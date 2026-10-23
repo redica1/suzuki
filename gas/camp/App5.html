@@ -1,4 +1,4 @@
-/* build: 20261023-222923 */
+/* build: 20261023-223231 */
   ${login?`<div class="panel" style="display:grid;gap:8px"><b>내가 올린 글 ${mine.length}</b>${mine.length?mine.map(x=>`<div class="qitem"><div class="spread"><span><b class="num">${esc(x.no)}</b> · ${esc(String(x.at).slice(5,16))} · ${esc(x.where)}</span>${qPill(x.state)}</div><div style="white-space:pre-wrap">${esc(x.text)}</div>${x.pic?'<small class="hint">사진 첨부함</small>':''}${x.reply?`<div class="reply"><b>운영진 답변</b>${x.done?` <small class="hint">${kday(x.done)}</small>`:''}<div style="white-space:pre-wrap">${esc(x.reply)}</div></div>`:''}</div>`).join(''):'<p class="hint" style="margin:0">아직 올린 글이 없어요.</p>'}</div>`:`<p class="hint">로그인하면 내가 올린 글과 운영진 답변을 여기서 볼 수 있어요.</p>`}
   </section>`}
 function openQ(){if(S.view!=='q')S.qBack={view:S.view,step:S.step};S.qWhere='';S.view='q';render();window.scrollTo({top:0});
@@ -165,7 +165,7 @@ document.addEventListener('click',e=>{
     if(paid){const f=document.getElementById('cxDoc'),req={no:sb.no,acad:sb.acad,names,ids:sel,why,amt,bank:(document.getElementById('cxBank')||{}).value||'',acct:((document.getElementById('cxAcct')||{}).value||'').replace(/[^\d-]/g,''),holder:((document.getElementById('cxHolder')||{}).value||'').trim()};
       const go=file=>{req.file=file;api('cancelReq',[req],()=>{})};
       if(f&&f.files&&f.files[0]){const fl=f.files[0];const rd=new FileReader();rd.onload=()=>go({name:fl.name,type:fl.type,data:String(rd.result).split(',')[1]});rd.readAsDataURL(fl)}else go(null)}
-    sb.ppl.forEach(p=>{if(sel.includes(p.id)){p.status=isPaid(p)?'취소요청':'취소';p.cxReqAt=nowStamp()}});subSave();
+    sb.ppl.forEach(p=>{if(sel.includes(p.id)){p.status=isPaid(p)?'취소요청':'취소';p.cxReqAt=nowStamp();if(!isPaid(p))p.cxWhy=why}});subSave();
     delete S.cx[sb.no];S.cxOpen='';S.cxReason='';S.cxDone={names,amt,paid};render();window.scrollTo({top:0});toast(paid?'취소 요청을 보냈어요':'취소했어요');return}
   if(b.id==='homeBtn'){S.view='form';if(S.step===6)Object.assign(S,{acad:'',verified:false,picked:{},extra:[],fam:[],info:{},room:{},join:{},ens:{on:false},agree:false});go(1);return}
   if(d.tab){S.tab=d.tab;S.rq='';render();return}

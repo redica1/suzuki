@@ -1,4 +1,4 @@
-/* build: 20261023-222550 */
+/* build: 20261023-222923 */
   ${teams().some(x=>x.over)?`<div class="note">가족방은 한 방에 ${ROOM.cap}명까지예요: ${teams().filter(x=>x.over).map(x=>`${esc(x.rep.name)} 가족 ${x.n}명`).join(', ')}</div>`:''}
   ${S.editOnly?`<div class="note info spread"><span><b>${S.editOnly.length}명만 고치는 중</b> · ${ps.filter(p=>S.editOnly.includes(p.key)).map(p=>esc(p.name)).join(', ')}</span><button class="btn small ghost" type="button" id="showAllCards">모두 보기</button></div>`:''}
   ${ps.filter(p=>p.kind!=='family'&&(!S.editOnly||S.editOnly.includes(p.key))).map(pCard).join('')}
@@ -73,7 +73,7 @@ function vEns(){
 
     `:''}
   </div>
-  ${S.editNo&&S.ensEdit?`<div class="row" style="justify-content:center;gap:8px;margin:14px 0"><button class="btn" type="button" id="toMine3">← 저장하지 않고 목록으로</button><button class="btn primary" type="button" id="ensSaveBtn">앙상블 수정 내용 저장</button></div>`:''}
+  ${S.editNo&&S.ensEdit?`<div class="row" style="justify-content:center;gap:8px;margin:14px 0"><button class="btn" type="button" id="toMine3">← 저장하지 않고 목록으로</button><button class="btn primary" type="button" id="ensSaveBtn">앙상블 수정 내용 저장</button></div>${S.ensSaved?`<p class="hint" style="text-align:center;margin:-6px 0 10px">✓ ${stampTxt(S.ensSaved)} 저장했어요</p>`:''}`:''}
   <div class="panel"><b>지금까지 신청된 앙상블 팀 ${ensTeams().length}</b>${ensTeams().length?`<div class="tbl" style="margin-top:8px"><table><thead><tr><th>팀 이름</th><th>대표 학원</th><th>신청 선생님</th><th>함께하는 학원</th></tr></thead><tbody>${ensTeams().map(t=>`<tr${(t.rep===S.acad||(t.acads||[]).includes(S.acad))?' style="background:var(--soft,#f3f6ff)"':''}><td><b>${esc(t.name)}</b></td><td>${esc(t.rep)}</td><td>${esc(t.by||'')}</td><td>${(t.acads||[]).map(esc).join(', ')||'-'}</td></tr>`).join('')}</tbody></table></div>`:'<p class="hint" style="margin:6px 0 0">아직 신청된 팀이 없어요.</p>'}</div>
   </section>`;
 }
@@ -197,5 +197,3 @@ function payTag(p){if(p.status!=='정상')return '';if(p.pay==='신고'){const r
 function subTag(sb){const L=sb.ppl.filter(p=>p.status==='정상');if(!L.length)return '<span class="pill lock">전체 취소</span>';
   const ok=L.filter(p=>isPaid(p)&&dueOf(p)<=0&&p.pay!=='신고').length, rp=L.filter(p=>p.pay==='신고').length;
   return ok===L.length?'<span class="pill ok">모두 입금 확인</span>':`<span class="pill ${ok?'new':'due'}">입금 확인 ${ok} / ${L.length}명</span>${rp?` <span class="pill new">신고 ${rp}명 확인 중</span>`:''}`}
-S.rpRow={};
-const rpv=p=>{const r=S.rpRow[p.id]||(S.rpRow[p.id]={n:'',d:'',a:String(dueOf(p))});return r};

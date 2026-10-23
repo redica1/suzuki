@@ -1,4 +1,6 @@
-/* build: 20261023-222550 */
+/* build: 20261023-222923 */
+  if(d.settype){const [k,v]=d.settype.split('|');const p=people().find(x=>x.key===k);if(p){info(p).type=v;render();toast(`${p.name}: ${v==='회원의 악기하는 자녀'?'악기하는 교사자녀':v} 금액으로 계산해요`)}return}
+  if(d.roomck&&b.matches('input')){if(b.checked)S.room[d.roomck]=true;else delete S.room[d.roomck];render();const tm=teams().find(x=>x.rep.key===d.roomck);toast(b.checked?(tm&&tm.fee?`가족방 ${tm.n}명 · ${won(tm.fee)}을 청구에 더했어요`:'가족방을 신청했어요 · 4명이라 추가 비용이 없어요'):'가족방 신청을 뺐어요');return}
   if(d.sibpick!==undefined){S.sibOpen=S.sibOpen===d.sibpick?'':d.sibpick;render();return}
   if(d.sib){const [a,b]=d.sib.split('|');const h=headOf(a);S.join[b]=h;delete S.room[b];sibsOf(b).forEach(j=>S.join[j]=h);S.sibOpen='';
     const pp=people(),hp=pp.find(p=>p.key===h)||{},bp=pp.find(p=>p.key===b)||{};

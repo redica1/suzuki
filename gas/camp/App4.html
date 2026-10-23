@@ -1,4 +1,6 @@
-/* build: 20261023-222550 */
+/* build: 20261023-222923 */
+S.rpRow={};
+const rpv=p=>{const r=S.rpRow[p.id]||(S.rpRow[p.id]={n:'',d:'',a:String(dueOf(p))});return r};
 function askBox(title,body,okLabel,onOk){closeAsk();const bg=document.createElement('div');bg.className='askbg';bg.id='askBg';
   bg.innerHTML=`<div class="askbox" role="dialog" aria-modal="true" aria-labelledby="askT"><h3 id="askT">${title}</h3><div>${body}</div><div class="row"><button class="btn ghost" type="button" id="askNo">취소</button><button class="btn primary" type="button" id="askOk">${okLabel}</button></div></div>`;
   document.body.appendChild(bg);bg.addEventListener('click',e=>{if(e.target===bg||e.target.id==='askNo'){closeAsk()}else if(e.target.id==='askOk'){closeAsk();onOk()}});
@@ -14,13 +16,15 @@ function repDone(ids){const L=[];MY_SUBS.forEach(sb=>sb.ppl.forEach(p=>{if(ids.i
   bg.addEventListener('click',e=>{if(e.target===bg||e.target.id==='askOk')done()});document.getElementById('askOk').focus()}
 /* 더 낸 금액: 입금 확인된 사람이 수정으로 청구액이 줄었거나 더 많이 낸 경우 (이미 요청했으면 0) */
 const overOf=p=>p.status==='정상'&&isPaid(p)&&p.pay!=='신고'&&!p.ovReq?Math.max(0,(p.paidAmt||0)-pAmt(p)):0;
-const BANKS=['국민','신한','하나','우리','농협','기업','카카오뱅크','토스뱅크','새마을금고','우체국','SC제일','부산','대구','경남','광주','전북','제주','수협','신협','케이뱅크'];
+const BANKS=['KB국민은행','신한은행','하나은행','우리은행','NH농협은행','지역농협·축협','IBK기업은행','카카오뱅크','토스뱅크','케이뱅크','새마을금고','신협','우체국','수협은행','SC제일은행','한국씨티은행','iM뱅크(대구은행)','부산은행','경남은행','광주은행','전북은행','제주은행','KDB산업은행','산림조합','저축은행','증권사(CMA)'];
+/* 은행 칸: 목록에서 고르거나 직접 써요 (대구은행 → iM뱅크처럼 이름이 바뀐 곳·작은 곳도) */
+const bankInp=(id,ph)=>`<input type="text" id="${id}" list="bankList" placeholder="${ph||'은행 (고르거나 직접 쓰기)'}" autocomplete="off" maxlength="20" aria-label="은행">`;
 function ovBox(no,ids){const sb=MY_SUBS.find(x=>x.no===no);if(!sb)return;const L=sb.ppl.filter(p=>ids.includes(p.id)&&overOf(p)>0);if(!L.length)return;
   const sum=L.reduce((t,p)=>t+overOf(p),0);closeAsk();const bg=document.createElement('div');bg.className='askbg';bg.id='askBg';
   bg.innerHTML=`<div class="askbox" role="dialog" aria-modal="true" aria-labelledby="askT"><h3 id="askT">더 낸 ${won(sum)}을 돌려드려요</h3>
     <div class="tbl"><table><thead><tr><th>이름</th><th class="r">입금 확인</th><th class="r">지금 청구액</th><th class="r">돌려받을 금액</th></tr></thead><tbody>${L.map(p=>`<tr><td><b>${esc(p.name)}</b></td><td class="r num">${won(p.paidAmt||0)}</td><td class="r num">${won(pAmt(p))}</td><td class="r num"><b>${won(overOf(p))}</b></td></tr>`).join('')}</tbody></table></div>
     <p class="hint" style="margin:8px 0">돌려받을 계좌를 적으면 운영진에게 「차액 환불」로 바로 올라가요. 참가는 그대로예요 (취소가 아니에요).</p>
-    <div class="rpf"><select id="ovB" aria-label="은행"><option value="">은행</option>${BANKS.map(x=>`<option>${x}</option>`).join('')}</select><input type="text" id="ovA" inputmode="numeric" placeholder="계좌번호"><input type="text" id="ovH" placeholder="예금주" value="${esc(S.user&&S.user.name||'')}"></div>
+    <div class="rpf">${bankInp('ovB')}<input type="text" id="ovA" inputmode="numeric" placeholder="계좌번호"><input type="text" id="ovH" placeholder="예금주" value="${esc(S.user&&S.user.name||'')}"></div>
     <span class="err" id="ovErr"></span>
     <div class="row"><button class="btn ghost" type="button" id="askNo">나중에</button><button class="btn primary" type="button" id="ovGo">돌려받기 요청</button></div></div>`;
   document.body.appendChild(bg);
@@ -37,7 +41,7 @@ function prpForm(p,sb){const ed=p.pay==='신고'&&p.rep;const r0=ed&&(p.rep.rows
   const over=(+v.a||0)>dueOf(p);
   return `<div class="prpf">${ed?'':bankHTML()}<div class="rpf"><label class="fl" for="prpN"><span>입금자명</span><input type="text" id="prpN" value="${esc(v.n)}" placeholder="입금자명"></label><label class="fl" for="prpD"><span>입금일 <b class="req">*</b></span><input type="date" id="prpD" value="${v.d}" max="${S.today}" min="${(S.bank||{}).from||''}"></label><label class="fl" for="prpA"><span>입금 금액</span><input type="text" class="num" id="prpA" inputmode="numeric" value="${v.a?(+v.a).toLocaleString('ko-KR'):''}" data-due="${dueOf(p)}"></label></div>
     <div class="rfbox" id="prpRf" ${over?'':'hidden'}><span class="hint"><b>청구액(${won(dueOf(p))})보다 많아요.</b> 더 낸 금액을 돌려받을 계좌를 적어 주세요.</span>
-      <div class="rpf"><select id="prpRfB" aria-label="환불 은행"><option value="">은행</option>${['국민','신한','하나','우리','농협','기업','카카오뱅크','토스뱅크','새마을금고','우체국','SC제일','부산','대구','경남','광주','전북','제주','수협','신협','케이뱅크'].map(x=>`<option>${x}</option>`).join('')}</select><input type="text" id="prpRfA" inputmode="numeric" placeholder="계좌번호"><input type="text" id="prpRfH" placeholder="예금주"></div></div>
+      <div class="rpf">${bankInp('prpRfB')}<input type="text" id="prpRfA" inputmode="numeric" placeholder="계좌번호"><input type="text" id="prpRfH" placeholder="예금주"></div></div>
     <label class="fl" for="prpM"><span>메모</span><input type="text" id="prpM" placeholder="금액이 청구액 ${won(dueOf(p))}과 다르면 적어 주세요"></label>
     <div class="row" style="justify-content:flex-end"><span class="err" id="prpErr" style="margin-right:auto"></span><button class="btn small ghost" type="button" data-prp="${p.id}">닫기</button>${ed?`<button class="btn small" type="button" data-prpdel="${sb.no}|${p.id}">신고 취소</button><button class="btn small primary" type="button" data-prpgo="${sb.no}|${p.id}">수정 내용 저장</button>`:`<button class="btn small primary" type="button" data-prpgo="${sb.no}|${p.id}">입금 신고하기</button>`}</div>
     ${ed?`<p class="hint" style="margin:0">운영진이 확인하기 전까지 고칠 수 있어요. 확인된 뒤에는 운영진에게 연락해 주세요.${p.rep.ids.length>1?` 이 신고는 ${p.rep.ids.length}명이 함께예요 · 이 사람 줄만 바뀌어요.`:''}</p>`:''}</div>`}
@@ -57,7 +61,7 @@ function payReport(){
       <div class="rpf"><input type="text" data-rpf="${p.id}|n" value="${esc(v.n)}" placeholder="입금자명" aria-label="${esc(p.name)} 입금자명" ${on?'':'disabled'}><input type="date" data-rpf="${p.id}|d" value="${v.d}" max="${S.today}" min="${(S.bank||{}).from||''}" aria-label="${esc(p.name)} 입금일" ${on?'':'disabled'}><input type="text" class="num" inputmode="numeric" data-rpf="${p.id}|a" value="${v.a?(+v.a).toLocaleString('ko-KR'):''}" placeholder="금액" aria-label="${esc(p.name)} 입금 금액" ${on?'':'disabled'}></div></li>`}).join('')}</ul>`).join('')}
     <div class="spread"><span class="hint">선택한 ${sel.length}명 · 청구 ${won(sum)} · 넣은 금액 <b class="num">${won(open.filter(x=>sel.includes(x.p.id)).reduce((t,x)=>t+(+rpv(x.p).a||0),0))}</b></span></div>
     <label class="f" for="rpMemo"><span>메모 <span class="hint">선택 · 금액이 청구액과 다르면 이유를 적어 주세요</span></span><input type="text" id="rpMemo" value="${esc(S.rpMemo||'')}"></label>
-    <details class="rfbox"><summary class="hint">청구액보다 많이 낸 사람이 있으면 · 환불 받을 계좌</summary><div class="rpf" style="margin-top:6px"><select id="rpRfB" aria-label="환불 은행"><option value="">은행</option>${['국민','신한','하나','우리','농협','기업','카카오뱅크','토스뱅크','새마을금고','우체국','SC제일','부산','대구','경남','광주','전북','제주','수협','신협','케이뱅크'].map(x=>`<option>${x}</option>`).join('')}</select><input type="text" id="rpRfA" inputmode="numeric" placeholder="계좌번호"><input type="text" id="rpRfH" placeholder="예금주"></div></details>
+    <details class="rfbox"><summary class="hint">청구액보다 많이 낸 사람이 있으면 · 환불 받을 계좌</summary><div class="rpf" style="margin-top:6px">${bankInp('rpRfB')}<input type="text" id="rpRfA" inputmode="numeric" placeholder="계좌번호"><input type="text" id="rpRfH" placeholder="예금주"></div></details>
     <p class="err" id="rpErr"></p>
     <button class="btn primary" type="button" id="rpGo">입금 신고하기</button>`:''}</div>`}
 /* 접수 인원 요약: 교사 n명 · 학생 n명 (바이올린 n · 첼로 n …) · 가족 n명 (취소 빼고) */
@@ -112,7 +116,7 @@ function cxPanel(sb,sel){
       ${nUn?`<dt>입금 전</dt><dd>${nUn}명은 입금 전이라 바로 취소돼요</dd>`:''}</dl>
     <label class="f" for="cxWhy">취소 사유<select id="cxWhy">${['','질병·부상','개인 사정','일정 변경','기타'].map(x=>`<option value="${x}" ${x===S.cxReason?'selected':''}>${x||'선택해 주세요'}</option>`).join('')}</select></label>
     ${r.doc&&paid?`<label class="f" for="cxDoc">진단서 <span class="hint">필수 · 이 기간에는 진단서가 있어야 취소돼요 (사진·PDF)</span><input type="file" id="cxDoc" accept="image/\x2a,application/pdf"></label>`:''}
-    ${paid&&amt>0?`<div class="grid2"><label class="f" for="cxBank">환불 받을 은행<select id="cxBank"><option value="">선택</option>${['국민','신한','하나','우리','농협','기업','카카오뱅크','토스뱅크','새마을금고','우체국'].map(b=>`<option>${b}</option>`).join('')}</select></label>
+    ${paid&&amt>0?`<div class="grid2"><label class="f" for="cxBank">환불 받을 은행${bankInp('cxBank')}</label>
       <label class="f" for="cxAcct">계좌번호<input type="text" id="cxAcct" inputmode="numeric"></label><label class="f" for="cxHolder">예금주<input type="text" id="cxHolder" value="${esc(S.user.name)}"></label></div>`:''}
     <p class="err" id="cxErr"></p>
     <div class="row"><button class="btn primary" type="button" data-cxgo="${sb.no}">${paid?'취소 요청하기':'취소하기'}</button><button class="btn ghost" type="button" data-cxclear="${sb.no}">선택 해제</button></div>`}</div>`}

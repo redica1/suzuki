@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261024-000814 -->
+<!-- build: 20261024-001200 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -72,6 +72,7 @@ tr.off td{opacity:.5}
 @media (max-width:640px){input.num{width:90px}input[type=date]{width:128px}}
 .panel.acad>summary{cursor:pointer;list-style:none}.panel.acad>summary::-webkit-details-marker{display:none}.panel.acad>summary::before,.rnd>summary::before{content:'▸';margin-right:6px;color:var(--faint)}.panel.acad[open]>summary::before,.rnd[open]>summary::before{content:'▾'}
 .rnd{border-top:1px solid var(--line);padding:8px 0 4px;margin-top:8px}.rnd>summary{cursor:pointer;list-style:none;padding:4px 2px}.rnd>summary::-webkit-details-marker{display:none}.rnd .panel.sub{margin:8px 0 0 10px}
+.stgrid{display:grid;grid-template-columns:1fr 1.6fr;gap:12px;margin-top:8px;align-items:start}@media (max-width:720px){.stgrid{grid-template-columns:1fr}}
 </style></head>
 <body>
 <div class="band"><div class="wrap">
@@ -244,7 +245,7 @@ function vQ(){const L=(S.D.issues||[]).slice().reverse(),f=S.qf||'open';const F=
 function statRows(){const L=[];(S.D.subs||[]).forEach(sb=>sb.ppl.filter(p=>p.status==='정상').forEach(p=>{const k=p.id.slice(sb.no.length+1),i=(sb.form&&sb.form.info&&sb.form.info[k])||{};
   L.push({sb,p,i,acad:sb.acad,round:sb.round||'-',kind:p.kind,type:p.type||i.type||'',inst:p.inst||i.inst||'',prog:i.prog||'',lessons:+i.lessons||0,mc:i.mc||[],concert:i.concert&&i.concert!=='없음'?i.concert:'',song:i.other?[i.oc,i.ot].filter(Boolean).join(' · '):(i.song||''),p1:i.p1||'',p2:i.p2||'',room:!!(sb.form&&sb.form.room&&sb.form.room[k]),bill:pAmt(p),paid:+p.paidAmt||0})}));return L}
 const cnt=(L,f)=>{const m=new Map();L.forEach(x=>{const k=f(x);m.set(k,(m.get(k)||0)+1)});return [...m].sort((a,b)=>b[1]-a[1])};
-const SVIEW=[['acad','학원별'],['round','차수·구분'],['inst','악기·진도'],['les','레슨·마스터클래스'],['con','음악회'],['room','가족방']];
+const SVIEW=[['acad','학원별'],['round','차수·구분'],['inst','악기·진도·권수'],['les','레슨·마스터클래스'],['con','음악회'],['room','가족방']];
 function vStat(){const L=statRows(),v=S.sv||'acad';
   const head=`<div class="panel"><div class="spread"><div><b>통계</b> <span class="hint">취소한 사람은 빼고 · 지금 들어온 접수 ${(S.D.subs||[]).length}건 · ${L.length}명</span></div><button class="btn small" type="button" id="reload">새로 불러오기</button></div>
     <div class="row" style="gap:6px;margin-top:8px;flex-wrap:wrap">${SVIEW.map(([k,l])=>`<button class="btn small ${v===k?'primary':''}" type="button" data-sv="${k}">${l}</button>`).join('')}</div></div>`;
@@ -256,9 +257,26 @@ function stAcad(L){const A=[...new Set(L.map(x=>x.acad))].sort((a,b)=>a.localeCo
   return ST(['학원','교사','학생',...ins.map(i=>'· '+esc(i)),'가족','합계(명찰)','청구','입금 확인'],A.map(a=>[esc(a),...row(L.filter(x=>x.acad===a))]),['합계',...row(L)])}
 function stRound(L){const R=[...new Set(L.map(x=>x.round))].sort(),Ty=cnt(L,x=>x.type).map(x=>x[0]);
   return ST(['참가 구분',...R,'합계'],Ty.map(t=>[esc(t),...R.map(r=>L.filter(x=>x.type===t&&x.round===r).length||''),L.filter(x=>x.type===t).length]),['합계',...R.map(r=>L.filter(x=>x.round===r).length),L.length])}
+const PROG_LIST = {
+  '바이올린':['Pre-Twinkle','1권A 작은별 변주곡 ~ 무궁동','1권B 알레그레토 ~','2권A 요정의 춤 ~','2권B 미뇽의 가보트 ~','3권A ~ 유모레스크','3권B 베커 가보트 ~','4권A ~ 자이츠 5번 3악장','4권B 비발디 협주곡 가단조 ~','5권A ~ 비발디 협주곡 사단조','5권B 독일춤곡 ~','6권A ~ 피오코 알레그로','6권B 라모 가보트 ~','7권A ~ 헨델 소나타 1번','7권B 바흐 협주곡 가단조 ~','8권 전체','9권 모차르트 협주곡 5번','10권 모차르트 협주곡 4번','10권 이상 멘델스존 협주곡 3악장','10권 이상 기타 곡'],
+  '첼로':['Pre-Twinkle','1권A 작은별 ~ 무궁동','1권B 그 옛날에 ~','2권','3권','4권','5권','6권','7권','8권','9권','10권','10권 이상'],
+  '기타':['1권','2권','3권','4권','5권','6권','7권','8권','9권','10권','10권 이상']};
+/* 진도 → 권수 (1권A·1권B → 1권, 10권 이상은 따로) */
+const bookOf=g=>{g=String(g||'');if(/pre/i.test(g))return 'Pre-Twinkle';if(/10권\s*이상/.test(g))return '10권 이상';const m=g.match(/^(\d+)권/);return m?m[1]+'권':(g||'미입력')};
+const pct=(n,t)=>t&&n?Math.round(n*1000/t)/10+'%':'';
 function stInst(L){const P=L.filter(x=>x.kind!=='가족');const ins=cnt(P,x=>x.inst||'미정');
-  return ST(['악기','교사','학생','합계'],ins.map(([i])=>[esc(i),P.filter(x=>(x.inst||'미정')===i&&x.kind==='교사').length,P.filter(x=>(x.inst||'미정')===i&&x.kind==='학생').length,P.filter(x=>(x.inst||'미정')===i).length]))
-    +ins.map(([i])=>{const Q=P.filter(x=>(x.inst||'미정')===i&&x.prog);return Q.length?`<div class="panel"><b>${esc(i)} 현재 진도</b>${ST(['진도','인원'],cnt(Q,x=>x.prog).map(([k,n])=>[esc(k),n]))}</div>`:''}).join('')}
+  const top=ST(['악기','교사','학생','합계'],ins.map(([i])=>[esc(i),P.filter(x=>(x.inst||'미정')===i&&x.kind==='교사').length,P.filter(x=>(x.inst||'미정')===i&&x.kind==='학생').length,P.filter(x=>(x.inst||'미정')===i).length]),['합계',P.filter(x=>x.kind==='교사').length,P.filter(x=>x.kind==='학생').length,P.length]);
+  const per=ins.map(([i])=>{const Sx=P.filter(x=>(x.inst||'미정')===i&&x.kind==='학생');if(!Sx.length)return '';
+    const list=PROG_LIST[i]||PROG_LIST['기타'];const known=new Set(list);const extra=[...new Set(Sx.map(x=>x.prog).filter(g=>g&&!known.has(g)))];const all=[...list,...extra];
+    const T=Sx.length,none=Sx.filter(x=>!x.prog).length;
+    const books=[...new Set(all.map(bookOf))];const bc=b=>Sx.filter(x=>x.prog&&bookOf(x.prog)===b).length;
+    const bookTbl=ST(['권수','인원','비율'],books.map(b=>{const n=bc(b);return [esc(b),n||'<span class="faint">0</span>',pct(n,T)]}).concat(none?[['<span class="faint">진도 미입력</span>',none,pct(none,T)]]:[]),['총계',T,'100%']);
+    const rows=[];books.forEach(b=>{const G=all.filter(g=>bookOf(g)===b);if(G.length>1||G[0]!==b){G.forEach(g=>{const n=Sx.filter(x=>x.prog===g).length;rows.push(['&nbsp;&nbsp;'+esc(g),n||'<span class="faint">0</span>',pct(n,T)])});rows.push([`<b>${esc(b)} 총계</b>`,`<b>${bc(b)}</b>`,`<b>${pct(bc(b),T)}</b>`])}
+      else{const n=bc(b);rows.push([esc(b),n||'<span class="faint">0</span>',pct(n,T)])}});
+    if(none)rows.push(['<span class="faint">진도 미입력</span>',none,pct(none,T)]);
+    const progTbl=ST(['현재 진도','인원','비율'],rows,['총계',T,'100%']);
+    return `<div class="panel"><div class="spread"><b>${esc(i)} 학생 ${T}명</b><span class="hint">권수는 현재 진도에서 셈 (1권A·1권B → 1권)</span></div><div class="stgrid"><div><b class="hint">권수별</b>${bookTbl}</div><div><b class="hint">진도별</b>${progTbl}</div></div></div>`}).join('');
+  return top+per}
 function stLes(L){const LS=L.filter(x=>x.lessons>0);const M=L.filter(x=>x.mc.length);
   return `<div class="panel"><b>추가 개인레슨</b> <span class="hint">${LS.length}명 · ${LS.reduce((t,x)=>t+x.lessons,0)}회 · ${won(LS.reduce((t,x)=>t+x.lessons,0)*60000)}</span></div>`
     +ST(['선호 교수 1','신청자','레슨 횟수','선호 교수 2로 고른 사람'],cnt(LS,x=>x.p1||'(안 고름)').map(([k,n])=>[esc(k),n,LS.filter(x=>(x.p1||'(안 고름)')===k).reduce((t,x)=>t+x.lessons,0),LS.filter(x=>x.p2===k).length||'']))

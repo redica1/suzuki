@@ -1,4 +1,4 @@
-/* build: 20261024-000814 */
+/* build: 20261024-001200 */
 const ensQ=e=>{if(e.target.id==='enTq'&&e.target.value!==S.ens.tq){S.ens.tq=e.target.value;const pos=e.target.selectionStart;if(!e.isComposing){render();const n=document.getElementById('enTq');if(n){n.focus();n.setSelectionRange(pos,pos)}}return}if(e.target.id==='enAq'&&e.target.value!==S.ens.aq){S.ens.aq=e.target.value;const box=document.getElementById('ensCands');if(box)box.innerHTML=ensCandsHTML()}};
 document.addEventListener('input',ensQ);document.addEventListener('compositionend',ensQ);
 document.addEventListener('focusin',e=>{if(e.target.id==='acQ'&&!S.acOpen){S.acOpen=true;S.acQ='';render();const n=document.getElementById('acQ');n.focus()}});

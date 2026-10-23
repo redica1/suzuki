@@ -1,4 +1,4 @@
-/* build: 20261023-220844 */
+/* build: 20261023-221114 */
 function ensSave(L){ENS=L} /* 화면 미리보기용 · 진짜 팀 목록은 서버가 접수 내용에서 다시 만듦 */
 const teamOf=a=>ensTeams().find(t=>t.rep===a||(t.acads||[]).includes(a));
 /* 우리 학원이 이미 팀에 들어가 있으면(다른 선생님·다른 접수로) 대표·함께 선택을 막음. 지금 고치는 접수가 그 팀을 낸 접수면 막지 않음 */
@@ -61,6 +61,7 @@ function vEns(){
 
     `:''}
   </div>
+  ${S.editNo&&S.ensEdit?`<div class="row" style="justify-content:center;gap:8px;margin:14px 0"><button class="btn" type="button" id="toMine3">← 저장하지 않고 목록으로</button><button class="btn primary" type="button" id="ensSaveBtn">앙상블 수정 내용 저장</button></div>`:''}
   <div class="panel"><b>지금까지 신청된 앙상블 팀 ${ensTeams().length}</b>${ensTeams().length?`<div class="tbl" style="margin-top:8px"><table><thead><tr><th>팀 이름</th><th>대표 학원</th><th>신청 선생님</th><th>함께하는 학원</th></tr></thead><tbody>${ensTeams().map(t=>`<tr${(t.rep===S.acad||(t.acads||[]).includes(S.acad))?' style="background:var(--soft,#f3f6ff)"':''}><td><b>${esc(t.name)}</b></td><td>${esc(t.rep)}</td><td>${esc(t.by||'')}</td><td>${(t.acads||[]).map(esc).join(', ')||'-'}</td></tr>`).join('')}</tbody></table></div>`:'<p class="hint" style="margin:6px 0 0">아직 신청된 팀이 없어요.</p>'}</div>
   </section>`;
 }
@@ -192,5 +193,3 @@ function askBox(title,body,okLabel,onOk){closeAsk();const bg=document.createElem
   document.getElementById('askOk').focus()}
 /* 입금 신고를 보낸 뒤: 무엇을 신고했는지 확인 상자 → 닫으면 그 사람 줄로 가서 반짝 */
 function repDone(ids){const L=[];MY_SUBS.forEach(sb=>sb.ppl.forEach(p=>{if(ids.includes(p.id)&&p.pay==='신고'&&p.rep){const r=p.rep.rows&&p.rep.rows[p.id]||{name:p.rep.name,date:p.rep.date,a:p.rep.amt};L.push({p,r})}}));if(!L.length)return;
-  const sum=L.reduce((t,x)=>t+(+x.r.a||0),0);closeAsk();const bg=document.createElement('div');bg.className='askbg';bg.id='askBg';
-  bg.innerHTML=`<div class="askbox" role="dialog" aria-modal="true" aria-labelledby="askT"><h3 id="askT">✓ 입금 신고를 보냈어요</h3>

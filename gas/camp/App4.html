@@ -1,4 +1,6 @@
-/* build: 20261023-220844 */
+/* build: 20261023-221114 */
+  const sum=L.reduce((t,x)=>t+(+x.r.a||0),0);closeAsk();const bg=document.createElement('div');bg.className='askbg';bg.id='askBg';
+  bg.innerHTML=`<div class="askbox" role="dialog" aria-modal="true" aria-labelledby="askT"><h3 id="askT">✓ 입금 신고를 보냈어요</h3>
     <div class="tbl"><table><thead><tr><th>이름</th><th>입금자명</th><th>입금일</th><th class="r">금액</th></tr></thead><tbody>${L.map(x=>`<tr><td><b>${esc(x.p.name)}</b></td><td>${esc(x.r.name||'')}</td><td>${kday(x.r.date)}</td><td class="r num">${won(+x.r.a||0)}</td></tr>`).join('')}</tbody>${L.length>1?`<tfoot><tr><td colspan="3"><b>합계</b></td><td class="r num"><b>${won(sum)}</b></td></tr></tfoot>`:''}</table></div>
     <p class="hint" style="margin:10px 0 0">지금은 <b>「입금 확인 중」</b>이에요. 운영진이 통장과 맞춰 보고 확인하면 <b>「입금 확인」</b>으로 바뀌어요.<br>입금일이나 금액을 잘못 넣었으면 그 사람 줄의 「신고 수정」을 눌러 고칠 수 있어요.</p>
     <div class="row"><button class="btn primary" type="button" id="askOk">확인</button></div></div>`;
@@ -115,7 +117,7 @@ function render(){
   if(S.editNo&&S.step>1&&S.step<6){const D=editDiff();if(D)document.getElementById('dockLabel').textContent=`기존 ${won(D.before)} → 수정 후 (${sgn(D.diff)})`}
   back.hidden = S.step===1||S.step===6;
   next.hidden = S.step===6;
-  next.textContent = S.step===5?(S.editNo?'수정 내용 저장':'접수하기'):'다음';
+  next.textContent = S.step===5?(S.editNo?'수정 내용 저장':'접수하기'):(S.step===4&&S.editNo&&S.ensEdit?'앙상블 저장':'다음');
   next.disabled = false; next.classList.toggle('dim', blocked());
   document.getElementById('roundChip').textContent = `${ROUNDS[CAMP.ri][0]} 접수 중 · ${ROUNDS[CAMP.ri][1]}`;
   document.getElementById('roundSeg').innerHTML = ''&&ROUNDS.map((r,i)=>`<button type="button" data-round="${i}" aria-pressed="${CAMP.ri===i}" style="padding:2px 9px;font-size:12px">${r[0]}</button>`).join('');
@@ -136,7 +138,3 @@ function missWhat(){const t=totals(),L=[],el=[],Q=x=>{const e=typeof x==='string
   else if(S.step===2){if(t.n===0)L.push('참가자를 1명 이상 신청 명단에 추가해 주세요');else L.push(`한 번에 ${CAMP.perSubmitMax}명까지 접수할 수 있어요`)}
   else if(S.step===3){
     people().forEach(p=>{const i=info(p),m=[];
-      if(p.kind==='student'&&!i.teacher){m.push('담당 교사');Q('#tc_'+p.key)}
-      if(yearBad(p,i.by)){m.push('출생연도');Q('#ag_'+p.key)}
-      if(!i.gender){m.push('성별');const g=document.querySelector(`[data-gender^="${p.key}|"]`);if(g)Q(g.parentElement)}
-      if(p.kind==='student'&&PLAYS.has(i.type)&&!i.prog){m.push('현재 진도');Q('#pg_'+p.key)}

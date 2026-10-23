@@ -1,4 +1,8 @@
-/* build: 20261023-220844 */
+/* build: 20261023-221114 */
+  if(b.id==='restart'){Object.assign(S,{step:1,verified:false,picked:{},extra:[],fam:[],room:{},join:{},info:{},agree:false,ens:{on:false},verr:''});render();return}
+});
+document.addEventListener('change',e=>{const el=e.target;
+  if(el.dataset&&el.dataset.rp){const a=S.rp||[];S.rp=el.checked?[...new Set([...a,el.dataset.rp])]:a.filter(x=>x!==el.dataset.rp);{const n=document.getElementById('rpMemo');if(n)S.rpMemo=n.value}render();return}
   if(el.dataset&&el.dataset.xon){const x=S.extra.find(v=>v.id===el.dataset.xon);x.on=el.checked;if(!x.on){delete S.room[x.id];delete S.join[x.id];S.fam=S.fam.filter(f=>f.link!==x.id)}render();return}
   if(el.dataset&&el.dataset.cx){const [no,id]=el.dataset.cx.split('|');const a=S.cx[no]||(S.cx[no]=[]);if(el.checked){if(!a.includes(id))a.push(id)}else S.cx[no]=a.filter(x=>x!==id);if(!S.cx[no].length)delete S.cx[no];S.cxDone=null;render();return}
   if(el.id==='today'&&el.value){S.today=el.value;S.ruleOpen=true;render();return}

@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261023-231956 -->
+<!-- build: 20261023-232216 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -113,13 +113,13 @@ function payPill(p){if(p.status!=='정상')return p.status==='취소요청'?'<sp
   return !(+p.paidAmt)?'<span class="pill due">입금 전</span>':d>0?`<span class="pill due">차액 ${won(d)}</span>`:d<0?`<span class="pill new">${won(-d)} 더 냄${p.ovReq?' · 돌려받기 요청':''}</span>`:'<span class="pill ok">입금 확인</span>'}
 
 /* ---------- 화면 ---------- */
-const TABS=[['home','한눈에'],['subs','접수 · 입금 확인'],['rp','입금 신고'],['cx','취소 · 환불'],['ens','앙상블'],['q','오류·건의']];
+const TABS=[['home','한눈에'],['subs','접수 · 입금 확인'],['rp','입금 신고'],['cx','취소 · 환불'],['ens','앙상블'],['stat','통계'],['q','오류·건의']];
 function render(){
   const app=document.getElementById('app'),tabs=document.getElementById('tabs');
   if(!S.D){tabs.innerHTML='';app.innerHTML=vLogin();return}
   const st=stats();
   tabs.innerHTML=TABS.map(([k,l])=>`<button type="button" role="tab" data-tab="${k}" aria-selected="${S.tab===k}">${l}${k==='rp'&&st.rp?`<span class="cnt">${st.rp}</span>`:''}${k==='cx'&&st.cx?`<span class="cnt">${st.cx}</span>`:''}${k==='q'&&st.q?`<span class="cnt">${st.q}</span>`:''}</button>`).join('');
-  app.innerHTML={home:vHome,subs:vSubs,rp:vRp,cx:vCx,ens:vEns,q:vQ}[S.tab]();
+  app.innerHTML={home:vHome,subs:vSubs,rp:vRp,cx:vCx,ens:vEns,stat:vStat,q:vQ}[S.tab]();
 }
 function vLogin(){return `<div class="panel login"><h2 style="font-family:var(--display);font-size:19px;margin:0 0 10px">관리자 로그인</h2>
   <label>아이디<input type="text" id="lid" autocomplete="username" value="admin"></label>
@@ -240,6 +240,33 @@ function vQ(){const L=(S.D.issues||[]).slice().reverse(),f=S.qf||'open';const F=
       <textarea id="qr_${x.row}" rows="2" style="flex:1;min-width:220px" placeholder="선생님께 보일 답변">${esc(x.reply)}</textarea><button class="btn small primary" type="button" data-qsave="${x.row}">저장</button></div>
     ${x.by?`<small class="faint">${esc(x.by)}${x.done?' · '+kday(x.done):''}</small>`:''}</div>`).join('')||'<div class="panel hint">해당하는 글이 없어요.</div>'}`}
 
+/* ---------- 통계 (실제 접수 · 취소 뺌) ---------- */
+function statRows(){const L=[];(S.D.subs||[]).forEach(sb=>sb.ppl.filter(p=>p.status==='정상').forEach(p=>{const k=p.id.slice(sb.no.length+1),i=(sb.form&&sb.form.info&&sb.form.info[k])||{};
+  L.push({sb,p,i,acad:sb.acad,round:sb.round||'-',kind:p.kind,type:p.type||i.type||'',inst:p.inst||i.inst||'',prog:i.prog||'',lessons:+i.lessons||0,mc:i.mc||[],concert:i.concert&&i.concert!=='없음'?i.concert:'',song:i.other?[i.oc,i.ot].filter(Boolean).join(' · '):(i.song||''),p1:i.p1||'',p2:i.p2||'',room:!!(sb.form&&sb.form.room&&sb.form.room[k]),bill:pAmt(p),paid:+p.paidAmt||0})}));return L}
+const cnt=(L,f)=>{const m=new Map();L.forEach(x=>{const k=f(x);m.set(k,(m.get(k)||0)+1)});return [...m].sort((a,b)=>b[1]-a[1])};
+const SVIEW=[['acad','학원별'],['round','차수·구분'],['inst','악기·진도'],['les','레슨·마스터클래스'],['con','음악회'],['room','가족방']];
+function vStat(){const L=statRows(),v=S.sv||'acad';
+  const head=`<div class="panel"><div class="spread"><div><b>통계</b> <span class="hint">취소한 사람은 빼고 · 지금 들어온 접수 ${(S.D.subs||[]).length}건 · ${L.length}명</span></div><button class="btn small" type="button" id="reload">새로 불러오기</button></div>
+    <div class="row" style="gap:6px;margin-top:8px;flex-wrap:wrap">${SVIEW.map(([k,l])=>`<button class="btn small ${v===k?'primary':''}" type="button" data-sv="${k}">${l}</button>`).join('')}</div></div>`;
+  if(!L.length)return head+'<div class="panel hint">아직 접수가 없어요.</div>';
+  return head+({acad:stAcad,round:stRound,inst:stInst,les:stLes,con:stCon,room:stRoom}[v])(L)}
+const ST=(h,rows,foot)=>`<div class="panel tbl"><table><thead><tr>${h.map((x,i)=>`<th${i?' class="r"':''}>${x}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr>${r.map((x,i)=>`<td${i?' class="r num"':''}>${x}</td>`).join('')}</tr>`).join('')}${foot?`<tr>${foot.map((x,i)=>`<td${i?' class="r num"':''}><b>${x}</b></td>`).join('')}</tr>`:''}</tbody></table></div>`;
+function stAcad(L){const A=[...new Set(L.map(x=>x.acad))].sort((a,b)=>a.localeCompare(b,'ko'));const ins=[...new Set(L.filter(x=>x.kind==='학생').map(x=>x.inst||'미정'))];
+  const row=G=>{const st=G.filter(x=>x.kind==='학생');return [G.filter(x=>x.kind==='교사').length,st.length,...ins.map(i=>st.filter(x=>(x.inst||'미정')===i).length||''),G.filter(x=>x.kind==='가족').length,G.length,won(G.reduce((t,x)=>t+x.bill,0)),won(G.reduce((t,x)=>t+x.paid,0))]};
+  return ST(['학원','교사','학생',...ins.map(i=>'· '+esc(i)),'가족','합계(명찰)','청구','입금 확인'],A.map(a=>[esc(a),...row(L.filter(x=>x.acad===a))]),['합계',...row(L)])}
+function stRound(L){const R=[...new Set(L.map(x=>x.round))].sort(),Ty=cnt(L,x=>x.type).map(x=>x[0]);
+  return ST(['참가 구분',...R,'합계'],Ty.map(t=>[esc(t),...R.map(r=>L.filter(x=>x.type===t&&x.round===r).length||''),L.filter(x=>x.type===t).length]),['합계',...R.map(r=>L.filter(x=>x.round===r).length),L.length])}
+function stInst(L){const P=L.filter(x=>x.kind!=='가족');const ins=cnt(P,x=>x.inst||'미정');
+  return ST(['악기','교사','학생','합계'],ins.map(([i])=>[esc(i),P.filter(x=>(x.inst||'미정')===i&&x.kind==='교사').length,P.filter(x=>(x.inst||'미정')===i&&x.kind==='학생').length,P.filter(x=>(x.inst||'미정')===i).length]))
+    +ins.map(([i])=>{const Q=P.filter(x=>(x.inst||'미정')===i&&x.prog);return Q.length?`<div class="panel"><b>${esc(i)} 현재 진도</b>${ST(['진도','인원'],cnt(Q,x=>x.prog).map(([k,n])=>[esc(k),n]))}</div>`:''}).join('')}
+function stLes(L){const LS=L.filter(x=>x.lessons>0);const M=L.filter(x=>x.mc.length);
+  return `<div class="panel"><b>추가 개인레슨</b> <span class="hint">${LS.length}명 · ${LS.reduce((t,x)=>t+x.lessons,0)}회 · ${won(LS.reduce((t,x)=>t+x.lessons,0)*60000)}</span></div>`
+    +ST(['선호 교수 1','신청자','레슨 횟수','선호 교수 2로 고른 사람'],cnt(LS,x=>x.p1||'(안 고름)').map(([k,n])=>[esc(k),n,LS.filter(x=>(x.p1||'(안 고름)')===k).reduce((t,x)=>t+x.lessons,0),LS.filter(x=>x.p2===k).length||'']))
+    +`<div class="panel"><b>마스터클래스</b> <span class="hint">${M.length}명</span></div>`
+    +ST(['교수','신청자','이름'],[...new Set(M.flatMap(x=>x.mc))].map(m=>{const Q=M.filter(x=>x.mc.includes(m));return [esc(m),Q.length,Q.map(x=>esc(x.p.name)+' <small class="faint">'+esc(x.acad)+'</small>').join(', ')]}))}
+function stCon(L){const C=L.filter(x=>x.concert);return ['오후','트와일라잇','이브닝'].map(c=>{const Q=C.filter(x=>x.concert===c);return `<div class="panel tbl"><b>${c} 음악회 ${Q.length}명</b>${Q.length?`<table style="margin-top:6px"><thead><tr><th>이름</th><th>학원</th><th>악기</th><th>곡</th></tr></thead><tbody>${Q.map(x=>`<tr><td>${esc(x.p.name)}</td><td>${esc(x.acad)}</td><td>${esc(x.inst)}</td><td>${esc(x.song)}</td></tr>`).join('')}</tbody></table>`:''}</div>`}).join('')}
+function stRoom(L){const R=L.filter(x=>x.room);return ST(['학원','가족방 수','대표'],[...new Set(R.map(x=>x.acad))].map(a=>{const Q=R.filter(x=>x.acad===a);return [esc(a),Q.length,Q.map(x=>esc(x.p.name)).join(', ')]}),['합계',R.length,''])}
+
 /* ---------- 동작 ---------- */
 const num=id=>+String((document.getElementById(id)||{}).value||'').replace(/\D/g,'')||0;
 const val=id=>((document.getElementById(id)||{}).value||'').trim();
@@ -250,6 +277,7 @@ function confirmOne(pid){const d=val('d_'+pid),a=num('a_'+pid);
 document.addEventListener('click',e=>{const tr=e.target.closest('tr.ensrow');if(tr&&!e.target.closest('button,input,label')){S.ensOpen=S.ensOpen===tr.dataset.ensopen?'':tr.dataset.ensopen;render()}});
 document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const d=b.dataset;
   if(d.qf){S.qf=d.qf;render();return}
+  if(d.sv){S.sv=d.sv;render();return}
   if(d.cxf){S.cxf=d.cxf;render();return}
   if(d.qsave){const row=+d.qsave;call('adminSetIssue',[row,val('qs_'+row),(document.getElementById('qr_'+row)||{}).value||''],r=>{setData(r);toast('저장했어요')});return}
   if(d.ensopen){S.ensOpen=S.ensOpen===d.ensopen?'':d.ensopen;render();return}

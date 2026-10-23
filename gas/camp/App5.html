@@ -1,4 +1,4 @@
-/* build: 20261023-231956 */
+/* build: 20261023-232216 */
       <dl class="kv"><dt>함께하는 학원</dt><dd>${esc(sb.acad)} (대표)${(e.acads||[]).length?', '+e.acads.map(esc).join(', '):''}</dd><dt>곡</dt><dd>${songs.join('<br>')||'<span class="hint">아직 없음</span>'}</dd><dt>연주시간</dt><dd>${e.tm||e.ts?`${+e.tm||0}분 ${+e.ts||0}초`:'-'}</dd></dl></div>`}).join('')}
   ${(()=>{const has=MY_SUBS.some(sb=>sb.form&&sb.form.ens&&sb.form.ens.on&&sb.ppl.some(p=>p.status==='정상'));const last=[...MY_SUBS].reverse().find(sb=>sb.form&&sb.ppl.some(p=>p.status==='정상'));
     if(has||!last)return '';const t=teamOf(last.acad);const mb=last.form.ens&&last.form.ens.member;

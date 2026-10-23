@@ -1,4 +1,8 @@
-/* build: 20261023-231102 */
+/* build: 20261023-231337 */
+  if(b.id==='toMine'||b.id==='toMine2'||b.id==='toMine3'||b.id==='mineBtn'){if(S.editNo){S.editNo=null;S.editOnly=null;if(S.riBack!==undefined){CAMP.ri=S.riBack;S.riBack=undefined}resetForm();S.acad='';S.verified=false;S.step=1}S.view='mine';S.cxDone=null;render();window.scrollTo({top:0});return}
+  if(b.id==='toForm'){S.view='form';if(S.editNo&&S.riBack!==undefined){CAMP.ri=S.riBack;S.riBack=undefined}S.editNo=null;S.editOnly=null;if(S.step===6||S.step>1){resetForm();S.acad='';S.verified=false;S.step=1}render();window.scrollTo({top:0});return}
+  if(d.subedit){startEdit(d.subedit,null);return}
+  if(b.id==='rpGo'){const open=unpaidPpl();const sel=(S.rp||[]).filter(id=>open.some(x=>x.p.id===id));const er=m=>{document.getElementById('rpErr').textContent=m};
     if(!sel.length)return er('입금한 사람을 체크해 주세요.');const ps=open.filter(x=>sel.includes(x.p.id)).map(x=>x.p);const memo=document.getElementById('rpMemo').value.trim();
     for(const p of ps){const v=rpv(p);if(!v.n.trim())return er(`${p.name} 줄에 입금자명을 넣어 주세요.`);if(!v.d)return er(`${p.name} 줄에 입금일을 선택해 주세요.`);if(!(+v.a>0))return er(`${p.name} 줄에 입금 금액을 넣어 주세요.`)}
     for(const p of ps){const v=rpv(p);if(v.d>S.today)return er(`${p.name} 줄 입금일이 오늘보다 뒤예요.`);if(v.n.trim().length>20)return er(`${p.name} 줄 입금자명은 20자까지예요.`)}

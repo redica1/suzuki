@@ -1,4 +1,6 @@
-/* build: 20261023-231102 */
+/* build: 20261023-231337 */
+  const base=ps.reduce((t,p)=>t+Math.max(0,(p.paidAmt||0)-(REFUND.duesRefund?0:p.dues)),0);return {r,base,paid:ps.length>0,amt:Math.floor(base*r.rate/100/100)*100}}
+function stTag(st,p){return st==='정상'?(p&&p.cxRejected?`<span class="pill bad">취소 요청 반려${p.cxWhy?' · '+esc(p.cxWhy):''}</span>`:''):st==='취소요청'?'<span class="pill due">취소 요청 · 확인 중</span>':`<span class="pill lock">취소${p&&p.refund?' · 환불 '+kday(p.refund.date)+' '+won(p.refund.amt):''}</span>`}
 function payTag(p){if(p.status!=='정상')return '';if(p.pay==='신고'){const r=p.rep&&(p.rep.rows&&p.rep.rows[p.id]||{date:p.rep.date,a:p.rep.amt})||{};return `<span class="pill new">입금 확인 중${r.date?' · '+kday(r.date):''}${r.a?' '+won(+r.a):''}</span>`}const d=dueOf(p);const rj=p.rejected&&p.rejected.length&&!isPaid(p)?p.rejected[p.rejected.length-1]:null;if(rj)return `<span class="pill bad" title="${esc(rj.why||'')}">입금 신고 반려${rj.why?' · '+esc(rj.why):''}</span>`;
   return !isPaid(p)?'<span class="pill due">입금 전</span>':d>0?`<span class="pill due">차액 ${won(d)} 입금 전</span>`:d<0?(p.ovReq?`<span class="pill due">${won(p.ovReq.amt)} 돌려받기 요청 · 확인 중</span>`:`<span class="pill new">입금 확인 · ${won(-d)} 더 냄</span>${p.ovRejected?` <span class="pill bad">돌려받기 반려${p.ovRejected.why?' · '+esc(p.ovRejected.why):''}</span>`:''}`):`<span class="pill ok">입금 확인${p.rep&&p.rep.ok?' '+kday(p.rep.ok):''}</span>${(p.ovDone||[]).length?` <span class="pill">차액 ${won(p.ovDone.reduce((t,x)=>t+x.amt,0))} 돌려받음 ${kday(p.ovDone[p.ovDone.length-1].date)}</span>`:''}`}
 function subTag(sb){const L=sb.ppl.filter(p=>p.status==='정상');if(!L.length)return '<span class="pill lock">전체 취소</span>';
@@ -125,5 +127,3 @@ function vMine(){
     ${S.cxOpen===sb.no&&selCx.length?cxPanel(sb,selCx):''}</div>`}).join('')}
   <h3 style="margin:18px 0 6px;font-size:16px">앙상블</h3>
   ${MY_SUBS.filter(sb=>sb.form&&sb.form.ens&&sb.form.ens.on&&sb.ppl.some(p=>p.status==='정상')).map(sb=>{const e=sb.form.ens;const songs=[1,2].map(n=>songTxt(e,n)).filter(Boolean);
-    return `<div class="panel enscard"><div class="spread"><div><span class="pill new">앙상블</span> <b style="font-size:17px">${esc(e.group||'(팀 이름 없음)')}</b> <span class="hint">${sb.no} · 대표 ${esc(sb.acad)}</span></div><button class="btn primary" type="button" data-ensedit="${sb.no}">앙상블 수정</button></div>
-      <dl class="kv"><dt>함께하는 학원</dt><dd>${esc(sb.acad)} (대표)${(e.acads||[]).length?', '+e.acads.map(esc).join(', '):''}</dd><dt>곡</dt><dd>${songs.join('<br>')||'<span class="hint">아직 없음</span>'}</dd><dt>연주시간</dt><dd>${e.tm||e.ts?`${+e.tm||0}분 ${+e.ts||0}초`:'-'}</dd></dl></div>`}).join('')}

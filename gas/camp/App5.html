@@ -1,4 +1,6 @@
-/* build: 20261023-231102 */
+/* build: 20261023-231337 */
+    return `<div class="panel enscard"><div class="spread"><div><span class="pill new">앙상블</span> <b style="font-size:17px">${esc(e.group||'(팀 이름 없음)')}</b> <span class="hint">${sb.no} · 대표 ${esc(sb.acad)}</span></div><button class="btn primary" type="button" data-ensedit="${sb.no}">앙상블 수정</button></div>
+      <dl class="kv"><dt>함께하는 학원</dt><dd>${esc(sb.acad)} (대표)${(e.acads||[]).length?', '+e.acads.map(esc).join(', '):''}</dd><dt>곡</dt><dd>${songs.join('<br>')||'<span class="hint">아직 없음</span>'}</dd><dt>연주시간</dt><dd>${e.tm||e.ts?`${+e.tm||0}분 ${+e.ts||0}초`:'-'}</dd></dl></div>`}).join('')}
   ${(()=>{const has=MY_SUBS.some(sb=>sb.form&&sb.form.ens&&sb.form.ens.on&&sb.ppl.some(p=>p.status==='정상'));const last=[...MY_SUBS].reverse().find(sb=>sb.form&&sb.ppl.some(p=>p.status==='정상'));
     if(has||!last)return '';const t=teamOf(last.acad);const mb=last.form.ens&&last.form.ens.member;
     if(t&&t.rep===last.acad)return `<div class="panel enscard"><span class="pill new">앙상블</span> <b>${esc(last.acad)}</b>은(는) 「<b>${esc(t.name)}</b>」 팀 대표로 신청돼 있어요 · ${esc(t.by||'')} 선생님 신청 (${esc(t.no)})<br><span class="hint">팀 정보는 ${esc(t.by||'신청한')} 선생님이 고쳐요.</span></div>`;
@@ -73,7 +75,7 @@ function render(){fillBanks();
 /* 「다음」을 막는 조건: 그 단계에서 보이는 것만 (2단계는 사람이 1명 이상이면 통과, 가족 이름·가족방 인원은 3단계에서) */
 function blocked(){const t=totals();
   return (S.step===1&&!(S.user&&S.acad))||(S.step===2&&(t.n===0||t.n>CAMP.perSubmitMax))
-    ||(S.step===3&&(missingTeacher().length>0||missingBasic().length>0||missingProg().length>0||S.fam.some(f=>!f.name.trim())||t.teams.some(x=>x.over)))
+    ||(S.step===3&&(missingTeacher().length>0||missingBasic().length>0||missingProg().length>0||missingPref().length>0||S.fam.some(f=>!f.name.trim())||t.teams.some(x=>x.over)))
     ||(S.step===4&&S.ens.on&&!(S.ens.group||'').trim())||(S.step===4&&S.ens.member&&!S.ens.joinNo&&!(S.ens.joinRep||'').trim())||(S.step===5&&!S.agree)}
 function toast(m,force){if(S.saving&&!force){S.savedMsg=m;return}const el=document.getElementById('toast');el.textContent=m;el.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>el.hidden=true,2200)}
 function go(n){S.step=n;render();window.scrollTo({top:0})}
@@ -90,6 +92,7 @@ function missWhat(){const t=totals(),L=[],el=[],Q=x=>{const e=typeof x==='string
       if(yearBad(p,i.by)){m.push('출생연도');Q('#ag_'+p.key)}
       if(!i.gender){m.push('성별');const g=document.querySelector(`[data-gender^="${p.key}|"]`);if(g)Q(g.parentElement)}
       if(p.kind==='student'&&PLAYS.has(i.type)&&!i.prog){m.push('현재 진도');Q('#pg_'+p.key)}
+      if(missingPref().some(x=>x.key===p.key)){m.push('선호 교수 1');Q('#p1_'+p.key)}
       if(m.length)L.push(`${p.name}: ${m.join('·')}`)});
     S.fam.filter(f=>!f.name.trim()).forEach(f=>{L.push(`${FAM_SHORT[f.type]||'가족'} 이름`);Q('#fn_'+f.id)});
     if(t.teams.some(x=>x.over))L.push(`가족방은 한 방에 ${ROOM.cap}명까지예요`)}
@@ -175,7 +178,3 @@ document.addEventListener('click',e=>{
       return}
     go(S.step+1);return}
   if(b.id==='backBtn'){go(S.step-1);return}
-  if(b.id==='toMine'||b.id==='toMine2'||b.id==='toMine3'||b.id==='mineBtn'){if(S.editNo){S.editNo=null;S.editOnly=null;if(S.riBack!==undefined){CAMP.ri=S.riBack;S.riBack=undefined}resetForm();S.acad='';S.verified=false;S.step=1}S.view='mine';S.cxDone=null;render();window.scrollTo({top:0});return}
-  if(b.id==='toForm'){S.view='form';if(S.editNo&&S.riBack!==undefined){CAMP.ri=S.riBack;S.riBack=undefined}S.editNo=null;S.editOnly=null;if(S.step===6||S.step>1){resetForm();S.acad='';S.verified=false;S.step=1}render();window.scrollTo({top:0});return}
-  if(d.subedit){startEdit(d.subedit,null);return}
-  if(b.id==='rpGo'){const open=unpaidPpl();const sel=(S.rp||[]).filter(id=>open.some(x=>x.p.id===id));const er=m=>{document.getElementById('rpErr').textContent=m};

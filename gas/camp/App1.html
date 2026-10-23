@@ -1,4 +1,4 @@
-/* build: 20261023-231102 */
+/* build: 20261023-231337 */
 /* ---------- 캠프 설정 (관리자 화면에서 입력되는 값) ---------- */
 const ROOM = { cap:4, emptyFee:130000 }; // 가족방: 4인 기준, 빈 자리 1개당 추가 비용
 const CAMP = { id:'27W', ri:0, lessonFee:60000, lessonMax:5, mcFee:150000,
@@ -100,6 +100,7 @@ const okYear=v=>/^\d{4}$/.test(String(v||''))&&+v>=1920&&+v<=2026;
 const yearBad=(p,v)=>p.kind==='student'?!okYear(v):(String(v||'').trim()!==''&&!okYear(v)); // 학생만 필수, 나머지는 선택(넣으면 4자리)
 function missingBasic(){ return people().filter(p=>{const i=info(p);return yearBad(p,i.by)||!i.gender}) }
 function missingProg(){ return people().filter(p=>p.kind==='student'&&PLAYS.has(info(p).type)&&!info(p).prog) }
+function missingPref(){ return people().filter(p=>p.kind!=='family'&&PLAYS.has(info(p).type)&&+info(p).lessons>0&&(PROF[p.inst]||[]).length&&!info(p).p1) }
 function missingTeacher(){ return people().filter(p=>p.kind==='student'&&!info(p).teacher) }
 function teams(){ // 가족방 팀: 대표(학생·교사) + 그 가족 + 같은 방으로 묶은 형제와 그 가족
   const ps=people(); const byKey=Object.fromEntries(ps.map(p=>[p.key,p]));
@@ -206,4 +207,3 @@ function bookedOf(x){for(const sb of ALL_SUBS){if(sb.no===S.editNo||sb.acad!==S.
 /* 고치는 중일 때 신청 명단 칩에 붙는 표시: 기존(들어온 차례·시각) / 새로 추가 */
 const nextBatch=()=>{const sb=ALL_SUBS.find(x=>x.no===S.editNo);return sb?Math.max(1,...sb.ppl.map(q=>q.batch||1))+1:1};
 const btCls=n=>'bt'+(((n||1)-1)%6+1);
-function editBatch(id){if(!S.editNo)return null;const sb=ALL_SUBS.find(x=>x.no===S.editNo);const p=sb&&sb.ppl.find(q=>q.id===sb.no+'_'+id&&q.status!=='취소');return p?(p.batch||1):0}

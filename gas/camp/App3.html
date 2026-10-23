@@ -1,4 +1,8 @@
-/* build: 20261023-231102 */
+/* build: 20261023-231337 */
+  ${missingProg().length?`<div class="note">현재 진도를 선택해 주세요: ${missingProg().map(p=>esc(p.name)).join(', ')}</div>`:''}
+  ${missingBasic().length?`<div class="note">성별(모두)과 학생 출생연도를 넣어 주세요: ${missingBasic().map(p=>esc(p.name)).join(', ')}</div>`:''}
+  ${missingPref().length?`<div class="note">추가레슨을 신청했으면 선호 교수 1을 골라 주세요: ${missingPref().map(p=>esc(p.name)).join(', ')}</div>`:''}
+  ${missingTeacher().length?`<div class="note">담당 교사가 비어 있는 학생: ${missingTeacher().map(p=>esc(p.name)).join(', ')}</div>`:''}
   ${S.fam.some(f=>!f.name.trim())?`<div class="note">가족 이름을 넣어 주세요: ${S.fam.filter(f=>!f.name.trim()).map(f=>{const o=people().find(p=>p.key===f.link);return `${esc(o?o.name:'')}의 ${FAM_SHORT[f.type]}`}).join(', ')}</div>`:''}
   ${teams().some(x=>x.over)?`<div class="note">가족방은 한 방에 ${ROOM.cap}명까지예요: ${teams().filter(x=>x.over).map(x=>`${esc(x.rep.name)} 가족 ${x.n}명`).join(', ')}</div>`:''}
   ${S.editOnly?`<div class="note info spread"><span><b>${S.editOnly.length}명만 고치는 중</b> · ${ps.filter(p=>S.editOnly.includes(p.key)).map(p=>esc(p.name)).join(', ')}</span><button class="btn small ghost" type="button" id="showAllCards">모두 보기</button></div>`:''}
@@ -200,5 +204,3 @@ function vStep5(){
 const pAmt=p=>p.fee+p.lesson+p.dues+(p.room||0);
 function subTotal(sb,ids){return sb.ppl.filter(p=>!ids||ids.includes(p.id)).reduce((t,p)=>t+pAmt(p),0)}
 function refundOf(sb,ids){const r=refundRule(S.today);const ps=sb.ppl.filter(p=>ids.includes(p.id)&&isPaid(p));
-  const base=ps.reduce((t,p)=>t+Math.max(0,(p.paidAmt||0)-(REFUND.duesRefund?0:p.dues)),0);return {r,base,paid:ps.length>0,amt:Math.floor(base*r.rate/100/100)*100}}
-function stTag(st,p){return st==='정상'?(p&&p.cxRejected?`<span class="pill bad">취소 요청 반려${p.cxWhy?' · '+esc(p.cxWhy):''}</span>`:''):st==='취소요청'?'<span class="pill due">취소 요청 · 확인 중</span>':`<span class="pill lock">취소${p&&p.refund?' · 환불 '+kday(p.refund.date)+' '+won(p.refund.amt):''}</span>`}

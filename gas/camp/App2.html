@@ -1,4 +1,5 @@
-/* build: 20261023-222329 */
+/* build: 20261023-222550 */
+function editTag(id){if(!S.editNo)return '';const sb=ALL_SUBS.find(x=>x.no===S.editNo);const p=sb&&sb.ppl.find(q=>q.id===sb.no+'_'+id&&q.status!=='취소');
   return p?` <small class="ctag">${(p.batch||1)===1?'처음 접수':'추가 '+((p.batch||1)-1)} · ${stampTxt(p.addAt)||kday(sb.date)}</small>`:` <small class="ctag new">새로 추가 (추가 ${nextBatch()-1})</small>`}
 function rosterRow(x,kind){
   const bk=bookedOf(x), booked=x.booked||bk, on=!!S.picked[x.id], sel=!!S.sel[x.id];
@@ -175,4 +176,3 @@ function vStep3(){
   ${missingBasic().length?`<div class="note">성별(모두)과 학생 출생연도를 넣어 주세요: ${missingBasic().map(p=>esc(p.name)).join(', ')}</div>`:''}
   ${missingTeacher().length?`<div class="note">담당 교사가 비어 있는 학생: ${missingTeacher().map(p=>esc(p.name)).join(', ')}</div>`:''}
   ${S.fam.some(f=>!f.name.trim())?`<div class="note">가족 이름을 넣어 주세요: ${S.fam.filter(f=>!f.name.trim()).map(f=>{const o=people().find(p=>p.key===f.link);return `${esc(o?o.name:'')}의 ${FAM_SHORT[f.type]}`}).join(', ')}</div>`:''}
-  ${teams().some(x=>x.over)?`<div class="note">가족방은 한 방에 ${ROOM.cap}명까지예요: ${teams().filter(x=>x.over).map(x=>`${esc(x.rep.name)} 가족 ${x.n}명`).join(', ')}</div>`:''}

@@ -1,4 +1,5 @@
-/* build: 20261023-222329 */
+/* build: 20261023-222550 */
+function askBox(title,body,okLabel,onOk){closeAsk();const bg=document.createElement('div');bg.className='askbg';bg.id='askBg';
   bg.innerHTML=`<div class="askbox" role="dialog" aria-modal="true" aria-labelledby="askT"><h3 id="askT">${title}</h3><div>${body}</div><div class="row"><button class="btn ghost" type="button" id="askNo">취소</button><button class="btn primary" type="button" id="askOk">${okLabel}</button></div></div>`;
   document.body.appendChild(bg);bg.addEventListener('click',e=>{if(e.target===bg||e.target.id==='askNo'){closeAsk()}else if(e.target.id==='askOk'){closeAsk();onOk()}});
   document.getElementById('askOk').focus()}

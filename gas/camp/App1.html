@@ -1,4 +1,4 @@
-/* build: 20261023-222329 */
+/* build: 20261023-222550 */
 /* ---------- 캠프 설정 (관리자 화면에서 입력되는 값) ---------- */
 const ROOM = { cap:4, emptyFee:130000 }; // 가족방: 4인 기준, 빈 자리 1개당 추가 비용
 const CAMP = { id:'27W', ri:0, lessonFee:60000, lessonMax:5, mcFee:150000,
@@ -172,7 +172,7 @@ function vStep1(){
   <p class="lede">회원 명단에 있는 선생님만 접수할 수 있어요. 지금은 <b>마포스즈키</b> 선생님만 시험으로 접수할 수 있어요.</p>
   <div class="panel" style="max-width:440px">
     <label class="f" for="lgNm">이름<input type="text" id="lgNm" value="${esc(S.lgNm)}" autocomplete="name" placeholder=""></label>
-    <label class="f" for="lgEm">휴대전화<input type="tel" id="lgEm" value="${esc(S.lgEm||'010-')}" inputmode="numeric" placeholder="010-0000-0000" maxlength="13" autocomplete="tel"></label>
+    <label class="f" for="lgEm">휴대전화<span class="phwrap"><span class="phpre" aria-hidden="true">010-</span><input type="tel" id="lgEm" value="${esc(String(S.lgEm||'').replace(/^010-?/,''))}" inputmode="numeric" placeholder="0000-0000" maxlength="9" autocomplete="tel-local" aria-label="휴대전화 010 뒤 8자리"></span></label>
     <p class="hint">회원 명단의 이름과 휴대전화로 들어가요.</p>
     ${S.verr?`<p class="err">${S.verr}</p>`:''}
     <button class="btn primary" type="button" id="doLogin">로그인</button>
@@ -207,4 +207,3 @@ function bookedOf(x){for(const sb of ALL_SUBS){if(sb.no===S.editNo||sb.acad!==S.
 const nextBatch=()=>{const sb=ALL_SUBS.find(x=>x.no===S.editNo);return sb?Math.max(1,...sb.ppl.map(q=>q.batch||1))+1:1};
 const btCls=n=>'bt'+(((n||1)-1)%6+1);
 function editBatch(id){if(!S.editNo)return null;const sb=ALL_SUBS.find(x=>x.no===S.editNo);const p=sb&&sb.ppl.find(q=>q.id===sb.no+'_'+id&&q.status!=='취소');return p?(p.batch||1):0}
-function editTag(id){if(!S.editNo)return '';const sb=ALL_SUBS.find(x=>x.no===S.editNo);const p=sb&&sb.ppl.find(q=>q.id===sb.no+'_'+id&&q.status!=='취소');

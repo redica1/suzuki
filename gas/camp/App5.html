@@ -1,4 +1,4 @@
-/* build: 20261023-222329 */
+/* build: 20261023-222550 */
   ${login?`<div class="panel" style="display:grid;gap:8px"><b>내가 올린 글 ${mine.length}</b>${mine.length?mine.map(x=>`<div class="qitem"><div class="spread"><span><b class="num">${esc(x.no)}</b> · ${esc(String(x.at).slice(5,16))} · ${esc(x.where)}</span>${qPill(x.state)}</div><div style="white-space:pre-wrap">${esc(x.text)}</div>${x.pic?'<small class="hint">사진 첨부함</small>':''}${x.reply?`<div class="reply"><b>운영진 답변</b>${x.done?` <small class="hint">${kday(x.done)}</small>`:''}<div style="white-space:pre-wrap">${esc(x.reply)}</div></div>`:''}</div>`).join(''):'<p class="hint" style="margin:0">아직 올린 글이 없어요.</p>'}</div>`:`<p class="hint">로그인하면 내가 올린 글과 운영진 답변을 여기서 볼 수 있어요.</p>`}
   </section>`}
 function openQ(){if(S.view!=='q')S.qBack={view:S.view,step:S.step};S.qWhere='';S.view='q';render();window.scrollTo({top:0});
@@ -85,8 +85,8 @@ document.addEventListener('click',e=>{
     if(!t){S.verr=`회원 명단에서 ${n} 선생님을 찾지 못했어요.`;render();return}
     if(t.state==='대기'){S.verr='승인 대기 중이에요. 협회가 확인하면 이메일로 알려 드려요.';render();return}
     login({...t,acads:t.acads.includes('마포스즈키')?['마포스즈키',...t.acads.filter(a=>a!=='마포스즈키')]:t.acads});if(t.acads.includes('마포스즈키')){document.querySelector('[data-acad="마포스즈키"]')||0}return}
-  if(b.id==='doLogin'){const nm=document.getElementById('lgNm').value.trim(),ph=document.getElementById('lgEm').value.replace(/\D/g,'');S.lgNm=nm;S.lgEm=document.getElementById('lgEm').value;
-    if(!nm||ph.length<10){S.verr='이름과 휴대전화를 모두 넣어 주세요.';render();return}
+  if(b.id==='doLogin'){const nm=document.getElementById('lgNm').value.trim(),ph='010'+document.getElementById('lgEm').value.replace(/\D/g,'');S.lgNm=nm;S.lgEm='010-'+document.getElementById('lgEm').value;
+    if(!nm||ph.length<11){S.verr='이름과 휴대전화를 모두 넣어 주세요.';render();return}
     busy(true,'명단을 확인하고 있어요…');google.script.run.withSuccessHandler(r=>{busy(false);if(!r.ok){S.verr=r.msg;render();return}
       S.token=r.token;S.today=r.today;loadFromServer(r);login({...r.teacher,acads:r.teacher.acads});
       if(!MY_SUBS.length&&r.teacher.acads.length===1){const a=r.teacher.acads[0];S.acad=a;S.rq='';S.sel={};S.ptab='교사';S.picked={};S.extra=[];S.fam=[];S.info={};S.room={};ensureRoster(a);S.verified=true;render()}})
@@ -100,7 +100,7 @@ document.addEventListener('click',e=>{
     const t={name:nm,phone:ph,role:g('rgRole'),inst:g('rgInst'),email:g('rgEmail'),acads:[],hasPw:true,newReg:true};TEACHER_DB.push(t);login(t);toast('교사 등록을 마쳤어요. 학원을 선택해 주세요');return}
   if(b.id==='toFirst'){S.auth='first1';S.verr='';render();return}
   if(b.id==='toLogin'){S.auth='login';S.verr='';render();return}
-  if(b.id==='forgot'){const ph=(document.getElementById('lgEm').value||'').replace(/\D/g,'');const t=TEACHER_DB.find(x=>x.phone===ph);toast(t&&t.email?`${t.email.replace(/^(..).*(@.*)$/,'$1***$2')}로 재설정 링크를 보냈어요 (시제품)`:'등록된 이메일이 없어요. 운영진 카톡으로 문의해 주세요');return}
+  if(b.id==='forgot'){const ph='010'+(document.getElementById('lgEm').value||'').replace(/\D/g,'');const t=TEACHER_DB.find(x=>x.phone===ph);toast(t&&t.email?`${t.email.replace(/^(..).*(@.*)$/,'$1***$2')}로 재설정 링크를 보냈어요 (시제품)`:'등록된 이메일이 없어요. 운영진 카톡으로 문의해 주세요');return}
   if(b.id==='firstCheck'){const t=findT(S.fPhone);if(!t||t.name!==S.fName.trim()){S.verr='명단의 이름·휴대전화와 일치하지 않아요. 명단에 없으면 아래 「교사 등록」을 눌러 주세요.';render();return}
     if(t.hasPw){S.verr='이미 비밀번호가 있어요. 로그인 화면에서 「비밀번호를 잊었어요」를 눌러 주세요.';render();return}
     S.pending={...t};S.auth='first2';S.verr='';render();return}

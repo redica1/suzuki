@@ -1,4 +1,4 @@
-/* build: 20261023-222329 */
+/* build: 20261023-222550 */
   if(d.sibpick!==undefined){S.sibOpen=S.sibOpen===d.sibpick?'':d.sibpick;render();return}
   if(d.sib){const [a,b]=d.sib.split('|');const h=headOf(a);S.join[b]=h;delete S.room[b];sibsOf(b).forEach(j=>S.join[j]=h);S.sibOpen='';
     const pp=people(),hp=pp.find(p=>p.key===h)||{},bp=pp.find(p=>p.key===b)||{};
@@ -61,7 +61,7 @@ document.addEventListener('change',e=>{if(e.target.id==='qWhere'){S.qWhere=e.tar
 const fmtPhone=v=>{let d=String(v).replace(/\D/g,'');if(/^010010/.test(d))d=d.slice(3);d=d.slice(0,11);return d.length<4?d:d.length<8?d.slice(0,3)+'-'+d.slice(3):d.slice(0,3)+'-'+d.slice(3,7)+'-'+d.slice(7)};
 document.addEventListener('input',e=>{
   {const el=e.target;if(/^q(Name|Phone|Acad|Text)$/.test(el.id)){S[el.id]=el.value;return}}
-  if(e.target.id==='lgEm'){const el=e.target,f=fmtPhone(el.value);if(f!==el.value){el.value=f;el.setSelectionRange(f.length,f.length)}S.lgEm=f;return}
+  if(e.target.id==='lgEm'){const el=e.target;let d=el.value.replace(/\D/g,'');/* 습관대로 010부터 쳐도 됨: 0·01 은 잠깐 두고, 010 이 되면 뗌 (010 뒷자리는 0·1로 시작하지 않음) */if(/^01?$/.test(d)){S.lgEm='010-';return}if(d.startsWith('010'))d=d.slice(3);d=d.slice(0,8);const f=d.length>4?d.slice(0,4)+'-'+d.slice(4):d;if(f!==el.value){el.value=f;el.setSelectionRange(f.length,f.length)}S.lgEm='010-'+f;return}
   if(e.target.id==='prpA'){const box=document.getElementById('prpRf');if(box)box.hidden=!((+e.target.value.replace(/\D/g,'')||0)>(+e.target.dataset.due||0))}
   if(e.target.dataset&&e.target.dataset.rpf){const [id,k]=e.target.dataset.rpf.split('|');const r=S.rpRow[id]||(S.rpRow[id]={n:'',d:'',a:''});r[k]=k==='a'?e.target.value.replace(/\D/g,''):e.target.value;return}
   if(e.target.id==='nB'){e.target.value=e.target.value.replace(/\D/g,'').slice(0,4);return}

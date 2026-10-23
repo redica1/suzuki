@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261024-001200 -->
+<!-- build: 20261024-001521 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -245,12 +245,12 @@ function vQ(){const L=(S.D.issues||[]).slice().reverse(),f=S.qf||'open';const F=
 function statRows(){const L=[];(S.D.subs||[]).forEach(sb=>sb.ppl.filter(p=>p.status==='정상').forEach(p=>{const k=p.id.slice(sb.no.length+1),i=(sb.form&&sb.form.info&&sb.form.info[k])||{};
   L.push({sb,p,i,acad:sb.acad,round:sb.round||'-',kind:p.kind,type:p.type||i.type||'',inst:p.inst||i.inst||'',prog:i.prog||'',lessons:+i.lessons||0,mc:i.mc||[],concert:i.concert&&i.concert!=='없음'?i.concert:'',song:i.other?[i.oc,i.ot].filter(Boolean).join(' · '):(i.song||''),p1:i.p1||'',p2:i.p2||'',room:!!(sb.form&&sb.form.room&&sb.form.room[k]),bill:pAmt(p),paid:+p.paidAmt||0})}));return L}
 const cnt=(L,f)=>{const m=new Map();L.forEach(x=>{const k=f(x);m.set(k,(m.get(k)||0)+1)});return [...m].sort((a,b)=>b[1]-a[1])};
-const SVIEW=[['acad','학원별'],['round','차수·구분'],['inst','악기·진도·권수'],['les','레슨·마스터클래스'],['con','음악회'],['room','가족방']];
+const SVIEW=[['acad','학원별'],['round','차수·구분'],['inst','악기·진도·권수'],['badge','학원별 인원·명찰'],['les','레슨·마스터클래스'],['con','음악회'],['room','가족방']];
 function vStat(){const L=statRows(),v=S.sv||'acad';
   const head=`<div class="panel"><div class="spread"><div><b>통계</b> <span class="hint">취소한 사람은 빼고 · 지금 들어온 접수 ${(S.D.subs||[]).length}건 · ${L.length}명</span></div><button class="btn small" type="button" id="reload">새로 불러오기</button></div>
     <div class="row" style="gap:6px;margin-top:8px;flex-wrap:wrap">${SVIEW.map(([k,l])=>`<button class="btn small ${v===k?'primary':''}" type="button" data-sv="${k}">${l}</button>`).join('')}</div></div>`;
   if(!L.length)return head+'<div class="panel hint">아직 접수가 없어요.</div>';
-  return head+({acad:stAcad,round:stRound,inst:stInst,les:stLes,con:stCon,room:stRoom}[v])(L)}
+  return head+({acad:stAcad,round:stRound,inst:stInst,badge:stBadge,les:stLes,con:stCon,room:stRoom}[v])(L)}
 const ST=(h,rows,foot)=>`<div class="panel tbl"><table><thead><tr>${h.map((x,i)=>`<th${i?' class="r"':''}>${x}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr>${r.map((x,i)=>`<td${i?' class="r num"':''}>${x}</td>`).join('')}</tr>`).join('')}${foot?`<tr>${foot.map((x,i)=>`<td${i?' class="r num"':''}><b>${x}</b></td>`).join('')}</tr>`:''}</tbody></table></div>`;
 function stAcad(L){const A=[...new Set(L.map(x=>x.acad))].sort((a,b)=>a.localeCompare(b,'ko'));const ins=[...new Set(L.filter(x=>x.kind==='학생').map(x=>x.inst||'미정'))];
   const row=G=>{const st=G.filter(x=>x.kind==='학생');return [G.filter(x=>x.kind==='교사').length,st.length,...ins.map(i=>st.filter(x=>(x.inst||'미정')===i).length||''),G.filter(x=>x.kind==='가족').length,G.length,won(G.reduce((t,x)=>t+x.bill,0)),won(G.reduce((t,x)=>t+x.paid,0))]};
@@ -277,6 +277,27 @@ function stInst(L){const P=L.filter(x=>x.kind!=='가족');const ins=cnt(P,x=>x.i
     const progTbl=ST(['현재 진도','인원','비율'],rows,['총계',T,'100%']);
     return `<div class="panel"><div class="spread"><b>${esc(i)} 학생 ${T}명</b><span class="hint">권수는 현재 진도에서 셈 (1권A·1권B → 1권)</span></div><div class="stgrid"><div><b class="hint">권수별</b>${bookTbl}</div><div><b class="hint">진도별</b>${progTbl}</div></div></div>`}).join('');
   return top+per}
+/* 2026 여름 「학원별인원통계」「명찰통계」와 같은 표 */
+const TYPE_ORDER=['교사','연수생','소속없는 중급연수생','학생','회원의 악기하는 자녀','회원의 첫번째 보호자','회원의 그외 악기 안하는 동반가족','동반가족 중 돌전아기'];
+const T_TEACH=['교사','연수생','소속없는 중급연수생'],T_PLAY=['학생','회원의 악기하는 자녀'];
+const byTot=(A,f)=>A.map(a=>[a,f(a)]).sort((x,y)=>y[1]-x[1]||x[0].localeCompare(y[0],'ko')).map(x=>x[0]);
+const nz=n=>n||'';
+function stBadge(L){const A=[...new Set(L.map(x=>x.acad))];
+  /* ① 학원 × 악기 (학생 + 악기하는 교사 자녀) */
+  const P=L.filter(x=>T_PLAY.includes(x.type));const IO=['바이올린','첼로','플루트'],ins=cnt(P,x=>x.inst||'미정').map(x=>x[0]).sort((x,y)=>(IO.indexOf(x)+1||9)-(IO.indexOf(y)+1||9));
+  const A1=byTot(A.filter(a=>P.some(x=>x.acad===a)),a=>P.filter(x=>x.acad===a).length);
+  const t1=ST(['학원',...ins.map(esc),'총계'],A1.map(a=>{const G=P.filter(x=>x.acad===a);return [esc(a),...ins.map(i=>nz(G.filter(x=>(x.inst||'미정')===i).length)),G.length]}),['총계',...ins.map(i=>P.filter(x=>(x.inst||'미정')===i).length),P.length]);
+  /* ② 학원 × 참가 구분 */
+  const types=[...TYPE_ORDER.filter(t=>L.some(x=>x.type===t)),...[...new Set(L.map(x=>x.type))].filter(t=>!TYPE_ORDER.includes(t))];
+  const A2=byTot(A,a=>L.filter(x=>x.acad===a).length);
+  const t2=ST(['학원',...types.map(esc),'총계'],A2.map(a=>{const G=L.filter(x=>x.acad===a);return [esc(a),...types.map(t=>nz(G.filter(x=>x.type===t).length)),G.length]}),['총계',...types.map(t=>L.filter(x=>x.type===t).length),L.length]);
+  /* ③ 명찰 (학원 이름순) */
+  const A3=[...A].sort((x,y)=>x.localeCompare(y,'ko'));const tc=G=>G.filter(x=>T_TEACH.includes(x.type)).length;
+  const t3=ST(['학원','교사','학생','가족','필요 명찰 수'],A3.map(a=>{const G=L.filter(x=>x.acad===a);return [esc(a),nz(tc(G)),nz(G.filter(x=>T_PLAY.includes(x.type)).length),nz(G.filter(x=>!T_TEACH.includes(x.type)&&!T_PLAY.includes(x.type)).length),G.length]}),
+    ['총계',tc(L),P.length,L.filter(x=>!T_TEACH.includes(x.type)&&!T_PLAY.includes(x.type)).length,L.length]);
+  return `<div class="panel"><b>① 학원별 악기 인원</b> <span class="hint">학생 + 회원의 악기하는 자녀 · 많은 순</span>${t1}</div>
+    <div class="panel"><b>② 학원별 참가 구분 인원</b> <span class="hint">취소 뺌 · 많은 순 · 총계 = 그 학원 참가 인원</span>${t2}</div>
+    <div class="panel"><b>③ 명찰 통계</b> <span class="hint">학원 이름순 · 교수진 명찰은 따로 준비 (접수에 들어 있지 않음)</span>${t3}</div>`}
 function stLes(L){const LS=L.filter(x=>x.lessons>0);const M=L.filter(x=>x.mc.length);
   return `<div class="panel"><b>추가 개인레슨</b> <span class="hint">${LS.length}명 · ${LS.reduce((t,x)=>t+x.lessons,0)}회 · ${won(LS.reduce((t,x)=>t+x.lessons,0)*60000)}</span></div>`
     +ST(['선호 교수 1','신청자','레슨 횟수','선호 교수 2로 고른 사람'],cnt(LS,x=>x.p1||'(안 고름)').map(([k,n])=>[esc(k),n,LS.filter(x=>(x.p1||'(안 고름)')===k).reduce((t,x)=>t+x.lessons,0),LS.filter(x=>x.p2===k).length||'']))

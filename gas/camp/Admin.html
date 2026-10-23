@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261023-221114 -->
+<!-- build: 20261023-221536 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -105,19 +105,19 @@ function people(){const L=[];(S.D?S.D.subs:[]).forEach(sb=>sb.ppl.forEach(p=>L.p
 function stats(){const P=people(),live=P.filter(x=>x.p.status==='정상');
   const bill=live.reduce((t,x)=>t+pAmt(x.p),0),paid=P.reduce((t,x)=>t+(+x.p.paidAmt||0),0);
   return {subs:(S.D?S.D.subs:[]).length,n:live.length,bill,paid,left:Math.max(0,bill-paid),rp:live.filter(x=>x.p.pay==='신고').length,
-    cx:(S.D?S.D.cx:[]).filter(c=>c.state==='요청').length,acads:[...new Set(live.map(x=>x.sb.acad))].length,unpaid:live.filter(x=>pAmt(x.p)-(+x.p.paidAmt||0)>0).length,over:live.filter(x=>(+x.p.paidAmt||0)>pAmt(x.p)),overAmt:live.reduce((t,x)=>t+Math.max(0,(+x.p.paidAmt||0)-pAmt(x.p)),0)}}
+    cx:(S.D?S.D.cx:[]).filter(c=>c.state==='요청').length,q:(S.D&&S.D.issues||[]).filter(x=>x.state!=='해결').length,acads:[...new Set(live.map(x=>x.sb.acad))].length,unpaid:live.filter(x=>pAmt(x.p)-(+x.p.paidAmt||0)>0).length,over:live.filter(x=>(+x.p.paidAmt||0)>pAmt(x.p)),overAmt:live.reduce((t,x)=>t+Math.max(0,(+x.p.paidAmt||0)-pAmt(x.p)),0)}}
 function payPill(p){if(p.status!=='정상')return p.status==='취소요청'?'<span class="pill due">취소 요청</span>':`<span class="pill">취소${p.refund?' · 환불 '+kday(p.refund.date):''}</span>`;
   const d=pAmt(p)-(+p.paidAmt||0);if(p.pay==='신고')return `<span class="pill new">${+p.paidAmt?'차액 신고 · 확인 전':'신고 · 확인 전'}</span>`;
   return !(+p.paidAmt)?'<span class="pill due">입금 전</span>':d>0?`<span class="pill due">차액 ${won(d)}</span>`:d<0?`<span class="pill new">${won(-d)} 더 냄${p.ovReq?' · 돌려받기 요청':''}</span>`:'<span class="pill ok">입금 확인</span>'}
 
 /* ---------- 화면 ---------- */
-const TABS=[['home','한눈에'],['subs','접수 · 입금 확인'],['rp','입금 신고'],['cx','환불 요청'],['ens','앙상블']];
+const TABS=[['home','한눈에'],['subs','접수 · 입금 확인'],['rp','입금 신고'],['cx','환불 요청'],['ens','앙상블'],['q','오류·건의']];
 function render(){
   const app=document.getElementById('app'),tabs=document.getElementById('tabs');
   if(!S.D){tabs.innerHTML='';app.innerHTML=vLogin();return}
   const st=stats();
-  tabs.innerHTML=TABS.map(([k,l])=>`<button type="button" role="tab" data-tab="${k}" aria-selected="${S.tab===k}">${l}${k==='rp'&&st.rp?`<span class="cnt">${st.rp}</span>`:''}${k==='cx'&&st.cx?`<span class="cnt">${st.cx}</span>`:''}</button>`).join('');
-  app.innerHTML={home:vHome,subs:vSubs,rp:vRp,cx:vCx,ens:vEns}[S.tab]();
+  tabs.innerHTML=TABS.map(([k,l])=>`<button type="button" role="tab" data-tab="${k}" aria-selected="${S.tab===k}">${l}${k==='rp'&&st.rp?`<span class="cnt">${st.rp}</span>`:''}${k==='cx'&&st.cx?`<span class="cnt">${st.cx}</span>`:''}${k==='q'&&st.q?`<span class="cnt">${st.q}</span>`:''}</button>`).join('');
+  app.innerHTML={home:vHome,subs:vSubs,rp:vRp,cx:vCx,ens:vEns,q:vQ}[S.tab]();
 }
 function vLogin(){return `<div class="panel login"><h2 style="font-family:var(--display);font-size:19px;margin:0 0 10px">관리자 로그인</h2>
   <label>아이디<input type="text" id="lid" autocomplete="username" value="admin"></label>
@@ -126,7 +126,7 @@ function vLogin(){return `<div class="panel login"><h2 style="font-family:var(--
   <p class="hint">아이디·비밀번호는 접수 DB 시트의 「설정」 탭에서 정해요.</p></div>`}
 function vHome(){const st=stats();const t=(k,v,s,w)=>`<div class="tile ${w?'warn':''}"><span class="k">${k}</span><span class="v">${v}</span><span class="s">${s||''}</span></div>`;
   const byA={};people().filter(x=>x.p.status==='정상').forEach(({sb,p})=>{const a=byA[sb.acad]=byA[sb.acad]||{n:0,bill:0,paid:0,subs:new Set()};a.n++;a.bill+=pAmt(p);a.paid+=(+p.paidAmt||0);a.subs.add(sb.no)});
-  return `<div class="tiles">${t('접수',st.subs+'건',st.acads+'개 학원')}${t('참가 인원',st.n+'명','취소 빼고')}${t('청구 합계',won(st.bill))}${t('입금 확인',won(st.paid))}${t('남은 금액',won(st.left),st.unpaid+'명 입금 전·차액',st.left>0)}${t('입금 신고 대기',st.rp+'명','확인하면 입금 확인',st.rp>0)}${t('돌려줄 차액',won(st.overAmt),st.over.length+'명'+(st.over.filter(x=>x.p.ovReq).length?' · 요청 '+st.over.filter(x=>x.p.ovReq).length+'명':''),st.overAmt>0)}${t('환불 요청',st.cx+'건','',st.cx>0)}</div>
+  return `<div class="tiles">${t('접수',st.subs+'건',st.acads+'개 학원')}${t('참가 인원',st.n+'명','취소 빼고')}${t('청구 합계',won(st.bill))}${t('입금 확인',won(st.paid))}${t('남은 금액',won(st.left),st.unpaid+'명 입금 전·차액',st.left>0)}${t('입금 신고 대기',st.rp+'명','확인하면 입금 확인',st.rp>0)}${t('돌려줄 차액',won(st.overAmt),st.over.length+'명'+(st.over.filter(x=>x.p.ovReq).length?' · 요청 '+st.over.filter(x=>x.p.ovReq).length+'명':''),st.overAmt>0)}${t('환불 요청',st.cx+'건','',st.cx>0)}${t('오류·건의',st.q+'건','미해결·해결 중',st.q>0)}</div>
   <div class="panel"><div class="spread"><b>학원별</b><button class="btn small" type="button" id="reload">새로 불러오기</button></div><div class="tbl"><table><thead><tr><th>학원</th><th class="r">접수</th><th class="r">인원</th><th class="r">청구</th><th class="r">입금 확인</th><th class="r">남은 금액</th></tr></thead><tbody>
   ${Object.entries(byA).sort((a,b)=>a[0].localeCompare(b[0],'ko')).map(([a,v])=>`<tr><td>${esc(a)}</td><td class="r num">${v.subs.size}</td><td class="r num">${v.n}</td><td class="r num">${won(v.bill)}</td><td class="r num">${won(v.paid)}</td><td class="r num">${v.bill-v.paid>0?`<b style="color:var(--rosin)">${won(v.bill-v.paid)}</b>`:'-'}</td></tr>`).join('')||'<tr><td colspan="6" class="hint">아직 접수가 없어요.</td></tr>'}
   </tbody></table></div></div>`}
@@ -202,6 +202,17 @@ function ensDetail(t,sb,e){const joined=(t.mem||[]);const live=sb?sb.ppl.filter(
       <label class="fl" style="flex:1;min-width:200px"><span>운영진 메모 <small class="faint">선생님 화면에는 안 보여요</small></span>${inp('adminMemo','예: 무대 순서 3번, 반주자 배정 김OO','100%')}</label></div>
     <div class="row" style="justify-content:flex-end;gap:8px"><button class="btn small ghost" type="button" data-ensopen="${esc(t.no)}">닫기</button><button class="btn small primary" type="button" data-enssave="${esc(t.no)}">고친 내용 저장</button></div></div>`}
 
+function vQ(){const L=(S.D.issues||[]).slice().reverse(),f=S.qf||'open';const F=[['open','안 끝난 것'],['all','전체'],['미해결','미해결'],['해결 중','해결 중'],['해결','해결']];
+  const show=L.filter(x=>f==='all'||(f==='open'?x.state!=='해결':x.state===f));
+  const pill=st=>st==='해결'?'<span class="pill ok">해결</span>':st==='해결 중'?'<span class="pill new">해결 중</span>':'<span class="pill due">미해결</span>';
+  return `<div class="panel"><div class="spread"><div class="row" style="gap:6px">${F.map(([k,l])=>`<button class="btn small ${f===k?'primary':''}" type="button" data-qf="${k}">${l}</button>`).join('')}</div><button class="btn small" type="button" id="reload">새로 불러오기</button></div>
+    <span class="hint">선생님이 접수 화면 위 「오류·건의」로 올린 글이에요. 상태를 바꾸고 답을 적어 「저장」하면 선생님 화면(내가 올린 글)에 보여요. 시트 「문의」 탭에도 남아요.</span></div>
+  ${show.map(x=>`<div class="panel" style="display:grid;gap:8px"><div class="spread"><span><b class="num">${esc(x.no)}</b> · ${esc(String(x.at).slice(5,16))} · <b>${esc(x.name)}</b>${x.p4?` <small class="faint">(…${esc(x.p4)})</small>`:''} · ${esc(x.acad)} · <span class="faint">${esc(x.where)}</span></span>${pill(x.state)}</div>
+    <div style="white-space:pre-wrap">${esc(x.text)}</div>${x.pic?`<a href="${esc(x.pic)}" target="_blank" rel="noopener">사진 보기</a>`:''}<small class="faint">${esc(x.env)}</small>
+    <div class="row" style="gap:8px;align-items:flex-start;flex-wrap:wrap"><select id="qs_${x.row}">${['미해결','해결 중','해결'].map(o=>`<option ${o===x.state?'selected':''}>${o}</option>`).join('')}</select>
+      <textarea id="qr_${x.row}" rows="2" style="flex:1;min-width:220px" placeholder="선생님께 보일 답변">${esc(x.reply)}</textarea><button class="btn small primary" type="button" data-qsave="${x.row}">저장</button></div>
+    ${x.by?`<small class="faint">${esc(x.by)}${x.done?' · '+kday(x.done):''}</small>`:''}</div>`).join('')||'<div class="panel hint">해당하는 글이 없어요.</div>'}`}
+
 /* ---------- 동작 ---------- */
 const num=id=>+String((document.getElementById(id)||{}).value||'').replace(/\D/g,'')||0;
 const val=id=>((document.getElementById(id)||{}).value||'').trim();
@@ -211,6 +222,8 @@ function confirmOne(pid){const d=val('d_'+pid),a=num('a_'+pid);
   call('adminConfirm',[[{pid,date:d,amt:a,memo:val('m_'+pid)}]],r=>{setData(r);toast('입금 확인 · '+kday(d)+' '+won(a))})}
 document.addEventListener('click',e=>{const tr=e.target.closest('tr.ensrow');if(tr&&!e.target.closest('button,input,label')){S.ensOpen=S.ensOpen===tr.dataset.ensopen?'':tr.dataset.ensopen;render()}});
 document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const d=b.dataset;
+  if(d.qf){S.qf=d.qf;render();return}
+  if(d.qsave){const row=+d.qsave;call('adminSetIssue',[row,val('qs_'+row),(document.getElementById('qr_'+row)||{}).value||''],r=>{setData(r);toast('저장했어요')});return}
   if(d.ensopen){S.ensOpen=S.ensOpen===d.ensopen?'':d.ensopen;render();return}
   if(d.enssave){const g=k=>val('ee_'+k),c=k=>!!(document.getElementById('ee_'+k)||{}).checked;
     const p={group:g('group'),acads:g('acads').split(/[,，]/).map(x=>x.trim()).filter(Boolean),k1:g('k1'),c1:g('c1'),o1:g('o1'),acc1:c('acc1'),video1:c('video1'),k2:g('k2'),c2:g('c2'),o2:g('o2'),acc2:c('acc2'),video2:c('video2'),tm:g('tm').replace(/\D/g,''),ts:g('ts').replace(/\D/g,''),adminMemo:g('adminMemo')};

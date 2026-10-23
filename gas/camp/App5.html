@@ -1,4 +1,38 @@
-/* build: 20261023-221114 */
+/* build: 20261023-221536 */
+  {const st=document.getElementById('steps');if(st)st.hidden=S.view==='mine'||S.view==='q'}
+  if(S.view==='q'){document.getElementById('app').innerHTML=vQ();['backBtn','nextBtn','mineBtn'].forEach(id=>{const e=document.getElementById(id);if(e)e.hidden=true});document.getElementById('dockLabel').textContent='오류·건의';document.getElementById('dockTotal').textContent='';return}
+  {const mb=document.getElementById('mineBtn');if(mb){mb.hidden=!(S.user&&MY_SUBS.length&&S.view!=='mine');mb.textContent=`내 접수 ${MY_SUBS.length}건`}}
+  if(S.view==='mine'){document.getElementById('app').innerHTML=vMine();document.getElementById('backBtn').hidden=true;document.getElementById('nextBtn').hidden=true;document.getElementById('dockLabel').textContent='내 접수';document.getElementById('dockTotal').textContent=`${MY_SUBS.length}건`;return}
+  renderSteps();
+  const app=document.getElementById('app');
+  app.innerHTML = (S.editNo&&S.step<6?`<div class="note info spread" style="margin-bottom:12px"><span><b>${S.editNo} 접수를 고치는 중</b> · 인원을 추가하거나 정보를 바꾼 뒤 마지막 단계에서 「수정 내용 저장」을 눌러요. 입금된 사람은 금액이 바뀌면 차액만 입금하면 돼요.</span><button class="btn small" type="button" id="toMine">← 목록으로 돌아가기</button></div>`:'')+[vStep1,vStep2,vStep3,vEns,vStep4,vStep5][S.step-1]()+(S.editNo&&S.step<6?`<div class="row" style="justify-content:center;margin:18px 0 6px"><button class="btn" type="button" id="toMine2">← 저장하지 않고 목록으로 돌아가기</button></div>`:'');
+  const t=totals(), next=document.getElementById('nextBtn'), back=document.getElementById('backBtn');
+  document.getElementById('dockLabel').textContent = S.step===1?'접수 준비':`선택 ${t.n}명${t.teams.length?` · 가족방 ${t.teams.length}`:''}${t.waiting?` · 회비확인대기 ${t.waiting}명`:''}`;
+  document.getElementById('dockTotal').textContent = won(t.all);
+  if(S.editNo&&S.step>1&&S.step<6){const D=editDiff();if(D)document.getElementById('dockLabel').textContent=`기존 ${won(D.before)} → 수정 후 (${sgn(D.diff)})`}
+  back.hidden = S.step===1||S.step===6;
+  next.hidden = S.step===6;
+  next.textContent = S.step===5?(S.editNo?'수정 내용 저장':'접수하기'):(S.step===4&&S.editNo&&S.ensEdit?'앙상블 저장':'다음');
+  next.disabled = false; next.classList.toggle('dim', blocked());
+  document.getElementById('roundChip').textContent = `${ROUNDS[CAMP.ri][0]} 접수 중 · ${ROUNDS[CAMP.ri][1]}`;
+  document.getElementById('roundSeg').innerHTML = ''&&ROUNDS.map((r,i)=>`<button type="button" data-round="${i}" aria-pressed="${CAMP.ri===i}" style="padding:2px 9px;font-size:12px">${r[0]}</button>`).join('');
+}
+/* 「다음」을 막는 조건: 그 단계에서 보이는 것만 (2단계는 사람이 1명 이상이면 통과, 가족 이름·가족방 인원은 3단계에서) */
+function blocked(){const t=totals();
+  return (S.step===1&&!(S.user&&S.acad))||(S.step===2&&(t.n===0||t.n>CAMP.perSubmitMax))
+    ||(S.step===3&&(missingTeacher().length>0||missingBasic().length>0||missingProg().length>0||S.fam.some(f=>!f.name.trim())||t.teams.some(x=>x.over)))
+    ||(S.step===4&&S.ens.on&&!(S.ens.group||'').trim())||(S.step===4&&S.ens.member&&!S.ens.joinNo&&!(S.ens.joinRep||'').trim())||(S.step===5&&!S.agree)}
+function toast(m,force){if(S.saving&&!force){S.savedMsg=m;return}const el=document.getElementById('toast');el.textContent=m;el.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>el.hidden=true,2200)}
+function go(n){S.step=n;render();window.scrollTo({top:0})}
+function setNext(){const nb=document.getElementById('nextBtn');if(nb){nb.disabled=false;nb.classList.toggle('dim',blocked())}}
+/* 필수 칸이 빠졌을 때: 띵 소리 + 진동 + 빠진 칸 반짝임 + 무엇이 빠졌는지 알림 */
+function beep(){try{const C=window.AudioContext||window.webkitAudioContext;if(!C)return;const a=beep.c||(beep.c=new C());if(a.state==='suspended')a.resume();
+  [[880,0],[660,.18]].forEach(([f,t])=>{const o=a.createOscillator(),g=a.createGain();o.type='sine';o.frequency.value=f;g.gain.setValueAtTime(.0001,a.currentTime+t);g.gain.exponentialRampToValueAtTime(.35,a.currentTime+t+.02);g.gain.exponentialRampToValueAtTime(.0001,a.currentTime+t+.16);o.connect(g);g.connect(a.destination);o.start(a.currentTime+t);o.stop(a.currentTime+t+.17)})}catch(e){}}
+function missWhat(){const t=totals(),L=[],el=[],Q=x=>{const e=typeof x==='string'?document.querySelector(x):x;if(e)el.push(e)};
+  if(S.step===1){L.push('로그인하고 학원을 골라 주세요')}
+  else if(S.step===2){if(t.n===0)L.push('참가자를 1명 이상 신청 명단에 추가해 주세요');else L.push(`한 번에 ${CAMP.perSubmitMax}명까지 접수할 수 있어요`)}
+  else if(S.step===3){
+    people().forEach(p=>{const i=info(p),m=[];
       if(p.kind==='student'&&!i.teacher){m.push('담당 교사');Q('#tc_'+p.key)}
       if(yearBad(p,i.by)){m.push('출생연도');Q('#ag_'+p.key)}
       if(!i.gender){m.push('성별');const g=document.querySelector(`[data-gender^="${p.key}|"]`);if(g)Q(g.parentElement)}
@@ -64,6 +98,9 @@ document.addEventListener('click',e=>{
     login(t);toast('비밀번호를 만들었어요. 다음부터 휴대전화와 비밀번호로 로그인해요');return}
   if(b.id==='logout'){MY_SUBS.length=0;Object.assign(S,{user:null,auth:'login',acad:'',verified:false,picked:{},extra:[],fam:[],info:{},room:{},verr:''});render();return}
   if(b.id==='nextBtn'&&S.step===2&&selIds().length){toast(`체크만 하고 아직 추가하지 않은 ${selIds().length}명이 있어요. 「신청 명단에 추가」를 눌러 주세요.`);const ab=document.getElementById('addCart');if(ab)ab.scrollIntoView({block:'center'});return}
+  if(b.id==='qBtn'){openQ();return}
+  if(b.id==='qSend'){sendQ();return}
+  if(b.id==='qBack'){const v=S.qBack||{view:'form'};S.view=v.view==='q'?'form':v.view;render();window.scrollTo({top:0});return}
   if(b.id==='ensSaveBtn'){document.getElementById('nextBtn').click();return}
   if(b.id==='nextBtn'&&blocked()){warnMissing();return}
   if(b.id==='nextBtn'&&S.step===4&&S.editNo&&S.ensEdit){S.step=5;S.agree=true}
@@ -145,33 +182,3 @@ document.addEventListener('click',e=>{
   if(b.id==='cancelFam'){S.showFam=false;render();return}
   if(b.id==='addFam'){
     const n=document.getElementById('fN').value.trim(), ty=document.getElementById('fT').value, l=document.getElementById('fL');
-    if(!n){document.getElementById('fErr').textContent='이름을 넣어 주세요.';return}
-    S.fam.push({id:'f'+Date.now(),name:n,type:ty,link:l.value,linkName:l.options[l.selectedIndex].text});S.showFam=false;render();return}
-  if(d.rmf){const fm=S.fam.find(x=>x.id===d.rmf);S.fam=S.fam.filter(x=>x.id!==d.rmf);if(fm&&!S.fam.some(x=>x.link===fm.link))delete S.room[fm.link];delete S.info[d.rmf];render();return}
-  if(d.seg){const i=S.info[d.k];i.pref=d.v==='1';if(!i.pref){i.p1='';i.p2=''}render();return}
-  if(d.mc!==undefined&&b.matches('input')){const i=S.info[d.k];i.mc=b.checked?[...i.mc,d.mc]:i.mc.filter(x=>x!==d.mc);render();return}
-  if(d.other&&b.matches('input')){const i=S.info[d.other];i.other=b.checked;if(b.checked)i.song='';render();return}
-  if(d.ens&&b.matches('input[type=checkbox]')){S.ens[d.ens]=b.checked;return}
-  if(d.enson){if(d.enson!=='1'&&S.editNo&&S.ens.on&&teamMates(S.editNo).length){toast('함께하는 학원이 있어서 대표 신청을 취소할 수 없어요',true);return}S.ens.on=d.enson==='1';S.ens.member=d.enson==='m';if(S.ens.member&&!S.ens.joinNo){const t=teamOf(S.acad);if(t&&t.rep!==S.acad)S.ens.joinNo=t.no}render();return}
-  if(d.copy){copyText(d.copy);return}
-  if(d.ovr){const [no,id]=d.ovr.split('|');ovBox(no,[id]);return}
-  if(d.prp){S.prp=S.prp===d.prp?'':d.prp;render();return}
-  if(d.prpgo){const [no,id]=d.prpgo.split('|');const sb=MY_SUBS.find(x=>x.no===no),p=sb.ppl.find(q=>q.id===id);const g=k=>document.getElementById(k).value.trim();const er=m=>{document.getElementById('prpErr').textContent=m};
-    const name=g('prpN'),date=g('prpD'),amt=+g('prpA').replace(/\D/g,''),memo=g('prpM');
-    if(!name)return er('입금자명을 넣어 주세요.');if(name.length>20)return er('입금자명은 20자까지예요.');if(!date)return er('입금일을 선택해 주세요.');if(date>S.today)return er('입금일이 오늘보다 뒤예요.');if((S.bank||{}).from&&date<S.bank.from)return er('입금일을 확인해 주세요.');if(!amt)return er('입금 금액을 넣어 주세요.');if(amt!==dueOf(p)&&!memo)return er('청구액과 금액이 달라요. 메모를 적어 주세요.');
-    let rf=null;if(amt>dueOf(p)){rf={bank:g('prpRfB'),acct:g('prpRfA').replace(/[^\d-]/g,''),holder:g('prpRfH')};if(!rf.bank||rf.acct.replace(/-/g,'').length<6||!rf.holder)return er('더 낸 금액을 돌려받을 은행·계좌번호·예금주를 적어 주세요.')}
-    if(p.pay==='신고'&&p.rep){const r=p.rep;r.rows=r.rows||Object.fromEntries(r.ids.map(i=>[i,{name:r.name,date:r.date,a:i===p.id?r.amt:0}]));r.rows[p.id]={name,date,a:amt};if(rf)r.refund=rf;r.amt=r.ids.reduce((t,i)=>t+(+(r.rows[i]||{}).a||0),0);r.name=r.rows[r.ids[0]].name;r.date=r.rows[r.ids[0]].date;if(memo)r.memo=memo;r.edited=nowStamp();
-      MY_SUBS.forEach(x=>x.ppl.forEach(q=>{if(q.rep&&q.rep.id===r.id)q.rep=r}));S.prp='';subSave();render();toast(`${p.name} 입금 신고를 고쳤어요 · ${kday(date)} ${won(amt)}`);return}
-    const rows={[p.id]:{name,date,a:amt}};const rp={id:'R'+Date.now().toString(36),name,date,amt,memo,ids:[p.id],rows};if(rf)rp.refund=rf;p.pay='신고';p.rep=rp;delete S.rpRow[p.id];S.prp='';S.afterSave=()=>repDone([p.id]);subSave();render();toast(`${p.name} 입금 신고를 보냈어요 · ${kday(date)} ${won(amt)}`);return}
-  if(d.prpdel){const [no,id]=d.prpdel.split('|');const sb=MY_SUBS.find(x=>x.no===no),p=sb.ppl.find(q=>q.id===id);
-    askBox('입금 신고를 취소할까요?',`<b>${esc(p.name)}</b>의 입금 신고를 지워요. 다시 「입금 신고」로 새로 낼 수 있어요.`,'신고 취소',()=>{const r=p.rep;r.ids=r.ids.filter(i=>i!==p.id);if(r.rows)delete r.rows[p.id];r.amt=r.ids.reduce((t,i)=>t+(+((r.rows||{})[i]||{}).a||0),0);
-      MY_SUBS.forEach(x=>x.ppl.forEach(q=>{if(q.rep&&q.rep.id===r.id)q.rep=r}));p.pay='전';delete p.rep;S.prp='';subSave();render();toast(`${p.name} 입금 신고를 취소했어요`)});return}
-  if(d.atab){S.atab=d.atab;render();return}
-  if(d.ensjoin){S.ens.joinNo=S.ens.joinNo===d.ensjoin?'':d.ensjoin;render();return}
-  if(d.ensadd){const a=d.ensadd,t=teamOf(a),tn=(S.ens.group||'').trim();
-    askBox('학원을 추가하시겠습니까?',`<b>${esc(a)}</b>을(를) ${tn?`「${esc(tn)}」 `:''}팀에 추가해요.${t?`<p class="note warn" style="margin:10px 0 0">이미 「${esc(t.name)}」 팀에 속해 있어요 (대표 ${esc(t.rep)}). 그래도 추가할 수 있어요.</p>`:''}`,'추가',
-      ()=>{S.ens.acads=[...new Set([...(S.ens.acads||[]),a])];S.ens.aq='';render();toast(`${a}을(를) 팀에 넣었어요`)});return}
-  if(b.id==='ensClear'){ensSave([]);render();toast('시험으로 넣은 앙상블 팀을 지웠어요');return}
-  if(d.ensrm){if(S.editNo&&joinedOf(S.editNo).includes(d.ensrm)){toast(d.ensrm+'은(는) 직접 함께 신청한 학원이라 뺄 수 없어요',true);return}S.ens.acads=(S.ens.acads||[]).filter(a=>a!==d.ensrm);render();return}
-  if(d.ensmem&&b.matches('input')){S.ens.mem=S.ens.mem||{};S.ens.mem[d.ensmem]=b.checked;render();return}
-  if(b.id==='again'){S.picked={};S.extra=[];S.fam=[];S.room={};S.join={};S.info={};S.agree=false;S.ens={on:false};go(2);toast('같은 학원으로 추가 접수를 시작해요');return}

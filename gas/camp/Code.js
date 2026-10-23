@@ -1,4 +1,4 @@
-/* build: 20261023-221114 */
+/* build: 20261023-221536 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -545,7 +545,7 @@ function adminData(token) {
   const cx = rows_(SH.CX).filter(r => r['접수번호']).map(r => ({ row: r._row, at: String(r['요청 일시']), no: String(r['접수번호']), acad: String(r['학원']), by: String(r['요청 교사']),
     names: String(r['참가자']), why: String(r['사유']), amt: +r['환불 예정액'] || 0, bank: String(r['은행'] || ''), acct: String(r['계좌번호'] || ''), holder: String(r['예금주'] || ''),
     doc: String(r['진단서'] || ''), state: String(r['처리'] || '요청'), done: dstr_(r['처리일']), memo: String(r['메모'] || ''), ids: String(r['참가자ID'] || '').split(',').filter(Boolean) }));
-  return { today: today_(), subs, admin, cx, teams: teams_(subs) };
+  return { today: today_(), subs, admin, cx, teams: teams_(subs), issues: issues_() };
 }
 function setAdminCols_(pid, vals) {
   const sh = SpreadsheetApp.getActive().getSheetByName(SH.P);
@@ -674,6 +674,73 @@ function mail_(sb, u) {
     if (ADMIN_EMAIL) MailApp.sendEmail(ADMIN_EMAIL, `[캠프 접수] ${sb.acad} ${sb.no} · ${live.length}명`, body);
   } catch (e) { log_('시스템', '메일 실패', String(e)); }
 }
+/* ---------------- 오류·건의 게시판 (「문의」 시트) ----------------
+   글은 시트 한 줄(칸 13개)이라 용량 걱정 없음. 사진은 드라이브 「캠프 문의 사진」 폴더에(5MB까지). */
+const ISS = '문의';
+const ISS_HEAD = ['번호', '일시', '이름', '연락처 뒤4자리', '학원', '화면', '내용', '사진', '상태', '답변', '처리일', '처리자', '환경'];
+const ISS_STATES = ['미해결', '해결 중', '해결'];
+function issSheet_() {
+  const ss = SpreadsheetApp.getActive(); let sh = ss.getSheetByName(ISS);
+  if (!sh) { sh = ss.insertSheet(ISS); sh.appendRow(ISS_HEAD); sh.setFrozenRows(1); sh.getRange('A:A').setNumberFormat('@'); }
+  return sh;
+}
+function issues_() {
+  issSheet_();
+  return rows_(ISS).filter(r => r['번호']).map(r => ({ row: r._row, no: String(r['번호']), at: String(r['일시']), name: String(r['이름']), p4: String(r['연락처 뒤4자리'] || ''), acad: String(r['학원'] || ''),
+    where: String(r['화면'] || ''), text: String(r['내용'] || ''), pic: String(r['사진'] || ''), state: String(r['상태'] || '미해결'), reply: String(r['답변'] || ''),
+    done: dstr_(r['처리일']), by: String(r['처리자'] || ''), env: String(r['환경'] || '') }));
+}
+/** 선생님: 글 쓰기 (로그인 안 해도 됨 — 로그인이 안 되는 오류도 적을 수 있게) */
+function submitIssue(token, d) {
+  d = d || {};
+  let u = null; try { if (token) u = who_(token); } catch (e) {}
+  const name = String(u ? u.name : d.name || '').trim().slice(0, 20);
+  const p4 = String(d.phone || '').replace(/\D/g, '').slice(-4);
+  const text = String(d.text || '').trim();
+  if (!name) throw new Error('이름을 넣어 주세요.');
+  if (!u && p4.length < 4) throw new Error('휴대전화 번호를 넣어 주세요 (답을 드릴 때 써요).');
+  if (text.length < 2) throw new Error('어떤 문제인지 적어 주세요.');
+  if (text.length > 2000) throw new Error('2000자까지 적을 수 있어요.');
+  const C = CacheService.getScriptCache(), k = 'iss_' + (name + p4).replace(/\s/g, '');
+  if (C.get(k)) throw new Error('방금 글을 올렸어요. 1분 뒤에 다시 올려 주세요.');
+  let pic = '';
+  if (d.file && d.file.data) {
+    if (String(d.file.data).length > 7000000) throw new Error('사진은 5MB까지 올릴 수 있어요.');
+    if (!/^image\//.test(d.file.type || '')) throw new Error('사진(이미지) 파일만 올릴 수 있어요.');
+    const it = DriveApp.getFoldersByName('캠프 문의 사진 ' + CAMP_ID);
+    const folder = it.hasNext() ? it.next() : DriveApp.createFolder('캠프 문의 사진 ' + CAMP_ID);
+    pic = folder.createFile(Utilities.newBlob(Utilities.base64Decode(d.file.data), d.file.type, Utilities.formatDate(new Date(), TZ, 'yyyyMMdd-HHmmss') + '-' + name + '-' + String(d.file.name || 'pic').slice(-40))).getUrl();
+  }
+  const lock = lock_();
+  let no;
+  try {
+    const sh = issSheet_();
+    const n = rows_(ISS).reduce((m, r) => Math.max(m, +String(r['번호']).replace(/\D/g, '') || 0), 0) + 1;
+    no = 'Q' + String(n).padStart(3, '0');
+    const acad = u ? (u.acads || []).join(', ') : String(d.acad || '').slice(0, 40);
+    sh.appendRow([no, stamp_(), name, p4 ? "'" + p4 : '', acad, String(d.where || '').slice(0, 40), text, pic, '미해결', '', '', '', String(d.env || '').slice(0, 300)]);
+    C.put(k, '1', 60);
+  } finally { lock.releaseLock(); }
+  log_(name, '문의', no);
+  return { ok: true, no, mine: u ? myIssues_(u.name) : [] };
+}
+function myIssues_(name) { return issues_().filter(x => x.name === name).reverse().map(x => ({ no: x.no, at: x.at, where: x.where, text: x.text, pic: !!x.pic, state: x.state, reply: x.reply, done: x.done })); }
+function myIssues(token) { const u = who_(token); return { ok: true, mine: myIssues_(u.name) }; }
+/** 관리자: 상태·답변 */
+function adminSetIssue(token, row, state, reply) {
+  const a = adm_(token);
+  if (!ISS_STATES.includes(state)) throw new Error('상태를 골라 주세요.');
+  const lock = lock_();
+  try {
+    const sh = issSheet_(), h = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0];
+    const r = rows_(ISS).find(x => x._row === row); if (!r) throw new Error('글을 찾지 못했어요. 새로 불러와 주세요.');
+    const set = (k, v) => sh.getRange(row, h.indexOf(k) + 1).setValues([[v]]);
+    set('상태', state); set('답변', String(reply || '').slice(0, 2000)); set('처리일', state === '미해결' ? '' : today_()); set('처리자', a.name);
+    log_('관리자 ' + a.name, '문의 ' + state, String(r['번호']));
+  } finally { lock.releaseLock(); }
+  return adminData(token);
+}
+
 function log_(who, what, detail) {
   const sh = SpreadsheetApp.getActive().getSheetByName(SH.LOG);
   if (sh) sh.appendRow([stamp_(), who, what, detail]);

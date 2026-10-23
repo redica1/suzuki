@@ -1,4 +1,4 @@
-/* build: 20261023-221114 */
+/* build: 20261023-221536 */
   const sum=L.reduce((t,x)=>t+(+x.r.a||0),0);closeAsk();const bg=document.createElement('div');bg.className='askbg';bg.id='askBg';
   bg.innerHTML=`<div class="askbox" role="dialog" aria-modal="true" aria-labelledby="askT"><h3 id="askT">✓ 입금 신고를 보냈어요</h3>
     <div class="tbl"><table><thead><tr><th>이름</th><th>입금자명</th><th>입금일</th><th class="r">금액</th></tr></thead><tbody>${L.map(x=>`<tr><td><b>${esc(x.p.name)}</b></td><td>${esc(x.r.name||'')}</td><td>${kday(x.r.date)}</td><td class="r num">${won(+x.r.a||0)}</td></tr>`).join('')}</tbody>${L.length>1?`<tfoot><tr><td colspan="3"><b>합계</b></td><td class="r num"><b>${won(sum)}</b></td></tr></tfoot>`:''}</table></div>
@@ -104,37 +104,29 @@ function cxPanel(sb,sel){
       <label class="f" for="cxAcct">계좌번호<input type="text" id="cxAcct" inputmode="numeric"></label><label class="f" for="cxHolder">예금주<input type="text" id="cxHolder" value="${esc(S.user.name)}"></label></div>`:''}
     <p class="err" id="cxErr"></p>
     <div class="row"><button class="btn primary" type="button" data-cxgo="${sb.no}">${paid?'취소 요청하기':'취소하기'}</button><button class="btn ghost" type="button" data-cxclear="${sb.no}">선택 해제</button></div>`}</div>`}
+/* ---------- 오류·건의 게시판 ---------- */
+const Q_WHERE=['로그인','학원 확인','참가자 선택','참가 정보','앙상블','신청 확인 · 접수하기','내 접수 · 입금 신고','취소 · 환불','기타'];
+const qPill=st=>st==='해결'?'<span class="pill ok">해결</span>':st==='해결 중'?'<span class="pill new">해결 중</span>':'<span class="pill due">미해결</span>';
+function curWhere(){const v=S.qBack||{};if(v.view==='mine')return '내 접수 · 입금 신고';if(!S.user)return '로그인';return Q_WHERE[Math.min(Math.max(v.step||1,1),5)]||'기타'}
+function vQ(){const mine=S.qMine||[];const login=!!S.user;
+  return `<section class="sec"><div class="spread"><h2>오류·건의</h2><button class="btn small ghost" type="button" id="qBack">← 돌아가기</button></div>
+  <p class="lede">접수하다가 안 되는 것, 이상한 것, 바랐으면 하는 것을 적어 주세요. 운영진이 보고 <b>미해결 → 해결 중 → 해결</b>로 표시하고 답을 달아요.</p>
+  <div class="panel" style="display:grid;gap:10px">
+    ${login?`<div class="hint">${esc(S.user.name)} 선생님 · ${esc((S.user.acads||[]).join(', '))}</div>`:`<div class="grid2"><label class="f" for="qName">이름 <span class="req">*</span><input type="text" id="qName" value="${esc(S.qName||'')}"></label><label class="f" for="qPhone">휴대전화 <span class="req">*</span><input type="tel" id="qPhone" inputmode="numeric" value="${esc(S.qPhone||'010-')}"></label></div><label class="f" for="qAcad">학원<input type="text" id="qAcad" value="${esc(S.qAcad||'')}"></label>`}
+    <label class="f" for="qWhere">어느 화면에서요?<select id="qWhere">${Q_WHERE.map(x=>`<option ${x===(S.qWhere||curWhere())?'selected':''}>${x}</option>`).join('')}</select></label>
+    <label class="f" for="qText">무슨 일이 있었나요? <span class="req">*</span><textarea id="qText" rows="5" maxlength="2000" placeholder="무엇을 누르니 어떻게 됐는지 적어 주시면 빨리 고칠 수 있어요.">${esc(S.qText||'')}</textarea></label>
+    <label class="f" for="qPic">화면 사진 <span class="hint">있으면 · 5MB까지</span><input type="file" id="qPic" accept="image/\x2a"></label>
+    <div class="row" style="justify-content:flex-end"><span class="err" id="qErr" style="margin-right:auto"></span><button class="btn primary" type="button" id="qSend">올리기</button></div>
+  </div>
+  ${login?`<div class="panel" style="display:grid;gap:8px"><b>내가 올린 글 ${mine.length}</b>${mine.length?mine.map(x=>`<div class="qitem"><div class="spread"><span><b class="num">${esc(x.no)}</b> · ${esc(String(x.at).slice(5,16))} · ${esc(x.where)}</span>${qPill(x.state)}</div><div style="white-space:pre-wrap">${esc(x.text)}</div>${x.pic?'<small class="hint">사진 첨부함</small>':''}${x.reply?`<div class="reply"><b>운영진 답변</b>${x.done?` <small class="hint">${kday(x.done)}</small>`:''}<div style="white-space:pre-wrap">${esc(x.reply)}</div></div>`:''}</div>`).join(''):'<p class="hint" style="margin:0">아직 올린 글이 없어요.</p>'}</div>`:`<p class="hint">로그인하면 내가 올린 글과 운영진 답변을 여기서 볼 수 있어요.</p>`}
+  </section>`}
+function openQ(){if(S.view!=='q')S.qBack={view:S.view,step:S.step};S.qWhere='';S.view='q';render();window.scrollTo({top:0});
+  if(S.user&&S.token)api('myIssues',[],r=>{S.qMine=r.mine||[];if(S.view==='q')render()},null,'불러오고 있어요…')}
+function sendQ(){const er=m=>{document.getElementById('qErr').textContent=m};const g=id=>((document.getElementById(id)||{}).value||'').trim();
+  const d={text:g('qText'),where:g('qWhere'),name:g('qName'),phone:g('qPhone'),acad:g('qAcad'),env:`화면 ${(S.qBack||{}).view||''}/${(S.qBack||{}).step||''} · ${S.editNo?'수정 '+S.editNo+' · ':''}${navigator.userAgent.slice(0,200)}`};
+  if(!S.user&&(!d.name||d.phone.replace(/\D/g,'').length<10))return er('이름과 휴대전화를 넣어 주세요.');
+  if(d.text.length<2)return er('어떤 문제인지 적어 주세요.');
+  const f=document.getElementById('qPic');const go=file=>{d.file=file;
+    const call=()=>{busy(true,'올리고 있어요…');google.script.run.withSuccessHandler(r=>{busy(false);S.qText='';S.qMine=r.mine||S.qMine;render();toast(`${r.no}번으로 올렸어요 · 운영진이 확인하면 답을 달아요`,true)}).withFailureHandler(e=>{busy(false);er((e&&e.message)||String(e))}).submitIssue(S.token||'',d)};call()};
+  if(f&&f.files&&f.files[0]){const fl=f.files[0];if(fl.size>5*1024*1024)return er('사진은 5MB까지예요.');const rd=new FileReader();rd.onload=()=>go({name:fl.name,type:fl.type,data:String(rd.result).split(',')[1]});rd.readAsDataURL(fl)}else go(null)}
 function render(){
-  {const st=document.getElementById('steps');if(st)st.hidden=S.view==='mine'}
-  {const mb=document.getElementById('mineBtn');if(mb){mb.hidden=!(S.user&&MY_SUBS.length&&S.view!=='mine');mb.textContent=`내 접수 ${MY_SUBS.length}건`}}
-  if(S.view==='mine'){document.getElementById('app').innerHTML=vMine();document.getElementById('backBtn').hidden=true;document.getElementById('nextBtn').hidden=true;document.getElementById('dockLabel').textContent='내 접수';document.getElementById('dockTotal').textContent=`${MY_SUBS.length}건`;return}
-  renderSteps();
-  const app=document.getElementById('app');
-  app.innerHTML = (S.editNo&&S.step<6?`<div class="note info spread" style="margin-bottom:12px"><span><b>${S.editNo} 접수를 고치는 중</b> · 인원을 추가하거나 정보를 바꾼 뒤 마지막 단계에서 「수정 내용 저장」을 눌러요. 입금된 사람은 금액이 바뀌면 차액만 입금하면 돼요.</span><button class="btn small" type="button" id="toMine">← 목록으로 돌아가기</button></div>`:'')+[vStep1,vStep2,vStep3,vEns,vStep4,vStep5][S.step-1]()+(S.editNo&&S.step<6?`<div class="row" style="justify-content:center;margin:18px 0 6px"><button class="btn" type="button" id="toMine2">← 저장하지 않고 목록으로 돌아가기</button></div>`:'');
-  const t=totals(), next=document.getElementById('nextBtn'), back=document.getElementById('backBtn');
-  document.getElementById('dockLabel').textContent = S.step===1?'접수 준비':`선택 ${t.n}명${t.teams.length?` · 가족방 ${t.teams.length}`:''}${t.waiting?` · 회비확인대기 ${t.waiting}명`:''}`;
-  document.getElementById('dockTotal').textContent = won(t.all);
-  if(S.editNo&&S.step>1&&S.step<6){const D=editDiff();if(D)document.getElementById('dockLabel').textContent=`기존 ${won(D.before)} → 수정 후 (${sgn(D.diff)})`}
-  back.hidden = S.step===1||S.step===6;
-  next.hidden = S.step===6;
-  next.textContent = S.step===5?(S.editNo?'수정 내용 저장':'접수하기'):(S.step===4&&S.editNo&&S.ensEdit?'앙상블 저장':'다음');
-  next.disabled = false; next.classList.toggle('dim', blocked());
-  document.getElementById('roundChip').textContent = `${ROUNDS[CAMP.ri][0]} 접수 중 · ${ROUNDS[CAMP.ri][1]}`;
-  document.getElementById('roundSeg').innerHTML = ''&&ROUNDS.map((r,i)=>`<button type="button" data-round="${i}" aria-pressed="${CAMP.ri===i}" style="padding:2px 9px;font-size:12px">${r[0]}</button>`).join('');
-}
-/* 「다음」을 막는 조건: 그 단계에서 보이는 것만 (2단계는 사람이 1명 이상이면 통과, 가족 이름·가족방 인원은 3단계에서) */
-function blocked(){const t=totals();
-  return (S.step===1&&!(S.user&&S.acad))||(S.step===2&&(t.n===0||t.n>CAMP.perSubmitMax))
-    ||(S.step===3&&(missingTeacher().length>0||missingBasic().length>0||missingProg().length>0||S.fam.some(f=>!f.name.trim())||t.teams.some(x=>x.over)))
-    ||(S.step===4&&S.ens.on&&!(S.ens.group||'').trim())||(S.step===4&&S.ens.member&&!S.ens.joinNo&&!(S.ens.joinRep||'').trim())||(S.step===5&&!S.agree)}
-function toast(m,force){if(S.saving&&!force){S.savedMsg=m;return}const el=document.getElementById('toast');el.textContent=m;el.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>el.hidden=true,2200)}
-function go(n){S.step=n;render();window.scrollTo({top:0})}
-function setNext(){const nb=document.getElementById('nextBtn');if(nb){nb.disabled=false;nb.classList.toggle('dim',blocked())}}
-/* 필수 칸이 빠졌을 때: 띵 소리 + 진동 + 빠진 칸 반짝임 + 무엇이 빠졌는지 알림 */
-function beep(){try{const C=window.AudioContext||window.webkitAudioContext;if(!C)return;const a=beep.c||(beep.c=new C());if(a.state==='suspended')a.resume();
-  [[880,0],[660,.18]].forEach(([f,t])=>{const o=a.createOscillator(),g=a.createGain();o.type='sine';o.frequency.value=f;g.gain.setValueAtTime(.0001,a.currentTime+t);g.gain.exponentialRampToValueAtTime(.35,a.currentTime+t+.02);g.gain.exponentialRampToValueAtTime(.0001,a.currentTime+t+.16);o.connect(g);g.connect(a.destination);o.start(a.currentTime+t);o.stop(a.currentTime+t+.17)})}catch(e){}}
-function missWhat(){const t=totals(),L=[],el=[],Q=x=>{const e=typeof x==='string'?document.querySelector(x):x;if(e)el.push(e)};
-  if(S.step===1){L.push('로그인하고 학원을 골라 주세요')}
-  else if(S.step===2){if(t.n===0)L.push('참가자를 1명 이상 신청 명단에 추가해 주세요');else L.push(`한 번에 ${CAMP.perSubmitMax}명까지 접수할 수 있어요`)}
-  else if(S.step===3){
-    people().forEach(p=>{const i=info(p),m=[];

@@ -1,7 +1,37 @@
-/* build: 20261023-221114 */
+/* build: 20261023-221536 */
+    if(!n){document.getElementById('fErr').textContent='이름을 넣어 주세요.';return}
+    S.fam.push({id:'f'+Date.now(),name:n,type:ty,link:l.value,linkName:l.options[l.selectedIndex].text});S.showFam=false;render();return}
+  if(d.rmf){const fm=S.fam.find(x=>x.id===d.rmf);S.fam=S.fam.filter(x=>x.id!==d.rmf);if(fm&&!S.fam.some(x=>x.link===fm.link))delete S.room[fm.link];delete S.info[d.rmf];render();return}
+  if(d.seg){const i=S.info[d.k];i.pref=d.v==='1';if(!i.pref){i.p1='';i.p2=''}render();return}
+  if(d.mc!==undefined&&b.matches('input')){const i=S.info[d.k];i.mc=b.checked?[...i.mc,d.mc]:i.mc.filter(x=>x!==d.mc);render();return}
+  if(d.other&&b.matches('input')){const i=S.info[d.other];i.other=b.checked;if(b.checked)i.song='';render();return}
+  if(d.ens&&b.matches('input[type=checkbox]')){S.ens[d.ens]=b.checked;return}
+  if(d.enson){if(d.enson!=='1'&&S.editNo&&S.ens.on&&teamMates(S.editNo).length){toast('함께하는 학원이 있어서 대표 신청을 취소할 수 없어요',true);return}S.ens.on=d.enson==='1';S.ens.member=d.enson==='m';if(S.ens.member&&!S.ens.joinNo){const t=teamOf(S.acad);if(t&&t.rep!==S.acad)S.ens.joinNo=t.no}render();return}
+  if(d.copy){copyText(d.copy);return}
+  if(d.ovr){const [no,id]=d.ovr.split('|');ovBox(no,[id]);return}
+  if(d.prp){S.prp=S.prp===d.prp?'':d.prp;render();return}
+  if(d.prpgo){const [no,id]=d.prpgo.split('|');const sb=MY_SUBS.find(x=>x.no===no),p=sb.ppl.find(q=>q.id===id);const g=k=>document.getElementById(k).value.trim();const er=m=>{document.getElementById('prpErr').textContent=m};
+    const name=g('prpN'),date=g('prpD'),amt=+g('prpA').replace(/\D/g,''),memo=g('prpM');
+    if(!name)return er('입금자명을 넣어 주세요.');if(name.length>20)return er('입금자명은 20자까지예요.');if(!date)return er('입금일을 선택해 주세요.');if(date>S.today)return er('입금일이 오늘보다 뒤예요.');if((S.bank||{}).from&&date<S.bank.from)return er('입금일을 확인해 주세요.');if(!amt)return er('입금 금액을 넣어 주세요.');if(amt!==dueOf(p)&&!memo)return er('청구액과 금액이 달라요. 메모를 적어 주세요.');
+    let rf=null;if(amt>dueOf(p)){rf={bank:g('prpRfB'),acct:g('prpRfA').replace(/[^\d-]/g,''),holder:g('prpRfH')};if(!rf.bank||rf.acct.replace(/-/g,'').length<6||!rf.holder)return er('더 낸 금액을 돌려받을 은행·계좌번호·예금주를 적어 주세요.')}
+    if(p.pay==='신고'&&p.rep){const r=p.rep;r.rows=r.rows||Object.fromEntries(r.ids.map(i=>[i,{name:r.name,date:r.date,a:i===p.id?r.amt:0}]));r.rows[p.id]={name,date,a:amt};if(rf)r.refund=rf;r.amt=r.ids.reduce((t,i)=>t+(+(r.rows[i]||{}).a||0),0);r.name=r.rows[r.ids[0]].name;r.date=r.rows[r.ids[0]].date;if(memo)r.memo=memo;r.edited=nowStamp();
+      MY_SUBS.forEach(x=>x.ppl.forEach(q=>{if(q.rep&&q.rep.id===r.id)q.rep=r}));S.prp='';subSave();render();toast(`${p.name} 입금 신고를 고쳤어요 · ${kday(date)} ${won(amt)}`);return}
+    const rows={[p.id]:{name,date,a:amt}};const rp={id:'R'+Date.now().toString(36),name,date,amt,memo,ids:[p.id],rows};if(rf)rp.refund=rf;p.pay='신고';p.rep=rp;delete S.rpRow[p.id];S.prp='';S.afterSave=()=>repDone([p.id]);subSave();render();toast(`${p.name} 입금 신고를 보냈어요 · ${kday(date)} ${won(amt)}`);return}
+  if(d.prpdel){const [no,id]=d.prpdel.split('|');const sb=MY_SUBS.find(x=>x.no===no),p=sb.ppl.find(q=>q.id===id);
+    askBox('입금 신고를 취소할까요?',`<b>${esc(p.name)}</b>의 입금 신고를 지워요. 다시 「입금 신고」로 새로 낼 수 있어요.`,'신고 취소',()=>{const r=p.rep;r.ids=r.ids.filter(i=>i!==p.id);if(r.rows)delete r.rows[p.id];r.amt=r.ids.reduce((t,i)=>t+(+((r.rows||{})[i]||{}).a||0),0);
+      MY_SUBS.forEach(x=>x.ppl.forEach(q=>{if(q.rep&&q.rep.id===r.id)q.rep=r}));p.pay='전';delete p.rep;S.prp='';subSave();render();toast(`${p.name} 입금 신고를 취소했어요`)});return}
+  if(d.atab){S.atab=d.atab;render();return}
+  if(d.ensjoin){S.ens.joinNo=S.ens.joinNo===d.ensjoin?'':d.ensjoin;render();return}
+  if(d.ensadd){const a=d.ensadd,t=teamOf(a),tn=(S.ens.group||'').trim();
+    askBox('학원을 추가하시겠습니까?',`<b>${esc(a)}</b>을(를) ${tn?`「${esc(tn)}」 `:''}팀에 추가해요.${t?`<p class="note warn" style="margin:10px 0 0">이미 「${esc(t.name)}」 팀에 속해 있어요 (대표 ${esc(t.rep)}). 그래도 추가할 수 있어요.</p>`:''}`,'추가',
+      ()=>{S.ens.acads=[...new Set([...(S.ens.acads||[]),a])];S.ens.aq='';render();toast(`${a}을(를) 팀에 넣었어요`)});return}
+  if(b.id==='ensClear'){ensSave([]);render();toast('시험으로 넣은 앙상블 팀을 지웠어요');return}
+  if(d.ensrm){if(S.editNo&&joinedOf(S.editNo).includes(d.ensrm)){toast(d.ensrm+'은(는) 직접 함께 신청한 학원이라 뺄 수 없어요',true);return}S.ens.acads=(S.ens.acads||[]).filter(a=>a!==d.ensrm);render();return}
+  if(d.ensmem&&b.matches('input')){S.ens.mem=S.ens.mem||{};S.ens.mem[d.ensmem]=b.checked;render();return}
+  if(b.id==='again'){S.picked={};S.extra=[];S.fam=[];S.room={};S.join={};S.info={};S.agree=false;S.ens={on:false};go(2);toast('같은 학원으로 추가 접수를 시작해요');return}
   if(b.id==='restart'){Object.assign(S,{step:1,verified:false,picked:{},extra:[],fam:[],room:{},join:{},info:{},agree:false,ens:{on:false},verr:''});render();return}
 });
-document.addEventListener('change',e=>{const el=e.target;
+document.addEventListener('change',e=>{if(e.target.id==='qWhere'){S.qWhere=e.target.value;return}const el=e.target;
   if(el.dataset&&el.dataset.rp){const a=S.rp||[];S.rp=el.checked?[...new Set([...a,el.dataset.rp])]:a.filter(x=>x!==el.dataset.rp);{const n=document.getElementById('rpMemo');if(n)S.rpMemo=n.value}render();return}
   if(el.dataset&&el.dataset.xon){const x=S.extra.find(v=>v.id===el.dataset.xon);x.on=el.checked;if(!x.on){delete S.room[x.id];delete S.join[x.id];S.fam=S.fam.filter(f=>f.link!==x.id)}render();return}
   if(el.dataset&&el.dataset.cx){const [no,id]=el.dataset.cx.split('|');const a=S.cx[no]||(S.cx[no]=[]);if(el.checked){if(!a.includes(id))a.push(id)}else S.cx[no]=a.filter(x=>x!==id);if(!S.cx[no].length)delete S.cx[no];S.cxDone=null;render();return}
@@ -10,6 +40,7 @@ document.addEventListener('change',e=>{const el=e.target;
 });
 const fmtPhone=v=>{let d=String(v).replace(/\D/g,'');if(/^010010/.test(d))d=d.slice(3);d=d.slice(0,11);return d.length<4?d:d.length<8?d.slice(0,3)+'-'+d.slice(3):d.slice(0,3)+'-'+d.slice(3,7)+'-'+d.slice(7)};
 document.addEventListener('input',e=>{
+  {const el=e.target;if(/^q(Name|Phone|Acad|Text)$/.test(el.id)){S[el.id]=el.value;return}}
   if(e.target.id==='lgEm'){const el=e.target,f=fmtPhone(el.value);if(f!==el.value){el.value=f;el.setSelectionRange(f.length,f.length)}S.lgEm=f;return}
   if(e.target.id==='prpA'){const box=document.getElementById('prpRf');if(box)box.hidden=!((+e.target.value.replace(/\D/g,'')||0)>(+e.target.dataset.due||0))}
   if(e.target.dataset&&e.target.dataset.rpf){const [id,k]=e.target.dataset.rpf.split('|');const r=S.rpRow[id]||(S.rpRow[id]={n:'',d:'',a:''});r[k]=k==='a'?e.target.value.replace(/\D/g,''):e.target.value;return}

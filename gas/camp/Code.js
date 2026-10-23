@@ -546,19 +546,26 @@ function adminConfirm(token, items) {
   return adminData(token);
 }
 /** 입금 신고 반려: 그 사람은 다시 「입금 전」, 선생님 화면에 사유 표시 */
+/** 입금 신고 반려 (한 명 또는 여러 명: pid 자리에 배열) */
 function adminRejectReport(token, pid, reason) {
   const a = adm_(token);
+  const pids = Array.isArray(pid) ? pid : [pid];
+  if (!pids.length) throw new Error('반려할 사람을 골라 주세요.');
   const lock = lock_();
   try {
-    const all = loadSubs_(); const sb = all.find(x => pid.indexOf(x.no + '_') === 0); if (!sb) throw new Error('접수를 찾지 못했어요.');
-    const p = sb.ppl.find(x => x.id === pid);
-    if (!p || p.pay !== '신고' || !p.rep) throw new Error('입금 신고 상태가 아니에요.');
-    const row = p.rep.rows && p.rep.rows[p.id] || {};
-    p.rejected = (p.rejected || []).concat([{ id: p.rep.id, at: stamp_(), why: reason || '' }]);
-    p.pay = '전'; delete p.rep;
-    writeSub_(sb, false);
-    SpreadsheetApp.getActive().getSheetByName(SH.RP).appendRow([stamp_(), p.rejected.slice(-1)[0].id, sb.no, sb.acad, '관리자 ' + a.name, p.name, row.name || '', row.date || '', row.a || '', reason || '', '반려']);
-    log_('관리자 ' + a.name, '입금 신고 반려', pid + ' · ' + (reason || ''));
+    const all = loadSubs_(), touched = [];
+    pids.forEach(id => {
+      const sb = all.find(x => id.indexOf(x.no + '_') === 0); if (!sb) throw new Error('접수를 찾지 못했어요.');
+      const p = sb.ppl.find(x => x.id === id);
+      if (!p || p.pay !== '신고' || !p.rep) throw new Error((p ? p.name : id) + ' 은(는) 입금 신고 상태가 아니에요. 새로 불러와 주세요.');
+      const row = p.rep.rows && p.rep.rows[p.id] || {};
+      p.rejected = (p.rejected || []).concat([{ id: p.rep.id, at: stamp_(), why: reason || '' }]);
+      p.pay = '전'; delete p.rep;
+      if (!touched.includes(sb)) touched.push(sb);
+      SpreadsheetApp.getActive().getSheetByName(SH.RP).appendRow([stamp_(), p.rejected.slice(-1)[0].id, sb.no, sb.acad, '관리자 ' + a.name, p.name, row.name || '', row.date || '', row.a || '', reason || '', '반려']);
+      log_('관리자 ' + a.name, '입금 신고 반려', id + ' · ' + (reason || ''));
+    });
+    touched.forEach(sb => writeSub_(sb, false));
   } finally { lock.releaseLock(); }
   return adminData(token);
 }

@@ -80,7 +80,7 @@ tr.off td{opacity:.5}
 <div class="toast" id="toast" hidden></div>
 <div class="busy" id="busy" hidden></div>
 <script>
-const S={tok:'',tab:'home',q:'',open:{},sel:{},D:null,f:'all'};
+const S={tok:'',tab:'home',q:'',open:{},sel:{},D:null,f:'all',rpSel:{}};
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const won=n=>(+n||0).toLocaleString('ko-KR')+'원';
 const kday=d=>{if(!d)return '';const [y,m,dd]=String(d).slice(0,10).split('-');return `${+m}월 ${+dd}일`};
@@ -156,12 +156,18 @@ function vSubs(){
       </tbody></table></div></details>`}).join('')||'<div class="panel hint">해당하는 접수가 없어요.</div>'}`}
 function vRp(){const L=people().filter(x=>x.p.status==='정상'&&x.p.pay==='신고');
   return `<div class="panel"><div class="spread"><div><b>입금 신고 ${L.length}명</b> <span class="hint">통장과 입금자명·날짜·금액을 맞춰 보고 <b>통장 입금일을 골라</b> 「확인」. 맞지 않으면 「반려」(사유가 선생님 화면에 보여요).</span></div><button class="btn small" type="button" id="reload">새로 불러오기</button></div></div>
-  <div class="panel tbl"><table><thead><tr><th>접수</th><th>학원</th><th>이름</th><th>입금자명</th><th>신고 입금일</th><th class="r">신고 금액</th><th class="r">청구(남은)</th><th>메모</th><th>통장 입금일 *</th><th class="r">확인 금액</th><th></th></tr></thead><tbody>
-  ${L.map(({sb,p})=>{const r=repRow(p)||{},due=pAmt(p)-(+p.paidAmt||0),g=(+r.a||0)-due;return `<tr><td class="num">${sb.no}</td><td>${esc(sb.acad)}<br><small class="faint">${esc(sb.owner)}</small></td><td><b>${esc(p.name)}</b></td><td>${esc(r.name)}</td><td>${kday(r.date)}</td>
+  ${L.length?`<div class="panel row" id="rpBar" style="gap:8px;flex-wrap:wrap;align-items:center">
+    <label class="row" style="gap:6px;flex-wrap:nowrap"><input type="checkbox" id="rpAll" ${L.every(x=>S.rpSel[x.p.id])?'checked':''}><b>전체 선택</b></label><span class="hint" id="rpCnt">${L.filter(x=>S.rpSel[x.p.id]).length}명 선택</span>
+    <span style="flex:1"></span>
+    <button class="btn small" type="button" id="rpSame" title="선택한 사람마다 선생님이 신고한 날짜를 통장 입금일 칸에 넣어요">신고일 넣기</button>
+    <span class="hint">또는</span><input type="date" id="rpDay" aria-label="선택한 사람 통장 입금일"><button class="btn small" type="button" id="rpDayGo">날짜 넣기</button>
+    <button class="btn small primary" type="button" id="rpOkAll">선택 확인</button><button class="btn small" type="button" id="rpRejAll">선택 반려</button></div>`:''}
+  <div class="panel tbl"><table><thead><tr><th></th><th>접수</th><th>학원</th><th>이름</th><th>입금자명</th><th>신고 입금일</th><th class="r">신고 금액</th><th class="r">청구(남은)</th><th>메모</th><th>통장 입금일 *</th><th class="r">확인 금액</th><th></th></tr></thead><tbody>
+  ${L.map(({sb,p})=>{const r=repRow(p)||{},due=pAmt(p)-(+p.paidAmt||0),g=(+r.a||0)-due;return `<tr><td><input type="checkbox" data-rpsel="${p.id}" ${S.rpSel[p.id]?'checked':''} aria-label="${esc(p.name)} 선택"></td><td class="num">${sb.no}</td><td>${esc(sb.acad)}<br><small class="faint">${esc(sb.owner)}</small></td><td><b>${esc(p.name)}</b></td><td>${esc(r.name)}</td><td>${kday(r.date)}</td>
     <td class="r num">${won(r.a)}${+p.paidAmt?`<br><small class="faint">이미 확인 ${won(p.paidAmt)}</small>`:''}</td><td class="r num">${won(due)}${g?`<br><small style="color:var(--${g<0?'bad':'rosin'})">${g>0?'+':''}${won(g)}</small>`:''}</td><td><small>${esc(p.rep&&p.rep.memo||'')}${p.rep&&p.rep.edited?`<br><span class="faint">${esc(p.rep.edited.slice(5,16))} 수정</span>`:''}</small></td>
-    <td><input type="date" id="d_${p.id}" value="" aria-label="${esc(p.name)} 통장 입금일"> <button class="btn small ghost" type="button" data-same="${p.id}|${esc(r.date||'')}" title="신고한 날짜를 넣어요">신고일</button></td>
+    <td><input type="date" id="d_${p.id}" value="" data-rdate="${esc(r.date||'')}" aria-label="${esc(p.name)} 통장 입금일"> <button class="btn small ghost" type="button" data-same="${p.id}|${esc(r.date||'')}" title="신고한 날짜를 넣어요">신고일</button></td>
     <td class="r"><input class="num" type="text" inputmode="numeric" id="a_${p.id}" value="${((+p.paidAmt||0)+(+r.a||0)).toLocaleString('ko-KR')}" title="이미 확인된 금액 + 이번 신고 금액 (사람별 입금 합계)"></td>
-    <td><div class="row" style="flex-wrap:nowrap"><button class="btn small primary" type="button" data-ok="${p.id}">확인</button><button class="btn small" type="button" data-rej="${p.id}">반려</button></div></td></tr>`}).join('')||'<tr><td colspan="11" class="hint">확인을 기다리는 입금 신고가 없어요.</td></tr>'}
+    <td><div class="row" style="flex-wrap:nowrap"><button class="btn small primary" type="button" data-ok="${p.id}">확인</button><button class="btn small" type="button" data-rej="${p.id}">반려</button></div></td></tr>`}).join('')||'<tr><td colspan="12" class="hint">확인을 기다리는 입금 신고가 없어요.</td></tr>'}
   </tbody></table></div>`}
 function vCx(){const L=(S.D.cx||[]).slice().sort((a,b)=>(a.state==='요청'?0:1)-(b.state==='요청'?0:1)||String(b.at).localeCompare(String(a.at)));
   return `<div class="panel"><div class="spread"><div><b>환불 요청 ${L.filter(c=>c.state==='요청').length}건 대기</b> <span class="hint">환불을 보냈으면 <b>환불한 날을 골라</b> 「환불 완료」. 그 사람은 「취소」로 바뀌어요. 「반려」하면 참가 상태로 돌아가요.</span></div><button class="btn small" type="button" id="reload">새로 불러오기</button></div></div>
@@ -192,6 +198,15 @@ document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)r
   if(b.id==='reload'){call('adminData',[],setData,'불러오고 있어요…');return}
   if(d.f){S.f=d.f;render();return}
   if(d.ok){confirmOne(d.ok);return}
+  if(b.id==='rpSame'||b.id==='rpDayGo'){const ids=rpPicked();if(!ids.length){toast('먼저 사람을 선택해 주세요');return}const day=b.id==='rpDayGo'?val('rpDay'):'';if(b.id==='rpDayGo'&&!day){toast('넣을 날짜를 골라 주세요');return}
+    ids.forEach(id=>{const el=document.getElementById('d_'+id);if(el)el.value=day||el.dataset.rdate||''});toast(ids.length+'명에게 '+(day?kday(day):'신고일')+'을(를) 넣었어요');return}
+  if(b.id==='rpOkAll'){const ids=rpPicked();if(!ids.length){toast('먼저 사람을 선택해 주세요');return}
+    const noD=ids.filter(id=>!val('d_'+id));if(noD.length){toast('통장 입금일이 빈 사람이 '+noD.length+'명 있어요. 「신고일 넣기」나 「날짜 넣기」를 먼저 눌러 주세요');const el=document.getElementById('d_'+noD[0]);if(el)el.focus();return}
+    const noA=ids.filter(id=>!num('a_'+id));if(noA.length){toast('확인 금액이 빈 사람이 있어요');return}
+    const items=ids.map(id=>({pid:id,date:val('d_'+id),amt:num('a_'+id),memo:''}));const sum=items.reduce((t,x)=>t+x.amt,0);
+    ask(ids.length+'명 입금 확인할까요?','합계 '+won(sum)+' · 사람마다 고른 통장 입금일로 확인돼요.',()=>call('adminConfirm',[items],r=>{S.rpSel={};setData(r);toast(ids.length+'명 입금 확인했어요')}),'모두 확인');return}
+  if(b.id==='rpRejAll'){const ids=rpPicked();if(!ids.length){toast('먼저 사람을 선택해 주세요');return}
+    ask(ids.length+'명 입금 신고를 반려할까요?','선생님 화면에서 다시 「입금 전」이 되고 반려 사유가 보여요.',v=>{if(!v){toast('반려 사유를 적어 주세요');return}call('adminRejectReport',[ids,v],r=>{S.rpSel={};setData(r);toast(ids.length+'명 반려했어요')})},'모두 반려','반려 사유 (예: 통장에 없어요)');return}
   if(d.unok){ask('입금 확인을 취소할까요?','이 사람은 다시 「입금 전」(신고했으면 「신고 · 확인 전」)으로 돌아가요.',()=>call('adminConfirm',[[{pid:d.unok,date:'',amt:0,memo:val('m_'+d.unok)}]],r=>{setData(r);toast('입금 확인을 취소했어요')}),'확인 취소');return}
   if(d.same){const [pid,dt]=d.same.split('|');const el=document.getElementById('d_'+pid);if(el&&dt)el.value=dt;return}
   if(d.rej){ask('입금 신고를 반려할까요?','선생님 화면에서 이 사람이 다시 「입금 전」이 되고 반려 사유가 보여요.',v=>{if(!v){toast('반려 사유를 적어 주세요');return}call('adminRejectReport',[d.rej,v],r=>{setData(r);toast('반려했어요')})},'반려','반려 사유 (예: 통장에 없어요)');return}
@@ -204,7 +219,11 @@ document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)r
     if(!items.length){toast('확인할 금액이 없어요');return}
     call('adminConfirm',[items],r=>{S.sel={};setData(r);toast(items.length+'명 입금 확인 · '+kday(dt))});return}
 });
+function rpPicked(){return [...document.querySelectorAll('[data-rpsel]')].filter(x=>x.checked).map(x=>x.dataset.rpsel)}
+function rpCount(){const n=rpPicked().length,all=document.querySelectorAll('[data-rpsel]');const c=document.getElementById('rpCnt');if(c)c.textContent=n+'명 선택';const a=document.getElementById('rpAll');if(a)a.checked=all.length>0&&n===all.length}
 document.addEventListener('change',e=>{const el=e.target;
+  if(el.id==='rpAll'){document.querySelectorAll('[data-rpsel]').forEach(x=>{x.checked=el.checked;S.rpSel[x.dataset.rpsel]=el.checked});rpCount();return}
+  if(el.dataset&&el.dataset.rpsel){S.rpSel[el.dataset.rpsel]=el.checked;rpCount();return}
   if(el.dataset.sel){S.sel[el.dataset.sel]=el.checked;S.bulkD=val('bulkD')||S.bulkD;render();return}
   if(el.id==='bulkD'){S.bulkD=el.value}});
 document.addEventListener('toggle',e=>{const s=e.target.dataset&&e.target.dataset.sub;if(s)S.open[s]=e.target.open},true);

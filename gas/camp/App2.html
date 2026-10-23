@@ -1,4 +1,4 @@
-/* build: 20261023-225651 */
+/* build: 20261023-225901 */
 function editTag(id){if(!S.editNo)return '';const sb=ALL_SUBS.find(x=>x.no===S.editNo);const p=sb&&sb.ppl.find(q=>q.id===sb.no+'_'+id&&q.status!=='취소');
   return p?` <small class="ctag">${(p.batch||1)===1?'처음 접수':'추가 '+((p.batch||1)-1)} · ${stampTxt(p.addAt)||kday(sb.date)}</small>`:` <small class="ctag new">새로 추가 (추가 ${nextBatch()-1})</small>`}
 function rosterRow(x,kind){

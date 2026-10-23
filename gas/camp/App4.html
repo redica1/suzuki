@@ -1,4 +1,4 @@
-/* build: 20261023-225651 */
+/* build: 20261023-225901 */
   return !isPaid(p)?'<span class="pill due">입금 전</span>':d>0?`<span class="pill due">차액 ${won(d)} 입금 전</span>`:d<0?(p.ovReq?`<span class="pill due">${won(p.ovReq.amt)} 돌려받기 요청 · 확인 중</span>`:`<span class="pill new">입금 확인 · ${won(-d)} 더 냄</span>${p.ovRejected?` <span class="pill bad">돌려받기 반려${p.ovRejected.why?' · '+esc(p.ovRejected.why):''}</span>`:''}`):`<span class="pill ok">입금 확인${p.rep&&p.rep.ok?' '+kday(p.rep.ok):''}</span>${(p.ovDone||[]).length?` <span class="pill">차액 ${won(p.ovDone.reduce((t,x)=>t+x.amt,0))} 돌려받음 ${kday(p.ovDone[p.ovDone.length-1].date)}</span>`:''}`}
 function subTag(sb){const L=sb.ppl.filter(p=>p.status==='정상');if(!L.length)return '<span class="pill lock">전체 취소</span>';
   const ok=L.filter(p=>isPaid(p)&&dueOf(p)<=0&&p.pay!=='신고').length, rp=L.filter(p=>p.pay==='신고').length;

@@ -1,4 +1,4 @@
-/* build: 20261023-225651 */
+/* build: 20261023-225901 */
     if(t&&t.rep===last.acad)return `<div class="panel enscard"><span class="pill new">앙상블</span> <b>${esc(last.acad)}</b>은(는) 「<b>${esc(t.name)}</b>」 팀 대표로 신청돼 있어요 · ${esc(t.by||'')} 선생님 신청 (${esc(t.no)})<br><span class="hint">팀 정보는 ${esc(t.by||'신청한')} 선생님이 고쳐요.</span></div>`;
     if(t){const my=MY_SUBS.find(sb=>(t.mem||[]).some(m=>m.no===sb.no));
       return `<div class="panel enscard spread"><div><span class="pill new">앙상블 · 함께하는 학원</span> 「<b>${esc(t.name)}</b>」 팀 (대표 학원 ${esc(t.rep)}${byTxt(t)})에 함께해요.<br><span class="hint">곡·시간 같은 팀 정보는 대표 학원이 넣어요.</span></div>${my?`<button class="btn" type="button" data-ensedit="${my.no}">앙상블 수정</button>`:''}</div>`}
@@ -58,7 +58,7 @@ function render(){fillBanks();
   const t=totals(), next=document.getElementById('nextBtn'), back=document.getElementById('backBtn');
   document.getElementById('dockLabel').textContent = S.step===1?'접수 준비':`선택 ${t.n}명${t.teams.length?` · 가족방 ${t.teams.length}`:''}${t.waiting?` · 회비확인대기 ${t.waiting}명`:''}`;
   document.getElementById('dockTotal').textContent = won(t.all);
-  if(S.editNo&&S.step>1&&S.step<6){const D=editDiff();if(D)document.getElementById('dockLabel').textContent=`기존 ${won(D.before)} → 수정 후 (${sgn(D.diff)})`}
+  if(S.editNo&&S.step>1&&S.step<6){const D=editDiff();if(D)document.getElementById('dockLabel').textContent=D.diff?`고친 내용: ${won(D.before)} → ${won(D.after)} (${sgn(D.diff)})`:'고치는 중 · 금액 그대로'}
   back.hidden = S.step===1||S.step===6;
   next.hidden = S.step===6;
   next.textContent = S.step===5?(S.editNo?'수정 내용 저장':'접수하기'):(S.step===4&&S.editNo&&S.ensEdit?'앙상블 저장':S.step===3&&S.editNo&&S.quickEdit?'저장':'다음');
@@ -106,6 +106,7 @@ function startEdit(no,only){const sb=MY_SUBS.find(x=>x.no===no);const f=JSON.par
   Object.assign(S,{picked:f.picked,extra:f.extra,fam:f.fam,info:f.info,room:f.room,join:f.join||{},ens:f.ens||{on:false},agree:false,sel:{},cartAt:{}});
   sb.ppl.forEach(p=>{if(p.status==='취소'){const k=p.id.slice(sb.no.length+1);delete S.picked[k];S.fam=S.fam.filter(x=>x.id!==k);S.extra=S.extra.filter(x=>x.id!==k)}});
   S.riBack=CAMP.ri;if(f.ri!==undefined)CAMP.ri=f.ri;S.editNo=sb.no;S.editOnly=only;S.cx={};S.cxOpen='';S.view='form';
+  try{S.editBaseAmt={};makeSub(sb.no).ppl.forEach(p=>S.editBaseAmt[p.id]=pAmt(p))}catch(e){S.editBaseAmt=null}
   if(only==='ens'){S.editOnly=null;S.ensEdit=true;if(S.quietEdit){S.step=4}else{S.ensSaved='';go(4);toast(`앙상블 「${S.ens.group||''}」을(를) 고쳐요 · 다 고친 뒤 「앙상블 저장」`)}}
   else if(only){S.quickEdit=true;S.quickKeys=only;if(S.quietEdit){S.step=3}else{S.qSaved='';go(3);toast(only.length===1?'신청 내용을 보고 고칠 수 있어요 · 고치면 「저장」':`${only.length}명 정보를 고쳐요 · 다 고친 뒤 「저장」`)}}else{go(2);toast(`${sb.no}에 인원을 추가해요 · 추가한 뒤 「다음」으로 정보를 넣어요`)}}
 function resetForm(){Object.assign(S,{ensEdit:false,quickEdit:false,cartAt:{},picked:{},extra:[],fam:[],info:{},room:{},join:{},ens:{on:false},agree:false,sel:{}})}

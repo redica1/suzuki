@@ -1,4 +1,12 @@
-/* build: 20261023-221536 */
+/* build: 20261023-221828 */
+    const n=document.getElementById('nN').value.trim(), y=+document.getElementById('nB').value, ins=document.getElementById('nI').value, sy=document.getElementById('nSy').value, sm=document.getElementById('nSm').value, st=sy&&sm?`${sy}.${sm}`:'', tc=document.getElementById('nT').value;
+    if(!n||!(y>1990&&y<2026)||!tc){document.getElementById('nErr').textContent='이름, 출생연도(4자리), 담당 교사를 넣어 주세요.';return}
+    {const xid='x'+Date.now();S.cartAt[xid]=nowStamp();S.extra.push({id:xid,name:n,birth:y,inst:ins,start:st||'-',teacher:tc})}S.showNew=false;render();toast(`${n} 학생을 추가했어요 · 연회비 3만 원 추가`);return}
+  if(d.rmx){delete S.room[d.rmx];delete S.join[d.rmx];S.extra=S.extra.filter(x=>x.id!==d.rmx);S.fam=S.fam.filter(f=>f.link!==d.rmx);delete S.info[d.rmx];render();return}
+  if(b.id==='openFam'){S.showFam=true;render();return}
+  if(b.id==='cancelFam'){S.showFam=false;render();return}
+  if(b.id==='addFam'){
+    const n=document.getElementById('fN').value.trim(), ty=document.getElementById('fT').value, l=document.getElementById('fL');
     if(!n){document.getElementById('fErr').textContent='이름을 넣어 주세요.';return}
     S.fam.push({id:'f'+Date.now(),name:n,type:ty,link:l.value,linkName:l.options[l.selectedIndex].text});S.showFam=false;render();return}
   if(d.rmf){const fm=S.fam.find(x=>x.id===d.rmf);S.fam=S.fam.filter(x=>x.id!==d.rmf);if(fm&&!S.fam.some(x=>x.link===fm.link))delete S.room[fm.link];delete S.info[d.rmf];render();return}

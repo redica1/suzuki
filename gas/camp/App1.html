@@ -1,4 +1,4 @@
-/* build: 20261023-221536 */
+/* build: 20261023-221828 */
 /* ---------- 캠프 설정 (관리자 화면에서 입력되는 값) ---------- */
 const ROOM = { cap:4, emptyFee:130000 }; // 가족방: 4인 기준, 빈 자리 1개당 추가 비용
 const CAMP = { id:'27W', ri:0, lessonFee:60000, lessonMax:5, mcFee:150000,
@@ -43,7 +43,7 @@ function loadMine(){MY_SUBS.length=0;if(S.user)MY_SUBS.push(...ALL_SUBS.filter(s
 function makeSub(no){
   const ps=people(), tm=teams(), roomBy={}; tm.forEach(x=>roomBy[x.rep.key]=(roomBy[x.rep.key]||0)+x.fee);
   return {no,owner:S.user.name,acad:S.acad,round:ROUNDS[CAMP.ri][0],date:S.today,
-    ppl:ps.map(p=>{const f=feeOf(p),i=info(p);return {id:no+'_'+p.key,name:p.name,dtag:p.dtag||'',kind:p.kind==='teacher'?'교사':p.kind==='family'?'가족':'학생',
+    ppl:ps.map(p=>{const f=feeOf(p),i=info(p);return {id:no+'_'+p.key,name:p.name,dtag:p.dtag||'',inst:p.inst||'',kind:p.kind==='teacher'?'교사':p.kind==='family'?'가족':'학생',
       type:i.type,fee:f.base,lesson:f.les+f.mc,dues:f.dues,room:roomBy[p.key]||0,status:'정상',pay:'전',paidAmt:0,batch:1,addAt:nowStamp()}}),
     form:JSON.parse(JSON.stringify({picked:S.picked,extra:S.extra,fam:S.fam,info:S.info,room:S.room,join:S.join,ens:S.ens,ri:CAMP.ri}))}}
 const nowStamp=()=>`${S.today} ${new Date().toTimeString().slice(0,8)}`;

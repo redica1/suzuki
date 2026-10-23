@@ -1,4 +1,4 @@
-/* build: 20261023-232216 */
+/* build: 20261023-232504 */
 /* ---------- 캠프 설정 (관리자 화면에서 입력되는 값) ---------- */
 const ROOM = { cap:4, emptyFee:130000 }; // 가족방: 4인 기준, 빈 자리 1개당 추가 비용
 const CAMP = { id:'27W', ri:0, lessonFee:60000, lessonMax:5, mcFee:150000,
@@ -184,7 +184,7 @@ function vStep1(){
 
   </div></section>`;
   // 로그인됨: 학원 고르기 (모든 학원 중 직접 선택)
-  const q=S.acQ.trim(); const mineA=u.acads;
+  const q=S.acQ.trim(); const mineA=u.home||u.acads;
   const all=ACADEMIES.filter(a=>!q||a.name.includes(q)||a.region.includes(q)||(a.head||'').includes(q)).sort((x,y)=>(mineA.includes(y.name)?1:0)-(mineA.includes(x.name)?1:0)||x.name.localeCompare(y.name,'ko'));
   return `${MY_SUBS.length?`<div class="note info spread" style="margin-bottom:12px"><span><b>내 접수 ${MY_SUBS.length}건</b> · 확인·취소는 여기서</span><button class="btn small primary" type="button" id="toMine">내 접수 보기</button></div>`:''}<section class="sec"><div class="spread"><h2>어느 학원으로 접수할까요?</h2><button class="btn small ghost" type="button" id="logout">로그아웃</button></div>
   <div class="verified">✓ ${esc(u.name)} 선생님${u.role?` · ${esc(u.role)}`:''} · ${esc(u.inst)}${u.newReg?' · <span class="pill due">신규 등록 · 운영진 확인 대기</span>':''}</div>
@@ -198,7 +198,7 @@ function vStep1(){
           ${all.map(a=>`<li><button type="button" role="option" data-acad="${esc(a.name)}" aria-selected="${S.acad===a.name}"><span>${esc(a.name)}${mineA.includes(a.name)?' <span class="pill ok">내 소속</span>':''}</span><small>${esc(a.region)}${a.head?` · ${esc(a.head)}`:''}</small></button></li>`).join('')||'<li class="hint" style="padding:8px">찾는 학원이 없어요. 맨 위 「직접 입력」을 선택해 주세요.</li>'}
         </ul>`:''}
       </div></label>
-    ${S.acad&&!mineA.includes(S.acad)&&S.acad!==classOf(u)?`<div class="note info">고른 학원이 명단상 소속과 달라요. 접수하면 소속이 「${esc(S.acad)}」로 바뀌고 운영진에게 알림이 가요.</div>`:''}
+    ${S.acad&&!mineA.includes(S.acad)&&S.acad!==classOf(u)?`<div class="note info">「${esc(S.acad)}」은(는) 명단상 소속이 아니지만 <b>이 학원 학생을 접수할 수 있어요</b> (겸임). 소속은 그대로 「${esc(mineA.join(', ')||'-')}」예요.</div>`:''}
     <label class="f" for="email">접수 확인 메일 받을 주소<input type="text" id="email" value="${esc(S.email)}" placeholder="name@naver.com"></label>
   </div></section>`;
 }

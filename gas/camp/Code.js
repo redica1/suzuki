@@ -1,4 +1,4 @@
-/* build: 20261023-232216 */
+/* build: 20261023-232504 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -144,14 +144,25 @@ function login(name, phone) {
   if (t.state === '대기') return { ok: false, msg: '승인 대기 중이에요. 협회가 확인하면 이메일로 알려 드려요.' };
   try { ensureSettings_(); } catch (x) {}
   const open = acadOpen_();
-  const acads = t.acads.filter(a => !open || open.includes(a));
+  const own = [...new Set(loadSubs_().filter(x => x.owner === t.name).map(x => x.acad))];
+  const acads = [...new Set(t.acads.concat(own))].filter(a => !open || open.includes(a));
   if (!acads.length) return { ok: false, msg: '지금은 ' + open.join(', ') + '만 접수할 수 있어요.' };
   const token = Utilities.getUuid();
   CacheService.getScriptCache().put('tok_' + token, JSON.stringify({ name: t.name, acads }), 21600);
   log_(t.name, '로그인', '');
-  return Object.assign({ ok: true, token, today: today_(), teacher: { id: t.id, name: t.name, role: t.role, inst: t.inst, acads, p4: t.p4 } }, bundle_(acads));
+  return Object.assign({ ok: true, token, today: today_(), teacher: { id: t.id, name: t.name, role: t.role, inst: t.inst, acads, home: t.acads, p4: t.p4 } }, bundle_(acads));
 }
 
+/** 다른 학원 학생도 접수 (겸임) — 소속은 그대로, 이 로그인 동안 그 학원 명단·접수를 열어 줌 */
+function addAcad(token, acad) {
+  const C = CacheService.getScriptCache(), v = C.get('tok_' + token);
+  if (!v) throw new Error('로그인이 끝났어요. 화면을 새로 고쳐 다시 로그인해 주세요.');
+  const u = JSON.parse(v); acad = String(acad || '').trim();
+  if (!acad) throw new Error('학원을 골라 주세요.');
+  const open = acadOpen_(); if (open && !open.includes(acad)) throw new Error('지금은 ' + open.join(', ') + '만 접수할 수 있어요.');
+  if (!u.acads.includes(acad)) { u.acads.push(acad); C.put('tok_' + token, JSON.stringify(u), 21600); log_(u.name, '다른 학원 접수(겸임)', acad); }
+  return Object.assign({ ok: true, acads: u.acads }, bundle_(u.acads));
+}
 function who_(token) {
   const v = CacheService.getScriptCache().get('tok_' + token);
   if (!v) throw new Error('로그인이 끝났어요. 화면을 새로 고쳐 다시 로그인해 주세요.');

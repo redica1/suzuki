@@ -1,4 +1,4 @@
-/* build: 20261023-232216 */
+/* build: 20261023-232504 */
       <dl class="kv"><dt>함께하는 학원</dt><dd>${esc(sb.acad)} (대표)${(e.acads||[]).length?', '+e.acads.map(esc).join(', '):''}</dd><dt>곡</dt><dd>${songs.join('<br>')||'<span class="hint">아직 없음</span>'}</dd><dt>연주시간</dt><dd>${e.tm||e.ts?`${+e.tm||0}분 ${+e.ts||0}초`:'-'}</dd></dl></div>`}).join('')}
   ${(()=>{const has=MY_SUBS.some(sb=>sb.form&&sb.form.ens&&sb.form.ens.on&&sb.ppl.some(p=>p.status==='정상'));const last=[...MY_SUBS].reverse().find(sb=>sb.form&&sb.ppl.some(p=>p.status==='정상'));
     if(has||!last)return '';const t=teamOf(last.acad);const mb=last.form.ens&&last.form.ens.member;
@@ -121,9 +121,11 @@ document.addEventListener('click',e=>{
   const d=b.dataset;
   if(d.go){go(+d.go);return}
   if(d.round!==undefined){CAMP.ri=+d.round;render();toast(`${ROUNDS[CAMP.ri][0]} 금액으로 계산해요`);return}
-  if(d.acad){S.acad=d.acad;S.rq='';S.sel={};S.ptab='교사';S.acQ='';S.acOpen=false;S.picked={};S.extra=[];S.fam=[];S.info={};S.room={};
-    ensureRoster(d.acad);
-    S.verified=true;render();return}
+  if(d.acad){const a=d.acad;const go=()=>{S.acad=a;S.rq='';S.sel={};S.ptab='교사';S.acQ='';S.acOpen=false;S.picked={};S.extra=[];S.fam=[];S.info={};S.room={};
+    ensureRoster(a);S.verified=true;render()};
+    /* 내 소속이 아닌 학원(겸임): 서버에서 그 학원 명단을 받아 옴 — 소속은 그대로 */
+    if(S.token&&S.user&&!(S.user.acads||[]).includes(a)&&a!==classOf(S.user)){api('addAcad',[a],r=>{const keep=S.user;loadFromServer(r);S.user=keep;S.user.acads=r.acads;go();toast(a+' 명단을 열었어요 · 소속은 그대로예요',true)},null,'명단을 불러오고 있어요…');return}
+    go();return}
   if(d.quick){const n=d.quick;const t=TEACHER_DB.find(x=>x.demo&&x.name===n)||TEACHER_DB.find(x=>bare(x.name)===n&&x.acads.includes('마포스즈키'))||TEACHER_DB.find(x=>bare(x.name)===n);
     if(!t){S.verr=`회원 명단에서 ${n} 선생님을 찾지 못했어요.`;render();return}
     if(t.state==='대기'){S.verr='승인 대기 중이에요. 협회가 확인하면 이메일로 알려 드려요.';render();return}
@@ -177,4 +179,3 @@ document.addEventListener('click',e=>{
       return}
     go(S.step+1);return}
   if(b.id==='backBtn'){go(S.step-1);return}
-  if(b.id==='toMine'||b.id==='toMine2'||b.id==='toMine3'||b.id==='mineBtn'){if(S.editNo){S.editNo=null;S.editOnly=null;if(S.riBack!==undefined){CAMP.ri=S.riBack;S.riBack=undefined}resetForm();S.acad='';S.verified=false;S.step=1}S.view='mine';S.cxDone=null;render();window.scrollTo({top:0});return}

@@ -1,4 +1,4 @@
-/* build: 20261023-225035 */
+/* build: 20261023-225313 */
     const overP=ps.filter(p=>+rpv(p).a>dueOf(p));let rfAll=null;if(overP.length){const gv=id=>(document.getElementById(id)||{}).value||'';rfAll={bank:gv('rpRfB'),acct:gv('rpRfA').replace(/[^\d-]/g,''),holder:gv('rpRfH').trim()};if(!rfAll.bank||rfAll.acct.replace(/-/g,'').length<6||!rfAll.holder)return er(`${overP.map(p=>p.name).join(', ')}은(는) 청구액보다 많아요. 아래 「환불 받을 계좌」를 적어 주세요.`)}
     const diff=ps.filter(p=>+rpv(p).a!==dueOf(p));if(diff.length&&!memo)return er(`${diff.map(p=>p.name).join(', ')}의 금액이 청구액과 달라요. 메모에 이유를 적어 주세요.`);
     const rows={};ps.forEach(p=>{const v=rpv(p);rows[p.id]={name:v.n.trim(),date:v.d,a:+v.a}});
@@ -22,7 +22,7 @@
     if(r.doc&&paid){const f=document.getElementById('cxDoc');if(!f||!f.files.length)return er('이 기간에는 진단서를 올려야 취소할 수 있어요.')}
     if(paid&&amt>0){const bk=document.getElementById('cxBank').value,ac=document.getElementById('cxAcct').value.replace(/[^\d-]/g,''),ho=document.getElementById('cxHolder').value.trim();if(!bk||ac.length<8||!ho)return er('환불 받을 은행·계좌번호·예금주를 넣어 주세요.')}
     const names=sb.ppl.filter(p=>sel.includes(p.id)).map(p=>p.name);
-    if(paid){const f=document.getElementById('cxDoc'),req={no:sb.no,acad:sb.acad,names,ids:sel,why,amt,bank:(document.getElementById('cxBank')||{}).value||'',acct:((document.getElementById('cxAcct')||{}).value||'').replace(/[^\d-]/g,''),holder:((document.getElementById('cxHolder')||{}).value||'').trim()};
+    if(paid){const f=document.getElementById('cxDoc'),req={no:sb.no,acad:sb.acad,names,ids:sel,why,amt,rule:`${r.label} · ${r.rate?r.rate+'% 환불':'환불 없음'}`,bank:(document.getElementById('cxBank')||{}).value||'',acct:((document.getElementById('cxAcct')||{}).value||'').replace(/[^\d-]/g,''),holder:((document.getElementById('cxHolder')||{}).value||'').trim()};
       const go=file=>{req.file=file;api('cancelReq',[req],()=>{})};
       if(f&&f.files&&f.files[0]){const fl=f.files[0];const rd=new FileReader();rd.onload=()=>go({name:fl.name,type:fl.type,data:String(rd.result).split(',')[1]});rd.readAsDataURL(fl)}else go(null)}
     sb.ppl.forEach(p=>{if(sel.includes(p.id)){p.status=isPaid(p)?'취소요청':'취소';p.cxReqAt=nowStamp();if(!isPaid(p))p.cxWhy=why}});subSave();

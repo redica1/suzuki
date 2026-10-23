@@ -1,0 +1,591 @@
+/**
+ * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
+ *
+ * 이 스크립트는 「접수 DB」 구글 시트에 붙여서(확장 프로그램 › Apps Script) 씁니다.
+ *  1) 처음 한 번 setup() 실행 → 시트(명단_교사, 명단_학생, 접수, 참가자, 입금신고, 환불요청, 앙상블팀, 기록)를 만들고 마포스즈키 명단을 넣음
+ *  2) 배포 › 새 배포 › 웹 앱 (실행: 나, 액세스: 모든 사용자) → 나온 주소를 선생님께 안내
+ *  3) 관리자 화면: 같은 주소 뒤에 ?page=admin  (아이디·비밀번호는 「설정」 탭에서 정함)
+ *
+ * 데이터 원칙
+ *  - 접수 1건 = 「접수」 1행 (전체 내용은 JSON 열에), 참가자 1명 = 「참가자」 1행 (운영진이 보는 표)
+ *  - 입금 확인은 운영진이 「참가자」 시트의 [운영진] 입금확인일 · 입금확인액 칸에 적음 → 선생님 화면에 「입금 확인」으로 보임
+ *  - 선생님 화면은 이 칸을 바꿀 수 없음 (서버가 시트 값으로 덮어씀)
+ */
+
+const CAMP_ID = '27W';
+const CAMP_NAME = '2027 스즈키 겨울 음악제';
+const TZ = 'Asia/Seoul';
+const TEST_ACADS = ['마포스즈키'];          // 시험 기간에 접수할 수 있는 학원
+const ADMIN_EMAIL = '';                     // 새 접수 알림을 받을 주소 (비워 두면 안 보냄)
+const JSON_CHUNK = 45000;                   // 시트 한 칸 글자 수 한도(5만) 아래로 나눠 저장
+
+/* ---------------- 참가비 · 옵션 (화면 Index 의 값과 같아야 함 — 금액은 서버가 다시 계산해서 저장) ---------------- */
+const FEES = {
+  '교사': [560000, 570000, 590000], '연수생': [560000, 570000, 590000], '소속없는 중급연수생': [560000, 570000, 590000], '학생': [560000, 570000, 590000],
+  '회원의 악기하는 자녀': [510000, 520000, 540000], '회원의 첫번째 보호자': [510000, 520000, 540000],
+  '회원의 그외 악기 안하는 동반가족': [410000, 420000, 440000], '동반가족 중 돌전아기': [310000, 320000, 340000]
+};
+const ROUND_NAMES = ['1차', '2차', '3차'];
+const OPT = { lessonFee: 60000, lessonMax: 5, studentDues: 30000, teacherDues: 300000, roomCap: 4, roomEmptyFee: 130000 };
+const PLAYS = ['교사', '연수생', '소속없는 중급연수생', '학생', '회원의 악기하는 자녀'];
+const MASTER = [{ n: '안드레아 부샤츠', fee: 150000 }, { n: '이성주', fee: 150000 }];
+const PAY_MAX = 10000000;            // 한 사람 입금 신고 금액 상한
+const RP_HEAD = ['기록 일시', '신고ID', '접수번호', '학원', '접수 교사', '참가자', '입금자명', '입금일', '금액', '메모', '구분', '환불 계좌'];
+const SETTINGS = [['관리자 아이디', 'admin', '관리자 화면(?page=admin) 로그인 아이디'],
+  ['관리자 비밀번호', '', '여기에 비밀번호를 적어야 관리자 화면에 들어갈 수 있어요 (8자 이상)'],
+  ['입금 은행', '', '선생님 화면 입금 안내에 보이는 은행 (예: 국민은행)'],
+  ['입금 계좌번호', '', '입금 계좌번호 (선생님 화면에서 복사 가능)'],
+  ['예금주', '', '입금 계좌 예금주'],
+  ['입금 시작일', '2026-10-01', '이 날짜보다 앞선 입금일로는 신고할 수 없어요'],
+  ['공유주소', 'https://redica1.github.io/suzuki/camp/', '카카오톡 안에서 열었을 때 바깥 브라우저로 넘길 주소']];
+
+const SH = {
+  T: '명단_교사', S: '명단_학생', SUB: '접수', P: '참가자', RP: '입금신고', CX: '환불요청', ENS: '앙상블팀', LOG: '기록'
+};
+const SUB_HEAD = ['접수번호', '접수일시', '수정일시', '학원', '접수 교사', '차수', '인원(정상)', '청구액', '입금확인액', '남은 금액', '앙상블', 'JSON_1', 'JSON_2', 'JSON_3', 'JSON_4'];
+const P_HEAD = ['참가자ID', '접수번호', '차수', '학원', '접수 교사', '들어온 차례', '추가 일시', '이름', '구분', '참가 구분', '악기', '담당 교사', '출생연도', '성별',
+  '현재 진도', '선호 교수1', '선호 교수2', '추가 레슨', '마스터클래스', '음악회', '음악회 곡', '가족방', '참가비', '레슨·MC', '연회비', '가족방비', '청구액', '상태',
+  '입금 상태', '신고 입금자명', '신고 입금일', '신고 금액', '신고 메모', '[운영진] 입금확인일', '[운영진] 입금확인액', '[운영진] 메모'];
+const ADMIN_COLS = ['[운영진] 입금확인일', '[운영진] 입금확인액', '[운영진] 메모'];
+const CX_HEAD = ['요청 일시', '접수번호', '학원', '요청 교사', '참가자', '사유', '환불 예정액', '은행', '계좌번호', '예금주', '진단서', '처리', '처리일', '메모', '참가자ID'];
+
+/* ---------------- 웹 앱 ---------------- */
+function doGet(e) {
+  const admin = e && e.parameter && e.parameter.page === 'admin';
+  let page;
+  if (admin) page = HtmlService.createHtmlOutputFromFile('Admin');
+  else { const t = HtmlService.createTemplateFromFile('Index'); let share = ''; try { ensureSettings_(); share = setting_('공유주소'); } catch (x) {} t.shareUrl = share; page = t.evaluate(); }
+  return page
+    .setTitle(CAMP_NAME + (admin ? ' 접수 관리' : ' 접수'))
+    .addMetaTag('viewport', 'width=device-width, initial-scale=1')
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+}
+
+/** 화면 코드가 길어서 App1, App2 … 파일로 나눠 둠 → Index.html 이 붙여서 보냄 */
+function include(name) { return HtmlService.createTemplateFromFile(name).getRawContent(); }   // App1~5는 자바스크립트라 HTML 검사 없이 그대로 붙임
+
+/* ---------------- 처음 설정 ---------------- */
+function setup() {
+  const ss = SpreadsheetApp.getActive();
+  const mk = (name, head) => {
+    let sh = ss.getSheetByName(name);
+    if (!sh) sh = ss.insertSheet(name);
+    if (sh.getLastRow() === 0) { sh.appendRow(head); sh.setFrozenRows(1); sh.getRange(1, 1, 1, head.length).setFontWeight('bold'); }
+    return sh;
+  };
+  const shT = mk(SH.T, ['ID', '이름', '직급', '악기', '휴대전화 뒤 4자리', '소속 학원', '회비 납부일', '연회비', '상태']);
+  const shS = mk(SH.S, ['ID', '고유번호', '이름', '구분 표시', '학원', '악기', '출생연도', '담당 교사', '회비 납부일']);
+  mk(SH.SUB, SUB_HEAD);
+  const shP = mk(SH.P, P_HEAD);
+  mk(SH.RP, RP_HEAD);
+  mk(SH.CX, CX_HEAD);
+  setupAdmin_();
+  mk(SH.ENS, ['대표 접수번호', '팀 이름', '대표 학원', '함께하는 학원', '곡1 작곡가', '곡1 곡명', '곡1 원어', '곡1 반주', '곡1 영상', '곡2 작곡가', '곡2 곡명', '곡2 원어', '곡2 반주', '곡2 영상', '연주시간']);
+  mk(SH.LOG, ['일시', '누가', '무엇', '내용']);
+  // 운영진 칸 색
+  const c0 = P_HEAD.indexOf(ADMIN_COLS[0]) + 1;
+  shP.getRange(1, c0, 1, ADMIN_COLS.length).setBackground('#fff2cc');
+
+  // 마포스즈키 명단 (시험용) — 이미 있으면 다시 넣지 않음
+  if (shT.getLastRow() < 2) {
+    const rows = MAPO.teachers.map((t, i) => ['M' + (i + 1), t.name, t.role || '강사', t.inst, "'" + t.p4, [MAPO.acad].concat(t.extra || []).join(', '),
+      MAPO.paid[t.name] || '', t.role === '원장' ? 500000 : 300000, '승인']);
+    shT.getRange(2, 1, rows.length, rows[0].length).setValues(rows);
+  }
+  if (shS.getLastRow() < 2) {
+    const rows = MAPO.students.map(([raw, inst], i) => {
+      const m = String(raw).match(/^(.*?)\s*\(([^)]*)\)$/);
+      const name = m ? m[1] : raw, tag = m ? m[2].replace(/[A-Za-z]+$/, '') : '';   // (남A)(남B)의 A·B는 쓰지 않음
+      return ['S' + (i + 1), 'S' + String(i + 1).padStart(4, '0'), name, tag, MAPO.acad, inst, '', '', '2026-04-01'];
+    });
+    shS.getRange(2, 1, rows.length, rows[0].length).setValues(rows);
+  }
+  log_('설정', 'setup', '시트 준비 완료');
+  return '준비 완료';
+}
+
+/* ---------------- 잠금 ---------------- */
+/** 동시에 몰릴 때: 30초 기다려도 못 잡으면 'BUSY' → 화면이 잠시 뒤 자동으로 다시 보냄 */
+function lock_() { const l = LockService.getScriptLock(); if (!l.tryLock(30000)) throw new Error('BUSY'); return l; }
+
+/* ---------------- 로그인 ---------------- */
+const bare_ = s => String(s || '').replace(/[A-Za-z\s]+$/, '').replace(/\s/g, '');
+const today_ = () => Utilities.formatDate(new Date(), TZ, 'yyyy-MM-dd');
+const stamp_ = () => Utilities.formatDate(new Date(), TZ, 'yyyy-MM-dd HH:mm:ss');
+
+function rows_(name) {
+  const sh = SpreadsheetApp.getActive().getSheetByName(name);
+  if (!sh || sh.getLastRow() < 2) return [];
+  const v = sh.getRange(1, 1, sh.getLastRow(), sh.getLastColumn()).getValues();
+  const h = v[0];
+  return v.slice(1).map((r, i) => { const o = { _row: i + 2 }; h.forEach((k, j) => o[k] = r[j]); return o; });
+}
+const dstr_ = v => v instanceof Date ? Utilities.formatDate(v, TZ, 'yyyy-MM-dd') : String(v || '');
+
+function teachers_() {
+  return rows_(SH.T).filter(r => r['ID']).map(r => ({
+    id: String(r['ID']), name: String(r['이름']), role: String(r['직급'] || '강사'), inst: String(r['악기'] || ''),
+    p4: String(r['휴대전화 뒤 4자리'] || '').replace(/\D/g, ''), acads: String(r['소속 학원'] || '').split(',').map(s => s.trim()).filter(Boolean),
+    paidDate: dstr_(r['회비 납부일']), dueAmt: +r['연회비'] || 0, state: String(r['상태'] || '승인')
+  }));
+}
+
+/** 이름 + 휴대전화로 로그인 (시험 기간: 명단의 휴대전화 뒤 4자리와 비교) */
+function login(name, phone) {
+  const ph = String(phone || '').replace(/\D/g, '');
+  const nm = bare_(name);
+  if (!nm || ph.length < 10) return { ok: false, msg: '이름과 휴대전화를 모두 넣어 주세요.' };
+  const t = teachers_().find(x => bare_(x.name) === nm && x.p4 && ph.endsWith(x.p4));
+  if (!t) return { ok: false, msg: '회원 명단의 이름·휴대전화와 맞지 않아요. 지금은 마포스즈키 선생님만 시험으로 접수할 수 있어요.' };
+  if (t.state === '대기') return { ok: false, msg: '승인 대기 중이에요. 협회가 확인하면 이메일로 알려 드려요.' };
+  try { ensureSettings_(); } catch (x) {}
+  const acads = t.acads.filter(a => TEST_ACADS.includes(a));
+  if (!acads.length) return { ok: false, msg: '시험 기간에는 마포스즈키만 접수할 수 있어요.' };
+  const token = Utilities.getUuid();
+  CacheService.getScriptCache().put('tok_' + token, JSON.stringify({ name: t.name, acads }), 21600);
+  log_(t.name, '로그인', '');
+  return Object.assign({ ok: true, token, today: today_(), teacher: { id: t.id, name: t.name, role: t.role, inst: t.inst, acads, p4: t.p4 } }, bundle_(acads));
+}
+
+function who_(token) {
+  const v = CacheService.getScriptCache().get('tok_' + token);
+  if (!v) throw new Error('로그인이 끝났어요. 화면을 새로 고쳐 다시 로그인해 주세요.');
+  return JSON.parse(v);
+}
+
+/** 화면에 필요한 것: 학원 명단, 그 학원 접수 전부(다른 선생님 것 포함 — 중복 접수 막기용), 앙상블 팀 */
+function bundle_(acads) {
+  const ts = teachers_();
+  const st = rows_(SH.S);
+  const rosters = {};
+  acads.forEach(a => {
+    rosters[a] = {
+      teachers: ts.filter(t => t.acads.includes(a)).map(t => ({ id: t.id, name: t.name, role: t.role, inst: t.inst, paidDate: t.paidDate, dueAmt: t.dueAmt, extra: t.acads.filter(x => x !== a) })),
+      students: st.filter(r => String(r['학원']) === a && r['ID']).map(r => ({
+        id: String(r['ID']), uid: String(r['고유번호']), name: String(r['이름']), tag: String(r['구분 표시'] || ''), inst: String(r['악기'] || ''),
+        birth: String(r['출생연도'] || ''), teacher: String(r['담당 교사'] || ''), paidDate: dstr_(r['회비 납부일'])
+      }))
+    };
+  });
+  const all = loadSubs_();
+  return { rosters, subs: all.filter(sb => acads.includes(sb.acad)), teams: teams_(all), bank: bankInfo_(), today: today_() };
+}
+
+/* ---------------- 접수 읽고 쓰기 ---------------- */
+function loadSubs_() {
+  const admin = adminMap_();
+  return rows_(SH.SUB).filter(r => r['접수번호']).map(r => {
+    const js = ['JSON_1', 'JSON_2', 'JSON_3', 'JSON_4'].map(k => String(r[k] || '')).join('');
+    let sb; try { sb = JSON.parse(js); } catch (e) { return null; }
+    applyAdmin_(sb, admin);
+    return sb;
+  }).filter(Boolean);
+}
+
+/** 운영진이 참가자 시트에 적은 입금 확인 → 접수 내용에 반영 (선생님 화면은 이 값을 바꿀 수 없음) */
+function adminMap_() {
+  const m = {};
+  rows_(SH.P).forEach(r => {
+    const id = String(r['참가자ID'] || ''); if (!id) return;
+    m[id] = { date: dstr_(r['[운영진] 입금확인일']), amt: +String(r['[운영진] 입금확인액'] || '').replace(/[^\d]/g, '') || 0, memo: String(r['[운영진] 메모'] || '') };
+  });
+  return m;
+}
+function applyAdmin_(sb, admin) {
+  (sb.ppl || []).forEach(p => {
+    const a = admin[p.id];
+    if (a && a.amt > 0) {
+      p.paidAmt = a.amt;
+      const row = p.rep && p.rep.rows && p.rep.rows[p.id];
+      if (p.pay === '신고' && row && row.base !== undefined && a.amt <= +row.base) {
+        // 이미 일부 확인된 뒤에 낸 차액 신고: 운영진이 확인액을 늘리기 전까지 「신고 · 확인 중」 그대로
+      } else {
+        p.pay = '확인';
+        p.rep = Object.assign({}, p.rep || {}, { ok: a.date || (p.rep && p.rep.date) || '' });
+      }
+    } else {
+      p.paidAmt = 0;
+      if (p.pay === '확인') p.pay = p.rep && p.rep.ids ? '신고' : '전';
+    }
+  });
+  return sb;
+}
+
+function writeSub_(sb, isNew) { writeSubRow_(sb, isNew); writePeople_(sb); }
+function writeSubRow_(sb, isNew) {
+  const ss = SpreadsheetApp.getActive();
+  const sh = ss.getSheetByName(SH.SUB);
+  const live = sb.ppl.filter(p => p.status === '정상');
+  const amt = p => (+p.fee || 0) + (+p.lesson || 0) + (+p.dues || 0) + (+p.room || 0);
+  const bill = live.reduce((t, p) => t + amt(p), 0), paid = live.reduce((t, p) => t + (+p.paidAmt || 0), 0);
+  const json = JSON.stringify(sb);
+  const chunks = [0, 1, 2, 3].map(i => json.slice(i * JSON_CHUNK, (i + 1) * JSON_CHUNK));
+  if (json.length > JSON_CHUNK * 4) throw new Error('접수 내용이 너무 길어요. 접수를 나눠서 내 주세요.');
+  const e = sb.form && sb.form.ens || {};
+  const row = [sb.no, sb.createdAt || stamp_(), isNew ? '' : stamp_(), sb.acad, sb.owner, sb.round, live.length, bill, paid, Math.max(0, bill - paid),
+    e.on ? '대표 · ' + (e.group || '') : e.member ? '함께 · ' + (e.joinNo || e.joinRep || '') : ''].concat(chunks);
+  const found = rows_(SH.SUB).find(r => String(r['접수번호']) === sb.no);
+  if (found) { row[1] = found['접수일시'] instanceof Date ? Utilities.formatDate(found['접수일시'], TZ, 'yyyy-MM-dd HH:mm:ss') : found['접수일시']; sh.getRange(found._row, 1, 1, row.length).setValues([row]); }
+  else sh.appendRow(row);
+}
+
+/** 참가자 시트: 그 접수의 줄을 다시 씀. 운영진 칸은 참가자ID 기준으로 지킴 */
+function writePeople_(sb) {
+  const sh = SpreadsheetApp.getActive().getSheetByName(SH.P);
+  const old = rows_(SH.P).filter(r => String(r['접수번호']) === sb.no);
+  const keep = {}; old.forEach(r => keep[String(r['참가자ID'])] = ADMIN_COLS.map(k => r[k]));
+  old.map(r => r._row).sort((a, b) => b - a).forEach(r => sh.deleteRow(r));
+  const f = sb.form || {}, info = f.info || {};
+  const rows = sb.ppl.map(p => {
+    const key = p.id.slice(sb.no.length + 1), i = info[key] || {};
+    const r = p.rep && p.rep.rows && p.rep.rows[p.id] || (p.rep && p.rep.ids ? { name: p.rep.name, date: p.rep.date, a: p.rep.amt } : {});
+    const vals = {
+      '참가자ID': p.id, '접수번호': sb.no, '차수': sb.round, '학원': sb.acad, '접수 교사': sb.owner, '들어온 차례': (p.batch || 1) === 1 ? '처음 접수' : '추가 ' + ((p.batch || 1) - 1),
+      '추가 일시': p.addAt || '', '이름': p.name, '구분': p.kind, '참가 구분': p.type, '악기': i.inst || '', '담당 교사': i.teacher || '', '출생연도': i.by || '', '성별': i.gender || '',
+      '현재 진도': i.prog || '', '선호 교수1': i.p1 || '', '선호 교수2': i.p2 || '', '추가 레슨': i.lessons || '', '마스터클래스': (i.mc || []).join(', '),
+      '음악회': i.concert && i.concert !== '없음' ? i.concert : '', '음악회 곡': i.other ? (String(i.oc || '') + ' ' + String(i.ot || '')).trim() : (i.song || ''),
+      '가족방': p.room ? '대표(빈 자리 요금)' : (f.room && f.room[key] ? '대표' : ''), '참가비': p.fee, '레슨·MC': p.lesson, '연회비': p.dues, '가족방비': p.room || 0,
+      '청구액': (+p.fee || 0) + (+p.lesson || 0) + (+p.dues || 0) + (+p.room || 0), '상태': p.status, '입금 상태': p.pay,
+      '신고 입금자명': r.name || '', '신고 입금일': r.date || '', '신고 금액': r.a || '', '신고 메모': p.rep && p.rep.memo || ''
+    };
+    const k = keep[p.id] || ['', '', ''];
+    ADMIN_COLS.forEach((c, j) => vals[c] = k[j]);
+    return P_HEAD.map(h => vals[h] === undefined ? '' : vals[h]);
+  });
+  if (rows.length) sh.getRange(sh.getLastRow() + 1, 1, rows.length, P_HEAD.length).setValues(rows);
+}
+
+/** 앙상블 팀: 접수 내용에서 다시 만듦 (대표 학원 접수 + 「대표가 이미 있어요」로 들어온 학원) */
+function teams_(all) {
+  const L = all.filter(sb => sb.form && sb.form.ens && sb.form.ens.on && (sb.form.ens.group || '').trim() && sb.ppl.some(p => p.status === '정상'))
+    .map(sb => { const e = sb.form.ens; return { name: e.group.trim(), rep: sb.acad, acads: (e.acads || []).slice(), no: sb.no, e }; });
+  all.forEach(sb => {
+    const e = sb.form && sb.form.ens;
+    if (e && e.member && e.joinNo && sb.ppl.some(p => p.status === '정상')) { const t = L.find(x => x.no === e.joinNo); if (t && !t.acads.includes(sb.acad)) t.acads.push(sb.acad); }
+  });
+  return L.map(t => ({ name: t.name, rep: t.rep, acads: t.acads, no: t.no }));
+}
+function writeTeams_(all) {
+  const sh = SpreadsheetApp.getActive().getSheetByName(SH.ENS);
+  if (sh.getLastRow() > 1) sh.getRange(2, 1, sh.getLastRow() - 1, sh.getLastColumn()).clearContent();
+  const T = teams_(all);
+  const rows = T.map(t => { const e = (all.find(sb => sb.no === t.no).form.ens) || {};
+    return [t.no, t.name, t.rep, t.acads.join(', '), e.k1 || '', e.c1 || '', e.o1 || '', e.acc1 ? 'O' : '', e.video1 ? 'O' : '', e.k2 || '', e.c2 || '', e.o2 || '', e.acc2 ? 'O' : '', e.video2 ? 'O' : '',
+      (e.tm || e.ts) ? (+e.tm || 0) + '분 ' + (+e.ts || 0) + '초' : '']; });
+  if (rows.length) sh.getRange(2, 1, rows.length, rows[0].length).setValues(rows);
+}
+
+/* ---------------- 금액은 서버가 다시 계산 ---------------- */
+/** 화면이 보낸 금액을 믿지 않고 참가 구분·차수·레슨·마스터클래스·연회비·가족방으로 다시 계산 */
+function recalc_(sb) {
+  const f = sb.form || {}, info = f.info || {}, ri = Math.max(0, Math.min(ROUND_NAMES.length - 1, +f.ri || 0));
+  sb.round = ROUND_NAMES[ri];
+  const tPaid = {}; teachers_().forEach(t => tPaid['t_' + t.id] = !!t.paidDate);
+  const sPaid = {}; rows_(SH.S).forEach(r => sPaid[String(r['ID'])] = !!dstr_(r['회비 납부일']));
+  const key = p => p.id.slice(sb.no.length + 1);
+  const live = sb.ppl.filter(p => p.status !== '취소');
+  const liveKeys = live.map(key);
+  // 가족방: 대표 + 같은 방 형제 + 그 가족
+  const roomBy = {};
+  Object.keys(f.room || {}).filter(k => f.room[k] && liveKeys.includes(k)).forEach(k => {
+    const heads = [k].concat(Object.keys(f.join || {}).filter(j => f.join[j] === k && liveKeys.includes(j)));
+    const fam = (f.fam || []).filter(x => heads.includes(x.link) && liveKeys.includes(x.id)).length;
+    roomBy[k] = Math.max(0, OPT.roomCap - (heads.length + fam)) * OPT.roomEmptyFee;
+  });
+  sb.ppl.forEach(p => {
+    const k = key(p), i = info[k];
+    if (!i) return;                                   // 입금돼서 남겨 둔 사람(명단에서 뺀 사람)은 그대로
+    if (!FEES[i.type]) throw new Error(p.name + '의 참가 구분(' + i.type + ')을 확인해 주세요.');
+    const plays = PLAYS.includes(i.type);
+    const les = plays ? Math.max(0, Math.min(OPT.lessonMax, +i.lessons || 0)) : 0;
+    const mc = plays ? (i.mc || []).reduce((t, n) => t + ((MASTER.find(m => m.n === n) || {}).fee || 0), 0) : 0;
+    const isT = /^t_|^me_/.test(k), isFam = (f.fam || []).some(x => x.id === k);
+    const paid = isFam ? true : isT ? (k.indexOf('me_') === 0 ? true : !!tPaid[k]) : !!sPaid[k];
+    p.type = i.type; p.fee = FEES[i.type][ri]; p.lesson = les * OPT.lessonFee + mc;
+    p.dues = paid ? 0 : (isT ? OPT.teacherDues : OPT.studentDues);
+    p.room = roomBy[k] || 0;
+  });
+  return sb;
+}
+
+/** 입금 신고 검사: 날짜(오늘까지 · 입금 시작일 이후) · 금액 · 입금자명 */
+function checkRep_(p) {
+  const r = p.rep && p.rep.rows && p.rep.rows[p.id];
+  if (!r) throw new Error(p.name + ' 입금 신고 내용이 비어 있어요.');
+  const d = String(r.date || ''), from = setting_('입금 시작일') || '2026-10-01';
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(d)) throw new Error(p.name + ' 입금일을 선택해 주세요.');
+  if (d > today_()) throw new Error(p.name + ' 입금일이 오늘보다 뒤예요. 날짜를 확인해 주세요.');
+  if (d < from) throw new Error(p.name + ' 입금일이 ' + from + ' 보다 앞이에요. 날짜를 확인해 주세요.');
+  const a = +r.a || 0;
+  if (!(a > 0) || a > PAY_MAX) throw new Error(p.name + ' 입금 금액을 확인해 주세요.');
+  const nm = String(r.name || '').trim();
+  if (!nm || nm.length > 20) throw new Error(p.name + ' 입금자명을 20자 안으로 넣어 주세요.');
+  r.name = nm; r.a = a;
+}
+/** 과납 환불 계좌: 시트(입금신고)에만 쓰고 접수 내용(JSON)에서는 뺌 */
+function takeRefundAcct_(p) {
+  const x = p.rep && p.rep.refund; if (!x) return '';
+  delete p.rep.refund;
+  const acct = String(x.acct || '').replace(/[^\d-]/g, '');
+  if (!x.bank || acct.replace(/-/g, '').length < 6 || acct.replace(/-/g, '').length > 20 || !String(x.holder || '').trim()) throw new Error(p.name + ' 환불 계좌(은행·계좌번호·예금주)를 확인해 주세요.');
+  return x.bank + ' ' + acct + ' ' + String(x.holder).trim();
+}
+
+/* ---------------- 선생님이 부르는 기능 ---------------- */
+/** 새 접수: 접수번호는 서버가 붙임 (27W-001 …) */
+function submitNew(token, sb) {
+  const u = who_(token);
+  if (!u.acads.includes(sb.acad)) throw new Error('이 학원으로 접수할 수 없어요.');
+  const lock = lock_();
+  try {
+    const all = loadSubs_();
+    // 응답이 늦어 다시 보냈거나 자동 재시도한 같은 요청이면 → 이미 만든 접수를 그대로 돌려줌
+    if (sb.reqId) { const done = all.find(x => x.reqId === sb.reqId); if (done) { lock.releaseLock(); return Object.assign({ ok: true, no: done.no, again: true }, bundle_(u.acads)); } }
+    // 같은 학원 다른 접수에 이미 있는 사람은 다시 못 넣음
+    const key = id => id.slice(id.indexOf('_') + 1);
+    const taken = {};
+    all.filter(x => x.acad === sb.acad).forEach(x => x.ppl.filter(p => p.status === '정상').forEach(p => taken[key(p.id)] = x.no));
+    const dup = sb.ppl.filter(p => p.kind !== '가족' && taken[key(p.id)]);
+    if (dup.length) throw new Error(`${dup.map(p => p.name).join(', ')}은(는) 이미 ${taken[key(dup[0].id)]}에 접수돼 있어요. 「내 접수」에서 확인해 주세요.`);
+    const n = all.reduce((m, x) => Math.max(m, +String(x.no).split('-')[1] || 0), 0) + 1;
+    const no = CAMP_ID + '-' + String(n).padStart(3, '0');
+    const tmp = sb.no;
+    sb.no = no; sb.owner = u.name; sb.createdAt = stamp_();
+    sb.ppl.forEach(p => { p.id = no + p.id.slice(tmp.length); p.pay = '전'; p.paidAmt = 0; delete p.rep; });
+    sb.rev = 1; recalc_(sb);
+    writeSub_(sb, true);
+    all.push(sb); writeTeams_(all);
+    log_(u.name, '새 접수', no + ' · ' + sb.ppl.length + '명');
+    mail_(sb, u);
+  } finally { lock.releaseLock(); }
+  return Object.assign({ ok: true, no: sb.no }, bundle_(u.acads));
+}
+
+/** 내 접수 저장 (인원 추가·정보 수정·입금 신고·신고 수정·취소) — 내가 낸 접수만 */
+function saveSubs(token, subs) {
+  const u = who_(token);
+  const lock = lock_();
+  try {
+    const all = loadSubs_();
+    // 다른 화면(원장님 PC·폰 등)에서 그 사이 먼저 고쳤으면 덮어쓰지 않고 새로 불러오게 함
+    const stale = (subs || []).filter(sb => { const cur = all.find(x => x.no === sb.no); return cur && (+cur.rev || 0) !== (+sb.rev || 0); });
+    if (stale.length) { lock.releaseLock(); return Object.assign({ ok: false, conflict: true, msg: stale.map(x => x.no).join(', ') + ' 접수를 다른 화면에서 먼저 고쳤어요. 최신 내용으로 다시 불러왔으니 한 번 더 해 주세요.' }, bundle_(u.acads)); }
+    (subs || []).forEach(sb => {
+      const cur = all.find(x => x.no === sb.no);
+      if (!cur) throw new Error(sb.no + ' 접수를 찾지 못했어요.');
+      if (cur.owner !== u.name) throw new Error(sb.no + '는 ' + cur.owner + ' 선생님이 낸 접수라 고칠 수 없어요.');
+      sb.acad = cur.acad; sb.owner = cur.owner; sb.createdAt = cur.createdAt; sb.no = cur.no; sb.reqId = cur.reqId; sb.rev = (+cur.rev || 0) + 1;
+      recalc_(sb);
+      // 새로 낸 신고에는 그때까지 확인된 금액(base)을 적어 둠 → 차액 신고를 운영진 확인 전까지 지킴
+      sb.ppl.forEach(p => { const c = cur.ppl.find(x => x.id === p.id); const row = p.rep && p.rep.rows && p.rep.rows[p.id];
+        if (p.pay === '신고' && row) { const old = c && c.rep && c.rep.rows && c.rep.rows[p.id]; if (!(c && c.pay === '신고' && c.rep && c.rep.id === p.rep.id && old)) row.base = c ? (+c.paidAmt || 0) : 0; else row.base = old.base !== undefined ? old.base : (+c.paidAmt || 0); } });
+      // 입금 확인은 운영진 칸 기준 (선생님 화면 값 무시)
+      const admin = adminMap_(); applyAdmin_(sb, admin);
+      // 운영진이 정한 것은 선생님 화면의 옛 값으로 되돌리지 않음
+      cur.ppl.forEach(c => {
+        const p = sb.ppl.find(x => x.id === c.id); if (!p) return;
+        if (c.status === '취소' && c.refund) { p.status = '취소'; p.refund = c.refund; }
+        if (c.status === '정상' && c.cxRejected && p.status === '취소요청' && !(p.cxReqAt && p.cxReqAt > c.cxRejected)) { p.status = '정상'; }
+        p.cxRejected = c.cxRejected; p.rejected = c.rejected;
+        if (p.pay === '신고' && p.rep && (c.rejected || []).some(r => r.id === p.rep.id)) { p.pay = '전'; delete p.rep; }
+      });
+      // 입금 신고 기록 남기기 (새로 생긴 신고·바뀐 신고·취소)
+      const before = {}; cur.ppl.forEach(p => before[p.id] = p);
+      sb.ppl.forEach(p => {
+        const b = before[p.id] || {};
+        const r = x => x && x.rep && x.pay === '신고' ? JSON.stringify(x.rep.rows && x.rep.rows[x.id] || [x.rep.name, x.rep.date, x.rep.amt]) : '';
+        let refund = '';
+        if (p.pay === '신고' && r(p) !== r(b)) { checkRep_(p); refund = takeRefundAcct_(p); }
+        else if (p.rep && p.rep.refund) delete p.rep.refund;
+        if (r(p) !== r(b)) {
+          const row = p.rep && p.rep.rows && p.rep.rows[p.id] || {};
+          ensureHead_(SH.RP, RP_HEAD);
+          SpreadsheetApp.getActive().getSheetByName(SH.RP).appendRow([stamp_(), p.rep ? p.rep.id : (b.rep && b.rep.id) || '', sb.no, sb.acad, u.name, p.name,
+            row.name || '', row.date || '', row.a || '', p.rep && p.rep.memo || '', p.pay === '신고' ? (b.pay === '신고' ? '신고 수정' : '새 신고') : '신고 취소', refund ? "'" + refund : '']);
+        }
+        if (p.status !== '정상' && b.status === '정상') log_(u.name, p.status === '취소' ? '취소' : '취소 요청', sb.no + ' · ' + p.name);
+      });
+      writeSub_(sb, false);
+      const i = all.indexOf(cur); all[i] = sb;
+      log_(u.name, '접수 저장', sb.no);
+    });
+    writeTeams_(all);
+  } finally { lock.releaseLock(); }
+  return Object.assign({ ok: true }, bundle_(u.acads));
+}
+
+/** 환불 요청: 계좌·진단서는 「환불요청」 시트와 드라이브 폴더에만 (접수 내용 JSON에는 넣지 않음) */
+function cancelReq(token, req) {
+  const u = who_(token);
+  const lock = lock_();
+  try {
+  const sb = loadSubs_().find(x => x.no === req.no);
+  if (!sb || sb.owner !== u.name || !u.acads.includes(sb.acad)) throw new Error('이 접수의 환불을 요청할 수 없어요.');
+  const ps = sb.ppl.filter(p => (req.ids || []).includes(p.id));
+  if (!ps.length) throw new Error('환불 요청할 사람을 찾지 못했어요.');
+  req.acad = sb.acad; req.names = ps.map(p => p.name);
+  const maxAmt = ps.reduce((t, p) => t + Math.max(0, (+p.paidAmt || 0) - (+p.dues || 0)), 0);
+  req.amt = Math.max(0, Math.min(+req.amt || 0, maxAmt));
+  if (req.amt > 0) {
+    const acct = String(req.acct || '').replace(/[^\d-]/g, ''), n = acct.replace(/-/g, '').length;
+    if (!req.bank || n < 6 || n > 20 || !String(req.holder || '').trim()) throw new Error('환불 받을 은행·계좌번호(6~20자리)·예금주를 확인해 주세요.');
+    req.acct = acct;
+  }
+  if (!String(req.why || '').trim()) throw new Error('취소 사유를 골라 주세요.');
+  let link = '';
+  if (req.file && req.file.data) {
+    const it = DriveApp.getFoldersByName('캠프 진단서 ' + CAMP_ID);
+    const folder = it.hasNext() ? it.next() : DriveApp.createFolder('캠프 진단서 ' + CAMP_ID);
+    const blob = Utilities.newBlob(Utilities.base64Decode(req.file.data), req.file.type || 'application/octet-stream',
+      `${req.acad}-${req.names.join('_')}-${Utilities.formatDate(new Date(), TZ, 'yyyyMMdd')}-${req.file.name}`);
+    link = folder.createFile(blob).getUrl();
+  }
+  ensureHead_(SH.CX, CX_HEAD);
+  SpreadsheetApp.getActive().getSheetByName(SH.CX).appendRow([stamp_(), req.no, req.acad, u.name, req.names.join(', '), req.why, req.amt || 0,
+    req.bank || '', req.acct ? "'" + req.acct : '', req.holder || '', link, '요청', '', '', (req.ids || []).join(',')]);
+  log_(u.name, '환불 요청', req.no + ' · ' + req.names.join(', '));
+  } finally { lock.releaseLock(); }
+  return { ok: true };
+}
+
+/* ---------------- 관리자 ---------------- */
+/** 「설정」 탭: 관리자 아이디·비밀번호 (비밀번호는 시트에서 직접 정함) */
+function setupAdmin_() {
+  const ss = SpreadsheetApp.getActive();
+  let sh = ss.getSheetByName('설정');
+  if (!sh) { sh = ss.insertSheet('설정'); sh.appendRow(['항목', '값', '설명']);
+    sh.appendRow(['관리자 아이디', 'admin', '관리자 화면(?page=admin) 로그인 아이디']);
+    sh.appendRow(['관리자 비밀번호', '', '여기에 비밀번호를 적어야 관리자 화면에 들어갈 수 있어요 (8자 이상)']);
+    sh.setFrozenRows(1); }
+  return sh;
+}
+function ensureSettings_() {
+  const sh = setupAdmin_();
+  const have = rows_('설정').map(r => String(r['항목']));
+  SETTINGS.forEach(r => { if (!have.includes(r[0])) sh.appendRow(r); });
+}
+function bankInfo_() { return { bank: setting_('입금 은행'), acct: setting_('입금 계좌번호'), holder: setting_('예금주'), from: setting_('입금 시작일') || '2026-10-01' }; }
+function setting_(k) { const r = rows_('설정').find(x => String(x['항목']) === k); return r ? String(r['값'] || '') : ''; }
+function ensureHead_(name, head) {
+  const sh = SpreadsheetApp.getActive().getSheetByName(name);
+  const cur = sh.getRange(1, 1, 1, Math.max(1, sh.getLastColumn())).getValues()[0].map(String);
+  head.forEach(h => { if (!cur.includes(h)) { cur.push(h); sh.getRange(1, cur.length).setValues([[h]]); } });
+}
+function adminLogin(id, pw) {
+  ensureSettings_();
+  const C = CacheService.getScriptCache(), fails = +C.get('adm_fail') || 0;
+  if (fails >= 10) return { ok: false, msg: '비밀번호를 여러 번 틀려서 5분 동안 잠겼어요. 잠시 뒤 다시 해 주세요.' };
+  const want = setting_('관리자 비밀번호');
+  if (!want || want.length < 8) return { ok: false, msg: '「설정」 탭의 관리자 비밀번호 칸에 8자 이상 비밀번호를 먼저 적어 주세요.' };
+  if (String(id).trim() !== setting_('관리자 아이디') || String(pw) !== want) { C.put('adm_fail', String(fails + 1), 300); Utilities.sleep(800); return { ok: false, msg: '아이디나 비밀번호가 맞지 않아요.' + (fails >= 6 ? ' (' + (10 - fails - 1) + '번 더 틀리면 5분 잠김)' : '') }; }
+  C.remove('adm_fail');
+  const token = Utilities.getUuid();
+  CacheService.getScriptCache().put('adm_' + token, JSON.stringify({ name: String(id).trim() }), 21600);
+  log_('관리자 ' + id, '로그인', '');
+  return Object.assign({ ok: true, token }, adminData(token));
+}
+function adm_(token) {
+  const v = CacheService.getScriptCache().get('adm_' + token);
+  if (!v) throw new Error('관리자 로그인이 끝났어요. 새로 고쳐 다시 로그인해 주세요.');
+  return JSON.parse(v);
+}
+/** 관리자 화면에 필요한 것: 모든 접수 · 운영진 칸 · 환불 요청 · 앙상블 팀 */
+function adminData(token) {
+  adm_(token);
+  const subs = loadSubs_();
+  const admin = adminMap_();
+  ensureHead_(SH.CX, CX_HEAD);
+  const cx = rows_(SH.CX).filter(r => r['접수번호']).map(r => ({ row: r._row, at: String(r['요청 일시']), no: String(r['접수번호']), acad: String(r['학원']), by: String(r['요청 교사']),
+    names: String(r['참가자']), why: String(r['사유']), amt: +r['환불 예정액'] || 0, bank: String(r['은행'] || ''), acct: String(r['계좌번호'] || ''), holder: String(r['예금주'] || ''),
+    doc: String(r['진단서'] || ''), state: String(r['처리'] || '요청'), done: dstr_(r['처리일']), memo: String(r['메모'] || ''), ids: String(r['참가자ID'] || '').split(',').filter(Boolean) }));
+  return { today: today_(), subs, admin, cx, teams: teams_(subs) };
+}
+function setAdminCols_(pid, vals) {
+  const sh = SpreadsheetApp.getActive().getSheetByName(SH.P);
+  const r = rows_(SH.P).find(x => String(x['참가자ID']) === pid);
+  if (!r) throw new Error('참가자 줄을 찾지 못했어요: ' + pid);
+  const c0 = P_HEAD.indexOf(ADMIN_COLS[0]) + 1;
+  sh.getRange(r._row, c0, 1, 3).setValues([vals]);
+  const ci = P_HEAD.indexOf('입금 상태') + 1;
+  sh.getRange(r._row, ci, 1, 1).setValues([[vals[1] ? '확인' : '']]);
+}
+/** 입금 확인 (날짜 필수). amt를 비우면 확인 취소 */
+function adminConfirm(token, items) {
+  const a = adm_(token);
+  const lock = lock_();
+  try {
+    items.forEach(it => {
+      if (it.amt > 0 && !/^\d{4}-\d{2}-\d{2}$/.test(it.date || '')) throw new Error('입금일을 선택해 주세요.');
+      setAdminCols_(it.pid, it.amt > 0 ? [it.date, it.amt, it.memo || ''] : ['', '', it.memo || '']);
+      log_('관리자 ' + a.name, it.amt > 0 ? '입금 확인' : '입금 확인 취소', it.pid + (it.amt > 0 ? ' · ' + it.date + ' · ' + it.amt : ''));
+    });
+    // 접수 탭 합계 다시 쓰기
+    const subs = loadSubs_(); const nos = [...new Set(items.map(it => it.pid.split('_')[0]))];
+    subs.filter(sb => nos.includes(sb.no)).forEach(sb => writeSubRow_(sb));
+  } finally { lock.releaseLock(); }
+  return adminData(token);
+}
+/** 입금 신고 반려: 그 사람은 다시 「입금 전」, 선생님 화면에 사유 표시 */
+function adminRejectReport(token, pid, reason) {
+  const a = adm_(token);
+  const lock = lock_();
+  try {
+    const all = loadSubs_(); const sb = all.find(x => pid.indexOf(x.no + '_') === 0); if (!sb) throw new Error('접수를 찾지 못했어요.');
+    const p = sb.ppl.find(x => x.id === pid);
+    if (!p || p.pay !== '신고' || !p.rep) throw new Error('입금 신고 상태가 아니에요.');
+    const row = p.rep.rows && p.rep.rows[p.id] || {};
+    p.rejected = (p.rejected || []).concat([{ id: p.rep.id, at: stamp_(), why: reason || '' }]);
+    p.pay = '전'; delete p.rep;
+    writeSub_(sb, false);
+    SpreadsheetApp.getActive().getSheetByName(SH.RP).appendRow([stamp_(), p.rejected.slice(-1)[0].id, sb.no, sb.acad, '관리자 ' + a.name, p.name, row.name || '', row.date || '', row.a || '', reason || '', '반려']);
+    log_('관리자 ' + a.name, '입금 신고 반려', pid + ' · ' + (reason || ''));
+  } finally { lock.releaseLock(); }
+  return adminData(token);
+}
+/** 환불 요청 처리: 완료(환불한 날 필수) / 반려 */
+function adminRefund(token, row, action, date, memo, amt) {
+  const a = adm_(token);
+  if (action === '완료' && !/^\d{4}-\d{2}-\d{2}$/.test(date || '')) throw new Error('환불한 날짜를 선택해 주세요.');
+  const lock = lock_();
+  try {
+    const sh = SpreadsheetApp.getActive().getSheetByName(SH.CX);
+    const r = rows_(SH.CX).find(x => x._row === row); if (!r) throw new Error('요청 줄을 찾지 못했어요.');
+    const h = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0];
+    const set = (k, v) => sh.getRange(row, h.indexOf(k) + 1).setValues([[v]]);
+    set('처리', action === '완료' ? '환불 완료' : '반려'); set('처리일', date || today_()); set('메모', memo || '');
+    if (action === '완료' && amt !== undefined && amt !== '') set('환불 예정액', +amt || 0);
+    const ids = String(r['참가자ID'] || '').split(',').filter(Boolean);
+    const all = loadSubs_(); const sb = all.find(x => x.no === String(r['접수번호']));
+    if (sb) {
+      sb.ppl.forEach(p => {
+        const hit = ids.length ? ids.includes(p.id) : String(r['참가자']).split(', ').includes(p.name) && p.status === '취소요청';
+        if (!hit) return;
+        if (action === '완료') { p.status = '취소'; p.refund = { date, amt: +amt || +r['환불 예정액'] || 0 }; }
+        else { p.status = '정상'; p.cxRejected = stamp_(); p.cxWhy = memo || ''; }
+      });
+      writeSub_(sb, false); writeTeams_(all);
+    }
+    log_('관리자 ' + a.name, action === '완료' ? '환불 완료' : '취소 요청 반려', String(r['접수번호']) + ' · ' + r['참가자'] + (date ? ' · ' + date : ''));
+  } finally { lock.releaseLock(); }
+  return adminData(token);
+}
+
+/* ---------------- 알림·기록 ---------------- */
+function mail_(sb, u) {
+  try {
+    const live = sb.ppl.filter(p => p.status === '정상');
+    const bill = live.reduce((t, p) => t + (+p.fee || 0) + (+p.lesson || 0) + (+p.dues || 0) + (+p.room || 0), 0);
+    const body = `${CAMP_NAME} 접수가 완료되었어요.\n\n접수번호: ${sb.no}\n학원: ${sb.acad}\n접수 교사: ${u.name}\n차수: ${sb.round}\n인원: ${live.length}명\n입금하실 금액: ${bill.toLocaleString('ko-KR')}원\n\n` +
+      live.map(p => `- ${p.name} (${p.type}) ${((+p.fee || 0) + (+p.lesson || 0) + (+p.dues || 0) + (+p.room || 0)).toLocaleString('ko-KR')}원`).join('\n') +
+      `\n\n입금한 뒤 접수 화면의 「내 접수」에서 사람별로 입금 신고를 해 주세요.`;
+    if (sb.email) MailApp.sendEmail(sb.email, `[${CAMP_NAME}] 접수 완료 ${sb.no}`, body);
+    if (ADMIN_EMAIL) MailApp.sendEmail(ADMIN_EMAIL, `[캠프 접수] ${sb.acad} ${sb.no} · ${live.length}명`, body);
+  } catch (e) { log_('시스템', '메일 실패', String(e)); }
+}
+function log_(who, what, detail) {
+  const sh = SpreadsheetApp.getActive().getSheetByName(SH.LOG);
+  if (sh) sh.appendRow([stamp_(), who, what, detail]);
+}
+
+/* ---------------- 시험용 마포스즈키 명단 (setup에서 시트로 옮긴 뒤에는 시트가 원본) ---------------- */
+const MAPO = { acad: "마포스즈키", teachers: [], students: [], paid: {} }; /* 명단은 접수 DB 시트(명단_교사·명단_학생)에 있음. 코드에는 개인정보를 넣지 않음 */

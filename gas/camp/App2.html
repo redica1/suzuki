@@ -1,0 +1,184 @@
+  const bk=bookedOf(x), booked=x.booked||bk, on=!!S.picked[x.id], sel=!!S.sel[x.id];
+  const pill = on?`<span class="pill new">명단에 추가됨</span>`:booked?(bk?`<span class="pill lock">${bk.no} · ${stampTxt(bk.at)} 접수됨${bk.by!==(S.user||{}).name?' · '+esc(bk.by)+' 선생님':''}</span>`:`<span class="pill lock">${x.bookedRound} 접수됨 · ${x.bookedBy?esc(x.bookedBy)+' 선생님':x.booked}</span>`): x.paid?`<span class="pill ok">${kind==='t'?'교사':'학생'}회비 납부${x.paidDate?' · '+x.paidDate.slice(5).replace('-','/'):''}</span>`:`<span class="pill due">회비 미납</span>`;
+  const sub = kind==='t'?`${x.role} · ${x.inst}`:`${x.birth?age(x.birth)+'세':'출생연도 없음'} · ${x.inst} · 담당 ${x.teacher||'<span style="color:var(--rosin)">미지정</span>'}`;
+  return `<li class="${booked?'locked':''}${on?' incart':''}"><input type="checkbox" id="pk_${x.id}" data-pick="${x.id}" ${on||sel?'checked':''} ${booked||on?'disabled':''} aria-label="${esc(x.name)} 선택">
+    <label class="who" for="pk_${x.id}"><b>${esc(x.name)}${dtag(x)} <span class="kind ${kind==='t'?'kt':'ks'}">${kind==='t'?'교사':'학생'}</span></b><small>${sub}</small></label>${pill}</li>`;
+}
+function typeSeg(key,owner){
+  const opts=owner==='teacher'?TEACHER_TYPES.map(t=>[t,t]):[['학생','학생'],['회원의 악기하는 자녀','악기하는 교사자녀']];
+  const cur=(S.info[key]&&S.info[key].type)||opts[0][0];
+  return `<div class="typeseg" role="group" aria-label="참가 구분">${opts.map(([v,l])=>`<button type="button" data-settype="${key}|${v}" aria-pressed="${cur===v}">${l}<span class="num">${won((FEES[v]||[])[CAMP.ri]||0)}</span></button>`).join('')}</div>`;
+}
+function headOf(key){return S.join[key]||key}
+function sibsOf(key){return Object.keys(S.join).filter(j=>S.join[j]===key)}
+function roomRow(key,name){
+  const byKey=Object.fromEntries(people().map(p=>[p.key,p]));
+  if(S.join[key]){const h=byKey[S.join[key]];const rel=h&&h.kind==='teacher'?`${esc(h.name)} 선생님의 자녀`:`${esc(h?h.name:'')}의 형제`;return `<div class="roomck sibnote"><span><b>${rel}</b> · ${esc(h?h.name:'')} 가족방에 함께 들어가요</span><button class="btn small ghost" type="button" data-unsib="${key}">연결 풀기</button></div>`}
+  const sibs=sibsOf(key).filter(k=>byKey[k]);
+  if(!S.fam.some(f=>f.link===key)&&!sibs.length) return '';
+  const heads=[key,...sibs]; const n=heads.length+S.fam.filter(f=>heads.includes(f.link)).length;
+  const fee=Math.max(0,ROOM.cap-n)*ROOM.emptyFee;
+  const isT=(byKey[key]||{}).kind==='teacher';
+  return `${sibs.length?`<div class="chips"><span class="hint" style="align-self:center">${isT?'자녀':'형제'}</span>${sibs.map(k=>`<span class="cchip">${esc(byKey[k].name)}<button type="button" data-unsib="${k}" aria-label="${esc(byKey[k].name)} 형제 연결 풀기">×</button></span>`).join('')}</div>`:''}
+  <label class="roomck" for="rm_${key}"><input type="checkbox" id="rm_${key}" data-roomck="${key}" ${S.room[key]?'checked':''}>
+    <span><b>가족방 신청</b> · ${n}명${sibs.length?` (${isT?'자녀':'형제'} ${sibs.length}명 포함)`:''}${n>ROOM.cap?` <span style="color:var(--bad)">(한 방은 ${ROOM.cap}명까지)</span>`:''}</span>
+    <span class="num">${!fee?'추가 비용 없음':S.room[key]?`<span class="pill ok">청구에 +${won(fee)}</span>`:`신청하면 +${won(fee)}`}</span></label>
+  <p class="hint" style="margin:0">가족방은 ${ROOM.cap}명 한 방 기준이에요. 빈 자리 1개마다 ${won(ROOM.emptyFee)}이 더해져요 (${ROOM.cap}명이면 추가 비용 없음).</p>`;
+}
+/* 가족 추가 버튼 + 형제 고르기 (형제는 같은 학원, 먼저 신청 명단에 추가되어 있어야 함) */
+function famChips(key,owner,name){
+  const chips=`<div class="chips"><span class="hint" style="align-self:center">${esc(name)} 가족 추가</span>${!S.join[key]?`<button class="chip" type="button" data-sibpick="${key}">+ ${owner==='teacher'?'자녀 (참가 학생)':'형제'}</button>`:''}${FAM_CHIPS[owner].map(([t,l])=>`<button class="chip" type="button" data-addfam="${key}|${t}">+ ${l}</button>`).join('')}</div>`;
+  if(S.sibOpen!==key) return chips;
+  const cands=people().filter(p=>p.kind==='student'&&p.key!==key&&!S.join[p.key]&&!sibsOf(p.key).length);
+  return chips+`<div class="sibpick"><b>${owner==='teacher'?`${esc(name)} 선생님의 자녀를 선택하세요`:`${esc(name)}의 형제를 선택하세요`}</b> <span class="hint">${owner==='teacher'?'악기를 하는 자녀는 학생으로 먼저 신청 명단에 추가해 주세요 · 「악기하는 교사자녀」 참가비로 바뀌어요 · 악기를 안 하는 자녀는 「+ 동반가족」':'같은 학원 · 신청 명단에 먼저 추가된 학생만 나와요'}</span>
+    <div class="chips">${cands.map(c=>`<button class="chip" type="button" data-sib="${key}|${c.key}">${esc(c.name)} <small>${esc(c.dtag||c.inst||'')}</small></button>`).join('')||'<span class="hint">신청 명단에 다른 학생이 없어요. 형제를 먼저 추가한 뒤 다시 눌러 주세요.</span>'}
+    <button class="btn small ghost" type="button" data-sibpick="">닫기</button></div></div>`;
+}
+function famBlock(key,name,owner){
+  const fs=S.fam.filter(f=>f.link===key);
+  return `<li class="fam"><span></span><div class="famlist">
+    ${typeSeg(key,owner)}
+    ${fs.map(f=>`<div class="famitem"><div class="famtop"><label for="fn_${f.id}"><b>${FAM_SHORT[f.type]}</b> 이름</label><span class="num">${won((FEES[f.type]||[])[CAMP.ri]||0)}</span><button class="btn small ghost" type="button" data-rmf="${f.id}" aria-label="${esc(f.name||FAM_SHORT[f.type])} 빼기">빼기</button></div>
+      <input type="text" id="fn_${f.id}" data-famname="${f.id}" value="${esc(f.name)}" placeholder="이름을 입력하세요" autocomplete="off" ${f.name?'':'class="empty"'}></div>`).join('')}
+    ${famChips(key,owner,name)}
+    ${roomRow(key,name)}
+  </div></li>`;
+}
+const PTABS=['교사','바이올린','첼로','비올라','플루트'];
+const selIds=()=>Object.keys(S.sel).filter(k=>S.sel[k]&&!S.picked[k]);
+function ptabList(){const r=roster(),me=S.user?S.user.name:'';
+  return PTABS.map(t=>{const L=t==='교사'?r.teachers:r.students.filter(x=>x.inst===t);const k=L.filter(x=>S.picked[x.id]).length;
+    return {t,n:L.length,k}}).filter(x=>x.t==='교사'||x.t==='바이올린'||x.t==='첼로'||x.n)}
+function addBtn(){const n=selIds().length;
+  return `<button class="btn primary addcart" type="button" id="addCart" ${n?'':'disabled'}>${n?`선택한 ${n}명 신청 명단에 추가`:`${S.ptab==='교사'?'선생님':'학생'}을 체크하고 신청 명단에 추가해요`}</button>`}
+function cartPanel(){
+  const r=roster();const ts=r.teachers.filter(x=>S.picked[x.id]);const ss=r.students.filter(x=>S.picked[x.id]);
+  if(!ts.length&&!ss.length) return `<div class="panel cart"><h3>신청 명단</h3><p class="hint" style="margin:0">아직 비어 있어요. 위 탭에서 체크하고 「신청 명단에 추가」를 눌러 주세요. 다른 탭으로 옮겨 가며 계속 추가할 수 있어요.</p></div>`;
+  /* 사람마다 접수 일시: 이미 접수된 사람 = 그 접수 시각, 이번에 담은 사람 = 담은 시각 (아직 접수 전) */
+  const sb=S.editNo?ALL_SUBS.find(x=>x.no===S.editNo):null;
+  const rows=[...ts.map(x=>({x,k:'교사'})),...ss.map(x=>({x,k:x.inst||'기타'}))].map(o=>{const p=sb&&sb.ppl.find(q=>q.id===sb.no+'_'+o.x.id&&q.status!=='취소');
+    return {...o,old:!!p,bn:p?(p.batch||1):nextBatch(),at:p?(p.addAt||sb.date+' 00:00'):(S.cartAt[o.x.id]||'9999')}}).sort((a,b)=>(a.old-b.old)||(a.at>b.at?-1:a.at<b.at?1:0)||a.x.name.localeCompare(b.x.name,'ko'));
+  const nNew=rows.filter(o=>!o.old).length;
+  return `<div class="panel cart"><h3>신청 명단 <span class="hint">교사 ${ts.length}명 · 학생 ${ss.length}명${S.editNo&&nNew?` · 새로 추가 ${nNew}명`:''}</span></h3>
+    <p class="hint" style="margin:0">가장 최근에 추가하거나 접수한 사람이 위에 있어요. 참가 구분, 함께 오는 가족, 형제, 가족방은 「다음」을 눌러 참가 정보에서 넣어요.</p>
+    <div class="tbl"><table class="ctbl"><thead><tr><th class="num">#</th><th>이름</th><th>구분</th><th>접수 일시</th><th></th></tr></thead><tbody>
+    ${rows.map((o,i)=>`<tr class="${S.editNo?'bt '+btCls(o.bn):''}"><td class="num cap">${i+1}</td><td><b>${esc(o.x.name)}</b>${dtag(o.x)}</td><td>${esc(o.k)}</td>
+      <td>${o.old?`<span class="bdot"></span><span class="num">${stampTxt(o.at)}</span> <small class="hint">${o.bn===1?'처음 접수':'추가 '+(o.bn-1)}</small>`:`${S.editNo?'<span class="bdot"></span>':''}<span class="num">${S.cartAt[o.x.id]?stampTxt(S.cartAt[o.x.id]):''}</span> <small class="ctagn">${S.editNo?`새로 추가 (추가 ${o.bn-1})`:'추가 · 아직 접수 전'}</small>`}</td>
+      <td class="r"><button class="btn small ghost" type="button" data-uncart="${o.x.id}" aria-label="${esc(o.x.name)} 빼기">빼기</button></td></tr>`).join('')}
+    </tbody></table></div></div>`;
+}
+function rosterList(){
+  const r=roster(), me=S.user?S.user.name:'', q=(S.rq||'').trim();
+  const T=S.ptab==='교사';
+  const all=(T?r.teachers.map(x=>({x,k:'t'})):r.students.filter(x=>x.inst===S.ptab&&(!S.mine||x.teacher===me)).map(x=>({x,k:'s'})))
+    .filter(o=>!q||o.x.name.includes(q)).sort((a,b)=>a.x.name.localeCompare(b.x.name,'ko'));
+  if(all.length) return `${q?`<p class="hint">「${esc(q)}」 ${all.length}명</p>`:''}<ul class="roster">${all.map(o=>rosterRow(o.x,o.k)).join('')}</ul>`;
+  if(q) return `<p class="hint">${esc(S.ptab)} 탭에 「${esc(q)}」(이)라는 사람이 없어요. 다른 탭도 확인해 보세요.${T?'':' 학생이면 아래 「명단에 없는 학생 추가」를 눌러 주세요.'}</p>`;
+  return `<p class="hint">${T?'이 학원 교사가 명단에 없어요.':`${esc(S.ptab)} 학생이 명단에 없어요.`}</p>`}
+function vStep2(){
+  const r=roster(), t=totals();
+  const me=S.user?S.user.name:'';
+  const unpaidPicked = people().filter(p=>!p.paid && p.kind!=='family');
+  const studentsForLink = people().filter(p=>p.kind==='student');
+  return `<section class="sec"><h2>${esc(S.acad)} 참가자 선택</h2>
+  <p class="lede">탭에서 교사·학생을 체크하고 「신청 명단에 추가」를 눌러요. 탭을 옮겨 가며 여러 번 추가할 수 있어요. 가족은 다음 단계에서 넣어요.</p>
+  <div class="panel">
+    <div class="itabs" role="tablist" aria-label="교사·악기">${ptabList().map(o=>`<button type="button" role="tab" data-ptab="${o.t}" aria-pressed="${S.ptab===o.t}">${o.t}<small>${o.k?o.k+'/':''}${o.n}</small></button>`).join('')}</div>
+    <p class="hint" style="margin:0">가나다순 · 탭 숫자는 「추가한 수/전체」</p>
+    <div class="spread"><div class="legend"><span><span class="pill ok">회비 납부</span> 바로 접수</span><span><span class="pill due">회비 미납</span> 연회비 함께 입금</span><span><span class="pill lock">접수됨</span> 이미 접수한 사람</span></div>
+      <div class="row" ${S.ptab==='교사'?'hidden':''}><label class="mine" for="mine"><input type="checkbox" id="mine" ${S.mine?'checked':''}>내 학생만 보기 (담당 ${esc(me)})</label></div></div>
+    <input type="search" id="rq" value="${esc(S.rq||'')}" placeholder="이름으로 찾기 (학생·교사)" autocomplete="off" aria-label="이름으로 찾기">
+    <div id="rosterList">${rosterList()}</div>
+    ${addBtn()}
+    ${true?`
+    ${S.extra.length?`<div class="xhead">명단에 없어 추가한 학생 ${S.extra.length}명 <span class="hint">체크한 학생만 접수돼요 · 연회비 30,000원이 함께 청구돼요 · 「빼기」는 목록에서 지워요</span></div><ul class="roster">${S.extra.map(s=>`<li><input type="checkbox" id="xk_${s.id}" ${s.on!==false?'checked':''} data-xon="${s.id}" aria-label="${esc(s.name)} 선택"><label class="who" for="xk_${s.id}"><b>${esc(s.name)} <span class="kind ks">학생</span></b><small>${age(s.birth)}세 · ${s.inst} · 담당 ${esc(s.teacher)}</small></label><span class="row" style="flex-wrap:nowrap"><span class="pill new">신규 추가</span><button class="btn small ghost" type="button" data-rmx="${s.id}">빼기</button></span></li>`).join('')}</ul>`:''}
+    ${S.showNew?`<div class="adder"><b>명단에 없는 학생 추가</b>
+      <p class="hint">늦게 들어온 학생은 여기서 추가하고 연회비 30,000원을 캠프비와 함께 입금해 주세요. 운영진이 확인하면 정식 접수돼요.</p>
+      <div class="grid2"><label class="f" for="nN"><span>학생 이름<span class="req">*</span></span><input type="text" id="nN"></label>
+      <label class="f" for="nB"><span>출생연도<span class="ex">(ex 2020)</span><span class="req">*</span></span><input type="text" id="nB" inputmode="numeric" maxlength="4"></label>
+      <label class="f" for="nI">전공<select id="nI"><option>바이올린</option><option>첼로</option><option>비올라</option><option>플루트</option></select></label>
+      <div class="f"><span>시작 연월</span><div class="pair"><select id="nSy" aria-label="시작 년도"><option value="">년도</option>${Array.from({length:12},(_,i)=>2026-i).map(y=>`<option>${y}</option>`).join('')}</select><select id="nSm" aria-label="시작 월"><option value="">월</option>${Array.from({length:12},(_,i)=>`<option value="${String(i+1).padStart(2,'0')}">${i+1}월</option>`).join('')}</select></div></div>
+      <label class="f" for="nT"><span>담당 교사<span class="req">*</span></span><select id="nT">${opts(teachersFor('바이올린'),'','선택')}</select></label></div>
+      <div class="row"><button class="btn primary small" type="button" id="addNew">학생 추가</button><button class="btn small ghost" type="button" id="cancelNew">닫기</button><span class="err" id="nErr"></span></div></div>`
+    :`<button class="btn ghost" type="button" id="openNew">+ 명단에 없는 학생 추가</button>`}`:''}
+  </div>
+  ${cartPanel()}
+  ${unpaidPicked.length?`<div class="note"><b>회비확인대기 ${unpaidPicked.length}명</b> · ${unpaidPicked.map(p=>esc(p.name)).join(', ')}<br>연회비를 캠프비와 같은 계좌로 함께 입금해 주세요. 운영진이 입금을 확인하면 정식 접수로 바뀌어요.</div>`:''}
+  </section>`;
+}
+/* 담당 교사: 학생 악기와 같은 전공의 교사만 (없으면 전체) */
+function teachersFor(inst,cur){const all=roster().teachers;const L=all.filter(t=>t.inst===inst);const out=(L.length?L:all).map(t=>t.name);if(cur&&!out.includes(cur))out.push(cur);return out}
+function opts(list,val,ph){ return `<option value="">${ph}</option>`+list.map(x=>`<option ${x===val?'selected':''}>${esc(x)}</option>`).join('') }
+function duesTxt(p){const r=roster();const x=(p.kind==='teacher'?r.teachers:r.students).find(y=>y.id===p.key)||{};
+  return p.kind==='teacher'?`교사회비 납부${x.dueAmt?' '+won(x.dueAmt):''}${x.paidDate?' · '+x.paidDate.replace(/-/g,'.'):''}`:`학생회비 납부 ${won(x.paidAmt||CAMP.studentDues)}${x.paidDate?' · '+x.paidDate.replace(/-/g,'.'):''}`}
+function pCard(p){
+  const i=info(p), f=feeOf(p), plays=PLAYS.has(i.type);
+  const instKey = PROGRESS[p.inst]?p.inst:'기타';
+  const types = p.kind==='teacher'?TEACHER_TYPES:p.kind==='student'?['학생','회원의 악기하는 자녀']:FAMILY_TYPES;
+  const songs = SONGS[p.inst]||[];
+  const eb=S.editNo?editBatch(p.key):null, ecls=S.editNo?(eb?` bt ${btCls(eb)} old`:` bt ${btCls(nextBatch())} isnew`):'';
+  const etag=S.editNo?(eb?`<span class="etag">${eb===1?'처음 접수':'추가 '+(eb-1)} · ${esc(stampTxt((ALL_SUBS.find(x=>x.no===S.editNo).ppl.find(q=>q.id===S.editNo+'_'+p.key)||{}).addAt))} · 이미 접수됨</span>`:`<span class="etag new">새로 추가 (추가 ${nextBatch()-1}) · 입력할 사람</span>`):'';
+  return `<article class="pcard${ecls}" id="card_${p.key}">${etag}<header><div><h3>${esc(p.name)}${dtag(p)}</h3><small>${esc(p.inst||'악기 없음')} · ${esc(p.sub)}${p.kind==='student'&&i.teacher?` · 담당 ${esc(i.teacher)}`:''}</small></div>
+    ${p.kind==='family'?'':p.paid?`<span class="pill ok" title="연회비 명단 기준">${duesTxt(p)}</span>`:`<span class="pill due">회비확인대기 · 연회비 함께 입금</span>`}</header>
+   <div class="body">
+    <div class="f"><span>참가자 구분</span>${p.kind==='family'?`<select id="ty_${p.key}" data-f="type" data-k="${p.key}">${types.map(x=>`<option ${x===i.type?'selected':''}>${x}</option>`).join('')}</select>`:typeSeg(p.key,p.kind==='teacher'?'teacher':'student')}</div>
+    ${p.kind==='family'?`<div class="row" style="justify-content:flex-end"><button class="btn small ghost" type="button" data-rmf="${p.key}">이 가족 빼기</button></div><label class="f" for="fc_${p.key}">가족 이름<input type="text" id="fc_${p.key}" data-famname="${p.key}" value="${esc(S.fam.find(x=>x.id===p.key)?.name||'')}" placeholder="이름을 넣어 주세요"></label>`:''}
+    ${p.kind==='student'?`<div class="pair"><label class="f" for="tc_${p.key}"><span>담당 교사<span class="req">*</span></span><select id="tc_${p.key}" data-f="teacher" data-k="${p.key}" ${i.teacher?'':'style="border-color:var(--rosin)"'}>${opts(teachersFor(p.inst,i.teacher),i.teacher,roster().teachers.some(t=>t.inst===p.inst)?`${p.inst} 선생님 중에서 선택해 주세요`:'담당 교사를 선택해 주세요')}</select></label>
+      <label class="f" for="ag_${p.key}"><span>출생연도<span class="ex">(ex ${p.kind==='student'?'2020':'1985'})</span>${p.kind==='student'?'<span class="req">*</span>':''}</span><input type="text" id="ag_${p.key}" data-f="by" data-k="${p.key}" inputmode="numeric" maxlength="4" value="${esc(i.by)}" ${yearBad(p,i.by)?'class="empty"':''}></label></div>
+    <div class="pair"><div class="f" style="display:grid;gap:4px;justify-items:start"><span>성별<span class="req">*</span></span><div class="seg" role="group" aria-label="${esc(p.name)} 성별" style="width:max-content">${['남','여'].map(g=>`<button type="button" data-gender="${p.key}|${g}" aria-pressed="${i.gender===g}">${g==='남'?'남성':'여성'}</button>`).join('')}</div></div>
+      ${plays?`<label class="f" for="pg_${p.key}"><span>현재 진도<span class="req">*</span></span><select id="pg_${p.key}" data-f="prog" data-k="${p.key}" ${i.prog?'':'class="empty"'}>${opts(PROGRESS[instKey],i.prog,'진도를 선택해 주세요')}</select></label>`:''}</div>`:`<div class="pair"><label class="f" for="ag_${p.key}"><span>출생연도<span class="ex">(ex ${p.kind==='student'?'2020':'1985'})</span>${p.kind==='student'?'<span class="req">*</span>':''}</span><input type="text" id="ag_${p.key}" data-f="by" data-k="${p.key}" inputmode="numeric" maxlength="4" value="${esc(i.by)}" ${yearBad(p,i.by)?'class="empty"':''}></label>
+      <div class="f" style="display:grid;gap:4px;justify-items:start"><span>성별<span class="req">*</span></span><div class="seg" role="group" aria-label="${esc(p.name)} 성별" style="width:max-content">${['남','여'].map(g=>`<button type="button" data-gender="${p.key}|${g}" aria-pressed="${i.gender===g}">${g==='남'?'남성':'여성'}</button>`).join('')}</div></div></div>`}
+    ${plays?(p.kind==='teacher'?`
+    <div class="grp"><div class="spread"><span class="grp-h">추가레슨 · 마스터클래스</span><div class="seg"><button type="button" data-ext="${p.key}|0" aria-pressed="${!i.ext}">신청 안 함</button><button type="button" data-ext="${p.key}|1" aria-pressed="${!!i.ext}">신청</button></div></div>
+    ${i.ext?`<label class="f" for="ls_${p.key}">추가 개인레슨<select id="ls_${p.key}" data-f="lessons" data-k="${p.key}">${Array.from({length:CAMP.lessonMax+1},(_,n)=>`<option value="${n}" ${n==i.lessons?'selected':''}>${n?`${n}회 · ${won(n*CAMP.lessonFee)}`:'신청 안 함'}</option>`).join('')}</select></label>
+    ${PROF[p.inst]?`<div class="pair">
+      <label class="f" for="p1_${p.key}">선호 교수 1 <span class="hint">${i.lessons?'선택':'추가레슨 신청 시'}</span><select id="p1_${p.key}" data-f="p1" data-k="${p.key}" ${i.lessons?'':'disabled'}>${opts(PROF[p.inst],i.p1,'없음')}</select></label>
+      <label class="f" for="p2_${p.key}">선호 교수 2 <span class="hint">${i.lessons?'선택':'추가레슨 신청 시'}</span><select id="p2_${p.key}" data-f="p2" data-k="${p.key}" ${i.lessons?'':'disabled'}>${opts(PROF[p.inst].filter(x=>x!==i.p1),i.p2,'없음')}</select></label></div>`:''}
+    ${mcOf(p.inst).length?`<div class="grp f" style="display:grid;gap:6px"><span style="color:var(--muted);font-weight:500;font-size:13.5px">${p.inst} 마스터클래스 <span class="hint">교수마다 단가가 달라요 · 기본 레슨과 함께 신청 불가 · 복수 신청 가능</span></span>
+      <div class="checks">${mcOf(p.inst).map(m=>`<label><input type="checkbox" data-mc="${esc(m.n)}" data-k="${p.key}" ${i.mc.includes(m.n)?'checked':''}>${esc(m.n)} <span class="hint">${m.min}분 · ${won(m.fee)}</span></label>`).join('')}</div></div>`:''}`:''}</div>
+    `:`
+    <label class="f" for="ls_${p.key}">추가 개인레슨<select id="ls_${p.key}" data-f="lessons" data-k="${p.key}">${Array.from({length:CAMP.lessonMax+1},(_,n)=>`<option value="${n}" ${n==i.lessons?'selected':''}>${n?`${n}회 · ${won(n*CAMP.lessonFee)}`:'신청 안 함'}</option>`).join('')}</select></label>
+    ${PROF[p.inst]?`<div class="pair">
+      <label class="f" for="p1_${p.key}">선호 교수 1 <span class="hint">${i.lessons?'선택':'추가레슨 신청 시'}</span><select id="p1_${p.key}" data-f="p1" data-k="${p.key}" ${i.lessons?'':'disabled'}>${opts(PROF[p.inst],i.p1,'없음')}</select></label>
+      <label class="f" for="p2_${p.key}">선호 교수 2 <span class="hint">${i.lessons?'선택':'추가레슨 신청 시'}</span><select id="p2_${p.key}" data-f="p2" data-k="${p.key}" ${i.lessons?'':'disabled'}>${opts(PROF[p.inst].filter(x=>x!==i.p1),i.p2,'없음')}</select></label></div>`:''}
+    <div class="grp"><span class="grp-h">음악회</span>
+    <label class="f" for="cc_${p.key}">참가할 음악회<select id="cc_${p.key}" data-f="concert" data-k="${p.key}">${['없음','오후','트와일라잇','이브닝'].map(x=>`<option value="${x}" ${x===i.concert?'selected':''}>${x==='없음'?'참가 안 함':x}</option>`).join('')}</select></label>
+    ${i.concert!=='없음'?`<div class="sub">
+      ${i.concert==='오후'?`<p class="hint">오후 음악회: 10권 이하는 스즈키 교재 곡만, 10권 이상은 재현부까지만 연주해요.</p>`:''}
+      ${!i.other?`<label class="f" for="sg_${p.key}">연주곡<select id="sg_${p.key}" data-f="song" data-k="${p.key}">${opts(songs,i.song,songs.length?'곡을 선택해 주세요':'목록이 없어요. 아래에 직접 입력해 주세요')}</select></label>`:''}
+      <div class="checks"><label><input type="checkbox" data-other="${p.key}" ${i.other?'checked':''}>목록에 없는 곡이에요</label></div>
+      ${i.other?`<div class="grid2"><label class="f" for="oc_${p.key}">작곡가<input type="text" id="oc_${p.key}" data-f="oc" data-k="${p.key}" value="${esc(i.oc)}"></label>
+      <label class="f" for="ot_${p.key}">곡명 (원어로 정확히)<input type="text" id="ot_${p.key}" data-f="ot" data-k="${p.key}" value="${esc(i.ot)}"></label></div>`:''}
+    </div>`:''}
+    </div>
+    ${mcOf(p.inst).length?`<div class="grp f" style="display:grid;gap:6px"><span style="color:var(--muted);font-weight:500;font-size:13.5px">${p.inst} 마스터클래스 <span class="hint">교수마다 단가가 달라요 · 기본 레슨과 함께 신청 불가 · 복수 신청 가능</span></span>
+      <div class="checks">${mcOf(p.inst).map(m=>`<label><input type="checkbox" data-mc="${esc(m.n)}" data-k="${p.key}" ${i.mc.includes(m.n)?'checked':''}>${esc(m.n)} <span class="hint">${m.min}분 · ${won(m.fee)}</span></label>`).join('')}</div></div>`:''}
+`):`<p class="hint">${p.kind==='family'?`${esc(people().find(x=>x.key===p.link)?.name||'')}의 가족으로 접수돼요. 레슨·음악회 질문은 없어요.`:'이 구분은 레슨·음악회 신청이 없어요.'}</p>`}
+    ${p.kind!=='family'?`<div class="famadd">${(()=>{const fs=people().filter(x=>x.kind==='family'&&x.link===p.key);return fs.length?`<div class="famnest"><div class="grp-h">${esc(p.name)}의 가족 ${fs.length}명</div>${fs.map(pCard).join('')}</div>`:''})()}${famChips(p.key,p.kind==='teacher'?'teacher':'student',p.name)}${roomRow(p.key,p.name)}</div>`:''}
+    <div class="fee-line"><span>${ROUNDS[CAMP.ri][0]} ${esc(i.type==='회원의 악기하는 자녀'?'악기하는 교사자녀':i.type)} ${won(f.base)}${f.les?` + 레슨 ${won(f.les)}`:''}${f.mc?` + 마스터클래스 ${won(f.mc)}`:''}${f.dues?` + 연회비 ${won(f.dues)}`:''}${(()=>{const tm=teams().find(x=>x.rep.key===p.key);return tm?` + 가족방(${tm.n}명) ${won(tm.fee)}`:''})()}</span><b class="num">${won(f.total+((teams().find(x=>x.rep.key===p.key)||{}).fee||0))}</b></div>
+   </div></article>`;
+}
+function vStep3(){
+  const ps=people();
+  return `<section class="sec"><h2>참가 정보 입력</h2>
+  ${S.editNo?`<div class="note info">${S.editNo} 고치는 중 · <b>색이 칠해진 「새로 추가」 카드</b>가 이번에 정보를 넣을 사람이에요. 회색 카드는 이미 접수된 사람이라 필요할 때만 고치면 돼요.</div>`:''}
+  <p class="lede">이름·악기·담당 교사와 학생 출생연도는 명단에서 가져왔어요. 모든 참가자의 출생연도와 성별을 확인하고, 진도·레슨·음악회를 선택해 주세요.</p>
+  ${missingProg().length?`<div class="note">현재 진도를 선택해 주세요: ${missingProg().map(p=>esc(p.name)).join(', ')}</div>`:''}
+  ${missingBasic().length?`<div class="note">성별(모두)과 학생 출생연도를 넣어 주세요: ${missingBasic().map(p=>esc(p.name)).join(', ')}</div>`:''}
+  ${missingTeacher().length?`<div class="note">담당 교사가 비어 있는 학생: ${missingTeacher().map(p=>esc(p.name)).join(', ')}</div>`:''}
+  ${S.fam.some(f=>!f.name.trim())?`<div class="note">가족 이름을 넣어 주세요: ${S.fam.filter(f=>!f.name.trim()).map(f=>{const o=people().find(p=>p.key===f.link);return `${esc(o?o.name:'')}의 ${FAM_SHORT[f.type]}`}).join(', ')}</div>`:''}
+  ${teams().some(x=>x.over)?`<div class="note">가족방은 한 방에 ${ROOM.cap}명까지예요: ${teams().filter(x=>x.over).map(x=>`${esc(x.rep.name)} 가족 ${x.n}명`).join(', ')}</div>`:''}
+  ${S.editOnly?`<div class="note info spread"><span><b>${S.editOnly.length}명만 고치는 중</b> · ${ps.filter(p=>S.editOnly.includes(p.key)).map(p=>esc(p.name)).join(', ')}</span><button class="btn small ghost" type="button" id="showAllCards">모두 보기</button></div>`:''}
+  ${ps.filter(p=>p.kind!=='family'&&(!S.editOnly||S.editOnly.includes(p.key))).map(pCard).join('')}
+  </section>`;
+}
+const ENS_KEY='sz-ens-27w';
+function ensTeams(){return ENS}
+function ensApply(no){let L=ensTeams().filter(t=>t.no!==no&&t.rep!==S.acad);
+  L=L.map(t=>({...t,acads:(t.acads||[]).filter(a=>a!==S.acad)}));
+  if(S.ens.on&&(S.ens.group||'').trim())L.push({name:S.ens.group.trim(),rep:S.acad,acads:S.ens.acads||[],no});
+  if(S.ens.member&&S.ens.joinNo){const t=L.find(x=>x.no===S.ens.joinNo);if(t)t.acads=[...new Set([...(t.acads||[]),S.acad])]}
+  ensSave(L)}
+function ensSave(L){ENS=L} /* 화면 미리보기용 · 진짜 팀 목록은 서버가 접수 내용에서 다시 만듦 */
+const teamOf=a=>ensTeams().find(t=>t.rep===a||(t.acads||[]).includes(a));
+/* 「대표가 이미 있어요」: 이미 신청된 팀에서 고르거나, 아직 신청 전이면 대표 학원 이름을 적음 */

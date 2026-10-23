@@ -1,0 +1,141 @@
+/**
+ * 캠프 접수 자동 반영 도우미 (2026-10-23)  — 이 파일은 깃허브에 보관만 하는 사본. 실제로는 「캠프접수 자동 반영 도우미」 앱스크립트의 Code.gs
+ *
+ * 코드 원본: 깃허브 redica1/suzuki 의 gas/camp/ 폴더 (Claude 가 고쳐서 올림, 개인정보 없음)
+ *
+ * ■ 평소: 5분마다 깃허브 gas/camp/ 를 보고 바뀌었으면 → 테스트(STG) 앱에만 반영 (같은 주소, 새 버전)
+ * ■ 메인 반영: STG 에서 확인이 끝나면 releaseNow (또는 RELEASE_AT 에 시각 적고 scheduleRelease)
+ *      ① 메인 시트 백업 사본 ② STG 와 같은 코드(깃허브 같은 커밋)를 메인 앱 새 버전으로 같은 주소에 배포 ③ 결과 메일
+ *   문제가 생기면 rollback (바로 전 메인 버전으로, 시트 데이터는 그대로)
+ *
+ * ■ 처음 한 번
+ *   1) 프로젝트 설정 › Google Cloud 프로젝트 › 프로젝트 변경 → 1057506662611 (교사연수 도우미와 같은 suzuki-deploy)
+ *   2) 프로젝트 설정 › 「appsscript.json 매니페스트 파일 표시」 → appsscript.json 에 아래 MANIFEST 붙여넣기
+ *   3) 아래 STG.scriptId · PROD.scriptId 채우기 (각 앱스크립트 › 프로젝트 설정 › 스크립트 ID)
+ *   4) deployStgNow 실행 → 권한 허용 → 로그에 「배포 완료」 확인 → setupTrigger 실행
+ *
+ * MANIFEST:
+ * {"timeZone":"Asia/Seoul","runtimeVersion":"V8","exceptionLogging":"STACKDRIVER",
+ *  "oauthScopes":["https://www.googleapis.com/auth/script.projects","https://www.googleapis.com/auth/script.deployments",
+ *   "https://www.googleapis.com/auth/drive","https://www.googleapis.com/auth/script.external_request",
+ *   "https://www.googleapis.com/auth/script.scriptapp","https://www.googleapis.com/auth/script.send_mail"]}
+ */
+const SRC = 'https://raw.githubusercontent.com/redica1/suzuki/main/gas/camp/';
+const STG = {
+  key: 'stg', name: '캠프 접수 (테스트 STG)',
+  scriptId: '',                                                                     // ← [STG] 2027 겨울캠프접수 › 프로젝트 설정 › 스크립트 ID
+  deploymentId: 'AKfycby2WK6m-LkmOgUM3V2P_yA0f2kobvlfJw7qmNE36Tzxg6xvj6dQPKJuVFmT68zP7_55'
+};
+const PROD = {
+  key: 'prod', name: '캠프 접수 (메인)',
+  scriptId: '',                                                                     // ← 2027 겨울캠프접수 › 프로젝트 설정 › 스크립트 ID
+  deploymentId: 'AKfycbzrzYgEsPnHVcBIjobN9xB6nGBcZ7nPYMX7hDtx3OoI7WYokszGDLhcO0lHWYz9rWAt7w',
+  sheetId: '17lM8Gq23Pe40o9f2oi9wuZoJ15vGvt4aCyULDyjj_mA'                          // 메인 시트 (반영 전에 백업)
+};
+const RELEASE_AT = '';   // 예약 반영 시각 예: '2026-12-01 02:00' (서울)
+
+const now_ = () => Utilities.formatDate(new Date(), 'Asia/Seoul', 'yyyy-MM-dd HH:mm');
+const P_ = () => PropertiesService.getScriptProperties();
+const typeOf_ = n => /\.html$/.test(n) ? 'HTML' : /\.(js|gs)$/.test(n) ? 'SERVER_JS' : '';
+
+function setupTrigger() {
+  ScriptApp.getProjectTriggers().filter(t => t.getHandlerFunction() === 'checkStg').forEach(t => ScriptApp.deleteTrigger(t));
+  ScriptApp.newTrigger('checkStg').timeBased().everyMinutes(5).create();
+  Logger.log('5분마다 깃허브를 보고 바뀌면 STG 에 반영하도록 켰어요.');
+}
+
+/** 5분마다: 깃허브 코드가 바뀌었으면 STG 에 반영 */
+function checkStg() {
+  need_(STG);
+  const src = fetchSrc_();
+  if (src.hash === P_().getProperty('hash_stg')) return;
+  deployFiles_(STG, src, '자동 반영');
+  P_().setProperty('hash_stg', src.hash);
+}
+function deployStgNow() { need_(STG); const src = fetchSrc_(); deployFiles_(STG, src, '바로 반영'); P_().setProperty('hash_stg', src.hash); }
+
+/* ---------- 메인 반영 ---------- */
+function releaseNow() { release(); }
+function scheduleRelease() {
+  need_(PROD);
+  const m = String(RELEASE_AT).match(/^(\d{4})-(\d{2})-(\d{2})\s+(\d{1,2}):(\d{2})$/);
+  if (!m) throw new Error("RELEASE_AT 에 '2026-12-01 02:00' 처럼 시각을 적어 주세요.");
+  const at = new Date(m[1] + '-' + m[2] + '-' + m[3] + 'T' + ('0' + m[4]).slice(-2) + ':' + m[5] + ':00+09:00');
+  if (at.getTime() < Date.now() + 60000) throw new Error('지금보다 나중 시각을 적어 주세요.');
+  cancelRelease(); ScriptApp.newTrigger('release').timeBased().at(at).create(); P_().setProperty('releaseAt', RELEASE_AT);
+  Logger.log('예약했어요: ' + RELEASE_AT);
+}
+function cancelRelease() { ScriptApp.getProjectTriggers().filter(t => t.getHandlerFunction() === 'release').forEach(t => ScriptApp.deleteTrigger(t)); P_().deleteProperty('releaseAt'); }
+
+function release() {
+  need_(PROD);
+  const lock = LockService.getScriptLock(); if (!lock.tryLock(60000)) throw new Error('다른 반영이 진행 중이에요.');
+  const log = [];
+  try {
+    const f = DriveApp.getFileById(PROD.sheetId);
+    const b = f.makeCopy('[백업] ' + f.getName() + ' ' + now_());
+    log.push('메인 시트 백업: ' + b.getName() + ' (' + b.getUrl() + ')');
+    const prev = currentVersion_(PROD);
+    const src = fetchSrc_();
+    if (P_().getProperty('hash_stg') && src.hash !== P_().getProperty('hash_stg')) log.push('주의: 깃허브 코드가 마지막 STG 반영 뒤에 또 바뀌었어요. (그래도 지금 코드로 반영)');
+    const v = deployFiles_(PROD, src, '메인 반영 (STG 확인 코드)');
+    P_().setProperty('prevVersion', String(prev));
+    log.push('메인 앱 버전 ' + prev + ' → ' + v + ' (같은 주소)');
+  } catch (e) { log.push('실패: ' + e.message); throw e; }
+  finally {
+    lock.releaseLock(); cancelRelease();
+    const body = log.join('\n') + '\n\n되돌리려면 도우미에서 rollback 을 실행하세요.';
+    Logger.log(body);
+    try { MailApp.sendEmail(Session.getEffectiveUser().getEmail(), '[캠프 접수] 메인 반영 결과 ' + now_(), body); } catch (x) {}
+  }
+}
+function rollback() {
+  const prev = +P_().getProperty('prevVersion'); if (!prev) throw new Error('되돌릴 이전 버전 기록이 없어요.');
+  const cur = currentVersion_(PROD);
+  api_(PROD, 'put', '/deployments/' + PROD.deploymentId, { deploymentConfig: { versionNumber: prev, manifestFileName: 'appsscript', description: '되돌림 ' + now_() } });
+  Logger.log('메인 앱을 버전 ' + cur + ' → ' + prev + ' 로 되돌렸어요.');
+}
+function status() {
+  const out = [];
+  [STG, PROD].forEach(t => out.push(t.name + ': ' + (t.scriptId ? '버전 ' + currentVersion_(t) : '스크립트 ID 비어 있음')));
+  out.push('예약: ' + (P_().getProperty('releaseAt') || '없음') + ' / 되돌릴 버전: ' + (P_().getProperty('prevVersion') || '없음'));
+  Logger.log(out.join('\n'));
+}
+
+/* ---------- 내부 ---------- */
+function need_(t) { if (!t.scriptId || !t.deploymentId) throw new Error(t.name + ' 의 scriptId 를 먼저 채워 주세요.'); }
+
+/** 깃허브에서 files.json 에 적힌 파일을 모두 받아 옴 (캐시 피하려고 주소 뒤에 시각) */
+function fetchSrc_() {
+  const get = n => { const r = UrlFetchApp.fetch(SRC + n + '?t=' + Date.now(), { muteHttpExceptions: true });
+    if (r.getResponseCode() !== 200) throw new Error('깃허브에서 ' + n + ' 를 못 받았어요 (' + r.getResponseCode() + ')'); return r.getContentText('UTF-8'); };
+  const names = JSON.parse(get('files.json'));
+  const files = names.map(n => ({ n, src: get(n) }));
+  if (!files.some(f => f.n === 'Code.js') || !files.some(f => f.n === 'Index.html')) throw new Error('Code.js · Index.html 이 없어요.');
+  const hash = Utilities.base64Encode(Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, files.map(f => f.n + '\n' + f.src).join('\n\u0000\n'), Utilities.Charset.UTF_8));
+  return { files, hash };
+}
+
+function api_(t, method, path, body) {
+  const res = UrlFetchApp.fetch('https://script.googleapis.com/v1/projects/' + t.scriptId + path, {
+    method, contentType: 'application/json', payload: body ? JSON.stringify(body) : undefined,
+    headers: { Authorization: 'Bearer ' + ScriptApp.getOAuthToken() }, muteHttpExceptions: true });
+  const code = res.getResponseCode(), txt = res.getContentText();
+  if (code >= 300) throw new Error(t.name + ' ' + path + ' 실패 (' + code + '): ' + txt.slice(0, 400));
+  return txt ? JSON.parse(txt) : {};
+}
+function currentVersion_(t) { const d = api_(t, 'get', '/deployments/' + t.deploymentId); return (d.deploymentConfig && d.deploymentConfig.versionNumber) || 0; }
+
+/** 앱의 appsscript.json(액세스 「모든 사용자」 설정)은 그대로 두고, 코드 파일만 깃허브 것으로 바꾼 뒤 새 버전으로 같은 주소에 배포 */
+function deployFiles_(t, src, why) {
+  const cur = api_(t, 'get', '/content').files || [];
+  const manifest = cur.filter(f => f.type === 'JSON');
+  if (!manifest.length || !/ANYONE_ANONYMOUS/.test(manifest[0].source)) throw new Error(t.name + ' 의 appsscript.json 액세스가 「모든 사용자」(ANYONE_ANONYMOUS)가 아니에요. 먼저 고쳐 주세요.');
+  const put = src.files.map(f => ({ name: f.n.replace(/\.[^.]+$/, ''), type: typeOf_(f.n), source: f.src }));
+  api_(t, 'put', '/content', { files: manifest.concat(put) });
+  const when = now_();
+  const v = api_(t, 'post', '/versions', { description: why + ' ' + when });
+  api_(t, 'put', '/deployments/' + t.deploymentId, { deploymentConfig: { versionNumber: v.versionNumber, manifestFileName: 'appsscript', description: why + ' ' + when } });
+  Logger.log(t.name + ' 버전 ' + v.versionNumber + ' 배포 완료 (' + why + ', ' + when + ')');
+  return v.versionNumber;
+}

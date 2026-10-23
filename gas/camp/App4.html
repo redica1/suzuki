@@ -1,0 +1,162 @@
+    <label class="f" for="rpMemo"><span>메모 <span class="hint">선택 · 금액이 청구액과 다르면 이유를 적어 주세요</span></span><input type="text" id="rpMemo" value="${esc(S.rpMemo||'')}"></label>
+    <details class="rfbox"><summary class="hint">청구액보다 많이 낸 사람이 있으면 · 환불 받을 계좌</summary><div class="rpf" style="margin-top:6px"><select id="rpRfB" aria-label="환불 은행"><option value="">은행</option>${['국민','신한','하나','우리','농협','기업','카카오뱅크','토스뱅크','새마을금고','우체국','SC제일','부산','대구','경남','광주','전북','제주','수협','신협','케이뱅크'].map(x=>`<option>${x}</option>`).join('')}</select><input type="text" id="rpRfA" inputmode="numeric" placeholder="계좌번호"><input type="text" id="rpRfH" placeholder="예금주"></div></details>
+    <p class="err" id="rpErr"></p>
+    <button class="btn primary" type="button" id="rpGo">입금 신고하기</button>`:''}</div>`}
+function vMine(){
+  const r=refundRule(S.today);
+  const rulesTxt=REFUND.rules.map(x=>`<li><b>${kday(x.until)}까지</b> · ${x.label} — ${x.rate?`참가비 ${x.rate}% 환불`:'<b>환불 없음</b>'}${x.doc?' · <b>진단서 필요</b>':''}</li>`).join('')+`<li><b>그 이후</b> · ${REFUND.after.label} — ${REFUND.after.allow?'':'취소 불가'}</li>`;
+  const done=S.cxDone?`<div class="note ok"><b>${S.cxDone.paid?'취소 요청을 보냈어요.':'취소했어요.'}</b> ${S.cxDone.names.map(esc).join(', ')} · ${S.cxDone.paid?`환불 예정 ${won(S.cxDone.amt)} · 운영진이 확인한 뒤 ${S.cxDone.amt?'입력한 계좌로 보내 드려요':'처리 결과를 알려 드려요'}.`:'입금 전이라 바로 취소됐어요.'}</div>`:'';
+  const all=MY_SUBS.flatMap(sb=>sb.ppl.filter(p=>p.status==='정상')); const okAmt=all.reduce((t,p)=>t+(p.paidAmt||0),0), allAmt=all.reduce((t,p)=>t+pAmt(p),0);
+  return `<section class="sec"><div class="spread"><h2>내 접수</h2><button class="btn small ghost" type="button" id="toForm">← 새 접수하기</button></div>
+  <p class="lede">${esc(S.user.name)} 선생님이 낸 접수예요. 사람마다 입금 상태가 보여요. 여기서 인원을 추가하거나 정보를 고치고, 입금 신고·취소를 해요.</p>
+  ${MY_SUBS.filter(sb=>sb.form&&sb.form.ens&&sb.form.ens.on&&sb.ppl.some(p=>p.status==='정상')).map(sb=>{const e=sb.form.ens;const songs=[1,2].map(n=>songTxt(e,n)).filter(Boolean);
+    return `<div class="panel enscard"><div class="spread"><div><span class="pill new">앙상블</span> <b style="font-size:17px">${esc(e.group||'(팀 이름 없음)')}</b> <span class="hint">${sb.no} · 대표 ${esc(sb.acad)}</span></div><button class="btn primary" type="button" data-ensedit="${sb.no}">앙상블 수정</button></div>
+      <dl class="kv"><dt>함께하는 학원</dt><dd>${esc(sb.acad)} (대표)${(e.acads||[]).length?', '+e.acads.map(esc).join(', '):''}</dd><dt>곡</dt><dd>${songs.join('<br>')||'<span class="hint">아직 없음</span>'}</dd><dt>연주시간</dt><dd>${e.tm||e.ts?`${+e.tm||0}분 ${+e.ts||0}초`:'-'}</dd></dl></div>`}).join('')}
+  ${(()=>{const has=MY_SUBS.some(sb=>sb.form&&sb.form.ens&&sb.form.ens.on&&sb.ppl.some(p=>p.status==='정상'));const last=[...MY_SUBS].reverse().find(sb=>sb.form&&sb.ppl.some(p=>p.status==='정상'));
+    if(has||!last)return '';const t=teamOf(last.acad);const mb=last.form.ens&&last.form.ens.member;
+    return (t&&t.rep!==last.acad)||mb?`<div class="panel enscard spread"><div><span class="pill new">앙상블 · 함께하는 학원</span> ${t&&t.rep!==last.acad?`「<b>${esc(t.name)}</b>」 팀 (대표 ${esc(t.rep)})에 함께해요.`:`대표 <b>${esc(last.form.ens.joinRep||'')}</b> 팀에 함께해요 · 대표 학원 신청 전`}<br><span class="hint">곡·시간 같은 팀 정보는 대표 학원이 넣어요.</span></div><button class="btn" type="button" data-ensedit="${last.no}">앙상블 수정</button></div>`
+      :`<div class="panel enscard spread"><div><span class="pill new">앙상블</span> <b style="font-size:16px">앙상블은 아직 신청하지 않았어요</b><br><span class="hint">여러 학원이 한 팀으로 나가요. 우리 학원이 대표로 신청할 수 있어요.</span></div><button class="btn primary" type="button" data-ensnew="${last.no}">＋ 앙상블 신청하기</button></div>`})()}
+  ${MY_SUBS.length?`<div class="panel"><dl class="kv"><dt>접수</dt><dd>${MY_SUBS.length}건 · ${all.length}명</dd><dt>청구 합계</dt><dd class="num">${won(allAmt)}</dd><dt>입금 확인</dt><dd class="num">${won(okAmt)}</dd><dt>남은 금액</dt><dd class="num"><b>${won(Math.max(0,allAmt-okAmt))}</b>${okAmt>allAmt?` <span class="hint">${won(okAmt-allAmt)} 더 냄 · 운영진이 정리해요</span>`:''}</dd></dl></div>`:'<div class="note">아직 낸 접수가 없어요. 「새 접수하기」에서 접수하면 여기에 쌓여요.</div>'}
+  ${done}
+  ${payReport()}
+  <details class="panel" ${S.ruleOpen?'open':''} id="ruleBox"><summary><b>취소·환불 규정</b> <span class="hint">오늘(${kday(S.today)}) 취소하면: ${r.rate?`참가비 ${r.rate}% 환불`:'환불 없음'}${r.doc?' · 진단서 필요':''}${r.allow===false?' · 취소 불가':''}</span></summary>
+    <ul class="rules">${rulesTxt}</ul><p class="hint">${REFUND.duesRefund?'':'연회비는 환불되지 않아요. '}환불 금액은 입금이 확인된 사람의 참가비·레슨비 기준이에요. 입금 전인 사람은 수수료가 없는 기간(전액 환불 기간)에는 바로 취소되고, 수수료가 생기는 날부터는 입금이 확인된 사람만 취소 요청할 수 있어요.</p>
+    </details>
+  ${(()=>{const last=[...MY_SUBS].reverse().find(sb=>sb.form);return last?`<button class="btn primary bigadd" type="button" data-subedit="${last.no}">＋ 인원 추가<small>${last.no}에 더해요 · ${last.round} 금액</small></button>`:''})()}
+  ${MY_SUBS.map(sb=>{const sel=S.cx[sb.no]||[];const live=sb.ppl.filter(p=>p.status==='정상');const selCx=sel.filter(id=>{const p=sb.ppl.find(q=>q.id===id);return p&&canCxP(p)});
+    return `<div class="panel sub-card"><div class="spread"><div><b class="num">${sb.no}</b> <span class="hint">${sb.round} · ${kday(sb.date)} 접수 · ${esc(sb.acad)}</span></div><div>${subTag(sb)}</div></div>
+    ${[...new Set(sb.ppl.map(p=>p.batch||1))].sort((a,b)=>a-b).map(bn=>{const G=sb.ppl.filter(p=>(p.batch||1)===bn);return `<div class="bgrp ${btCls(bn)}"><div class="bh"><b><span class="bdot"></span>${bn===1?'처음 접수':`추가 ${bn-1}`} · ${stampTxt(G[0].addAt)||kday(sb.date)}</b><span class="hint">${G.filter(p=>p.status==='정상').length}명${G.some(p=>p.status!=='정상')?` · 취소 ${G.filter(p=>p.status!=='정상').length}`:''} · ${won(G.filter(p=>p.status==='정상').reduce((t,p)=>t+pAmt(p),0))}</span></div>
+    <ul class="roster">${G.map(p=>`<li class="${p.status!=='정상'?'locked':''}"><input type="checkbox" id="cx_${p.id}" data-cx="${sb.no}|${p.id}" ${sel.includes(p.id)?'checked':''} ${p.status==='정상'?'':'disabled'} aria-label="${esc(p.name)} 선택">
+      <label class="who" for="cx_${p.id}"><b>${esc(p.name)}${p.dtag?` <small class="dtag">${esc(p.dtag)}</small>`:''} <span class="kind ${p.kind==='교사'?'kt':'ks'}">${p.kind}</span> <span class="num">${won(pAmt(p))}</span></b><small>${esc(p.type)} ${won(p.fee)}${p.lesson?` + 레슨 ${won(p.lesson)}`:''}${p.dues?` + 연회비 ${won(p.dues)}`:''}${p.room?` + 가족방 ${won(p.room)}`:''}${isPaid(p)&&p.status==='정상'?` · 지금 취소하면 <b>${won(refundOf(sb,[p.id]).amt)}</b> 환불`:''}${p.pay==='신고'&&p.status==='정상'?' · 입금 신고 확인 중이라 확인된 뒤 취소할 수 있어요':''}</small></label><span class="row" style="flex-wrap:nowrap;gap:6px;justify-content:flex-end">${stTag(p.status,p)}${payTag(p)}${p.status==='정상'&&p.pay!=='신고'&&dueOf(p)>0?`<button class="btn small ${S.prp===p.id?'primary':''}" type="button" data-prp="${p.id}" aria-expanded="${S.prp===p.id}">입금 신고</button>`:''}${p.status==='정상'&&p.pay==='신고'?`<button class="btn small ${S.prp===p.id?'primary':''}" type="button" data-prp="${p.id}" aria-expanded="${S.prp===p.id}">신고 수정</button>`:''}${p.status==='정상'&&sb.form?`<button class="btn small" type="button" data-pedit="${sb.no}|${p.id}" aria-label="${esc(p.name)} 정보 수정">수정</button>`:''}</span>
+      ${S.prp===p.id?prpForm(p,sb):''}</li>`).join('')}</ul></div>`}).join('')}
+    <div class="spread"><span class="hint">합계 ${won(subTotal(sb,sb.ppl.filter(p=>p.status==='정상').map(p=>p.id)))}</span>
+      ${live.length?`<span class="row"><button class="btn small" type="button" data-cxall="${sb.no}">${sel.length===live.length?'전체 해제':'전체 선택'}</button>
+      <button class="btn small primary" type="button" data-seledit="${sb.no}" ${sel.length&&sb.form?'':'disabled'}>선택한 ${sel.length}명 정보 수정</button>
+      <button class="btn small" type="button" data-cxopen="${sb.no}" ${selCx.length?'':'disabled'}>선택한 ${selCx.length}명 취소</button></span>`:''}</div>
+    ${sel.length&&selCx.length<sel.length?`<p class="hint" style="margin:0">${sel.filter(id=>!selCx.includes(id)).map(id=>esc((sb.ppl.find(p=>p.id===id)||{}).name)).join(', ')}은(는) ${unpaidCancelOk()?'입금 신고 확인 중이라':'취소 수수료가 생기는 기간인데 입금 확인 전이라'} 지금 취소할 수 없어요.</p>`:''}
+    ${S.cxOpen===sb.no&&selCx.length?cxPanel(sb,selCx):''}</div>`}).join('')}
+  </section>`}
+function cxPanel(sb,sel){
+  const {r,base,amt,paid}=refundOf(sb,sel); const blocked=r.allow===false&&paid; const nUn=sb.ppl.filter(p=>sel.includes(p.id)&&!isPaid(p)).length;
+  return `<div class="cxbox"><b>${sel.length}명 취소</b>
+    ${blocked?`<div class="note warn">캠프가 시작돼서 취소할 수 없어요. 운영진에게 문의해 주세요.</div>`:`
+    <dl class="kv"><dt>적용 규정</dt><dd>${r.label} (${kday(r.until||S.today)}까지) · ${r.rate?`${r.rate}% 환불`:'환불 없음'}</dd>
+      ${paid?`<dt>환불 기준 금액</dt><dd class="num">${won(base)} <span class="hint">입금 확인된 ${sel.length-nUn}명</span></dd><dt>환불 예정</dt><dd class="num"><b>${won(amt)}</b></dd>`:''}
+      ${nUn?`<dt>입금 전</dt><dd>${nUn}명은 입금 전이라 바로 취소돼요</dd>`:''}</dl>
+    <label class="f" for="cxWhy">취소 사유<select id="cxWhy">${['','질병·부상','개인 사정','일정 변경','기타'].map(x=>`<option value="${x}" ${x===S.cxReason?'selected':''}>${x||'선택해 주세요'}</option>`).join('')}</select></label>
+    ${r.doc&&paid?`<label class="f" for="cxDoc">진단서 <span class="hint">필수 · 이 기간에는 진단서가 있어야 취소돼요 (사진·PDF)</span><input type="file" id="cxDoc" accept="image/*,application/pdf"></label>`:''}
+    ${paid&&amt>0?`<div class="grid2"><label class="f" for="cxBank">환불 받을 은행<select id="cxBank"><option value="">선택</option>${['국민','신한','하나','우리','농협','기업','카카오뱅크','토스뱅크','새마을금고','우체국'].map(b=>`<option>${b}</option>`).join('')}</select></label>
+      <label class="f" for="cxAcct">계좌번호<input type="text" id="cxAcct" inputmode="numeric"></label><label class="f" for="cxHolder">예금주<input type="text" id="cxHolder" value="${esc(S.user.name)}"></label></div>`:''}
+    <p class="err" id="cxErr"></p>
+    <div class="row"><button class="btn primary" type="button" data-cxgo="${sb.no}">${paid?'취소 요청하기':'취소하기'}</button><button class="btn ghost" type="button" data-cxclear="${sb.no}">선택 해제</button></div>`}</div>`}
+function render(){
+  if(S.view==='mine'){document.getElementById('app').innerHTML=vMine();document.getElementById('backBtn').hidden=true;document.getElementById('nextBtn').hidden=true;document.getElementById('dockLabel').textContent='내 접수';document.getElementById('dockTotal').textContent=`${MY_SUBS.length}건`;return}
+  renderSteps();
+  const app=document.getElementById('app');
+  app.innerHTML = (S.editNo&&S.step<6?`<div class="note info spread" style="margin-bottom:12px"><span><b>${S.editNo} 접수를 고치는 중</b> · 인원을 추가하거나 정보를 바꾼 뒤 마지막 단계에서 「수정 내용 저장」을 눌러요. 입금된 사람은 금액이 바뀌면 차액만 입금하면 돼요.</span><button class="btn small ghost" type="button" id="toMine">고치기 그만 · 내 접수로</button></div>`:'')+[vStep1,vStep2,vStep3,vEns,vStep4,vStep5][S.step-1]();
+  const t=totals(), next=document.getElementById('nextBtn'), back=document.getElementById('backBtn');
+  document.getElementById('dockLabel').textContent = S.step===1?'접수 준비':`선택 ${t.n}명${t.teams.length?` · 가족방 ${t.teams.length}`:''}${t.waiting?` · 회비확인대기 ${t.waiting}명`:''}`;
+  document.getElementById('dockTotal').textContent = won(t.all);
+  back.hidden = S.step===1||S.step===6;
+  next.hidden = S.step===6;
+  next.textContent = S.step===5?(S.editNo?'수정 내용 저장':'접수하기'):'다음';
+  next.disabled = blocked();
+  document.getElementById('roundChip').textContent = `${ROUNDS[CAMP.ri][0]} 접수 중 · ${ROUNDS[CAMP.ri][1]}`;
+  document.getElementById('roundSeg').innerHTML = ''&&ROUNDS.map((r,i)=>`<button type="button" data-round="${i}" aria-pressed="${CAMP.ri===i}" style="padding:2px 9px;font-size:12px">${r[0]}</button>`).join('');
+}
+/* 「다음」을 막는 조건: 그 단계에서 보이는 것만 (2단계는 사람이 1명 이상이면 통과, 가족 이름·가족방 인원은 3단계에서) */
+function blocked(){const t=totals();
+  return (S.step===1&&!(S.user&&S.acad))||(S.step===2&&(t.n===0||t.n>CAMP.perSubmitMax))
+    ||(S.step===3&&(missingTeacher().length>0||missingBasic().length>0||missingProg().length>0||S.fam.some(f=>!f.name.trim())||t.teams.some(x=>x.over)))
+    ||(S.step===4&&S.ens.on&&!(S.ens.group||'').trim())||(S.step===4&&S.ens.member&&!S.ens.joinNo&&!(S.ens.joinRep||'').trim())||(S.step===5&&!S.agree)}
+function toast(m,force){if(S.saving&&!force){S.savedMsg=m;return}const el=document.getElementById('toast');el.textContent=m;el.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>el.hidden=true,2200)}
+function go(n){S.step=n;render();window.scrollTo({top:0})}
+/* 접수 고치기 시작: only=null 이면 사람 추가(2단계), 사람 키 목록이면 그 사람들만 정보 수정(3단계) */
+function startEdit(no,only){const sb=MY_SUBS.find(x=>x.no===no);const f=JSON.parse(JSON.stringify(sb.form));S.acad=sb.acad;ensureRoster(sb.acad);S.verified=true;
+  Object.assign(S,{picked:f.picked,extra:f.extra,fam:f.fam,info:f.info,room:f.room,join:f.join||{},ens:f.ens||{on:false},agree:false,sel:{},cartAt:{}});
+  sb.ppl.forEach(p=>{if(p.status==='취소'){const k=p.id.slice(sb.no.length+1);delete S.picked[k];S.fam=S.fam.filter(x=>x.id!==k);S.extra=S.extra.filter(x=>x.id!==k)}});
+  S.riBack=CAMP.ri;if(f.ri!==undefined)CAMP.ri=f.ri;S.editNo=sb.no;S.editOnly=only;S.cx={};S.cxOpen='';S.view='form';
+  if(only==='ens'){S.editOnly=null;go(4);toast(`앙상블 「${esc(S.ens.group||'')}」을(를) 고쳐요 · 다 고친 뒤 「다음」→「수정 내용 저장」`)}
+  else if(only){go(3);toast(`${only.length}명 정보를 고쳐요 · 다 고친 뒤 마지막에 「수정 내용 저장」`)}else{go(2);toast(`${sb.no}에 인원을 추가해요 · 추가한 뒤 「다음」으로 정보를 넣어요`)}}
+function resetForm(){Object.assign(S,{cartAt:{},picked:{},extra:[],fam:[],info:{},room:{},join:{},ens:{on:false},agree:false,sel:{}})}
+
+/* ---------- 동작 ---------- */
+document.addEventListener('click',e=>{
+  const b=e.target.closest('button,[data-pick],[data-mc],[data-other],[data-ens],[data-roomck],[data-ensmem]'); if(!b) return;
+  const d=b.dataset;
+  if(d.go){go(+d.go);return}
+  if(d.round!==undefined){CAMP.ri=+d.round;render();toast(`${ROUNDS[CAMP.ri][0]} 금액으로 계산해요`);return}
+  if(d.acad){S.acad=d.acad;S.rq='';S.sel={};S.ptab='교사';S.acQ='';S.acOpen=false;S.picked={};S.extra=[];S.fam=[];S.info={};S.room={};
+    ensureRoster(d.acad);
+    S.verified=true;render();return}
+  if(d.quick){const n=d.quick;const t=TEACHER_DB.find(x=>x.demo&&x.name===n)||TEACHER_DB.find(x=>bare(x.name)===n&&x.acads.includes('마포스즈키'))||TEACHER_DB.find(x=>bare(x.name)===n);
+    if(!t){S.verr=`회원 명단에서 ${n} 선생님을 찾지 못했어요.`;render();return}
+    if(t.state==='대기'){S.verr='승인 대기 중이에요. 협회가 확인하면 이메일로 알려 드려요.';render();return}
+    login({...t,acads:t.acads.includes('마포스즈키')?['마포스즈키',...t.acads.filter(a=>a!=='마포스즈키')]:t.acads});if(t.acads.includes('마포스즈키')){document.querySelector('[data-acad="마포스즈키"]')||0}return}
+  if(b.id==='doLogin'){const nm=document.getElementById('lgNm').value.trim(),ph=document.getElementById('lgEm').value.replace(/\D/g,'');S.lgNm=nm;S.lgEm=document.getElementById('lgEm').value;
+    if(!nm||ph.length<10){S.verr='이름과 휴대전화를 모두 넣어 주세요.';render();return}
+    busy(true,'명단을 확인하고 있어요…');google.script.run.withSuccessHandler(r=>{busy(false);if(!r.ok){S.verr=r.msg;render();return}
+      S.token=r.token;S.today=r.today;loadFromServer(r);login({...r.teacher,acads:r.teacher.acads});
+      if(!MY_SUBS.length&&r.teacher.acads.length===1){const a=r.teacher.acads[0];S.acad=a;S.rq='';S.sel={};S.ptab='교사';S.picked={};S.extra=[];S.fam=[];S.info={};S.room={};ensureRoster(a);S.verified=true;render()}})
+      .withFailureHandler(e=>{busy(false);S.verr='연결이 잠시 안 돼요. 다시 눌러 주세요. ('+((e&&e.message)||e)+')';render()}).login(nm,ph);return}
+  if(b.id==='toReg'){S.auth='reg';S.verr='';render();return}
+  if(b.id==='doReg'){const g=id=>document.getElementById(id).value.trim();const nm=g('rgName'),ph=g('rgPhone').replace(/\D/g,'');
+    if(!nm||ph.length<10){S.verr='이름과 휴대전화를 넣어 주세요.';render();return}
+    if(findT(ph)){S.verr='이미 명단에 있는 번호예요. 「처음이세요?」로 비밀번호를 만들어 주세요.';render();return}
+    const p1=g('pw1'),p2=g('pw2'); if(p1.length<8){S.verr='비밀번호는 8자 이상이에요.';render();return} if(p1!==p2){S.verr='비밀번호 확인이 달라요.';render();return}
+    if(!S.consent){S.verr='개인정보 수집·이용에 동의해 주세요.';render();return}
+    const t={name:nm,phone:ph,role:g('rgRole'),inst:g('rgInst'),email:g('rgEmail'),acads:[],hasPw:true,newReg:true};TEACHER_DB.push(t);login(t);toast('교사 등록을 마쳤어요. 학원을 선택해 주세요');return}
+  if(b.id==='toFirst'){S.auth='first1';S.verr='';render();return}
+  if(b.id==='toLogin'){S.auth='login';S.verr='';render();return}
+  if(b.id==='forgot'){const ph=(document.getElementById('lgEm').value||'').replace(/\D/g,'');const t=TEACHER_DB.find(x=>x.phone===ph);toast(t&&t.email?`${t.email.replace(/^(..).*(@.*)$/,'$1***$2')}로 재설정 링크를 보냈어요 (시제품)`:'등록된 이메일이 없어요. 운영진 카톡으로 문의해 주세요');return}
+  if(b.id==='firstCheck'){const t=findT(S.fPhone);if(!t||t.name!==S.fName.trim()){S.verr='명단의 이름·휴대전화와 일치하지 않아요. 명단에 없으면 아래 「교사 등록」을 눌러 주세요.';render();return}
+    if(t.hasPw){S.verr='이미 비밀번호가 있어요. 로그인 화면에서 「비밀번호를 잊었어요」를 눌러 주세요.';render();return}
+    S.pending={...t};S.auth='first2';S.verr='';render();return}
+  if(b.id==='makePw'){const p1=document.getElementById('pw1').value,p2=document.getElementById('pw2').value;
+    if(p1.length<8){S.verr='비밀번호는 8자 이상이에요.';render();return} if(p1!==p2){S.verr='비밀번호 확인이 달라요.';render();return}
+    if(!S.consent){S.verr='개인정보 수집·이용에 동의해 주세요.';render();return}
+    const t=TEACHER_DB.find(x=>x.phone===S.pending.phone);Object.assign(t,{email:document.getElementById('pfEmail').value.trim(),inst:document.getElementById('pfInst').value,role:document.getElementById('pfRole').value,hasPw:true});
+    login(t);toast('비밀번호를 만들었어요. 다음부터 휴대전화와 비밀번호로 로그인해요');return}
+  if(b.id==='logout'){MY_SUBS.length=0;Object.assign(S,{user:null,auth:'login',acad:'',verified:false,picked:{},extra:[],fam:[],info:{},room:{},verr:''});render();return}
+  if(b.id==='nextBtn'&&S.step===2&&selIds().length){toast(`체크만 하고 아직 추가하지 않은 ${selIds().length}명이 있어요. 「신청 명단에 추가」를 눌러 주세요.`);const ab=document.getElementById('addCart');if(ab)ab.scrollIntoView({block:'center'});return}
+  if(b.id==='nextBtn'){const next=b;
+    if(S.step===5){S.no=`${CAMP.id}-${String(ALL_SUBS.length+1).padStart(3,'0')}`;if(S.editNo){const old=ALL_SUBS.find(x=>x.no===S.editNo);const nw=makeSub(old.no);const kept=[];
+        const nb=Math.max(1,...old.ppl.map(q=>q.batch||1))+1;let added=0;
+        nw.ppl.forEach(p=>{const o=old.ppl.find(q=>q.id===p.id);if(o&&o.status!=='취소'){p.pay=o.pay;p.rep=o.rep;p.paidAmt=o.paidAmt||0;p.status=o.status;p.batch=o.batch||1;p.addAt=o.addAt||old.date}else{p.batch=nb;added++}});
+        old.ppl.forEach(o=>{if(!nw.ppl.some(p=>p.id===o.id)){if(o.status==='정상'&&(isPaid(o)||o.pay==='신고')){kept.push(o.name);nw.ppl.push(o)}else if(o.status!=='정상')nw.ppl.push(o)}});
+        Object.assign(old,{ppl:nw.ppl,form:nw.form,edited:S.today});subSave();loadMine();const no=S.editNo;S.editNo=null;S.editOnly=null;if(S.riBack!==undefined){CAMP.ri=S.riBack;S.riBack=undefined}resetForm();S.view='mine';S.rp=null;render();window.scrollTo({top:0});
+        toast(kept.length?`${no} 접수를 고쳤어요${added?` · ${added}명 추가`:''} · 입금된 ${kept.join(', ')}은(는) 빠지지 않았어요. 빼려면 아래에서 취소해 주세요`:`${no} 접수를 고쳤어요${added?` · ${added}명 추가 (추가 ${nb-1})`:''}`);return}
+      {const sb=makeSub('TMP');sb.email=S.email||'';sb.reqId=S.reqId||(S.reqId='Q'+Date.now().toString(36)+Math.random().toString(36).slice(2,7));next.disabled=true;
+        api('submitNew',[sb],r=>{S.no=r.no;S.reqId='';applyBundle(r);S.cartAt={};S.rp=null;go(6);if(r.again)toast('이미 접수된 내용이에요 · '+r.no,true)},()=>{render()},'접수하고 있어요…')}
+      return}
+    go(S.step+1);return}
+  if(b.id==='backBtn'){go(S.step-1);return}
+  if(b.id==='toMine'){if(S.editNo){S.editNo=null;S.editOnly=null;if(S.riBack!==undefined){CAMP.ri=S.riBack;S.riBack=undefined}resetForm();S.acad='';S.verified=false;S.step=1}S.view='mine';S.cxDone=null;render();window.scrollTo({top:0});return}
+  if(b.id==='toForm'){S.view='form';if(S.editNo&&S.riBack!==undefined){CAMP.ri=S.riBack;S.riBack=undefined}S.editNo=null;S.editOnly=null;if(S.step===6||S.step>1){resetForm();S.acad='';S.verified=false;S.step=1}render();window.scrollTo({top:0});return}
+  if(d.subedit){startEdit(d.subedit,null);return}
+  if(b.id==='rpGo'){const open=unpaidPpl();const sel=(S.rp||[]).filter(id=>open.some(x=>x.p.id===id));const er=m=>{document.getElementById('rpErr').textContent=m};
+    if(!sel.length)return er('입금한 사람을 체크해 주세요.');const ps=open.filter(x=>sel.includes(x.p.id)).map(x=>x.p);const memo=document.getElementById('rpMemo').value.trim();
+    for(const p of ps){const v=rpv(p);if(!v.n.trim())return er(`${p.name} 줄에 입금자명을 넣어 주세요.`);if(!v.d)return er(`${p.name} 줄에 입금일을 선택해 주세요.`);if(!(+v.a>0))return er(`${p.name} 줄에 입금 금액을 넣어 주세요.`)}
+    for(const p of ps){const v=rpv(p);if(v.d>S.today)return er(`${p.name} 줄 입금일이 오늘보다 뒤예요.`);if(v.n.trim().length>20)return er(`${p.name} 줄 입금자명은 20자까지예요.`)}
+    const overP=ps.filter(p=>+rpv(p).a>dueOf(p));let rfAll=null;if(overP.length){const gv=id=>(document.getElementById(id)||{}).value||'';rfAll={bank:gv('rpRfB'),acct:gv('rpRfA').replace(/[^\d-]/g,''),holder:gv('rpRfH').trim()};if(!rfAll.bank||rfAll.acct.replace(/-/g,'').length<6||!rfAll.holder)return er(`${overP.map(p=>p.name).join(', ')}은(는) 청구액보다 많아요. 아래 「환불 받을 계좌」를 적어 주세요.`)}
+    const diff=ps.filter(p=>+rpv(p).a!==dueOf(p));if(diff.length&&!memo)return er(`${diff.map(p=>p.name).join(', ')}의 금액이 청구액과 달라요. 메모에 이유를 적어 주세요.`);
+    const rows={};ps.forEach(p=>{const v=rpv(p);rows[p.id]={name:v.n.trim(),date:v.d,a:+v.a}});
+    const rep={id:'R'+Date.now().toString(36),name:rows[ps[0].id].name,date:rows[ps[0].id].date,amt:ps.reduce((t,p)=>t+rows[p.id].a,0),memo,ids:sel,rows};if(rfAll)rep.refund=rfAll;
+    ps.forEach(p=>{p.pay='신고';p.rep=rep;delete S.rpRow[p.id]});subSave();S.rp=null;S.rpMemo=undefined;render();window.scrollTo({top:0});toast(`${ps.length}명 입금 신고를 보냈어요 · 운영진이 확인하면 「입금 확인」으로 바뀌어요`);return}
+  if(b.id==='rpFill'){const n=document.getElementById('rpAllN').value.trim(),dd=document.getElementById('rpAllD').value;S.rpAllN=n;S.rpAllD=dd;const sel=S.rp||[];
+    if(!n&&!dd){toast('넣을 입금자명이나 입금일을 적어 주세요');return}unpaidPpl().filter(x=>sel.includes(x.p.id)).forEach(({p})=>{const v=rpv(p);if(n)v.n=n;if(dd)v.d=dd});render();toast(`선택한 ${sel.length}명에게 넣었어요`);return}
+  if(d.rpok){MY_SUBS.forEach(sb=>sb.ppl.forEach(p=>{if(p.rep&&p.rep.id===d.rpok&&p.pay==='신고'){const row=p.rep.rows&&p.rep.rows[p.id];p.pay='확인';p.paidAmt=(p.paidAmt||0)+(row?row.a:dueOf(p));p.rep.ok=row?row.date:p.rep.date}}));subSave();render();toast('시제품: 운영진이 입금을 확인한 것으로 바꿨어요');return}
+  if(d.rpall!==undefined){S.rp=d.rpall==='1'?unpaidPpl().map(x=>x.p.id):[];{const n=document.getElementById('rpMemo');if(n)S.rpMemo=n.value}render();return}
+  if(d.cxall){const sb=MY_SUBS.find(x=>x.no===d.cxall);const live=sb.ppl.filter(p=>p.status==='정상').map(p=>p.id);S.cx[sb.no]=(S.cx[sb.no]||[]).length===live.length?[]:live;S.cxOpen='';S.cxDone=null;render();return}
+  if(d.cxopen){S.cxOpen=d.cxopen;S.cxDone=null;render();const x=document.querySelector('.cxbox');if(x&&x.scrollIntoView)x.scrollIntoView({block:'center'});return}
+  if(b.id==='showAllCards'){S.editOnly=null;render();return}
+  if(d.ensnew){startEdit(d.ensnew,'ens');S.ens={...(S.ens||{}),on:true};render();return}
+  if(d.ensedit){startEdit(d.ensedit,'ens');return}
+  if(d.pedit){const [no,id]=d.pedit.split('|');startEdit(no,[id.slice(no.length+1)]);return}
+  if(d.seledit){const no=d.seledit;const ids=(S.cx[no]||[]);if(!ids.length)return;startEdit(no,ids.map(id=>id.slice(no.length+1)));return}
+  if(d.cxclear){delete S.cx[d.cxclear];render();return}
+  if(d.cxgo){const sb=MY_SUBS.find(x=>x.no===d.cxgo);const sel=(S.cx[sb.no]||[]).filter(id=>{const p=sb.ppl.find(q=>q.id===id);return p&&canCxP(p)});const {r,amt,paid}=refundOf(sb,sel);const er=m=>{document.getElementById('cxErr').textContent=m};
+    const why=document.getElementById('cxWhy').value;if(!why)return er('취소 사유를 선택해 주세요.');
+    if(r.doc&&paid){const f=document.getElementById('cxDoc');if(!f||!f.files.length)return er('이 기간에는 진단서를 올려야 취소할 수 있어요.')}
+    if(paid&&amt>0){const bk=document.getElementById('cxBank').value,ac=document.getElementById('cxAcct').value.replace(/[^\d-]/g,''),ho=document.getElementById('cxHolder').value.trim();if(!bk||ac.length<8||!ho)return er('환불 받을 은행·계좌번호·예금주를 넣어 주세요.')}
+    const names=sb.ppl.filter(p=>sel.includes(p.id)).map(p=>p.name);

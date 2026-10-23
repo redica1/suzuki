@@ -1,4 +1,14 @@
-/* build: 20261023-232730 */
+/* build: 20261023-233114 */
+        Object.assign(old,{ppl:nw.ppl,form:nw.form,edited:S.today});{const ono=old.no;S.afterSave=()=>{const sb=MY_SUBS.find(x=>x.no===ono);if(sb){const ids=sb.ppl.filter(p=>overOf(p)>0).map(p=>p.id);if(ids.length)ovBox(ono,ids)}}}const wasEns=S.ensEdit,wasQuick=S.quickEdit&&S.quickKeys;subSave();loadMine();const no=S.editNo;S.editNo=null;S.editOnly=null;if(S.riBack!==undefined){CAMP.ri=S.riBack;S.riBack=undefined}resetForm();S.view='mine';S.rp=null;
+        if(wasQuick){S.quietEdit=true;startEdit(no,wasQuick);S.quietEdit=false;S.qSaved=nowStamp();render();toast('저장했어요 · 계속 고칠 수 있어요');return}
+        if(wasEns){S.quietEdit=true;startEdit(no,'ens');S.quietEdit=false;S.ensSaved=nowStamp();render();toast('앙상블을 저장했어요 · 계속 고칠 수 있어요');return}
+        render();window.scrollTo({top:0});
+        toast(kept.length?`${no} 접수를 고쳤어요${added?` · ${added}명 추가`:''} · 입금된 ${kept.join(', ')}은(는) 빠지지 않았어요. 빼려면 아래에서 취소해 주세요`:`${no} 접수를 고쳤어요${added?` · ${added}명 추가 (추가 ${nb-1})`:''}`);return}
+      {const sb=makeSub('TMP');sb.email=S.email||'';sb.reqId=S.reqId||(S.reqId='Q'+Date.now().toString(36)+Math.random().toString(36).slice(2,7));next.disabled=true;
+        api('submitNew',[sb],r=>{S.no=r.no;S.reqId='';applyBundle(r);S.cartAt={};S.rp=null;go(6);if(r.again)toast('이미 접수된 내용이에요 · '+r.no,true)},()=>{render()},'접수하고 있어요…')}
+      return}
+    go(S.step+1);return}
+  if(b.id==='backBtn'){go(S.step-1);return}
   if(b.id==='toMine'||b.id==='toMine2'||b.id==='toMine3'||b.id==='mineBtn'){if(S.editNo){S.editNo=null;S.editOnly=null;if(S.riBack!==undefined){CAMP.ri=S.riBack;S.riBack=undefined}resetForm();S.acad='';S.verified=false;S.step=1}S.view='mine';S.cxDone=null;render();window.scrollTo({top:0});return}
   if(b.id==='toForm'){S.view='form';if(S.editNo&&S.riBack!==undefined){CAMP.ri=S.riBack;S.riBack=undefined}S.editNo=null;S.editOnly=null;if(S.step===6||S.step>1){resetForm();S.acad='';S.verified=false;S.step=1}render();window.scrollTo({top:0});return}
   if(d.subedit){startEdit(d.subedit,null);return}

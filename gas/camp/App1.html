@@ -1,4 +1,4 @@
-/* build: 20261023-232730 */
+/* build: 20261023-233114 */
 /* ---------- 캠프 설정 (관리자 화면에서 입력되는 값) ---------- */
 const ROOM = { cap:4, emptyFee:130000 }; // 가족방: 4인 기준, 빈 자리 1개당 추가 비용
 const CAMP = { id:'27W', ri:0, lessonFee:60000, lessonMax:5, mcFee:150000,
@@ -189,7 +189,11 @@ function vStep1(){
   return `${MY_SUBS.length?`<div class="note info spread" style="margin-bottom:12px"><span><b>내 접수 ${MY_SUBS.length}건</b> · 확인·취소는 여기서</span><button class="btn small primary" type="button" id="toMine">내 접수 보기</button></div>`:''}<section class="sec"><div class="spread"><h2>어느 학원으로 접수할까요?</h2><button class="btn small ghost" type="button" id="logout">로그아웃</button></div>
   <div class="verified">✓ ${esc(u.name)} 선생님${u.role?` · ${esc(u.role)}`:''} · ${esc(u.inst)}${u.newReg?' · <span class="pill due">신규 등록 · 운영진 확인 대기</span>':''}</div>
   <div class="panel">
-    <label class="f" for="acQ">학원명 <span class="hint">학원을 옮겼으면 지금 학원을 고르세요</span>
+    <div class="f" style="display:grid;gap:8px"><span>어디로 접수하나요?</span>
+      <div class="row" style="gap:8px;flex-wrap:wrap">${mineA.map(a=>`<button class="btn ${S.acad===a?'primary':''}" type="button" data-acad="${esc(a)}">${esc(a)} <small>(내 소속)</small></button>`).join('')}
+        <button class="btn ${S.acad&&!mineA.includes(S.acad)&&S.acad!==classOf(u)?'primary':''}" type="button" id="otherAcad">다른 학원 학생 접수 <small>(겸임 · 소속 그대로)</small></button>
+        <button class="btn ${S.acad===classOf(u)?'primary':''}" type="button" data-acad="${esc(classOf(u))}">${esc(classOf(u))} <small>(학원 없이)</small></button></div></div>
+    <label class="f" for="acQ">학원 찾기 <span class="hint">다른 학원 학생도 접수할 수 있어요 · 선생님 소속은 그대로예요</span>
       <div class="ac combo">
         <input type="search" id="acQ" role="combobox" aria-expanded="${S.acOpen}" aria-controls="acList" value="${esc(S.acOpen?S.acQ:S.acad)}" placeholder="학원을 선택하거나 검색하세요" autocomplete="off">
         <span class="caret" aria-hidden="true">▾</span>
@@ -199,10 +203,3 @@ function vStep1(){
         </ul>`:''}
       </div></label>
     ${S.acad&&!mineA.includes(S.acad)&&S.acad!==classOf(u)?`<div class="note info">「${esc(S.acad)}」은(는) 명단상 소속이 아니지만 <b>이 학원 학생을 접수할 수 있어요</b> (겸임). 소속은 그대로 「${esc(mineA.join(', ')||'-')}」예요.</div>`:''}
-    <label class="f" for="email">접수 확인 메일 받을 주소<input type="text" id="email" value="${esc(S.email)}" placeholder="name@naver.com"></label>
-  </div></section>`;
-}
-/* 이미 낸 접수에 들어 있는 사람 (고치는 중인 접수는 빼고) */
-function bookedOf(x){const T=/^t_/.test(x.id);/* 선생님은 학원을 통틀어 한 번만 */for(const sb of ALL_SUBS){if(sb.no===S.editNo||(!T&&sb.acad!==S.acad))continue;const p=sb.ppl.find(q=>q.id===sb.no+'_'+x.id&&(q.status==='정상'||(T&&q.status==='취소요청')));if(p)return {no:sb.no+(sb.acad!==S.acad?' · '+sb.acad:''),round:sb.round,by:sb.owner,at:p.addAt||sb.date}}return null}
-/* 고치는 중일 때 신청 명단 칩에 붙는 표시: 기존(들어온 차례·시각) / 새로 추가 */
-const nextBatch=()=>{const sb=ALL_SUBS.find(x=>x.no===S.editNo);return sb?Math.max(1,...sb.ppl.map(q=>q.batch||1))+1:1};

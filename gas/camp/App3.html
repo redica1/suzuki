@@ -1,4 +1,13 @@
-/* build: 20261023-232730 */
+/* build: 20261023-233114 */
+    <div class="fee-line"><span>${ROUNDS[CAMP.ri][0]} ${esc(i.type==='회원의 악기하는 자녀'?'악기하는 교사자녀':i.type)} ${won(f.base)}${f.les?` + 레슨 ${won(f.les)}`:''}${f.mc?` + 마스터클래스 ${won(f.mc)}`:''}${f.dues?` + 연회비 ${won(f.dues)}`:''}${(()=>{const tm=teams().find(x=>x.rep.key===p.key);return tm?` + 가족방(${tm.n}명) ${won(tm.fee)}`:''})()}</span><b class="num">${won(f.total+((teams().find(x=>x.rep.key===p.key)||{}).fee||0))}</b></div>
+   </div></article>`;
+}
+function vStep3(){
+  const ps=people();
+  return `<section class="sec"><h2>${S.editNo&&S.quickEdit?'신청 내용':'참가 정보 입력'}</h2>
+  ${S.editNo&&!S.quickEdit?`<div class="note info">${S.editNo} 고치는 중 · <b>색이 칠해진 「새로 추가」 카드</b>가 이번에 정보를 넣을 사람이에요. 회색 카드는 이미 접수된 사람이라 필요할 때만 고치면 돼요.</div>`:''}
+  <p class="lede">이름·악기·담당 교사와 학생 출생연도는 명단에서 가져왔어요. 모든 참가자의 출생연도와 성별을 확인하고, 진도·레슨·음악회를 선택해 주세요.</p>
+  ${missingProg().length?`<div class="note">현재 진도를 선택해 주세요: ${missingProg().map(p=>esc(p.name)).join(', ')}</div>`:''}
   ${missingBasic().length?`<div class="note">성별(모두)과 학생 출생연도를 넣어 주세요: ${missingBasic().map(p=>esc(p.name)).join(', ')}</div>`:''}
   ${missingPref().length?`<div class="note">추가레슨을 신청했으면 선호 교수 1을 골라 주세요: ${missingPref().map(p=>esc(p.name)).join(', ')}</div>`:''}
   ${missingTeacher().length?`<div class="note">담당 교사가 비어 있는 학생: ${missingTeacher().map(p=>esc(p.name)).join(', ')}</div>`:''}
@@ -195,12 +204,3 @@ function vStep5(){
   <div class="ticket"><p><span class="pill new" style="font-size:13px">${ROUNDS[CAMP.ri][0]} 접수</span></p><p>접수번호</p><div class="no">${S.no}</div>
     <p>${esc(S.acad)} · ${t.n}명${t.teams.length?` · 가족방 ${t.teams.length}개`:''} · 입금하실 금액 <b class="num" style="color:var(--ink)">${won(t.all)}</b></p>
     <p class="hint">입금한 뒤 「내 접수」에서 입금 신고를 해 주세요. 접수 확인·취소도 「내 접수」에서 해요. 확인 메일도 보내 드렸어요.</p><button class="btn primary" type="button" id="toMine">내 접수 · 입금 신고</button></div>
-  <div class="panel"><b>접수된 사람</b><ul class="roster">${ps.map(p=>`<li><span></span><div class="who"><b>${esc(p.name)}</b><small>${ROUNDS[CAMP.ri][0]} · ${esc(info(p).type)}${p.kind==='student'?` · 담당 ${esc(info(p).teacher)}`:''}</small></div>${p.paid?'<span class="pill lock">입금 대기</span>':'<span class="pill due">회비확인대기</span>'}</li>`).join('')}</ul></div>
-  <div class="row"><button class="btn primary" type="button" id="again">추가 접수하기</button><button class="btn" type="button" id="restart">처음부터 다시 보기</button></div>
-  </section>`;
-}
-
-const pAmt=p=>p.fee+p.lesson+p.dues+(p.room||0);
-function subTotal(sb,ids){return sb.ppl.filter(p=>!ids||ids.includes(p.id)).reduce((t,p)=>t+pAmt(p),0)}
-function refundOf(sb,ids){const r=refundRule(S.today);const ps=sb.ppl.filter(p=>ids.includes(p.id)&&isPaid(p));
-  const base=ps.reduce((t,p)=>t+Math.max(0,(p.paidAmt||0)-(REFUND.duesRefund?0:p.dues)),0);return {r,base,paid:ps.length>0,amt:Math.floor(base*r.rate/100/100)*100}}

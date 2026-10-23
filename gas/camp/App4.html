@@ -1,4 +1,13 @@
-/* build: 20261023-232730 */
+/* build: 20261023-233114 */
+  <div class="panel"><b>접수된 사람</b><ul class="roster">${ps.map(p=>`<li><span></span><div class="who"><b>${esc(p.name)}</b><small>${ROUNDS[CAMP.ri][0]} · ${esc(info(p).type)}${p.kind==='student'?` · 담당 ${esc(info(p).teacher)}`:''}</small></div>${p.paid?'<span class="pill lock">입금 대기</span>':'<span class="pill due">회비확인대기</span>'}</li>`).join('')}</ul></div>
+  <div class="row"><button class="btn primary" type="button" id="again">추가 접수하기</button><button class="btn" type="button" id="restart">처음부터 다시 보기</button></div>
+  </section>`;
+}
+
+const pAmt=p=>p.fee+p.lesson+p.dues+(p.room||0);
+function subTotal(sb,ids){return sb.ppl.filter(p=>!ids||ids.includes(p.id)).reduce((t,p)=>t+pAmt(p),0)}
+function refundOf(sb,ids){const r=refundRule(S.today);const ps=sb.ppl.filter(p=>ids.includes(p.id)&&isPaid(p));
+  const base=ps.reduce((t,p)=>t+Math.max(0,(p.paidAmt||0)-(REFUND.duesRefund?0:p.dues)),0);return {r,base,paid:ps.length>0,amt:Math.floor(base*r.rate/100/100)*100}}
 function stTag(st,p){return st==='정상'?(p&&p.cxRejected?`<span class="pill bad">취소 요청 반려${p.cxWhy?' · '+esc(p.cxWhy):''}</span>`:''):st==='취소요청'?'<span class="pill due">취소 요청 · 확인 중</span>':`<span class="pill lock">취소${p&&p.refund?(p.refund.date?' · 환불 '+kday(p.refund.date)+' '+won(p.refund.amt):' · 환불 예정 '+won(p.refund.amt)):''}</span>`}
 function payTag(p){if(p.status!=='정상')return '';if(p.pay==='신고'){const r=p.rep&&(p.rep.rows&&p.rep.rows[p.id]||{date:p.rep.date,a:p.rep.amt})||{};return `<span class="pill new">입금 확인 중${r.date?' · '+kday(r.date):''}${r.a?' '+won(+r.a):''}</span>`}const d=dueOf(p);const rj=p.rejected&&p.rejected.length&&!isPaid(p)?p.rejected[p.rejected.length-1]:null;if(rj)return `<span class="pill bad" title="${esc(rj.why||'')}">입금 신고 반려${rj.why?' · '+esc(rj.why):''}</span>`;
   return !isPaid(p)?'<span class="pill due">입금 전</span>':d>0?`<span class="pill due">차액 ${won(d)} 입금 전</span>`:d<0?(p.ovReq?`<span class="pill due">${won(p.ovReq.amt)} 돌려받기 요청 · 확인 중</span>`:`<span class="pill new">입금 확인 · ${won(-d)} 더 냄</span>${p.ovRejected?` <span class="pill bad">돌려받기 반려${p.ovRejected.why?' · '+esc(p.ovRejected.why):''}</span>`:''}`):`<span class="pill ok">입금 확인${p.rep&&p.rep.ok?' '+kday(p.rep.ok):''}</span>${(p.ovDone||[]).length?` <span class="pill">차액 ${won(p.ovDone.reduce((t,x)=>t+x.amt,0))} 돌려받음 ${kday(p.ovDone[p.ovDone.length-1].date)}</span>`:''}`}
@@ -105,7 +114,7 @@ function vMine(){
   const done=S.cxDone?`<div class="note ok"><b>${S.cxDone.paid?'취소 요청을 보냈어요.':'취소했어요.'}</b> ${S.cxDone.names.map(esc).join(', ')} · ${S.cxDone.paid?`환불 예정 ${won(S.cxDone.amt)} · 운영진이 확인한 뒤 ${S.cxDone.amt?'입력한 계좌로 보내 드려요':'처리 결과를 알려 드려요'}.`:'입금 전이라 바로 취소됐어요.'}</div>`:'';
   const all=MY_SUBS.flatMap(sb=>sb.ppl.filter(p=>p.status==='정상')); const okAmt=all.reduce((t,p)=>t+(p.paidAmt||0),0), allAmt=all.reduce((t,p)=>t+pAmt(p),0);
   if(S.mscope==='acad')return vAcad();
-  return `<section class="sec"><div class="spread"><h2>접수 내역</h2><button class="btn small ghost" type="button" id="toForm">← 새 접수하기</button></div>${scopeSeg()}
+  return `<section class="sec"><div class="spread"><h2>접수 내역</h2><button class="btn small primary" type="button" id="toForm">＋ 새 접수 <small>(다른 학원도)</small></button></div>${scopeSeg()}
   <p class="lede">${esc(S.user.name)} 선생님이 낸 접수예요. 사람마다 입금 상태가 보여요. 여기서 인원을 추가하거나 정보를 고치고, 입금 신고·취소를 해요.</p>
   ${MY_SUBS.length?`<div class="panel"><dl class="kv"><dt>접수</dt><dd>${MY_SUBS.length}건 · ${all.length}명<br><span class="compo">${compoTxt(MY_SUBS)}</span></dd><dt>청구 합계</dt><dd class="num">${won(allAmt)}</dd><dt>입금 확인</dt><dd class="num">${won(okAmt)}</dd><dt>남은 금액</dt><dd class="num"><b>${won(Math.max(0,allAmt-okAmt))}</b>${okAmt>allAmt?` <span class="hint">${won(okAmt-allAmt)} 더 냄 · 운영진이 정리해요</span>`:''}</dd></dl></div>`:'<div class="note">아직 낸 접수가 없어요. 「새 접수하기」에서 접수하면 여기에 쌓여요.</div>'}
   ${done}
@@ -121,9 +130,3 @@ function vMine(){
     <div class="spread"><span class="hint">합계 ${won(subTotal(sb,sb.ppl.filter(p=>p.status==='정상').map(p=>p.id)))}</span>
       ${live.length?`<span class="row"><button class="btn small" type="button" data-cxall="${sb.no}">${(()=>{const v=live.filter(p=>mineOk(sb,p));return v.length&&v.every(p=>sel.includes(p.id))?(S.mtab&&S.mtab!=='전체'?S.mtab+' 해제':'전체 해제'):(S.mtab&&S.mtab!=='전체'?S.mtab+' 모두 선택':'전체 선택')})()}</button>
       <button class="btn small primary" type="button" data-seledit="${sb.no}" ${sel.length&&sb.form?'':'disabled'}>선택한 ${sel.length}명 정보 수정</button>
-      <button class="btn small" type="button" data-cxopen="${sb.no}" ${selCx.length?'':'disabled'}>선택한 ${selCx.length}명 취소</button></span>`:''}</div>
-    ${sel.length&&selCx.length<sel.length?`<p class="hint" style="margin:0">${sel.filter(id=>!selCx.includes(id)).map(id=>esc((sb.ppl.find(p=>p.id===id)||{}).name)).join(', ')}은(는) ${unpaidCancelOk()?'입금 신고 확인 중이라':'캠프가 시작돼서'} 지금 취소할 수 없어요.${unpaidCancelOk()?' 그 사람 줄의 「신고 수정 › 신고 취소」로 신고를 거두면 바로 취소할 수 있어요.':''}</p>`:''}
-    ${S.cxOpen===sb.no&&selCx.length?cxPanel(sb,selCx):''}</div>`}).join('')}
-  <h3 style="margin:18px 0 6px;font-size:16px">앙상블</h3>
-  ${MY_SUBS.filter(sb=>sb.form&&sb.form.ens&&sb.form.ens.on&&sb.ppl.some(p=>p.status==='정상')).map(sb=>{const e=sb.form.ens;const songs=[1,2].map(n=>songTxt(e,n)).filter(Boolean);
-    return `<div class="panel enscard"><div class="spread"><div><span class="pill new">앙상블</span> <b style="font-size:17px">${esc(e.group||'(팀 이름 없음)')}</b> <span class="hint">${sb.no} · 대표 ${esc(sb.acad)}</span></div><button class="btn primary" type="button" data-ensedit="${sb.no}">앙상블 수정</button></div>

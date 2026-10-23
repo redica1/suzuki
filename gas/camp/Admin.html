@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261024-001521 -->
+<!-- build: 20261024-001951 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -48,6 +48,7 @@ input:focus,select:focus{outline:2px solid var(--accent);outline-offset:0}
 input.num{font-family:var(--mono);text-align:right;width:110px}
 input[type=date]{width:140px}
 .tbl{overflow-x:auto}
+table.sortable th[data-sc]{cursor:pointer;user-select:none;white-space:nowrap}table.sortable th[data-sc]:hover{text-decoration:underline}table.sortable tr.foot td{border-top:2px solid var(--line,#ccc)}.sarr{font-size:10px}
 table{border-collapse:collapse;width:100%;font-size:13.5px}
 th,td{text-align:left;padding:7px 6px;border-bottom:1px solid var(--line);vertical-align:middle}
 th{font-size:12px;color:var(--muted);font-weight:600;white-space:nowrap}
@@ -121,7 +122,17 @@ function render(){
   const st=stats();
   tabs.innerHTML=TABS.map(([k,l])=>`<button type="button" role="tab" data-tab="${k}" aria-selected="${S.tab===k}">${l}${k==='rp'&&st.rp?`<span class="cnt">${st.rp}</span>`:''}${k==='cx'&&st.cx?`<span class="cnt">${st.cx}</span>`:''}${k==='q'&&st.q?`<span class="cnt">${st.q}</span>`:''}</button>`).join('');
   app.innerHTML={home:vHome,subs:vSubs,rp:vRp,cx:vCx,ens:vEns,stat:vStat,q:vQ}[S.tab]();
+  if(S.tab==='stat')reSort();
 }
+/* 통계 표 정렬: 같은 보기·같은 표면 다시 그려도 유지 */
+const sigOf=t=>(S.sv||'acad')+'|'+[...t.querySelectorAll('thead th')].map(x=>x.textContent.replace(/\s*[▲▼]$/,'')).join('/');
+const cellVal=td=>{const s=(td?td.textContent:'').trim();if(s===''||s==='-')return 0;return /^-?[\d,.\s]+(원|명|건|%|회)?$/.test(s)?+s.replace(/[^\d.-]/g,'')||0:s};
+function sortTbl(t,c,d){const tb=t.tBodies[0];if(!tb)return;const foot=[...tb.rows].filter(r=>r.classList.contains('foot'));const R=[...tb.rows].filter(r=>!r.classList.contains('foot'));
+  R.sort((x,y)=>{const a=cellVal(x.cells[c]),b=cellVal(y.cells[c]);const v=typeof a==='number'&&typeof b==='number'?a-b:String(a).localeCompare(String(b),'ko',{numeric:true});return d==='asc'?v:-v});
+  R.concat(foot).forEach(r=>tb.appendChild(r));t.querySelectorAll('thead th').forEach((th,i)=>{const s=th.querySelector('.sarr');if(s)s.textContent=i===c?(d==='asc'?' ▲':' ▼'):'';th.setAttribute('aria-sort',i===c?(d==='asc'?'ascending':'descending'):'none')})}
+function reSort(){const M=S.statSort||{};document.querySelectorAll('#app table.sortable').forEach(t=>{const m=M[sigOf(t)];if(m)sortTbl(t,m.c,m.d)})}
+document.addEventListener('click',e=>{const th=e.target.closest&&e.target.closest('table.sortable th[data-sc]');if(!th)return;const t=th.closest('table'),c=+th.dataset.sc,k=sigOf(t);
+  S.statSort=S.statSort||{};const cur=S.statSort[k];const d=cur&&cur.c===c?(cur.d==='desc'?'asc':'desc'):(c===0?'asc':'desc');S.statSort[k]={c,d};sortTbl(t,c,d)});
 function vLogin(){return `<div class="panel login"><h2 style="font-family:var(--display);font-size:19px;margin:0 0 10px">관리자 로그인</h2>
   <label>아이디<input type="text" id="lid" autocomplete="username" value="admin"></label>
   <label>비밀번호<input type="password" id="lpw" autocomplete="current-password"></label>
@@ -251,7 +262,7 @@ function vStat(){const L=statRows(),v=S.sv||'acad';
     <div class="row" style="gap:6px;margin-top:8px;flex-wrap:wrap">${SVIEW.map(([k,l])=>`<button class="btn small ${v===k?'primary':''}" type="button" data-sv="${k}">${l}</button>`).join('')}</div></div>`;
   if(!L.length)return head+'<div class="panel hint">아직 접수가 없어요.</div>';
   return head+({acad:stAcad,round:stRound,inst:stInst,badge:stBadge,les:stLes,con:stCon,room:stRoom}[v])(L)}
-const ST=(h,rows,foot)=>`<div class="panel tbl"><table><thead><tr>${h.map((x,i)=>`<th${i?' class="r"':''}>${x}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr>${r.map((x,i)=>`<td${i?' class="r num"':''}>${x}</td>`).join('')}</tr>`).join('')}${foot?`<tr>${foot.map((x,i)=>`<td${i?' class="r num"':''}><b>${x}</b></td>`).join('')}</tr>`:''}</tbody></table></div>`;
+const ST=(h,rows,foot)=>`<div class="panel tbl"><table class="sortable"><thead><tr>${h.map((x,i)=>`<th${i?' class="r"':''} data-sc="${i}" title="눌러서 정렬 (한 번 더 누르면 반대로)">${x}<span class="sarr"></span></th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr>${r.map((x,i)=>`<td${i?' class="r num"':''}>${x}</td>`).join('')}</tr>`).join('')}${foot?`<tr class="foot">${foot.map((x,i)=>`<td${i?' class="r num"':''}><b>${x}</b></td>`).join('')}</tr>`:''}</tbody></table></div>`;
 function stAcad(L){const A=[...new Set(L.map(x=>x.acad))].sort((a,b)=>a.localeCompare(b,'ko'));const ins=[...new Set(L.filter(x=>x.kind==='학생').map(x=>x.inst||'미정'))];
   const row=G=>{const st=G.filter(x=>x.kind==='학생');return [G.filter(x=>x.kind==='교사').length,st.length,...ins.map(i=>st.filter(x=>(x.inst||'미정')===i).length||''),G.filter(x=>x.kind==='가족').length,G.length,won(G.reduce((t,x)=>t+x.bill,0)),won(G.reduce((t,x)=>t+x.paid,0))]};
   return ST(['학원','교사','학생',...ins.map(i=>'· '+esc(i)),'가족','합계(명찰)','청구','입금 확인'],A.map(a=>[esc(a),...row(L.filter(x=>x.acad===a))]),['합계',...row(L)])}

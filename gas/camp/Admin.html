@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261024-004959 -->
+<!-- build: 20261024-005128 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -294,10 +294,10 @@ function stType(L){const T=[...TYPE_ORDER.filter(t=>L.some(x=>x.type===t)),...[.
 /* 교사별 */
 function stTeacher(L){const S2=L.filter(x=>T_PLAY.includes(x.type));const ins=[...new Set(S2.map(x=>x.inst||'미정'))].sort(instSort);
   const v=ins.includes(S.sv3)?S.sv3:'all';const F=v==='all'?S2:S2.filter(x=>(x.inst||'미정')===v);
-  const keyT=x=>(x.i.teacher||'(담당 교사 없음)')+'\u0001'+x.acad;const K=[...new Set(F.map(keyT))].sort((x,y)=>x.localeCompare(y,'ko'));
-  const sub=`<div class="panel subtabs"><div class="row" style="gap:6px">${[['all','전체'],...ins.map(i=>[i,i])].map(([k,l])=>`<button class="btn small ${v===k?'primary':''}" type="button" data-sv3="${esc(k)}">${esc(l)} ${k==='all'?S2.length:S2.filter(x=>(x.inst||'미정')===k).length}</button>`).join('')}<span class="hint" style="margin-left:6px">학생 정보의 「담당 교사」 기준 · 학생 + 악기하는 교사자녀 · 학원이 다르면 따로</span></div></div>`;
-  const cols=v==='all'?ins:[v];
-  const tbl=ST(['교사','학원',...cols.map(esc),...(v==='all'?['합계']:[])],K.map(k=>{const [t,ac]=k.split('\u0001');const G=F.filter(x=>keyT(x)===k);return [esc(t),esc(ac),...cols.map(i=>nz(G.filter(x=>(x.inst||'미정')===i).length)),...(v==='all'?[G.length]:[])]}),['총계','',...cols.map(i=>F.filter(x=>(x.inst||'미정')===i).length),...(v==='all'?[F.length]:[])],2);
+  const keyT=x=>[x.acad,x.i.teacher||'(담당 교사 없음)',x.inst||'미정'].join('\u0001');
+  const K=[...new Set(F.map(keyT))].sort((x,y)=>{const [a1,t1,i1]=x.split('\u0001'),[a2,t2,i2]=y.split('\u0001');return a1.localeCompare(a2,'ko')||t1.localeCompare(t2,'ko')||instSort(i1,i2)});
+  const tbl=ST(['학원','교사','전공','학생 수'],K.map(k=>{const [ac,t,i]=k.split('\u0001');return [esc(ac),esc(t),esc(i),F.filter(x=>keyT(x)===k).length]}),['합계','','',F.length],3);
+  const sub=`<div class="panel subtabs"><div class="row" style="gap:6px">${[['all','전체'],...ins.map(i=>[i,i])].map(([k,l])=>`<button class="btn small ${v===k?'primary':''}" type="button" data-sv3="${esc(k)}">${esc(l)} ${k==='all'?S2.length:S2.filter(x=>(x.inst||'미정')===k).length}</button>`).join('')}<span class="hint" style="margin-left:6px">학생 정보의 「담당 교사」 기준 · 학생 + 악기하는 교사자녀</span></div></div>`;
   return sub+tbl}
 function stRound(L){const R=[...new Set(L.map(x=>x.round))].sort(),Ty=cnt(L,x=>x.type).map(x=>x[0]);
   return ST(['참가 구분',...R,'합계'],Ty.map(t=>[esc(t),...R.map(r=>L.filter(x=>x.type===t&&x.round===r).length||''),L.filter(x=>x.type===t).length]),['합계',...R.map(r=>L.filter(x=>x.round===r).length),L.length])}

@@ -1,4 +1,16 @@
-/* build: 20261023-221828 */
+/* build: 20261023-222329 */
+  if(d.sibpick!==undefined){S.sibOpen=S.sibOpen===d.sibpick?'':d.sibpick;render();return}
+  if(d.sib){const [a,b]=d.sib.split('|');const h=headOf(a);S.join[b]=h;delete S.room[b];sibsOf(b).forEach(j=>S.join[j]=h);S.sibOpen='';
+    const pp=people(),hp=pp.find(p=>p.key===h)||{},bp=pp.find(p=>p.key===b)||{};
+    if(hp.kind==='teacher'){const ib=info(bp);ib.type='회원의 악기하는 자녀'}
+    render();toast(hp.kind==='teacher'?`${bp.name}을(를) ${hp.name} 선생님의 자녀로 연결했어요 · 악기하는 교사자녀 참가비로 바뀌고 가족방은 한 방으로 계산돼요`:`${bp.name}을(를) ${hp.name}의 형제로 연결했어요 · 가족방은 한 방으로 계산돼요`);return}
+  if(d.unsib){const h=S.join[d.unsib];const hp=people().find(p=>p.key===h)||{};delete S.join[d.unsib];
+    if(hp.kind==='teacher'&&S.info[d.unsib]&&S.info[d.unsib].type==='회원의 악기하는 자녀')S.info[d.unsib].type='학생';render();toast('연결을 풀었어요');return}
+  if(d.addfam){const [k,t]=d.addfam.split('|');const id='f'+Date.now();S.fam.push({id,name:'',type:t,link:k});render();const n=document.getElementById('fn_'+id)||document.getElementById('fc_'+id);n&&n.focus();toast(`${FAM_SHORT[t]}를 추가했어요. 이름을 넣어 주세요`);return}
+  if(b.id==='allPaid'){const r=roster(),me=S.user.name;[...r.students.filter(x=>!S.mine||x.teacher===me),...(S.mine?[]:r.teachers)].forEach(x=>{if(x.paid&&!x.booked&&!S.picked[x.id])S.sel[x.id]=true});render();toast('회비 납부한 사람을 모두 선택했어요');return}
+  if(b.id==='openNew'){S.showNew=true;render();document.getElementById('nN').focus();return}
+  if(b.id==='cancelNew'){S.showNew=false;render();return}
+  if(b.id==='addNew'){
     const n=document.getElementById('nN').value.trim(), y=+document.getElementById('nB').value, ins=document.getElementById('nI').value, sy=document.getElementById('nSy').value, sm=document.getElementById('nSm').value, st=sy&&sm?`${sy}.${sm}`:'', tc=document.getElementById('nT').value;
     if(!n||!(y>1990&&y<2026)||!tc){document.getElementById('nErr').textContent='이름, 출생연도(4자리), 담당 교사를 넣어 주세요.';return}
     {const xid='x'+Date.now();S.cartAt[xid]=nowStamp();S.extra.push({id:xid,name:n,birth:y,inst:ins,start:st||'-',teacher:tc})}S.showNew=false;render();toast(`${n} 학생을 추가했어요 · 연회비 3만 원 추가`);return}

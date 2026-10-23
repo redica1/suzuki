@@ -1,4 +1,15 @@
-/* build: 20261023-221828 */
+/* build: 20261023-222329 */
+  ${S.editOnly?`<div class="note info spread"><span><b>${S.editOnly.length}명만 고치는 중</b> · ${ps.filter(p=>S.editOnly.includes(p.key)).map(p=>esc(p.name)).join(', ')}</span><button class="btn small ghost" type="button" id="showAllCards">모두 보기</button></div>`:''}
+  ${ps.filter(p=>p.kind!=='family'&&(!S.editOnly||S.editOnly.includes(p.key))).map(pCard).join('')}
+  </section>`;
+}
+const ENS_KEY='sz-ens-27w';
+function ensTeams(){return ENS}
+function ensApply(no){let L=ensTeams().filter(t=>t.no!==no&&t.rep!==S.acad);
+  L=L.map(t=>({...t,acads:(t.acads||[]).filter(a=>a!==S.acad)}));
+  if(S.ens.on&&(S.ens.group||'').trim())L.push({name:S.ens.group.trim(),rep:S.acad,acads:S.ens.acads||[],no});
+  if(S.ens.member&&S.ens.joinNo){const t=L.find(x=>x.no===S.ens.joinNo);if(t)t.acads=[...new Set([...(t.acads||[]),S.acad])]}
+  ensSave(L)}
 function ensSave(L){ENS=L} /* 화면 미리보기용 · 진짜 팀 목록은 서버가 접수 내용에서 다시 만듦 */
 const teamOf=a=>ensTeams().find(t=>t.rep===a||(t.acads||[]).includes(a));
 /* 우리 학원이 이미 팀에 들어가 있으면(다른 선생님·다른 접수로) 대표·함께 선택을 막음. 지금 고치는 접수가 그 팀을 낸 접수면 막지 않음 */
@@ -188,8 +199,3 @@ function subTag(sb){const L=sb.ppl.filter(p=>p.status==='정상');if(!L.length)r
 S.rpRow={};
 const rpv=p=>{const r=S.rpRow[p.id]||(S.rpRow[p.id]={n:'',d:'',a:String(dueOf(p))});return r};
 function askBox(title,body,okLabel,onOk){closeAsk();const bg=document.createElement('div');bg.className='askbg';bg.id='askBg';
-  bg.innerHTML=`<div class="askbox" role="dialog" aria-modal="true" aria-labelledby="askT"><h3 id="askT">${title}</h3><div>${body}</div><div class="row"><button class="btn ghost" type="button" id="askNo">취소</button><button class="btn primary" type="button" id="askOk">${okLabel}</button></div></div>`;
-  document.body.appendChild(bg);bg.addEventListener('click',e=>{if(e.target===bg||e.target.id==='askNo'){closeAsk()}else if(e.target.id==='askOk'){closeAsk();onOk()}});
-  document.getElementById('askOk').focus()}
-/* 입금 신고를 보낸 뒤: 무엇을 신고했는지 확인 상자 → 닫으면 그 사람 줄로 가서 반짝 */
-function repDone(ids){const L=[];MY_SUBS.forEach(sb=>sb.ppl.forEach(p=>{if(ids.includes(p.id)&&p.pay==='신고'&&p.rep){const r=p.rep.rows&&p.rep.rows[p.id]||{name:p.rep.name,date:p.rep.date,a:p.rep.amt};L.push({p,r})}}));if(!L.length)return;

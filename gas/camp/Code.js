@@ -1,4 +1,4 @@
-/* build: 20261023-230232 */
+/* build: 20261023-230331 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -546,6 +546,14 @@ function adminLogin(id, pw) {
   CacheService.getScriptCache().put('adm_' + token, JSON.stringify({ name: String(id).trim() }), 21600);
   log_('관리자 ' + id, '로그인', '');
   return Object.assign({ ok: true, token }, adminData(token));
+}
+/** STG 전용: 「설정」 탭 「관리자 자동 로그인」 = 예 이면 비밀번호 없이 들어감 (메인 시트에는 이 줄을 두지 않음) */
+function adminAuto() {
+  if (setting_('관리자 자동 로그인') !== '예') return { ok: false };
+  const token = Utilities.getUuid(), id = setting_('관리자 아이디') || 'admin';
+  CacheService.getScriptCache().put('adm_' + token, JSON.stringify({ name: id + '(자동)' }), 21600);
+  log_('관리자 ' + id, '자동 로그인(테스트)', '');
+  return Object.assign({ ok: true, token, id }, adminData(token));
 }
 function adm_(token) {
   const v = CacheService.getScriptCache().get('adm_' + token);

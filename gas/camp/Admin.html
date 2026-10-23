@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261023-230232 -->
+<!-- build: 20261023-230331 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -299,7 +299,8 @@ document.addEventListener('toggle',e=>{const d=e.target.dataset||{};if(d.sub)S.o
 document.addEventListener('input',e=>{if(e.target.id==='q'){S.q=e.target.value;const p=e.target.selectionStart;render();const n=document.getElementById('q');n.focus();n.setSelectionRange(p,p)}});
 document.addEventListener('keydown',e=>{if(e.key==='Enter'&&(e.target.id==='lpw'||e.target.id==='lid'))document.getElementById('doLogin').click()});
 (function(){let t='';try{t=sessionStorage.getItem('campAdmTok')||''}catch(x){}
-  if(t){S.tok=t;let id='';try{id=sessionStorage.getItem('campAdmId')||''}catch(x){}document.getElementById('who').textContent=id?'관리자 '+id:'';call('adminData',[],setData,'불러오고 있어요…')}})();
+  if(t){S.tok=t;let id='';try{id=sessionStorage.getItem('campAdmId')||''}catch(x){}document.getElementById('who').textContent=id?'관리자 '+id:'';call('adminData',[],setData,'불러오고 있어요…')}
+  else{/* 테스트(STG): 설정에 「관리자 자동 로그인 = 예」면 바로 들어감 */google.script.run.withSuccessHandler(r=>{if(!r||!r.ok)return;S.tok=r.token;try{sessionStorage.setItem('campAdmTok',r.token);sessionStorage.setItem('campAdmId',r.id)}catch(x){}document.getElementById('who').textContent='관리자 '+r.id+' (테스트 자동 로그인)';setData(r)}).withFailureHandler(()=>{}).adminAuto()}})();
 render();
 </script>
 </body></html>

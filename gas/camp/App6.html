@@ -1,4 +1,4 @@
-/* build: 20261023-230232 */
+/* build: 20261023-230331 */
     const overP=ps.filter(p=>+rpv(p).a>dueOf(p));let rfAll=null;if(overP.length){const gv=id=>(document.getElementById(id)||{}).value||'';rfAll={bank:gv('rpRfB'),acct:gv('rpRfA').replace(/[^\d-]/g,''),holder:gv('rpRfH').trim()};if(!rfAll.bank||rfAll.acct.replace(/-/g,'').length<6||!rfAll.holder)return er(`${overP.map(p=>p.name).join(', ')}은(는) 청구액보다 많아요. 아래 「환불 받을 계좌」를 적어 주세요.`)}
     const diff=ps.filter(p=>+rpv(p).a!==dueOf(p));if(diff.length&&!memo)return er(`${diff.map(p=>p.name).join(', ')}의 금액이 청구액과 달라요. 메모에 이유를 적어 주세요.`);
     const rows={};ps.forEach(p=>{const v=rpv(p);rows[p.id]={name:v.n.trim(),date:v.d,a:+v.a}});

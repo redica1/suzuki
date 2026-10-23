@@ -1,4 +1,4 @@
-/* build: 20261023-214809 */
+/* build: 20261023-215737 */
     else if(e.target.id==='ovGo'){const b=document.getElementById('ovB').value,a=document.getElementById('ovA').value.replace(/[^\d-]/g,''),h=document.getElementById('ovH').value.trim();
       if(!b||a.replace(/-/g,'').length<6||!h){document.getElementById('ovErr').textContent='은행·계좌번호·예금주를 넣어 주세요.';return}
       closeAsk();api('overRefundReq',[{no,ids:L.map(p=>p.id),bank:b,acct:a,holder:h}],r=>{applyBundle(r);render();toast(`${won(sum)} 돌려받기를 요청했어요 · 운영진이 보내면 「돌려받음」으로 바뀌어요`,true)},null,'요청하고 있어요…')}});

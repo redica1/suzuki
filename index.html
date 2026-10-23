@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>26가을 스즈키 교사연수 신청</title>
+<!--
+  스즈키 교사연수 신청 — 공유용 페이지 (2026-10-23)
+  · 깃허브 redica1/suzuki 저장소(GitHub Pages)에 이 파일과 og.png 를 함께 올림 → https://redica1.github.io/suzuki/
+  · 올린 주소가 다르면 아래 og:url · og:image 두 줄의 주소만 바꿔 주세요 (카톡 미리보기는 전체 주소여야 함).
+  · 지금은 테스트(STG) 앱이 들어 있습니다. 운영으로 바꿀 때는 맨 아래 iframe src 를 운영 앱 주소로 바꿉니다.
+      테스트: https://script.google.com/macros/s/AKfycbwEe8lmP7_TWFb_hxtEyapxUDNrKGg-8AlFX9XxISQRp73L863sE7BHGK-u6OJFLUH_FQ/exec
+      운영:   https://script.google.com/macros/s/AKfycbyQRUumuRkMZGVvwmRXT6p73qiSYmHkIm8jpavTltA-EPU9CoP8mHr3KmEHS3Mq6Hma9Q/exec
+-->
+<meta name="description" content="11월 20일(금) 서울 첼로·스즈키 이론, 11월 21일(토) 대전 바이올린 교사연수. 연수 신청 · 입금 신고 · 출석 체크">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="스즈키 교사연수">
+<meta property="og:title" content="26가을 스즈키 교사연수 신청">
+<meta property="og:description" content="11/20(금) 서울 첼로·스즈키 이론 · 11/21(토) 대전 바이올린 | 연수 신청 · 입금 신고 · 출석 체크">
+<meta property="og:url" content="https://redica1.github.io/suzuki/">
+<meta property="og:image" content="https://redica1.github.io/suzuki/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="26가을 스즈키 교사연수 신청 — 11월 20일 서울, 11월 21일 대전">
+<meta property="og:locale" content="ko_KR">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#eef0f4">
+<meta name="robots" content="noindex">
+<style>
+  html, body { margin: 0; height: 100%; background: #eef0f4; }
+  /* 신청 화면을 화면 가득 (주소창이 줄었다 늘었다 해도 맞게) */
+  #app { position: fixed; inset: 0; width: 100%; height: 100%; height: 100dvh; border: 0; display: block; }
+  /* 신청 화면이 뜨기 전 잠깐 보이는 안내 */
+  #wait { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
+          font: 600 17px/1.5 -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif; color: #5d6680; text-align: center; padding: 24px; }
+  #wait a { color: #2c46c9; }
+  .spin { width: 26px; height: 26px; border-radius: 50%; border: 3px solid #2c46c9; border-right-color: transparent; animation: s .8s linear infinite; }
+  @keyframes s { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+<div id="wait"><span class="spin"></span>신청 화면을 여는 중이에요…<small id="slow" hidden>오래 걸리면 <a id="direct" target="_top">여기를 눌러 바로 열어 주세요</a></small></div>
+<iframe id="app" title="26가을 스즈키 교사연수 신청" allow="clipboard-write; screen-wake-lock"
+  src="https://script.google.com/macros/s/AKfycbwEe8lmP7_TWFb_hxtEyapxUDNrKGg-8AlFX9XxISQRp73L863sE7BHGK-u6OJFLUH_FQ/exec"></iframe>
+<script>
+  // 10초가 지나도 신청 화면이 안 뜨면 앱 주소로 바로 여는 링크를 보여 줌 (회사·학교 와이파이가 막는 경우 대비)
+  var app = document.getElementById('app');
+  document.getElementById('direct').href = app.src;
+  setTimeout(function () { document.getElementById('slow').hidden = false; }, 10000);
+</script>
+</body>
+</html>

@@ -1,4 +1,26 @@
-/* build: 20261023-223638 */
+/* build: 20261023-223939 */
+    const overP=ps.filter(p=>+rpv(p).a>dueOf(p));let rfAll=null;if(overP.length){const gv=id=>(document.getElementById(id)||{}).value||'';rfAll={bank:gv('rpRfB'),acct:gv('rpRfA').replace(/[^\d-]/g,''),holder:gv('rpRfH').trim()};if(!rfAll.bank||rfAll.acct.replace(/-/g,'').length<6||!rfAll.holder)return er(`${overP.map(p=>p.name).join(', ')}은(는) 청구액보다 많아요. 아래 「환불 받을 계좌」를 적어 주세요.`)}
+    const diff=ps.filter(p=>+rpv(p).a!==dueOf(p));if(diff.length&&!memo)return er(`${diff.map(p=>p.name).join(', ')}의 금액이 청구액과 달라요. 메모에 이유를 적어 주세요.`);
+    const rows={};ps.forEach(p=>{const v=rpv(p);rows[p.id]={name:v.n.trim(),date:v.d,a:+v.a}});
+    const rep={id:'R'+Date.now().toString(36),name:rows[ps[0].id].name,date:rows[ps[0].id].date,amt:ps.reduce((t,p)=>t+rows[p.id].a,0),memo,ids:sel,rows};if(rfAll)rep.refund=rfAll;
+    ps.forEach(p=>{p.pay='신고';p.rep=rep;delete S.rpRow[p.id]});S.afterSave=()=>repDone(ps.map(p=>p.id));subSave();S.rp=null;S.rpMemo=undefined;render();toast(`${ps.length}명 입금 신고를 보냈어요 · 운영진이 확인하면 「입금 확인」으로 바뀌어요`);return}
+  if(b.id==='rpFill'){const n=document.getElementById('rpAllN').value.trim(),dd=document.getElementById('rpAllD').value;S.rpAllN=n;S.rpAllD=dd;const sel=S.rp||[];
+    if(!n&&!dd){toast('적용할 입금자명이나 입금일을 적어 주세요');return}unpaidPpl().filter(x=>sel.includes(x.p.id)).forEach(({p})=>{const v=rpv(p);if(n)v.n=n;if(dd)v.d=dd});render();toast(`선택한 ${sel.length}명에게 적용했어요`);return}
+  if(d.rpok){MY_SUBS.forEach(sb=>sb.ppl.forEach(p=>{if(p.rep&&p.rep.id===d.rpok&&p.pay==='신고'){const row=p.rep.rows&&p.rep.rows[p.id];p.pay='확인';p.paidAmt=(p.paidAmt||0)+(row?row.a:dueOf(p));p.rep.ok=row?row.date:p.rep.date}}));subSave();render();toast('시제품: 운영진이 입금을 확인한 것으로 바꿨어요');return}
+  if(d.rpall!==undefined){S.rp=d.rpall==='1'?unpaidPpl().map(x=>x.p.id):[];{const n=document.getElementById('rpMemo');if(n)S.rpMemo=n.value}render();return}
+  if(d.cxall){const sb=MY_SUBS.find(x=>x.no===d.cxall);const live=sb.ppl.filter(p=>p.status==='정상'&&mineOk(sb,p)).map(p=>p.id);const cur=S.cx[sb.no]||[];S.cx[sb.no]=live.length&&live.every(id=>cur.includes(id))?cur.filter(id=>!live.includes(id)):[...new Set([...cur,...live])];S.cxOpen='';S.cxDone=null;render();return}
+  if(d.cxopen){S.cxOpen=d.cxopen;S.cxDone=null;render();const x=document.querySelector('.cxbox');if(x&&x.scrollIntoView)x.scrollIntoView({block:'center'});return}
+  if(b.id==='showAllCards'){S.editOnly=null;render();return}
+  if(d.ensnew){startEdit(d.ensnew,'ens');S.ens={...(S.ens||{}),on:true};render();return}
+  if(d.ensedit){startEdit(d.ensedit,'ens');return}
+  if(d.pedit){const [no,id]=d.pedit.split('|');startEdit(no,[id.slice(no.length+1)]);return}
+  if(d.seledit){const no=d.seledit;const sb0=MY_SUBS.find(x=>x.no===no);const all=(S.cx[no]||[]);const ids=all.filter(id=>{const p=sb0&&sb0.ppl.find(q=>q.id===id);return !(p&&p.pay==='신고')});if(ids.length<all.length)toast(`입금 신고 확인 중인 ${all.length-ids.length}명은 운영진 확인 전까지 고칠 수 없어서 뺐어요`,true);if(!ids.length)return;startEdit(no,ids.map(id=>id.slice(no.length+1)));return}
+  if(d.cxclear){delete S.cx[d.cxclear];render();return}
+  if(d.cxgo){const sb=MY_SUBS.find(x=>x.no===d.cxgo);const sel=(S.cx[sb.no]||[]).filter(id=>{const p=sb.ppl.find(q=>q.id===id);return p&&canCxP(p)});const {r,amt,paid}=refundOf(sb,sel);const er=m=>{document.getElementById('cxErr').textContent=m};
+    {const left=sb.ppl.filter(p=>p.status==='정상'&&!sel.includes(p.id)).length,m=teamMates(sb.no);if(!left&&m.length)return er(`이 접수는 앙상블 「${repTeam(sb.no).name}」 팀 대표예요. 함께하는 학원(${m.join(', ')})이 있어서 모두 취소할 수 없어요. 함께하는 학원과 이야기한 뒤 운영진에게 연락해 주세요.`)}
+    const why=document.getElementById('cxWhy').value;if(!why)return er('취소 사유를 선택해 주세요.');
+    if(r.doc&&paid){const f=document.getElementById('cxDoc');if(!f||!f.files.length)return er('이 기간에는 진단서를 올려야 취소할 수 있어요.')}
+    if(paid&&amt>0){const bk=document.getElementById('cxBank').value,ac=document.getElementById('cxAcct').value.replace(/[^\d-]/g,''),ho=document.getElementById('cxHolder').value.trim();if(!bk||ac.length<8||!ho)return er('환불 받을 은행·계좌번호·예금주를 넣어 주세요.')}
     const names=sb.ppl.filter(p=>sel.includes(p.id)).map(p=>p.name);
     if(paid){const f=document.getElementById('cxDoc'),req={no:sb.no,acad:sb.acad,names,ids:sel,why,amt,bank:(document.getElementById('cxBank')||{}).value||'',acct:((document.getElementById('cxAcct')||{}).value||'').replace(/[^\d-]/g,''),holder:((document.getElementById('cxHolder')||{}).value||'').trim()};
       const go=file=>{req.file=file;api('cancelReq',[req],()=>{})};
@@ -59,6 +81,7 @@
       MY_SUBS.forEach(x=>x.ppl.forEach(q=>{if(q.rep&&q.rep.id===r.id)q.rep=r}));p.pay='전';delete p.rep;S.prp='';subSave();render();toast(`${p.name} 입금 신고를 취소했어요`)});return}
   if(d.atab){S.atab=d.atab;render();return}
   if(d.mtab){S.mtab=d.mtab;render();return}
+  if(d.mscope){S.mscope=d.mscope;render();window.scrollTo({top:0});return}
   if(d.ensjoin){S.ens.joinNo=S.ens.joinNo===d.ensjoin?'':d.ensjoin;render();return}
   if(d.ensadd){const a=d.ensadd,t=teamOf(a),tn=(S.ens.group||'').trim();
     askBox('학원을 추가하시겠습니까?',`<b>${esc(a)}</b>을(를) ${tn?`「${esc(tn)}」 `:''}팀에 추가해요.${t?`<p class="note warn" style="margin:10px 0 0">이미 「${esc(t.name)}」 팀에 속해 있어요 (대표 ${esc(t.rep)}). 그래도 추가할 수 있어요.</p>`:''}`,'추가',

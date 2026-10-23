@@ -1,4 +1,4 @@
-/* build: 20261023-232504 */
+/* build: 20261023-232730 */
 /* ---------- 캠프 설정 (관리자 화면에서 입력되는 값) ---------- */
 const ROOM = { cap:4, emptyFee:130000 }; // 가족방: 4인 기준, 빈 자리 1개당 추가 비용
 const CAMP = { id:'27W', ri:0, lessonFee:60000, lessonMax:5, mcFee:150000,
@@ -50,7 +50,7 @@ const nowStamp=()=>`${S.today} ${new Date().toTimeString().slice(0,8)}`;
 const stampTxt=x=>{if(!x)return '';const [d,t]=x.split(' ');return `${kday(d)}${t?' '+t.slice(0,5):''}`};
 function ensureRoster(a){
     if(!ROSTER[a]) ROSTER[a]=a===classOf(S.user)?{teachers:[],students:[]}:rosterFor(a);
-    if(!ROSTER[a].teachers.some(x=>bare(x.name)===bare(S.user.name))) ROSTER[a].teachers.unshift({id:'me_'+S.user.phone,name:S.user.name,role:S.user.role||'강사',inst:S.user.inst,paid:!S.user.newReg,moved:!S.user.acads.includes(a)});}
+    if(!ROSTER[a].teachers.some(x=>bare(x.name)===bare(S.user.name))) ROSTER[a].teachers.unshift({id:S.user.id?'t_'+S.user.id:'me_'+S.user.phone,name:S.user.name,role:S.user.role||'강사',inst:S.user.inst,paid:!S.user.newReg,moved:!S.user.acads.includes(a)});}
 const ROUNDS = [['1차','12월 1일 ~ 12월 10일'],['2차','12월 11일 ~ 12월 20일'],['3차','12월 21일 ~ 12월 28일']];
 const FEES = { // 참가자격 × 차수 (관리자 참가비표에서 입력, 2026 여름 금액을 예시로 사용)
   '교사':[560000,570000,590000],'연수생':[560000,570000,590000],'소속없는 중급연수생':[560000,570000,590000],'학생':[560000,570000,590000],'회원의 악기하는 자녀':[510000,520000,540000],
@@ -203,7 +203,6 @@ function vStep1(){
   </div></section>`;
 }
 /* 이미 낸 접수에 들어 있는 사람 (고치는 중인 접수는 빼고) */
-function bookedOf(x){for(const sb of ALL_SUBS){if(sb.no===S.editNo||sb.acad!==S.acad)continue;const p=sb.ppl.find(q=>q.id===sb.no+'_'+x.id&&q.status==='정상');if(p)return {no:sb.no,round:sb.round,by:sb.owner,at:p.addAt||sb.date}}return null}
+function bookedOf(x){const T=/^t_/.test(x.id);/* 선생님은 학원을 통틀어 한 번만 */for(const sb of ALL_SUBS){if(sb.no===S.editNo||(!T&&sb.acad!==S.acad))continue;const p=sb.ppl.find(q=>q.id===sb.no+'_'+x.id&&(q.status==='정상'||(T&&q.status==='취소요청')));if(p)return {no:sb.no+(sb.acad!==S.acad?' · '+sb.acad:''),round:sb.round,by:sb.owner,at:p.addAt||sb.date}}return null}
 /* 고치는 중일 때 신청 명단 칩에 붙는 표시: 기존(들어온 차례·시각) / 새로 추가 */
 const nextBatch=()=>{const sb=ALL_SUBS.find(x=>x.no===S.editNo);return sb?Math.max(1,...sb.ppl.map(q=>q.batch||1))+1:1};
-const btCls=n=>'bt'+(((n||1)-1)%6+1);

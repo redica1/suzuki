@@ -1,4 +1,4 @@
-/* build: 20261023-224230 */
+/* build: 20261023-225035 */
 /* ---------- 캠프 설정 (관리자 화면에서 입력되는 값) ---------- */
 const ROOM = { cap:4, emptyFee:130000 }; // 가족방: 4인 기준, 빈 자리 1개당 추가 비용
 const CAMP = { id:'27W', ri:0, lessonFee:60000, lessonMax:5, mcFee:150000,
@@ -169,7 +169,7 @@ function classOf(u){return `${u.name} 클래스`}
 function vStep1(){
   const u=S.user;
   if(!u) return `<section class="sec"><h2>선생님 로그인</h2>
-  <p class="lede">회원 명단에 있는 선생님만 접수할 수 있어요. 지금은 <b>마포스즈키</b> 선생님만 시험으로 접수할 수 있어요.</p>
+  <p class="lede">회원 명단에 있는 선생님만 접수할 수 있어요. 이름과 휴대전화로 들어가요.</p>
   <div class="panel" style="max-width:440px">
     <label class="f" for="lgNm">이름<input type="text" id="lgNm" value="${esc(S.lgNm)}" autocomplete="name" placeholder=""></label>
     <label class="f" for="lgEm">휴대전화<span class="phwrap"><span class="phpre" aria-hidden="true">010-</span><input type="tel" id="lgEm" value="${esc(String(S.lgEm||'').replace(/^010-?/,''))}" inputmode="numeric" placeholder="0000-0000" maxlength="9" autocomplete="tel-local" aria-label="휴대전화 010 뒤 8자리"></span></label>

@@ -1,4 +1,4 @@
-/* build: 20261023-224230 */
+/* build: 20261023-225035 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -16,7 +16,9 @@
 const CAMP_ID = '27W';
 const CAMP_NAME = '2027 스즈키 겨울 음악제';
 const TZ = 'Asia/Seoul';
-const TEST_ACADS = ['마포스즈키'];          // 시험 기간에 접수할 수 있는 학원
+const TEST_ACADS = ['마포스즈키'];          // 「설정」 탭 「접수 가능 학원」이 비어 있을 때만 씀
+/** 접수 가능 학원: 설정 「접수 가능 학원」 = 전체 / 학원1, 학원2 … (없으면 TEST_ACADS) */
+function acadOpen_() { const v = setting_('접수 가능 학원'); if (!v) return TEST_ACADS; if (/^전체$/.test(v)) return null; return v.split(',').map(s => s.trim()).filter(Boolean); }
 const ADMIN_EMAIL = '';                     // 새 접수 알림을 받을 주소 (비워 두면 안 보냄)
 const JSON_CHUNK = 45000;                   // 시트 한 칸 글자 수 한도(5만) 아래로 나눠 저장
 
@@ -38,7 +40,8 @@ const SETTINGS = [['관리자 아이디', 'admin', '관리자 화면(?page=admin
   ['입금 계좌번호', '', '입금 계좌번호 (선생님 화면에서 복사 가능)'],
   ['예금주', '', '입금 계좌 예금주'],
   ['입금 시작일', '2026-10-01', '이 날짜보다 앞선 입금일로는 신고할 수 없어요'],
-  ['공유주소', 'https://redica1.github.io/suzuki/camp/', '카카오톡 안에서 열었을 때 바깥 브라우저로 넘길 주소']];
+  ['공유주소', 'https://redica1.github.io/suzuki/camp/', '카카오톡 안에서 열었을 때 바깥 브라우저로 넘길 주소'],
+  ['접수 가능 학원', '마포스즈키', '「전체」 또는 학원 이름을 쉼표로 (예: 마포스즈키, 미사스즈키)']];
 
 const SH = {
   T: '명단_교사', S: '명단_학생', SUB: '접수', P: '참가자', RP: '입금신고', CX: '환불요청', ENS: '앙상블팀', LOG: '기록'
@@ -137,11 +140,12 @@ function login(name, phone) {
   const nm = bare_(name);
   if (!nm || ph.length < 10) return { ok: false, msg: '이름과 휴대전화를 모두 넣어 주세요.' };
   const t = teachers_().find(x => bare_(x.name) === nm && x.p4 && ph.endsWith(x.p4));
-  if (!t) return { ok: false, msg: '회원 명단의 이름·휴대전화와 맞지 않아요. 지금은 마포스즈키 선생님만 시험으로 접수할 수 있어요.' };
+  if (!t) return { ok: false, msg: '회원 명단의 이름·휴대전화와 맞지 않아요.' };
   if (t.state === '대기') return { ok: false, msg: '승인 대기 중이에요. 협회가 확인하면 이메일로 알려 드려요.' };
   try { ensureSettings_(); } catch (x) {}
-  const acads = t.acads.filter(a => TEST_ACADS.includes(a));
-  if (!acads.length) return { ok: false, msg: '시험 기간에는 마포스즈키만 접수할 수 있어요.' };
+  const open = acadOpen_();
+  const acads = t.acads.filter(a => !open || open.includes(a));
+  if (!acads.length) return { ok: false, msg: '지금은 ' + open.join(', ') + '만 접수할 수 있어요.' };
   const token = Utilities.getUuid();
   CacheService.getScriptCache().put('tok_' + token, JSON.stringify({ name: t.name, acads }), 21600);
   log_(t.name, '로그인', '');

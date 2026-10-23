@@ -1,4 +1,5 @@
-/* build: 20261024-005128 */
+/* build: 20261024-005844 */
+  if(b.id==='qBack'){const v=S.qBack||{view:'form'};S.view=v.view==='q'?'form':v.view;render();window.scrollTo({top:0});return}
   if(b.id==='ensSaveBtn'){document.getElementById('nextBtn').click();return}
   if(b.id==='nextBtn'&&blocked()){warnMissing();return}
   if(b.id==='nextBtn'&&S.step===4&&S.editNo&&S.ensEdit){S.step=5;S.agree=true}
@@ -168,4 +169,3 @@ document.addEventListener('change',e=>{
   if(el.id==='mine'){S.mine=el.checked;render();return}
   if(el.id==='who'||el.id==='phone'){render();return}
 });
-document.addEventListener('change',e=>{if(e.target.id==='nI'){const n=document.getElementById('nT');if(n)n.innerHTML=opts(teachersFor(e.target.value),'','선택')}});

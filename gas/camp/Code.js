@@ -1,4 +1,4 @@
-/* build: 20261024-005128 */
+/* build: 20261024-005844 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -32,6 +32,35 @@ const ROUND_NAMES = ['1차', '2차', '3차'];
 const OPT = { lessonFee: 60000, lessonMax: 5, studentDues: 30000, teacherDues: 300000, roomCap: 4, roomEmptyFee: 130000 };
 const PLAYS = ['교사', '연수생', '소속없는 중급연수생', '학생', '회원의 악기하는 자녀'];
 const MASTER = [{ n: '안드레아 부샤츠', fee: 150000 }, { n: '이성주', fee: 150000 }];
+/* 교수진: 「교수진」 시트에서 관리 (처음 한 번만 아래 목록으로 채움) */
+const PROF_SEED = {
+  '바이올린':['곽은수','김소정','김유정','김한기','민연희','변지혜','서민정','신재원','양승돈','오영근','이광호','이슬비','정호진','황경익','황선영','Ayumi Moriyama','Jeffrey Solares','Motomichi Kisohara','Sara M. Gonzales'],
+  '첼로':['김현실','이숙정','황선경']};
+const PROF_HEAD = ['이름', '악기', '레슨', '마스터클래스', '시간(분)', '마스터클래스 금액', '소속', '사용', '메모'];
+const PROF_INST = ['바이올린', '첼로', '플루트', '비올라', '피아노', '기타'];
+let PROF_CACHE = null;
+function profSheet_() {
+  const ss = SpreadsheetApp.getActive(); let sh = ss.getSheetByName(SH.PROF);
+  if (!sh) {
+    sh = ss.insertSheet(SH.PROF); sh.appendRow(PROF_HEAD);
+    Object.keys(PROF_SEED).forEach(i => PROF_SEED[i].forEach(n => sh.appendRow([n, i, '예', '아니오', '', '', '교수진', '예', ''])));
+    MASTER.forEach(m => sh.appendRow([m.n, '바이올린', '아니오', '예', 45, m.fee, '교수진', '예', '']));
+  } else ensureHead_(SH.PROF, PROF_HEAD);
+  return sh;
+}
+const yes_ = v => /^(예|y|yes|o|true|1|사용)$/i.test(String(v).trim());
+/** 교수진 전체 (사용 안 함 포함) */
+function profs_() {
+  if (PROF_CACHE) return PROF_CACHE;
+  profSheet_();
+  PROF_CACHE = rows_(SH.PROF).filter(r => String(r['이름'] || '').trim()).map(r => ({
+    name: String(r['이름']).trim(), inst: String(r['악기'] || '').trim(), lesson: yes_(r['레슨']), mc: yes_(r['마스터클래스']),
+    min: +r['시간(분)'] || 0, fee: +String(r['마스터클래스 금액'] || 0).replace(/[^\d]/g, '') || 0, org: String(r['소속'] || ''), on: String(r['사용'] || '예').trim() === '' || yes_(r['사용']), memo: String(r['메모'] || '') }));
+  return PROF_CACHE;
+}
+/** 접수 화면용: 사용하는 교수만 (선호 교수 목록 · 마스터클래스) */
+function profPublic_() { return profs_().filter(p => p.on).map(p => ({ n: p.name, i: p.inst, l: p.lesson, mc: p.mc, min: p.min, fee: p.fee })); }
+const mcList_ = () => profs_().filter(p => p.on && p.mc).map(p => ({ n: p.name, fee: p.fee }));
 const PAY_MAX = 10000000;            // 한 사람 입금 신고 금액 상한
 const RP_HEAD = ['기록 일시', '신고ID', '접수번호', '학원', '접수 교사', '참가자', '입금자명', '입금일', '금액', '메모', '구분', '환불 계좌'];
 const SETTINGS = [['관리자 아이디', 'admin', '관리자 화면(?page=admin) 로그인 아이디'],
@@ -44,7 +73,7 @@ const SETTINGS = [['관리자 아이디', 'admin', '관리자 화면(?page=admin
   ['접수 가능 학원', '마포스즈키', '「전체」 또는 학원 이름을 쉼표로 (예: 마포스즈키, 미사스즈키)']];
 
 const SH = {
-  T: '명단_교사', S: '명단_학생', SUB: '접수', P: '참가자', RP: '입금신고', CX: '환불요청', ENS: '앙상블팀', LOG: '기록'
+  T: '명단_교사', S: '명단_학생', SUB: '접수', P: '참가자', RP: '입금신고', CX: '환불요청', ENS: '앙상블팀', LOG: '기록', PROF: '교수진'
 };
 const SUB_HEAD = ['접수번호', '접수일시', '수정일시', '학원', '접수 교사', '차수', '인원(정상)', '청구액', '입금확인액', '남은 금액', '앙상블', 'JSON_1', 'JSON_2', 'JSON_3', 'JSON_4'];
 const P_HEAD = ['참가자ID', '접수번호', '차수', '학원', '접수 교사', '들어온 차례', '추가 일시', '이름', '구분', '참가 구분', '악기', '담당 교사', '출생연도', '성별',
@@ -207,6 +236,7 @@ function who_(token) {
 
 /** 화면에 필요한 것: 학원 명단, 그 학원 접수 전부(다른 선생님 것 포함 — 중복 접수 막기용), 앙상블 팀 */
 function bundle_(acads) {
+  const profs = (() => { try { return profPublic_(); } catch (x) { return null; } })();
   const ts = teachers_();
   const st = rows_(SH.S);
   const rosters = {};
@@ -220,7 +250,7 @@ function bundle_(acads) {
     };
   });
   const all = loadSubs_();
-  return { rosters, subs: all.filter(sb => acads.includes(sb.acad)), teams: teams_(all), bank: bankInfo_(), today: today_() };
+  return { rosters, subs: all.filter(sb => acads.includes(sb.acad)), teams: teams_(all), bank: bankInfo_(), today: today_(), profs };
 }
 
 /* ---------------- 접수 읽고 쓰기 ---------------- */
@@ -366,7 +396,7 @@ function recalc_(sb) {
     if (!FEES[i.type]) throw new Error(p.name + '의 참가 구분(' + i.type + ')을 확인해 주세요.');
     const plays = PLAYS.includes(i.type);
     const les = plays ? Math.max(0, Math.min(OPT.lessonMax, +i.lessons || 0)) : 0;
-    const mc = plays ? (i.mc || []).reduce((t, n) => t + ((MASTER.find(m => m.n === n) || {}).fee || 0), 0) : 0;
+    const mc = plays ? (i.mc || []).reduce((t, n) => t + ((mcList_().find(m => m.n === n) || {}).fee || 0), 0) : 0;
     const isT = /^t_|^me_/.test(k), isFam = (f.fam || []).some(x => x.id === k);
     const paid = isFam ? true : isT ? (k.indexOf('me_') === 0 ? true : !!tPaid[k]) : !!sPaid[k];
     p.type = i.type; p.fee = FEES[i.type][ri]; p.lesson = les * OPT.lessonFee + mc;
@@ -638,7 +668,7 @@ function adminData(token) {
   // 통계용: 예전 접수라 사람마다 악기가 비어 있으면 명단에서 채워서 보냄 (시트에는 안 씀)
   const inst = {}; teachers_().forEach(t => inst['t_' + t.id] = t.inst); rows_(SH.S).forEach(r => inst[String(r['ID'])] = String(r['악기'] || ''));
   subs.forEach(sb => sb.ppl.forEach(p => { if (!p.inst) { const k = p.id.slice(sb.no.length + 1), i = (sb.form && sb.form.info && sb.form.info[k]) || {}; p.inst = i.inst || inst[k] || ''; } }));
-  return { today: today_(), subs, admin, cx, teams: teams_(subs), issues: issues_() };
+  return { today: today_(), subs, admin, cx, teams: teams_(subs), issues: issues_(), profs: profs_() };
 }
 function setAdminCols_(pid, vals) {
   const sh = SpreadsheetApp.getActive().getSheetByName(SH.P);
@@ -709,6 +739,28 @@ function adminSaveEns(token, no, patch) {
     sb.rev = (+sb.rev || 0) + 1;
     writeSub_(sb, false); writeTeams_(all);
     log_('관리자 ' + a.name, '앙상블 수정', no + ' · ' + e.group);
+  } finally { lock.releaseLock(); }
+  return adminData(token);
+}
+/** 관리자: 교수진 목록 저장 (전체를 새로 씀) */
+function adminSaveProfs(token, list) {
+  const a = adm_(token);
+  const t = (s, n) => String(s == null ? '' : s).trim().slice(0, n || 60);
+  const L = (list || []).map(p => ({ name: t(p.name, 40), inst: t(p.inst, 20), lesson: !!p.lesson, mc: !!p.mc, min: Math.max(0, Math.min(240, +p.min || 0)), fee: Math.max(0, Math.min(5000000, +String(p.fee || 0).replace(/[^\d]/g, '') || 0)), org: t(p.org, 40), on: p.on !== false, memo: t(p.memo, 200) })).filter(p => p.name);
+  const seen = {};
+  L.forEach(p => {
+    if (!PROF_INST.includes(p.inst)) throw new Error(p.name + ': 악기를 골라 주세요.');
+    const k = p.name + '|' + p.inst; if (seen[k]) throw new Error(p.name + '(' + p.inst + ')이(가) 두 번 있어요.'); seen[k] = 1;
+    if (p.mc && !p.fee) throw new Error(p.name + ': 마스터클래스 금액을 넣어 주세요.');
+    if (!p.lesson && !p.mc) throw new Error(p.name + ': 레슨이나 마스터클래스 중 하나는 골라 주세요.');
+  });
+  const lock = lock_();
+  try {
+    const sh = profSheet_(); const last = sh.getLastRow();
+    if (last > 1) sh.getRange(2, 1, last - 1, PROF_HEAD.length).clearContent();
+    if (L.length) sh.getRange(2, 1, L.length, PROF_HEAD.length).setValues(L.map(p => [p.name, p.inst, p.lesson ? '예' : '아니오', p.mc ? '예' : '아니오', p.mc ? (p.min || '') : '', p.mc ? p.fee : '', p.org, p.on ? '예' : '아니오', p.memo]));
+    PROF_CACHE = null;
+    log_('관리자 ' + a.name, '교수진 저장', L.length + '명');
   } finally { lock.releaseLock(); }
   return adminData(token);
 }

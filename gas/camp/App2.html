@@ -1,4 +1,8 @@
-/* build: 20261024-005128 */
+/* build: 20261024-005844 */
+          ${all.map(a=>`<li><button type="button" role="option" data-acad="${esc(a.name)}" aria-selected="${S.acad===a.name}"><span>${esc(a.name)}${mineA.includes(a.name)?' <span class="pill ok">내 소속</span>':''}</span><small>${esc(a.region)}${a.head?` · ${esc(a.head)}`:''}</small></button></li>`).join('')||'<li class="hint" style="padding:8px">찾는 학원이 없어요. 맨 위 「직접 입력」을 선택해 주세요.</li>'}
+        </ul>`:''}
+      </div></label>
+    ${S.acad&&!mineA.includes(S.acad)&&S.acad!==classOf(u)?`<div class="note info">「${esc(S.acad)}」은(는) 명단상 소속이 아니지만 <b>이 학원 학생을 접수할 수 있어요</b> (겸임). 소속은 그대로 「${esc(mineA.join(', ')||'-')}」예요.</div>`:''}
     <label class="f" for="email">접수 확인 메일 받을 주소<input type="text" id="email" value="${esc(S.email)}" placeholder="name@naver.com"></label>
   </div></section>`;
 }
@@ -173,4 +177,3 @@ function pCard(p){
     </div>
 
 `):`<p class="hint">${p.kind==='family'?`${esc(people().find(x=>x.key===p.link)?.name||'')}의 가족으로 접수돼요. 레슨·음악회 질문은 없어요.`:'이 구분은 레슨·음악회 신청이 없어요.'}</p>`}
-    ${p.kind!=='family'?`<div class="famadd">${(()=>{const fs=people().filter(x=>x.kind==='family'&&x.link===p.key);return fs.length?`<div class="famnest"><div class="grp-h">${esc(p.name)}의 가족 ${fs.length}명</div>${fs.map(pCard).join('')}</div>`:''})()}${(S.editNo&&S.quickEdit?'':famChips(p.key,p.kind==='teacher'?'teacher':'student',p.name))}${roomRow(p.key,p.name)}</div>`:''}

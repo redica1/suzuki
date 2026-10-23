@@ -1,4 +1,5 @@
-/* build: 20261024-005128 */
+/* build: 20261024-005844 */
+    <div class="spread"><span class="hint">합계 ${won(subTotal(sb,sb.ppl.filter(p=>p.status==='정상').map(p=>p.id)))}</span>
       ${live.length?`<span class="row"><button class="btn small" type="button" data-cxall="${sb.no}">${(()=>{const v=live.filter(p=>mineOk(sb,p));return v.length&&v.every(p=>sel.includes(p.id))?(S.mtab&&S.mtab!=='전체'?S.mtab+' 해제':'전체 해제'):(S.mtab&&S.mtab!=='전체'?S.mtab+' 모두 선택':'전체 선택')})()}</button>
       <button class="btn small primary" type="button" data-seledit="${sb.no}" ${sel.length&&sb.form?'':'disabled'}>선택한 ${sel.length}명 정보 수정</button>
       <button class="btn small" type="button" data-cxopen="${sb.no}" ${selCx.length?'':'disabled'}>선택한 ${selCx.length}명 취소</button></span>`:''}</div>
@@ -176,4 +177,3 @@ document.addEventListener('click',e=>{
   if(b.id==='otherAcad'){S.acOpen=true;S.acQ='';render();const n=document.getElementById('acQ');if(n)n.focus();return}
   if(b.id==='qBtn'){openQ();return}
   if(b.id==='qSend'){sendQ();return}
-  if(b.id==='qBack'){const v=S.qBack||{view:'form'};S.view=v.view==='q'?'form':v.view;render();window.scrollTo({top:0});return}

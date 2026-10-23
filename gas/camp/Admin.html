@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261024-011814 -->
+<!-- build: 20261024-012105 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -618,7 +618,7 @@ function view(){
   const done=L.rows.filter(x=>SB[x.pid]).length,short=reqS.filter(s=>lessonsOf(s.id).length<s.req).length;
   const clash=L.rows.filter(x=>grpAt(x.d,x.t,x.pr)).length,gone=L.rows.filter(x=>!SB[x.pid]).length;
   const head=`<div class="panel"><div class="spread"><div class="row" style="gap:6px">${[['day','날짜별'],['prof','교수별'],['stu','학생별'],['need','신청 현황']].map(([k,l])=>`<button class="btn small ${A.mode===k?'primary':''}" type="button" data-lmode="${k}">${l}</button>`).join('')}</div>
-      <div class="row" style="gap:6px"><button class="btn small" type="button" id="l_reload">새로 불러오기</button></div></div>
+      <div class="row" style="gap:6px"><button class="btn small ${L.open?'primary':''}" type="button" id="l_open" title="선생님 화면 「내 시간표」에 교사 일정·개인레슨을 보여 줄지">선생님께 시간표 공개: ${L.open?'켜짐':'꺼짐'}</button><button class="btn small" type="button" id="l_reload">새로 불러오기</button></div></div>
     <div class="row" style="gap:6px;margin-top:8px"><span class="pill info">추가레슨 신청 ${reqS.length}명 · ${reqN}회</span><span class="pill ${done>=reqN?'ok':'mute'}">배정 ${done}칸</span>${short?`<span class="pill due">덜 배정 ${short}명</span>`:''}${clash?`<span class="pill bad">교사 일정과 겹침 ${clash}칸</span>`:''}${gone?`<span class="pill bad">취소된 학생 칸 ${gone}</span>`:''}<span class="hint">30분 단위 · 칸을 누르면 바로 시트 「개인레슨」에 저장돼요 · 회색 = 교수님 교사 일정</span></div></div>`;
   if(A.mode==='day'){if(A.day>=days.length)A.day=0;
     return `<div class="act">${head}<div class="row"><div class="seg" role="group" aria-label="날짜">${days.map((x,i)=>`<button type="button" data-lday="${i}" aria-pressed="${A.day===i}">${esc(x)}</button>`).join('')}</div></div>${picker()}
@@ -648,7 +648,8 @@ document.addEventListener('click',ev=>{if(S.tab!=='tt')return;const b=ev.target.
   if(d.lcell){const [dd,t,pr]=d.lcell.split('|');A.sel={d:+dd,t,pr};A.cq='';render();return}
   if(d.lassign){const s=SB[d.lassign];setCell(d.lassign);toast(`${A.sel?'':''}${s?s.name:''} 배정했어요`);return}
   if(b.id==='l_clear'){setCell('');toast('칸을 비웠어요');return}
-  if(b.id==='l_close'){A.sel=null;render();return}});
+  if(b.id==='l_close'){A.sel=null;render();return}
+  if(b.id==='l_open'){const v=L.open?'아니오':'예';ask(L.open?'시간표 공개를 끌까요?':'선생님께 시간표를 공개할까요?',L.open?'선생님 화면 「내 시간표」에서 일정이 안 보이게 돼요.':'로그인한 선생님이 「내 시간표」에서 자기 교사 일정·(교수면) 개인레슨·우리 학생 레슨 시간을 볼 수 있어요. 아직 정리 중이면 나중에 켜 주세요.',()=>run('adminSetSetting',['시간표 공개',v],r=>{L.open=r.val==='예';render();toast(L.open?'선생님께 시간표를 공개했어요':'시간표 공개를 껐어요')},m=>toast('바꾸지 못했어요 · '+m)),L.open?'끄기':'공개하기');return}});
 document.addEventListener('input',e=>{if(S.tab!=='tt'||!L)return;const el=e.target;
   if(el.id==='l_cq'){A.cq=el.value;render();keepFocus('l_cq');return}
   if(el.id==='l_stu'){A.stu=el.value;render();keepFocus('l_stu');return}});

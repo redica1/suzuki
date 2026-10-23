@@ -1,4 +1,5 @@
-/* build: 20261024-011814 */
+/* build: 20261024-012105 */
+      ${S.prp===p.id?prpForm(p,sb):''}</li>`).join('')}</ul></div>`}).join('')}
     <div class="spread"><span class="hint">합계 ${won(subTotal(sb,sb.ppl.filter(p=>p.status==='정상').map(p=>p.id)))}</span>
       ${live.length?`<span class="row"><button class="btn small" type="button" data-cxall="${sb.no}">${(()=>{const v=live.filter(p=>mineOk(sb,p));return v.length&&v.every(p=>sel.includes(p.id))?(S.mtab&&S.mtab!=='전체'?S.mtab+' 해제':'전체 해제'):(S.mtab&&S.mtab!=='전체'?S.mtab+' 모두 선택':'전체 선택')})()}</button>
       <button class="btn small primary" type="button" data-seledit="${sb.no}" ${sel.length&&sb.form?'':'disabled'}>선택한 ${sel.length}명 정보 수정</button>
@@ -49,6 +50,23 @@ function vQ(){const mine=S.qMine||[];const login=!!S.user;
   </div>
   ${login?`<div class="panel" style="display:grid;gap:8px"><b>내가 올린 글 ${mine.length}</b>${mine.length?mine.map(x=>`<div class="qitem"><div class="spread"><span><b class="num">${esc(x.no)}</b> · ${esc(String(x.at).slice(5,16))} · ${esc(x.where)}</span>${qPill(x.state)}</div><div style="white-space:pre-wrap">${esc(x.text)}</div>${x.pic?'<small class="hint">사진 첨부함</small>':''}${x.reply?`<div class="reply"><b>운영진 답변</b>${x.done?` <small class="hint">${kday(x.done)}</small>`:''}<div style="white-space:pre-wrap">${esc(x.reply)}</div></div>`:''}</div>`).join(''):'<p class="hint" style="margin:0">아직 올린 글이 없어요.</p>'}</div>`:`<p class="hint">로그인하면 내가 올린 글과 운영진 답변을 여기서 볼 수 있어요.</p>`}
   </section>`}
+/* ---------- 내 시간표 (운영진이 「시간표 공개」를 켜면) ---------- */
+const tmin=t=>{const [h,m]=String(t).split(':').map(Number);return h*60+m};
+function vMyTT(){const T=S.tt;
+  const head=`<section class="sec"><div class="spread"><h2>내 시간표</h2><button class="btn small ghost" type="button" id="ttBack">← 돌아가기</button></div>`;
+  if(!T)return head+'<div class="panel">시간표를 불러오고 있어요…</div></section>';
+  if(!T.open)return head+'<div class="note info">아직 시간표가 공개되지 않았어요. 운영진이 교사 일정과 개인레슨 시간표를 정하면 여기에서 볼 수 있어요.</div></section>';
+  const days=T.days||[],mine=(T.mine||[]).slice().sort((a,b)=>a.d-b.d||tmin(a.t)-tmin(b.t));
+  const tab=S.ttTab||'me';
+  const seg=`<div class="seg" role="group" aria-label="보기" style="margin:8px 0"><button type="button" data-tttab="me" aria-pressed="${tab==='me'}">내 일정 ${mine.length}</button><button type="button" data-tttab="stu" aria-pressed="${tab==='stu'}">우리 학생 레슨 ${(T.students||[]).length}명</button></div>`;
+  if(tab==='me')return head+seg+`<div class="panel">${T.prof?`<p class="hint" style="margin:0 0 6px">교수 · 레슨실 <b>${esc(T.prof.room||'미정')}</b></p>`:''}
+    ${days.map((dl,d)=>{const xs=mine.filter(x=>x.d===d);return xs.length?`<div class="ttday"><div class="ttdl">${esc(dl)}</div>${xs.map(x=>`<div class="ttit"><span class="num">${esc(x.t)}${x.e?'<small>~'+esc(x.e)+'</small>':''}</span><span><span class="ttrole ${x.what==='개인레슨'?'les':''}">${esc(x.what)}</span><b>${esc(x.title)}</b> · ${esc(x.where)}${x.loc?` <small class="hint">${esc(x.loc)}</small>`:''}${x.with?`<br><small class="hint">${x.what==='개인레슨'?'학생: ':'함께: '}${esc(x.with)}</small>`:''}</span></div>`).join('')}</div>`:''}).join('')||'<p class="hint" style="margin:0">아직 배정된 일정이 없어요.</p>'}</div></section>`;
+  const st=T.students||[];
+  return head+seg+`<p class="lede">내가 접수했거나 내가 담당 교사인 학생의 개인레슨 시간이에요. 학부모님께 알려 주세요.</p>
+    ${st.length?st.map(x=>`<div class="panel ttstu"><div class="spread"><b>${esc(x.name)}</b><span class="hint">${esc(x.acad)} · ${esc(x.inst)}${x.teacher?' · 담당 '+esc(x.teacher):''}${x.req?' · 추가레슨 '+x.req+'회':''}</span></div>
+      ${x.lessons.length?x.lessons.slice().sort((a,b)=>a.d-b.d||tmin(a.t)-tmin(b.t)).map(l=>`<div class="ttit"><span class="num">${esc((days[l.d]||'').replace(/\(.\)/,''))} ${esc(l.t)}</span><span><b>${esc(l.pr)}</b> 교수님${l.room?' · '+esc(l.room):''}</span></div>`).join(''):'<p class="hint" style="margin:4px 0 0">개인레슨 없음</p>'}</div>`).join(''):'<p class="hint">학생이 없어요.</p>'}</section>`}
+function openTT(){if(S.view!=='tt')S.ttBack={view:S.view,step:S.step};S.view='tt';S.tt=null;render();window.scrollTo({top:0});
+  api('myTimetable',[],r=>{S.tt=r;if(S.view==='tt')render()},()=>{S.tt={open:false};render()},'시간표를 불러오고 있어요…')}
 function openQ(){if(S.view!=='q')S.qBack={view:S.view,step:S.step};S.qWhere='';S.view='q';render();window.scrollTo({top:0});
   if(S.user&&S.token)api('myIssues',[],r=>{S.qMine=r.mine||[];if(S.view==='q')render()},null,'불러오고 있어요…')}
 function sendQ(){const er=m=>{document.getElementById('qErr').textContent=m};const g=id=>((document.getElementById(id)||{}).value||'').trim();
@@ -70,6 +88,7 @@ try{new MutationObserver(fillAcct).observe(document.documentElement,{childList:t
 function fillBanks(){const d=document.getElementById('bankList');if(d&&!d.children.length)d.innerHTML=BANKS.map(b=>`<option value="${b}">`).join('')}
 function render(){fillBanks();
   {const st=document.getElementById('steps');if(st)st.hidden=S.view==='mine'||S.view==='q'||!!(S.editNo&&S.quickEdit)}
+  if(S.view==='tt'){document.getElementById('app').innerHTML=vMyTT();['backBtn','nextBtn','mineBtn'].forEach(id=>{const e=document.getElementById(id);if(e)e.hidden=true});document.getElementById('dockLabel').textContent='내 시간표';document.getElementById('dockTotal').textContent='';const st=document.getElementById('steps');if(st)st.hidden=true;return}
   if(S.view==='q'){document.getElementById('app').innerHTML=vQ();['backBtn','nextBtn','mineBtn'].forEach(id=>{const e=document.getElementById(id);if(e)e.hidden=true});document.getElementById('dockLabel').textContent='오류·건의';document.getElementById('dockTotal').textContent='';return}
   {const mb=document.getElementById('mineBtn');if(mb){mb.hidden=!(S.user&&MY_SUBS.length&&S.view!=='mine');mb.textContent=`내 접수 ${MY_SUBS.length}건`}}
   if(S.view==='mine'){document.getElementById('app').innerHTML=vMine();document.getElementById('backBtn').hidden=true;document.getElementById('nextBtn').hidden=true;document.getElementById('dockLabel').textContent='내 접수';document.getElementById('dockTotal').textContent=`${MY_SUBS.length}건`;return}
@@ -151,29 +170,3 @@ document.addEventListener('click',e=>{
   if(b.id==='doLogin'){const nm=document.getElementById('lgNm').value.trim(),ph='010'+document.getElementById('lgEm').value.replace(/\D/g,'');S.lgNm=nm;S.lgEm='010-'+document.getElementById('lgEm').value;
     if(!nm||ph.length<11){S.verr='이름과 휴대전화를 모두 넣어 주세요.';render();return}
     busy(true,'명단을 확인하고 있어요…');google.script.run.withSuccessHandler(r=>{busy(false);if(!r.ok){S.verr=r.msg;render();return}
-      S.token=r.token;S.today=r.today;S.myAcct=r.myAcct||null;loadFromServer(r);login({...r.teacher,acads:r.teacher.acads});
-      if(!MY_SUBS.length&&r.teacher.acads.length===1){const a=r.teacher.acads[0];S.acad=a;S.rq='';S.sel={};S.ptab='교사';S.picked={};S.extra=[];S.fam=[];S.info={};S.room={};ensureRoster(a);S.verified=true;render()}})
-      .withFailureHandler(e=>{busy(false);S.verr='연결이 잠시 안 돼요. 다시 눌러 주세요. ('+((e&&e.message)||e)+')';render()}).login(nm,ph);return}
-  if(b.id==='toReg'){S.auth='reg';S.verr='';render();return}
-  if(b.id==='doReg'){const g=id=>document.getElementById(id).value.trim();const nm=g('rgName'),ph=g('rgPhone').replace(/\D/g,'');
-    if(!nm||ph.length<10){S.verr='이름과 휴대전화를 넣어 주세요.';render();return}
-    if(findT(ph)){S.verr='이미 명단에 있는 번호예요. 「처음이세요?」로 비밀번호를 만들어 주세요.';render();return}
-    const p1=g('pw1'),p2=g('pw2'); if(p1.length<8){S.verr='비밀번호는 8자 이상이에요.';render();return} if(p1!==p2){S.verr='비밀번호 확인이 달라요.';render();return}
-    if(!S.consent){S.verr='개인정보 수집·이용에 동의해 주세요.';render();return}
-    const t={name:nm,phone:ph,role:g('rgRole'),inst:g('rgInst'),email:g('rgEmail'),acads:[],hasPw:true,newReg:true};TEACHER_DB.push(t);login(t);toast('교사 등록을 마쳤어요. 학원을 선택해 주세요');return}
-  if(b.id==='toFirst'){S.auth='first1';S.verr='';render();return}
-  if(b.id==='toLogin'){S.auth='login';S.verr='';render();return}
-  if(b.id==='forgot'){const ph='010'+(document.getElementById('lgEm').value||'').replace(/\D/g,'');const t=TEACHER_DB.find(x=>x.phone===ph);toast(t&&t.email?`${t.email.replace(/^(..).*(@.*)$/,'$1***$2')}로 재설정 링크를 보냈어요 (시제품)`:'등록된 이메일이 없어요. 운영진 카톡으로 문의해 주세요');return}
-  if(b.id==='firstCheck'){const t=findT(S.fPhone);if(!t||t.name!==S.fName.trim()){S.verr='명단의 이름·휴대전화와 일치하지 않아요. 명단에 없으면 아래 「교사 등록」을 눌러 주세요.';render();return}
-    if(t.hasPw){S.verr='이미 비밀번호가 있어요. 로그인 화면에서 「비밀번호를 잊었어요」를 눌러 주세요.';render();return}
-    S.pending={...t};S.auth='first2';S.verr='';render();return}
-  if(b.id==='makePw'){const p1=document.getElementById('pw1').value,p2=document.getElementById('pw2').value;
-    if(p1.length<8){S.verr='비밀번호는 8자 이상이에요.';render();return} if(p1!==p2){S.verr='비밀번호 확인이 달라요.';render();return}
-    if(!S.consent){S.verr='개인정보 수집·이용에 동의해 주세요.';render();return}
-    const t=TEACHER_DB.find(x=>x.phone===S.pending.phone);Object.assign(t,{email:document.getElementById('pfEmail').value.trim(),inst:document.getElementById('pfInst').value,role:document.getElementById('pfRole').value,hasPw:true});
-    login(t);toast('비밀번호를 만들었어요. 다음부터 휴대전화와 비밀번호로 로그인해요');return}
-  if(b.id==='logout'){MY_SUBS.length=0;Object.assign(S,{user:null,auth:'login',acad:'',verified:false,picked:{},extra:[],fam:[],info:{},room:{},verr:''});render();return}
-  if(b.id==='nextBtn'&&S.step===2&&selIds().length){toast(`체크만 하고 아직 추가하지 않은 ${selIds().length}명이 있어요. 「신청 명단에 추가」를 눌러 주세요.`);const ab=document.getElementById('addCart');if(ab)ab.scrollIntoView({block:'center'});return}
-  if(b.id==='otherAcad'){S.acOpen=true;S.acQ='';render();const n=document.getElementById('acQ');if(n)n.focus();return}
-  if(b.id==='qBtn'){openQ();return}
-  if(b.id==='qSend'){sendQ();return}

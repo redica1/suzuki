@@ -1,4 +1,4 @@
-/* build: 20261024-011814 */
+/* build: 20261024-012105 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -70,7 +70,8 @@ const SETTINGS = [['관리자 아이디', 'admin', '관리자 화면(?page=admin
   ['예금주', '', '입금 계좌 예금주'],
   ['입금 시작일', '2026-10-01', '이 날짜보다 앞선 입금일로는 신고할 수 없어요'],
   ['공유주소', 'https://redica1.github.io/suzuki/camp/', '카카오톡 안에서 열었을 때 바깥 브라우저로 넘길 주소'],
-  ['접수 가능 학원', '마포스즈키', '「전체」 또는 학원 이름을 쉼표로 (예: 마포스즈키, 미사스즈키)']];
+  ['접수 가능 학원', '마포스즈키', '「전체」 또는 학원 이름을 쉼표로 (예: 마포스즈키, 미사스즈키)'],
+  ['시간표 공개', '아니오', '「예」면 선생님 화면 「내 시간표」에 교사 일정·개인레슨이 보여요']];
 
 const SH = {
   T: '명단_교사', S: '명단_학생', SUB: '접수', P: '참가자', RP: '입금신고', CX: '환불요청', ENS: '앙상블팀', LOG: '기록', PROF: '교수진', ACT: '교사일정', ACTCFG: '일정설정', ACTLOG: '일정기록', LES: '개인레슨'
@@ -994,7 +995,8 @@ function lessonData(token) {
   let days = []; try { days = actCfg_().days || []; } catch (x) {}
   let acts = []; try { acts = actEvents_().map(e => ({ d: e.d, s: e.s, e: e.e, room: e.room, title: e.title, ppl: e.ppl })); } catch (x) {}
   let people = []; try { people = (actCfg_().people || []).map(p => ({ id: p.id, n: p.n })); } catch (x) {}
-  return { days, rows: lessons_().map(x => ({ d: x.d, t: x.t, pr: x.pr, pid: x.pid })), acts, people };
+  let open = false; try { open = setting_('시간표 공개') === '예'; } catch (x) {}
+  return { days, rows: lessons_().map(x => ({ d: x.d, t: x.t, pr: x.pr, pid: x.pid })), acts, people, open };
 }
 /** 칸 하나 배정/비우기: op = {d, t, pr, pid(빈 값이면 비우기)} */
 function lessonSet(token, op) {
@@ -1023,3 +1025,43 @@ function lessonSet(token, op) {
   } finally { lock.releaseLock(); }
   return { ok: true, rows: lessons_().map(x => ({ d: x.d, t: x.t, pr: x.pr, pid: x.pid })) };
 }
+
+/* ================= 선생님 「내 시간표」 =================
+ * 설정 「시간표 공개」 = 예 일 때만: 내 일정(교사 일정) + (교수면) 내 개인레슨 + 우리 학생 레슨 */
+function myTimetable(token) {
+  const u = who_(token);
+  if (setting_('시간표 공개') !== '예') return { open: false };
+  const c = actCfg_(); const days = c.days || [];
+  const ppl = actPeople_(c.people); const T = teachers_().find(t => t.name === u.name && t.acads.some(a => u.acads.includes(a)));
+  const nm = s => String(s || '').replace(/\s+/g, '').toLowerCase();
+  const meIds = ppl.filter(p => (T && p.tid === T.id) || (!p.tid && nm(p.n) === nm(u.name))).map(p => p.id);
+  const pn = id => (ppl.find(p => p.id === id) || { n: id }).n;
+  const roomLoc = (d, r) => (((c.rooms || {})[d] || []).find(x => x[0] === r) || [])[1] || '';
+  const mine = [];
+  actEvents_().forEach(e => { const me = e.ppl.find(p => meIds.includes(p.n)); if (!me) return;
+    mine.push({ d: e.d, t: e.s, e: e.e, what: me.r, title: e.title, where: e.room, loc: roomLoc(e.d, e.room), with: e.ppl.filter(p => !meIds.includes(p.n)).map(p => pn(p.n) + '(' + p.r + ')').join(', ') }); });
+  const prof = profs_().find(p => p.on && p.lesson && nm(p.name) === nm(u.name));
+  const subs = loadSubs_(); const byPid = {};
+  subs.forEach(sb => sb.ppl.forEach(p => { if (p.status === '정상') { const k = p.id.slice(sb.no.length + 1); byPid[p.id] = { p, sb, i: (sb.form && sb.form.info && sb.form.info[k]) || {} }; } }));
+  const L = lessons_(); const roomOf = n => (profs_().find(p => p.name === n) || {}).room || '';
+  if (prof) L.filter(x => x.pr === prof.name).forEach(x => { const s = byPid[x.pid]; mine.push({ d: x.d, t: x.t, e: '', what: '개인레슨', title: '개인레슨', where: prof.room || '레슨실', loc: '', with: s ? s.p.name + ' (' + s.sb.acad + ')' : '' }); });
+  const stu = [];
+  Object.keys(byPid).forEach(id => { const s = byPid[id]; const type = s.p.type || s.i.type || '';
+    if (!['학생', '회원의 악기하는 자녀'].includes(type)) return;
+    const mineSub = s.sb.owner === u.name, myPupil = nm(s.i.teacher) === nm(u.name) && u.acads.includes(s.sb.acad);
+    if (!mineSub && !myPupil) return;
+    stu.push({ name: s.p.name, acad: s.sb.acad, inst: s.p.inst || s.i.inst || '', teacher: s.i.teacher || '', req: +s.i.lessons || 0, lessons: L.filter(x => x.pid === id).map(x => ({ d: x.d, t: x.t, pr: x.pr, room: roomOf(x.pr) })) }); });
+  stu.sort((a, b) => a.acad.localeCompare(b.acad) || a.name.localeCompare(b.name));
+  return { open: true, days, mine, prof: prof ? { name: prof.name, room: prof.room } : null, students: stu };
+}
+/** 관리자: 설정 한 줄 바꾸기 (시간표 공개 등 허용된 항목만) */
+function adminSetSetting(token, key, val) {
+  const a = adm_(token);
+  if (!['시간표 공개'].includes(key)) throw new Error('바꿀 수 없는 설정이에요.');
+  ensureSettings_(); const sh = SpreadsheetApp.getActive().getSheetByName('설정');
+  const r = rows_('설정').find(x => String(x['항목']) === key);
+  if (r) sh.getRange(r._row, 2).setValues([[String(val)]]); else sh.appendRow([key, String(val), '']);
+  log_('관리자 ' + a.name, '설정 바꿈', key + ' = ' + val);
+  return { ok: true, val: setting_(key) };
+}
+function adminGetSetting(token, key) { adm_(token); return { val: setting_(key) }; }

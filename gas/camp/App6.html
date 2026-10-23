@@ -1,4 +1,33 @@
-/* build: 20261024-011814 */
+/* build: 20261024-012105 */
+      S.token=r.token;S.today=r.today;S.myAcct=r.myAcct||null;loadFromServer(r);login({...r.teacher,acads:r.teacher.acads});
+      if(!MY_SUBS.length&&r.teacher.acads.length===1){const a=r.teacher.acads[0];S.acad=a;S.rq='';S.sel={};S.ptab='교사';S.picked={};S.extra=[];S.fam=[];S.info={};S.room={};ensureRoster(a);S.verified=true;render()}})
+      .withFailureHandler(e=>{busy(false);S.verr='연결이 잠시 안 돼요. 다시 눌러 주세요. ('+((e&&e.message)||e)+')';render()}).login(nm,ph);return}
+  if(b.id==='toReg'){S.auth='reg';S.verr='';render();return}
+  if(b.id==='doReg'){const g=id=>document.getElementById(id).value.trim();const nm=g('rgName'),ph=g('rgPhone').replace(/\D/g,'');
+    if(!nm||ph.length<10){S.verr='이름과 휴대전화를 넣어 주세요.';render();return}
+    if(findT(ph)){S.verr='이미 명단에 있는 번호예요. 「처음이세요?」로 비밀번호를 만들어 주세요.';render();return}
+    const p1=g('pw1'),p2=g('pw2'); if(p1.length<8){S.verr='비밀번호는 8자 이상이에요.';render();return} if(p1!==p2){S.verr='비밀번호 확인이 달라요.';render();return}
+    if(!S.consent){S.verr='개인정보 수집·이용에 동의해 주세요.';render();return}
+    const t={name:nm,phone:ph,role:g('rgRole'),inst:g('rgInst'),email:g('rgEmail'),acads:[],hasPw:true,newReg:true};TEACHER_DB.push(t);login(t);toast('교사 등록을 마쳤어요. 학원을 선택해 주세요');return}
+  if(b.id==='toFirst'){S.auth='first1';S.verr='';render();return}
+  if(b.id==='toLogin'){S.auth='login';S.verr='';render();return}
+  if(b.id==='forgot'){const ph='010'+(document.getElementById('lgEm').value||'').replace(/\D/g,'');const t=TEACHER_DB.find(x=>x.phone===ph);toast(t&&t.email?`${t.email.replace(/^(..).*(@.*)$/,'$1***$2')}로 재설정 링크를 보냈어요 (시제품)`:'등록된 이메일이 없어요. 운영진 카톡으로 문의해 주세요');return}
+  if(b.id==='firstCheck'){const t=findT(S.fPhone);if(!t||t.name!==S.fName.trim()){S.verr='명단의 이름·휴대전화와 일치하지 않아요. 명단에 없으면 아래 「교사 등록」을 눌러 주세요.';render();return}
+    if(t.hasPw){S.verr='이미 비밀번호가 있어요. 로그인 화면에서 「비밀번호를 잊었어요」를 눌러 주세요.';render();return}
+    S.pending={...t};S.auth='first2';S.verr='';render();return}
+  if(b.id==='makePw'){const p1=document.getElementById('pw1').value,p2=document.getElementById('pw2').value;
+    if(p1.length<8){S.verr='비밀번호는 8자 이상이에요.';render();return} if(p1!==p2){S.verr='비밀번호 확인이 달라요.';render();return}
+    if(!S.consent){S.verr='개인정보 수집·이용에 동의해 주세요.';render();return}
+    const t=TEACHER_DB.find(x=>x.phone===S.pending.phone);Object.assign(t,{email:document.getElementById('pfEmail').value.trim(),inst:document.getElementById('pfInst').value,role:document.getElementById('pfRole').value,hasPw:true});
+    login(t);toast('비밀번호를 만들었어요. 다음부터 휴대전화와 비밀번호로 로그인해요');return}
+  if(b.id==='logout'){MY_SUBS.length=0;Object.assign(S,{user:null,auth:'login',acad:'',verified:false,picked:{},extra:[],fam:[],info:{},room:{},verr:''});render();return}
+  if(b.id==='nextBtn'&&S.step===2&&selIds().length){toast(`체크만 하고 아직 추가하지 않은 ${selIds().length}명이 있어요. 「신청 명단에 추가」를 눌러 주세요.`);const ab=document.getElementById('addCart');if(ab)ab.scrollIntoView({block:'center'});return}
+  if(b.id==='otherAcad'){S.acOpen=true;S.acQ='';render();const n=document.getElementById('acQ');if(n)n.focus();return}
+  if(b.id==='qBtn'){openQ();return}
+  if(b.id==='qSend'){sendQ();return}
+  if(b.id==='ttBtn'){openTT();return}
+  if(b.id==='ttBack'){const v=S.ttBack||{view:'mine'};S.view=v.view==='tt'?'mine':v.view;render();window.scrollTo({top:0});return}
+  if(b.dataset&&b.dataset.tttab){S.ttTab=b.dataset.tttab;render();return}
   if(b.id==='qBack'){const v=S.qBack||{view:'form'};S.view=v.view==='q'?'form':v.view;render();window.scrollTo({top:0});return}
   if(b.id==='ensSaveBtn'){document.getElementById('nextBtn').click();return}
   if(b.id==='nextBtn'&&blocked()){warnMissing();return}
@@ -134,38 +163,3 @@ document.addEventListener('change',e=>{if(e.target.id==='qWhere'){S.qWhere=e.tar
 const fmtPhone=v=>{let d=String(v).replace(/\D/g,'');if(/^010010/.test(d))d=d.slice(3);d=d.slice(0,11);return d.length<4?d:d.length<8?d.slice(0,3)+'-'+d.slice(3):d.slice(0,3)+'-'+d.slice(3,7)+'-'+d.slice(7)};
 document.addEventListener('input',e=>{
   {const el=e.target;if(/^q(Name|Phone|Acad|Text)$/.test(el.id)){S[el.id]=el.value;return}}
-  if(e.target.id==='lgEm'){const el=e.target;let d=el.value.replace(/\D/g,'');/* 습관대로 010부터 쳐도 됨: 0·01 은 잠깐 두고, 010 이 되면 뗌 (010 뒷자리는 0·1로 시작하지 않음) */if(/^01?$/.test(d)){S.lgEm='010-';return}if(d.startsWith('010'))d=d.slice(3);d=d.slice(0,8);const f=d.length>4?d.slice(0,4)+'-'+d.slice(4):d;if(f!==el.value){el.value=f;el.setSelectionRange(f.length,f.length)}S.lgEm='010-'+f;return}
-  if(e.target.id==='prpA'){const box=document.getElementById('prpRf');if(box)box.hidden=!((+e.target.value.replace(/\D/g,'')||0)>(+e.target.dataset.due||0))}
-  if(e.target.dataset&&e.target.dataset.rpf){const [id,k]=e.target.dataset.rpf.split('|');const r=S.rpRow[id]||(S.rpRow[id]={n:'',d:'',a:''});r[k]=k==='a'?e.target.value.replace(/\D/g,''):e.target.value;return}
-  if(e.target.id==='nB'){e.target.value=e.target.value.replace(/\D/g,'').slice(0,4);return}
-  if(e.target.id==='rq'){S.rq=e.target.value;const l=document.getElementById('rosterList');if(l)l.innerHTML=rosterList();return}
-  const el=e.target, d=el.dataset;
-  if(el.id==='fName'){S.fName=el.value;return}
-  if(el.id==='fPhone'){S.fPhone=el.value;return}
-  if(el.id==='acQ'){S.acQ=el.value;S.acOpen=true;if(e.isComposing)return;const pos=el.selectionStart;render();const n=document.getElementById('acQ');n.focus();n.setSelectionRange(pos,pos);return}
-  if(el.id==='who'){S.who=el.value;S.verified=false;S.verr='';setNext();return}
-  if(el.id==='phone'){S.phone=el.value;S.verified=false;S.verr='';setNext();return}
-  if(el.id==='email'){S.email=el.value;return}
-  if(el.id==='req'){S.req=el.value;return}
-  if(d.famname){const f=S.fam.find(x=>x.id===d.famname);if(f){f.name=el.value;const h=document.querySelector(`#card_${f.id} h3`);if(h)h.textContent=el.value||'(이름 미입력)';el.classList.toggle('empty',!el.value);setNext()}return}
-  if(d.f&&(el.tagName==='INPUT')){S.info[d.k][d.f]=el.value;if(d.f==='by'){el.value=el.value.replace(/\D/g,'').slice(0,4);S.info[d.k].by=el.value;{const pp=people().find(x=>x.key===d.k);el.classList.toggle('empty',yearBad(pp,el.value))}setNext()}return}
-  if(d.ens==='tm'||d.ens==='ts'){el.value=el.value.replace(/\D/g,'').slice(0,2);if(d.ens==='ts'&&+el.value>59)el.value='59';S.ens[d.ens]=el.value;return}
-  if(d.ens&&el.type==='text'){S.ens[d.ens]=el.value;if(d.ens==='group')setNext();if(d.ens==='extra'){const pos=el.selectionStart;render();const n=document.getElementById('enX');n.focus();n.setSelectionRange(pos,pos)}return}
-});
-document.addEventListener('change',e=>{
-  const el=e.target, d=el.dataset;
-  if(d.f&&el.tagName==='SELECT'){const i=S.info[d.k];i[d.f]=d.f==='lessons'?+el.value:el.value;
-    if(d.f==='type'&&!PLAYS.has(el.value)){i.lessons=0;i.mc=[];i.concert='없음'}
-    if(d.f==='type'){const fm=S.fam.find(x=>x.id===d.k);if(fm)fm.type=el.value}
-    if(d.f==='p1'&&(i.p2===el.value||!el.value))i.p2='';
-    if(d.f==='lessons'&&!i.lessons){i.p1='';i.p2=''}
-    render();const n=document.getElementById(el.id);n&&n.focus();return}
-  if(d.room){const k=d.room;delete S.room[k];delete S.join[k];
-    if(el.value==='own')S.room[k]=true; else if(el.value.startsWith('j:'))S.join[k]=el.value.slice(2);
-    if(el.value!=='own')Object.keys(S.join).forEach(j=>{if(S.join[j]===k)delete S.join[j]});
-    render();const n=document.getElementById(el.id);n&&n.focus();return}
-  if(el.id==='agree'){S.agree=el.checked;render();return}
-  if(el.id==='consent'){S.consent=el.checked;return}
-  if(el.id==='mine'){S.mine=el.checked;render();return}
-  if(el.id==='who'||el.id==='phone'){render();return}
-});

@@ -1,4 +1,4 @@
-/* build: 20261023-234001 */
+/* build: 20261024-000814 */
 /* ---------- 캠프 설정 (관리자 화면에서 입력되는 값) ---------- */
 const ROOM = { cap:4, emptyFee:130000 }; // 가족방: 4인 기준, 빈 자리 1개당 추가 비용
 const CAMP = { id:'27W', ri:0, lessonFee:60000, lessonMax:5, mcFee:150000,
@@ -24,7 +24,7 @@ let ENS=[];
 const MY_SUBS=[];
 /* 서버 부르기: 저장 중 표시 → 끝나면 서버의 최신 접수로 바꿔 다시 그림 */
 function busy(on,msg){let el=document.getElementById('busy');if(!el){el=document.createElement('div');el.id='busy';el.className='busy';document.body.appendChild(el)}el.textContent=msg||'저장하고 있어요…';el.hidden=!on}
-function api(fn,args,ok,fail,msg,tries){tries=tries||0;busy(true,msg);google.script.run.withSuccessHandler(r=>{busy(false);ok&&ok(r)}).withFailureHandler(e=>{const m=(e&&e.message)||String(e);
+function api(fn,args,ok,fail,msg,tries){tries=tries||0;busy(true,msg);google.script.run.withSuccessHandler(r=>{busy(false);if(r&&r.ok!==false&&/^(cancelReq|overRefundReq|saveSubs)$/.test(fn)){const f=findAcct(args);if(f)S.myAcct=f}ok&&ok(r)}).withFailureHandler(e=>{const m=(e&&e.message)||String(e);
   /* 접속이 몰리거나(BUSY) 네트워크가 잠깐 끊기면 1.5초 · 3초 · 4.5초 · 6초 뒤 다시 보냄 (서버는 같은 요청을 두 번 처리하지 않음) */
   if(/BUSY|lock|timed out|timeout|network|네트워크|시간 초과|서버 오류|server error/i.test(m)&&tries<4){busy(true,'접속이 많아 다시 보내고 있어요… ('+(tries+1)+'/4)');setTimeout(()=>api(fn,args,ok,fail,msg,tries+1),1500*(tries+1));return}
   busy(false);toast(/BUSY/.test(m)?'지금 접속이 많아요. 잠시 뒤 다시 해 주세요.':'저장하지 못했어요 · '+m,true);if(fail)fail(m)})[fn](S.token,...args)}

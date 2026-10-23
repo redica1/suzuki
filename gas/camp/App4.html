@@ -1,4 +1,4 @@
-/* build: 20261023-234001 */
+/* build: 20261024-000814 */
   <div class="panel"><b>접수된 사람</b><ul class="roster">${ps.map(p=>`<li><span></span><div class="who"><b>${esc(p.name)}</b><small>${ROUNDS[CAMP.ri][0]} · ${esc(info(p).type)}${p.kind==='student'?` · 담당 ${esc(info(p).teacher)}`:''}</small></div>${p.paid?'<span class="pill lock">입금 대기</span>':'<span class="pill due">회비확인대기</span>'}</li>`).join('')}</ul></div>
   <div class="row"><button class="btn primary" type="button" id="again">추가 접수하기</button><button class="btn" type="button" id="restart">처음부터 다시 보기</button></div>
   </section>`;

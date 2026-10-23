@@ -1,4 +1,4 @@
-/* build: 20261023-234001 */
+/* build: 20261024-000814 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -150,7 +150,7 @@ function login(name, phone) {
   const token = Utilities.getUuid();
   CacheService.getScriptCache().put('tok_' + token, JSON.stringify({ name: t.name, acads }), 21600);
   log_(t.name, '로그인', '');
-  return Object.assign({ ok: true, token, today: today_(), teacher: { id: t.id, name: t.name, role: t.role, inst: t.inst, acads, home: t.acads, p4: t.p4 } }, bundle_(acads));
+  return Object.assign({ ok: true, token, today: today_(), teacher: { id: t.id, name: t.name, role: t.role, inst: t.inst, acads, home: t.acads, p4: t.p4 }, myAcct: myAcct_(t.name) }, bundle_(acads));
 }
 
 /** 교사(선생님 본인 포함)는 모든 학원을 통틀어 한 번만 — 다른 학원(겸임·내 클래스)에는 학생만 */
@@ -389,6 +389,14 @@ function checkRep_(p) {
   const nm = String(r.name || '').trim();
   if (!nm || nm.length > 20) throw new Error(p.name + ' 입금자명을 20자 안으로 넣어 주세요.');
   r.name = nm; r.a = a;
+}
+/** 선생님이 마지막으로 적은 환불 계좌 (환불요청·입금신고 시트에서 찾음) → 다음 환불 칸에 미리 채움 */
+function myAcct_(name) {
+  let best = null;
+  const put = (at, bank, acct, holder) => { acct = String(acct || '').replace(/[^\d-]/g, ''); if (!bank || acct.replace(/-/g, '').length < 6 || !holder) return; at = at instanceof Date ? Utilities.formatDate(at, TZ, 'yyyy-MM-dd HH:mm:ss') : String(at || ''); if (!best || at >= best.at) best = { at, bank: String(bank).trim(), acct, holder: String(holder).trim() }; };
+  try { rows_(SH.CX).forEach(r => { if (String(r['요청 교사']) === name) put(r['요청 일시'], r['은행'], r['계좌번호'], r['예금주']); }); } catch (x) {}
+  try { rows_(SH.RP).forEach(r => { if (String(r['접수 교사']) !== name) return; const m = String(r['환불 계좌'] || '').trim().match(/^(.+?)\s+([\d-]{6,})\s+(.+)$/); if (m) put(r['기록 일시'], m[1], m[2], m[3]); }); } catch (x) {}
+  return best ? { bank: best.bank, acct: best.acct, holder: best.holder } : null;
 }
 /** 과납 환불 계좌: 시트(입금신고)에만 쓰고 접수 내용(JSON)에서는 뺌 */
 function takeRefundAcct_(p) {

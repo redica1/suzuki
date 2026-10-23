@@ -1,4 +1,4 @@
-/* build: 20261023-234001 */
+/* build: 20261024-000814 */
       ${live.length?`<span class="row"><button class="btn small" type="button" data-cxall="${sb.no}">${(()=>{const v=live.filter(p=>mineOk(sb,p));return v.length&&v.every(p=>sel.includes(p.id))?(S.mtab&&S.mtab!=='전체'?S.mtab+' 해제':'전체 해제'):(S.mtab&&S.mtab!=='전체'?S.mtab+' 모두 선택':'전체 선택')})()}</button>
       <button class="btn small primary" type="button" data-seledit="${sb.no}" ${sel.length&&sb.form?'':'disabled'}>선택한 ${sel.length}명 정보 수정</button>
       <button class="btn small" type="button" data-cxopen="${sb.no}" ${selCx.length?'':'disabled'}>선택한 ${selCx.length}명 취소</button></span>`:''}</div>
@@ -57,6 +57,15 @@ function sendQ(){const er=m=>{document.getElementById('qErr').textContent=m};con
   const f=document.getElementById('qPic');const go=file=>{d.file=file;
     const call=()=>{busy(true,'올리고 있어요…');google.script.run.withSuccessHandler(r=>{busy(false);S.qText='';S.qMine=r.mine||S.qMine;render();toast(`${r.no}번으로 올렸어요 · 운영진이 확인하면 답을 달아요`,true)}).withFailureHandler(e=>{busy(false);er((e&&e.message)||String(e))}).submitIssue(S.token||'',d)};call()};
   if(f&&f.files&&f.files[0]){const fl=f.files[0];if(fl.size>5*1024*1024)return er('사진은 5MB까지예요.');const rd=new FileReader();rd.onload=()=>go({name:fl.name,type:fl.type,data:String(rd.result).split(',')[1]});rd.readAsDataURL(fl)}else go(null)}
+/* 환불 계좌 기억: 마지막으로 적은 계좌를 다음 환불 칸에 미리 채움 */
+const ACCT_SETS=[['cxBank','cxAcct','cxHolder'],['ovB','ovA','ovH'],['prpRfB','prpRfA','prpRfH'],['rpRfB','rpRfA','rpRfH']];
+function findAcct(o,d){d=d||0;if(!o||typeof o!=='object'||d>8)return null;if(o.bank&&o.acct&&o.holder&&String(o.acct).replace(/\D/g,'').length>=6)return{bank:String(o.bank),acct:String(o.acct),holder:String(o.holder)};
+  for(const k in o){const f=findAcct(o[k],d+1);if(f)return f}return null}
+function fillAcct(){try{fillAcct_()}catch(e){}}
+function fillAcct_(){const m=S.myAcct;if(!m||!m.acct)return;ACCT_SETS.forEach(([b,a,h])=>{const A=document.getElementById(a);if(!A||A.dataset.af)return;A.dataset.af='1';
+  const B=document.getElementById(b),H=document.getElementById(h);if(A.value||(B&&B.value))return;if(B)B.value=m.bank;A.value=m.acct;if(H)H.value=m.holder;
+  const box=A.closest('.rpf,.grid2')||A.parentElement;if(box&&!box.nextElementSibling?.classList?.contains('afhint'))box.insertAdjacentHTML('afterend','<small class="hint afhint">지난번에 적은 계좌를 채워 뒀어요. 다르면 고쳐 주세요.</small>')})}
+try{new MutationObserver(fillAcct).observe(document.documentElement,{childList:true,subtree:true})}catch(e){}
 function fillBanks(){const d=document.getElementById('bankList');if(d&&!d.children.length)d.innerHTML=BANKS.map(b=>`<option value="${b}">`).join('')}
 function render(){fillBanks();
   {const st=document.getElementById('steps');if(st)st.hidden=S.view==='mine'||S.view==='q'||!!(S.editNo&&S.quickEdit)}
@@ -141,7 +150,7 @@ document.addEventListener('click',e=>{
   if(b.id==='doLogin'){const nm=document.getElementById('lgNm').value.trim(),ph='010'+document.getElementById('lgEm').value.replace(/\D/g,'');S.lgNm=nm;S.lgEm='010-'+document.getElementById('lgEm').value;
     if(!nm||ph.length<11){S.verr='이름과 휴대전화를 모두 넣어 주세요.';render();return}
     busy(true,'명단을 확인하고 있어요…');google.script.run.withSuccessHandler(r=>{busy(false);if(!r.ok){S.verr=r.msg;render();return}
-      S.token=r.token;S.today=r.today;loadFromServer(r);login({...r.teacher,acads:r.teacher.acads});
+      S.token=r.token;S.today=r.today;S.myAcct=r.myAcct||null;loadFromServer(r);login({...r.teacher,acads:r.teacher.acads});
       if(!MY_SUBS.length&&r.teacher.acads.length===1){const a=r.teacher.acads[0];S.acad=a;S.rq='';S.sel={};S.ptab='교사';S.picked={};S.extra=[];S.fam=[];S.info={};S.room={};ensureRoster(a);S.verified=true;render()}})
       .withFailureHandler(e=>{busy(false);S.verr='연결이 잠시 안 돼요. 다시 눌러 주세요. ('+((e&&e.message)||e)+')';render()}).login(nm,ph);return}
   if(b.id==='toReg'){S.auth='reg';S.verr='';render();return}
@@ -168,12 +177,3 @@ document.addEventListener('click',e=>{
   if(b.id==='qBtn'){openQ();return}
   if(b.id==='qSend'){sendQ();return}
   if(b.id==='qBack'){const v=S.qBack||{view:'form'};S.view=v.view==='q'?'form':v.view;render();window.scrollTo({top:0});return}
-  if(b.id==='ensSaveBtn'){document.getElementById('nextBtn').click();return}
-  if(b.id==='nextBtn'&&blocked()){warnMissing();return}
-  if(b.id==='nextBtn'&&S.step===4&&S.editNo&&S.ensEdit){S.step=5;S.agree=true}
-  if(b.id==='nextBtn'&&S.step===3&&S.editNo&&S.quickEdit){S.step=5;S.agree=true}
-  if(b.id==='qeSaveBtn'){document.getElementById('nextBtn').click();return}
-  if(b.id==='nextBtn'){const next=b;
-    if(S.step===5){S.no=`${CAMP.id}-${String(ALL_SUBS.length+1).padStart(3,'0')}`;if(S.editNo){const old=ALL_SUBS.find(x=>x.no===S.editNo);const nw=makeSub(old.no);const kept=[];
-        const nb=Math.max(1,...old.ppl.map(q=>q.batch||1))+1;let added=0;
-        nw.ppl.forEach(p=>{const o=old.ppl.find(q=>q.id===p.id);if(o&&o.status==='정상'&&o.pay==='신고'){const k=p.id.slice(old.no.length+1);['fee','lesson','dues','type'].forEach(x=>p[x]=o[x]);if(old.form&&old.form.info&&old.form.info[k])nw.form.info[k]=old.form.info[k]}if(o&&o.status!=='취소'){p.pay=o.pay;p.rep=o.rep;p.paidAmt=o.paidAmt||0;p.status=o.status;p.batch=o.batch||1;p.addAt=o.addAt||old.date}else{p.batch=nb;added++}});

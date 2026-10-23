@@ -1,4 +1,10 @@
-/* build: 20261023-234001 */
+/* build: 20261024-000814 */
+const ensQ=e=>{if(e.target.id==='enTq'&&e.target.value!==S.ens.tq){S.ens.tq=e.target.value;const pos=e.target.selectionStart;if(!e.isComposing){render();const n=document.getElementById('enTq');if(n){n.focus();n.setSelectionRange(pos,pos)}}return}if(e.target.id==='enAq'&&e.target.value!==S.ens.aq){S.ens.aq=e.target.value;const box=document.getElementById('ensCands');if(box)box.innerHTML=ensCandsHTML()}};
+document.addEventListener('input',ensQ);document.addEventListener('compositionend',ensQ);
+document.addEventListener('focusin',e=>{if(e.target.id==='acQ'&&!S.acOpen){S.acOpen=true;S.acQ='';render();const n=document.getElementById('acQ');n.focus()}});
+document.addEventListener('compositionend',e=>{if(e.target.id==='acQ'){S.acQ=e.target.value;S.acOpen=true;render();const n=document.getElementById('acQ');n.focus();n.setSelectionRange(n.value.length,n.value.length)}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&S.acOpen){S.acOpen=false;render()}});
+document.addEventListener('mousedown',e=>{if(S.acOpen&&!e.target.closest('.combo')){S.acOpen=false;render()}});
 document.addEventListener('toggle',e=>{if(e.target.id==='ensBox')S.ens.on=e.target.open},true);
 
 /* 카카오톡 안 브라우저: 입력이 안 되는 경우가 있어 바깥 브라우저로 넘김 (공유주소는 「설정」 탭) */

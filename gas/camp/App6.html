@@ -1,4 +1,13 @@
-/* build: 20261023-234001 */
+/* build: 20261024-000814 */
+  if(b.id==='ensSaveBtn'){document.getElementById('nextBtn').click();return}
+  if(b.id==='nextBtn'&&blocked()){warnMissing();return}
+  if(b.id==='nextBtn'&&S.step===4&&S.editNo&&S.ensEdit){S.step=5;S.agree=true}
+  if(b.id==='nextBtn'&&S.step===3&&S.editNo&&S.quickEdit){S.step=5;S.agree=true}
+  if(b.id==='qeSaveBtn'){document.getElementById('nextBtn').click();return}
+  if(b.id==='nextBtn'){const next=b;
+    if(S.step===5){S.no=`${CAMP.id}-${String(ALL_SUBS.length+1).padStart(3,'0')}`;if(S.editNo){const old=ALL_SUBS.find(x=>x.no===S.editNo);const nw=makeSub(old.no);const kept=[];
+        const nb=Math.max(1,...old.ppl.map(q=>q.batch||1))+1;let added=0;
+        nw.ppl.forEach(p=>{const o=old.ppl.find(q=>q.id===p.id);if(o&&o.status==='정상'&&o.pay==='신고'){const k=p.id.slice(old.no.length+1);['fee','lesson','dues','type'].forEach(x=>p[x]=o[x]);if(old.form&&old.form.info&&old.form.info[k])nw.form.info[k]=old.form.info[k]}if(o&&o.status!=='취소'){p.pay=o.pay;p.rep=o.rep;p.paidAmt=o.paidAmt||0;p.status=o.status;p.batch=o.batch||1;p.addAt=o.addAt||old.date}else{p.batch=nb;added++}});
         old.ppl.forEach(o=>{if(!nw.ppl.some(p=>p.id===o.id)){if(o.status==='정상'&&(isPaid(o)||o.pay==='신고')){kept.push(o.name);nw.ppl.push(o)}else if(o.status!=='정상')nw.ppl.push(o)}});
         Object.assign(old,{ppl:nw.ppl,form:nw.form,edited:S.today});{const ono=old.no;S.afterSave=()=>{const sb=MY_SUBS.find(x=>x.no===ono);if(sb){const ids=sb.ppl.filter(p=>overOf(p)>0).map(p=>p.id);if(ids.length)ovBox(ono,ids)}}}const wasEns=S.ensEdit,wasQuick=S.quickEdit&&S.quickKeys;subSave();loadMine();const no=S.editNo;S.editNo=null;S.editOnly=null;if(S.riBack!==undefined){CAMP.ri=S.riBack;S.riBack=undefined}resetForm();S.view='mine';S.rp=null;
         if(wasQuick){S.quietEdit=true;startEdit(no,wasQuick);S.quietEdit=false;S.qSaved=nowStamp();render();toast('저장했어요 · 계속 고칠 수 있어요');return}
@@ -160,9 +169,3 @@ document.addEventListener('change',e=>{
   if(el.id==='who'||el.id==='phone'){render();return}
 });
 document.addEventListener('change',e=>{if(e.target.id==='nI'){const n=document.getElementById('nT');if(n)n.innerHTML=opts(teachersFor(e.target.value),'','선택')}});
-const ensQ=e=>{if(e.target.id==='enTq'&&e.target.value!==S.ens.tq){S.ens.tq=e.target.value;const pos=e.target.selectionStart;if(!e.isComposing){render();const n=document.getElementById('enTq');if(n){n.focus();n.setSelectionRange(pos,pos)}}return}if(e.target.id==='enAq'&&e.target.value!==S.ens.aq){S.ens.aq=e.target.value;const box=document.getElementById('ensCands');if(box)box.innerHTML=ensCandsHTML()}};
-document.addEventListener('input',ensQ);document.addEventListener('compositionend',ensQ);
-document.addEventListener('focusin',e=>{if(e.target.id==='acQ'&&!S.acOpen){S.acOpen=true;S.acQ='';render();const n=document.getElementById('acQ');n.focus()}});
-document.addEventListener('compositionend',e=>{if(e.target.id==='acQ'){S.acQ=e.target.value;S.acOpen=true;render();const n=document.getElementById('acQ');n.focus();n.setSelectionRange(n.value.length,n.value.length)}});
-document.addEventListener('keydown',e=>{if(e.key==='Escape'&&S.acOpen){S.acOpen=false;render()}});
-document.addEventListener('mousedown',e=>{if(S.acOpen&&!e.target.closest('.combo')){S.acOpen=false;render()}});

@@ -1,4 +1,4 @@
-/* build: 20261023-231337 */
+/* build: 20261023-231748 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -51,7 +51,7 @@ const P_HEAD = ['참가자ID', '접수번호', '차수', '학원', '접수 교�
   '현재 진도', '선호 교수1', '선호 교수2', '추가 레슨', '마스터클래스', '음악회', '음악회 곡', '가족방', '참가비', '레슨·MC', '연회비', '가족방비', '청구액', '상태',
   '입금 상태', '신고 입금자명', '신고 입금일', '신고 금액', '신고 메모', '[운영진] 입금확인일', '[운영진] 입금확인액', '[운영진] 메모'];
 const ADMIN_COLS = ['[운영진] 입금확인일', '[운영진] 입금확인액', '[운영진] 메모'];
-const CX_HEAD = ['요청 일시', '접수번호', '학원', '요청 교사', '참가자', '사유', '환불 예정액', '은행', '계좌번호', '예금주', '진단서', '처리', '처리일', '메모', '참가자ID', '신청액', '입금액', '적용 규정'];
+const CX_HEAD = ['요청 일시', '접수번호', '학원', '요청 교사', '참가자', '사유', '환불 예정액', '은행', '계좌번호', '예금주', '진단서', '처리', '처리일', '메모', '참가자ID', '신청액', '입금액', '적용 규정', '접수일'];
 
 /* ---------------- 웹 앱 ---------------- */
 function doGet(e) {
@@ -568,7 +568,7 @@ function adminData(token) {
   ensureHead_(SH.CX, CX_HEAD);
   const cx = rows_(SH.CX).filter(r => r['접수번호']).map(r => ({ row: r._row, at: String(r['요청 일시']), no: String(r['접수번호']), acad: String(r['학원']), by: String(r['요청 교사']),
     names: String(r['참가자']), why: String(r['사유']), amt: +r['환불 예정액'] || 0, bank: String(r['은행'] || ''), acct: String(r['계좌번호'] || ''), holder: String(r['예금주'] || ''),
-    doc: String(r['진단서'] || ''), state: String(r['처리'] || '요청'), done: dstr_(r['처리일']), memo: String(r['메모'] || ''), ids: String(r['참가자ID'] || '').split(',').filter(Boolean), base: +r['신청액'] || 0, paid: +r['입금액'] || 0, rule: String(r['적용 규정'] || '') }));
+    doc: String(r['진단서'] || ''), state: String(r['처리'] || '요청'), done: dstr_(r['처리일']), memo: String(r['메모'] || ''), ids: String(r['참가자ID'] || '').split(',').filter(Boolean), base: +r['신청액'] || 0, paid: +r['입금액'] || 0, rule: String(r['적용 규정'] || ''), okAt: dstr_(r['접수일']) }));
   return { today: today_(), subs, admin, cx, teams: teams_(subs), issues: issues_() };
 }
 function setAdminCols_(pid, vals) {
@@ -644,44 +644,56 @@ function adminSaveEns(token, no, patch) {
   return adminData(token);
 }
 /** 환불 요청 처리: 완료(환불한 날 필수) / 반려 */
+/** 환불 처리는 두 단계: ① 접수(승인) — 참가 취소·환불 예정 금액 확정  ② 환불 완료 — 실제로 돈을 보낸 날짜(필수)
+ *  action: '접수' | '완료' | '반려'   (환불액 0원이면 '접수' = 취소 확정, 송금 단계 없음) */
 function adminRefund(token, row, action, date, memo, amt) {
   const a = adm_(token);
-  if (action === '완료' && !/^\d{4}-\d{2}-\d{2}$/.test(date || '')) throw new Error('환불한 날짜를 선택해 주세요.');
+  if (action === '완료' && !/^\d{4}-\d{2}-\d{2}$/.test(date || '')) throw new Error('환불한(돈을 보낸) 날짜를 선택해 주세요.');
   const lock = lock_();
   try {
     const sh = SpreadsheetApp.getActive().getSheetByName(SH.CX);
+    ensureHead_(SH.CX, CX_HEAD);
     const r = rows_(SH.CX).find(x => x._row === row); if (!r) throw new Error('요청 줄을 찾지 못했어요.');
     const h = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0];
     const set = (k, v) => sh.getRange(row, h.indexOf(k) + 1).setValues([[v]]);
-    set('처리', action === '완료' ? '환불 완료' : '반려'); set('처리일', date || today_()); set('메모', memo || '');
-    if (action === '완료' && amt !== undefined && amt !== '') set('환불 예정액', +amt || 0);
+    const st = String(r['처리'] || '요청');
+    if (action === '접수' && st !== '요청') throw new Error('이미 처리한 요청이에요. 새로 불러와 주세요.');
+    if (action === '완료' && st !== '환불 예정') throw new Error('먼저 「환불 접수」를 해 주세요.');
+    if (action === '반려' && !['요청', '환불 예정'].includes(st)) throw new Error('이미 끝난 요청이에요.');
+    const money = (amt !== undefined && amt !== '') ? +amt || 0 : +r['환불 예정액'] || 0;
+    const ov = String(r['사유']) === '차액 환불';
+    let newSt = action === '반려' ? '반려' : action === '완료' ? '환불 완료' : (money > 0 ? '환불 예정' : (ov ? '반려' : '취소 확정'));
+    set('처리', newSt); set('메모', memo || String(r['메모'] || ''));
+    if (action === '접수') { set('접수일', today_()); set('환불 예정액', money); set('처리일', money > 0 ? '' : today_()); }
+    else set('처리일', action === '완료' ? date : today_());
     const ids = String(r['참가자ID'] || '').split(',').filter(Boolean);
     const all = loadSubs_(); const sb = all.find(x => x.no === String(r['접수번호']));
-    if (sb && String(r['사유']) === '차액 환불') {
+    if (sb && ov) {
       const am = adminMap_(), hits = sb.ppl.filter(p => ids.includes(p.id));
-      const want = hits.reduce((t, p) => t + (p.ovReq ? +p.ovReq.amt : 0), 0), total = (amt !== undefined && amt !== '') ? +amt || 0 : want;
+      const want = hits.reduce((t, p) => t + (p.ovReq ? +p.ovReq.amt : 0), 0), total = (amt !== undefined && amt !== '') ? +amt || 0 : (+r['환불 예정액'] || want);
       hits.forEach((p, i) => {
-        if (action === '완료') {
+        if (action === '접수') { if (p.ovReq) p.ovReq.ok = today_(); }
+        else if (action === '완료') {
           // 사람마다 요청한 금액만큼 (운영진이 합계를 바꿨으면 마지막 사람에게 차이를 붙임)
           let give = p.ovReq ? +p.ovReq.amt : 0; if (i === hits.length - 1) give += total - want;
           const a0 = am[p.id] || { date: '', amt: +p.paidAmt || 0, memo: '' };
           const left = Math.max(0, a0.amt - give);
           setAdminCols_(p.id, [a0.date || date, left, (a0.memo ? a0.memo + ' / ' : '') + '차액 환불 ' + give + '원 ' + date]);
-          p.paidAmt = left; p.ovDone = (p.ovDone || []).concat([{ date, amt: give }]);
-        } else { p.ovRejected = { at: stamp_(), why: memo || '' }; }
-        delete p.ovReq;
+          p.paidAmt = left; p.ovDone = (p.ovDone || []).concat([{ date, amt: give }]); delete p.ovReq;
+        } else { p.ovRejected = { at: stamp_(), why: memo || '' }; delete p.ovReq; }
       });
       writeSub_(sb, false);
     } else if (sb) {
       sb.ppl.forEach(p => {
         const hit = ids.length ? ids.includes(p.id) : String(r['참가자']).split(', ').includes(p.name) && p.status === '취소요청';
         if (!hit) return;
-        if (action === '완료') { p.status = '취소'; p.refund = { date, amt: +amt || +r['환불 예정액'] || 0 }; }
-        else { p.status = '정상'; p.cxRejected = stamp_(); p.cxWhy = memo || ''; }
+        if (action === '접수') { p.status = '취소'; p.refund = { amt: money, okAt: today_(), date: '' }; }
+        else if (action === '완료') { p.status = '취소'; p.refund = Object.assign({}, p.refund || {}, { amt: money, date }); }
+        else { p.status = '정상'; delete p.refund; p.cxRejected = stamp_(); p.cxWhy = memo || ''; }
       });
       writeSub_(sb, false); writeTeams_(all);
     }
-    log_('관리자 ' + a.name, action === '완료' ? '환불 완료' : '취소 요청 반려', String(r['접수번호']) + ' · ' + r['참가자'] + (date ? ' · ' + date : ''));
+    log_('관리자 ' + a.name, { 접수: money > 0 ? '환불 접수' : '취소 확정', 완료: '환불 완료(송금)', 반려: '환불 요청 반려' }[action], String(r['접수번호']) + ' · ' + r['참가자'] + ' · ' + money + (date ? ' · ' + date : ''));
   } finally { lock.releaseLock(); }
   return adminData(token);
 }

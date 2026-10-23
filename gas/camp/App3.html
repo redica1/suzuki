@@ -1,4 +1,4 @@
-/* build: 20261023-223231 */
+/* build: 20261023-223410 */
   ${teams().some(x=>x.over)?`<div class="note">가족방은 한 방에 ${ROOM.cap}명까지예요: ${teams().filter(x=>x.over).map(x=>`${esc(x.rep.name)} 가족 ${x.n}명`).join(', ')}</div>`:''}
   ${S.editOnly?`<div class="note info spread"><span><b>${S.editOnly.length}명만 고치는 중</b> · ${ps.filter(p=>S.editOnly.includes(p.key)).map(p=>esc(p.name)).join(', ')}</span><button class="btn small ghost" type="button" id="showAllCards">모두 보기</button></div>`:''}
   ${ps.filter(p=>p.kind!=='family'&&(!S.editOnly||S.editOnly.includes(p.key))).map(pCard).join('')}
@@ -127,6 +127,8 @@ function editDiff(){if(!S.editNo)return null;const old=ALL_SUBS.find(x=>x.no===S
   live.filter(o=>!nw.ppl.some(p=>p.id===o.id)&&(isPaid(o)||o.pay==='신고')).forEach(o=>{const pd=o.paidAmt||0,b=pAmt(o);owe+=Math.max(0,b-pd);back+=Math.max(0,pd-b)});
   return {rows,before,after,diff:after-before,paid,owe,back}}
 const sgn=n=>n>0?'+'+won(n):n<0?'−'+won(-n):'0원';
+function quickBar(){const allLocked=(S.quickKeys||[]).every(k=>lockedP(k));
+  return `${allLocked?'':editDiffHTML()}<div class="row" style="justify-content:center;gap:8px;margin:14px 0"><button class="btn" type="button" id="toMine3">← 목록으로</button>${allLocked?'':'<button class="btn primary" type="button" id="qeSaveBtn">수정 내용 저장</button>'}</div>${S.qSaved?`<p class="hint" style="text-align:center;margin:-6px 0 10px">✓ ${stampTxt(S.qSaved)} 저장했어요</p>`:''}`}
 function editDiffHTML(){const D=editDiff();if(!D)return '';
   const tag=D.diff>0?'<span class="pill due">늘어요</span>':D.diff<0?'<span class="pill new">줄어요</span>':'<span class="pill ok">그대로</span>';
   return `<div class="panel" style="border:2px solid var(--accent)"><div class="spread"><h3 style="font-size:16px;margin:0">금액 변동 · ${esc(S.editNo)}</h3>${tag}</div>
@@ -193,7 +195,3 @@ function refundOf(sb,ids){const r=refundRule(S.today);const ps=sb.ppl.filter(p=>
   const base=ps.reduce((t,p)=>t+Math.max(0,(p.paidAmt||0)-(REFUND.duesRefund?0:p.dues)),0);return {r,base,paid:ps.length>0,amt:Math.floor(base*r.rate/100/100)*100}}
 function stTag(st,p){return st==='정상'?(p&&p.cxRejected?`<span class="pill bad">취소 요청 반려${p.cxWhy?' · '+esc(p.cxWhy):''}</span>`:''):st==='취소요청'?'<span class="pill due">취소 요청 · 확인 중</span>':`<span class="pill lock">취소${p&&p.refund?' · 환불 '+kday(p.refund.date)+' '+won(p.refund.amt):''}</span>`}
 function payTag(p){if(p.status!=='정상')return '';if(p.pay==='신고'){const r=p.rep&&(p.rep.rows&&p.rep.rows[p.id]||{date:p.rep.date,a:p.rep.amt})||{};return `<span class="pill new">입금 확인 중${r.date?' · '+kday(r.date):''}${r.a?' '+won(+r.a):''}</span>`}const d=dueOf(p);const rj=p.rejected&&p.rejected.length&&!isPaid(p)?p.rejected[p.rejected.length-1]:null;if(rj)return `<span class="pill bad" title="${esc(rj.why||'')}">입금 신고 반려${rj.why?' · '+esc(rj.why):''}</span>`;
-  return !isPaid(p)?'<span class="pill due">입금 전</span>':d>0?`<span class="pill due">차액 ${won(d)} 입금 전</span>`:d<0?(p.ovReq?`<span class="pill due">${won(p.ovReq.amt)} 돌려받기 요청 · 확인 중</span>`:`<span class="pill new">입금 확인 · ${won(-d)} 더 냄</span>${p.ovRejected?` <span class="pill bad">돌려받기 반려${p.ovRejected.why?' · '+esc(p.ovRejected.why):''}</span>`:''}`):`<span class="pill ok">입금 확인${p.rep&&p.rep.ok?' '+kday(p.rep.ok):''}</span>${(p.ovDone||[]).length?` <span class="pill">차액 ${won(p.ovDone.reduce((t,x)=>t+x.amt,0))} 돌려받음 ${kday(p.ovDone[p.ovDone.length-1].date)}</span>`:''}`}
-function subTag(sb){const L=sb.ppl.filter(p=>p.status==='정상');if(!L.length)return '<span class="pill lock">전체 취소</span>';
-  const ok=L.filter(p=>isPaid(p)&&dueOf(p)<=0&&p.pay!=='신고').length, rp=L.filter(p=>p.pay==='신고').length;
-  return ok===L.length?'<span class="pill ok">모두 입금 확인</span>':`<span class="pill ${ok?'new':'due'}">입금 확인 ${ok} / ${L.length}명</span>${rp?` <span class="pill new">신고 ${rp}명 확인 중</span>`:''}`}

@@ -1,4 +1,8 @@
-/* build: 20261023-223231 */
+/* build: 20261023-223410 */
+    <label class="f" for="qText">무슨 일이 있었나요? <span class="req">*</span><textarea id="qText" rows="5" maxlength="2000" placeholder="무엇을 누르니 어떻게 됐는지 적어 주시면 빨리 고칠 수 있어요.">${esc(S.qText||'')}</textarea></label>
+    <label class="f" for="qPic">화면 사진 <span class="hint">있으면 · 5MB까지</span><input type="file" id="qPic" accept="image/\x2a"></label>
+    <div class="row" style="justify-content:flex-end"><span class="err" id="qErr" style="margin-right:auto"></span><button class="btn primary" type="button" id="qSend">올리기</button></div>
+  </div>
   ${login?`<div class="panel" style="display:grid;gap:8px"><b>내가 올린 글 ${mine.length}</b>${mine.length?mine.map(x=>`<div class="qitem"><div class="spread"><span><b class="num">${esc(x.no)}</b> · ${esc(String(x.at).slice(5,16))} · ${esc(x.where)}</span>${qPill(x.state)}</div><div style="white-space:pre-wrap">${esc(x.text)}</div>${x.pic?'<small class="hint">사진 첨부함</small>':''}${x.reply?`<div class="reply"><b>운영진 답변</b>${x.done?` <small class="hint">${kday(x.done)}</small>`:''}<div style="white-space:pre-wrap">${esc(x.reply)}</div></div>`:''}</div>`).join(''):'<p class="hint" style="margin:0">아직 올린 글이 없어요.</p>'}</div>`:`<p class="hint">로그인하면 내가 올린 글과 운영진 답변을 여기서 볼 수 있어요.</p>`}
   </section>`}
 function openQ(){if(S.view!=='q')S.qBack={view:S.view,step:S.step};S.qWhere='';S.view='q';render();window.scrollTo({top:0});
@@ -18,15 +22,16 @@ function render(){fillBanks();
   if(S.view==='mine'){document.getElementById('app').innerHTML=vMine();document.getElementById('backBtn').hidden=true;document.getElementById('nextBtn').hidden=true;document.getElementById('dockLabel').textContent='내 접수';document.getElementById('dockTotal').textContent=`${MY_SUBS.length}건`;return}
   renderSteps();
   const app=document.getElementById('app');
-  app.innerHTML = (S.editNo&&S.step<6?`<div class="note info spread" style="margin-bottom:12px"><span><b>${S.editNo} 접수를 고치는 중</b> · 인원을 추가하거나 정보를 바꾼 뒤 마지막 단계에서 「수정 내용 저장」을 눌러요. 입금된 사람은 금액이 바뀌면 차액만 입금하면 돼요.</span><button class="btn small" type="button" id="toMine">← 목록으로 돌아가기</button></div>`:'')+[vStep1,vStep2,vStep3,vEns,vStep4,vStep5][S.step-1]()+(S.editNo&&S.step<6?`<div class="row" style="justify-content:center;margin:18px 0 6px"><button class="btn" type="button" id="toMine2">← 저장하지 않고 목록으로 돌아가기</button></div>`:'');
+  app.innerHTML = (S.editNo&&S.step<6?`<div class="note info spread" style="margin-bottom:12px"><span><b>${S.editNo} 접수를 고치는 중</b> · 인원을 추가하거나 정보를 바꾼 뒤 마지막 단계에서 「수정 내용 저장」을 눌러요. 입금된 사람은 금액이 바뀌면 차액만 입금하면 돼요.</span><button class="btn small" type="button" id="toMine">← 목록으로 돌아가기</button></div>`:'')+[vStep1,vStep2,vStep3,vEns,vStep4,vStep5][S.step-1]()+(S.editNo&&S.quickEdit&&S.step===3?quickBar():'')+(S.editNo&&S.step<6&&!(S.quickEdit&&S.step===3)?`<div class="row" style="justify-content:center;margin:18px 0 6px"><button class="btn" type="button" id="toMine2">← 저장하지 않고 목록으로 돌아가기</button></div>`:'');
   const t=totals(), next=document.getElementById('nextBtn'), back=document.getElementById('backBtn');
   document.getElementById('dockLabel').textContent = S.step===1?'접수 준비':`선택 ${t.n}명${t.teams.length?` · 가족방 ${t.teams.length}`:''}${t.waiting?` · 회비확인대기 ${t.waiting}명`:''}`;
   document.getElementById('dockTotal').textContent = won(t.all);
   if(S.editNo&&S.step>1&&S.step<6){const D=editDiff();if(D)document.getElementById('dockLabel').textContent=`기존 ${won(D.before)} → 수정 후 (${sgn(D.diff)})`}
   back.hidden = S.step===1||S.step===6;
   next.hidden = S.step===6;
-  next.textContent = S.step===5?(S.editNo?'수정 내용 저장':'접수하기'):(S.step===4&&S.editNo&&S.ensEdit?'앙상블 저장':'다음');
+  next.textContent = S.step===5?(S.editNo?'수정 내용 저장':'접수하기'):(S.step===4&&S.editNo&&S.ensEdit?'앙상블 저장':S.step===3&&S.editNo&&S.quickEdit?'저장':'다음');
   next.disabled = false; next.classList.toggle('dim', blocked());
+  if(S.editNo&&S.quickEdit&&S.step===3&&(S.quickKeys||[]).every(k=>lockedP(k)))next.hidden=true;
   lockCards();
   document.getElementById('roundChip').textContent = `${ROUNDS[CAMP.ri][0]} 접수 중 · ${ROUNDS[CAMP.ri][1]}`;
   document.getElementById('roundSeg').innerHTML = ''&&ROUNDS.map((r,i)=>`<button type="button" data-round="${i}" aria-pressed="${CAMP.ri===i}" style="padding:2px 9px;font-size:12px">${r[0]}</button>`).join('');
@@ -70,8 +75,8 @@ function startEdit(no,only){const sb=MY_SUBS.find(x=>x.no===no);const f=JSON.par
   sb.ppl.forEach(p=>{if(p.status==='취소'){const k=p.id.slice(sb.no.length+1);delete S.picked[k];S.fam=S.fam.filter(x=>x.id!==k);S.extra=S.extra.filter(x=>x.id!==k)}});
   S.riBack=CAMP.ri;if(f.ri!==undefined)CAMP.ri=f.ri;S.editNo=sb.no;S.editOnly=only;S.cx={};S.cxOpen='';S.view='form';
   if(only==='ens'){S.editOnly=null;S.ensEdit=true;if(S.quietEdit){S.step=4}else{S.ensSaved='';go(4);toast(`앙상블 「${S.ens.group||''}」을(를) 고쳐요 · 다 고친 뒤 「앙상블 저장」`)}}
-  else if(only){go(3);toast(`${only.length}명 정보를 고쳐요 · 다 고친 뒤 마지막에 「수정 내용 저장」`)}else{go(2);toast(`${sb.no}에 인원을 추가해요 · 추가한 뒤 「다음」으로 정보를 넣어요`)}}
-function resetForm(){Object.assign(S,{ensEdit:false,cartAt:{},picked:{},extra:[],fam:[],info:{},room:{},join:{},ens:{on:false},agree:false,sel:{}})}
+  else if(only){S.quickEdit=true;S.quickKeys=only;if(S.quietEdit){S.step=3}else{S.qSaved='';go(3);toast(only.length===1?'신청 내용을 보고 고칠 수 있어요 · 고치면 「저장」':`${only.length}명 정보를 고쳐요 · 다 고친 뒤 「저장」`)}}else{go(2);toast(`${sb.no}에 인원을 추가해요 · 추가한 뒤 「다음」으로 정보를 넣어요`)}}
+function resetForm(){Object.assign(S,{ensEdit:false,quickEdit:false,cartAt:{},picked:{},extra:[],fam:[],info:{},room:{},join:{},ens:{on:false},agree:false,sel:{}})}
 
 /* ---------- 동작 ---------- */
 document.addEventListener('click',e=>{
@@ -118,12 +123,15 @@ document.addEventListener('click',e=>{
   if(b.id==='ensSaveBtn'){document.getElementById('nextBtn').click();return}
   if(b.id==='nextBtn'&&blocked()){warnMissing();return}
   if(b.id==='nextBtn'&&S.step===4&&S.editNo&&S.ensEdit){S.step=5;S.agree=true}
+  if(b.id==='nextBtn'&&S.step===3&&S.editNo&&S.quickEdit){S.step=5;S.agree=true}
+  if(b.id==='qeSaveBtn'){document.getElementById('nextBtn').click();return}
   if(b.id==='nextBtn'){const next=b;
     if(S.step===5){S.no=`${CAMP.id}-${String(ALL_SUBS.length+1).padStart(3,'0')}`;if(S.editNo){const old=ALL_SUBS.find(x=>x.no===S.editNo);const nw=makeSub(old.no);const kept=[];
         const nb=Math.max(1,...old.ppl.map(q=>q.batch||1))+1;let added=0;
         nw.ppl.forEach(p=>{const o=old.ppl.find(q=>q.id===p.id);if(o&&o.status==='정상'&&o.pay==='신고'){const k=p.id.slice(old.no.length+1);['fee','lesson','dues','type'].forEach(x=>p[x]=o[x]);if(old.form&&old.form.info&&old.form.info[k])nw.form.info[k]=old.form.info[k]}if(o&&o.status!=='취소'){p.pay=o.pay;p.rep=o.rep;p.paidAmt=o.paidAmt||0;p.status=o.status;p.batch=o.batch||1;p.addAt=o.addAt||old.date}else{p.batch=nb;added++}});
         old.ppl.forEach(o=>{if(!nw.ppl.some(p=>p.id===o.id)){if(o.status==='정상'&&(isPaid(o)||o.pay==='신고')){kept.push(o.name);nw.ppl.push(o)}else if(o.status!=='정상')nw.ppl.push(o)}});
-        Object.assign(old,{ppl:nw.ppl,form:nw.form,edited:S.today});{const ono=old.no;S.afterSave=()=>{const sb=MY_SUBS.find(x=>x.no===ono);if(sb){const ids=sb.ppl.filter(p=>overOf(p)>0).map(p=>p.id);if(ids.length)ovBox(ono,ids)}}}const wasEns=S.ensEdit;subSave();loadMine();const no=S.editNo;S.editNo=null;S.editOnly=null;if(S.riBack!==undefined){CAMP.ri=S.riBack;S.riBack=undefined}resetForm();S.view='mine';S.rp=null;
+        Object.assign(old,{ppl:nw.ppl,form:nw.form,edited:S.today});{const ono=old.no;S.afterSave=()=>{const sb=MY_SUBS.find(x=>x.no===ono);if(sb){const ids=sb.ppl.filter(p=>overOf(p)>0).map(p=>p.id);if(ids.length)ovBox(ono,ids)}}}const wasEns=S.ensEdit,wasQuick=S.quickEdit&&S.quickKeys;subSave();loadMine();const no=S.editNo;S.editNo=null;S.editOnly=null;if(S.riBack!==undefined){CAMP.ri=S.riBack;S.riBack=undefined}resetForm();S.view='mine';S.rp=null;
+        if(wasQuick){S.quietEdit=true;startEdit(no,wasQuick);S.quietEdit=false;S.qSaved=nowStamp();render();toast('저장했어요 · 계속 고칠 수 있어요');return}
         if(wasEns){S.quietEdit=true;startEdit(no,'ens');S.quietEdit=false;S.ensSaved=nowStamp();render();toast('앙상블을 저장했어요 · 계속 고칠 수 있어요');return}
         render();window.scrollTo({top:0});
         toast(kept.length?`${no} 접수를 고쳤어요${added?` · ${added}명 추가`:''} · 입금된 ${kept.join(', ')}은(는) 빠지지 않았어요. 빼려면 아래에서 취소해 주세요`:`${no} 접수를 고쳤어요${added?` · ${added}명 추가 (추가 ${nb-1})`:''}`);return}
@@ -170,9 +178,3 @@ document.addEventListener('click',e=>{
   if(b.id==='homeBtn'){S.view='form';if(S.step===6)Object.assign(S,{acad:'',verified:false,picked:{},extra:[],fam:[],info:{},room:{},join:{},ens:{on:false},agree:false});go(1);return}
   if(d.tab){S.tab=d.tab;S.rq='';render();return}
   if(d.ptab){S.ptab=d.ptab;S.rq='';render();return}
-  if(b.id==='addCart'){const L=selIds();const at=nowStamp();L.forEach(id=>{S.picked[id]=true;if(!S.cartAt[id])S.cartAt[id]=at});S.sel={};render();toast(`${L.length}명을 신청 명단에 추가했어요`);return}
-  if(d.uncart){const id=d.uncart;S.picked[id]=false;delete S.cartAt[id];delete S.sel[id];delete S.room[id];delete S.join[id];Object.keys(S.join).forEach(j=>{if(S.join[j]===id)delete S.join[j]});const n=S.fam.filter(f=>f.link===id).length;S.fam=S.fam.filter(f=>f.link!==id);render();toast(n?`명단에서 뺐어요 · 가족 ${n}명도 함께`:'명단에서 뺐어요');return}
-  if(d.pick){if(S.picked[d.pick]){render();return} S.sel[d.pick]=b.checked; const ab=document.getElementById('addCart'); if(ab) ab.outerHTML=addBtn(); return}
-  if(false){S.picked[d.pick]=b.checked; if(!b.checked){delete S.room[d.pick];delete S.join[d.pick];Object.keys(S.join).forEach(j=>{if(S.join[j]===d.pick)delete S.join[j]});const n=S.fam.filter(f=>f.link===d.pick).length; S.fam=S.fam.filter(f=>f.link!==d.pick); if(n)toast(`가족 ${n}명도 함께 뺐어요`)} render();return}
-  if(d.ext){const [k,v]=d.ext.split('|');const i=S.info[k];i.ext=v==='1';if(!i.ext){i.lessons=0;i.mc=[];i.p1='';i.p2=''}render();return}
-  if(d.gender){const [k,g]=d.gender.split('|');S.info[k].gender=g;render();return}

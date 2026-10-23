@@ -1,4 +1,10 @@
-/* build: 20261023-223231 */
+/* build: 20261023-223410 */
+  if(b.id==='addCart'){const L=selIds();const at=nowStamp();L.forEach(id=>{S.picked[id]=true;if(!S.cartAt[id])S.cartAt[id]=at});S.sel={};render();toast(`${L.length}명을 신청 명단에 추가했어요`);return}
+  if(d.uncart){const id=d.uncart;S.picked[id]=false;delete S.cartAt[id];delete S.sel[id];delete S.room[id];delete S.join[id];Object.keys(S.join).forEach(j=>{if(S.join[j]===id)delete S.join[j]});const n=S.fam.filter(f=>f.link===id).length;S.fam=S.fam.filter(f=>f.link!==id);render();toast(n?`명단에서 뺐어요 · 가족 ${n}명도 함께`:'명단에서 뺐어요');return}
+  if(d.pick){if(S.picked[d.pick]){render();return} S.sel[d.pick]=b.checked; const ab=document.getElementById('addCart'); if(ab) ab.outerHTML=addBtn(); return}
+  if(false){S.picked[d.pick]=b.checked; if(!b.checked){delete S.room[d.pick];delete S.join[d.pick];Object.keys(S.join).forEach(j=>{if(S.join[j]===d.pick)delete S.join[j]});const n=S.fam.filter(f=>f.link===d.pick).length; S.fam=S.fam.filter(f=>f.link!==d.pick); if(n)toast(`가족 ${n}명도 함께 뺐어요`)} render();return}
+  if(d.ext){const [k,v]=d.ext.split('|');const i=S.info[k];i.ext=v==='1';if(!i.ext){i.lessons=0;i.mc=[];i.p1='';i.p2=''}render();return}
+  if(d.gender){const [k,g]=d.gender.split('|');S.info[k].gender=g;render();return}
   if(d.settype){const [k,v]=d.settype.split('|');const p=people().find(x=>x.key===k);if(p){info(p).type=v;render();toast(`${p.name}: ${v==='회원의 악기하는 자녀'?'악기하는 교사자녀':v} 금액으로 계산해요`)}return}
   if(d.roomck&&b.matches('input')){if(b.checked)S.room[d.roomck]=true;else delete S.room[d.roomck];render();const tm=teams().find(x=>x.rep.key===d.roomck);toast(b.checked?(tm&&tm.fee?`가족방 ${tm.n}명 · ${won(tm.fee)}을 청구에 더했어요`:'가족방을 신청했어요 · 4명이라 추가 비용이 없어요'):'가족방 신청을 뺐어요');return}
   if(d.sibpick!==undefined){S.sibOpen=S.sibOpen===d.sibpick?'':d.sibpick;render();return}

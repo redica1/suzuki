@@ -10,7 +10,8 @@
   · https://redica1.github.io/suzuki/camp/admin.html → 캠프 관리자 화면
   · 이 페이지는 액자일 뿐, 명단·접수 내용은 깃허브에 없음 (접수 DB 구글 시트에만 있음).
   · 카카오톡 등 앱 안 브라우저에서는 구글이 막으므로 크롬(기본 브라우저)으로 넘김 (교사연수 페이지와 같은 방식).
-  · 앱 주소가 바뀌면 아래 APP 한 줄만 바꾸면 됨.
+  · 주소 뒤에 ?test 를 붙이면 테스트(STG) 앱이 열림: …/suzuki/camp/?test , …/suzuki/camp/admin.html?test
+  · 앱 주소가 바뀌면 아래 PROD · STG 줄만 바꾸면 됨.
 -->
 <meta name="description" content="2027 스즈키 겨울 음악제 접수 · 2027년 1월 11일(월) ~ 15일(금) · 학원별 접수 · 입금 신고 · 내 접수 확인">
 <meta property="og:type" content="website">
@@ -49,7 +50,9 @@
 <iframe id="app" title="2027 스즈키 겨울 음악제 접수" allow="clipboard-write; screen-wake-lock" hidden></iframe>
 <script>
 (function () {
-  var APP = 'https://script.google.com/macros/s/AKfycbwf3Pwdvt61GRyAfkPLqgJhuaqvV5bqfHrX39mholgmJ-yzOxBPefki8IZ9m_uJU6dwzw/exec';   // 캠프 접수 앱 (2027 겨울)
+  var PROD = 'https://script.google.com/macros/s/AKfycbwf3Pwdvt61GRyAfkPLqgJhuaqvV5bqfHrX39mholgmJ-yzOxBPefki8IZ9m_uJU6dwzw/exec';   // 메인 (실제 접수)
+  var STG  = 'https://script.google.com/macros/s/AKfycbzY1_EiUv5MZN6KIft561bsCYlnbJ4Mw8D3wEoVyadiKG0wWTBr09EU394Xxq9LJaLq/exec';   // 테스트 (STG)
+  var APP = (/[?&]test\b/i.test(location.search) ? STG : PROD);
   var ua = navigator.userAgent || '', here = location.href.split('#')[0];
   var android = /Android/i.test(ua);
   var kakao = /KAKAOTALK/i.test(ua), line = / Line\//i.test(ua);

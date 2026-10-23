@@ -3,11 +3,10 @@
 function payReport(){
   const open=unpaidPpl();
   const reps=[];MY_SUBS.forEach(sb=>sb.ppl.forEach(p=>{if(p.pay==='신고'&&p.rep&&!reps.some(r=>r.id===p.rep.id))reps.push(p.rep)}));
-  if(!open.length&&!reps.length) return '';
+  if(!open.length) return ''; /* 신고한 사람은 아래 사람별 줄에 「입금 확인 중 · 날짜 금액」으로 보여서 여기서는 안 보여 줌 */
   const sel=S.rp||(S.rp=open.map(x=>x.p.id)); const sum=open.filter(x=>sel.includes(x.p.id)).reduce((t,x)=>t+dueOf(x.p),0);
   const nameOf=id=>{for(const sb of MY_SUBS){const p=sb.ppl.find(q=>q.id===id);if(p)return p.name}return ''};
   return `<div class="panel rp"><div class="spread"><h3 style="margin:0">입금 신고</h3><span class="hint">입금한 사람을 체크하고 알려 주시면 운영진이 통장과 맞춰 보고 확인해요</span></div>
-    ${reps.map(r=>`<div class="note info spread"><span>${r.ids.map(id=>`${esc(nameOf(id))} · ${esc((r.rows&&r.rows[id]||r).name)} · ${kday((r.rows&&r.rows[id]||r).date)} · ${won((r.rows&&r.rows[id]||{a:r.amt}).a)}`).join('<br>')}<br>합계 <b>${won(r.amt)}</b> · <b>운영진 확인 중</b>${r.edited?` <small class="hint">(${stampTxt(r.edited)} 수정)</small>`:''}${r.memo?`<br><span class="hint">메모: ${esc(r.memo)}</span>`:''}</span></div>`).join('')}
     ${open.length?`${bankHTML()}<div class="hint">사람마다 <b>입금자명 · 입금일 · 입금 금액</b>을 같은 줄에 넣어요. 나눠서 입금해도 돼요.</div>
     <div class="row"><button class="btn small" type="button" data-rpall="1">모두 선택</button><button class="btn small ghost" type="button" data-rpall="0">모두 해제</button><span class="hint">${sel.length}명 선택</span>
       <span class="hint" style="margin-left:auto">선택한 사람에게 한 번에:</span><input type="text" id="rpAllN" placeholder="입금자명" style="width:110px" aria-label="한 번에 넣을 입금자명" value="${esc(S.rpAllN||'')}"><input type="date" id="rpAllD" style="width:140px" aria-label="한 번에 넣을 입금일" value="${S.rpAllD||''}" max="${S.today}"><button class="btn small" type="button" id="rpFill">적용</button></div>
@@ -72,6 +71,7 @@ function cxPanel(sb,sel){
     <div class="row"><button class="btn primary" type="button" data-cxgo="${sb.no}">${paid?'취소 요청하기':'취소하기'}</button><button class="btn ghost" type="button" data-cxclear="${sb.no}">선택 해제</button></div>`}</div>`}
 function render(){
   {const st=document.getElementById('steps');if(st)st.hidden=S.view==='mine'}
+  {const mb=document.getElementById('mineBtn');if(mb){mb.hidden=!(S.user&&MY_SUBS.length&&S.view!=='mine');mb.textContent=`📋 내 접수 ${MY_SUBS.length}건`}}
   if(S.view==='mine'){document.getElementById('app').innerHTML=vMine();document.getElementById('backBtn').hidden=true;document.getElementById('nextBtn').hidden=true;document.getElementById('dockLabel').textContent='내 접수';document.getElementById('dockTotal').textContent=`${MY_SUBS.length}건`;return}
   renderSteps();
   const app=document.getElementById('app');
@@ -157,3 +157,5 @@ document.addEventListener('click',e=>{
   if(b.id==='toFirst'){S.auth='first1';S.verr='';render();return}
   if(b.id==='toLogin'){S.auth='login';S.verr='';render();return}
   if(b.id==='forgot'){const ph=(document.getElementById('lgEm').value||'').replace(/\D/g,'');const t=TEACHER_DB.find(x=>x.phone===ph);toast(t&&t.email?`${t.email.replace(/^(..).*(@.*)$/,'$1***$2')}로 재설정 링크를 보냈어요 (시제품)`:'등록된 이메일이 없어요. 운영진 카톡으로 문의해 주세요');return}
+  if(b.id==='firstCheck'){const t=findT(S.fPhone);if(!t||t.name!==S.fName.trim()){S.verr='명단의 이름·휴대전화와 일치하지 않아요. 명단에 없으면 아래 「교사 등록」을 눌러 주세요.';render();return}
+    if(t.hasPw){S.verr='이미 비밀번호가 있어요. 로그인 화면에서 「비밀번호를 잊었어요」를 눌러 주세요.';render();return}

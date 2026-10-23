@@ -289,6 +289,8 @@ tfoot td{font-weight:700;border-bottom:0}
 .dock .sum small{color:var(--muted);font-size:12.5px}
 .dock .sum b{font-size:19px}
 .dock .row{flex-wrap:nowrap}
+.dock .btn.mine{border-color:var(--accent,#2c46c9);color:var(--accent,#2c46c9);font-weight:700}
+@media (max-width:440px){.dock .wrap{gap:8px}.dock .btn{padding-inline:10px}.dock .sum b{font-size:16px}}
 
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:8px;font-size:14px;z-index:9}
 .flash{animation:flash .45s ease-in-out 4;outline:3px solid #e0483b;outline-offset:2px;border-radius:8px}
@@ -338,6 +340,7 @@ select:disabled{opacity:.5}
   <div class="wrap">
     <div class="sum"><small id="dockLabel">선택 0명</small><b class="num" id="dockTotal">0원</b></div>
     <div class="row">
+      <button class="btn mine" id="mineBtn" type="button" hidden>📋 내 접수</button>
       <button class="btn ghost" id="homeBtn" type="button" title="처음 화면">⌂ 처음</button>
       <button class="btn ghost" id="backBtn" type="button">이전</button>
       <button class="btn primary" id="nextBtn" type="button">다음</button>
@@ -352,7 +355,6 @@ select:disabled{opacity:.5}
 <?!= include('App3') ?>
 <?!= include('App4') ?>
 <?!= include('App5') ?>
-<?!= include('App6') ?>
 </script>
 
 </body></html>

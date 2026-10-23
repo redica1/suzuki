@@ -1,5 +1,3 @@
-  if(b.id==='firstCheck'){const t=findT(S.fPhone);if(!t||t.name!==S.fName.trim()){S.verr='명단의 이름·휴대전화와 일치하지 않아요. 명단에 없으면 아래 「교사 등록」을 눌러 주세요.';render();return}
-    if(t.hasPw){S.verr='이미 비밀번호가 있어요. 로그인 화면에서 「비밀번호를 잊었어요」를 눌러 주세요.';render();return}
     S.pending={...t};S.auth='first2';S.verr='';render();return}
   if(b.id==='makePw'){const p1=document.getElementById('pw1').value,p2=document.getElementById('pw2').value;
     if(p1.length<8){S.verr='비밀번호는 8자 이상이에요.';render();return} if(p1!==p2){S.verr='비밀번호 확인이 달라요.';render();return}
@@ -21,7 +19,7 @@
       return}
     go(S.step+1);return}
   if(b.id==='backBtn'){go(S.step-1);return}
-  if(b.id==='toMine'||b.id==='toMine2'){if(S.editNo){S.editNo=null;S.editOnly=null;if(S.riBack!==undefined){CAMP.ri=S.riBack;S.riBack=undefined}resetForm();S.acad='';S.verified=false;S.step=1}S.view='mine';S.cxDone=null;render();window.scrollTo({top:0});return}
+  if(b.id==='toMine'||b.id==='toMine2'||b.id==='mineBtn'){if(S.editNo){S.editNo=null;S.editOnly=null;if(S.riBack!==undefined){CAMP.ri=S.riBack;S.riBack=undefined}resetForm();S.acad='';S.verified=false;S.step=1}S.view='mine';S.cxDone=null;render();window.scrollTo({top:0});return}
   if(b.id==='toForm'){S.view='form';if(S.editNo&&S.riBack!==undefined){CAMP.ri=S.riBack;S.riBack=undefined}S.editNo=null;S.editOnly=null;if(S.step===6||S.step>1){resetForm();S.acad='';S.verified=false;S.step=1}render();window.scrollTo({top:0});return}
   if(d.subedit){startEdit(d.subedit,null);return}
   if(b.id==='rpGo'){const open=unpaidPpl();const sel=(S.rp||[]).filter(id=>open.some(x=>x.p.id===id));const er=m=>{document.getElementById('rpErr').textContent=m};
@@ -173,3 +171,7 @@ document.addEventListener('toggle',e=>{if(e.target.id==='ensBox')S.ens.on=e.targ
 
 /* 카카오톡 안 브라우저: 입력이 안 되는 경우가 있어 바깥 브라우저로 넘김 (공유주소는 「설정」 탭) */
 (function(){if(!/KAKAOTALK/i.test(navigator.userAgent||''))return;const u=(typeof SHARE_URL==='string'&&SHARE_URL)||'';if(!u)return;
+  const b=document.createElement('div');b.className='kakao';b.innerHTML='카카오톡 안에서는 접수가 잘 안 될 수 있어요. <a href="kakaotalk://web/openExternal?url='+encodeURIComponent(u)+'" target="_top">브라우저로 열기</a>';document.body.prepend(b)})();
+/* 처음 화면: 로그인부터 */
+render();
+

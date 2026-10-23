@@ -1,4 +1,13 @@
-/* build: 20261023-223410 */
+/* build: 20261023-223638 */
+    const names=sb.ppl.filter(p=>sel.includes(p.id)).map(p=>p.name);
+    if(paid){const f=document.getElementById('cxDoc'),req={no:sb.no,acad:sb.acad,names,ids:sel,why,amt,bank:(document.getElementById('cxBank')||{}).value||'',acct:((document.getElementById('cxAcct')||{}).value||'').replace(/[^\d-]/g,''),holder:((document.getElementById('cxHolder')||{}).value||'').trim()};
+      const go=file=>{req.file=file;api('cancelReq',[req],()=>{})};
+      if(f&&f.files&&f.files[0]){const fl=f.files[0];const rd=new FileReader();rd.onload=()=>go({name:fl.name,type:fl.type,data:String(rd.result).split(',')[1]});rd.readAsDataURL(fl)}else go(null)}
+    sb.ppl.forEach(p=>{if(sel.includes(p.id)){p.status=isPaid(p)?'취소요청':'취소';p.cxReqAt=nowStamp();if(!isPaid(p))p.cxWhy=why}});subSave();
+    delete S.cx[sb.no];S.cxOpen='';S.cxReason='';S.cxDone={names,amt,paid};render();window.scrollTo({top:0});toast(paid?'취소 요청을 보냈어요':'취소했어요');return}
+  if(b.id==='homeBtn'){S.view='form';if(S.step===6)Object.assign(S,{acad:'',verified:false,picked:{},extra:[],fam:[],info:{},room:{},join:{},ens:{on:false},agree:false});go(1);return}
+  if(d.tab){S.tab=d.tab;S.rq='';render();return}
+  if(d.ptab){S.ptab=d.ptab;S.rq='';render();return}
   if(b.id==='addCart'){const L=selIds();const at=nowStamp();L.forEach(id=>{S.picked[id]=true;if(!S.cartAt[id])S.cartAt[id]=at});S.sel={};render();toast(`${L.length}명을 신청 명단에 추가했어요`);return}
   if(d.uncart){const id=d.uncart;S.picked[id]=false;delete S.cartAt[id];delete S.sel[id];delete S.room[id];delete S.join[id];Object.keys(S.join).forEach(j=>{if(S.join[j]===id)delete S.join[j]});const n=S.fam.filter(f=>f.link===id).length;S.fam=S.fam.filter(f=>f.link!==id);render();toast(n?`명단에서 뺐어요 · 가족 ${n}명도 함께`:'명단에서 뺐어요');return}
   if(d.pick){if(S.picked[d.pick]){render();return} S.sel[d.pick]=b.checked; const ab=document.getElementById('addCart'); if(ab) ab.outerHTML=addBtn(); return}
@@ -49,6 +58,7 @@
     askBox('입금 신고를 취소할까요?',`<b>${esc(p.name)}</b>의 입금 신고를 지워요. 다시 「입금 신고」로 새로 낼 수 있어요.`,'신고 취소',()=>{const r=p.rep;r.ids=r.ids.filter(i=>i!==p.id);if(r.rows)delete r.rows[p.id];r.amt=r.ids.reduce((t,i)=>t+(+((r.rows||{})[i]||{}).a||0),0);
       MY_SUBS.forEach(x=>x.ppl.forEach(q=>{if(q.rep&&q.rep.id===r.id)q.rep=r}));p.pay='전';delete p.rep;S.prp='';subSave();render();toast(`${p.name} 입금 신고를 취소했어요`)});return}
   if(d.atab){S.atab=d.atab;render();return}
+  if(d.mtab){S.mtab=d.mtab;render();return}
   if(d.ensjoin){S.ens.joinNo=S.ens.joinNo===d.ensjoin?'':d.ensjoin;render();return}
   if(d.ensadd){const a=d.ensadd,t=teamOf(a),tn=(S.ens.group||'').trim();
     askBox('학원을 추가하시겠습니까?',`<b>${esc(a)}</b>을(를) ${tn?`「${esc(tn)}」 `:''}팀에 추가해요.${t?`<p class="note warn" style="margin:10px 0 0">이미 「${esc(t.name)}」 팀에 속해 있어요 (대표 ${esc(t.rep)}). 그래도 추가할 수 있어요.</p>`:''}`,'추가',

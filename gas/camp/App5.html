@@ -1,4 +1,11 @@
-/* build: 20261023-223410 */
+/* build: 20261023-223638 */
+function curWhere(){const v=S.qBack||{};if(v.view==='mine')return '내 접수 · 입금 신고';if(!S.user)return '로그인';return Q_WHERE[Math.min(Math.max(v.step||1,1),5)]||'기타'}
+function vQ(){const mine=S.qMine||[];const login=!!S.user;
+  return `<section class="sec"><div class="spread"><h2>오류·건의</h2><button class="btn small ghost" type="button" id="qBack">← 돌아가기</button></div>
+  <p class="lede">접수하다가 안 되는 것, 이상한 것, 바랐으면 하는 것을 적어 주세요. 운영진이 보고 <b>미해결 → 해결 중 → 해결</b>로 표시하고 답을 달아요.</p>
+  <div class="panel" style="display:grid;gap:10px">
+    ${login?`<div class="hint">${esc(S.user.name)} 선생님 · ${esc((S.user.acads||[]).join(', '))}</div>`:`<div class="grid2"><label class="f" for="qName">이름 <span class="req">*</span><input type="text" id="qName" value="${esc(S.qName||'')}"></label><label class="f" for="qPhone">휴대전화 <span class="req">*</span><input type="tel" id="qPhone" inputmode="numeric" value="${esc(S.qPhone||'010-')}"></label></div><label class="f" for="qAcad">학원<input type="text" id="qAcad" value="${esc(S.qAcad||'')}"></label>`}
+    <label class="f" for="qWhere">어느 화면에서요?<select id="qWhere">${Q_WHERE.map(x=>`<option ${x===(S.qWhere||curWhere())?'selected':''}>${x}</option>`).join('')}</select></label>
     <label class="f" for="qText">무슨 일이 있었나요? <span class="req">*</span><textarea id="qText" rows="5" maxlength="2000" placeholder="무엇을 누르니 어떻게 됐는지 적어 주시면 빨리 고칠 수 있어요.">${esc(S.qText||'')}</textarea></label>
     <label class="f" for="qPic">화면 사진 <span class="hint">있으면 · 5MB까지</span><input type="file" id="qPic" accept="image/\x2a"></label>
     <div class="row" style="justify-content:flex-end"><span class="err" id="qErr" style="margin-right:auto"></span><button class="btn primary" type="button" id="qSend">올리기</button></div>
@@ -156,7 +163,7 @@ document.addEventListener('click',e=>{
     if(!n&&!dd){toast('적용할 입금자명이나 입금일을 적어 주세요');return}unpaidPpl().filter(x=>sel.includes(x.p.id)).forEach(({p})=>{const v=rpv(p);if(n)v.n=n;if(dd)v.d=dd});render();toast(`선택한 ${sel.length}명에게 적용했어요`);return}
   if(d.rpok){MY_SUBS.forEach(sb=>sb.ppl.forEach(p=>{if(p.rep&&p.rep.id===d.rpok&&p.pay==='신고'){const row=p.rep.rows&&p.rep.rows[p.id];p.pay='확인';p.paidAmt=(p.paidAmt||0)+(row?row.a:dueOf(p));p.rep.ok=row?row.date:p.rep.date}}));subSave();render();toast('시제품: 운영진이 입금을 확인한 것으로 바꿨어요');return}
   if(d.rpall!==undefined){S.rp=d.rpall==='1'?unpaidPpl().map(x=>x.p.id):[];{const n=document.getElementById('rpMemo');if(n)S.rpMemo=n.value}render();return}
-  if(d.cxall){const sb=MY_SUBS.find(x=>x.no===d.cxall);const live=sb.ppl.filter(p=>p.status==='정상').map(p=>p.id);S.cx[sb.no]=(S.cx[sb.no]||[]).length===live.length?[]:live;S.cxOpen='';S.cxDone=null;render();return}
+  if(d.cxall){const sb=MY_SUBS.find(x=>x.no===d.cxall);const live=sb.ppl.filter(p=>p.status==='정상'&&mineOk(sb,p)).map(p=>p.id);const cur=S.cx[sb.no]||[];S.cx[sb.no]=live.length&&live.every(id=>cur.includes(id))?cur.filter(id=>!live.includes(id)):[...new Set([...cur,...live])];S.cxOpen='';S.cxDone=null;render();return}
   if(d.cxopen){S.cxOpen=d.cxopen;S.cxDone=null;render();const x=document.querySelector('.cxbox');if(x&&x.scrollIntoView)x.scrollIntoView({block:'center'});return}
   if(b.id==='showAllCards'){S.editOnly=null;render();return}
   if(d.ensnew){startEdit(d.ensnew,'ens');S.ens={...(S.ens||{}),on:true};render();return}
@@ -169,12 +176,3 @@ document.addEventListener('click',e=>{
     const why=document.getElementById('cxWhy').value;if(!why)return er('취소 사유를 선택해 주세요.');
     if(r.doc&&paid){const f=document.getElementById('cxDoc');if(!f||!f.files.length)return er('이 기간에는 진단서를 올려야 취소할 수 있어요.')}
     if(paid&&amt>0){const bk=document.getElementById('cxBank').value,ac=document.getElementById('cxAcct').value.replace(/[^\d-]/g,''),ho=document.getElementById('cxHolder').value.trim();if(!bk||ac.length<8||!ho)return er('환불 받을 은행·계좌번호·예금주를 넣어 주세요.')}
-    const names=sb.ppl.filter(p=>sel.includes(p.id)).map(p=>p.name);
-    if(paid){const f=document.getElementById('cxDoc'),req={no:sb.no,acad:sb.acad,names,ids:sel,why,amt,bank:(document.getElementById('cxBank')||{}).value||'',acct:((document.getElementById('cxAcct')||{}).value||'').replace(/[^\d-]/g,''),holder:((document.getElementById('cxHolder')||{}).value||'').trim()};
-      const go=file=>{req.file=file;api('cancelReq',[req],()=>{})};
-      if(f&&f.files&&f.files[0]){const fl=f.files[0];const rd=new FileReader();rd.onload=()=>go({name:fl.name,type:fl.type,data:String(rd.result).split(',')[1]});rd.readAsDataURL(fl)}else go(null)}
-    sb.ppl.forEach(p=>{if(sel.includes(p.id)){p.status=isPaid(p)?'취소요청':'취소';p.cxReqAt=nowStamp();if(!isPaid(p))p.cxWhy=why}});subSave();
-    delete S.cx[sb.no];S.cxOpen='';S.cxReason='';S.cxDone={names,amt,paid};render();window.scrollTo({top:0});toast(paid?'취소 요청을 보냈어요':'취소했어요');return}
-  if(b.id==='homeBtn'){S.view='form';if(S.step===6)Object.assign(S,{acad:'',verified:false,picked:{},extra:[],fam:[],info:{},room:{},join:{},ens:{on:false},agree:false});go(1);return}
-  if(d.tab){S.tab=d.tab;S.rq='';render();return}
-  if(d.ptab){S.ptab=d.ptab;S.rq='';render();return}

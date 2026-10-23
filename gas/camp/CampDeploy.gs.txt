@@ -1,5 +1,5 @@
 /**
- * 캠프 접수 자동 반영 도우미 (2026-10-23)  — 이 파일은 깃허브에 보관만 하는 사본. 실제로는 「캠프접수 자동 반영 도우미」 앱스크립트의 Code.gs
+ * 캠프 접수 자동 반영 도우미 (2026-10-23 v2 · 반쯤 바뀐 파일을 올리지 않게 커밋 고정·빌드 번호 확인)  — 이 파일은 깃허브에 보관만 하는 사본. 실제로는 「캠프접수 자동 반영 도우미」 앱스크립트의 Code.gs
  *
  * 코드 원본: 깃허브 redica1/suzuki 의 gas/camp/ 폴더 (Claude 가 고쳐서 올림, 개인정보 없음)
  *
@@ -47,7 +47,8 @@ function setupTrigger() {
 /** 5분마다: 깃허브 코드가 바뀌었으면 STG 에 반영 */
 function checkStg() {
   need_(STG);
-  const src = fetchSrc_();
+  let src;
+  try { src = fetchSrc_(); } catch (e) { if (/^MIXED/.test(e.message)) { Logger.log(e.message); return; } throw e; }
   if (src.hash === P_().getProperty('hash_stg')) return;
   deployFiles_(STG, src, '자동 반영');
   P_().setProperty('hash_stg', src.hash);
@@ -105,13 +106,26 @@ function status() {
 /* ---------- 내부 ---------- */
 function need_(t) { if (!t.scriptId || !t.deploymentId) throw new Error(t.name + ' 의 scriptId 를 먼저 채워 주세요.'); }
 
-/** 깃허브에서 files.json 에 적힌 파일을 모두 받아 옴 (캐시 피하려고 주소 뒤에 시각) */
+/** 깃허브에서 files.json 에 적힌 파일을 모두 받아 옴.
+ *  · 같은 커밋(sha)에서 받음 → 올리는 도중에 섞인 파일을 받지 않음
+ *  · 파일마다 적힌 빌드 번호가 다르면 이번에는 건너뛰고 5분 뒤 다시 (MIXED) */
+function srcBase_() {
+  try {
+    const r = UrlFetchApp.fetch('https://api.github.com/repos/redica1/suzuki/commits/main', { headers: { Accept: 'application/vnd.github.sha' }, muteHttpExceptions: true });
+    const sha = r.getContentText().trim();
+    if (r.getResponseCode() === 200 && /^[0-9a-f]{40}$/.test(sha)) return SRC.replace('/main/', '/' + sha + '/');
+  } catch (e) {}
+  return SRC;
+}
 function fetchSrc_() {
-  const get = n => { const r = UrlFetchApp.fetch(SRC + n + '?t=' + Date.now(), { muteHttpExceptions: true });
+  const base = srcBase_();
+  const get = n => { const r = UrlFetchApp.fetch(base + n + '?t=' + Date.now(), { muteHttpExceptions: true });
     if (r.getResponseCode() !== 200) throw new Error('깃허브에서 ' + n + ' 를 못 받았어요 (' + r.getResponseCode() + ')'); return r.getContentText('UTF-8'); };
   const names = JSON.parse(get('files.json'));
   const files = names.map(n => ({ n, src: get(n) }));
   if (!files.some(f => f.n === 'Code.js') || !files.some(f => f.n === 'Index.html')) throw new Error('Code.js · Index.html 이 없어요.');
+  const builds = {}; files.forEach(f => { const m = f.src.slice(0, 3000).match(/build: (\S+)/); if (m) builds[m[1]] = 1; });
+  if (Object.keys(builds).length > 1) throw new Error('MIXED 깃허브 파일이 아직 다 바뀌지 않았어요 (빌드 ' + Object.keys(builds).join(', ') + '). 5분 뒤 다시 해요.');
   const hash = Utilities.base64Encode(Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, files.map(f => f.n + '\n' + f.src).join('\n\u0000\n'), Utilities.Charset.UTF_8));
   return { files, hash };
 }

@@ -1,3 +1,4 @@
+/* build: 20261023-202217 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -566,6 +567,29 @@ function adminRejectReport(token, pid, reason) {
       log_('관리자 ' + a.name, '입금 신고 반려', id + ' · ' + (reason || ''));
     });
     touched.forEach(sb => writeSub_(sb, false));
+  } finally { lock.releaseLock(); }
+  return adminData(token);
+}
+/** 관리자: 앙상블 팀 정보 고치기 (팀 이름·함께하는 학원·곡·시간·운영진 메모) */
+function adminSaveEns(token, no, patch) {
+  const a = adm_(token);
+  const lock = lock_();
+  try {
+    const all = loadSubs_(); const sb = all.find(x => x.no === no);
+    if (!sb || !sb.form || !sb.form.ens || !sb.form.ens.on) throw new Error('앙상블 대표 접수를 찾지 못했어요. 새로 불러와 주세요.');
+    const e = sb.form.ens, t = s => String(s == null ? '' : s).trim().slice(0, 200);
+    if (!t(patch.group)) throw new Error('팀 이름을 넣어 주세요.');
+    const before = JSON.stringify(e);
+    e.group = t(patch.group);
+    e.acads = [...new Set((patch.acads || []).map(t).filter(x => x && x !== sb.acad))];
+    ['k1', 'c1', 'o1', 'k2', 'c2', 'o2', 'adminMemo'].forEach(k => e[k] = t(patch[k]));
+    ['acc1', 'video1', 'acc2', 'video2'].forEach(k => e[k] = !!patch[k]);
+    e.tm = String(Math.min(99, Math.max(0, parseInt(patch.tm, 10) || 0)) || ''); e.ts = String(Math.min(59, Math.max(0, parseInt(patch.ts, 10) || 0)) || '');
+    if (JSON.stringify(e) === before) return adminData(token);
+    e.adminEdited = stamp_() + ' ' + a.name;
+    sb.rev = (+sb.rev || 0) + 1;
+    writeSub_(sb, false); writeTeams_(all);
+    log_('관리자 ' + a.name, '앙상블 수정', no + ' · ' + e.group);
   } finally { lock.releaseLock(); }
   return adminData(token);
 }

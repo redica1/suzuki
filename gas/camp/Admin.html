@@ -1,4 +1,5 @@
 <!doctype html>
+<!-- build: 20261023-202217 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -179,10 +180,27 @@ function vCx(){const L=(S.D.cx||[]).slice().sort((a,b)=>(a.state==='요청'?0:1)
     <td>${c.state==='요청'?`<input type="date" id="cd_${c.row}" value="">`:''}</td>
     <td>${c.state==='요청'?`<div class="row" style="flex-wrap:nowrap"><button class="btn small primary" type="button" data-cxok="${c.row}">${c.amt?'환불 완료':'취소 확정'}</button><button class="btn small" type="button" data-cxno="${c.row}">반려</button></div>`:`<small class="faint">${esc(c.memo)}</small>`}</td></tr>`).join('')||'<tr><td colspan="11" class="hint">환불 요청이 없어요.</td></tr>'}
   </tbody></table></div>`}
-function vEns(){const T=S.D.teams||[];return `<div class="panel tbl"><table><thead><tr><th>팀 이름</th><th>대표 학원</th><th>함께하는 학원</th><th>곡</th><th>연주시간</th></tr></thead><tbody>
-  ${T.map(t=>{const sb=S.D.subs.find(x=>x.no===t.no),e=sb&&sb.form&&sb.form.ens||{};const song=n=>[e['k'+n],e['c'+n]].filter(Boolean).map(esc).join(' · ')+([e['acc'+n]&&'반주',e['video'+n]&&'영상'].filter(Boolean).length?` <small class="faint">(${[e['acc'+n]&&'반주',e['video'+n]&&'영상'].filter(Boolean).join(' · ')})</small>`:'');
-    return `<tr><td><b>${esc(t.name)}</b><br><small class="faint">${esc(t.no)}</small></td><td>${esc(t.rep)}</td><td>${t.acads.map(esc).join(', ')||'-'}</td><td>${[1,2].map(song).filter(x=>x.trim()).join('<br>')||'-'}</td><td>${e.tm||e.ts?`${+e.tm||0}분 ${+e.ts||0}초`:'-'}</td></tr>`}).join('')||'<tr><td colspan="5" class="hint">신청된 팀이 없어요.</td></tr>'}
+function vEns(){const T=S.D.teams||[];
+  return `<div class="panel"><span class="hint">팀 줄을 누르면 자세한 내용이 열려요. 운영진은 여기서 바로 고칠 수 있어요 (선생님 화면에도 바뀐 내용이 보여요).</span></div>
+  <div class="panel tbl"><table><thead><tr><th></th><th>팀 이름</th><th>대표 학원</th><th>신청 선생님</th><th>함께하는 학원</th><th>곡</th><th>연주시간</th></tr></thead><tbody>
+  ${T.map(t=>{const sb=S.D.subs.find(x=>x.no===t.no),e=sb&&sb.form&&sb.form.ens||{},on=S.ensOpen===t.no;
+    return `<tr class="ensrow" data-ensopen="${esc(t.no)}" style="cursor:pointer${on?';background:var(--soft,#eef3ff)':''}"><td>${on?'▾':'▸'}</td><td><b>${esc(t.name)}</b><br><small class="faint">${esc(t.no)}</small>${e.adminEdited?'<br><small class="faint">운영진 수정</small>':''}</td><td>${esc(t.rep)}</td><td>${esc(t.by||'')}</td><td>${t.acads.map(esc).join(', ')||'-'}</td><td>${[1,2].map(n=>songA(e,n)).filter(x=>x.trim()).join('<br>')||'-'}</td><td>${e.tm||e.ts?`${+e.tm||0}분 ${+e.ts||0}초`:'-'}</td></tr>
+    ${on?`<tr><td colspan="7" style="background:var(--soft,#f6f8ff)">${ensDetail(t,sb,e)}</td></tr>`:''}`}).join('')||'<tr><td colspan="7" class="hint">신청된 팀이 없어요.</td></tr>'}
   </tbody></table></div>`}
+const songA=(e,n)=>{const x=[e['acc'+n]&&'반주',e['video'+n]&&'영상'].filter(Boolean);return [e['k'+n],e['c'+n]].filter(Boolean).map(esc).join(' · ')+(x.length?` <small class="faint">(${x.join(' · ')})</small>`:'')};
+function ensDetail(t,sb,e){const joined=(t.mem||[]);const live=sb?sb.ppl.filter(p=>p.status==='정상').length:0;
+  const inp=(k,ph,w)=>`<input type="text" id="ee_${k}" value="${esc(e[k]||'')}" placeholder="${ph||''}" ${w?`style="width:${w}"`:''}>`;
+  const chk=k=>`<label class="row" style="gap:4px;flex-wrap:nowrap"><input type="checkbox" id="ee_${k}" ${e[k]?'checked':''}>${k.startsWith('acc')?'반주자 필요':'영상 사용'}</label>`;
+  const song=n=>`<div style="display:grid;gap:6px;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));align-items:end"><label class="fl"><span>곡 ${n} · 작곡가</span>${inp('k'+n)}</label><label class="fl"><span>곡명</span>${inp('c'+n)}</label><label class="fl"><span>곡명 · 원어</span>${inp('o'+n)}</label><div class="row" style="gap:10px">${chk('acc'+n)}${chk('video'+n)}</div></div>`;
+  return `<div style="display:grid;gap:12px;padding:6px 2px">
+    <div class="row" style="gap:18px;flex-wrap:wrap"><span>접수번호 <b class="num">${esc(t.no)}</b></span><span>대표 학원 <b>${esc(t.rep)}</b></span><span>신청 선생님 <b>${esc(t.by||'')}</b></span><span>그 접수 참가 인원 <b>${live}명</b></span>${e.adminEdited?`<span class="faint">마지막 운영진 수정 ${esc(e.adminEdited)}</span>`:''}</div>
+    ${joined.length?`<div class="hint">직접 「대표가 이미 있어요」로 함께 신청한 학원: ${joined.map(m=>`<b>${esc(m.acad)}</b> (${esc(m.by)} 선생님 · ${esc(m.no)})`).join(', ')} <span class="faint">— 그 학원 접수에서 나오는 거라 여기서 빼지 않아요</span></div>`:''}
+    <label class="fl"><span>팀 이름 *</span>${inp('group','','100%')}</label>
+    <label class="fl"><span>대표가 넣은 함께하는 학원 <small class="faint">쉼표(,)로 나눠서</small></span><input type="text" id="ee_acads" value="${esc((e.acads||[]).join(', '))}" placeholder="예: 미사스즈키, 강남스즈키"></label>
+    ${song(1)}${song(2)}
+    <div class="row" style="gap:8px;flex-wrap:wrap;align-items:end"><label class="fl"><span>총 연주시간</span><span class="row" style="gap:4px;flex-wrap:nowrap"><input type="text" id="ee_tm" inputmode="numeric" maxlength="2" value="${esc(e.tm||'')}" style="width:56px;text-align:right">분<input type="text" id="ee_ts" inputmode="numeric" maxlength="2" value="${esc(e.ts||'')}" style="width:56px;text-align:right">초</span></label>
+      <label class="fl" style="flex:1;min-width:200px"><span>운영진 메모 <small class="faint">선생님 화면에는 안 보여요</small></span>${inp('adminMemo','예: 무대 순서 3번, 반주자 배정 김OO','100%')}</label></div>
+    <div class="row" style="justify-content:flex-end;gap:8px"><button class="btn small ghost" type="button" data-ensopen="${esc(t.no)}">닫기</button><button class="btn small primary" type="button" data-enssave="${esc(t.no)}">고친 내용 저장</button></div></div>`}
 
 /* ---------- 동작 ---------- */
 const num=id=>+String((document.getElementById(id)||{}).value||'').replace(/\D/g,'')||0;
@@ -191,7 +209,16 @@ function confirmOne(pid){const d=val('d_'+pid),a=num('a_'+pid);
   if(!d){toast('입금일을 먼저 선택해 주세요');const el=document.getElementById('d_'+pid);if(el)el.focus();return}
   if(!a){toast('입금액을 넣어 주세요');return}
   call('adminConfirm',[[{pid,date:d,amt:a,memo:val('m_'+pid)}]],r=>{setData(r);toast('입금 확인 · '+kday(d)+' '+won(a))})}
+document.addEventListener('click',e=>{const tr=e.target.closest('tr.ensrow');if(tr&&!e.target.closest('button,input,label')){S.ensOpen=S.ensOpen===tr.dataset.ensopen?'':tr.dataset.ensopen;render()}});
 document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const d=b.dataset;
+  if(d.ensopen){S.ensOpen=S.ensOpen===d.ensopen?'':d.ensopen;render();return}
+  if(d.enssave){const g=k=>val('ee_'+k),c=k=>!!(document.getElementById('ee_'+k)||{}).checked;
+    const p={group:g('group'),acads:g('acads').split(/[,，]/).map(x=>x.trim()).filter(Boolean),k1:g('k1'),c1:g('c1'),o1:g('o1'),acc1:c('acc1'),video1:c('video1'),k2:g('k2'),c2:g('c2'),o2:g('o2'),acc2:c('acc2'),video2:c('video2'),tm:g('tm').replace(/\D/g,''),ts:g('ts').replace(/\D/g,''),adminMemo:g('adminMemo')};
+    if(!p.group){toast('팀 이름을 넣어 주세요');document.getElementById('ee_group').focus();return}
+    if(+p.ts>59){toast('초는 59까지예요');return}
+    const other=p.acads.filter(a=>(S.D.teams||[]).some(t=>t.no!==d.enssave&&(t.rep===a||(t.acads||[]).includes(a))));
+    const go=()=>call('adminSaveEns',[d.enssave,p],r=>{setData(r);toast('앙상블 「'+p.group+'」 팀을 고쳤어요')});
+    if(other.length)ask('다른 팀에도 들어 있는 학원이 있어요','<b>'+other.map(esc).join(', ')+'</b>은(는) 다른 팀에도 있어요. 그래도 저장할까요?',go,'그래도 저장');else go();return}
   if(b.id==='doLogin'){const id=val('lid'),pw=document.getElementById('lpw').value;busy(true,'확인하고 있어요…');
     google.script.run.withSuccessHandler(r=>{busy(false);if(!r.ok){document.getElementById('lerr').textContent=r.msg;return}S.tok=r.token;try{sessionStorage.setItem('campAdmTok',r.token);sessionStorage.setItem('campAdmId',id)}catch(x){}document.getElementById('who').textContent='관리자 '+id;setData(r)}).withFailureHandler(x=>{busy(false);document.getElementById('lerr').textContent=(x&&x.message)||String(x)}).adminLogin(id,pw);return}
   if(d.tab){S.tab=d.tab;render();return}

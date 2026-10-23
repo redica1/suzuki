@@ -1,4 +1,4 @@
-/* build: 20261024-010814 */
+/* build: 20261024-011814 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -36,15 +36,15 @@ const MASTER = [{ n: '안드레아 부샤츠', fee: 150000 }, { n: '이성주', 
 const PROF_SEED = {
   '바이올린':['곽은수','김소정','김유정','김한기','민연희','변지혜','서민정','신재원','양승돈','오영근','이광호','이슬비','정호진','황경익','황선영','Ayumi Moriyama','Jeffrey Solares','Motomichi Kisohara','Sara M. Gonzales'],
   '첼로':['김현실','이숙정','황선경']};
-const PROF_HEAD = ['이름', '악기', '레슨', '마스터클래스', '시간(분)', '마스터클래스 금액', '소속', '사용', '메모'];
+const PROF_HEAD = ['이름', '악기', '레슨', '마스터클래스', '시간(분)', '마스터클래스 금액', '소속', '사용', '메모', '레슨실'];
 const PROF_INST = ['바이올린', '첼로', '플루트', '비올라', '피아노', '기타'];
 let PROF_CACHE = null;
 function profSheet_() {
   const ss = SpreadsheetApp.getActive(); let sh = ss.getSheetByName(SH.PROF);
   if (!sh) {
     sh = ss.insertSheet(SH.PROF); sh.appendRow(PROF_HEAD);
-    Object.keys(PROF_SEED).forEach(i => PROF_SEED[i].forEach(n => sh.appendRow([n, i, '예', '아니오', '', '', '교수진', '예', ''])));
-    MASTER.forEach(m => sh.appendRow([m.n, '바이올린', '아니오', '예', 45, m.fee, '교수진', '예', '']));
+    Object.keys(PROF_SEED).forEach(i => PROF_SEED[i].forEach(n => sh.appendRow([n, i, '예', '아니오', '', '', '교수진', '예', '', ''])));
+    MASTER.forEach(m => sh.appendRow([m.n, '바이올린', '아니오', '예', 45, m.fee, '교수진', '예', '', '']));
   } else ensureHead_(SH.PROF, PROF_HEAD);
   return sh;
 }
@@ -55,7 +55,7 @@ function profs_() {
   profSheet_();
   PROF_CACHE = rows_(SH.PROF).filter(r => String(r['이름'] || '').trim()).map(r => ({
     name: String(r['이름']).trim(), inst: String(r['악기'] || '').trim(), lesson: yes_(r['레슨']), mc: yes_(r['마스터클래스']),
-    min: +r['시간(분)'] || 0, fee: +String(r['마스터클래스 금액'] || 0).replace(/[^\d]/g, '') || 0, org: String(r['소속'] || ''), on: String(r['사용'] || '예').trim() === '' || yes_(r['사용']), memo: String(r['메모'] || '') }));
+    min: +r['시간(분)'] || 0, fee: +String(r['마스터클래스 금액'] || 0).replace(/[^\d]/g, '') || 0, org: String(r['소속'] || ''), on: String(r['사용'] || '예').trim() === '' || yes_(r['사용']), memo: String(r['메모'] || ''), room: String(r['레슨실'] || '') }));
   return PROF_CACHE;
 }
 /** 접수 화면용: 사용하는 교수만 (선호 교수 목록 · 마스터클래스) */
@@ -73,7 +73,7 @@ const SETTINGS = [['관리자 아이디', 'admin', '관리자 화면(?page=admin
   ['접수 가능 학원', '마포스즈키', '「전체」 또는 학원 이름을 쉼표로 (예: 마포스즈키, 미사스즈키)']];
 
 const SH = {
-  T: '명단_교사', S: '명단_학생', SUB: '접수', P: '참가자', RP: '입금신고', CX: '환불요청', ENS: '앙상블팀', LOG: '기록', PROF: '교수진', ACT: '교사일정', ACTCFG: '일정설정', ACTLOG: '일정기록'
+  T: '명단_교사', S: '명단_학생', SUB: '접수', P: '참가자', RP: '입금신고', CX: '환불요청', ENS: '앙상블팀', LOG: '기록', PROF: '교수진', ACT: '교사일정', ACTCFG: '일정설정', ACTLOG: '일정기록', LES: '개인레슨'
 };
 const SUB_HEAD = ['접수번호', '접수일시', '수정일시', '학원', '접수 교사', '차수', '인원(정상)', '청구액', '입금확인액', '남은 금액', '앙상블', 'JSON_1', 'JSON_2', 'JSON_3', 'JSON_4'];
 const P_HEAD = ['참가자ID', '접수번호', '차수', '학원', '접수 교사', '들어온 차례', '추가 일시', '이름', '구분', '참가 구분', '악기', '담당 교사', '출생연도', '성별',
@@ -746,7 +746,7 @@ function adminSaveEns(token, no, patch) {
 function adminSaveProfs(token, list) {
   const a = adm_(token);
   const t = (s, n) => String(s == null ? '' : s).trim().slice(0, n || 60);
-  const L = (list || []).map(p => ({ name: t(p.name, 40), inst: t(p.inst, 20), lesson: !!p.lesson, mc: !!p.mc, min: Math.max(0, Math.min(240, +p.min || 0)), fee: Math.max(0, Math.min(5000000, +String(p.fee || 0).replace(/[^\d]/g, '') || 0)), org: t(p.org, 40), on: p.on !== false, memo: t(p.memo, 200) })).filter(p => p.name);
+  const L = (list || []).map(p => ({ name: t(p.name, 40), inst: t(p.inst, 20), lesson: !!p.lesson, mc: !!p.mc, min: Math.max(0, Math.min(240, +p.min || 0)), fee: Math.max(0, Math.min(5000000, +String(p.fee || 0).replace(/[^\d]/g, '') || 0)), org: t(p.org, 40), on: p.on !== false, memo: t(p.memo, 200), room: t(p.room, 30) })).filter(p => p.name);
   const seen = {};
   L.forEach(p => {
     if (!PROF_INST.includes(p.inst)) throw new Error(p.name + ': 악기를 골라 주세요.');
@@ -758,7 +758,7 @@ function adminSaveProfs(token, list) {
   try {
     const sh = profSheet_(); const last = sh.getLastRow();
     if (last > 1) sh.getRange(2, 1, last - 1, PROF_HEAD.length).clearContent();
-    if (L.length) sh.getRange(2, 1, L.length, PROF_HEAD.length).setValues(L.map(p => [p.name, p.inst, p.lesson ? '예' : '아니오', p.mc ? '예' : '아니오', p.mc ? (p.min || '') : '', p.mc ? p.fee : '', p.org, p.on ? '예' : '아니오', p.memo]));
+    if (L.length) sh.getRange(2, 1, L.length, PROF_HEAD.length).setValues(L.map(p => [p.name, p.inst, p.lesson ? '예' : '아니오', p.mc ? '예' : '아니오', p.mc ? (p.min || '') : '', p.mc ? p.fee : '', p.org, p.on ? '예' : '아니오', p.memo, p.room]));
     PROF_CACHE = null;
     log_('관리자 ' + a.name, '교수진 저장', L.length + '명');
   } finally { lock.releaseLock(); }
@@ -981,4 +981,45 @@ function schedSave(token, b) {
     (b.log || []).slice(0, 50).forEach(x => sh.log.appendRow([stamp_(), a.name, t(x, 300)]));
     return { ok: true, rev: val.rev };
   } finally { try { lock.releaseLock(); } catch (x) {} }
+}
+
+/* ================= 개인레슨 시간표 =================
+ * 「개인레슨」: 한 줄 = 30분 칸 하나 (날짜(0부터) · 시간 · 교수 · 참가자ID · 학생 · 학원 · 접수번호 · 악기 · 배정 일시 · 관리자)
+ * 날짜는 「일정설정」 days(교사 일정과 같은 날짜), 교수는 「교수진」에서 레슨 교수 */
+const LES_HEAD = ['날짜', '시간', '교수', '참가자ID', '학생', '학원', '접수번호', '악기', '배정 일시', '관리자'];
+function lesSheet_() { const ss = SpreadsheetApp.getActive(); let sh = ss.getSheetByName(SH.LES); if (!sh) { sh = ss.insertSheet(SH.LES); sh.appendRow(LES_HEAD); } return sh; }
+function lessons_() { lesSheet_(); return rows_(SH.LES).filter(r => String(r['교수'] || '') && String(r['참가자ID'] || '')).map(r => ({ d: +r['날짜'] || 0, t: hm_(r['시간']), pr: String(r['교수']), pid: String(r['참가자ID']), _row: r._row })); }
+function lessonData(token) {
+  adm_(token);
+  let days = []; try { days = actCfg_().days || []; } catch (x) {}
+  let acts = []; try { acts = actEvents_().map(e => ({ d: e.d, s: e.s, e: e.e, room: e.room, title: e.title, ppl: e.ppl })); } catch (x) {}
+  let people = []; try { people = (actCfg_().people || []).map(p => ({ id: p.id, n: p.n })); } catch (x) {}
+  return { days, rows: lessons_().map(x => ({ d: x.d, t: x.t, pr: x.pr, pid: x.pid })), acts, people };
+}
+/** 칸 하나 배정/비우기: op = {d, t, pr, pid(빈 값이면 비우기)} */
+function lessonSet(token, op) {
+  const a = adm_(token);
+  if (!op || !/^\d{2}:\d{2}$/.test(String(op.t)) || !op.pr) throw new Error('칸 정보가 잘못됐어요. 새로 불러와 주세요.');
+  const lock = lock_();
+  try {
+    const sh = lesSheet_(); const L = lessons_();
+    const d = +op.d || 0, t = String(op.t), pr = String(op.pr);
+    const cur = L.find(x => x.d === d && x.t === t && x.pr === pr);
+    if (op.pid) {
+      const other = L.find(x => x.d === d && x.t === t && x.pid === op.pid && x.pr !== pr);
+      if (other) throw new Error('이 학생은 같은 시간에 ' + other.pr + ' 교수 레슨이 있어요.');
+      let info = { name: '', acad: '', no: '', inst: '' };
+      const sb = loadSubs_().find(x => String(op.pid).indexOf(x.no + '_') === 0);
+      const p = sb && sb.ppl.find(q => q.id === op.pid);
+      if (!p || p.status !== '정상') throw new Error('참가자를 찾지 못했거나 취소된 사람이에요. 새로 불러와 주세요.');
+      info = { name: p.name, acad: sb.acad, no: sb.no, inst: p.inst || '' };
+      const row = [d, "'" + t, pr, op.pid, info.name, info.acad, info.no, info.inst, stamp_(), a.name];
+      if (cur) sh.getRange(cur._row, 1, 1, LES_HEAD.length).setValues([row]); else sh.appendRow(row);
+      log_('관리자 ' + a.name, '개인레슨 배정', d + '일 ' + t + ' ' + pr + ' · ' + info.name);
+    } else if (cur) {
+      sh.deleteRow(cur._row);
+      log_('관리자 ' + a.name, '개인레슨 비움', d + '일 ' + t + ' ' + pr);
+    }
+  } finally { lock.releaseLock(); }
+  return { ok: true, rows: lessons_().map(x => ({ d: x.d, t: x.t, pr: x.pr, pid: x.pid })) };
 }

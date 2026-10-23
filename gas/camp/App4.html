@@ -1,4 +1,4 @@
-/* build: 20261024-010814 */
+/* build: 20261024-011814 */
     <p>${esc(S.acad)} · ${t.n}명${t.teams.length?` · 가족방 ${t.teams.length}개`:''} · 입금하실 금액 <b class="num" style="color:var(--ink)">${won(t.all)}</b></p>
     <p class="hint">입금한 뒤 「내 접수」에서 입금 신고를 해 주세요. 접수 확인·취소도 「내 접수」에서 해요. 확인 메일도 보내 드렸어요.</p><button class="btn primary" type="button" id="toMine">내 접수 · 입금 신고</button></div>
   <div class="panel"><b>접수된 사람</b><ul class="roster">${ps.map(p=>`<li><span></span><div class="who"><b>${esc(p.name)}</b><small>${ROUNDS[CAMP.ri][0]} · ${esc(info(p).type)}${p.kind==='student'?` · 담당 ${esc(info(p).teacher)}`:''}</small></div>${p.paid?'<span class="pill lock">입금 대기</span>':'<span class="pill due">회비확인대기</span>'}</li>`).join('')}</ul></div>

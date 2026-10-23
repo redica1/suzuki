@@ -1,4 +1,4 @@
-/* build: 20261023-225901 */
+/* build: 20261023-230232 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -58,7 +58,7 @@ function doGet(e) {
   const admin = e && e.parameter && e.parameter.page === 'admin';
   let page;
   if (admin) page = HtmlService.createHtmlOutputFromFile('Admin');
-  else { const t = HtmlService.createTemplateFromFile('Index'); let share = ''; try { ensureSettings_(); share = setting_('공유주소'); } catch (x) {} t.shareUrl = share; page = t.evaluate(); }
+  else { const t = HtmlService.createTemplateFromFile('Index'); let share = ''; let tl = ''; try { ensureSettings_(); share = setting_('공유주소'); tl = setting_('테스트 로그인'); } catch (x) {} t.shareUrl = share; t.testLogin = tl; /* 테스트 로그인: STG 「설정」에만 (이름/휴대전화) — 로그인 칸을 미리 채움 */ page = t.evaluate(); }
   return page
     .setTitle(CAMP_NAME + (admin ? ' 접수 관리' : ' 접수'))
     .addMetaTag('viewport', 'width=device-width, initial-scale=1')

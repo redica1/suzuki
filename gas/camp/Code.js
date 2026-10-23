@@ -1,4 +1,4 @@
-/* build: 20261023-233114 */
+/* build: 20261023-234001 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -160,6 +160,33 @@ function teacherDup_(all, sb, onlyIds) {
   all.forEach(x => { if (x.no === sb.no) return; x.ppl.forEach(p => { if (p.status === '정상' || p.status === '취소요청') { const k = tk(x.no, p.id); if (k) taken[k] = x; } }); });
   const d = sb.ppl.filter(p => p.status === '정상' && (!onlyIds || onlyIds.includes(p.id)) && tk(sb.no, p.id) && taken[tk(sb.no, p.id)]);
   if (d.length) { const x = taken[tk(sb.no, d[0].id)]; throw new Error(d.map(p => p.name).join(', ') + ' 선생님은 이미 ' + x.no + ' (' + x.acad + ')에 교사로 접수돼 있어요. 선생님은 한 번만 접수할 수 있어요 · 이 학원에는 학생만 추가해 주세요.'); }
+}
+/** 환불요청 시트에서 그 사람 줄의 처리 상태를 바꿈 */
+function markCx_(no, pid, from, to, memo) {
+  const sh = SpreadsheetApp.getActive().getSheetByName(SH.CX); if (!sh) return;
+  const h = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0];
+  rows_(SH.CX).filter(r => String(r['접수번호']) === no && String(r['처리']) === from && String(r['참가자ID'] || '').split(',').includes(pid)).forEach(r => {
+    sh.getRange(r._row, h.indexOf('처리') + 1).setValues([[to]]); sh.getRange(r._row, h.indexOf('처리일') + 1).setValues([[today_()]]);
+    if (memo) sh.getRange(r._row, h.indexOf('메모') + 1).setValues([[memo]]);
+  });
+}
+/** 선생님: 운영진이 접수하기 전의 취소 요청을 거둠 (그 요청에 든 사람 모두 참가로) */
+function withdrawCx(token, no, pid) {
+  const u = who_(token);
+  const lock = lock_();
+  try {
+    const all = loadSubs_(), sb = all.find(x => x.no === no);
+    if (!sb || sb.owner !== u.name) throw new Error('이 접수의 취소 요청을 거둘 수 없어요.');
+    const r = rows_(SH.CX).filter(x => String(x['접수번호']) === no && String(x['사유']) !== '차액 환불' && String(x['참가자ID'] || '').split(',').includes(pid)).pop();
+    if (!r) throw new Error('취소 요청을 찾지 못했어요. 새로 고쳐 주세요.');
+    if (String(r['처리'] || '요청') !== '요청') throw new Error('운영진이 이미 처리했어요(' + r['처리'] + '). 운영진에게 문의해 주세요.');
+    const ids = String(r['참가자ID'] || '').split(',').filter(Boolean);
+    sb.ppl.forEach(p => { if (ids.includes(p.id) && p.status === '취소요청') { p.status = '정상'; delete p.cxReqAt; p.cxWithdrawn = stamp_(); } });
+    sb.rev = (+sb.rev || 0) + 1; writeSub_(sb, false); writeTeams_(all);
+    markCx_(no, pid, '요청', '철회', '선생님이 취소 요청을 거둠');
+    log_(u.name, '취소 요청 철회', no + ' · ' + r['참가자']);
+  } finally { lock.releaseLock(); }
+  return Object.assign({ ok: true }, bundle_(who_(token).acads));
 }
 /** 다른 학원 학생도 접수 (겸임) — 소속은 그대로, 이 로그인 동안 그 학원 명단·접수를 열어 줌 */
 function addAcad(token, acad) {
@@ -454,6 +481,15 @@ function saveSubs(token, subs) {
         }
         if (p.status !== '정상' && b.status === '정상') log_(u.name, p.status === '취소' ? '취소' : '취소 요청', sb.no + ' · ' + p.name);
         // 입금 전 바로 취소: 운영진이 볼 수 있게 「환불요청」 시트에 기록 (처리 = 바로 취소)
+        if (p.status === '정상' && b.status === '취소' && !b.refund) {
+          if ((+b.paidAmt || 0) > 0) throw new Error(p.name + '은(는) 입금 기록이 있어 운영진에게 문의해 주세요.');
+          const k = p.id.slice(sb.no.length + 1);
+          const other = all.find(x => x.no !== sb.no && (x.acad === sb.acad || /^t_/.test(k)) && x.ppl.some(q => q.id.slice(x.no.length + 1) === k && (q.status === '정상' || q.status === '취소요청')));
+          if (other) throw new Error(p.name + '은(는) 이미 ' + other.no + '에 접수돼 있어서 다시 참가할 수 없어요.');
+          delete p.cxAt; delete p.cxWhy; p.rejoinAt = stamp_();
+          log_(u.name, '다시 참가', sb.no + ' · ' + p.name);
+          markCx_(sb.no, p.id, '바로 취소', '다시 참가', '선생님이 다시 참가로 되돌림');
+        }
         if (p.status === '취소' && b.status === '정상' && !p.refund) {
           if ((+p.paidAmt || 0) > 0) throw new Error(p.name + '은(는) 방금 입금이 확인됐어요. 화면을 새로 고친 뒤 「취소 요청」으로 다시 해 주세요.');
           p.cxAt = stamp_();

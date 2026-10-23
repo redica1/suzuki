@@ -1,4 +1,6 @@
-/* build: 20261023-233114 */
+/* build: 20261023-234001 */
+      ${live.length?`<span class="row"><button class="btn small" type="button" data-cxall="${sb.no}">${(()=>{const v=live.filter(p=>mineOk(sb,p));return v.length&&v.every(p=>sel.includes(p.id))?(S.mtab&&S.mtab!=='전체'?S.mtab+' 해제':'전체 해제'):(S.mtab&&S.mtab!=='전체'?S.mtab+' 모두 선택':'전체 선택')})()}</button>
+      <button class="btn small primary" type="button" data-seledit="${sb.no}" ${sel.length&&sb.form?'':'disabled'}>선택한 ${sel.length}명 정보 수정</button>
       <button class="btn small" type="button" data-cxopen="${sb.no}" ${selCx.length?'':'disabled'}>선택한 ${selCx.length}명 취소</button></span>`:''}</div>
     ${sel.length&&selCx.length<sel.length?`<p class="hint" style="margin:0">${sel.filter(id=>!selCx.includes(id)).map(id=>esc((sb.ppl.find(p=>p.id===id)||{}).name)).join(', ')}은(는) ${unpaidCancelOk()?'입금 신고 확인 중이라':'캠프가 시작돼서'} 지금 취소할 수 없어요.${unpaidCancelOk()?' 그 사람 줄의 「신고 수정 › 신고 취소」로 신고를 거두면 바로 취소할 수 있어요.':''}</p>`:''}
     ${S.cxOpen===sb.no&&selCx.length?cxPanel(sb,selCx):''}</div>`}).join('')}
@@ -175,4 +177,3 @@ document.addEventListener('click',e=>{
     if(S.step===5){S.no=`${CAMP.id}-${String(ALL_SUBS.length+1).padStart(3,'0')}`;if(S.editNo){const old=ALL_SUBS.find(x=>x.no===S.editNo);const nw=makeSub(old.no);const kept=[];
         const nb=Math.max(1,...old.ppl.map(q=>q.batch||1))+1;let added=0;
         nw.ppl.forEach(p=>{const o=old.ppl.find(q=>q.id===p.id);if(o&&o.status==='정상'&&o.pay==='신고'){const k=p.id.slice(old.no.length+1);['fee','lesson','dues','type'].forEach(x=>p[x]=o[x]);if(old.form&&old.form.info&&old.form.info[k])nw.form.info[k]=old.form.info[k]}if(o&&o.status!=='취소'){p.pay=o.pay;p.rep=o.rep;p.paidAmt=o.paidAmt||0;p.status=o.status;p.batch=o.batch||1;p.addAt=o.addAt||old.date}else{p.batch=nb;added++}});
-        old.ppl.forEach(o=>{if(!nw.ppl.some(p=>p.id===o.id)){if(o.status==='정상'&&(isPaid(o)||o.pay==='신고')){kept.push(o.name);nw.ppl.push(o)}else if(o.status!=='정상')nw.ppl.push(o)}});

@@ -1,0 +1,11 @@
+/* build: 20261023-234001 */
+document.addEventListener('toggle',e=>{if(e.target.id==='ensBox')S.ens.on=e.target.open},true);
+
+/* 카카오톡 안 브라우저: 입력이 안 되는 경우가 있어 바깥 브라우저로 넘김 (공유주소는 「설정」 탭) */
+(function(){if(!/KAKAOTALK/i.test(navigator.userAgent||''))return;const u=(typeof SHARE_URL==='string'&&SHARE_URL)||'';if(!u)return;
+  const b=document.createElement('div');b.className='kakao';b.innerHTML='카카오톡 안에서는 접수가 잘 안 될 수 있어요. <a href="kakaotalk:\/\/web/openExternal?url='+encodeURIComponent(u)+'" target="_top">브라우저로 열기</a>';document.body.prepend(b)})();
+/* 테스트 로그인(STG 설정에만 있음): 이름·휴대전화 칸을 미리 채움 */
+try{if(typeof TEST_LOGIN==='string'&&TEST_LOGIN){const [n,ph]=TEST_LOGIN.split('/');if(n)S.lgNm=n.trim();if(ph){const d=ph.replace(/\D/g,'').replace(/^010/,'').slice(0,8);S.lgEm='010-'+(d.length>4?d.slice(0,4)+'-'+d.slice(4):d)}}}catch(e){}
+/* 처음 화면: 로그인부터 */
+render();
+

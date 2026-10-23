@@ -1,4 +1,4 @@
-/* build: 20261023-215737 */
+/* build: 20261023-220220 */
     if(d.f==='p1'&&(i.p2===el.value||!el.value))i.p2='';
     if(d.f==='lessons'&&!i.lessons){i.p1='';i.p2=''}
     render();const n=document.getElementById(el.id);n&&n.focus();return}
@@ -22,7 +22,7 @@ document.addEventListener('toggle',e=>{if(e.target.id==='ensBox')S.ens.on=e.targ
 
 /* 카카오톡 안 브라우저: 입력이 안 되는 경우가 있어 바깥 브라우저로 넘김 (공유주소는 「설정」 탭) */
 (function(){if(!/KAKAOTALK/i.test(navigator.userAgent||''))return;const u=(typeof SHARE_URL==='string'&&SHARE_URL)||'';if(!u)return;
-  const b=document.createElement('div');b.className='kakao';b.innerHTML='카카오톡 안에서는 접수가 잘 안 될 수 있어요. <a href="kakaotalk://web/openExternal?url='+encodeURIComponent(u)+'" target="_top">브라우저로 열기</a>';document.body.prepend(b)})();
+  const b=document.createElement('div');b.className='kakao';b.innerHTML='카카오톡 안에서는 접수가 잘 안 될 수 있어요. <a href="kakaotalk:\/\/web/openExternal?url='+encodeURIComponent(u)+'" target="_top">브라우저로 열기</a>';document.body.prepend(b)})();
 /* 처음 화면: 로그인부터 */
 render();
 

@@ -1,4 +1,4 @@
-/* build: 20261023-215737 */
+/* build: 20261023-220220 */
     else if(e.target.id==='ovGo'){const b=document.getElementById('ovB').value,a=document.getElementById('ovA').value.replace(/[^\d-]/g,''),h=document.getElementById('ovH').value.trim();
       if(!b||a.replace(/-/g,'').length<6||!h){document.getElementById('ovErr').textContent='은행·계좌번호·예금주를 넣어 주세요.';return}
       closeAsk();api('overRefundReq',[{no,ids:L.map(p=>p.id),bank:b,acct:a,holder:h}],r=>{applyBundle(r);render();toast(`${won(sum)} 돌려받기를 요청했어요 · 운영진이 보내면 「돌려받음」으로 바뀌어요`,true)},null,'요청하고 있어요…')}});
@@ -79,7 +79,7 @@ function cxPanel(sb,sel){
       ${paid?`<dt>환불 기준 금액</dt><dd class="num">${won(base)} <span class="hint">입금 확인된 ${sel.length-nUn}명</span></dd><dt>환불 예정</dt><dd class="num"><b>${won(amt)}</b></dd>`:''}
       ${nUn?`<dt>입금 전</dt><dd>${nUn}명은 입금 전이라 바로 취소돼요</dd>`:''}</dl>
     <label class="f" for="cxWhy">취소 사유<select id="cxWhy">${['','질병·부상','개인 사정','일정 변경','기타'].map(x=>`<option value="${x}" ${x===S.cxReason?'selected':''}>${x||'선택해 주세요'}</option>`).join('')}</select></label>
-    ${r.doc&&paid?`<label class="f" for="cxDoc">진단서 <span class="hint">필수 · 이 기간에는 진단서가 있어야 취소돼요 (사진·PDF)</span><input type="file" id="cxDoc" accept="image/*,application/pdf"></label>`:''}
+    ${r.doc&&paid?`<label class="f" for="cxDoc">진단서 <span class="hint">필수 · 이 기간에는 진단서가 있어야 취소돼요 (사진·PDF)</span><input type="file" id="cxDoc" accept="image/\x2a,application/pdf"></label>`:''}
     ${paid&&amt>0?`<div class="grid2"><label class="f" for="cxBank">환불 받을 은행<select id="cxBank"><option value="">선택</option>${['국민','신한','하나','우리','농협','기업','카카오뱅크','토스뱅크','새마을금고','우체국'].map(b=>`<option>${b}</option>`).join('')}</select></label>
       <label class="f" for="cxAcct">계좌번호<input type="text" id="cxAcct" inputmode="numeric"></label><label class="f" for="cxHolder">예금주<input type="text" id="cxHolder" value="${esc(S.user.name)}"></label></div>`:''}
     <p class="err" id="cxErr"></p>

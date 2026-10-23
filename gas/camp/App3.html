@@ -1,4 +1,4 @@
-/* build: 20261023-230724 */
+/* build: 20261023-231102 */
   ${S.fam.some(f=>!f.name.trim())?`<div class="note">가족 이름을 넣어 주세요: ${S.fam.filter(f=>!f.name.trim()).map(f=>{const o=people().find(p=>p.key===f.link);return `${esc(o?o.name:'')}의 ${FAM_SHORT[f.type]}`}).join(', ')}</div>`:''}
   ${teams().some(x=>x.over)?`<div class="note">가족방은 한 방에 ${ROOM.cap}명까지예요: ${teams().filter(x=>x.over).map(x=>`${esc(x.rep.name)} 가족 ${x.n}명`).join(', ')}</div>`:''}
   ${S.editOnly?`<div class="note info spread"><span><b>${S.editOnly.length}명만 고치는 중</b> · ${ps.filter(p=>S.editOnly.includes(p.key)).map(p=>esc(p.name)).join(', ')}</span><button class="btn small ghost" type="button" id="showAllCards">모두 보기</button></div>`:''}
@@ -118,15 +118,20 @@ function detailRows(p){
 }
 /* 고치는 중: 기존 신청 금액 ↔ 수정 후 금액, 사람별 차이, 이미 입금된 돈 기준으로 더 낼 돈 / 돌려받을 돈 */
 function editDiff(){if(!S.editNo)return null;const old=ALL_SUBS.find(x=>x.no===S.editNo);if(!old)return null;let nw;try{nw=makeSub(old.no)}catch(e){return null}
-  const live=old.ppl.filter(p=>p.status==='정상'),rows=[];
+  /* 비교 대상: 취소된 사람만 빼고 모두 (취소 요청 중인 사람도 「추가」로 보지 않음). 합계는 참가(정상)인 사람만 */
+  const A=old.ppl.filter(p=>p.status!=='취소'),live=A.filter(p=>p.status==='정상'),rows=[];
   const baseOf=o=>S.editBaseAmt&&S.editBaseAmt[o.id]!==undefined?S.editBaseAmt[o.id]:pAmt(o);
-  nw.ppl.forEach(p=>{const o=live.find(q=>q.id===p.id);const a=o?baseOf(o):0,b=pAmt(p);if(!o||a!==b)rows.push({name:p.name,a:o?a:null,b,paid:o?(o.paidAmt||0):0})});
-  live.forEach(o=>{if(!nw.ppl.some(p=>p.id===o.id)){const kept=isPaid(o)||o.pay==='신고';rows.push({name:o.name,a:baseOf(o),b:kept?baseOf(o):null,kept,paid:o.paidAmt||0})}});
+  const kept=o=>isPaid(o)||o.pay==='신고'||o.status!=='정상';
+  nw.ppl.forEach(p=>{const o=A.find(q=>q.id===p.id);const b=pAmt(p);
+    if(!o)rows.push({name:p.name,a:null,b,paid:0});
+    else if(o.status==='정상'&&baseOf(o)!==b)rows.push({name:p.name,a:baseOf(o),b,paid:o.paidAmt||0})});
+  live.forEach(o=>{if(!nw.ppl.some(p=>p.id===o.id)&&!kept(o))rows.push({name:o.name,a:baseOf(o),b:null,paid:o.paidAmt||0})});
+  const inNew=id=>nw.ppl.some(p=>p.id===id);
   const before=live.reduce((t,p)=>t+baseOf(p),0);
-  const after=nw.ppl.reduce((t,p)=>t+pAmt(p),0)+live.filter(o=>!nw.ppl.some(p=>p.id===o.id)&&(isPaid(o)||o.pay==='신고')).reduce((t,p)=>t+pAmt(p),0);
+  const after=nw.ppl.filter(p=>{const o=A.find(q=>q.id===p.id);return !o||o.status==='정상'}).reduce((t,p)=>t+pAmt(p),0)+live.filter(o=>!inNew(o.id)&&kept(o)).reduce((t,p)=>t+baseOf(p),0);
   const paid=live.reduce((t,p)=>t+(p.paidAmt||0),0);let owe=0,back=0;
-  nw.ppl.forEach(p=>{const o=live.find(q=>q.id===p.id),pd=o?(o.paidAmt||0):0,b=pAmt(p);owe+=Math.max(0,b-pd);back+=Math.max(0,pd-b)});
-  live.filter(o=>!nw.ppl.some(p=>p.id===o.id)&&(isPaid(o)||o.pay==='신고')).forEach(o=>{const pd=o.paidAmt||0,b=pAmt(o);owe+=Math.max(0,b-pd);back+=Math.max(0,pd-b)});
+  nw.ppl.forEach(p=>{const o=A.find(q=>q.id===p.id);if(o&&o.status!=='정상')return;const pd=o?(o.paidAmt||0):0,b=pAmt(p);owe+=Math.max(0,b-pd);back+=Math.max(0,pd-b)});
+  live.filter(o=>!inNew(o.id)&&kept(o)).forEach(o=>{const pd=o.paidAmt||0,b=baseOf(o);owe+=Math.max(0,b-pd);back+=Math.max(0,pd-b)});
   return {rows,before,after,diff:after-before,paid,owe,back}}
 const sgn=n=>n>0?'+'+won(n):n<0?'−'+won(-n):'0원';
 function quickBar(){const allLocked=(S.quickKeys||[]).every(k=>lockedP(k));

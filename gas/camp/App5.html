@@ -1,4 +1,4 @@
-/* build: 20261023-230724 */
+/* build: 20261023-231102 */
   ${(()=>{const has=MY_SUBS.some(sb=>sb.form&&sb.form.ens&&sb.form.ens.on&&sb.ppl.some(p=>p.status==='정상'));const last=[...MY_SUBS].reverse().find(sb=>sb.form&&sb.ppl.some(p=>p.status==='정상'));
     if(has||!last)return '';const t=teamOf(last.acad);const mb=last.form.ens&&last.form.ens.member;
     if(t&&t.rep===last.acad)return `<div class="panel enscard"><span class="pill new">앙상블</span> <b>${esc(last.acad)}</b>은(는) 「<b>${esc(t.name)}</b>」 팀 대표로 신청돼 있어요 · ${esc(t.by||'')} 선생님 신청 (${esc(t.no)})<br><span class="hint">팀 정보는 ${esc(t.by||'신청한')} 선생님이 고쳐요.</span></div>`;

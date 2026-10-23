@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261023-223939 -->
+<!-- build: 20261023-224230 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -70,6 +70,8 @@ tr.off td{opacity:.5}
 .askbox{background:var(--surface);border:1px solid var(--line);border-radius:12px;max-width:400px;width:100%;padding:18px;display:grid;gap:10px}
 .bulk{position:sticky;top:0;z-index:5;background:var(--accent-soft);border:1px solid var(--accent);border-radius:var(--r);padding:8px 12px;margin-bottom:10px}
 @media (max-width:640px){input.num{width:90px}input[type=date]{width:128px}}
+.panel.acad>summary{cursor:pointer;list-style:none}.panel.acad>summary::-webkit-details-marker{display:none}.panel.acad>summary::before,.rnd>summary::before{content:'▸';margin-right:6px;color:var(--faint)}.panel.acad[open]>summary::before,.rnd[open]>summary::before{content:'▾'}
+.rnd{border-top:1px solid var(--line);padding:8px 0 4px;margin-top:8px}.rnd>summary{cursor:pointer;list-style:none;padding:4px 2px}.rnd>summary::-webkit-details-marker{display:none}.rnd .panel.sub{margin:8px 0 0 10px}
 </style></head>
 <body>
 <div class="band"><div class="wrap">
@@ -81,7 +83,7 @@ tr.off td{opacity:.5}
 <div class="toast" id="toast" hidden></div>
 <div class="busy" id="busy" hidden></div>
 <script>
-const S={tok:'',tab:'home',q:'',open:{},sel:{},D:null,f:'all',rpSel:{}};
+const S={tok:'',tab:'home',q:'',open:{},sel:{},D:null,f:'all',rpSel:{},openA:{},openR:{}};
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const won=n=>(+n||0).toLocaleString('ko-KR')+'원';
 const kday=d=>{if(!d)return '';const [y,m,dd]=String(d).slice(0,10).split('-');return `${+m}월 ${+dd}일`};
@@ -138,7 +140,21 @@ function vSubs(){
   return `<div class="panel"><div class="spread"><div class="row"><input type="search" id="q" placeholder="접수번호 · 학원 · 교사 · 이름" value="${esc(S.q)}" style="width:240px">${F.map(([k,l])=>`<button class="btn small ${S.f===k?'primary':''}" type="button" data-f="${k}">${l}</button>`).join('')}</div><button class="btn small" type="button" id="reload">새로 불러오기</button></div>
     <p class="hint" style="margin:6px 0 0">사람마다 <b>입금일(필수)</b>과 금액을 넣고 「확인」. 확인을 취소하려면 「취소」. 여러 명은 체크 → 위 막대에서 같은 입금일로 한꺼번에 확인.</p></div>
   ${selN?`<div class="bulk spread"><b>${selN}명 선택</b><div class="row"><span class="hint">입금일</span><input type="date" id="bulkD" value="${S.bulkD||''}"><span class="hint">금액은 사람마다 넣은 값(없으면 남은 금액)</span><button class="btn small primary" type="button" id="bulkOk">선택한 ${selN}명 입금 확인</button><button class="btn small ghost" type="button" id="bulkClr">선택 해제</button></div></div>`:''}
-  ${subs.map(sb=>{const live=sb.ppl.filter(p=>p.status==='정상'),bill=live.reduce((t,p)=>t+pAmt(p),0),paid=sb.ppl.reduce((t,p)=>t+(+p.paidAmt||0),0);const L=sb.ppl.filter(keep);if(!L.length&&S.f!=='all')return '';
+  ${acadGroups(subs,keep,q)}`}
+/* 학원 → 차수 → 접수. 학원·차수는 눌러야 펼쳐짐 (찾기·걸러 보기 중이면 맞는 곳은 펼침) */
+function acadGroups(subs,keep,q){const hit=sb=>S.f==='all'||sb.ppl.some(keep);const auto=!!q||S.f!=='all';
+  const A={};subs.filter(hit).forEach(sb=>(A[sb.acad]=A[sb.acad]||[]).push(sb));
+  const sum=L=>{const live=L.flatMap(sb=>sb.ppl.filter(p=>p.status==='정상'));const bill=live.reduce((t,p)=>t+pAmt(p),0),paid=L.reduce((t,sb)=>t+sb.ppl.reduce((u,p)=>u+(+p.paidAmt||0),0),0),rp=live.filter(p=>p.pay==='신고').length;
+    return `<span class="hint">${L.length}건 · ${live.length}명</span><span class="num">청구 ${won(bill)}</span><span class="num">입금 ${won(paid)}</span>${rp?`<span class="pill new">신고 ${rp}</span>`:''}${bill-paid>0?`<span class="pill due">남음 ${won(bill-paid)}</span>`:'<span class="pill ok">완납</span>'}`};
+  const keys=Object.keys(A).sort((a,b)=>a.localeCompare(b,'ko'));
+  if(!keys.length)return '<div class="panel hint">해당하는 접수가 없어요.</div>';
+  return keys.map(ac=>{const L=A[ac];const oa=S.openA[ac]!==undefined?S.openA[ac]:auto;
+    const R={};L.forEach(sb=>(R[sb.round||'-']=R[sb.round||'-']||[]).push(sb));
+    return `<details class="panel acad" data-acad="${esc(ac)}" ${oa?'open':''}><summary class="spread"><div><b style="font-size:16px">${esc(ac)}</b> <span class="hint">교사 ${[...new Set(L.map(sb=>sb.owner))].map(esc).join(', ')}</span></div><div class="row">${sum(L)}</div></summary>
+      ${oa?Object.keys(R).sort().map(rd=>{const k=ac+'|'+rd,or=S.openR[k]!==undefined?S.openR[k]:auto;
+        return `<details class="rnd" data-rnd="${esc(k)}" ${or?'open':''}><summary class="spread"><b>${esc(rd)}</b><div class="row">${sum(R[rd])}</div></summary>${or?R[rd].map(sb=>subBlock(sb,keep,q,subs)).join(''):''}</details>`}).join(''):''}
+    </details>`}).join('')}
+function subBlock(sb,keep,q,subs){const live=sb.ppl.filter(p=>p.status==='정상'),bill=live.reduce((t,p)=>t+pAmt(p),0),paid=sb.ppl.reduce((t,p)=>t+(+p.paidAmt||0),0);const L=sb.ppl.filter(keep);if(!L.length&&S.f!=='all')return '';
     const open=S.open[sb.no]!==undefined?S.open[sb.no]:(!!q||S.f!=='all'||subs.length<=3);
     const e=sb.form&&sb.form.ens||{};
     return `<details class="panel sub" data-sub="${sb.no}" ${open?'open':''}><summary class="spread"><div><b class="num">${sb.no}</b> <b>${esc(sb.acad)}</b> <span class="hint">${esc(sb.owner)} · ${esc(sb.round)} · ${esc(String(sb.createdAt||'').slice(0,16))}${e.on?` · 앙상블 대표 「${esc(e.group)}」`:e.member?' · 앙상블 함께':''}</span></div>
@@ -154,7 +170,7 @@ function vSubs(){
         <td class="r"><input class="num" type="text" inputmode="numeric" id="a_${p.id}" value="${(+defA||0).toLocaleString('ko-KR')}" aria-label="${esc(p.name)} 입금액"></td>
         <td><input type="text" id="m_${p.id}" value="${esc(a.memo||'')}" style="width:110px" aria-label="${esc(p.name)} 메모"></td>
         <td><div class="row" style="flex-wrap:nowrap">${on?`<button class="btn small" type="button" data-ok="${p.id}">고치기</button><button class="btn small ghost" type="button" data-unok="${p.id}">취소</button>`:live?`<button class="btn small primary" type="button" data-ok="${p.id}">확인</button>`:''}</div></td></tr>`}).join('')}
-      </tbody></table></div></details>`}).join('')||'<div class="panel hint">해당하는 접수가 없어요.</div>'}`}
+      </tbody></table></div></details>`}
 function vRp(){const L=people().filter(x=>x.p.status==='정상'&&x.p.pay==='신고');
   return `<div class="panel"><div class="spread"><div><b>입금 신고 ${L.length}명</b> <span class="hint">통장과 입금자명·날짜·금액을 맞춰 보고 <b>통장 입금일을 골라</b> 「확인」. 맞지 않으면 「반려」(사유가 선생님 화면에 보여요).</span></div><button class="btn small" type="button" id="reload">새로 불러오기</button></div></div>
   ${L.length?`<div class="panel row" id="rpBar" style="gap:8px;flex-wrap:wrap;align-items:center">
@@ -267,7 +283,9 @@ document.addEventListener('change',e=>{const el=e.target;
   if(el.dataset&&el.dataset.rpsel){S.rpSel[el.dataset.rpsel]=el.checked;rpCount();return}
   if(el.dataset.sel){S.sel[el.dataset.sel]=el.checked;S.bulkD=val('bulkD')||S.bulkD;render();return}
   if(el.id==='bulkD'){S.bulkD=el.value}});
-document.addEventListener('toggle',e=>{const s=e.target.dataset&&e.target.dataset.sub;if(s)S.open[s]=e.target.open},true);
+document.addEventListener('toggle',e=>{const d=e.target.dataset||{};if(d.sub)S.open[d.sub]=e.target.open;
+  if(d.acad!==undefined&&S.openA[d.acad]!==e.target.open){S.openA[d.acad]=e.target.open;render()}
+  if(d.rnd!==undefined&&S.openR[d.rnd]!==e.target.open){S.openR[d.rnd]=e.target.open;render()}},true);
 document.addEventListener('input',e=>{if(e.target.id==='q'){S.q=e.target.value;const p=e.target.selectionStart;render();const n=document.getElementById('q');n.focus();n.setSelectionRange(p,p)}});
 document.addEventListener('keydown',e=>{if(e.key==='Enter'&&(e.target.id==='lpw'||e.target.id==='lid'))document.getElementById('doLogin').click()});
 (function(){let t='';try{t=sessionStorage.getItem('campAdmTok')||''}catch(x){}

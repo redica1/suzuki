@@ -1,4 +1,4 @@
-/* build: 20261024-005844 */
+/* build: 20261024-010814 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -73,7 +73,7 @@ const SETTINGS = [['관리자 아이디', 'admin', '관리자 화면(?page=admin
   ['접수 가능 학원', '마포스즈키', '「전체」 또는 학원 이름을 쉼표로 (예: 마포스즈키, 미사스즈키)']];
 
 const SH = {
-  T: '명단_교사', S: '명단_학생', SUB: '접수', P: '참가자', RP: '입금신고', CX: '환불요청', ENS: '앙상블팀', LOG: '기록', PROF: '교수진'
+  T: '명단_교사', S: '명단_학생', SUB: '접수', P: '참가자', RP: '입금신고', CX: '환불요청', ENS: '앙상블팀', LOG: '기록', PROF: '교수진', ACT: '교사일정', ACTCFG: '일정설정', ACTLOG: '일정기록'
 };
 const SUB_HEAD = ['접수번호', '접수일시', '수정일시', '학원', '접수 교사', '차수', '인원(정상)', '청구액', '입금확인액', '남은 금액', '앙상블', 'JSON_1', 'JSON_2', 'JSON_3', 'JSON_4'];
 const P_HEAD = ['참가자ID', '접수번호', '차수', '학원', '접수 교사', '들어온 차례', '추가 일시', '이름', '구분', '참가 구분', '악기', '담당 교사', '출생연도', '성별',
@@ -905,3 +905,80 @@ function log_(who, what, detail) {
 
 /* ---------------- 시험용 마포스즈키 명단 (setup에서 시트로 옮긴 뒤에는 시트가 원본) ---------------- */
 const MAPO = { acad: "마포스즈키", teachers: [], students: [], paid: {} }; /* 명단은 접수 DB 시트(명단_교사·명단_학생)에 있음. 코드에는 개인정보를 넣지 않음 */
+
+/* ================= 교사 일정 =================
+ * 「교사일정」: 한 줄 = 일정 하나 (ID · 날짜(0부터) · 시작 · 끝 · 장소 · 이름 · 종류 · 설명 · 사람(JSON) · 사람(이름, 보기용))
+ * 「일정설정」: 항목 · 값(JSON) — days · rooms · meals · rows · people · unav · req · target · rev
+ * 「일정기록」: 일시 · 관리자 · 내용 */
+const ACT_HEAD = ['ID', '날짜', '시작', '끝', '장소', '이름', '종류', '설명', '사람', '사람(이름)'];
+const ACT_KEYS = ['days', 'rooms', 'meals', 'rows', 'people', 'unav', 'req', 'target', 'rev'];
+function actSheets_() {
+  const ss = SpreadsheetApp.getActive();
+  const mk = (n, h) => { let sh = ss.getSheetByName(n); if (!sh) { sh = ss.insertSheet(n); sh.appendRow(h); } return sh; };
+  return { ev: mk(SH.ACT, ACT_HEAD), cfg: mk(SH.ACTCFG, ['항목', '값']), log: mk(SH.ACTLOG, ['일시', '관리자', '내용']) };
+}
+function actCfg_() {
+  actSheets_(); const o = {};
+  rows_(SH.ACTCFG).forEach(r => { const k = String(r['항목'] || ''); if (!k) return; try { o[k] = JSON.parse(String(r['값'] || 'null')); } catch (x) { o[k] = null; } });
+  return o;
+}
+const hm_ = v => v instanceof Date ? Utilities.formatDate(v, TZ, 'HH:mm') : (/^\d{1,2}:\d{2}/.test(String(v)) ? String(v).replace(/^(\d):/, '0$1:').slice(0, 5) : String(v || ''));
+function actEvents_() {
+  actSheets_();
+  return rows_(SH.ACT).filter(r => String(r['ID'] || '')).map(r => {
+    let ppl = []; try { ppl = JSON.parse(String(r['사람'] || '[]')); } catch (x) {}
+    return { id: String(r['ID']), d: +r['날짜'] || 0, s: hm_(r['시작']), e: hm_(r['끝']), room: String(r['장소'] || ''), title: String(r['이름'] || ''), type: String(r['종류'] || '레슨'),
+      desc: String(r['설명'] || '').split('\n').map(x => x.trim()).filter(Boolean), ppl: Array.isArray(ppl) ? ppl : [] };
+  });
+}
+/** 일정의 사람 = 저장된 목록 + 회원 명단 교사 + 교수진 (이름이 같으면 회원 명단과 연결) */
+function actPeople_(saved) {
+  const L = (saved || []).map(p => Object.assign({}, p));
+  const nm = s => String(s || '').replace(/\s+/g, '').toLowerCase();
+  const byName = n => L.filter(p => nm(p.n) === nm(n));
+  teachers_().forEach(t => {
+    const c = byName(t.name).filter(p => !p.tid && p.kind !== '교수');
+    if (L.some(p => p.tid === t.id)) return;
+    if (c.length === 1) { c[0].tid = t.id; return; }
+    if (c.length > 1) { const k = c.find(p => (p.acad || '').split(' · ').some(a => t.acads.includes(a))); if (k) { k.tid = t.id; return; } }
+    L.push({ id: 'R' + t.id, n: t.name, acad: t.acads.join(' · '), inst: t.inst || '', kind: /연수/.test(t.role || '') ? '연수생' : '교사', tid: t.id });
+  });
+  try { profs_().filter(p => p.on).forEach(p => { if (!byName(p.name).length) L.push({ id: 'P:' + p.name, n: p.name, acad: p.org || '교수진', inst: p.inst, kind: '교수' }); }); } catch (x) {}
+  return L;
+}
+function schedData(token) {
+  adm_(token);
+  const c = actCfg_();
+  const log = rows_(SH.ACTLOG).slice(-300).reverse().map(r => ({ at: String(r['일시'] instanceof Date ? Utilities.formatDate(r['일시'], TZ, 'M/d HH:mm') : r['일시']).replace(/^\d{4}-0?(\d+)-0?(\d+)/, '$1/$2'), t: (r['관리자'] ? r['관리자'] + ' · ' : '') + String(r['내용'] || '') }));
+  return { days: c.days || [], rooms: c.rooms || {}, meals: c.meals || [], rows: c.rows || {}, people: actPeople_(c.people), unav: c.unav || {}, req: c.req || {}, target: c.target || { min: 2, max: 6 }, rev: +c.rev || 0, events: actEvents_(), log };
+}
+function schedSave(token, b) {
+  const a = adm_(token);
+  if (!b || !Array.isArray(b.events) || !Array.isArray(b.days)) throw new Error('보낸 내용이 비어 있어요. 새로 불러와 주세요.');
+  if (b.events.length > 3000) throw new Error('일정이 너무 많아요.');
+  const lock = lock_();
+  try {
+    const sh = actSheets_(); const c = actCfg_();
+    if ((+c.rev || 0) !== (+b.rev || 0)) { lock.releaseLock(); return Object.assign({ conflict: true, msg: '다른 관리자 화면에서 먼저 고쳤어요. 최신 내용으로 다시 불러왔어요. 방금 고친 것은 한 번 더 해 주세요.' }, schedData(token)); }
+    const t = (s, n) => String(s == null ? '' : s).slice(0, n || 200);
+    const okT = s => /^\d{2}:\d{2}$/.test(String(s));
+    const P = {}; (b.people || []).forEach(p => P[p.id] = p);
+    const rows = b.events.map(e => {
+      if (!okT(e.s) || !okT(e.e)) throw new Error('시간 형식이 잘못된 일정이 있어요: ' + t(e.title, 30));
+      const ppl = (e.ppl || []).map(p => ({ n: t(p.n, 40), r: t(p.r, 10) })).filter(p => p.n);
+      return [t(e.id, 40), +e.d || 0, "'" + e.s, "'" + e.e, t(e.room, 60), t(e.title, 120), t(e.type, 20), (e.desc || []).map(x => t(x, 200)).join('\n'), JSON.stringify(ppl), ppl.map(p => ((P[p.n] || {}).n || p.n) + '(' + p.r + ')').join(', ')];
+    });
+    const last = sh.ev.getLastRow();
+    if (last > 1) sh.ev.getRange(2, 1, last - 1, ACT_HEAD.length).clearContent();
+    if (rows.length) sh.ev.getRange(2, 1, rows.length, ACT_HEAD.length).setValues(rows);
+    const val = { days: b.days.map(x => t(x, 30)), rooms: b.rooms || {}, meals: b.meals || [], rows: b.rows || {}, people: (b.people || []).map(p => ({ id: t(p.id, 40), n: t(p.n, 60), acad: t(p.acad, 120), inst: t(p.inst, 20), kind: t(p.kind, 10), tid: p.tid ? t(p.tid, 20) : undefined })), unav: b.unav || {}, req: b.req || {}, target: b.target || { min: 2, max: 6 }, rev: (+c.rev || 0) + 1 };
+    const cur = rows_(SH.ACTCFG);
+    ACT_KEYS.forEach(k => {
+      const s = JSON.stringify(val[k]); if (s.length > 45000) throw new Error(k + ' 내용이 너무 길어요.');
+      const r = cur.find(x => String(x['항목']) === k);
+      if (r) sh.cfg.getRange(r._row, 2).setValues([[s]]); else sh.cfg.appendRow([k, s]);
+    });
+    (b.log || []).slice(0, 50).forEach(x => sh.log.appendRow([stamp_(), a.name, t(x, 300)]));
+    return { ok: true, rev: val.rev };
+  } finally { try { lock.releaseLock(); } catch (x) {} }
+}

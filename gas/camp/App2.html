@@ -133,14 +133,14 @@ function pCard(p){
     ${i.ext?`<label class="f" for="ls_${p.key}">추가 개인레슨<select id="ls_${p.key}" data-f="lessons" data-k="${p.key}">${Array.from({length:CAMP.lessonMax+1},(_,n)=>`<option value="${n}" ${n==i.lessons?'selected':''}>${n?`${n}회 · ${won(n*CAMP.lessonFee)}`:'신청 안 함'}</option>`).join('')}</select></label>
     ${PROF[p.inst]?`<div class="pair">
       <label class="f" for="p1_${p.key}">선호 교수 1 <span class="hint">${i.lessons?'선택':'추가레슨 신청 시'}</span><select id="p1_${p.key}" data-f="p1" data-k="${p.key}" ${i.lessons?'':'disabled'}>${opts(PROF[p.inst],i.p1,'없음')}</select></label>
-      <label class="f" for="p2_${p.key}">선호 교수 2 <span class="hint">${i.lessons?'선택':'추가레슨 신청 시'}</span><select id="p2_${p.key}" data-f="p2" data-k="${p.key}" ${i.lessons?'':'disabled'}>${opts(PROF[p.inst].filter(x=>x!==i.p1),i.p2,'없음')}</select></label></div>`:''}
+      <label class="f" for="p2_${p.key}">선호 교수 2 <span class="hint">${!i.lessons?'추가레슨 신청 시':i.p1?'선택':'선호 교수 1을 먼저 골라요'}</span><select id="p2_${p.key}" data-f="p2" data-k="${p.key}" ${i.lessons&&i.p1?'':'disabled'}>${opts(PROF[p.inst].filter(x=>x!==i.p1),i.p2,'없음')}</select></label></div>`:''}
     ${mcOf(p.inst).length?`<div class="grp f" style="display:grid;gap:6px"><span style="color:var(--muted);font-weight:500;font-size:13.5px">${p.inst} 마스터클래스 <span class="hint">교수마다 단가가 달라요 · 기본 레슨과 함께 신청 불가 · 복수 신청 가능</span></span>
       <div class="checks">${mcOf(p.inst).map(m=>`<label><input type="checkbox" data-mc="${esc(m.n)}" data-k="${p.key}" ${i.mc.includes(m.n)?'checked':''}>${esc(m.n)} <span class="hint">${m.min}분 · ${won(m.fee)}</span></label>`).join('')}</div></div>`:''}`:''}</div>
     `:`
     <label class="f" for="ls_${p.key}">추가 개인레슨<select id="ls_${p.key}" data-f="lessons" data-k="${p.key}">${Array.from({length:CAMP.lessonMax+1},(_,n)=>`<option value="${n}" ${n==i.lessons?'selected':''}>${n?`${n}회 · ${won(n*CAMP.lessonFee)}`:'신청 안 함'}</option>`).join('')}</select></label>
     ${PROF[p.inst]?`<div class="pair">
       <label class="f" for="p1_${p.key}">선호 교수 1 <span class="hint">${i.lessons?'선택':'추가레슨 신청 시'}</span><select id="p1_${p.key}" data-f="p1" data-k="${p.key}" ${i.lessons?'':'disabled'}>${opts(PROF[p.inst],i.p1,'없음')}</select></label>
-      <label class="f" for="p2_${p.key}">선호 교수 2 <span class="hint">${i.lessons?'선택':'추가레슨 신청 시'}</span><select id="p2_${p.key}" data-f="p2" data-k="${p.key}" ${i.lessons?'':'disabled'}>${opts(PROF[p.inst].filter(x=>x!==i.p1),i.p2,'없음')}</select></label></div>`:''}
+      <label class="f" for="p2_${p.key}">선호 교수 2 <span class="hint">${!i.lessons?'추가레슨 신청 시':i.p1?'선택':'선호 교수 1을 먼저 골라요'}</span><select id="p2_${p.key}" data-f="p2" data-k="${p.key}" ${i.lessons&&i.p1?'':'disabled'}>${opts(PROF[p.inst].filter(x=>x!==i.p1),i.p2,'없음')}</select></label></div>`:''}
     <div class="grp"><span class="grp-h">음악회</span>
     <label class="f" for="cc_${p.key}">참가할 음악회<select id="cc_${p.key}" data-f="concert" data-k="${p.key}">${['없음','오후','트와일라잇','이브닝'].map(x=>`<option value="${x}" ${x===i.concert?'selected':''}>${x==='없음'?'참가 안 함':x}</option>`).join('')}</select></label>
     ${i.concert!=='없음'?`<div class="sub">
@@ -181,4 +181,4 @@ function ensApply(no){let L=ensTeams().filter(t=>t.no!==no&&t.rep!==S.acad);
   ensSave(L)}
 function ensSave(L){ENS=L} /* 화면 미리보기용 · 진짜 팀 목록은 서버가 접수 내용에서 다시 만듦 */
 const teamOf=a=>ensTeams().find(t=>t.rep===a||(t.acads||[]).includes(a));
-/* 「대표가 이미 있어요」: 이미 신청된 팀에서 고르거나, 아직 신청 전이면 대표 학원 이름을 적음 */
+/* 우리 학원이 이미 팀에 들어가 있으면(다른 선생님·다른 접수로) 대표·함께 선택을 막음. 지금 고치는 접수가 그 팀을 낸 접수면 막지 않음 */

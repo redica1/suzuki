@@ -1,3 +1,35 @@
+      return}
+    go(S.step+1);return}
+  if(b.id==='backBtn'){go(S.step-1);return}
+  if(b.id==='toMine'||b.id==='toMine2'){if(S.editNo){S.editNo=null;S.editOnly=null;if(S.riBack!==undefined){CAMP.ri=S.riBack;S.riBack=undefined}resetForm();S.acad='';S.verified=false;S.step=1}S.view='mine';S.cxDone=null;render();window.scrollTo({top:0});return}
+  if(b.id==='toForm'){S.view='form';if(S.editNo&&S.riBack!==undefined){CAMP.ri=S.riBack;S.riBack=undefined}S.editNo=null;S.editOnly=null;if(S.step===6||S.step>1){resetForm();S.acad='';S.verified=false;S.step=1}render();window.scrollTo({top:0});return}
+  if(d.subedit){startEdit(d.subedit,null);return}
+  if(b.id==='rpGo'){const open=unpaidPpl();const sel=(S.rp||[]).filter(id=>open.some(x=>x.p.id===id));const er=m=>{document.getElementById('rpErr').textContent=m};
+    if(!sel.length)return er('입금한 사람을 체크해 주세요.');const ps=open.filter(x=>sel.includes(x.p.id)).map(x=>x.p);const memo=document.getElementById('rpMemo').value.trim();
+    for(const p of ps){const v=rpv(p);if(!v.n.trim())return er(`${p.name} 줄에 입금자명을 넣어 주세요.`);if(!v.d)return er(`${p.name} 줄에 입금일을 선택해 주세요.`);if(!(+v.a>0))return er(`${p.name} 줄에 입금 금액을 넣어 주세요.`)}
+    for(const p of ps){const v=rpv(p);if(v.d>S.today)return er(`${p.name} 줄 입금일이 오늘보다 뒤예요.`);if(v.n.trim().length>20)return er(`${p.name} 줄 입금자명은 20자까지예요.`)}
+    const overP=ps.filter(p=>+rpv(p).a>dueOf(p));let rfAll=null;if(overP.length){const gv=id=>(document.getElementById(id)||{}).value||'';rfAll={bank:gv('rpRfB'),acct:gv('rpRfA').replace(/[^\d-]/g,''),holder:gv('rpRfH').trim()};if(!rfAll.bank||rfAll.acct.replace(/-/g,'').length<6||!rfAll.holder)return er(`${overP.map(p=>p.name).join(', ')}은(는) 청구액보다 많아요. 아래 「환불 받을 계좌」를 적어 주세요.`)}
+    const diff=ps.filter(p=>+rpv(p).a!==dueOf(p));if(diff.length&&!memo)return er(`${diff.map(p=>p.name).join(', ')}의 금액이 청구액과 달라요. 메모에 이유를 적어 주세요.`);
+    const rows={};ps.forEach(p=>{const v=rpv(p);rows[p.id]={name:v.n.trim(),date:v.d,a:+v.a}});
+    const rep={id:'R'+Date.now().toString(36),name:rows[ps[0].id].name,date:rows[ps[0].id].date,amt:ps.reduce((t,p)=>t+rows[p.id].a,0),memo,ids:sel,rows};if(rfAll)rep.refund=rfAll;
+    ps.forEach(p=>{p.pay='신고';p.rep=rep;delete S.rpRow[p.id]});subSave();S.rp=null;S.rpMemo=undefined;render();window.scrollTo({top:0});toast(`${ps.length}명 입금 신고를 보냈어요 · 운영진이 확인하면 「입금 확인」으로 바뀌어요`);return}
+  if(b.id==='rpFill'){const n=document.getElementById('rpAllN').value.trim(),dd=document.getElementById('rpAllD').value;S.rpAllN=n;S.rpAllD=dd;const sel=S.rp||[];
+    if(!n&&!dd){toast('넣을 입금자명이나 입금일을 적어 주세요');return}unpaidPpl().filter(x=>sel.includes(x.p.id)).forEach(({p})=>{const v=rpv(p);if(n)v.n=n;if(dd)v.d=dd});render();toast(`선택한 ${sel.length}명에게 넣었어요`);return}
+  if(d.rpok){MY_SUBS.forEach(sb=>sb.ppl.forEach(p=>{if(p.rep&&p.rep.id===d.rpok&&p.pay==='신고'){const row=p.rep.rows&&p.rep.rows[p.id];p.pay='확인';p.paidAmt=(p.paidAmt||0)+(row?row.a:dueOf(p));p.rep.ok=row?row.date:p.rep.date}}));subSave();render();toast('시제품: 운영진이 입금을 확인한 것으로 바꿨어요');return}
+  if(d.rpall!==undefined){S.rp=d.rpall==='1'?unpaidPpl().map(x=>x.p.id):[];{const n=document.getElementById('rpMemo');if(n)S.rpMemo=n.value}render();return}
+  if(d.cxall){const sb=MY_SUBS.find(x=>x.no===d.cxall);const live=sb.ppl.filter(p=>p.status==='정상').map(p=>p.id);S.cx[sb.no]=(S.cx[sb.no]||[]).length===live.length?[]:live;S.cxOpen='';S.cxDone=null;render();return}
+  if(d.cxopen){S.cxOpen=d.cxopen;S.cxDone=null;render();const x=document.querySelector('.cxbox');if(x&&x.scrollIntoView)x.scrollIntoView({block:'center'});return}
+  if(b.id==='showAllCards'){S.editOnly=null;render();return}
+  if(d.ensnew){startEdit(d.ensnew,'ens');S.ens={...(S.ens||{}),on:true};render();return}
+  if(d.ensedit){startEdit(d.ensedit,'ens');return}
+  if(d.pedit){const [no,id]=d.pedit.split('|');startEdit(no,[id.slice(no.length+1)]);return}
+  if(d.seledit){const no=d.seledit;const ids=(S.cx[no]||[]);if(!ids.length)return;startEdit(no,ids.map(id=>id.slice(no.length+1)));return}
+  if(d.cxclear){delete S.cx[d.cxclear];render();return}
+  if(d.cxgo){const sb=MY_SUBS.find(x=>x.no===d.cxgo);const sel=(S.cx[sb.no]||[]).filter(id=>{const p=sb.ppl.find(q=>q.id===id);return p&&canCxP(p)});const {r,amt,paid}=refundOf(sb,sel);const er=m=>{document.getElementById('cxErr').textContent=m};
+    const why=document.getElementById('cxWhy').value;if(!why)return er('취소 사유를 선택해 주세요.');
+    if(r.doc&&paid){const f=document.getElementById('cxDoc');if(!f||!f.files.length)return er('이 기간에는 진단서를 올려야 취소할 수 있어요.')}
+    if(paid&&amt>0){const bk=document.getElementById('cxBank').value,ac=document.getElementById('cxAcct').value.replace(/[^\d-]/g,''),ho=document.getElementById('cxHolder').value.trim();if(!bk||ac.length<8||!ho)return er('환불 받을 은행·계좌번호·예금주를 넣어 주세요.')}
+    const names=sb.ppl.filter(p=>sel.includes(p.id)).map(p=>p.name);
     if(paid){const f=document.getElementById('cxDoc'),req={no:sb.no,acad:sb.acad,names,ids:sel,why,amt,bank:(document.getElementById('cxBank')||{}).value||'',acct:((document.getElementById('cxAcct')||{}).value||'').replace(/[^\d-]/g,''),holder:((document.getElementById('cxHolder')||{}).value||'').trim()};
       const go=file=>{req.file=file;api('cancelReq',[req],()=>{})};
       if(f&&f.files&&f.files[0]){const fl=f.files[0];const rd=new FileReader();rd.onload=()=>go({name:fl.name,type:fl.type,data:String(rd.result).split(',')[1]});rd.readAsDataURL(fl)}else go(null)}
@@ -83,21 +115,21 @@ document.addEventListener('input',e=>{
   if(el.id==='fName'){S.fName=el.value;return}
   if(el.id==='fPhone'){S.fPhone=el.value;return}
   if(el.id==='acQ'){S.acQ=el.value;S.acOpen=true;if(e.isComposing)return;const pos=el.selectionStart;render();const n=document.getElementById('acQ');n.focus();n.setSelectionRange(pos,pos);return}
-  if(el.id==='who'){S.who=el.value;S.verified=false;S.verr='';document.getElementById('nextBtn').disabled=true;return}
-  if(el.id==='phone'){S.phone=el.value;S.verified=false;S.verr='';document.getElementById('nextBtn').disabled=true;return}
+  if(el.id==='who'){S.who=el.value;S.verified=false;S.verr='';setNext();return}
+  if(el.id==='phone'){S.phone=el.value;S.verified=false;S.verr='';setNext();return}
   if(el.id==='email'){S.email=el.value;return}
   if(el.id==='req'){S.req=el.value;return}
-  if(d.famname){const f=S.fam.find(x=>x.id===d.famname);if(f){f.name=el.value;const h=document.querySelector(`#card_${f.id} h3`);if(h)h.textContent=el.value||'(이름 미입력)';el.classList.toggle('empty',!el.value);const nb=document.getElementById('nextBtn');nb.disabled=blocked()}return}
-  if(d.f&&(el.tagName==='INPUT')){S.info[d.k][d.f]=el.value;if(d.f==='by'){el.value=el.value.replace(/\D/g,'').slice(0,4);S.info[d.k].by=el.value;{const pp=people().find(x=>x.key===d.k);el.classList.toggle('empty',yearBad(pp,el.value))}document.getElementById('nextBtn').disabled=missingBasic().length>0||missingProg().length>0||missingTeacher().length>0||S.fam.some(f=>!f.name.trim())}return}
+  if(d.famname){const f=S.fam.find(x=>x.id===d.famname);if(f){f.name=el.value;const h=document.querySelector(`#card_${f.id} h3`);if(h)h.textContent=el.value||'(이름 미입력)';el.classList.toggle('empty',!el.value);setNext()}return}
+  if(d.f&&(el.tagName==='INPUT')){S.info[d.k][d.f]=el.value;if(d.f==='by'){el.value=el.value.replace(/\D/g,'').slice(0,4);S.info[d.k].by=el.value;{const pp=people().find(x=>x.key===d.k);el.classList.toggle('empty',yearBad(pp,el.value))}setNext()}return}
   if(d.ens==='tm'||d.ens==='ts'){el.value=el.value.replace(/\D/g,'').slice(0,2);if(d.ens==='ts'&&+el.value>59)el.value='59';S.ens[d.ens]=el.value;return}
-  if(d.ens&&el.type==='text'){S.ens[d.ens]=el.value;if(d.ens==='group')document.getElementById('nextBtn').disabled=S.ens.on&&!el.value.trim();if(d.ens==='extra'){const pos=el.selectionStart;render();const n=document.getElementById('enX');n.focus();n.setSelectionRange(pos,pos)}return}
+  if(d.ens&&el.type==='text'){S.ens[d.ens]=el.value;if(d.ens==='group')setNext();if(d.ens==='extra'){const pos=el.selectionStart;render();const n=document.getElementById('enX');n.focus();n.setSelectionRange(pos,pos)}return}
 });
 document.addEventListener('change',e=>{
   const el=e.target, d=el.dataset;
   if(d.f&&el.tagName==='SELECT'){const i=S.info[d.k];i[d.f]=d.f==='lessons'?+el.value:el.value;
     if(d.f==='type'&&!PLAYS.has(el.value)){i.lessons=0;i.mc=[];i.concert='없음'}
     if(d.f==='type'){const fm=S.fam.find(x=>x.id===d.k);if(fm)fm.type=el.value}
-    if(d.f==='p1'&&i.p2===el.value)i.p2='';
+    if(d.f==='p1'&&(i.p2===el.value||!el.value))i.p2='';
     if(d.f==='lessons'&&!i.lessons){i.p1='';i.p2=''}
     render();const n=document.getElementById(el.id);n&&n.focus();return}
   if(d.room){const k=d.room;delete S.room[k];delete S.join[k];

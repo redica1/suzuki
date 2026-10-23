@@ -258,12 +258,21 @@ function writePeople_(sb) {
 /** 앙상블 팀: 접수 내용에서 다시 만듦 (대표 학원 접수 + 「대표가 이미 있어요」로 들어온 학원) */
 function teams_(all) {
   const L = all.filter(sb => sb.form && sb.form.ens && sb.form.ens.on && (sb.form.ens.group || '').trim() && sb.ppl.some(p => p.status === '정상'))
-    .map(sb => { const e = sb.form.ens; return { name: e.group.trim(), rep: sb.acad, acads: (e.acads || []).slice(), no: sb.no, e }; });
+    .map(sb => { const e = sb.form.ens; return { name: e.group.trim(), rep: sb.acad, by: sb.owner || '', acads: (e.acads || []).slice(), no: sb.no, mem: [], e }; });
   all.forEach(sb => {
     const e = sb.form && sb.form.ens;
-    if (e && e.member && e.joinNo && sb.ppl.some(p => p.status === '정상')) { const t = L.find(x => x.no === e.joinNo); if (t && !t.acads.includes(sb.acad)) t.acads.push(sb.acad); }
+    if (e && e.member && e.joinNo && sb.ppl.some(p => p.status === '정상')) { const t = L.find(x => x.no === e.joinNo); if (t) { if (!t.acads.includes(sb.acad)) t.acads.push(sb.acad); t.mem.push({ acad: sb.acad, by: sb.owner || '', no: sb.no }); } }
   });
-  return L.map(t => ({ name: t.name, rep: t.rep, acads: t.acads, no: t.no }));
+  return L.map(t => ({ name: t.name, rep: t.rep, by: t.by, acads: t.acads, no: t.no, mem: t.mem }));
+}
+/** 한 학원은 한 팀에만: 이미 다른 접수(다른 선생님 포함)로 팀에 들어가 있으면 대표·함께 신청을 막음 */
+function checkEns_(sb, all) {
+  const e = sb.form && sb.form.ens; if (!e || !(e.on || e.member)) return;
+  const T = teams_(all.filter(x => x.no !== sb.no));
+  const t = T.find(x => x.rep === sb.acad || x.acads.includes(sb.acad));
+  if (!t) return;
+  if (e.member && e.joinNo === t.no) return;
+  throw new Error(sb.acad + '은(는) 이미 앙상블 「' + t.name + '」 팀에 들어가 있어요 (대표 학원 ' + t.rep + ' · ' + t.by + ' 선생님 신청). 화면을 새로 고쳐 확인해 주세요.');
 }
 function writeTeams_(all) {
   const sh = SpreadsheetApp.getActive().getSheetByName(SH.ENS);
@@ -352,7 +361,7 @@ function submitNew(token, sb) {
     const tmp = sb.no;
     sb.no = no; sb.owner = u.name; sb.createdAt = stamp_();
     sb.ppl.forEach(p => { p.id = no + p.id.slice(tmp.length); p.pay = '전'; p.paidAmt = 0; delete p.rep; });
-    sb.rev = 1; recalc_(sb);
+    sb.rev = 1; recalc_(sb); checkEns_(sb, all);
     writeSub_(sb, true);
     all.push(sb); writeTeams_(all);
     log_(u.name, '새 접수', no + ' · ' + sb.ppl.length + '명');
@@ -376,6 +385,7 @@ function saveSubs(token, subs) {
       if (cur.owner !== u.name) throw new Error(sb.no + '는 ' + cur.owner + ' 선생님이 낸 접수라 고칠 수 없어요.');
       sb.acad = cur.acad; sb.owner = cur.owner; sb.createdAt = cur.createdAt; sb.no = cur.no; sb.reqId = cur.reqId; sb.rev = (+cur.rev || 0) + 1;
       recalc_(sb);
+      if (JSON.stringify((sb.form || {}).ens || {}) !== JSON.stringify((cur.form || {}).ens || {})) checkEns_(sb, all);
       // 새로 낸 신고에는 그때까지 확인된 금액(base)을 적어 둠 → 차액 신고를 운영진 확인 전까지 지킴
       sb.ppl.forEach(p => { const c = cur.ppl.find(x => x.id === p.id); const row = p.rep && p.rep.rows && p.rep.rows[p.id];
         if (p.pay === '신고' && row) { const old = c && c.rep && c.rep.rows && c.rep.rows[p.id]; if (!(c && c.pay === '신고' && c.rep && c.rep.id === p.rep.id && old)) row.base = c ? (+c.paidAmt || 0) : 0; else row.base = old.base !== undefined ? old.base : (+c.paidAmt || 0); } });
@@ -461,11 +471,12 @@ function setupAdmin_() {
 }
 function ensureSettings_() {
   const sh = setupAdmin_();
+  sh.getRange('B:B').setNumberFormat('@');   // 값 칸은 글자 그대로 (날짜·계좌번호가 바뀌지 않게)
   const have = rows_('설정').map(r => String(r['항목']));
   SETTINGS.forEach(r => { if (!have.includes(r[0])) sh.appendRow(r); });
 }
 function bankInfo_() { return { bank: setting_('입금 은행'), acct: setting_('입금 계좌번호'), holder: setting_('예금주'), from: setting_('입금 시작일') || '2026-10-01' }; }
-function setting_(k) { const r = rows_('설정').find(x => String(x['항목']) === k); return r ? String(r['값'] || '') : ''; }
+function setting_(k) { const r = rows_('설정').find(x => String(x['항목']) === k); return r ? dstr_(r['값']).trim() : ''; }
 function ensureHead_(name, head) {
   const sh = SpreadsheetApp.getActive().getSheetByName(name);
   const cur = sh.getRange(1, 1, 1, Math.max(1, sh.getLastColumn())).getValues()[0].map(String);

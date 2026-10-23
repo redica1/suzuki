@@ -8,9 +8,10 @@
   스즈키 교사연수 신청 — 공유용 페이지 (2026-10-23)
   · 깃허브 redica1/suzuki 저장소(GitHub Pages)에 이 파일과 og.png 를 함께 올림 → https://redica1.github.io/suzuki/
   · 올린 주소가 다르면 아래 og:url · og:image 두 줄의 주소만 바꿔 주세요 (카톡 미리보기는 전체 주소여야 함).
-  · 지금은 테스트(STG) 앱이 들어 있습니다. 운영으로 바꿀 때는 아래 APP 주소를 운영 앱 주소로 바꿉니다.
-      테스트: https://script.google.com/macros/s/AKfycbwEe8lmP7_TWFb_hxtEyapxUDNrKGg-8AlFX9XxISQRp73L863sE7BHGK-u6OJFLUH_FQ/exec
-      운영:   https://script.google.com/macros/s/AKfycbyQRUumuRkMZGVvwmRXT6p73qiSYmHkIm8jpavTltA-EPU9CoP8mHr3KmEHS3Mq6Hma9Q/exec
+  · 주소에 따라 앱이 정해짐 (10/23, 깃허브는 다시 고칠 필요 없음)
+      https://redica1.github.io/suzuki/       → 운영 앱 (선생님께 보내는 주소)
+      https://redica1.github.io/suzuki/?test  → 테스트(STG) 앱 (운영진 시험용)
+  · 운영 앱은 예약 반영(RELEASE_AT) 뒤부터 이 페이지 안에서 열림. 그 전에는 ?test 주소로만 시험.
   · 카카오톡·라인·네이버·인스타 등 앱 안 브라우저에서는 구글이 신청 화면을 안에 넣는 것을 막아
     "현재 파일을 열 수 없습니다"가 뜸 (10/23 확인) → 앱 안에서 열면 크롬(기본 브라우저)으로 자동으로 넘김.
 -->
@@ -56,7 +57,9 @@
 <iframe id="app" title="26가을 스즈키 교사연수 신청" allow="clipboard-write; screen-wake-lock" hidden></iframe>
 <script>
 (function () {
-  var APP = 'https://script.google.com/macros/s/AKfycbwEe8lmP7_TWFb_hxtEyapxUDNrKGg-8AlFX9XxISQRp73L863sE7BHGK-u6OJFLUH_FQ/exec';
+  var PROD = 'https://script.google.com/macros/s/AKfycbyQRUumuRkMZGVvwmRXT6p73qiSYmHkIm8jpavTltA-EPU9CoP8mHr3KmEHS3Mq6Hma9Q/exec';   // 운영
+  var STG  = 'https://script.google.com/macros/s/AKfycbwEe8lmP7_TWFb_hxtEyapxUDNrKGg-8AlFX9XxISQRp73L863sE7BHGK-u6OJFLUH_FQ/exec';   // 테스트
+  var APP = /[?&]test\b/i.test(location.search) ? STG : PROD;
   var ua = navigator.userAgent || '', here = location.href.split('#')[0];
   var android = /Android/i.test(ua);
   var kakao = /KAKAOTALK/i.test(ua), line = / Line\//i.test(ua);

@@ -1,4 +1,10 @@
-/* build: 20261024-012105 */
+/* build: 20261024-012441 */
+    if(!t){S.verr=`회원 명단에서 ${n} 선생님을 찾지 못했어요.`;render();return}
+    if(t.state==='대기'){S.verr='승인 대기 중이에요. 협회가 확인하면 이메일로 알려 드려요.';render();return}
+    login({...t,acads:t.acads.includes('마포스즈키')?['마포스즈키',...t.acads.filter(a=>a!=='마포스즈키')]:t.acads});if(t.acads.includes('마포스즈키')){document.querySelector('[data-acad="마포스즈키"]')||0}return}
+  if(b.id==='doLogin'){const nm=document.getElementById('lgNm').value.trim(),ph='010'+document.getElementById('lgEm').value.replace(/\D/g,'');S.lgNm=nm;S.lgEm='010-'+document.getElementById('lgEm').value;
+    if(!nm||ph.length<11){S.verr='이름과 휴대전화를 모두 넣어 주세요.';render();return}
+    busy(true,'명단을 확인하고 있어요…');google.script.run.withSuccessHandler(r=>{busy(false);if(!r.ok){S.verr=r.msg;render();return}
       S.token=r.token;S.today=r.today;S.myAcct=r.myAcct||null;loadFromServer(r);login({...r.teacher,acads:r.teacher.acads});
       if(!MY_SUBS.length&&r.teacher.acads.length===1){const a=r.teacher.acads[0];S.acad=a;S.rq='';S.sel={};S.ptab='교사';S.picked={};S.extra=[];S.fam=[];S.info={};S.room={};ensureRoster(a);S.verified=true;render()}})
       .withFailureHandler(e=>{busy(false);S.verr='연결이 잠시 안 돼요. 다시 눌러 주세요. ('+((e&&e.message)||e)+')';render()}).login(nm,ph);return}
@@ -156,10 +162,3 @@
 document.addEventListener('change',e=>{if(e.target.id==='qWhere'){S.qWhere=e.target.value;return}const el=e.target;
   if(el.dataset&&el.dataset.rp){const a=S.rp||[];S.rp=el.checked?[...new Set([...a,el.dataset.rp])]:a.filter(x=>x!==el.dataset.rp);{const n=document.getElementById('rpMemo');if(n)S.rpMemo=n.value}render();return}
   if(el.dataset&&el.dataset.xon){const x=S.extra.find(v=>v.id===el.dataset.xon);x.on=el.checked;if(!x.on){delete S.room[x.id];delete S.join[x.id];S.fam=S.fam.filter(f=>f.link!==x.id)}render();return}
-  if(el.dataset&&el.dataset.cx){const [no,id]=el.dataset.cx.split('|');const a=S.cx[no]||(S.cx[no]=[]);if(el.checked){if(!a.includes(id))a.push(id)}else S.cx[no]=a.filter(x=>x!==id);if(!S.cx[no].length)delete S.cx[no];S.cxDone=null;render();return}
-  if(el.id==='today'&&el.value){S.today=el.value;S.ruleOpen=true;render();return}
-  if(el.id==='cxWhy'){S.cxReason=el.value;return}
-});
-const fmtPhone=v=>{let d=String(v).replace(/\D/g,'');if(/^010010/.test(d))d=d.slice(3);d=d.slice(0,11);return d.length<4?d:d.length<8?d.slice(0,3)+'-'+d.slice(3):d.slice(0,3)+'-'+d.slice(3,7)+'-'+d.slice(7)};
-document.addEventListener('input',e=>{
-  {const el=e.target;if(/^q(Name|Phone|Acad|Text)$/.test(el.id)){S[el.id]=el.value;return}}

@@ -1,4 +1,4 @@
-/* build: 20261024-012105 */
+/* build: 20261024-012441 */
       ${S.prp===p.id?prpForm(p,sb):''}</li>`).join('')}</ul></div>`}).join('')}
     <div class="spread"><span class="hint">합계 ${won(subTotal(sb,sb.ppl.filter(p=>p.status==='정상').map(p=>p.id)))}</span>
       ${live.length?`<span class="row"><button class="btn small" type="button" data-cxall="${sb.no}">${(()=>{const v=live.filter(p=>mineOk(sb,p));return v.length&&v.every(p=>sel.includes(p.id))?(S.mtab&&S.mtab!=='전체'?S.mtab+' 해제':'전체 해제'):(S.mtab&&S.mtab!=='전체'?S.mtab+' 모두 선택':'전체 선택')})()}</button>
@@ -58,7 +58,10 @@ function vMyTT(){const T=S.tt;
   if(!T.open)return head+'<div class="note info">아직 시간표가 공개되지 않았어요. 운영진이 교사 일정과 개인레슨 시간표를 정하면 여기에서 볼 수 있어요.</div></section>';
   const days=T.days||[],mine=(T.mine||[]).slice().sort((a,b)=>a.d-b.d||tmin(a.t)-tmin(b.t));
   const tab=S.ttTab||'me';
-  const seg=`<div class="seg" role="group" aria-label="보기" style="margin:8px 0"><button type="button" data-tttab="me" aria-pressed="${tab==='me'}">내 일정 ${mine.length}</button><button type="button" data-tttab="stu" aria-pressed="${tab==='stu'}">우리 학생 레슨 ${(T.students||[]).length}명</button></div>`;
+  const seg=`<div class="seg" role="group" aria-label="보기" style="margin:8px 0"><button type="button" data-tttab="me" aria-pressed="${tab==='me'}">내 일정 ${mine.length}</button><button type="button" data-tttab="stu" aria-pressed="${tab==='stu'}">우리 학생 레슨 ${(T.students||[]).length}명</button><button type="button" data-tttab="room" aria-pressed="${tab==='room'}">우리 방 ${(T.rooms||[]).length}</button></div>`;
+  if(tab==='room'){const R=T.rooms||[];return head+seg+`<p class="lede">우리 학원이 쓰는 숙소 방이에요. 방마다 누가 들어갈지는 원장님이 정해 알려 주세요. 방 비밀번호는 비번 수신자에게 문자로 가요.</p>
+    ${R.length?R.map(r=>`<div class="panel ttstu"><div class="spread"><b class="num" style="font-size:18px">${esc(r.no)}</b><span class="hint">${esc(r.bld)} ${esc(r.fl)}${r.type?' · '+esc(r.type):''}</span></div>
+      <div>${esc(r.prof?r.prof+' 교수님 방':r.kind||'')}${r.main&&!r.prof?` · ${esc(r.main)} ${r.mn}명`:''}${r.sub?` · ${esc(r.sub)} ${r.sn}명 함께`:''}</div>${r.pw?`<small class="hint">비번 수신자: ${esc(r.pw)}</small>`:''}</div>`).join(''):'<div class="note info">아직 방이 정해지지 않았어요. 정해지면 여기에 보여요.</div>'}</section>`}
   if(tab==='me')return head+seg+`<div class="panel">${T.prof?`<p class="hint" style="margin:0 0 6px">교수 · 레슨실 <b>${esc(T.prof.room||'미정')}</b></p>`:''}
     ${days.map((dl,d)=>{const xs=mine.filter(x=>x.d===d);return xs.length?`<div class="ttday"><div class="ttdl">${esc(dl)}</div>${xs.map(x=>`<div class="ttit"><span class="num">${esc(x.t)}${x.e?'<small>~'+esc(x.e)+'</small>':''}</span><span><span class="ttrole ${x.what==='개인레슨'?'les':''}">${esc(x.what)}</span><b>${esc(x.title)}</b> · ${esc(x.where)}${x.loc?` <small class="hint">${esc(x.loc)}</small>`:''}${x.with?`<br><small class="hint">${x.what==='개인레슨'?'학생: ':'함께: '}${esc(x.with)}</small>`:''}</span></div>`).join('')}</div>`:''}).join('')||'<p class="hint" style="margin:0">아직 배정된 일정이 없어요.</p>'}</div></section>`;
   const st=T.students||[];
@@ -164,9 +167,3 @@ document.addEventListener('click',e=>{
     if(S.token&&S.user&&!(S.user.acads||[]).includes(a)){api('addAcad',[a],r=>{const keep=S.user;loadFromServer(r);S.user=keep;S.user.acads=r.acads;go();toast(a+' 명단을 열었어요 · 소속은 그대로예요',true)},null,'명단을 불러오고 있어요…');return}
     go();return}
   if(d.quick){const n=d.quick;const t=TEACHER_DB.find(x=>x.demo&&x.name===n)||TEACHER_DB.find(x=>bare(x.name)===n&&x.acads.includes('마포스즈키'))||TEACHER_DB.find(x=>bare(x.name)===n);
-    if(!t){S.verr=`회원 명단에서 ${n} 선생님을 찾지 못했어요.`;render();return}
-    if(t.state==='대기'){S.verr='승인 대기 중이에요. 협회가 확인하면 이메일로 알려 드려요.';render();return}
-    login({...t,acads:t.acads.includes('마포스즈키')?['마포스즈키',...t.acads.filter(a=>a!=='마포스즈키')]:t.acads});if(t.acads.includes('마포스즈키')){document.querySelector('[data-acad="마포스즈키"]')||0}return}
-  if(b.id==='doLogin'){const nm=document.getElementById('lgNm').value.trim(),ph='010'+document.getElementById('lgEm').value.replace(/\D/g,'');S.lgNm=nm;S.lgEm='010-'+document.getElementById('lgEm').value;
-    if(!nm||ph.length<11){S.verr='이름과 휴대전화를 모두 넣어 주세요.';render();return}
-    busy(true,'명단을 확인하고 있어요…');google.script.run.withSuccessHandler(r=>{busy(false);if(!r.ok){S.verr=r.msg;render();return}

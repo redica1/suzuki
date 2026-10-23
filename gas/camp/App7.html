@@ -1,4 +1,11 @@
-/* build: 20261024-012105 */
+/* build: 20261024-012441 */
+  if(el.dataset&&el.dataset.cx){const [no,id]=el.dataset.cx.split('|');const a=S.cx[no]||(S.cx[no]=[]);if(el.checked){if(!a.includes(id))a.push(id)}else S.cx[no]=a.filter(x=>x!==id);if(!S.cx[no].length)delete S.cx[no];S.cxDone=null;render();return}
+  if(el.id==='today'&&el.value){S.today=el.value;S.ruleOpen=true;render();return}
+  if(el.id==='cxWhy'){S.cxReason=el.value;return}
+});
+const fmtPhone=v=>{let d=String(v).replace(/\D/g,'');if(/^010010/.test(d))d=d.slice(3);d=d.slice(0,11);return d.length<4?d:d.length<8?d.slice(0,3)+'-'+d.slice(3):d.slice(0,3)+'-'+d.slice(3,7)+'-'+d.slice(7)};
+document.addEventListener('input',e=>{
+  {const el=e.target;if(/^q(Name|Phone|Acad|Text)$/.test(el.id)){S[el.id]=el.value;return}}
   if(e.target.id==='lgEm'){const el=e.target;let d=el.value.replace(/\D/g,'');/* 습관대로 010부터 쳐도 됨: 0·01 은 잠깐 두고, 010 이 되면 뗌 (010 뒷자리는 0·1로 시작하지 않음) */if(/^01?$/.test(d)){S.lgEm='010-';return}if(d.startsWith('010'))d=d.slice(3);d=d.slice(0,8);const f=d.length>4?d.slice(0,4)+'-'+d.slice(4):d;if(f!==el.value){el.value=f;el.setSelectionRange(f.length,f.length)}S.lgEm='010-'+f;return}
   if(e.target.id==='prpA'){const box=document.getElementById('prpRf');if(box)box.hidden=!((+e.target.value.replace(/\D/g,'')||0)>(+e.target.dataset.due||0))}
   if(e.target.dataset&&e.target.dataset.rpf){const [id,k]=e.target.dataset.rpf.split('|');const r=S.rpRow[id]||(S.rpRow[id]={n:'',d:'',a:''});r[k]=k==='a'?e.target.value.replace(/\D/g,''):e.target.value;return}

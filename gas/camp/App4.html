@@ -1,4 +1,22 @@
-/* build: 20261023-220220 */
+/* build: 20261023-220844 */
+    <div class="tbl"><table><thead><tr><th>이름</th><th>입금자명</th><th>입금일</th><th class="r">금액</th></tr></thead><tbody>${L.map(x=>`<tr><td><b>${esc(x.p.name)}</b></td><td>${esc(x.r.name||'')}</td><td>${kday(x.r.date)}</td><td class="r num">${won(+x.r.a||0)}</td></tr>`).join('')}</tbody>${L.length>1?`<tfoot><tr><td colspan="3"><b>합계</b></td><td class="r num"><b>${won(sum)}</b></td></tr></tfoot>`:''}</table></div>
+    <p class="hint" style="margin:10px 0 0">지금은 <b>「입금 확인 중」</b>이에요. 운영진이 통장과 맞춰 보고 확인하면 <b>「입금 확인」</b>으로 바뀌어요.<br>입금일이나 금액을 잘못 넣었으면 그 사람 줄의 「신고 수정」을 눌러 고칠 수 있어요.</p>
+    <div class="row"><button class="btn primary" type="button" id="askOk">확인</button></div></div>`;
+  document.body.appendChild(bg);const done=()=>{closeAsk();const li=(document.querySelector(`[data-prp="${ids[0]}"]`)||{closest:()=>null}).closest('li');if(li){li.scrollIntoView({block:'center',behavior:'smooth'});L.forEach(x=>{const e=(document.querySelector(`[data-prp="${x.p.id}"]`)||{closest:()=>null}).closest('li');if(e){e.classList.add('flash');setTimeout(()=>e.classList.remove('flash'),2000)}})}};
+  bg.addEventListener('click',e=>{if(e.target===bg||e.target.id==='askOk')done()});document.getElementById('askOk').focus()}
+/* 더 낸 금액: 입금 확인된 사람이 수정으로 청구액이 줄었거나 더 많이 낸 경우 (이미 요청했으면 0) */
+const overOf=p=>p.status==='정상'&&isPaid(p)&&p.pay!=='신고'&&!p.ovReq?Math.max(0,(p.paidAmt||0)-pAmt(p)):0;
+const BANKS=['국민','신한','하나','우리','농협','기업','카카오뱅크','토스뱅크','새마을금고','우체국','SC제일','부산','대구','경남','광주','전북','제주','수협','신협','케이뱅크'];
+function ovBox(no,ids){const sb=MY_SUBS.find(x=>x.no===no);if(!sb)return;const L=sb.ppl.filter(p=>ids.includes(p.id)&&overOf(p)>0);if(!L.length)return;
+  const sum=L.reduce((t,p)=>t+overOf(p),0);closeAsk();const bg=document.createElement('div');bg.className='askbg';bg.id='askBg';
+  bg.innerHTML=`<div class="askbox" role="dialog" aria-modal="true" aria-labelledby="askT"><h3 id="askT">더 낸 ${won(sum)}을 돌려드려요</h3>
+    <div class="tbl"><table><thead><tr><th>이름</th><th class="r">입금 확인</th><th class="r">지금 청구액</th><th class="r">돌려받을 금액</th></tr></thead><tbody>${L.map(p=>`<tr><td><b>${esc(p.name)}</b></td><td class="r num">${won(p.paidAmt||0)}</td><td class="r num">${won(pAmt(p))}</td><td class="r num"><b>${won(overOf(p))}</b></td></tr>`).join('')}</tbody></table></div>
+    <p class="hint" style="margin:8px 0">돌려받을 계좌를 적으면 운영진에게 「차액 환불」로 바로 올라가요. 참가는 그대로예요 (취소가 아니에요).</p>
+    <div class="rpf"><select id="ovB" aria-label="은행"><option value="">은행</option>${BANKS.map(x=>`<option>${x}</option>`).join('')}</select><input type="text" id="ovA" inputmode="numeric" placeholder="계좌번호"><input type="text" id="ovH" placeholder="예금주" value="${esc(S.user&&S.user.name||'')}"></div>
+    <span class="err" id="ovErr"></span>
+    <div class="row"><button class="btn ghost" type="button" id="askNo">나중에</button><button class="btn primary" type="button" id="ovGo">돌려받기 요청</button></div></div>`;
+  document.body.appendChild(bg);
+  bg.addEventListener('click',e=>{if(e.target===bg||e.target.id==='askNo'){closeAsk();toast('나중에 그 사람 줄의 「돌려받기」를 눌러 요청할 수 있어요',true)}
     else if(e.target.id==='ovGo'){const b=document.getElementById('ovB').value,a=document.getElementById('ovA').value.replace(/[^\d-]/g,''),h=document.getElementById('ovH').value.trim();
       if(!b||a.replace(/-/g,'').length<6||!h){document.getElementById('ovErr').textContent='은행·계좌번호·예금주를 넣어 주세요.';return}
       closeAsk();api('overRefundReq',[{no,ids:L.map(p=>p.id),bank:b,acct:a,holder:h}],r=>{applyBundle(r);render();toast(`${won(sum)} 돌려받기를 요청했어요 · 운영진이 보내면 「돌려받음」으로 바뀌어요`,true)},null,'요청하고 있어요…')}});
@@ -68,7 +86,7 @@ function vMine(){
       ${live.length?`<span class="row"><button class="btn small" type="button" data-cxall="${sb.no}">${sel.length===live.length?'전체 해제':'전체 선택'}</button>
       <button class="btn small primary" type="button" data-seledit="${sb.no}" ${sel.length&&sb.form?'':'disabled'}>선택한 ${sel.length}명 정보 수정</button>
       <button class="btn small" type="button" data-cxopen="${sb.no}" ${selCx.length?'':'disabled'}>선택한 ${selCx.length}명 취소</button></span>`:''}</div>
-    ${sel.length&&selCx.length<sel.length?`<p class="hint" style="margin:0">${sel.filter(id=>!selCx.includes(id)).map(id=>esc((sb.ppl.find(p=>p.id===id)||{}).name)).join(', ')}은(는) ${unpaidCancelOk()?'입금 신고 확인 중이라':'취소 수수료가 생기는 기간인데 입금 확인 전이라'} 지금 취소할 수 없어요.</p>`:''}
+    ${sel.length&&selCx.length<sel.length?`<p class="hint" style="margin:0">${sel.filter(id=>!selCx.includes(id)).map(id=>esc((sb.ppl.find(p=>p.id===id)||{}).name)).join(', ')}은(는) ${unpaidCancelOk()?'입금 신고 확인 중이라':'캠프가 시작돼서'} 지금 취소할 수 없어요.${unpaidCancelOk()?' 그 사람 줄의 「신고 수정 › 신고 취소」로 신고를 거두면 바로 취소할 수 있어요.':''}</p>`:''}
     ${S.cxOpen===sb.no&&selCx.length?cxPanel(sb,selCx):''}</div>`}).join('')}
   </section>`}
 function cxPanel(sb,sel){
@@ -94,6 +112,7 @@ function render(){
   const t=totals(), next=document.getElementById('nextBtn'), back=document.getElementById('backBtn');
   document.getElementById('dockLabel').textContent = S.step===1?'접수 준비':`선택 ${t.n}명${t.teams.length?` · 가족방 ${t.teams.length}`:''}${t.waiting?` · 회비확인대기 ${t.waiting}명`:''}`;
   document.getElementById('dockTotal').textContent = won(t.all);
+  if(S.editNo&&S.step>1&&S.step<6){const D=editDiff();if(D)document.getElementById('dockLabel').textContent=`기존 ${won(D.before)} → 수정 후 (${sgn(D.diff)})`}
   back.hidden = S.step===1||S.step===6;
   next.hidden = S.step===6;
   next.textContent = S.step===5?(S.editNo?'수정 내용 저장':'접수하기'):'다음';
@@ -121,37 +140,3 @@ function missWhat(){const t=totals(),L=[],el=[],Q=x=>{const e=typeof x==='string
       if(yearBad(p,i.by)){m.push('출생연도');Q('#ag_'+p.key)}
       if(!i.gender){m.push('성별');const g=document.querySelector(`[data-gender^="${p.key}|"]`);if(g)Q(g.parentElement)}
       if(p.kind==='student'&&PLAYS.has(i.type)&&!i.prog){m.push('현재 진도');Q('#pg_'+p.key)}
-      if(m.length)L.push(`${p.name}: ${m.join('·')}`)});
-    S.fam.filter(f=>!f.name.trim()).forEach(f=>{L.push(`${FAM_SHORT[f.type]||'가족'} 이름`);Q('#fn_'+f.id)});
-    if(t.teams.some(x=>x.over))L.push(`가족방은 한 방에 ${ROOM.cap}명까지예요`)}
-  else if(S.step===4){if(S.ens.on&&!(S.ens.group||'').trim()){L.push('앙상블 팀 이름');Q('#enG')}
-    if(S.ens.member&&!S.ens.joinNo&&!(S.ens.joinRep||'').trim()){L.push('함께할 팀을 고르거나 대표 학원 이름을 적어 주세요');Q('#enTq')}}
-  else if(S.step===5&&!S.agree){L.push('안내 사항 동의에 체크해 주세요');{const a=document.getElementById('agree');if(a)Q(a.closest('label')||a)}}
-  return {L,el}}
-function warnMissing(){const {L,el}=missWhat();beep();try{navigator.vibrate&&navigator.vibrate([120,60,120])}catch(e){}
-  document.querySelectorAll('.flash').forEach(x=>x.classList.remove('flash'));
-  el.forEach(x=>{void x.offsetWidth;x.classList.add('flash');setTimeout(()=>x.classList.remove('flash'),2000)});
-  if(el[0]){el[0].scrollIntoView({block:'center',behavior:'smooth'});if(el[0].focus&&/INPUT|SELECT/.test(el[0].tagName))setTimeout(()=>el[0].focus({preventScroll:true}),350)}
-  const m=L.length?'빠진 칸이 있어요 · '+L.slice(0,3).join(' / ')+(L.length>3?` 외 ${L.length-3}곳`:''):'빠진 칸을 확인해 주세요';
-  const tt=document.getElementById('toast');toast(m,true);clearTimeout(toast.t);toast.t=setTimeout(()=>tt.hidden=true,4500)}
-/* 접수 고치기 시작: only=null 이면 사람 추가(2단계), 사람 키 목록이면 그 사람들만 정보 수정(3단계) */
-function startEdit(no,only){const sb=MY_SUBS.find(x=>x.no===no);const f=JSON.parse(JSON.stringify(sb.form));S.acad=sb.acad;ensureRoster(sb.acad);S.verified=true;
-  Object.assign(S,{picked:f.picked,extra:f.extra,fam:f.fam,info:f.info,room:f.room,join:f.join||{},ens:f.ens||{on:false},agree:false,sel:{},cartAt:{}});
-  sb.ppl.forEach(p=>{if(p.status==='취소'){const k=p.id.slice(sb.no.length+1);delete S.picked[k];S.fam=S.fam.filter(x=>x.id!==k);S.extra=S.extra.filter(x=>x.id!==k)}});
-  S.riBack=CAMP.ri;if(f.ri!==undefined)CAMP.ri=f.ri;S.editNo=sb.no;S.editOnly=only;S.cx={};S.cxOpen='';S.view='form';
-  if(only==='ens'){S.editOnly=null;go(4);toast(`앙상블 「${esc(S.ens.group||'')}」을(를) 고쳐요 · 다 고친 뒤 「다음」→「수정 내용 저장」`)}
-  else if(only){go(3);toast(`${only.length}명 정보를 고쳐요 · 다 고친 뒤 마지막에 「수정 내용 저장」`)}else{go(2);toast(`${sb.no}에 인원을 추가해요 · 추가한 뒤 「다음」으로 정보를 넣어요`)}}
-function resetForm(){Object.assign(S,{cartAt:{},picked:{},extra:[],fam:[],info:{},room:{},join:{},ens:{on:false},agree:false,sel:{}})}
-
-/* ---------- 동작 ---------- */
-document.addEventListener('click',e=>{
-  const b=e.target.closest('button,[data-pick],[data-mc],[data-other],[data-ens],[data-roomck],[data-ensmem]'); if(!b) return;
-  const d=b.dataset;
-  if(d.go){go(+d.go);return}
-  if(d.round!==undefined){CAMP.ri=+d.round;render();toast(`${ROUNDS[CAMP.ri][0]} 금액으로 계산해요`);return}
-  if(d.acad){S.acad=d.acad;S.rq='';S.sel={};S.ptab='교사';S.acQ='';S.acOpen=false;S.picked={};S.extra=[];S.fam=[];S.info={};S.room={};
-    ensureRoster(d.acad);
-    S.verified=true;render();return}
-  if(d.quick){const n=d.quick;const t=TEACHER_DB.find(x=>x.demo&&x.name===n)||TEACHER_DB.find(x=>bare(x.name)===n&&x.acads.includes('마포스즈키'))||TEACHER_DB.find(x=>bare(x.name)===n);
-    if(!t){S.verr=`회원 명단에서 ${n} 선생님을 찾지 못했어요.`;render();return}
-    if(t.state==='대기'){S.verr='승인 대기 중이에요. 협회가 확인하면 이메일로 알려 드려요.';render();return}

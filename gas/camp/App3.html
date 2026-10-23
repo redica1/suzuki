@@ -1,4 +1,4 @@
-/* build: 20261023-220220 */
+/* build: 20261023-220844 */
 function ensSave(L){ENS=L} /* 화면 미리보기용 · 진짜 팀 목록은 서버가 접수 내용에서 다시 만듦 */
 const teamOf=a=>ensTeams().find(t=>t.rep===a||(t.acads||[]).includes(a));
 /* 우리 학원이 이미 팀에 들어가 있으면(다른 선생님·다른 접수로) 대표·함께 선택을 막음. 지금 고치는 접수가 그 팀을 낸 접수면 막지 않음 */
@@ -102,11 +102,31 @@ function detailRows(p){
   if(!p.paid) rows.push(['연회비',p.isNew?'신규 추가 · 회비확인대기':'미납 · 회비확인대기']);
   return rows;
 }
+/* 고치는 중: 기존 신청 금액 ↔ 수정 후 금액, 사람별 차이, 이미 입금된 돈 기준으로 더 낼 돈 / 돌려받을 돈 */
+function editDiff(){if(!S.editNo)return null;const old=ALL_SUBS.find(x=>x.no===S.editNo);if(!old)return null;let nw;try{nw=makeSub(old.no)}catch(e){return null}
+  const live=old.ppl.filter(p=>p.status==='정상'),rows=[];
+  nw.ppl.forEach(p=>{const o=live.find(q=>q.id===p.id);const a=o?pAmt(o):0,b=pAmt(p);if(!o||a!==b)rows.push({name:p.name,a:o?a:null,b,paid:o?(o.paidAmt||0):0})});
+  live.forEach(o=>{if(!nw.ppl.some(p=>p.id===o.id)){const kept=isPaid(o)||o.pay==='신고';rows.push({name:o.name,a:pAmt(o),b:kept?pAmt(o):null,kept,paid:o.paidAmt||0})}});
+  const before=live.reduce((t,p)=>t+pAmt(p),0);
+  const after=nw.ppl.reduce((t,p)=>t+pAmt(p),0)+live.filter(o=>!nw.ppl.some(p=>p.id===o.id)&&(isPaid(o)||o.pay==='신고')).reduce((t,p)=>t+pAmt(p),0);
+  const paid=live.reduce((t,p)=>t+(p.paidAmt||0),0);let owe=0,back=0;
+  nw.ppl.forEach(p=>{const o=live.find(q=>q.id===p.id),pd=o?(o.paidAmt||0):0,b=pAmt(p);owe+=Math.max(0,b-pd);back+=Math.max(0,pd-b)});
+  live.filter(o=>!nw.ppl.some(p=>p.id===o.id)&&(isPaid(o)||o.pay==='신고')).forEach(o=>{const pd=o.paidAmt||0,b=pAmt(o);owe+=Math.max(0,b-pd);back+=Math.max(0,pd-b)});
+  return {rows,before,after,diff:after-before,paid,owe,back}}
+const sgn=n=>n>0?'+'+won(n):n<0?'−'+won(-n):'0원';
+function editDiffHTML(){const D=editDiff();if(!D)return '';
+  const tag=D.diff>0?'<span class="pill due">늘어요</span>':D.diff<0?'<span class="pill new">줄어요</span>':'<span class="pill ok">그대로</span>';
+  return `<div class="panel" style="border:2px solid var(--accent)"><div class="spread"><h3 style="font-size:16px;margin:0">금액 변동 · ${esc(S.editNo)}</h3>${tag}</div>
+    <dl class="kv" style="margin-top:8px"><dt>기존 신청 금액</dt><dd class="num">${won(D.before)}</dd><dt>수정 후 금액</dt><dd class="num"><b>${won(D.after)}</b></dd><dt>변동</dt><dd class="num"><b style="color:var(--${D.diff>0?'rosin':'accent'})">${sgn(D.diff)}</b></dd>
+      ${D.paid?`<dt>이미 입금 확인</dt><dd class="num">${won(D.paid)}</dd><dt>더 입금할 금액</dt><dd class="num"><b>${won(D.owe)}</b></dd>${D.back?`<dt>돌려받을 금액</dt><dd class="num"><b style="color:var(--accent)">${won(D.back)}</b></dd>`:''}`:''}</dl>
+    ${D.rows.length?`<div class="tbl" style="margin-top:8px"><table><thead><tr><th>이름</th><th class="r">기존</th><th class="r">수정 후</th><th class="r">차이</th></tr></thead><tbody>${D.rows.map(r=>`<tr><td><b>${esc(r.name)}</b>${r.a===null?' <span class="pill new">추가</span>':r.b===null?' <span class="pill">빠짐</span>':r.kept?' <span class="pill due">입금돼 있어 남음</span>':''}</td><td class="r num">${r.a===null?'-':won(r.a)}</td><td class="r num">${r.b===null?'-':won(r.b)}</td><td class="r num">${sgn((r.b||0)-(r.a||0))}</td></tr>`).join('')}</tbody></table></div>`:'<p class="hint" style="margin:6px 0 0">금액이 바뀐 사람이 없어요.</p>'}
+    <p class="hint" style="margin:8px 0 0">${[D.paid&&D.owe?'저장한 뒤 「내 접수」에서 더 낼 금액만 입금 신고하면 돼요.':'',D.back?'저장하면 돌려받을 계좌를 묻는 창이 떠요.':'','「수정 내용 저장」을 눌러야 바뀌어요.'].filter(Boolean).join(' ')}</p></div>`}
 function vStep4(){
   const ps=people(), t=totals(), R=ROUNDS[CAMP.ri];
   const edit=(n,l)=>`<button class="btn small ghost" type="button" data-go="${n}">${l} 수정</button>`;
   return `<section class="sec"><h2>신청 확인</h2>
   <p class="lede">접수하기 전에 신청 내용과 금액을 확인해 주세요. 고칠 곳이 있으면 「수정」을 누르면 돼요.</p>
+  ${editDiffHTML()}
 
   <div class="panel"><div class="spread"><h3 style="font-size:16px">접수 정보</h3>${edit(1,'접수자')}</div>
     <dl class="kv"><dt>학원</dt><dd>${esc(S.acad)}</dd><dt>접수자</dt><dd>${esc(S.who)} · ${esc(S.phone)}</dd><dt>이메일</dt><dd>${esc(S.email||'-')}</dd>
@@ -174,21 +194,3 @@ function askBox(title,body,okLabel,onOk){closeAsk();const bg=document.createElem
 function repDone(ids){const L=[];MY_SUBS.forEach(sb=>sb.ppl.forEach(p=>{if(ids.includes(p.id)&&p.pay==='신고'&&p.rep){const r=p.rep.rows&&p.rep.rows[p.id]||{name:p.rep.name,date:p.rep.date,a:p.rep.amt};L.push({p,r})}}));if(!L.length)return;
   const sum=L.reduce((t,x)=>t+(+x.r.a||0),0);closeAsk();const bg=document.createElement('div');bg.className='askbg';bg.id='askBg';
   bg.innerHTML=`<div class="askbox" role="dialog" aria-modal="true" aria-labelledby="askT"><h3 id="askT">✓ 입금 신고를 보냈어요</h3>
-    <div class="tbl"><table><thead><tr><th>이름</th><th>입금자명</th><th>입금일</th><th class="r">금액</th></tr></thead><tbody>${L.map(x=>`<tr><td><b>${esc(x.p.name)}</b></td><td>${esc(x.r.name||'')}</td><td>${kday(x.r.date)}</td><td class="r num">${won(+x.r.a||0)}</td></tr>`).join('')}</tbody>${L.length>1?`<tfoot><tr><td colspan="3"><b>합계</b></td><td class="r num"><b>${won(sum)}</b></td></tr></tfoot>`:''}</table></div>
-    <p class="hint" style="margin:10px 0 0">지금은 <b>「입금 확인 중」</b>이에요. 운영진이 통장과 맞춰 보고 확인하면 <b>「입금 확인」</b>으로 바뀌어요.<br>입금일이나 금액을 잘못 넣었으면 그 사람 줄의 「신고 수정」을 눌러 고칠 수 있어요.</p>
-    <div class="row"><button class="btn primary" type="button" id="askOk">확인</button></div></div>`;
-  document.body.appendChild(bg);const done=()=>{closeAsk();const li=(document.querySelector(`[data-prp="${ids[0]}"]`)||{closest:()=>null}).closest('li');if(li){li.scrollIntoView({block:'center',behavior:'smooth'});L.forEach(x=>{const e=(document.querySelector(`[data-prp="${x.p.id}"]`)||{closest:()=>null}).closest('li');if(e){e.classList.add('flash');setTimeout(()=>e.classList.remove('flash'),2000)}})}};
-  bg.addEventListener('click',e=>{if(e.target===bg||e.target.id==='askOk')done()});document.getElementById('askOk').focus()}
-/* 더 낸 금액: 입금 확인된 사람이 수정으로 청구액이 줄었거나 더 많이 낸 경우 (이미 요청했으면 0) */
-const overOf=p=>p.status==='정상'&&isPaid(p)&&p.pay!=='신고'&&!p.ovReq?Math.max(0,(p.paidAmt||0)-pAmt(p)):0;
-const BANKS=['국민','신한','하나','우리','농협','기업','카카오뱅크','토스뱅크','새마을금고','우체국','SC제일','부산','대구','경남','광주','전북','제주','수협','신협','케이뱅크'];
-function ovBox(no,ids){const sb=MY_SUBS.find(x=>x.no===no);if(!sb)return;const L=sb.ppl.filter(p=>ids.includes(p.id)&&overOf(p)>0);if(!L.length)return;
-  const sum=L.reduce((t,p)=>t+overOf(p),0);closeAsk();const bg=document.createElement('div');bg.className='askbg';bg.id='askBg';
-  bg.innerHTML=`<div class="askbox" role="dialog" aria-modal="true" aria-labelledby="askT"><h3 id="askT">더 낸 ${won(sum)}을 돌려드려요</h3>
-    <div class="tbl"><table><thead><tr><th>이름</th><th class="r">입금 확인</th><th class="r">지금 청구액</th><th class="r">돌려받을 금액</th></tr></thead><tbody>${L.map(p=>`<tr><td><b>${esc(p.name)}</b></td><td class="r num">${won(p.paidAmt||0)}</td><td class="r num">${won(pAmt(p))}</td><td class="r num"><b>${won(overOf(p))}</b></td></tr>`).join('')}</tbody></table></div>
-    <p class="hint" style="margin:8px 0">돌려받을 계좌를 적으면 운영진에게 「차액 환불」로 바로 올라가요. 참가는 그대로예요 (취소가 아니에요).</p>
-    <div class="rpf"><select id="ovB" aria-label="은행"><option value="">은행</option>${BANKS.map(x=>`<option>${x}</option>`).join('')}</select><input type="text" id="ovA" inputmode="numeric" placeholder="계좌번호"><input type="text" id="ovH" placeholder="예금주" value="${esc(S.user&&S.user.name||'')}"></div>
-    <span class="err" id="ovErr"></span>
-    <div class="row"><button class="btn ghost" type="button" id="askNo">나중에</button><button class="btn primary" type="button" id="ovGo">돌려받기 요청</button></div></div>`;
-  document.body.appendChild(bg);
-  bg.addEventListener('click',e=>{if(e.target===bg||e.target.id==='askNo'){closeAsk();toast('나중에 그 사람 줄의 「돌려받기」를 눌러 요청할 수 있어요',true)}

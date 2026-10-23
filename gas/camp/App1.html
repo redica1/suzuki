@@ -1,4 +1,4 @@
-/* build: 20261023-220220 */
+/* build: 20261023-220844 */
 /* ---------- 캠프 설정 (관리자 화면에서 입력되는 값) ---------- */
 const ROOM = { cap:4, emptyFee:130000 }; // 가족방: 4인 기준, 빈 자리 1개당 추가 비용
 const CAMP = { id:'27W', ri:0, lessonFee:60000, lessonMax:5, mcFee:150000,
@@ -10,7 +10,7 @@ const REFUND = { rules:[
   {until:'2027-01-10', label:'캠프 전날까지', rate:0, doc:true}],
   after:{label:'캠프 시작 후', rate:0, doc:true, allow:false}, duesRefund:false };
 /* 입금 전 접수는 수수료가 없는 기간(100% 환불)에만 취소 가능 */
-const unpaidCancelOk=()=>refundRule(S.today).rate===100;
+const unpaidCancelOk=()=>refundRule(S.today).allow!==false; // 입금 전이면 캠프 시작 전까지 언제든 바로 취소 (10/23 결정)
 /* 사람별 입금: pay = '전' | '신고' | '확인'. 입금 확인된 사람만 환불 대상 */
 const isPaid=p=>(p.paidAmt||0)>0;
 const dueOf=p=>pAmt(p)-(p.paidAmt||0);

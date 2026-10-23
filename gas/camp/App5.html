@@ -1,4 +1,38 @@
-/* build: 20261023-220220 */
+/* build: 20261023-220844 */
+      if(m.length)L.push(`${p.name}: ${m.join('·')}`)});
+    S.fam.filter(f=>!f.name.trim()).forEach(f=>{L.push(`${FAM_SHORT[f.type]||'가족'} 이름`);Q('#fn_'+f.id)});
+    if(t.teams.some(x=>x.over))L.push(`가족방은 한 방에 ${ROOM.cap}명까지예요`)}
+  else if(S.step===4){if(S.ens.on&&!(S.ens.group||'').trim()){L.push('앙상블 팀 이름');Q('#enG')}
+    if(S.ens.member&&!S.ens.joinNo&&!(S.ens.joinRep||'').trim()){L.push('함께할 팀을 고르거나 대표 학원 이름을 적어 주세요');Q('#enTq')}}
+  else if(S.step===5&&!S.agree){L.push('안내 사항 동의에 체크해 주세요');{const a=document.getElementById('agree');if(a)Q(a.closest('label')||a)}}
+  return {L,el}}
+function warnMissing(){const {L,el}=missWhat();beep();try{navigator.vibrate&&navigator.vibrate([120,60,120])}catch(e){}
+  document.querySelectorAll('.flash').forEach(x=>x.classList.remove('flash'));
+  el.forEach(x=>{void x.offsetWidth;x.classList.add('flash');setTimeout(()=>x.classList.remove('flash'),2000)});
+  if(el[0]){el[0].scrollIntoView({block:'center',behavior:'smooth'});if(el[0].focus&&/INPUT|SELECT/.test(el[0].tagName))setTimeout(()=>el[0].focus({preventScroll:true}),350)}
+  const m=L.length?'빠진 칸이 있어요 · '+L.slice(0,3).join(' / ')+(L.length>3?` 외 ${L.length-3}곳`:''):'빠진 칸을 확인해 주세요';
+  const tt=document.getElementById('toast');toast(m,true);clearTimeout(toast.t);toast.t=setTimeout(()=>tt.hidden=true,4500)}
+/* 접수 고치기 시작: only=null 이면 사람 추가(2단계), 사람 키 목록이면 그 사람들만 정보 수정(3단계) */
+function startEdit(no,only){const sb=MY_SUBS.find(x=>x.no===no);const f=JSON.parse(JSON.stringify(sb.form));S.acad=sb.acad;ensureRoster(sb.acad);S.verified=true;
+  Object.assign(S,{picked:f.picked,extra:f.extra,fam:f.fam,info:f.info,room:f.room,join:f.join||{},ens:f.ens||{on:false},agree:false,sel:{},cartAt:{}});
+  sb.ppl.forEach(p=>{if(p.status==='취소'){const k=p.id.slice(sb.no.length+1);delete S.picked[k];S.fam=S.fam.filter(x=>x.id!==k);S.extra=S.extra.filter(x=>x.id!==k)}});
+  S.riBack=CAMP.ri;if(f.ri!==undefined)CAMP.ri=f.ri;S.editNo=sb.no;S.editOnly=only;S.cx={};S.cxOpen='';S.view='form';
+  if(only==='ens'){S.editOnly=null;go(4);toast(`앙상블 「${esc(S.ens.group||'')}」을(를) 고쳐요 · 다 고친 뒤 「다음」→「수정 내용 저장」`)}
+  else if(only){go(3);toast(`${only.length}명 정보를 고쳐요 · 다 고친 뒤 마지막에 「수정 내용 저장」`)}else{go(2);toast(`${sb.no}에 인원을 추가해요 · 추가한 뒤 「다음」으로 정보를 넣어요`)}}
+function resetForm(){Object.assign(S,{cartAt:{},picked:{},extra:[],fam:[],info:{},room:{},join:{},ens:{on:false},agree:false,sel:{}})}
+
+/* ---------- 동작 ---------- */
+document.addEventListener('click',e=>{
+  const b=e.target.closest('button,[data-pick],[data-mc],[data-other],[data-ens],[data-roomck],[data-ensmem]'); if(!b) return;
+  const d=b.dataset;
+  if(d.go){go(+d.go);return}
+  if(d.round!==undefined){CAMP.ri=+d.round;render();toast(`${ROUNDS[CAMP.ri][0]} 금액으로 계산해요`);return}
+  if(d.acad){S.acad=d.acad;S.rq='';S.sel={};S.ptab='교사';S.acQ='';S.acOpen=false;S.picked={};S.extra=[];S.fam=[];S.info={};S.room={};
+    ensureRoster(d.acad);
+    S.verified=true;render();return}
+  if(d.quick){const n=d.quick;const t=TEACHER_DB.find(x=>x.demo&&x.name===n)||TEACHER_DB.find(x=>bare(x.name)===n&&x.acads.includes('마포스즈키'))||TEACHER_DB.find(x=>bare(x.name)===n);
+    if(!t){S.verr=`회원 명단에서 ${n} 선생님을 찾지 못했어요.`;render();return}
+    if(t.state==='대기'){S.verr='승인 대기 중이에요. 협회가 확인하면 이메일로 알려 드려요.';render();return}
     login({...t,acads:t.acads.includes('마포스즈키')?['마포스즈키',...t.acads.filter(a=>a!=='마포스즈키')]:t.acads});if(t.acads.includes('마포스즈키')){document.querySelector('[data-acad="마포스즈키"]')||0}return}
   if(b.id==='doLogin'){const nm=document.getElementById('lgNm').value.trim(),ph=document.getElementById('lgEm').value.replace(/\D/g,'');S.lgNm=nm;S.lgEm=document.getElementById('lgEm').value;
     if(!nm||ph.length<10){S.verr='이름과 휴대전화를 모두 넣어 주세요.';render();return}
@@ -139,33 +173,3 @@
 });
 document.addEventListener('change',e=>{const el=e.target;
   if(el.dataset&&el.dataset.rp){const a=S.rp||[];S.rp=el.checked?[...new Set([...a,el.dataset.rp])]:a.filter(x=>x!==el.dataset.rp);{const n=document.getElementById('rpMemo');if(n)S.rpMemo=n.value}render();return}
-  if(el.dataset&&el.dataset.xon){const x=S.extra.find(v=>v.id===el.dataset.xon);x.on=el.checked;if(!x.on){delete S.room[x.id];delete S.join[x.id];S.fam=S.fam.filter(f=>f.link!==x.id)}render();return}
-  if(el.dataset&&el.dataset.cx){const [no,id]=el.dataset.cx.split('|');const a=S.cx[no]||(S.cx[no]=[]);if(el.checked){if(!a.includes(id))a.push(id)}else S.cx[no]=a.filter(x=>x!==id);if(!S.cx[no].length)delete S.cx[no];S.cxDone=null;render();return}
-  if(el.id==='today'&&el.value){S.today=el.value;S.ruleOpen=true;render();return}
-  if(el.id==='cxWhy'){S.cxReason=el.value;return}
-});
-const fmtPhone=v=>{let d=String(v).replace(/\D/g,'');if(/^010010/.test(d))d=d.slice(3);d=d.slice(0,11);return d.length<4?d:d.length<8?d.slice(0,3)+'-'+d.slice(3):d.slice(0,3)+'-'+d.slice(3,7)+'-'+d.slice(7)};
-document.addEventListener('input',e=>{
-  if(e.target.id==='lgEm'){const el=e.target,f=fmtPhone(el.value);if(f!==el.value){el.value=f;el.setSelectionRange(f.length,f.length)}S.lgEm=f;return}
-  if(e.target.id==='prpA'){const box=document.getElementById('prpRf');if(box)box.hidden=!((+e.target.value.replace(/\D/g,'')||0)>(+e.target.dataset.due||0))}
-  if(e.target.dataset&&e.target.dataset.rpf){const [id,k]=e.target.dataset.rpf.split('|');const r=S.rpRow[id]||(S.rpRow[id]={n:'',d:'',a:''});r[k]=k==='a'?e.target.value.replace(/\D/g,''):e.target.value;return}
-  if(e.target.id==='nB'){e.target.value=e.target.value.replace(/\D/g,'').slice(0,4);return}
-  if(e.target.id==='rq'){S.rq=e.target.value;const l=document.getElementById('rosterList');if(l)l.innerHTML=rosterList();return}
-  const el=e.target, d=el.dataset;
-  if(el.id==='fName'){S.fName=el.value;return}
-  if(el.id==='fPhone'){S.fPhone=el.value;return}
-  if(el.id==='acQ'){S.acQ=el.value;S.acOpen=true;if(e.isComposing)return;const pos=el.selectionStart;render();const n=document.getElementById('acQ');n.focus();n.setSelectionRange(pos,pos);return}
-  if(el.id==='who'){S.who=el.value;S.verified=false;S.verr='';setNext();return}
-  if(el.id==='phone'){S.phone=el.value;S.verified=false;S.verr='';setNext();return}
-  if(el.id==='email'){S.email=el.value;return}
-  if(el.id==='req'){S.req=el.value;return}
-  if(d.famname){const f=S.fam.find(x=>x.id===d.famname);if(f){f.name=el.value;const h=document.querySelector(`#card_${f.id} h3`);if(h)h.textContent=el.value||'(이름 미입력)';el.classList.toggle('empty',!el.value);setNext()}return}
-  if(d.f&&(el.tagName==='INPUT')){S.info[d.k][d.f]=el.value;if(d.f==='by'){el.value=el.value.replace(/\D/g,'').slice(0,4);S.info[d.k].by=el.value;{const pp=people().find(x=>x.key===d.k);el.classList.toggle('empty',yearBad(pp,el.value))}setNext()}return}
-  if(d.ens==='tm'||d.ens==='ts'){el.value=el.value.replace(/\D/g,'').slice(0,2);if(d.ens==='ts'&&+el.value>59)el.value='59';S.ens[d.ens]=el.value;return}
-  if(d.ens&&el.type==='text'){S.ens[d.ens]=el.value;if(d.ens==='group')setNext();if(d.ens==='extra'){const pos=el.selectionStart;render();const n=document.getElementById('enX');n.focus();n.setSelectionRange(pos,pos)}return}
-});
-document.addEventListener('change',e=>{
-  const el=e.target, d=el.dataset;
-  if(d.f&&el.tagName==='SELECT'){const i=S.info[d.k];i[d.f]=d.f==='lessons'?+el.value:el.value;
-    if(d.f==='type'&&!PLAYS.has(el.value)){i.lessons=0;i.mc=[];i.concert='없음'}
-    if(d.f==='type'){const fm=S.fam.find(x=>x.id===d.k);if(fm)fm.type=el.value}

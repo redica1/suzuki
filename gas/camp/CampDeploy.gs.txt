@@ -1,5 +1,5 @@
 /**
- * 캠프 접수 자동 반영 도우미 (2026-10-23 v2 · 반쯤 바뀐 파일을 올리지 않게 커밋 고정·빌드 번호 확인)  — 이 파일은 깃허브에 보관만 하는 사본. 실제로는 「캠프접수 자동 반영 도우미」 앱스크립트의 Code.gs
+ * 캠프 접수 자동 반영 도우미 (2026-10-23 v3 · 글자 깨짐 방지 · 반쯤 바뀐 파일을 올리지 않게 커밋 고정·빌드 번호 확인)  — 이 파일은 깃허브에 보관만 하는 사본. 실제로는 「캠프접수 자동 반영 도우미」 앱스크립트의 Code.gs
  *
  * 코드 원본: 깃허브 redica1/suzuki 의 gas/camp/ 폴더 (Claude 가 고쳐서 올림, 개인정보 없음)
  *
@@ -132,7 +132,7 @@ function fetchSrc_() {
 
 function api_(t, method, path, body) {
   const res = UrlFetchApp.fetch('https://script.googleapis.com/v1/projects/' + t.scriptId + path, {
-    method, contentType: 'application/json', payload: body ? JSON.stringify(body) : undefined,
+    method, contentType: 'application/json; charset=utf-8', payload: body ? JSON.stringify(body).replace(/[\u007f-\uffff]/g, c => '\\u' + ('000' + c.charCodeAt(0).toString(16)).slice(-4)) : undefined,   // 한글·특수 글자는 \uXXXX 로 보내 깨지지 않게
     headers: { Authorization: 'Bearer ' + ScriptApp.getOAuthToken() }, muteHttpExceptions: true });
   const code = res.getResponseCode(), txt = res.getContentText();
   if (code >= 300) throw new Error(t.name + ' ' + path + ' 실패 (' + code + '): ' + txt.slice(0, 400));

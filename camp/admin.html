@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>캠프 접수 관리자</title>
+<!--
+  2027 스즈키 겨울 음악제(캠프) — 관리자 페이지 (2026-10-23)
+      https://redica1.github.io/suzuki/camp/admin.html → 캠프 접수 앱의 관리자 화면 (?page=admin)
+  · 아이디·비밀번호는 접수 DB 시트 「설정」 탭 (이 페이지는 액자일 뿐, 명단·비밀번호는 깃허브에 없음).
+-->
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<meta property="og:title" content="캠프 접수 관리자 (운영진 전용)">
+<meta property="og:description" content="운영진만 사용하는 관리자 화면입니다.">
+<meta name="theme-color" content="#1b2340">
+<style>
+  html, body { margin: 0; height: 100%; background: #eef0f4; }
+  [hidden] { display: none !important; }
+  body { font: 600 17px/1.55 -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif; color: #18203a; }
+  #app { position: fixed; inset: 0; width: 100%; height: 100%; height: 100dvh; border: 0; display: block; }
+  .msg { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; text-align: center; padding: 24px; color: #5d6680; }
+  .msg b { color: #18203a; font-size: 21px; }
+  .msg a.btn { display: inline-block; background: #2c46c9; color: #fff; text-decoration: none; border-radius: 12px; padding: 14px 22px; font-size: 18px; font-weight: 700; }
+  .msg a.sub { color: #5d6680; font-size: 15px; }
+  .spin { width: 26px; height: 26px; border-radius: 50%; border: 3px solid #2c46c9; border-right-color: transparent; animation: s .8s linear infinite; }
+  @keyframes s { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+<div class="msg" id="wait" hidden><span class="spin"></span>관리자 화면을 여는 중이에요…<small id="slow" hidden>오래 걸리면 <a id="direct" target="_top">여기를 눌러 바로 열어 주세요</a></small></div>
+<div class="msg" id="inapp" hidden>
+  <b>크롬(기본 브라우저)에서 열어 주세요</b>
+  <span>카카오톡 같은 앱 안에서는 관리자 화면이 열리지 않아요.</span>
+  <a class="btn" id="openOut">브라우저에서 열기</a>
+  <a class="sub" id="copyUrl" href="#">버튼이 안 되면: 주소 복사하기</a>
+</div>
+<iframe id="app" title="캠프 접수 관리자" allow="camera; clipboard-write; clipboard-read; screen-wake-lock" hidden></iframe>
+<script>
+(function () {
+  var APP = 'https://script.google.com/macros/s/AKfycbxXtviL6-9yGWs3lLgDiQs2AdWcVGJwCdg0fsY1XWaWrXUlqtBnCqycnIvbjvM59pfyEA/exec?page=admin';   // 캠프 접수 앱 관리자 화면
+  var ua = navigator.userAgent || '', here = location.href.split('#')[0];
+  var android = /Android/i.test(ua);
+  var kakao = /KAKAOTALK/i.test(ua), line = / Line\//i.test(ua);
+  var otherApp = /NAVER\(inapp|Instagram|FBAN|FBAV|BAND\/|DaumApps|everytimeApp|; wv\)/i.test(ua);
+  var out = '';
+  if (kakao) out = 'kakaotalk://web/openExternal?url=' + encodeURIComponent(here);
+  else if (line) out = here + (here.indexOf('?') < 0 ? '?' : '&') + 'openExternalBrowser=1';
+  else if (otherApp && android) out = 'intent://' + here.replace(/^https?:\/\//, '') + '#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=' + encodeURIComponent(here) + ';end';
+
+  if (kakao || line || otherApp) {
+    document.getElementById('inapp').hidden = false;
+    var b = document.getElementById('openOut');
+    if (out) { b.href = out; setTimeout(function () { location.href = out; }, 50); }
+    else b.style.display = 'none';
+    document.getElementById('copyUrl').onclick = function (e) {
+      e.preventDefault();
+      var done = function () { alert('주소를 복사했어요. 크롬이나 사파리 주소창에 붙여 넣어 주세요.'); };
+      try { navigator.clipboard.writeText(here).then(done, function () { prompt('이 주소를 복사해 브라우저에 붙여 넣어 주세요', here); }); }
+      catch (x) { prompt('이 주소를 복사해 브라우저에 붙여 넣어 주세요', here); }
+    };
+    return;
+  }
+  var app = document.getElementById('app');
+  document.getElementById('wait').hidden = false;
+  document.getElementById('direct').href = APP;
+  app.src = APP; app.hidden = false;
+  setTimeout(function () { document.getElementById('slow').hidden = false; }, 10000);
+})();
+</script>
+</body>
+</html>

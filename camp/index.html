@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>2027 스즈키 겨울 음악제 접수</title>
+<!--
+  2027 스즈키 겨울 음악제(캠프) 접수 — 공유용 페이지 (2026-10-23)
+  · https://redica1.github.io/suzuki/camp/        → 캠프 접수 앱 (선생님께 보내는 주소)
+  · https://redica1.github.io/suzuki/camp/admin.html → 캠프 관리자 화면
+  · 이 페이지는 액자일 뿐, 명단·접수 내용은 깃허브에 없음 (접수 DB 구글 시트에만 있음).
+  · 카카오톡 등 앱 안 브라우저에서는 구글이 막으므로 크롬(기본 브라우저)으로 넘김 (교사연수 페이지와 같은 방식).
+  · 앱 주소가 바뀌면 아래 APP 한 줄만 바꾸면 됨.
+-->
+<meta name="description" content="2027 스즈키 겨울 음악제 접수 · 2027년 1월 11일(월) ~ 15일(금) · 학원별 접수 · 입금 신고 · 내 접수 확인">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="스즈키 겨울 음악제">
+<meta property="og:title" content="2027 스즈키 겨울 음악제 접수">
+<meta property="og:description" content="2027. 1. 11.(월) ~ 1. 15.(금) | 학원별 접수 · 입금 신고 · 내 접수 확인">
+<meta property="og:url" content="https://redica1.github.io/suzuki/camp/">
+<meta property="og:locale" content="ko_KR">
+<meta name="theme-color" content="#16303a">
+<meta name="robots" content="noindex">
+<style>
+  html, body { margin: 0; height: 100%; background: #eef0f4; }
+  [hidden] { display: none !important; }
+  body { font: 600 17px/1.55 -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif; color: #18203a; }
+  /* 접수 화면을 화면 가득 (주소창이 줄었다 늘었다 해도 맞게) */
+  #app { position: fixed; inset: 0; width: 100%; height: 100%; height: 100dvh; border: 0; display: block; }
+  /* 접수 화면이 뜨기 전 잠깐 보이는 안내 */
+  .msg { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; text-align: center; padding: 24px; color: #5d6680; }
+  .msg b { color: #18203a; font-size: 21px; }
+  .msg a.btn { display: inline-block; background: #2c46c9; color: #fff; text-decoration: none; border-radius: 12px; padding: 14px 22px; font-size: 18px; font-weight: 700; }
+  .msg a.sub { color: #5d6680; font-size: 15px; }
+  .spin { width: 26px; height: 26px; border-radius: 50%; border: 3px solid #2c46c9; border-right-color: transparent; animation: s .8s linear infinite; }
+  @keyframes s { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+<!-- 보통 브라우저: 접수 화면을 불러오는 동안 -->
+<div class="msg" id="wait" hidden><span class="spin"></span>접수 화면을 여는 중이에요…<small id="slow" hidden>오래 걸리면 <a id="direct" target="_top">여기를 눌러 바로 열어 주세요</a></small></div>
+<!-- 카톡 등 앱 안 브라우저: 크롬·기본 브라우저로 넘김 -->
+<div class="msg" id="inapp" hidden>
+  <b>크롬(기본 브라우저)에서 열어 주세요</b>
+  <span>카카오톡 같은 앱 안에서는 접수 화면이 열리지 않아요.<br>아래 버튼을 누르면 브라우저에서 열려요.</span>
+  <a class="btn" id="openOut">브라우저에서 열기</a>
+  <a class="sub" id="copyUrl" href="#">버튼이 안 되면: 주소 복사하기</a>
+</div>
+<iframe id="app" title="2027 스즈키 겨울 음악제 접수" allow="clipboard-write; screen-wake-lock" hidden></iframe>
+<script>
+(function () {
+  var APP = 'https://script.google.com/macros/s/AKfycbxXtviL6-9yGWs3lLgDiQs2AdWcVGJwCdg0fsY1XWaWrXUlqtBnCqycnIvbjvM59pfyEA/exec';   // 캠프 접수 앱 (2027 겨울)
+  var ua = navigator.userAgent || '', here = location.href.split('#')[0];
+  var android = /Android/i.test(ua);
+  var kakao = /KAKAOTALK/i.test(ua), line = / Line\//i.test(ua);
+  var otherApp = /NAVER\(inapp|Instagram|FBAN|FBAV|BAND\/|DaumApps|everytimeApp|SamsungBrowser\/[\d.]+ .*wv|; wv\)/i.test(ua);
+  var out = '';
+  if (kakao) out = 'kakaotalk://web/openExternal?url=' + encodeURIComponent(here);
+  else if (line) out = here + (here.indexOf('?') < 0 ? '?' : '&') + 'openExternalBrowser=1';
+  else if (otherApp && android) out = 'intent://' + here.replace(/^https?:\/\//, '') + '#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=' + encodeURIComponent(here) + ';end';
+
+  if (kakao || line || otherApp) {
+    // 앱 안 브라우저: 접수 화면은 넣지 않고 바로 바깥 브라우저로 넘김 (안 넘어가면 버튼·주소 복사)
+    document.getElementById('inapp').hidden = false;
+    var b = document.getElementById('openOut');
+    if (out) { b.href = out; setTimeout(function () { location.href = out; }, 50); }
+    else b.style.display = 'none';   // 아이폰의 일부 앱은 자동으로 못 넘김 → 주소 복사 안내
+    document.getElementById('copyUrl').onclick = function (e) {
+      e.preventDefault();
+      var done = function () { alert('주소를 복사했어요. 크롬이나 사파리 주소창에 붙여 넣어 주세요.'); };
+      try { navigator.clipboard.writeText(here).then(done, function () { prompt('이 주소를 복사해 브라우저에 붙여 넣어 주세요', here); }); }
+      catch (x) { prompt('이 주소를 복사해 브라우저에 붙여 넣어 주세요', here); }
+    };
+    return;
+  }
+  // 보통 브라우저: 접수 화면을 화면 가득
+  var app = document.getElementById('app');
+  document.getElementById('wait').hidden = false;
+  document.getElementById('direct').href = APP;
+  app.src = APP; app.hidden = false;
+  // 10초가 지나도 안 뜨면 앱 주소로 바로 여는 링크 (회사·학교 와이파이가 막는 경우 대비)
+  setTimeout(function () { document.getElementById('slow').hidden = false; }, 10000);
+})();
+</script>
+</body>
+</html>

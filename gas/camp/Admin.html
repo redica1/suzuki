@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261024-003144 -->
+<!-- build: 20261024-003411 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -278,7 +278,7 @@ const kinds=G=>[nz(G.filter(x=>x.kind==='교사').length),nz(G.filter(x=>x.kind=
 function stRoundX(L){const R=[...new Set(L.map(x=>x.round))].sort();const A=[...new Set(L.map(x=>x.acad))].sort((x,y)=>x.localeCompare(y,'ko'));
   const t1=ST(['차수','접수 건수','교사','학생','가족','합계','청구','입금 확인','남은 금액'],R.map(r=>{const G=L.filter(x=>x.round===r);return [esc(r),new Set(G.map(x=>x.sb.no)).size,...kinds(G),...money(G)]}),['합계',new Set(L.map(x=>x.sb.no)).size,...kinds(L),...money(L)]);
   const t2=ST(['학원',...R.map(esc),'합계'],A.map(a=>[esc(a),...R.map(r=>nz(L.filter(x=>x.acad===a&&x.round===r).length)),L.filter(x=>x.acad===a).length]),['합계',...R.map(r=>L.filter(x=>x.round===r).length),L.length]);
-  return `<div class="panel"><b>① 차수별 합계</b> <span class="hint">접수한 차수 기준 (금액도 그 차수 요금)</span>${t1}</div><div class="panel"><b>② 학원 × 차수 인원</b>${t2}</div><div class="panel"><b>③ 참가자격 × 차수 인원</b>${stRound(L)}</div>`}
+  return `<div class="panel"><b>① 차수별 합계</b> <span class="hint">접수한 차수 기준 (금액도 그 차수 요금)</span>${t1}</div><div class="panel"><b>② 학원 × 차수 인원</b>${t2}</div>`}
 /* 참가자격별 */
 function stType(L){const T=[...TYPE_ORDER.filter(t=>L.some(x=>x.type===t)),...[...new Set(L.map(x=>x.type))].filter(t=>!TYPE_ORDER.includes(t))];
   return `<div class="panel"><b>참가자격별</b> <span class="hint">취소 뺌</span>${ST(['참가자격','인원','비율','청구','입금 확인','남은 금액'],T.map(t=>{const G=L.filter(x=>x.type===t);return [esc(t||'미정'),G.length,pct(G.length,L.length),...money(G)]}),['합계',L.length,'100%',...money(L)])}</div>`}
@@ -299,9 +299,9 @@ const PROG_LIST = {
 /* 진도 → 권수 (1권A·1권B → 1권, 10권 이상은 따로) */
 const bookOf=g=>{g=String(g||'');if(/pre/i.test(g))return 'Pre-Twinkle';if(/10권\s*이상/.test(g))return '10권 이상';const m=g.match(/^(\d+)권/);return m?m[1]+'권':(g||'미입력')};
 const pct=(n,t)=>t&&n?Math.round(n*1000/t)/10+'%':'';
-function stInst(L){const P=L.filter(x=>x.kind!=='가족');const ins=cnt(P,x=>x.inst||'미정');
-  const top=ST(['악기','교사','학생','합계'],ins.map(([i])=>[esc(i),P.filter(x=>(x.inst||'미정')===i&&x.kind==='교사').length,P.filter(x=>(x.inst||'미정')===i&&x.kind==='학생').length,P.filter(x=>(x.inst||'미정')===i).length]),['합계',P.filter(x=>x.kind==='교사').length,P.filter(x=>x.kind==='학생').length,P.length]);
-  const per=ins.map(([i])=>{const Sx=P.filter(x=>(x.inst||'미정')===i&&x.kind==='학생');if(!Sx.length)return '';
+function stInst(L){const P=L.filter(x=>T_TEACH.includes(x.type)||T_PLAY.includes(x.type));const ins=cnt(P,x=>x.inst||'미정');
+  const top=ST(['악기','교사','학생','합계'],ins.map(([i])=>[esc(i),P.filter(x=>(x.inst||'미정')===i&&T_TEACH.includes(x.type)).length,P.filter(x=>(x.inst||'미정')===i&&T_PLAY.includes(x.type)).length,P.filter(x=>(x.inst||'미정')===i).length]),['합계',P.filter(x=>T_TEACH.includes(x.type)).length,P.filter(x=>T_PLAY.includes(x.type)).length,P.length]);
+  const per=ins.map(([i])=>{const Sx=P.filter(x=>(x.inst||'미정')===i&&T_PLAY.includes(x.type));if(!Sx.length)return '';
     const list=PROG_LIST[i]||PROG_LIST['기타'];const known=new Set(list);const extra=[...new Set(Sx.map(x=>x.prog).filter(g=>g&&!known.has(g)))];const all=[...list,...extra];
     const T=Sx.length,none=Sx.filter(x=>!x.prog).length;
     const books=[...new Set(all.map(bookOf))];const bc=b=>Sx.filter(x=>x.prog&&bookOf(x.prog)===b).length;
@@ -310,7 +310,7 @@ function stInst(L){const P=L.filter(x=>x.kind!=='가족');const ins=cnt(P,x=>x.i
       else{const n=bc(b);rows.push([esc(b),n||'<span class="faint">0</span>',pct(n,T)])}});
     if(none)rows.push(['<span class="faint">진도 미입력</span>',none,pct(none,T)]);
     const progTbl=ST(['현재 진도','인원','비율'],rows,['총계',T,'100%']);
-    return `<div class="panel"><div class="spread"><b>${esc(i)} 학생 ${T}명</b><span class="hint">권수는 현재 진도에서 셈 (1권A·1권B → 1권)</span></div><div class="stgrid"><div><b class="hint">권수별</b>${bookTbl}</div><div><b class="hint">진도별</b>${progTbl}</div></div></div>`}).join('');
+    return `<div class="panel"><div class="spread"><b>${esc(i)} 학생 ${T}명</b> <span class="hint">학생 + 악기하는 교사자녀</span><span class="hint">권수는 현재 진도에서 셈 (1권A·1권B → 1권)</span></div><div class="stgrid"><div><b class="hint">권수별</b>${bookTbl}</div><div><b class="hint">진도별</b>${progTbl}</div></div></div>`}).join('');
   return top+per}
 /* 2026 여름 「학원별인원통계」「명찰통계」와 같은 표 */
 const TYPE_ORDER=['교사','연수생','소속없는 중급연수생','학생','회원의 악기하는 자녀','회원의 첫번째 보호자','회원의 그외 악기 안하는 동반가족','동반가족 중 돌전아기'];

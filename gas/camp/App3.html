@@ -1,4 +1,11 @@
+function ensSave(L){ENS=L} /* 화면 미리보기용 · 진짜 팀 목록은 서버가 접수 내용에서 다시 만듦 */
+const teamOf=a=>ensTeams().find(t=>t.rep===a||(t.acads||[]).includes(a));
+/* 우리 학원이 이미 팀에 들어가 있으면(다른 선생님·다른 접수로) 대표·함께 선택을 막음. 지금 고치는 접수가 그 팀을 낸 접수면 막지 않음 */
 function ensLock(){const a=S.acad,t=teamOf(a);if(!t)return null;if(S.editNo&&(t.no===S.editNo||(t.mem||[]).some(m=>m.no===S.editNo)))return null;return t}
+/* 이 접수가 대표로 낸 팀과 함께하는 학원 (함께하는 학원이 있으면 대표는 마음대로 취소 못 함) */
+const repTeam=no=>ensTeams().find(t=>t.no===no);
+const teamMates=no=>{const t=repTeam(no);return t?(t.acads||[]).filter(a=>a!==t.rep):[]};
+const joinedOf=no=>{const t=repTeam(no);return t?(t.mem||[]).map(m=>m.acad):[]};
 const byTxt=t=>t&&t.by?` · ${esc(t.by)} 선생님 신청`:'';
 /* 「대표가 이미 있어요」: 이미 신청된 팀에서 고르거나, 아직 신청 전이면 대표 학원 이름을 적음 */
 const songTxt=(e,n)=>{const t=[e['k'+n],e['c'+n]].filter(Boolean).map(esc).join(' · ');if(!t)return '';const x=[e['acc'+n]&&'반주자',e['video'+n]&&'영상'].filter(Boolean);return t+(x.length?` <small class="hint">(${x.join(' · ')})</small>`:'')};
@@ -16,6 +23,7 @@ function vEns(){
   const mem=players.filter(p=>E.mem&&E.mem[p.key]);
   const cnt=k=>mem.filter(p=>p.inst===k).length, etc=mem.filter(p=>!['바이올린','첼로'].includes(p.inst)).length;
   const lk=ensLock(); if(lk){E.on=false;E.member=false}
+  const mates=S.editNo&&E.on?teamMates(S.editNo):[], joined=S.editNo?joinedOf(S.editNo):[], keep=mates.length>0;
   const mine=teamOf(S.acad), sel=E.acads||[], q=(E.aq||'').trim();
   const cands=q?ACADEMIES.filter(a=>a.name!==S.acad&&!sel.includes(a.name)&&(a.name.includes(q)||(a.region||'').includes(q)||(a.head||'').includes(q))).slice(0,12):[];
   return `<section class="sec"><h2>앙상블 신청</h2>
@@ -24,13 +32,13 @@ function vEns(){
    :mine&&S.editNo&&mine.no===S.editNo?`<div class="note info">「<b>${esc(mine.name)}</b>」 팀 정보를 고치는 중이에요. 마지막 단계에서 「수정 내용 저장」을 누르면 바뀌어요.</div>`:''}
   <div class="panel">
     <div class="f" style="display:grid;gap:6px"><span style="color:var(--muted);font-weight:500;font-size:13.5px">앙상블을 신청하시나요?</span>
-      <div class="seg ens3"><button type="button" data-enson="0" aria-pressed="${!E.on&&!E.member}">신청 안 함</button><button type="button" data-enson="1" aria-pressed="${!!E.on}" ${lk?'disabled':''}>우리가 대표예요</button><button type="button" data-enson="m" aria-pressed="${!!E.member}" ${lk?'disabled':''}>대표가 이미 있어요</button></div>
-      <span class="hint">${lk?'우리 학원은 이미 팀에 들어가 있어서 고를 수 없어요.':E.on?'우리 학원이 팀을 만들고 신청해요. 함께하는 학원은 아래에서 골라요.':E.member?'다른 학원이 대표인 팀에 함께해요. 신청과 곡·시간은 대표 학원이 넣어요.':'앙상블에 나가지 않아요.'}</span></div>
+      <div class="seg ens3"><button type="button" data-enson="0" aria-pressed="${!E.on&&!E.member}" ${keep?'disabled':''}>신청 안 함</button><button type="button" data-enson="1" aria-pressed="${!!E.on}" ${lk?'disabled':''}>우리가 대표예요</button><button type="button" data-enson="m" aria-pressed="${!!E.member}" ${lk||keep?'disabled':''}>대표가 이미 있어요</button></div>
+      <span class="hint">${keep?`<b style="color:var(--rosin)">함께하는 학원(${mates.map(esc).join(', ')})이 있어서 대표 신청을 취소할 수 없어요.</b> 꼭 취소해야 하면 함께하는 학원과 먼저 이야기한 뒤 운영진에게 연락해 주세요.`:lk?'우리 학원은 이미 팀에 들어가 있어서 고를 수 없어요.':E.on?'우리 학원이 팀을 만들고 신청해요. 함께하는 학원은 아래에서 골라요.':E.member?'다른 학원이 대표인 팀에 함께해요. 신청과 곡·시간은 대표 학원이 넣어요.':'앙상블에 나가지 않아요.'}</span></div>
     ${E.member?ensMemberHTML():''}
     ${E.on?`
     <label class="f" for="enG"><span>팀 이름<span class="req">*</span> <span class="hint">마음대로 정해요 · 프로그램북에 이 이름으로 나가요</span></span><input type="text" id="enG" data-ens="group" value="${esc(E.group||'')}" placeholder="예: 서울 연합 챔버" ${E.group?'':'class="empty"'}></label>
     <div class="f" style="display:grid;gap:6px"><span>함께하는 학원 <span class="hint">대표 학원(우리 학원)은 자동으로 들어가요</span></span>
-      <div class="chips"><span class="cchip"><b>${esc(S.acad)}</b>&nbsp;<small class="dtag">대표</small></span>${sel.map(a=>{const t=teamOf(a);return `<span class="cchip ${t?'warn':''}">${esc(a)}${t?` <small class="dtag">이미 「${esc(t.name)}」 팀</small>`:''}<button type="button" data-ensrm="${esc(a)}" aria-label="${esc(a)} 빼기">×</button></span>`}).join('')}</div>
+      <div class="chips"><span class="cchip"><b>${esc(S.acad)}</b>&nbsp;<small class="dtag">대표</small></span>${[...new Set([...sel,...joined])].map(a=>{let t=teamOf(a);if(t&&S.editNo&&t.no===S.editNo)t=null;const jn=joined.includes(a);return `<span class="cchip ${t?'warn':''}">${esc(a)}${t?` <small class="dtag">이미 「${esc(t.name)}」 팀</small>`:''}${jn?' <small class="dtag">직접 함께 신청</small>':`<button type="button" data-ensrm="${esc(a)}" aria-label="${esc(a)} 빼기">×</button>`}</span>`}).join('')}</div>
       <input type="search" id="enAq" value="${esc(E.aq||'')}" placeholder="학원 이름·지역·원장으로 찾아서 추가" autocomplete="off">
       <div id="ensCands">${ensCandsHTML()}</div>
       ${sel.some(a=>teamOf(a))?`<div class="note">「이미 ○○ 팀」인 학원은 다른 팀에 들어가 있어요. 그 팀 대표 학원과 확인한 뒤 함께하세요. 한 학원은 한 팀에만 들어가는 게 원칙이에요.</div>`:''}
@@ -161,6 +169,15 @@ function askBox(title,body,okLabel,onOk){closeAsk();const bg=document.createElem
   bg.innerHTML=`<div class="askbox" role="dialog" aria-modal="true" aria-labelledby="askT"><h3 id="askT">${title}</h3><div>${body}</div><div class="row"><button class="btn ghost" type="button" id="askNo">취소</button><button class="btn primary" type="button" id="askOk">${okLabel}</button></div></div>`;
   document.body.appendChild(bg);bg.addEventListener('click',e=>{if(e.target===bg||e.target.id==='askNo'){closeAsk()}else if(e.target.id==='askOk'){closeAsk();onOk()}});
   document.getElementById('askOk').focus()}
+/* 입금 신고를 보낸 뒤: 무엇을 신고했는지 확인 상자 → 닫으면 그 사람 줄로 가서 반짝 */
+function repDone(ids){const L=[];MY_SUBS.forEach(sb=>sb.ppl.forEach(p=>{if(ids.includes(p.id)&&p.pay==='신고'&&p.rep){const r=p.rep.rows&&p.rep.rows[p.id]||{name:p.rep.name,date:p.rep.date,a:p.rep.amt};L.push({p,r})}}));if(!L.length)return;
+  const sum=L.reduce((t,x)=>t+(+x.r.a||0),0);closeAsk();const bg=document.createElement('div');bg.className='askbg';bg.id='askBg';
+  bg.innerHTML=`<div class="askbox" role="dialog" aria-modal="true" aria-labelledby="askT"><h3 id="askT">✓ 입금 신고를 보냈어요</h3>
+    <div class="tbl"><table><thead><tr><th>이름</th><th>입금자명</th><th>입금일</th><th class="r">금액</th></tr></thead><tbody>${L.map(x=>`<tr><td><b>${esc(x.p.name)}</b></td><td>${esc(x.r.name||'')}</td><td>${kday(x.r.date)}</td><td class="r num">${won(+x.r.a||0)}</td></tr>`).join('')}</tbody>${L.length>1?`<tfoot><tr><td colspan="3"><b>합계</b></td><td class="r num"><b>${won(sum)}</b></td></tr></tfoot>`:''}</table></div>
+    <p class="hint" style="margin:10px 0 0">지금은 <b>「입금 확인 중」</b>이에요. 운영진이 통장과 맞춰 보고 확인하면 <b>「입금 확인」</b>으로 바뀌어요.<br>입금일이나 금액을 잘못 넣었으면 그 사람 줄의 「신고 수정」을 눌러 고칠 수 있어요.</p>
+    <div class="row"><button class="btn primary" type="button" id="askOk">확인</button></div></div>`;
+  document.body.appendChild(bg);const done=()=>{closeAsk();const li=(document.querySelector(`[data-prp="${ids[0]}"]`)||{closest:()=>null}).closest('li');if(li){li.scrollIntoView({block:'center',behavior:'smooth'});L.forEach(x=>{const e=(document.querySelector(`[data-prp="${x.p.id}"]`)||{closest:()=>null}).closest('li');if(e){e.classList.add('flash');setTimeout(()=>e.classList.remove('flash'),2000)}})}};
+  bg.addEventListener('click',e=>{if(e.target===bg||e.target.id==='askOk')done()});document.getElementById('askOk').focus()}
 function closeAsk(){const x=document.getElementById('askBg');if(x)x.remove()}
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeAsk()});
 const unpaidPpl=()=>MY_SUBS.flatMap(sb=>sb.ppl.filter(p=>p.status==='정상'&&p.pay!=='신고'&&dueOf(p)>0).map(p=>({sb,p})));
@@ -171,18 +188,3 @@ function prpForm(p,sb){const ed=p.pay==='신고'&&p.rep;const r0=ed&&(p.rep.rows
     <div class="rfbox" id="prpRf" ${over?'':'hidden'}><span class="hint"><b>청구액(${won(dueOf(p))})보다 많아요.</b> 더 낸 금액을 돌려받을 계좌를 적어 주세요.</span>
       <div class="rpf"><select id="prpRfB" aria-label="환불 은행"><option value="">은행</option>${['국민','신한','하나','우리','농협','기업','카카오뱅크','토스뱅크','새마을금고','우체국','SC제일','부산','대구','경남','광주','전북','제주','수협','신협','케이뱅크'].map(x=>`<option>${x}</option>`).join('')}</select><input type="text" id="prpRfA" inputmode="numeric" placeholder="계좌번호"><input type="text" id="prpRfH" placeholder="예금주"></div></div>
     <label class="fl" for="prpM"><span>메모</span><input type="text" id="prpM" placeholder="금액이 청구액 ${won(dueOf(p))}과 다르면 적어 주세요"></label>
-    <div class="row" style="justify-content:flex-end"><span class="err" id="prpErr" style="margin-right:auto"></span><button class="btn small ghost" type="button" data-prp="${p.id}">닫기</button>${ed?`<button class="btn small" type="button" data-prpdel="${sb.no}|${p.id}">신고 취소</button><button class="btn small primary" type="button" data-prpgo="${sb.no}|${p.id}">수정 내용 저장</button>`:`<button class="btn small primary" type="button" data-prpgo="${sb.no}|${p.id}">입금 신고하기</button>`}</div>
-    ${ed?`<p class="hint" style="margin:0">운영진이 확인하기 전까지 고칠 수 있어요. 확인된 뒤에는 운영진에게 연락해 주세요.${p.rep.ids.length>1?` 이 신고는 ${p.rep.ids.length}명이 함께예요 · 이 사람 줄만 바뀌어요.`:''}</p>`:''}</div>`}
-function payReport(){
-  const open=unpaidPpl();
-  const reps=[];MY_SUBS.forEach(sb=>sb.ppl.forEach(p=>{if(p.pay==='신고'&&p.rep&&!reps.some(r=>r.id===p.rep.id))reps.push(p.rep)}));
-  if(!open.length&&!reps.length) return '';
-  const sel=S.rp||(S.rp=open.map(x=>x.p.id)); const sum=open.filter(x=>sel.includes(x.p.id)).reduce((t,x)=>t+dueOf(x.p),0);
-  const nameOf=id=>{for(const sb of MY_SUBS){const p=sb.ppl.find(q=>q.id===id);if(p)return p.name}return ''};
-  return `<div class="panel rp"><div class="spread"><h3 style="margin:0">입금 신고</h3><span class="hint">입금한 사람을 체크하고 알려 주시면 운영진이 통장과 맞춰 보고 확인해요</span></div>
-    ${reps.map(r=>`<div class="note info spread"><span>${r.ids.map(id=>`${esc(nameOf(id))} · ${esc((r.rows&&r.rows[id]||r).name)} · ${kday((r.rows&&r.rows[id]||r).date)} · ${won((r.rows&&r.rows[id]||{a:r.amt}).a)}`).join('<br>')}<br>합계 <b>${won(r.amt)}</b> · <b>운영진 확인 중</b>${r.edited?` <small class="hint">(${stampTxt(r.edited)} 수정)</small>`:''}${r.memo?`<br><span class="hint">메모: ${esc(r.memo)}</span>`:''}</span></div>`).join('')}
-    ${open.length?`${bankHTML()}<div class="hint">사람마다 <b>입금자명 · 입금일 · 입금 금액</b>을 같은 줄에 넣어요. 나눠서 입금해도 돼요.</div>
-    <div class="row"><button class="btn small" type="button" data-rpall="1">모두 선택</button><button class="btn small ghost" type="button" data-rpall="0">모두 해제</button><span class="hint">${sel.length}명 선택</span>
-      <span class="hint" style="margin-left:auto">선택한 사람에게 한 번에:</span><input type="text" id="rpAllN" placeholder="입금자명" style="width:110px" aria-label="한 번에 넣을 입금자명" value="${esc(S.rpAllN||'')}"><input type="date" id="rpAllD" style="width:140px" aria-label="한 번에 넣을 입금일" value="${S.rpAllD||''}" max="${S.today}"><button class="btn small" type="button" id="rpFill">적용</button></div>
-    ${MY_SUBS.filter(sb=>open.some(x=>x.sb===sb)).map(sb=>`<div class="hint" style="margin-top:6px"><b class="num">${sb.no}</b> · ${sb.round} · ${kday(sb.date)} 접수</div>
-    <div class="rphead"><span></span><span></span><div class="rpf"><span>입금자명</span><span>입금일 *</span><span class="r">입금 금액</span></div></div>

@@ -1,3 +1,23 @@
+  if(b.id==='firstCheck'){const t=findT(S.fPhone);if(!t||t.name!==S.fName.trim()){S.verr='명단의 이름·휴대전화와 일치하지 않아요. 명단에 없으면 아래 「교사 등록」을 눌러 주세요.';render();return}
+    if(t.hasPw){S.verr='이미 비밀번호가 있어요. 로그인 화면에서 「비밀번호를 잊었어요」를 눌러 주세요.';render();return}
+    S.pending={...t};S.auth='first2';S.verr='';render();return}
+  if(b.id==='makePw'){const p1=document.getElementById('pw1').value,p2=document.getElementById('pw2').value;
+    if(p1.length<8){S.verr='비밀번호는 8자 이상이에요.';render();return} if(p1!==p2){S.verr='비밀번호 확인이 달라요.';render();return}
+    if(!S.consent){S.verr='개인정보 수집·이용에 동의해 주세요.';render();return}
+    const t=TEACHER_DB.find(x=>x.phone===S.pending.phone);Object.assign(t,{email:document.getElementById('pfEmail').value.trim(),inst:document.getElementById('pfInst').value,role:document.getElementById('pfRole').value,hasPw:true});
+    login(t);toast('비밀번호를 만들었어요. 다음부터 휴대전화와 비밀번호로 로그인해요');return}
+  if(b.id==='logout'){MY_SUBS.length=0;Object.assign(S,{user:null,auth:'login',acad:'',verified:false,picked:{},extra:[],fam:[],info:{},room:{},verr:''});render();return}
+  if(b.id==='nextBtn'&&S.step===2&&selIds().length){toast(`체크만 하고 아직 추가하지 않은 ${selIds().length}명이 있어요. 「신청 명단에 추가」를 눌러 주세요.`);const ab=document.getElementById('addCart');if(ab)ab.scrollIntoView({block:'center'});return}
+  if(b.id==='nextBtn'&&blocked()){warnMissing();return}
+  if(b.id==='nextBtn'){const next=b;
+    if(S.step===5){S.no=`${CAMP.id}-${String(ALL_SUBS.length+1).padStart(3,'0')}`;if(S.editNo){const old=ALL_SUBS.find(x=>x.no===S.editNo);const nw=makeSub(old.no);const kept=[];
+        const nb=Math.max(1,...old.ppl.map(q=>q.batch||1))+1;let added=0;
+        nw.ppl.forEach(p=>{const o=old.ppl.find(q=>q.id===p.id);if(o&&o.status!=='취소'){p.pay=o.pay;p.rep=o.rep;p.paidAmt=o.paidAmt||0;p.status=o.status;p.batch=o.batch||1;p.addAt=o.addAt||old.date}else{p.batch=nb;added++}});
+        old.ppl.forEach(o=>{if(!nw.ppl.some(p=>p.id===o.id)){if(o.status==='정상'&&(isPaid(o)||o.pay==='신고')){kept.push(o.name);nw.ppl.push(o)}else if(o.status!=='정상')nw.ppl.push(o)}});
+        Object.assign(old,{ppl:nw.ppl,form:nw.form,edited:S.today});subSave();loadMine();const no=S.editNo;S.editNo=null;S.editOnly=null;if(S.riBack!==undefined){CAMP.ri=S.riBack;S.riBack=undefined}resetForm();S.view='mine';S.rp=null;render();window.scrollTo({top:0});
+        toast(kept.length?`${no} 접수를 고쳤어요${added?` · ${added}명 추가`:''} · 입금된 ${kept.join(', ')}은(는) 빠지지 않았어요. 빼려면 아래에서 취소해 주세요`:`${no} 접수를 고쳤어요${added?` · ${added}명 추가 (추가 ${nb-1})`:''}`);return}
+      {const sb=makeSub('TMP');sb.email=S.email||'';sb.reqId=S.reqId||(S.reqId='Q'+Date.now().toString(36)+Math.random().toString(36).slice(2,7));next.disabled=true;
+        api('submitNew',[sb],r=>{S.no=r.no;S.reqId='';applyBundle(r);S.cartAt={};S.rp=null;go(6);if(r.again)toast('이미 접수된 내용이에요 · '+r.no,true)},()=>{render()},'접수하고 있어요…')}
       return}
     go(S.step+1);return}
   if(b.id==='backBtn'){go(S.step-1);return}
@@ -12,7 +32,7 @@
     const diff=ps.filter(p=>+rpv(p).a!==dueOf(p));if(diff.length&&!memo)return er(`${diff.map(p=>p.name).join(', ')}의 금액이 청구액과 달라요. 메모에 이유를 적어 주세요.`);
     const rows={};ps.forEach(p=>{const v=rpv(p);rows[p.id]={name:v.n.trim(),date:v.d,a:+v.a}});
     const rep={id:'R'+Date.now().toString(36),name:rows[ps[0].id].name,date:rows[ps[0].id].date,amt:ps.reduce((t,p)=>t+rows[p.id].a,0),memo,ids:sel,rows};if(rfAll)rep.refund=rfAll;
-    ps.forEach(p=>{p.pay='신고';p.rep=rep;delete S.rpRow[p.id]});subSave();S.rp=null;S.rpMemo=undefined;render();window.scrollTo({top:0});toast(`${ps.length}명 입금 신고를 보냈어요 · 운영진이 확인하면 「입금 확인」으로 바뀌어요`);return}
+    ps.forEach(p=>{p.pay='신고';p.rep=rep;delete S.rpRow[p.id]});S.afterSave=()=>repDone(ps.map(p=>p.id));subSave();S.rp=null;S.rpMemo=undefined;render();toast(`${ps.length}명 입금 신고를 보냈어요 · 운영진이 확인하면 「입금 확인」으로 바뀌어요`);return}
   if(b.id==='rpFill'){const n=document.getElementById('rpAllN').value.trim(),dd=document.getElementById('rpAllD').value;S.rpAllN=n;S.rpAllD=dd;const sel=S.rp||[];
     if(!n&&!dd){toast('적용할 입금자명이나 입금일을 적어 주세요');return}unpaidPpl().filter(x=>sel.includes(x.p.id)).forEach(({p})=>{const v=rpv(p);if(n)v.n=n;if(dd)v.d=dd});render();toast(`선택한 ${sel.length}명에게 적용했어요`);return}
   if(d.rpok){MY_SUBS.forEach(sb=>sb.ppl.forEach(p=>{if(p.rep&&p.rep.id===d.rpok&&p.pay==='신고'){const row=p.rep.rows&&p.rep.rows[p.id];p.pay='확인';p.paidAmt=(p.paidAmt||0)+(row?row.a:dueOf(p));p.rep.ok=row?row.date:p.rep.date}}));subSave();render();toast('시제품: 운영진이 입금을 확인한 것으로 바꿨어요');return}
@@ -26,6 +46,7 @@
   if(d.seledit){const no=d.seledit;const ids=(S.cx[no]||[]);if(!ids.length)return;startEdit(no,ids.map(id=>id.slice(no.length+1)));return}
   if(d.cxclear){delete S.cx[d.cxclear];render();return}
   if(d.cxgo){const sb=MY_SUBS.find(x=>x.no===d.cxgo);const sel=(S.cx[sb.no]||[]).filter(id=>{const p=sb.ppl.find(q=>q.id===id);return p&&canCxP(p)});const {r,amt,paid}=refundOf(sb,sel);const er=m=>{document.getElementById('cxErr').textContent=m};
+    {const left=sb.ppl.filter(p=>p.status==='정상'&&!sel.includes(p.id)).length,m=teamMates(sb.no);if(!left&&m.length)return er(`이 접수는 앙상블 「${repTeam(sb.no).name}」 팀 대표예요. 함께하는 학원(${m.join(', ')})이 있어서 모두 취소할 수 없어요. 함께하는 학원과 이야기한 뒤 운영진에게 연락해 주세요.`)}
     const why=document.getElementById('cxWhy').value;if(!why)return er('취소 사유를 선택해 주세요.');
     if(r.doc&&paid){const f=document.getElementById('cxDoc');if(!f||!f.files.length)return er('이 기간에는 진단서를 올려야 취소할 수 있어요.')}
     if(paid&&amt>0){const bk=document.getElementById('cxBank').value,ac=document.getElementById('cxAcct').value.replace(/[^\d-]/g,''),ho=document.getElementById('cxHolder').value.trim();if(!bk||ac.length<8||!ho)return er('환불 받을 은행·계좌번호·예금주를 넣어 주세요.')}
@@ -73,7 +94,7 @@
   if(d.mc!==undefined&&b.matches('input')){const i=S.info[d.k];i.mc=b.checked?[...i.mc,d.mc]:i.mc.filter(x=>x!==d.mc);render();return}
   if(d.other&&b.matches('input')){const i=S.info[d.other];i.other=b.checked;if(b.checked)i.song='';render();return}
   if(d.ens&&b.matches('input[type=checkbox]')){S.ens[d.ens]=b.checked;return}
-  if(d.enson){S.ens.on=d.enson==='1';S.ens.member=d.enson==='m';if(S.ens.member&&!S.ens.joinNo){const t=teamOf(S.acad);if(t&&t.rep!==S.acad)S.ens.joinNo=t.no}render();return}
+  if(d.enson){if(d.enson!=='1'&&S.editNo&&S.ens.on&&teamMates(S.editNo).length){toast('함께하는 학원이 있어서 대표 신청을 취소할 수 없어요',true);return}S.ens.on=d.enson==='1';S.ens.member=d.enson==='m';if(S.ens.member&&!S.ens.joinNo){const t=teamOf(S.acad);if(t&&t.rep!==S.acad)S.ens.joinNo=t.no}render();return}
   if(d.copy){copyText(d.copy);return}
   if(d.prp){S.prp=S.prp===d.prp?'':d.prp;render();return}
   if(d.prpgo){const [no,id]=d.prpgo.split('|');const sb=MY_SUBS.find(x=>x.no===no),p=sb.ppl.find(q=>q.id===id);const g=k=>document.getElementById(k).value.trim();const er=m=>{document.getElementById('prpErr').textContent=m};
@@ -82,7 +103,7 @@
     let rf=null;if(amt>dueOf(p)){rf={bank:g('prpRfB'),acct:g('prpRfA').replace(/[^\d-]/g,''),holder:g('prpRfH')};if(!rf.bank||rf.acct.replace(/-/g,'').length<6||!rf.holder)return er('더 낸 금액을 돌려받을 은행·계좌번호·예금주를 적어 주세요.')}
     if(p.pay==='신고'&&p.rep){const r=p.rep;r.rows=r.rows||Object.fromEntries(r.ids.map(i=>[i,{name:r.name,date:r.date,a:i===p.id?r.amt:0}]));r.rows[p.id]={name,date,a:amt};if(rf)r.refund=rf;r.amt=r.ids.reduce((t,i)=>t+(+(r.rows[i]||{}).a||0),0);r.name=r.rows[r.ids[0]].name;r.date=r.rows[r.ids[0]].date;if(memo)r.memo=memo;r.edited=nowStamp();
       MY_SUBS.forEach(x=>x.ppl.forEach(q=>{if(q.rep&&q.rep.id===r.id)q.rep=r}));S.prp='';subSave();render();toast(`${p.name} 입금 신고를 고쳤어요 · ${kday(date)} ${won(amt)}`);return}
-    const rows={[p.id]:{name,date,a:amt}};const rp={id:'R'+Date.now().toString(36),name,date,amt,memo,ids:[p.id],rows};if(rf)rp.refund=rf;p.pay='신고';p.rep=rp;delete S.rpRow[p.id];S.prp='';subSave();render();toast(`${p.name} 입금 신고를 보냈어요 · ${kday(date)} ${won(amt)}`);return}
+    const rows={[p.id]:{name,date,a:amt}};const rp={id:'R'+Date.now().toString(36),name,date,amt,memo,ids:[p.id],rows};if(rf)rp.refund=rf;p.pay='신고';p.rep=rp;delete S.rpRow[p.id];S.prp='';S.afterSave=()=>repDone([p.id]);subSave();render();toast(`${p.name} 입금 신고를 보냈어요 · ${kday(date)} ${won(amt)}`);return}
   if(d.prpdel){const [no,id]=d.prpdel.split('|');const sb=MY_SUBS.find(x=>x.no===no),p=sb.ppl.find(q=>q.id===id);
     askBox('입금 신고를 취소할까요?',`<b>${esc(p.name)}</b>의 입금 신고를 지워요. 다시 「입금 신고」로 새로 낼 수 있어요.`,'신고 취소',()=>{const r=p.rep;r.ids=r.ids.filter(i=>i!==p.id);if(r.rows)delete r.rows[p.id];r.amt=r.ids.reduce((t,i)=>t+(+((r.rows||{})[i]||{}).a||0),0);
       MY_SUBS.forEach(x=>x.ppl.forEach(q=>{if(q.rep&&q.rep.id===r.id)q.rep=r}));p.pay='전';delete p.rep;S.prp='';subSave();render();toast(`${p.name} 입금 신고를 취소했어요`)});return}
@@ -92,7 +113,7 @@
     askBox('학원을 추가하시겠습니까?',`<b>${esc(a)}</b>을(를) ${tn?`「${esc(tn)}」 `:''}팀에 추가해요.${t?`<p class="note warn" style="margin:10px 0 0">이미 「${esc(t.name)}」 팀에 속해 있어요 (대표 ${esc(t.rep)}). 그래도 추가할 수 있어요.</p>`:''}`,'추가',
       ()=>{S.ens.acads=[...new Set([...(S.ens.acads||[]),a])];S.ens.aq='';render();toast(`${a}을(를) 팀에 넣었어요`)});return}
   if(b.id==='ensClear'){ensSave([]);render();toast('시험으로 넣은 앙상블 팀을 지웠어요');return}
-  if(d.ensrm){S.ens.acads=(S.ens.acads||[]).filter(a=>a!==d.ensrm);render();return}
+  if(d.ensrm){if(S.editNo&&joinedOf(S.editNo).includes(d.ensrm)){toast(d.ensrm+'은(는) 직접 함께 신청한 학원이라 뺄 수 없어요',true);return}S.ens.acads=(S.ens.acads||[]).filter(a=>a!==d.ensrm);render();return}
   if(d.ensmem&&b.matches('input')){S.ens.mem=S.ens.mem||{};S.ens.mem[d.ensmem]=b.checked;render();return}
   if(b.id==='again'){S.picked={};S.extra=[];S.fam=[];S.room={};S.join={};S.info={};S.agree=false;S.ens={on:false};go(2);toast('같은 학원으로 추가 접수를 시작해요');return}
   if(b.id==='restart'){Object.assign(S,{step:1,verified:false,picked:{},extra:[],fam:[],room:{},join:{},info:{},agree:false,ens:{on:false},verr:''});render();return}
@@ -152,7 +173,3 @@ document.addEventListener('toggle',e=>{if(e.target.id==='ensBox')S.ens.on=e.targ
 
 /* 카카오톡 안 브라우저: 입력이 안 되는 경우가 있어 바깥 브라우저로 넘김 (공유주소는 「설정」 탭) */
 (function(){if(!/KAKAOTALK/i.test(navigator.userAgent||''))return;const u=(typeof SHARE_URL==='string'&&SHARE_URL)||'';if(!u)return;
-  const b=document.createElement('div');b.className='kakao';b.innerHTML='카카오톡 안에서는 접수가 잘 안 될 수 있어요. <a href="kakaotalk://web/openExternal?url='+encodeURIComponent(u)+'" target="_top">브라우저로 열기</a>';document.body.prepend(b)})();
-/* 처음 화면: 로그인부터 */
-render();
-

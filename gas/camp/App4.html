@@ -1,3 +1,18 @@
+    <div class="row" style="justify-content:flex-end"><span class="err" id="prpErr" style="margin-right:auto"></span><button class="btn small ghost" type="button" data-prp="${p.id}">닫기</button>${ed?`<button class="btn small" type="button" data-prpdel="${sb.no}|${p.id}">신고 취소</button><button class="btn small primary" type="button" data-prpgo="${sb.no}|${p.id}">수정 내용 저장</button>`:`<button class="btn small primary" type="button" data-prpgo="${sb.no}|${p.id}">입금 신고하기</button>`}</div>
+    ${ed?`<p class="hint" style="margin:0">운영진이 확인하기 전까지 고칠 수 있어요. 확인된 뒤에는 운영진에게 연락해 주세요.${p.rep.ids.length>1?` 이 신고는 ${p.rep.ids.length}명이 함께예요 · 이 사람 줄만 바뀌어요.`:''}</p>`:''}</div>`}
+function payReport(){
+  const open=unpaidPpl();
+  const reps=[];MY_SUBS.forEach(sb=>sb.ppl.forEach(p=>{if(p.pay==='신고'&&p.rep&&!reps.some(r=>r.id===p.rep.id))reps.push(p.rep)}));
+  if(!open.length&&!reps.length) return '';
+  const sel=S.rp||(S.rp=open.map(x=>x.p.id)); const sum=open.filter(x=>sel.includes(x.p.id)).reduce((t,x)=>t+dueOf(x.p),0);
+  const nameOf=id=>{for(const sb of MY_SUBS){const p=sb.ppl.find(q=>q.id===id);if(p)return p.name}return ''};
+  return `<div class="panel rp"><div class="spread"><h3 style="margin:0">입금 신고</h3><span class="hint">입금한 사람을 체크하고 알려 주시면 운영진이 통장과 맞춰 보고 확인해요</span></div>
+    ${reps.map(r=>`<div class="note info spread"><span>${r.ids.map(id=>`${esc(nameOf(id))} · ${esc((r.rows&&r.rows[id]||r).name)} · ${kday((r.rows&&r.rows[id]||r).date)} · ${won((r.rows&&r.rows[id]||{a:r.amt}).a)}`).join('<br>')}<br>합계 <b>${won(r.amt)}</b> · <b>운영진 확인 중</b>${r.edited?` <small class="hint">(${stampTxt(r.edited)} 수정)</small>`:''}${r.memo?`<br><span class="hint">메모: ${esc(r.memo)}</span>`:''}</span></div>`).join('')}
+    ${open.length?`${bankHTML()}<div class="hint">사람마다 <b>입금자명 · 입금일 · 입금 금액</b>을 같은 줄에 넣어요. 나눠서 입금해도 돼요.</div>
+    <div class="row"><button class="btn small" type="button" data-rpall="1">모두 선택</button><button class="btn small ghost" type="button" data-rpall="0">모두 해제</button><span class="hint">${sel.length}명 선택</span>
+      <span class="hint" style="margin-left:auto">선택한 사람에게 한 번에:</span><input type="text" id="rpAllN" placeholder="입금자명" style="width:110px" aria-label="한 번에 넣을 입금자명" value="${esc(S.rpAllN||'')}"><input type="date" id="rpAllD" style="width:140px" aria-label="한 번에 넣을 입금일" value="${S.rpAllD||''}" max="${S.today}"><button class="btn small" type="button" id="rpFill">적용</button></div>
+    ${MY_SUBS.filter(sb=>open.some(x=>x.sb===sb)).map(sb=>`<div class="hint" style="margin-top:6px"><b class="num">${sb.no}</b> · ${sb.round} · ${kday(sb.date)} 접수</div>
+    <div class="rphead"><span></span><span></span><div class="rpf"><span>입금자명</span><span>입금일 *</span><span class="r">입금 금액</span></div></div>
     <ul class="roster rprow">${open.filter(x=>x.sb===sb).map(({p})=>{const on=sel.includes(p.id),v=rpv(p);return `<li><input type="checkbox" id="rp_${p.id}" data-rp="${p.id}" ${on?'checked':''}><label class="who" for="rp_${p.id}"><b>${esc(p.name)}${p.dtag?` <small class="dtag">${esc(p.dtag)}</small>`:''} <span class="kind ${p.kind==='교사'?'kt':'ks'}">${p.kind}</span> <span class="num">${won(dueOf(p))}</span></b><small>${esc(p.type)} ${won(p.fee)}${p.lesson?` + 레슨 ${won(p.lesson)}`:''}${p.dues?` + 연회비 ${won(p.dues)}`:''}${p.room?` + 가족방 ${won(p.room)}`:''}${isPaid(p)?` · 이미 ${won(p.paidAmt)} 입금 확인 → <b>차액</b>`:''}</small></label>
       <div class="rpf"><input type="text" data-rpf="${p.id}|n" value="${esc(v.n)}" placeholder="입금자명" aria-label="${esc(p.name)} 입금자명" ${on?'':'disabled'}><input type="date" data-rpf="${p.id}|d" value="${v.d}" max="${S.today}" min="${(S.bank||{}).from||''}" aria-label="${esc(p.name)} 입금일" ${on?'':'disabled'}><input type="text" class="num" inputmode="numeric" data-rpf="${p.id}|a" value="${v.a?(+v.a).toLocaleString('ko-KR'):''}" placeholder="금액" aria-label="${esc(p.name)} 입금 금액" ${on?'':'disabled'}></div></li>`}).join('')}</ul>`).join('')}
     <div class="spread"><span class="hint">선택한 ${sel.length}명 · 청구 ${won(sum)} · 넣은 금액 <b class="num">${won(open.filter(x=>sel.includes(x.p.id)).reduce((t,x)=>t+(+rpv(x.p).a||0),0))}</b></span></div>
@@ -56,6 +71,7 @@ function cxPanel(sb,sel){
     <p class="err" id="cxErr"></p>
     <div class="row"><button class="btn primary" type="button" data-cxgo="${sb.no}">${paid?'취소 요청하기':'취소하기'}</button><button class="btn ghost" type="button" data-cxclear="${sb.no}">선택 해제</button></div>`}</div>`}
 function render(){
+  {const st=document.getElementById('steps');if(st)st.hidden=S.view==='mine'}
   if(S.view==='mine'){document.getElementById('app').innerHTML=vMine();document.getElementById('backBtn').hidden=true;document.getElementById('nextBtn').hidden=true;document.getElementById('dockLabel').textContent='내 접수';document.getElementById('dockTotal').textContent=`${MY_SUBS.length}건`;return}
   renderSteps();
   const app=document.getElementById('app');
@@ -141,23 +157,3 @@ document.addEventListener('click',e=>{
   if(b.id==='toFirst'){S.auth='first1';S.verr='';render();return}
   if(b.id==='toLogin'){S.auth='login';S.verr='';render();return}
   if(b.id==='forgot'){const ph=(document.getElementById('lgEm').value||'').replace(/\D/g,'');const t=TEACHER_DB.find(x=>x.phone===ph);toast(t&&t.email?`${t.email.replace(/^(..).*(@.*)$/,'$1***$2')}로 재설정 링크를 보냈어요 (시제품)`:'등록된 이메일이 없어요. 운영진 카톡으로 문의해 주세요');return}
-  if(b.id==='firstCheck'){const t=findT(S.fPhone);if(!t||t.name!==S.fName.trim()){S.verr='명단의 이름·휴대전화와 일치하지 않아요. 명단에 없으면 아래 「교사 등록」을 눌러 주세요.';render();return}
-    if(t.hasPw){S.verr='이미 비밀번호가 있어요. 로그인 화면에서 「비밀번호를 잊었어요」를 눌러 주세요.';render();return}
-    S.pending={...t};S.auth='first2';S.verr='';render();return}
-  if(b.id==='makePw'){const p1=document.getElementById('pw1').value,p2=document.getElementById('pw2').value;
-    if(p1.length<8){S.verr='비밀번호는 8자 이상이에요.';render();return} if(p1!==p2){S.verr='비밀번호 확인이 달라요.';render();return}
-    if(!S.consent){S.verr='개인정보 수집·이용에 동의해 주세요.';render();return}
-    const t=TEACHER_DB.find(x=>x.phone===S.pending.phone);Object.assign(t,{email:document.getElementById('pfEmail').value.trim(),inst:document.getElementById('pfInst').value,role:document.getElementById('pfRole').value,hasPw:true});
-    login(t);toast('비밀번호를 만들었어요. 다음부터 휴대전화와 비밀번호로 로그인해요');return}
-  if(b.id==='logout'){MY_SUBS.length=0;Object.assign(S,{user:null,auth:'login',acad:'',verified:false,picked:{},extra:[],fam:[],info:{},room:{},verr:''});render();return}
-  if(b.id==='nextBtn'&&S.step===2&&selIds().length){toast(`체크만 하고 아직 추가하지 않은 ${selIds().length}명이 있어요. 「신청 명단에 추가」를 눌러 주세요.`);const ab=document.getElementById('addCart');if(ab)ab.scrollIntoView({block:'center'});return}
-  if(b.id==='nextBtn'&&blocked()){warnMissing();return}
-  if(b.id==='nextBtn'){const next=b;
-    if(S.step===5){S.no=`${CAMP.id}-${String(ALL_SUBS.length+1).padStart(3,'0')}`;if(S.editNo){const old=ALL_SUBS.find(x=>x.no===S.editNo);const nw=makeSub(old.no);const kept=[];
-        const nb=Math.max(1,...old.ppl.map(q=>q.batch||1))+1;let added=0;
-        nw.ppl.forEach(p=>{const o=old.ppl.find(q=>q.id===p.id);if(o&&o.status!=='취소'){p.pay=o.pay;p.rep=o.rep;p.paidAmt=o.paidAmt||0;p.status=o.status;p.batch=o.batch||1;p.addAt=o.addAt||old.date}else{p.batch=nb;added++}});
-        old.ppl.forEach(o=>{if(!nw.ppl.some(p=>p.id===o.id)){if(o.status==='정상'&&(isPaid(o)||o.pay==='신고')){kept.push(o.name);nw.ppl.push(o)}else if(o.status!=='정상')nw.ppl.push(o)}});
-        Object.assign(old,{ppl:nw.ppl,form:nw.form,edited:S.today});subSave();loadMine();const no=S.editNo;S.editNo=null;S.editOnly=null;if(S.riBack!==undefined){CAMP.ri=S.riBack;S.riBack=undefined}resetForm();S.view='mine';S.rp=null;render();window.scrollTo({top:0});
-        toast(kept.length?`${no} 접수를 고쳤어요${added?` · ${added}명 추가`:''} · 입금된 ${kept.join(', ')}은(는) 빠지지 않았어요. 빼려면 아래에서 취소해 주세요`:`${no} 접수를 고쳤어요${added?` · ${added}명 추가 (추가 ${nb-1})`:''}`);return}
-      {const sb=makeSub('TMP');sb.email=S.email||'';sb.reqId=S.reqId||(S.reqId='Q'+Date.now().toString(36)+Math.random().toString(36).slice(2,7));next.disabled=true;
-        api('submitNew',[sb],r=>{S.no=r.no;S.reqId='';applyBundle(r);S.cartAt={};S.rp=null;go(6);if(r.again)toast('이미 접수된 내용이에요 · '+r.no,true)},()=>{render()},'접수하고 있어요…')}

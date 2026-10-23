@@ -265,6 +265,13 @@ function teams_(all) {
   });
   return L.map(t => ({ name: t.name, rep: t.rep, by: t.by, acads: t.acads, no: t.no, mem: t.mem }));
 }
+/** 대표 팀에 함께하는 학원이 있으면: 앙상블을 끄거나 그 접수의 사람을 모두 취소할 수 없음 */
+function guardRepTeam_(no, all, ensOn, leftCount) {
+  const t = teams_(all).find(x => x.no === no); if (!t) return;
+  const m = t.acads.filter(a => a !== t.rep); if (!m.length) return;
+  if (!ensOn) throw new Error('앙상블 「' + t.name + '」 팀에 함께하는 학원(' + m.join(', ') + ')이 있어서 대표 신청을 취소할 수 없어요. 운영진에게 연락해 주세요.');
+  if (leftCount < 1) throw new Error(no + ' 접수는 앙상블 「' + t.name + '」 팀 대표예요. 함께하는 학원(' + m.join(', ') + ')이 있어서 모두 취소할 수 없어요. 운영진에게 연락해 주세요.');
+}
 /** 한 학원은 한 팀에만: 이미 다른 접수(다른 선생님 포함)로 팀에 들어가 있으면 대표·함께 신청을 막음 */
 function checkEns_(sb, all) {
   const e = sb.form && sb.form.ens; if (!e || !(e.on || e.member)) return;
@@ -386,6 +393,7 @@ function saveSubs(token, subs) {
       sb.acad = cur.acad; sb.owner = cur.owner; sb.createdAt = cur.createdAt; sb.no = cur.no; sb.reqId = cur.reqId; sb.rev = (+cur.rev || 0) + 1;
       recalc_(sb);
       if (JSON.stringify((sb.form || {}).ens || {}) !== JSON.stringify((cur.form || {}).ens || {})) checkEns_(sb, all);
+      guardRepTeam_(cur.no, all, !!(sb.form && sb.form.ens && sb.form.ens.on), sb.ppl.filter(p => p.status === '정상').length);
       // 새로 낸 신고에는 그때까지 확인된 금액(base)을 적어 둠 → 차액 신고를 운영진 확인 전까지 지킴
       sb.ppl.forEach(p => { const c = cur.ppl.find(x => x.id === p.id); const row = p.rep && p.rep.rows && p.rep.rows[p.id];
         if (p.pay === '신고' && row) { const old = c && c.rep && c.rep.rows && c.rep.rows[p.id]; if (!(c && c.pay === '신고' && c.rep && c.rep.id === p.rep.id && old)) row.base = c ? (+c.paidAmt || 0) : 0; else row.base = old.base !== undefined ? old.base : (+c.paidAmt || 0); } });
@@ -433,6 +441,7 @@ function cancelReq(token, req) {
   if (!sb || sb.owner !== u.name || !u.acads.includes(sb.acad)) throw new Error('이 접수의 환불을 요청할 수 없어요.');
   const ps = sb.ppl.filter(p => (req.ids || []).includes(p.id));
   if (!ps.length) throw new Error('환불 요청할 사람을 찾지 못했어요.');
+  guardRepTeam_(sb.no, loadSubs_(), true, sb.ppl.filter(p => p.status === '정상' && !(req.ids || []).includes(p.id)).length);
   req.acad = sb.acad; req.names = ps.map(p => p.name);
   const maxAmt = ps.reduce((t, p) => t + Math.max(0, (+p.paidAmt || 0) - (+p.dues || 0)), 0);
   req.amt = Math.max(0, Math.min(+req.amt || 0, maxAmt));

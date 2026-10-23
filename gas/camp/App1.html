@@ -31,8 +31,8 @@ function applyBundle(d){if(d.subs){ALL_SUBS.length=0;ALL_SUBS.push(...d.subs);S.
 /* 바뀐 접수만 보냄. 「보냈어요」 같은 알림은 서버 저장이 끝난 뒤에 띄움 (실패하면 최신 내용으로 다시 불러옴) */
 function subSave(){const mine=ALL_SUBS.filter(sb=>S.user&&sb.owner===S.user.name&&JSON.stringify(sb)!==(S.snap||{})[sb.no]);if(!mine.length)return;
   S.saving=true;S.savedMsg='';
-  api('saveSubs',[JSON.parse(JSON.stringify(mine))],r=>{S.saving=false;const m=S.savedMsg;S.savedMsg='';applyBundle(r);render();toast(r.ok===false?r.msg:(m||'저장했어요'),true)},
-    ()=>{S.saving=false;S.savedMsg='';api('saveSubs',[[]],r=>{applyBundle(r);render()},null,'최신 내용을 불러오고 있어요…')})}
+  api('saveSubs',[JSON.parse(JSON.stringify(mine))],r=>{S.saving=false;const m=S.savedMsg,cb=S.afterSave;S.savedMsg='';S.afterSave=null;applyBundle(r);render();toast(r.ok===false?r.msg:(m||'저장했어요'),true);if(r.ok!==false&&cb)cb()},
+    ()=>{S.saving=false;S.savedMsg='';S.afterSave=null;api('saveSubs',[[]],r=>{applyBundle(r);render()},null,'최신 내용을 불러오고 있어요…')})}
 function bankHTML(){const b=S.bank||{};if(!b.acct)return '<div class="hint">입금 계좌는 운영진이 따로 안내해요. 받는 분 통장에 <b>학원 이름</b>이 보이게 입금해 주세요.</div>';
   return `<div class="bankbox"><span class="k">입금 계좌</span><b class="num">${esc(b.bank)} ${esc(b.acct)}</b><span>예금주 ${esc(b.holder)}</span><button class="btn small" type="button" data-copy="${esc(b.acct)}">계좌번호 복사</button></div>`}
 function copyText(t){const done=()=>toast('복사했어요 · '+t,true);try{navigator.clipboard.writeText(t).then(done,()=>fallbackCopy(t))}catch(e){fallbackCopy(t)}}
@@ -207,5 +207,3 @@ const nextBatch=()=>{const sb=ALL_SUBS.find(x=>x.no===S.editNo);return sb?Math.m
 const btCls=n=>'bt'+(((n||1)-1)%6+1);
 function editBatch(id){if(!S.editNo)return null;const sb=ALL_SUBS.find(x=>x.no===S.editNo);const p=sb&&sb.ppl.find(q=>q.id===sb.no+'_'+id&&q.status!=='취소');return p?(p.batch||1):0}
 function editTag(id){if(!S.editNo)return '';const sb=ALL_SUBS.find(x=>x.no===S.editNo);const p=sb&&sb.ppl.find(q=>q.id===sb.no+'_'+id&&q.status!=='취소');
-  return p?` <small class="ctag">${(p.batch||1)===1?'처음 접수':'추가 '+((p.batch||1)-1)} · ${stampTxt(p.addAt)||kday(sb.date)}</small>`:` <small class="ctag new">새로 추가 (추가 ${nextBatch()-1})</small>`}
-function rosterRow(x,kind){

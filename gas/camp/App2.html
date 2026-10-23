@@ -1,3 +1,5 @@
+  return p?` <small class="ctag">${(p.batch||1)===1?'처음 접수':'추가 '+((p.batch||1)-1)} · ${stampTxt(p.addAt)||kday(sb.date)}</small>`:` <small class="ctag new">새로 추가 (추가 ${nextBatch()-1})</small>`}
+function rosterRow(x,kind){
   const bk=bookedOf(x), booked=x.booked||bk, on=!!S.picked[x.id], sel=!!S.sel[x.id];
   const pill = on?`<span class="pill new">명단에 추가됨</span>`:booked?(bk?`<span class="pill lock">${bk.no} · ${stampTxt(bk.at)} 접수됨${bk.by!==(S.user||{}).name?' · '+esc(bk.by)+' 선생님':''}</span>`:`<span class="pill lock">${x.bookedRound} 접수됨 · ${x.bookedBy?esc(x.bookedBy)+' 선생님':x.booked}</span>`): x.paid?`<span class="pill ok">${kind==='t'?'교사':'학생'}회비 납부${x.paidDate?' · '+x.paidDate.slice(5).replace('-','/'):''}</span>`:`<span class="pill due">회비 미납</span>`;
   const sub = kind==='t'?`${x.role} · ${x.inst}`:`${x.birth?age(x.birth)+'세':'출생연도 없음'} · ${x.inst} · 담당 ${x.teacher||'<span style="color:var(--rosin)">미지정</span>'}`;
@@ -179,6 +181,3 @@ function ensApply(no){let L=ensTeams().filter(t=>t.no!==no&&t.rep!==S.acad);
   if(S.ens.on&&(S.ens.group||'').trim())L.push({name:S.ens.group.trim(),rep:S.acad,acads:S.ens.acads||[],no});
   if(S.ens.member&&S.ens.joinNo){const t=L.find(x=>x.no===S.ens.joinNo);if(t)t.acads=[...new Set([...(t.acads||[]),S.acad])]}
   ensSave(L)}
-function ensSave(L){ENS=L} /* 화면 미리보기용 · 진짜 팀 목록은 서버가 접수 내용에서 다시 만듦 */
-const teamOf=a=>ensTeams().find(t=>t.rep===a||(t.acads||[]).includes(a));
-/* 우리 학원이 이미 팀에 들어가 있으면(다른 선생님·다른 접수로) 대표·함께 선택을 막음. 지금 고치는 접수가 그 팀을 낸 접수면 막지 않음 */

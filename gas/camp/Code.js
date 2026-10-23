@@ -1,4 +1,4 @@
-/* build: 20261023-214004 */
+/* build: 20261023-214809 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -406,6 +406,7 @@ function saveSubs(token, subs) {
         if (c.status === '취소' && c.refund) { p.status = '취소'; p.refund = c.refund; }
         if (c.status === '정상' && c.cxRejected && p.status === '취소요청' && !(p.cxReqAt && p.cxReqAt > c.cxRejected)) { p.status = '정상'; }
         p.cxRejected = c.cxRejected; p.rejected = c.rejected;
+        ['ovReq', 'ovDone', 'ovRejected'].forEach(k => { if (c[k] !== undefined) p[k] = c[k]; else delete p[k]; });
         if (p.pay === '신고' && p.rep && (c.rejected || []).some(r => r.id === p.rep.id)) { p.pay = '전'; delete p.rep; }
       });
       // 입금 신고 기록 남기기 (새로 생긴 신고·바뀐 신고·취소)
@@ -429,6 +430,31 @@ function saveSubs(token, subs) {
       log_(u.name, '접수 저장', sb.no);
     });
     writeTeams_(all);
+  } finally { lock.releaseLock(); }
+  return Object.assign({ ok: true }, bundle_(u.acads));
+}
+
+/** 더 낸 금액(차액) 돌려받기 요청: 수정으로 청구액이 줄었거나 더 많이 입금한 사람. 취소가 아님 */
+const amt_ = p => (+p.fee || 0) + (+p.lesson || 0) + (+p.dues || 0) + (+p.room || 0);
+function overRefundReq(token, req) {
+  const u = who_(token);
+  const acct = String(req.acct || '').replace(/[^\d-]/g, ''), n = acct.replace(/-/g, '').length;
+  if (!req.bank || n < 6 || n > 20 || !String(req.holder || '').trim()) throw new Error('돌려받을 은행·계좌번호(6~20자리)·예금주를 확인해 주세요.');
+  const lock = lock_();
+  try {
+    const all = loadSubs_(); const sb = all.find(x => x.no === req.no);
+    if (!sb || sb.owner !== u.name || !u.acads.includes(sb.acad)) throw new Error('이 접수의 환불을 요청할 수 없어요.');
+    applyAdmin_(sb, adminMap_());
+    const items = sb.ppl.filter(p => (req.ids || []).includes(p.id) && p.status === '정상' && !p.ovReq && (+p.paidAmt || 0) - amt_(p) > 0)
+      .map(p => ({ p, amt: (+p.paidAmt || 0) - amt_(p) }));
+    if (!items.length) throw new Error('돌려받을 금액이 없어요. 화면을 새로 고쳐 확인해 주세요.');
+    const sum = items.reduce((t, x) => t + x.amt, 0);
+    items.forEach(x => { x.p.ovReq = { at: stamp_(), amt: x.amt }; delete x.p.ovRejected; });
+    ensureHead_(SH.CX, CX_HEAD);
+    SpreadsheetApp.getActive().getSheetByName(SH.CX).appendRow([stamp_(), sb.no, sb.acad, u.name, items.map(x => x.p.name).join(', '), '차액 환불', sum,
+      req.bank, "'" + acct, String(req.holder).trim(), '', '요청', '', items.map(x => x.p.name + ' ' + x.amt).join(' / '), items.map(x => x.p.id).join(',')]);
+    sb.rev = (+sb.rev || 0) + 1; writeSub_(sb, false);
+    log_(u.name, '차액 환불 요청', sb.no + ' · ' + sum);
   } finally { lock.releaseLock(); }
   return Object.assign({ ok: true }, bundle_(u.acads));
 }
@@ -607,7 +633,22 @@ function adminRefund(token, row, action, date, memo, amt) {
     if (action === '완료' && amt !== undefined && amt !== '') set('환불 예정액', +amt || 0);
     const ids = String(r['참가자ID'] || '').split(',').filter(Boolean);
     const all = loadSubs_(); const sb = all.find(x => x.no === String(r['접수번호']));
-    if (sb) {
+    if (sb && String(r['사유']) === '차액 환불') {
+      const am = adminMap_(), hits = sb.ppl.filter(p => ids.includes(p.id));
+      const want = hits.reduce((t, p) => t + (p.ovReq ? +p.ovReq.amt : 0), 0), total = (amt !== undefined && amt !== '') ? +amt || 0 : want;
+      hits.forEach((p, i) => {
+        if (action === '완료') {
+          // 사람마다 요청한 금액만큼 (운영진이 합계를 바꿨으면 마지막 사람에게 차이를 붙임)
+          let give = p.ovReq ? +p.ovReq.amt : 0; if (i === hits.length - 1) give += total - want;
+          const a0 = am[p.id] || { date: '', amt: +p.paidAmt || 0, memo: '' };
+          const left = Math.max(0, a0.amt - give);
+          setAdminCols_(p.id, [a0.date || date, left, (a0.memo ? a0.memo + ' / ' : '') + '차액 환불 ' + give + '원 ' + date]);
+          p.paidAmt = left; p.ovDone = (p.ovDone || []).concat([{ date, amt: give }]);
+        } else { p.ovRejected = { at: stamp_(), why: memo || '' }; }
+        delete p.ovReq;
+      });
+      writeSub_(sb, false);
+    } else if (sb) {
       sb.ppl.forEach(p => {
         const hit = ids.length ? ids.includes(p.id) : String(r['참가자']).split(', ').includes(p.name) && p.status === '취소요청';
         if (!hit) return;

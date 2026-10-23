@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261023-214004 -->
+<!-- build: 20261023-214809 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -105,10 +105,10 @@ function people(){const L=[];(S.D?S.D.subs:[]).forEach(sb=>sb.ppl.forEach(p=>L.p
 function stats(){const P=people(),live=P.filter(x=>x.p.status==='정상');
   const bill=live.reduce((t,x)=>t+pAmt(x.p),0),paid=P.reduce((t,x)=>t+(+x.p.paidAmt||0),0);
   return {subs:(S.D?S.D.subs:[]).length,n:live.length,bill,paid,left:Math.max(0,bill-paid),rp:live.filter(x=>x.p.pay==='신고').length,
-    cx:(S.D?S.D.cx:[]).filter(c=>c.state==='요청').length,acads:[...new Set(live.map(x=>x.sb.acad))].length,unpaid:live.filter(x=>pAmt(x.p)-(+x.p.paidAmt||0)>0).length}}
+    cx:(S.D?S.D.cx:[]).filter(c=>c.state==='요청').length,acads:[...new Set(live.map(x=>x.sb.acad))].length,unpaid:live.filter(x=>pAmt(x.p)-(+x.p.paidAmt||0)>0).length,over:live.filter(x=>(+x.p.paidAmt||0)>pAmt(x.p)),overAmt:live.reduce((t,x)=>t+Math.max(0,(+x.p.paidAmt||0)-pAmt(x.p)),0)}}
 function payPill(p){if(p.status!=='정상')return p.status==='취소요청'?'<span class="pill due">취소 요청</span>':`<span class="pill">취소${p.refund?' · 환불 '+kday(p.refund.date):''}</span>`;
   const d=pAmt(p)-(+p.paidAmt||0);if(p.pay==='신고')return `<span class="pill new">${+p.paidAmt?'차액 신고 · 확인 전':'신고 · 확인 전'}</span>`;
-  return !(+p.paidAmt)?'<span class="pill due">입금 전</span>':d>0?`<span class="pill due">차액 ${won(d)}</span>`:d<0?`<span class="pill new">${won(-d)} 더 냄</span>`:'<span class="pill ok">입금 확인</span>'}
+  return !(+p.paidAmt)?'<span class="pill due">입금 전</span>':d>0?`<span class="pill due">차액 ${won(d)}</span>`:d<0?`<span class="pill new">${won(-d)} 더 냄${p.ovReq?' · 돌려받기 요청':''}</span>`:'<span class="pill ok">입금 확인</span>'}
 
 /* ---------- 화면 ---------- */
 const TABS=[['home','한눈에'],['subs','접수 · 입금 확인'],['rp','입금 신고'],['cx','환불 요청'],['ens','앙상블']];
@@ -126,7 +126,7 @@ function vLogin(){return `<div class="panel login"><h2 style="font-family:var(--
   <p class="hint">아이디·비밀번호는 접수 DB 시트의 「설정」 탭에서 정해요.</p></div>`}
 function vHome(){const st=stats();const t=(k,v,s,w)=>`<div class="tile ${w?'warn':''}"><span class="k">${k}</span><span class="v">${v}</span><span class="s">${s||''}</span></div>`;
   const byA={};people().filter(x=>x.p.status==='정상').forEach(({sb,p})=>{const a=byA[sb.acad]=byA[sb.acad]||{n:0,bill:0,paid:0,subs:new Set()};a.n++;a.bill+=pAmt(p);a.paid+=(+p.paidAmt||0);a.subs.add(sb.no)});
-  return `<div class="tiles">${t('접수',st.subs+'건',st.acads+'개 학원')}${t('참가 인원',st.n+'명','취소 빼고')}${t('청구 합계',won(st.bill))}${t('입금 확인',won(st.paid))}${t('남은 금액',won(st.left),st.unpaid+'명 입금 전·차액',st.left>0)}${t('입금 신고 대기',st.rp+'명','확인하면 입금 확인',st.rp>0)}${t('환불 요청',st.cx+'건','',st.cx>0)}</div>
+  return `<div class="tiles">${t('접수',st.subs+'건',st.acads+'개 학원')}${t('참가 인원',st.n+'명','취소 빼고')}${t('청구 합계',won(st.bill))}${t('입금 확인',won(st.paid))}${t('남은 금액',won(st.left),st.unpaid+'명 입금 전·차액',st.left>0)}${t('입금 신고 대기',st.rp+'명','확인하면 입금 확인',st.rp>0)}${t('돌려줄 차액',won(st.overAmt),st.over.length+'명'+(st.over.filter(x=>x.p.ovReq).length?' · 요청 '+st.over.filter(x=>x.p.ovReq).length+'명':''),st.overAmt>0)}${t('환불 요청',st.cx+'건','',st.cx>0)}</div>
   <div class="panel"><div class="spread"><b>학원별</b><button class="btn small" type="button" id="reload">새로 불러오기</button></div><div class="tbl"><table><thead><tr><th>학원</th><th class="r">접수</th><th class="r">인원</th><th class="r">청구</th><th class="r">입금 확인</th><th class="r">남은 금액</th></tr></thead><tbody>
   ${Object.entries(byA).sort((a,b)=>a[0].localeCompare(b[0],'ko')).map(([a,v])=>`<tr><td>${esc(a)}</td><td class="r num">${v.subs.size}</td><td class="r num">${v.n}</td><td class="r num">${won(v.bill)}</td><td class="r num">${won(v.paid)}</td><td class="r num">${v.bill-v.paid>0?`<b style="color:var(--rosin)">${won(v.bill-v.paid)}</b>`:'-'}</td></tr>`).join('')||'<tr><td colspan="6" class="hint">아직 접수가 없어요.</td></tr>'}
   </tbody></table></div></div>`}
@@ -171,14 +171,14 @@ function vRp(){const L=people().filter(x=>x.p.status==='정상'&&x.p.pay==='신�
     <td><div class="row" style="flex-wrap:nowrap"><button class="btn small primary" type="button" data-ok="${p.id}">확인</button><button class="btn small" type="button" data-rej="${p.id}">반려</button></div></td></tr>`}).join('')||'<tr><td colspan="12" class="hint">확인을 기다리는 입금 신고가 없어요.</td></tr>'}
   </tbody></table></div>`}
 function vCx(){const L=(S.D.cx||[]).slice().sort((a,b)=>(a.state==='요청'?0:1)-(b.state==='요청'?0:1)||String(b.at).localeCompare(String(a.at)));
-  return `<div class="panel"><div class="spread"><div><b>환불 요청 ${L.filter(c=>c.state==='요청').length}건 대기</b> <span class="hint">환불을 보냈으면 <b>환불한 날을 골라</b> 「환불 완료」. 그 사람은 「취소」로 바뀌어요. 「반려」하면 참가 상태로 돌아가요.</span></div><button class="btn small" type="button" id="reload">새로 불러오기</button></div></div>
+  return `<div class="panel"><div class="spread"><div><b>환불 요청 ${L.filter(c=>c.state==='요청').length}건 대기</b> <span class="hint">환불을 보냈으면 <b>환불한 날을 골라</b> 「환불 완료」. 그 사람은 「취소」로 바뀌어요 (「차액 환불」은 취소가 아니라 입금확인액만 줄어요). 「반려」하면 참가 상태로 돌아가요.</span></div><button class="btn small" type="button" id="reload">새로 불러오기</button></div></div>
   <div class="panel tbl"><table><thead><tr><th>요청</th><th>접수</th><th>학원 · 교사</th><th>참가자</th><th>사유</th><th>계좌</th><th>진단서</th><th class="r">환불액</th><th>상태</th><th>환불한 날 *</th><th></th></tr></thead><tbody>
-  ${L.map(c=>`<tr><td><small>${esc(String(c.at).slice(5,16))}</small></td><td class="num">${esc(c.no)}</td><td>${esc(c.acad)}<br><small class="faint">${esc(c.by)}</small></td><td><b>${esc(c.names)}</b></td><td>${esc(c.why)}</td>
+  ${L.map(c=>`<tr><td><small>${esc(String(c.at).slice(5,16))}</small></td><td class="num">${esc(c.no)}</td><td>${esc(c.acad)}<br><small class="faint">${esc(c.by)}</small></td><td><b>${esc(c.names)}</b></td><td>${c.why==='차액 환불'?'<span class="pill new">차액 환불</span><br><small class="faint">취소 아님 · 입금확인액이 줄어요</small>'+(c.memo&&c.state==='요청'?'<br><small>'+esc(c.memo)+'</small>':''):esc(c.why)}</td>
     <td><small>${esc(c.bank)} ${esc(c.acct)}<br>${esc(c.holder)}</small></td><td>${c.doc?`<a href="${esc(c.doc)}" target="_blank" rel="noopener">보기</a>`:'<span class="faint">-</span>'}</td>
     <td class="r">${c.state==='요청'?`<input class="num" type="text" inputmode="numeric" id="ca_${c.row}" value="${(+c.amt||0).toLocaleString('ko-KR')}">`:`<span class="num">${won(c.amt)}</span>`}</td>
     <td>${c.state==='요청'?'<span class="pill due">요청</span>':c.state==='환불 완료'?`<span class="pill ok">환불 ${kday(c.done)}</span>`:'<span class="pill">반려</span>'}</td>
     <td>${c.state==='요청'?`<input type="date" id="cd_${c.row}" value="">`:''}</td>
-    <td>${c.state==='요청'?`<div class="row" style="flex-wrap:nowrap"><button class="btn small primary" type="button" data-cxok="${c.row}">${c.amt?'환불 완료':'취소 확정'}</button><button class="btn small" type="button" data-cxno="${c.row}">반려</button></div>`:`<small class="faint">${esc(c.memo)}</small>`}</td></tr>`).join('')||'<tr><td colspan="11" class="hint">환불 요청이 없어요.</td></tr>'}
+    <td>${c.state==='요청'?`<div class="row" style="flex-wrap:nowrap"><button class="btn small primary" type="button" data-cxok="${c.row}">${c.why==='차액 환불'?'보냈어요':c.amt?'환불 완료':'취소 확정'}</button><button class="btn small" type="button" data-cxno="${c.row}">반려</button></div>`:`<small class="faint">${esc(c.memo)}</small>`}</td></tr>`).join('')||'<tr><td colspan="11" class="hint">환불 요청이 없어요.</td></tr>'}
   </tbody></table></div>`}
 function vEns(){const T=S.D.teams||[];
   return `<div class="panel"><span class="hint">팀 줄을 누르면 자세한 내용이 열려요. 운영진은 여기서 바로 고칠 수 있어요 (선생님 화면에도 바뀐 내용이 보여요).</span></div>

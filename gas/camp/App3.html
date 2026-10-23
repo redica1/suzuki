@@ -1,4 +1,4 @@
-/* build: 20261023-214004 */
+/* build: 20261023-214809 */
 function ensSave(L){ENS=L} /* 화면 미리보기용 · 진짜 팀 목록은 서버가 접수 내용에서 다시 만듦 */
 const teamOf=a=>ensTeams().find(t=>t.rep===a||(t.acads||[]).includes(a));
 /* 우리 학원이 이미 팀에 들어가 있으면(다른 선생님·다른 접수로) 대표·함께 선택을 막음. 지금 고치는 접수가 그 팀을 낸 접수면 막지 않음 */
@@ -160,7 +160,7 @@ function refundOf(sb,ids){const r=refundRule(S.today);const ps=sb.ppl.filter(p=>
   const base=ps.reduce((t,p)=>t+Math.max(0,(p.paidAmt||0)-(REFUND.duesRefund?0:p.dues)),0);return {r,base,paid:ps.length>0,amt:Math.floor(base*r.rate/100/100)*100}}
 function stTag(st,p){return st==='정상'?(p&&p.cxRejected?`<span class="pill bad">취소 요청 반려${p.cxWhy?' · '+esc(p.cxWhy):''}</span>`:''):st==='취소요청'?'<span class="pill due">취소 요청 · 확인 중</span>':`<span class="pill lock">취소${p&&p.refund?' · 환불 '+kday(p.refund.date)+' '+won(p.refund.amt):''}</span>`}
 function payTag(p){if(p.status!=='정상')return '';if(p.pay==='신고'){const r=p.rep&&(p.rep.rows&&p.rep.rows[p.id]||{date:p.rep.date,a:p.rep.amt})||{};return `<span class="pill new">입금 확인 중${r.date?' · '+kday(r.date):''}${r.a?' '+won(+r.a):''}</span>`}const d=dueOf(p);const rj=p.rejected&&p.rejected.length&&!isPaid(p)?p.rejected[p.rejected.length-1]:null;if(rj)return `<span class="pill bad" title="${esc(rj.why||'')}">입금 신고 반려${rj.why?' · '+esc(rj.why):''}</span>`;
-  return !isPaid(p)?'<span class="pill due">입금 전</span>':d>0?`<span class="pill due">차액 ${won(d)} 입금 전</span>`:d<0?`<span class="pill new">입금 확인 · ${won(-d)} 더 냄</span>`:`<span class="pill ok">입금 확인${p.rep&&p.rep.ok?' '+kday(p.rep.ok):''}</span>`}
+  return !isPaid(p)?'<span class="pill due">입금 전</span>':d>0?`<span class="pill due">차액 ${won(d)} 입금 전</span>`:d<0?(p.ovReq?`<span class="pill due">${won(p.ovReq.amt)} 돌려받기 요청 · 확인 중</span>`:`<span class="pill new">입금 확인 · ${won(-d)} 더 냄</span>${p.ovRejected?` <span class="pill bad">돌려받기 반려${p.ovRejected.why?' · '+esc(p.ovRejected.why):''}</span>`:''}`):`<span class="pill ok">입금 확인${p.rep&&p.rep.ok?' '+kday(p.rep.ok):''}</span>${(p.ovDone||[]).length?` <span class="pill">차액 ${won(p.ovDone.reduce((t,x)=>t+x.amt,0))} 돌려받음 ${kday(p.ovDone[p.ovDone.length-1].date)}</span>`:''}`}
 function subTag(sb){const L=sb.ppl.filter(p=>p.status==='정상');if(!L.length)return '<span class="pill lock">전체 취소</span>';
   const ok=L.filter(p=>isPaid(p)&&dueOf(p)<=0&&p.pay!=='신고').length, rp=L.filter(p=>p.pay==='신고').length;
   return ok===L.length?'<span class="pill ok">모두 입금 확인</span>':`<span class="pill ${ok?'new':'due'}">입금 확인 ${ok} / ${L.length}명</span>${rp?` <span class="pill new">신고 ${rp}명 확인 중</span>`:''}`}
@@ -179,13 +179,16 @@ function repDone(ids){const L=[];MY_SUBS.forEach(sb=>sb.ppl.forEach(p=>{if(ids.i
     <div class="row"><button class="btn primary" type="button" id="askOk">확인</button></div></div>`;
   document.body.appendChild(bg);const done=()=>{closeAsk();const li=(document.querySelector(`[data-prp="${ids[0]}"]`)||{closest:()=>null}).closest('li');if(li){li.scrollIntoView({block:'center',behavior:'smooth'});L.forEach(x=>{const e=(document.querySelector(`[data-prp="${x.p.id}"]`)||{closest:()=>null}).closest('li');if(e){e.classList.add('flash');setTimeout(()=>e.classList.remove('flash'),2000)}})}};
   bg.addEventListener('click',e=>{if(e.target===bg||e.target.id==='askOk')done()});document.getElementById('askOk').focus()}
-function closeAsk(){const x=document.getElementById('askBg');if(x)x.remove()}
-document.addEventListener('keydown',e=>{if(e.key==='Escape')closeAsk()});
-const unpaidPpl=()=>MY_SUBS.flatMap(sb=>sb.ppl.filter(p=>p.status==='정상'&&p.pay!=='신고'&&dueOf(p)>0).map(p=>({sb,p})));
-/* 한 사람 입금 신고 (줄 안에서 바로) */
-function prpForm(p,sb){const ed=p.pay==='신고'&&p.rep;const r0=ed&&(p.rep.rows&&p.rep.rows[p.id]||{name:p.rep.name,date:p.rep.date,a:p.rep.amt});const v=ed?{n:r0.name,d:r0.date,a:String(r0.a)}:rpv(p);
-  const over=(+v.a||0)>dueOf(p);
-  return `<div class="prpf">${ed?'':bankHTML()}<div class="rpf"><label class="fl" for="prpN"><span>입금자명</span><input type="text" id="prpN" value="${esc(v.n)}" placeholder="입금자명"></label><label class="fl" for="prpD"><span>입금일 <b class="req">*</b></span><input type="date" id="prpD" value="${v.d}" max="${S.today}" min="${(S.bank||{}).from||''}"></label><label class="fl" for="prpA"><span>입금 금액</span><input type="text" class="num" id="prpA" inputmode="numeric" value="${v.a?(+v.a).toLocaleString('ko-KR'):''}" data-due="${dueOf(p)}"></label></div>
-    <div class="rfbox" id="prpRf" ${over?'':'hidden'}><span class="hint"><b>청구액(${won(dueOf(p))})보다 많아요.</b> 더 낸 금액을 돌려받을 계좌를 적어 주세요.</span>
-      <div class="rpf"><select id="prpRfB" aria-label="환불 은행"><option value="">은행</option>${['국민','신한','하나','우리','농협','기업','카카오뱅크','토스뱅크','새마을금고','우체국','SC제일','부산','대구','경남','광주','전북','제주','수협','신협','케이뱅크'].map(x=>`<option>${x}</option>`).join('')}</select><input type="text" id="prpRfA" inputmode="numeric" placeholder="계좌번호"><input type="text" id="prpRfH" placeholder="예금주"></div></div>
-    <label class="fl" for="prpM"><span>메모</span><input type="text" id="prpM" placeholder="금액이 청구액 ${won(dueOf(p))}과 다르면 적어 주세요"></label>
+/* 더 낸 금액: 입금 확인된 사람이 수정으로 청구액이 줄었거나 더 많이 낸 경우 (이미 요청했으면 0) */
+const overOf=p=>p.status==='정상'&&isPaid(p)&&p.pay!=='신고'&&!p.ovReq?Math.max(0,(p.paidAmt||0)-pAmt(p)):0;
+const BANKS=['국민','신한','하나','우리','농협','기업','카카오뱅크','토스뱅크','새마을금고','우체국','SC제일','부산','대구','경남','광주','전북','제주','수협','신협','케이뱅크'];
+function ovBox(no,ids){const sb=MY_SUBS.find(x=>x.no===no);if(!sb)return;const L=sb.ppl.filter(p=>ids.includes(p.id)&&overOf(p)>0);if(!L.length)return;
+  const sum=L.reduce((t,p)=>t+overOf(p),0);closeAsk();const bg=document.createElement('div');bg.className='askbg';bg.id='askBg';
+  bg.innerHTML=`<div class="askbox" role="dialog" aria-modal="true" aria-labelledby="askT"><h3 id="askT">더 낸 ${won(sum)}을 돌려드려요</h3>
+    <div class="tbl"><table><thead><tr><th>이름</th><th class="r">입금 확인</th><th class="r">지금 청구액</th><th class="r">돌려받을 금액</th></tr></thead><tbody>${L.map(p=>`<tr><td><b>${esc(p.name)}</b></td><td class="r num">${won(p.paidAmt||0)}</td><td class="r num">${won(pAmt(p))}</td><td class="r num"><b>${won(overOf(p))}</b></td></tr>`).join('')}</tbody></table></div>
+    <p class="hint" style="margin:8px 0">돌려받을 계좌를 적으면 운영진에게 「차액 환불」로 바로 올라가요. 참가는 그대로예요 (취소가 아니에요).</p>
+    <div class="rpf"><select id="ovB" aria-label="은행"><option value="">은행</option>${BANKS.map(x=>`<option>${x}</option>`).join('')}</select><input type="text" id="ovA" inputmode="numeric" placeholder="계좌번호"><input type="text" id="ovH" placeholder="예금주" value="${esc(S.user&&S.user.name||'')}"></div>
+    <span class="err" id="ovErr"></span>
+    <div class="row"><button class="btn ghost" type="button" id="askNo">나중에</button><button class="btn primary" type="button" id="ovGo">돌려받기 요청</button></div></div>`;
+  document.body.appendChild(bg);
+  bg.addEventListener('click',e=>{if(e.target===bg||e.target.id==='askNo'){closeAsk();toast('나중에 그 사람 줄의 「돌려받기」를 눌러 요청할 수 있어요',true)}

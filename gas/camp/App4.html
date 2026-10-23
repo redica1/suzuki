@@ -1,4 +1,18 @@
-/* build: 20261023-214004 */
+/* build: 20261023-214809 */
+    else if(e.target.id==='ovGo'){const b=document.getElementById('ovB').value,a=document.getElementById('ovA').value.replace(/[^\d-]/g,''),h=document.getElementById('ovH').value.trim();
+      if(!b||a.replace(/-/g,'').length<6||!h){document.getElementById('ovErr').textContent='은행·계좌번호·예금주를 넣어 주세요.';return}
+      closeAsk();api('overRefundReq',[{no,ids:L.map(p=>p.id),bank:b,acct:a,holder:h}],r=>{applyBundle(r);render();toast(`${won(sum)} 돌려받기를 요청했어요 · 운영진이 보내면 「돌려받음」으로 바뀌어요`,true)},null,'요청하고 있어요…')}});
+  document.getElementById('ovB').focus()}
+function closeAsk(){const x=document.getElementById('askBg');if(x)x.remove()}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeAsk()});
+const unpaidPpl=()=>MY_SUBS.flatMap(sb=>sb.ppl.filter(p=>p.status==='정상'&&p.pay!=='신고'&&dueOf(p)>0).map(p=>({sb,p})));
+/* 한 사람 입금 신고 (줄 안에서 바로) */
+function prpForm(p,sb){const ed=p.pay==='신고'&&p.rep;const r0=ed&&(p.rep.rows&&p.rep.rows[p.id]||{name:p.rep.name,date:p.rep.date,a:p.rep.amt});const v=ed?{n:r0.name,d:r0.date,a:String(r0.a)}:rpv(p);
+  const over=(+v.a||0)>dueOf(p);
+  return `<div class="prpf">${ed?'':bankHTML()}<div class="rpf"><label class="fl" for="prpN"><span>입금자명</span><input type="text" id="prpN" value="${esc(v.n)}" placeholder="입금자명"></label><label class="fl" for="prpD"><span>입금일 <b class="req">*</b></span><input type="date" id="prpD" value="${v.d}" max="${S.today}" min="${(S.bank||{}).from||''}"></label><label class="fl" for="prpA"><span>입금 금액</span><input type="text" class="num" id="prpA" inputmode="numeric" value="${v.a?(+v.a).toLocaleString('ko-KR'):''}" data-due="${dueOf(p)}"></label></div>
+    <div class="rfbox" id="prpRf" ${over?'':'hidden'}><span class="hint"><b>청구액(${won(dueOf(p))})보다 많아요.</b> 더 낸 금액을 돌려받을 계좌를 적어 주세요.</span>
+      <div class="rpf"><select id="prpRfB" aria-label="환불 은행"><option value="">은행</option>${['국민','신한','하나','우리','농협','기업','카카오뱅크','토스뱅크','새마을금고','우체국','SC제일','부산','대구','경남','광주','전북','제주','수협','신협','케이뱅크'].map(x=>`<option>${x}</option>`).join('')}</select><input type="text" id="prpRfA" inputmode="numeric" placeholder="계좌번호"><input type="text" id="prpRfH" placeholder="예금주"></div></div>
+    <label class="fl" for="prpM"><span>메모</span><input type="text" id="prpM" placeholder="금액이 청구액 ${won(dueOf(p))}과 다르면 적어 주세요"></label>
     <div class="row" style="justify-content:flex-end"><span class="err" id="prpErr" style="margin-right:auto"></span><button class="btn small ghost" type="button" data-prp="${p.id}">닫기</button>${ed?`<button class="btn small" type="button" data-prpdel="${sb.no}|${p.id}">신고 취소</button><button class="btn small primary" type="button" data-prpgo="${sb.no}|${p.id}">수정 내용 저장</button>`:`<button class="btn small primary" type="button" data-prpgo="${sb.no}|${p.id}">입금 신고하기</button>`}</div>
     ${ed?`<p class="hint" style="margin:0">운영진이 확인하기 전까지 고칠 수 있어요. 확인된 뒤에는 운영진에게 연락해 주세요.${p.rep.ids.length>1?` 이 신고는 ${p.rep.ids.length}명이 함께예요 · 이 사람 줄만 바뀌어요.`:''}</p>`:''}</div>`}
 function payReport(){
@@ -48,7 +62,7 @@ function vMine(){
     return `<div class="panel sub-card"><div class="spread"><div><b class="num">${sb.no}</b> <span class="hint">${sb.round} · ${kday(sb.date)} 접수 · ${esc(sb.acad)}</span></div><div>${subTag(sb)}</div></div>
     ${[...new Set(sb.ppl.map(p=>p.batch||1))].sort((a,b)=>a-b).map(bn=>{const G=sb.ppl.filter(p=>(p.batch||1)===bn);return `<div class="bgrp ${btCls(bn)}"><div class="bh"><b><span class="bdot"></span>${bn===1?'처음 접수':`추가 ${bn-1}`} · ${stampTxt(G[0].addAt)||kday(sb.date)}</b><span class="hint">${G.filter(p=>p.status==='정상').length}명${G.some(p=>p.status!=='정상')?` · 취소 ${G.filter(p=>p.status!=='정상').length}`:''} · ${won(G.filter(p=>p.status==='정상').reduce((t,p)=>t+pAmt(p),0))}</span></div>
     <ul class="roster">${G.map(p=>`<li class="${p.status!=='정상'?'locked':''}"><input type="checkbox" id="cx_${p.id}" data-cx="${sb.no}|${p.id}" ${sel.includes(p.id)?'checked':''} ${p.status==='정상'?'':'disabled'} aria-label="${esc(p.name)} 선택">
-      <label class="who" for="cx_${p.id}"><b>${esc(p.name)}${p.dtag?` <small class="dtag">${esc(p.dtag)}</small>`:''} <span class="kind ${p.kind==='교사'?'kt':'ks'}">${p.kind}</span> <span class="num">${won(pAmt(p))}</span></b><small>${esc(p.type)} ${won(p.fee)}${p.lesson?` + 레슨 ${won(p.lesson)}`:''}${p.dues?` + 연회비 ${won(p.dues)}`:''}${p.room?` + 가족방 ${won(p.room)}`:''}${isPaid(p)&&p.status==='정상'?` · 지금 취소하면 <b>${won(refundOf(sb,[p.id]).amt)}</b> 환불`:''}${p.pay==='신고'&&p.status==='정상'?' · 입금 신고 확인 중이라 확인된 뒤 취소할 수 있어요':''}</small></label><span class="row" style="flex-wrap:nowrap;gap:6px;justify-content:flex-end">${stTag(p.status,p)}${payTag(p)}${p.status==='정상'&&p.pay!=='신고'&&dueOf(p)>0?`<button class="btn small ${S.prp===p.id?'primary':''}" type="button" data-prp="${p.id}" aria-expanded="${S.prp===p.id}">입금 신고</button>`:''}${p.status==='정상'&&p.pay==='신고'?`<button class="btn small ${S.prp===p.id?'primary':''}" type="button" data-prp="${p.id}" aria-expanded="${S.prp===p.id}">신고 수정</button>`:''}${p.status==='정상'&&sb.form?`<button class="btn small" type="button" data-pedit="${sb.no}|${p.id}" aria-label="${esc(p.name)} 정보 수정">수정</button>`:''}</span>
+      <label class="who" for="cx_${p.id}"><b>${esc(p.name)}${p.dtag?` <small class="dtag">${esc(p.dtag)}</small>`:''} <span class="kind ${p.kind==='교사'?'kt':'ks'}">${p.kind}</span> <span class="num">${won(pAmt(p))}</span></b><small>${esc(p.type)} ${won(p.fee)}${p.lesson?` + 레슨 ${won(p.lesson)}`:''}${p.dues?` + 연회비 ${won(p.dues)}`:''}${p.room?` + 가족방 ${won(p.room)}`:''}${isPaid(p)&&p.status==='정상'?` · 지금 취소하면 <b>${won(refundOf(sb,[p.id]).amt)}</b> 환불`:''}${p.pay==='신고'&&p.status==='정상'?' · 입금 신고 확인 중이라 확인된 뒤 취소할 수 있어요':''}</small></label><span class="row" style="flex-wrap:nowrap;gap:6px;justify-content:flex-end">${stTag(p.status,p)}${payTag(p)}${p.status==='정상'&&p.pay!=='신고'&&dueOf(p)>0?`<button class="btn small ${S.prp===p.id?'primary':''}" type="button" data-prp="${p.id}" aria-expanded="${S.prp===p.id}">입금 신고</button>`:''}${p.status==='정상'&&p.pay==='신고'?`<button class="btn small ${S.prp===p.id?'primary':''}" type="button" data-prp="${p.id}" aria-expanded="${S.prp===p.id}">신고 수정</button>`:''}${overOf(p)>0?`<button class="btn small primary" type="button" data-ovr="${sb.no}|${p.id}">${won(overOf(p))} 돌려받기</button>`:''}${p.status==='정상'&&sb.form?`<button class="btn small" type="button" data-pedit="${sb.no}|${p.id}" aria-label="${esc(p.name)} 정보 수정">수정</button>`:''}</span>
       ${S.prp===p.id?prpForm(p,sb):''}</li>`).join('')}</ul></div>`}).join('')}
     <div class="spread"><span class="hint">합계 ${won(subTotal(sb,sb.ppl.filter(p=>p.status==='정상').map(p=>p.id)))}</span>
       ${live.length?`<span class="row"><button class="btn small" type="button" data-cxall="${sb.no}">${sel.length===live.length?'전체 해제':'전체 선택'}</button>
@@ -141,22 +155,3 @@ document.addEventListener('click',e=>{
   if(d.quick){const n=d.quick;const t=TEACHER_DB.find(x=>x.demo&&x.name===n)||TEACHER_DB.find(x=>bare(x.name)===n&&x.acads.includes('마포스즈키'))||TEACHER_DB.find(x=>bare(x.name)===n);
     if(!t){S.verr=`회원 명단에서 ${n} 선생님을 찾지 못했어요.`;render();return}
     if(t.state==='대기'){S.verr='승인 대기 중이에요. 협회가 확인하면 이메일로 알려 드려요.';render();return}
-    login({...t,acads:t.acads.includes('마포스즈키')?['마포스즈키',...t.acads.filter(a=>a!=='마포스즈키')]:t.acads});if(t.acads.includes('마포스즈키')){document.querySelector('[data-acad="마포스즈키"]')||0}return}
-  if(b.id==='doLogin'){const nm=document.getElementById('lgNm').value.trim(),ph=document.getElementById('lgEm').value.replace(/\D/g,'');S.lgNm=nm;S.lgEm=document.getElementById('lgEm').value;
-    if(!nm||ph.length<10){S.verr='이름과 휴대전화를 모두 넣어 주세요.';render();return}
-    busy(true,'명단을 확인하고 있어요…');google.script.run.withSuccessHandler(r=>{busy(false);if(!r.ok){S.verr=r.msg;render();return}
-      S.token=r.token;S.today=r.today;loadFromServer(r);login({...r.teacher,acads:r.teacher.acads});
-      if(!MY_SUBS.length&&r.teacher.acads.length===1){const a=r.teacher.acads[0];S.acad=a;S.rq='';S.sel={};S.ptab='교사';S.picked={};S.extra=[];S.fam=[];S.info={};S.room={};ensureRoster(a);S.verified=true;render()}})
-      .withFailureHandler(e=>{busy(false);S.verr='연결이 잠시 안 돼요. 다시 눌러 주세요. ('+((e&&e.message)||e)+')';render()}).login(nm,ph);return}
-  if(b.id==='toReg'){S.auth='reg';S.verr='';render();return}
-  if(b.id==='doReg'){const g=id=>document.getElementById(id).value.trim();const nm=g('rgName'),ph=g('rgPhone').replace(/\D/g,'');
-    if(!nm||ph.length<10){S.verr='이름과 휴대전화를 넣어 주세요.';render();return}
-    if(findT(ph)){S.verr='이미 명단에 있는 번호예요. 「처음이세요?」로 비밀번호를 만들어 주세요.';render();return}
-    const p1=g('pw1'),p2=g('pw2'); if(p1.length<8){S.verr='비밀번호는 8자 이상이에요.';render();return} if(p1!==p2){S.verr='비밀번호 확인이 달라요.';render();return}
-    if(!S.consent){S.verr='개인정보 수집·이용에 동의해 주세요.';render();return}
-    const t={name:nm,phone:ph,role:g('rgRole'),inst:g('rgInst'),email:g('rgEmail'),acads:[],hasPw:true,newReg:true};TEACHER_DB.push(t);login(t);toast('교사 등록을 마쳤어요. 학원을 선택해 주세요');return}
-  if(b.id==='toFirst'){S.auth='first1';S.verr='';render();return}
-  if(b.id==='toLogin'){S.auth='login';S.verr='';render();return}
-  if(b.id==='forgot'){const ph=(document.getElementById('lgEm').value||'').replace(/\D/g,'');const t=TEACHER_DB.find(x=>x.phone===ph);toast(t&&t.email?`${t.email.replace(/^(..).*(@.*)$/,'$1***$2')}로 재설정 링크를 보냈어요 (시제품)`:'등록된 이메일이 없어요. 운영진 카톡으로 문의해 주세요');return}
-  if(b.id==='firstCheck'){const t=findT(S.fPhone);if(!t||t.name!==S.fName.trim()){S.verr='명단의 이름·휴대전화와 일치하지 않아요. 명단에 없으면 아래 「교사 등록」을 눌러 주세요.';render();return}
-    if(t.hasPw){S.verr='이미 비밀번호가 있어요. 로그인 화면에서 「비밀번호를 잊었어요」를 눌러 주세요.';render();return}

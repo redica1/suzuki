@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261024-004431 -->
+<!-- build: 20261024-004449 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -262,7 +262,7 @@ function vStat(){const L=statRows(),v=S.sv||'acad';
     <div class="row" style="gap:6px;margin-top:8px;flex-wrap:wrap">${SVIEW.map(([k,l])=>`<button class="btn small ${v===k?'primary':''}" type="button" data-sv="${k}">${l}</button>`).join('')}</div></div>`;
   if(!L.length)return head+'<div class="panel hint">아직 접수가 없어요.</div>';
   return head+(({acad:stAcad,type:stType,tch:stTeacher,inst:stInst,badge:stBadge}[v]||stAcad))(L)}
-const ST=(h,rows,foot)=>`<div class="panel tbl"><table class="sortable"><thead><tr>${h.map((x,i)=>`<th${i?' class="r"':''} data-sc="${i}" title="눌러서 정렬 (한 번 더 누르면 반대로)">${x}<span class="sarr"></span></th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr>${r.map((x,i)=>`<td${i?' class="r num"':''}>${x}</td>`).join('')}</tr>`).join('')}${foot?`<tr class="foot">${foot.map((x,i)=>`<td${i?' class="r num"':''}><b>${x}</b></td>`).join('')}</tr>`:''}</tbody></table></div>`;
+const ST=(h,rows,foot,nl)=>`<div class="panel tbl"><table class="sortable"><thead><tr>${h.map((x,i)=>`<th${i>=(nl||1)?' class="r"':''} data-sc="${i}" title="눌러서 정렬 (한 번 더 누르면 반대로)">${x}<span class="sarr"></span></th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr>${r.map((x,i)=>`<td${i>=(nl||1)?' class="r num"':''}>${x}</td>`).join('')}</tr>`).join('')}${foot?`<tr class="foot">${foot.map((x,i)=>`<td${i>=(nl||1)?' class="r num"':''}><b>${x}</b></td>`).join('')}</tr>`:''}</tbody></table></div>`;
 /* 장학금: 학원별 신청 인원에 따른 금액. 기준은 나중에 정함 → 여기 채우면 학원별 표에 칸이 생김
    예) 2026 여름 시트: 학생 30명 이상 1,200,000 · 20명 이상 800,000 · 10명 이상 400,000 (확정 아님) */
 const SCHOLAR=[]; /* [[최소 인원, 금액], …] 큰 인원부터 */
@@ -294,7 +294,7 @@ function stType(L){const T=[...TYPE_ORDER.filter(t=>L.some(x=>x.type===t)),...[.
 /* 교사별 */
 function stTeacher(L){const S2=L.filter(x=>T_PLAY.includes(x.type));const ins=[...new Set(S2.map(x=>x.inst||'미정'))].sort(instSort);
   const keyT=x=>(x.i.teacher||'(담당 교사 없음)')+'\u0001'+x.acad;const K=[...new Set(S2.map(keyT))].sort((x,y)=>x.localeCompare(y,'ko'));
-  return `<div class="panel"><b>교사별</b> <span class="hint">학생 정보의 「담당 교사」 기준 · 학생 + 악기하는 교사자녀 · 학원이 다르면 따로</span>${ST(['교사','학원',...ins.map(esc)],K.map(k=>{const [t,ac]=k.split('\u0001');const G=S2.filter(x=>keyT(x)===k);return [esc(t),esc(ac),...ins.map(i=>nz(G.filter(x=>(x.inst||'미정')===i).length))]}),['총계','',...ins.map(i=>S2.filter(x=>(x.inst||'미정')===i).length)])}</div>`}
+  return `<div class="panel"><b>교사별</b> <span class="hint">학생 정보의 「담당 교사」 기준 · 학생 + 악기하는 교사자녀 · 학원이 다르면 따로</span>${ST(['교사','학원',...ins.map(esc)],K.map(k=>{const [t,ac]=k.split('\u0001');const G=S2.filter(x=>keyT(x)===k);return [esc(t),esc(ac),...ins.map(i=>nz(G.filter(x=>(x.inst||'미정')===i).length))]}),['총계','',...ins.map(i=>S2.filter(x=>(x.inst||'미정')===i).length)],2)}</div>`}
 function stRound(L){const R=[...new Set(L.map(x=>x.round))].sort(),Ty=cnt(L,x=>x.type).map(x=>x[0]);
   return ST(['참가 구분',...R,'합계'],Ty.map(t=>[esc(t),...R.map(r=>L.filter(x=>x.type===t&&x.round===r).length||''),L.filter(x=>x.type===t).length]),['합계',...R.map(r=>L.filter(x=>x.round===r).length),L.length])}
 const PROG_LIST = {

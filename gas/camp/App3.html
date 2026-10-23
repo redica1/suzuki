@@ -1,5 +1,4 @@
-/* build: 20261023-231748 */
-  ${missingProg().length?`<div class="note">현재 진도를 선택해 주세요: ${missingProg().map(p=>esc(p.name)).join(', ')}</div>`:''}
+/* build: 20261023-231956 */
   ${missingBasic().length?`<div class="note">성별(모두)과 학생 출생연도를 넣어 주세요: ${missingBasic().map(p=>esc(p.name)).join(', ')}</div>`:''}
   ${missingPref().length?`<div class="note">추가레슨을 신청했으면 선호 교수 1을 골라 주세요: ${missingPref().map(p=>esc(p.name)).join(', ')}</div>`:''}
   ${missingTeacher().length?`<div class="note">담당 교사가 비어 있는 학생: ${missingTeacher().map(p=>esc(p.name)).join(', ')}</div>`:''}
@@ -204,3 +203,4 @@ function vStep5(){
 const pAmt=p=>p.fee+p.lesson+p.dues+(p.room||0);
 function subTotal(sb,ids){return sb.ppl.filter(p=>!ids||ids.includes(p.id)).reduce((t,p)=>t+pAmt(p),0)}
 function refundOf(sb,ids){const r=refundRule(S.today);const ps=sb.ppl.filter(p=>ids.includes(p.id)&&isPaid(p));
+  const base=ps.reduce((t,p)=>t+Math.max(0,(p.paidAmt||0)-(REFUND.duesRefund?0:p.dues)),0);return {r,base,paid:ps.length>0,amt:Math.floor(base*r.rate/100/100)*100}}

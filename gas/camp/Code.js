@@ -1,4 +1,4 @@
-/* build: 20261024-131433 */
+/* build: 20261024-132121 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -781,6 +781,35 @@ function consentLog_(kind, name, ph, c) {
     sh.appendRow([stamp_(), C.base.id, kind, name, "'" + String(ph).slice(-4), C.consent.ver, items.map(x => x.title + ': ' + (c && c[x.id] === true ? '동의' : '안 함')).join(' / ')]);
   } catch (x) {}
 }
+/** 동의 전에 먼저: 이름·휴대전화로 누구인지, 이미 접수했는지 확인 (아무것도 저장하지 않음)
+ *  kind = 'member' | 'guest' → { ok, name, subs:[접수번호…], fresh } */
+function authCheck(kind, name, phone) {
+  const ph = String(phone || '').replace(/\D/g, '');
+  if (kind === 'guest') {
+    const C = camp_();
+    if (!C.base.guest) return { ok: false, msg: '지금은 비회원 접수를 받지 않아요. 다니는 학원 선생님께 접수를 부탁해 주세요.' };
+    const nm = String(name || '').trim().replace(/\s+/g, ' ');
+    if (nm.length < 2 || nm.length > 20 || /[()]/.test(nm)) return { ok: false, msg: '보호자 이름을 2~20자로 넣어 주세요.' };
+    if (!/^01\d{8,9}$/.test(ph)) return { ok: false, msg: '휴대전화를 확인해 주세요.' };
+    const g = guestByPhone_(ph);
+    if (g && g.name !== nm) return { ok: false, taken: true, msg: '이 휴대전화로 이미 「' + maskName_(g.name) + '」 님이 신청했어요. 처음 신청할 때 넣은 보호자 이름으로 넣어 주세요.' };
+    const owner = g ? g.owner : nm + '(' + ph.slice(-4) + ')';
+    const subs = loadSubs_().filter(x => x.acad === GUEST_ACAD && x.owner === owner);
+    return { ok: true, name: nm, subs: subs.map(x => x.no), fresh: !g };
+  }
+  const nm = bare_(name);
+  if (!nm || ph.length < 10) return { ok: false, msg: '이름과 휴대전화를 모두 넣어 주세요.' };
+  const t = teachers_().find(x => bare_(x.name) === nm && x.p4 && ph.endsWith(x.p4));
+  if (!t) return { ok: false, msg: '회원 명단의 이름·휴대전화와 맞지 않아요.' + (guestByPhone_(ph) ? ' 이 번호는 비회원(학부모)으로 신청한 번호예요. 처음 화면에서 「비회원」을 골라 주세요.' : '') };
+  if (t.state === '대기') return { ok: false, msg: '승인 대기 중이에요. 협회가 확인하면 이메일로 알려 드려요.' };
+  const subs = loadSubs_().filter(x => x.owner === t.name);
+  return { ok: true, name: t.name, subs: subs.map(x => x.no), fresh: !subs.length };
+}
+const maskName_ = n => { n = String(n || ''); return n.length <= 1 ? n : n.length === 2 ? n[0] + '*' : n[0] + '*'.repeat(n.length - 2) + n[n.length - 1]; };
+function guestByPhone_(ph) {
+  const r = rows_(GUEST_SH).find(x => String(x['휴대전화']).replace(/\D/g, '') === ph);
+  return r ? { owner: String(r['접수자']), name: String(r['이름']), _row: r._row } : null;
+}
 function guestLogin(name, phone, consent) {
   const C = camp_();
   if (!C.base.guest) return { ok: false, msg: '지금은 비회원 접수를 받지 않아요. 다니는 학원 선생님께 접수를 부탁해 주세요.' };
@@ -788,14 +817,17 @@ function guestLogin(name, phone, consent) {
   if (nm.length < 2 || nm.length > 20 || /[()]/.test(nm)) return { ok: false, msg: '보호자 이름을 2~20자로 넣어 주세요.' };
   if (!/^01\d{8,9}$/.test(ph)) return { ok: false, msg: '휴대전화를 확인해 주세요.' };
   const ce = consentErr_(consent); if (ce) return { ok: false, msg: ce };
-  const owner = nm + '(' + ph.slice(-4) + ')';
+  let owner = nm + '(' + ph.slice(-4) + ')';
   const lock = lock_();
   try {
     const ss = SpreadsheetApp.getActive(); let sh = ss.getSheetByName(GUEST_SH);
     const head = ['접수자', '이름', '휴대전화', '처음', '마지막'];
     if (!sh) { sh = ss.insertSheet(GUEST_SH); sh.getRange(1, 1, 1, head.length).setValues([head]).setFontWeight('bold'); sh.setFrozenRows(1); sh.getRange('C:C').setNumberFormat('@'); }
-    const r = rows_(GUEST_SH).find(x => String(x['접수자']) === owner);
-    if (r && String(r['휴대전화']).replace(/\D/g, '') !== ph) return { ok: false, msg: '같은 이름·휴대전화 뒷번호로 이미 접수한 분이 있어요. 협회로 문의해 주세요.' };
+    const g = guestByPhone_(ph);
+    if (g && g.name !== nm) return { ok: false, msg: '이 휴대전화로 이미 「' + maskName_(g.name) + '」 님이 신청했어요. 처음 신청할 때 넣은 보호자 이름으로 넣어 주세요.' };
+    if (g) owner = g.owner;
+    else if (rows_(GUEST_SH).some(x => String(x['접수자']) === owner)) owner = nm + '(' + ph.slice(-4) + '-' + ph.slice(-8, -4) + ')';   // 이름·뒷번호가 같은 다른 사람
+    const r = g ? { _row: g._row } : null;
     if (r) sh.getRange(r._row, 5).setValues([[stamp_()]]);
     else sh.appendRow([owner, nm, "'" + ph.replace(/(\d{3})(\d{3,4})(\d{4})/, '$1-$2-$3'), stamp_(), stamp_()]);
   } finally { lock.releaseLock(); }

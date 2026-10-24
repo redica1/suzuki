@@ -1,4 +1,14 @@
-/* build: 20261024-131433 */
+/* build: 20261024-132121 */
+  if(b.id==='rpFill'){const n=document.getElementById('rpAllN').value.trim(),dd=document.getElementById('rpAllD').value;S.rpAllN=n;S.rpAllD=dd;const sel=S.rp||[];
+    if(!n&&!dd){toast('적용할 입금자명이나 입금일을 적어 주세요');return}unpaidPpl().filter(x=>sel.includes(x.p.id)).forEach(({p})=>{const v=rpv(p);if(n)v.n=n;if(dd)v.d=dd});render();toast(`선택한 ${sel.length}명에게 적용했어요`);return}
+  if(d.rpok){MY_SUBS.forEach(sb=>sb.ppl.forEach(p=>{if(p.rep&&p.rep.id===d.rpok&&p.pay==='신고'){const row=p.rep.rows&&p.rep.rows[p.id];p.pay='확인';p.paidAmt=(p.paidAmt||0)+(row?row.a:dueOf(p));p.rep.ok=row?row.date:p.rep.date}}));subSave();render();toast('시제품: 운영진이 입금을 확인한 것으로 바꿨어요');return}
+  if(d.rpall!==undefined){S.rp=d.rpall==='1'?unpaidPpl().map(x=>x.p.id):[];{const n=document.getElementById('rpMemo');if(n)S.rpMemo=n.value}render();return}
+  if(d.cxall){const sb=MY_SUBS.find(x=>x.no===d.cxall);const live=sb.ppl.filter(p=>p.status==='정상'&&mineOk(sb,p)).map(p=>p.id);const cur=S.cx[sb.no]||[];S.cx[sb.no]=live.length&&live.every(id=>cur.includes(id))?cur.filter(id=>!live.includes(id)):[...new Set([...cur,...live])];S.cxOpen='';S.cxDone=null;render();return}
+  if(d.cxopen){S.cxOpen=d.cxopen;S.cxDone=null;render();const x=document.querySelector('.cxbox');if(x&&x.scrollIntoView)x.scrollIntoView({block:'center'});return}
+  if(b.id==='showAllCards'){S.editOnly=null;render();return}
+  if(d.ensnew){startEdit(d.ensnew,'ens');S.ens={...(S.ens||{}),on:true};render();return}
+  if(d.ensedit){startEdit(d.ensedit,'ens');return}
+  if(d.pedit){const [no,id]=d.pedit.split('|');startEdit(no,[id.slice(no.length+1)]);return}
   if(d.seledit){const no=d.seledit;const sb0=MY_SUBS.find(x=>x.no===no);const all=(S.cx[no]||[]);const ids=all.filter(id=>{const p=sb0&&sb0.ppl.find(q=>q.id===id);return !(p&&p.pay==='신고')});if(ids.length<all.length)toast(`입금 신고 확인 중인 ${all.length-ids.length}명은 운영진 확인 전까지 고칠 수 없어서 뺐어요`,true);if(!ids.length)return;startEdit(no,ids.map(id=>id.slice(no.length+1)));return}
   if(d.cxclear){delete S.cx[d.cxclear];render();return}
   if(d.cxgo){const sb=MY_SUBS.find(x=>x.no===d.cxgo);const sel=(S.cx[sb.no]||[]).filter(id=>{const p=sb.ppl.find(q=>q.id===id);return p&&canCxP(p)});const {r,amt,paid}=refundOf(sb,sel);const er=m=>{document.getElementById('cxErr').textContent=m};
@@ -12,6 +22,7 @@
       if(f&&f.files&&f.files[0]){const fl=f.files[0];const rd=new FileReader();rd.onload=()=>go({name:fl.name,type:fl.type,data:String(rd.result).split(',')[1]});rd.readAsDataURL(fl)}else go(null)}
     sb.ppl.forEach(p=>{if(sel.includes(p.id)){p.status=isPaid(p)?'취소요청':'취소';p.cxReqAt=nowStamp();if(!isPaid(p))p.cxWhy=why}});subSave();
     delete S.cx[sb.no];S.cxOpen='';S.cxReason='';S.cxDone={names,amt,paid};render();window.scrollTo({top:0});toast(paid?'취소 요청을 보냈어요':'취소했어요');return}
+  if(b.id==='homeBtn'&&!S.user){S.view='form';S.auth='pick';S.chk=null;S.verr='';go(1);return}
   if(b.id==='homeBtn'){S.view='form';if(S.step===6)Object.assign(S,{acad:'',verified:false,picked:{},extra:[],fam:[],info:{},room:{},join:{},ens:{on:false},agree:false});go(1);return}
   if(d.tab){S.tab=d.tab;S.rq='';render();return}
   if(d.ptab){S.ptab=d.ptab;S.rq='';render();return}

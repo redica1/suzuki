@@ -1,4 +1,28 @@
-/* build: 20261024-131433 */
+/* build: 20261024-132121 */
+    <div class="song3"><b class="sh">곡 2 <span class="hint">있으면</span></b>
+      <label class="f" for="enK2">작곡가<input type="text" id="enK2" data-ens="k2" value="${esc(E.k2||'')}" placeholder=""></label>
+      <label class="f" for="enC2">곡명<input type="text" id="enC2" data-ens="c2" value="${esc(E.c2||'')}" placeholder=""></label>
+      <label class="f" for="enO2">곡명 · 원어<input type="text" id="enO2" data-ens="o2" value="${esc(E.o2||'')}" placeholder=""></label>
+      <div class="checks sc"><label><input type="checkbox" data-ens="acc2" ${E.acc2?'checked':''}>반주자가 필요해요</label><label><input type="checkbox" data-ens="video2" ${E.video2?'checked':''}>영상을 사용해요</label></div></div>
+
+    `:''}
+  </div>
+  ${S.editNo&&S.ensEdit?`<div class="row" style="justify-content:center;gap:8px;margin:14px 0"><button class="btn" type="button" id="toMine3">← 저장하지 않고 목록으로</button><button class="btn primary" type="button" id="ensSaveBtn">앙상블 수정 내용 저장</button></div>${S.ensSaved?`<p class="hint" style="text-align:center;margin:-6px 0 10px">✓ ${stampTxt(S.ensSaved)} 저장했어요</p>`:''}`:''}
+  <div class="panel"><b>지금까지 신청된 앙상블 팀 ${ensTeams().length}</b>${ensTeams().length?`<div class="tbl" style="margin-top:8px"><table><thead><tr><th>팀 이름</th><th>대표 학원</th><th>신청 선생님</th><th>함께하는 학원</th></tr></thead><tbody>${ensTeams().map(t=>`<tr${(t.rep===S.acad||(t.acads||[]).includes(S.acad))?' style="background:var(--soft,#f3f6ff)"':''}><td><b>${esc(t.name)}</b></td><td>${esc(t.rep)}</td><td>${esc(t.by||'')}</td><td>${(t.acads||[]).map(esc).join(', ')||'-'}</td></tr>`).join('')}</tbody></table></div>`:'<p class="hint" style="margin:6px 0 0">아직 신청된 팀이 없어요.</p>'}</div>
+  </section>`;
+}
+/* 참가자별 신청 내용 표: 신청한 것만 채우고, 아무도 신청 안 한 열은 빼요 */
+function applyTable(ps,tab){
+  if(!ps.length)return `<p class="hint" style="padding:10px 0">${tab==='room'?'가족방 신청이 없어요.':'해당하는 사람이 없어요.'}</p>`;
+  const D=ps.map(p=>{const i=info(p),pl=PLAYS.has(i.type);const fam=p.kind==='family';
+    return {p,i,fam,
+      who:fam?`${FAM_SHORT[i.type]||i.type}`:i.type,
+      inst:fam?'':(p.inst||''),
+      tch:p.kind==='student'?(i.teacher||''):'',
+      prog:pl&&p.kind==='student'?(i.prog||''):'',
+      pref:pl?[i.p1,i.p2].filter(Boolean).join(', '):'',
+      les:pl&&i.lessons?`${i.lessons}회`:'',
+      mc:pl&&i.mc&&i.mc.length?i.mc.join(', '):'',
       con:pl&&p.kind!=='teacher'&&i.concert&&i.concert!=='없음'?`${i.concert}${(i.other?`${i.oc} ${i.ot}`.trim():i.song)?' · '+(i.other?`${i.oc} ${i.ot}`.trim():i.song):''}${i.concert==='이브닝'?' · 오디션 영상 '+(i.video?'제출':'없음'):''}`:'',
       room:(()=>{const tm=teams().find(x=>x.members.some(m=>m.key===p.key));return tm?`${tm.rep.name} 가족방 · ${tm.n}명`:''})(),
       note:[!p.paid?(p.isNew?'신규 · 회비확인대기':'회비확인대기'):'',p.isNew&&p.paid?'신규':''].filter(Boolean).join(' · ')}});
@@ -166,13 +190,3 @@ function prpForm(p,sb){const ed=p.pay==='신고'&&p.rep;const r0=ed&&(p.rep.rows
 function payReport(){
   const open=unpaidPpl();
   const reps=[];MY_SUBS.forEach(sb=>sb.ppl.forEach(p=>{if(p.pay==='신고'&&p.rep&&!reps.some(r=>r.id===p.rep.id))reps.push(p.rep)}));
-  if(!open.length) return ''; /* 신고한 사람은 아래 사람별 줄에 「입금 확인 중 · 날짜 금액」으로 보여서 여기서는 안 보여 줌 */
-  const sel=S.rp||(S.rp=open.map(x=>x.p.id)); const sum=open.filter(x=>sel.includes(x.p.id)).reduce((t,x)=>t+dueOf(x.p),0);
-  const nameOf=id=>{for(const sb of MY_SUBS){const p=sb.ppl.find(q=>q.id===id);if(p)return p.name}return ''};
-  return `<div class="panel rp"><div class="spread"><h3 style="margin:0">입금 신고</h3><span class="hint">입금한 사람을 체크하고 알려 주시면 운영진이 통장과 맞춰 보고 확인해요</span></div>
-    ${open.length?`${bankHTML()}<div class="hint">사람마다 <b>입금자명 · 입금일 · 입금 금액</b>을 같은 줄에 넣어요. 나눠서 입금해도 돼요.</div>
-    <div class="row"><button class="btn small" type="button" data-rpall="1">모두 선택</button><button class="btn small ghost" type="button" data-rpall="0">모두 해제</button><span class="hint">${sel.length}명 선택</span>
-      <span class="hint" style="margin-left:auto">선택한 사람에게 한 번에:</span><input type="text" id="rpAllN" placeholder="입금자명" style="width:110px" aria-label="한 번에 넣을 입금자명" value="${esc(S.rpAllN||'')}"><input type="date" id="rpAllD" style="width:140px" aria-label="한 번에 넣을 입금일" value="${S.rpAllD||''}" max="${S.today}"><button class="btn small" type="button" id="rpFill">적용</button></div>
-    ${MY_SUBS.filter(sb=>open.some(x=>x.sb===sb)).map(sb=>`<div class="hint" style="margin-top:6px"><b class="num">${sb.no}</b> · ${sb.round} · ${kday(sb.date)} 접수</div>
-    <div class="rphead"><span></span><span></span><div class="rpf"><span>입금자명</span><span>입금일 *</span><span class="r">입금 금액</span></div></div>
-    <ul class="roster rprow">${open.filter(x=>x.sb===sb).map(({p})=>{const on=sel.includes(p.id),v=rpv(p);return `<li><input type="checkbox" id="rp_${p.id}" data-rp="${p.id}" ${on?'checked':''}><label class="who" for="rp_${p.id}"><b>${esc(p.name)}${p.dtag?` <small class="dtag">${esc(p.dtag)}</small>`:''} <span class="kind ${p.kind==='교사'?'kt':'ks'}">${p.kind}</span> <span class="num">${won(dueOf(p))}</span></b><small>${esc(p.type)} ${won(p.fee)}${p.lesson?` + 레슨 ${won(p.lesson)}`:''}${p.dues?` + 연회비 ${won(p.dues)}`:''}${p.room?` + 가족방 ${won(p.room)}`:''}${isPaid(p)?` · 이미 ${won(p.paidAmt)} 입금 확인 → <b>차액</b>`:''}</small></label>

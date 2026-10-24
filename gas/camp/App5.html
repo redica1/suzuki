@@ -1,4 +1,14 @@
-/* build: 20261024-131433 */
+/* build: 20261024-132121 */
+  if(!open.length) return ''; /* 신고한 사람은 아래 사람별 줄에 「입금 확인 중 · 날짜 금액」으로 보여서 여기서는 안 보여 줌 */
+  const sel=S.rp||(S.rp=open.map(x=>x.p.id)); const sum=open.filter(x=>sel.includes(x.p.id)).reduce((t,x)=>t+dueOf(x.p),0);
+  const nameOf=id=>{for(const sb of MY_SUBS){const p=sb.ppl.find(q=>q.id===id);if(p)return p.name}return ''};
+  return `<div class="panel rp"><div class="spread"><h3 style="margin:0">입금 신고</h3><span class="hint">입금한 사람을 체크하고 알려 주시면 운영진이 통장과 맞춰 보고 확인해요</span></div>
+    ${open.length?`${bankHTML()}<div class="hint">사람마다 <b>입금자명 · 입금일 · 입금 금액</b>을 같은 줄에 넣어요. 나눠서 입금해도 돼요.</div>
+    <div class="row"><button class="btn small" type="button" data-rpall="1">모두 선택</button><button class="btn small ghost" type="button" data-rpall="0">모두 해제</button><span class="hint">${sel.length}명 선택</span>
+      <span class="hint" style="margin-left:auto">선택한 사람에게 한 번에:</span><input type="text" id="rpAllN" placeholder="입금자명" style="width:110px" aria-label="한 번에 넣을 입금자명" value="${esc(S.rpAllN||'')}"><input type="date" id="rpAllD" style="width:140px" aria-label="한 번에 넣을 입금일" value="${S.rpAllD||''}" max="${S.today}"><button class="btn small" type="button" id="rpFill">적용</button></div>
+    ${MY_SUBS.filter(sb=>open.some(x=>x.sb===sb)).map(sb=>`<div class="hint" style="margin-top:6px"><b class="num">${sb.no}</b> · ${sb.round} · ${kday(sb.date)} 접수</div>
+    <div class="rphead"><span></span><span></span><div class="rpf"><span>입금자명</span><span>입금일 *</span><span class="r">입금 금액</span></div></div>
+    <ul class="roster rprow">${open.filter(x=>x.sb===sb).map(({p})=>{const on=sel.includes(p.id),v=rpv(p);return `<li><input type="checkbox" id="rp_${p.id}" data-rp="${p.id}" ${on?'checked':''}><label class="who" for="rp_${p.id}"><b>${esc(p.name)}${p.dtag?` <small class="dtag">${esc(p.dtag)}</small>`:''} <span class="kind ${p.kind==='교사'?'kt':'ks'}">${p.kind}</span> <span class="num">${won(dueOf(p))}</span></b><small>${esc(p.type)} ${won(p.fee)}${p.lesson?` + 레슨 ${won(p.lesson)}`:''}${p.dues?` + 연회비 ${won(p.dues)}`:''}${p.room?` + 가족방 ${won(p.room)}`:''}${isPaid(p)?` · 이미 ${won(p.paidAmt)} 입금 확인 → <b>차액</b>`:''}</small></label>
       <div class="rpf"><input type="text" data-rpf="${p.id}|n" value="${esc(v.n)}" placeholder="입금자명" aria-label="${esc(p.name)} 입금자명" ${on?'':'disabled'}><input type="date" data-rpf="${p.id}|d" value="${v.d}" max="${S.today}" min="${(S.bank||{}).from||''}" aria-label="${esc(p.name)} 입금일" ${on?'':'disabled'}><input type="text" class="num" inputmode="numeric" data-rpf="${p.id}|a" value="${v.a?(+v.a).toLocaleString('ko-KR'):''}" placeholder="금액" aria-label="${esc(p.name)} 입금 금액" ${on?'':'disabled'}></div></li>`}).join('')}</ul>`).join('')}
     <div class="spread"><span class="hint">선택한 ${sel.length}명 · 청구 ${won(sum)} · 넣은 금액 <b class="num">${won(open.filter(x=>sel.includes(x.p.id)).reduce((t,x)=>t+(+rpv(x.p).a||0),0))}</b></span></div>
     <label class="f" for="rpMemo"><span>메모 <span class="hint">선택 · 금액이 청구액과 다르면 이유를 적어 주세요</span></span><input type="text" id="rpMemo" value="${esc(S.rpMemo||'')}"></label>
@@ -116,16 +126,3 @@ function vMyTT(){const T=S.tt;
     ${R.length?R.map(r=>`<div class="panel ttstu"><div class="spread"><b class="num" style="font-size:18px">${esc(r.no)}</b><span class="hint">${esc(r.bld)} ${esc(r.fl)}${r.type?' · '+esc(r.type):''}</span></div>
       <div>${esc(r.prof?r.prof+' 교수님 방':r.kind||'')}${r.main&&!r.prof?` · ${esc(r.main)} ${r.mn}명`:''}${r.sub?` · ${esc(r.sub)} ${r.sn}명 함께`:''}</div>${r.pw?`<small class="hint">비번 수신자: ${esc(r.pw)}</small>`:''}</div>`).join(''):'<div class="note info">아직 방이 정해지지 않았어요. 정해지면 여기에 보여요.</div>'}</section>`}
   if(tab==='me')return head+seg+`<div class="panel">${T.prof?`<p class="hint" style="margin:0 0 6px">교수 · 레슨실 <b>${esc(T.prof.room||'미정')}</b></p>`:''}
-    ${days.map((dl,d)=>{const xs=mine.filter(x=>x.d===d);return xs.length?`<div class="ttday"><div class="ttdl">${esc(dl)}</div>${xs.map(x=>`<div class="ttit"><span class="num">${esc(x.t)}${x.e?'<small>~'+esc(x.e)+'</small>':''}</span><span><span class="ttrole ${x.what==='개인레슨'?'les':''}">${esc(x.what)}</span><b>${esc(x.title)}</b> · ${esc(x.where)}${x.loc?` <small class="hint">${esc(x.loc)}</small>`:''}${x.with?`<br><small class="hint">${x.what==='개인레슨'?'학생: ':'함께: '}${esc(x.with)}</small>`:''}</span></div>`).join('')}</div>`:''}).join('')||'<p class="hint" style="margin:0">아직 배정된 일정이 없어요.</p>'}</div></section>`;
-  const st=T.students||[];
-  return head+seg+`<p class="lede">내가 접수했거나 내가 담당 교사인 학생의 개인레슨 시간이에요. 학부모님께 알려 주세요.</p>
-    ${st.length?st.map(x=>`<div class="panel ttstu"><div class="spread"><b>${esc(x.name)}</b><span class="hint">${esc(x.acad)} · ${esc(x.inst)}${x.teacher?' · 담당 '+esc(x.teacher):''}${x.req?' · 추가레슨 '+x.req+'회':''}</span></div>
-      ${x.lessons.length?x.lessons.slice().sort((a,b)=>a.d-b.d||tmin(a.t)-tmin(b.t)).map(l=>`<div class="ttit"><span class="num">${esc((days[l.d]||'').replace(/\(.\)/,''))} ${esc(l.t)}</span><span><b>${esc(l.pr)}</b> 교수님${l.room?' · '+esc(l.room):''}</span></div>`).join(''):'<p class="hint" style="margin:4px 0 0">개인레슨 없음</p>'}</div>`).join(''):'<p class="hint">학생이 없어요.</p>'}</section>`}
-function openTT(){if(S.view!=='tt')S.ttBack={view:S.view,step:S.step};S.view='tt';S.tt=null;render();window.scrollTo({top:0});
-  api('myTimetable',[],r=>{S.tt=r;if(S.view==='tt')render()},()=>{S.tt={open:false};render()},'시간표를 불러오고 있어요…')}
-function openQ(){if(S.view!=='q')S.qBack={view:S.view,step:S.step};S.qWhere='';S.view='q';render();window.scrollTo({top:0});
-  if(S.user&&S.token)api('myIssues',[],r=>{S.qMine=r.mine||[];if(S.view==='q')render()},null,'불러오고 있어요…')}
-function sendQ(){const er=m=>{document.getElementById('qErr').textContent=m};const g=id=>((document.getElementById(id)||{}).value||'').trim();
-  const d={text:g('qText'),where:g('qWhere'),name:g('qName'),phone:g('qPhone'),acad:g('qAcad'),env:`화면 ${(S.qBack||{}).view||''}/${(S.qBack||{}).step||''} · ${S.editNo?'수정 '+S.editNo+' · ':''}${navigator.userAgent.slice(0,200)}`};
-  if(!S.user&&(!d.name||d.phone.replace(/\D/g,'').length<10))return er('이름과 휴대전화를 넣어 주세요.');
-  if(d.text.length<2)return er('어떤 문제인지 적어 주세요.');

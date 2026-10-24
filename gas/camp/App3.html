@@ -1,4 +1,19 @@
-/* build: 20261024-131433 */
+/* build: 20261024-132121 */
+    ${S.extra.length?`<div class="xhead">명단에 없어 추가한 학생 ${S.extra.length}명 <span class="hint">체크한 학생만 접수돼요 · 연회비 30,000원이 함께 청구돼요 · 「빼기」는 목록에서 지워요</span></div><ul class="roster">${S.extra.map(s=>`<li><input type="checkbox" id="xk_${s.id}" ${s.on!==false?'checked':''} data-xon="${s.id}" aria-label="${esc(s.name)} 선택"><label class="who" for="xk_${s.id}"><b>${esc(s.name)} <span class="kind ks">학생</span></b><small>${age(s.birth)}세 · ${s.inst} · 담당 ${esc(s.teacher)}</small></label><span class="row" style="flex-wrap:nowrap"><span class="pill new">신규 추가</span><button class="btn small ghost" type="button" data-rmx="${s.id}">빼기</button></span></li>`).join('')}</ul>`:''}
+    ${S.showNew?`<div class="adder"><b>명단에 없는 학생 추가</b>
+      <p class="hint">늦게 들어온 학생은 여기서 추가하고 연회비 30,000원을 캠프비와 함께 입금해 주세요. 운영진이 확인하면 정식 접수돼요.</p>
+      <div class="grid2"><label class="f" for="nN"><span>학생 이름<span class="req">*</span></span><input type="text" id="nN"></label>
+      <label class="f" for="nB"><span>출생연도<span class="ex">(ex 2020)</span><span class="req">*</span></span><input type="text" id="nB" inputmode="numeric" maxlength="4"></label>
+      <label class="f" for="nI">전공<select id="nI"><option>바이올린</option><option>첼로</option><option>비올라</option><option>플루트</option></select></label>
+      <div class="f"><span>시작 연월</span><div class="pair"><select id="nSy" aria-label="시작 년도"><option value="">년도</option>${Array.from({length:12},(_,i)=>2026-i).map(y=>`<option>${y}</option>`).join('')}</select><select id="nSm" aria-label="시작 월"><option value="">월</option>${Array.from({length:12},(_,i)=>`<option value="${String(i+1).padStart(2,'0')}">${i+1}월</option>`).join('')}</select></div></div>
+      <label class="f" for="nT"><span>담당 교사<span class="req">*</span></span><select id="nT">${opts(teachersFor('바이올린'),'','선택')}</select></label></div>
+      <div class="row"><button class="btn primary small" type="button" id="addNew">학생 추가</button><button class="btn small ghost" type="button" id="cancelNew">닫기</button><span class="err" id="nErr"></span></div></div>`
+    :`<button class="btn ghost" type="button" id="openNew">+ 명단에 없는 학생 추가</button>`}`:''}
+  </div>
+  ${cartPanel()}
+  ${unpaidPicked.length?`<div class="note"><b>회비확인대기 ${unpaidPicked.length}명</b> · ${unpaidPicked.map(p=>esc(p.name)).join(', ')}<br>연회비를 캠프비와 같은 계좌로 함께 입금해 주세요. 운영진이 입금을 확인하면 정식 접수로 바뀌어요.</div>`:''}
+  </section>`;
+}
 /* 담당 교사: 학생 악기와 같은 전공의 교사만 (없으면 전체) */
 function teachersFor(inst,cur){const all=roster().teachers;const L=all.filter(t=>t.inst===inst);const out=(L.length?L:all).map(t=>t.name);if(cur&&!out.includes(cur))out.push(cur);return out}
 function opts(list,val,ph){ return `<option value="">${ph}</option>`+list.map(x=>`<option ${x===val?'selected':''}>${esc(x)}</option>`).join('') }
@@ -135,27 +150,3 @@ function vEns(){
       <label class="f" for="enC1">곡명<input type="text" id="enC1" data-ens="c1" value="${esc(E.c1||'')}" placeholder="예: 두 대의 바이올린을 위한 협주곡 가단조"></label>
       <label class="f" for="enO1">곡명 · 원어<input type="text" id="enO1" data-ens="o1" value="${esc(E.o1||'')}" placeholder="Concerto for Two Violins in A minor, RV 522"></label>
       <div class="checks sc"><label><input type="checkbox" data-ens="acc1" ${E.acc1?'checked':''}>반주자가 필요해요</label><label><input type="checkbox" data-ens="video1" ${E.video1?'checked':''}>영상을 사용해요</label></div></div>
-    <div class="song3"><b class="sh">곡 2 <span class="hint">있으면</span></b>
-      <label class="f" for="enK2">작곡가<input type="text" id="enK2" data-ens="k2" value="${esc(E.k2||'')}" placeholder=""></label>
-      <label class="f" for="enC2">곡명<input type="text" id="enC2" data-ens="c2" value="${esc(E.c2||'')}" placeholder=""></label>
-      <label class="f" for="enO2">곡명 · 원어<input type="text" id="enO2" data-ens="o2" value="${esc(E.o2||'')}" placeholder=""></label>
-      <div class="checks sc"><label><input type="checkbox" data-ens="acc2" ${E.acc2?'checked':''}>반주자가 필요해요</label><label><input type="checkbox" data-ens="video2" ${E.video2?'checked':''}>영상을 사용해요</label></div></div>
-
-    `:''}
-  </div>
-  ${S.editNo&&S.ensEdit?`<div class="row" style="justify-content:center;gap:8px;margin:14px 0"><button class="btn" type="button" id="toMine3">← 저장하지 않고 목록으로</button><button class="btn primary" type="button" id="ensSaveBtn">앙상블 수정 내용 저장</button></div>${S.ensSaved?`<p class="hint" style="text-align:center;margin:-6px 0 10px">✓ ${stampTxt(S.ensSaved)} 저장했어요</p>`:''}`:''}
-  <div class="panel"><b>지금까지 신청된 앙상블 팀 ${ensTeams().length}</b>${ensTeams().length?`<div class="tbl" style="margin-top:8px"><table><thead><tr><th>팀 이름</th><th>대표 학원</th><th>신청 선생님</th><th>함께하는 학원</th></tr></thead><tbody>${ensTeams().map(t=>`<tr${(t.rep===S.acad||(t.acads||[]).includes(S.acad))?' style="background:var(--soft,#f3f6ff)"':''}><td><b>${esc(t.name)}</b></td><td>${esc(t.rep)}</td><td>${esc(t.by||'')}</td><td>${(t.acads||[]).map(esc).join(', ')||'-'}</td></tr>`).join('')}</tbody></table></div>`:'<p class="hint" style="margin:6px 0 0">아직 신청된 팀이 없어요.</p>'}</div>
-  </section>`;
-}
-/* 참가자별 신청 내용 표: 신청한 것만 채우고, 아무도 신청 안 한 열은 빼요 */
-function applyTable(ps,tab){
-  if(!ps.length)return `<p class="hint" style="padding:10px 0">${tab==='room'?'가족방 신청이 없어요.':'해당하는 사람이 없어요.'}</p>`;
-  const D=ps.map(p=>{const i=info(p),pl=PLAYS.has(i.type);const fam=p.kind==='family';
-    return {p,i,fam,
-      who:fam?`${FAM_SHORT[i.type]||i.type}`:i.type,
-      inst:fam?'':(p.inst||''),
-      tch:p.kind==='student'?(i.teacher||''):'',
-      prog:pl&&p.kind==='student'?(i.prog||''):'',
-      pref:pl?[i.p1,i.p2].filter(Boolean).join(', '):'',
-      les:pl&&i.lessons?`${i.lessons}회`:'',
-      mc:pl&&i.mc&&i.mc.length?i.mc.join(', '):'',

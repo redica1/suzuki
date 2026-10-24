@@ -1,4 +1,4 @@
-/* build: 20261024-131433 */
+/* build: 20261024-132121 */
 function vAuthPick(){return `<section class="sec"><h2>접수 시작</h2>
   <p class="lede">어떻게 접수하시나요?</p>
   <div class="pick2">
@@ -6,25 +6,27 @@ function vAuthPick(){return `<section class="sec"><h2>접수 시작</h2>
     ${GUEST_OPEN?`<button type="button" class="pickcard" data-mode="guest"><b>비회원 (학부모)</b><span>회원 학원에 다니지 않는 아이를 보호자가 직접 접수해요. 보호자 이름과 휴대전화만 있으면 돼요.</span></button>`:''}
   </div>
   ${GUEST_OPEN?'<p class="hint">회원 학원에 다니는 학생은 담당 선생님이 한꺼번에 접수해요. 잘 모르겠으면 다니는 학원 선생님께 먼저 여쭤 주세요.</p>':''}</section>`}
-function vConsent(){const L=consItems();
+function vConsent(){if(!S.chk){S.auth='pick';return vAuthPick()}const L=consItems();
   return `<section class="sec"><h2>개인정보 동의</h2>
-  <p class="lede">${S.mode==='guest'?'비회원(학부모) 접수':'회원 선생님 접수'} · 아래 내용을 읽고 동의해 주세요. 제목을 누르면 전체 내용이 펼쳐져요.</p>
+  ${(()=>{const c=S.chk;if(!c)return '';const G=c.kind==='guest';const who=G?`${esc(c.name)} 보호자 · 비회원`:`${esc(c.name)} 선생님 · 회원 명단 확인`;
+    return `<div class="verified" style="max-width:640px">✓ ${who}</div>${c.subs&&c.subs.length?`<div class="note info" style="max-width:640px"><b>이미 신청한 분이에요</b> · 접수 ${c.subs.length}건 (${c.subs.map(esc).join(', ')}) · 동의하면 「내 접수」로 가서 확인·수정·입금 신고를 할 수 있어요.</div>`:`<p class="hint" style="max-width:640px">${G?'처음 신청하시는 분이에요.':'아직 접수한 내역이 없어요.'} 동의하면 접수를 시작해요.</p>`}`})()}
+  <p class="lede">아래 내용을 읽고 동의해 주세요. 제목을 누르면 전체 내용이 펼쳐져요.</p>
   <div class="panel cons" style="max-width:640px">
     <label class="consall"><input type="checkbox" id="consAll" ${consAll()?'checked':''}><b>전체 동의</b> <span class="hint">(선택 항목 포함)</span></label>
     ${L.map(x=>`<div class="consit"><div class="consrow"><label><input type="checkbox" data-cons="${x.id}" ${S.cons&&S.cons[x.id]?'checked':''}><span class="pill ${x.req?'due':'ok'}">${x.req?'필수':'선택'}</span> ${esc(x.title.replace(/\s*\(선택\)$/,''))}</label>
       <button type="button" class="btn small ghost" data-consopen="${x.id}" aria-expanded="${!!(S.consOpen||{})[x.id]}">${(S.consOpen||{})[x.id]?'접기':'내용 보기'}</button></div>
       ${(S.consOpen||{})[x.id]?`<div class="consbody">${esc(x.id==='refund'?(refundBody()+(x.body?'\n\n'+x.body:'')):x.body)}</div>`:''}</div>`).join('')}
     ${S.verr?`<p class="err">${S.verr}</p>`:''}
-    <div class="row" style="justify-content:space-between"><button class="btn ghost" type="button" id="toPick">← 처음으로</button><button class="btn primary" type="button" id="consNext">동의하고 다음</button></div>
+    <div class="row" style="justify-content:space-between"><button class="btn ghost" type="button" id="reInput">← 다시 입력</button><button class="btn primary" type="button" id="consNext">동의하고 ${S.chk&&S.chk.subs&&S.chk.subs.length?'내 접수 보기':'접수 시작'}</button></div>
   </div></section>`}
 function vGuestLogin(){return `<section class="sec"><h2>비회원 (학부모) 접수</h2>
   <p class="lede">보호자 이름과 휴대전화를 넣어 주세요. 나중에 접수 내용을 보거나 고칠 때도 같은 이름·번호로 들어와요.</p>
   <div class="panel" style="max-width:440px">
     <label class="f" for="lgNm">보호자 이름<input type="text" id="lgNm" value="${esc(S.lgNm)}" autocomplete="name"></label>
     <label class="f" for="lgEm">휴대전화<span class="phwrap"><span class="phpre" aria-hidden="true">010-</span><input type="tel" id="lgEm" value="${esc(String(S.lgEm||'').replace(/^010-?/,''))}" inputmode="numeric" placeholder="0000-0000" maxlength="9" autocomplete="tel-local" aria-label="휴대전화 010 뒤 8자리"></span></label>
-    <p class="hint"><span class="pill ok">동의 완료</span> 개인정보 동의를 마쳤어요.</p>
+    <p class="hint">이미 신청했다면 같은 이름·번호로 넣으면 접수 내용을 볼 수 있어요. 다음 화면에서 개인정보 동의를 받아요.</p>
     ${S.verr?`<p class="err">${S.verr}</p>`:''}
-    <button class="btn primary" type="button" id="doGuest">비회원으로 접수 시작</button>
+    <button class="btn primary" type="button" id="doGuest">확인</button>
     <button class="btn ghost small" type="button" id="toPick" style="justify-self:start">← 처음으로</button>
   </div></section>`}
 function vGuestStep1(){const u=S.user;
@@ -48,7 +50,17 @@ function vGuestStep2(){const t=totals();
   </div>
   ${t.n?`<div class="note info">넣은 아이 ${S.extra.filter(s=>s.on!==false).length}명 · 「다음」을 눌러 진도·레슨·가족을 넣어요.</div>`:''}
   </section>`}
+function doMemberLogin(nm,ph){busy(true,'들어가고 있어요…');google.script.run.withSuccessHandler(r=>{busy(false);if(!r.ok){S.verr=r.msg;if(S.auth==='consent'&&!/동의/.test(r.msg))S.auth='login';render();return}
+      S.token=r.token;S.today=r.today;S.myAcct=r.myAcct||null;loadFromServer(r);login({...r.teacher,acads:r.teacher.acads});
+      if(!MY_SUBS.length&&r.teacher.acads.length===1){const a=r.teacher.acads[0];S.acad=a;S.rq='';S.sel={};S.ptab='교사';S.picked={};S.extra=[];S.fam=[];S.info={};S.room={};ensureRoster(a);S.verified=true;render()}})
+      .withFailureHandler(e=>{busy(false);S.verr='연결이 잠시 안 돼요. 다시 눌러 주세요. ('+((e&&e.message)||e)+')';render()}).login(nm,ph,S.cons||{})}
+function doGuestLogin(nm,ph){busy(true,'들어가고 있어요…');google.script.run.withSuccessHandler(r=>{busy(false);if(!r.ok){S.verr=r.msg;if(S.auth==='consent'&&!/동의/.test(r.msg))S.auth='guest';render();return}
+      S.token=r.token;S.today=r.today;S.myAcct=r.myAcct||null;loadFromServer(r);login({...r.teacher});
+      if(!MY_SUBS.length){S.acad=GUEST_ACAD;S.rq='';S.sel={};S.picked={};S.extra=[];S.fam=[];S.info={};S.room={};ensureRoster(GUEST_ACAD);S.verified=true;render()}})
+      .withFailureHandler(e=>{busy(false);S.verr='연결이 잠시 안 돼요. 다시 눌러 주세요. ('+((e&&e.message)||e)+')';render()}).guestLogin(nm,ph,S.cons||{})}
 function renderSteps(){
+  if(!S.user){const PRE=['회원 · 비회원 선택',S.mode==='guest'?'보호자 확인':'본인 확인','개인정보 동의'],cur=S.auth==='pick'?1:S.auth==='consent'?3:2;
+    document.getElementById('steps').innerHTML=PRE.map((t,i)=>`<li class="${i+1===cur?'on':i+1<cur?'done':''}"><button type="button" disabled aria-current="${i+1===cur?'step':'false'}"><span class="bar"></span>${i+1}. ${t}</button></li>`).join('');return}
   document.getElementById('steps').innerHTML = (isGuest()?['보호자 확인','참가 아이','참가 정보','(앙상블 없음)','신청 확인','접수 완료']:STEPS).map((t,i)=>{
     const n=i+1, cls=n===S.step?'on':(n<S.step?'done':''); const can = n<S.step && S.step<6;
     return `<li class="${cls}"><button type="button" ${can?`data-go="${n}"`:'disabled'} aria-current="${n===S.step?'step':'false'}"><span class="bar"></span>${n}. ${t}</button></li>`}).join('');
@@ -203,18 +215,3 @@ function vStep2(){
     <div id="rosterList">${rosterList()}</div>
     ${addBtn()}
     ${true?`
-    ${S.extra.length?`<div class="xhead">명단에 없어 추가한 학생 ${S.extra.length}명 <span class="hint">체크한 학생만 접수돼요 · 연회비 30,000원이 함께 청구돼요 · 「빼기」는 목록에서 지워요</span></div><ul class="roster">${S.extra.map(s=>`<li><input type="checkbox" id="xk_${s.id}" ${s.on!==false?'checked':''} data-xon="${s.id}" aria-label="${esc(s.name)} 선택"><label class="who" for="xk_${s.id}"><b>${esc(s.name)} <span class="kind ks">학생</span></b><small>${age(s.birth)}세 · ${s.inst} · 담당 ${esc(s.teacher)}</small></label><span class="row" style="flex-wrap:nowrap"><span class="pill new">신규 추가</span><button class="btn small ghost" type="button" data-rmx="${s.id}">빼기</button></span></li>`).join('')}</ul>`:''}
-    ${S.showNew?`<div class="adder"><b>명단에 없는 학생 추가</b>
-      <p class="hint">늦게 들어온 학생은 여기서 추가하고 연회비 30,000원을 캠프비와 함께 입금해 주세요. 운영진이 확인하면 정식 접수돼요.</p>
-      <div class="grid2"><label class="f" for="nN"><span>학생 이름<span class="req">*</span></span><input type="text" id="nN"></label>
-      <label class="f" for="nB"><span>출생연도<span class="ex">(ex 2020)</span><span class="req">*</span></span><input type="text" id="nB" inputmode="numeric" maxlength="4"></label>
-      <label class="f" for="nI">전공<select id="nI"><option>바이올린</option><option>첼로</option><option>비올라</option><option>플루트</option></select></label>
-      <div class="f"><span>시작 연월</span><div class="pair"><select id="nSy" aria-label="시작 년도"><option value="">년도</option>${Array.from({length:12},(_,i)=>2026-i).map(y=>`<option>${y}</option>`).join('')}</select><select id="nSm" aria-label="시작 월"><option value="">월</option>${Array.from({length:12},(_,i)=>`<option value="${String(i+1).padStart(2,'0')}">${i+1}월</option>`).join('')}</select></div></div>
-      <label class="f" for="nT"><span>담당 교사<span class="req">*</span></span><select id="nT">${opts(teachersFor('바이올린'),'','선택')}</select></label></div>
-      <div class="row"><button class="btn primary small" type="button" id="addNew">학생 추가</button><button class="btn small ghost" type="button" id="cancelNew">닫기</button><span class="err" id="nErr"></span></div></div>`
-    :`<button class="btn ghost" type="button" id="openNew">+ 명단에 없는 학생 추가</button>`}`:''}
-  </div>
-  ${cartPanel()}
-  ${unpaidPicked.length?`<div class="note"><b>회비확인대기 ${unpaidPicked.length}명</b> · ${unpaidPicked.map(p=>esc(p.name)).join(', ')}<br>연회비를 캠프비와 같은 계좌로 함께 입금해 주세요. 운영진이 입금을 확인하면 정식 접수로 바뀌어요.</div>`:''}
-  </section>`;
-}

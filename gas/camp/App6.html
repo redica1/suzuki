@@ -1,4 +1,17 @@
-/* build: 20261024-131433 */
+/* build: 20261024-132121 */
+    ${days.map((dl,d)=>{const xs=mine.filter(x=>x.d===d);return xs.length?`<div class="ttday"><div class="ttdl">${esc(dl)}</div>${xs.map(x=>`<div class="ttit"><span class="num">${esc(x.t)}${x.e?'<small>~'+esc(x.e)+'</small>':''}</span><span><span class="ttrole ${x.what==='개인레슨'?'les':''}">${esc(x.what)}</span><b>${esc(x.title)}</b> · ${esc(x.where)}${x.loc?` <small class="hint">${esc(x.loc)}</small>`:''}${x.with?`<br><small class="hint">${x.what==='개인레슨'?'학생: ':'함께: '}${esc(x.with)}</small>`:''}</span></div>`).join('')}</div>`:''}).join('')||'<p class="hint" style="margin:0">아직 배정된 일정이 없어요.</p>'}</div></section>`;
+  const st=T.students||[];
+  return head+seg+`<p class="lede">내가 접수했거나 내가 담당 교사인 학생의 개인레슨 시간이에요. 학부모님께 알려 주세요.</p>
+    ${st.length?st.map(x=>`<div class="panel ttstu"><div class="spread"><b>${esc(x.name)}</b><span class="hint">${esc(x.acad)} · ${esc(x.inst)}${x.teacher?' · 담당 '+esc(x.teacher):''}${x.req?' · 추가레슨 '+x.req+'회':''}</span></div>
+      ${x.lessons.length?x.lessons.slice().sort((a,b)=>a.d-b.d||tmin(a.t)-tmin(b.t)).map(l=>`<div class="ttit"><span class="num">${esc((days[l.d]||'').replace(/\(.\)/,''))} ${esc(l.t)}</span><span><b>${esc(l.pr)}</b> 교수님${l.room?' · '+esc(l.room):''}</span></div>`).join(''):'<p class="hint" style="margin:4px 0 0">개인레슨 없음</p>'}</div>`).join(''):'<p class="hint">학생이 없어요.</p>'}</section>`}
+function openTT(){if(S.view!=='tt')S.ttBack={view:S.view,step:S.step};S.view='tt';S.tt=null;render();window.scrollTo({top:0});
+  api('myTimetable',[],r=>{S.tt=r;if(S.view==='tt')render()},()=>{S.tt={open:false};render()},'시간표를 불러오고 있어요…')}
+function openQ(){if(S.view!=='q')S.qBack={view:S.view,step:S.step};S.qWhere='';S.view='q';render();window.scrollTo({top:0});
+  if(S.user&&S.token)api('myIssues',[],r=>{S.qMine=r.mine||[];if(S.view==='q')render()},null,'불러오고 있어요…')}
+function sendQ(){const er=m=>{document.getElementById('qErr').textContent=m};const g=id=>((document.getElementById(id)||{}).value||'').trim();
+  const d={text:g('qText'),where:g('qWhere'),name:g('qName'),phone:g('qPhone'),acad:g('qAcad'),env:`화면 ${(S.qBack||{}).view||''}/${(S.qBack||{}).step||''} · ${S.editNo?'수정 '+S.editNo+' · ':''}${navigator.userAgent.slice(0,200)}`};
+  if(!S.user&&(!d.name||d.phone.replace(/\D/g,'').length<10))return er('이름과 휴대전화를 넣어 주세요.');
+  if(d.text.length<2)return er('어떤 문제인지 적어 주세요.');
   const f=document.getElementById('qPic');const go=file=>{d.file=file;
     const call=()=>{busy(true,'올리고 있어요…');google.script.run.withSuccessHandler(r=>{busy(false);S.qText='';S.qMine=r.mine||S.qMine;render();toast(`${r.no}번으로 올렸어요 · 운영진이 확인하면 답을 달아요`,true)}).withFailureHandler(e=>{busy(false);er((e&&e.message)||String(e))}).submitIssue(S.token||'',d)};call()};
   if(f&&f.files&&f.files[0]){const fl=f.files[0];if(fl.size>5*1024*1024)return er('사진은 5MB까지예요.');const rd=new FileReader();rd.onload=()=>go({name:fl.name,type:fl.type,data:String(rd.result).split(',')[1]});rd.readAsDataURL(fl)}else go(null)}
@@ -26,7 +39,7 @@ function render(){fillBanks();
   document.getElementById('dockTotal').textContent = won(t.all);
   if(S.editNo&&S.step>1&&S.step<6){const D=editDiff();if(D)document.getElementById('dockLabel').textContent=D.diff?`고친 내용: ${won(D.before)} → ${won(D.after)} (${sgn(D.diff)})`:(S.quickEdit?'신청 내용 보기 · 금액 그대로':'고치는 중 · 금액 그대로')}
   back.hidden = S.step===1||S.step===6;
-  next.hidden = S.step===6;
+  next.hidden = S.step===6||!S.user;
   next.textContent = S.step===5?(S.editNo?'수정 내용 저장':'접수하기'):(S.step===4&&S.editNo&&S.ensEdit?'앙상블 저장':S.step===3&&S.editNo&&S.quickEdit?'저장':'다음');
   next.disabled = false; next.classList.toggle('dim', blocked());
   if(S.editNo&&S.quickEdit&&S.step===3&&(S.quickKeys||[]).every(k=>lockedP(k)))next.hidden=true;
@@ -94,22 +107,20 @@ document.addEventListener('click',e=>{
     if(!t){S.verr=`회원 명단에서 ${n} 선생님을 찾지 못했어요.`;render();return}
     if(t.state==='대기'){S.verr='승인 대기 중이에요. 협회가 확인하면 이메일로 알려 드려요.';render();return}
     login({...t,acads:t.acads.includes('마포스즈키')?['마포스즈키',...t.acads.filter(a=>a!=='마포스즈키')]:t.acads});if(t.acads.includes('마포스즈키')){document.querySelector('[data-acad="마포스즈키"]')||0}return}
-  if(d.mode){S.mode=d.mode;S.cons=S.cons||{};S.verr='';S.auth='consent';render();window.scrollTo({top:0});return}
-  if(b.id==='toPick'){S.auth='pick';S.verr='';render();return}
+  if(d.mode){S.mode=d.mode;S.cons={};S.chk=null;S.verr='';S.auth=d.mode==='guest'?'guest':'login';render();window.scrollTo({top:0});return}
+  if(b.id==='toPick'){S.auth='pick';S.chk=null;S.verr='';render();return}
+  if(b.id==='reInput'){S.auth=S.mode==='guest'?'guest':'login';S.chk=null;S.verr='';render();return}
   if(d.consopen){S.consOpen=S.consOpen||{};S.consOpen[d.consopen]=!S.consOpen[d.consopen];render();return}
-  if(b.id==='consNext'){if(!consReqOk()){const miss=consItems().filter(x=>x.req&&!(S.cons||{})[x.id]).map(x=>x.title);S.verr='필수 항목에 동의해 주세요: '+miss.join(', ');render();return}S.verr='';S.auth=S.mode==='guest'?'guest':'login';render();window.scrollTo({top:0});return}
-  if(b.id==='doGuest'){const nm=document.getElementById('lgNm').value.trim(),ph='010'+document.getElementById('lgEm').value.replace(/\D/g,'');S.lgNm=nm;S.lgEm='010-'+document.getElementById('lgEm').value;
-    if(nm.length<2||ph.length<11){S.verr='보호자 이름과 휴대전화를 모두 넣어 주세요.';render();return}
-    busy(true,'확인하고 있어요…');google.script.run.withSuccessHandler(r=>{busy(false);if(!r.ok){S.verr=r.msg;render();return}
-      S.token=r.token;S.today=r.today;S.myAcct=r.myAcct||null;loadFromServer(r);login({...r.teacher});
-      if(!MY_SUBS.length){S.acad=GUEST_ACAD;S.rq='';S.sel={};S.picked={};S.extra=[];S.fam=[];S.info={};S.room={};ensureRoster(GUEST_ACAD);S.verified=true;render()}})
-      .withFailureHandler(e=>{busy(false);S.verr='연결이 잠시 안 돼요. 다시 눌러 주세요. ('+((e&&e.message)||e)+')';render()}).guestLogin(nm,ph,S.cons||{});return}
-  if(b.id==='doLogin'){const nm=document.getElementById('lgNm').value.trim(),ph='010'+document.getElementById('lgEm').value.replace(/\D/g,'');S.lgNm=nm;S.lgEm='010-'+document.getElementById('lgEm').value;
-    if(!nm||ph.length<11){S.verr='이름과 휴대전화를 모두 넣어 주세요.';render();return}
-    busy(true,'명단을 확인하고 있어요…');google.script.run.withSuccessHandler(r=>{busy(false);if(!r.ok){S.verr=r.msg;render();return}
-      S.token=r.token;S.today=r.today;S.myAcct=r.myAcct||null;loadFromServer(r);login({...r.teacher,acads:r.teacher.acads});
-      if(!MY_SUBS.length&&r.teacher.acads.length===1){const a=r.teacher.acads[0];S.acad=a;S.rq='';S.sel={};S.ptab='교사';S.picked={};S.extra=[];S.fam=[];S.info={};S.room={};ensureRoster(a);S.verified=true;render()}})
-      .withFailureHandler(e=>{busy(false);S.verr='연결이 잠시 안 돼요. 다시 눌러 주세요. ('+((e&&e.message)||e)+')';render()}).login(nm,ph,S.cons||{});return}
+  if(b.id==='consNext'){if(!consReqOk()){const miss=consItems().filter(x=>x.req&&!(S.cons||{})[x.id]).map(x=>x.title);S.verr='필수 항목에 동의해 주세요: '+miss.join(', ');render();return}
+    S.verr='';const c=S.chk||{};if(c.kind==='guest')doGuestLogin(c.nm,c.ph);else doMemberLogin(c.nm,c.ph);return}
+  if(b.id==='doGuest'||b.id==='doLogin'){const G=b.id==='doGuest',nm=document.getElementById('lgNm').value.trim(),ph='010'+document.getElementById('lgEm').value.replace(/\D/g,'');S.lgNm=nm;S.lgEm='010-'+document.getElementById('lgEm').value;
+    if((G?nm.length<2:!nm)||ph.length<11){S.verr=G?'보호자 이름과 휴대전화를 모두 넣어 주세요.':'이름과 휴대전화를 모두 넣어 주세요.';render();return}
+    /* 테스트 페이지(동의 미리 함)는 바로 로그인 */
+    if(typeof TEST_AUTOCONSENT!=='undefined'&&TEST_AUTOCONSENT){if(G)doGuestLogin(nm,ph);else doMemberLogin(nm,ph);return}
+    /* 1) 이름·휴대전화로 누구인지·이미 접수했는지 확인 → 2) 개인정보 동의 → 3) 로그인 */
+    busy(true,G?'확인하고 있어요…':'명단을 확인하고 있어요…');google.script.run.withSuccessHandler(r=>{busy(false);if(!r.ok){S.verr=r.msg;render();return}
+      S.chk={kind:G?'guest':'member',nm,ph,name:r.name,subs:r.subs||[],fresh:r.fresh};S.cons={};S.verr='';S.auth='consent';render();window.scrollTo({top:0})})
+      .withFailureHandler(e=>{busy(false);S.verr='연결이 잠시 안 돼요. 다시 눌러 주세요. ('+((e&&e.message)||e)+')';render()}).authCheck(G?'guest':'member',nm,ph);return}
   if(b.id==='toReg'){S.auth='reg';S.verr='';render();return}
   if(b.id==='doReg'){const g=id=>document.getElementById(id).value.trim();const nm=g('rgName'),ph=g('rgPhone').replace(/\D/g,'');
     if(!nm||ph.length<10){S.verr='이름과 휴대전화를 넣어 주세요.';render();return}
@@ -169,13 +180,3 @@ document.addEventListener('click',e=>{
     const rows={};ps.forEach(p=>{const v=rpv(p);rows[p.id]={name:v.n.trim(),date:v.d,a:+v.a}});
     const rep={id:'R'+Date.now().toString(36),name:rows[ps[0].id].name,date:rows[ps[0].id].date,amt:ps.reduce((t,p)=>t+rows[p.id].a,0),memo,ids:sel,rows};if(rfAll)rep.refund=rfAll;
     ps.forEach(p=>{p.pay='신고';p.rep=rep;delete S.rpRow[p.id]});S.afterSave=()=>repDone(ps.map(p=>p.id));subSave();S.rp=null;S.rpMemo=undefined;render();toast(`${ps.length}명 입금 신고를 보냈어요 · 운영진이 확인하면 「입금 확인」으로 바뀌어요`);return}
-  if(b.id==='rpFill'){const n=document.getElementById('rpAllN').value.trim(),dd=document.getElementById('rpAllD').value;S.rpAllN=n;S.rpAllD=dd;const sel=S.rp||[];
-    if(!n&&!dd){toast('적용할 입금자명이나 입금일을 적어 주세요');return}unpaidPpl().filter(x=>sel.includes(x.p.id)).forEach(({p})=>{const v=rpv(p);if(n)v.n=n;if(dd)v.d=dd});render();toast(`선택한 ${sel.length}명에게 적용했어요`);return}
-  if(d.rpok){MY_SUBS.forEach(sb=>sb.ppl.forEach(p=>{if(p.rep&&p.rep.id===d.rpok&&p.pay==='신고'){const row=p.rep.rows&&p.rep.rows[p.id];p.pay='확인';p.paidAmt=(p.paidAmt||0)+(row?row.a:dueOf(p));p.rep.ok=row?row.date:p.rep.date}}));subSave();render();toast('시제품: 운영진이 입금을 확인한 것으로 바꿨어요');return}
-  if(d.rpall!==undefined){S.rp=d.rpall==='1'?unpaidPpl().map(x=>x.p.id):[];{const n=document.getElementById('rpMemo');if(n)S.rpMemo=n.value}render();return}
-  if(d.cxall){const sb=MY_SUBS.find(x=>x.no===d.cxall);const live=sb.ppl.filter(p=>p.status==='정상'&&mineOk(sb,p)).map(p=>p.id);const cur=S.cx[sb.no]||[];S.cx[sb.no]=live.length&&live.every(id=>cur.includes(id))?cur.filter(id=>!live.includes(id)):[...new Set([...cur,...live])];S.cxOpen='';S.cxDone=null;render();return}
-  if(d.cxopen){S.cxOpen=d.cxopen;S.cxDone=null;render();const x=document.querySelector('.cxbox');if(x&&x.scrollIntoView)x.scrollIntoView({block:'center'});return}
-  if(b.id==='showAllCards'){S.editOnly=null;render();return}
-  if(d.ensnew){startEdit(d.ensnew,'ens');S.ens={...(S.ens||{}),on:true};render();return}
-  if(d.ensedit){startEdit(d.ensedit,'ens');return}
-  if(d.pedit){const [no,id]=d.pedit.split('|');startEdit(no,[id.slice(no.length+1)]);return}

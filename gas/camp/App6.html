@@ -1,4 +1,5 @@
-/* build: 20261024-213811 */
+/* build: 20261024-214658 */
+  if(tab==='me')return head+seg+`<div class="panel">${T.prof?`<p class="hint" style="margin:0 0 6px">교수 · 레슨실 <b>${esc(T.prof.room||'미정')}</b></p>`:''}
     ${days.map((dl,d)=>{const xs=mine.filter(x=>x.d===d);return xs.length?`<div class="ttday"><div class="ttdl">${esc(dl)}</div>${xs.map(x=>`<div class="ttit"><span class="num">${esc(x.t)}${x.e?'<small>~'+esc(x.e)+'</small>':''}</span><span><span class="ttrole ${x.what==='개인레슨'?'les':''}">${esc(x.what)}</span><b>${esc(x.title)}</b> · ${esc(x.where)}${x.loc?` <small class="hint">${esc(x.loc)}</small>`:''}${x.with?`<br><small class="hint">${x.what==='개인레슨'?'학생: ':'함께: '}${esc(x.with)}</small>`:''}</span></div>`).join('')}</div>`:''}).join('')||'<p class="hint" style="margin:0">아직 배정된 일정이 없어요.</p>'}</div></section>`;
   const st=T.students||[];
   return head+seg+`<p class="lede">내가 접수했거나 내가 담당 교사인 학생의 개인레슨 시간이에요. 학부모님께 알려 주세요.</p>
@@ -179,4 +180,3 @@ document.addEventListener('click',e=>{
     const diff=ps.filter(p=>+rpv(p).a!==dueOf(p));if(diff.length&&!memo)return er(`${diff.map(p=>p.name).join(', ')}의 금액이 청구액과 달라요. 메모에 이유를 적어 주세요.`);
     const rows={};ps.forEach(p=>{const v=rpv(p);rows[p.id]={name:v.n.trim(),date:v.d,a:+v.a}});
     const rep={id:'R'+Date.now().toString(36),name:rows[ps[0].id].name,date:rows[ps[0].id].date,amt:ps.reduce((t,p)=>t+rows[p.id].a,0),memo,ids:sel,rows};if(rfAll)rep.refund=rfAll;
-    ps.forEach(p=>{p.pay='신고';p.rep=rep;delete S.rpRow[p.id]});S.afterSave=()=>repDone(ps.map(p=>p.id));subSave();S.rp=null;S.rpMemo=undefined;render();toast(`${ps.length}명 입금 신고를 보냈어요 · 운영진이 확인하면 「입금 확인」으로 바뀌어요`);return}

@@ -1,4 +1,4 @@
-/* build: 20261024-213811 */
+/* build: 20261024-214658 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -1567,7 +1567,7 @@ function lessonSet(token, op) {
  * 설정 「시간표 공개」 = 예 일 때만: 내 일정(교사 일정) + (교수면) 내 개인레슨 + 우리 학생 레슨 */
 function myTimetable(token) {
   const u = who_(token);
-  if (setting_('시간표 공개') !== '예') return { open: false };
+  if (setting_('시간표 공개') !== '예') return { open: false, rooms: myRooms_(u) };
   const c = actCfg_(); const days = c.days || [];
   const ppl = actPeople_(c.people); const T = teachers_().find(t => t.name === u.name && t.acads.some(a => u.acads.includes(a)));
   const nm = s => String(s || '').replace(/\s+/g, '').toLowerCase();
@@ -1606,7 +1606,12 @@ function adminGetSetting(token, key) { adm_(token); return { val: setting_(key) 
 /* ================= 방 배정 =================
  * 「방배정」: 한 줄 = 방 하나. 처음 열 때 겨울 숙소 객실 목록(Stay Tower S · Flex Tower P, 406실)으로 채움
  * 정원 기본: 18평 3명 · 23평 4명 · 27평 5명 · 표시 없음 5명 (방마다 고칠 수 있음) */
-const ROOM_HEAD = ['방번호', '건물', '층', '타입', '정원', '방종류', '메인학원', '메인 인원', '보조학원', '보조 인원', '비번 수신자', '교수', '메모', '고친 일시', '관리자'];
+const ROOM_HEAD = ['방번호', '건물', '층', '타입', '정원', '방종류', '메인학원', '메인 인원', '보조학원', '보조 인원', '비번 수신자', '교수', '메모', '고친 일시', '관리자', '배정', '사용 날짜', '공개'];
+/* 배정(JSON) = 방을 쓰는 묶음 목록 [{k, v, n, a, days, tm, no}] — 맨 앞이 메인
+ *   k: acad 학원 · grp 관리자가 만든 이름(본부방 · 애플방 …) · name 개인(교수 · 연수교사 …) · fam 가족방 신청 가족(no = 접수번호)
+ *   n: 그 묶음이 자는 인원 · a: 인원을 셀 학원 · days: 쓰는 날짜(빈 값 = 방 사용 날짜 전부) · tm: 시간 메모(예: 14:00 이후)
+ * 사용 날짜 = 방을 쓰는 날짜 번호(교사 일정 날짜), 빈 값 = 모든 날짜 · 공개 = 예면 일괄 공개 전이라도 그 방은 선생님 화면에 보임
+ * 메인학원 · 메인 인원 · 보조학원 · 보조 인원 · 교수 칸은 시트에서 보기 쉽게 배정에서 다시 채움 */
 const ROOM_KINDS = ['클래스방', '2인가족방', '3인가족방', '4인가족방', '교수방', '여교사방', '남교사방', '레슨방', '본부방'];
 const ROOM_INV = 'S101:;S102:;S103:;S105:;S106:;S107:;S108:;S109:;S117:;S118:;S119:;S121:;S122:;S123:;S125:;S126:;S127:;S128:;S129:;S130:;S201:;S202:;S203:;S205:;S206:;S207:;S208:;S209:;S210:;S211:;S212:;S213:;S215:;S216:;S217:;S218:;S219:;S220:;S221:;S222:;S223:;S225:;S226:;S227:;S228:;S229:;S230:;S231:;S232:;S233:;S236:;S237:;S238:;S239:;S240:;S241:;S301:;S302:;S303:;S305:;S306:;S307:;S308:;S309:;S310:23C;S311:23C;S312:23C;S313:23C;S315:23C;S316:23C;S317:23C;S318:23C;S319:23C;S320:;S321:;S322:;S323:;S325:;S326:;S327:;S328:;S329:;S330:;S331:;S332:;S333:;S336:;S338:;S339:;S340:;S341:;S401:;S402:;S403:;S405:;S406:;S407:;S408:;S409:;S410:;S411:;S412:;S413:;S415:;S416:;S417:;S418:;S419:;S420:;S421:;S422:;S423:;S425:;S426:;S427:;S428:;S429:;S430:;S431:;S432:;S433:;S435:;S501:27H;S502:27H;S503:27H;S505:27H;S506:27H;S507:27H;S508:27H;S509:18C;S510:;S511:;S512:;S513:;S515:;S516:;S517:;S518:;S519:;S520:27H;S521:18C;S522:;S523:;S525:27H;S526:27H;S527:27H;S528:27H;S529:27H;S530:27H;S531:27H;S532:27H;S533:27H;S535:;S601:27H;S602:27H;S603:27H;S605:27H;S606:27H;S607:27H;S608:27H;S609:18H;S610:;S611:;S612:;S613:;S615:;S616:;S617:;S618:;S619:;S620:27H;S621:18H;S622:18H;S623:18H;S625:;S626:;S627:;S628:;S629:;S630:;S631:;S632:;S633:;S635:;S701:27H;S702:27H;S703:27H;S705:27H;S706:27H;S707:27H;S708:27H;S709:18T;S710:27H;S711:27H;S712:27H;S713:27H;S715:27H;S716:27H;S717:27H;S718:27H;S719:27H;S720:27H;S721:18T;S722:18T;S723:18T;S725:27H;S726:27H;S727:27H;S728:27H;S729:27H;S730:27H;S731:27H;S732:27H;S733:27H;S735:;S801:23H;S802:23H;S803:;S805:;S806:;S807:;S808:;S809:18H;S810:;S811:;S812:;S813:;S815:23H;S816:23H;S817:23H;S818:23H;S819:23H;S820:27H;S821:18H;S822:18H;S823:18H;S825:23H;S826:23H;S827:23H;S828:23H;S829:23H;S830:23H;S831:27H;S833:;S901:23T;S902:23T;S903:23T;S905:23T;S906:23T;S907:23T;S908:23T;S909:18T;S910:23T;S911:23T;S912:23T;S913:23T;S915:23T;S916:23T;S917:23T;S918:23T;S919:23T;S920:27H;S921:18T;S922:18T;S923:18T;S925:23T;S926:23T;S927:23T;S928:23T;S929:23T;S930:23T;S931:27H;P201:;P202:;P203:;P205:;P206:;P207:;P208:;P209:;P210:;P211:;P212:;P213:;P215:;P216:;P217:;P218:;P219:;P301:;P302:;P303:;P305:;P306:;P307:;P308:;P309:;P310:;P311:;P312:;P313:;P315:;P316:;P317:;P318:;P319:;P320:;P321:;P322:;P323:;P325:;P326:;P327:;P401:;P402:;P403:;P405:;P406:;P407:;P408:;P409:;P410:;P411:;P412:;P413:;P415:;P416:;P417:;P418:;P419:;P420:;P421:;P422:;P423:;P425:;P426:;P427:;P501:;P502:;P503:;P505:;P506:;P507:;P508:;P509:;P510:;P511:;P512:;P513:;P515:;P516:;P517:;P518:;P519:;P520:;P601:;P602:;P603:;P605:;P606:;P607:;P608:;P609:;P610:;P611:;P612:;P613:;P615:;P616:;P617:;P618:;P619:;P620:;P701:;P702:;P703:;P705:;P706:;P707:;P708:;P709:;P710:;P711:;P712:;P713:;P715:;P716:;P717:;P718:;P719:;P720:;P801:;P802:;P803:;P805:;P806:;P807:;P808:;P809:;P810:;P811:;P812:;P813:;P815:;P816:;P817:';
 function roomSheet_() {
@@ -1615,36 +1620,88 @@ function roomSheet_() {
     sh = ss.insertSheet(SH.ROOM); sh.appendRow(ROOM_HEAD);
     const cap = { '18': 3, '23': 4, '27': 5 };
     const rows = ROOM_INV.split(';').filter(Boolean).map(x => { const [no, type] = x.split(':'); return [no, no[0] === 'S' ? 'Stay Tower' : 'Flex Tower', no.slice(1, -2) + 'F', type || '', cap[String(type || '').slice(0, 2)] || 5, '', '', '', '', '', '', '', '', '', '']; });
-    sh.getRange(2, 1, rows.length, ROOM_HEAD.length).setValues(rows);
-  }
+    sh.getRange(2, 1, rows.length, ROOM_HEAD.length).setValues(rows.map(r => r.concat(['', '', '']).slice(0, ROOM_HEAD.length)));
+  } else ensureHead_(SH.ROOM, ROOM_HEAD);
   return sh;
+}
+/** 예전 줄(배정 칸 없음) → 메인 · 보조 · 교수로 배정 목록 만들기 */
+function roomOcc_(r) {
+  if (r.occ && r.occ.length) return r.occ;
+  const L = [];
+  if (r.prof) L.push({ k: 'name', v: r.prof, n: 1, a: '교수진', days: [], tm: '' });
+  if (r.main && r.main !== r.prof) L.push({ k: ['본부', '교수진'].includes(r.main) ? 'grp' : 'acad', v: r.main, n: r.mn || 0, a: r.main, days: [], tm: '' });
+  if (r.sub) L.push({ k: 'acad', v: r.sub, n: r.sn || 0, a: r.sub, days: [], tm: '' });
+  return L;
 }
 function rooms_() {
   roomSheet_();
   return rows_(SH.ROOM).filter(r => String(r['방번호'] || '')).map(r => ({ no: String(r['방번호']), bld: String(r['건물'] || ''), fl: String(r['층'] || ''), type: String(r['타입'] || ''), cap: +r['정원'] || 0,
-    kind: String(r['방종류'] || ''), main: String(r['메인학원'] || ''), mn: +r['메인 인원'] || 0, sub: String(r['보조학원'] || ''), sn: +r['보조 인원'] || 0, pw: String(r['비번 수신자'] || ''), prof: String(r['교수'] || ''), memo: String(r['메모'] || ''), _row: r._row }));
+    kind: String(r['방종류'] || ''), main: String(r['메인학원'] || ''), mn: +r['메인 인원'] || 0, sub: String(r['보조학원'] || ''), sn: +r['보조 인원'] || 0, pw: String(r['비번 수신자'] || ''), prof: String(r['교수'] || ''), memo: String(r['메모'] || ''), _row: r._row,
+    occ: (() => { try { const o = JSON.parse(String(r['배정'] || '[]')); return Array.isArray(o) ? o : []; } catch (x) { return []; } })(),
+    days: String(r['사용 날짜'] == null ? '' : r['사용 날짜']).split(',').map(x => x.trim()).filter(x => /^\d+$/.test(x)).map(Number), pub: String(r['공개'] || '') === '예' }))
+    .map(r => Object.assign(r, { occ: roomOcc_(r) }));
 }
-function roomData(token) { adm_(token); let open = false; try { open = setting_('시간표 공개') === '예'; } catch (x) {} return { rooms: rooms_().map(r => { const o = Object.assign({}, r); delete o._row; return o; }), kinds: ROOM_KINDS, open }; }
-/** 방 하나 저장 (빈 메인학원이면 비움) */
+/** 방 설정: 일괄 공개 · 공개 시각 · 메인에 고를 수 있는 이름(본부방 · 애플방 …) */
+function roomCfg_() {
+  let names = []; try { names = JSON.parse(setting_('방 이름 목록') || '[]'); } catch (x) {}
+  if (!Array.isArray(names) || !names.length) names = ['본부방', '교수진'];
+  return { pubAll: setting_('방 공개') === '예', pubAt: String(setting_('방 공개 시각') || '').replace(/^'/, ''), names };
+}
+function roomPubNow_(cfg) { if (!cfg.pubAll) return false; if (!cfg.pubAt) return true; const t = new Date(cfg.pubAt.replace(' ', 'T') + ':00+09:00'); return isNaN(t) ? true : Date.now() >= t.getTime(); }
+function roomCfgSave(token, b) {
+  const a = adm_(token); need_(a, 'room');
+  const at = String((b && b.pubAt) || '').trim(); if (at && !/^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}$/.test(at)) throw new Error('공개 시각을 2027-01-05 18:00 꼴로 넣어 주세요.');
+  const names = [...new Set(((b && b.names) || []).map(x => String(x).trim().slice(0, 30)).filter(Boolean))].slice(0, 30);
+  ensureSettings_(); const sh = SpreadsheetApp.getActive().getSheetByName('설정');
+  const put = (k, v, d) => { const r = rows_('설정').find(x => String(x['항목']) === k); if (r) sh.getRange(r._row, 2).setValues([[v]]); else sh.appendRow([k, v, d]); };
+  put('방 공개', b && b.pubAll ? '예' : '아니오', '「예」면 공개 시각부터 선생님 화면 「우리 방」에 방이 보여요 (방마다 따로 공개도 가능)');
+  put('방 공개 시각', at ? "'" + at.replace('T', ' ') : '', '비우면 바로 공개 · 예) 2027-01-05 18:00');
+  put('방 이름 목록', JSON.stringify(names), '방배정 메인에 학원 대신 고를 수 있는 이름');
+  log_('관리자 ' + a.name, '방 공개 설정', (b && b.pubAll ? '일괄 공개 ' + (at || '바로') : '일괄 공개 안 함') + ' · 이름 ' + names.join(', '));
+  return roomData(token);
+}
+function roomData(token) {
+  adm_(token); let open = false; try { open = setting_('시간표 공개') === '예'; } catch (x) {}
+  let days = []; try { days = actCfg_().days || []; } catch (x) {}
+  const cfg = roomCfg_();
+  return { rooms: rooms_().map(r => { const o = Object.assign({}, r); delete o._row; return o; }), kinds: ROOM_KINDS, open, days, cfg: Object.assign({}, cfg, { live: roomPubNow_(cfg) }) };
+}
+/** 방 하나 저장: 배정 목록(occ)이 비면 방을 비움 · 날짜마다 인원 합계가 정원을 넘으면 막음 */
 function roomSave(token, x) {
   const a = adm_(token); need_(a, 'room');
   const t = (s, n) => String(s == null ? '' : s).trim().slice(0, n || 60);
+  const n = v => Math.max(0, Math.min(30, Math.floor(+v || 0)));
   const lock = lock_();
   try {
     const sh = roomSheet_(); const r = rooms_().find(y => y.no === t(x.no, 10));
     if (!r) throw new Error('방을 찾지 못했어요: ' + x.no);
     const kind = t(x.kind, 20); if (kind && !ROOM_KINDS.includes(kind)) throw new Error('방종류를 골라 주세요.');
-    const n = v => Math.max(0, Math.min(20, Math.floor(+v || 0)));
-    const clear = !t(x.main) && !t(x.prof);
-    const row = [r.no, r.bld, r.fl, t(x.type, 10) || r.type, n(x.cap) || r.cap, clear ? '' : kind, clear ? '' : t(x.main, 40), clear ? '' : n(x.mn), clear ? '' : t(x.sub, 40), clear ? '' : n(x.sn), clear ? '' : t(x.pw, 40), clear ? '' : t(x.prof, 40), t(x.memo, 200), stamp_(), a.name];
+    let nd = 0; try { nd = (actCfg_().days || []).length; } catch (e) {}
+    const dl = L => [...new Set((Array.isArray(L) ? L : []).map(Number).filter(d => d >= 0 && d < Math.max(nd, 1) && Number.isInteger(d)))].sort((p, q) => p - q);
+    if ((!Array.isArray(x.occ) || !x.occ.length) && (x.main || x.prof || x.sub)) x.occ = roomOcc_({ main: t(x.main, 40), mn: +x.mn || 0, sub: t(x.sub, 40), sn: +x.sn || 0, prof: t(x.prof, 40) });   // 예전 방식(메인 · 보조 · 교수)으로 보낸 것
+    const occ = (Array.isArray(x.occ) ? x.occ : []).slice(0, 12).map(o => ({ k: ['acad', 'grp', 'name', 'fam'].includes(o.k) ? o.k : 'name', v: t(o.v, 40), n: n(o.n), a: t(o.a, 40), days: dl(o.days), tm: t(o.tm, 30), no: t(o.no, 20) })).filter(o => o.v);
+    const days = dl(x.days), cap = n(x.cap) || r.cap, clear = !occ.length;
+    const all = nd ? [...Array(nd).keys()] : [0], use = days.length ? days : all;
+    use.forEach(d => { const sum = occ.filter(o => !o.days.length || o.days.includes(d)).reduce((s2, o) => s2 + o.n, 0); if (sum > cap) throw new Error(`${r.no} 방: ${d + 1}번째 날 인원 ${sum}명이 정원 ${cap}명보다 많아요.`); });
+    const m = occ[0] || {}, sub = occ.slice(1).find(o => o.k === 'acad' || o.k === 'grp'), pr = occ.find(o => o.k === 'name' && kind === '교수방');
+    const row = [r.no, r.bld, r.fl, t(x.type, 10) || r.type, cap, clear ? '' : kind, clear ? '' : (m.v || ''), clear ? '' : m.n, clear ? '' : (sub ? sub.v : ''), clear ? '' : (sub ? sub.n : ''), clear ? '' : t(x.pw, 40), clear ? '' : (pr ? pr.v : ''), t(x.memo, 200), stamp_(), a.name,
+      clear ? '' : JSON.stringify(occ), days.length && days.length < all.length ? days.join(',') : '', x.pub && !clear ? '예' : ''];
     sh.getRange(r._row, 1, 1, ROOM_HEAD.length).setValues([row]);
-    log_('관리자 ' + a.name, clear ? '방 비움' : '방 배정', r.no + (clear ? '' : ' · ' + (t(x.prof) || t(x.main)) + ' ' + kind));
+    log_('관리자 ' + a.name, clear ? '방 비움' : '방 배정', r.no + (clear ? '' : ' · ' + occ.map(o => o.v + ' ' + o.n).join(', ') + ' ' + kind));
   } finally { lock.releaseLock(); }
   return roomData(token);
 }
 /** 선생님 「내 시간표」에 보일 우리 학원 방 */
 function myRooms_(u) {
-  try { return rooms_().filter(r => u.acads.includes(r.main) || u.acads.includes(r.sub) || (r.prof && r.prof === u.name)).map(r => ({ no: r.no, bld: r.bld, fl: r.fl, type: r.type, kind: r.kind, main: r.main, sub: r.sub, mn: r.mn, sn: r.sn, pw: r.pw, prof: r.prof })); } catch (x) { return []; }
+  try {
+    const cfg = roomCfg_(), live = roomPubNow_(cfg); let days = []; try { days = actCfg_().days || []; } catch (x) {}
+    const nm = s => String(s || '').replace(/\s+/g, '');
+    const mine = o => (o.k === 'acad' || o.k === 'fam') && u.acads.includes(o.a || o.v) || (o.k === 'name' && nm(o.v) === nm(u.name)) || (o.k === 'acad' && u.acads.includes(o.v));
+    return rooms_().filter(r => (live || r.pub) && r.occ.some(mine)).map(r => ({ no: r.no, bld: r.bld, fl: r.fl, type: r.type, kind: r.kind, pw: r.pw,
+      days: (r.days.length ? r.days : days.map((_, i) => i)).map(d => days[d] || (d + 1) + '일'),
+      occ: r.occ.map(o => ({ v: mine(o) ? o.v : (o.k === 'name' ? '다른 분' : o.v), n: o.n, mine: !!mine(o), days: o.days.map(d => days[d] || (d + 1) + '일'), tm: o.tm })),
+      main: r.main, sub: r.sub, mn: r.mn, sn: r.sn, prof: r.prof }));
+  } catch (x) { return []; }
 }
 
 /* ================= 오후음악회 연주 순서 · 리허설 =================

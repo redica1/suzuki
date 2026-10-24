@@ -1,4 +1,4 @@
-/* build: 20261024-012441 */
+/* build: 20261024-100302 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -932,19 +932,28 @@ function actEvents_() {
       desc: String(r['설명'] || '').split('\n').map(x => x.trim()).filter(Boolean), ppl: Array.isArray(ppl) ? ppl : [] };
   });
 }
-/** 일정의 사람 = 저장된 목록 + 회원 명단 교사 + 교수진 (이름이 같으면 회원 명단과 연결) */
+/** 일정에 넣을 수 있는 사람 = 캠프에 접수한 교사(교사·연수생·소속없는 중급연수생) + 교수진(사용 중)
+ *  접수 취소(환불 접수 · 입금 전 바로 취소)된 교사는 cx=true → 화면에서 이름 흐리게 「(취소)」, 횟수·통계에서 빠짐
+ *  예전에 넣었는데 지금은 명단에 없는 사람은 out=true 로 남겨 둠 (일정 칸에 이미 들어 있으면 보이게) */
 function actPeople_(saved) {
-  const L = (saved || []).map(p => Object.assign({}, p));
   const nm = s => String(s || '').replace(/\s+/g, '').toLowerCase();
-  const byName = n => L.filter(p => nm(p.n) === nm(n));
-  teachers_().forEach(t => {
-    const c = byName(t.name).filter(p => !p.tid && p.kind !== '교수');
-    if (L.some(p => p.tid === t.id)) return;
-    if (c.length === 1) { c[0].tid = t.id; return; }
-    if (c.length > 1) { const k = c.find(p => (p.acad || '').split(' · ').some(a => t.acads.includes(a))); if (k) { k.tid = t.id; return; } }
-    L.push({ id: 'R' + t.id, n: t.name, acad: t.acads.join(' · '), inst: t.inst || '', kind: /연수/.test(t.role || '') ? '연수생' : '교사', tid: t.id });
-  });
-  try { profs_().filter(p => p.on).forEach(p => { if (!byName(p.name).length) L.push({ id: 'P:' + p.name, n: p.name, acad: p.org || '교수진', inst: p.inst, kind: '교수' }); }); } catch (x) {}
+  const TT = ['교사', '연수생', '소속없는 중급연수생'];
+  const M = {};
+  loadSubs_().forEach(sb => sb.ppl.forEach(p => {
+    const k = p.id.slice(sb.no.length + 1); const i = (sb.form && sb.form.info && sb.form.info[k]) || {};
+    const type = p.type || i.type || ''; if (!TT.includes(type)) return;
+    const id = 'C:' + k; const cx = p.status === '취소';
+    if (M[id] && !M[id].cx) return;   // 다른 접수에서 살아 있으면 그쪽
+    M[id] = { id, n: p.name, acad: sb.acad, inst: p.inst || i.inst || '', kind: type === '교사' ? '교사' : '연수생', tid: /^t_/.test(k) ? k.slice(2) : '', cx };
+  }));
+  const L = Object.values(M);
+  try { profs_().filter(p => p.on).forEach(p => {
+    const same = L.find(x => nm(x.n) === nm(p.name));
+    if (same) { same.kind = '교수'; same.cx = false; if (!same.inst) same.inst = p.inst; return; }   // 교수로 등록된 분은 접수 취소와 상관없이 넣을 수 있음
+    L.push({ id: 'P:' + p.name, n: p.name, acad: p.org || '교수진', inst: p.inst, kind: '교수' });
+  }); } catch (x) {}
+  const have = new Set(L.map(p => p.id));
+  (saved || []).forEach(p => { if (!have.has(p.id)) L.push(Object.assign({}, p, { out: true })); });
   return L;
 }
 function schedData(token) {
@@ -1013,7 +1022,7 @@ function lessonSet(token, op) {
       let info = { name: '', acad: '', no: '', inst: '' };
       const sb = loadSubs_().find(x => String(op.pid).indexOf(x.no + '_') === 0);
       const p = sb && sb.ppl.find(q => q.id === op.pid);
-      if (!p || p.status !== '정상') throw new Error('참가자를 찾지 못했거나 취소된 사람이에요. 새로 불러와 주세요.');
+      if (!p || p.status === '취소') throw new Error('참가자를 찾지 못했거나 취소된 사람이에요. 새로 불러와 주세요.');
       info = { name: p.name, acad: sb.acad, no: sb.no, inst: p.inst || '' };
       const row = [d, "'" + t, pr, op.pid, info.name, info.acad, info.no, info.inst, stamp_(), a.name];
       if (cur) sh.getRange(cur._row, 1, 1, LES_HEAD.length).setValues([row]); else sh.appendRow(row);
@@ -1042,9 +1051,9 @@ function myTimetable(token) {
     mine.push({ d: e.d, t: e.s, e: e.e, what: me.r, title: e.title, where: e.room, loc: roomLoc(e.d, e.room), with: e.ppl.filter(p => !meIds.includes(p.n)).map(p => pn(p.n) + '(' + p.r + ')').join(', ') }); });
   const prof = profs_().find(p => p.on && p.lesson && nm(p.name) === nm(u.name));
   const subs = loadSubs_(); const byPid = {};
-  subs.forEach(sb => sb.ppl.forEach(p => { if (p.status === '정상') { const k = p.id.slice(sb.no.length + 1); byPid[p.id] = { p, sb, i: (sb.form && sb.form.info && sb.form.info[k]) || {} }; } }));
+  subs.forEach(sb => sb.ppl.forEach(p => { if (p.status !== '취소') { const k = p.id.slice(sb.no.length + 1); byPid[p.id] = { p, sb, i: (sb.form && sb.form.info && sb.form.info[k]) || {} }; } }));
   const L = lessons_(); const roomOf = n => (profs_().find(p => p.name === n) || {}).room || '';
-  if (prof) L.filter(x => x.pr === prof.name).forEach(x => { const s = byPid[x.pid]; mine.push({ d: x.d, t: x.t, e: '', what: '개인레슨', title: '개인레슨', where: prof.room || '레슨실', loc: '', with: s ? s.p.name + ' (' + s.sb.acad + ')' : '' }); });
+  if (prof) L.filter(x => x.pr === prof.name).forEach(x => { const s = byPid[x.pid]; if (!s) return; mine.push({ d: x.d, t: x.t, e: '', what: '개인레슨', title: '개인레슨', where: prof.room || '레슨실', loc: '', with: s ? s.p.name + ' (' + s.sb.acad + ')' : '' }); });
   const stu = [];
   Object.keys(byPid).forEach(id => { const s = byPid[id]; const type = s.p.type || s.i.type || '';
     if (!['학생', '회원의 악기하는 자녀'].includes(type)) return;

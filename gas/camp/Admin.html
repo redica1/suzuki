@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261024-152136 -->
+<!-- build: 20261024-153128 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -765,7 +765,7 @@ function vSet(){return `<div class="sec-h"><div><h2>날짜 · 장소</h2><p>캠�
   <div class="sec-h"><div><h2>날마다 안내 글 · 식사 줄 <span class="cap" style="margin:0">구글 시트로 보낼 때 씀</span></h2><p>안내 글은 그날 표 맨 위 빨간 줄이에요. 식사 줄은 한 줄에 「17:30-19:20 | 저녁 식사 · 식사 장소 …」.</p></div></div>
   <div class="g2">${D.days.map((x,i)=>`<div class="panel"><b>${esc(x)}</b><label class="f">안내 글<textarea class="a_note" data-i="${i}" rows="2" style="width:100%;font:inherit;padding:6px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)" placeholder="예: 모든 교사는 참관하시는 수업에서 적극적으로 보조해 주세요.">${esc((D.dayNotes||[])[i]||'')}</textarea></label>
     <label class="f">식사 줄<textarea class="a_meal" data-i="${i}" rows="${Math.max(2,D.meals.filter(m=>m.d===i).length+1)}" style="width:100%;font:inherit;padding:6px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)">${esc(D.meals.filter(m=>m.d===i).map(m=>m.s+'-'+m.e+' | '+m.t).join('\n'))}</textarea></label></div>`).join('')}</div>
-  <div class="row"><button class="btn small primary" type="button" id="a_noteSave">안내 글 · 식사 줄 저장</button></div>
+  <div class="row"><button class="btn small primary" type="button" id="a_noteSave">안내 글 · 식사 줄 저장</button><button class="btn small" type="button" id="a_mealCamp" title="캠프 설정 › 식사 시간을 모든 날짜에 다시 넣어요 (그 밖에 따로 넣은 줄은 그대로)">캠프 설정 식사 시간 다시 넣기</button></div>
   <div class="sec-h"><div><h2>권 설명 (한 · 영) <span class="cap" style="margin:0">구글 시트로 보낼 때 씀</span></h2><p>대상이 권 하나일 때 「Vn 4B(비발디 가단조 ~)」와 영어 줄 「Vivaldi in A minor ~」로 나가요. 비워 두면 권만 나가요.</p></div></div>
   <div class="g3 lstg">${TG_INST.map(k=>`<div class="panel lstcol"><b class="lsth">${k}</b><table class="pft lst"><tbody>${(k==='Vn'?['Pre','1A','1B','2A','2B','3A','3B','4A','4B','5','6','7','8','9','10']:['Pre','1','2','3','4','5','6','7','8','9','10']).map(t=>{const v=(D.bookDesc[k]||{})[t]||['',''];return `<tr><td class="num" style="white-space:nowrap">${t}</td><td><input type="text" class="a_bd" data-k="${k}" data-t="${t}" data-l="0" value="${esc(v[0]||'')}" placeholder="한글" maxlength="60"><input type="text" class="a_bd" data-k="${k}" data-t="${t}" data-l="1" value="${esc(v[1]||'')}" placeholder="English" maxlength="80" style="margin-top:3px;font-size:12px"></td></tr>`}).join('')}</tbody></table></div>`).join('')}</div>
   <div class="row"><button class="btn small primary" type="button" id="a_bdSave">권 설명 저장</button></div>
@@ -790,6 +790,10 @@ document.addEventListener('click',ev=>{if(S.tab!=='act'||!D)return;const b=ev.ta
   if(b.id==='a_noteSave'){const N=[];document.querySelectorAll('.a_note').forEach(el=>N[+el.dataset.i]=el.value.trim());D.dayNotes=D.days.map((_,i)=>N[i]||'');
     const M=[],bad=[];document.querySelectorAll('.a_meal').forEach(el=>{const i=+el.dataset.i;el.value.split('\n').map(x=>x.trim()).filter(Boolean).forEach(line=>{const m=line.match(/^(\d{1,2}):(\d{2})\s*[-~]\s*(\d{1,2}):(\d{2})\s*\|?\s*(.*)$/);if(!m){bad.push(line);return}M.push({d:i,s:m[1].padStart(2,'0')+':'+m[2],e:m[3].padStart(2,'0')+':'+m[4],t:m[5]||'식사'})})});
     if(bad.length){toast('시간을 「17:30-19:20 | 글」 꼴로 적어 주세요: '+bad[0]);return}D.meals=M;logIt('안내 글 · 식사 줄 고침');refresh();toast('저장했어요');return}
+  if(b.id==='a_mealCamp'){const CM=((S.D&&S.D.camp)||{}).meals||[],n=D.days.length;if(!CM.length){toast('캠프 설정에 식사 시간이 없어요');return}
+    const keep=D.meals.filter(m=>!m.k&&!/아침|점심|저녁|breakfast|lunch|dinner/i.test(m.t||'')),L=[];
+    for(let d=0;d<n;d++)CM.forEach(m=>{if(m.on===false)return;if(n>1&&d===0&&!m.first)return;if(n>1&&d===n-1&&!m.last)return;L.push({d,s:m.s,e:m.e,t:m.t,k:m.k})});
+    D.meals=keep.concat(L).sort((x,y)=>x.d-y.d||x.s.localeCompare(y.s));logIt('캠프 설정 식사 시간을 모든 날짜에 다시 넣음');refresh();toast(n+'일에 식사 시간을 넣었어요');return}
   if(b.id==='a_bdSave'){const B={Vn:{},Vc:{},Fl:{}};document.querySelectorAll('.a_bd').forEach(el=>{const k=el.dataset.k,t=el.dataset.t;B[k][t]=B[k][t]||['',''];B[k][t][+el.dataset.l]=el.value.trim()});
     Object.keys(B).forEach(k=>Object.keys(B[k]).forEach(t=>{if(!B[k][t][0]&&!B[k][t][1])delete B[k][t]}));D.bookDesc=B;logIt('권 설명 고침');refresh();toast('권 설명을 저장했어요');return}
   if(d.lreset){if(A.lst)delete A.lst[d.lreset];render();return}
@@ -854,7 +858,7 @@ function view(){
   setTimeout(()=>stat());
   return `<div class="act">${tabs}${body}</div>`}
 document.addEventListener('click',ev=>{if(S.tab!=='act')return;const b=ev.target.closest('button');if(b&&b.id==='a_retry'){ERR='';load();render()}});
-return {view,flush,dirty:()=>DIRTY||SAVING};
+return {view,flush,dirty:()=>DIRTY||SAVING,reset:()=>{if(!DIRTY&&!SAVING){D=null;A.pv=null}}};
 })();
 
 /* ================= 개인레슨 시간표 (30분 칸 · 교수 × 시간) =================
@@ -1236,6 +1240,11 @@ function vCamp(){if(!S.cc)S.cc=ccCopy();const c=S.cc;if(!c.base)return '<div cla
     <tr class="off"><td><small class="faint">그 뒤</small></td><td>${inp('refund.after.label','text','maxlength="30"')}</td><td>${inp('refund.after.rate','num','style="width:64px"')}</td><td class="c">${inp('refund.after.doc','check')}</td><td><label class="row" style="gap:4px;flex-wrap:nowrap"><small>취소 받기</small>${inp('refund.after.allow','check')}</label></td></tr></tbody></table>
     <label class="row" style="gap:6px;margin-top:6px">${inp('refund.duesRefund','check')} 연회비도 환불</label>
     <p class="hint">위에서부터 처음 맞는 규정을 써요 (취소 요청한 날 기준). 「취소 받기」를 끄면 캠프 시작 뒤에는 입금한 사람이 취소를 요청할 수 없어요.</p></div>
+  <div class="panel"><div class="spread"><h3>식사 시간 <span class="hint">교사 일정 모든 날짜의 식사 줄 · 프로그램북에도 그대로</span></h3><button class="btn small" type="button" data-ccm="add" ${(c.meals||[]).length>=6?'disabled':''}>＋ 식사 추가</button></div>
+    <table class="pft cct"><thead><tr><th>식사</th><th>시작</th><th>끝</th><th>표에 나오는 글</th><th class="c">첫날</th><th class="c">마지막 날</th><th class="c">사용</th><th></th></tr></thead><tbody>
+    ${(c.meals||[]).map((m,i)=>`<tr class="${m.on===false?'off':''}"><td>${inp('meals.'+i+'.k','text','maxlength="10" style="width:70px"')}</td><td>${inp('meals.'+i+'.s','time')}</td><td>${inp('meals.'+i+'.e','time')}</td><td>${inp('meals.'+i+'.t','text','maxlength="120" style="min-width:220px" placeholder="예: Lunch 점심 식사 · 식사 장소: 밀타임"')}</td><td class="c">${inp('meals.'+i+'.first','check')}</td><td class="c">${inp('meals.'+i+'.last','check')}</td><td class="c">${inp('meals.'+i+'.on','check')}</td><td><button class="btn small ghost" type="button" data-ccm="del|${i}">빼기</button></td></tr>`).join('')||'<tr><td colspan="8" class="hint">식사 시간이 없어요.</td></tr>'}</tbody></table>
+    <label class="row" style="gap:6px;margin-top:6px"><input type="checkbox" id="ccMealsApply"> 바꾼 게 없어도 저장할 때 교사 일정에 다시 넣기</label>
+    <p class="hint">저장하면 교사 일정의 모든 날짜에 식사 줄이 다시 들어가요 (첫날 · 마지막 날은 체크한 식사만). 예전 아침 · 점심 · 저녁 줄은 바뀌고, 그 밖에 따로 넣은 줄(간식 등)은 그대로예요. 날짜를 새로 늘렸으면 「교사 일정 › 날짜 · 장소」의 「캠프 설정 식사 시간 다시 넣기」를 눌러 주세요.</p></div>
   <div class="panel hint">개인정보 동의 문구는 「설정 › 동의서」에서 입력·수정해요.</div>
   <div class="panel hint"><b>새 캠프(다음 학기)를 열 때</b><br>1) 지금 접수 DB 시트를 통째로 「사본 만들기」 → 지난 캠프 보관용으로 이름을 바꿔 둬요.<br>2) 이 시트에서 「접수」·「참가자」·「입금신고」·「환불요청」·「앙상블팀」·「교사일정」·「개인레슨」·「방배정」·「음악회순서」·「비회원」·「동의기록」 탭의 내용(2행부터)을 지워요.<br>3) 여기 「캠프 설정」에서 캠프 코드(예: 27S)·이름·날짜·장소·차수·참가비·환불 규정을 새로 넣고 저장해요.<br>4) 「교사 일정 › 날짜 · 장소」에서 날짜를 맞추고, 「교수진」·「담당자」를 확인해요. 접수 화면 주소는 그대로예요.</div>
   </div>`}
@@ -1249,8 +1258,9 @@ function ccClick(b,d){if(S.tab!=='camp'&&S.tab!=='cons')return false;const c=S.c
   if(d.ccr){const [op,i]=d.ccr.split('|');if(op==='add'){const L=c.rounds[c.rounds.length-1]||{};c.rounds.push({n:(c.rounds.length+1)+'차',from:L.to||'',to:L.to||''});Object.keys(c.fees).forEach(t=>c.fees[t].push(c.fees[t][c.fees[t].length-1]||0))}
     else{c.rounds.splice(+i,1);Object.keys(c.fees).forEach(t=>c.fees[t].splice(+i,1));if(c.base.cur!=='auto'&&+c.base.cur>=c.rounds.length)c.base.cur='auto'}render();return true}
   if(d.ccf){const [op,i]=d.ccf.split('|');if(op==='add'){const L=c.refund.rules[c.refund.rules.length-1];c.refund.rules.push({until:L?L.until:'',label:'',rate:0,doc:false})}else c.refund.rules.splice(+i,1);render();return true}
-  if(d.ccsave){const old=S.D.camp||{},idCh=old.base&&old.base.id!==c.base.id;
-    const go=()=>call('campSave',[c,old.rev||0],r=>{S.D.camp=r.camp;S.cc=null;applyCampAdm(r.camp);render();toast('캠프 설정을 저장했어요 · 선생님 화면에 바로 반영돼요')},'저장하고 있어요…');
+  if(d.ccm){const [op,i]=d.ccm.split('|');c.meals=c.meals||[];if(op==='add')c.meals.push({k:'',t:'',s:'15:00',e:'15:30',on:true,first:true,last:true});else c.meals.splice(+i,1);render();return true}
+  if(d.ccsave){const old=S.D.camp||{},idCh=old.base&&old.base.id!==c.base.id;const ap=document.getElementById('ccMealsApply');c.mealsApply=!!(ap&&ap.checked);
+    const go=()=>call('campSave',[c,old.rev||0],r=>{S.D.camp=r.camp;S.cc=null;applyCampAdm(r.camp);render();toast('캠프 설정을 저장했어요 · 선생님 화면에 바로 반영돼요'+(r.mealsDays?` · 교사 일정 ${r.mealsDays}일에 식사 시간을 넣었어요`:''));if(r.mealsDays)ACT.reset()},'저장하고 있어요…');
     if(idCh&&(S.D.subs||[]).length)ask('캠프 코드를 바꿀까요?',`이미 접수가 ${(S.D.subs||[]).length}건 있어요. 새 접수부터 <b>${esc(c.base.id)}-001</b>처럼 번호가 매겨지고, 지난 접수 번호는 그대로예요. 보통은 새 캠프를 열 때만 바꿔요.`,go,'그래도 저장');
     else go();return true}
   return false}

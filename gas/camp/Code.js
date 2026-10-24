@@ -1,4 +1,4 @@
-/* build: 20261024-152136 */
+/* build: 20261024-153128 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -686,6 +686,10 @@ const CAMP_DEF = {
   opt: { lessonFee: OPT.lessonFee, lessonMax: OPT.lessonMax, mcFee: 150000, studentDues: OPT.studentDues, teacherDues: OPT.teacherDues, roomCap: OPT.roomCap, roomEmptyFee: OPT.roomEmptyFee },
   refund: { rules: [{ until: '2026-12-10', label: '접수 마감 전', rate: 100, doc: false }, { until: '2026-12-28', label: '캠프 14일 전까지', rate: 50, doc: false }, { until: '2027-01-10', label: '캠프 전날까지', rate: 0, doc: true }],
     after: { label: '캠프 시작 후', rate: 0, doc: true, allow: false }, duesRefund: false },
+  /* 식사 시간: 교사 일정 모든 날짜에 식사 줄로 들어감 · first/last = 첫날 · 마지막 날에도 넣을지 */
+  meals: [{ k: '아침', t: 'Breakfast 아침 식사', s: '07:20', e: '08:50', on: true, first: false, last: true },
+    { k: '점심', t: 'Lunch 점심 식사', s: '11:30', e: '13:20', on: true, first: false, last: true },
+    { k: '저녁', t: 'Dinner 저녁 식사', s: '17:30', e: '19:20', on: true, first: true, last: false }],
   consent: { ver: '2026-10-24', items: [
     { id: 'collect', title: '개인정보 수집·이용 동의', req: true, on: true, body: '수집 항목\n- 접수하는 분: 이름, 휴대전화, 이메일\n- 참가자: 이름, 성별, 출생연도, 악기·현재 진도, 담당 선생님, 레슨·음악회·가족방 신청 내용\n- 입금·환불: 입금자명, 입금일, 금액, 환불 받을 계좌(은행·계좌번호·예금주)\n\n이용 목적\n캠프 접수 확인, 반·레슨·숙소 배정, 일정 안내와 연락, 참가비 입금 확인과 환불\n\n보유 기간\n캠프가 끝나고 1년 동안 보관한 뒤 지워요. 회계 기록은 관련 법령이 정한 기간만큼 보관해요.\n\n동의하지 않을 수 있지만, 동의하지 않으면 캠프 접수를 할 수 없어요.' },
     { id: 'third', title: '개인정보 제3자 제공 동의', req: true, on: true, body: '제공받는 곳: 캠프 숙소(리조트)\n제공 항목: 참가자 이름, 성별, 학원(소속)\n제공 목적: 객실 배정과 투숙 관리\n보유 기간: 캠프가 끝나면 숙소의 방침에 따라 지워요.\n\n동의하지 않을 수 있지만, 동의하지 않으면 숙소 배정이 필요한 캠프 접수를 할 수 없어요.' },
@@ -694,7 +698,7 @@ const CAMP_DEF = {
     { id: 'photo', title: '사진·영상 촬영과 홍보 활용 동의 (선택)', req: false, on: true, body: '캠프 중 찍은 사진·영상(참가자 모습 포함)을 협회 홈페이지, SNS, 소식지 같은 홍보에 쓸 수 있어요.\n보유 기간: 게시물을 내려 달라고 요청할 때까지\n\n동의하지 않아도 접수할 수 있어요. 동의하지 않으면 홍보물에 쓰지 않아요.' }
   ] },
 };
-const CAMP_KEYS = [['base', '기본'], ['rounds', '차수'], ['fees', '참가비'], ['opt', '옵션'], ['refund', '환불'], ['consent', '동의']];
+const CAMP_KEYS = [['base', '기본'], ['rounds', '차수'], ['fees', '참가비'], ['opt', '옵션'], ['refund', '환불'], ['consent', '동의'], ['meals', '식사']];
 let CAMP_CACHE = null;
 function camp_() {
   if (CAMP_CACHE) return CAMP_CACHE;
@@ -741,21 +745,36 @@ function campSave(token, c, rev) {
   const consent = { ver: today_(), items: dc.map(d => { const x = oc.find(y => y.id === d.id) || d; const fixed = d.id === 'collect';
     return { id: d.id, title: String(x.title || d.title).trim().slice(0, 60) || d.title, req: fixed ? true : !!x.req, on: fixed ? true : !!x.on, body: String(x.body == null ? d.body : x.body).slice(0, 4000) }; }) };
   { const old = camp_().consent; if (JSON.stringify(old.items) === JSON.stringify(consent.items)) consent.ver = old.ver; }
-  const nc = { base: { id: String(b.id).trim(), name: String(b.name).trim(), start: b.start, end: b.end, place: String(b.place || '').trim(), open: b.open, close: b.close, cur, guest: b.guest !== false }, rounds, fees, opt, refund, consent };
+  const meals = (Array.isArray(c.meals) ? c.meals : []).slice(0, 6).map(m => ({ k: String(m.k || '').trim().slice(0, 10), t: String(m.t || '').trim().slice(0, 120), s: String(m.s || ''), e: String(m.e || ''), on: m.on !== false, first: !!m.first, last: !!m.last }));
+  meals.forEach((m, i) => { if (!m.k) throw new Error((i + 1) + '번째 식사 이름을 적어 주세요.'); if (!/^\d{2}:\d{2}$/.test(m.s) || !/^\d{2}:\d{2}$/.test(m.e) || m.e <= m.s) throw new Error(m.k + ' 시간을 07:20 ~ 08:50 꼴로 확인해 주세요.'); if (!m.t) m.t = m.k + ' 식사'; });
+  const nc = { meals, base: { id: String(b.id).trim(), name: String(b.name).trim(), start: b.start, end: b.end, place: String(b.place || '').trim(), open: b.open, close: b.close, cur, guest: b.guest !== false }, rounds, fees, opt, refund, consent };
   const lock = lock_();
   try {
     const ss = SpreadsheetApp.getActive(); let sh = ss.getSheetByName(CAMPCFG);
     if (!sh) { sh = ss.insertSheet(CAMPCFG); sh.getRange(1, 1, 1, 3).setValues([['항목', '값', '설명']]).setFontWeight('bold'); sh.setFrozenRows(1); sh.getRange('B:B').setNumberFormat('@'); }
     CAMP_CACHE = null; const old = camp_();
     if ((+rev || 0) !== (old.rev || 0)) throw new Error('다른 분이 먼저 캠프 설정을 바꿨어요. 새로 고친 뒤 다시 해 주세요.');
-    const desc = { base: '캠프 코드 · 이름 · 날짜 · 장소 · 접수 기간 · 비회원 접수', rounds: '차수 이름과 기간', fees: '참가자격 × 차수 참가비', opt: '추가 레슨 · 마스터클래스 · 회비 · 가족방', refund: '취소·환불 규정', consent: '개인정보 동의 문구 (바꾸면 버전 날짜가 바뀜)' };
+    const desc = { base: '캠프 코드 · 이름 · 날짜 · 장소 · 접수 기간 · 비회원 접수', rounds: '차수 이름과 기간', fees: '참가자격 × 차수 참가비', opt: '추가 레슨 · 마스터클래스 · 회비 · 가족방', refund: '취소·환불 규정', meals: '식사 시간 (교사 일정 모든 날짜의 식사 줄)', consent: '개인정보 동의 문구 (바꾸면 버전 날짜가 바뀜)' };
     const vals = CAMP_KEYS.map(k => [k[1], JSON.stringify(nc[k[0]]), desc[k[0]]]).concat([['rev', String((old.rev || 0) + 1), '바꾼 횟수 (건드리지 마세요)']]);
     sh.getRange(2, 1, Math.max(sh.getLastRow(), vals.length + 1), 3).clearContent();
     sh.getRange(2, 1, vals.length, 3).setValues(vals);
     CAMP_CACHE = null;
+    if (JSON.stringify(old.meals || []) !== JSON.stringify(meals) || c.mealsApply) nc.mealsDays = mealsApply_(meals);
     log_(a.name, '캠프 설정 저장', nc.base.id + ' · ' + nc.base.start + '~' + nc.base.end);
   } finally { lock.releaseLock(); }
-  return { ok: true, camp: campPublic_() };
+  return { ok: true, camp: campPublic_(), mealsDays: nc.mealsDays };
+}
+/** 캠프 설정의 식사 시간 → 교사 일정(일정설정 meals) 모든 날짜에 다시 넣기
+ *  예전 식사 줄(표시 k가 있거나 아침·점심·저녁 / Breakfast·Lunch·Dinner 글이 든 줄)은 바꾸고, 그 밖의 줄(간식 등)은 그대로 둠 → 바꾼 날짜 수 */
+const MEAL_RX = /아침|점심|저녁|breakfast|lunch|dinner/i;
+function mealGen_(meals, n) { const L = []; for (let d = 0; d < n; d++) (meals || []).forEach(m => { if (m.on === false) return; if (d === 0 && !m.first && n > 1) return; if (d === n - 1 && !m.last && n > 1) return; L.push({ d, s: m.s, e: m.e, t: m.t, k: m.k }); }); return L; }
+function mealsApply_(meals) {
+  const sh = actSheets_(), c = actCfg_(), n = (c.days || []).length; if (!n) return 0;
+  const keep = (Array.isArray(c.meals) ? c.meals : []).filter(m => !m.k && !MEAL_RX.test(String(m.t || '')));
+  const L = keep.concat(mealGen_(meals, n)).sort((x, y) => x.d - y.d || String(x.s).localeCompare(String(y.s)));
+  const put = (k, v) => { const r = rows_(SH.ACTCFG).find(x => String(x['항목']) === k); if (r) sh.cfg.getRange(r._row, 2).setValues([[JSON.stringify(v)]]); else sh.cfg.appendRow([k, JSON.stringify(v)]); };
+  put('meals', L); put('rev', (+c.rev || 0) + 1);   // 열려 있는 교사 일정 화면은 다음 저장 때 새로 불러옴
+  return n;
 }
 
 
@@ -1447,7 +1466,7 @@ function schedData(token) {
   adm_(token);
   const c = actCfg_();
   const log = rows_(SH.ACTLOG).slice(-300).reverse().map(r => ({ at: String(r['일시'] instanceof Date ? Utilities.formatDate(r['일시'], TZ, 'M/d HH:mm') : r['일시']).replace(/^\d{4}-0?(\d+)-0?(\d+)/, '$1/$2'), t: (r['관리자'] ? r['관리자'] + ' · ' : '') + String(r['내용'] || '') }));
-  return { days: c.days || [], rooms: c.rooms || {}, meals: c.meals || [], rows: c.rows || {}, people: actPeople_(c.people), unav: c.unav || {}, req: c.req || {}, target: c.target || { min: 2, max: 6 }, kinds: Array.isArray(c.kinds) && c.kinds.length ? c.kinds : ACT_KINDS, stages: Array.isArray(c.stages) && c.stages.length ? c.stages : ACT_STAGES, roleSets: c.roleSets && typeof c.roleSets === 'object' ? orchMerge_(c.roleSets, c.orchParts) : ACT_ROLESETS, tgSongs: c.tgSongs && typeof c.tgSongs === 'object' ? c.tgSongs : null, en: c.en || ACT_EN, bookDesc: c.bookDesc || ACT_BOOKDESC, dayNotes: c.dayNotes || [], roleShort: c.roleShort || {}, rev: +c.rev || 0, events: actEvents_(), log };
+  return { days: c.days || [], rooms: c.rooms || {}, meals: Array.isArray(c.meals) ? c.meals : mealGen_(camp_().meals, (c.days || []).length), rows: c.rows || {}, people: actPeople_(c.people), unav: c.unav || {}, req: c.req || {}, target: c.target || { min: 2, max: 6 }, kinds: Array.isArray(c.kinds) && c.kinds.length ? c.kinds : ACT_KINDS, stages: Array.isArray(c.stages) && c.stages.length ? c.stages : ACT_STAGES, roleSets: c.roleSets && typeof c.roleSets === 'object' ? orchMerge_(c.roleSets, c.orchParts) : ACT_ROLESETS, tgSongs: c.tgSongs && typeof c.tgSongs === 'object' ? c.tgSongs : null, en: c.en || ACT_EN, bookDesc: c.bookDesc || ACT_BOOKDESC, dayNotes: c.dayNotes || [], roleShort: c.roleShort || {}, rev: +c.rev || 0, events: actEvents_(), log };
 }
 function schedSave(token, b) {
   const a = adm_(token); need_(a, 'act');
@@ -1469,7 +1488,7 @@ function schedSave(token, b) {
     sh.ev.getRange(1, 1, 1, ACT_HEAD.length).setValues([ACT_HEAD]);   // 머리줄 (「세부」 칸이 없던 시트도 맞춤)
     if (last > 1) sh.ev.getRange(2, 1, last - 1, ACT_HEAD.length).clearContent();
     if (rows.length) sh.ev.getRange(2, 1, rows.length, ACT_HEAD.length).setValues(rows);
-    const val = { days: b.days.map(x => t(x, 30)), rooms: b.rooms || {}, meals: b.meals || [], rows: b.rows || {}, people: (b.people || []).map(p => ({ id: t(p.id, 40), n: t(p.n, 60), acad: t(p.acad, 120), inst: t(p.inst, 20), kind: t(p.kind, 10), tid: p.tid ? t(p.tid, 20) : undefined })), unav: b.unav || {}, req: b.req || {}, target: b.target || { min: 2, max: 6 }, en: (() => { const o = {}; Object.keys(b.en || {}).slice(0, 300).forEach(k => { o[t(k, 40)] = t(b.en[k], 80); }); return o; })(), bookDesc: (() => { const o = {}; ['Vn', 'Vc', 'Fl'].forEach(k => { o[k] = {}; Object.keys((b.bookDesc || {})[k] || {}).slice(0, 40).forEach(x => { const v = b.bookDesc[k][x]; if (Array.isArray(v)) o[k][t(x, 6)] = [t(v[0], 60), t(v[1], 80)]; }); }); return o; })(), dayNotes: (b.dayNotes || []).map(x => t(x, 300)).slice(0, 20), roleShort: (() => { const o = {}; Object.keys(b.roleShort || {}).slice(0, 100).forEach(k => { const v = t(b.roleShort[k], 6).trim(); if (v) o[t(k, 12)] = v; }); return o; })(), meals: (b.meals || []).map(m => ({ d: +m.d || 0, s: t(m.s, 5), e: t(m.e, 5), t: t(m.t, 200) })).filter(m => /^\d{2}:\d{2}$/.test(m.s)).slice(0, 80), tgSongs: (() => { const o = {}; ['Vn', 'Vc', 'Fl'].forEach(k => { const L = (b.tgSongs || {})[k]; o[k] = (Array.isArray(L) ? L : []).map(x => t(x, 40).trim()).filter(Boolean).slice(0, 40); }); return o; })(), stages: (Array.isArray(b.stages) && b.stages.length ? b.stages : ACT_STAGES).map(x => t(x, 20).trim()).filter(Boolean).slice(0, 20), roleSets: (() => { const o = {}; ACT_CATS.forEach(c => { const L = ((b.roleSets || {})[c] || ACT_ROLESETS[c]); o[c] = (Array.isArray(L) ? L : []).map(x => t(x, 12).trim()).filter(Boolean).slice(0, 40); }); return o; })(), kinds: (Array.isArray(b.kinds) ? b.kinds : ACT_KINDS).map(k => ({ n: t(k.n, 40).trim(), c: ACT_CATS.includes(k.c) ? k.c : '레슨', link: !!k.link })).filter(k => k.n).slice(0, 80), orchParts: 1, rev: (+c.rev || 0) + 1 };
+    const val = { days: b.days.map(x => t(x, 30)), rooms: b.rooms || {}, meals: b.meals || [], rows: b.rows || {}, people: (b.people || []).map(p => ({ id: t(p.id, 40), n: t(p.n, 60), acad: t(p.acad, 120), inst: t(p.inst, 20), kind: t(p.kind, 10), tid: p.tid ? t(p.tid, 20) : undefined })), unav: b.unav || {}, req: b.req || {}, target: b.target || { min: 2, max: 6 }, en: (() => { const o = {}; Object.keys(b.en || {}).slice(0, 300).forEach(k => { o[t(k, 40)] = t(b.en[k], 80); }); return o; })(), bookDesc: (() => { const o = {}; ['Vn', 'Vc', 'Fl'].forEach(k => { o[k] = {}; Object.keys((b.bookDesc || {})[k] || {}).slice(0, 40).forEach(x => { const v = b.bookDesc[k][x]; if (Array.isArray(v)) o[k][t(x, 6)] = [t(v[0], 60), t(v[1], 80)]; }); }); return o; })(), dayNotes: (b.dayNotes || []).map(x => t(x, 300)).slice(0, 20), roleShort: (() => { const o = {}; Object.keys(b.roleShort || {}).slice(0, 100).forEach(k => { const v = t(b.roleShort[k], 6).trim(); if (v) o[t(k, 12)] = v; }); return o; })(), meals: (b.meals || []).map(m => Object.assign({ d: +m.d || 0, s: t(m.s, 5), e: t(m.e, 5), t: t(m.t, 200) }, m.k ? { k: t(m.k, 10) } : {})).filter(m => /^\d{2}:\d{2}$/.test(m.s)).slice(0, 80), tgSongs: (() => { const o = {}; ['Vn', 'Vc', 'Fl'].forEach(k => { const L = (b.tgSongs || {})[k]; o[k] = (Array.isArray(L) ? L : []).map(x => t(x, 40).trim()).filter(Boolean).slice(0, 40); }); return o; })(), stages: (Array.isArray(b.stages) && b.stages.length ? b.stages : ACT_STAGES).map(x => t(x, 20).trim()).filter(Boolean).slice(0, 20), roleSets: (() => { const o = {}; ACT_CATS.forEach(c => { const L = ((b.roleSets || {})[c] || ACT_ROLESETS[c]); o[c] = (Array.isArray(L) ? L : []).map(x => t(x, 12).trim()).filter(Boolean).slice(0, 40); }); return o; })(), kinds: (Array.isArray(b.kinds) ? b.kinds : ACT_KINDS).map(k => ({ n: t(k.n, 40).trim(), c: ACT_CATS.includes(k.c) ? k.c : '레슨', link: !!k.link })).filter(k => k.n).slice(0, 80), orchParts: 1, rev: (+c.rev || 0) + 1 };
     const cur = rows_(SH.ACTCFG);
     ACT_KEYS.forEach(k => {
       const s = JSON.stringify(val[k]); if (s.length > 45000) throw new Error(k + ' 내용이 너무 길어요.');

@@ -1,4 +1,4 @@
-/* build: 20261024-222838 */
+/* build: 20261024-223629 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -1487,7 +1487,7 @@ function schedData(token) {
   adm_(token);
   const c = actCfg_();
   const log = rows_(SH.ACTLOG).slice(-300).reverse().map(r => ({ at: String(r['일시'] instanceof Date ? Utilities.formatDate(r['일시'], TZ, 'M/d HH:mm') : r['일시']).replace(/^\d{4}-0?(\d+)-0?(\d+)/, '$1/$2'), t: (r['관리자'] ? r['관리자'] + ' · ' : '') + String(r['내용'] || '') }));
-  return { days: c.days || [], rooms: c.rooms || {}, meals: Array.isArray(c.meals) ? c.meals : mealGen_(camp_().meals, (c.days || []).length), rows: c.rows || {}, people: actPeople_(c.people), unav: c.unav || {}, req: c.req || {}, target: c.target || { min: 2, max: 6 }, kinds: Array.isArray(c.kinds) && c.kinds.length ? c.kinds : ACT_KINDS, stages: Array.isArray(c.stages) && c.stages.length ? c.stages : ACT_STAGES, roleSets: c.roleSets && typeof c.roleSets === 'object' ? orchMerge_(c.roleSets, c.orchParts) : ACT_ROLESETS, tgSongs: c.tgSongs && typeof c.tgSongs === 'object' ? c.tgSongs : null, en: c.en || ACT_EN, bookDesc: c.bookDesc || ACT_BOOKDESC, dayNotes: c.dayNotes || [], roleShort: c.roleShort || {}, rev: +c.rev || 0, events: actEvents_(), log };
+  return { days: c.days || [], rooms: c.rooms || {}, meals: Array.isArray(c.meals) ? c.meals : mealGen_(camp_().meals, (c.days || []).length), rows: c.rows || {}, people: actPeople_(c.people), unav: c.unav || {}, req: c.req || {}, target: c.target || { min: 2, max: 6 }, kinds: Array.isArray(c.kinds) && c.kinds.length ? c.kinds : ACT_KINDS, stages: Array.isArray(c.stages) && c.stages.length ? c.stages : ACT_STAGES, roleSets: c.roleSets && typeof c.roleSets === 'object' ? orchMerge_(c.roleSets, c.orchParts) : ACT_ROLESETS, tgSongs: c.tgSongs && typeof c.tgSongs === 'object' ? c.tgSongs : null, en: c.en || ACT_EN, bookDesc: c.bookDesc || ACT_BOOKDESC, dayNotes: c.dayNotes || [], roleShort: c.roleShort || {}, rev: +c.rev || 0, events: actEvents_(), log, lessons: (() => { try { return lessons_().map(x => ({ d: x.d, t: x.t, pr: x.pr })); } catch (e) { return []; } })() };
 }
 function schedSave(token, b) {
   const a = adm_(token); need_(a, 'act');
@@ -1531,7 +1531,7 @@ function lessonData(token) {
   adm_(token);
   let days = []; try { days = actCfg_().days || []; } catch (x) {}
   let acts = []; try { acts = actEvents_().map(e => ({ d: e.d, s: e.s, e: e.e, room: e.room, title: evName_(e), ppl: e.ppl })); } catch (x) {}
-  let people = []; try { people = (actCfg_().people || []).map(p => ({ id: p.id, n: p.n })); } catch (x) {}
+  let people = []; try { people = actPeople_(actCfg_().people).map(p => ({ id: p.id, n: p.n })); } catch (x) {}
   let open = false; try { open = setting_('시간표 공개') === '예'; } catch (x) {}
   return { days, rows: lessons_().map(x => ({ d: x.d, t: x.t, pr: x.pr, pid: x.pid })), acts, people, open };
 }
@@ -1547,6 +1547,9 @@ function lessonSet(token, op) {
     if (op.pid) {
       const other = L.find(x => x.d === d && x.t === t && x.pid === op.pid && x.pr !== pr);
       if (other) throw new Error('이 학생은 같은 시간에 ' + other.pr + ' 교수 레슨이 있어요.');
+      { const c = actCfg_(), ppl = actPeople_(c.people), nm = {}; ppl.forEach(p => nm[p.id] = p.n); const mm = v => { const q = String(v).split(':'); return +q[0] * 60 + +q[1]; };
+        const ev = actEvents_().find(e => e.d === d && e.ppl.some(p => (nm[p.n] || String(p.n).replace(/^[CP]:/, '')) === pr) && mm(e.s) < mm(t) + 30 && mm(t) < mm(e.e));
+        if (ev) throw new Error(pr + ' 교수님은 이 시간에 교사 일정 「' + evName_(ev) + '」 ' + ev.s + '~' + ev.e + ' ' + ev.room + '이(가) 있어서 레슨을 넣을 수 없어요.'); }
       let info = { name: '', acad: '', no: '', inst: '' };
       const sb = loadSubs_().find(x => String(op.pid).indexOf(x.no + '_') === 0);
       const p = sb && sb.ppl.find(q => q.id === op.pid);

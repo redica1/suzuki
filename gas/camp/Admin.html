@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261024-222838 -->
+<!-- build: 20261024-223629 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -108,6 +108,7 @@ tr.off td{opacity:.5}
 .act .seg button{all:unset;cursor:pointer;padding:6px 12px;font-size:13.5px}
 .act .seg button[aria-pressed=true]{background:var(--accent);color:var(--accent-ink);font-weight:600}
 .act .note{background:var(--rosin-soft);border-left:3px solid var(--rosin);border-radius:8px;padding:10px 12px;font-size:13.5px}
+.act .note.bad{background:var(--bad-soft);border-left-color:var(--bad)}
 .act .note.info{background:var(--accent-soft);border-left-color:var(--accent)}
 .act .tt{overflow:auto;max-height:70vh;border:1px solid var(--line);border-radius:8px}
 .sheetwrap{overflow:auto;max-height:78vh;border:1px solid var(--line);border-radius:8px;background:#ffffff;color:#222}
@@ -500,7 +501,7 @@ let D=null,CHG=0,REV=0,DIRTY=false,SAVING=false,TIMER=null,LOADING=false,PEND=[]
 const A={tab:'grid',day:0,sel:null,swap:null,q:'',pq:'',filter:'zero',who:'',unav:{},req:{},log:[],target:{min:2,max:6},newSel:null,trainee:false};
 function run(fn,args,ok,fail){if(roBlock(fn)){fail&&fail(RO_MSG);return}google.script.run.withSuccessHandler(ok).withFailureHandler(e=>{const m=(e&&e.message)||String(e);fail&&fail(m)})[fn](S.tok,...args)}
 function load(){LOADING=true;ERR='';run('schedData',[],r=>{LOADING=false;applyData(r);render()},m=>{LOADING=false;ERR=m;render()})}
-function applyData(r){D={days:r.days||[],rooms:r.rooms||{},meals:r.meals||[],rows:r.rows||{},events:r.events||[],people:r.people||[]};normAct(r);
+function applyData(r){D={days:r.days||[],rooms:r.rooms||{},meals:r.meals||[],rows:r.rows||{},events:r.events||[],people:r.people||[],lessons:r.lessons||[]};normAct(r);
   A.unav=r.unav||{};A.req=r.req||{};A.target=r.target||{min:2,max:6};A.log=r.log||[];REV=r.rev||0;DIRTY=false;PEND=[];
   if(A.day>=D.days.length)A.day=0;ST=stats()}
 function payload(){return {rev:REV,kinds:D.kinds,stages:D.stages,roleSets:D.roleSets,tgSongs:D.tgSongs,en:D.en,bookDesc:D.bookDesc,dayNotes:D.dayNotes,roleShort:D.roleShort,days:D.days,rooms:D.rooms,meals:D.meals,rows:D.rows||{},events:D.events,people:D.people,unav:A.unav,req:A.req,target:A.target,log:PEND.slice()}}
@@ -586,10 +587,13 @@ function vGrid(){
 /* 겹침 막기: 같은 날 시간이 겹치는 다른 일정에 이미 있거나, 못 오는 날이면 넣을 수 없음 → 이유 글 (괜찮으면 '') */
 function confOf(e,id,skip,at){const d=at?at.d:e.d,s1=at?at.s:e.s,e1=at?at.e:e.e;skip=skip||[];
   const o=D.events.find(o=>o.id!==e.id&&!skip.includes(o.id)&&o.d===d&&o.ppl.some(z=>z.n===id)&&mins(o.s)<mins(e1)&&mins(s1)<mins(o.e));
-  if(o)return `같은 시간 「${o.title}」 ${o.s}~${o.e} ${o.room}`;if((A.unav[id]||[]).includes(d))return '못 오는 날';return ''}
+  if(o)return `같은 시간 「${o.title}」 ${o.s}~${o.e} ${o.room}`;if((A.unav[id]||[]).includes(d))return '못 오는 날';
+  const ls=lesAt(id,d,s1,e1);if(ls)return `같은 시간 개인레슨 ${ls.t}~`;return ''}
+/* 교수님 개인레슨(30분 칸)과 겹치는지 */
+function lesAt(id,d,s1,e1){const nm=NAME(id);return (D.lessons||[]).find(x=>x.d===d&&x.pr===nm&&mins(x.t)<mins(e1)&&mins(s1)<mins(x.t)+30)}
 function candRows(e){const q=A.pq.trim();const used=new Set(e.ppl.map(p=>p.n));
   return P().filter(p=>!gone(p.id)&&!used.has(p.id)&&(!q||p.n.includes(q)||(p.acad||'').includes(q)||(p.inst||'').includes(q)))
-    .map(p=>{const x=ST.st[p.id]||{total:0,roles:{},cats:{},days:D.days.map(()=>0)};const busy=D.events.some(o=>o.id!==e.id&&o.d===e.d&&o.ppl.some(z=>z.n===p.id)&&mins(o.s)<mins(e.e)&&mins(e.s)<mins(o.e));const off=(A.unav[p.id]||[]).includes(e.d);return {p,x,busy,off}})
+    .map(p=>{const x=ST.st[p.id]||{total:0,roles:{},cats:{},days:D.days.map(()=>0)};const busy=D.events.some(o=>o.id!==e.id&&o.d===e.d&&o.ppl.some(z=>z.n===p.id)&&mins(o.s)<mins(e.e)&&mins(e.s)<mins(o.e))||!!lesAt(p.id,e.d,e.s,e.e);const off=(A.unav[p.id]||[]).includes(e.d);return {p,x,busy,off}})
     .sort((a,b)=>(a.busy||a.off)-(b.busy||b.off)||a.x.total-b.x.total||a.p.n.localeCompare(b.p.n,'ko'))}
 function addBox(e){const RL=roleList(e.cat);if(!A.addR||!RL.includes(A.addR))A.addR=e.ppl.length?(RL[1]||RL[0]):RL[0];A.pck=A.pck||{};
   return `<div class="addbox"><div class="row" style="gap:8px"><b>사람 넣기</b><label class="row" style="gap:4px">① 역할<select id="a_addR">${RL.map(r=>`<option ${r===A.addR?'selected':''}>${esc(r)}</option>`).join('')}</select></label><span class="cap" style="margin:0">② 이름을 적거나 아래 목록에서 체크 → ③ 한 번에 넣기</span></div>
@@ -923,7 +927,7 @@ let SB={};const stuOf=id=>SB[id];
 const sh0=a=>String(a||'').replace(/스즈키$/,'');
 const at=(d,t,pr)=>L.rows.find(x=>x.d===d&&x.t===t&&x.pr===pr);
 const lessonsOf=id=>L.rows.filter(x=>x.pid===id);
-const pname=id=>((L.people||[]).find(p=>p.id===id)||{n:''}).n;
+const pname=id=>((L.people||[]).find(p=>p.id===id)||{n:String(id).replace(/^[CP]:/,'')}).n;
 function grpAt(d,t,pr){const s=mins(t),e=s+30;return (L.acts||[]).find(x=>x.d===d&&mins(x.s)<e&&s<mins(x.e)&&(x.ppl||[]).some(p=>pname(p.n)===pr))}
 function cell(d,t,pr){if(LUNCH.has(t))return '<td class="lunch">점심</td>';
   const x=at(d,t,pr),s=x&&stuOf(x.pid),ga=grpAt(d,t,pr);const dup=x&&L.rows.some(y=>y!==x&&y.d===d&&y.t===t&&y.pid===x.pid);
@@ -939,10 +943,10 @@ function picker(){
   const ga=grpAt(d,t,pr);
   return `<div class="picker"><div class="sec-h"><div><b>${esc(L.days[d]||'')} ${t} · ${esc(pr)}</b> <span class="cap" style="margin:0">${esc(prof.room||'레슨실 미정')} · ${esc(prof.inst)}</span></div>
     <div class="row">${cur?'<button class="btn small" type="button" id="l_clear">비우기</button>':''}<button class="btn small" type="button" id="l_close">닫기</button></div></div>
-    ${ga?`<div class="note">이 시간에 ${esc(pr)} 교수님은 <b>${esc(ga.title)} · ${esc(ga.room)}</b> 일정이 있어요 (교사 일정). 레슨을 넣으면 겹쳐요.</div>`:''}
+    ${ga?`<div class="note bad">이 시간에 ${esc(pr)} 교수님은 <b>${esc(ga.title)} · ${esc(ga.room)}</b> 일정이 있어서 레슨을 넣을 수 없어요 (교사 일정). 다른 시간을 고르거나 교사 일정에서 먼저 빼 주세요.</div>`:''}
     ${cur?(stuOf(cur.pid)?`<p class="cap" style="margin:0">현재: <b>${esc(enAbbr(stuOf(cur.pid).name))}</b> ${esc(stuOf(cur.pid).name)}</p>`:`<p class="cap" style="margin:0">현재: <b>${esc((GONE[cur.pid]||{name:''}).name)} (취소)</b> · 접수를 취소한 학생이에요. 다른 학생을 넣거나 비워 주세요.</p>`):''}
     <div class="row"><input type="search" id="l_cq" value="${esc(A.cq)}" placeholder="학생 이름 · 학원 · 영문 약자로 찾기" style="flex:1"><label class="checks"><label><input type="checkbox" id="l_only" ${A.only?'checked':''}>추가레슨 신청한 학생만</label></label></div>
-    <ul class="cands">${C.map(c=>`<li><button type="button" data-lassign="${esc(c.s.id)}" ${c.busy?'disabled':''}><span><b>${esc(c.s.name)}</b> <small class="num">${esc(enAbbr(c.s.name))}</small> <small>${esc(c.s.acad)} · ${esc(c.s.prog||'진도 -')}</small></span>
+    <ul class="cands">${C.map(c=>`<li><button type="button" data-lassign="${esc(c.s.id)}" ${c.busy||ga?'disabled':''}><span><b>${esc(c.s.name)}</b> <small class="num">${esc(enAbbr(c.s.name))}</small> <small>${esc(c.s.acad)} · ${esc(c.s.prog||'진도 -')}</small></span>
       <span class="row" style="gap:4px;flex-wrap:nowrap">${c.want===2?'<span class="pill info">희망 1</span>':c.want===1?'<span class="pill info">희망 2</span>':''}${c.busy?'<span class="pill bad">이 시간 다른 레슨</span>':''}${c.today&&!c.busy?'<span class="pill mute">이날 레슨 있음</span>':''}<span class="pill ${c.cnt>=c.s.req?'ok':'due'}">신청 ${c.s.req} · 배정 ${c.cnt}</span></span></button></li>`).join('')||'<li class="cap" style="padding:8px">해당하는 학생이 없어요.</li>'}</ul></div>`}
 function view(){
   if(!L){if(!LOADING&&!ERR)load();return `<div class="panel">${ERR?`<span class="err">개인레슨을 불러오지 못했어요 · ${esc(ERR)}</span> <button class="btn small" type="button" id="l_retry">다시</button>`:'개인레슨 시간표를 불러오고 있어요…'}</div>`}
@@ -989,7 +993,7 @@ document.addEventListener('click',ev=>{if(S.tab!=='tt')return;const b=ev.target.
   if(d.lstu){const s=SB[d.lstu];A.stu=s?s.name:'';A.stuId=d.lstu;render();return}
   if(b.id==='l_stuAll'){A.stu='';A.stuId='';render();return}
   if(d.lcell){const [dd,t,pr]=d.lcell.split('|');A.sel={d:+dd,t,pr};A.cq='';render();return}
-  if(d.lassign){const s=SB[d.lassign];setCell(d.lassign);toast(`${A.sel?'':''}${s?s.name:''} 배정했어요`);return}
+  if(d.lassign){if(A.sel&&grpAt(A.sel.d,A.sel.t,A.sel.pr)){toast('교사 일정과 겹쳐서 넣을 수 없어요');return}const s=SB[d.lassign];setCell(d.lassign);toast(`${A.sel?'':''}${s?s.name:''} 배정했어요`);return}
   if(b.id==='l_clear'){setCell('');toast('칸을 비웠어요');return}
   if(b.id==='l_close'){A.sel=null;render();return}
   if(b.id==='l_open'){const v=L.open?'아니오':'예';ask(L.open?'시간표 공개를 끌까요?':'선생님께 시간표를 공개할까요?',L.open?'선생님 화면 「내 시간표」에서 일정이 안 보이게 돼요.':'로그인한 선생님이 「내 시간표」에서 자기 교사 일정·(교수면) 개인레슨·우리 학생 레슨 시간을 볼 수 있어요. 아직 정리 중이면 나중에 켜 주세요.',()=>run('adminSetSetting',['시간표 공개',v],r=>{L.open=r.val==='예';render();toast(L.open?'선생님께 시간표를 공개했어요':'시간표 공개를 껐어요')},m=>toast('바꾸지 못했어요 · '+m)),L.open?'끄기':'공개하기');return}});

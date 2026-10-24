@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261024-223629 -->
+<!-- build: 20261024-225636 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -149,6 +149,9 @@ tr.off td{opacity:.5}
 .act .tt td button:hover{background:var(--accent-soft)}
 .act .tt td button b{display:block;font-weight:600;font-size:12.5px;overflow:hidden;text-overflow:ellipsis}
 .act .tt td button small{display:block;color:var(--faint);font-size:11px;overflow:hidden;text-overflow:ellipsis}
+.act .tt.les td button{width:auto;min-width:124px;height:auto;min-height:38px;padding:4px 7px;white-space:normal;overflow:visible}
+.act .tt.les td button b,.act .tt.les td button small{white-space:normal;overflow:visible;text-overflow:clip;word-break:keep-all}
+.act .tt.les thead th{min-width:124px}
 .act .tt td.fill{background:var(--surface)}
 .act .tt td.empty button{color:var(--faint)}
 .act .tt td.sel{outline:2px solid var(--accent);outline-offset:-2px}
@@ -904,12 +907,15 @@ return {view,flush,dirty:()=>DIRTY||SAVING,reset:()=>{if(!DIRTY&&!SAVING){D=null
 
 /* ================= 개인레슨 시간표 (30분 칸 · 교수 × 시간) =================
    시제품 「스즈키 캠프 개인레슨」을 옮김. 교수 = 「교수진」의 레슨 교수, 날짜 = 교사 일정의 날짜, 학생 = 실제 접수(취소 뺌) */
-/* 학생 이름 → 영문 약자 「성 대문자.이름 머리글자」 예) 김민정 → KIM.MJ · 이서윤 → LEE.SY (개인레슨 칸 · 교수님 시간표) */
+/* 성 영문 표기 · 로마자 첫 글자 (개인레슨 영문 이름) */
 const SURN={김:'KIM',이:'LEE',리:'LEE',박:'PARK',최:'CHOI',정:'JUNG',조:'CHO',강:'KANG',윤:'YOON',장:'JANG',임:'LIM',한:'HAN',오:'OH',서:'SEO',신:'SHIN',권:'KWON',황:'HWANG',안:'AHN',송:'SONG',류:'RYU',유:'YOO',전:'JEON',홍:'HONG',고:'KO',문:'MOON',양:'YANG',손:'SON',배:'BAE',백:'BAEK',허:'HEO',남:'NAM',심:'SHIM',노:'NOH',하:'HA',곽:'KWAK',성:'SUNG',차:'CHA',주:'JOO',우:'WOO',구:'KOO',민:'MIN',나:'NA',진:'JIN',지:'JI',엄:'UM',채:'CHAE',원:'WON',천:'CHUN',방:'BANG',공:'KONG',현:'HYUN',함:'HAM',변:'BYUN',염:'YEOM',여:'YEO',추:'CHOO',도:'DO',소:'SO',석:'SEOK',선:'SUN',설:'SEOL',마:'MA',길:'GIL',연:'YEON',위:'WI',표:'PYO',명:'MYUNG',기:'KI',반:'BAN',왕:'WANG',금:'KEUM',옥:'OK',육:'YOOK',인:'IN',맹:'MAENG',제:'JE',모:'MO',탁:'TAK',국:'KOOK',어:'EO',은:'EUN',편:'PYUN',용:'YONG',예:'YE',경:'KYUNG',봉:'BONG',사:'SA',부:'BOO',태:'TAE',피:'PI',목:'MOK',형:'HYUNG',계:'KYE',두:'DOO',감:'KAM',음:'EUM',빈:'BIN',호:'HO',라:'RA',범:'BUM',승:'SEUNG',간:'KAN',상:'SANG',시:'SI',단:'DAN',견:'KYUN',당:'DANG',화:'HWA',창:'CHANG',경:'KYUNG',남궁:'NAMGOONG',황보:'HWANGBO',선우:'SUNWOO',제갈:'JEGAL',독고:'DOKGO',사공:'SAGONG',서문:'SEOMUN'};
 const RR_I=['G','KK','N','D','TT','R','M','B','PP','S','SS','','J','JJ','CH','K','T','P','H'],RR_V=['A','AE','YA','YAE','EO','E','YEO','YE','O','WA','WAE','OE','YO','WU','WO','WE','WI','YU','EU','UI','I'];
 const rrHead=ch=>{const c=ch.charCodeAt(0)-0xAC00;if(c<0||c>11171)return ch.toUpperCase();const i=Math.floor(c/588),v=Math.floor((c%588)/28);return (RR_I[i]||RR_V[v]).charAt(0)};
-function enAbbr(name){const n=String(name||'').replace(/\s+/g,'');if(!/^[가-힣]{2,5}$/.test(n)){const w=String(name||'').trim().split(/\s+/);return w.length>1?w[w.length-1].toUpperCase()+'.'+w.slice(0,-1).map(x=>x.charAt(0).toUpperCase()).join(''):String(name||'').toUpperCase()}
-  const two=n.length>=4&&SURN[n.slice(0,2)]?n.slice(0,2):n.charAt(0);const sur=SURN[two]||[...two].map(rrHead).join('');return sur+'.'+[...n.slice(two.length)].map(rrHead).join('')}
+/* 개인레슨 표기: 한글 이름 (성 첫 글자만 대문자. 가운데 글자 머리글자) 예) 김민정 (Kim. M) · 남궁민수 (Namgoong. M) */
+function enName(name){const n=String(name||'').replace(/\s+/g,'');if(!/^[가-힣]{2,5}$/.test(n))return '';
+  const two=n.length>=4&&SURN[n.slice(0,2)]?n.slice(0,2):n.charAt(0);const S0=SURN[two]||[...two].map(rrHead).join('');const g=n.slice(two.length);
+  return S0.charAt(0)+S0.slice(1).toLowerCase()+'. '+(g?rrHead(g.charAt(0)):'')}
+const lesName=name=>{const e=enName(name);return e?`${name} (${e})`:String(name||'')};
 const LES=(()=>{
 const TIMES=[];for(let h=9;h<18;h++){TIMES.push(String(h).padStart(2,'0')+':00',String(h).padStart(2,'0')+':30')}
 const LUNCH=new Set(['12:00','12:30']);
@@ -933,20 +939,20 @@ function cell(d,t,pr){if(LUNCH.has(t))return '<td class="lunch">점심</td>';
   const x=at(d,t,pr),s=x&&stuOf(x.pid),ga=grpAt(d,t,pr);const dup=x&&L.rows.some(y=>y!==x&&y.d===d&&y.t===t&&y.pid===x.pid);
   const sel=A.sel&&A.sel.d===d&&A.sel.t===t&&A.sel.pr===pr;
   const gn=x&&!s?(GONE[x.pid]||{name:'(명단에 없음)',acad:''}):null;
-  return `<td class="${x?'fill':'empty'} ${gn?'gonec':''} ${sel?'sel':''} ${(x&&ga&&!gn)||dup?'conflict':''} ${ga?'grp':''}" ${ga?`title="${esc(ga.title)} · ${esc(ga.room)}"`:gn?'title="취소한 학생 · 칸을 눌러 다른 학생을 넣거나 비워 주세요"':''}><button type="button" data-lcell="${d}|${t}|${esc(pr)}">${gn?`<b>${esc(gn.name)} (취소)</b><small>${esc(sh0(gn.acad))}</small>`:x?`<b>${esc(enAbbr(s.name))}</b><small>${esc(s.name)} · ${esc(s.acad.replace(/스즈키$/,''))}</small>${ga?`<small class="ga">겹침: ${esc(ga.title)}</small>`:''}`:(ga?`<small class="ga">${esc(ga.title)}</small><small>${esc(ga.room)}</small>`:'+')}</button></td>`}
+  return `<td class="${x?'fill':'empty'} ${gn?'gonec':''} ${sel?'sel':''} ${(x&&ga&&!gn)||dup?'conflict':''} ${ga?'grp':''}" ${ga?`title="${esc(ga.title)} · ${esc(ga.room)}"`:gn?'title="취소한 학생 · 칸을 눌러 다른 학생을 넣거나 비워 주세요"':''}><button type="button" data-lcell="${d}|${t}|${esc(pr)}">${gn?`<b>${esc(gn.name)} (취소)</b><small>${esc(sh0(gn.acad))}</small>`:x?`<b>${esc(lesName(s.name))}</b>${s.acad&&s.acad!=='비회원'?`<small>${esc(s.acad.replace(/스즈키$/,''))}</small>`:''}${ga?`<small class="ga">겹침: ${esc(ga.title)}</small>`:''}`:(ga?`<small class="ga">${esc(ga.title)}</small><small>${esc(ga.room)}</small>`:'+')}</button></td>`}
 function picker(){
   if(!A.sel)return '<div class="note info">칸을 누르면 여기에서 학생을 넣거나 바꿀 수 있어요. 희망 교수로 고른 학생과 레슨이 덜 채워진 학생이 위에 나와요.</div>';
   const {d,t,pr}=A.sel,prof=profs().find(p=>p.name===pr)||{inst:''},cur=at(d,t,pr),q=A.cq.trim();
-  const C=Object.values(SB).filter(s=>s.inst===prof.inst&&(!A.only||s.req>0||(cur&&cur.pid===s.id))&&(!q||s.name.includes(q)||s.acad.includes(q)||enAbbr(s.name).includes(q.toUpperCase())))
+  const C=Object.values(SB).filter(s=>s.inst===prof.inst&&(!A.only||s.req>0||(cur&&cur.pid===s.id))&&(!q||s.name.includes(q)||s.acad.includes(q)||enName(s.name).toLowerCase().includes(q.toLowerCase())))
     .map(s=>{const ls=lessonsOf(s.id);return {s,cnt:ls.length,busy:ls.some(x=>x.d===d&&x.t===t&&x.pr!==pr),today:ls.some(x=>x.d===d),want:s.p1===pr?2:s.p2===pr?1:0}})
     .sort((a,b)=>b.want-a.want||(b.s.req-b.cnt)-(a.s.req-a.cnt)||a.cnt-b.cnt||a.s.name.localeCompare(b.s.name,'ko')).slice(0,50);
   const ga=grpAt(d,t,pr);
   return `<div class="picker"><div class="sec-h"><div><b>${esc(L.days[d]||'')} ${t} · ${esc(pr)}</b> <span class="cap" style="margin:0">${esc(prof.room||'레슨실 미정')} · ${esc(prof.inst)}</span></div>
     <div class="row">${cur?'<button class="btn small" type="button" id="l_clear">비우기</button>':''}<button class="btn small" type="button" id="l_close">닫기</button></div></div>
     ${ga?`<div class="note bad">이 시간에 ${esc(pr)} 교수님은 <b>${esc(ga.title)} · ${esc(ga.room)}</b> 일정이 있어서 레슨을 넣을 수 없어요 (교사 일정). 다른 시간을 고르거나 교사 일정에서 먼저 빼 주세요.</div>`:''}
-    ${cur?(stuOf(cur.pid)?`<p class="cap" style="margin:0">현재: <b>${esc(enAbbr(stuOf(cur.pid).name))}</b> ${esc(stuOf(cur.pid).name)}</p>`:`<p class="cap" style="margin:0">현재: <b>${esc((GONE[cur.pid]||{name:''}).name)} (취소)</b> · 접수를 취소한 학생이에요. 다른 학생을 넣거나 비워 주세요.</p>`):''}
-    <div class="row"><input type="search" id="l_cq" value="${esc(A.cq)}" placeholder="학생 이름 · 학원 · 영문 약자로 찾기" style="flex:1"><label class="checks"><label><input type="checkbox" id="l_only" ${A.only?'checked':''}>추가레슨 신청한 학생만</label></label></div>
-    <ul class="cands">${C.map(c=>`<li><button type="button" data-lassign="${esc(c.s.id)}" ${c.busy||ga?'disabled':''}><span><b>${esc(c.s.name)}</b> <small class="num">${esc(enAbbr(c.s.name))}</small> <small>${esc(c.s.acad)} · ${esc(c.s.prog||'진도 -')}</small></span>
+    ${cur?(stuOf(cur.pid)?`<p class="cap" style="margin:0">현재: <b>${esc(lesName(stuOf(cur.pid).name))}</b></p>`:`<p class="cap" style="margin:0">현재: <b>${esc((GONE[cur.pid]||{name:''}).name)} (취소)</b> · 접수를 취소한 학생이에요. 다른 학생을 넣거나 비워 주세요.</p>`):''}
+    <div class="row"><input type="search" id="l_cq" value="${esc(A.cq)}" placeholder="학생 이름 · 학원 · 영문 이름으로 찾기" style="flex:1"><label class="checks"><label><input type="checkbox" id="l_only" ${A.only?'checked':''}>추가레슨 신청한 학생만</label></label></div>
+    <ul class="cands">${C.map(c=>`<li><button type="button" data-lassign="${esc(c.s.id)}" ${c.busy||ga?'disabled':''}><span><b>${esc(lesName(c.s.name))}</b> <small>${c.s.acad!=='비회원'?esc(c.s.acad)+' · ':''}${esc(c.s.prog||'진도 -')}</small></span>
       <span class="row" style="gap:4px;flex-wrap:nowrap">${c.want===2?'<span class="pill info">희망 1</span>':c.want===1?'<span class="pill info">희망 2</span>':''}${c.busy?'<span class="pill bad">이 시간 다른 레슨</span>':''}${c.today&&!c.busy?'<span class="pill mute">이날 레슨 있음</span>':''}<span class="pill ${c.cnt>=c.s.req?'ok':'due'}">신청 ${c.s.req} · 배정 ${c.cnt}</span></span></button></li>`).join('')||'<li class="cap" style="padding:8px">해당하는 학생이 없어요.</li>'}</ul></div>`}
 function view(){
   if(!L){if(!LOADING&&!ERR)load();return `<div class="panel">${ERR?`<span class="err">개인레슨을 불러오지 못했어요 · ${esc(ERR)}</span> <button class="btn small" type="button" id="l_retry">다시</button>`:'개인레슨 시간표를 불러오고 있어요…'}</div>`}
@@ -963,25 +969,25 @@ function view(){
     <div class="row" style="gap:6px;margin-top:8px"><span class="pill info">추가레슨 신청 ${reqS.length}명 · ${reqN}회</span><span class="pill ${done>=reqN?'ok':'mute'}">배정 ${done}칸</span>${short?`<span class="pill due">덜 배정 ${short}명</span>`:''}${clash?`<span class="pill bad">교사 일정과 겹침 ${clash}칸</span>`:''}${gone?`<span class="pill bad">취소한 학생 칸 ${gone} · 흐린 칸</span>`:''}<span class="hint">30분 단위 · 칸을 누르면 바로 시트 「개인레슨」에 저장돼요 · 회색 = 교수님 교사 일정</span></div></div>`;
   if(A.mode==='day'){if(A.day>=days.length)A.day=0;
     return `<div class="act">${head}<div class="row"><div class="seg" role="group" aria-label="날짜">${days.map((x,i)=>`<button type="button" data-lday="${i}" aria-pressed="${A.day===i}">${esc(x)}</button>`).join('')}</div></div>${picker()}
-    <div class="tt"><table><thead><tr><th>시간</th>${P.map(p=>`<th>${esc(p.name)}<small>${esc(p.room||'방 미정')} · ${p.inst==='첼로'?'Vc':p.inst==='플루트'?'Fl':'Vn'}</small></th>`).join('')}</tr></thead><tbody>${TIMES.map(t=>`<tr><th>${t}</th>${P.map(p=>cell(A.day,t,p.name)).join('')}</tr>`).join('')}</tbody></table></div></div>`}
+    <div class="tt les"><table><thead><tr><th>시간</th>${P.map(p=>`<th>${esc(p.name)}<small>${esc(p.room||'방 미정')} · ${p.inst==='첼로'?'Vc':p.inst==='플루트'?'Fl':'Vn'}</small></th>`).join('')}</tr></thead><tbody>${TIMES.map(t=>`<tr><th>${t}</th>${P.map(p=>cell(A.day,t,p.name)).join('')}</tr>`).join('')}</tbody></table></div></div>`}
   if(A.mode==='prof'){const pr=P.find(p=>p.name===A.prof);const n=L.rows.filter(x=>x.pr===pr.name).length;
     return `<div class="act">${head}<div class="row"><label for="l_prof" class="cap" style="margin:0">교수</label><select id="l_prof">${P.map(p=>`<option ${p.name===A.prof?'selected':''}>${esc(p.name)}</option>`).join('')}</select><span class="pill info">${esc(pr.room||'레슨실 미정')}</span><span class="pill mute">총 ${n}회</span></div>${picker()}
-    <div class="tt"><table><thead><tr><th>시간</th>${days.map(x=>`<th>${esc(x)}</th>`).join('')}</tr></thead><tbody>${TIMES.map(t=>`<tr><th>${t}</th>${days.map((_,d)=>cell(d,t,pr.name)).join('')}</tr>`).join('')}</tbody></table></div>
+    <div class="tt les"><table><thead><tr><th>시간</th>${days.map(x=>`<th>${esc(x)}</th>`).join('')}</tr></thead><tbody>${TIMES.map(t=>`<tr><th>${t}</th>${days.map((_,d)=>cell(d,t,pr.name)).join('')}</tr>`).join('')}</tbody></table></div>
     <p class="cap" style="margin:0">교수님께 보여 줄 「내 수업시간표」와 같은 내용이에요.</p></div>`}
-  if(A.mode==='stu'){const q=A.stu.trim();const hits=q?all.filter(s=>s.name===q||s.name.includes(q)||s.acad.includes(q)||enAbbr(s.name).includes(q.toUpperCase())).slice(0,20):[];
+  if(A.mode==='stu'){const q=A.stu.trim();const hits=q?all.filter(s=>s.name===q||s.name.includes(q)||s.acad.includes(q)||enName(s.name).toLowerCase().includes(q.toLowerCase())).slice(0,20):[];
     const lst=reqS.slice().sort((a,b)=>a.acad.localeCompare(b.acad,'ko')||a.name.localeCompare(b.name,'ko'));
-    if(!q)return `<div class="act">${head}<div class="row"><input type="search" id="l_stu" value="" placeholder="학생 이름 · 학원 · 영문 약자" style="width:min(300px,100%)"><span class="hint">추가레슨 신청한 학생 ${lst.length}명 · 이름을 누르면 그 학생 시간표</span></div>
-      <div class="panel tbl"><table><thead><tr><th>학생</th><th>영문</th><th>학원</th><th>악기</th><th>진도</th><th>희망 교수</th><th class="r">신청</th><th class="r">배정</th></tr></thead><tbody>${lst.map(s=>{const n=lessonsOf(s.id).length;return `<tr><td><button type="button" class="evlink" data-lstu="${esc(s.id)}">${esc(s.name)}</button></td><td class="num">${esc(enAbbr(s.name))}</td><td>${esc(s.acad)}</td><td>${esc(s.inst)}</td><td>${esc(s.prog||'-')}</td><td>${esc([s.p1,s.p2].filter(Boolean).join(' · ')||'-')}</td><td class="r num">${s.req}</td><td class="r num">${n<s.req?`<span class="pill due">${n}</span>`:n}</td></tr>`}).join('')||'<tr><td colspan="8" class="hint">추가레슨을 신청한 학생이 없어요.</td></tr>'}</tbody></table></div></div>`;
+    if(!q)return `<div class="act">${head}<div class="row"><input type="search" id="l_stu" value="" placeholder="학생 이름 · 학원 · 영문 이름" style="width:min(300px,100%)"><span class="hint">추가레슨 신청한 학생 ${lst.length}명 · 이름을 누르면 그 학생 시간표</span></div>
+      <div class="panel tbl"><table><thead><tr><th>학생</th><th>학원</th><th>악기</th><th>진도</th><th>희망 교수</th><th class="r">신청</th><th class="r">배정</th></tr></thead><tbody>${lst.map(s=>{const n=lessonsOf(s.id).length;return `<tr><td><button type="button" class="evlink" data-lstu="${esc(s.id)}">${esc(lesName(s.name))}</button></td><td>${s.acad==='비회원'?'':esc(s.acad)}</td><td>${esc(s.inst)}</td><td>${esc(s.prog||'-')}</td><td>${esc([s.p1,s.p2].filter(Boolean).join(' · ')||'-')}</td><td class="r num">${s.req}</td><td class="r num">${n<s.req?`<span class="pill due">${n}</span>`:n}</td></tr>`}).join('')||'<tr><td colspan="8" class="hint">추가레슨을 신청한 학생이 없어요.</td></tr>'}</tbody></table></div></div>`;
     const one=A.stuId&&SB[A.stuId]&&SB[A.stuId].name===q?[SB[A.stuId]]:hits;
-    return `<div class="act">${head}<div class="row"><input type="search" id="l_stu" value="${esc(A.stu)}" placeholder="학생 이름 · 학원 · 영문 약자" style="width:min(300px,100%)"><button class="btn small" type="button" id="l_stuAll">신청 학생 목록</button></div>
+    return `<div class="act">${head}<div class="row"><input type="search" id="l_stu" value="${esc(A.stu)}" placeholder="학생 이름 · 학원 · 영문 이름" style="width:min(300px,100%)"><button class="btn small" type="button" id="l_stuAll">신청 학생 목록</button></div>
     ${q?(one.length?`<div class="g2">${one.map(s=>{const ls=lessonsOf(s.id).slice().sort((a,b)=>a.d-b.d||mins(a.t)-mins(b.t));
-      return `<div class="panel"><div class="sec-h"><div><h3>${esc(s.name)} <small class="num">${esc(enAbbr(s.name))}</small></h3><span class="cap" style="margin:0">${esc(s.acad)} · ${esc(s.inst)} · ${esc(s.prog||'')} · ${esc(s.no)}</span></div><span class="pill ${ls.length>=s.req?'ok':'due'}">신청 ${s.req} · 배정 ${ls.length}</span></div>
+      return `<div class="panel"><div class="sec-h"><div><h3>${esc(lesName(s.name))}</h3><span class="cap" style="margin:0">${s.acad==='비회원'?'':esc(s.acad)+' · '}${esc(s.inst)} · ${esc(s.prog||'')} · ${esc(s.no)}</span></div><span class="pill ${ls.length>=s.req?'ok':'due'}">신청 ${s.req} · 배정 ${ls.length}</span></div>
       ${s.p1?`<p class="cap" style="margin:0">희망 교수: ${esc(s.p1)}${s.p2?' · '+esc(s.p2):''}</p>`:''}
       ${ls.length?`<div class="tbl"><table><thead><tr><th>날짜</th><th>시간</th><th>교수</th><th>레슨실</th></tr></thead><tbody>${ls.map(x=>`<tr><td>${esc(days[x.d]||'')}</td><td class="num">${x.t}</td><td>${esc(x.pr)}</td><td>${esc((P.find(p=>p.name===x.pr)||{}).room||'')}</td></tr>`).join('')}</tbody></table></div>`:'<p class="cap" style="margin:0">아직 배정된 레슨이 없어요.</p>'}</div>`}).join('')}</div>`:'<p class="cap">찾는 학생이 없어요.</p>'):'<div class="note info">학생 이름을 넣으면 그 학생의 레슨 시간표가 나와요.</div>'}</div>`}
   const f=A.nf;const R=reqS.map(s=>({s,n:lessonsOf(s.id).length})).filter(x=>f==='all'||(f==='need'?x.n<x.s.req:x.n>x.s.req)).sort((a,b)=>(b.s.req-b.n)-(a.s.req-a.n)||a.s.acad.localeCompare(b.s.acad,'ko'));
   return `<div class="act">${head}<div class="row">${[['need','덜 배정'],['over','신청보다 많음'],['all','신청한 학생 전체']].map(([k,l])=>`<button class="btn small ${f===k?'primary':''}" type="button" data-lnf="${k}">${l}</button>`).join('')}</div>
-    <div class="panel tbl"><table><thead><tr><th>학생</th><th>영문</th><th>학원</th><th>악기</th><th>진도</th><th>희망 교수</th><th class="r">신청</th><th class="r">배정</th><th>배정된 시간</th></tr></thead><tbody>
-    ${R.map(({s,n})=>`<tr><td><b>${esc(s.name)}</b></td><td class="num">${esc(enAbbr(s.name))}</td><td>${esc(s.acad)}</td><td>${esc(s.inst)}</td><td>${esc(s.prog||'-')}</td><td>${esc([s.p1,s.p2].filter(Boolean).join(' · ')||'-')}</td><td class="r num">${s.req}</td><td class="r num">${n<s.req?`<span class="pill due">${n}</span>`:n}</td><td class="cap">${lessonsOf(s.id).map(x=>esc((days[x.d]||'').replace(/\(.\)/,''))+' '+x.t+' '+esc(x.pr)).join(' / ')}</td></tr>`).join('')||'<tr><td colspan="9" class="hint">해당하는 학생이 없어요.</td></tr>'}</tbody></table></div></div>`}
+    <div class="panel tbl"><table><thead><tr><th>학생</th><th>학원</th><th>악기</th><th>진도</th><th>희망 교수</th><th class="r">신청</th><th class="r">배정</th><th>배정된 시간</th></tr></thead><tbody>
+    ${R.map(({s,n})=>`<tr><td><b>${esc(lesName(s.name))}</b></td><td>${s.acad==='비회원'?'':esc(s.acad)}</td><td>${esc(s.inst)}</td><td>${esc(s.prog||'-')}</td><td>${esc([s.p1,s.p2].filter(Boolean).join(' · ')||'-')}</td><td class="r num">${s.req}</td><td class="r num">${n<s.req?`<span class="pill due">${n}</span>`:n}</td><td class="cap">${lessonsOf(s.id).map(x=>esc((days[x.d]||'').replace(/\(.\)/,''))+' '+x.t+' '+esc(x.pr)).join(' / ')}</td></tr>`).join('')||'<tr><td colspan="9" class="hint">해당하는 학생이 없어요.</td></tr>'}</tbody></table></div></div>`}
 function setCell(pid){const {d,t,pr}=A.sel;const before=L.rows.slice();L.rows=L.rows.filter(x=>!(x.d===d&&x.t===t&&x.pr===pr));if(pid)L.rows.push({d,t,pr,pid});A.sel=null;render();
   run('lessonSet',[{d,t,pr,pid:pid||''}],r=>{L.rows=r.rows;render()},m=>{L.rows=before;render();toast('저장하지 못했어요 · '+m)})}
 document.addEventListener('click',ev=>{if(S.tab!=='tt')return;const b=ev.target.closest('button');if(!b)return;const d=b.dataset;

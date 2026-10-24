@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261024-133010 -->
+<!-- build: 20261024-133532 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -177,6 +177,7 @@ tr.off td{opacity:.5}
 .act .dck input{accent-color:var(--bad)}
 .act .dtag{font-size:10.5px;font-weight:500;color:var(--muted);background:var(--sunk);border-radius:4px;padding:0 4px;margin-left:3px}
 .act .arole{display:inline-block;font-size:10.5px;font-weight:600;border-radius:4px;padding:0 5px;margin-right:4px;background:var(--accent-soft);color:var(--accent)}
+.act .tgrow{display:grid;grid-template-columns:2.4em 1fr;gap:4px 8px;align-items:center}.act .tgrow .tgm{grid-column:2;padding:5px 8px;border:1px solid var(--line);border-radius:6px;font:inherit;font-size:13px;background:var(--surface);color:var(--ink)}.act .tgk{font-size:13px}.act .tgchips{display:flex;flex-wrap:wrap;gap:4px}.act .tgc{all:unset;cursor:pointer;font-size:12px;padding:2px 8px;border:1px solid var(--line);border-radius:999px;background:var(--surface);color:var(--muted)}.act .tgc.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600}.act .tgc.sp{border-style:dashed}.act .tgc:focus-visible{outline:2px solid var(--accent)}.act .tgsep{width:8px}.act .tgline{color:var(--accent);font-weight:600}
 .act .panel{display:grid;gap:12px}.act .panel .cap{font-size:12.5px;color:var(--faint);margin:-6px 0 0}.act h2{font-family:var(--display);font-size:20px;margin:0}.act .pill.mute{background:var(--sunk);color:var(--muted)}.act .pill.info{background:var(--accent-soft);color:var(--accent)}.act input[type=text],.act input[type=search],.act input[type=number],.act select{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:6px 9px;min-width:0;font:inherit;color:inherit}.act .tbl table{border-collapse:collapse;width:100%;font-size:13.5px}.act .tbl th,.act .tbl td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);white-space:nowrap}.act .tbl th{font-size:12px;color:var(--muted);background:var(--sunk)}.act td.r,.act th.r{text-align:right}.act .err{color:var(--bad)}
 .act > *{margin-bottom:14px}
 .act .floor{display:grid;gap:6px}.act .floor .flab{font-size:12.5px;font-weight:600;color:var(--muted)}
@@ -399,14 +400,27 @@ const ACT=(()=>{
 const ROLES=['수업','보조','지휘','사회','담당','연주','책임','부책임','강연'];
 const TYPES=['레슨','오케스트라','오후음악회','특별수업','교사연수','리허설','음악회','대기'];
 const MAIN_ROLES=['수업','보조','사회'];
+/* 대상 (악기별 권수 칩) · 역할 목록 */
+const TG_INST=['Vn','Vc','Fl'];
+const TG_BOOKS={Vn:['Pre','1A','1B','2A','2B','3A','3B','4A','4B','5','6','7','8','9','10','10+'],Vc:['Pre','1','2','3','4','5','6','7','8','9','10','10+'],Fl:['Pre','1','2','3','4','5','6','7','8','9','10','10+']};
+const TG_SPECIAL=['지정학생','초급교사','연수교사','전체교사'];
+const bkLab=b=>b==='Pre'?'Pre-Twinkle':b==='10+'?'10권 이상':/^\d+[AB]$/.test(b)?b.replace(/^(\d+)/,'$1권'):b+'권';
+/* 이어진 권은 범위로: 1A·1B·2A → 1A~2A */
+function tgRange(inst,L){const O=TG_BOOKS[inst],ix=L.map(b=>O.indexOf(b)).filter(i=>i>=0).sort((a,b)=>a-b);const out=[];let s=null,p=null;
+  ix.forEach(i=>{if(s===null){s=p=i}else if(i===p+1)p=i;else{out.push([s,p]);s=p=i}});if(s!==null)out.push([s,p]);
+  return out.map(([a,b])=>a===b?O[a]:O[a]+'~'+O[b]).join('·')}
+function tgTxt(tg){if(!tg)return '';return TG_INST.filter(k=>tg[k]&&((tg[k].b||[]).length||(tg[k].x||[]).length||tg[k].m)).map(k=>{const t=tg[k];return k+' '+[tgRange(k,t.b||[]),...(t.x||[]),t.m||''].filter(Boolean).join(' · ')}).join(' / ')}
+const DEF_ROLES=['수업','보조','지휘','사회','반주','통역','진행','연주','세팅','문지기','담당','책임','강연'];
+const roleList=cur=>{const L=(D.roles&&D.roles.length?D.roles:DEF_ROLES).slice();if(cur&&!L.includes(cur))L.unshift(cur);return L};
+
 let D=null,CHG=0,REV=0,DIRTY=false,SAVING=false,TIMER=null,LOADING=false,PEND=[],LASTSAVE='',ERR='';
 const A={tab:'grid',day:0,sel:null,swap:null,q:'',pq:'',filter:'zero',who:'',unav:{},req:{},log:[],target:{min:2,max:6},newSel:null,trainee:false};
 function run(fn,args,ok,fail){if(roBlock(fn)){fail&&fail(RO_MSG);return}google.script.run.withSuccessHandler(ok).withFailureHandler(e=>{const m=(e&&e.message)||String(e);fail&&fail(m)})[fn](S.tok,...args)}
 function load(){LOADING=true;ERR='';run('schedData',[],r=>{LOADING=false;applyData(r);render()},m=>{LOADING=false;ERR=m;render()})}
-function applyData(r){D={days:r.days||[],rooms:r.rooms||{},meals:r.meals||[],rows:r.rows||{},events:r.events||[],people:r.people||[],kinds:r.kinds||[]};
+function applyData(r){D={days:r.days||[],rooms:r.rooms||{},meals:r.meals||[],rows:r.rows||{},events:r.events||[],people:r.people||[],kinds:r.kinds||[],roles:r.roles||[]};
   A.unav=r.unav||{};A.req=r.req||{};A.target=r.target||{min:2,max:6};A.log=r.log||[];REV=r.rev||0;DIRTY=false;PEND=[];
   if(A.day>=D.days.length)A.day=0;ST=stats()}
-function payload(){return {rev:REV,kinds:D.kinds,days:D.days,rooms:D.rooms,meals:D.meals,rows:D.rows||{},events:D.events,people:D.people,unav:A.unav,req:A.req,target:A.target,log:PEND.slice()}}
+function payload(){return {rev:REV,kinds:D.kinds,roles:D.roles,days:D.days,rooms:D.rooms,meals:D.meals,rows:D.rows||{},events:D.events,people:D.people,unav:A.unav,req:A.req,target:A.target,log:PEND.slice()}}
 function save(){CHG++;DIRTY=true;clearTimeout(TIMER);TIMER=setTimeout(()=>flush(),1500);stat()}
 function flush(after){if(SAVING){setTimeout(()=>flush(after),500);return}if(!DIRTY){after&&after();return}
   SAVING=true;clearTimeout(TIMER);const body=payload();const sent=body.log.length,sentChg=CHG;stat();
@@ -457,7 +471,7 @@ const goneTxt=id=>{const p=pBy(id);return p&&p.cx?'취소':'명단 밖'};
 function chip(e,p,i){const k=e.id+'|'+p.n;if(gone(p.n))return `<button type="button" class="pchip gone" data-achip="${e.id}|${i}" title="${esc(LB(p.n))} · ${goneTxt(p.n)} — 이 칸에서 빼고 다른 분을 넣어 주세요"><span class="rl">${p.r}</span>${esc(short(NAME(p.n)))} (${goneTxt(p.n)})</button>`;const bad=ST.clash.has(k)?'겹침':ST.off.has(k)?'못 오는 날':'';
   const sw=A.swap&&A.swap.eid===e.id&&A.swap.i===i;
   return `<button type="button" class="pchip ${bad?'bad':''} ${sw?'swapping':''} r-${p.r}" data-achip="${e.id}|${i}" title="${esc(LB(p.n))} · ${p.r}${bad?' · '+bad:''}"><span class="rl">${p.r}</span>${esc(short(NAME(p.n)))}${TAG(p.n)?`<small class="dtag">${esc(TAG(p.n))}</small>`:''}</button>`}
-function cellEv(e){const first=e.desc.slice(0,2).map(esc).join('<br>');
+function cellEv(e){const tt=tgTxt(e.tg);const first=[...(tt?[`<span class="tgline">${esc(tt)}</span>`]:[]),...e.desc.slice(0,tt?1:2).map(esc)].join('<br>');
   return `<div class="ev ${TCLS[e.type]||''} ${A.sel===e.id?'on':''}" data-aev="${e.id}"><div class="evh"><b>${esc(e.title)}${e.sub?` <small>${esc(e.sub)}</small>`:''}</b><span class="num tm">${e.s}~${e.e}</span></div>${first?`<small>${first}</small>`:''}<div class="chips2">${e.ppl.map((p,i)=>chip(e,p,i)).join('')}</div></div>`}
 function vGrid(){
   const d=A.day, rooms=D.rooms[d]||[], evs=D.events.filter(e=>e.d===d), meals=D.meals.filter(m=>m.d===d);
@@ -501,8 +515,12 @@ function editor(){
 </div>
     <div class="g3"><div class="f"><span>시간 <span class="cap" style="margin:0">시 · 분</span></span><div class="row" style="flex-wrap:nowrap">${tsel('a_edS',e.s)}<span>~</span>${tsel('a_edE',e.e)}</div></div><label class="f" for="a_edR">장소<select id="a_edR">${rooms.map(([r,l])=>`<option value="${esc(r)}" ${r===e.room?'selected':''}>${esc(r)} · ${esc(l)}</option>`).join('')}</select></label>
       <label class="f" for="a_edD">설명 (한 줄에 하나 · 진도 범위 한/영 등)<textarea id="a_edD" rows="2">${esc(e.desc.join('\n'))}</textarea></label></div>
+    <div class="f tgbox" style="display:grid;gap:6px"><span>대상 <span class="cap" style="margin:0">악기별 권수 · 누르면 켜고 꺼요 · 안 고른 악기는 해당 없음</span></span>
+      ${TG_INST.map(k=>{const t=(e.tg||{})[k]||{};return `<div class="tgrow"><b class="tgk">${k}</b><div class="tgchips">${TG_BOOKS[k].map(b=>`<button type="button" class="tgc ${(t.b||[]).includes(b)?'on':''}" data-atg="${k}|b|${b}" aria-pressed="${(t.b||[]).includes(b)}">${b==='Pre'?'Pre':b==='10+'?'10+':b}</button>`).join('')}<span class="tgsep"></span>${TG_SPECIAL.map(x=>`<button type="button" class="tgc sp ${(t.x||[]).includes(x)?'on':''}" data-atg="${k}|x|${x}" aria-pressed="${(t.x||[]).includes(x)}">${x}</button>`).join('')}</div>
+        <input type="text" class="tgm" id="a_tgm_${k}" value="${esc(t.m||'')}" placeholder="메모 (곡명 · Tonalization · 테크닉클래스 등)" maxlength="60"></div>`}).join('')}
+      ${tgTxt(e.tg)?`<span class="cap" style="margin:0">표에 보이는 모양: ${esc(tgTxt(e.tg))}</span>`:''}</div>
     <div class="f" style="display:grid;gap:6px"><span>사람</span>
-      ${e.ppl.map((p,i)=>{const x=ST.st[p.n]||{roles:{}};const k=e.id+'|'+p.n;return `<div class="prow ${ST.clash.has(k)||ST.off.has(k)?'bad':''}"><select data-aprole="${i}" aria-label="역할">${ROLES.map(r=>`<option ${r===p.r?'selected':''}>${r}</option>`).join('')}</select>
+      ${e.ppl.map((p,i)=>{const x=ST.st[p.n]||{roles:{}};const k=e.id+'|'+p.n;return `<div class="prow ${ST.clash.has(k)||ST.off.has(k)?'bad':''}"><select data-aprole="${i}" aria-label="역할">${roleList(p.r).map(r=>`<option ${r===p.r?'selected':''}>${esc(r)}</option>`).join('')}</select>
         <b>${LBH(p.n)}</b>${gone(p.n)?`<span class="pill bad">${goneTxt(p.n)} · 빼고 다른 분을 넣어 주세요</span>`:''}<span class="cap" style="margin:0">${esc((pBy(p.n)||{}).acad||'')} · 수업 ${x.roles['수업']||0} · 보조 ${x.roles['보조']||0} · 사회 ${x.roles['사회']||0}</span>
         ${ST.clash.has(k)?'<span class="pill bad">같은 시간 다른 일정</span>':''}${ST.off.has(k)?'<span class="pill bad">못 오는 날</span>':''}
         <span class="row" style="gap:4px;margin-left:auto"><button class="btn small" type="button" data-aswap="${e.id}|${i}">바꾸기</button><button class="btn small ghost" type="button" data-aprm="${i}">빼기</button></span></div>`}).join('')||'<p class="cap" style="margin:0">아직 사람이 없어요.</p>'}
@@ -551,7 +569,7 @@ function vLog(){return `<div class="sec-h"><div><h2>바꾼 기록</h2><p>시트 
 
 document.addEventListener('change',ev=>{if(S.tab!=='act'||ev.target.id!=='a_edK')return;const o=ev.target.selectedOptions[0],y=document.getElementById('a_edY');if(o&&y&&o.dataset.t)y.value=o.dataset.t});
 function readEditor(e){const g=id=>document.getElementById(id);if(!g('a_edT'))return;
-  e.title=g('a_edK').value||e.title;e.sub=g('a_edT').value.trim();e.type=g('a_edY').value;e.room=g('a_edR').value;e.desc=g('a_edD').value.split('\n').map(x=>x.trim()).filter(Boolean);
+  e.title=g('a_edK').value||e.title;e.sub=g('a_edT').value.trim();TG_INST.forEach(k=>{const m=g('a_tgm_'+k);if(!m)return;e.tg=e.tg||{};const t=e.tg[k]=e.tg[k]||{b:[],x:[],m:''};t.m=m.value.trim()});e.type=g('a_edY').value;e.room=g('a_edR').value;e.desc=g('a_edD').value.split('\n').map(x=>x.trim()).filter(Boolean);
   const s=hmVal('a_edS'),en=hmVal('a_edE'); if(s&&en&&mins(en)>mins(s)){e.s=s;e.e=en}else if(s&&en)toast('끝나는 시간이 시작보다 늦어야 해요');}
 
 document.addEventListener('click',ev=>{if(S.tab!=='act'||!D)return;
@@ -576,6 +594,7 @@ document.addEventListener('click',ev=>{if(S.tab!=='act'||!D)return;
     D.events.splice(D.events.indexOf(e),1);logIt(`지움: ${D.days[e.d]} ${e.s} ${e.room} 「${e.title}」${e.ppl.length?' ('+e.ppl.map(p=>LB(p.n)).join(', ')+')':''}`);A.sel=null;refresh();toast('일정을 지웠어요');return}
   if(b.id==='a_cpOther'){const e=evById(A.sel);readEditor(e);let n=0;D.days.forEach((_,dd)=>{if(dd===e.d)return;if((D.rooms[dd]||[]).some(r=>r[0]===e.room)&&!D.events.some(o=>o.d===dd&&o.room===e.room&&o.s===e.s)){D.events.push({...JSON.parse(JSON.stringify(e)),id:'n'+Date.now()+dd,d:dd,ppl:[]});n++}});
     logIt(`복사: 「${e.title}」 ${e.s} ${e.room} → 다른 날 ${n}곳`);refresh();toast(n?`다른 날 ${n}곳에 복사했어요 (사람은 비워 둠)`:'다른 날 같은 자리에 이미 일정이 있어요');return}
+  if(d.atg){const e=evById(A.sel);readEditor(e);const [k,f,v]=d.atg.split('|');e.tg=e.tg||{};const t=e.tg[k]=e.tg[k]||{b:[],x:[],m:''};t[f]=t[f]||[];const i=t[f].indexOf(v);if(i>=0)t[f].splice(i,1);else{t[f].push(v);if(f==='b'){const O=TG_BOOKS[k];t.b.sort((a,b)=>O.indexOf(a)-O.indexOf(b))}}refresh();return}
   if(d.aaddp){const e=evById(A.sel);readEditor(e);const role0={레슨:'수업',오케스트라:'지휘',오후음악회:'사회',교사연수:'수업',특별수업:'수업',리허설:'담당',음악회:'연주',대기:'책임'}[e.type]||'담당';
     const r=e.ppl.length?(e.type==='오후음악회'?'사회':['레슨','특별수업','교사연수'].includes(e.type)?'보조':'담당'):role0;
     e.ppl.push({n:d.aaddp,r});logIt(`넣음: ${LB(d.aaddp)} → ${D.days[e.d]} ${e.s} ${e.room} 「${e.title}」 ${r}`);A.pq='';A.pqOpen=false;refresh();return}
@@ -613,7 +632,19 @@ function vSet(){return `<div class="sec-h"><div><h2>날짜 · 장소</h2><p>캠�
     ${D.kinds.map((k,i)=>`<tr><td class="num">${i+1}</td><td><input type="text" class="a_kn" data-i="${i}" value="${esc(k.n)}" maxlength="40"></td><td><select class="a_kt" data-i="${i}">${TYPES.map(t=>`<option ${t===k.t?'selected':''}>${t}</option>`).join('')}</select></td><td class="r num">${D.events.filter(e=>e.title===k.n).length}</td>
       <td><div class="row" style="gap:4px;flex-wrap:nowrap"><button class="btn small ghost" type="button" data-akup="${i}" ${i?'':'disabled'} aria-label="위로">▲</button><button class="btn small ghost" type="button" data-akdel="${i}">빼기</button></div></td></tr>`).join('')}</tbody></table></div>
     ${(()=>{const other=[...new Set(D.events.map(e=>e.title).filter(t=>!D.kinds.some(k=>k.n===t)))];return other.length?`<p class="cap" style="margin:0">목록에 없는 이름을 쓰는 일정: ${other.slice(0,20).map(esc).join(', ')}${other.length>20?' …':''} · 일정을 눌러 행사 종류를 골라 주세요.</p>`:''})()}
-    <div class="row"><button class="btn small primary" type="button" id="a_kindSave">행사 종류 저장</button><span class="cap" style="margin:0">이름을 바꾸면 그 이름을 쓰던 일정도 같이 바뀌어요.</span></div></div>`}
+    <div class="row"><button class="btn small primary" type="button" id="a_kindSave">행사 종류 저장</button><span class="cap" style="margin:0">이름을 바꾸면 그 이름을 쓰던 일정도 같이 바뀌어요.</span></div></div>
+  <div class="panel"><div class="spread"><div><b>역할</b> <span class="cap" style="margin:0">일정에 넣은 사람마다 고르는 역할 · 「수업 · 보조 · 사회」는 교사별 횟수에서 따로 셈</span></div><button class="btn small" type="button" id="a_roleAdd">＋ 역할 추가</button></div>
+    <div class="tbl"><table class="pft"><thead><tr><th>#</th><th>역할</th><th class="r">쓰는 횟수</th><th></th></tr></thead><tbody>
+    ${roleList().map((r,i)=>`<tr><td class="num">${i+1}</td><td><input type="text" class="a_rn" data-i="${i}" value="${esc(r)}" maxlength="12" ${MAIN_ROLES.includes(r)?'readonly title="교사별 횟수에서 세는 역할이라 이름을 바꿀 수 없어요"':''}></td><td class="r num">${D.events.reduce((t,e)=>t+e.ppl.filter(p=>p.r===r).length,0)}</td><td><div class="row" style="gap:4px;flex-wrap:nowrap"><button class="btn small ghost" type="button" data-arup="${i}" ${i?'':'disabled'} aria-label="위로">▲</button>${MAIN_ROLES.includes(r)?'<span class="cap" style="margin:0">고정</span>':`<button class="btn small ghost" type="button" data-ardel="${i}">빼기</button>`}</div></td></tr>`).join('')}</tbody></table></div>
+    <div class="row"><button class="btn small primary" type="button" id="a_roleSave">역할 저장</button><span class="cap" style="margin:0">이름을 바꾸면 그 역할로 넣은 사람도 같이 바뀌어요. 빼도 이미 넣은 역할은 그대로 남아요.</span></div></div>`}
+function readRoles(){const L=[];document.querySelectorAll('.a_rn').forEach(el=>{L[+el.dataset.i]=el.value.trim()});return L}
+document.addEventListener('click',ev=>{if(S.tab!=='act'||!D)return;const b=ev.target.closest('button');if(!b)return;
+  if(b.id==='a_roleAdd'){D.roles=readRoles();D.roles.push('');render();const ins=document.querySelectorAll('.a_rn');if(ins.length)ins[ins.length-1].focus();return}
+  if(b.dataset.ardel!==undefined){D.roles=readRoles();D.roles.splice(+b.dataset.ardel,1);render();return}
+  if(b.dataset.arup!==undefined){D.roles=readRoles();const i=+b.dataset.arup;[D.roles[i-1],D.roles[i]]=[D.roles[i],D.roles[i-1]];render();return}
+  if(b.id==='a_roleSave'){const old=roleList(),L=readRoles();const names=L.filter(Boolean);if(new Set(names).size!==names.length){toast('같은 역할이 두 번 있어요');return}
+    let ren=0;L.forEach((r,i)=>{const o=old[i];if(o&&r&&o!==r)D.events.forEach(e=>e.ppl.forEach(p=>{if(p.r===o){p.r=r;ren++}}))});
+    MAIN_ROLES.forEach(m=>{if(!names.includes(m))names.unshift(m)});D.roles=names;logIt('역할 고침: '+names.join(', '));refresh();toast('역할을 저장했어요'+(ren?` · ${ren}명 역할 이름도 바꿈`:''));return}});
 function readKinds(){const L=[];document.querySelectorAll('.a_kn').forEach(el=>{const i=+el.dataset.i,t=document.querySelector(`.a_kt[data-i="${i}"]`);L[i]={n:el.value.trim(),t:t?t.value:'레슨'}});return L}
 document.addEventListener('click',ev=>{if(S.tab!=='act'||!D)return;const b=ev.target.closest('button');if(!b)return;
   if(b.id==='a_kindAdd'){D.kinds=readKinds().filter(Boolean);D.kinds.push({n:'',t:'레슨'});render();const ins=document.querySelectorAll('.a_kn');if(ins.length)ins[ins.length-1].focus();return}

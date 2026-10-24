@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261024-231921 -->
+<!-- build: 20261024-232536 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -116,7 +116,7 @@ tr.off td{opacity:.5}
 .sheet td{padding:1px 3px;overflow:hidden;white-space:normal;line-height:1.2;word-break:keep-all}
 .sheet td.lyroom,.sheet td.lylab{cursor:pointer}
 .sheet td.lyroom:hover,.sheet td.lylab:hover{outline:2px solid #1f5c63;outline-offset:-2px}
-.sheet td.lyroom.on{outline:3px solid #1f5c63;outline-offset:-3px}
+.sheet td.lyroom.on,.sheet td.lylab.on{outline:3px solid #1f5c63;outline-offset:-3px}
 .roomed .occt td{vertical-align:middle}
 .roomadd{margin-top:6px}
 .memoff td{color:var(--faint,#9aa3a6)}.memoff td b{font-weight:500}
@@ -1146,8 +1146,8 @@ function vPlan(){const F=floors();if(A.lyF>=F.length)A.lyF=0;const Fl=F[A.lyF];
       for(let rr=r;rr<r+rs;rr++)for(let cc=c;cc<c+cs;cc++)if(rr!==r||cc!==c)cover.add(rr+','+cc);
       const bs=[...String(bd||'0000')].map(n=>n==='0'?'none':`${n==='3'?3:n==='2'?2:1}px solid #333`);let text=t,bgc=bg,cls='',attr='';
       const rno=roomAt[r+','+c],lno=labelAt[r+','+c];
-      if(rno){const q=byNo[rno];cls='lyroom'+(A.sel===rno?' on':'');attr=` data-rroom="${rno}" title="${rno} 방 편집"`;if(q&&q.pub)text=t+' *'}
-      if(lno){const q=byNo[lno];if(q&&used(q)){text=[q.occ.map(o=>sh(o.v)+(o.n?' '+o.n:'')).join('\n'),q.kind,`${peak(q)}/${q.cap}`,q.days&&q.days.length&&q.days.length<allDays().length?q.days.map(dayLab).join(','):''].filter(Boolean).join('\n');bgc=roomColor(q)}else if(!Fl.builtin&&t){}else{text='';bgc=Fl.builtin?'':bg}cls+=' lylab';attr+=` data-rroom="${lno}"`}
+      if(rno){const q=byNo[rno];if(q&&q.pub)text=t+' *';if(!Fl.rooms[rno][2]){cls='lyroom'+(A.sel===rno?' on':'');attr=` data-rroom="${rno}" title="${rno} 방 편집"`}}
+      if(lno){const q=byNo[lno];if(q&&used(q)){text=[q.occ.map(o=>sh(o.v)+(o.n?' '+o.n:'')).join('\n'),q.kind,`${peak(q)}/${q.cap}`,q.days&&q.days.length&&q.days.length<allDays().length?q.days.map(dayLab).join(','):''].filter(Boolean).join('\n');bgc=roomColor(q)}else if(!Fl.builtin&&t){}else{text='';bgc=Fl.builtin?'':bg}cls+=' lylab'+(A.sel===lno?' on':'');attr+=` data-rroom="${lno}" title="${lno} 방 배정 넣기 · 고치기"`}
       const style=`${bgc?`background:${bgc};`:''}${fg&&!/^#0{6}$/.test(fg)?`color:${fg};`:''}${b?'font-weight:700;':''}font-size:${Math.round((+fs||10)*1.1)}px;border-top:${bs[0]};border-right:${bs[1]};border-bottom:${bs[2]};border-left:${bs[3]};text-align:${ha==='C'?'center':ha==='R'?'right':'left'};vertical-align:${va==='T'?'top':va==='B'?'bottom':'middle'}`;
       row+=`<td${rs>1?` rowspan="${rs}"`:''}${cs>1?` colspan="${cs}"`:''} class="${cls}"${attr} style="${style}">${esc(text).replace(/\n/g,'<br>')}</td>`}
     html+=`<tr style="height:${Fl.rh[r]}px">${row}</tr>`}
@@ -1161,7 +1161,7 @@ function vPlan(){const F=floors();if(A.lyF>=F.length)A.lyF=0;const Fl=F[A.lyF];
     ${res?`<div class="note" style="margin-top:8px">${res.map(x=>`<div><b>${esc(x.tab)}</b> · 방 ${x.rooms}개${x.added.length?` · 새로 더한 방: ${x.added.map(esc).join(', ')}`:''}${x.missing.length?` · <span class="pill due">도면에 없는 방 ${x.missing.length}</span> ${x.missing.map(m=>`<span class="row" style="gap:4px;display:inline-flex">${esc(m.no)}${m.used?` (배정 있음) → <select data-rmvto="${esc(m.no)}"><option value="">옮길 방</option>${R.rooms.filter(r=>!used(r)&&r.no!==m.no&&x.added.includes(r.no)).concat(R.rooms.filter(r=>!used(r)&&r.no!==m.no&&!x.added.includes(r.no)&&r.fl===m.fl)).slice(0,40).map(r=>`<option>${esc(r.no)}</option>`).join('')}</select><button class="btn small" type="button" data-rmv="${esc(m.no)}">배정 옮기기</button>`:''}</span>`).join(' ')}`:''}${x.borders==='guess'?' · 테두리를 읽지 못해 글 · 색이 있는 칸에 선을 그렸어요':''}</div>`).join('')}</div>`:''}</div>
   ${editor()}
   <div class="sheetwrap"><table class="sheet"><colgroup>${Fl.cw.map(w=>`<col style="width:${w}px">`).join('')}</colgroup><tbody>${html}</tbody></table></div>
-  <p class="cap" style="margin:0">방번호나 그 아래 칸을 누르면 그 방을 고쳐요. 방번호 옆 * = 공개된 방. 배정 칸 색은 「방 공개 · 메인 이름 · 색」에서 정해요.</p>`}
+  <p class="cap" style="margin:0">방번호 아래 칸을 누르면 그 방 배정을 넣거나 고쳐요 (방번호 칸은 눌러지지 않아요). 방번호 옆 * = 공개된 방. 배정 칸 색은 「방 공개 · 메인 이름 · 색」에서 정해요.</p>`}
 function colorBox(){const C=(R.cfg&&R.cfg.colors)||{mode:'kind',kind:{},main:{}},mode=A.cMode||C.mode;const M=mainsUsed();
   const pick=(t,k,v)=>`<label class="row" style="gap:4px;margin-right:10px"><input type="color" class="rc_col" data-t="${t}" data-k="${esc(k)}" value="${esc(v)}">${esc(k)}</label>`;
   return `<div style="margin-top:10px"><div class="row" style="gap:10px"><b>배정 칸 색</b><label class="row" style="gap:4px"><input type="radio" name="rc_mode" value="kind" ${mode==='kind'?'checked':''}> 방종류별</label><label class="row" style="gap:4px"><input type="radio" name="rc_mode" value="main" ${mode==='main'?'checked':''}> 메인별 (학원 · 이름)</label><span class="cap" style="margin:0">방 하나만 다른 색은 방 편집의 「이 방 색」</span></div>

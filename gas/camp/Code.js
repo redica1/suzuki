@@ -1,4 +1,4 @@
-/* build: 20261024-235736 */
+/* build: 20261025-000202 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -1619,7 +1619,7 @@ const ROOM_HEAD = ['방번호', '건물', '층', '타입', '정원', '방종류'
  *   n: 그 묶음이 자는 인원 · a: 인원을 셀 학원 · days: 쓰는 날짜(빈 값 = 방 사용 날짜 전부) · tm: 시간 메모(예: 14:00 이후)
  * 사용 날짜 = 방을 쓰는 날짜 번호(교사 일정 날짜), 빈 값 = 모든 날짜 · 공개 = 예면 일괄 공개 전이라도 그 방은 선생님 화면에 보임
  * 메인학원 · 메인 인원 · 보조학원 · 보조 인원 · 교수 칸은 시트에서 보기 쉽게 배정에서 다시 채움 */
-const ROOM_KINDS = ['클래스방', '2인가족방', '3인가족방', '4인가족방', '교수방', '여교사방', '남교사방', '레슨방', '본부방'];
+const ROOM_KINDS = ['클래스방', '가족방', '교수방', '여교사방', '남교사방', '레슨방', '본부방'];
 const ROOM_INV = 'S101:;S102:;S103:;S105:;S106:;S107:;S108:;S109:;S117:;S118:;S119:;S121:;S122:;S123:;S125:;S126:;S127:;S128:;S129:;S130:;S201:;S202:;S203:;S205:;S206:;S207:;S208:;S209:;S210:;S211:;S212:;S213:;S215:;S216:;S217:;S218:;S219:;S220:;S221:;S222:;S223:;S225:;S226:;S227:;S228:;S229:;S230:;S231:;S232:;S233:;S236:;S237:;S238:;S239:;S240:;S241:;S301:;S302:;S303:;S305:;S306:;S307:;S308:;S309:;S310:23C;S311:23C;S312:23C;S313:23C;S315:23C;S316:23C;S317:23C;S318:23C;S319:23C;S320:;S321:;S322:;S323:;S325:;S326:;S327:;S328:;S329:;S330:;S331:;S332:;S333:;S336:;S338:;S339:;S340:;S341:;S401:;S402:;S403:;S405:;S406:;S407:;S408:;S409:;S410:;S411:;S412:;S413:;S415:;S416:;S417:;S418:;S419:;S420:;S421:;S422:;S423:;S425:;S426:;S427:;S428:;S429:;S430:;S431:;S432:;S433:;S435:;S501:27H;S502:27H;S503:27H;S505:27H;S506:27H;S507:27H;S508:27H;S509:18C;S510:;S511:;S512:;S513:;S515:;S516:;S517:;S518:;S519:;S520:27H;S521:18C;S522:;S523:;S525:27H;S526:27H;S527:27H;S528:27H;S529:27H;S530:27H;S531:27H;S532:27H;S533:27H;S535:;S601:27H;S602:27H;S603:27H;S605:27H;S606:27H;S607:27H;S608:27H;S609:18H;S610:;S611:;S612:;S613:;S615:;S616:;S617:;S618:;S619:;S620:27H;S621:18H;S622:18H;S623:18H;S625:;S626:;S627:;S628:;S629:;S630:;S631:;S632:;S633:;S635:;S701:27H;S702:27H;S703:27H;S705:27H;S706:27H;S707:27H;S708:27H;S709:18T;S710:27H;S711:27H;S712:27H;S713:27H;S715:27H;S716:27H;S717:27H;S718:27H;S719:27H;S720:27H;S721:18T;S722:18T;S723:18T;S725:27H;S726:27H;S727:27H;S728:27H;S729:27H;S730:27H;S731:27H;S732:27H;S733:27H;S735:;S801:23H;S802:23H;S803:;S805:;S806:;S807:;S808:;S809:18H;S810:;S811:;S812:;S813:;S815:23H;S816:23H;S817:23H;S818:23H;S819:23H;S820:27H;S821:18H;S822:18H;S823:18H;S825:23H;S826:23H;S827:23H;S828:23H;S829:23H;S830:23H;S831:27H;S833:;S901:23T;S902:23T;S903:23T;S905:23T;S906:23T;S907:23T;S908:23T;S909:18T;S910:23T;S911:23T;S912:23T;S913:23T;S915:23T;S916:23T;S917:23T;S918:23T;S919:23T;S920:27H;S921:18T;S922:18T;S923:18T;S925:23T;S926:23T;S927:23T;S928:23T;S929:23T;S930:23T;S931:27H;P201:;P202:;P203:;P205:;P206:;P207:;P208:;P209:;P210:;P211:;P212:;P213:;P215:;P216:;P217:;P218:;P219:;P301:;P302:;P303:;P305:;P306:;P307:;P308:;P309:;P310:;P311:;P312:;P313:;P315:;P316:;P317:;P318:;P319:;P320:;P321:;P322:;P323:;P325:;P326:;P327:;P401:;P402:;P403:;P405:;P406:;P407:;P408:;P409:;P410:;P411:;P412:;P413:;P415:;P416:;P417:;P418:;P419:;P420:;P421:;P422:;P423:;P425:;P426:;P427:;P501:;P502:;P503:;P505:;P506:;P507:;P508:;P509:;P510:;P511:;P512:;P513:;P515:;P516:;P517:;P518:;P519:;P520:;P601:;P602:;P603:;P605:;P606:;P607:;P608:;P609:;P610:;P611:;P612:;P613:;P615:;P616:;P617:;P618:;P619:;P620:;P701:;P702:;P703:;P705:;P706:;P707:;P708:;P709:;P710:;P711:;P712:;P713:;P715:;P716:;P717:;P718:;P719:;P720:;P801:;P802:;P803:;P805:;P806:;P807:;P808:;P809:;P810:;P811:;P812:;P813:;P815:;P816:;P817:';
 function roomSheet_() {
   const ss = SpreadsheetApp.getActive(); let sh = ss.getSheetByName(SH.ROOM);
@@ -1643,7 +1643,7 @@ function roomOcc_(r) {
 function rooms_() {
   roomSheet_();
   return rows_(SH.ROOM).filter(r => String(r['방번호'] || '')).map(r => ({ no: String(r['방번호']), bld: String(r['건물'] || ''), fl: String(r['층'] || ''), type: String(r['타입'] || ''), cap: +r['정원'] || 0,
-    kind: String(r['방종류'] || ''), main: String(r['메인학원'] || ''), mn: +r['메인 인원'] || 0, sub: String(r['보조학원'] || ''), sn: +r['보조 인원'] || 0, pw: String(r['비번 수신자'] || ''), prof: String(r['교수'] || ''), memo: String(r['메모'] || ''), _row: r._row,
+    kind: String(r['방종류'] || '').replace(/^\d인가족방$/, '가족방'), main: String(r['메인학원'] || ''), mn: +r['메인 인원'] || 0, sub: String(r['보조학원'] || ''), sn: +r['보조 인원'] || 0, pw: String(r['비번 수신자'] || ''), prof: String(r['교수'] || ''), memo: String(r['메모'] || ''), _row: r._row,
     occ: (() => { try { const o = JSON.parse(String(r['배정'] || '[]')); return Array.isArray(o) ? o : []; } catch (x) { return []; } })(),
     days: String(r['사용 날짜'] == null ? '' : r['사용 날짜']).split(',').map(x => x.trim()).filter(x => /^\d+$/.test(x)).map(Number), pub: String(r['공개'] || '') === '예', color: /^#[0-9a-f]{6}$/i.test(String(r['색'] || '')) ? String(r['색']) : '', size: String(r['평수'] || ''), beds: r['침대'] === '' || r['침대'] == null ? '' : +r['침대'], feat: String(r['방 특징'] || '') }))
     .map(r => Object.assign(r, { occ: roomOcc_(r) }));
@@ -1797,13 +1797,14 @@ function roomSave(token, x) {
   try {
     const sh = roomSheet_(); const r = rooms_().find(y => y.no === t(x.no, 10));
     if (!r) throw new Error('방을 찾지 못했어요: ' + x.no);
-    const kind = t(x.kind, 20); if (kind && !ROOM_KINDS.includes(kind)) throw new Error('방종류를 골라 주세요.');
+    let kind = t(x.kind, 20).replace(/^\d인가족방$/, '가족방'); if (kind && !ROOM_KINDS.includes(kind)) throw new Error('방종류를 골라 주세요.');
     let nd = 0; try { nd = (actCfg_().days || []).length; } catch (e) {}
     const dl = L => [...new Set((Array.isArray(L) ? L : []).map(Number).filter(d => d >= 0 && d < Math.max(nd, 1) && Number.isInteger(d)))].sort((p, q) => p - q);
     if ((!Array.isArray(x.occ) || !x.occ.length) && (x.main || x.prof || x.sub)) x.occ = roomOcc_({ main: t(x.main, 40), mn: +x.mn || 0, sub: t(x.sub, 40), sn: +x.sn || 0, prof: t(x.prof, 40) });   // 예전 방식(메인 · 보조 · 교수)으로 보낸 것
     const occ = (Array.isArray(x.occ) ? x.occ : []).slice(0, 12).map(o => Object.assign({ k: ['acad', 'grp', 'name', 'fam'].includes(o.k) ? o.k : 'name', v: t(o.v, 40), n: n(o.n), a: t(o.a, 40), days: dl(o.days), tm: t(o.tm, 30), no: t(o.no, 20) }, Array.isArray(o.names) && o.names.length ? { names: o.names.slice(0, 10).map(y => t(y, 30)) } : {})).filter(o => o.v);
     const days = dl(x.days), cap = n(x.cap) || r.cap, clear = !occ.length;
     if (occ.some(o => o.k === 'fam') && occ.some(o => o.k !== 'fam')) throw new Error(r.no + ' 방: 가족방에는 학원 · 사람 · 이름을 같이 넣을 수 없어요.');
+    if (occ.some(o => o.k === 'fam')) kind = '가족방'; /* 가족을 넣은 방은 방종류 = 가족방 */
     const all = nd ? [...Array(nd).keys()] : [0], use = days.length ? days : all;
     use.forEach(d => { const sum = occ.filter(o => !o.days.length || o.days.includes(d)).reduce((s2, o) => s2 + o.n, 0); if (sum > cap) throw new Error(`${r.no} 방: ${d + 1}번째 날 인원 ${sum}명이 정원 ${cap}명보다 많아요.`); });
     const m = occ[0] || {}, sub = occ.slice(1).find(o => o.k === 'acad' || o.k === 'grp'), pr = occ.find(o => o.k === 'name' && kind === '교수방');

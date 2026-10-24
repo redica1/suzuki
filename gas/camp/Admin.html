@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261024-235736 -->
+<!-- build: 20261025-000202 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -1038,7 +1038,7 @@ document.addEventListener('input',e=>{if(e.target.id==='r_fq'){A.fq=e.target.val
 function run(fn,args,ok,fail){if(roBlock(fn)){fail&&fail(RO_MSG);return}google.script.run.withSuccessHandler(ok).withFailureHandler(e=>{const m=(e&&e.message)||String(e);fail&&fail(m)})[fn](S.tok,...args)}
 function load(){LOADING=true;ERR='';run('roomData',[],r=>{LOADING=false;R=r;render()},m=>{LOADING=false;ERR=m;render()})}
 const kcls=k=>!k?'':k.includes('가족')?'fam':k==='교수방'?'prof':k==='클래스방'?'cls':'etc';
-const KCOL={'클래스방':'#d6ecef','2인가족방':'#ffe9b0','3인가족방':'#ffe09a','4인가족방':'#ffd27a','교수방':'#f3d1e6','여교사방':'#e3dcff','남교사방':'#cfe0ff','레슨방':'#e6e6e6','본부방':'#e6e6e6'};
+const KCOL={'클래스방':'#d6ecef','가족방':'#ffd27a','교수방':'#f3d1e6','여교사방':'#e3dcff','남교사방':'#cfe0ff','레슨방':'#e6e6e6','본부방':'#e6e6e6'};
 const sh=a=>String(a||'').replace(/스즈키$/,'');
 const OK_LBL={acad:'학원',grp:'이름',name:'개인',fam:'가족방'};
 const allDays=()=>(R.days||[]).length?R.days.map((_,i)=>i):[0];
@@ -1062,7 +1062,7 @@ function tile(r){const n=peak(r),part=r.days&&r.days.length&&r.days.length<allDa
   <span class="rno num">${esc(r.no)}${r.pub?' <small class="pill ok" style="padding:0 4px">공개</small>':''}</span><span class="rty">${esc(rType(r.no)||r.type||'타입 -')} · 정원 ${r.cap}</span>
   ${used(r)?`<b>${esc(oLab(r.occ[0]))}${r.occ.length>1?` <small>+ ${r.occ.slice(1).map(x=>esc(oLab(x))).join(', ')}</small>`:''}</b><span class="rk">${esc(r.kind||'방종류 -')} · ${n}/${r.cap}${n>r.cap?' 넘침':''}${part?' · '+r.days.map(dayLab).join(','):''}</span>${r.pw?`<span class="rpw">비번 ${esc(r.pw)}</span>`:''}`:'<span class="rk">빈 방</span>'}</button>`}
 /* ---------- 방 편집 (A.ed = 고치는 중인 복사본) ---------- */
-function openEd(no){const r=R.rooms.find(x=>x.no===no);A.sel=no;A.ed=r?JSON.parse(JSON.stringify({no:r.no,kind:r.kind,cap:r.cap,pw:r.pw,memo:r.memo,pub:!!r.pub,days:r.days||[],occ:r.occ||[],type:r.type,color:r.color||'',size:r.size||'',beds:r.beds===''||r.beds==null?'':r.beds,feat:r.feat||''})):null}
+function openEd(no){const r=R.rooms.find(x=>x.no===no);A.sel=no;A.ed=r?JSON.parse(JSON.stringify({no:r.no,kind:(r.occ||[]).some(o=>o.k==='fam')?'가족방':r.kind==='가족방'?'':r.kind,cap:r.cap,pw:r.pw,memo:r.memo,pub:!!r.pub,days:r.days||[],occ:r.occ||[],type:r.type,color:r.color||'',size:r.size||'',beds:r.beds===''||r.beds==null?'':r.beds,feat:r.feat||''})):null}
 function famList(){return famRooms()}
 /* 방 편집 순서: ① 방 정보(평수 · 침대 · 정원 · 타입) ② 사용 날짜 ③ 방종류 ④ 메인(학원 · 이름 · 사람 · 가족) + 숙박 인원 ⑤ 보조 학원 · 사람 · 가족 + 숙박 인원 ⑥ 비번 수신자 · 메모 · 공개 · 색 */
 function occRow(e,o,i,rd,M,AL,inOcc,main){
@@ -1092,7 +1092,7 @@ function editor(){const e=A.ed,r=R.rooms.find(x=>x.no===A.sel);if(!e||!r)return 
       <label>정원 <input type="number" id="r_cap" min="1" max="30" value="${e.cap}" style="width:56px"> 명</label>
       <label>방 메모 <input type="text" id="r_feat" value="${esc(e.feat||'')}" maxlength="40" placeholder="예: 온돌 · 거실 · 이불 2채 추가" style="width:200px"></label></div>
     <div class="row" style="gap:8px;flex-wrap:wrap"><b>사용 날짜</b>${D.map(d=>`<label class="row" style="gap:3px"><input type="checkbox" data-rday="${d}" ${rd.includes(d)?'checked':''}>${esc(dayLab(d))}</label>`).join('')}<span class="cap" style="margin:0">체크를 풀면 그날은 사용 안 함</span></div>
-    <div class="row" style="gap:10px;flex-wrap:wrap"><label class="row" style="gap:6px"><b>방종류</b><select id="r_kind">${['',...R.kinds].map(k=>`<option value="${esc(k)}" ${k===e.kind?'selected':''}>${k||'선택'}</option>`).join('')}</select></label>
+    <div class="row" style="gap:10px;flex-wrap:wrap">${hasFam?`<span class="row" style="gap:6px"><b>방종류</b><span class="pill info">가족방</span><span class="cap" style="margin:0">가족을 넣으면 자동</span><input type="hidden" id="r_kind" value="가족방"></span>`:`<label class="row" style="gap:6px"><b>방종류</b><select id="r_kind">${['',...R.kinds.filter(k=>k!=='가족방')].map(k=>`<option value="${esc(k)}" ${k===e.kind?'selected':''}>${k||'선택'}</option>`).join('')}</select></label>`}
       <span class="pill ${tot>e.cap?'bad':tot?'info':'mute'}">숙박 ${tot} / 정원 ${e.cap}명</span>${rd.length>1&&loads.some(x=>x.n!==tot)?loads.map(x=>`<span class="pill ${x.n>e.cap?'bad':'mute'}">${esc(dayLab(x.d))} ${x.n}</span>`).join(''):''}</div>
     <div class="occs">${e.occ.length?e.occ.map((o,i)=>occRow(e,o,i,rd,M,AL,inOcc,i===0)).join(''):'<p class="hint" style="margin:0">아직 아무도 없어요. 아래에서 메인을 골라 주세요 — 학원, 관리자가 정한 이름(본부방 등), 사람 이름, 가족방 신청 가족 중 하나.</p>'}</div>
     ${hasFam?`<p class="hint" style="margin:0">가족방이에요. 가족방에는 학원 · 사람 · 이름을 같이 넣을 수 없어요 (다른 가족을 더 넣는 것만 돼요). 학원 방으로 쓰려면 가족을 먼저 빼 주세요.</p><div class="g2 roomadd">${addSel('r_addF','＋ 가족방 신청 가족 더 넣기 ('+fams.length+')',famOpts,'r_addFam','넣기')}</div>`:`
@@ -1249,14 +1249,14 @@ document.addEventListener('click',ev=>{if(S.tab!=='room')return;const b=ev.targe
   if(d.rfl!==undefined){A.fl=d.rfl;A.sel='';A.ed=null;render();return}
   if(d.rroom){if(A.sel===d.rroom){A.sel='';A.ed=null}else openEd(d.rroom);render();return}
   if(d.rgo){const r=R.rooms.find(x=>x.no===d.rgo);if(r){A.v='list';A.bld=r.bld;A.fl=r.fl;openEd(r.no);render();window.scrollTo({top:0})}return}
-  if(d.rdel!==undefined){edRead();A.ed.occ.splice(+d.rdel,1);render();return}
+  if(d.rdel!==undefined){edRead();A.ed.occ.splice(+d.rdel,1);if(A.ed.kind==='가족방'&&!A.ed.occ.some(o=>o.k==='fam'))A.ed.kind='';render();return}
   if(d.rmain!==undefined){edRead();const o=A.ed.occ.splice(+d.rmain,1)[0];A.ed.occ.unshift(o);render();return}
   const addO=o=>{edRead();const fam=A.ed.occ.some(x=>x.k==='fam');if(fam&&o.k!=='fam'){toast('가족방에는 학원 · 사람 · 이름을 같이 넣을 수 없어요');return}if(o.k==='fam'&&A.ed.occ.some(x=>x.k!=='fam')){toast('가족은 빈 방(또는 가족방)에만 넣을 수 있어요');return}A.ed.occ.push(Object.assign({days:[],tm:''},o));render()};
   if(b.id==='r_addAcad'){const v=(document.getElementById('r_addA')||{}).value;if(!v){toast('학원을 골라 주세요');return}const M=acads();const left=Math.max(0,(M[v]?M[v].n:0)-got(v));addO({k:'acad',v,a:v,n:Math.min(left||1,A.ed.cap)});return}
   if(b.id==='r_addGrp'){const v=(document.getElementById('r_addG')||{}).value;if(!v){toast('이름을 골라 주세요 · 목록은 「방 공개 · 메인 이름」에서 정해요');return}addO({k:'grp',v,a:'',n:1});return}
   if(b.id==='r_addName'){const v=((document.getElementById('r_addP')||{}).value||'').trim();if(!v){toast('사람 이름을 넣어 주세요');return}const p=people().find(x=>x.n===v);addO({k:'name',v,a:p?p.a:'',n:1});return}
   if(b.id==='r_addFam'){const v=(document.getElementById('r_addF')||{}).value;if(!v){toast('가족을 골라 주세요');return}const [no,rep]=v.split('|');const f=famRooms().find(x=>x.sb.no===no&&x.rep.name===rep);if(!f)return;
-    addO({k:'fam',v:rep+' 가족',a:f.sb.acad,n:f.n,no,names:f.mem.map(m=>m.name)});if(!A.ed.kind)A.ed.kind=(f.n>=2&&f.n<=4?f.n+'인가족방':'4인가족방');if(!A.ed.pw)A.ed.pw=rep;render();return}
+    addO({k:'fam',v:rep+' 가족',a:f.sb.acad,n:f.n,no,names:f.mem.map(m=>m.name)});A.ed.kind='가족방';if(!A.ed.pw)A.ed.pw=rep;render();return}
   if(b.id==='r_save'){save(false);return}
   if(b.id==='r_clear'){save(true);return}
   if(b.id==='r_close'){A.sel='';A.ed=null;render();return}

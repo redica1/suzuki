@@ -1,4 +1,4 @@
-/* build: 20261024-103032 */
+/* build: 20261024-103122 */
     askBox('입금 신고를 취소할까요?',`<b>${esc(p.name)}</b>의 입금 신고를 지워요. 다시 「입금 신고」로 새로 낼 수 있어요.`,'신고 취소',()=>{const r=p.rep;r.ids=r.ids.filter(i=>i!==p.id);if(r.rows)delete r.rows[p.id];r.amt=r.ids.reduce((t,i)=>t+(+((r.rows||{})[i]||{}).a||0),0);
       MY_SUBS.forEach(x=>x.ppl.forEach(q=>{if(q.rep&&q.rep.id===r.id)q.rep=r}));p.pay='전';delete p.rep;S.prp='';subSave();render();toast(`${p.name} 입금 신고를 취소했어요`)});return}
   if(d.atab){S.atab=d.atab;render();return}

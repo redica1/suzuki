@@ -1,4 +1,4 @@
-/* build: 20261024-225636 */
+/* build: 20261024-225849 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -1530,7 +1530,7 @@ function lessons_() { lesSheet_(); return rows_(SH.LES).filter(r => String(r['�
 function lessonData(token) {
   adm_(token);
   let days = []; try { days = actCfg_().days || []; } catch (x) {}
-  let acts = []; try { acts = actEvents_().map(e => ({ d: e.d, s: e.s, e: e.e, room: e.room, title: evName_(e), ppl: e.ppl })); } catch (x) {}
+  let acts = []; try { acts = actEvents_().map(e => ({ d: e.d, s: e.s, e: e.e, room: e.room, title: e.title + (e.stage && e.stage !== '본공연' ? ' ' + e.stage : ''), ppl: e.ppl }));   // 개인레슨 칸에는 활동(이름 · 단계)과 장소만 — 곡명(세부)은 뺌 } catch (x) {}
   let people = []; try { people = actPeople_(actCfg_().people).map(p => ({ id: p.id, n: p.n })); } catch (x) {}
   let open = false; try { open = setting_('시간표 공개') === '예'; } catch (x) {}
   return { days, rows: lessons_().map(x => ({ d: x.d, t: x.t, pr: x.pr, pid: x.pid })), acts, people, open };
@@ -1549,7 +1549,7 @@ function lessonSet(token, op) {
       if (other) throw new Error('이 학생은 같은 시간에 ' + other.pr + ' 교수 레슨이 있어요.');
       { const c = actCfg_(), ppl = actPeople_(c.people), nm = {}; ppl.forEach(p => nm[p.id] = p.n); const mm = v => { const q = String(v).split(':'); return +q[0] * 60 + +q[1]; };
         const ev = actEvents_().find(e => e.d === d && e.ppl.some(p => (nm[p.n] || String(p.n).replace(/^[CP]:/, '')) === pr) && mm(e.s) < mm(t) + 30 && mm(t) < mm(e.e));
-        if (ev) throw new Error(pr + ' 교수님은 이 시간에 교사 일정 「' + evName_(ev) + '」 ' + ev.s + '~' + ev.e + ' ' + ev.room + '이(가) 있어서 레슨을 넣을 수 없어요.'); }
+        if (ev) throw new Error(pr + ' 교수님은 이 시간에 교사 일정 「' + ev.title + (ev.stage && ev.stage !== '본공연' ? ' ' + ev.stage : '') + '」 ' + ev.s + '~' + ev.e + ' ' + ev.room + '이(가) 있어서 레슨을 넣을 수 없어요.'); }
       let info = { name: '', acad: '', no: '', inst: '' };
       const sb = loadSubs_().find(x => String(op.pid).indexOf(x.no + '_') === 0);
       const p = sb && sb.ppl.find(q => q.id === op.pid);

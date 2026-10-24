@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261024-135453 -->
+<!-- build: 20261024-142217 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -156,6 +156,7 @@ tr.off td{opacity:.5}
 .act .ev .tm{font-size:10.5px;color:var(--faint);white-space:nowrap}
 .act .ev small{color:var(--muted);font-size:11px;line-height:1.3}
 .act .lstg{align-items:start}.act .lstcol{display:grid;gap:14px}.act .lsth{font-size:16px}.act .lstbox{display:grid;gap:6px}.act table.lst td{padding:3px 4px}.act table.lst input[type=text]{width:100%;min-width:90px}
+.act .addbox{display:grid;gap:8px;padding:10px;border:1px dashed var(--line);border-radius:8px;background:var(--bg)}.act .ckl li label{display:flex;gap:8px;align-items:center;padding:6px 8px;cursor:pointer;border-radius:6px}.act .ckl li label:hover{background:var(--sunk)}.act .ckl li label.warn{opacity:.75}.act .ckl{max-height:320px;overflow:auto}
 .act .ev.stg2{border-left-style:dashed;background:var(--sunk)}.act .stg{font-size:11px;font-weight:600;padding:0 5px;border-radius:4px;background:var(--rosin-soft);color:var(--rosin)}
 .act .t-les{border-left-color:var(--bar)}.t-orc{border-left-color:var(--ok)}.t-con{border-left-color:var(--rosin)}.t-reh{border-left-color:var(--faint)}.t-spe{border-left-color:var(--accent)}.t-tt{border-left-color:var(--bad)}
 .act .chips2{display:flex;flex-wrap:wrap;gap:3px}
@@ -524,14 +525,25 @@ function vGrid(){
   </tbody></table></div>`;
 }
 /* 고치는 칸 */
-function personList(e){
-  const q=A.pq.trim(); if(!q&&!A.pqOpen) return '';
-  const used=new Set(e.ppl.map(p=>p.n));
-  const L=P().filter(p=>!gone(p.id)&&!used.has(p.id)&&(!q||p.n.includes(q)||(p.acad||'').includes(q)||(p.inst||'').includes(q)))
+/* 사람 넣기: 역할을 먼저 고르고 → 이름을 「,」로 적거나 · 목록에서 체크해서 한꺼번에 */
+function candRows(e){const q=A.pq.trim();const used=new Set(e.ppl.map(p=>p.n));
+  return P().filter(p=>!gone(p.id)&&!used.has(p.id)&&(!q||p.n.includes(q)||(p.acad||'').includes(q)||(p.inst||'').includes(q)))
     .map(p=>{const x=ST.st[p.id]||{total:0,roles:{},cats:{},days:D.days.map(()=>0)};const busy=D.events.some(o=>o.id!==e.id&&o.d===e.d&&o.ppl.some(z=>z.n===p.id)&&mins(o.s)<mins(e.e)&&mins(e.s)<mins(o.e));const off=(A.unav[p.id]||[]).includes(e.d);return {p,x,busy,off}})
-    .sort((a,b)=>(a.busy||a.off)-(b.busy||b.off)||a.x.total-b.x.total||a.p.n.localeCompare(b.p.n,'ko')).slice(0,40);
-  return `<ul class="cands">${L.map(({p,x,busy,off})=>`<li><button type="button" data-aaddp="${p.id}" ${busy||off?'class="warn"':''}><span><b>${LBH(p.id)}</b> <small>${esc(p.inst||'')} · ${esc(p.acad||'')}${p.kind!=='교사'?' · '+p.kind:''}</small></span>
-    <span class="row" style="gap:4px;flex-wrap:nowrap">${busy?'<span class="pill bad">이 시간 다른 일정</span>':''}${off?'<span class="pill bad">못 오는 날</span>':''}<span class="pill ${x.total?'mute':'due'}">${x.total?cnt3(x):'아직 0회'}</span></span></button></li>`).join('')||'<li class="cap" style="padding:8px">찾는 사람이 없어요.</li>'}</ul>`}
+    .sort((a,b)=>(a.busy||a.off)-(b.busy||b.off)||a.x.total-b.x.total||a.p.n.localeCompare(b.p.n,'ko'))}
+function addBox(e){const RL=roleList(e.cat);if(!A.addR||!RL.includes(A.addR))A.addR=e.ppl.length?(RL[1]||RL[0]):RL[0];const m=A.addM||'type';A.pck=A.pck||{};
+  const picked=Object.keys(A.pck).filter(k=>A.pck[k]);
+  return `<div class="addbox"><div class="row" style="gap:8px"><b>사람 넣기</b><label class="row" style="gap:4px">① 역할<select id="a_addR">${RL.map(r=>`<option ${r===A.addR?'selected':''}>${esc(r)}</option>`).join('')}</select></label>
+    <span class="cap" style="margin:0">②</span><div class="seg" role="group" aria-label="넣는 방법"><button type="button" data-aaddm="type" aria-pressed="${m==='type'}">이름으로 입력</button><button type="button" data-aaddm="check" aria-pressed="${m==='check'}">목록에서 체크</button></div></div>
+  ${m==='type'?`<div class="row" style="gap:6px;flex-wrap:nowrap"><input type="text" id="a_names" value="${esc(A.names||'')}" placeholder="이름을 쉼표(,)로 구분해 적어요 · 예: 황의한, 최진실, 이선화" autocomplete="off" style="flex:1"><button class="btn small primary" type="button" id="a_namesAdd">${esc(A.addR)}(으)로 넣기</button></div>
+    ${A.namesMsg?`<div class="cap" style="margin:0">${A.namesMsg}</div>`:''}`
+  :`<div class="row" style="gap:6px;flex-wrap:nowrap"><input type="search" id="a_pq" value="${esc(A.pq)}" placeholder="이름·학원·악기로 찾기 (적게 나온 사람이 위에)" autocomplete="off" style="flex:1"><button class="btn small primary" type="button" id="a_pckAdd" ${picked.length?'':'disabled'}>선택한 ${picked.length}명 ${esc(A.addR)}(으)로 넣기</button></div>
+    <ul class="cands ckl">${candRows(e).slice(0,60).map(({p,x,busy,off})=>`<li><label class="${busy||off?'warn':''}"><input type="checkbox" data-apck="${esc(p.id)}" ${A.pck[p.id]?'checked':''}><span><b>${LBH(p.id)}</b> <small>${esc(p.inst||'')} · ${esc(p.acad||'')}${p.kind!=='교사'?' · '+p.kind:''}</small></span>
+      <span class="row" style="gap:4px;flex-wrap:nowrap;margin-left:auto">${busy?'<span class="pill bad">이 시간 다른 일정</span>':''}${off?'<span class="pill bad">못 오는 날</span>':''}<span class="pill ${x.total?'mute':'due'}">${x.total?cnt3(x):'아직 0회'}</span></span></label></li>`).join('')||'<li class="cap" style="padding:8px">찾는 사람이 없어요.</li>'}</ul>`}</div>`}
+/* 이름 → 사람: 띄어쓰기·대소문자 무시, 같은 이름이 여럿이면 고르게 */
+function addPeople(e,ids,role){const have=new Set(e.ppl.map(p=>p.n));let n=0;const warn=[];
+  ids.forEach(id=>{if(have.has(id))return;e.ppl.push({n:id,r:role});have.add(id);n++;
+    if(D.events.some(o=>o.id!==e.id&&o.d===e.d&&o.ppl.some(z=>z.n===id)&&mins(o.s)<mins(e.e)&&mins(e.s)<mins(o.e)))warn.push(LB(id)+' 겹침');if((A.unav[id]||[]).includes(e.d))warn.push(LB(id)+' 못 오는 날')});
+  if(n)logIt(`넣음 (${role}): ${ids.map(LB).join(', ')} → ${D.days[e.d]} ${e.s} ${e.room} 「${e.title}」`);return {n,warn}}
 function editor(){
   const e=A.sel&&evById(A.sel); if(!e) return '';
   const rooms=D.rooms[e.d]||[];
@@ -554,8 +566,7 @@ function editor(){
         <b>${LBH(p.n)}</b>${gone(p.n)?`<span class="pill bad">${goneTxt(p.n)} · 빼고 다른 분을 넣어 주세요</span>`:''}<span class="cap" style="margin:0">${esc((pBy(p.n)||{}).acad||'')} · ${cnt3(x)}</span>
         ${ST.clash.has(k)?'<span class="pill bad">같은 시간 다른 일정</span>':''}${ST.off.has(k)?'<span class="pill bad">못 오는 날</span>':''}
         <span class="row" style="gap:4px;margin-left:auto"><button class="btn small" type="button" data-aswap="${e.id}|${i}">바꾸기</button><button class="btn small ghost" type="button" data-aprm="${i}">빼기</button></span></div>`}).join('')||'<p class="cap" style="margin:0">아직 사람이 없어요.</p>'}
-      <input type="search" id="a_pq" value="${esc(A.pq)}" placeholder="사람 넣기: 이름·학원·악기로 찾기 (적게 나온 사람이 위에)" autocomplete="off">
-      ${personList(e)}</div>
+      ${addBox(e)}</div>
     <div class="row"><button class="btn small" type="button" id="a_cpOther">다른 날 같은 시간·장소에 복사 (사람 빼고)</button><button class="btn small primary" type="button" id="a_edSave">고친 내용 저장</button></div></div>`}
 
 /* ---------- 교사별 횟수 ---------- */
@@ -611,8 +622,8 @@ document.addEventListener('click',ev=>{if(S.tab!=='act'||!D)return;
       const pa=a.ppl[A.swap.i],pb=bb.ppl[+i];[pa.n,pb.n]=[pb.n,pa.n];
       logIt(`맞바꿈: ${D.days[a.d]} ${a.s} ${a.room} 「${a.title}」 ${pa.r} ↔ ${D.days[bb.d]} ${bb.s} ${bb.room} 「${bb.title}」 ${pb.r} · 이제 ${LB(pa.n)} / ${LB(pb.n)}`);
       A.swap=null;refresh();toast(`${LB(pb.n)} ↔ ${LB(pa.n)} 맞바꿨어요`);return}
-    A.sel=eid;A.pq='';A.pqOpen=false;render();return}
-  if(d.aev&&!ev.target.closest('button')){A.sel=d.aev;A.pq='';A.pqOpen=false;render();return}
+    A.sel=eid;A.pq='';A.pqOpen=false;A.addR='';A.names='';A.namesMsg='';A.pck={};render();return}
+  if(d.aev&&!ev.target.closest('button')){A.sel=d.aev;A.pq='';A.pqOpen=false;A.addR='';A.names='';A.namesMsg='';A.pck={};render();return}
   if(b.id==='a_rowAdd'){const t=hmVal('a_rowT');A.rowT=t;const dd=A.day;D.rows=D.rows||{};const L=D.rows[dd]=D.rows[dd]||[];
     const has=D.events.some(e=>e.d===dd&&e.s===t)||L.includes(t);if(has){toast(`${t} 줄은 이미 있어요`);return}L.push(t);logIt(`시간 줄 추가: ${D.days[dd]} ${t}`);refresh();toast(`${D.days[dd]} ${t} 줄을 넣었어요 · 빈 칸의 +를 눌러 일정을 넣으세요`);return}
   if(d.arowdel){const L=(D.rows||{})[A.day]||[];const i=L.indexOf(d.arowdel);if(i>=0)L.splice(i,1);refresh();toast(`${d.arowdel} 줄을 뺐어요`);return}
@@ -626,6 +637,15 @@ document.addEventListener('click',ev=>{if(S.tab!=='act'||!D)return;
     logIt(`복사: 「${e.title}」 ${e.s} ${e.room} → 다른 날 ${n}곳`);refresh();toast(n?`다른 날 ${n}곳에 복사했어요 (사람은 비워 둠)`:'다른 날 같은 자리에 이미 일정이 있어요');return}
   if(d.acat){const e=evById(A.sel);readEditor(e);if(e.cat!==d.acat){e.cat=e.type=d.acat;const K=kindsOf(d.acat);if(!K.some(k=>k.n===e.title))e.title=(K[0]||{n:e.title}).n;e.stage=d.acat==='공연'?(D.stages[0]||'본공연'):'';refresh()}return}
   if(d.atg){const e=evById(A.sel);readEditor(e);const [k,f,v]=d.atg.split('|');e.tg=e.tg||{};const t=e.tg[k]=e.tg[k]||{b:[],x:[],m:''};t[f]=t[f]||[];const i=t[f].indexOf(v);if(i>=0)t[f].splice(i,1);else{t[f].push(v);if(f==='b'){const O=TG_BOOKS[k];t.b.sort((a,b)=>O.indexOf(a)-O.indexOf(b))}}refresh();return}
+  if(d.aaddm){const e=evById(A.sel);readEditor(e);A.addM=d.aaddm;render();return}
+  if(b.id==='a_pckAdd'){const e=evById(A.sel);readEditor(e);const ids=Object.keys(A.pck||{}).filter(k=>A.pck[k]);const r=addPeople(e,ids,A.addR);A.pck={};A.pq='';refresh();toast(`${r.n}명을 ${A.addR}(으)로 넣었어요`+(r.warn.length?' · '+r.warn.join(', '):''));return}
+  if(b.id==='a_namesAdd'){const e=evById(A.sel);readEditor(e);const el=document.getElementById('a_names');const raw=(el?el.value:A.names||'').split(/[,，、\n]+/).map(x=>x.trim()).filter(Boolean);
+    const nm=x=>x.replace(/\s+/g,'').toLowerCase();const ok=[],miss=[],dup=[];
+    raw.forEach(x=>{const L=P().filter(p=>!gone(p.id)&&nm(p.n)===nm(x));if(L.length===1)ok.push(L[0].id);else if(L.length>1)dup.push({x,L});else miss.push(x)});
+    const r=addPeople(e,ok,A.addR);A.names=miss.concat(dup.map(d=>d.x)).join(', ');
+    A.namesMsg=(r.n?`<span class="pill ok">${r.n}명 넣음</span> `:'')+(miss.length?`<span class="pill bad">명단에 없는 이름: ${miss.map(esc).join(', ')}</span> `:'')+(dup.length?dup.map(d=>`<span class="pill due">「${esc(d.x)}」 같은 이름 ${d.L.length}명 — 골라 주세요:</span> ${d.L.map(p=>`<button class="btn small" type="button" data-apick1="${esc(p.id)}">${esc(p.n)} <small>${esc(p.acad||'')}</small></button>`).join(' ')}`).join(' '):'')+(r.warn.length?` <span class="pill bad">${r.warn.map(esc).join(', ')}</span>`:'');
+    refresh();setTimeout(()=>{const n=document.getElementById('a_names');if(n&&A.names)n.focus()});return}
+  if(d.apick1){const e=evById(A.sel);readEditor(e);const r=addPeople(e,[d.apick1],A.addR);A.namesMsg='';refresh();toast(`${LB(d.apick1)} 선생님을 넣었어요`+(r.warn.length?' · '+r.warn.join(', '):''));return}
   if(d.aaddp){const e=evById(A.sel);readEditor(e);const RL=roleList(e.cat);const r=(e.ppl.length?RL[1]:RL[0])||RL[0]||'담당';
     e.ppl.push({n:d.aaddp,r});logIt(`넣음: ${LB(d.aaddp)} → ${D.days[e.d]} ${e.s} ${e.room} 「${e.title}」 ${r}`);A.pq='';A.pqOpen=false;refresh();return}
   if(d.aprm!==undefined){const e=evById(A.sel);const p=e.ppl.splice(+d.aprm,1)[0];logIt(`뺌: ${LB(p.n)} ← ${D.days[e.d]} ${e.s} ${e.room} 「${e.title}」 ${p.r}`);refresh();return}
@@ -637,12 +657,14 @@ document.addEventListener('click',ev=>{if(S.tab!=='act'||!D)return;
     let k=0;D.events.forEach(e=>{const before=e.ppl.length;e.ppl=e.ppl.filter(p=>p.n!==n);k+=before-e.ppl.length});logIt(`${LB(n)} 선생님을 모든 칸에서 뺌 (${k}칸)`);refresh();toast(`${LB(n)} 선생님을 ${k}칸에서 뺐어요 · 빈 칸을 채워 주세요`);return}
   if(b.id==='a_reload'){if(DIRTY){flush(()=>load());return}load();return}
 });
-document.addEventListener('focusin',e=>{if(S.tab!=='act'||!D)return;if(e.target.id==='a_pq'&&!A.pqOpen){A.pqOpen=true;const ed=evById(A.sel);readEditor(ed);render();keepFocus('a_pq')}});
 document.addEventListener('input',e=>{if(S.tab!=='act'||!D)return;const el=e.target;
-  if(el.id==='a_pq'){A.pq=el.value;A.pqOpen=true;const ed=evById(A.sel);readEditor(ed);render();keepFocus('a_pq');return}
+  if(el.id==='a_pq'){A.pq=el.value;const ed=evById(A.sel);readEditor(ed);render();keepFocus('a_pq');return}
+  if(el.id==='a_names'){A.names=el.value;return}
   if(el.id==='a_q'){A.q=el.value;render();keepFocus('a_q');return}
   if(el.dataset.areq){A.req[el.dataset.areq]=el.value;save();return}});
 document.addEventListener('change',e=>{if(S.tab!=='act'||!D)return;const el=e.target;
+  if(el.id==='a_addR'){A.addR=el.value;const ev=evById(A.sel);readEditor(ev);render();return}
+  if(el.dataset.apck){A.pck=A.pck||{};A.pck[el.dataset.apck]=el.checked;const b=document.getElementById('a_pckAdd');const n=Object.values(A.pck).filter(Boolean).length;if(b){b.disabled=!n;b.textContent=`선택한 ${n}명 ${A.addR}(으)로 넣기`}return}
   if(el.dataset.aprole!==undefined){const ev=evById(A.sel);readEditor(ev);const p=ev.ppl[+el.dataset.aprole];logIt(`역할: ${LB(p.n)} ${p.r} → ${el.value} (${D.days[ev.d]} ${ev.s} ${ev.room})`);p.r=el.value;refresh();return}
   if(el.dataset.aunav){const [n,i]=el.dataset.aunav.split('|');const a=A.unav[n]||(A.unav[n]=[]);if(el.checked){a.push(+i);logIt(`${LB(n)} 선생님 ${D.days[+i]} 못 옴`)}else{a.splice(a.indexOf(+i),1);logIt(`${LB(n)} 선생님 ${D.days[+i]} 못 옴 해제`)}refresh();return}
   if(el.dataset.areq){logIt(`요청 메모: ${LB(el.dataset.areq)} · ${el.value||'(지움)'}`);save();return}

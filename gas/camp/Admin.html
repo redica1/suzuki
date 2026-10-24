@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261024-133532 -->
+<!-- build: 20261024-134110 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -44,6 +44,7 @@ main.wrap{padding-top:28px;padding-bottom:60px}
 .panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;margin-bottom:16px}
 .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .spread{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}
+.hsec{margin-bottom:18px}.hsec h3{font-size:15px;margin:0 0 8px}.tile.inst .v{font-size:22px}
 .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:22px}
 .tile{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px}
 .tile .k{display:block;color:var(--muted);font-size:12.5px}.tile .v{display:block;font-family:var(--mono);font-size:clamp(16px,1.9vw,21px);white-space:nowrap;letter-spacing:-.02em;margin:4px 0 2px}.tile .s{color:var(--faint);font-size:12px}
@@ -258,7 +259,7 @@ function render(){
   document.getElementById('tabs2').classList.toggle('none',!document.querySelector('#tabs2 .grp:not([hidden])'));
   const ro=RO();app.classList.toggle('ro',ro);
   app.innerHTML=(ro?`<div class="robar">보기만 할 수 있는 메뉴예요 · 바꿔도 저장되지 않아요 (총관리자에게 「편집」 권한을 받으면 저장돼요)</div>`:'')+{home:vHome,subs:vSubs,rp:vRp,cx:vCx,ens:vEns,prof:vProf,act:()=>ACT.view(),tt:()=>LES.view(),room:()=>ROOM.view(),con:vCon,stat:vStat,q:vQ,camp:vCamp,staff:vStaff,cons:vCons,schol:vSchol}[S.tab]();
-  if(S.tab==='stat')reSort();
+  if(S.tab==='stat'||S.tab==='home')reSort();
 }
 /* 통계 표 정렬: 같은 보기·같은 표면 다시 그려도 유지 */
 const sigOf=t=>(S.sv||'acad')+'|'+[...t.querySelectorAll('thead th')].map(x=>x.textContent.replace(/\s*[▲▼]$/,'')).join('/');
@@ -276,12 +277,23 @@ function vLogin(){const m=S.lmode||'sup';return `<div class="panel login"><h2 st
   <label>휴대전화<input type="tel" id="lph" inputmode="tel" autocomplete="tel" placeholder="010-0000-0000"></label>`}
   <p class="err" id="lerr"></p><button class="btn primary" type="button" id="doLogin" style="width:100%;justify-content:center">들어가기</button>
   <p class="hint">${m==='sup'?'아이디·비밀번호는 접수 DB 시트의 「설정」 탭에서 정해요.':'총관리자가 「담당자」에 등록한 교사 회원만 들어올 수 있어요. 메뉴는 받은 권한만큼 보여요.'}</p></div>`}
-function vHome(){const st=stats();const t=(k,v,s,w)=>`<div class="tile ${w?'warn':''}"><span class="k">${k}</span><span class="v">${v}</span><span class="s">${s||''}</span></div>`;
-  const byA={};people().filter(x=>x.p.status==='정상').forEach(({sb,p})=>{const a=byA[sb.acad]=byA[sb.acad]||{n:0,bill:0,paid:0,subs:new Set()};a.n++;a.bill+=pAmt(p);a.paid+=(+p.paidAmt||0);a.subs.add(sb.no)});
-  return `<div class="tiles">${t('접수',st.subs+'건',st.acads+'개 학원')}${t('참가 인원',st.n+'명','취소 빼고')}${t('청구 합계',won(st.bill))}${t('입금 확인',won(st.paid))}${t('남은 금액',won(st.left),st.unpaid+'명 입금 전·차액',st.left>0)}${t('입금 신고 대기',st.rp+'명','확인하면 입금 확인',st.rp>0)}${t('돌려줄 차액',won(st.overAmt),st.over.length+'명'+(st.over.filter(x=>x.p.ovReq).length?' · 요청 '+st.over.filter(x=>x.p.ovReq).length+'명':''),st.overAmt>0)}${t('환불',st.cx+'건','접수 대기 '+st.cxW+' · 송금 대기 '+st.cxP,st.cx>0)}${t('오류·건의',st.q+'건','미해결·해결 중',st.q>0)}</div>
-  <div class="panel"><div class="spread"><b>학원별</b><button class="btn small" type="button" id="reload">새로 불러오기</button></div><div class="tbl"><table><thead><tr><th>학원</th><th class="r">접수</th><th class="r">인원</th><th class="r">청구</th><th class="r">입금 확인</th><th class="r">남은 금액</th></tr></thead><tbody>
-  ${Object.entries(byA).sort((a,b)=>a[0].localeCompare(b[0],'ko')).map(([a,v])=>`<tr><td>${esc(a)}</td><td class="r num">${v.subs.size}</td><td class="r num">${v.n}</td><td class="r num">${won(v.bill)}</td><td class="r num">${won(v.paid)}</td><td class="r num">${v.bill-v.paid>0?`<b style="color:var(--rosin)">${won(v.bill-v.paid)}</b>`:'-'}</td></tr>`).join('')||'<tr><td colspan="6" class="hint">아직 접수가 없어요.</td></tr>'}
-  </tbody></table></div></div>`}
+function vHome(){const st=stats();const t=(k,v,s,w,cls)=>`<div class="tile ${w?'warn':''} ${cls||''}"><span class="k">${k}</span><span class="v">${v}</span><span class="s">${s||''}</span></div>`;
+  const L=statRows(),T=L.filter(x=>T_TEACH.includes(x.type)),Sx=L.filter(x=>T_PLAY.includes(x.type)),fam=L.length-T.length-Sx.length;
+  const ins=[...new Set([...T,...Sx].map(x=>x.inst||'미정'))].sort(instSort);
+  const live=people().filter(x=>x.p.status==='정상');const rp=live.filter(x=>x.p.pay==='신고');const rpAmt=rp.reduce((s,x)=>s+((repRow(x.p)||{}).a||0),0);
+  const CX=(S.D.cx||[]).filter(c=>c.why!=='차액 환불'||true),sumCx=k=>CX.filter(c=>c.state===k).reduce((s,c)=>s+(+c.amt||0),0),nCx=k=>CX.filter(c=>c.state===k).length;
+  return `<div class="hsec"><h3>인원 <span class="hint">취소한 사람 빼고 · 통계와 같은 기준</span></h3><div class="tiles">
+    ${t('총 참가 인원',L.length+'명',`교사 ${T.length} · 학생 ${Sx.length}${fam?` · 가족 ${fam}`:''}`)}
+    ${t('교사 인원',T.length+'명','교사 · 연수생 · 소속없는 중급연수생')}
+    ${t('학생 인원',Sx.length+'명','학생 + 악기하는 교사자녀 + 비회원 학생')}
+    ${ins.map(i=>{const a=T.filter(x=>(x.inst||'미정')===i).length,b=Sx.filter(x=>(x.inst||'미정')===i).length;return t(esc(i),(a+b)+'명',`교사 ${a} · 학생 ${b}`,false,'inst')}).join('')}</div></div>
+  <div class="hsec"><h3>금액</h3><div class="tiles">
+    ${t('청구 합계',won(st.bill),`남은 금액 ${won(st.left)} · ${st.unpaid}명`)}
+    ${t('입금 신고',won(rpAmt),rp.length?`${rp.length}명 · 확인 기다림`:'확인 기다리는 신고 없음',rp.length>0)}
+    ${t('입금 확인',won(st.paid))}
+    ${t('환불 금액',won(sumCx('요청')+sumCx('환불 예정')+sumCx('환불 완료')),`요청 ${won(sumCx('요청'))} (${nCx('요청')}) · 예정 ${won(sumCx('환불 예정'))} (${nCx('환불 예정')}) · 완료 ${won(sumCx('환불 완료'))} (${nCx('환불 완료')})`,nCx('요청')+nCx('환불 예정')>0)}</div></div>
+  <div class="hsec"><div class="spread"><h3>학원별 접수 인원</h3><button class="btn small" type="button" id="reload">새로 불러오기</button></div>
+  ${L.length?stAcad(L,true):'<div class="panel hint">아직 접수가 없어요.</div>'}</div>`}
 const isGuestSb=sb=>sb.acad==='비회원';
 const memTag=sb=>isGuestSb(sb)?'<span class="pill gst">비회원</span>':'<span class="pill mem">회원</span>';
 function vSubs(){
@@ -1179,15 +1191,15 @@ const ST=(h,rows,foot,nl)=>`<div class="panel tbl"><table class="sortable"><thea
    예) 2026 여름 시트: 학생 30명 이상 1,200,000 · 20명 이상 800,000 · 10명 이상 400,000 (확정 아님) */
 const SCHOLAR=[]; /* [[최소 인원, 금액], …] 큰 인원부터 */
 const scholarOf=n=>{const t=SCHOLAR.find(([m])=>n>=m);return t?t[1]:0};
-function stAcad(L){const v=S.sv2||'inst';
+function stAcad(L,home){const v=S.sv2||'inst';
   const sub=`<div class="panel subtabs"><div class="row" style="gap:6px">${[['inst','전공별'],['type','참가자격별']].map(([k,l])=>`<button class="btn small ${v===k?'primary':''}" type="button" data-sv2="${k}">${l}</button>`).join('')}<span class="hint" style="margin-left:6px">${v==='inst'?'학생 + 악기하는 교사자녀 · 악기별':'참가자격별 인원 · 총계 = 그 학원 참가 인원'}</span></div></div>`;
-  return sub+(v==='inst'?acadInst(L):acadType(L))}
-function acadInst(L){const A=[...new Set(L.map(x=>x.acad))];const P=L.filter(x=>T_PLAY.includes(x.type));
+  return sub+(v==='inst'?acadInst(L,home):acadType(L))}
+function acadInst(L,noSch){const A=[...new Set(L.map(x=>x.acad))];const P=L.filter(x=>T_PLAY.includes(x.type));
   const IO=['바이올린','첼로','플루트'],ins=[...new Set(P.map(x=>x.inst||'미정'))].sort((x,y)=>(IO.indexOf(x)+1||9)-(IO.indexOf(y)+1||9)||x.localeCompare(y,'ko'));
-  const sch=SCHOLAR.length;const A1=byTot(A,a=>P.filter(x=>x.acad===a).length);
+  const sch=noSch?0:SCHOLAR.length;const A1=byTot(A,a=>P.filter(x=>x.acad===a).length);
   const row=a=>{const G=P.filter(x=>x.acad===a);return [esc(a),...ins.map(i=>nz(G.filter(x=>(x.inst||'미정')===i).length)),G.length,...(sch?[scholarOf(G.length)?won(scholarOf(G.length)):'']:[])]};
   return ST(['학원',...ins.map(esc),'총계',...(sch?['장학금']:[])],A1.map(row),['총계',...ins.map(i=>P.filter(x=>(x.inst||'미정')===i).length),P.length,...(sch?[won(A.reduce((t,a)=>t+scholarOf(P.filter(x=>x.acad===a).length),0))]:[])])
-    +(sch?'':'<div class="panel hint">장학금: 학원별 신청 인원에 따른 금액 기준이 정해지면 이 표에 「장학금」 칸이 생겨요.</div>')}
+    +(sch||noSch?'':'<div class="panel hint">장학금: 학원별 신청 인원에 따른 금액 기준이 정해지면 이 표에 「장학금」 칸이 생겨요.</div>')}
 function acadType(L){const A=[...new Set(L.map(x=>x.acad))];
   const types=[...TYPE_ORDER.filter(t=>L.some(x=>x.type===t)),...[...new Set(L.map(x=>x.type))].filter(t=>!TYPE_ORDER.includes(t))];
   const lab=t=>t==='회원의 악기하는 자녀'?'악기하는 교사자녀':t==='회원의 그외 악기 안하는 동반가족'?'그외 동반가족':t;

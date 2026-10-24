@@ -1,4 +1,4 @@
-/* build: 20261024-153128 */
+/* build: 20261024-213811 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -912,9 +912,11 @@ function tgTok_(L) {
   P.forEach(o => { const plain = !o.pt && !o.up && o.bk !== 'Pre'; if (plain && run.length && +o.bk === +run[run.length - 1].bk + 1) run.push(o); else { flush(); if (plain) run.push(o); else out.push(lab(o)); } });
   flush(); return { txt: out.join(', '), one: P.length === 1 ? P[0] : null };
 }
+/** 미리보기 · 시트에서 숨길 것 (일정설정 pvHide): f = 칸 안 항목(en 영어 · tg 대상 · sub 세부 · desc 설명 · note 안내 글 · meal 식사 줄) · r = 「구분:역할」 · t = 탭(t 참가교사 · o 오케 명단 · c 음악회) */
+const pvHide_ = c => { const h = c.pvHide || {}; return { f: new Set(h.f || []), r: new Set(h.r || []), t: new Set(h.t || []) }; };
 function progCell_(e, c, nameOf) {
-  const en = Object.assign({}, ACT_EN, c.en || {}), BD = c.bookDesc || ACT_BOOKDESC, short = c.roleShort || {};
-  const L = [], tg = e.tg || {}, insts = ['Vn', 'Vc', 'Fl'].filter(k => tg[k] && ((tg[k].b || []).length || (tg[k].x || []).length || (tg[k].s || []).length || tg[k].m));
+  const H = pvHide_(c), en = H.f.has('en') ? {} : Object.assign({}, ACT_EN, c.en || {}), BD = c.bookDesc || ACT_BOOKDESC, short = c.roleShort || {};
+  const L = [], tg = H.f.has('tg') ? {} : (e.tg || {}), insts = ['Vn', 'Vc', 'Fl'].filter(k => tg[k] && ((tg[k].b || []).length || (tg[k].x || []).length || (tg[k].s || []).length || tg[k].m));
   const stage = e.stage && e.stage !== '본공연' ? e.stage : '';
   if (insts.length) {
     if (e.cat !== '레슨' || (e.title && e.title !== '그룹레슨')) L.push(e.title + (stage ? ' ' + stage : '') + (en[e.title] ? ' / ' + en[e.title] + (stage && en[stage] ? ' ' + en[stage] : '') : ''));
@@ -922,7 +924,7 @@ function progCell_(e, c, nameOf) {
     insts.forEach(k => {
       const t = tg[k], r = tgTok_(t.b), d = r.one ? ((BD[k] || {})[r.one.bk + r.one.pt] || null) : null;
       ko.push([k + (r.txt ? ' ' + r.txt : ''), ...(t.x || [])].join(' ') + (d && d[0] ? '(' + d[0] + ')' : ''));
-      if (d && d[1]) eng.push(d[1]);
+      if (d && d[1] && !H.f.has('en')) eng.push(d[1]);
       if ((t.s || []).length || t.m) ko.push([...(t.s || []), t.m || ''].filter(Boolean).join(', '));
     });
     L.push(...ko); if (eng.length) L.push(eng.join(' / '));
@@ -931,10 +933,11 @@ function progCell_(e, c, nameOf) {
     const E = [en[e.title] || '', stage ? (en[stage] || '') : ''].filter(Boolean).join(' / ');
     if (E) L.push(E);
   }
-  if (e.sub) L.push(e.sub);
-  (e.desc || []).forEach(x => L.push(x));
-  const order = ((c.roleSets || {})[e.cat] || []).slice(); e.ppl.forEach(p => { if (!order.includes(p.r)) order.push(p.r); });
-  const G = order.map(r => ({ r, n: e.ppl.filter(p => p.r === r).map(p => nameOf(p.n)) })).filter(g => g.n.length);
+  if (e.sub && !H.f.has('sub')) L.push(e.sub);
+  if (!H.f.has('desc')) (e.desc || []).forEach(x => L.push(x));
+  const ppl = e.ppl.filter(p => !H.r.has(e.cat + ':' + p.r));
+  const order = ((c.roleSets || {})[e.cat] || []).slice(); ppl.forEach(p => { if (!order.includes(p.r)) order.push(p.r); });
+  const G = order.map(r => ({ r, n: ppl.filter(p => p.r === r).map(p => nameOf(p.n)) })).filter(g => g.n.length);
   G.forEach((g, i) => { if (i === 0 && (e.cat === '레슨')) g.n.forEach(n => L.push(n)); else L.push((short[g.r] || g.r) + ': ' + g.n.join(', ')); });
   return L.join('\n');
 }
@@ -951,10 +954,10 @@ function progBuild_() {
   const dayDate = d => dt0 ? new Date(dt0.getTime() + d * 864e5) : null;
   const mm = t => { const m = String(t).match(/^(\d+):(\d+)/); return m ? +m[1] * 60 + +m[2] : 0; };
   days.forEach((dl, d) => {
-    const rooms = (c.rooms || {})[d] || [], E = evs.filter(e => e.d === d), M = (c.meals || []).filter(m => m.d === d);
+    const rooms = (c.rooms || {})[d] || [], E = evs.filter(e => e.d === d), M = pvHide_(c).f.has('meal') ? [] : (c.meals || []).filter(m => m.d === d);
     const starts = [...new Set([...E.map(e => e.s), ...M.map(m => m.s)])].sort((x, y) => mm(x) - mm(y));
     const W = Math.max(2, rooms.length + 1), V = [], F = [];
-    const dt = dayDate(d), note = (c.dayNotes || [])[d] || '';
+    const HH = pvHide_(c), dt = dayDate(d), note = HH.f.has('note') ? '' : (c.dayNotes || [])[d] || '';
     V.push([note].concat(Array(W - 1).fill(''))); F.push(Array(W).fill(null));
     V.push([dt ? `${dt.getMonth() + 1}월 ${dt.getDate()}일 스케쥴     ${MON_EN[dt.getMonth()]} ${ord_(dt.getDate())} ${WD_EN[dt.getDay()]} Schedule` : dl + ' 스케쥴'].concat(Array(W - 1).fill(''))); F.push(Array(W).fill(null));
     V.push([''].concat(rooms.map(r => r[0]), Array(W - 1 - rooms.length).fill(''))); F.push(Array(W).fill('#e8eef0'));
@@ -990,7 +993,8 @@ function progBuild_() {
     order.forEach(r => { const N = []; byMain.forEach(e => e.ppl.forEach(p => { if (p.r === r) { const n = nameOf(p.n); if (!N.includes(n)) N.push(n); } })); if (N.length) orch.push({ k: 'p', v: [r].concat(N) }); });
     orch.push({ k: 'b', v: [''] });
   });
-  return { title: C.base.name, days: out, teachers, orch, concerts: progConcerts_(c, C, evs, nameOf, dayDate) };
+  const HT = pvHide_(c).t;
+  return { title: C.base.name, days: out, teachers: HT.has('t') ? null : teachers, orch: HT.has('o') ? null : orch, concerts: HT.has('c') ? [] : progConcerts_(c, C, evs, nameOf, dayDate), hide: c.pvHide || { f: [], r: [], t: [] }, roleSets: Object.assign({}, ACT_ROLESETS, c.roleSets || {}), used: [...new Set(evs.flatMap(e => e.ppl.map(p => e.cat + ':' + p.r)))] };
 }
 /** 음악회 프로그램 (오후음악회 · 이브닝 …): 「오후음악회」 탭의 연주 순서 그대로 · 같은 곡이 이어지면 한 번호로 묶고 학원별로 이름을 모음
  *  곡 이름: 목록 곡 「V01-14 미뉴에트 2번 (바흐)」 → 「바흐 미뉴에트 2번」, 직접 입력은 작곡가 + 곡명 · 영어 곡명은 설정 songEn(관리자가 미리보기에서 입력) */
@@ -1043,6 +1047,15 @@ function songEnSave(token, map) {
   } finally { lock.releaseLock(); }
   return { ok: true };
 }
+/** 미리보기 · 시트에서 숨길 항목 저장 */
+function pvHideSave(token, h) {
+  const a = adm_(token); need_(a, 'act');
+  const cl = (L, n) => [...new Set((Array.isArray(L) ? L : []).map(x => String(x).slice(0, 40)))].slice(0, n);
+  const v = { f: cl(h && h.f, 10).filter(x => ['en', 'tg', 'sub', 'desc', 'note', 'meal'].includes(x)), r: cl(h && h.r, 80), t: cl(h && h.t, 3).filter(x => ['t', 'o', 'c'].includes(x)) };
+  const lock = lock_();
+  try { const sh = actSheets_(); const r = rows_(SH.ACTCFG).find(x => String(x['항목']) === 'pvHide'); if (r) sh.cfg.getRange(r._row, 2).setValues([[JSON.stringify(v)]]); else sh.cfg.appendRow(['pvHide', JSON.stringify(v)]); log_(a.name, '프로그램북 숨길 항목', JSON.stringify(v)); } finally { lock.releaseLock(); }
+  return progBuild_();
+}
 /** 미리보기 (교사 일정 › 프로그램표 › 미리보기) — 시트에 쓰지 않음 */
 function progPreview(token) {
   const a = adm_(token); if (!a.sup && !a.perms.act) throw new Error('교사 일정 권한이 있어야 볼 수 있어요.');
@@ -1073,9 +1086,9 @@ function exportProgram(token) {
     sh.setColumnWidth(1, 90); for (let k = 2; k <= W; k++) sh.setColumnWidth(k, 150);
     sh.setFrozenRows(4); sh.setFrozenColumns(1);
   });
-  const TV = P.teachers, ts = fresh('참가교사');
-  ts.getRange(1, 1, TV.length, 3).setValues(TV); ts.getRange(1, 1, 1, 3).setFontWeight('bold'); ts.setColumnWidth(1, 160); ts.setColumnWidth(3, 420); ts.setFrozenRows(1);
-  if (P.orch.length) {
+  const TV = P.teachers, ts = TV ? fresh('참가교사') : null;
+  if (ts) ts.getRange(1, 1, TV.length, 3).setValues(TV); if (ts) { ts.getRange(1, 1, 1, 3).setFontWeight('bold'); ts.setColumnWidth(1, 160); ts.setColumnWidth(3, 420); ts.setFrozenRows(1); }
+  if (P.orch && P.orch.length) {
     const OW = Math.max(2, ...P.orch.map(r => r.v.length)), OV = P.orch.map(r => r.v.concat(Array(OW - r.v.length).fill(''))), os = fresh('오케 명단');
     os.getRange(1, 1, OV.length, OW).setValues(OV);
     P.orch.forEach((r, i) => { if (r.k === 'h') os.getRange(i + 1, 1, 1, OW).merge().setFontWeight('bold').setFontSize(12).setBackground('#fdf3e1'); if (r.k !== 'b') os.getRange(i + 1, 1).setFontWeight('bold'); });
@@ -1088,8 +1101,8 @@ function exportProgram(token) {
     R.forEach((r, i) => { if (r.k === 't') sh.getRange(i + 1, 2).setFontWeight('bold').setFontSize(14); if (r.k === 'i') sh.getRange(i + 1, 1, 1, 2).setFontWeight('bold'); if (r.k === 'j' && R[i - 1] && R[i - 1].k === 'i') sh.getRange(i + 1, 2).setFontColor('#555555'); });
     sh.setColumnWidth(1, 40); sh.setColumnWidth(2, 340); sh.setColumnWidth(3, 340);
   });
-  // 처음 만들 때 생긴 빈 「시트1」 지우기
-  ss.getSheets().forEach(s => { if (!tabs.includes(s.getName()) && s.getLastRow() === 0 && ss.getSheets().length > 1) ss.deleteSheet(s); });
+  // 처음 만들 때 생긴 빈 「시트1」 · 숨기기로 바꾼 탭(참가교사 · 오케 명단 · 음악회) 지우기
+  ss.getSheets().forEach(s => { const n = s.getName(); if (tabs.includes(n) || ss.getSheets().length <= 1) return; if (s.getLastRow() === 0 || n === '참가교사' || n === '오케 명단' || /^음악회 /.test(n)) ss.deleteSheet(s); });
   log_(a.name, '프로그램표 보냄', tabs.length + '탭');
   return { ok: true, url: ss.getUrl(), tabs };
 }
@@ -1099,7 +1112,7 @@ function exportProgram(token) {
  * 담당자 = 교사 회원 중에서 골라 메뉴마다 편집 / 보기 / 없음 → 관리자 화면에 이름 + 휴대전화로 로그인 */
 const STAFF = '담당자';
 const STAFF_HEAD = ['교사ID', '이름', '학원', '권한', '사용', '메모', '바꾼 날'];
-const ADMIN_TABS = [['home', '한눈에'], ['subs', '접수 · 입금 확인'], ['rp', '입금 신고'], ['cx', '취소 · 환불'], ['ens', '앙상블'], ['prof', '교수진'], ['act', '교사 일정'], ['tt', '개인레슨'], ['room', '방 배정'], ['con', '오후음악회'], ['stat', '통계'], ['q', '오류·건의'], ['schol', '장학금']];
+const ADMIN_TABS = [['home', '한눈에'], ['subs', '접수 · 입금 확인'], ['rp', '입금 신고'], ['cx', '취소 · 환불'], ['ens', '앙상블'], ['prof', '교수진'], ['act', '교사 일정'], ['tt', '개인레슨'], ['room', '방 배정'], ['con', '오후음악회'], ['stat', '통계'], ['q', '오류·건의'], ['schol', '장학금'], ['mem', '회원 명단']];
 function staff_() {
   return rows_(STAFF).filter(r => r['교사ID']).map(r => { let p = {}; try { p = JSON.parse(String(r['권한'] || '{}')); } catch (x) {}
     return { tid: String(r['교사ID']), name: String(r['이름']), acad: String(r['학원'] || ''), perms: p, on: String(r['사용'] || '예') !== '아니오', memo: String(r['메모'] || '') }; });
@@ -1148,6 +1161,14 @@ function staffSave(token, list) {
   return { ok: true, staff: staff_() };
 }
 
+/** 설정 › 회원 명단: 명단_교사 · 명단_학생 전체 + 이번 캠프 접수 여부 (취소 뺌). 휴대전화 · 생일 같은 건 보내지 않음 */
+function memberData(token) {
+  const a = adm_(token); if (!a.sup && !a.perms.mem) throw new Error('회원 명단을 볼 권한이 없어요.');
+  const on = {}; loadSubs_().forEach(sb => sb.ppl.forEach(p => { if (p.status === '취소') return; const k = p.id.slice(sb.no.length + 1); on[k] = on[k] || { no: sb.no, type: p.type || '', acad: sb.acad }; }));
+  const T = teachers_().map(t => ({ id: t.id, name: t.name, acad: t.acads.join(', '), inst: t.inst, role: t.role, state: t.state, on: on['t_' + t.id] || null }));
+  const S_ = rows_(SH.S).filter(r => r['ID']).map(r => ({ id: String(r['ID']), name: String(r['이름']), acad: String(r['학원'] || ''), inst: String(r['악기'] || ''), teacher: String(r['담당 교사'] || ''), on: on[String(r['ID'])] || null }));
+  return { teachers: T, students: S_ };
+}
 /** 관리자 화면에 필요한 것: 모든 접수 · 운영진 칸 · 환불 요청 · 앙상블 팀 */
 function adminData(token) {
   const me = adm_(token);

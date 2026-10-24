@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261024-153128 -->
+<!-- build: 20261024-213811 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -106,6 +106,8 @@ tr.off td{opacity:.5}
 .act .note{background:var(--rosin-soft);border-left:3px solid var(--rosin);border-radius:8px;padding:10px 12px;font-size:13.5px}
 .act .note.info{background:var(--accent-soft);border-left-color:var(--accent)}
 .act .tt{overflow:auto;max-height:70vh;border:1px solid var(--line);border-radius:8px}
+.memoff td{color:var(--faint,#9aa3a6)}.memoff td b{font-weight:500}
+.act .evlink{background:none;border:0;padding:0;font:inherit;font-weight:700;color:var(--accent,#1f5f66);text-decoration:underline;cursor:pointer}
 .act .pvwrap{overflow:auto;max-height:75vh;border:1px solid var(--line);border-radius:8px;background:#fff;margin-top:8px}
 .act table.pv{border-collapse:collapse;font-size:12px;color:#222;min-width:100%}
 .act table.pv td,.act table.pv th{border:1px solid #c9d3d7;padding:4px 6px;vertical-align:top;text-align:left;white-space:normal;min-width:120px;max-width:200px;line-height:1.4}
@@ -265,10 +267,10 @@ function payPill(p){if(p.status!=='정상')return p.status==='취소요청'?'<sp
 
 /* ---------- 화면 ---------- */
 /* GNB: 1단(묶음) › 2단(메뉴). 권한은 2단 메뉴마다 · 아래 메뉴가 다 「없음」이면 묶음도 숨김 */
-const GROUPS=[['dash','대시보드',['home']],['ops','운영관리',['subs','rp','cx','schol','q']],['sch','스케줄관리',['act','tt','ens','con']],['room','방배정',['room']],['stat','통계',['stat']],['cfg','설정',['camp','cons','prof','staff']]];
-const SUBL={home:'대시보드',subs:'접수 · 입금 확인',rp:'입금 신고',cx:'취소 · 환불',q:'오류 · 건의',act:'교사 일정',tt:'개인레슨',ens:'앙상블',con:'오후음악회',room:'방배정',stat:'통계',schol:'장학금',cons:'동의서',camp:'캠프 설정',prof:'교수진',staff:'담당자'};
+const GROUPS=[['dash','대시보드',['home']],['ops','운영관리',['subs','rp','cx','schol','q']],['sch','스케줄관리',['act','tt','ens','con']],['room','방배정',['room']],['stat','통계',['stat']],['cfg','설정',['camp','mem','cons','prof','staff']]];
+const SUBL={mem:'회원 명단',home:'대시보드',subs:'접수 · 입금 확인',rp:'입금 신고',cx:'취소 · 환불',q:'오류 · 건의',act:'교사 일정',tt:'개인레슨',ens:'앙상블',con:'오후음악회',room:'방배정',stat:'통계',schol:'장학금',cons:'동의서',camp:'캠프 설정',prof:'교수진',staff:'담당자'};
 const groupOf=t=>(GROUPS.find(g=>g[2].includes(t))||GROUPS[0]);
-const TABS=[['home','한눈에'],['subs','접수 · 입금 확인'],['rp','입금 신고'],['cx','취소 · 환불'],['ens','앙상블'],['prof','교수진'],['act','교사 일정'],['tt','개인레슨'],['room','방 배정'],['con','오후음악회'],['stat','통계'],['q','오류·건의'],['schol','장학금']];
+const TABS=[['home','한눈에'],['subs','접수 · 입금 확인'],['rp','입금 신고'],['cx','취소 · 환불'],['ens','앙상블'],['prof','교수진'],['act','교사 일정'],['tt','개인레슨'],['room','방 배정'],['con','오후음악회'],['stat','통계'],['q','오류·건의'],['schol','장학금'],['mem','회원 명단']];
 function render(){
   const app=document.getElementById('app'),tabs=document.getElementById('tabs');
   if(!S.D){tabs.innerHTML='';document.getElementById('tabs2').innerHTML='';app.innerHTML=vLogin();return}
@@ -284,7 +286,7 @@ function render(){
   /* 지금 묶음에 2단이 없으면 빈칸으로 → 줄이 안 보임 */
   document.getElementById('tabs2').classList.toggle('none',!document.querySelector('#tabs2 .grp:not([hidden])'));
   const ro=RO();app.classList.toggle('ro',ro);
-  app.innerHTML=(ro?`<div class="robar">보기만 할 수 있는 메뉴예요 · 바꿔도 저장되지 않아요 (총관리자에게 「편집」 권한을 받으면 저장돼요)</div>`:'')+{home:vHome,subs:vSubs,rp:vRp,cx:vCx,ens:vEns,prof:vProf,act:()=>ACT.view(),tt:()=>LES.view(),room:()=>ROOM.view(),con:vCon,stat:vStat,q:vQ,camp:vCamp,staff:vStaff,cons:vCons,schol:vSchol}[S.tab]();
+  app.innerHTML=(ro?`<div class="robar">보기만 할 수 있는 메뉴예요 · 바꿔도 저장되지 않아요 (총관리자에게 「편집」 권한을 받으면 저장돼요)</div>`:'')+{home:vHome,subs:vSubs,rp:vRp,cx:vCx,ens:vEns,prof:vProf,act:()=>ACT.view(),tt:()=>LES.view(),room:()=>ROOM.view(),con:vCon,stat:vStat,q:vQ,camp:vCamp,staff:vStaff,cons:vCons,schol:vSchol,mem:vMem}[S.tab]();
   if(S.tab==='stat'||S.tab==='home')reSort();
 }
 /* 통계 표 정렬: 같은 보기·같은 표면 다시 그려도 유지 */
@@ -575,15 +577,13 @@ function candRows(e){const q=A.pq.trim();const used=new Set(e.ppl.map(p=>p.n));
   return P().filter(p=>!gone(p.id)&&!used.has(p.id)&&(!q||p.n.includes(q)||(p.acad||'').includes(q)||(p.inst||'').includes(q)))
     .map(p=>{const x=ST.st[p.id]||{total:0,roles:{},cats:{},days:D.days.map(()=>0)};const busy=D.events.some(o=>o.id!==e.id&&o.d===e.d&&o.ppl.some(z=>z.n===p.id)&&mins(o.s)<mins(e.e)&&mins(e.s)<mins(o.e));const off=(A.unav[p.id]||[]).includes(e.d);return {p,x,busy,off}})
     .sort((a,b)=>(a.busy||a.off)-(b.busy||b.off)||a.x.total-b.x.total||a.p.n.localeCompare(b.p.n,'ko'))}
-function addBox(e){const RL=roleList(e.cat);if(!A.addR||!RL.includes(A.addR))A.addR=e.ppl.length?(RL[1]||RL[0]):RL[0];const m=A.addM||'type';A.pck=A.pck||{};
-  const picked=Object.keys(A.pck).filter(k=>A.pck[k]);
-  return `<div class="addbox"><div class="row" style="gap:8px"><b>사람 넣기</b><label class="row" style="gap:4px">① 역할<select id="a_addR">${RL.map(r=>`<option ${r===A.addR?'selected':''}>${esc(r)}</option>`).join('')}</select></label>
-    <span class="cap" style="margin:0">②</span><div class="seg" role="group" aria-label="넣는 방법"><button type="button" data-aaddm="type" aria-pressed="${m==='type'}">이름으로 입력</button><button type="button" data-aaddm="check" aria-pressed="${m==='check'}">목록에서 체크</button></div></div>
-  ${m==='type'?`<div class="row" style="gap:6px;flex-wrap:nowrap"><input type="text" id="a_names" value="${esc(A.names||'')}" placeholder="이름을 쉼표(,)로 구분해 적어요 · 예: 황의한, 최진실, 이선화" autocomplete="off" style="flex:1"><button class="btn small primary" type="button" id="a_namesAdd">${esc(A.addR)}(으)로 넣기</button></div>
-    ${A.namesMsg?`<div class="cap" style="margin:0">${A.namesMsg}</div>`:''}`
-  :`<div class="row" style="gap:6px;flex-wrap:nowrap"><input type="search" id="a_pq" value="${esc(A.pq)}" placeholder="이름·학원·악기로 찾기 (적게 나온 사람이 위에)" autocomplete="off" style="flex:1"><button class="btn small primary" type="button" id="a_pckAdd" ${picked.length?'':'disabled'}>선택한 ${picked.length}명 ${esc(A.addR)}(으)로 넣기</button></div>
-    <ul class="cands ckl">${candRows(e).slice(0,60).map(({p,x,busy,off})=>`<li><label class="${busy||off?'warn':''}" ${busy||off?`title="${busy?'이 시간 다른 일정이 있어 넣을 수 없어요':'못 오는 날이라 넣을 수 없어요'}"`:''}><input type="checkbox" data-apck="${esc(p.id)}" ${A.pck[p.id]&&!busy&&!off?'checked':''} ${busy||off?'disabled':''}><span><b>${LBH(p.id)}</b> <small>${esc(p.inst||'')} · ${esc(p.acad||'')}${p.kind!=='교사'?' · '+p.kind:''}</small></span>
-      <span class="row" style="gap:4px;flex-wrap:nowrap;margin-left:auto">${busy?'<span class="pill bad">이 시간 다른 일정</span>':''}${off?'<span class="pill bad">못 오는 날</span>':''}<span class="pill ${x.total?'mute':'due'}">${x.total?cnt3(x):'아직 0회'}</span></span></label></li>`).join('')||'<li class="cap" style="padding:8px">찾는 사람이 없어요.</li>'}</ul>`}</div>`}
+function addBox(e){const RL=roleList(e.cat);if(!A.addR||!RL.includes(A.addR))A.addR=e.ppl.length?(RL[1]||RL[0]):RL[0];A.pck=A.pck||{};
+  return `<div class="addbox"><div class="row" style="gap:8px"><b>사람 넣기</b><label class="row" style="gap:4px">① 역할<select id="a_addR">${RL.map(r=>`<option ${r===A.addR?'selected':''}>${esc(r)}</option>`).join('')}</select></label><span class="cap" style="margin:0">② 이름을 적거나 아래 목록에서 체크 → ③ 한 번에 넣기</span></div>
+  <div class="row" style="gap:6px;flex-wrap:nowrap"><input type="text" id="a_names" value="${esc(A.names||'')}" placeholder="이름을 쉼표(,)로 · 아래에서 체크하면 여기에 자동으로 올라가요" autocomplete="off" style="flex:1"><button class="btn small primary" type="button" id="a_namesAdd">${esc(A.addR)}(으)로 한 번에 넣기</button></div>
+  ${A.namesMsg?`<div class="cap" style="margin:0">${A.namesMsg}</div>`:''}
+  <input type="search" id="a_pq" value="${esc(A.pq)}" placeholder="목록에서 찾기: 이름·학원·악기 (적게 나온 사람이 위에)" autocomplete="off" style="width:100%">
+  <ul class="cands ckl">${candRows(e).slice(0,60).map(({p,x,busy,off})=>`<li><label class="${busy||off?'warn':''}" ${busy||off?`title="${busy?'이 시간 다른 일정이 있어 넣을 수 없어요':'못 오는 날이라 넣을 수 없어요'}"`:''}><input type="checkbox" data-apck="${esc(p.id)}" ${A.pck[p.id]&&!busy&&!off?'checked':''} ${busy||off?'disabled':''}><span><b>${LBH(p.id)}</b> <small>${esc(p.inst||'')} · ${esc(p.acad||'')}${p.kind!=='교사'?' · '+p.kind:''}</small></span>
+    <span class="row" style="gap:4px;flex-wrap:nowrap;margin-left:auto">${busy?'<span class="pill bad">이 시간 다른 일정</span>':''}${off?'<span class="pill bad">못 오는 날</span>':''}<span class="pill ${x.total?'mute':'due'}">${x.total?cnt3(x):'아직 0회'}</span></span></label></li>`).join('')||'<li class="cap" style="padding:8px">찾는 사람이 없어요.</li>'}</ul></div>`}
 /* 이름 → 사람: 띄어쓰기·대소문자 무시, 같은 이름이 여럿이면 고르게 */
 function addPeople(e,ids,role){const have=new Set(e.ppl.map(p=>p.n));let n=0;const warn=[];
   ids.forEach(id=>{if(have.has(id))return;const c=confOf(e,id);if(c){warn.push(LB(id)+' — '+c);return}e.ppl.push({n:id,r:role});have.add(id);n++});
@@ -622,7 +622,7 @@ function editor(){
         <label class="f" for="a_cpR">장소<select id="a_cpR">${rms.map(([r,l])=>`<option value="${esc(r)}" ${r===room?'selected':''}>${esc(r)}${l?' · '+esc(l):''}</option>`).join('')}</select></label>
         <label class="row" style="gap:4px;align-self:end"><input type="checkbox" id="a_cpP" ${A.cpP===false?'':'checked'}> 사람도 같이 복사</label></div>
       <div class="row" style="gap:6px"><button class="btn small primary" type="button" id="a_cpGo">복사해서 만들기</button><button class="btn small ghost" type="button" id="a_cpX">닫기</button></div></div>`})():''}
-    <div class="row"><button class="btn small" type="button" id="a_cpOpen">일정 복사 (날짜 · 시간 고르기)</button><button class="btn small primary" type="button" id="a_edSave">고친 내용 저장</button></div></div>`}
+    <div class="row"><button class="btn small" type="button" id="a_cpOpen">일정 복사 (날짜 · 시간 고르기)</button><button class="btn small primary" type="button" id="a_edSave">저장</button></div></div>`}
 
 /* ---------- 교사별 횟수 ---------- */
 function vCount(){
@@ -657,8 +657,13 @@ function vWho(){
   <div class="row"><label for="a_whoSel" class="cap" style="margin:0">교사</label><select id="a_whoSel">${ids.map(n=>`<option value="${n}" ${n===me?'selected':''}>${esc(LB(n))}</option>`).join('')}</select>
     ${Object.entries(x.roles).map(([r,n])=>`<span class="pill info">${r} ${n}</span>`).join('')}${A.req[me]?`<span class="pill due">요청: ${esc(A.req[me])}</span>`:''}</div>
   <div class="panel">${D.days.map((dl,d)=>{const its=x.items.filter(i=>i.e.d===d).sort((a,b)=>mins(a.e.s)-mins(b.e.s));const off=(A.unav[me]||[]).includes(d);
-    return `<div class="dayblk"><div class="dlab">${dl}${off?' <span class="pill bad">못 오는 날</span>':''}</div>${its.map(({e,r})=>{const k=e.id+'|'+me;return `<div class="ditem ${ST.clash.has(k)||ST.off.has(k)?'bad':''}"><span class="num dt">${e.s}</span><span><span class="arole">${r}</span><b>${esc(e.title)}</b> · ${esc(e.room)} <span class="cap" style="margin:0">${esc(locOf(d,e.room))} · ~${e.e}</span>${e.ppl.length>1?`<br><span class="cap" style="margin:0">함께: ${e.ppl.filter(p=>p.n!==me).map(p=>esc(LB(p.n))+'('+p.r+')').join(', ')}</span>`:''}</span></div>`}).join('')||'<span class="cap">일정 없음</span>'}</div>`}).join('')}</div>`}
+    return `<div class="dayblk"><div class="dlab">${dl}${off?' <span class="pill bad">못 오는 날</span>':''}</div>${its.map(({e,r})=>{const k=e.id+'|'+me;return `<div class="ditem ${ST.clash.has(k)||ST.off.has(k)?'bad':''}"><span class="num dt">${e.s}</span><span><span class="arole">${r}</span><button type="button" class="evlink" data-aevpop="${e.id}" title="프로그램 내용 보기">${evLabel(e)}</button> · ${esc(e.room)} <span class="cap" style="margin:0">${esc(locOf(d,e.room))} · ~${e.e}</span></span></div>`}).join('')||'<span class="cap">일정 없음</span>'}</div>`}).join('')}</div>`}
 
+/* 교사별 일정에서 공연·레슨 이름을 누르면: 프로그램표 칸 내용(대상 · 설명 · 역할별 사람)을 팝업으로 */
+function evPop(e){const G=[];e.ppl.forEach(p=>{let g=G.find(x=>x.r===p.r);if(!g)G.push(g={r:p.r,N:[]});g.N.push(LB(p.n))});const tt=tgTxt(e.tg);
+  modal(`${D.days[e.d]} ${e.s}~${e.e}`,`<div class="evpop"><h3 style="margin:4px 0">${evLabel(e)}</h3><p class="cap" style="margin:0">${esc(e.cat)} · ${esc(e.room)} ${esc(locOf(e.d,e.room))}</p>
+    ${tt?`<p><span class="tgline">${esc(tt)}</span></p>`:''}${e.desc.length?`<p>${e.desc.map(esc).join('<br>')}</p>`:''}
+    ${G.length?`<table class="pft"><tbody>${G.map(g=>`<tr><th style="white-space:nowrap;text-align:left;padding-right:10px">${esc(g.r)}</th><td>${g.N.map(esc).join(', ')}</td></tr>`).join('')}</tbody></table>`:'<p class="cap">아직 넣은 사람이 없어요.</p>'}</div>`)}
 /* ---------- 바꾼 기록 ---------- */
 function vLog(){return `<div class="sec-h"><div><h2>바꾼 기록</h2><p>시트 셀 메모와 「해결」 표시를 대신해요. 누가 언제 무엇을 바꿨는지 남아요.</p></div></div>
   <div class="panel">${A.log.length?`<div class="tbl"><table><thead><tr><th>시각</th><th>내용</th></tr></thead><tbody>${A.log.map(l=>`<tr><td class="num">${esc(l.at)}</td><td style="white-space:normal">${esc(l.t)}</td></tr>`).join('')}</tbody></table></div>`:'<p class="cap" style="margin:0">아직 바꾼 내용이 없어요. 프로그램표에서 사람을 바꾸거나 빼면 여기에 남아요.</p>'}</div>`}
@@ -673,6 +678,8 @@ document.addEventListener('click',ev=>{if(S.tab!=='act'||!D)return;
   if(d.atab){A.tab=d.atab;A.sel=null;if(d.atab==='prev'){A.pv=null;A.pvErr=''}render();return}
   if(d.apv!==undefined){A.pvT=/^\d+$/.test(d.apv)?+d.apv:d.apv;render();return}
   if(b.id==='a_pvReload'){A.pv=null;A.pvErr='';render();return}
+  if(b.id==='a_pvHideSave'){const h={f:[],r:[],t:[]};document.querySelectorAll('.a_pvh').forEach(x=>{if(!x.checked)h[x.dataset.k].push(x.dataset.v)});b.disabled=true;A.pvHideOpen=true;
+    run('pvHideSave',[h],r=>{A.pv=r;render();toast('보일 항목을 저장했어요 · 구글 시트로 보낼 때도 그대로예요')},e=>{b.disabled=false;toast('저장하지 못했어요 · '+e)});return}
   if(b.id==='a_senSave'){const m={};document.querySelectorAll('.a_sen').forEach(x=>m[x.dataset.k]=x.value.trim());b.disabled=true;run('songEnSave',[m],()=>{toast('영어 곡명을 저장했어요');A.pv=null;render()},e=>{b.disabled=false;toast('저장하지 못했어요 · '+e)});return}
   if(d.aday!==undefined){A.day=+d.aday;A.sel=null;render();return}
   if(d.achip){const [eid,i]=d.achip.split('|');
@@ -714,8 +721,9 @@ document.addEventListener('click',ev=>{if(S.tab!=='act'||!D)return;
   if(d.atg){const e=evById(A.sel);readEditor(e);const [k,f,v]=d.atg.split('|');e.tg=e.tg||{};const t=e.tg[k]=e.tg[k]||{b:[],x:[],m:''};t[f]=t[f]||[];const i=t[f].indexOf(v);if(i>=0)t[f].splice(i,1);else{t[f].push(v);if(f==='b'){const O=TG_BOOKS[k];t.b.sort((a,b)=>O.indexOf(a)-O.indexOf(b))}}refresh();return}
   if(d.aaddm){const e=evById(A.sel);readEditor(e);A.addM=d.aaddm;render();return}
   if(b.id==='a_pckAdd'){const e=evById(A.sel);readEditor(e);const ids=Object.keys(A.pck||{}).filter(k=>A.pck[k]);const r=addPeople(e,ids,A.addR);A.pck={};A.pq='';refresh();toast(`${r.n}명을 ${A.addR}(으)로 넣었어요`+(r.warn.length?` · 못 넣음: ${r.warn.join(', ')}`:''));return}
-  if(b.id==='a_namesAdd'){const e=evById(A.sel);readEditor(e);const el=document.getElementById('a_names');const raw=(el?el.value:A.names||'').split(/[,，、\n]+/).map(x=>x.trim()).filter(Boolean);
+  if(b.id==='a_namesAdd'){const e=evById(A.sel);readEditor(e);const el=document.getElementById('a_names');let raw=(el?el.value:A.names||'').split(/[,，、\n]+/).map(x=>x.trim()).filter(Boolean);
     const nm=x=>x.replace(/\s+/g,'').toLowerCase();const ok=[],miss=[],dup=[];
+    const ckd=Object.keys(A.pck||{}).filter(k=>A.pck[k]);ckd.forEach(id=>{const j=raw.findIndex(x=>nm(x)===nm(NAME(id)));if(j>=0){raw.splice(j,1);ok.push(id)}});A.pck={};
     raw.forEach(x=>{const L=P().filter(p=>!gone(p.id)&&nm(p.n)===nm(x));if(L.length===1)ok.push(L[0].id);else if(L.length>1)dup.push({x,L});else miss.push(x)});
     const r=addPeople(e,ok,A.addR);A.names=miss.concat(dup.map(d=>d.x)).join(', ');
     A.namesMsg=(r.n?`<span class="pill ok">${r.n}명 넣음</span> `:'')+(miss.length?`<span class="pill bad">명단에 없는 이름: ${miss.map(esc).join(', ')}</span> `:'')+(dup.length?dup.map(d=>`<span class="pill due">「${esc(d.x)}」 같은 이름 ${d.L.length}명 — 골라 주세요:</span> ${d.L.map(p=>`<button class="btn small" type="button" data-apick1="${esc(p.id)}">${esc(p.n)} <small>${esc(p.acad||'')}</small></button>`).join(' ')}`).join(' '):'')+(r.warn.length?` <span class="pill bad">겹쳐서 못 넣음: ${r.warn.map(esc).join(' / ')}</span>`:'');
@@ -728,6 +736,7 @@ document.addEventListener('click',ev=>{if(S.tab!=='act'||!D)return;
   if(b.id==='a_swapX'){A.swap=null;render();return}
   if(d.afilter){A.filter=d.afilter;render();return}
   if(d.awho){A.who=d.awho;A.tab='who';render();window.scrollTo({top:0});return}
+  if(d.aevpop){const e=evById(d.aevpop);if(e)evPop(e);return}
   if(d.apull){const n=d.apull;if(!b.dataset.sure){b.dataset.sure='1';b.textContent='정말 뺄까요?';return}
     let k=0;D.events.forEach(e=>{const before=e.ppl.length;e.ppl=e.ppl.filter(p=>p.n!==n);k+=before-e.ppl.length});logIt(`${LB(n)} 선생님을 모든 칸에서 뺌 (${k}칸)`);refresh();toast(`${LB(n)} 선생님을 ${k}칸에서 뺐어요 · 빈 칸을 채워 주세요`);return}
   if(b.id==='a_reload'){if(DIRTY){flush(()=>load());return}load();return}
@@ -742,7 +751,9 @@ document.addEventListener('change',e=>{if(S.tab!=='act'||!D)return;const el=e.ta
   if(el.id==='a_cpD'){A.cpD=+el.value;A.cpS=hmVal('a_cpS');A.cpE=hmVal('a_cpE');A.cpR=document.getElementById('a_cpR').value;A.cpP=document.getElementById('a_cpP').checked;const ev=evById(A.sel);readEditor(ev);render();return}
   if(el.id==='a_edG'){const ev=evById(A.sel);readEditor(ev);render();return}
   if(el.id==='a_addR'){A.addR=el.value;const ev=evById(A.sel);readEditor(ev);render();return}
-  if(el.dataset.apck){A.pck=A.pck||{};A.pck[el.dataset.apck]=el.checked;const b=document.getElementById('a_pckAdd');const n=Object.values(A.pck).filter(Boolean).length;if(b){b.disabled=!n;b.textContent=`선택한 ${n}명 ${A.addR}(으)로 넣기`}return}
+  if(el.dataset.apck){A.pck=A.pck||{};const id=el.dataset.apck;A.pck[id]=el.checked;const inp=document.getElementById('a_names');const nm=NAME(id);
+    const L=(inp?inp.value:A.names||'').split(/[,，、]+/).map(x=>x.trim()).filter(Boolean);const i=L.indexOf(nm);
+    if(el.checked&&i<0)L.push(nm);if(!el.checked&&i>=0)L.splice(i,1);A.names=L.join(', ');if(inp)inp.value=A.names;return}
   if(el.dataset.aprole!==undefined){const ev=evById(A.sel);readEditor(ev);const p=ev.ppl[+el.dataset.aprole];logIt(`역할: ${LB(p.n)} ${p.r} → ${el.value} (${D.days[ev.d]} ${ev.s} ${ev.room})`);p.r=el.value;refresh();return}
   if(el.dataset.aunav){const [n,i]=el.dataset.aunav.split('|');const a=A.unav[n]||(A.unav[n]=[]);if(el.checked){a.push(+i);logIt(`${LB(n)} 선생님 ${D.days[+i]} 못 옴`)}else{a.splice(a.indexOf(+i),1);logIt(`${LB(n)} 선생님 ${D.days[+i]} 못 옴 해제`)}refresh();return}
   if(el.dataset.areq){logIt(`요청 메모: ${LB(el.dataset.areq)} · ${el.value||'(지움)'}`);save();return}
@@ -837,14 +848,26 @@ function pvCon(K){const EN={};K.rows.forEach((r,i)=>{if(r.k==='i'){const n=K.row
     <div class="ensl">${[...new Set(K.songs)].map(k=>`<label class="row" style="gap:6px;margin-top:6px"><span style="min-width:220px">${esc(k)}</span><input type="text" class="a_sen" data-k="${esc(k)}" value="${esc(EN[k]||'')}" placeholder="예) J.S.Bach-Minuet No.2" style="flex:1;min-width:200px"></label>`).join('')}</div>
     <div class="row" style="margin-top:8px"><button class="btn small primary" type="button" id="a_senSave">영어 곡명 저장</button></div></div>`:''}
   <p class="hint">「오후음악회」 탭의 연주 순서 그대로예요. 같은 곡이 이어지면 한 번호로 묶고, 같은 학원은 이름을 쉼표로 모아요. 사회 · 진행은 교사 일정에서 그 음악회 칸의 「사회」 「진행」 역할에서 가져와요.</p>`}
+/* 보일 항목 고르기: 체크 = 보임 · 저장하면 미리보기와 구글 시트 모두에 적용 */
+const PV_F=[['tg','대상 (Vn 4B …)'],['en','영어 줄'],['sub','세부'],['desc','설명'],['note','날짜 안내 글'],['meal','식사 줄']],PV_T=[['t','참가교사 탭'],['o','오케 명단 탭'],['c','음악회 프로그램 탭']];
+function pvHideBox(P){const H=P.hide||{},has=(k,v)=>(H[k]||[]).includes(v);const RS=P.roleSets||{};
+  const roles=CATS.map(c=>[c,[...new Set([...(RS[c]||[]),...(P.used||[]).filter(x=>x.startsWith(c+':')).map(x=>x.slice(c.length+1))])]]);
+  const n=(H.f||[]).length+(H.r||[]).length+(H.t||[]).length;
+  return `<details class="panel pvhide" ${A.pvHideOpen?'open':''}><summary><b>보일 항목 고르기</b> <span class="hint">체크를 풀면 미리보기와 구글 시트에서 빠져요${n?` · 지금 ${n}개 숨김`:''}</span></summary>
+    <div class="row" style="gap:12px;flex-wrap:wrap;margin-top:8px"><span class="cap" style="margin:0">칸 내용</span>${PV_F.map(([k,l])=>`<label class="row" style="gap:4px"><input type="checkbox" class="a_pvh" data-k="f" data-v="${k}" ${has('f',k)?'':'checked'}>${l}</label>`).join('')}</div>
+    ${roles.map(([c,L])=>L.length?`<div class="row" style="gap:12px;flex-wrap:wrap;margin-top:6px"><span class="cap" style="margin:0">${c} 사람</span>${L.map(r=>`<label class="row" style="gap:4px"><input type="checkbox" class="a_pvh" data-k="r" data-v="${esc(c+':'+r)}" ${has('r',c+':'+r)?'':'checked'}>${esc(r)}</label>`).join('')}</div>`:'').join('')}
+    <div class="row" style="gap:12px;flex-wrap:wrap;margin-top:6px"><span class="cap" style="margin:0">탭</span>${PV_T.map(([k,l])=>`<label class="row" style="gap:4px"><input type="checkbox" class="a_pvh" data-k="t" data-v="${k}" ${has('t',k)?'':'checked'}>${l}</label>`).join('')}</div>
+    <div class="row" style="margin-top:8px"><button class="btn small primary" type="button" id="a_pvHideSave">보일 항목 저장</button><span class="cap" style="margin:0">예) 공연 사람의 「연주」를 풀면 공연 칸에 연주자 이름이 안 나와요</span></div></details>`}
 function vPrev(){
   if(!A.pv){if(!A.pvErr)setTimeout(pvLoad);return `<div class="panel">${A.pvErr?`<span class="err">미리보기를 만들지 못했어요 · ${esc(A.pvErr)}</span> <button class="btn small" type="button" id="a_pvReload">다시</button>`:'프로그램북 미리보기를 만드는 중…'}</div>`}
-  const P=A.pv,t=A.pvT==null?0:A.pvT;
-  const tabs=[...P.days.map((x,i)=>[i,x.label]),['t','참가교사'],['o','오케 명단 '+P.orch.filter(r=>r.k==='h').length],...(P.concerts||[]).map((k,i)=>['c'+i,k.name])];
+  const P=A.pv;let t=A.pvT==null?0:A.pvT;
+  const tabs=[...P.days.map((x,i)=>[i,x.label]),...(P.teachers?[['t','참가교사']]:[]),...(P.orch?[['o','오케 명단 '+P.orch.filter(r=>r.k==='h').length]]:[]),...(P.concerts||[]).map((k,i)=>['c'+i,k.name])];
+  if(!tabs.some(([k])=>String(k)===String(t)))t=A.pvT=0;
   const ci=/^c\d+$/.test(String(t))?+String(t).slice(1):-1;
-  const body=t==='t'?pvTch(P.teachers):t==='o'?pvOrch(P.orch):ci>=0&&P.concerts[ci]?pvCon(P.concerts[ci]):P.days[t]?pvDay(P.days[t]):'';
+  const body=t==='t'&&P.teachers?pvTch(P.teachers):t==='o'&&P.orch?pvOrch(P.orch):ci>=0&&P.concerts[ci]?pvCon(P.concerts[ci]):P.days[t]?pvDay(P.days[t]):'';
   return `<div class="sec-h"><div><h2>프로그램북 미리보기</h2><p>구글 시트로 보낼 모양 그대로예요. 확인하고 보내세요. (보낼 때마다 같은 시트를 덮어써요)</p></div>
     <div class="row"><button class="btn small primary" type="button" id="a_export">구글 시트로 보내기</button>${A.exportUrl?`<a class="btn small" href="${esc(A.exportUrl)}" target="_blank" rel="noopener">보낸 시트 열기</a>`:''}<button class="btn small" type="button" id="a_pvReload">미리보기 새로</button><button class="btn small" type="button" data-atab="grid">프로그램표로</button></div></div>
+  ${pvHideBox(P)}
   <div class="row"><div class="seg pvtabs" role="group" aria-label="미리보기 탭">${tabs.map(([k,l])=>`<button type="button" data-apv="${k}" aria-pressed="${String(t)===String(k)}">${esc(l)}</button>`).join('')}</div></div>
   ${body}`}
 const TABS=[['grid','프로그램표'],['prev','미리보기 · 시트 보내기'],['count','교사별 횟수'],['who','교사별 일정'],['set','날짜 · 장소'],['log','바꾼 기록']];
@@ -863,6 +886,12 @@ return {view,flush,dirty:()=>DIRTY||SAVING,reset:()=>{if(!DIRTY&&!SAVING){D=null
 
 /* ================= 개인레슨 시간표 (30분 칸 · 교수 × 시간) =================
    시제품 「스즈키 캠프 개인레슨」을 옮김. 교수 = 「교수진」의 레슨 교수, 날짜 = 교사 일정의 날짜, 학생 = 실제 접수(취소 뺌) */
+/* 학생 이름 → 영문 약자 「성 대문자.이름 머리글자」 예) 김민정 → KIM.MJ · 이서윤 → LEE.SY (개인레슨 칸 · 교수님 시간표) */
+const SURN={김:'KIM',이:'LEE',리:'LEE',박:'PARK',최:'CHOI',정:'JUNG',조:'CHO',강:'KANG',윤:'YOON',장:'JANG',임:'LIM',한:'HAN',오:'OH',서:'SEO',신:'SHIN',권:'KWON',황:'HWANG',안:'AHN',송:'SONG',류:'RYU',유:'YOO',전:'JEON',홍:'HONG',고:'KO',문:'MOON',양:'YANG',손:'SON',배:'BAE',백:'BAEK',허:'HEO',남:'NAM',심:'SHIM',노:'NOH',하:'HA',곽:'KWAK',성:'SUNG',차:'CHA',주:'JOO',우:'WOO',구:'KOO',민:'MIN',나:'NA',진:'JIN',지:'JI',엄:'UM',채:'CHAE',원:'WON',천:'CHUN',방:'BANG',공:'KONG',현:'HYUN',함:'HAM',변:'BYUN',염:'YEOM',여:'YEO',추:'CHOO',도:'DO',소:'SO',석:'SEOK',선:'SUN',설:'SEOL',마:'MA',길:'GIL',연:'YEON',위:'WI',표:'PYO',명:'MYUNG',기:'KI',반:'BAN',왕:'WANG',금:'KEUM',옥:'OK',육:'YOOK',인:'IN',맹:'MAENG',제:'JE',모:'MO',탁:'TAK',국:'KOOK',어:'EO',은:'EUN',편:'PYUN',용:'YONG',예:'YE',경:'KYUNG',봉:'BONG',사:'SA',부:'BOO',태:'TAE',피:'PI',목:'MOK',형:'HYUNG',계:'KYE',두:'DOO',감:'KAM',음:'EUM',빈:'BIN',호:'HO',라:'RA',범:'BUM',승:'SEUNG',간:'KAN',상:'SANG',시:'SI',단:'DAN',견:'KYUN',당:'DANG',화:'HWA',창:'CHANG',경:'KYUNG',남궁:'NAMGOONG',황보:'HWANGBO',선우:'SUNWOO',제갈:'JEGAL',독고:'DOKGO',사공:'SAGONG',서문:'SEOMUN'};
+const RR_I=['G','KK','N','D','TT','R','M','B','PP','S','SS','','J','JJ','CH','K','T','P','H'],RR_V=['A','AE','YA','YAE','EO','E','YEO','YE','O','WA','WAE','OE','YO','WU','WO','WE','WI','YU','EU','UI','I'];
+const rrHead=ch=>{const c=ch.charCodeAt(0)-0xAC00;if(c<0||c>11171)return ch.toUpperCase();const i=Math.floor(c/588),v=Math.floor((c%588)/28);return (RR_I[i]||RR_V[v]).charAt(0)};
+function enAbbr(name){const n=String(name||'').replace(/\s+/g,'');if(!/^[가-힣]{2,5}$/.test(n)){const w=String(name||'').trim().split(/\s+/);return w.length>1?w[w.length-1].toUpperCase()+'.'+w.slice(0,-1).map(x=>x.charAt(0).toUpperCase()).join(''):String(name||'').toUpperCase()}
+  const two=n.length>=4&&SURN[n.slice(0,2)]?n.slice(0,2):n.charAt(0);const sur=SURN[two]||[...two].map(rrHead).join('');return sur+'.'+[...n.slice(two.length)].map(rrHead).join('')}
 const LES=(()=>{
 const TIMES=[];for(let h=9;h<18;h++){TIMES.push(String(h).padStart(2,'0')+':00',String(h).padStart(2,'0')+':30')}
 const LUNCH=new Set(['12:00','12:30']);
@@ -886,20 +915,20 @@ function cell(d,t,pr){if(LUNCH.has(t))return '<td class="lunch">점심</td>';
   const x=at(d,t,pr),s=x&&stuOf(x.pid),ga=grpAt(d,t,pr);const dup=x&&L.rows.some(y=>y!==x&&y.d===d&&y.t===t&&y.pid===x.pid);
   const sel=A.sel&&A.sel.d===d&&A.sel.t===t&&A.sel.pr===pr;
   const gn=x&&!s?(GONE[x.pid]||{name:'(명단에 없음)',acad:''}):null;
-  return `<td class="${x?'fill':'empty'} ${gn?'gonec':''} ${sel?'sel':''} ${(x&&ga&&!gn)||dup?'conflict':''} ${ga?'grp':''}" ${ga?`title="${esc(ga.title)} · ${esc(ga.room)}"`:gn?'title="취소한 학생 · 칸을 눌러 다른 학생을 넣거나 비워 주세요"':''}><button type="button" data-lcell="${d}|${t}|${esc(pr)}">${gn?`<b>${esc(gn.name)} (취소)</b><small>${esc(sh0(gn.acad))}</small>`:x?`<b>${esc(s.name)}</b><small>${s?esc(s.acad.replace(/스즈키$/,''))+(s.teacher?' · '+esc(s.teacher)+'T':''):''}</small>${ga?`<small class="ga">겹침: ${esc(ga.title)}</small>`:''}`:(ga?`<small class="ga">${esc(ga.title)}</small><small>${esc(ga.room)}</small>`:'+')}</button></td>`}
+  return `<td class="${x?'fill':'empty'} ${gn?'gonec':''} ${sel?'sel':''} ${(x&&ga&&!gn)||dup?'conflict':''} ${ga?'grp':''}" ${ga?`title="${esc(ga.title)} · ${esc(ga.room)}"`:gn?'title="취소한 학생 · 칸을 눌러 다른 학생을 넣거나 비워 주세요"':''}><button type="button" data-lcell="${d}|${t}|${esc(pr)}">${gn?`<b>${esc(gn.name)} (취소)</b><small>${esc(sh0(gn.acad))}</small>`:x?`<b>${esc(enAbbr(s.name))}</b><small>${esc(s.name)} · ${esc(s.acad.replace(/스즈키$/,''))}</small>${ga?`<small class="ga">겹침: ${esc(ga.title)}</small>`:''}`:(ga?`<small class="ga">${esc(ga.title)}</small><small>${esc(ga.room)}</small>`:'+')}</button></td>`}
 function picker(){
   if(!A.sel)return '<div class="note info">칸을 누르면 여기에서 학생을 넣거나 바꿀 수 있어요. 희망 교수로 고른 학생과 레슨이 덜 채워진 학생이 위에 나와요.</div>';
   const {d,t,pr}=A.sel,prof=profs().find(p=>p.name===pr)||{inst:''},cur=at(d,t,pr),q=A.cq.trim();
-  const C=Object.values(SB).filter(s=>s.inst===prof.inst&&(!A.only||s.req>0||(cur&&cur.pid===s.id))&&(!q||s.name.includes(q)||s.acad.includes(q)||s.teacher.includes(q)))
+  const C=Object.values(SB).filter(s=>s.inst===prof.inst&&(!A.only||s.req>0||(cur&&cur.pid===s.id))&&(!q||s.name.includes(q)||s.acad.includes(q)||enAbbr(s.name).includes(q.toUpperCase())))
     .map(s=>{const ls=lessonsOf(s.id);return {s,cnt:ls.length,busy:ls.some(x=>x.d===d&&x.t===t&&x.pr!==pr),today:ls.some(x=>x.d===d),want:s.p1===pr?2:s.p2===pr?1:0}})
     .sort((a,b)=>b.want-a.want||(b.s.req-b.cnt)-(a.s.req-a.cnt)||a.cnt-b.cnt||a.s.name.localeCompare(b.s.name,'ko')).slice(0,50);
   const ga=grpAt(d,t,pr);
   return `<div class="picker"><div class="sec-h"><div><b>${esc(L.days[d]||'')} ${t} · ${esc(pr)}</b> <span class="cap" style="margin:0">${esc(prof.room||'레슨실 미정')} · ${esc(prof.inst)}</span></div>
     <div class="row">${cur?'<button class="btn small" type="button" id="l_clear">비우기</button>':''}<button class="btn small" type="button" id="l_close">닫기</button></div></div>
     ${ga?`<div class="note">이 시간에 ${esc(pr)} 교수님은 <b>${esc(ga.title)} · ${esc(ga.room)}</b> 일정이 있어요 (교사 일정). 레슨을 넣으면 겹쳐요.</div>`:''}
-    ${cur?(stuOf(cur.pid)?`<p class="cap" style="margin:0">현재: <b>${esc(stuOf(cur.pid).name)}</b></p>`:`<p class="cap" style="margin:0">현재: <b>${esc((GONE[cur.pid]||{name:''}).name)} (취소)</b> · 접수를 취소한 학생이에요. 다른 학생을 넣거나 비워 주세요.</p>`):''}
-    <div class="row"><input type="search" id="l_cq" value="${esc(A.cq)}" placeholder="학생 이름·학원·담당 교사로 찾기" style="flex:1"><label class="checks"><label><input type="checkbox" id="l_only" ${A.only?'checked':''}>추가레슨 신청한 학생만</label></label></div>
-    <ul class="cands">${C.map(c=>`<li><button type="button" data-lassign="${esc(c.s.id)}" ${c.busy?'disabled':''}><span><b>${esc(c.s.name)}</b> <small>${esc(c.s.acad)} · 담당 ${esc(c.s.teacher||'-')} · ${esc(c.s.prog||'진도 -')}</small></span>
+    ${cur?(stuOf(cur.pid)?`<p class="cap" style="margin:0">현재: <b>${esc(enAbbr(stuOf(cur.pid).name))}</b> ${esc(stuOf(cur.pid).name)}</p>`:`<p class="cap" style="margin:0">현재: <b>${esc((GONE[cur.pid]||{name:''}).name)} (취소)</b> · 접수를 취소한 학생이에요. 다른 학생을 넣거나 비워 주세요.</p>`):''}
+    <div class="row"><input type="search" id="l_cq" value="${esc(A.cq)}" placeholder="학생 이름 · 학원 · 영문 약자로 찾기" style="flex:1"><label class="checks"><label><input type="checkbox" id="l_only" ${A.only?'checked':''}>추가레슨 신청한 학생만</label></label></div>
+    <ul class="cands">${C.map(c=>`<li><button type="button" data-lassign="${esc(c.s.id)}" ${c.busy?'disabled':''}><span><b>${esc(c.s.name)}</b> <small class="num">${esc(enAbbr(c.s.name))}</small> <small>${esc(c.s.acad)} · ${esc(c.s.prog||'진도 -')}</small></span>
       <span class="row" style="gap:4px;flex-wrap:nowrap">${c.want===2?'<span class="pill info">희망 1</span>':c.want===1?'<span class="pill info">희망 2</span>':''}${c.busy?'<span class="pill bad">이 시간 다른 레슨</span>':''}${c.today&&!c.busy?'<span class="pill mute">이날 레슨 있음</span>':''}<span class="pill ${c.cnt>=c.s.req?'ok':'due'}">신청 ${c.s.req} · 배정 ${c.cnt}</span></span></button></li>`).join('')||'<li class="cap" style="padding:8px">해당하는 학생이 없어요.</li>'}</ul></div>`}
 function view(){
   if(!L){if(!LOADING&&!ERR)load();return `<div class="panel">${ERR?`<span class="err">개인레슨을 불러오지 못했어요 · ${esc(ERR)}</span> <button class="btn small" type="button" id="l_retry">다시</button>`:'개인레슨 시간표를 불러오고 있어요…'}</div>`}
@@ -921,16 +950,20 @@ function view(){
     return `<div class="act">${head}<div class="row"><label for="l_prof" class="cap" style="margin:0">교수</label><select id="l_prof">${P.map(p=>`<option ${p.name===A.prof?'selected':''}>${esc(p.name)}</option>`).join('')}</select><span class="pill info">${esc(pr.room||'레슨실 미정')}</span><span class="pill mute">총 ${n}회</span></div>${picker()}
     <div class="tt"><table><thead><tr><th>시간</th>${days.map(x=>`<th>${esc(x)}</th>`).join('')}</tr></thead><tbody>${TIMES.map(t=>`<tr><th>${t}</th>${days.map((_,d)=>cell(d,t,pr.name)).join('')}</tr>`).join('')}</tbody></table></div>
     <p class="cap" style="margin:0">교수님께 보여 줄 「내 수업시간표」와 같은 내용이에요.</p></div>`}
-  if(A.mode==='stu'){const q=A.stu.trim();const hits=q?all.filter(s=>s.name.includes(q)||s.acad.includes(q)||s.teacher.includes(q)).slice(0,20):[];
-    return `<div class="act">${head}<div class="row"><input type="search" id="l_stu" value="${esc(A.stu)}" placeholder="학생 이름 · 학원 · 담당 교사" style="width:min(300px,100%)"></div>
-    ${q?(hits.length?`<div class="g2">${hits.map(s=>{const ls=lessonsOf(s.id).slice().sort((a,b)=>a.d-b.d||mins(a.t)-mins(b.t));
-      return `<div class="panel"><div class="sec-h"><div><h3>${esc(s.name)}</h3><span class="cap" style="margin:0">${esc(s.acad)} · 담당 ${esc(s.teacher||'-')} · ${esc(s.inst)} · ${esc(s.prog||'')} · ${esc(s.no)}</span></div><span class="pill ${ls.length>=s.req?'ok':'due'}">신청 ${s.req} · 배정 ${ls.length}</span></div>
+  if(A.mode==='stu'){const q=A.stu.trim();const hits=q?all.filter(s=>s.name===q||s.name.includes(q)||s.acad.includes(q)||enAbbr(s.name).includes(q.toUpperCase())).slice(0,20):[];
+    const lst=reqS.slice().sort((a,b)=>a.acad.localeCompare(b.acad,'ko')||a.name.localeCompare(b.name,'ko'));
+    if(!q)return `<div class="act">${head}<div class="row"><input type="search" id="l_stu" value="" placeholder="학생 이름 · 학원 · 영문 약자" style="width:min(300px,100%)"><span class="hint">추가레슨 신청한 학생 ${lst.length}명 · 이름을 누르면 그 학생 시간표</span></div>
+      <div class="panel tbl"><table><thead><tr><th>학생</th><th>영문</th><th>학원</th><th>악기</th><th>진도</th><th>희망 교수</th><th class="r">신청</th><th class="r">배정</th></tr></thead><tbody>${lst.map(s=>{const n=lessonsOf(s.id).length;return `<tr><td><button type="button" class="evlink" data-lstu="${esc(s.id)}">${esc(s.name)}</button></td><td class="num">${esc(enAbbr(s.name))}</td><td>${esc(s.acad)}</td><td>${esc(s.inst)}</td><td>${esc(s.prog||'-')}</td><td>${esc([s.p1,s.p2].filter(Boolean).join(' · ')||'-')}</td><td class="r num">${s.req}</td><td class="r num">${n<s.req?`<span class="pill due">${n}</span>`:n}</td></tr>`}).join('')||'<tr><td colspan="8" class="hint">추가레슨을 신청한 학생이 없어요.</td></tr>'}</tbody></table></div></div>`;
+    const one=A.stuId&&SB[A.stuId]&&SB[A.stuId].name===q?[SB[A.stuId]]:hits;
+    return `<div class="act">${head}<div class="row"><input type="search" id="l_stu" value="${esc(A.stu)}" placeholder="학생 이름 · 학원 · 영문 약자" style="width:min(300px,100%)"><button class="btn small" type="button" id="l_stuAll">신청 학생 목록</button></div>
+    ${q?(one.length?`<div class="g2">${one.map(s=>{const ls=lessonsOf(s.id).slice().sort((a,b)=>a.d-b.d||mins(a.t)-mins(b.t));
+      return `<div class="panel"><div class="sec-h"><div><h3>${esc(s.name)} <small class="num">${esc(enAbbr(s.name))}</small></h3><span class="cap" style="margin:0">${esc(s.acad)} · ${esc(s.inst)} · ${esc(s.prog||'')} · ${esc(s.no)}</span></div><span class="pill ${ls.length>=s.req?'ok':'due'}">신청 ${s.req} · 배정 ${ls.length}</span></div>
       ${s.p1?`<p class="cap" style="margin:0">희망 교수: ${esc(s.p1)}${s.p2?' · '+esc(s.p2):''}</p>`:''}
       ${ls.length?`<div class="tbl"><table><thead><tr><th>날짜</th><th>시간</th><th>교수</th><th>레슨실</th></tr></thead><tbody>${ls.map(x=>`<tr><td>${esc(days[x.d]||'')}</td><td class="num">${x.t}</td><td>${esc(x.pr)}</td><td>${esc((P.find(p=>p.name===x.pr)||{}).room||'')}</td></tr>`).join('')}</tbody></table></div>`:'<p class="cap" style="margin:0">아직 배정된 레슨이 없어요.</p>'}</div>`}).join('')}</div>`:'<p class="cap">찾는 학생이 없어요.</p>'):'<div class="note info">학생 이름을 넣으면 그 학생의 레슨 시간표가 나와요.</div>'}</div>`}
   const f=A.nf;const R=reqS.map(s=>({s,n:lessonsOf(s.id).length})).filter(x=>f==='all'||(f==='need'?x.n<x.s.req:x.n>x.s.req)).sort((a,b)=>(b.s.req-b.n)-(a.s.req-a.n)||a.s.acad.localeCompare(b.s.acad,'ko'));
   return `<div class="act">${head}<div class="row">${[['need','덜 배정'],['over','신청보다 많음'],['all','신청한 학생 전체']].map(([k,l])=>`<button class="btn small ${f===k?'primary':''}" type="button" data-lnf="${k}">${l}</button>`).join('')}</div>
-    <div class="panel tbl"><table><thead><tr><th>학생</th><th>학원</th><th>담당 교사</th><th>악기</th><th>진도</th><th>희망 교수</th><th class="r">신청</th><th class="r">배정</th><th>배정된 시간</th></tr></thead><tbody>
-    ${R.map(({s,n})=>`<tr><td><b>${esc(s.name)}</b></td><td>${esc(s.acad)}</td><td>${esc(s.teacher||'-')}</td><td>${esc(s.inst)}</td><td>${esc(s.prog||'-')}</td><td>${esc([s.p1,s.p2].filter(Boolean).join(' · ')||'-')}</td><td class="r num">${s.req}</td><td class="r num">${n<s.req?`<span class="pill due">${n}</span>`:n}</td><td class="cap">${lessonsOf(s.id).map(x=>esc((days[x.d]||'').replace(/\(.\)/,''))+' '+x.t+' '+esc(x.pr)).join(' / ')}</td></tr>`).join('')||'<tr><td colspan="9" class="hint">해당하는 학생이 없어요.</td></tr>'}</tbody></table></div></div>`}
+    <div class="panel tbl"><table><thead><tr><th>학생</th><th>영문</th><th>학원</th><th>악기</th><th>진도</th><th>희망 교수</th><th class="r">신청</th><th class="r">배정</th><th>배정된 시간</th></tr></thead><tbody>
+    ${R.map(({s,n})=>`<tr><td><b>${esc(s.name)}</b></td><td class="num">${esc(enAbbr(s.name))}</td><td>${esc(s.acad)}</td><td>${esc(s.inst)}</td><td>${esc(s.prog||'-')}</td><td>${esc([s.p1,s.p2].filter(Boolean).join(' · ')||'-')}</td><td class="r num">${s.req}</td><td class="r num">${n<s.req?`<span class="pill due">${n}</span>`:n}</td><td class="cap">${lessonsOf(s.id).map(x=>esc((days[x.d]||'').replace(/\(.\)/,''))+' '+x.t+' '+esc(x.pr)).join(' / ')}</td></tr>`).join('')||'<tr><td colspan="9" class="hint">해당하는 학생이 없어요.</td></tr>'}</tbody></table></div></div>`}
 function setCell(pid){const {d,t,pr}=A.sel;const before=L.rows.slice();L.rows=L.rows.filter(x=>!(x.d===d&&x.t===t&&x.pr===pr));if(pid)L.rows.push({d,t,pr,pid});A.sel=null;render();
   run('lessonSet',[{d,t,pr,pid:pid||''}],r=>{L.rows=r.rows;render()},m=>{L.rows=before;render();toast('저장하지 못했어요 · '+m)})}
 document.addEventListener('click',ev=>{if(S.tab!=='tt')return;const b=ev.target.closest('button');if(!b)return;const d=b.dataset;
@@ -939,6 +972,8 @@ document.addEventListener('click',ev=>{if(S.tab!=='tt')return;const b=ev.target.
   if(d.lmode){A.mode=d.lmode;A.sel=null;render();return}
   if(d.lday!==undefined){A.day=+d.lday;A.sel=null;render();return}
   if(d.lnf){A.nf=d.lnf;render();return}
+  if(d.lstu){const s=SB[d.lstu];A.stu=s?s.name:'';A.stuId=d.lstu;render();return}
+  if(b.id==='l_stuAll'){A.stu='';A.stuId='';render();return}
   if(d.lcell){const [dd,t,pr]=d.lcell.split('|');A.sel={d:+dd,t,pr};A.cq='';render();return}
   if(d.lassign){const s=SB[d.lassign];setCell(d.lassign);toast(`${A.sel?'':''}${s?s.name:''} 배정했어요`);return}
   if(b.id==='l_clear'){setCell('');toast('칸을 비웠어요');return}
@@ -1083,8 +1118,8 @@ function vCon(){const sv=S.consv||'list';
 function vConList(){const f=S.conf||'오후',ins=S.coni||'',q=(S.conq||'').trim();const all=conRows();
   const L=all.filter(x=>(f==='all'||x.con===f)&&(!ins||x.inst===ins)&&(!q||[x.name,x.acad,x.owner,x.song,x.oc,x.ot].some(v=>String(v).includes(q))));
   const cnt=k=>all.filter(x=>x.con===k).length;const INS=[...new Set(all.map(x=>x.inst).filter(Boolean))];
-  const H=['이름(학원)','접수 일시','차수','학원','접수 교사','참가자','악기','만 나이','참가 구분','진도','음악회','곡명 (목록)','작곡가 (그외 곡)','곡명 (원어)','오디션 영상'];
-  const rows=L.map(x=>[x.key,x.at.slice(0,16),x.round,x.acad,x.owner,x.name+(x.status==='취소요청'?' (취소 요청)':''),x.inst,x.age,x.type,x.prog,x.con,x.song,x.oc,x.ot,x.video]);
+  const H=['이름(학원)','접수 일시','학원','접수 교사','참가자','악기','만 나이','진도','음악회','곡명 (목록)','작곡가 (그외 곡)','곡명 (원어)','오디션 영상'];
+  const rows=L.map(x=>[x.key,x.at.slice(0,16),x.acad,x.owner,x.name+(x.status==='취소요청'?' (취소 요청)':''),x.inst,x.age,x.prog,x.con,x.song,x.oc,x.ot,x.video]);
   S.conTSV=[H,...rows].map(r=>r.map(v=>String(v==null?'':v).replace(/[\t\n]/g,' ')).join('\t')).join('\n');
   return `<div class="panel"><div class="spread"><div><b>음악회 신청</b> <span class="hint">2026 여름 「오후음악회용」 시트처럼 · 취소한 사람은 빠짐 · 만 나이는 캠프 첫날(${CAMP_YEAR}-${CAMP_DAY}) 기준, 출생연도만 있으면 생일 전으로 셈 · 머리 칸 눌러 정렬</span></div>
     <div class="row" style="gap:6px"><button class="btn small" type="button" id="conCopy">표 복사 (시트에 붙여넣기)</button><button class="btn small" type="button" id="reload">새로 불러오기</button></div></div>
@@ -1195,7 +1230,7 @@ const ME=()=>(S.D&&S.D.me)||{sup:true,perms:{}};
 const permOf=k=>{const m=ME();if(m.sup)return '편집';if(k==='camp'||k==='staff'||k==='cons')return '';return (m.perms||{})[k]||''};
 const visTabs=()=>TABS.concat(SUP_TABS).filter(([k])=>permOf(k));
 const RO=()=>permOf(S.tab)==='보기';
-const WRITE_FN=/^(scholSave|adminConfirm|adminRejectReport|adminSaveEns|adminSaveProfs|adminRefund|adminSetIssue|schedSave|lessonSet|adminSetSetting|roomSave|conSave|campSave|staffSave|songEnSave)$/;
+const WRITE_FN=/^(scholSave|adminConfirm|adminRejectReport|adminSaveEns|adminSaveProfs|adminRefund|adminSetIssue|schedSave|lessonSet|adminSetSetting|roomSave|conSave|campSave|staffSave|songEnSave|pvHideSave)$/;
 const roBlock=fn=>WRITE_FN.test(fn)&&permOf(S.tab)!=='편집';
 const RO_MSG='보기만 할 수 있는 메뉴예요. 바꾸려면 총관리자에게 「편집」 권한을 받아 주세요.';
 
@@ -1293,6 +1328,27 @@ function schLoad(){S.schL=1;call('scholData',[],r=>{S.schL=0;S.SC=r;S.sc=JSON.pa
 const scDirty=()=>S.SC&&S.sc&&JSON.stringify(S.sc)!==JSON.stringify(S.SC);
 const scPill=()=>scDirty()?'<span class="pill due">저장 안 한 변경 있음</span><button class="btn small ghost" type="button" data-screset="1">되돌리기</button>':'';
 function scRow(a){let r=S.sc.rows.find(x=>x.acad===a);if(!r){r={acad:a,n:0,base:0,amt:'',state:'예정',date:'',memo:''};S.sc.rows.push(r)}return r}
+document.addEventListener('click',e=>{if(S.tab!=='mem')return;const b=e.target.closest('button');if(!b)return;const d=b.dataset;
+  if(d.memk){S.memK=d.memk;S.memA='';render();return}if(d.memf){S.memF=d.memf;render();return}if(d.memre){S.MEM=null;render();return}});
+document.addEventListener('input',e=>{if(S.tab!=='mem'||e.target.id!=='memQ')return;S.memQ=e.target.value;render();keepFocus('memQ')});
+document.addEventListener('change',e=>{if(S.tab!=='mem'||e.target.id!=='memA')return;S.memA=e.target.value;render()});
+/* ---------- 설정 › 회원 명단: 교사 · 학생 전체 · 이번 캠프에 접수한 사람은 진하게(참가), 아닌 사람은 흐리게(미참가) ---------- */
+function memLoad(){S.memL=1;call('memberData',[],r=>{S.memL=0;S.MEM=r;render()},'회원 명단을 불러오고 있어요…')}
+function vMem(){if(!S.MEM){if(!S.memL)setTimeout(memLoad,0);return '<div class="panel hint">회원 명단을 불러오고 있어요…</div>'}
+  const k=S.memK||'t',f=S.memF||'all',q=(S.memQ||'').trim(),ac=S.memA||'';const all=k==='t'?S.MEM.teachers:S.MEM.students;
+  const acads=[...new Set(all.flatMap(x=>String(x.acad).split(',').map(y=>y.trim())).filter(Boolean))].sort((x,y)=>x.localeCompare(y,'ko'));
+  const L=all.filter(x=>(f==='all'||(f==='on'?!!x.on:!x.on))&&(!ac||String(x.acad).split(',').map(y=>y.trim()).includes(ac))&&(!q||[x.name,x.acad,x.inst].some(v=>String(v).includes(q))))
+    .sort((x,y)=>(!!y.on-!!x.on)||String(x.acad).localeCompare(String(y.acad),'ko')||x.name.localeCompare(y.name,'ko'));
+  const nOn=all.filter(x=>x.on).length;
+  S.conTSV=[['학원','전공','이름','참가','접수번호'],...L.map(x=>[x.acad,x.inst,x.name,x.on?'참가':'미참가',x.on?x.on.no:''])].map(r=>r.join('\t')).join('\n');
+  return `<div class="cc"><div class="panel"><div class="spread"><div><b>회원 명단</b> <span class="hint">시트 「명단_교사」 · 「명단_학생」 전체 · 이번 캠프에 접수한 사람은 <b>참가</b>(진하게), 아닌 사람은 미참가(흐리게) · 취소한 사람은 미참가</span></div>
+    <div class="row" style="gap:6px"><button class="btn small" type="button" id="conCopy">표 복사</button><button class="btn small" type="button" data-memre="1">새로 불러오기</button></div></div>
+    <div class="row" style="gap:6px;margin-top:8px;flex-wrap:wrap">${[['t','교사 '+S.MEM.teachers.length],['s','학생 '+S.MEM.students.length]].map(([v,l])=>`<button class="btn small ${k===v?'primary':''}" type="button" data-memk="${v}">${l}</button>`).join('')}<span style="width:10px"></span>
+      ${[['all','전체 '+all.length],['on','참가 '+nOn],['off','미참가 '+(all.length-nOn)]].map(([v,l])=>`<button class="btn small ${f===v?'primary':''}" type="button" data-memf="${v}">${l}</button>`).join('')}
+      <select id="memA"><option value="">학원 전체</option>${acads.map(a=>`<option ${a===ac?'selected':''}>${esc(a)}</option>`).join('')}</select>
+      <input type="search" id="memQ" value="${esc(S.memQ||'')}" placeholder="이름 · 학원 · 전공" style="margin-left:auto;width:min(220px,100%)"></div></div>
+  <div class="panel tbl"><table><thead><tr><th>학원</th><th>전공</th><th>이름</th>${k==='t'?'<th>직급</th>':''}<th>참가</th><th>접수번호</th></tr></thead><tbody>
+    ${L.map(x=>`<tr class="${x.on?'':'memoff'}"><td>${esc(x.acad)}</td><td>${esc(x.inst||'-')}</td><td><b>${esc(x.name)}</b>${k==='t'&&x.state&&x.state!=='승인'?` <small class="faint">(${esc(x.state)})</small>`:''}</td>${k==='t'?`<td>${esc(x.role||'')}</td>`:''}<td>${x.on?`<span class="pill ok">참가</span>${x.on.type&&x.on.type!=='교사'&&x.on.type!=='학생'?` <small>${esc(x.on.type)}</small>`:''}`:'<span class="pill mute">미참가</span>'}</td><td class="num">${x.on?esc(x.on.no):''}</td></tr>`).join('')||`<tr><td colspan="6" class="hint">해당하는 사람이 없어요.</td></tr>`}</tbody></table></div></div>`}
 function vSchol(){if(!S.SC){if(!S.schL)setTimeout(schLoad,0);return '<div class="panel hint">장학금을 불러오고 있어요…</div>'}
   const T=S.sc.tiers,N=schPlayers();const acads=[...new Set([...Object.keys(N),...S.sc.rows.map(r=>r.acad)])].sort((a,b)=>(N[b]||0)-(N[a]||0)||a.localeCompare(b,'ko'));
   const L=acads.map(a=>{const r=S.sc.rows.find(x=>x.acad===a)||{acad:a,amt:'',state:'예정',date:'',memo:''};const n=N[a]||0,base=tierOf(T,n),pay=r.amt===''||r.amt==null?base:+r.amt;return {a,r,n,base,pay}});
@@ -1431,6 +1487,11 @@ const INST_ORDER=['바이올린','첼로','플루트'];const instSort=(x,y)=>(IN
 /* 통계 숫자 누르면 그 사람들 (팝업) */
 const POP={};let popN=0;
 function pc(list,label){if(!list.length)return '<span class="faint">0</span>';const k='p'+(++popN);POP[k]={label,list};return `<button type="button" class="numlink" data-pop="${k}" title="누구인지 보기">${list.length}</button>`}
+/* 간단 팝업: 제목 + 내용 HTML · 바깥/닫기/Esc로 닫힘 */
+function modal(title,html){const bg=document.createElement('div');bg.className='askbg';
+  bg.innerHTML=`<div class="askbox popbox" role="dialog" aria-modal="true" aria-label="${esc(title)}"><div class="spread"><b style="font-size:16px">${esc(title)}</b><button class="btn small ghost" type="button" data-x>닫기</button></div><div style="max-height:65vh;overflow:auto">${html}</div></div>`;
+  document.body.appendChild(bg);const close=()=>{bg.remove();document.removeEventListener('keydown',k)};const k=e=>{if(e.key==='Escape')close()};document.addEventListener('keydown',k);
+  bg.addEventListener('click',e=>{if(e.target===bg||e.target.closest('[data-x]'))close()});const f=bg.querySelector('[data-x]');if(f)f.focus();return bg}
 function popShow(k){const P=POP[k];if(!P)return;const bg=document.createElement('div');bg.className='askbg';
   const L=P.list.slice().sort((a,b)=>a.acad.localeCompare(b.acad,'ko')||String(a.p.name).localeCompare(b.p.name,'ko'));
   const tsv=[['이름','학원','구분','악기','권수(진도)','담당 교사','접수번호'],...L.map(x=>[x.p.name,x.acad,x.type,x.inst,x.prog,x.i.teacher||'',x.sb.no])].map(r=>r.map(v=>String(v==null?'':v).replace(/[\t\n]/g,' ')).join('\t')).join('\n');

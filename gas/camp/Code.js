@@ -1,4 +1,4 @@
-/* build: 20261025-001627 */
+/* build: 20261025-002404 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -1168,6 +1168,57 @@ function memberData(token) {
   const T = teachers_().map(t => ({ id: t.id, name: t.name, acad: t.acads.join(', '), inst: t.inst, role: t.role, state: t.state, on: on['t_' + t.id] || null }));
   const S_ = rows_(SH.S).filter(r => r['ID']).map(r => ({ id: String(r['ID']), name: String(r['이름']), acad: String(r['학원'] || ''), inst: String(r['악기'] || ''), teacher: String(r['담당 교사'] || ''), on: on[String(r['ID'])] || null }));
   return { teachers: T, students: S_ };
+}
+/* ---------------- 테스트용 가상 접수 (총관리자 · 캠프 설정 맨 아래 버튼) ----------------
+ * 「가상○○스즈키」 학원으로 교사 · 학생 접수를 만듦. 이름은 무작위 조합(실제 회원 아님) · 입금 전 · 연회비 없음. sb.fake = true
+ * 지우기: fake 표시가 있는 접수와 그 참가자 줄만 지움 (진짜 접수는 건드리지 않음) */
+function devFakeSubs(token, nT, nS) {
+  const a = adm_(token); needSup_(a);
+  nT = Math.max(0, Math.min(200, +nT || 0)); nS = Math.max(0, Math.min(600, +nS || 0));
+  const NA = ['하늘', '바다', '숲', '별', '달', '구름', '나무', '강', '산', '들', '해', '빛', '꽃', '봄', '솔', '샘', '물', '돌', '길', '섬'];
+  const per = 3, nA = Math.max(1, Math.ceil(nT / per));
+  let seed = Date.now() % 2147483647; const rnd = () => (seed = (seed * 48271) % 2147483647) / 2147483647; const pick = L => L[Math.floor(rnd() * L.length)];
+  const SUR = '김이박최정강조윤장임한오서신권황안송류전홍고문양손배'.split(''), G = '가나다라마바사아자서민지수현준윤하은도예시유채소연태주우진건희아린결온솔별빛봄'.split('');
+  const used = {}; const nm = () => { for (let i = 0; i < 500; i++) { const n = pick(SUR) + pick(G) + pick(G); if (!used[n]) { used[n] = 1; return n; } } return '가상' + Date.now(); };
+  const INST = ['바이올린', '바이올린', '바이올린', '첼로', '플루트'];
+  const PROG = { 바이올린: ['Pre-Twinkle', '1권A 작은별 변주곡 ~ 무궁동', '1권B 알레그레토 ~', '2권A 요정의 춤 ~', '2권B 미뇽의 가보트 ~', '3권', '4권A ~ 자이츠 5번 3악장', '4권B 비발디 협주곡 가단조 ~', '5권', '6권', '7권', '8권 전체', '9권', '10권 이상'], 첼로: ['1권', '2권', '3권', '4권', '5권', '6권 이상'], 플루트: ['1권', '2권', '3권', '4권 이상'] };
+  const prof = profs_().filter(p => p.on && p.lesson);
+  const lock = lock_(); const made = [];
+  try {
+    const all = loadSubs_(); let n = all.reduce((m, x) => Math.max(m, +String(x.no).split('-')[1] || 0), 0);
+    let tLeft = nT, sLeft = nS;
+    for (let ai = 0; ai < nA; ai++) {
+      const acad = '가상' + NA[ai % NA.length] + (ai >= NA.length ? Math.floor(ai / NA.length) + 1 : '') + '스즈키';
+      const tc = Math.min(per, tLeft), sc = ai === nA - 1 ? sLeft : Math.min(sLeft, Math.ceil(nS / nA)); tLeft -= tc; sLeft -= sc;
+      if (!tc && !sc) continue;
+      n++; const no = camp_().base.id + '-' + String(n).padStart(3, '0'), at = stamp_();
+      const info = {}, picked = {}, ppl = [];
+      const T = []; for (let k = 0; k < Math.max(1, tc); k++) T.push({ n: nm(), inst: k === 0 ? '바이올린' : pick(INST) });
+      if (tc) T.forEach((t, k) => { const key = 't_fk' + n + '_' + k; picked[key] = true; info[key] = { type: '교사', gender: rnd() < .8 ? '여' : '남', concert: '없음' };
+        ppl.push({ id: no + '_' + key, name: t.n, kind: '교사', type: '교사', inst: t.inst, status: '정상', addAt: at, batch: 1 }); });
+      for (let k = 0; k < sc; k++) { const t = T[k % T.length], key = 'fk' + n + '_' + k, P = PROG[t.inst] || PROG['바이올린'];
+        const pp = prof.filter(p => p.inst === t.inst).map(p => p.name), les = pp.length && rnd() < .45 ? 1 + Math.floor(rnd() * 3) : 0;
+        picked[key] = true; info[key] = { type: '학생', gender: rnd() < .5 ? '여' : '남', by: String(2012 + Math.floor(rnd() * 9)), teacher: t.n, prog: pick(P), lessons: les, p1: les ? pick(pp) : '', p2: les && rnd() < .5 ? pick(pp) : '', concert: rnd() < .25 ? '오후' : '없음' };
+        ppl.push({ id: no + '_' + key, name: nm(), kind: '학생', type: '학생', inst: t.inst, status: '정상', addAt: at, batch: 1 }); }
+      const sb = { no, acad, owner: T[0].n, fake: true, createdAt: at, date: at.slice(0, 10), email: '', rev: 1, form: { ri: 0, picked, info, extra: [], fam: [], room: {}, join: {}, ens: { on: false } }, ppl };
+      sb.ppl.forEach(p => { p.pay = '전'; p.paidAmt = 0; });
+      recalc_(sb); sb.ppl.forEach(p => p.dues = 0);   /* 가상 회원은 연회비 없음 */
+      writeSub_(sb, true); made.push(no);
+    }
+    log_(a.name, '가상 접수 만듦', made.join(', '));
+  } finally { lock.releaseLock(); }
+  return { ok: true, made, adm: adminData(token) };
+}
+function devFakeClear(token) {
+  const a = adm_(token); needSup_(a);
+  const lock = lock_(); let k = 0;
+  try {
+    const fk = loadSubs_().filter(sb => sb.fake).map(sb => sb.no); if (!fk.length) return { ok: true, n: 0, adm: adminData(token) };
+    const ss = SpreadsheetApp.getActive();
+    [[SH.SUB, '접수번호'], [SH.P, '접수번호']].forEach(([name, col]) => { const sh = ss.getSheetByName(name); rows_(name).filter(r => fk.includes(String(r[col]))).map(r => r._row).sort((x, y) => y - x).forEach(r => { sh.deleteRow(r); k++; }); });
+    log_(a.name, '가상 접수 지움', fk.join(', '));
+  } finally { lock.releaseLock(); }
+  return { ok: true, n: k, adm: adminData(token) };
 }
 /** 관리자 화면에 필요한 것: 모든 접수 · 운영진 칸 · 환불 요청 · 앙상블 팀 */
 function adminData(token) {

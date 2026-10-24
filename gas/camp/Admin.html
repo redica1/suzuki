@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261025-001627 -->
+<!-- build: 20261025-002404 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -1459,6 +1459,9 @@ function vCamp(){if(!S.cc)S.cc=ccCopy();const c=S.cc;if(!c.base)return '<div cla
     <label class="row" style="gap:6px;margin-top:6px"><input type="checkbox" id="ccMealsApply"> 바꾼 게 없어도 저장할 때 교사 일정에 다시 넣기</label>
     <p class="hint">저장하면 교사 일정의 모든 날짜에 식사 줄이 다시 들어가요 (첫날 · 마지막 날은 체크한 식사만). 예전 아침 · 점심 · 저녁 줄은 바뀌고, 그 밖에 따로 넣은 줄(간식 등)은 그대로예요. 날짜를 새로 늘렸으면 「교사 일정 › 날짜 · 장소」의 「캠프 설정 식사 시간 다시 넣기」를 눌러 주세요.</p></div>
   <div class="panel hint">개인정보 동의 문구는 「설정 › 동의서」에서 입력·수정해요.</div>
+  <div class="panel"><h3>테스트용 가상 접수 <span class="hint">STG 시험용 · 「가상○○스즈키」 학원 · 이름은 무작위(실제 회원 아님) · 입금 전</span></h3>
+    <div class="row" style="gap:8px;flex-wrap:wrap"><label class="row" style="gap:4px">교사 <input type="number" id="fkT" value="30" min="0" max="200" style="width:70px">명</label><label class="row" style="gap:4px">학생 <input type="number" id="fkS" value="100" min="0" max="600" style="width:70px">명</label>
+      <button class="btn small" type="button" id="fkMake">가상 접수 만들기</button><button class="btn small ghost" type="button" id="fkClear">가상 접수 모두 지우기 (${(S.D.subs||[]).filter(x=>x.fake).length}건)</button></div></div>
   <div class="panel hint"><b>새 캠프(다음 학기)를 열 때</b><br>1) 지금 접수 DB 시트를 통째로 「사본 만들기」 → 지난 캠프 보관용으로 이름을 바꿔 둬요.<br>2) 이 시트에서 「접수」·「참가자」·「입금신고」·「환불요청」·「앙상블팀」·「교사일정」·「개인레슨」·「방배정」·「음악회순서」·「비회원」·「동의기록」 탭의 내용(2행부터)을 지워요.<br>3) 여기 「캠프 설정」에서 캠프 코드(예: 27S)·이름·날짜·장소·차수·참가비·환불 규정을 새로 넣고 저장해요.<br>4) 「교사 일정 › 날짜 · 장소」에서 날짜를 맞추고, 「교수진」·「담당자」를 확인해요. 접수 화면 주소는 그대로예요.</div>
   </div>`}
 document.addEventListener('input',e=>{const t=e.target;if(!t.dataset||!t.dataset.cc||!S.cc)return;const ty=t.dataset.cct;
@@ -1472,6 +1475,8 @@ function ccClick(b,d){if(S.tab!=='camp'&&S.tab!=='cons')return false;const c=S.c
     else{c.rounds.splice(+i,1);Object.keys(c.fees).forEach(t=>c.fees[t].splice(+i,1));if(c.base.cur!=='auto'&&+c.base.cur>=c.rounds.length)c.base.cur='auto'}render();return true}
   if(d.ccf){const [op,i]=d.ccf.split('|');if(op==='add'){const L=c.refund.rules[c.refund.rules.length-1];c.refund.rules.push({until:L?L.until:'',label:'',rate:0,doc:false})}else c.refund.rules.splice(+i,1);render();return true}
   if(d.ccm){const [op,i]=d.ccm.split('|');c.meals=c.meals||[];if(op==='add')c.meals.push({k:'',t:'',s:'15:00',e:'15:30',on:true,first:true,last:true});else c.meals.splice(+i,1);render();return true}
+  if(b.id==='fkMake'){const t=+document.getElementById('fkT').value||0,sN=+document.getElementById('fkS').value||0;ask('가상 접수를 만들까요?',`교사 ${t}명 · 학생 ${sN}명을 「가상○○스즈키」 학원들로 접수해요 (학원마다 교사 3명). 나중에 「가상 접수 모두 지우기」로 한 번에 지울 수 있어요.`,()=>call('devFakeSubs',[t,sN],r=>{setData(r.adm);toast('가상 접수 '+r.made.length+'건을 만들었어요 · '+r.made.join(', '))},'가상 접수를 만들고 있어요…'),'만들기');return true}
+  if(b.id==='fkClear'){ask('가상 접수를 모두 지울까요?','가상 표시가 있는 접수와 그 참가자 줄만 지워요. 진짜 접수는 그대로예요. 방 · 레슨 · 일정에 넣은 가상 인원은 따로 빼 주세요.',()=>call('devFakeClear',[],r=>{setData(r.adm);toast('가상 접수 줄 '+r.n+'개를 지웠어요')},'지우고 있어요…'),'지우기');return true}
   if(d.ccsave){const old=S.D.camp||{},idCh=old.base&&old.base.id!==c.base.id;const ap=document.getElementById('ccMealsApply');c.mealsApply=!!(ap&&ap.checked);
     const go=()=>call('campSave',[c,old.rev||0],r=>{S.D.camp=r.camp;S.cc=null;applyCampAdm(r.camp);render();toast('캠프 설정을 저장했어요 · 선생님 화면에 바로 반영돼요'+(r.mealsDays?` · 교사 일정 ${r.mealsDays}일에 식사 시간을 넣었어요`:''));if(r.mealsDays)ACT.reset()},'저장하고 있어요…');
     if(idCh&&(S.D.subs||[]).length)ask('캠프 코드를 바꿀까요?',`이미 접수가 ${(S.D.subs||[]).length}건 있어요. 새 접수부터 <b>${esc(c.base.id)}-001</b>처럼 번호가 매겨지고, 지난 접수 번호는 그대로예요. 보통은 새 캠프를 열 때만 바꿔요.`,go,'그래도 저장');

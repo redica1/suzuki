@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261024-231403 -->
+<!-- build: 20261024-231921 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -1155,7 +1155,9 @@ function vPlan(){const F=floors();if(A.lyF>=F.length)A.lyF=0;const Fl=F[A.lyF];
   return `<div class="row"><div class="seg" role="group" aria-label="층">${F.map((f,k)=>`<button type="button" data-rlyf="${k}" aria-pressed="${A.lyF===k}">${esc(f.name)}${f.builtin?'':' ·'}</button>`).join('')}</div></div>
   <div class="panel"><div class="spread"><div><b>도면</b> <span class="hint">${Fl.builtin?'지금 층: 기본 도면(2026 겨울 객실배치도)':`지금 층: 시트 「${esc(Fl.tab)}」에서 불러옴 · ${esc(String(Fl.at||'').slice(0,16))}${Fl.borders==='guess'?' · 테두리는 추정':''}`} · 층 이름 옆 · = 시트에서 불러온 층</span></div>
     <div class="row" style="gap:6px"><button class="btn small primary" type="button" id="r_lyImp" ${tabs.length?'':'disabled'}>도면 불러오기 (${tabs.length}탭)</button></div></div>
-    <p class="hint" style="margin:6px 0 0">접수 DB 시트에 층마다 「배치도 Stay 1F」처럼 <b>「배치도」로 시작하는 탭</b>을 만들어 그리면 돼요 (칸 크기 · 병합 · 색 · 테두리 그대로). 방번호(S101 꼴)를 적은 칸 <b>바로 아래 칸</b>에 올해 배정이 보여요. 탭 순서 = 층 버튼 순서.${tabs.length?' 지금 탭: '+tabs.map(esc).join(', '):''}</p>
+    <div class="row" style="gap:6px;margin-top:8px;flex-wrap:nowrap"><label class="cap" for="r_lySrc" style="margin:0;white-space:nowrap">도면 시트 주소</label><input type="url" id="r_lySrc" value="${esc((R.cfg||{}).layoutSrc||'')}" placeholder="https:\/\/docs.google.com/spreadsheets/d/… (비우면 이 접수 DB 시트)" style="flex:1;min-width:0"><button class="btn small" type="button" id="r_lySrcSave">주소 저장</button></div>
+    ${R.layoutErr?`<div class="note bad" style="margin-top:6px">${esc(R.layoutErr)}</div>`:''}
+    <p class="hint" style="margin:6px 0 0">그 시트에서 이름에 <b>「배치도」가 든 탭</b>을 층마다 하나씩 읽어요 (예: 배치도 Stay 1F · 객실배치도 · 스테이 2층 배치도). 칸 크기 · 병합 · 색 · 테두리 그대로, 방번호(S101 꼴)를 적은 칸 <b>바로 아래 칸</b>에 올해 배정이 보여요. 탭 순서 = 층 버튼 순서, 숨긴 탭은 안 읽어요. 다른 시트를 쓰면 관리자 계정이 그 시트를 볼 수 있게 공유해 주세요.${tabs.length?' 지금 탭: '+tabs.map(esc).join(', '):''}</p>
     ${res?`<div class="note" style="margin-top:8px">${res.map(x=>`<div><b>${esc(x.tab)}</b> · 방 ${x.rooms}개${x.added.length?` · 새로 더한 방: ${x.added.map(esc).join(', ')}`:''}${x.missing.length?` · <span class="pill due">도면에 없는 방 ${x.missing.length}</span> ${x.missing.map(m=>`<span class="row" style="gap:4px;display:inline-flex">${esc(m.no)}${m.used?` (배정 있음) → <select data-rmvto="${esc(m.no)}"><option value="">옮길 방</option>${R.rooms.filter(r=>!used(r)&&r.no!==m.no&&x.added.includes(r.no)).concat(R.rooms.filter(r=>!used(r)&&r.no!==m.no&&!x.added.includes(r.no)&&r.fl===m.fl)).slice(0,40).map(r=>`<option>${esc(r.no)}</option>`).join('')}</select><button class="btn small" type="button" data-rmv="${esc(m.no)}">배정 옮기기</button>`:''}</span>`).join(' ')}`:''}${x.borders==='guess'?' · 테두리를 읽지 못해 글 · 색이 있는 칸에 선을 그렸어요':''}</div>`).join('')}</div>`:''}</div>
   ${editor()}
   <div class="sheetwrap"><table class="sheet"><colgroup>${Fl.cw.map(w=>`<col style="width:${w}px">`).join('')}</colgroup><tbody>${html}</tbody></table></div>
@@ -1221,6 +1223,8 @@ document.addEventListener('click',ev=>{if(S.tab!=='room')return;const b=ev.targe
   if(b.id==='r_save'){save(false);return}
   if(b.id==='r_clear'){save(true);return}
   if(b.id==='r_close'){A.sel='';A.ed=null;render();return}
+  if(b.id==='r_lySrcSave'){const v=(document.getElementById('r_lySrc').value||'').trim();const c=R.cfg||{};b.disabled=true;
+    run('roomCfgSave',[{pubAll:!!c.pubAll,pubAt:c.pubAt||'',names:c.names||[],layoutSrc:v}],r=>{R=r;A.lyRes=null;render();toast(r.layoutErr?r.layoutErr:`도면 시트를 저장했어요 · 도면 탭 ${(r.layoutTabs||[]).length}개`)},m=>{b.disabled=false;toast('저장하지 못했어요 · '+m)});return}
   if(b.id==='r_lyImp'){const tabs=(R.layoutTabs||[]).slice();if(!tabs.length)return;b.disabled=true;const out=[];let i=0;
     const next=()=>{if(i>=tabs.length){A.lyRes=out;load();toast(`도면 ${out.length}탭을 불러왔어요`);return}b.textContent=`불러오는 중 ${i+1}/${tabs.length} · ${tabs[i]}`;
       run('layoutImport',[tabs[i]],r=>{out.push(r);i++;next()},m=>{b.disabled=false;b.textContent='도면 불러오기';toast(tabs[i]+' 을(를) 불러오지 못했어요 · '+m)})};next();return}

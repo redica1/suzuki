@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261024-144027 -->
+<!-- build: 20261024-144917 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -161,6 +161,8 @@ tr.off td{opacity:.5}
 .act .ev.stg2{border-left-style:dashed;background:var(--sunk)}.act .stg{font-size:11px;font-weight:600;padding:0 5px;border-radius:4px;background:var(--rosin-soft);color:var(--rosin)}
 .act .t-les{border-left-color:var(--bar)}.t-orc{border-left-color:var(--ok)}.t-con{border-left-color:var(--rosin)}.t-reh{border-left-color:var(--faint)}.t-spe{border-left-color:var(--accent)}.t-tt{border-left-color:var(--bad)}
 .act .chips2{display:flex;flex-wrap:wrap;gap:3px}
+.act .rgls{display:grid;gap:2px;margin-top:3px}.act .rgl{font-size:12px;line-height:1.55}.act .rgl .rl{font-size:10px;font-weight:600;border-radius:999px;padding:0 5px;background:var(--sunk);color:var(--muted);margin-right:2px}.act .pnm{all:unset;cursor:pointer;border-radius:3px}.act .pnm:hover{text-decoration:underline;color:var(--accent)}.act .pnm:focus-visible{outline:2px solid var(--accent)}.act .pnm.bad{color:var(--bad);font-weight:600}.act .pnm.gone{color:var(--faint);text-decoration:line-through}.act .pnm.swapping{outline:2px dashed var(--rosin);outline-offset:1px}.act .rgl .cm{color:var(--faint)}.act .tt td .rgl button.pnm{display:inline;width:auto;height:auto;padding:0 1px;line-height:inherit;overflow:visible;box-sizing:content-box}.act .tt td .rgl button.pnm:hover{background:none}
+.act .rgl .rl.r-수업{background:var(--accent);color:var(--accent-ink)}.act .rgl .rl.r-보조{background:var(--accent-soft);color:var(--accent)}.act .rgl .rl.r-지휘,.act .rgl .rl.r-사회{background:var(--rosin-soft);color:var(--rosin)}
 .act .pchip{all:unset;cursor:pointer;display:inline-flex;gap:3px;align-items:center;font-size:11.5px;border:1px solid var(--line);border-radius:999px;padding:0 7px 0 2px;background:var(--bg);line-height:1.7}
 .act .pchip .rl{font-size:10px;font-weight:600;border-radius:999px;padding:0 5px;background:var(--sunk);color:var(--muted)}
 .act .pchip.r-수업 .rl{background:var(--accent);color:var(--accent-ink)}
@@ -516,8 +518,12 @@ const goneTxt=id=>{const p=pBy(id);return p&&p.cx?'취소':'명단 밖'};
 function chip(e,p,i){const k=e.id+'|'+p.n;if(gone(p.n))return `<button type="button" class="pchip gone" data-achip="${e.id}|${i}" title="${esc(LB(p.n))} · ${goneTxt(p.n)} — 이 칸에서 빼고 다른 분을 넣어 주세요"><span class="rl">${p.r}</span>${esc(short(NAME(p.n)))} (${goneTxt(p.n)})</button>`;const bad=ST.clash.has(k)?'겹침':ST.off.has(k)?'못 오는 날':'';
   const sw=A.swap&&A.swap.eid===e.id&&A.swap.i===i;
   return `<button type="button" class="pchip ${bad?'bad':''} ${sw?'swapping':''} r-${p.r}" data-achip="${e.id}|${i}" title="${esc(LB(p.n))} · ${p.r}${bad?' · '+bad:''}"><span class="rl">${p.r}</span>${esc(short(NAME(p.n)))}${TAG(p.n)?`<small class="dtag">${esc(TAG(p.n))}</small>`:''}</button>`}
+/* 표 칸: 역할 하나에 이름을 쉼표로 (예: 연주 황선영, 곽은수, 오영근) · 이름을 누르면 바꾸기 */
+function chipsByRole(e){if(!e.ppl.length)return '';const G=[];e.ppl.forEach((p,i)=>{let g=G.find(x=>x.r===p.r);if(!g)G.push(g={r:p.r,L:[]});g.L.push({p,i})});
+  return `<div class="rgls">${G.map(g=>`<div class="rgl"><span class="rl r-${esc(g.r)}">${esc(g.r)}</span> ${g.L.map(({p,i})=>{const k=e.id+'|'+p.n,go=gone(p.n),bad=ST.clash.has(k)?'겹침':ST.off.has(k)?'못 오는 날':'',sw=A.swap&&A.swap.eid===e.id&&A.swap.i===i;
+    return `<button type="button" class="pnm ${go?'gone':''} ${bad?'bad':''} ${sw?'swapping':''}" data-achip="${e.id}|${i}" title="${esc(LB(p.n))} · ${esc(p.r)}${go?' · '+goneTxt(p.n):''}${bad?' · '+bad:''}${TAG(p.n)?' · '+esc(TAG(p.n)):''}">${esc(short(NAME(p.n)))}${go?`(${goneTxt(p.n)})`:''}</button>`}).join('<span class="cm">, </span>')}</div>`).join('')}</div>`}
 function cellEv(e){const tt=tgTxt(e.tg);const first=[...(tt?[`<span class="tgline">${esc(tt)}</span>`]:[]),...e.desc.slice(0,tt?1:2).map(esc)].join('<br>');
-  return `<div class="ev ${TCLS_C[e.cat]||''} ${e.cat==='공연'&&e.stage&&e.stage!=='본공연'?'stg2':''} ${A.sel===e.id?'on':''}" data-aev="${e.id}"><div class="evh"><b>${evLabel(e)}</b><span class="num tm">${e.s}~${e.e}</span></div>${first?`<small>${first}</small>`:''}<div class="chips2">${e.ppl.map((p,i)=>chip(e,p,i)).join('')}</div></div>`}
+  return `<div class="ev ${TCLS_C[e.cat]||''} ${e.cat==='공연'&&e.stage&&e.stage!=='본공연'?'stg2':''} ${A.sel===e.id?'on':''}" data-aev="${e.id}"><div class="evh"><b>${evLabel(e)}</b><span class="num tm">${e.s}~${e.e}</span></div>${first?`<small>${first}</small>`:''}${chipsByRole(e)}</div>`}
 function vGrid(){
   const d=A.day, rooms=D.rooms[d]||[], evs=D.events.filter(e=>e.d===d), meals=D.meals.filter(m=>m.d===d);
   const extra=((D.rows||{})[d]||[]);

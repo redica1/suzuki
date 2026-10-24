@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261024-132121 -->
+<!-- build: 20261024-132531 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -36,6 +36,8 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font
 .tabs2 .cnt{display:inline-block;min-width:18px;padding:0 5px;margin-left:5px;border-radius:9px;background:var(--rosin);color:#fff;font-size:11.5px;text-align:center}
 .tabs button:focus-visible,.tabs2 button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .mfs{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--surface)}.mfs button{all:unset;cursor:pointer;padding:6px 12px;font-size:13.5px}.mfs button[aria-pressed=true]{background:var(--accent);color:var(--accent-ink);font-weight:600}.mfs button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.numlink{all:unset;cursor:pointer;color:var(--accent);font-weight:600;text-decoration:underline;text-underline-offset:3px;padding:0 2px;border-radius:4px}.numlink:hover{background:var(--accent-soft)}.numlink:focus-visible{outline:2px solid var(--accent)}
+.askbox.popbox{width:min(880px,94vw);max-width:none}.popbox table td,.popbox table th{white-space:nowrap}
 .pill.mem{background:var(--accent-soft);color:var(--accent)}.pill.gst{background:var(--rosin-soft);color:var(--rosin)}
 .tabs .cnt{display:inline-block;min-width:18px;padding:0 5px;margin-left:5px;border-radius:9px;background:var(--rosin);color:#fff;font-size:11.5px;text-align:center}
 main.wrap{padding-top:28px;padding-bottom:60px}
@@ -214,6 +216,9 @@ function call(fn,args,ok,msg,tries){if(roBlock(fn)){toast(RO_MSG);return}tries=t
   busy(false);if(/로그인이 끝났/.test(m)){try{sessionStorage.removeItem('campAdmTok')}catch(x){}S.tok='';S.D=null;render();toast('로그인 시간이 끝났어요. 다시 로그인해 주세요.');return}
   toast('안 됐어요 · '+(/BUSY/.test(m)?'지금 접속이 많아요. 잠시 뒤 다시 해 주세요.':m))})[fn](S.tok,...args)}
 function goTab(t){if(!t)return;if(t==='staff'&&S.tab!=='staff'){S.SF=null;S.sf=null}if((t==='camp'||t==='cons')&&S.tab!==t&&!ccDirty())S.cc=null;if(t==='cons'){S.consR=null;S.consL=0}if(t==='schol'&&S.tab!=='schol'&&!scDirty()){S.SC=null;S.sc=null}if(S.tab==='act'&&t!=='act')ACT.flush();if(S.tab==='con'&&t!=='con')CORD.flush();S.tab=t;render()}
+/* 한글 입력: 글자를 조합하는 동안에는 다시 그리지 않음 (다시 그리면 「ㅎㅏㄴ」처럼 깨짐) → 조합이 끝나면 한 번 */
+document.addEventListener('input',e=>{if(e.isComposing&&e.target.matches&&e.target.matches('input[type=search],input[type=text]'))e.stopImmediatePropagation()},true);
+document.addEventListener('compositionend',e=>{const t=e.target;if(t.matches&&t.matches('input[type=search],input[type=text]'))setTimeout(()=>{if(document.body.contains(t))t.dispatchEvent(new Event('input',{bubbles:true}))},0)},true);
 function whoTxt(){const m=S.D&&S.D.me,w=document.getElementById('who');if(!m||!w)return;w.textContent=m.sup?(/자동/.test(m.name)?'관리자 '+m.name.replace('(자동)','')+' (테스트 자동 로그인)':'총관리자 '+m.name):'담당자 '+m.name+' 선생님'}
 function setData(d){if(Array.isArray(d.scholar)&&typeof SCHOLAR!=='undefined'){SCHOLAR.length=0;d.scholar.forEach(t=>SCHOLAR.push(t))}if(S.D){if(!d.me&&S.D.me)d.me=S.D.me;if(!d.camp&&S.D.camp)d.camp=S.D.camp}S.D=d;applyCampAdm(d.camp);whoTxt();document.getElementById('sync').textContent='불러온 시각 '+new Date().toTimeString().slice(0,5);render()}
 function ask(title,body,ok,okLabel,input){const bg=document.createElement('div');bg.className='askbg';
@@ -1081,6 +1086,9 @@ function scClick(b,d){if(S.tab!=='schol'&&S.tab!=='cons')return false;
 const PERM_V=[['','없음'],['보기','보기'],['편집','편집']];
 function stLoad(){S.sfLoading=true;call('staffData',[],r=>{S.sfLoading=false;S.SF=r;S.sf=JSON.parse(JSON.stringify(r.staff));render()},'담당자를 불러오고 있어요…')}
 const sfDirty=()=>S.SF&&S.sf&&JSON.stringify(S.sf)!==JSON.stringify(S.SF.staff);
+function sfCandHTML(){const q=(S.sfq||'').trim().replace(/\s/g,'');if(!q||!S.SF)return '';const have=new Set(S.sf.map(s=>s.tid));
+  const cand=S.SF.teachers.filter(t=>!have.has(t.id)&&(t.name.replace(/\s/g,'').includes(q)||(t.acad||'').replace(/\s/g,'').includes(q))).slice(0,12);
+  return `<div class="row" style="gap:6px;margin-top:8px">${cand.map(t=>`<button class="btn small" type="button" data-sfadd="${esc(t.id)}">＋ ${esc(t.name)} <small class="faint">${esc(t.acad||'')}${t.inst?' · '+esc(t.inst):''}</small></button>`).join('')||'<span class="hint">맞는 교사 회원이 없어요 (이미 담당자이거나 명단에 없음)</span>'}</div>`}
 const sfPill=()=>sfDirty()?'<span class="pill due">저장 안 한 변경 있음</span><button class="btn small ghost" type="button" data-sfreset="1">되돌리기</button>':'';
 function vStaff(){if(!S.SF){if(!S.sfLoading)setTimeout(stLoad,0);return '<div class="panel hint">담당자를 불러오고 있어요…</div>'}
   const L=S.sf,T=S.SF.tabs,q=(S.sfq||'').trim().replace(/\s/g,'');
@@ -1089,8 +1097,8 @@ function vStaff(){if(!S.SF){if(!S.sfLoading)setTimeout(stLoad,0);return '<div cl
   return `<div class="panel"><div class="spread"><div><b>담당자 · 권한</b> <span class="hint">교사 회원 중에서 골라 메뉴마다 「편집 / 보기 / 없음」을 정해요 · 담당자는 관리자 화면에서 「담당 선생님」으로 이름 + 휴대전화로 들어와요</span></div>
     <div class="row" style="gap:6px"><span id="sfDirty" class="row" style="gap:6px">${sfPill()}</span><button class="btn small primary" type="button" data-sfsave="1">저장</button></div></div>
     <div class="row" style="gap:6px;margin-top:10px"><input type="search" id="sfq" placeholder="담당자 추가: 교사 이름이나 학원" value="${esc(S.sfq||'')}" style="min-width:240px;padding:6px 9px;border:1px solid var(--line);border-radius:6px;font:inherit;background:var(--surface);color:var(--ink)"></div>
-    ${q?`<div class="row" style="gap:6px;margin-top:8px">${cand.map(t=>`<button class="btn small" type="button" data-sfadd="${esc(t.id)}">＋ ${esc(t.name)} <small class="faint">${esc(t.acad||'')}${t.inst?' · '+esc(t.inst):''}</small></button>`).join('')||'<span class="hint">맞는 교사 회원이 없어요 (이미 담당자이거나 명단에 없음)</span>'}</div>`:''}</div>
-  <div class="panel tbl"><table class="pft sft"><thead><tr><th>담당자</th><th>사용</th>${T.map(([k,l])=>`<th class="c">${esc(l)}</th>`).join('')}<th>한 번에</th><th>메모</th><th></th></tr></thead><tbody>
+    <div id="sfCand">${sfCandHTML()}</div></div>
+    <div class="panel tbl"><table class="pft sft"><thead><tr><th>담당자</th><th>사용</th>${T.map(([k,l])=>`<th class="c">${esc(l)}</th>`).join('')}<th>한 번에</th><th>메모</th><th></th></tr></thead><tbody>
   ${L.map((s,i)=>`<tr class="${s.on?'':'off'}"><td><b>${esc(s.name)}</b><br><small class="faint">${esc(s.acad||'')}</small></td><td class="c"><input type="checkbox" data-sf="${i}|on" ${s.on?'checked':''} aria-label="사용"></td>
     ${T.map(([k,l])=>`<td><select data-sf="${i}|p|${k}" aria-label="${esc(l)}" class="pv${s.perms[k]==='편집'?' e':s.perms[k]==='보기'?' v':''}">${PERM_V.map(([v,t])=>`<option value="${v}" ${(s.perms[k]||'')===v?'selected':''}>${t}</option>`).join('')}</select></td>`).join('')}
     <td><div class="row" style="gap:4px;flex-wrap:nowrap"><button class="btn small ghost" type="button" data-sfall="${i}|보기">모두 보기</button><button class="btn small ghost" type="button" data-sfall="${i}|">모두 없음</button></div></td>
@@ -1098,7 +1106,7 @@ function vStaff(){if(!S.SF){if(!S.sfLoading)setTimeout(stLoad,0);return '<div cl
     <td><button class="btn small ghost" type="button" data-sfdel="${i}">빼기</button></td></tr>`).join('')||`<tr><td colspan="${T.length+5}" class="hint">아직 담당자가 없어요. 위 칸에 교사 이름을 넣어 추가해 주세요.</td></tr>`}
   </tbody></table></div>
   <div class="panel hint">· <b>편집</b> = 보고 바꿀 수 있음 · <b>보기</b> = 볼 수만 있음 (저장은 서버가 막아요) · <b>없음</b> = 메뉴가 안 보임<br>· 「캠프 설정」·「담당자」는 총관리자(아이디·비밀번호)만 써요. 권한을 바꾸면 담당자가 다음에 무엇을 누를 때부터 바로 적용돼요.<br>· 모든 메뉴에서 접수 명단(이름·학원)은 보여요. 휴대전화·계좌 같은 개인정보는 해당 메뉴(취소 · 환불 등)에 권한이 있을 때만 쓰세요.</div>`}
-document.addEventListener('input',e=>{const t=e.target;if(t.id==='sfq'){S.sfq=t.value;render();keepFocus('sfq');return}
+document.addEventListener('input',e=>{const t=e.target;if(t.id==='sfq'){S.sfq=t.value;const c=document.getElementById('sfCand');if(c)c.innerHTML=sfCandHTML();return}
   if(!t.dataset||!t.dataset.sf||!S.sf)return;const [i,k,tab]=t.dataset.sf.split('|');const s=S.sf[+i];if(!s)return;
   if(k==='on'){s.on=t.checked;render()}else if(k==='memo'){s.memo=t.value;const p=document.getElementById('sfDirty');if(p)p.innerHTML=sfPill()}else if(k==='p'){if(t.value)s.perms[tab]=t.value;else delete s.perms[tab];render()}});
 document.addEventListener('change',e=>{const t=e.target;if(t.dataset&&t.dataset.sf&&t.tagName==='SELECT'&&S.sf){const [i,k,tab]=t.dataset.sf.split('|');const s=S.sf[+i];if(s&&k==='p'){if(t.value)s.perms[tab]=t.value;else delete s.perms[tab];render()}}});
@@ -1114,7 +1122,7 @@ function statRows(){const L=[];(S.D.subs||[]).forEach(sb=>sb.ppl.filter(p=>p.sta
   L.push({sb,p,i,acad:sb.acad,round:sb.round||'-',kind:p.kind,type:p.type||i.type||'',inst:p.inst||i.inst||'',prog:i.prog||'',lessons:+i.lessons||0,mc:i.mc||[],concert:i.concert&&i.concert!=='없음'?i.concert:'',song:i.other?[i.oc,i.ot].filter(Boolean).join(' · '):(i.song||''),p1:i.p1||'',p2:i.p2||'',room:!!(sb.form&&sb.form.room&&sb.form.room[k]),bill:pAmt(p),paid:+p.paidAmt||0})}));return L}
 const cnt=(L,f)=>{const m=new Map();L.forEach(x=>{const k=f(x);m.set(k,(m.get(k)||0)+1)});return [...m].sort((a,b)=>b[1]-a[1])};
 const SVIEW=[['acad','학원별'],['type','전체 참가자격별'],['tch','교사별'],['inst','악기·진도·권수'],['badge','명찰']];
-function vStat(){const L=statRows(),v=S.sv||'acad';
+function vStat(){Object.keys(POP).forEach(k=>delete POP[k]);const L=statRows(),v=S.sv||'acad';
   const head=`<div class="panel"><div class="spread"><div><b>통계</b> <span class="hint">취소한 사람은 빼고 · 지금 들어온 접수 ${(S.D.subs||[]).length}건 · ${L.length}명</span></div><button class="btn small" type="button" id="reload">새로 불러오기</button></div>
     <div class="row" style="gap:6px;margin-top:8px;flex-wrap:wrap">${SVIEW.map(([k,l])=>`<button class="btn small ${v===k?'primary':''}" type="button" data-sv="${k}">${l}</button>`).join('')}</div></div>`;
   if(!L.length)return head+'<div class="panel hint">아직 접수가 없어요.</div>';
@@ -1166,18 +1174,32 @@ const PROG_LIST = {
 const bookOf=g=>{g=String(g||'');if(/pre/i.test(g))return 'Pre-Twinkle';if(/10권\s*이상/.test(g))return '10권 이상';const m=g.match(/^(\d+)권/);return m?m[1]+'권':(g||'미입력')};
 const pct=(n,t)=>t&&n?Math.round(n*1000/t)/10+'%':'';
 const INST_ORDER=['바이올린','첼로','플루트'];const instSort=(x,y)=>(INST_ORDER.indexOf(x)+1||9)-(INST_ORDER.indexOf(y)+1||9)||x.localeCompare(y,'ko');
+/* 통계 숫자 누르면 그 사람들 (팝업) */
+const POP={};let popN=0;
+function pc(list,label){if(!list.length)return '<span class="faint">0</span>';const k='p'+(++popN);POP[k]={label,list};return `<button type="button" class="numlink" data-pop="${k}" title="누구인지 보기">${list.length}</button>`}
+function popShow(k){const P=POP[k];if(!P)return;const bg=document.createElement('div');bg.className='askbg';
+  const L=P.list.slice().sort((a,b)=>a.acad.localeCompare(b.acad,'ko')||String(a.p.name).localeCompare(b.p.name,'ko'));
+  const tsv=[['이름','학원','구분','악기','권수(진도)','담당 교사','접수번호'],...L.map(x=>[x.p.name,x.acad,x.type,x.inst,x.prog,x.i.teacher||'',x.sb.no])].map(r=>r.map(v=>String(v==null?'':v).replace(/[\t\n]/g,' ')).join('\t')).join('\n');
+  bg.innerHTML=`<div class="askbox popbox" role="dialog" aria-modal="true" aria-label="${esc(P.label)}"><div class="spread"><b style="font-size:16px">${esc(P.label)} · ${L.length}명</b><div class="row" style="gap:6px"><button class="btn small" type="button" data-popcopy>표 복사</button><button class="btn small ghost" type="button" data-x>닫기</button></div></div>
+    <div class="tbl" style="max-height:60vh;overflow:auto"><table><thead><tr><th>#</th><th>이름</th><th>학원</th><th>구분</th><th>악기</th><th>권수 (진도)</th><th>담당 교사</th><th>접수</th></tr></thead><tbody>
+    ${L.map((x,n)=>`<tr><td class="num">${n+1}</td><td><b>${esc(x.p.name)}</b>${x.p.status==='취소요청'?' <small class="faint">(취소 요청)</small>':''}</td><td>${esc(x.acad)}</td><td><small>${esc(x.type==='회원의 악기하는 자녀'?'악기하는 교사자녀':x.type)}</small></td><td>${esc(x.inst||'')}</td><td>${esc(x.prog||'-')}</td><td>${esc(x.i.teacher||'')}</td><td class="num"><small>${esc(x.sb.no)}</small></td></tr>`).join('')}</tbody></table></div></div>`;
+  document.body.appendChild(bg);const close=()=>{bg.remove();document.removeEventListener('keydown',esc_)};const esc_=e=>{if(e.key==='Escape')close()};document.addEventListener('keydown',esc_);
+  bg.addEventListener('click',e=>{if(e.target===bg||e.target.closest('[data-x]'))close();else if(e.target.closest('[data-popcopy]')){try{navigator.clipboard.writeText(tsv).then(()=>toast('복사했어요 · 시트에 붙여넣기'),()=>toast('복사하지 못했어요'))}catch(x){toast('복사하지 못했어요')}}});
+  const f=bg.querySelector('[data-x]');if(f)f.focus()}
+document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-pop]');if(b){e.stopPropagation();popShow(b.dataset.pop)}},true);
 function stInst(L){const P=L.filter(x=>T_TEACH.includes(x.type)||T_PLAY.includes(x.type));const ins=cnt(P,x=>x.inst||'미정').sort((x,y)=>instSort(x[0],y[0]));
-  const top=ST(['악기','교사','학생','합계'],ins.map(([i])=>[esc(i),P.filter(x=>(x.inst||'미정')===i&&T_TEACH.includes(x.type)).length,P.filter(x=>(x.inst||'미정')===i&&T_PLAY.includes(x.type)).length,P.filter(x=>(x.inst||'미정')===i).length]),['합계',P.filter(x=>T_TEACH.includes(x.type)).length,P.filter(x=>T_PLAY.includes(x.type)).length,P.length]);
-  const per=ins.map(([i])=>{const Sx=P.filter(x=>(x.inst||'미정')===i&&T_PLAY.includes(x.type));if(!Sx.length)return '';
+  const iof=x=>x.inst||'미정',isT=x=>T_TEACH.includes(x.type),isS=x=>T_PLAY.includes(x.type);
+  const top=ST(['악기','교사','학생','합계'],ins.map(([i])=>{const G=P.filter(x=>iof(x)===i);return [esc(i),pc(G.filter(isT),i+' 교사'),pc(G.filter(isS),i+' 학생'),pc(G,i+' 전체')]}),['합계',pc(P.filter(isT),'교사 전체'),pc(P.filter(isS),'학생 전체'),pc(P,'교사·학생 전체')]);
+  const per=ins.map(([i])=>{const Sx=P.filter(x=>iof(x)===i&&isS(x));if(!Sx.length)return '';
     const list=PROG_LIST[i]||PROG_LIST['기타'];const known=new Set(list);const extra=[...new Set(Sx.map(x=>x.prog).filter(g=>g&&!known.has(g)))];const all=[...list,...extra];
-    const T=Sx.length,none=Sx.filter(x=>!x.prog).length;
-    const books=[...new Set(all.map(bookOf))];const bc=b=>Sx.filter(x=>x.prog&&bookOf(x.prog)===b).length;
-    const bookTbl=ST(['권수','인원'],books.map(b=>{const n=bc(b);return [esc(b),n||'<span class="faint">0</span>']}).concat(none?[['<span class="faint">진도 미입력</span>',none]]:[]),['총계',T]);
-    const rows=[];books.forEach(b=>{const G=all.filter(g=>bookOf(g)===b);if(G.length>1||G[0]!==b){G.forEach(g=>{const n=Sx.filter(x=>x.prog===g).length;rows.push(['&nbsp;&nbsp;'+esc(g),n||'<span class="faint">0</span>'])});rows.push([`<b>${esc(b)} 총계</b>`,`<b>${bc(b)}</b>`])}
-      else{const n=bc(b);rows.push([esc(b),n||'<span class="faint">0</span>'])}});
-    if(none)rows.push(['<span class="faint">진도 미입력</span>',none]);
-    const progTbl=ST(['현재 진도','인원'],rows,['총계',T]);
-    return `<div class="panel"><div class="spread"><b>${esc(i)} 학생 ${T}명</b> <span class="hint">학생 + 악기하는 교사자녀</span><span class="hint">권수는 현재 진도에서 셈 (1권A·1권B → 1권)</span></div><div class="stgrid"><div><b class="hint">권수별</b>${bookTbl}</div><div><b class="hint">진도별</b>${progTbl}</div></div></div>`}).join('');
+    const T=Sx.length,none=Sx.filter(x=>!x.prog);
+    const books=[...new Set(all.map(bookOf))];const bl=b=>Sx.filter(x=>x.prog&&bookOf(x.prog)===b);
+    const bookTbl=ST(['권수','인원'],books.map(b=>[esc(b),pc(bl(b),i+' '+b)]).concat(none.length?[['<span class="faint">진도 미입력</span>',pc(none,i+' 진도 미입력')]]:[]),['총계',pc(Sx,i+' 학생 전체')]);
+    const rows=[];books.forEach(b=>{const G=all.filter(g=>bookOf(g)===b);if(G.length>1||G[0]!==b){G.forEach(g=>{rows.push(['&nbsp;&nbsp;'+esc(g),pc(Sx.filter(x=>x.prog===g),i+' '+g)])});rows.push([`<b>${esc(b)} 총계</b>`,pc(bl(b),i+' '+b)])}
+      else rows.push([esc(b),pc(bl(b),i+' '+b)])});
+    if(none.length)rows.push(['<span class="faint">진도 미입력</span>',pc(none,i+' 진도 미입력')]);
+    const progTbl=ST(['현재 진도','인원'],rows,['총계',pc(Sx,i+' 학생 전체')]);
+    return `<div class="panel"><div class="spread"><b>${esc(i)} 학생 ${T}명</b> <span class="hint">학생 + 악기하는 교사자녀</span><span class="hint">권수는 현재 진도에서 셈 (1권A·1권B → 1권) · 숫자를 누르면 누구인지 보여요</span></div><div class="stgrid"><div><b class="hint">권수별</b>${bookTbl}</div><div><b class="hint">진도별</b>${progTbl}</div></div></div>`}).join('');
   return top+per}
 /* 2026 여름 「학원별인원통계」「명찰통계」와 같은 표 */
 const TYPE_ORDER=['교사','연수생','소속없는 중급연수생','학생','회원의 악기하는 자녀','회원의 첫번째 보호자','회원의 그외 악기 안하는 동반가족','동반가족 중 돌전아기','비회원 학생','비회원 보호자','비회원 동반가족','비회원 돌전아기'];

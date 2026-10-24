@@ -1,4 +1,4 @@
-/* build: 20261024-145336 */
+/* build: 20261024-150810 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -876,6 +876,109 @@ function consentData(token) {
   return { rows: L.reverse().slice(0, 1000), total: L.length };
 }
 
+
+/* ---------------- 프로그램표 → 구글 시트 (교사 일정 › 「구글 시트로 보내기」) ----------------
+ * 따로 만든 스프레드시트(설정 「프로그램표 시트」에 ID)에 날짜마다 탭 하나 + 「참가교사」 탭. 보낼 때마다 덮어씀 */
+const ACT_BOOKDESC = { Vn: { 'Pre': ['프리 트윙클', 'Pre-Twinkle'], '1A': ['~ 무궁동', '~ Perpetual Motion'], '1B': ['알레그레토 ~', 'Allegretto ~'], '2A': ['~ 헨델 부레', '~ Handel Bourrée'], '2B': ['두 사람의 척탄병 ~', 'Two Grenadiers ~'], '3A': ['~ 유모레스크', '~ Humoresque'], '3B': ['베커 가보트 ~', 'Becker Gavotte ~'], '4A': ['~ 자이츠 5번 3악장', "~ Seitz No.5 3rd mov't"], '4B': ['비발디 가단조 ~', 'Vivaldi in A minor ~'] }, Vc: { 'Pre': ['프리 트윙클', 'Pre-Twinkle'] }, Fl: { 'Pre': ['프리 트윙클', 'Pre-Twinkle'] } };
+const ACT_EN = { '공연': 'Concert', '레슨': 'Lesson', '업무': 'Duty', '본공연': '', '리허설': 'Rehearsal', '무대 세팅': 'Stage Setting', '그룹레슨': 'Group Lesson', '교사연수': 'Teacher Training', '마스터클래스': 'Master Class', '식당': 'Dining' };
+const WD_EN = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'], MON_EN = ['Jan.', 'Feb.', 'Mar.', 'Apr.', 'May', 'Jun.', 'Jul.', 'Aug.', 'Sep.', 'Oct.', 'Nov.', 'Dec.'];
+const ord_ = n => n + (n % 10 === 1 && n !== 11 ? 'st' : n % 10 === 2 && n !== 12 ? 'nd' : n % 10 === 3 && n !== 13 ? 'rd' : 'th');
+/** 대상 토큰 → 글: 1 · 1A · 4B+ · 7+ (이어진 권 전체 3개 이상은 1~3) */
+function tgTok_(L) {
+  const BK = ['Pre', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10'];
+  const P = (L || []).map(t => { const m = String(t).match(/^(Pre|\d+)([AB]*)(\+?)$/); return m ? { bk: m[1], pt: m[2], up: !!m[3] } : null; }).filter(Boolean).sort((a, b) => BK.indexOf(a.bk) - BK.indexOf(b.bk));
+  const lab = o => o.bk + (o.pt || '') + (o.up ? ' 이상' : '');
+  const out = []; let run = [];
+  const flush = () => { if (run.length > 2) out.push(run[0].bk + '~' + run[run.length - 1].bk); else run.forEach(o => out.push(lab(o))); run = []; };
+  P.forEach(o => { const plain = !o.pt && !o.up && o.bk !== 'Pre'; if (plain && run.length && +o.bk === +run[run.length - 1].bk + 1) run.push(o); else { flush(); if (plain) run.push(o); else out.push(lab(o)); } });
+  flush(); return { txt: out.join(', '), one: P.length === 1 ? P[0] : null };
+}
+function progCell_(e, c, nameOf) {
+  const en = Object.assign({}, ACT_EN, c.en || {}), BD = c.bookDesc || ACT_BOOKDESC, short = c.roleShort || {};
+  const L = [], tg = e.tg || {}, insts = ['Vn', 'Vc', 'Fl'].filter(k => tg[k] && ((tg[k].b || []).length || (tg[k].x || []).length || (tg[k].s || []).length || tg[k].m));
+  const stage = e.stage && e.stage !== '본공연' ? e.stage : '';
+  if (insts.length) {
+    if (e.cat !== '레슨' || (e.title && e.title !== '그룹레슨')) L.push(e.title + (stage ? ' ' + stage : '') + (en[e.title] ? ' / ' + en[e.title] + (stage && en[stage] ? ' ' + en[stage] : '') : ''));
+    const ko = [], eng = [];
+    insts.forEach(k => {
+      const t = tg[k], r = tgTok_(t.b), d = r.one ? ((BD[k] || {})[r.one.bk + r.one.pt] || null) : null;
+      ko.push([k + (r.txt ? ' ' + r.txt : ''), ...(t.x || [])].join(' ') + (d && d[0] ? '(' + d[0] + ')' : ''));
+      if (d && d[1]) eng.push(d[1]);
+      if ((t.s || []).length || t.m) ko.push([...(t.s || []), t.m || ''].filter(Boolean).join(', '));
+    });
+    L.push(...ko); if (eng.length) L.push(eng.join(' / '));
+  } else {
+    L.push(e.title + (stage ? ' ' + stage : ''));
+    const E = [en[e.title] || '', stage ? (en[stage] || '') : ''].filter(Boolean).join(' / ');
+    if (E) L.push(E);
+  }
+  if (e.sub) L.push(e.sub);
+  (e.desc || []).forEach(x => L.push(x));
+  const order = ((c.roleSets || {})[e.cat] || []).slice(); e.ppl.forEach(p => { if (!order.includes(p.r)) order.push(p.r); });
+  const G = order.map(r => ({ r, n: e.ppl.filter(p => p.r === r).map(p => nameOf(p.n)) })).filter(g => g.n.length);
+  G.forEach((g, i) => { if (i === 0 && (e.cat === '레슨')) g.n.forEach(n => L.push(n)); else L.push((short[g.r] || g.r) + ': ' + g.n.join(', ')); });
+  return L.join('\n');
+}
+function exportProgram(token) {
+  const a = adm_(token); if (!a.sup && !a.perms.act) throw new Error('교사 일정 권한이 있어야 보낼 수 있어요.');
+  const c = actCfg_(), C = camp_(); const evs = actEvents_().map(e => Object.assign(e, { cat: ['공연', '레슨', '업무'].includes(e.type) ? e.type : ({ 오케스트라: '공연', 오후음악회: '공연', 음악회: '공연', 리허설: '공연', 대기: '업무' })[e.type] || '레슨' }));
+  const ppl = actPeople_(c.people); const nm = {}; ppl.forEach(p => nm[p.id] = p.n); const nameOf = id => nm[id] || String(id).replace(/^[CP]:/, '');
+  let ss = null, id = setting_('프로그램표 시트');
+  if (id) { try { ss = SpreadsheetApp.openById(id); } catch (x) { ss = null; } }
+  if (!ss) {
+    ss = SpreadsheetApp.create(C.base.name + ' 프로그램표 (관리자에서 보내면 덮어씀)');
+    ensureSettings_(); const st = SpreadsheetApp.getActive().getSheetByName('설정'); const r = rows_('설정').find(x => String(x['항목']) === '프로그램표 시트');
+    if (r) st.getRange(r._row, 2).setValues([[ss.getId()]]); else st.appendRow(['프로그램표 시트', ss.getId(), '교사 일정 › 구글 시트로 보내기 결과 파일 (지우면 새로 만듦)']);
+  }
+  const days = c.days || [], tabs = [];
+  const start = String(C.base.start || ''), dt0 = /^\d{4}-\d{2}-\d{2}$/.test(start) ? new Date(start + 'T00:00:00+09:00') : null;
+  const tabName = s => String(s).replace(/[\/\\?*:\[\]]/g, '.').slice(0, 90);
+  days.forEach((dl, d) => {
+    const rooms = (c.rooms || {})[d] || [], E = evs.filter(e => e.d === d), M = (c.meals || []).filter(m => m.d === d);
+    const starts = [...new Set([...E.map(e => e.s), ...M.map(m => m.s)])].sort();
+    const W = rooms.length + 1, V = [], F = [];   // 값 · 칸 색
+    const dt = dt0 ? new Date(dt0.getTime() + d * 864e5) : null;
+    const note = (c.dayNotes || [])[d] || '';
+    V.push([note].concat(Array(W - 1).fill(''))); F.push(Array(W).fill(null));
+    V.push([dt ? `${dt.getMonth() + 1}월 ${dt.getDate()}일 스케쥴     ${MON_EN[dt.getMonth()]} ${ord_(dt.getDate())} ${WD_EN[dt.getDay()]} Schedule` : dl + ' 스케쥴'].concat(Array(W - 1).fill(''))); F.push(Array(W).fill(null));
+    V.push([''].concat(rooms.map(r => r[0]))); F.push(Array(W).fill('#e8eef0'));
+    V.push([''].concat(rooms.map(r => r[1] || ''))); F.push(Array(W).fill('#e8eef0'));
+    const mealRows = [];
+    starts.forEach(t => {
+      const ms = M.filter(m => m.s === t);
+      ms.forEach(m => { mealRows.push(V.length); V.push([m.s + '-' + m.e, m.t].concat(Array(W - 2).fill(''))); F.push(Array(W).fill('#f1f1f1')); });
+      const here = E.filter(e => e.s === t); if (!here.length) return;
+      const ends = here.map(e => e.e).sort(), endMain = ends[0];
+      const row = [t + '-' + endMain], col = [null];
+      rooms.forEach(r => { const xs = here.filter(e => e.room === r[0]); row.push(xs.map(e => (e.e !== endMain ? e.s + '-' + e.e + '\n' : '') + progCell_(e, c, nameOf)).join('\n\n')); col.push(xs.length ? ({ 공연: '#fdf3e1', 레슨: '#e9f4f5', 업무: '#f3f3f3' })[xs[0].cat] : null); });
+      V.push(row); F.push(col);
+    });
+    const name = tabName(dl + ' 프로그램'); tabs.push(name);
+    let sh = ss.getSheetByName(name); if (!sh) sh = ss.insertSheet(name); else { sh.clear(); try { sh.getRange(1, 1, sh.getMaxRows(), sh.getMaxColumns()).breakApart(); } catch (x) {} }
+    sh.getRange(1, 1, V.length, W).setValues(V);
+    const all = sh.getRange(1, 1, V.length, W);
+    all.setWrap(true).setVerticalAlignment('top').setFontSize(10);
+    sh.getRange(1, 1, 1, W).merge().setFontColor('#b4423a'); sh.getRange(2, 1, 1, W).merge().setFontWeight('bold').setFontSize(13);
+    sh.getRange(3, 1, 2, W).setFontWeight('bold').setHorizontalAlignment('center');
+    sh.getRange(3, 1, V.length - 2, W).setBorder(true, true, true, true, true, true, '#c9d3d7', SpreadsheetApp.BorderStyle.SOLID);
+    sh.getRange(5, 1, Math.max(1, V.length - 4), 1).setFontWeight('bold');
+    sh.getRange(1, 1, V.length, W).setBackgrounds(F.map(r => r.map(x => x || '#ffffff')));
+    mealRows.forEach(r => sh.getRange(r + 1, 2, 1, W - 1).merge().setHorizontalAlignment('center'));
+    sh.setColumnWidth(1, 90); for (let k = 2; k <= W; k++) sh.setColumnWidth(k, 150);
+    sh.setFrozenRows(4); sh.setFrozenColumns(1);
+  });
+  // 참가교사 (학원 · 악기 · 교사)
+  const TT = ['교사', '연수생', '소속없는 중급연수생'], T = {};
+  loadSubs_().forEach(sb => sb.ppl.forEach(p => { if (p.status === '취소' || !TT.includes(p.type)) return; const k = sb.acad + '|' + (p.inst || ''); (T[k] = T[k] || []).push(p.name); }));
+  const TV = [['학원', '악기', '교사']].concat(Object.keys(T).sort((x, y) => x.localeCompare(y, 'ko')).map(k => { const [ac, ins] = k.split('|'); return [ac, ({ 바이올린: 'Vn', 첼로: 'Vc', 플루트: 'Fl', 비올라: 'Va' })[ins] || ins, T[k].join(', ')]; }));
+  let ts = ss.getSheetByName('참가교사'); if (!ts) ts = ss.insertSheet('참가교사'); else ts.clear();
+  ts.getRange(1, 1, TV.length, 3).setValues(TV); ts.getRange(1, 1, 1, 3).setFontWeight('bold'); ts.setColumnWidth(1, 160); ts.setColumnWidth(3, 420); ts.setFrozenRows(1); tabs.push('참가교사');
+  // 처음 만들 때 생긴 빈 「시트1」 지우기 · 날짜 순서대로
+  ss.getSheets().forEach(s => { if (!tabs.includes(s.getName()) && s.getLastRow() === 0 && ss.getSheets().length > 1) ss.deleteSheet(s); });
+  log_(a.name, '프로그램표 보냄', tabs.length + '탭');
+  return { ok: true, url: ss.getUrl(), tabs };
+}
+
 /* ---------------- 담당자 · 권한 (「담당자」 시트) ----------------
  * 관리자 아이디·비밀번호 = 총관리자 (모든 메뉴 + 캠프 설정 + 담당자)
  * 담당자 = 교사 회원 중에서 골라 메뉴마다 편집 / 보기 / 없음 → 관리자 화면에 이름 + 휴대전화로 로그인 */
@@ -1195,7 +1298,7 @@ const ACT_ROLESETS = { '공연': ['지휘', '반주자', '통역', '객석정리
 /** 대상 칩 { Vn:{b:[권], x:[지정학생…], m:메모}, Vc, Fl } → 시트에는 JSON (빈 악기는 뺌) */
 function tgClean_(tg) { const o = {}; ['Vn', 'Vc', 'Fl'].forEach(k => { const v = (tg || {})[k]; if (!v) return; const b = (v.b || []).map(x => String(x).slice(0, 6)).filter(x => /^(Pre|\d{1,2})[AB]{0,2}\+?$/.test(x)).slice(0, 20), x = (v.x || []).map(y => String(y).slice(0, 10)).slice(0, 6), m = String(v.m || '').slice(0, 60), sg = (v.s || []).map(y => String(y).slice(0, 40)).slice(0, 12); if (b.length || x.length || m || sg.length) o[k] = { b, x, m, s: sg }; }); return Object.keys(o).length ? JSON.stringify(o) : ''; }
 const evName_ = e => e.title + (e.stage && e.stage !== '본공연' ? ' ' + e.stage : '') + (e.sub ? ' · ' + e.sub : '');
-const ACT_KEYS = ['days', 'rooms', 'meals', 'rows', 'people', 'unav', 'req', 'target', 'kinds', 'stages', 'roleSets', 'tgSongs', 'rev'];
+const ACT_KEYS = ['days', 'rooms', 'meals', 'rows', 'people', 'unav', 'req', 'target', 'kinds', 'stages', 'roleSets', 'tgSongs', 'en', 'bookDesc', 'dayNotes', 'roleShort', 'rev'];
 function actSheets_() {
   const ss = SpreadsheetApp.getActive();
   const mk = (n, h) => { let sh = ss.getSheetByName(n); if (!sh) { sh = ss.insertSheet(n); sh.appendRow(h); } return sh; };
@@ -1243,7 +1346,7 @@ function schedData(token) {
   adm_(token);
   const c = actCfg_();
   const log = rows_(SH.ACTLOG).slice(-300).reverse().map(r => ({ at: String(r['일시'] instanceof Date ? Utilities.formatDate(r['일시'], TZ, 'M/d HH:mm') : r['일시']).replace(/^\d{4}-0?(\d+)-0?(\d+)/, '$1/$2'), t: (r['관리자'] ? r['관리자'] + ' · ' : '') + String(r['내용'] || '') }));
-  return { days: c.days || [], rooms: c.rooms || {}, meals: c.meals || [], rows: c.rows || {}, people: actPeople_(c.people), unav: c.unav || {}, req: c.req || {}, target: c.target || { min: 2, max: 6 }, kinds: Array.isArray(c.kinds) && c.kinds.length ? c.kinds : ACT_KINDS, stages: Array.isArray(c.stages) && c.stages.length ? c.stages : ACT_STAGES, roleSets: c.roleSets && typeof c.roleSets === 'object' ? c.roleSets : ACT_ROLESETS, tgSongs: c.tgSongs && typeof c.tgSongs === 'object' ? c.tgSongs : null, rev: +c.rev || 0, events: actEvents_(), log };
+  return { days: c.days || [], rooms: c.rooms || {}, meals: c.meals || [], rows: c.rows || {}, people: actPeople_(c.people), unav: c.unav || {}, req: c.req || {}, target: c.target || { min: 2, max: 6 }, kinds: Array.isArray(c.kinds) && c.kinds.length ? c.kinds : ACT_KINDS, stages: Array.isArray(c.stages) && c.stages.length ? c.stages : ACT_STAGES, roleSets: c.roleSets && typeof c.roleSets === 'object' ? c.roleSets : ACT_ROLESETS, tgSongs: c.tgSongs && typeof c.tgSongs === 'object' ? c.tgSongs : null, en: c.en || ACT_EN, bookDesc: c.bookDesc || ACT_BOOKDESC, dayNotes: c.dayNotes || [], roleShort: c.roleShort || {}, rev: +c.rev || 0, events: actEvents_(), log };
 }
 function schedSave(token, b) {
   const a = adm_(token); need_(a, 'act');
@@ -1265,7 +1368,7 @@ function schedSave(token, b) {
     sh.ev.getRange(1, 1, 1, ACT_HEAD.length).setValues([ACT_HEAD]);   // 머리줄 (「세부」 칸이 없던 시트도 맞춤)
     if (last > 1) sh.ev.getRange(2, 1, last - 1, ACT_HEAD.length).clearContent();
     if (rows.length) sh.ev.getRange(2, 1, rows.length, ACT_HEAD.length).setValues(rows);
-    const val = { days: b.days.map(x => t(x, 30)), rooms: b.rooms || {}, meals: b.meals || [], rows: b.rows || {}, people: (b.people || []).map(p => ({ id: t(p.id, 40), n: t(p.n, 60), acad: t(p.acad, 120), inst: t(p.inst, 20), kind: t(p.kind, 10), tid: p.tid ? t(p.tid, 20) : undefined })), unav: b.unav || {}, req: b.req || {}, target: b.target || { min: 2, max: 6 }, tgSongs: (() => { const o = {}; ['Vn', 'Vc', 'Fl'].forEach(k => { const L = (b.tgSongs || {})[k]; o[k] = (Array.isArray(L) ? L : []).map(x => t(x, 40).trim()).filter(Boolean).slice(0, 40); }); return o; })(), stages: (Array.isArray(b.stages) && b.stages.length ? b.stages : ACT_STAGES).map(x => t(x, 20).trim()).filter(Boolean).slice(0, 20), roleSets: (() => { const o = {}; ACT_CATS.forEach(c => { const L = ((b.roleSets || {})[c] || ACT_ROLESETS[c]); o[c] = (Array.isArray(L) ? L : []).map(x => t(x, 12).trim()).filter(Boolean).slice(0, 40); }); return o; })(), kinds: (Array.isArray(b.kinds) ? b.kinds : ACT_KINDS).map(k => ({ n: t(k.n, 40).trim(), c: ACT_CATS.includes(k.c) ? k.c : '레슨', link: !!k.link })).filter(k => k.n).slice(0, 80), rev: (+c.rev || 0) + 1 };
+    const val = { days: b.days.map(x => t(x, 30)), rooms: b.rooms || {}, meals: b.meals || [], rows: b.rows || {}, people: (b.people || []).map(p => ({ id: t(p.id, 40), n: t(p.n, 60), acad: t(p.acad, 120), inst: t(p.inst, 20), kind: t(p.kind, 10), tid: p.tid ? t(p.tid, 20) : undefined })), unav: b.unav || {}, req: b.req || {}, target: b.target || { min: 2, max: 6 }, en: (() => { const o = {}; Object.keys(b.en || {}).slice(0, 300).forEach(k => { o[t(k, 40)] = t(b.en[k], 80); }); return o; })(), bookDesc: (() => { const o = {}; ['Vn', 'Vc', 'Fl'].forEach(k => { o[k] = {}; Object.keys((b.bookDesc || {})[k] || {}).slice(0, 40).forEach(x => { const v = b.bookDesc[k][x]; if (Array.isArray(v)) o[k][t(x, 6)] = [t(v[0], 60), t(v[1], 80)]; }); }); return o; })(), dayNotes: (b.dayNotes || []).map(x => t(x, 300)).slice(0, 20), roleShort: (() => { const o = {}; Object.keys(b.roleShort || {}).slice(0, 100).forEach(k => { const v = t(b.roleShort[k], 6).trim(); if (v) o[t(k, 12)] = v; }); return o; })(), meals: (b.meals || []).map(m => ({ d: +m.d || 0, s: t(m.s, 5), e: t(m.e, 5), t: t(m.t, 200) })).filter(m => /^\d{2}:\d{2}$/.test(m.s)).slice(0, 80), tgSongs: (() => { const o = {}; ['Vn', 'Vc', 'Fl'].forEach(k => { const L = (b.tgSongs || {})[k]; o[k] = (Array.isArray(L) ? L : []).map(x => t(x, 40).trim()).filter(Boolean).slice(0, 40); }); return o; })(), stages: (Array.isArray(b.stages) && b.stages.length ? b.stages : ACT_STAGES).map(x => t(x, 20).trim()).filter(Boolean).slice(0, 20), roleSets: (() => { const o = {}; ACT_CATS.forEach(c => { const L = ((b.roleSets || {})[c] || ACT_ROLESETS[c]); o[c] = (Array.isArray(L) ? L : []).map(x => t(x, 12).trim()).filter(Boolean).slice(0, 40); }); return o; })(), kinds: (Array.isArray(b.kinds) ? b.kinds : ACT_KINDS).map(k => ({ n: t(k.n, 40).trim(), c: ACT_CATS.includes(k.c) ? k.c : '레슨', link: !!k.link })).filter(k => k.n).slice(0, 80), rev: (+c.rev || 0) + 1 };
     const cur = rows_(SH.ACTCFG);
     ACT_KEYS.forEach(k => {
       const s = JSON.stringify(val[k]); if (s.length > 45000) throw new Error(k + ' 내용이 너무 길어요.');

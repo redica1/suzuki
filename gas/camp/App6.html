@@ -1,4 +1,4 @@
-/* build: 20261024-103122 */
+/* build: 20261024-104106 */
 /* 접수 고치기 시작: only=null 이면 사람 추가(2단계), 사람 키 목록이면 그 사람들만 정보 수정(3단계) */
 function startEdit(no,only){const sb=MY_SUBS.find(x=>x.no===no);const f=JSON.parse(JSON.stringify(sb.form));S.acad=sb.acad;ensureRoster(sb.acad);S.verified=true;
   Object.assign(S,{picked:f.picked,extra:f.extra,fam:f.fam,info:f.info,room:f.room,join:f.join||{},ens:f.ens||{on:false},agree:false,sel:{},cartAt:{}});

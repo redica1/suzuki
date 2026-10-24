@@ -1,4 +1,4 @@
-/* build: 20261024-103122 */
+/* build: 20261024-104106 */
     <tbody>${ps.map(p=>{const i=info(p),f=feeOf(p);return `<tr><td>${esc(p.name)}</td><td>${esc(i.type)}</td><td class="r num">${won(f.base)}</td><td class="r num">${f.les+f.mc?won(f.les+f.mc):'-'}</td><td class="r num">${f.dues?won(f.dues):'-'}</td><td class="r num"><b>${won(f.total)}</b></td></tr>`}).join('')}
     ${t.teams.map((x,ix)=>`<tr><td>가족방 ${ix+1}</td><td>${esc(x.rep.name)} 가족 ${x.n}명</td><td></td><td></td><td></td><td class="r num"><b>${won(x.fee)}</b></td></tr>`).join('')}</tbody>
     <tfoot>

@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261024-103122 -->
+<!-- build: 20261024-104106 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -30,6 +30,11 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font
 .tabs{display:flex;gap:4px;flex-wrap:wrap;margin-top:12px}
 .tabs button{all:unset;cursor:pointer;padding:7px 14px;border-radius:8px 8px 0 0;color:var(--band-muted);font-weight:600;font-size:14px}
 .tabs button[aria-selected=true]{background:var(--bg);color:var(--ink)}
+.tabs2{display:flex;gap:2px;flex-wrap:wrap;padding-top:14px;border-bottom:1px solid var(--line)}.tabs2:empty,.tabs2.none{display:none}.tabs2:not(:empty):not(.none)+main.wrap{padding-top:18px}
+.tabs2 button{all:unset;cursor:pointer;padding:8px 14px 9px;color:var(--muted);font-weight:600;font-size:14px;border-bottom:2px solid transparent;margin-bottom:-1px}
+.tabs2 button:hover{color:var(--ink)}.tabs2 button[aria-selected=true]{color:var(--accent);border-bottom-color:var(--accent)}
+.tabs2 .cnt{display:inline-block;min-width:18px;padding:0 5px;margin-left:5px;border-radius:9px;background:var(--rosin);color:#fff;font-size:11.5px;text-align:center}
+.tabs button:focus-visible,.tabs2 button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .tabs .cnt{display:inline-block;min-width:18px;padding:0 5px;margin-left:5px;border-radius:9px;background:var(--rosin);color:#fff;font-size:11.5px;text-align:center}
 main.wrap{padding-top:28px;padding-bottom:60px}
 .panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;margin-bottom:16px}
@@ -186,6 +191,7 @@ tr.off td{opacity:.5}
   <div class="meta"><span>입금 확인 · 입금 신고 대조 · 환불 처리</span><span id="who"></span><span id="sync"></span></div>
   <nav class="tabs" id="tabs" role="tablist"></nav>
 </div></div>
+<nav class="wrap tabs2" id="tabs2" role="tablist" aria-label="세부 메뉴"></nav>
 <main class="wrap" id="app"></main>
 <div class="toast" id="toast" hidden></div>
 <div class="busy" id="busy" hidden></div>
@@ -204,6 +210,7 @@ function call(fn,args,ok,msg,tries){if(roBlock(fn)){toast(RO_MSG);return}tries=t
   if(/BUSY|lock|timed out|timeout|network|네트워크|시간 초과/i.test(m)&&tries<4){busy(true,'접속이 많아 다시 보내고 있어요… ('+(tries+1)+'/4)');setTimeout(()=>call(fn,args,ok,msg,tries+1),1500*(tries+1));return}
   busy(false);if(/로그인이 끝났/.test(m)){try{sessionStorage.removeItem('campAdmTok')}catch(x){}S.tok='';S.D=null;render();toast('로그인 시간이 끝났어요. 다시 로그인해 주세요.');return}
   toast('안 됐어요 · '+(/BUSY/.test(m)?'지금 접속이 많아요. 잠시 뒤 다시 해 주세요.':m))})[fn](S.tok,...args)}
+function goTab(t){if(!t)return;if(t==='staff'&&S.tab!=='staff'){S.SF=null;S.sf=null}if(t==='camp'&&S.tab!=='camp'&&!ccDirty())S.cc=null;if(S.tab==='act'&&t!=='act')ACT.flush();if(S.tab==='con'&&t!=='con')CORD.flush();S.tab=t;render()}
 function whoTxt(){const m=S.D&&S.D.me,w=document.getElementById('who');if(!m||!w)return;w.textContent=m.sup?(/자동/.test(m.name)?'관리자 '+m.name.replace('(자동)','')+' (테스트 자동 로그인)':'총관리자 '+m.name):'담당자 '+m.name+' 선생님'}
 function setData(d){if(S.D){if(!d.me&&S.D.me)d.me=S.D.me;if(!d.camp&&S.D.camp)d.camp=S.D.camp}S.D=d;applyCampAdm(d.camp);whoTxt();document.getElementById('sync').textContent='불러온 시각 '+new Date().toTimeString().slice(0,5);render()}
 function ask(title,body,ok,okLabel,input){const bg=document.createElement('div');bg.className='askbg';
@@ -221,14 +228,25 @@ function payPill(p){if(p.status!=='정상')return p.status==='취소요청'?'<sp
   return !(+p.paidAmt)?'<span class="pill due">입금 전</span>':d>0?`<span class="pill due">차액 ${won(d)}</span>`:d<0?`<span class="pill new">${won(-d)} 더 냄${p.ovReq?' · 돌려받기 요청':''}</span>`:'<span class="pill ok">입금 확인</span>'}
 
 /* ---------- 화면 ---------- */
+/* GNB: 1단(묶음) › 2단(메뉴). 권한은 2단 메뉴마다 · 아래 메뉴가 다 「없음」이면 묶음도 숨김 */
+const GROUPS=[['dash','대시보드',['home']],['ops','운영관리',['subs','rp','cx','q']],['sch','스케줄관리',['act','tt','ens','con']],['room','방배정',['room']],['stat','통계',['stat']],['cfg','설정',['camp','prof','staff']]];
+const SUBL={home:'대시보드',subs:'접수 · 입금 확인',rp:'입금 신고',cx:'취소 · 환불',q:'오류 · 건의',act:'교사 일정',tt:'개인레슨',ens:'앙상블',con:'오후음악회',room:'방배정',stat:'통계',camp:'캠프 설정',prof:'교수진',staff:'담당자'};
+const groupOf=t=>(GROUPS.find(g=>g[2].includes(t))||GROUPS[0]);
 const TABS=[['home','한눈에'],['subs','접수 · 입금 확인'],['rp','입금 신고'],['cx','취소 · 환불'],['ens','앙상블'],['prof','교수진'],['act','교사 일정'],['tt','개인레슨'],['room','방 배정'],['con','오후음악회'],['stat','통계'],['q','오류·건의']];
 function render(){
   const app=document.getElementById('app'),tabs=document.getElementById('tabs');
-  if(!S.D){tabs.innerHTML='';app.innerHTML=vLogin();return}
+  if(!S.D){tabs.innerHTML='';document.getElementById('tabs2').innerHTML='';app.innerHTML=vLogin();return}
   const st=stats();
   const VT=visTabs();if(!VT.some(([k])=>k===S.tab))S.tab=VT.length?VT[0][0]:'home';
-  if(!VT.length){tabs.innerHTML='';app.innerHTML='<div class="panel hint">아직 볼 수 있는 메뉴가 없어요. 총관리자에게 권한을 받아 주세요.</div>';return}
-  tabs.innerHTML=VT.map(([k,l])=>`<button type="button" role="tab" data-tab="${k}" aria-selected="${S.tab===k}">${l}${k==='rp'&&st.rp?`<span class="cnt">${st.rp}</span>`:''}${k==='cx'&&st.cx?`<span class="cnt">${st.cx}</span>`:''}${k==='q'&&st.q?`<span class="cnt">${st.q}</span>`:''}</button>`).join('');
+  if(!VT.length){tabs.innerHTML='';document.getElementById('tabs2').innerHTML='';app.innerHTML='<div class="panel hint">아직 볼 수 있는 메뉴가 없어요. 총관리자에게 권한을 받아 주세요.</div>';return}
+  const vis=new Set(VT.map(x=>x[0])),cntOf=k=>k==='rp'?st.rp:k==='cx'?st.cx:k==='q'?st.q:0,badge=n=>n?`<span class="cnt">${n}</span>`:'';
+  const cur=groupOf(S.tab);S.lastSub=S.lastSub||{};S.lastSub[cur[0]]=S.tab;
+  const G=GROUPS.map(([g,l,ks])=>[g,l,ks.filter(k=>vis.has(k))]).filter(x=>x[2].length);
+  tabs.innerHTML=G.map(([g,l,ks])=>`<button type="button" role="tab" data-g="${g}"${GROUPS.find(x=>x[0]===g)[2].length===1?` data-tab="${ks[0]}"`:''} aria-selected="${cur[0]===g}">${l}${badge(ks.reduce((t,k)=>t+cntOf(k),0))}</button>`).join('');
+  /* 2단: 묶음마다 만들어 두고 지금 묶음만 보임 (메뉴가 하나뿐인 묶음은 2단 없음) */
+  document.getElementById('tabs2').innerHTML=G.filter(([g,l,ks])=>ks.length>1||GROUPS.find(x=>x[0]===g)[2].length>1).map(([g,l,ks])=>`<span class="grp" data-grp="${g}" ${cur[0]===g?'':'hidden'} style="display:${cur[0]===g?'contents':'none'}">${ks.map(k=>`<button type="button" role="tab" data-tab="${k}" aria-selected="${S.tab===k}">${SUBL[k]}${badge(cntOf(k))}</button>`).join('')}</span>`).join('');
+  /* 지금 묶음에 2단이 없으면 빈칸으로 → 줄이 안 보임 */
+  document.getElementById('tabs2').classList.toggle('none',!document.querySelector('#tabs2 .grp:not([hidden])'));
   const ro=RO();app.classList.toggle('ro',ro);
   app.innerHTML=(ro?`<div class="robar">보기만 할 수 있는 메뉴예요 · 바꿔도 저장되지 않아요 (총관리자에게 「편집」 권한을 받으면 저장돼요)</div>`:'')+{home:vHome,subs:vSubs,rp:vRp,cx:vCx,ens:vEns,prof:vProf,act:()=>ACT.view(),tt:()=>LES.view(),room:()=>ROOM.view(),con:vCon,stat:vStat,q:vQ,camp:vCamp,staff:vStaff}[S.tab]();
   if(S.tab==='stat')reSort();
@@ -1113,7 +1131,8 @@ document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)r
     google.script.run.withSuccessHandler(r=>{busy(false);if(!r.ok){document.getElementById('lerr').textContent=r.msg;return}S.tok=r.token;try{sessionStorage.setItem('campAdmTok',r.token);sessionStorage.removeItem('campAdmId')}catch(x){}setData(r)}).withFailureHandler(x=>{busy(false);document.getElementById('lerr').textContent=(x&&x.message)||String(x)}).staffLogin(nm,ph);return}
   if(b.id==='doLogin'){const id=val('lid'),pw=document.getElementById('lpw').value;busy(true,'확인하고 있어요…');
     google.script.run.withSuccessHandler(r=>{busy(false);if(!r.ok){document.getElementById('lerr').textContent=r.msg;return}S.tok=r.token;try{sessionStorage.setItem('campAdmTok',r.token);sessionStorage.setItem('campAdmId',id)}catch(x){}document.getElementById('who').textContent='관리자 '+id;setData(r)}).withFailureHandler(x=>{busy(false);document.getElementById('lerr').textContent=(x&&x.message)||String(x)}).adminLogin(id,pw);return}
-  if(d.tab){if(d.tab==='staff'&&S.tab!=='staff'){S.SF=null;S.sf=null}if(d.tab==='camp'&&S.tab!=='camp'&&!ccDirty())S.cc=null;if(S.tab==='act'&&d.tab!=='act')ACT.flush();if(S.tab==='con'&&d.tab!=='con')CORD.flush();S.tab=d.tab;render();return}
+  if(d.g){const g=GROUPS.find(x=>x[0]===d.g),vis=visTabs().map(x=>x[0]),L=(S.lastSub||{})[d.g];goTab(L&&vis.includes(L)?L:g[2].find(k=>vis.includes(k)));return}
+  if(d.tab){goTab(d.tab);return}
   if(b.id==='reload'){call('adminData',[],setData,'불러오고 있어요…');return}
   if(d.f){S.f=d.f;render();return}
   if(d.ok){confirmOne(d.ok);return}

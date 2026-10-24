@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261024-222325 -->
+<!-- build: 20261024-222838 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -24,14 +24,18 @@
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:14.5px;line-height:1.55}
 .wrap{max-width:1180px;margin:0 auto;padding:0 16px}
-.band{background:var(--band);color:var(--band-ink);padding:16px 0 12px}
-.band h1{font-family:var(--display);font-size:22px;margin:0}
-.band .meta{color:var(--band-muted);font-size:13px;display:flex;gap:14px;flex-wrap:wrap;margin-top:4px}
-.tabs{display:flex;gap:4px;flex-wrap:wrap;margin-top:12px}
-.tabs button{all:unset;cursor:pointer;padding:7px 14px;border-radius:8px 8px 0 0;color:var(--band-muted);font-weight:600;font-size:14px}
+html{scroll-padding-top:var(--hdrH,0px)}
+.hdr{position:sticky;top:0;z-index:40}
+.tabs2bg{background:var(--bg)}
+.band{background:var(--band);color:var(--band-ink);padding:8px 0 0}
+.bandtop{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.band h1{font-family:var(--display);font-size:17px;margin:0}
+.band .meta{color:var(--band-muted);font-size:12.5px;display:flex;gap:12px;flex-wrap:wrap;margin:0;margin-left:auto;text-align:right}
+.tabs{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px}
+.tabs button{all:unset;cursor:pointer;padding:6px 14px;border-radius:8px 8px 0 0;color:var(--band-muted);font-weight:600;font-size:14px}
 .tabs button[aria-selected=true]{background:var(--bg);color:var(--ink)}
-.tabs2{display:flex;gap:2px;flex-wrap:wrap;padding-top:14px;border-bottom:1px solid var(--line)}.tabs2:empty,.tabs2.none{display:none}.tabs2:not(:empty):not(.none)+main.wrap{padding-top:18px}
-.tabs2 button{all:unset;cursor:pointer;padding:8px 14px 9px;color:var(--muted);font-weight:600;font-size:14px;border-bottom:2px solid transparent;margin-bottom:-1px}
+.tabs2{display:flex;gap:2px;flex-wrap:wrap;padding-top:4px;border-bottom:1px solid var(--line)}.tabs2:empty,.tabs2.none{display:none}.tabs2:not(:empty):not(.none)+main.wrap{padding-top:18px}
+.tabs2 button{all:unset;cursor:pointer;padding:6px 14px 7px;color:var(--muted);font-weight:600;font-size:14px;border-bottom:2px solid transparent;margin-bottom:-1px}
 .tabs2 button:hover{color:var(--ink)}.tabs2 button[aria-selected=true]{color:var(--accent);border-bottom-color:var(--accent)}
 .tabs2 .cnt{display:inline-block;min-width:18px;padding:0 5px;margin-left:5px;border-radius:9px;background:var(--rosin);color:#fff;font-size:11.5px;text-align:center}
 .tabs button:focus-visible,.tabs2 button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
@@ -86,7 +90,7 @@ tr.off td{opacity:.5}
 .busy{position:fixed;left:50%;top:12px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:7px 15px;border-radius:999px;font-size:13.5px;z-index:90}
 .askbg{position:fixed;inset:0;background:rgba(20,16,10,.45);display:grid;place-items:center;z-index:95;padding:16px}
 .askbox{background:var(--surface);border:1px solid var(--line);border-radius:12px;max-width:400px;width:100%;padding:18px;display:grid;gap:10px}
-.bulk{position:sticky;top:0;z-index:5;background:var(--accent-soft);border:1px solid var(--accent);border-radius:var(--r);padding:8px 12px;margin-bottom:10px}
+.bulk{position:sticky;top:var(--hdrH,0px);z-index:5;background:var(--accent-soft);border:1px solid var(--accent);border-radius:var(--r);padding:8px 12px;margin-bottom:10px}
 @media (max-width:640px){input.num{width:90px}input[type=date]{width:128px}}
 .panel.acad>summary{cursor:pointer;list-style:none}.panel.acad>summary::-webkit-details-marker{display:none}.panel.acad>summary::before,.rnd>summary::before{content:'▸';margin-right:6px;color:var(--faint)}.panel.acad[open]>summary::before,.rnd[open]>summary::before{content:'▾'}
 .rnd{border-top:1px solid var(--line);padding:8px 0 4px;margin-top:8px}.rnd>summary{cursor:pointer;list-style:none;padding:4px 2px}.rnd>summary::-webkit-details-marker{display:none}.rnd .panel.sub{margin:8px 0 0 10px}
@@ -227,14 +231,14 @@ tr.off td{opacity:.5}
 .act .legend .sw{display:inline-block;width:12px;height:12px;border-radius:3px;border:1px solid var(--line);margin:0 4px 0 10px;vertical-align:-1px}
 .act .sw.cls{border-left:4px solid var(--accent)}.act .sw.fam{background:var(--accent-soft)}.act .sw.prof{background:var(--rosin-soft)}.act .sw.etc{background:var(--sunk)}.act .sw.empty{border-style:dashed}
 .cotbl input[type=text],.cotbl input[type=number],.cotbl select{padding:4px 7px;border:1px solid var(--line);border-radius:6px;font:inherit;background:var(--surface);color:var(--ink);min-width:60px}.cotbl input.empty{border-color:var(--rosin)}.cotbl td{vertical-align:middle}tr.cogone td{color:var(--faint);background:var(--sunk)}
+@media (max-width:640px){.band h1{font-size:15px}.band .meta{font-size:11.5px;margin-left:0}.tabs,.tabs2{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}.tabs::-webkit-scrollbar,.tabs2::-webkit-scrollbar{display:none}.tabs button,.tabs2 button{white-space:nowrap;padding-left:11px;padding-right:11px}.tabs2 .grp{display:contents}}
 </style></head>
 <body>
-<div class="band"><div class="wrap">
-  <h1>2027 스즈키 겨울 음악제 · 접수 관리</h1>
-  <div class="meta"><span>입금 확인 · 입금 신고 대조 · 환불 처리</span><span id="who"></span><span id="sync"></span></div>
+<div class="hdr" id="hdr"><div class="band"><div class="wrap">
+  <div class="bandtop"><h1>2027 스즈키 겨울 음악제 · 접수 관리</h1><div class="meta"><span id="who"></span><span id="sync"></span></div></div>
   <nav class="tabs" id="tabs" role="tablist"></nav>
 </div></div>
-<nav class="wrap tabs2" id="tabs2" role="tablist" aria-label="세부 메뉴"></nav>
+<div class="tabs2bg"><nav class="wrap tabs2" id="tabs2" role="tablist" aria-label="세부 메뉴"></nav></div></div>
 <main class="wrap" id="app"></main>
 <div class="toast" id="toast" hidden></div>
 <div class="busy" id="busy" hidden></div>
@@ -258,6 +262,8 @@ function goTab(t){if(!t)return;if(t==='staff'&&S.tab!=='staff'){S.SF=null;S.sf=n
 document.addEventListener('input',e=>{if(e.isComposing&&e.target.matches&&e.target.matches('input[type=search],input[type=text]'))e.stopImmediatePropagation()},true);
 document.addEventListener('compositionend',e=>{const t=e.target;if(t.matches&&t.matches('input[type=search],input[type=text]'))setTimeout(()=>{if(document.body.contains(t))t.dispatchEvent(new Event('input',{bubbles:true}))},0)},true);
 function whoTxt(){const m=S.D&&S.D.me,w=document.getElementById('who');if(!m||!w)return;w.textContent=m.sup?(/자동/.test(m.name)?'관리자 '+m.name.replace('(자동)','')+' (테스트 자동 로그인)':'총관리자 '+m.name):'담당자 '+m.name+' 선생님'}
+function hdrH(){const h=document.getElementById('hdr');if(h)document.documentElement.style.setProperty('--hdrH',h.offsetHeight+'px')}
+window.addEventListener('resize',hdrH);
 function setData(d){if(Array.isArray(d.scholar)&&typeof SCHOLAR!=='undefined'){SCHOLAR.length=0;d.scholar.forEach(t=>SCHOLAR.push(t))}if(S.D){if(!d.me&&S.D.me)d.me=S.D.me;if(!d.camp&&S.D.camp)d.camp=S.D.camp}S.D=d;applyCampAdm(d.camp);whoTxt();document.getElementById('sync').textContent='불러온 시각 '+new Date().toTimeString().slice(0,5);render()}
 function ask(title,body,ok,okLabel,input){const bg=document.createElement('div');bg.className='askbg';
   bg.innerHTML=`<div class="askbox" role="dialog" aria-modal="true"><b style="font-size:16px">${title}</b><div>${body}</div>${input?`<input type="text" id="askIn" placeholder="${esc(input)}">`:''}<div class="row" style="justify-content:flex-end"><button class="btn ghost" type="button" data-x>취소</button><button class="btn primary" type="button" data-ok>${okLabel||'확인'}</button></div></div>`;
@@ -292,7 +298,7 @@ function render(){
   /* 2단: 묶음마다 만들어 두고 지금 묶음만 보임 (메뉴가 하나뿐인 묶음은 2단 없음) */
   document.getElementById('tabs2').innerHTML=G.filter(([g,l,ks])=>ks.length>1||GROUPS.find(x=>x[0]===g)[2].length>1).map(([g,l,ks])=>`<span class="grp" data-grp="${g}" ${cur[0]===g?'':'hidden'} style="display:${cur[0]===g?'contents':'none'}">${ks.map(k=>`<button type="button" role="tab" data-tab="${k}" aria-selected="${S.tab===k}">${SUBL[k]}${badge(cntOf(k))}</button>`).join('')}</span>`).join('');
   /* 지금 묶음에 2단이 없으면 빈칸으로 → 줄이 안 보임 */
-  document.getElementById('tabs2').classList.toggle('none',!document.querySelector('#tabs2 .grp:not([hidden])'));
+  document.getElementById('tabs2').classList.toggle('none',!document.querySelector('#tabs2 .grp:not([hidden])'));hdrH();
   const ro=RO();app.classList.toggle('ro',ro);
   app.innerHTML=(ro?`<div class="robar">보기만 할 수 있는 메뉴예요 · 바꿔도 저장되지 않아요 (총관리자에게 「편집」 권한을 받으면 저장돼요)</div>`:'')+{home:vHome,subs:vSubs,rp:vRp,cx:vCx,ens:vEns,prof:vProf,act:()=>ACT.view(),tt:()=>LES.view(),room:()=>ROOM.view(),con:vCon,stat:vStat,q:vQ,camp:vCamp,staff:vStaff,cons:vCons,schol:vSchol,mem:vMem}[S.tab]();
   if(S.tab==='stat'||S.tab==='home')reSort();

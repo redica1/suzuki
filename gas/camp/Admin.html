@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261024-142734 -->
+<!-- build: 20261024-143112 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -157,6 +157,7 @@ tr.off td{opacity:.5}
 .act .ev small{color:var(--muted);font-size:11px;line-height:1.3}
 .act .lstg{align-items:start}.act .lstcol{display:grid;gap:14px}.act .lsth{font-size:16px}.act .lstbox{display:grid;gap:6px}.act table.lst td{padding:3px 4px}.act table.lst input[type=text]{width:100%;min-width:90px}
 .act .addbox{display:grid;gap:8px;padding:10px;border:1px dashed var(--line);border-radius:8px;background:var(--bg)}.act .ckl li label{display:flex;gap:8px;align-items:center;padding:6px 8px;cursor:pointer;border-radius:6px}.act .ckl li label:hover{background:var(--sunk)}.act .ckl li label.warn{opacity:.75}.act .ckl{max-height:320px;overflow:auto}
+.act .linkbox{display:grid;gap:6px;padding:10px;border:1px dashed var(--rosin);border-radius:8px;background:var(--rosin-soft)}
 .act .ev.stg2{border-left-style:dashed;background:var(--sunk)}.act .stg{font-size:11px;font-weight:600;padding:0 5px;border-radius:4px;background:var(--rosin-soft);color:var(--rosin)}
 .act .t-les{border-left-color:var(--bar)}.t-orc{border-left-color:var(--ok)}.t-con{border-left-color:var(--rosin)}.t-reh{border-left-color:var(--faint)}.t-spe{border-left-color:var(--accent)}.t-tt{border-left-color:var(--bad)}
 .act .chips2{display:flex;flex-wrap:wrap;gap:3px}
@@ -569,6 +570,9 @@ function editor(){
       ${e.cat==='공연'?`<label class="f" for="a_edG">단계<select id="a_edG">${(D.stages.includes(e.stage)||!e.stage?[]:[e.stage]).concat(D.stages).map(x=>`<option ${x===e.stage?'selected':''}>${esc(x)}</option>`).join('')}</select></label>`:''}
       <label class="f" for="a_edT">세부 이름 <span class="cap" style="margin:0">반 이름 등 · 없으면 비워 둠</span><input type="text" id="a_edT" value="${esc(e.sub||'')}" placeholder="${e.cat==='레슨'?'예: Vn 1권 A반':e.cat==='공연'?'예: 1부':'예: 점심'}"></label>
 </div>
+    ${e.cat==='공연'&&e.stage&&e.stage!=='본공연'?(()=>{const M=D.events.filter(o=>o.id!==e.id&&o.cat==='공연'&&(o.stage||'본공연')==='본공연').sort((a,b)=>{const t=o=>o.d*1440+mins(o.s),me=t(e),fa=t(a)>=me,fb=t(b)>=me;return (fb-fa)||(fa?t(a)-t(b):t(b)-t(a))});const cur=M.find(o=>o.id===e.main);
+      return `<div class="linkbox"><div class="row" style="gap:6px;flex-wrap:wrap"><b>본공연 가져오기</b><select id="a_main" style="min-width:260px" title="이 칸 뒤에 있는 본공연이 위에 (가까운 순)">${M.length?M.map(o=>`<option value="${o.id}" ${o.id===(e.main||'')?'selected':''}>${esc(D.days[o.d])} ${o.s} · ${esc(o.title)}${o.sub?' · '+esc(o.sub):''} · ${esc(o.room)} (${o.ppl.length}명)</option>`).join(''):'<option value="">본공연 일정이 아직 없어요</option>'}</select><button class="btn small primary" type="button" id="a_mainCopy" ${M.length?'':'disabled'}>${cur?'다시 복사':'이 본공연 내용 복사'}</button></div>
+        <span class="cap" style="margin:0">고른 본공연의 종류 · 세부 이름 · 대상 · 사람(역할)을 이 ${esc(e.stage)} 칸에 그대로 넣어요. 이 칸의 날짜 · 시간 · 장소는 그대로예요.${cur?` 지금 연결: ${esc(D.days[cur.d])} ${cur.s} ${esc(cur.title)}`:''}</span></div>`})():''}
     <div class="g3"><div class="f"><span>시간 <span class="cap" style="margin:0">시 · 분</span></span><div class="row" style="flex-wrap:nowrap">${tsel('a_edS',e.s)}<span>~</span>${tsel('a_edE',e.e)}</div></div><label class="f" for="a_edR">장소<select id="a_edR">${rooms.map(([r,l])=>`<option value="${esc(r)}" ${r===e.room?'selected':''}>${esc(r)} · ${esc(l)}</option>`).join('')}</select></label>
       <label class="f" for="a_edD">설명 (한 줄에 하나 · 진도 범위 한/영 등)<textarea id="a_edD" rows="2">${esc(e.desc.join('\n'))}</textarea></label></div>
     ${e.cat==='업무'?'':`<div class="f tgbox" style="display:grid;gap:6px"><span>대상 <span class="cap" style="margin:0">권을 누르면 그 권 전체 · Vn은 A·B로 좁히기 · 「이상」 = 그 권(파트) 이상 참가 · 안 고른 악기는 해당 없음</span></span>
@@ -650,6 +654,10 @@ document.addEventListener('click',ev=>{if(S.tab!=='act'||!D)return;
     D.events.splice(D.events.indexOf(e),1);logIt(`지움: ${D.days[e.d]} ${e.s} ${e.room} 「${e.title}」${e.ppl.length?' ('+e.ppl.map(p=>LB(p.n)).join(', ')+')':''}`);A.sel=null;refresh();toast('일정을 지웠어요');return}
   if(b.id==='a_cpOther'){const e=evById(A.sel);readEditor(e);let n=0;D.days.forEach((_,dd)=>{if(dd===e.d)return;if((D.rooms[dd]||[]).some(r=>r[0]===e.room)&&!D.events.some(o=>o.d===dd&&o.room===e.room&&o.s===e.s)){D.events.push({...JSON.parse(JSON.stringify(e)),id:'n'+Date.now()+dd,d:dd,ppl:[]});n++}});
     logIt(`복사: 「${e.title}」 ${e.s} ${e.room} → 다른 날 ${n}곳`);refresh();toast(n?`다른 날 ${n}곳에 복사했어요 (사람은 비워 둠)`:'다른 날 같은 자리에 이미 일정이 있어요');return}
+  if(b.id==='a_mainCopy'){const e=evById(A.sel);readEditor(e);const o=evById(document.getElementById('a_main').value);if(!o)return;
+    e.title=o.title;e.sub=o.sub||'';e.tg=JSON.parse(JSON.stringify(o.tg||{}));e.ppl=JSON.parse(JSON.stringify(o.ppl||[]));if(!e.desc.length)e.desc=(o.desc||[]).slice();e.main=o.id;
+    logIt(`복사: 본공연 ${D.days[o.d]} ${o.s} 「${o.title}」 → ${e.stage} ${D.days[e.d]} ${e.s} ${e.room} (${e.ppl.length}명)`);refresh();
+    const k=e.ppl.filter(p=>ST.clash.has(e.id+'|'+p.n)||ST.off.has(e.id+'|'+p.n)).length;toast(`본공연 내용을 복사했어요 · ${e.ppl.length}명`+(k?` · ${k}명은 이 시간 겹침/못 오는 날`:''));return}
   if(d.acat){const e=evById(A.sel);readEditor(e);if(e.cat!==d.acat){e.cat=e.type=d.acat;const K=kindsOf(d.acat);if(!K.some(k=>k.n===e.title))e.title=(K[0]||{n:e.title}).n;e.stage=d.acat==='공연'?(D.stages[0]||'본공연'):'';refresh()}return}
   if(d.atgs){const e=evById(A.sel);readEditor(e);const i=d.atgs.indexOf('|'),k=d.atgs.slice(0,i),v=d.atgs.slice(i+1);e.tg=e.tg||{};const t=e.tg[k]=e.tg[k]||{b:[],x:[],m:''};t.s=t.s||[];const j=t.s.indexOf(v);if(j>=0)t.s.splice(j,1);else{t.s.push(v);const O=D.tgSongs[k]||[];t.s.sort((a,b)=>(O.indexOf(a)+1||99)-(O.indexOf(b)+1||99))}refresh();return}
   if(d.atgb||d.atgp||d.atgu){const e=evById(A.sel);readEditor(e);const [k,bk,p]=(d.atgb||d.atgp||d.atgu).split('|');e.tg=e.tg||{};const t=e.tg[k]=e.tg[k]||{b:[],x:[],m:''};
@@ -684,6 +692,7 @@ document.addEventListener('input',e=>{if(S.tab!=='act'||!D)return;const el=e.tar
   if(el.id==='a_q'){A.q=el.value;render();keepFocus('a_q');return}
   if(el.dataset.areq){A.req[el.dataset.areq]=el.value;save();return}});
 document.addEventListener('change',e=>{if(S.tab!=='act'||!D)return;const el=e.target;
+  if(el.id==='a_edG'){const ev=evById(A.sel);readEditor(ev);render();return}
   if(el.id==='a_addR'){A.addR=el.value;const ev=evById(A.sel);readEditor(ev);render();return}
   if(el.dataset.apck){A.pck=A.pck||{};A.pck[el.dataset.apck]=el.checked;const b=document.getElementById('a_pckAdd');const n=Object.values(A.pck).filter(Boolean).length;if(b){b.disabled=!n;b.textContent=`선택한 ${n}명 ${A.addR}(으)로 넣기`}return}
   if(el.dataset.aprole!==undefined){const ev=evById(A.sel);readEditor(ev);const p=ev.ppl[+el.dataset.aprole];logIt(`역할: ${LB(p.n)} ${p.r} → ${el.value} (${D.days[ev.d]} ${ev.s} ${ev.room})`);p.r=el.value;refresh();return}

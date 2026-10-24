@@ -1,4 +1,17 @@
-/* build: 20261024-101526 */
+/* build: 20261024-103032 */
+      <div class="checks">${mcOf(p.inst).map(m=>`<label><input type="checkbox" data-mc="${esc(m.n)}" data-k="${p.key}" ${i.mc.includes(m.n)?'checked':''}>${esc(m.n)} <span class="hint">${m.min}분 · ${won(m.fee)}</span></label>`).join('')}</div></div>`:`<p class="hint" style="margin:0">${esc(p.inst||'이 악기')} 마스터클래스는 아직 열린 교수가 없어요.</p>`}
+    <div class="grp"><span class="grp-h">음악회</span>
+    <label class="f" for="cc_${p.key}">참가할 음악회<select id="cc_${p.key}" data-f="concert" data-k="${p.key}">${['없음','오후','트와일라잇','이브닝'].map(x=>`<option value="${x}" ${x===i.concert?'selected':''}>${x==='없음'?'참가 안 함':x}</option>`).join('')}</select></label>
+    ${i.concert!=='없음'?`<div class="sub">
+      ${i.concert==='오후'?`<p class="hint">오후 음악회: 10권 이하는 스즈키 교재 곡만, 10권 이상은 재현부까지만 연주해요.</p>`:''}
+      ${!i.other?`<label class="f" for="sg_${p.key}">연주곡<select id="sg_${p.key}" data-f="song" data-k="${p.key}">${opts(songs,i.song,songs.length?'곡을 선택해 주세요':'목록이 없어요. 아래에 직접 입력해 주세요')}</select></label>`:''}
+      <div class="checks"><label><input type="checkbox" data-other="${p.key}" ${i.other?'checked':''}>목록에 없는 곡이에요</label></div>
+      ${i.other?`<div class="grid2"><label class="f" for="oc_${p.key}">작곡가<input type="text" id="oc_${p.key}" data-f="oc" data-k="${p.key}" value="${esc(i.oc)}"></label>
+      <label class="f" for="ot_${p.key}">곡명 (원어로 정확히)<input type="text" id="ot_${p.key}" data-f="ot" data-k="${p.key}" value="${esc(i.ot)}"></label></div>`:''}
+    </div>`:''}
+    </div>
+
+`):`<p class="hint">${p.kind==='family'?`${esc(people().find(x=>x.key===p.link)?.name||'')}의 가족으로 접수돼요. 레슨·음악회 질문은 없어요.`:'이 구분은 레슨·음악회 신청이 없어요.'}</p>`}
     ${p.kind!=='family'?`<div class="famadd">${(()=>{const fs=people().filter(x=>x.kind==='family'&&x.link===p.key);return fs.length?`<div class="famnest"><div class="grp-h">${esc(p.name)}의 가족 ${fs.length}명</div>${fs.map(pCard).join('')}</div>`:''})()}${(S.editNo&&S.quickEdit?'':famChips(p.key,p.kind==='teacher'?'teacher':'student',p.name))}${roomRow(p.key,p.name)}</div>`:''}
     <div class="fee-line"><span>${ROUNDS[CAMP.ri][0]} ${esc(i.type==='회원의 악기하는 자녀'?'악기하는 교사자녀':i.type)} ${won(f.base)}${f.les?` + 레슨 ${won(f.les)}`:''}${f.mc?` + 마스터클래스 ${won(f.mc)}`:''}${f.dues?` + 연회비 ${won(f.dues)}`:''}${(()=>{const tm=teams().find(x=>x.rep.key===p.key);return tm?` + 가족방(${tm.n}명) ${won(tm.fee)}`:''})()}</span><b class="num">${won(f.total+((teams().find(x=>x.rep.key===p.key)||{}).fee||0))}</b></div>
    </div></article>`;
@@ -185,21 +198,3 @@ function vStep4(){
   <div class="panel"><h3 style="font-size:16px">금액</h3>
     <div class="tbl"><table>
     <thead><tr><th>참가자</th><th>구분</th><th class="r">참가비</th><th class="r">레슨·마스터</th><th class="r">연회비</th><th class="r">합계</th></tr></thead>
-    <tbody>${ps.map(p=>{const i=info(p),f=feeOf(p);return `<tr><td>${esc(p.name)}</td><td>${esc(i.type)}</td><td class="r num">${won(f.base)}</td><td class="r num">${f.les+f.mc?won(f.les+f.mc):'-'}</td><td class="r num">${f.dues?won(f.dues):'-'}</td><td class="r num"><b>${won(f.total)}</b></td></tr>`}).join('')}
-    ${t.teams.map((x,ix)=>`<tr><td>가족방 ${ix+1}</td><td>${esc(x.rep.name)} 가족 ${x.n}명</td><td></td><td></td><td></td><td class="r num"><b>${won(x.fee)}</b></td></tr>`).join('')}</tbody>
-    <tfoot>
-      <tr><td colspan="5">캠프 참가비 · ${R[0]} 금액</td><td class="r num">${won(t.camp)}</td></tr>
-      ${t.room?`<tr><td colspan="5">가족방</td><td class="r num">${won(t.room)}</td></tr>`:''}
-      ${t.dues?`<tr><td colspan="5">연회비 (${t.waiting}명)</td><td class="r num">${won(t.dues)}</td></tr>`:''}
-      <tr><td colspan="5">입금하실 금액</td><td class="r num" style="color:var(--accent);font-size:17px">${won(t.all)}</td></tr>
-    </tfoot></table></div>
-    <div class="bank"><span class="k">입금 계좌</span><b>국민은행 · 한국스즈키협회</b><span class="num">계좌번호는 캠프 설정에서 입력</span>
-      <span class="k" style="margin-top:6px">입금자명</span><b>${esc(S.acad)}</b><span class="hint">학원 이름으로 입금해 주시면 확인이 빨라요. 나눠서 입금해도 괜찮아요.</span></div>
-    ${t.waiting?`<div class="note">연회비 미납·신규 추가 ${t.waiting}명은 <b>회비확인대기</b>로 접수돼요. 연회비까지 함께 입금되면 운영진이 확인 후 정식 접수로 바꿔 드려요.</div>`:''}
-    <label class="agree" for="agree"><input type="checkbox" id="agree" ${S.agree?'checked':''}><span>위 신청 내용이 맞고, 입금이 확인되어야 접수가 확정되며 환불은 취소 신청 후 규정에 따라 처리된다는 것을 확인했어요.</span></label>
-  </div></section>`;
-}
-function vStep5(){
-  const t=totals(), ps=people();
-  return `<section class="sec"><h2>접수가 완료되었어요</h2>
-  <div class="ticket"><p><span class="pill new" style="font-size:13px">${ROUNDS[CAMP.ri][0]} 접수</span></p><p>접수번호</p><div class="no">${S.no}</div>

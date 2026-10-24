@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261024-101526 -->
+<!-- build: 20261024-103032 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -48,6 +48,11 @@ input:focus,select:focus{outline:2px solid var(--accent);outline-offset:0}
 input.num{font-family:var(--mono);text-align:right;width:110px}
 input[type=date]{width:140px}
 .tbl{overflow-x:auto}
+.robar{background:var(--rosin-soft);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:13.5px}
+.cc h3{font-size:15px;margin:0 0 8px}.cc .panel{margin-bottom:10px}.ccg{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px 14px}.ccg label{display:grid;gap:4px;font-size:13px;font-weight:600}.ccg label .hint{font-weight:400;font-size:11.5px}.ccg .w2{grid-column:span 2}
+.ccg input,.ccg select,.cct input{padding:6px 8px;border:1px solid var(--line);border-radius:6px;font:inherit;background:var(--surface);color:var(--ink);min-width:0}.cct input[type=date]{min-width:140px}.cct td{vertical-align:middle}
+.sft select.pv{min-width:64px}.sft select.pv.e{background:var(--accent-soft);color:var(--accent);font-weight:600}.sft select.pv.v{background:var(--sunk)}.sft th.c{font-size:12px;white-space:nowrap}
+@media (max-width:640px){.ccg .w2{grid-column:auto}}
 .pft input[type=text],.pft select{width:100%;min-width:70px;padding:5px 7px;border:1px solid var(--line);border-radius:6px;font:inherit;background:var(--surface);color:var(--ink)}.pft select{min-width:96px}.pft td.c{text-align:center}.pft tr.off td{opacity:.5}.pft td{padding:4px 6px;vertical-align:middle}
 table.sortable th[data-sc]{cursor:pointer;user-select:none;white-space:nowrap}table.sortable th[data-sc]:hover{text-decoration:underline}table.sortable tr.foot td{border-top:2px solid var(--line,#ccc)}.sarr{font-size:10px}
 table{border-collapse:collapse;width:100%;font-size:13.5px}
@@ -195,11 +200,12 @@ const repRow=p=>p.rep&&(p.rep.rows&&p.rep.rows[p.id]||(p.rep.ids?{name:p.rep.nam
 function toast(m){const t=document.getElementById('toast');t.textContent=m;t.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>t.hidden=true,2800)}
 function busy(on,m){const b=document.getElementById('busy');b.textContent=m||'저장하고 있어요…';b.hidden=!on}
 /* 접속이 몰리면(BUSY) 자동으로 다시 보냄 · 로그인이 끝났으면 로그인 화면으로 */
-function call(fn,args,ok,msg,tries){tries=tries||0;busy(true,msg);google.script.run.withSuccessHandler(r=>{busy(false);ok&&ok(r)}).withFailureHandler(e=>{const m=(e&&e.message)||String(e);
+function call(fn,args,ok,msg,tries){if(roBlock(fn)){toast(RO_MSG);return}tries=tries||0;busy(true,msg);google.script.run.withSuccessHandler(r=>{busy(false);ok&&ok(r)}).withFailureHandler(e=>{const m=(e&&e.message)||String(e);
   if(/BUSY|lock|timed out|timeout|network|네트워크|시간 초과/i.test(m)&&tries<4){busy(true,'접속이 많아 다시 보내고 있어요… ('+(tries+1)+'/4)');setTimeout(()=>call(fn,args,ok,msg,tries+1),1500*(tries+1));return}
   busy(false);if(/로그인이 끝났/.test(m)){try{sessionStorage.removeItem('campAdmTok')}catch(x){}S.tok='';S.D=null;render();toast('로그인 시간이 끝났어요. 다시 로그인해 주세요.');return}
   toast('안 됐어요 · '+(/BUSY/.test(m)?'지금 접속이 많아요. 잠시 뒤 다시 해 주세요.':m))})[fn](S.tok,...args)}
-function setData(d){S.D=d;document.getElementById('sync').textContent='불러온 시각 '+new Date().toTimeString().slice(0,5);render()}
+function whoTxt(){const m=S.D&&S.D.me,w=document.getElementById('who');if(!m||!w)return;w.textContent=m.sup?(/자동/.test(m.name)?'관리자 '+m.name.replace('(자동)','')+' (테스트 자동 로그인)':'총관리자 '+m.name):'담당자 '+m.name+' 선생님'}
+function setData(d){if(S.D){if(!d.me&&S.D.me)d.me=S.D.me;if(!d.camp&&S.D.camp)d.camp=S.D.camp}S.D=d;applyCampAdm(d.camp);whoTxt();document.getElementById('sync').textContent='불러온 시각 '+new Date().toTimeString().slice(0,5);render()}
 function ask(title,body,ok,okLabel,input){const bg=document.createElement('div');bg.className='askbg';
   bg.innerHTML=`<div class="askbox" role="dialog" aria-modal="true"><b style="font-size:16px">${title}</b><div>${body}</div>${input?`<input type="text" id="askIn" placeholder="${esc(input)}">`:''}<div class="row" style="justify-content:flex-end"><button class="btn ghost" type="button" data-x>취소</button><button class="btn primary" type="button" data-ok>${okLabel||'확인'}</button></div></div>`;
   document.body.appendChild(bg);bg.addEventListener('click',e=>{if(e.target===bg||e.target.dataset.x!==undefined)bg.remove();else if(e.target.dataset.ok!==undefined){const v=input?document.getElementById('askIn').value.trim():'';bg.remove();ok(v)}});}
@@ -220,8 +226,11 @@ function render(){
   const app=document.getElementById('app'),tabs=document.getElementById('tabs');
   if(!S.D){tabs.innerHTML='';app.innerHTML=vLogin();return}
   const st=stats();
-  tabs.innerHTML=TABS.map(([k,l])=>`<button type="button" role="tab" data-tab="${k}" aria-selected="${S.tab===k}">${l}${k==='rp'&&st.rp?`<span class="cnt">${st.rp}</span>`:''}${k==='cx'&&st.cx?`<span class="cnt">${st.cx}</span>`:''}${k==='q'&&st.q?`<span class="cnt">${st.q}</span>`:''}</button>`).join('');
-  app.innerHTML={home:vHome,subs:vSubs,rp:vRp,cx:vCx,ens:vEns,prof:vProf,act:()=>ACT.view(),tt:()=>LES.view(),room:()=>ROOM.view(),con:vCon,stat:vStat,q:vQ}[S.tab]();
+  const VT=visTabs();if(!VT.some(([k])=>k===S.tab))S.tab=VT.length?VT[0][0]:'home';
+  if(!VT.length){tabs.innerHTML='';app.innerHTML='<div class="panel hint">아직 볼 수 있는 메뉴가 없어요. 총관리자에게 권한을 받아 주세요.</div>';return}
+  tabs.innerHTML=VT.map(([k,l])=>`<button type="button" role="tab" data-tab="${k}" aria-selected="${S.tab===k}">${l}${k==='rp'&&st.rp?`<span class="cnt">${st.rp}</span>`:''}${k==='cx'&&st.cx?`<span class="cnt">${st.cx}</span>`:''}${k==='q'&&st.q?`<span class="cnt">${st.q}</span>`:''}</button>`).join('');
+  const ro=RO();app.classList.toggle('ro',ro);
+  app.innerHTML=(ro?`<div class="robar">보기만 할 수 있는 메뉴예요 · 바꿔도 저장되지 않아요 (총관리자에게 「편집」 권한을 받으면 저장돼요)</div>`:'')+{home:vHome,subs:vSubs,rp:vRp,cx:vCx,ens:vEns,prof:vProf,act:()=>ACT.view(),tt:()=>LES.view(),room:()=>ROOM.view(),con:vCon,stat:vStat,q:vQ,camp:vCamp,staff:vStaff}[S.tab]();
   if(S.tab==='stat')reSort();
 }
 /* 통계 표 정렬: 같은 보기·같은 표면 다시 그려도 유지 */
@@ -233,11 +242,13 @@ function sortTbl(t,c,d){const tb=t.tBodies[0];if(!tb)return;const foot=[...tb.ro
 function reSort(){const M=S.statSort||{};document.querySelectorAll('#app table.sortable').forEach(t=>{const m=M[sigOf(t)];if(m)sortTbl(t,m.c,m.d)})}
 document.addEventListener('click',e=>{const th=e.target.closest&&e.target.closest('table.sortable th[data-sc]');if(!th)return;const t=th.closest('table'),c=+th.dataset.sc,k=sigOf(t);
   S.statSort=S.statSort||{};const cur=S.statSort[k];const d=cur&&cur.c===c?(cur.d==='desc'?'asc':'desc'):(c===0?'asc':'desc');S.statSort[k]={c,d};sortTbl(t,c,d)});
-function vLogin(){return `<div class="panel login"><h2 style="font-family:var(--display);font-size:19px;margin:0 0 10px">관리자 로그인</h2>
-  <label>아이디<input type="text" id="lid" autocomplete="username" value="admin"></label>
-  <label>비밀번호<input type="password" id="lpw" autocomplete="current-password"></label>
+function vLogin(){const m=S.lmode||'sup';return `<div class="panel login"><h2 style="font-family:var(--display);font-size:19px;margin:0 0 10px">관리자 로그인</h2>
+  <div class="row lmode" role="tablist" style="gap:6px;margin-bottom:10px"><button class="btn small ${m==='sup'?'primary':''}" type="button" data-lmode="sup" aria-pressed="${m==='sup'}">총관리자</button><button class="btn small ${m==='stf'?'primary':''}" type="button" data-lmode="stf" aria-pressed="${m==='stf'}">담당 선생님</button></div>
+  ${m==='sup'?`<label>아이디<input type="text" id="lid" autocomplete="username" value="admin"></label>
+  <label>비밀번호<input type="password" id="lpw" autocomplete="current-password"></label>`:`<label>이름<input type="text" id="lnm" autocomplete="name" placeholder="회원 명단의 이름"></label>
+  <label>휴대전화<input type="tel" id="lph" inputmode="tel" autocomplete="tel" placeholder="010-0000-0000"></label>`}
   <p class="err" id="lerr"></p><button class="btn primary" type="button" id="doLogin" style="width:100%;justify-content:center">들어가기</button>
-  <p class="hint">아이디·비밀번호는 접수 DB 시트의 「설정」 탭에서 정해요.</p></div>`}
+  <p class="hint">${m==='sup'?'아이디·비밀번호는 접수 DB 시트의 「설정」 탭에서 정해요.':'총관리자가 「담당자」에 등록한 교사 회원만 들어올 수 있어요. 메뉴는 받은 권한만큼 보여요.'}</p></div>`}
 function vHome(){const st=stats();const t=(k,v,s,w)=>`<div class="tile ${w?'warn':''}"><span class="k">${k}</span><span class="v">${v}</span><span class="s">${s||''}</span></div>`;
   const byA={};people().filter(x=>x.p.status==='정상').forEach(({sb,p})=>{const a=byA[sb.acad]=byA[sb.acad]||{n:0,bill:0,paid:0,subs:new Set()};a.n++;a.bill+=pAmt(p);a.paid+=(+p.paidAmt||0);a.subs.add(sb.no)});
   return `<div class="tiles">${t('접수',st.subs+'건',st.acads+'개 학원')}${t('참가 인원',st.n+'명','취소 빼고')}${t('청구 합계',won(st.bill))}${t('입금 확인',won(st.paid))}${t('남은 금액',won(st.left),st.unpaid+'명 입금 전·차액',st.left>0)}${t('입금 신고 대기',st.rp+'명','확인하면 입금 확인',st.rp>0)}${t('돌려줄 차액',won(st.overAmt),st.over.length+'명'+(st.over.filter(x=>x.p.ovReq).length?' · 요청 '+st.over.filter(x=>x.p.ovReq).length+'명':''),st.overAmt>0)}${t('환불',st.cx+'건','접수 대기 '+st.cxW+' · 송금 대기 '+st.cxP,st.cx>0)}${t('오류·건의',st.q+'건','미해결·해결 중',st.q>0)}</div>
@@ -361,7 +372,7 @@ const TYPES=['레슨','오케스트라','오후음악회','특별수업','교사
 const MAIN_ROLES=['수업','보조','사회'];
 let D=null,CHG=0,REV=0,DIRTY=false,SAVING=false,TIMER=null,LOADING=false,PEND=[],LASTSAVE='',ERR='';
 const A={tab:'grid',day:0,sel:null,swap:null,q:'',pq:'',filter:'zero',who:'',unav:{},req:{},log:[],target:{min:2,max:6},newSel:null,trainee:false};
-function run(fn,args,ok,fail){google.script.run.withSuccessHandler(ok).withFailureHandler(e=>{const m=(e&&e.message)||String(e);fail&&fail(m)})[fn](S.tok,...args)}
+function run(fn,args,ok,fail){if(roBlock(fn)){fail&&fail(RO_MSG);return}google.script.run.withSuccessHandler(ok).withFailureHandler(e=>{const m=(e&&e.message)||String(e);fail&&fail(m)})[fn](S.tok,...args)}
 function load(){LOADING=true;ERR='';run('schedData',[],r=>{LOADING=false;applyData(r);render()},m=>{LOADING=false;ERR=m;render()})}
 function applyData(r){D={days:r.days||[],rooms:r.rooms||{},meals:r.meals||[],rows:r.rows||{},events:r.events||[],people:r.people||[]};
   A.unav=r.unav||{};A.req=r.req||{};A.target=r.target||{min:2,max:6};A.log=r.log||[];REV=r.rev||0;DIRTY=false;PEND=[];
@@ -595,7 +606,7 @@ const IO=['바이올린','첼로','플루트','비올라','피아노','기타'];
 let L=null,LOADING=false,ERR='';
 const A={mode:'day',day:0,prof:'',sel:null,cq:'',stu:'',only:true,nf:'need'};
 const mins=t=>{const [h,m]=String(t).split(':').map(Number);return h*60+m};
-function run(fn,args,ok,fail){google.script.run.withSuccessHandler(ok).withFailureHandler(e=>{const m=(e&&e.message)||String(e);fail&&fail(m)})[fn](S.tok,...args)}
+function run(fn,args,ok,fail){if(roBlock(fn)){fail&&fail(RO_MSG);return}google.script.run.withSuccessHandler(ok).withFailureHandler(e=>{const m=(e&&e.message)||String(e);fail&&fail(m)})[fn](S.tok,...args)}
 function load(){LOADING=true;ERR='';run('lessonData',[],r=>{LOADING=false;L=r;if(A.day>=(L.days||[]).length)A.day=0;render()},m=>{LOADING=false;ERR=m;render()})}
 const profs=()=>(S.D.profs||[]).filter(p=>p.on&&p.lesson).slice().sort((a,b)=>(IO.indexOf(a.inst)+1||9)-(IO.indexOf(b.inst)+1||9));
 let GONE={};
@@ -683,7 +694,7 @@ return {view,reload:()=>{L=null}};
 const ROOM=(()=>{
 let R=null,LOADING=false,ERR='';
 const A={v:'list',bld:'Stay Tower',fl:'',sel:'',open:''};
-function run(fn,args,ok,fail){google.script.run.withSuccessHandler(ok).withFailureHandler(e=>{const m=(e&&e.message)||String(e);fail&&fail(m)})[fn](S.tok,...args)}
+function run(fn,args,ok,fail){if(roBlock(fn)){fail&&fail(RO_MSG);return}google.script.run.withSuccessHandler(ok).withFailureHandler(e=>{const m=(e&&e.message)||String(e);fail&&fail(m)})[fn](S.tok,...args)}
 function load(){LOADING=true;ERR='';run('roomData',[],r=>{LOADING=false;R=r;render()},m=>{LOADING=false;ERR=m;render()})}
 const tot=r=>(+r.mn||0)+(+r.sn||0);
 const kcls=k=>!k?'':k.includes('가족')?'fam':k==='교수방'?'prof':k==='클래스방'?'cls':'etc';
@@ -783,7 +794,7 @@ let C=null,LOADING=false,ERR='',TIMER=null,DIRTY=false,SAVING=false,CHG=0;
 const A={pick:{}};
 const hm=s=>{const [h,m]=String(s).split(':').map(Number);return h*60+m};
 const fmt=n=>String(Math.floor(n/60)).padStart(2,'0')+':'+String(n%60).padStart(2,'0');
-function run(fn,args,ok,fail){google.script.run.withSuccessHandler(ok).withFailureHandler(e=>{const m=(e&&e.message)||String(e);fail&&fail(m)})[fn](S.tok,...args)}
+function run(fn,args,ok,fail){if(roBlock(fn)){fail&&fail(RO_MSG);return}google.script.run.withSuccessHandler(ok).withFailureHandler(e=>{const m=(e&&e.message)||String(e);fail&&fail(m)})[fn](S.tok,...args)}
 function load(){LOADING=true;ERR='';run('conGet',[],r=>{LOADING=false;C=r;C.concerts.forEach(x=>{if(!C.order[x.id])C.order[x.id]=[]});render()},m=>{LOADING=false;ERR=m;render()})}
 function save(){CHG++;DIRTY=true;clearTimeout(TIMER);TIMER=setTimeout(flush,1200);stat()}
 function flush(){if(SAVING){setTimeout(flush,400);return}if(!DIRTY)return;SAVING=true;const sent=CHG;stat();
@@ -873,6 +884,108 @@ document.addEventListener('input',e=>{const t=e.target;if(!t.dataset||!t.dataset
   p[k]=t.type==='checkbox'?t.checked:(k==='fee'||k==='min')?t.value.replace(/[^\d]/g,''):t.value;
   if(t.type==='checkbox'||t.tagName==='SELECT')render()});
 document.addEventListener('change',e=>{const t=e.target;if(t.dataset&&t.dataset.pf&&t.tagName==='SELECT'&&S.pf){const [i,k]=t.dataset.pf.split('|');S.pf[+i][k]=t.value;render()}});
+/* ---------- 권한: 총관리자(아이디·비밀번호) = 전부 · 담당자(교사 회원) = 메뉴마다 편집 / 보기 / 없음 ---------- */
+const SUP_TABS=[['camp','캠프 설정'],['staff','담당자']];
+const ME=()=>(S.D&&S.D.me)||{sup:true,perms:{}};
+const permOf=k=>{const m=ME();if(m.sup)return '편집';if(k==='camp'||k==='staff')return '';return (m.perms||{})[k]||''};
+const visTabs=()=>TABS.concat(SUP_TABS).filter(([k])=>permOf(k));
+const RO=()=>permOf(S.tab)==='보기';
+const WRITE_FN=/^(adminConfirm|adminRejectReport|adminSaveEns|adminSaveProfs|adminRefund|adminSetIssue|schedSave|lessonSet|adminSetSetting|roomSave|conSave|campSave|staffSave)$/;
+const roBlock=fn=>WRITE_FN.test(fn)&&permOf(S.tab)!=='편집';
+const RO_MSG='보기만 할 수 있는 메뉴예요. 바꾸려면 총관리자에게 「편집」 권한을 받아 주세요.';
+
+/* ---------- 캠프 설정 (총관리자) ---------- */
+const FEE_TYPES=['교사','연수생','소속없는 중급연수생','학생','회원의 악기하는 자녀','회원의 첫번째 보호자','회원의 그외 악기 안하는 동반가족','동반가족 중 돌전아기'];
+const OPT_F=[['lessonFee','추가 개인레슨 1회 금액','원'],['lessonMax','추가 개인레슨 최대 횟수','회'],['studentDues','학생 연회비 (안 낸 학생만)','원'],['teacherDues','교사 연회비 (안 낸 교사만)','원'],['roomCap','가족방 정원','명'],['roomEmptyFee','가족방 빈 자리 1개 금액','원']];
+const ccCopy=()=>JSON.parse(JSON.stringify(S.D.camp||{}));
+const ccDirty=()=>S.cc&&JSON.stringify(S.cc)!==JSON.stringify(ccCopy());
+const WDK='일월화수목금토';
+const dw=d=>{if(!/^\d{4}-\d{2}-\d{2}$/.test(d||''))return '';const [y,m,dd]=d.split('-').map(Number);return WDK[new Date(Date.UTC(y,m-1,dd)).getUTCDay()]};
+const ccPill=()=>ccDirty()?'<span class="pill due">저장 안 한 변경 있음</span><button class="btn small ghost" type="button" data-ccreset="1">되돌리기</button>':'';
+function ccGet(path){return path.split('.').reduce((o,k)=>o==null?o:o[k],S.cc)}
+function ccSet(path,v){const ks=path.split('.'),last=ks.pop();const o=ks.reduce((o,k)=>o[k],S.cc);o[last]=v}
+function vCamp(){if(!S.cc)S.cc=ccCopy();const c=S.cc;if(!c.base)return '<div class="panel hint">캠프 설정을 불러오지 못했어요. 「새로 불러오기」를 눌러 주세요.</div>';
+  const b=c.base,R=c.rounds,o=c.opt,rf=c.refund;
+  const inp=(p,type,extra)=>{const v=ccGet(p);return type==='check'?`<input type="checkbox" data-cc="${p}" ${v?'checked':''}>`:`<input type="${type==='num'?'text':type}" ${type==='num'?'inputmode="numeric" class="num"':''} data-cc="${p}" data-cct="${type}" value="${esc(type==='num'?(+v||0).toLocaleString('ko-KR'):v==null?'':v)}" ${extra||''}>`};
+  const days=b.start&&b.end?Math.round((Date.parse(b.end)-Date.parse(b.start))/864e5):0;
+  const curOpts=[['auto','자동 (오늘 날짜로)'],...R.map((r,i)=>[String(i),r.n+' 로 고정'])];
+  return `<div class="cc">
+  <div class="panel"><div class="spread"><div><b>캠프 설정</b> <span class="hint">총관리자만 보여요 · 저장하면 선생님 접수 화면(날짜·장소·차수·참가비·환불 규정)이 바로 바뀌어요 · 시트 「캠프설정」 탭</span></div>
+    <div class="row" style="gap:6px"><span id="ccDirty" class="row" style="gap:6px">${ccPill()}</span><button class="btn small primary" type="button" data-ccsave="1">저장</button></div></div></div>
+  <div class="panel"><h3>기본</h3><div class="ccg">
+    <label>캠프 코드<span class="hint">접수번호 앞자리 (예: 27W-001)</span>${inp('base.id','text','maxlength="8" style="width:90px"')}</label>
+    <label class="w2">캠프 이름${inp('base.name','text','maxlength="60"')}</label>
+    <label>시작일 <small class="faint">${dw(b.start)}</small>${inp('base.start','date')}</label>
+    <label>끝나는 날 <small class="faint">${dw(b.end)}${days>0?` · ${days}박 ${days+1}일`:''}</small>${inp('base.end','date')}</label>
+    <label class="w2">장소${inp('base.place','text','maxlength="80" placeholder="추후 안내"')}</label>
+    <label>접수 시작${inp('base.open','date')}</label><label>접수 마감${inp('base.close','date')}</label>
+    <label>지금 차수<span class="hint">새 접수에 매기는 차수</span><select data-cc="base.cur">${curOpts.map(([v,l])=>`<option value="${v}" ${String(b.cur)===v?'selected':''}>${esc(l)}</option>`).join('')}</select></label>
+  </div><p class="hint">교사 일정(프로그램표)의 날짜는 「교사 일정 › 날짜 · 장소」에서 따로 맞춰요.</p></div>
+  <div class="panel"><div class="spread"><h3>차수</h3><button class="btn small" type="button" data-ccr="add" ${R.length>=6?'disabled':''}>＋ 차수 추가</button></div>
+    <table class="pft cct"><thead><tr><th>이름</th><th>시작</th><th>끝</th><th></th></tr></thead><tbody>${R.map((r,i)=>`<tr><td>${inp('rounds.'+i+'.n','text','maxlength="10" style="width:80px"')}</td><td>${inp('rounds.'+i+'.from','date')}</td><td>${inp('rounds.'+i+'.to','date')}</td><td>${R.length>1?`<button class="btn small ghost" type="button" data-ccr="del|${i}">빼기</button>`:''}</td></tr>`).join('')}</tbody></table>
+    <p class="hint">차수를 늘리거나 줄이면 아래 참가비표 칸도 같이 바뀌어요. 이미 들어온 접수의 차수·금액은 그대로예요.</p></div>
+  <div class="panel tbl"><h3>참가비표 <span class="hint">참가자격 × 차수 (원)</span></h3>
+    <table class="pft cct"><thead><tr><th>참가자격</th>${R.map(r=>`<th class="r">${esc(r.n)}</th>`).join('')}</tr></thead><tbody>${FEE_TYPES.map(t=>`<tr><td>${esc(t)}</td>${R.map((_,i)=>`<td>${inp('fees.'+t+'.'+i,'num','style="width:110px"')}</td>`).join('')}</tr>`).join('')}</tbody></table></div>
+  <div class="panel"><h3>추가 금액 · 가족방</h3><div class="ccg">${OPT_F.map(([k,l,u])=>`<label>${l}<span class="row" style="gap:4px;flex-wrap:nowrap">${inp('opt.'+k,'num','style="width:120px"')}<small class="faint">${u}</small></span></label>`).join('')}</div>
+    <p class="hint">마스터클래스 금액은 교수마다 「교수진」 탭에서 정해요.</p></div>
+  <div class="panel"><div class="spread"><h3>취소 · 환불 규정</h3><button class="btn small" type="button" data-ccf="add">＋ 규정 추가</button></div>
+    <table class="pft cct"><thead><tr><th>이 날까지</th><th>이름</th><th class="r">환불 %</th><th>진단서 필요</th><th></th></tr></thead><tbody>
+    ${rf.rules.map((r,i)=>`<tr><td>${inp('refund.rules.'+i+'.until','date')}</td><td>${inp('refund.rules.'+i+'.label','text','maxlength="30"')}</td><td>${inp('refund.rules.'+i+'.rate','num','style="width:64px"')}</td><td class="c">${inp('refund.rules.'+i+'.doc','check')}</td><td><button class="btn small ghost" type="button" data-ccf="del|${i}">빼기</button></td></tr>`).join('')}
+    <tr class="off"><td><small class="faint">그 뒤</small></td><td>${inp('refund.after.label','text','maxlength="30"')}</td><td>${inp('refund.after.rate','num','style="width:64px"')}</td><td class="c">${inp('refund.after.doc','check')}</td><td><label class="row" style="gap:4px;flex-wrap:nowrap"><small>취소 받기</small>${inp('refund.after.allow','check')}</label></td></tr></tbody></table>
+    <label class="row" style="gap:6px;margin-top:6px">${inp('refund.duesRefund','check')} 연회비도 환불</label>
+    <p class="hint">위에서부터 처음 맞는 규정을 써요 (취소 요청한 날 기준). 「취소 받기」를 끄면 캠프 시작 뒤에는 입금한 사람이 취소를 요청할 수 없어요.</p></div>
+  <div class="panel hint"><b>새 캠프(다음 학기)를 열 때</b><br>1) 지금 접수 DB 시트를 통째로 「사본 만들기」 → 지난 캠프 보관용으로 이름을 바꿔 둬요.<br>2) 이 시트에서 「접수」·「참가자」·「입금신고」·「환불요청」·「앙상블팀」·「교사일정」·「개인레슨」·「방배정」·「음악회순서」 탭의 내용(2행부터)을 지워요.<br>3) 여기 「캠프 설정」에서 캠프 코드(예: 27S)·이름·날짜·장소·차수·참가비·환불 규정을 새로 넣고 저장해요.<br>4) 「교사 일정 › 날짜 · 장소」에서 날짜를 맞추고, 「교수진」·「담당자」를 확인해요. 접수 화면 주소는 그대로예요.</div>
+  </div>`}
+document.addEventListener('input',e=>{const t=e.target;if(!t.dataset||!t.dataset.cc||!S.cc)return;const ty=t.dataset.cct;
+  const v=t.type==='checkbox'?t.checked:ty==='num'?+(t.value.replace(/[^\d]/g,'')||0):t.value;ccSet(t.dataset.cc,v);
+  const p=document.getElementById('ccDirty');if(p)p.innerHTML=ccPill()});
+document.addEventListener('change',e=>{const t=e.target;if(!t.dataset||!t.dataset.cc||!S.cc)return;if(t.tagName==='SELECT'){ccSet(t.dataset.cc,t.value);render();return}
+  if(t.dataset.cct==='num'){t.value=(+(t.value.replace(/[^\d]/g,'')||0)).toLocaleString('ko-KR');return}if(t.type==='checkbox'||t.type==='date')render()});
+function ccClick(b,d){if(S.tab!=='camp')return false;const c=S.cc;
+  if(d.ccreset){S.cc=null;render();return true}
+  if(d.ccr){const [op,i]=d.ccr.split('|');if(op==='add'){const L=c.rounds[c.rounds.length-1]||{};c.rounds.push({n:(c.rounds.length+1)+'차',from:L.to||'',to:L.to||''});Object.keys(c.fees).forEach(t=>c.fees[t].push(c.fees[t][c.fees[t].length-1]||0))}
+    else{c.rounds.splice(+i,1);Object.keys(c.fees).forEach(t=>c.fees[t].splice(+i,1));if(c.base.cur!=='auto'&&+c.base.cur>=c.rounds.length)c.base.cur='auto'}render();return true}
+  if(d.ccf){const [op,i]=d.ccf.split('|');if(op==='add'){const L=c.refund.rules[c.refund.rules.length-1];c.refund.rules.push({until:L?L.until:'',label:'',rate:0,doc:false})}else c.refund.rules.splice(+i,1);render();return true}
+  if(d.ccsave){const old=S.D.camp||{},idCh=old.base&&old.base.id!==c.base.id;
+    const go=()=>call('campSave',[c,old.rev||0],r=>{S.D.camp=r.camp;S.cc=null;applyCampAdm(r.camp);render();toast('캠프 설정을 저장했어요 · 선생님 화면에 바로 반영돼요')},'저장하고 있어요…');
+    if(idCh&&(S.D.subs||[]).length)ask('캠프 코드를 바꿀까요?',`이미 접수가 ${(S.D.subs||[]).length}건 있어요. 새 접수부터 <b>${esc(c.base.id)}-001</b>처럼 번호가 매겨지고, 지난 접수 번호는 그대로예요. 보통은 새 캠프를 열 때만 바꿔요.`,go,'그래도 저장');
+    else go();return true}
+  return false}
+/* 캠프 설정 → 관리자 화면 값 (환불 규정) */
+function applyCampAdm(c){if(!c||!c.refund||!Array.isArray(c.refund.rules))return;CX_RULES.length=0;c.refund.rules.forEach(r=>CX_RULES.push(r))}
+
+/* ---------- 담당자 · 권한 (총관리자) ---------- */
+const PERM_V=[['','없음'],['보기','보기'],['편집','편집']];
+function stLoad(){S.sfLoading=true;call('staffData',[],r=>{S.sfLoading=false;S.SF=r;S.sf=JSON.parse(JSON.stringify(r.staff));render()},'담당자를 불러오고 있어요…')}
+const sfDirty=()=>S.SF&&S.sf&&JSON.stringify(S.sf)!==JSON.stringify(S.SF.staff);
+const sfPill=()=>sfDirty()?'<span class="pill due">저장 안 한 변경 있음</span><button class="btn small ghost" type="button" data-sfreset="1">되돌리기</button>':'';
+function vStaff(){if(!S.SF){if(!S.sfLoading)setTimeout(stLoad,0);return '<div class="panel hint">담당자를 불러오고 있어요…</div>'}
+  const L=S.sf,T=S.SF.tabs,q=(S.sfq||'').trim().replace(/\s/g,'');
+  const have=new Set(L.map(s=>s.tid));
+  const cand=q?S.SF.teachers.filter(t=>!have.has(t.id)&&(t.name.replace(/\s/g,'').includes(q)||(t.acad||'').replace(/\s/g,'').includes(q))).slice(0,12):[];
+  return `<div class="panel"><div class="spread"><div><b>담당자 · 권한</b> <span class="hint">교사 회원 중에서 골라 메뉴마다 「편집 / 보기 / 없음」을 정해요 · 담당자는 관리자 화면에서 「담당 선생님」으로 이름 + 휴대전화로 들어와요</span></div>
+    <div class="row" style="gap:6px"><span id="sfDirty" class="row" style="gap:6px">${sfPill()}</span><button class="btn small primary" type="button" data-sfsave="1">저장</button></div></div>
+    <div class="row" style="gap:6px;margin-top:10px"><input type="search" id="sfq" placeholder="담당자 추가: 교사 이름이나 학원" value="${esc(S.sfq||'')}" style="min-width:240px;padding:6px 9px;border:1px solid var(--line);border-radius:6px;font:inherit;background:var(--surface);color:var(--ink)"></div>
+    ${q?`<div class="row" style="gap:6px;margin-top:8px">${cand.map(t=>`<button class="btn small" type="button" data-sfadd="${esc(t.id)}">＋ ${esc(t.name)} <small class="faint">${esc(t.acad||'')}${t.inst?' · '+esc(t.inst):''}</small></button>`).join('')||'<span class="hint">맞는 교사 회원이 없어요 (이미 담당자이거나 명단에 없음)</span>'}</div>`:''}</div>
+  <div class="panel tbl"><table class="pft sft"><thead><tr><th>담당자</th><th>사용</th>${T.map(([k,l])=>`<th class="c">${esc(l)}</th>`).join('')}<th>한 번에</th><th>메모</th><th></th></tr></thead><tbody>
+  ${L.map((s,i)=>`<tr class="${s.on?'':'off'}"><td><b>${esc(s.name)}</b><br><small class="faint">${esc(s.acad||'')}</small></td><td class="c"><input type="checkbox" data-sf="${i}|on" ${s.on?'checked':''} aria-label="사용"></td>
+    ${T.map(([k,l])=>`<td><select data-sf="${i}|p|${k}" aria-label="${esc(l)}" class="pv${s.perms[k]==='편집'?' e':s.perms[k]==='보기'?' v':''}">${PERM_V.map(([v,t])=>`<option value="${v}" ${(s.perms[k]||'')===v?'selected':''}>${t}</option>`).join('')}</select></td>`).join('')}
+    <td><div class="row" style="gap:4px;flex-wrap:nowrap"><button class="btn small ghost" type="button" data-sfall="${i}|보기">모두 보기</button><button class="btn small ghost" type="button" data-sfall="${i}|">모두 없음</button></div></td>
+    <td><input type="text" data-sf="${i}|memo" value="${esc(s.memo||'')}" maxlength="200" placeholder="예: 교사 일정 담당"></td>
+    <td><button class="btn small ghost" type="button" data-sfdel="${i}">빼기</button></td></tr>`).join('')||`<tr><td colspan="${T.length+5}" class="hint">아직 담당자가 없어요. 위 칸에 교사 이름을 넣어 추가해 주세요.</td></tr>`}
+  </tbody></table></div>
+  <div class="panel hint">· <b>편집</b> = 보고 바꿀 수 있음 · <b>보기</b> = 볼 수만 있음 (저장은 서버가 막아요) · <b>없음</b> = 메뉴가 안 보임<br>· 「캠프 설정」·「담당자」는 총관리자(아이디·비밀번호)만 써요. 권한을 바꾸면 담당자가 다음에 무엇을 누를 때부터 바로 적용돼요.<br>· 모든 메뉴에서 접수 명단(이름·학원)은 보여요. 휴대전화·계좌 같은 개인정보는 해당 메뉴(취소 · 환불 등)에 권한이 있을 때만 쓰세요.</div>`}
+document.addEventListener('input',e=>{const t=e.target;if(t.id==='sfq'){S.sfq=t.value;render();keepFocus('sfq');return}
+  if(!t.dataset||!t.dataset.sf||!S.sf)return;const [i,k,tab]=t.dataset.sf.split('|');const s=S.sf[+i];if(!s)return;
+  if(k==='on'){s.on=t.checked;render()}else if(k==='memo'){s.memo=t.value;const p=document.getElementById('sfDirty');if(p)p.innerHTML=sfPill()}else if(k==='p'){if(t.value)s.perms[tab]=t.value;else delete s.perms[tab];render()}});
+document.addEventListener('change',e=>{const t=e.target;if(t.dataset&&t.dataset.sf&&t.tagName==='SELECT'&&S.sf){const [i,k,tab]=t.dataset.sf.split('|');const s=S.sf[+i];if(s&&k==='p'){if(t.value)s.perms[tab]=t.value;else delete s.perms[tab];render()}}});
+function sfClick(b,d){if(S.tab!=='staff')return false;
+  if(d.sfreset){S.sf=JSON.parse(JSON.stringify(S.SF.staff));render();return true}
+  if(d.sfadd){const t=S.SF.teachers.find(x=>x.id===d.sfadd);if(t){S.sf.push({tid:t.id,name:t.name,acad:t.acad,perms:{home:'보기'},on:true,memo:''});S.sfq=''}render();return true}
+  if(d.sfdel){const s=S.sf[+d.sfdel];ask('담당자에서 뺄까요?',`<b>${esc(s.name)}</b> 선생님은 저장한 뒤부터 관리자 화면에 들어올 수 없어요.`,()=>{S.sf.splice(+d.sfdel,1);render()},'빼기');return true}
+  if(d.sfall){const [i,v]=d.sfall.split('|');const s=S.sf[+i];s.perms={};if(v)S.SF.tabs.forEach(([k])=>s.perms[k]=v);render();return true}
+  if(d.sfsave){call('staffSave',[S.sf],r=>{S.SF.staff=r.staff;S.sf=JSON.parse(JSON.stringify(r.staff));render();toast('담당자 '+r.staff.length+'명을 저장했어요')},'저장하고 있어요…');return true}
+  return false}
 /* ---------- 통계 (실제 접수 · 취소 뺌) ---------- */
 function statRows(){const L=[];(S.D.subs||[]).forEach(sb=>sb.ppl.filter(p=>p.status!=='취소').forEach(p=>{const k=p.id.slice(sb.no.length+1),i=(sb.form&&sb.form.info&&sb.form.info[k])||{};
   L.push({sb,p,i,acad:sb.acad,round:sb.round||'-',kind:p.kind,type:p.type||i.type||'',inst:p.inst||i.inst||'',prog:i.prog||'',lessons:+i.lessons||0,mc:i.mc||[],concert:i.concert&&i.concert!=='없음'?i.concert:'',song:i.other?[i.oc,i.ot].filter(Boolean).join(' · '):(i.song||''),p1:i.p1||'',p2:i.p2||'',room:!!(sb.form&&sb.form.room&&sb.form.room[k]),bill:pAmt(p),paid:+p.paidAmt||0})}));return L}
@@ -967,6 +1080,8 @@ function confirmOne(pid){const d=val('d_'+pid),a=num('a_'+pid);
   call('adminConfirm',[[{pid,date:d,amt:a,memo:val('m_'+pid)}]],r=>{setData(r);toast('입금 확인 · '+kday(d)+' '+won(a))})}
 document.addEventListener('click',e=>{const tr=e.target.closest('tr.ensrow');if(tr&&!e.target.closest('button,input,label')){S.ensOpen=S.ensOpen===tr.dataset.ensopen?'':tr.dataset.ensopen;render()}});
 document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const d=b.dataset;
+  if(ccClick(b,d)||sfClick(b,d))return;
+  if(d.lmode){S.lmode=d.lmode;render();return}
   if(d.qf){S.qf=d.qf;render();return}
   if(d.pff){S.pff=d.pff;render();return}
   if(d.pfadd){S.pf.push({name:'',inst:S.pff&&S.pff!=='all'?S.pff:'',lesson:true,mc:false,min:'',fee:'',org:'교수진',on:true,memo:'',room:''});render();const ins=document.querySelectorAll('[data-pf$="|name"]');if(ins.length)ins[ins.length-1].focus();return}
@@ -994,9 +1109,11 @@ document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)r
     const other=p.acads.filter(a=>(S.D.teams||[]).some(t=>t.no!==d.enssave&&(t.rep===a||(t.acads||[]).includes(a))));
     const go=()=>call('adminSaveEns',[d.enssave,p],r=>{setData(r);toast('앙상블 「'+p.group+'」 팀을 고쳤어요')});
     if(other.length)ask('다른 팀에도 들어 있는 학원이 있어요','<b>'+other.map(esc).join(', ')+'</b>은(는) 다른 팀에도 있어요. 그래도 저장할까요?',go,'그래도 저장');else go();return}
+  if(b.id==='doLogin'&&S.lmode==='stf'){const nm=val('lnm'),ph=val('lph');busy(true,'확인하고 있어요…');
+    google.script.run.withSuccessHandler(r=>{busy(false);if(!r.ok){document.getElementById('lerr').textContent=r.msg;return}S.tok=r.token;try{sessionStorage.setItem('campAdmTok',r.token);sessionStorage.removeItem('campAdmId')}catch(x){}setData(r)}).withFailureHandler(x=>{busy(false);document.getElementById('lerr').textContent=(x&&x.message)||String(x)}).staffLogin(nm,ph);return}
   if(b.id==='doLogin'){const id=val('lid'),pw=document.getElementById('lpw').value;busy(true,'확인하고 있어요…');
     google.script.run.withSuccessHandler(r=>{busy(false);if(!r.ok){document.getElementById('lerr').textContent=r.msg;return}S.tok=r.token;try{sessionStorage.setItem('campAdmTok',r.token);sessionStorage.setItem('campAdmId',id)}catch(x){}document.getElementById('who').textContent='관리자 '+id;setData(r)}).withFailureHandler(x=>{busy(false);document.getElementById('lerr').textContent=(x&&x.message)||String(x)}).adminLogin(id,pw);return}
-  if(d.tab){if(S.tab==='act'&&d.tab!=='act')ACT.flush();if(S.tab==='con'&&d.tab!=='con')CORD.flush();S.tab=d.tab;render();return}
+  if(d.tab){if(d.tab==='staff'&&S.tab!=='staff'){S.SF=null;S.sf=null}if(d.tab==='camp'&&S.tab!=='camp'&&!ccDirty())S.cc=null;if(S.tab==='act'&&d.tab!=='act')ACT.flush();if(S.tab==='con'&&d.tab!=='con')CORD.flush();S.tab=d.tab;render();return}
   if(b.id==='reload'){call('adminData',[],setData,'불러오고 있어요…');return}
   if(d.f){S.f=d.f;render();return}
   if(d.ok){confirmOne(d.ok);return}
@@ -1035,7 +1152,7 @@ document.addEventListener('toggle',e=>{const d=e.target.dataset||{};if(d.sub)S.o
   if(d.rnd!==undefined&&S.openR[d.rnd]!==e.target.open){S.openR[d.rnd]=e.target.open;render()}},true);
 document.addEventListener('input',e=>{if(e.target.id==='conq'){S.conq=e.target.value;const p=e.target.selectionStart;render();const n=document.getElementById('conq');if(n){n.focus();n.setSelectionRange(p,p)}return}});
 document.addEventListener('input',e=>{if(e.target.id==='q'){S.q=e.target.value;const p=e.target.selectionStart;render();const n=document.getElementById('q');n.focus();n.setSelectionRange(p,p)}});
-document.addEventListener('keydown',e=>{if(e.key==='Enter'&&(e.target.id==='lpw'||e.target.id==='lid'))document.getElementById('doLogin').click()});
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&/^(lpw|lid|lnm|lph)$/.test(e.target.id))document.getElementById('doLogin').click()});
 (function(){let t='';try{t=sessionStorage.getItem('campAdmTok')||''}catch(x){}
   if(t){S.tok=t;let id='';try{id=sessionStorage.getItem('campAdmId')||''}catch(x){}document.getElementById('who').textContent=id?'관리자 '+id:'';call('adminData',[],setData,'불러오고 있어요…')}
   else{/* 테스트(STG): 설정에 「관리자 자동 로그인 = 예」면 바로 들어감 */google.script.run.withSuccessHandler(r=>{if(!r||!r.ok)return;S.tok=r.token;try{sessionStorage.setItem('campAdmTok',r.token);sessionStorage.setItem('campAdmId',r.id)}catch(x){}document.getElementById('who').textContent='관리자 '+r.id+' (테스트 자동 로그인)';setData(r)}).withFailureHandler(()=>{}).adminAuto()}})();

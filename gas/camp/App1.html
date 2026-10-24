@@ -1,4 +1,4 @@
-/* build: 20261024-101526 */
+/* build: 20261024-103032 */
 /* ---------- 캠프 설정 (관리자 화면에서 입력되는 값) ---------- */
 const ROOM = { cap:4, emptyFee:130000 }; // 가족방: 4인 기준, 빈 자리 1개당 추가 비용
 const CAMP = { id:'27W', ri:0, lessonFee:60000, lessonMax:5, mcFee:150000,
@@ -31,7 +31,7 @@ function api(fn,args,ok,fail,msg,tries){tries=tries||0;busy(true,msg);google.scr
 /* 교수진: 서버 「교수진」 시트에서 받아 선호 교수 · 마스터클래스 목록을 바꿈 */
 function applyProfs(L){if(!Array.isArray(L)||!L.length)return;Object.keys(PROF).forEach(k=>delete PROF[k]);L.filter(p=>p.l).forEach(p=>(PROF[p.i]=PROF[p.i]||[]).push(p.n));
   MASTER.length=0;L.filter(p=>p.mc).forEach(p=>MASTER.push({n:p.n,i:p.i,min:+p.min||45,fee:+p.fee||0}))}
-function applyBundle(d){if(d.profs)applyProfs(d.profs);if(d.subs){ALL_SUBS.length=0;ALL_SUBS.push(...d.subs);S.snap={};d.subs.forEach(sb=>S.snap[sb.no]=JSON.stringify(sb))}if(d.teams)ENS=d.teams;if(d.bank)S.bank=d.bank;if(d.today)S.today=d.today;loadMine()}
+function applyBundle(d){if(d.camp)applyCamp(d.camp);if(d.profs)applyProfs(d.profs);if(d.subs){ALL_SUBS.length=0;ALL_SUBS.push(...d.subs);S.snap={};d.subs.forEach(sb=>S.snap[sb.no]=JSON.stringify(sb))}if(d.teams)ENS=d.teams;if(d.bank)S.bank=d.bank;if(d.today)S.today=d.today;loadMine()}
 /* 바뀐 접수만 보냄. 「보냈어요」 같은 알림은 서버 저장이 끝난 뒤에 띄움 (실패하면 최신 내용으로 다시 불러옴) */
 function subSave(){const mine=ALL_SUBS.filter(sb=>S.user&&sb.owner===S.user.name&&JSON.stringify(sb)!==(S.snap||{})[sb.no]);if(!mine.length)return;
   S.saving=true;S.savedMsg='';
@@ -58,6 +58,23 @@ const ROUNDS = [['1차','12월 1일 ~ 12월 10일'],['2차','12월 11일 ~ 12월
 const FEES = { // 참가자격 × 차수 (관리자 참가비표에서 입력, 2026 여름 금액을 예시로 사용)
   '교사':[560000,570000,590000],'연수생':[560000,570000,590000],'소속없는 중급연수생':[560000,570000,590000],'학생':[560000,570000,590000],'회원의 악기하는 자녀':[510000,520000,540000],
   '회원의 첫번째 보호자':[510000,520000,540000],'회원의 그외 악기 안하는 동반가족':[410000,420000,440000],'동반가족 중 돌전아기':[310000,320000,340000] };
+/* 캠프 설정: 관리자 「캠프 설정」 값으로 위의 기본값을 바꿈 (페이지를 열 때 + 로그인 · 저장할 때마다) */
+const WD='일월화수목금토';
+const dOf=d=>{const [y,m,dd]=d.split('-').map(Number);return new Date(Date.UTC(y,m-1,dd))};
+const kdw=d=>{const x=dOf(d);return `${x.getUTCMonth()+1}. ${x.getUTCDate()}.(${WD[x.getUTCDay()]})`};
+function applyCamp(c){if(!c||!c.base||!Array.isArray(c.rounds)||!c.rounds.length)return;const b=c.base,o=c.opt||{};
+  const keepRi=S&&S.editNo&&S.riBack!==undefined;
+  CAMP.id=b.id;['lessonFee','lessonMax','mcFee','studentDues','teacherDues'].forEach(k=>{if(o[k]!==undefined)CAMP[k]=+o[k]});
+  if(o.roomCap)ROOM.cap=+o.roomCap;if(o.roomEmptyFee!==undefined)ROOM.emptyFee=+o.roomEmptyFee;
+  ROUNDS.length=0;c.rounds.forEach(r=>ROUNDS.push([r.n,`${kday(r.from)} ~ ${kday(r.to)}`]));
+  if(c.fees)Object.keys(c.fees).forEach(t=>FEES[t]=c.fees[t]);
+  if(c.refund&&Array.isArray(c.refund.rules)){REFUND.rules=c.refund.rules;if(c.refund.after)REFUND.after=c.refund.after;REFUND.duesRefund=!!c.refund.duesRefund}
+  const ri=Math.max(0,Math.min(ROUNDS.length-1,+c.ri||0));if(keepRi)S.riBack=ri;else CAMP.ri=ri;
+  CAMP.name=b.name;CAMP.start=b.start;CAMP.end=b.end;CAMP.place=b.place;
+  try{const n=Math.round((dOf(b.end)-dOf(b.start))/864e5);const y1=b.start.slice(0,4),y2=b.end.slice(0,4);
+    document.getElementById('campTitle').textContent=b.name+' 접수';document.title=b.name+' 접수';
+    document.getElementById('campWhen').innerHTML=`<strong>${y1}. ${kdw(b.start)} ~ ${y2!==y1?y2+'. ':''}${kdw(b.end)}</strong>${n>0?` ${n}박 ${n+1}일`:''}`;
+    document.getElementById('campPlace').textContent=b.place||'추후 안내'}catch(e){}}
 const TEACHER_TYPES = ['교사','연수생','소속없는 중급연수생'];
 const PLAYS = new Set([...TEACHER_TYPES,'학생','회원의 악기하는 자녀']); // 레슨·음악회 질문 대상 (현재 진도는 학생만)
 const FAMILY_TYPES = ['회원의 첫번째 보호자','회원의 그외 악기 안하는 동반가족','동반가족 중 돌전아기'];
@@ -190,15 +207,3 @@ function vStep1(){
   const q=S.acQ.trim(); const mineA=u.home||u.acads;
   const all=ACADEMIES.filter(a=>!q||a.name.includes(q)||a.region.includes(q)||(a.head||'').includes(q)).sort((x,y)=>(mineA.includes(y.name)?1:0)-(mineA.includes(x.name)?1:0)||x.name.localeCompare(y.name,'ko'));
   return `${MY_SUBS.length?`<div class="note info spread" style="margin-bottom:12px"><span><b>내 접수 ${MY_SUBS.length}건</b> · 확인·취소는 여기서</span><button class="btn small primary" type="button" id="toMine">내 접수 보기</button></div>`:''}<section class="sec"><div class="spread"><h2>어느 학원으로 접수할까요?</h2><button class="btn small ghost" type="button" id="logout">로그아웃</button></div>
-  <div class="verified">✓ ${esc(u.name)} 선생님${u.role?` · ${esc(u.role)}`:''} · ${esc(u.inst)}${u.newReg?' · <span class="pill due">신규 등록 · 운영진 확인 대기</span>':''}</div>
-  <div class="panel">
-    <div class="f" style="display:grid;gap:8px"><span>어디로 접수하나요?</span>
-      <div class="row" style="gap:8px;flex-wrap:wrap">${mineA.map(a=>`<button class="btn ${S.acad===a?'primary':''}" type="button" data-acad="${esc(a)}">${esc(a)} <small>(내 소속)</small></button>`).join('')}
-        <button class="btn ${S.acad&&!mineA.includes(S.acad)&&S.acad!==classOf(u)?'primary':''}" type="button" id="otherAcad">다른 학원 학생 접수 <small>(겸임 · 소속 그대로)</small></button>
-        <button class="btn ${S.acad===classOf(u)?'primary':''}" type="button" data-acad="${esc(classOf(u))}">${esc(classOf(u))} <small>(학원 없이)</small></button></div></div>
-    <label class="f" for="acQ">학원 찾기 <span class="hint">다른 학원 학생도 접수할 수 있어요 · 선생님 소속은 그대로예요</span>
-      <div class="ac combo">
-        <input type="search" id="acQ" role="combobox" aria-expanded="${S.acOpen}" aria-controls="acList" value="${esc(S.acOpen?S.acQ:S.acad)}" placeholder="학원을 선택하거나 검색하세요" autocomplete="off">
-        <span class="caret" aria-hidden="true">▾</span>
-        ${S.acOpen?`<ul id="acList" role="listbox">
-          <li><button type="button" role="option" data-acad="${esc(classOf(u))}"><span><b>직접 입력</b> · ${esc(classOf(u))}</span><small>학원 소속 없이</small></button></li>

@@ -1,4 +1,4 @@
-/* build: 20261024-101526 */
+/* build: 20261024-103032 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -86,11 +86,12 @@ const CX_HEAD = ['요청 일시', '접수번호', '학원', '요청 교사', '�
 /* ---------------- 웹 앱 ---------------- */
 function doGet(e) {
   const admin = e && e.parameter && e.parameter.page === 'admin';
-  let page;
+  let page, cname = CAMP_NAME, cj = '';
+  try { const c = campPublic_(); cname = c.base.name; cj = JSON.stringify(c); } catch (x) {}
   if (admin) page = HtmlService.createHtmlOutputFromFile('Admin');
-  else { const t = HtmlService.createTemplateFromFile('Index'); let share = ''; let tl = ''; try { ensureSettings_(); share = setting_('공유주소'); tl = setting_('테스트 로그인'); } catch (x) {} t.shareUrl = share; t.testLogin = tl; /* 테스트 로그인: STG 「설정」에만 (이름/휴대전화) — 로그인 칸을 미리 채움 */ page = t.evaluate(); }
+  else { const t = HtmlService.createTemplateFromFile('Index'); let share = ''; let tl = ''; try { ensureSettings_(); share = setting_('공유주소'); tl = setting_('테스트 로그인'); } catch (x) {} t.shareUrl = share; t.testLogin = tl; t.campJson = cj; /* 테스트 로그인: STG 「설정」에만 (이름/휴대전화) — 로그인 칸을 미리 채움 · campJson: 「캠프설정」 시트 값 (날짜·장소·차수·참가비) */ page = t.evaluate(); }
   return page
-    .setTitle(CAMP_NAME + (admin ? ' 접수 관리' : ' 접수'))
+    .setTitle(cname + (admin ? ' 접수 관리' : ' 접수'))
     .addMetaTag('viewport', 'width=device-width, initial-scale=1')
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
@@ -251,7 +252,8 @@ function bundle_(acads) {
     };
   });
   const all = loadSubs_();
-  return { rosters, subs: all.filter(sb => acads.includes(sb.acad)), teams: teams_(all), bank: bankInfo_(), today: today_(), profs };
+  let camp = null; try { camp = campPublic_(); } catch (x) {}
+  return { rosters, subs: all.filter(sb => acads.includes(sb.acad)), teams: teams_(all), bank: bankInfo_(), today: today_(), profs, camp };
 }
 
 /* ---------------- 접수 읽고 쓰기 ---------------- */
@@ -377,8 +379,9 @@ function writeTeams_(all) {
 /* ---------------- 금액은 서버가 다시 계산 ---------------- */
 /** 화면이 보낸 금액을 믿지 않고 참가 구분·차수·레슨·마스터클래스·연회비·가족방으로 다시 계산 */
 function recalc_(sb) {
-  const f = sb.form || {}, info = f.info || {}, ri = Math.max(0, Math.min(ROUND_NAMES.length - 1, +f.ri || 0));
-  sb.round = ROUND_NAMES[ri];
+  const CC = camp_(), FEES = CC.fees, OPT = CC.opt;
+  const f = sb.form || {}, info = f.info || {}, ri = Math.max(0, Math.min(CC.rounds.length - 1, +f.ri || 0));
+  sb.round = CC.rounds[ri].n;
   const tPaid = {}; teachers_().forEach(t => tPaid['t_' + t.id] = !!t.paidDate);
   const sPaid = {}; rows_(SH.S).forEach(r => sPaid[String(r['ID'])] = !!dstr_(r['회비 납부일']));
   const key = p => p.id.slice(sb.no.length + 1);
@@ -455,7 +458,7 @@ function submitNew(token, sb) {
     const dup = sb.ppl.filter(p => p.kind !== '가족' && taken[key(p.id)]);
     if (dup.length) throw new Error(`${dup.map(p => p.name).join(', ')}은(는) 이미 ${taken[key(dup[0].id)]}에 접수돼 있어요. 「내 접수」에서 확인해 주세요.`);
     const n = all.reduce((m, x) => Math.max(m, +String(x.no).split('-')[1] || 0), 0) + 1;
-    const no = CAMP_ID + '-' + String(n).padStart(3, '0');
+    const no = camp_().base.id + '-' + String(n).padStart(3, '0');
     const tmp = sb.no;
     sb.no = no; sb.owner = u.name; sb.createdAt = stamp_();
     sb.ppl.forEach(p => { p.id = no + p.id.slice(tmp.length); p.pay = '전'; p.paidAmt = 0; delete p.rep; });
@@ -593,8 +596,8 @@ function cancelReq(token, req) {
   if (!String(req.why || '').trim()) throw new Error('취소 사유를 골라 주세요.');
   let link = '';
   if (req.file && req.file.data) {
-    const it = DriveApp.getFoldersByName('캠프 진단서 ' + CAMP_ID);
-    const folder = it.hasNext() ? it.next() : DriveApp.createFolder('캠프 진단서 ' + CAMP_ID);
+    const it = DriveApp.getFoldersByName('캠프 진단서 ' + camp_().base.id);
+    const folder = it.hasNext() ? it.next() : DriveApp.createFolder('캠프 진단서 ' + camp_().base.id);
     const blob = Utilities.newBlob(Utilities.base64Decode(req.file.data), req.file.type || 'application/octet-stream',
       `${req.acad}-${req.names.join('_')}-${Utilities.formatDate(new Date(), TZ, 'yyyyMMdd')}-${req.file.name}`);
     link = folder.createFile(blob).getUrl();
@@ -652,14 +655,143 @@ function adminAuto() {
   log_('관리자 ' + id, '자동 로그인(테스트)', '');
   return Object.assign({ ok: true, token, id }, adminData(token));
 }
+/** 관리자 로그인 확인 → { name, sup(총관리자), perms } · 담당자 권한은 매번 「담당자」 시트에서 다시 읽음 (권한을 거두면 바로 막힘) */
 function adm_(token) {
   const v = CacheService.getScriptCache().get('adm_' + token);
   if (!v) throw new Error('관리자 로그인이 끝났어요. 새로 고쳐 다시 로그인해 주세요.');
-  return JSON.parse(v);
+  const a = JSON.parse(v);
+  if (!a.staff) { a.sup = true; a.perms = {}; ADMIN_TABS.forEach(t => a.perms[t[0]] = '편집'); return a; }
+  const s = staff_().find(x => x.tid === a.tid && x.on);
+  if (!s) throw new Error('담당자 권한이 없어졌어요. 총관리자에게 문의해 주세요.');
+  a.sup = false; a.perms = s.perms; return a;
 }
+/* ---------------- 캠프 설정 (「캠프설정」 시트 · 총관리자만 바꿈) ----------------
+ * 시트 한 줄 = 한 묶음(기본 · 차수 · 참가비 · 옵션 · 환불), 값은 JSON. 시트가 없으면 아래 기본값을 씀 */
+const CAMPCFG = '캠프설정';
+const FEE_TYPES = ['교사', '연수생', '소속없는 중급연수생', '학생', '회원의 악기하는 자녀', '회원의 첫번째 보호자', '회원의 그외 악기 안하는 동반가족', '동반가족 중 돌전아기'];
+const CAMP_DEF = {
+  base: { id: CAMP_ID, name: CAMP_NAME, start: '2027-01-11', end: '2027-01-15', place: '추후 안내', open: '2026-12-01', close: '2026-12-28', cur: 'auto' },
+  rounds: [{ n: '1차', from: '2026-12-01', to: '2026-12-10' }, { n: '2차', from: '2026-12-11', to: '2026-12-20' }, { n: '3차', from: '2026-12-21', to: '2026-12-28' }],
+  fees: FEES,
+  opt: { lessonFee: OPT.lessonFee, lessonMax: OPT.lessonMax, mcFee: 150000, studentDues: OPT.studentDues, teacherDues: OPT.teacherDues, roomCap: OPT.roomCap, roomEmptyFee: OPT.roomEmptyFee },
+  refund: { rules: [{ until: '2026-12-10', label: '접수 마감 전', rate: 100, doc: false }, { until: '2026-12-28', label: '캠프 14일 전까지', rate: 50, doc: false }, { until: '2027-01-10', label: '캠프 전날까지', rate: 0, doc: true }],
+    after: { label: '캠프 시작 후', rate: 0, doc: true, allow: false }, duesRefund: false }
+};
+const CAMP_KEYS = [['base', '기본'], ['rounds', '차수'], ['fees', '참가비'], ['opt', '옵션'], ['refund', '환불']];
+let CAMP_CACHE = null;
+function camp_() {
+  if (CAMP_CACHE) return CAMP_CACHE;
+  const c = JSON.parse(JSON.stringify(CAMP_DEF)); c.rev = 0;
+  rows_(CAMPCFG).forEach(r => {
+    const k = (CAMP_KEYS.find(x => x[1] === String(r['항목'])) || [])[0], v = String(r['값'] || '');
+    if (String(r['항목']) === 'rev') { c.rev = +v || 0; return; }
+    if (!k || !v) return;
+    try { const o = JSON.parse(v); c[k] = Array.isArray(o) ? o : Object.assign(c[k], o); } catch (x) {}
+  });
+  return (CAMP_CACHE = c);
+}
+/** 지금 차수: 「현재 차수」를 정해 두면 그것, 자동이면 오늘 날짜가 든 차수 (마감 뒤면 마지막 차수) */
+function curRound_(c) {
+  c = c || camp_(); const n = c.rounds.length;
+  if (c.base.cur !== 'auto' && c.base.cur !== '' && !isNaN(+c.base.cur)) return Math.max(0, Math.min(n - 1, +c.base.cur));
+  const d = today_(), i = c.rounds.findIndex(r => d <= r.to);
+  return i < 0 ? n - 1 : i;
+}
+/** 선생님 화면에 보내는 설정 (+ 지금 차수) */
+function campPublic_() { const c = camp_(); return Object.assign({}, c, { ri: curRound_(c) }); }
+function campGet(token) { const a = adm_(token); needSup_(a); return { camp: campPublic_(), subs: rows_(SH.SUB).filter(r => r['접수번호']).length }; }
+function campSave(token, c, rev) {
+  const a = adm_(token); needSup_(a);
+  const ok = /^\d{4}-\d{2}-\d{2}$/, num = v => Math.max(0, Math.round(+v || 0));
+  const b = c.base || {};
+  if (!/^[0-9A-Za-z]{2,8}$/.test(String(b.id || ''))) throw new Error('캠프 코드는 영문·숫자 2~8자로 적어 주세요 (예: 27W).');
+  if (!String(b.name || '').trim()) throw new Error('캠프 이름을 적어 주세요.');
+  ['start', 'end', 'open', 'close'].forEach(k => { if (!ok.test(b[k] || '')) throw new Error('날짜를 2027-01-11 꼴로 적어 주세요.'); });
+  if (b.end < b.start) throw new Error('캠프 끝나는 날이 시작일보다 앞서요.');
+  const rounds = (c.rounds || []).map(r => ({ n: String(r.n || '').trim(), from: String(r.from || ''), to: String(r.to || '') }));
+  if (!rounds.length || rounds.length > 6) throw new Error('차수는 1~6개로 정해 주세요.');
+  rounds.forEach((r, i) => { if (!r.n || !ok.test(r.from) || !ok.test(r.to) || r.to < r.from) throw new Error((i + 1) + '번째 차수의 이름·기간을 확인해 주세요.'); if (i && r.from <= rounds[i - 1].to) throw new Error(r.n + ' 기간이 앞 차수와 겹쳐요.'); });
+  const fees = {}; FEE_TYPES.forEach(t => { fees[t] = rounds.map((_, i) => num(((c.fees || {})[t] || [])[i])); });
+  const o = c.opt || {}, opt = {}; Object.keys(CAMP_DEF.opt).forEach(k => opt[k] = num(o[k]));
+  if (!opt.roomCap) throw new Error('가족방 정원을 적어 주세요.');
+  const rf = c.refund || {}, rules = (rf.rules || []).map(r => ({ until: String(r.until || ''), label: String(r.label || '').trim(), rate: Math.max(0, Math.min(100, Math.round(+r.rate || 0))), doc: !!r.doc }));
+  rules.forEach((r, i) => { if (!ok.test(r.until) || !r.label) throw new Error((i + 1) + '번째 환불 규정의 날짜·이름을 확인해 주세요.'); if (i && r.until <= rules[i - 1].until) throw new Error('환불 규정은 날짜 순서대로 적어 주세요.'); });
+  const af = rf.after || {}, refund = { rules, after: { label: String(af.label || '캠프 시작 후'), rate: Math.max(0, Math.min(100, Math.round(+af.rate || 0))), doc: !!af.doc, allow: !!af.allow }, duesRefund: !!rf.duesRefund };
+  const cur = b.cur === 'auto' || b.cur === '' || b.cur == null ? 'auto' : String(Math.max(0, Math.min(rounds.length - 1, +b.cur || 0)));
+  const nc = { base: { id: String(b.id).trim(), name: String(b.name).trim(), start: b.start, end: b.end, place: String(b.place || '').trim(), open: b.open, close: b.close, cur }, rounds, fees, opt, refund };
+  const lock = lock_();
+  try {
+    const ss = SpreadsheetApp.getActive(); let sh = ss.getSheetByName(CAMPCFG);
+    if (!sh) { sh = ss.insertSheet(CAMPCFG); sh.getRange(1, 1, 1, 3).setValues([['항목', '값', '설명']]).setFontWeight('bold'); sh.setFrozenRows(1); sh.getRange('B:B').setNumberFormat('@'); }
+    CAMP_CACHE = null; const old = camp_();
+    if ((+rev || 0) !== (old.rev || 0)) throw new Error('다른 분이 먼저 캠프 설정을 바꿨어요. 새로 고친 뒤 다시 해 주세요.');
+    const desc = { base: '캠프 코드 · 이름 · 날짜 · 장소 · 접수 기간', rounds: '차수 이름과 기간', fees: '참가자격 × 차수 참가비', opt: '추가 레슨 · 마스터클래스 · 회비 · 가족방', refund: '취소·환불 규정' };
+    const vals = CAMP_KEYS.map(k => [k[1], JSON.stringify(nc[k[0]]), desc[k[0]]]).concat([['rev', String((old.rev || 0) + 1), '바꾼 횟수 (건드리지 마세요)']]);
+    sh.getRange(2, 1, Math.max(sh.getLastRow(), vals.length + 1), 3).clearContent();
+    sh.getRange(2, 1, vals.length, 3).setValues(vals);
+    CAMP_CACHE = null;
+    log_(a.name, '캠프 설정 저장', nc.base.id + ' · ' + nc.base.start + '~' + nc.base.end);
+  } finally { lock.releaseLock(); }
+  return { ok: true, camp: campPublic_() };
+}
+
+/* ---------------- 담당자 · 권한 (「담당자」 시트) ----------------
+ * 관리자 아이디·비밀번호 = 총관리자 (모든 메뉴 + 캠프 설정 + 담당자)
+ * 담당자 = 교사 회원 중에서 골라 메뉴마다 편집 / 보기 / 없음 → 관리자 화면에 이름 + 휴대전화로 로그인 */
+const STAFF = '담당자';
+const STAFF_HEAD = ['교사ID', '이름', '학원', '권한', '사용', '메모', '바꾼 날'];
+const ADMIN_TABS = [['home', '한눈에'], ['subs', '접수 · 입금 확인'], ['rp', '입금 신고'], ['cx', '취소 · 환불'], ['ens', '앙상블'], ['prof', '교수진'], ['act', '교사 일정'], ['tt', '개인레슨'], ['room', '방 배정'], ['con', '오후음악회'], ['stat', '통계'], ['q', '오류·건의']];
+function staff_() {
+  return rows_(STAFF).filter(r => r['교사ID']).map(r => { let p = {}; try { p = JSON.parse(String(r['권한'] || '{}')); } catch (x) {}
+    return { tid: String(r['교사ID']), name: String(r['이름']), acad: String(r['학원'] || ''), perms: p, on: String(r['사용'] || '예') !== '아니오', memo: String(r['메모'] || '') }; });
+}
+function needSup_(a) { if (!a.sup) throw new Error('총관리자만 할 수 있어요.'); }
+/** 그 메뉴를 「편집」할 수 있는지 (여러 메뉴 중 하나라도 되면 통과) */
+function need_(a, tabs) {
+  if (a.sup) return;
+  if (![].concat(tabs).some(t => a.perms[t] === '편집')) throw new Error('이 메뉴는 보기만 할 수 있어요. 바꾸려면 총관리자에게 「편집」 권한을 받아 주세요.');
+}
+function staffLogin(name, phone) {
+  const C = CacheService.getScriptCache(), fails = +C.get('stf_fail') || 0;
+  if (fails >= 15) return { ok: false, msg: '여러 번 틀려서 5분 동안 잠겼어요. 잠시 뒤 다시 해 주세요.' };
+  const ph = String(phone || '').replace(/\D/g, ''), nm = bare_(name);
+  if (!nm || ph.length < 10) return { ok: false, msg: '이름과 휴대전화를 모두 넣어 주세요.' };
+  const t = teachers_().find(x => bare_(x.name) === nm && x.p4 && ph.endsWith(x.p4));
+  const s = t && staff_().find(x => x.tid === t.id && x.on);
+  if (!s) { C.put('stf_fail', String(fails + 1), 300); Utilities.sleep(600); return { ok: false, msg: t ? '담당자로 등록되지 않았어요. 총관리자에게 문의해 주세요.' : '회원 명단의 이름·휴대전화와 맞지 않아요.' }; }
+  C.remove('stf_fail');
+  const token = Utilities.getUuid();
+  C.put('adm_' + token, JSON.stringify({ name: t.name, staff: true, tid: t.id }), 21600);
+  log_('담당자 ' + t.name, '관리자 화면 로그인', '');
+  return Object.assign({ ok: true, token }, adminData(token));
+}
+function me_(a) { return { name: a.name, sup: !!a.sup, perms: a.perms }; }
+function staffData(token) {
+  const a = adm_(token); needSup_(a);
+  return { staff: staff_(), teachers: teachers_().filter(t => t.state !== '대기').map(t => ({ id: t.id, name: t.name, acad: t.acads.join(', '), inst: t.inst, role: t.role })), tabs: ADMIN_TABS };
+}
+function staffSave(token, list) {
+  const a = adm_(token); needSup_(a);
+  const ts = {}; teachers_().forEach(t => ts[t.id] = t);
+  const keys = ADMIN_TABS.map(t => t[0]), seen = {};
+  const rows = (list || []).filter(s => s && ts[s.tid] && !seen[s.tid] && (seen[s.tid] = 1)).map(s => {
+    const p = {}; keys.forEach(k => { const v = (s.perms || {})[k]; if (v === '편집' || v === '보기') p[k] = v; });
+    return [s.tid, ts[s.tid].name, ts[s.tid].acads.join(', '), JSON.stringify(p), s.on === false ? '아니오' : '예', String(s.memo || '').slice(0, 200), today_()];
+  });
+  const lock = lock_();
+  try {
+    const ss = SpreadsheetApp.getActive(); let sh = ss.getSheetByName(STAFF);
+    if (!sh) { sh = ss.insertSheet(STAFF); sh.getRange(1, 1, 1, STAFF_HEAD.length).setValues([STAFF_HEAD]).setFontWeight('bold'); sh.setFrozenRows(1); sh.getRange('A:A').setNumberFormat('@'); }
+    if (sh.getLastRow() > 1) sh.getRange(2, 1, sh.getLastRow() - 1, STAFF_HEAD.length).clearContent();
+    if (rows.length) sh.getRange(2, 1, rows.length, STAFF_HEAD.length).setValues(rows);
+    log_(a.name, '담당자 저장', rows.length + '명');
+  } finally { lock.releaseLock(); }
+  return { ok: true, staff: staff_() };
+}
+
 /** 관리자 화면에 필요한 것: 모든 접수 · 운영진 칸 · 환불 요청 · 앙상블 팀 */
 function adminData(token) {
-  adm_(token);
+  const me = adm_(token);
   const subs = loadSubs_();
   const admin = adminMap_();
   ensureHead_(SH.CX, CX_HEAD);
@@ -669,7 +801,7 @@ function adminData(token) {
   // 통계용: 예전 접수라 사람마다 악기가 비어 있으면 명단에서 채워서 보냄 (시트에는 안 씀)
   const inst = {}; teachers_().forEach(t => inst['t_' + t.id] = t.inst); rows_(SH.S).forEach(r => inst[String(r['ID'])] = String(r['악기'] || ''));
   subs.forEach(sb => sb.ppl.forEach(p => { if (!p.inst) { const k = p.id.slice(sb.no.length + 1), i = (sb.form && sb.form.info && sb.form.info[k]) || {}; p.inst = i.inst || inst[k] || ''; } }));
-  return { today: today_(), subs, admin, cx, teams: teams_(subs), issues: issues_(), profs: profs_() };
+  return { today: today_(), subs, admin, cx, teams: teams_(subs), issues: issues_(), profs: profs_(), me: me_(me), camp: campPublic_() };
 }
 function setAdminCols_(pid, vals) {
   const sh = SpreadsheetApp.getActive().getSheetByName(SH.P);
@@ -682,7 +814,7 @@ function setAdminCols_(pid, vals) {
 }
 /** 입금 확인 (날짜 필수). amt를 비우면 확인 취소 */
 function adminConfirm(token, items) {
-  const a = adm_(token);
+  const a = adm_(token); need_(a, ['subs', 'rp']);
   const lock = lock_();
   try {
     items.forEach(it => {
@@ -699,7 +831,7 @@ function adminConfirm(token, items) {
 /** 입금 신고 반려: 그 사람은 다시 「입금 전」, 선생님 화면에 사유 표시 */
 /** 입금 신고 반려 (한 명 또는 여러 명: pid 자리에 배열) */
 function adminRejectReport(token, pid, reason) {
-  const a = adm_(token);
+  const a = adm_(token); need_(a, ['rp', 'subs']);
   const pids = Array.isArray(pid) ? pid : [pid];
   if (!pids.length) throw new Error('반려할 사람을 골라 주세요.');
   const lock = lock_();
@@ -722,7 +854,7 @@ function adminRejectReport(token, pid, reason) {
 }
 /** 관리자: 앙상블 팀 정보 고치기 (팀 이름·함께하는 학원·곡·시간·운영진 메모) */
 function adminSaveEns(token, no, patch) {
-  const a = adm_(token);
+  const a = adm_(token); need_(a, 'ens');
   const lock = lock_();
   try {
     const all = loadSubs_(); const sb = all.find(x => x.no === no);
@@ -745,7 +877,7 @@ function adminSaveEns(token, no, patch) {
 }
 /** 관리자: 교수진 목록 저장 (전체를 새로 씀) */
 function adminSaveProfs(token, list) {
-  const a = adm_(token);
+  const a = adm_(token); need_(a, 'prof');
   const t = (s, n) => String(s == null ? '' : s).trim().slice(0, n || 60);
   const L = (list || []).map(p => ({ name: t(p.name, 40), inst: t(p.inst, 20), lesson: !!p.lesson, mc: !!p.mc, min: Math.max(0, Math.min(240, +p.min || 0)), fee: Math.max(0, Math.min(5000000, +String(p.fee || 0).replace(/[^\d]/g, '') || 0)), org: t(p.org, 40), on: p.on !== false, memo: t(p.memo, 200), room: t(p.room, 30) })).filter(p => p.name);
   const seen = {};
@@ -769,7 +901,7 @@ function adminSaveProfs(token, list) {
 /** 환불 처리는 두 단계: ① 접수(승인) — 참가 취소·환불 예정 금액 확정  ② 환불 완료 — 실제로 돈을 보낸 날짜(필수)
  *  action: '접수' | '완료' | '반려'   (환불액 0원이면 '접수' = 취소 확정, 송금 단계 없음) */
 function adminRefund(token, row, action, date, memo, amt) {
-  const a = adm_(token);
+  const a = adm_(token); need_(a, 'cx');
   if (action === '완료' && !/^\d{4}-\d{2}-\d{2}$/.test(date || '')) throw new Error('환불한(돈을 보낸) 날짜를 선택해 주세요.');
   const lock = lock_();
   try {
@@ -825,10 +957,10 @@ function mail_(sb, u) {
   try {
     const live = sb.ppl.filter(p => p.status === '정상');
     const bill = live.reduce((t, p) => t + (+p.fee || 0) + (+p.lesson || 0) + (+p.dues || 0) + (+p.room || 0), 0);
-    const body = `${CAMP_NAME} 접수가 완료되었어요.\n\n접수번호: ${sb.no}\n학원: ${sb.acad}\n접수 교사: ${u.name}\n차수: ${sb.round}\n인원: ${live.length}명\n입금하실 금액: ${bill.toLocaleString('ko-KR')}원\n\n` +
+    const body = `${camp_().base.name} 접수가 완료되었어요.\n\n접수번호: ${sb.no}\n학원: ${sb.acad}\n접수 교사: ${u.name}\n차수: ${sb.round}\n인원: ${live.length}명\n입금하실 금액: ${bill.toLocaleString('ko-KR')}원\n\n` +
       live.map(p => `- ${p.name} (${p.type}) ${((+p.fee || 0) + (+p.lesson || 0) + (+p.dues || 0) + (+p.room || 0)).toLocaleString('ko-KR')}원`).join('\n') +
       `\n\n입금한 뒤 접수 화면의 「내 접수」에서 사람별로 입금 신고를 해 주세요.`;
-    if (sb.email) MailApp.sendEmail(sb.email, `[${CAMP_NAME}] 접수 완료 ${sb.no}`, body);
+    if (sb.email) MailApp.sendEmail(sb.email, `[${camp_().base.name}] 접수 완료 ${sb.no}`, body);
     if (ADMIN_EMAIL) MailApp.sendEmail(ADMIN_EMAIL, `[캠프 접수] ${sb.acad} ${sb.no} · ${live.length}명`, body);
   } catch (e) { log_('시스템', '메일 실패', String(e)); }
 }
@@ -865,8 +997,8 @@ function submitIssue(token, d) {
   if (d.file && d.file.data) {
     if (String(d.file.data).length > 7000000) throw new Error('사진은 5MB까지 올릴 수 있어요.');
     if (!/^image\//.test(d.file.type || '')) throw new Error('사진(이미지) 파일만 올릴 수 있어요.');
-    const it = DriveApp.getFoldersByName('캠프 문의 사진 ' + CAMP_ID);
-    const folder = it.hasNext() ? it.next() : DriveApp.createFolder('캠프 문의 사진 ' + CAMP_ID);
+    const it = DriveApp.getFoldersByName('캠프 문의 사진 ' + camp_().base.id);
+    const folder = it.hasNext() ? it.next() : DriveApp.createFolder('캠프 문의 사진 ' + camp_().base.id);
     pic = folder.createFile(Utilities.newBlob(Utilities.base64Decode(d.file.data), d.file.type, Utilities.formatDate(new Date(), TZ, 'yyyyMMdd-HHmmss') + '-' + name + '-' + String(d.file.name || 'pic').slice(-40))).getUrl();
   }
   const lock = lock_();
@@ -886,7 +1018,7 @@ function myIssues_(name) { return issues_().filter(x => x.name === name).reverse
 function myIssues(token) { const u = who_(token); return { ok: true, mine: myIssues_(u.name) }; }
 /** 관리자: 상태·답변 */
 function adminSetIssue(token, row, state, reply) {
-  const a = adm_(token);
+  const a = adm_(token); need_(a, 'q');
   if (!ISS_STATES.includes(state)) throw new Error('상태를 골라 주세요.');
   const lock = lock_();
   try {
@@ -963,7 +1095,7 @@ function schedData(token) {
   return { days: c.days || [], rooms: c.rooms || {}, meals: c.meals || [], rows: c.rows || {}, people: actPeople_(c.people), unav: c.unav || {}, req: c.req || {}, target: c.target || { min: 2, max: 6 }, rev: +c.rev || 0, events: actEvents_(), log };
 }
 function schedSave(token, b) {
-  const a = adm_(token);
+  const a = adm_(token); need_(a, 'act');
   if (!b || !Array.isArray(b.events) || !Array.isArray(b.days)) throw new Error('보낸 내용이 비어 있어요. 새로 불러와 주세요.');
   if (b.events.length > 3000) throw new Error('일정이 너무 많아요.');
   const lock = lock_();
@@ -1009,7 +1141,7 @@ function lessonData(token) {
 }
 /** 칸 하나 배정/비우기: op = {d, t, pr, pid(빈 값이면 비우기)} */
 function lessonSet(token, op) {
-  const a = adm_(token);
+  const a = adm_(token); need_(a, 'tt');
   if (!op || !/^\d{2}:\d{2}$/.test(String(op.t)) || !op.pr) throw new Error('칸 정보가 잘못됐어요. 새로 불러와 주세요.');
   const lock = lock_();
   try {
@@ -1065,7 +1197,7 @@ function myTimetable(token) {
 }
 /** 관리자: 설정 한 줄 바꾸기 (시간표 공개 등 허용된 항목만) */
 function adminSetSetting(token, key, val) {
-  const a = adm_(token);
+  const a = adm_(token); need_(a, 'tt');
   if (!['시간표 공개'].includes(key)) throw new Error('바꿀 수 없는 설정이에요.');
   ensureSettings_(); const sh = SpreadsheetApp.getActive().getSheetByName('설정');
   const r = rows_('설정').find(x => String(x['항목']) === key);
@@ -1099,7 +1231,7 @@ function rooms_() {
 function roomData(token) { adm_(token); let open = false; try { open = setting_('시간표 공개') === '예'; } catch (x) {} return { rooms: rooms_().map(r => { const o = Object.assign({}, r); delete o._row; return o; }), kinds: ROOM_KINDS, open }; }
 /** 방 하나 저장 (빈 메인학원이면 비움) */
 function roomSave(token, x) {
-  const a = adm_(token);
+  const a = adm_(token); need_(a, 'room');
   const t = (s, n) => String(s == null ? '' : s).trim().slice(0, n || 60);
   const lock = lock_();
   try {
@@ -1132,7 +1264,7 @@ function conGet(token) {
   return { days: c.days || [], concerts, order: c.conorder || {}, rev: +c.conrev || 0 };
 }
 function conSave(token, b) {
-  const a = adm_(token);
+  const a = adm_(token); need_(a, 'con');
   const lock = lock_();
   try {
     const c = actCfg_(); const sh = actSheets_();

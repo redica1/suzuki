@@ -1,4 +1,16 @@
-/* build: 20261024-101526 */
+/* build: 20261024-103032 */
+  <div class="verified">✓ ${esc(u.name)} 선생님${u.role?` · ${esc(u.role)}`:''} · ${esc(u.inst)}${u.newReg?' · <span class="pill due">신규 등록 · 운영진 확인 대기</span>':''}</div>
+  <div class="panel">
+    <div class="f" style="display:grid;gap:8px"><span>어디로 접수하나요?</span>
+      <div class="row" style="gap:8px;flex-wrap:wrap">${mineA.map(a=>`<button class="btn ${S.acad===a?'primary':''}" type="button" data-acad="${esc(a)}">${esc(a)} <small>(내 소속)</small></button>`).join('')}
+        <button class="btn ${S.acad&&!mineA.includes(S.acad)&&S.acad!==classOf(u)?'primary':''}" type="button" id="otherAcad">다른 학원 학생 접수 <small>(겸임 · 소속 그대로)</small></button>
+        <button class="btn ${S.acad===classOf(u)?'primary':''}" type="button" data-acad="${esc(classOf(u))}">${esc(classOf(u))} <small>(학원 없이)</small></button></div></div>
+    <label class="f" for="acQ">학원 찾기 <span class="hint">다른 학원 학생도 접수할 수 있어요 · 선생님 소속은 그대로예요</span>
+      <div class="ac combo">
+        <input type="search" id="acQ" role="combobox" aria-expanded="${S.acOpen}" aria-controls="acList" value="${esc(S.acOpen?S.acQ:S.acad)}" placeholder="학원을 선택하거나 검색하세요" autocomplete="off">
+        <span class="caret" aria-hidden="true">▾</span>
+        ${S.acOpen?`<ul id="acList" role="listbox">
+          <li><button type="button" role="option" data-acad="${esc(classOf(u))}"><span><b>직접 입력</b> · ${esc(classOf(u))}</span><small>학원 소속 없이</small></button></li>
           ${all.map(a=>`<li><button type="button" role="option" data-acad="${esc(a.name)}" aria-selected="${S.acad===a.name}"><span>${esc(a.name)}${mineA.includes(a.name)?' <span class="pill ok">내 소속</span>':''}</span><small>${esc(a.region)}${a.head?` · ${esc(a.head)}`:''}</small></button></li>`).join('')||'<li class="hint" style="padding:8px">찾는 학원이 없어요. 맨 위 「직접 입력」을 선택해 주세요.</li>'}
         </ul>`:''}
       </div></label>
@@ -164,16 +176,3 @@ function pCard(p){
       <label class="f" for="p1_${p.key}">선호 교수 1 ${i.lessons?'<span class="req">*</span> <span class="hint">추가레슨 신청하면 꼭 골라요</span>':'<span class="hint">추가레슨 신청 시</span>'}<select id="p1_${p.key}" data-f="p1" data-k="${p.key}" ${i.lessons?'':'disabled'} ${i.lessons&&!i.p1?'class="empty"':''}>${opts(PROF[p.inst],i.p1,'없음')}</select></label>
       <label class="f" for="p2_${p.key}">선호 교수 2 <span class="hint">${!i.lessons?'추가레슨 신청 시':i.p1?'선택':'선호 교수 1을 먼저 골라요'}</span><select id="p2_${p.key}" data-f="p2" data-k="${p.key}" ${i.lessons&&i.p1?'':'disabled'}>${opts(PROF[p.inst].filter(x=>x!==i.p1),i.p2,'없음')}</select></label></div>`:''}
     ${mcOf(p.inst).length?`<div class="grp f" style="display:grid;gap:6px"><span style="color:var(--muted);font-weight:500;font-size:13.5px">${p.inst} 마스터클래스 <span class="hint">교수마다 단가가 달라요 · 기본 레슨과 함께 신청 불가 · 복수 신청 가능</span></span>
-      <div class="checks">${mcOf(p.inst).map(m=>`<label><input type="checkbox" data-mc="${esc(m.n)}" data-k="${p.key}" ${i.mc.includes(m.n)?'checked':''}>${esc(m.n)} <span class="hint">${m.min}분 · ${won(m.fee)}</span></label>`).join('')}</div></div>`:`<p class="hint" style="margin:0">${esc(p.inst||'이 악기')} 마스터클래스는 아직 열린 교수가 없어요.</p>`}
-    <div class="grp"><span class="grp-h">음악회</span>
-    <label class="f" for="cc_${p.key}">참가할 음악회<select id="cc_${p.key}" data-f="concert" data-k="${p.key}">${['없음','오후','트와일라잇','이브닝'].map(x=>`<option value="${x}" ${x===i.concert?'selected':''}>${x==='없음'?'참가 안 함':x}</option>`).join('')}</select></label>
-    ${i.concert!=='없음'?`<div class="sub">
-      ${i.concert==='오후'?`<p class="hint">오후 음악회: 10권 이하는 스즈키 교재 곡만, 10권 이상은 재현부까지만 연주해요.</p>`:''}
-      ${!i.other?`<label class="f" for="sg_${p.key}">연주곡<select id="sg_${p.key}" data-f="song" data-k="${p.key}">${opts(songs,i.song,songs.length?'곡을 선택해 주세요':'목록이 없어요. 아래에 직접 입력해 주세요')}</select></label>`:''}
-      <div class="checks"><label><input type="checkbox" data-other="${p.key}" ${i.other?'checked':''}>목록에 없는 곡이에요</label></div>
-      ${i.other?`<div class="grid2"><label class="f" for="oc_${p.key}">작곡가<input type="text" id="oc_${p.key}" data-f="oc" data-k="${p.key}" value="${esc(i.oc)}"></label>
-      <label class="f" for="ot_${p.key}">곡명 (원어로 정확히)<input type="text" id="ot_${p.key}" data-f="ot" data-k="${p.key}" value="${esc(i.ot)}"></label></div>`:''}
-    </div>`:''}
-    </div>
-
-`):`<p class="hint">${p.kind==='family'?`${esc(people().find(x=>x.key===p.link)?.name||'')}의 가족으로 접수돼요. 레슨·음악회 질문은 없어요.`:'이 구분은 레슨·음악회 신청이 없어요.'}</p>`}

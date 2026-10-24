@@ -1,4 +1,22 @@
-/* build: 20261024-101526 */
+/* build: 20261024-103032 */
+    askBox('입금 신고를 취소할까요?',`<b>${esc(p.name)}</b>의 입금 신고를 지워요. 다시 「입금 신고」로 새로 낼 수 있어요.`,'신고 취소',()=>{const r=p.rep;r.ids=r.ids.filter(i=>i!==p.id);if(r.rows)delete r.rows[p.id];r.amt=r.ids.reduce((t,i)=>t+(+((r.rows||{})[i]||{}).a||0),0);
+      MY_SUBS.forEach(x=>x.ppl.forEach(q=>{if(q.rep&&q.rep.id===r.id)q.rep=r}));p.pay='전';delete p.rep;S.prp='';subSave();render();toast(`${p.name} 입금 신고를 취소했어요`)});return}
+  if(d.atab){S.atab=d.atab;render();return}
+  if(d.mtab){S.mtab=d.mtab;render();return}
+  if(d.mscope){S.mscope=d.mscope;render();window.scrollTo({top:0});return}
+  if(d.ensjoin){S.ens.joinNo=S.ens.joinNo===d.ensjoin?'':d.ensjoin;render();return}
+  if(d.ensadd){const a=d.ensadd,t=teamOf(a),tn=(S.ens.group||'').trim();
+    askBox('학원을 추가하시겠습니까?',`<b>${esc(a)}</b>을(를) ${tn?`「${esc(tn)}」 `:''}팀에 추가해요.${t?`<p class="note warn" style="margin:10px 0 0">이미 「${esc(t.name)}」 팀에 속해 있어요 (대표 ${esc(t.rep)}). 그래도 추가할 수 있어요.</p>`:''}`,'추가',
+      ()=>{S.ens.acads=[...new Set([...(S.ens.acads||[]),a])];S.ens.aq='';render();toast(`${a}을(를) 팀에 넣었어요`)});return}
+  if(b.id==='ensClear'){ensSave([]);render();toast('시험으로 넣은 앙상블 팀을 지웠어요');return}
+  if(d.ensrm){if(S.editNo&&joinedOf(S.editNo).includes(d.ensrm)){toast(d.ensrm+'은(는) 직접 함께 신청한 학원이라 뺄 수 없어요',true);return}S.ens.acads=(S.ens.acads||[]).filter(a=>a!==d.ensrm);render();return}
+  if(d.ensmem&&b.matches('input')){S.ens.mem=S.ens.mem||{};S.ens.mem[d.ensmem]=b.checked;render();return}
+  if(b.id==='again'){S.picked={};S.extra=[];S.fam=[];S.room={};S.join={};S.info={};S.agree=false;S.ens={on:false};go(2);toast('같은 학원으로 추가 접수를 시작해요');return}
+  if(b.id==='restart'){Object.assign(S,{step:1,verified:false,picked:{},extra:[],fam:[],room:{},join:{},info:{},agree:false,ens:{on:false},verr:''});render();return}
+});
+document.addEventListener('change',e=>{if(e.target.id==='qWhere'){S.qWhere=e.target.value;return}const el=e.target;
+  if(el.dataset&&el.dataset.rp){const a=S.rp||[];S.rp=el.checked?[...new Set([...a,el.dataset.rp])]:a.filter(x=>x!==el.dataset.rp);{const n=document.getElementById('rpMemo');if(n)S.rpMemo=n.value}render();return}
+  if(el.dataset&&el.dataset.xon){const x=S.extra.find(v=>v.id===el.dataset.xon);x.on=el.checked;if(!x.on){delete S.room[x.id];delete S.join[x.id];S.fam=S.fam.filter(f=>f.link!==x.id)}render();return}
   if(el.dataset&&el.dataset.cx){const [no,id]=el.dataset.cx.split('|');const a=S.cx[no]||(S.cx[no]=[]);if(el.checked){if(!a.includes(id))a.push(id)}else S.cx[no]=a.filter(x=>x!==id);if(!S.cx[no].length)delete S.cx[no];S.cxDone=null;render();return}
   if(el.id==='today'&&el.value){S.today=el.value;S.ruleOpen=true;render();return}
   if(el.id==='cxWhy'){S.cxReason=el.value;return}
@@ -55,6 +73,8 @@ document.addEventListener('toggle',e=>{if(e.target.id==='ensBox')S.ens.on=e.targ
   const b=document.createElement('div');b.className='kakao';b.innerHTML='카카오톡 안에서는 접수가 잘 안 될 수 있어요. <a href="kakaotalk:\/\/web/openExternal?url='+encodeURIComponent(u)+'" target="_top">브라우저로 열기</a>';document.body.prepend(b)})();
 /* 테스트 로그인(STG 설정에만 있음): 이름·휴대전화 칸을 미리 채움 */
 try{if(typeof TEST_LOGIN==='string'&&TEST_LOGIN){const [n,ph]=TEST_LOGIN.split('/');if(n)S.lgNm=n.trim();if(ph){const d=ph.replace(/\D/g,'').replace(/^010/,'').slice(0,8);S.lgEm='010-'+(d.length>4?d.slice(0,4)+'-'+d.slice(4):d)}}}catch(e){}
+/* 캠프 설정(날짜·장소·차수·참가비)은 서버가 페이지에 넣어 보냄 */
+try{if(typeof CAMP_CFG==='object'&&CAMP_CFG)applyCamp(CAMP_CFG)}catch(e){}
 /* 처음 화면: 로그인부터 */
 render();
 

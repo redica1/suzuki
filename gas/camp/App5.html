@@ -1,4 +1,7 @@
-/* build: 20261024-101526 */
+/* build: 20261024-103032 */
+    ${sb.ppl.some(p=>mineOk(sb,p))?'':`<p class="hint" style="margin:6px 0">이 접수에는 「${esc(S.mtab)}」에 해당하는 사람이 없어요.</p>`}${[...new Set(sb.ppl.map(p=>p.batch||1))].sort((a,b)=>a-b).map(bn=>{const G=sb.ppl.filter(p=>(p.batch||1)===bn&&mineOk(sb,p));if(!G.length)return '';return `<div class="bgrp ${btCls(bn)}"><div class="bh"><b><span class="bdot"></span>${bn===1?'처음 접수':`추가 ${bn-1}`} · ${stampTxt(G[0].addAt)||kday(sb.date)}</b><span class="hint">${G.filter(p=>p.status==='정상').length}명${G.some(p=>p.status!=='정상')?` · 취소 ${G.filter(p=>p.status!=='정상').length}`:''} · ${won(G.filter(p=>p.status==='정상').reduce((t,p)=>t+pAmt(p),0))}</span></div>
+    <ul class="roster">${G.map(p=>`<li class="${p.status!=='정상'?'locked':''}"><input type="checkbox" id="cx_${p.id}" data-cx="${sb.no}|${p.id}" ${sel.includes(p.id)?'checked':''} ${p.status==='정상'?'':'disabled'} aria-label="${esc(p.name)} 선택">
+      <label class="who" for="cx_${p.id}"><b>${esc(p.name)}${p.dtag?` <small class="dtag">${esc(p.dtag)}</small>`:''} <span class="kind ${p.kind==='교사'?'kt':'ks'}">${p.kind}</span> <span class="num">${won(pAmt(p))}</span></b><small>${esc(p.type)} ${won(p.fee)}${p.lesson?` + 레슨 ${won(p.lesson)}`:''}${p.dues?` + 연회비 ${won(p.dues)}`:''}${p.room?` + 가족방 ${won(p.room)}`:''}${p.pay==='신고'&&p.status==='정상'?' · 입금 신고 확인 중이라 확인된 뒤 취소할 수 있어요':''}</small></label><span class="row" style="flex-wrap:nowrap;gap:6px;justify-content:flex-end">${stTag(p.status,p)}${payTag(p)}${p.status==='취소요청'?`<button class="btn small" type="button" data-cxwd="${sb.no}|${p.id}">취소 요청 철회</button>`:''}${p.status==='취소'&&!p.refund&&!isPaid(p)&&refundRule(S.today).allow!==false?`<button class="btn small" type="button" data-rejoin="${sb.no}|${p.id}">다시 참가</button>`:''}${p.status==='정상'&&p.pay!=='신고'&&dueOf(p)>0?`<button class="btn small ${S.prp===p.id?'primary':''}" type="button" data-prp="${p.id}" aria-expanded="${S.prp===p.id}">입금 신고</button>`:''}${p.status==='정상'&&p.pay==='신고'?`<button class="btn small ${S.prp===p.id?'primary':''}" type="button" data-prp="${p.id}" aria-expanded="${S.prp===p.id}">신고 수정</button>`:''}${overOf(p)>0?`<button class="btn small primary" type="button" data-ovr="${sb.no}|${p.id}">${won(overOf(p))} 돌려받기</button>`:''}${p.status==='정상'&&sb.form?`<button class="btn small" type="button" data-pedit="${sb.no}|${p.id}" aria-label="${esc(p.name)} 신청 내용 보기">보기</button>`:''}</span>
       ${S.prp===p.id?prpForm(p,sb):''}</li>`).join('')}</ul></div>`}).join('')}
     <div class="spread"><span class="hint">합계 ${won(subTotal(sb,sb.ppl.filter(p=>p.status==='정상').map(p=>p.id)))}</span>
       ${live.length?`<span class="row"><button class="btn small" type="button" data-cxall="${sb.no}">${(()=>{const v=live.filter(p=>mineOk(sb,p));return v.length&&v.every(p=>sel.includes(p.id))?(S.mtab&&S.mtab!=='전체'?S.mtab+' 해제':'전체 해제'):(S.mtab&&S.mtab!=='전체'?S.mtab+' 모두 선택':'전체 선택')})()}</button>
@@ -145,25 +148,3 @@ function warnMissing(){const {L,el}=missWhat();beep();try{navigator.vibrate&&nav
   if(el[0]){el[0].scrollIntoView({block:'center',behavior:'smooth'});if(el[0].focus&&/INPUT|SELECT/.test(el[0].tagName))setTimeout(()=>el[0].focus({preventScroll:true}),350)}
   const m=L.length?'빠진 칸이 있어요 · '+L.slice(0,3).join(' / ')+(L.length>3?` 외 ${L.length-3}곳`:''):'빠진 칸을 확인해 주세요';
   const tt=document.getElementById('toast');toast(m,true);clearTimeout(toast.t);toast.t=setTimeout(()=>tt.hidden=true,4500)}
-/* 접수 고치기 시작: only=null 이면 사람 추가(2단계), 사람 키 목록이면 그 사람들만 정보 수정(3단계) */
-function startEdit(no,only){const sb=MY_SUBS.find(x=>x.no===no);const f=JSON.parse(JSON.stringify(sb.form));S.acad=sb.acad;ensureRoster(sb.acad);S.verified=true;
-  Object.assign(S,{picked:f.picked,extra:f.extra,fam:f.fam,info:f.info,room:f.room,join:f.join||{},ens:f.ens||{on:false},agree:false,sel:{},cartAt:{}});
-  sb.ppl.forEach(p=>{if(p.status==='취소'){const k=p.id.slice(sb.no.length+1);delete S.picked[k];S.fam=S.fam.filter(x=>x.id!==k);S.extra=S.extra.filter(x=>x.id!==k)}});
-  S.riBack=CAMP.ri;if(f.ri!==undefined)CAMP.ri=f.ri;S.editNo=sb.no;S.editOnly=only;S.cx={};S.cxOpen='';S.view='form';
-  try{S.editBaseAmt={};makeSub(sb.no).ppl.forEach(p=>S.editBaseAmt[p.id]=pAmt(p))}catch(e){S.editBaseAmt=null}
-  if(only==='ens'){S.editOnly=null;S.ensEdit=true;if(S.quietEdit){S.step=4}else{S.ensSaved='';go(4);toast(`앙상블 「${S.ens.group||''}」을(를) 고쳐요 · 다 고친 뒤 「앙상블 저장」`)}}
-  else if(only){S.quickEdit=true;S.quickKeys=only;if(S.quietEdit){S.step=3}else{S.qSaved='';go(3);toast(only.length===1?'신청 내용을 보고 고칠 수 있어요 · 고치면 「저장」':`${only.length}명 정보를 고쳐요 · 다 고친 뒤 「저장」`)}}else{go(2);toast(`${sb.no}에 인원을 추가해요 · 추가한 뒤 「다음」으로 정보를 넣어요`)}}
-function resetForm(){Object.assign(S,{ensEdit:false,quickEdit:false,cartAt:{},picked:{},extra:[],fam:[],info:{},room:{},join:{},ens:{on:false},agree:false,sel:{}})}
-
-/* ---------- 동작 ---------- */
-document.addEventListener('click',e=>{
-  const b=e.target.closest('button,[data-pick],[data-mc],[data-other],[data-ens],[data-roomck],[data-ensmem]'); if(!b) return;
-  const d=b.dataset;
-  if(d.go){go(+d.go);return}
-  if(d.round!==undefined){CAMP.ri=+d.round;render();toast(`${ROUNDS[CAMP.ri][0]} 금액으로 계산해요`);return}
-  if(d.acad){const a=d.acad;const go=()=>{S.acad=a;S.rq='';S.sel={};S.ptab='교사';S.acQ='';S.acOpen=false;S.picked={};S.extra=[];S.fam=[];S.info={};S.room={};
-    ensureRoster(a);S.verified=true;render()};
-    /* 내 소속이 아닌 학원(겸임): 서버에서 그 학원 명단을 받아 옴 — 소속은 그대로 */
-    if(S.token&&S.user&&!(S.user.acads||[]).includes(a)){api('addAcad',[a],r=>{const keep=S.user;loadFromServer(r);S.user=keep;S.user.acads=r.acads;go();toast(a+' 명단을 열었어요 · 소속은 그대로예요',true)},null,'명단을 불러오고 있어요…');return}
-    go();return}
-  if(d.quick){const n=d.quick;const t=TEACHER_DB.find(x=>x.demo&&x.name===n)||TEACHER_DB.find(x=>bare(x.name)===n&&x.acads.includes('마포스즈키'))||TEACHER_DB.find(x=>bare(x.name)===n);

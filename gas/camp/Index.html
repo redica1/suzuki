@@ -1,5 +1,5 @@
 <!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
-<!-- build: 20261024-101526 -->
+<!-- build: 20261024-103032 -->
 <base target="_top">
 <script>/* 화면이 하얗게 될 때 원인을 화면에 보여 주는 진단 (STG) */
 window.addEventListener('error',function(e){try{var n=e.lineno||0,c=(e.colno||1)-1,out=[];
@@ -10,6 +10,7 @@ var d=document.createElement('pre');d.style.cssText='white-space:pre-wrap;word-b
 d.textContent='[진단] '+e.message+' · 줄 '+n+' 칸 '+e.colno+'\n'+out.join('\n');(document.body||document.documentElement).appendChild(d)}catch(x){}});</script>
 <script>var SHARE_URL=<?!= JSON.stringify(typeof shareUrl==='undefined'?'':shareUrl).replace(/\//g,'\\/') ?>;</script>
 <script>var TEST_LOGIN=<?!= JSON.stringify(typeof testLogin==='undefined'?'':testLogin).replace(/\//g,'\\/') ?>;</script>
+<script>var CAMP_CFG=<?!= (typeof campJson==='undefined'||!campJson?'null':campJson).replace(/\//g,'\\/').replace(/</g,'\\u003c') ?>;</script>
 <title>스즈키 겨울 음악제 접수</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -341,10 +342,10 @@ select:disabled{opacity:.5}
 <div class="band">
   <div class="wrap">
     <div class="proto"><b>시험 접수</b> 테스트용 화면이에요. 접수 내용은 협회 접수 DB(테스트 시트)에 저장돼요.<span id="roundSeg" hidden></span></div>
-    <h1>2027 스즈키 겨울 음악제 접수</h1>
+    <h1 id="campTitle">2027 스즈키 겨울 음악제 접수</h1>
     <div class="meta">
-      <span><strong>2027. 1. 11.(월) ~ 1. 15.(금)</strong> 4박 5일</span>
-      <span>장소 <strong>추후 안내</strong></span>
+      <span id="campWhen"><strong>2027. 1. 11.(월) ~ 1. 15.(금)</strong> 4박 5일</span>
+      <span>장소 <strong id="campPlace">추후 안내</strong></span>
       <span class="round" id="roundChip"></span>
       <button class="qbtn" id="qBtn" type="button">오류·건의</button>
     </div>

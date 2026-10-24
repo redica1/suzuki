@@ -1,4 +1,22 @@
-/* build: 20261024-101526 */
+/* build: 20261024-103032 */
+    <tbody>${ps.map(p=>{const i=info(p),f=feeOf(p);return `<tr><td>${esc(p.name)}</td><td>${esc(i.type)}</td><td class="r num">${won(f.base)}</td><td class="r num">${f.les+f.mc?won(f.les+f.mc):'-'}</td><td class="r num">${f.dues?won(f.dues):'-'}</td><td class="r num"><b>${won(f.total)}</b></td></tr>`}).join('')}
+    ${t.teams.map((x,ix)=>`<tr><td>가족방 ${ix+1}</td><td>${esc(x.rep.name)} 가족 ${x.n}명</td><td></td><td></td><td></td><td class="r num"><b>${won(x.fee)}</b></td></tr>`).join('')}</tbody>
+    <tfoot>
+      <tr><td colspan="5">캠프 참가비 · ${R[0]} 금액</td><td class="r num">${won(t.camp)}</td></tr>
+      ${t.room?`<tr><td colspan="5">가족방</td><td class="r num">${won(t.room)}</td></tr>`:''}
+      ${t.dues?`<tr><td colspan="5">연회비 (${t.waiting}명)</td><td class="r num">${won(t.dues)}</td></tr>`:''}
+      <tr><td colspan="5">입금하실 금액</td><td class="r num" style="color:var(--accent);font-size:17px">${won(t.all)}</td></tr>
+    </tfoot></table></div>
+    <div class="bank"><span class="k">입금 계좌</span><b>국민은행 · 한국스즈키협회</b><span class="num">계좌번호는 캠프 설정에서 입력</span>
+      <span class="k" style="margin-top:6px">입금자명</span><b>${esc(S.acad)}</b><span class="hint">학원 이름으로 입금해 주시면 확인이 빨라요. 나눠서 입금해도 괜찮아요.</span></div>
+    ${t.waiting?`<div class="note">연회비 미납·신규 추가 ${t.waiting}명은 <b>회비확인대기</b>로 접수돼요. 연회비까지 함께 입금되면 운영진이 확인 후 정식 접수로 바꿔 드려요.</div>`:''}
+    <label class="agree" for="agree"><input type="checkbox" id="agree" ${S.agree?'checked':''}><span>위 신청 내용이 맞고, 입금이 확인되어야 접수가 확정되며 환불은 취소 신청 후 규정에 따라 처리된다는 것을 확인했어요.</span></label>
+  </div></section>`;
+}
+function vStep5(){
+  const t=totals(), ps=people();
+  return `<section class="sec"><h2>접수가 완료되었어요</h2>
+  <div class="ticket"><p><span class="pill new" style="font-size:13px">${ROUNDS[CAMP.ri][0]} 접수</span></p><p>접수번호</p><div class="no">${S.no}</div>
     <p>${esc(S.acad)} · ${t.n}명${t.teams.length?` · 가족방 ${t.teams.length}개`:''} · 입금하실 금액 <b class="num" style="color:var(--ink)">${won(t.all)}</b></p>
     <p class="hint">입금한 뒤 「내 접수」에서 입금 신고를 해 주세요. 접수 확인·취소도 「내 접수」에서 해요. 확인 메일도 보내 드렸어요.</p><button class="btn primary" type="button" id="toMine">내 접수 · 입금 신고</button></div>
   <div class="panel"><b>접수된 사람</b><ul class="roster">${ps.map(p=>`<li><span></span><div class="who"><b>${esc(p.name)}</b><small>${ROUNDS[CAMP.ri][0]} · ${esc(info(p).type)}${p.kind==='student'?` · 담당 ${esc(info(p).teacher)}`:''}</small></div>${p.paid?'<span class="pill lock">입금 대기</span>':'<span class="pill due">회비확인대기</span>'}</li>`).join('')}</ul></div>
@@ -125,6 +143,3 @@ function vMine(){
   ${MY_SUBS.length?mineTabs():''}
   ${MY_SUBS.map(sb=>{const sel=S.cx[sb.no]||[];const live=sb.ppl.filter(p=>p.status==='정상');const selCx=sel.filter(id=>{const p=sb.ppl.find(q=>q.id===id);return p&&canCxP(p)});
     return `<div class="panel sub-card"><div class="spread"><div><b class="num">${sb.no}</b> <span class="hint">${sb.round} · ${kday(sb.date)} 접수 · ${esc(sb.acad)} · <b>접수 교사 ${esc(sb.owner)}</b> (나)</span><div class="compo">${compoTxt([sb])}</div></div><div>${subTag(sb)}</div></div>
-    ${sb.ppl.some(p=>mineOk(sb,p))?'':`<p class="hint" style="margin:6px 0">이 접수에는 「${esc(S.mtab)}」에 해당하는 사람이 없어요.</p>`}${[...new Set(sb.ppl.map(p=>p.batch||1))].sort((a,b)=>a-b).map(bn=>{const G=sb.ppl.filter(p=>(p.batch||1)===bn&&mineOk(sb,p));if(!G.length)return '';return `<div class="bgrp ${btCls(bn)}"><div class="bh"><b><span class="bdot"></span>${bn===1?'처음 접수':`추가 ${bn-1}`} · ${stampTxt(G[0].addAt)||kday(sb.date)}</b><span class="hint">${G.filter(p=>p.status==='정상').length}명${G.some(p=>p.status!=='정상')?` · 취소 ${G.filter(p=>p.status!=='정상').length}`:''} · ${won(G.filter(p=>p.status==='정상').reduce((t,p)=>t+pAmt(p),0))}</span></div>
-    <ul class="roster">${G.map(p=>`<li class="${p.status!=='정상'?'locked':''}"><input type="checkbox" id="cx_${p.id}" data-cx="${sb.no}|${p.id}" ${sel.includes(p.id)?'checked':''} ${p.status==='정상'?'':'disabled'} aria-label="${esc(p.name)} 선택">
-      <label class="who" for="cx_${p.id}"><b>${esc(p.name)}${p.dtag?` <small class="dtag">${esc(p.dtag)}</small>`:''} <span class="kind ${p.kind==='교사'?'kt':'ks'}">${p.kind}</span> <span class="num">${won(pAmt(p))}</span></b><small>${esc(p.type)} ${won(p.fee)}${p.lesson?` + 레슨 ${won(p.lesson)}`:''}${p.dues?` + 연회비 ${won(p.dues)}`:''}${p.room?` + 가족방 ${won(p.room)}`:''}${p.pay==='신고'&&p.status==='정상'?' · 입금 신고 확인 중이라 확인된 뒤 취소할 수 있어요':''}</small></label><span class="row" style="flex-wrap:nowrap;gap:6px;justify-content:flex-end">${stTag(p.status,p)}${payTag(p)}${p.status==='취소요청'?`<button class="btn small" type="button" data-cxwd="${sb.no}|${p.id}">취소 요청 철회</button>`:''}${p.status==='취소'&&!p.refund&&!isPaid(p)&&refundRule(S.today).allow!==false?`<button class="btn small" type="button" data-rejoin="${sb.no}|${p.id}">다시 참가</button>`:''}${p.status==='정상'&&p.pay!=='신고'&&dueOf(p)>0?`<button class="btn small ${S.prp===p.id?'primary':''}" type="button" data-prp="${p.id}" aria-expanded="${S.prp===p.id}">입금 신고</button>`:''}${p.status==='정상'&&p.pay==='신고'?`<button class="btn small ${S.prp===p.id?'primary':''}" type="button" data-prp="${p.id}" aria-expanded="${S.prp===p.id}">신고 수정</button>`:''}${overOf(p)>0?`<button class="btn small primary" type="button" data-ovr="${sb.no}|${p.id}">${won(overOf(p))} 돌려받기</button>`:''}${p.status==='정상'&&sb.form?`<button class="btn small" type="button" data-pedit="${sb.no}|${p.id}" aria-label="${esc(p.name)} 신청 내용 보기">보기</button>`:''}</span>

@@ -1,4 +1,4 @@
-/* build: 20261024-235141 */
+/* build: 20261024-235736 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -1803,6 +1803,7 @@ function roomSave(token, x) {
     if ((!Array.isArray(x.occ) || !x.occ.length) && (x.main || x.prof || x.sub)) x.occ = roomOcc_({ main: t(x.main, 40), mn: +x.mn || 0, sub: t(x.sub, 40), sn: +x.sn || 0, prof: t(x.prof, 40) });   // 예전 방식(메인 · 보조 · 교수)으로 보낸 것
     const occ = (Array.isArray(x.occ) ? x.occ : []).slice(0, 12).map(o => Object.assign({ k: ['acad', 'grp', 'name', 'fam'].includes(o.k) ? o.k : 'name', v: t(o.v, 40), n: n(o.n), a: t(o.a, 40), days: dl(o.days), tm: t(o.tm, 30), no: t(o.no, 20) }, Array.isArray(o.names) && o.names.length ? { names: o.names.slice(0, 10).map(y => t(y, 30)) } : {})).filter(o => o.v);
     const days = dl(x.days), cap = n(x.cap) || r.cap, clear = !occ.length;
+    if (occ.some(o => o.k === 'fam') && occ.some(o => o.k !== 'fam')) throw new Error(r.no + ' 방: 가족방에는 학원 · 사람 · 이름을 같이 넣을 수 없어요.');
     const all = nd ? [...Array(nd).keys()] : [0], use = days.length ? days : all;
     use.forEach(d => { const sum = occ.filter(o => !o.days.length || o.days.includes(d)).reduce((s2, o) => s2 + o.n, 0); if (sum > cap) throw new Error(`${r.no} 방: ${d + 1}번째 날 인원 ${sum}명이 정원 ${cap}명보다 많아요.`); });
     const m = occ[0] || {}, sub = occ.slice(1).find(o => o.k === 'acad' || o.k === 'grp'), pr = occ.find(o => o.k === 'name' && kind === '교수방');

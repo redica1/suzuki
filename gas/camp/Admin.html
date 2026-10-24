@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261024-233305 -->
+<!-- build: 20261024-235141 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -120,6 +120,18 @@ tr.off td{opacity:.5}
 .sheet td.lyroom.on,.sheet td.lylab.on{outline:3px solid #1f5c63;outline-offset:-3px}
 .roomed .occt td{vertical-align:middle}
 .roomadd{margin-top:6px}
+.roomed .rinfo{display:flex;gap:12px;flex-wrap:wrap;align-items:center;background:var(--sunk);border-radius:8px;padding:8px 10px}
+.roomed .rinfo .lysw{display:inline-block;width:20px;height:14px;border:1px solid #333;border-radius:3px}
+.roomed .rinfo label{display:flex;gap:4px;align-items:center;font-size:13px}
+.roomed .occs{display:grid;gap:6px}
+.roomed .occ{display:grid;grid-template-columns:70px 1fr auto auto;gap:8px;align-items:center;border:1px solid var(--line);border-radius:8px;padding:6px 8px}
+.roomed .occ.main{border-color:var(--accent);background:var(--accent-soft)}
+.roomed .occ .olab{font-weight:700;font-size:12.5px}
+.roomed .occ .on input{width:58px}
+.roomed .occ .odays{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;font-size:12px;align-items:center}.roomed .occ .odays input[type=text]{width:150px;font-size:12px}
+.roomed .occ .oact{display:flex;gap:4px}
+@media (max-width:640px){.roomed .occ{grid-template-columns:1fr}}
+
 .memoff td{color:var(--faint,#9aa3a6)}.memoff td b{font-weight:500}
 .act .evlink{background:none;border:0;padding:0;font:inherit;font-weight:700;color:var(--accent,#1f5f66);text-decoration:underline;cursor:pointer}
 .act .pvwrap{overflow:auto;max-height:75vh;border:1px solid var(--line);border-radius:8px;background:#fff;margin-top:8px}
@@ -1049,44 +1061,56 @@ function tile(r){const n=peak(r),part=r.days&&r.days.length&&r.days.length<allDa
   <span class="rno num">${esc(r.no)}${r.pub?' <small class="pill ok" style="padding:0 4px">공개</small>':''}</span><span class="rty">${esc(rType(r.no)||r.type||'타입 -')} · 정원 ${r.cap}</span>
   ${used(r)?`<b>${esc(sh(r.occ[0].v))}${r.occ.length>1?` <small>+ ${r.occ.slice(1).map(x=>esc(sh(x.v))).join(', ')}</small>`:''}</b><span class="rk">${esc(r.kind||'방종류 -')} · ${n}/${r.cap}${n>r.cap?' 넘침':''}${part?' · '+r.days.map(dayLab).join(','):''}</span>${r.pw?`<span class="rpw">비번 ${esc(r.pw)}</span>`:''}`:'<span class="rk">빈 방</span>'}</button>`}
 /* ---------- 방 편집 (A.ed = 고치는 중인 복사본) ---------- */
-function openEd(no){const r=R.rooms.find(x=>x.no===no);A.sel=no;A.ed=r?JSON.parse(JSON.stringify({no:r.no,kind:r.kind,cap:r.cap,pw:r.pw,memo:r.memo,pub:!!r.pub,days:r.days||[],occ:r.occ||[],type:r.type,color:r.color||''})):null}
+function openEd(no){const r=R.rooms.find(x=>x.no===no);A.sel=no;A.ed=r?JSON.parse(JSON.stringify({no:r.no,kind:r.kind,cap:r.cap,pw:r.pw,memo:r.memo,pub:!!r.pub,days:r.days||[],occ:r.occ||[],type:r.type,color:r.color||'',size:r.size||'',beds:r.beds===''||r.beds==null?'':r.beds,feat:r.feat||''})):null}
 function famList(){return famRooms()}
+/* 방 편집 순서: ① 방 정보(평수 · 침대 · 정원 · 타입) ② 사용 날짜 ③ 방종류 ④ 메인(학원 · 이름 · 사람 · 가족) + 숙박 인원 ⑤ 보조 학원 · 사람 · 가족 + 숙박 인원 ⑥ 비번 수신자 · 메모 · 공개 · 색 */
+function occRow(e,o,i,rd,M,AL,inOcc,main){
+  const val=o.k==='acad'?`<select data-ro="${i}|v">${[o.v,...AL.filter(a=>a!==o.v&&!inOcc(a))].map(a=>`<option ${a===o.v?'selected':''}>${esc(a)}</option>`).join('')}</select>${M[o.v]?` <small class="faint">참가 ${M[o.v].n} · 방에 넣은 ${got(o.v)}</small>`:''}`
+    :o.k==='grp'?`<select data-ro="${i}|v">${[...new Set([o.v,...(R.cfg.names||[])])].map(a=>`<option ${a===o.v?'selected':''}>${esc(a)}</option>`).join('')}</select>`
+    :o.k==='fam'?`<b>${esc(o.v)}</b>${o.names&&o.names.length?` <small class="faint">${o.names.map(esc).join(', ')}</small>`:''}`
+    :`<b>${esc(o.v)}</b>${o.a?` <small class="faint">${esc(o.a)}</small>`:''}`;
+  const days=rd.length>1?`<div class="odays">${rd.map(d=>`<label><input type="checkbox" data-rod="${i}|${d}" ${(o.days.length?o.days:rd).includes(d)?'checked':''}>${esc(dayLab(d))}</label>`).join('')}<input type="text" data-ro="${i}|tm" value="${esc(o.tm||'')}" maxlength="30" placeholder="시간 메모 (예: 14:00 이후)"></div>`:'';
+  return `<div class="occ ${main?'main':''}"><span class="olab">${main?'메인':({acad:'보조 학원',grp:'이름',name:'사람',fam:'가족방'})[o.k]}</span><span class="oval">${val}${days}</span>
+    <label class="on">숙박 <input type="number" data-ro="${i}|n" min="0" max="30" value="${o.n}"> 명</label>
+    <span class="oact">${main?'':`<button class="btn small ghost" type="button" data-rmain="${i}">메인으로</button>`}<button class="btn small ghost" type="button" data-rdel="${i}">빼기</button></span></div>`}
 function editor(){const e=A.ed,r=R.rooms.find(x=>x.no===A.sel);if(!e||!r)return '';const M=acads();const AL=Object.keys(M).sort((x,y)=>x.localeCompare(y,'ko'));
   const D=allDays(),rd=e.days.length?e.days:D,inOcc=v=>e.occ.some(o=>o.v===v);
-  const loads=rd.map(d=>({d,n:e.occ.filter(o=>(o.days.length?o.days:rd).includes(d)).reduce((t,o)=>t+(+o.n||0),0)}));
+  const loads=rd.map(d=>({d,n:e.occ.filter(o=>(o.days.length?o.days:rd).includes(d)).reduce((t,o)=>t+(+o.n||0),0)}));const tot=Math.max(0,...loads.map(x=>x.n));
   const ppl=people(),fams=famList().filter(f=>!f.rs.length||f.rs.some(x=>x.no===r.no)).filter(f=>!e.occ.some(o=>o.k==='fam'&&o.no===f.sb.no&&o.v.startsWith(f.rep.name)));
-  const pwNames=[...new Set(e.occ.flatMap(o=>o.k==='acad'?(M[o.v]?M[o.v].names:[]):o.k==='name'?[o.v]:o.k==='fam'?[o.v.replace(/ 가족$/,'')]:[]))];
-  return `<div class="picker roomed"><div class="sec-h"><div><b class="num" style="font-size:18px">${esc(r.no)}</b> <span class="cap" style="margin:0">${esc(r.bld)} ${esc(r.fl)} · ${esc(rType(r.no)||r.type||'타입 -')}${numColor(r.no)?` <span class="lysw" style="display:inline-block;width:14px;height:10px;border:1px solid #333;background:${esc(numColor(r.no))}"></span>`:''}</span></div>
+  const pwNames=[...new Set(e.occ.flatMap(o=>o.k==='acad'?(M[o.v]?M[o.v].names:[]):o.k==='name'?[o.v]:o.k==='fam'?(o.names||[o.v.replace(/ 가족$/,'')]):[]))];
+  const addSel=(id,ph,opts,btn,lab)=>`<div class="row" style="gap:6px;flex-wrap:nowrap"><select id="${id}"><option value="">${ph}</option>${opts}</select><button class="btn small" type="button" id="${btn}">${lab}</button></div>`;
+  const acadOpts=AL.filter(a=>!inOcc(a)).map(a=>`<option value="${esc(a)}">${esc(a)} (참가 ${M[a].n} · 방에 넣은 ${got(a)})</option>`).join('');
+  const famOpts=fams.map(f=>`<option value="${esc(f.sb.no+'|'+f.rep.name)}">${esc(f.rep.name)} 가족 ${f.n}명 · ${esc(sh(f.sb.acad))}</option>`).join('');
+  const grpOpts=(R.cfg.names||[]).filter(n=>!inOcc(n)).map(n=>`<option>${esc(n)}</option>`).join('');
+  const typ=rType(r.no)||r.type||'';
+  return `<div class="picker roomed"><div class="sec-h"><div><b class="num" style="font-size:18px">${esc(r.no)}</b> <span class="cap" style="margin:0">${esc(r.bld)} ${esc(r.fl)}</span></div>
     <div class="row"><button class="btn small primary" type="button" id="r_save">저장</button><button class="btn small" type="button" id="r_clear">비우기</button><button class="btn small" type="button" id="r_close">닫기</button></div></div>
+    <div class="rinfo">${numColor(r.no)?`<span class="lysw" style="background:${esc(numColor(r.no))}"></span>`:''}<b>${esc(typ||'타입 미정')}</b>
+      <label>평수 <input type="text" id="r_size" value="${esc(e.size||'')}" maxlength="12" placeholder="예: 33평" style="width:76px"></label>
+      <label>침대 <input type="number" id="r_beds" min="0" max="10" value="${e.beds===''||e.beds==null?'':e.beds}" style="width:56px"> 개</label>
+      <label>정원 <input type="number" id="r_cap" min="1" max="30" value="${e.cap}" style="width:56px"> 명</label>
+      <label>방 메모 <input type="text" id="r_feat" value="${esc(e.feat||'')}" maxlength="40" placeholder="예: 온돌 · 거실 · 이불 2채 추가" style="width:200px"></label></div>
+    <div class="row" style="gap:8px;flex-wrap:wrap"><b>사용 날짜</b>${D.map(d=>`<label class="row" style="gap:3px"><input type="checkbox" data-rday="${d}" ${rd.includes(d)?'checked':''}>${esc(dayLab(d))}</label>`).join('')}<span class="cap" style="margin:0">체크를 풀면 그날은 사용 안 함</span></div>
+    <div class="row" style="gap:10px;flex-wrap:wrap"><label class="row" style="gap:6px"><b>방종류</b><select id="r_kind">${['',...R.kinds].map(k=>`<option value="${esc(k)}" ${k===e.kind?'selected':''}>${k||'선택'}</option>`).join('')}</select></label>
+      <span class="pill ${tot>e.cap?'bad':tot?'info':'mute'}">숙박 ${tot} / 정원 ${e.cap}명</span>${rd.length>1&&loads.some(x=>x.n!==tot)?loads.map(x=>`<span class="pill ${x.n>e.cap?'bad':'mute'}">${esc(dayLab(x.d))} ${x.n}</span>`).join(''):''}</div>
+    <div class="occs">${e.occ.length?e.occ.map((o,i)=>occRow(e,o,i,rd,M,AL,inOcc,i===0)).join(''):'<p class="hint" style="margin:0">아직 아무도 없어요. 아래에서 메인을 골라 주세요 — 학원, 관리자가 정한 이름(본부방 등), 사람 이름, 가족방 신청 가족 중 하나.</p>'}</div>
+    <div class="g2 roomadd">
+      ${addSel('r_addA',e.occ.length?'＋ 보조 학원 고르기':'＋ 메인 학원 고르기',acadOpts,'r_addAcad','넣기')}
+      ${addSel('r_addF','＋ 가족방 신청 가족 ('+fams.length+')',famOpts,'r_addFam','넣기')}
+      <div class="row" style="gap:6px;flex-wrap:nowrap"><input type="text" id="r_addP" list="r_ppl" placeholder="＋ 사람 이름 (연수교사 · 교수 등, 목록에 없어도 됨)" style="flex:1"><datalist id="r_ppl">${ppl.map(p=>`<option value="${esc(p.n)}">${esc(p.t)} · ${esc(p.a)}</option>`).join('')}</datalist><button class="btn small" type="button" id="r_addName">넣기</button></div>
+      ${addSel('r_addG','＋ 관리자가 정한 이름 (본부방 등)',grpOpts,'r_addGrp','넣기')}
+    </div>
     <div class="g3">
-      <label class="f">방종류<select id="r_kind">${['',...R.kinds].map(k=>`<option value="${esc(k)}" ${k===e.kind?'selected':''}>${k||'선택'}</option>`).join('')}</select></label>
-      <label class="f">정원<input type="number" id="r_cap" min="1" max="30" value="${e.cap}"></label>
-      <label class="f">공개 <span class="cap" style="margin:0">일괄 공개 전이라도 이 방만 선생님께 보이기</span><span class="row" style="gap:6px"><input type="checkbox" id="r_pub" ${e.pub?'checked':''}> 이 방 공개</span></label>
       <label class="f">비번 수신자<input type="text" id="r_pw" list="r_names" value="${esc(e.pw)}"></label>
       <label class="f">메모<input type="text" id="r_memo" value="${esc(e.memo)}"></label>
-      <label class="f">이 방 색 <span class="cap" style="margin:0">배치도 배정 칸</span><span class="row" style="gap:6px"><input type="checkbox" id="r_colOn" ${e.color?'checked':''}> 따로 정하기 <input type="color" id="r_col" value="${esc(e.color||'#ffd27a')}"></span></label></div>
-    <datalist id="r_names">${pwNames.map(n=>`<option value="${esc(n)}">`).join('')}</datalist>
-    <div class="row" style="gap:8px;flex-wrap:wrap"><b>사용 날짜</b>${D.map(d=>`<label class="row" style="gap:3px"><input type="checkbox" data-rday="${d}" ${rd.includes(d)?'checked':''}>${esc(dayLab(d))}</label>`).join('')}<span class="cap" style="margin:0">체크를 풀면 그날은 사용 안 함</span></div>
-    <div class="tbl"><table class="pft occt"><thead><tr><th></th><th>구분</th><th>이름</th><th class="r">인원</th><th>쓰는 날짜</th><th>시간 메모</th><th></th></tr></thead><tbody>
-    ${e.occ.map((o,i)=>`<tr><td>${i===0?'<span class="pill info">메인</span>':`<button class="btn small ghost" type="button" data-rmain="${i}" title="메인으로">메인으로</button>`}</td><td><small>${OK_LBL[o.k]||o.k}</small></td>
-      <td>${o.k==='acad'?`<select data-ro="${i}|v">${[o.v,...AL.filter(a=>a!==o.v&&!inOcc(a))].map(a=>`<option ${a===o.v?'selected':''}>${esc(a)}</option>`).join('')}</select>`:o.k==='grp'?`<select data-ro="${i}|v">${[...new Set([o.v,...(R.cfg.names||[])])].map(a=>`<option ${a===o.v?'selected':''}>${esc(a)}</option>`).join('')}</select>`:`<b>${esc(o.v)}</b>`}${o.a&&o.k!=='acad'&&o.k!=='grp'?` <small class="faint">${esc(o.a)}</small>`:''}${o.k==='acad'&&M[o.v]?` <small class="faint">참가 ${M[o.v].n} · 배정 ${got(o.v)}</small>`:''}</td>
-      <td class="r"><input type="number" data-ro="${i}|n" min="0" max="30" value="${o.n}" style="width:64px"></td>
-      <td>${rd.map(d=>`<label class="row" style="gap:2px;display:inline-flex;margin-right:6px"><input type="checkbox" data-rod="${i}|${d}" ${(o.days.length?o.days:rd).includes(d)?'checked':''}><small>${esc(dayLab(d))}</small></label>`).join('')}</td>
-      <td><input type="text" data-ro="${i}|tm" value="${esc(o.tm||'')}" maxlength="30" placeholder="예) 14:00 이후" style="width:120px"></td>
-      <td><button class="btn small ghost" type="button" data-rdel="${i}">빼기</button></td></tr>`).join('')||'<tr><td colspan="7" class="hint">아직 아무도 없어요. 아래에서 학원 · 이름 · 사람 · 가족을 넣어 주세요 (처음 넣는 게 메인).</td></tr>'}</tbody></table></div>
-    <div class="row" style="gap:6px;flex-wrap:wrap">${loads.map(x=>`<span class="pill ${x.n>e.cap?'bad':x.n?'mute':''}">${esc(dayLab(x.d))}: ${x.n}/${e.cap}명</span>`).join('')}<span class="cap" style="margin:0">날짜별 인원 / 정원</span></div>
-    <div class="g2 roomadd">
-      <div class="row" style="gap:6px;flex-wrap:nowrap"><select id="r_addA"><option value="">학원 고르기</option>${AL.filter(a=>!inOcc(a)).map(a=>`<option value="${esc(a)}">${esc(a)} (참가 ${M[a].n} · 배정 ${got(a)})</option>`).join('')}</select><button class="btn small" type="button" id="r_addAcad">＋ 학원</button></div>
-      <div class="row" style="gap:6px;flex-wrap:nowrap"><select id="r_addG"><option value="">관리자가 정한 이름</option>${(R.cfg.names||[]).filter(n=>!inOcc(n)).map(n=>`<option>${esc(n)}</option>`).join('')}</select><button class="btn small" type="button" id="r_addGrp">＋ 이름</button></div>
-      <div class="row" style="gap:6px;flex-wrap:nowrap"><input type="text" id="r_addP" list="r_ppl" placeholder="사람 이름 (예: 연수교사 · 교수)" style="flex:1"><datalist id="r_ppl">${ppl.map(p=>`<option value="${esc(p.n)}">${esc(p.t)} · ${esc(p.a)}</option>`).join('')}</datalist><button class="btn small" type="button" id="r_addName">＋ 사람</button></div>
-      <div class="row" style="gap:6px;flex-wrap:nowrap"><select id="r_addF"><option value="">가족방 신청 가족 (${fams.length})</option>${fams.map(f=>`<option value="${esc(f.sb.no+'|'+f.rep.name)}">${esc(f.rep.name)} 가족 ${f.n}명 · ${esc(sh(f.sb.acad))}</option>`).join('')}</select><button class="btn small" type="button" id="r_addFam">＋ 가족</button></div>
-    </div></div>`}
-function edRead(){const e=A.ed;if(!e)return;const g=id=>document.getElementById(id);if(!g('r_kind'))return;e.kind=g('r_kind').value;e.cap=+g('r_cap').value||e.cap;e.pub=g('r_pub').checked;e.pw=g('r_pw').value.trim();e.memo=g('r_memo').value.trim();e.color=g('r_colOn')&&g('r_colOn').checked?g('r_col').value:''}
+      <label class="f">공개 · 색<span class="row" style="gap:8px"><label class="row" style="gap:4px"><input type="checkbox" id="r_pub" ${e.pub?'checked':''}> 이 방 공개</label><label class="row" style="gap:4px"><input type="checkbox" id="r_colOn" ${e.color?'checked':''}> 이 방 색 <input type="color" id="r_col" value="${esc(e.color||'#ffd27a')}"></label></span></label></div>
+    <datalist id="r_names">${pwNames.map(n=>`<option value="${esc(n)}">`).join('')}</datalist></div>`}
+function edRead(){const e=A.ed;if(!e)return;const g=id=>document.getElementById(id);if(!g('r_kind'))return;e.kind=g('r_kind').value;e.cap=+g('r_cap').value||e.cap;if(g('r_size')){e.size=g('r_size').value.trim();e.beds=g('r_beds').value===''?'':+g('r_beds').value;e.feat=g('r_feat').value.trim()}e.pub=g('r_pub').checked;e.pw=g('r_pw').value.trim();e.memo=g('r_memo').value.trim();e.color=g('r_colOn')&&g('r_colOn').checked?g('r_col').value:''}
 document.addEventListener('change',ev=>{if(S.tab==='room'&&ev.target.name==='rc_mode'){A.cMode=ev.target.value;A.cfgOpen=true;['kind','main'].forEach(k=>{const el=document.getElementById('rc_'+k);if(el)el.style.display=k===A.cMode?'':'none'});return}if(S.tab!=='room'||!A.ed)return;const el=ev.target,d=el.dataset;
   if(d.rday!==undefined){edRead();const D=allDays();let rd=A.ed.days.length?A.ed.days.slice():D.slice();const x=+d.rday;rd=el.checked?[...new Set([...rd,x])].sort((a,b)=>a-b):rd.filter(y=>y!==x);A.ed.days=rd.length===D.length?[]:rd;A.ed.occ.forEach(o=>{o.days=o.days.filter(y=>rd.includes(y));if(o.days.length===rd.length)o.days=[]});render();return}
   if(d.rod){edRead();const [i,x]=d.rod.split('|').map(Number);const o=A.ed.occ[i];const rd=A.ed.days.length?A.ed.days:allDays();let od=o.days.length?o.days.slice():rd.slice();od=el.checked?[...new Set([...od,x])].sort((a,b)=>a-b):od.filter(y=>y!==x);o.days=od.length===rd.length?[]:od;render();return}
   if(d.ro){edRead();const [i,f]=d.ro.split('|');const o=A.ed.occ[+i];if(f==='n')o.n=Math.max(0,+el.value||0);else if(f==='v'){o.v=el.value;if(o.k==='acad')o.a=el.value}else o[f]=el.value;render();return}
-  if(['r_kind','r_cap','r_pub'].includes(el.id)){edRead();render();return}});
+  if(['r_kind','r_cap','r_pub','r_beds','r_size'].includes(el.id)){edRead();render();return}});
 /* 가족방 신청: 대표 + 같은 방 형제 + 가족 · 방 = 배정에 그 가족(접수번호 · 대표 이름)이 든 방 (예전처럼 비번 수신자 · 메모에 대표 이름이 있는 가족방도) */
 function famRooms(){const L=[];(S.D.subs||[]).forEach(sb=>{const f=sb.form||{},room=f.room||{},join=f.join||{},fam=f.fam||[];
   const P=k=>sb.ppl.find(p=>p.id===sb.no+'_'+k),live=k=>{const p=P(k);return p&&p.status!=='취소'};
@@ -1208,7 +1232,7 @@ function view(){
     ${editor()}
     ${[...new Set(L.map(r=>r.fl))].map(f=>`<div class="floor"><span class="flab">${esc(A.bld)} ${esc(f)} · ${L.filter(r=>r.fl===f&&used(r)).length}/${L.filter(r=>r.fl===f).length}</span><div class="rgrid">${L.filter(r=>r.fl===f).map(tile).join('')}</div></div>`).join('')}</div>`}
 function save(clear){const e=A.ed;if(!e)return;edRead();
-  const x=clear?{no:e.no,occ:[],cap:e.cap,memo:e.memo}:{no:e.no,kind:e.kind,cap:e.cap,pw:e.pw,memo:e.memo,pub:e.pub,days:e.days,occ:e.occ,color:e.color};
+  const x=clear?{no:e.no,occ:[],cap:e.cap,memo:e.memo,size:e.size,beds:e.beds,feat:e.feat}:{no:e.no,kind:e.kind,cap:e.cap,pw:e.pw,memo:e.memo,pub:e.pub,days:e.days,occ:e.occ,color:e.color,size:e.size,beds:e.beds,feat:e.feat};
   if(!clear&&e.occ.length&&!e.kind){toast('방종류를 골라 주세요');return}
   if(!clear){const rd=e.days.length?e.days:allDays();const bad=rd.find(d=>e.occ.filter(o=>(o.days.length?o.days:rd).includes(d)).reduce((t,o)=>t+(+o.n||0),0)>e.cap);if(bad!=null){toast(dayLab(bad)+' 인원이 정원보다 많아요 · 정원을 고치거나 인원 · 날짜를 줄여 주세요');return}}
   run('roomSave',[x],d=>{R=d;A.sel='';A.ed=null;render();toast(clear?e.no+' 방을 비웠어요':e.no+' 방을 저장했어요')},m=>toast('저장하지 못했어요 · '+m))}
@@ -1230,7 +1254,7 @@ document.addEventListener('click',ev=>{if(S.tab!=='room')return;const b=ev.targe
   if(b.id==='r_addGrp'){const v=(document.getElementById('r_addG')||{}).value;if(!v){toast('이름을 골라 주세요 · 목록은 「방 공개 · 메인 이름」에서 정해요');return}addO({k:'grp',v,a:'',n:1});return}
   if(b.id==='r_addName'){const v=((document.getElementById('r_addP')||{}).value||'').trim();if(!v){toast('사람 이름을 넣어 주세요');return}const p=people().find(x=>x.n===v);addO({k:'name',v,a:p?p.a:'',n:1});return}
   if(b.id==='r_addFam'){const v=(document.getElementById('r_addF')||{}).value;if(!v){toast('가족을 골라 주세요');return}const [no,rep]=v.split('|');const f=famRooms().find(x=>x.sb.no===no&&x.rep.name===rep);if(!f)return;
-    addO({k:'fam',v:rep+' 가족',a:f.sb.acad,n:f.n,no});if(!A.ed.kind)A.ed.kind=(f.n>=2&&f.n<=4?f.n+'인가족방':'4인가족방');if(!A.ed.pw)A.ed.pw=rep;render();return}
+    addO({k:'fam',v:rep+' 가족',a:f.sb.acad,n:f.n,no,names:f.mem.map(m=>m.name)});if(!A.ed.kind)A.ed.kind=(f.n>=2&&f.n<=4?f.n+'인가족방':'4인가족방');if(!A.ed.pw)A.ed.pw=rep;render();return}
   if(b.id==='r_save'){save(false);return}
   if(b.id==='r_clear'){save(true);return}
   if(b.id==='r_close'){A.sel='';A.ed=null;render();return}

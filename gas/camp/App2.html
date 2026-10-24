@@ -1,4 +1,8 @@
-/* build: 20261024-105903 */
+/* build: 20261024-110632 */
+function vAuthPick(){return `<section class="sec"><h2>접수 시작</h2>
+  <p class="lede">어떻게 접수하시나요?</p>
+  <div class="pick2">
+    <button type="button" class="pickcard" data-mode="member"><b>회원 선생님</b><span>협회 회원 선생님이 학원 학생들을 접수해요. 이름과 휴대전화로 로그인해요.</span></button>
     ${GUEST_OPEN?`<button type="button" class="pickcard" data-mode="guest"><b>비회원 (학부모)</b><span>회원 학원에 다니지 않는 아이를 보호자가 직접 접수해요. 보호자 이름과 휴대전화만 있으면 돼요.</span></button>`:''}
   </div>
   ${GUEST_OPEN?'<p class="hint">회원 학원에 다니는 학생은 담당 선생님이 한꺼번에 접수해요. 잘 모르겠으면 다니는 학원 선생님께 먼저 여쭤 주세요.</p>':''}</section>`}
@@ -214,5 +218,3 @@ function vStep2(){
   ${unpaidPicked.length?`<div class="note"><b>회비확인대기 ${unpaidPicked.length}명</b> · ${unpaidPicked.map(p=>esc(p.name)).join(', ')}<br>연회비를 캠프비와 같은 계좌로 함께 입금해 주세요. 운영진이 입금을 확인하면 정식 접수로 바뀌어요.</div>`:''}
   </section>`;
 }
-/* 담당 교사: 학생 악기와 같은 전공의 교사만 (없으면 전체) */
-function teachersFor(inst,cur){const all=roster().teachers;const L=all.filter(t=>t.inst===inst);const out=(L.length?L:all).map(t=>t.name);if(cur&&!out.includes(cur))out.push(cur);return out}

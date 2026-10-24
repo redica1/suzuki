@@ -1,4 +1,4 @@
-/* build: 20261024-105903 */
+/* build: 20261024-110632 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -408,6 +408,8 @@ function recalc_(sb) {
     const les = plays ? Math.max(0, Math.min(OPT.lessonMax, +i.lessons || 0)) : 0;
     const mc = plays ? (i.mc || []).reduce((t, n) => t + ((mcList_().find(m => m.n === n) || {}).fee || 0), 0) : 0;
     if (guest !== isGuestType_(i.type)) throw new Error(p.name + '의 참가 구분(' + i.type + ')을 확인해 주세요. ' + (guest ? '비회원 접수는 비회원 참가비로만 접수해요.' : ''));
+    if (p.status !== '취소' && ['학생', '회원의 악기하는 자녀', '비회원 학생'].includes(i.type) && !String(i.prog || '').trim()) throw new Error(p.name + '의 권수(현재 진도)를 골라 주세요.');
+    if (p.status !== '취소' && plays && i.concert === '이브닝' && !/^https?:\S{6,}$/i.test(String(i.video || '').trim())) throw new Error(p.name + ': 이브닝 음악회는 오디션 영상 주소(https…)를 넣어 주세요.');
     const isT = /^t_|^me_/.test(k), isFam = (f.fam || []).some(x => x.id === k);
     const paid = guest ? true : isFam ? true : isT ? (k.indexOf('me_') === 0 ? true : !!tPaid[k]) : !!sPaid[k];
     p.type = i.type; p.fee = FEES[i.type][ri]; p.lesson = les * OPT.lessonFee + mc;
@@ -804,12 +806,50 @@ function guestLogin(name, phone, consent) {
   return Object.assign({ ok: true, token, today: today_(), teacher: { id: '', name: owner, real: nm, role: '보호자', inst: '', acads: [GUEST_ACAD], home: [GUEST_ACAD], p4: ph.slice(-4), guest: true }, myAcct: myAcct_(owner) }, bundle_([GUEST_ACAD], owner));
 }
 
+
+/* ---------------- 장학금 (운영관리 › 장학금) ----------------
+ * 기준 = 「설정」 탭 「장학금 기준」 (JSON [[최소 인원, 금액], …]) · 학원별 지급 = 「장학금」 시트 */
+const SCHOL_SH = '장학금';
+const SCHOL_HEAD = ['학원', '학생 수(저장 때)', '기준 금액', '조정 금액', '상태', '지급일', '메모', '바꾼 날'];
+function scholTiers_() { try { const v = JSON.parse(setting_('장학금 기준') || '[]'); return Array.isArray(v) ? v.filter(x => +x[0] > 0).map(x => [+x[0], +x[1] || 0]).sort((a, b) => b[0] - a[0]) : []; } catch (x) { return []; } }
+function scholRows_() { return rows_(SCHOL_SH).filter(r => r['학원']).map(r => ({ acad: String(r['학원']), n: +r['학생 수(저장 때)'] || 0, base: +r['기준 금액'] || 0, amt: r['조정 금액'] === '' ? '' : +r['조정 금액'], state: String(r['상태'] || '예정'), date: dstr_(r['지급일']), memo: String(r['메모'] || '') })); }
+function scholData(token) { adm_(token); return { tiers: scholTiers_(), rows: scholRows_() }; }
+function scholSave(token, b) {
+  const a = adm_(token); need_(a, 'schol');
+  const tiers = (b.tiers || []).map(x => [Math.round(+x[0] || 0), Math.round(+x[1] || 0)]).filter(x => x[0] > 0 && x[1] >= 0).sort((p, q) => q[0] - p[0]);
+  if (new Set(tiers.map(x => x[0])).size !== tiers.length) throw new Error('같은 인원 기준이 두 번 있어요.');
+  const okD = /^\d{4}-\d{2}-\d{2}$/;
+  const rows = (b.rows || []).filter(r => r && String(r.acad || '').trim()).map(r => {
+    const st = ['예정', '지급 완료', '보류', '해당 없음'].includes(r.state) ? r.state : '예정';
+    if (st === '지급 완료' && !okD.test(r.date || '')) throw new Error(r.acad + ': 지급 완료면 지급일을 넣어 주세요.');
+    return [String(r.acad).trim(), Math.max(0, +r.n || 0), Math.max(0, +r.base || 0), r.amt === '' || r.amt == null ? '' : Math.max(0, Math.round(+r.amt || 0)), st, okD.test(r.date || '') ? "'" + r.date : '', String(r.memo || '').slice(0, 200), today_()];
+  });
+  const lock = lock_();
+  try {
+    ensureSettings_(); const ss = SpreadsheetApp.getActive(), st = ss.getSheetByName('설정');
+    const r = rows_('설정').find(x => String(x['항목']) === '장학금 기준');
+    if (r) st.getRange(r._row, 2).setValues([[JSON.stringify(tiers)]]); else st.appendRow(['장학금 기준', JSON.stringify(tiers), '학원별 학생 수(학생 + 악기하는 교사자녀) 기준 장학금 [[최소 인원, 금액], …] — 관리자 장학금 메뉴에서 바꿈']);
+    let sh = ss.getSheetByName(SCHOL_SH);
+    if (!sh) { sh = ss.insertSheet(SCHOL_SH); sh.getRange(1, 1, 1, SCHOL_HEAD.length).setValues([SCHOL_HEAD]).setFontWeight('bold'); sh.setFrozenRows(1); }
+    if (sh.getLastRow() > 1) sh.getRange(2, 1, sh.getLastRow() - 1, SCHOL_HEAD.length).clearContent();
+    if (rows.length) sh.getRange(2, 1, rows.length, SCHOL_HEAD.length).setValues(rows);
+    log_(a.name, '장학금 저장', '기준 ' + tiers.length + '단계 · 학원 ' + rows.length);
+  } finally { lock.releaseLock(); }
+  return { ok: true, tiers: scholTiers_(), rows: scholRows_() };
+}
+/** 동의서 기록 (설정 › 동의서, 총관리자) — 최근 순 */
+function consentData(token) {
+  const a = adm_(token); needSup_(a);
+  const L = rows_(CONSENT_SH).filter(r => r['일시']).map(r => ({ at: String(r['일시']), camp: String(r['캠프']), kind: String(r['구분']), name: String(r['이름']), p4: String(r['휴대전화 뒤 4자리']), ver: String(r['동의 문구 버전']), items: String(r['동의 항목']) }));
+  return { rows: L.reverse().slice(0, 1000), total: L.length };
+}
+
 /* ---------------- 담당자 · 권한 (「담당자」 시트) ----------------
  * 관리자 아이디·비밀번호 = 총관리자 (모든 메뉴 + 캠프 설정 + 담당자)
  * 담당자 = 교사 회원 중에서 골라 메뉴마다 편집 / 보기 / 없음 → 관리자 화면에 이름 + 휴대전화로 로그인 */
 const STAFF = '담당자';
 const STAFF_HEAD = ['교사ID', '이름', '학원', '권한', '사용', '메모', '바꾼 날'];
-const ADMIN_TABS = [['home', '한눈에'], ['subs', '접수 · 입금 확인'], ['rp', '입금 신고'], ['cx', '취소 · 환불'], ['ens', '앙상블'], ['prof', '교수진'], ['act', '교사 일정'], ['tt', '개인레슨'], ['room', '방 배정'], ['con', '오후음악회'], ['stat', '통계'], ['q', '오류·건의']];
+const ADMIN_TABS = [['home', '한눈에'], ['subs', '접수 · 입금 확인'], ['rp', '입금 신고'], ['cx', '취소 · 환불'], ['ens', '앙상블'], ['prof', '교수진'], ['act', '교사 일정'], ['tt', '개인레슨'], ['room', '방 배정'], ['con', '오후음악회'], ['stat', '통계'], ['q', '오류·건의'], ['schol', '장학금']];
 function staff_() {
   return rows_(STAFF).filter(r => r['교사ID']).map(r => { let p = {}; try { p = JSON.parse(String(r['권한'] || '{}')); } catch (x) {}
     return { tid: String(r['교사ID']), name: String(r['이름']), acad: String(r['학원'] || ''), perms: p, on: String(r['사용'] || '예') !== '아니오', memo: String(r['메모'] || '') }; });
@@ -870,7 +910,7 @@ function adminData(token) {
   // 통계용: 예전 접수라 사람마다 악기가 비어 있으면 명단에서 채워서 보냄 (시트에는 안 씀)
   const inst = {}; teachers_().forEach(t => inst['t_' + t.id] = t.inst); rows_(SH.S).forEach(r => inst[String(r['ID'])] = String(r['악기'] || ''));
   subs.forEach(sb => sb.ppl.forEach(p => { if (!p.inst) { const k = p.id.slice(sb.no.length + 1), i = (sb.form && sb.form.info && sb.form.info[k]) || {}; p.inst = i.inst || inst[k] || ''; } }));
-  return { today: today_(), subs, admin, cx, teams: teams_(subs), issues: issues_(), profs: profs_(), me: me_(me), camp: campPublic_() };
+  return { today: today_(), subs, admin, cx, teams: teams_(subs), issues: issues_(), profs: profs_(), me: me_(me), camp: campPublic_(), scholar: scholTiers_() };
 }
 function setAdminCols_(pid, vals) {
   const sh = SpreadsheetApp.getActive().getSheetByName(SH.P);

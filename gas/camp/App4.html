@@ -1,4 +1,10 @@
-/* build: 20261024-105903 */
+/* build: 20261024-110632 */
+      con:pl&&p.kind!=='teacher'&&i.concert&&i.concert!=='없음'?`${i.concert}${(i.other?`${i.oc} ${i.ot}`.trim():i.song)?' · '+(i.other?`${i.oc} ${i.ot}`.trim():i.song):''}${i.concert==='이브닝'?' · 오디션 영상 '+(i.video?'제출':'없음'):''}`:'',
+      room:(()=>{const tm=teams().find(x=>x.members.some(m=>m.key===p.key));return tm?`${tm.rep.name} 가족방 · ${tm.n}명`:''})(),
+      note:[!p.paid?(p.isNew?'신규 · 회비확인대기':'회비확인대기'):'',p.isNew&&p.paid?'신규':''].filter(Boolean).join(' · ')}});
+  const ALWAYS=new Set(['les','mc','room']);
+  const COLS=[['who','구분'],['inst','악기'],['tch','담당 교사'],['prog','현재 진도'],['pref','선호 교수'],['les','추가 레슨'],['mc','마스터클래스'],['room','가족방'],['con','음악회 · 곡'],['note','비고']].filter(([k])=>ALWAYS.has(k)||D.some(d=>d[k]));
+  return `<div class="tbl"><table class="atbl"><thead><tr><th>이름</th>${COLS.map(([,l])=>`<th>${l}</th>`).join('')}</tr></thead><tbody>
   ${D.map(d=>`<tr class="${d.fam?'famr':''}"><td>${d.fam?'<span class="cap">└ </span>':''}<b>${esc(d.p.name)}</b>${d.p.dtag?` <small class="dtag">${esc(d.p.dtag)}</small>`:''}<br><small class="hint">${d.i.by?d.i.by+'년':''}${d.i.gender?(d.i.by?' · ':'')+(d.i.gender==='남'?'남':'여'):''}</small></td>
     ${COLS.map(([k])=>`<td>${d[k]?(k==='note'?`<span class="pill due">${esc(d[k])}</span>`:esc(d[k])):ALWAYS.has(k)&&(k==='room'||PLAYS.has(d.i.type))?'<span class="nil">신청 없음</span>':'<span class="nil">–</span>'}</td>`).join('')}</tr>`).join('')}
   </tbody></table></div>
@@ -7,14 +13,15 @@ function detailRows(p){
   const i=info(p), rows=[];
   rows.push(['구분',i.type]); rows.push(['출생연도 · 성별',`${i.by?i.by+'년생':'-'} · ${i.gender==='남'?'남성':i.gender==='여'?'여성':'-'}`]);
   if(p.kind!=='family') rows.push(['악기',p.inst||'-']);
-  if(p.kind==='student') rows.push(['담당 교사',i.teacher||'-']);
+  if(p.kind==='student') rows.push([isGuest()?'다니는 곳·선생님':'담당 교사',i.teacher||'-']);
   if(p.kind==='family') rows.push(['가족',`${people().find(x=>x.key===p.link)?.name||''}의 가족`]);
   if(PLAYS.has(i.type)){
-    if(p.kind==='student') rows.push(['현재 진도',i.prog||'-']);
+    if(p.kind==='student') rows.push(['권수 (현재 진도)',i.prog||'-']);
     rows.push(['선호 교수',[i.p1,i.p2].filter(Boolean).join(', ')||'없음']);
     rows.push(['추가 개인레슨',i.lessons?`${i.lessons}회`:'신청 안 함']);
     if(mcOf(p.inst).length) rows.push(['마스터클래스',i.mc.length?i.mc.join(', '):'신청 안 함']);
     if(p.kind!=='teacher') rows.push(['음악회',i.concert==='없음'?'참가 안 함':`${i.concert} · ${i.other?`${i.oc} ${i.ot}`.trim()||'곡명 미입력':(i.song||'곡 미선택')}`]);
+    if(i.concert==='이브닝') rows.push(['오디션 영상',i.video||'-']);
   }
   if(!p.paid) rows.push(['연회비',p.isNew?'신규 추가 · 회비확인대기':'미납 · 회비확인대기']);
   return rows;
@@ -169,6 +176,3 @@ function payReport(){
     ${MY_SUBS.filter(sb=>open.some(x=>x.sb===sb)).map(sb=>`<div class="hint" style="margin-top:6px"><b class="num">${sb.no}</b> · ${sb.round} · ${kday(sb.date)} 접수</div>
     <div class="rphead"><span></span><span></span><div class="rpf"><span>입금자명</span><span>입금일 *</span><span class="r">입금 금액</span></div></div>
     <ul class="roster rprow">${open.filter(x=>x.sb===sb).map(({p})=>{const on=sel.includes(p.id),v=rpv(p);return `<li><input type="checkbox" id="rp_${p.id}" data-rp="${p.id}" ${on?'checked':''}><label class="who" for="rp_${p.id}"><b>${esc(p.name)}${p.dtag?` <small class="dtag">${esc(p.dtag)}</small>`:''} <span class="kind ${p.kind==='교사'?'kt':'ks'}">${p.kind}</span> <span class="num">${won(dueOf(p))}</span></b><small>${esc(p.type)} ${won(p.fee)}${p.lesson?` + 레슨 ${won(p.lesson)}`:''}${p.dues?` + 연회비 ${won(p.dues)}`:''}${p.room?` + 가족방 ${won(p.room)}`:''}${isPaid(p)?` · 이미 ${won(p.paidAmt)} 입금 확인 → <b>차액</b>`:''}</small></label>
-      <div class="rpf"><input type="text" data-rpf="${p.id}|n" value="${esc(v.n)}" placeholder="입금자명" aria-label="${esc(p.name)} 입금자명" ${on?'':'disabled'}><input type="date" data-rpf="${p.id}|d" value="${v.d}" max="${S.today}" min="${(S.bank||{}).from||''}" aria-label="${esc(p.name)} 입금일" ${on?'':'disabled'}><input type="text" class="num" inputmode="numeric" data-rpf="${p.id}|a" value="${v.a?(+v.a).toLocaleString('ko-KR'):''}" placeholder="금액" aria-label="${esc(p.name)} 입금 금액" ${on?'':'disabled'}></div></li>`}).join('')}</ul>`).join('')}
-    <div class="spread"><span class="hint">선택한 ${sel.length}명 · 청구 ${won(sum)} · 넣은 금액 <b class="num">${won(open.filter(x=>sel.includes(x.p.id)).reduce((t,x)=>t+(+rpv(x.p).a||0),0))}</b></span></div>
-    <label class="f" for="rpMemo"><span>메모 <span class="hint">선택 · 금액이 청구액과 다르면 이유를 적어 주세요</span></span><input type="text" id="rpMemo" value="${esc(S.rpMemo||'')}"></label>

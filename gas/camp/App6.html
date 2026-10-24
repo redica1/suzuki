@@ -1,4 +1,9 @@
-/* build: 20261024-105903 */
+/* build: 20261024-110632 */
+    const call=()=>{busy(true,'올리고 있어요…');google.script.run.withSuccessHandler(r=>{busy(false);S.qText='';S.qMine=r.mine||S.qMine;render();toast(`${r.no}번으로 올렸어요 · 운영진이 확인하면 답을 달아요`,true)}).withFailureHandler(e=>{busy(false);er((e&&e.message)||String(e))}).submitIssue(S.token||'',d)};call()};
+  if(f&&f.files&&f.files[0]){const fl=f.files[0];if(fl.size>5*1024*1024)return er('사진은 5MB까지예요.');const rd=new FileReader();rd.onload=()=>go({name:fl.name,type:fl.type,data:String(rd.result).split(',')[1]});rd.readAsDataURL(fl)}else go(null)}
+/* 환불 계좌 기억: 마지막으로 적은 계좌를 다음 환불 칸에 미리 채움 */
+const ACCT_SETS=[['cxBank','cxAcct','cxHolder'],['ovB','ovA','ovH'],['prpRfB','prpRfA','prpRfH'],['rpRfB','rpRfA','rpRfH']];
+function findAcct(o,d){d=d||0;if(!o||typeof o!=='object'||d>8)return null;if(o.bank&&o.acct&&o.holder&&String(o.acct).replace(/\D/g,'').length>=6)return{bank:String(o.bank),acct:String(o.acct),holder:String(o.holder)};
   for(const k in o){const f=findAcct(o[k],d+1);if(f)return f}return null}
 function fillAcct(){try{fillAcct_()}catch(e){}}
 function fillAcct_(){const m=S.myAcct;if(!m||!m.acct)return;ACCT_SETS.forEach(([b,a,h])=>{const A=document.getElementById(a);if(!A||A.dataset.af)return;A.dataset.af='1';
@@ -31,7 +36,7 @@ function render(){fillBanks();
 /* 「다음」을 막는 조건: 그 단계에서 보이는 것만 (2단계는 사람이 1명 이상이면 통과, 가족 이름·가족방 인원은 3단계에서) */
 function blocked(){const t=totals();
   return (S.step===1&&!(S.user&&S.acad))||(S.step===2&&(t.n===0||t.n>CAMP.perSubmitMax))
-    ||(S.step===3&&(missingTeacher().length>0||missingBasic().length>0||missingProg().length>0||missingPref().length>0||S.fam.some(f=>!f.name.trim())||t.teams.some(x=>x.over)))
+    ||(S.step===3&&(missingTeacher().length>0||missingBasic().length>0||missingProg().length>0||missingVideo().length>0||missingPref().length>0||S.fam.some(f=>!f.name.trim())||t.teams.some(x=>x.over)))
     ||(S.step===4&&S.ens.on&&!(S.ens.group||'').trim())||(S.step===4&&S.ens.member&&!S.ens.joinNo&&!(S.ens.joinRep||'').trim())||(S.step===5&&!S.agree)}
 function toast(m,force){if(S.saving&&!force){S.savedMsg=m;return}const el=document.getElementById('toast');el.textContent=m;el.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>el.hidden=true,2200)}
 function go(n){if(isGuest()&&n===4)n=S.step>4?3:5;S.step=n;render();window.scrollTo({top:0})}
@@ -47,7 +52,8 @@ function missWhat(){const t=totals(),L=[],el=[],Q=x=>{const e=typeof x==='string
       if(p.kind==='student'&&!i.teacher&&!isGuest()){m.push('담당 교사');Q('#tc_'+p.key)}
       if(yearBad(p,i.by)){m.push('출생연도');Q('#ag_'+p.key)}
       if(!i.gender){m.push('성별');const g=document.querySelector(`[data-gender^="${p.key}|"]`);if(g)Q(g.parentElement)}
-      if(p.kind==='student'&&PLAYS.has(i.type)&&!i.prog){m.push('현재 진도');Q('#pg_'+p.key)}
+      if(p.kind==='student'&&PLAYS.has(i.type)&&!i.prog){m.push('권수');Q('#pg_'+p.key)}
+      if(p.kind==='student'&&PLAYS.has(i.type)&&!videoOk(i)){m.push('오디션 영상 주소');Q('#vd_'+p.key)}
       if(missingPref().some(x=>x.key===p.key)){m.push('선호 교수 1');Q('#p1_'+p.key)}
       if(m.length)L.push(`${p.name}: ${m.join('·')}`)});
     S.fam.filter(f=>!f.name.trim()).forEach(f=>{L.push(`${FAM_SHORT[f.type]||'가족'} 이름`);Q('#fn_'+f.id)});
@@ -172,10 +178,3 @@ document.addEventListener('click',e=>{
   if(d.ensnew){startEdit(d.ensnew,'ens');S.ens={...(S.ens||{}),on:true};render();return}
   if(d.ensedit){startEdit(d.ensedit,'ens');return}
   if(d.pedit){const [no,id]=d.pedit.split('|');startEdit(no,[id.slice(no.length+1)]);return}
-  if(d.seledit){const no=d.seledit;const sb0=MY_SUBS.find(x=>x.no===no);const all=(S.cx[no]||[]);const ids=all.filter(id=>{const p=sb0&&sb0.ppl.find(q=>q.id===id);return !(p&&p.pay==='신고')});if(ids.length<all.length)toast(`입금 신고 확인 중인 ${all.length-ids.length}명은 운영진 확인 전까지 고칠 수 없어서 뺐어요`,true);if(!ids.length)return;startEdit(no,ids.map(id=>id.slice(no.length+1)));return}
-  if(d.cxclear){delete S.cx[d.cxclear];render();return}
-  if(d.cxgo){const sb=MY_SUBS.find(x=>x.no===d.cxgo);const sel=(S.cx[sb.no]||[]).filter(id=>{const p=sb.ppl.find(q=>q.id===id);return p&&canCxP(p)});const {r,amt,paid}=refundOf(sb,sel);const er=m=>{document.getElementById('cxErr').textContent=m};
-    {const left=sb.ppl.filter(p=>p.status==='정상'&&!sel.includes(p.id)).length,m=teamMates(sb.no);if(!left&&m.length)return er(`이 접수는 앙상블 「${repTeam(sb.no).name}」 팀 대표예요. 함께하는 학원(${m.join(', ')})이 있어서 모두 취소할 수 없어요. 함께하는 학원과 이야기한 뒤 운영진에게 연락해 주세요.`)}
-    const why=document.getElementById('cxWhy').value;if(!why)return er('취소 사유를 선택해 주세요.');
-    if(r.doc&&paid){const f=document.getElementById('cxDoc');if(!f||!f.files.length)return er('이 기간에는 진단서를 올려야 취소할 수 있어요.')}
-    if(paid&&amt>0){const bk=document.getElementById('cxBank').value,ac=document.getElementById('cxAcct').value.replace(/[^\d-]/g,''),ho=document.getElementById('cxHolder').value.trim();if(!bk||ac.length<8||!ho)return er('환불 받을 은행·계좌번호·예금주를 넣어 주세요.')}

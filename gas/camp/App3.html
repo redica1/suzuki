@@ -1,4 +1,6 @@
-/* build: 20261024-105903 */
+/* build: 20261024-110632 */
+/* 담당 교사: 학생 악기와 같은 전공의 교사만 (없으면 전체) */
+function teachersFor(inst,cur){const all=roster().teachers;const L=all.filter(t=>t.inst===inst);const out=(L.length?L:all).map(t=>t.name);if(cur&&!out.includes(cur))out.push(cur);return out}
 function opts(list,val,ph){ return `<option value="">${ph}</option>`+list.map(x=>`<option ${x===val?'selected':''}>${esc(x)}</option>`).join('') }
 function duesTxt(p){const r=roster();const x=(p.kind==='teacher'?r.teachers:r.students).find(y=>y.id===p.key)||{};
   return p.kind==='teacher'?`교사회비 납부${x.dueAmt?' '+won(x.dueAmt):''}${x.paidDate?' · '+x.paidDate.replace(/-/g,'.'):''}`:`학생회비 납부 ${won(x.paidAmt||CAMP.studentDues)}${x.paidDate?' · '+x.paidDate.replace(/-/g,'.'):''}`}
@@ -22,7 +24,7 @@ function pCard(p){
     ${p.kind==='student'?`<div class="pair">${isGuest()?`<label class="f" for="tc_${p.key}"><span>다니는 곳·선생님 <span class="hint">(있으면)</span></span><input type="text" id="tc_${p.key}" data-f="teacher" data-k="${p.key}" maxlength="40" value="${esc(i.teacher)}" placeholder="예: OO음악학원 김OO 선생님"></label>`:`<label class="f" for="tc_${p.key}"><span>담당 교사<span class="req">*</span></span><select id="tc_${p.key}" data-f="teacher" data-k="${p.key}" ${i.teacher?'':'style="border-color:var(--rosin)"'}>${opts(teachersFor(p.inst,i.teacher),i.teacher,roster().teachers.some(t=>t.inst===p.inst)?`${p.inst} 선생님 중에서 선택해 주세요`:'담당 교사를 선택해 주세요')}</select></label>`}
       <label class="f" for="ag_${p.key}"><span>출생연도<span class="ex">(ex ${p.kind==='student'?'2020':'1985'})</span>${p.kind==='student'?'<span class="req">*</span>':''}</span><input type="text" id="ag_${p.key}" data-f="by" data-k="${p.key}" inputmode="numeric" maxlength="4" value="${esc(i.by)}" ${yearBad(p,i.by)?'class="empty"':''}></label></div>
     <div class="pair"><div class="f" style="display:grid;gap:4px;justify-items:start"><span>성별<span class="req">*</span></span><div class="seg" role="group" aria-label="${esc(p.name)} 성별" style="width:max-content">${['남','여'].map(g=>`<button type="button" data-gender="${p.key}|${g}" aria-pressed="${i.gender===g}">${g==='남'?'남성':'여성'}</button>`).join('')}</div></div>
-      ${plays?`<label class="f" for="pg_${p.key}"><span>현재 진도<span class="req">*</span></span><select id="pg_${p.key}" data-f="prog" data-k="${p.key}" ${i.prog?'':'class="empty"'}>${opts(PROGRESS[instKey],i.prog,'진도를 선택해 주세요')}</select></label>`:''}</div>`:`<div class="pair"><label class="f" for="ag_${p.key}"><span>출생연도<span class="ex">(ex ${p.kind==='student'?'2020':'1985'})</span>${p.kind==='student'?'<span class="req">*</span>':''}</span><input type="text" id="ag_${p.key}" data-f="by" data-k="${p.key}" inputmode="numeric" maxlength="4" value="${esc(i.by)}" ${yearBad(p,i.by)?'class="empty"':''}></label>
+      ${plays?`<label class="f" for="pg_${p.key}"><span>권수 (현재 진도)<span class="req">*</span></span><select id="pg_${p.key}" data-f="prog" data-k="${p.key}" ${i.prog?'':'class="empty"'}>${opts(PROGRESS[instKey],i.prog,'권수를 선택해 주세요')}</select></label>`:''}</div>`:`<div class="pair"><label class="f" for="ag_${p.key}"><span>출생연도<span class="ex">(ex ${p.kind==='student'?'2020':'1985'})</span>${p.kind==='student'?'<span class="req">*</span>':''}</span><input type="text" id="ag_${p.key}" data-f="by" data-k="${p.key}" inputmode="numeric" maxlength="4" value="${esc(i.by)}" ${yearBad(p,i.by)?'class="empty"':''}></label>
       <div class="f" style="display:grid;gap:4px;justify-items:start"><span>성별<span class="req">*</span></span><div class="seg" role="group" aria-label="${esc(p.name)} 성별" style="width:max-content">${['남','여'].map(g=>`<button type="button" data-gender="${p.key}|${g}" aria-pressed="${i.gender===g}">${g==='남'?'남성':'여성'}</button>`).join('')}</div></div></div>`}
     ${plays?(p.kind==='teacher'?`
     <div class="grp"><span class="grp-h">추가레슨 · 마스터클래스</span>
@@ -43,10 +45,11 @@ function pCard(p){
     <label class="f" for="cc_${p.key}">참가할 음악회<select id="cc_${p.key}" data-f="concert" data-k="${p.key}">${['없음','오후','트와일라잇','이브닝'].map(x=>`<option value="${x}" ${x===i.concert?'selected':''}>${x==='없음'?'참가 안 함':x}</option>`).join('')}</select></label>
     ${i.concert!=='없음'?`<div class="sub">
       ${i.concert==='오후'?`<p class="hint">오후 음악회: 10권 이하는 스즈키 교재 곡만, 10권 이상은 재현부까지만 연주해요.</p>`:''}
-      ${!i.other?`<label class="f" for="sg_${p.key}">연주곡<select id="sg_${p.key}" data-f="song" data-k="${p.key}">${opts(songs,i.song,songs.length?'곡을 선택해 주세요':'목록이 없어요. 아래에 직접 입력해 주세요')}</select></label>`:''}
-      <div class="checks"><label><input type="checkbox" data-other="${p.key}" ${i.other?'checked':''}>목록에 없는 곡이에요</label></div>
+      ${(()=>{if(!songs.length)i.other=true;return ''})()}${!i.other?`<label class="f" for="sg_${p.key}">연주곡<select id="sg_${p.key}" data-f="song" data-k="${p.key}">${opts(songs,i.song,'곡을 선택해 주세요')}</select></label>`:''}
+      ${songs.length?`<div class="checks"><label><input type="checkbox" data-other="${p.key}" ${i.other?'checked':''}>목록에 없는 곡이에요</label></div>`:`<p class="hint" style="margin:0">${esc(p.inst||'이 악기')}는 곡 목록이 없어요. 작곡가와 곡명을 직접 넣어 주세요.</p>`}
       ${i.other?`<div class="grid2"><label class="f" for="oc_${p.key}">작곡가<input type="text" id="oc_${p.key}" data-f="oc" data-k="${p.key}" value="${esc(i.oc)}"></label>
       <label class="f" for="ot_${p.key}">곡명 (원어로 정확히)<input type="text" id="ot_${p.key}" data-f="ot" data-k="${p.key}" value="${esc(i.ot)}"></label></div>`:''}
+      ${i.concert==='이브닝'?`<label class="f" for="vd_${p.key}"><span>오디션 영상 주소<span class="req">*</span> <span class="hint">유튜브 「일부 공개」 링크 등 · https로 시작</span></span><input type="url" id="vd_${p.key}" data-f="video" data-k="${p.key}" value="${esc(i.video||'')}" placeholder="https:\/\/youtu.be/…" ${videoOk(i)?'':'class="empty"'} autocomplete="off"></label>`:''}
     </div>`:''}
     </div>
 
@@ -59,8 +62,9 @@ function vStep3(){
   const ps=people();
   return `<section class="sec"><h2>${S.editNo&&S.quickEdit?'신청 내용':'참가 정보 입력'}</h2>
   ${S.editNo&&!S.quickEdit?`<div class="note info">${S.editNo} 고치는 중 · <b>색이 칠해진 「새로 추가」 카드</b>가 이번에 정보를 넣을 사람이에요. 회색 카드는 이미 접수된 사람이라 필요할 때만 고치면 돼요.</div>`:''}
-  <p class="lede">${isGuest()?'아이마다 성별과 현재 진도를 넣고, 레슨·음악회를 골라 주세요. 함께 오는 보호자·가족은 각 아이 카드 아래 「가족 추가」에서 넣어요.':'이름·악기·담당 교사와 학생 출생연도는 명단에서 가져왔어요. 모든 참가자의 출생연도와 성별을 확인하고, 진도·레슨·음악회를 선택해 주세요.'}</p>
-  ${missingProg().length?`<div class="note">현재 진도를 선택해 주세요: ${missingProg().map(p=>esc(p.name)).join(', ')}</div>`:''}
+  <p class="lede">${isGuest()?'아이마다 성별과 권수(현재 진도)를 넣고, 레슨·음악회를 골라 주세요. 함께 오는 보호자·가족은 각 아이 카드 아래 「가족 추가」에서 넣어요.':'이름·악기·담당 교사와 학생 출생연도는 명단에서 가져왔어요. 모든 참가자의 출생연도와 성별을 확인하고, 진도·레슨·음악회를 선택해 주세요.'}</p>
+  ${missingVideo().length?`<div class="note">이브닝 음악회 오디션 영상 주소를 넣어 주세요 (https로 시작): ${missingVideo().map(p=>esc(p.name)).join(', ')}</div>`:''}
+  ${missingProg().length?`<div class="note">권수(현재 진도)를 선택해 주세요: ${missingProg().map(p=>esc(p.name)).join(', ')}</div>`:''}
   ${missingBasic().length?`<div class="note">성별(모두)과 학생 출생연도를 넣어 주세요: ${missingBasic().map(p=>esc(p.name)).join(', ')}</div>`:''}
   ${missingPref().length?`<div class="note">추가레슨을 신청했으면 선호 교수 1을 골라 주세요: ${missingPref().map(p=>esc(p.name)).join(', ')}</div>`:''}
   ${missingTeacher().length?`<div class="note">담당 교사가 비어 있는 학생: ${missingTeacher().map(p=>esc(p.name)).join(', ')}</div>`:''}
@@ -155,9 +159,3 @@ function applyTable(ps,tab){
       pref:pl?[i.p1,i.p2].filter(Boolean).join(', '):'',
       les:pl&&i.lessons?`${i.lessons}회`:'',
       mc:pl&&i.mc&&i.mc.length?i.mc.join(', '):'',
-      con:pl&&p.kind!=='teacher'&&i.concert&&i.concert!=='없음'?`${i.concert}${(i.other?`${i.oc} ${i.ot}`.trim():i.song)?' · '+(i.other?`${i.oc} ${i.ot}`.trim():i.song):''}`:'',
-      room:(()=>{const tm=teams().find(x=>x.members.some(m=>m.key===p.key));return tm?`${tm.rep.name} 가족방 · ${tm.n}명`:''})(),
-      note:[!p.paid?(p.isNew?'신규 · 회비확인대기':'회비확인대기'):'',p.isNew&&p.paid?'신규':''].filter(Boolean).join(' · ')}});
-  const ALWAYS=new Set(['les','mc','room']);
-  const COLS=[['who','구분'],['inst','악기'],['tch','담당 교사'],['prog','현재 진도'],['pref','선호 교수'],['les','추가 레슨'],['mc','마스터클래스'],['room','가족방'],['con','음악회 · 곡'],['note','비고']].filter(([k])=>ALWAYS.has(k)||D.some(d=>d[k]));
-  return `<div class="tbl"><table class="atbl"><thead><tr><th>이름</th>${COLS.map(([,l])=>`<th>${l}</th>`).join('')}</tr></thead><tbody>

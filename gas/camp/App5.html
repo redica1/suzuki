@@ -1,4 +1,7 @@
-/* build: 20261024-105903 */
+/* build: 20261024-110632 */
+      <div class="rpf"><input type="text" data-rpf="${p.id}|n" value="${esc(v.n)}" placeholder="입금자명" aria-label="${esc(p.name)} 입금자명" ${on?'':'disabled'}><input type="date" data-rpf="${p.id}|d" value="${v.d}" max="${S.today}" min="${(S.bank||{}).from||''}" aria-label="${esc(p.name)} 입금일" ${on?'':'disabled'}><input type="text" class="num" inputmode="numeric" data-rpf="${p.id}|a" value="${v.a?(+v.a).toLocaleString('ko-KR'):''}" placeholder="금액" aria-label="${esc(p.name)} 입금 금액" ${on?'':'disabled'}></div></li>`}).join('')}</ul>`).join('')}
+    <div class="spread"><span class="hint">선택한 ${sel.length}명 · 청구 ${won(sum)} · 넣은 금액 <b class="num">${won(open.filter(x=>sel.includes(x.p.id)).reduce((t,x)=>t+(+rpv(x.p).a||0),0))}</b></span></div>
+    <label class="f" for="rpMemo"><span>메모 <span class="hint">선택 · 금액이 청구액과 다르면 이유를 적어 주세요</span></span><input type="text" id="rpMemo" value="${esc(S.rpMemo||'')}"></label>
     <details class="rfbox"><summary class="hint">청구액보다 많이 낸 사람이 있으면 · 환불 받을 계좌</summary><div class="rpf" style="margin-top:6px">${bankInp('rpRfB')}<input type="text" id="rpRfA" inputmode="numeric" placeholder="계좌번호"><input type="text" id="rpRfH" placeholder="예금주"></div></details>
     <p class="err" id="rpErr"></p>
     <button class="btn primary" type="button" id="rpGo">입금 신고하기</button>`:''}</div>`}
@@ -127,8 +130,3 @@ function sendQ(){const er=m=>{document.getElementById('qErr').textContent=m};con
   if(!S.user&&(!d.name||d.phone.replace(/\D/g,'').length<10))return er('이름과 휴대전화를 넣어 주세요.');
   if(d.text.length<2)return er('어떤 문제인지 적어 주세요.');
   const f=document.getElementById('qPic');const go=file=>{d.file=file;
-    const call=()=>{busy(true,'올리고 있어요…');google.script.run.withSuccessHandler(r=>{busy(false);S.qText='';S.qMine=r.mine||S.qMine;render();toast(`${r.no}번으로 올렸어요 · 운영진이 확인하면 답을 달아요`,true)}).withFailureHandler(e=>{busy(false);er((e&&e.message)||String(e))}).submitIssue(S.token||'',d)};call()};
-  if(f&&f.files&&f.files[0]){const fl=f.files[0];if(fl.size>5*1024*1024)return er('사진은 5MB까지예요.');const rd=new FileReader();rd.onload=()=>go({name:fl.name,type:fl.type,data:String(rd.result).split(',')[1]});rd.readAsDataURL(fl)}else go(null)}
-/* 환불 계좌 기억: 마지막으로 적은 계좌를 다음 환불 칸에 미리 채움 */
-const ACCT_SETS=[['cxBank','cxAcct','cxHolder'],['ovB','ovA','ovH'],['prpRfB','prpRfA','prpRfH'],['rpRfB','rpRfA','rpRfH']];
-function findAcct(o,d){d=d||0;if(!o||typeof o!=='object'||d>8)return null;if(o.bank&&o.acct&&o.holder&&String(o.acct).replace(/\D/g,'').length>=6)return{bank:String(o.bank),acct:String(o.acct),holder:String(o.holder)};

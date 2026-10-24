@@ -1,4 +1,4 @@
-/* build: 20261024-105903 */
+/* build: 20261024-110632 */
 /* ---------- 캠프 설정 (관리자 화면에서 입력되는 값) ---------- */
 const ROOM = { cap:4, emptyFee:130000 }; // 가족방: 4인 기준, 빈 자리 1개당 추가 비용
 const CAMP = { id:'27W', ri:0, lessonFee:60000, lessonMax:5, mcFee:150000,
@@ -94,6 +94,8 @@ const mcFeeOf=names=>names.reduce((t,n)=>t+((MASTER.find(m=>m.n===n)||{}).fee||0
 const PROGRESS = {
   '바이올린':['Pre-Twinkle','1권A 작은별 변주곡 ~ 무궁동','1권B 알레그레토 ~','2권A 요정의 춤 ~','2권B 미뇽의 가보트 ~','3권A ~ 유모레스크','3권B 베커 가보트 ~','4권A ~ 자이츠 5번 3악장','4권B 비발디 협주곡 가단조 ~','5권A ~ 비발디 협주곡 사단조','5권B 독일춤곡 ~','6권A ~ 피오코 알레그로','6권B 라모 가보트 ~','7권A ~ 헨델 소나타 1번','7권B 바흐 협주곡 가단조 ~','8권 전체','9권 모차르트 협주곡 5번','10권 모차르트 협주곡 4번','10권 이상 멘델스존 협주곡 3악장','10권 이상 기타 곡'],
   '첼로':['Pre-Twinkle','1권A 작은별 ~ 무궁동','1권B 그 옛날에 ~','2권','3권','4권','5권','6권','7권','8권','9권','10권','10권 이상'],
+  '비올라':['Pre-Twinkle','1권','2권','3권','4권','5권','6권','7권','8권','9권','10권','10권 이상'],
+  '플루트':['Pre-Twinkle','1권','2권','3권','4권','5권','6권','7권','8권','9권','10권','10권 이상','11권 이상'],
   '기타':['1권','2권','3권','4권','5권','6권','7권','8권','9권','10권','10권 이상']};
 const SONGS = {
   '바이올린':['V01-01 작은 별 A, C & Theme (스즈키)','V01-03 예쁜 새 (독일 민요)','V01-04 주먹 쥐고 (프랑스 민요)','V01-06 봄바람 (독일 민요)','V01-07 그 옛날의 (베일리)','V01-08 알레그로 (스즈키)','V01-09 무궁동 (스즈키)','V01-11 안단티노 (스즈키)','V01-13 미뉴에트 1번 (바흐)','V01-14 미뉴에트 2번 (바흐)','V01-16 즐거운 농부 (슈만)','V01-17 가보트 (고섹)','V02-01 개선의 합창 (헨델)','V02-03 사냥꾼의 합창 (베버)','V02-07 두 사람의 척탄병 (슈만)','V02-08 요정의 춤 (파가니니)','V02-09 미뇽의 가보트 (토마)','V02-10 가보트 (륄리)','V02-12 미뉴에트 (보케리니)','V03-01 가보트 (마르티니)','V03-04 유모레스크 (드보르작)','V03-06 라장조 가보트 (바흐)','V03-07 부레 (바흐)','V04-01 협주곡 2번 3악장 (자이츠)','V04-02 협주곡 5번 1악장 (자이츠)','V04-04 협주곡 가단조 1악장 (비발디)','V04-05 협주곡 가단조 3악장 (비발디)','V04-55 무궁동 (칼 뵘)','V04-06 2개의 Vln을 위한 협주곡 1악장 제2 Vln (바흐)','V05-31 협주곡 사단조 1악장 (비발디)','V05-33 협주곡 사단조 3악장 (비발디)','V05-04 컨트리 댄스 (베버)','V05-07 2개의 Vln을 위한 협주곡 1악장 제1 Vln (바흐)','V06-01 라 폴리아 (코렐리)','V06-21 소나타 3번 1악장 (헨델)','V06-22 소나타 3번 2악장 (헨델)','V06-03 알레그로 (피오코)','V06-51 소나타 4번 1악장 (헨델)','V06-52 소나타 4번 2악장 (헨델)','V07-31 소나타 1번 1,2악장 (헨델)','V07-41 협주곡 1번 1악장 (바흐)','V07-07 알레그로 (코렐리)','V08-11 소나타 사단조 1,2악장 (에클레스)','V08-13 소나타 사단조 3,4악장 (에클레스)','V08-04 알레그로 (바흐)','V08-07 소나타 마단조 2악장 (베라치니)','V09-01 협주곡 5번 1악장 (모차르트)','V09-13 협주곡 5번 3악장 (모차르트)','V10-01 협주곡 4번 1악장 (모차르트)','V10-12 협주곡 4번 2악장 (모차르트)'],
@@ -121,6 +123,8 @@ const esc = s => String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>'
 const okYear=v=>/^\d{4}$/.test(String(v||''))&&+v>=1920&&+v<=2026;
 const yearBad=(p,v)=>p.kind==='student'?!okYear(v):(String(v||'').trim()!==''&&!okYear(v)); // 학생만 필수, 나머지는 선택(넣으면 4자리)
 function missingBasic(){ return people().filter(p=>{const i=info(p);return yearBad(p,i.by)||!i.gender}) }
+const videoOk=i=>i.concert!=='이브닝'||/^https?:\S{6,}$/i.test(String(i.video||'').trim());
+function missingVideo(){ return people().filter(p=>p.kind==='student'&&PLAYS.has(info(p).type)&&!videoOk(info(p))) }
 function missingProg(){ return people().filter(p=>p.kind==='student'&&PLAYS.has(info(p).type)&&!info(p).prog) }
 function missingPref(){ return people().filter(p=>p.kind!=='family'&&PLAYS.has(info(p).type)&&+info(p).lessons>0&&(PROF[p.inst]||[]).length&&!info(p).p1) }
 function missingTeacher(){ return isGuest()?[]:people().filter(p=>p.kind==='student'&&!info(p).teacher) }
@@ -197,7 +201,3 @@ const consItems=()=>CONSENT.items.filter(x=>x.on);
 const consAll=()=>consItems().every(x=>S.cons&&S.cons[x.id]);
 const consReqOk=()=>consItems().filter(x=>x.req).every(x=>S.cons&&S.cons[x.id]);
 function refundBody(){return REFUND.rules.map(r=>`- ${kday(r.until)}까지 (${r.label}): ${r.rate?`참가비 ${r.rate}% 환불`:'환불 없음'}${r.doc?' · 진단서 등 증빙이 있으면 운영진이 따로 판단':''}`).join('\n')+`\n- 그 뒤 (${REFUND.after.label}): ${REFUND.after.allow===false?'취소할 수 없어요':REFUND.after.rate?`참가비 ${REFUND.after.rate}% 환불`:'환불 없음'}\n\n취소를 요청한 날을 기준으로 위 규정을 적용해요. ${REFUND.duesRefund?'':'연회비는 환불되지 않아요. '}입금 전이면 바로 취소할 수 있어요.`}
-function vAuthPick(){return `<section class="sec"><h2>접수 시작</h2>
-  <p class="lede">어떻게 접수하시나요?</p>
-  <div class="pick2">
-    <button type="button" class="pickcard" data-mode="member"><b>회원 선생님</b><span>협회 회원 선생님이 학원 학생들을 접수해요. 이름과 휴대전화로 로그인해요.</span></button>

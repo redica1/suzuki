@@ -1,4 +1,11 @@
-/* build: 20261024-105903 */
+/* build: 20261024-110632 */
+  if(d.seledit){const no=d.seledit;const sb0=MY_SUBS.find(x=>x.no===no);const all=(S.cx[no]||[]);const ids=all.filter(id=>{const p=sb0&&sb0.ppl.find(q=>q.id===id);return !(p&&p.pay==='신고')});if(ids.length<all.length)toast(`입금 신고 확인 중인 ${all.length-ids.length}명은 운영진 확인 전까지 고칠 수 없어서 뺐어요`,true);if(!ids.length)return;startEdit(no,ids.map(id=>id.slice(no.length+1)));return}
+  if(d.cxclear){delete S.cx[d.cxclear];render();return}
+  if(d.cxgo){const sb=MY_SUBS.find(x=>x.no===d.cxgo);const sel=(S.cx[sb.no]||[]).filter(id=>{const p=sb.ppl.find(q=>q.id===id);return p&&canCxP(p)});const {r,amt,paid}=refundOf(sb,sel);const er=m=>{document.getElementById('cxErr').textContent=m};
+    {const left=sb.ppl.filter(p=>p.status==='정상'&&!sel.includes(p.id)).length,m=teamMates(sb.no);if(!left&&m.length)return er(`이 접수는 앙상블 「${repTeam(sb.no).name}」 팀 대표예요. 함께하는 학원(${m.join(', ')})이 있어서 모두 취소할 수 없어요. 함께하는 학원과 이야기한 뒤 운영진에게 연락해 주세요.`)}
+    const why=document.getElementById('cxWhy').value;if(!why)return er('취소 사유를 선택해 주세요.');
+    if(r.doc&&paid){const f=document.getElementById('cxDoc');if(!f||!f.files.length)return er('이 기간에는 진단서를 올려야 취소할 수 있어요.')}
+    if(paid&&amt>0){const bk=document.getElementById('cxBank').value,ac=document.getElementById('cxAcct').value.replace(/[^\d-]/g,''),ho=document.getElementById('cxHolder').value.trim();if(!bk||ac.length<8||!ho)return er('환불 받을 은행·계좌번호·예금주를 넣어 주세요.')}
     const names=sb.ppl.filter(p=>sel.includes(p.id)).map(p=>p.name);
     if(paid){const f=document.getElementById('cxDoc'),req={no:sb.no,acad:sb.acad,names,ids:sel,why,amt,rule:`${r.label} · ${r.rate?r.rate+'% 환불':'환불 없음'}`,bank:(document.getElementById('cxBank')||{}).value||'',acct:((document.getElementById('cxAcct')||{}).value||'').replace(/[^\d-]/g,''),holder:((document.getElementById('cxHolder')||{}).value||'').trim()};
       const go=file=>{req.file=file;api('cancelReq',[req],()=>{})};
@@ -105,7 +112,7 @@ document.addEventListener('input',e=>{if(e.target.type==='checkbox'&&(e.target.i
   if(el.id==='email'){S.email=el.value;return}
   if(el.id==='req'){S.req=el.value;return}
   if(d.famname){const f=S.fam.find(x=>x.id===d.famname);if(f){f.name=el.value;const h=document.querySelector(`#card_${f.id} h3`);if(h)h.textContent=el.value||'(이름 미입력)';el.classList.toggle('empty',!el.value);setNext()}return}
-  if(d.f&&(el.tagName==='INPUT')){S.info[d.k][d.f]=el.value;if(d.f==='by'){el.value=el.value.replace(/\D/g,'').slice(0,4);S.info[d.k].by=el.value;{const pp=people().find(x=>x.key===d.k);el.classList.toggle('empty',yearBad(pp,el.value))}setNext()}return}
+  if(d.f&&(el.tagName==='INPUT')){S.info[d.k][d.f]=el.value;if(d.f==='video'){el.classList.toggle('empty',!videoOk(S.info[d.k]));setNext();return}if(d.f==='by'){el.value=el.value.replace(/\D/g,'').slice(0,4);S.info[d.k].by=el.value;{const pp=people().find(x=>x.key===d.k);el.classList.toggle('empty',yearBad(pp,el.value))}setNext()}return}
   if(d.ens==='tm'||d.ens==='ts'){el.value=el.value.replace(/\D/g,'').slice(0,2);if(d.ens==='ts'&&+el.value>59)el.value='59';S.ens[d.ens]=el.value;return}
   if(d.ens&&el.type==='text'){S.ens[d.ens]=el.value;if(d.ens==='group')setNext();if(d.ens==='extra'){const pos=el.selectionStart;render();const n=document.getElementById('enX');n.focus();n.setSelectionRange(pos,pos)}return}
 });

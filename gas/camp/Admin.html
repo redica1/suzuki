@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261024-232536 -->
+<!-- build: 20261024-232958 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -116,6 +116,7 @@ tr.off td{opacity:.5}
 .sheet td{padding:1px 3px;overflow:hidden;white-space:normal;line-height:1.2;word-break:keep-all}
 .sheet td.lyroom,.sheet td.lylab{cursor:pointer}
 .sheet td.lyroom:hover,.sheet td.lylab:hover{outline:2px solid #1f5c63;outline-offset:-2px}
+.lylegend .lysw{display:inline-block;width:22px;height:16px;border:1px solid #333;border-radius:3px}
 .sheet td.lyroom.on,.sheet td.lylab.on{outline:3px solid #1f5c63;outline-offset:-3px}
 .roomed .occt td{vertical-align:middle}
 .roomadd{margin-top:6px}
@@ -1045,7 +1046,7 @@ function people(){const L=[];(S.D.subs||[]).forEach(sb=>sb.ppl.forEach(p=>{if(p.
 function occTxt(r){const o=r.occ||[];if(!o.length)return '';return sh(o[0].v)+(o.length>1?` <small>+ ${o.slice(1).map(x=>esc(sh(x.v))).join(', ')}</small>`:'')}
 function tile(r){const n=peak(r),part=r.days&&r.days.length&&r.days.length<allDays().length;
   return `<button type="button" class="rtile ${kcls(r.kind)} ${used(r)?'':'empty'} ${A.sel===r.no?'on':''}" data-rroom="${esc(r.no)}">
-  <span class="rno num">${esc(r.no)}${r.pub?' <small class="pill ok" style="padding:0 4px">공개</small>':''}</span><span class="rty">${esc(r.type||'타입 -')} · 정원 ${r.cap}</span>
+  <span class="rno num">${esc(r.no)}${r.pub?' <small class="pill ok" style="padding:0 4px">공개</small>':''}</span><span class="rty">${esc(rType(r.no)||r.type||'타입 -')} · 정원 ${r.cap}</span>
   ${used(r)?`<b>${esc(sh(r.occ[0].v))}${r.occ.length>1?` <small>+ ${r.occ.slice(1).map(x=>esc(sh(x.v))).join(', ')}</small>`:''}</b><span class="rk">${esc(r.kind||'방종류 -')} · ${n}/${r.cap}${n>r.cap?' 넘침':''}${part?' · '+r.days.map(dayLab).join(','):''}</span>${r.pw?`<span class="rpw">비번 ${esc(r.pw)}</span>`:''}`:'<span class="rk">빈 방</span>'}</button>`}
 /* ---------- 방 편집 (A.ed = 고치는 중인 복사본) ---------- */
 function openEd(no){const r=R.rooms.find(x=>x.no===no);A.sel=no;A.ed=r?JSON.parse(JSON.stringify({no:r.no,kind:r.kind,cap:r.cap,pw:r.pw,memo:r.memo,pub:!!r.pub,days:r.days||[],occ:r.occ||[],type:r.type,color:r.color||''})):null}
@@ -1055,7 +1056,7 @@ function editor(){const e=A.ed,r=R.rooms.find(x=>x.no===A.sel);if(!e||!r)return 
   const loads=rd.map(d=>({d,n:e.occ.filter(o=>(o.days.length?o.days:rd).includes(d)).reduce((t,o)=>t+(+o.n||0),0)}));
   const ppl=people(),fams=famList().filter(f=>!f.rs.length||f.rs.some(x=>x.no===r.no)).filter(f=>!e.occ.some(o=>o.k==='fam'&&o.no===f.sb.no&&o.v.startsWith(f.rep.name)));
   const pwNames=[...new Set(e.occ.flatMap(o=>o.k==='acad'?(M[o.v]?M[o.v].names:[]):o.k==='name'?[o.v]:o.k==='fam'?[o.v.replace(/ 가족$/,'')]:[]))];
-  return `<div class="picker roomed"><div class="sec-h"><div><b class="num" style="font-size:18px">${esc(r.no)}</b> <span class="cap" style="margin:0">${esc(r.bld)} ${esc(r.fl)} · ${esc(r.type||'타입 -')}</span></div>
+  return `<div class="picker roomed"><div class="sec-h"><div><b class="num" style="font-size:18px">${esc(r.no)}</b> <span class="cap" style="margin:0">${esc(r.bld)} ${esc(r.fl)} · ${esc(rType(r.no)||r.type||'타입 -')}${numColor(r.no)?` <span class="lysw" style="display:inline-block;width:14px;height:10px;border:1px solid #333;background:${esc(numColor(r.no))}"></span>`:''}</span></div>
     <div class="row"><button class="btn small primary" type="button" id="r_save">저장</button><button class="btn small" type="button" id="r_clear">비우기</button><button class="btn small" type="button" id="r_close">닫기</button></div></div>
     <div class="g3">
       <label class="f">방종류<select id="r_kind">${['',...R.kinds].map(k=>`<option value="${esc(k)}" ${k===e.kind?'selected':''}>${k||'선택'}</option>`).join('')}</select></label>
@@ -1136,6 +1137,15 @@ function mainsUsed(){return [...new Set(R.rooms.filter(used).map(r=>r.occ[0].v))
 function roomColor(q){if(q.color)return q.color;const C=(R.cfg&&R.cfg.colors)||{mode:'kind',kind:{},main:{}};
   if(C.mode==='main'){const m=q.occ[0].v;if(C.main&&C.main[m])return C.main[m];const L=mainsUsed();return PAL[Math.max(0,L.indexOf(m))%PAL.length]}
   return (C.kind&&C.kind[q.kind])||KCOL[q.kind]||'#eeeeee'}
+/* 방번호 칸 색 → 방 타입 (도면 위 범례에서 이름을 붙임) */
+let NC=null,NCR=null;
+function numColor(no){if(NCR!==R||!NC){NC={};NCR=R;floors().forEach(f=>Object.entries(f.rooms).forEach(([n,v])=>{const c=f.cells.find(x=>x[0]===v[0]&&x[1]===v[1]);if(c&&c[5]&&!NC[n])NC[n]=String(c[5]).toLowerCase()}))}return NC[no]||''}
+function rType(no){const c=numColor(no),T=(R.cfg&&R.cfg.typeColors)||{};return c&&T[c]||''}
+function legendBox(F){const cnt={};F.forEach(f=>Object.entries(f.rooms).forEach(([no,v])=>{const c=f.cells.find(x=>x[0]===v[0]&&x[1]===v[1]);const k=c&&c[5]?String(c[5]).toLowerCase():'';if(k)(cnt[k]=cnt[k]||{n:0,here:0}).n++}));
+  const Fl=F[A.lyF];Object.entries(Fl.rooms).forEach(([no,v])=>{const c=Fl.cells.find(x=>x[0]===v[0]&&x[1]===v[1]);const k=c&&c[5]?String(c[5]).toLowerCase():'';if(k&&cnt[k])cnt[k].here++});
+  const T=(R.cfg&&R.cfg.typeColors)||{},ks=Object.keys(cnt).filter(k=>cnt[k].here||T[k]).sort((a,b)=>cnt[b].here-cnt[a].here||cnt[b].n-cnt[a].n);if(!ks.length)return '';
+  return `<div class="panel lylegend"><div class="row" style="gap:10px;flex-wrap:wrap"><b>방 타입 (방번호 칸 색)</b>${ks.map(k=>`<label class="row" style="gap:5px"><span class="lysw" style="background:${esc(k)}"></span><input type="text" class="r_tcol" data-c="${esc(k)}" value="${esc(T[k]||'')}" placeholder="타입 이름 (예: 4인실)" maxlength="40" style="width:130px"><small class="faint">이 층 ${cnt[k].here} · 전체 ${cnt[k].n}</small></label>`).join('')}
+    <button class="btn small" type="button" id="r_tcolSave">타입 이름 저장</button></div><p class="cap" style="margin:4px 0 0">도면에서 방번호 칸 색이 같은 방은 같은 타입이에요. 이름을 붙이면 방 편집 · 방 목록에도 타입으로 보여요.</p></div>`}
 function vPlan(){const F=floors();if(A.lyF>=F.length)A.lyF=0;const Fl=F[A.lyF];
   const at={};Fl.cells.forEach(x=>{at[x[0]+','+x[1]]=x});
   const cover=new Set(),roomAt={},labelAt={};Object.entries(Fl.rooms).forEach(([no,[r,c,lab]])=>{roomAt[r+','+c]=no;if(lab)labelAt[lab[0]+','+lab[1]]=no});
@@ -1152,12 +1162,12 @@ function vPlan(){const F=floors();if(A.lyF>=F.length)A.lyF=0;const Fl=F[A.lyF];
       row+=`<td${rs>1?` rowspan="${rs}"`:''}${cs>1?` colspan="${cs}"`:''} class="${cls}"${attr} style="${style}">${esc(text).replace(/\n/g,'<br>')}</td>`}
     html+=`<tr style="height:${Fl.rh[r]}px">${row}</tr>`}
   const tabs=R.layoutTabs||[],res=A.lyRes;
-  return `<div class="row"><div class="seg" role="group" aria-label="층">${F.map((f,k)=>`<button type="button" data-rlyf="${k}" aria-pressed="${A.lyF===k}">${esc(f.name)}${f.builtin?'':' ·'}</button>`).join('')}</div></div>
+  return `${legendBox(F)}<div class="row"><div class="seg" role="group" aria-label="층">${F.map((f,k)=>`<button type="button" data-rlyf="${k}" aria-pressed="${A.lyF===k}">${esc(f.name)}${f.builtin?'':' ·'}</button>`).join('')}</div></div>
   <div class="panel"><div class="spread"><div><b>도면</b> <span class="hint">${Fl.builtin?'지금 층: 기본 도면(2026 겨울 객실배치도)':`지금 층: 시트 「${esc(Fl.tab)}」에서 불러옴 · ${esc(String(Fl.at||'').slice(0,16))}${Fl.borders==='guess'?' · 테두리는 추정':''}`} · 층 이름 옆 · = 시트에서 불러온 층</span></div>
     <div class="row" style="gap:6px"><button class="btn small primary" type="button" id="r_lyImp" ${tabs.length?'':'disabled'}>도면 불러오기 (${tabs.length}탭)</button></div></div>
     <div class="row" style="gap:6px;margin-top:8px;flex-wrap:nowrap"><label class="cap" for="r_lySrc" style="margin:0;white-space:nowrap">도면 시트 주소</label><input type="url" id="r_lySrc" value="${esc((R.cfg||{}).layoutSrc||'')}" placeholder="https:\/\/docs.google.com/spreadsheets/d/… (비우면 이 접수 DB 시트)" style="flex:1;min-width:0"><button class="btn small" type="button" id="r_lySrcSave">주소 저장</button></div>
     ${R.layoutErr?`<div class="note bad" style="margin-top:6px">${esc(R.layoutErr)}</div>`:''}
-    <p class="hint" style="margin:6px 0 0">그 시트에서 이름에 <b>「배치도」가 든 탭</b>을 층마다 하나씩 읽어요 (예: 배치도 Stay 1F · 객실배치도 · 스테이 2층 배치도). 칸 크기 · 병합 · 색 · 테두리 그대로, 방번호(S101 꼴)를 적은 칸 <b>바로 아래 칸</b>에 올해 배정이 보여요. 탭 순서 = 층 버튼 순서, 숨긴 탭은 안 읽어요. 다른 시트를 쓰면 관리자 계정이 그 시트를 볼 수 있게 공유해 주세요.${tabs.length?' 지금 탭: '+tabs.map(esc).join(', '):''}</p>
+    <p class="hint" style="margin:6px 0 0">그 시트에서 이름이 <b>「Stay 1F」 「Flex 3F」처럼 건물 + 층</b>이거나 <b>「배치도」가 든 탭</b>을 층마다 하나씩 읽어요. 칸 크기 · 병합 · 색 · 테두리 그대로, 방번호(S101 꼴)를 적은 칸 <b>바로 아래 칸</b>에 올해 배정이 보여요. 탭 순서 = 층 버튼 순서, 숨긴 탭은 안 읽어요. 다른 시트를 쓰면 관리자 계정이 그 시트를 볼 수 있게 공유해 주세요.${tabs.length?' 지금 탭: '+tabs.map(esc).join(', '):''}</p>
     ${res?`<div class="note" style="margin-top:8px">${res.map(x=>`<div><b>${esc(x.tab)}</b> · 방 ${x.rooms}개${x.added.length?` · 새로 더한 방: ${x.added.map(esc).join(', ')}`:''}${x.missing.length?` · <span class="pill due">도면에 없는 방 ${x.missing.length}</span> ${x.missing.map(m=>`<span class="row" style="gap:4px;display:inline-flex">${esc(m.no)}${m.used?` (배정 있음) → <select data-rmvto="${esc(m.no)}"><option value="">옮길 방</option>${R.rooms.filter(r=>!used(r)&&r.no!==m.no&&x.added.includes(r.no)).concat(R.rooms.filter(r=>!used(r)&&r.no!==m.no&&!x.added.includes(r.no)&&r.fl===m.fl)).slice(0,40).map(r=>`<option>${esc(r.no)}</option>`).join('')}</select><button class="btn small" type="button" data-rmv="${esc(m.no)}">배정 옮기기</button>`:''}</span>`).join(' ')}`:''}${x.borders==='guess'?' · 테두리를 읽지 못해 글 · 색이 있는 칸에 선을 그렸어요':''}</div>`).join('')}</div>`:''}</div>
   ${editor()}
   <div class="sheetwrap"><table class="sheet"><colgroup>${Fl.cw.map(w=>`<col style="width:${w}px">`).join('')}</colgroup><tbody>${html}</tbody></table></div>
@@ -1223,6 +1233,8 @@ document.addEventListener('click',ev=>{if(S.tab!=='room')return;const b=ev.targe
   if(b.id==='r_save'){save(false);return}
   if(b.id==='r_clear'){save(true);return}
   if(b.id==='r_close'){A.sel='';A.ed=null;render();return}
+  if(b.id==='r_tcolSave'){const tc={};document.querySelectorAll('.r_tcol').forEach(x=>{if(x.value.trim())tc[x.dataset.c]=x.value.trim()});const c=R.cfg||{};b.disabled=true;
+    run('roomCfgSave',[{pubAll:!!c.pubAll,pubAt:c.pubAt||'',names:c.names||[],typeColors:tc}],r=>{R=r;render();toast('방 타입 이름을 저장했어요')},m=>{b.disabled=false;toast('저장하지 못했어요 · '+m)});return}
   if(b.id==='r_lySrcSave'){const v=(document.getElementById('r_lySrc').value||'').trim();const c=R.cfg||{};b.disabled=true;
     run('roomCfgSave',[{pubAll:!!c.pubAll,pubAt:c.pubAt||'',names:c.names||[],layoutSrc:v}],r=>{R=r;A.lyRes=null;render();toast(r.layoutErr?r.layoutErr:`도면 시트를 저장했어요 · 도면 탭 ${(r.layoutTabs||[]).length}개`)},m=>{b.disabled=false;toast('저장하지 못했어요 · '+m)});return}
   if(b.id==='r_lyImp'){const tabs=(R.layoutTabs||[]).slice();if(!tabs.length)return;b.disabled=true;const out=[];let i=0;

@@ -1,4 +1,4 @@
-/* build: 20261024-232536 */
+/* build: 20261024-232958 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -1653,7 +1653,8 @@ function roomCfg_() {
   let names = []; try { names = JSON.parse(setting_('방 이름 목록') || '[]'); } catch (x) {}
   if (!Array.isArray(names) || !names.length) names = ['본부방', '교수진'];
   let colors = {}; try { colors = JSON.parse(setting_('방 색') || '{}') || {}; } catch (x) {}
-  return { layoutSrc: String(setting_('배치도 시트') || ''), pubAll: setting_('방 공개') === '예', pubAt: String(setting_('방 공개 시각') || '').replace(/^'/, ''), names, colors: { mode: colors.mode === 'main' ? 'main' : 'kind', kind: colors.kind || {}, main: colors.main || {} } };
+  let tcol = {}; try { tcol = JSON.parse(setting_('방 타입 색') || '{}') || {}; } catch (x) {}
+  return { typeColors: tcol, layoutSrc: String(setting_('배치도 시트') || ''), pubAll: setting_('방 공개') === '예', pubAt: String(setting_('방 공개 시각') || '').replace(/^'/, ''), names, colors: { mode: colors.mode === 'main' ? 'main' : 'kind', kind: colors.kind || {}, main: colors.main || {} } };
 }
 function roomPubNow_(cfg) { if (!cfg.pubAll) return false; if (!cfg.pubAt) return true; const t = new Date(cfg.pubAt.replace(' ', 'T') + ':00+09:00'); return isNaN(t) ? true : Date.now() >= t.getTime(); }
 function roomCfgSave(token, b) {
@@ -1667,6 +1668,8 @@ function roomCfgSave(token, b) {
   put('방 이름 목록', JSON.stringify(names), '방배정 메인에 학원 대신 고를 수 있는 이름');
   if (b && b.layoutSrc !== undefined) { const v = String(b.layoutSrc || '').trim(); if (v && !/\/d\/[a-zA-Z0-9_-]{20,}|^[a-zA-Z0-9_-]{20,}$/.test(v)) throw new Error('구글 시트 주소를 그대로 붙여 넣어 주세요 (https://docs.google.com/spreadsheets/d/…).');
     put('배치도 시트', v, '방배정 도면을 그린 구글 시트 주소 (비우면 이 시트)'); try { CacheService.getScriptCache().remove('lytabs_' + (layoutSrcId_() || 'here')); } catch (x) {} }
+  if (b && b.typeColors) { const o = {}; Object.keys(b.typeColors).slice(0, 40).forEach(k => { if (/^#[0-9a-f]{6}$/i.test(k)) { const v = String(b.typeColors[k] || '').trim().slice(0, 40); if (v) o[k.toLowerCase()] = v; } });
+    put('방 타입 색', JSON.stringify(o), '도면 방번호 칸 색 → 방 타입 이름 (배치도 위 범례)'); }
   if (b && b.colors) { const hx = v => /^#[0-9a-f]{6}$/i.test(String(v)) ? String(v) : ''; const cl = o => { const r = {}; Object.keys(o || {}).slice(0, 200).forEach(k => { const v = hx(o[k]); if (v) r[String(k).slice(0, 40)] = v; }); return r; };
     put('방 색', JSON.stringify({ mode: b.colors.mode === 'main' ? 'main' : 'kind', kind: cl(b.colors.kind), main: cl(b.colors.main) }), '배치도 배정 칸 색: mode = kind(방종류별) · main(메인별)'); }
   log_('관리자 ' + a.name, '방 공개 설정', (b && b.pubAll ? '일괄 공개 ' + (at || '바로') : '일괄 공개 안 함') + ' · 이름 ' + names.join(', '));
@@ -1691,7 +1694,7 @@ const ROOM_NO_RX = /^([A-Z]{1,2}\d{3,4})(?![0-9])/;
 /** 도면을 그린 스프레드시트: 설정 「배치도 시트」(주소나 ID) · 비우면 이 접수 DB 시트 */
 function layoutSrcId_() { const v = String(setting_('배치도 시트') || '').trim(); const m = v.match(/\/d\/([a-zA-Z0-9_-]{20,})/) || v.match(/^([a-zA-Z0-9_-]{20,})$/); return m ? m[1] : ''; }
 function layoutSS_() { const id = layoutSrcId_(); return id ? SpreadsheetApp.openById(id) : SpreadsheetApp.getActive(); }
-const isLayoutTab_ = n => /배치도/.test(n) && n !== LAYOUT_SH;
+const isLayoutTab_ = n => n !== LAYOUT_SH && (/배치도/.test(n) || /(stay|flex|스테이|플렉스)\s*\d+\s*(f|층)/i.test(n));
 function layoutTabs_(fresh) {
   const C = CacheService.getScriptCache(), key = 'lytabs_' + (layoutSrcId_() || 'here');
   if (!fresh) { const v = C.get(key); if (v) try { return JSON.parse(v); } catch (x) {} }

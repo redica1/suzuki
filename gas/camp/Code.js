@@ -1,4 +1,4 @@
-/* build: 20261024-225849 */
+/* build: 20261024-230052 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -1530,7 +1530,7 @@ function lessons_() { lesSheet_(); return rows_(SH.LES).filter(r => String(r['�
 function lessonData(token) {
   adm_(token);
   let days = []; try { days = actCfg_().days || []; } catch (x) {}
-  let acts = []; try { acts = actEvents_().map(e => ({ d: e.d, s: e.s, e: e.e, room: e.room, title: e.title + (e.stage && e.stage !== '본공연' ? ' ' + e.stage : ''), ppl: e.ppl }));   // 개인레슨 칸에는 활동(이름 · 단계)과 장소만 — 곡명(세부)은 뺌 } catch (x) {}
+  let acts = []; try { acts = actEvents_().map(e => ({ d: e.d, s: e.s, e: e.e, room: e.room, title: e.title + (e.stage && e.stage !== '본공연' ? ' ' + e.stage : ''), ppl: e.ppl }));   /* 개인레슨 칸에는 활동(이름 · 단계)과 장소만 — 곡명(세부)은 뺌 */ } catch (x) {}
   let people = []; try { people = actPeople_(actCfg_().people).map(p => ({ id: p.id, n: p.n })); } catch (x) {}
   let open = false; try { open = setting_('시간표 공개') === '예'; } catch (x) {}
   return { days, rows: lessons_().map(x => ({ d: x.d, t: x.t, pr: x.pr, pid: x.pid })), acts, people, open };

@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261024-225849 -->
+<!-- build: 20261024-230052 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -951,9 +951,9 @@ function picker(){
     <div class="row">${cur?'<button class="btn small" type="button" id="l_clear">비우기</button>':''}<button class="btn small" type="button" id="l_close">닫기</button></div></div>
     ${ga?`<div class="note bad">이 시간에 ${esc(pr)} 교수님은 <b>${esc(ga.title)} · ${esc(ga.room)}</b> 일정이 있어서 레슨을 넣을 수 없어요 (교사 일정). 다른 시간을 고르거나 교사 일정에서 먼저 빼 주세요.</div>`:''}
     ${cur?(stuOf(cur.pid)?`<p class="cap" style="margin:0">현재: <b>${esc(lesName(stuOf(cur.pid).name))}</b></p>`:`<p class="cap" style="margin:0">현재: <b>${esc((GONE[cur.pid]||{name:''}).name)} (취소)</b> · 접수를 취소한 학생이에요. 다른 학생을 넣거나 비워 주세요.</p>`):''}
-    <div class="row"><input type="search" id="l_cq" value="${esc(A.cq)}" placeholder="학생 이름 · 학원 · 영문 이름으로 찾기" style="flex:1"><label class="checks"><label><input type="checkbox" id="l_only" ${A.only?'checked':''}>추가레슨 신청한 학생만</label></label></div>
+    ${ga?(cur?'<p class="cap" style="margin:0">이미 들어 있는 레슨은 「비우기」로 빼거나 다른 시간으로 옮겨 주세요.</p>':''):`<div class="row"><input type="search" id="l_cq" value="${esc(A.cq)}" placeholder="학생 이름 · 학원 · 영문 이름으로 찾기" style="flex:1"><label class="checks"><label><input type="checkbox" id="l_only" ${A.only?'checked':''}>추가레슨 신청한 학생만</label></label></div>
     <ul class="cands">${C.map(c=>`<li><button type="button" data-lassign="${esc(c.s.id)}" ${c.busy||ga?'disabled':''}><span><b>${esc(lesName(c.s.name))}</b> <small>${c.s.acad!=='비회원'?esc(c.s.acad)+' · ':''}${esc(c.s.prog||'진도 -')}</small></span>
-      <span class="row" style="gap:4px;flex-wrap:nowrap">${c.want===2?'<span class="pill info">희망 1</span>':c.want===1?'<span class="pill info">희망 2</span>':''}${c.busy?'<span class="pill bad">이 시간 다른 레슨</span>':''}${c.today&&!c.busy?'<span class="pill mute">이날 레슨 있음</span>':''}<span class="pill ${c.cnt>=c.s.req?'ok':'due'}">신청 ${c.s.req} · 배정 ${c.cnt}</span></span></button></li>`).join('')||'<li class="cap" style="padding:8px">해당하는 학생이 없어요.</li>'}</ul></div>`}
+      <span class="row" style="gap:4px;flex-wrap:nowrap">${c.want===2?'<span class="pill info">희망 1</span>':c.want===1?'<span class="pill info">희망 2</span>':''}${c.busy?'<span class="pill bad">이 시간 다른 레슨</span>':''}${c.today&&!c.busy?'<span class="pill mute">이날 레슨 있음</span>':''}<span class="pill ${c.cnt>=c.s.req?'ok':'due'}">신청 ${c.s.req} · 배정 ${c.cnt}</span></span></button></li>`).join('')||'<li class="cap" style="padding:8px">해당하는 학생이 없어요.</li>'}</ul>`}</div>`}
 function view(){
   if(!L){if(!LOADING&&!ERR)load();return `<div class="panel">${ERR?`<span class="err">개인레슨을 불러오지 못했어요 · ${esc(ERR)}</span> <button class="btn small" type="button" id="l_retry">다시</button>`:'개인레슨 시간표를 불러오고 있어요…'}</div>`}
   SB={};students().forEach(s=>SB[s.id]=s);

@@ -1,4 +1,4 @@
-/* build: 20261024-110632 */
+/* build: 20261024-131433 */
 /* 담당 교사: 학생 악기와 같은 전공의 교사만 (없으면 전체) */
 function teachersFor(inst,cur){const all=roster().teachers;const L=all.filter(t=>t.inst===inst);const out=(L.length?L:all).map(t=>t.name);if(cur&&!out.includes(cur))out.push(cur);return out}
 function opts(list,val,ph){ return `<option value="">${ph}</option>`+list.map(x=>`<option ${x===val?'selected':''}>${esc(x)}</option>`).join('') }

@@ -1,4 +1,4 @@
-/* build: 20261024-110632 */
+/* build: 20261024-131433 */
       <div class="rpf"><input type="text" data-rpf="${p.id}|n" value="${esc(v.n)}" placeholder="입금자명" aria-label="${esc(p.name)} 입금자명" ${on?'':'disabled'}><input type="date" data-rpf="${p.id}|d" value="${v.d}" max="${S.today}" min="${(S.bank||{}).from||''}" aria-label="${esc(p.name)} 입금일" ${on?'':'disabled'}><input type="text" class="num" inputmode="numeric" data-rpf="${p.id}|a" value="${v.a?(+v.a).toLocaleString('ko-KR'):''}" placeholder="금액" aria-label="${esc(p.name)} 입금 금액" ${on?'':'disabled'}></div></li>`}).join('')}</ul>`).join('')}
     <div class="spread"><span class="hint">선택한 ${sel.length}명 · 청구 ${won(sum)} · 넣은 금액 <b class="num">${won(open.filter(x=>sel.includes(x.p.id)).reduce((t,x)=>t+(+rpv(x.p).a||0),0))}</b></span></div>
     <label class="f" for="rpMemo"><span>메모 <span class="hint">선택 · 금액이 청구액과 다르면 이유를 적어 주세요</span></span><input type="text" id="rpMemo" value="${esc(S.rpMemo||'')}"></label>
@@ -88,7 +88,7 @@ function cxPanel(sb,sel){
     <p class="err" id="cxErr"></p>
     <div class="row"><button class="btn primary" type="button" data-cxgo="${sb.no}">${paid?'취소 요청하기':'취소하기'}</button><button class="btn ghost" type="button" data-cxclear="${sb.no}">선택 해제</button></div>`}</div>`}
 /* ---------- 오류·건의 게시판 ---------- */
-const Q_WHERE=['로그인','학원 확인','참가자 선택','참가 정보','앙상블','신청 확인 · 접수하기','내 접수 · 입금 신고','취소 · 환불','기타'];
+const Q_WHERE=['로그인','학원 확인','참가자 선택','참가 정보','앙상블','신청 확인 · 접수하기','내 접수 · 입금 신고','취소 · 환불','가족방 요청','기타'];
 const qPill=st=>st==='해결'?'<span class="pill ok">해결</span>':st==='해결 중'?'<span class="pill new">해결 중</span>':'<span class="pill due">미해결</span>';
 function curWhere(){const v=S.qBack||{};if(v.view==='mine')return '내 접수 · 입금 신고';if(!S.user)return '로그인';return Q_WHERE[Math.min(Math.max(v.step||1,1),5)]||'기타'}
 function vQ(){const mine=S.qMine||[];const login=!!S.user;
@@ -96,7 +96,7 @@ function vQ(){const mine=S.qMine||[];const login=!!S.user;
   <p class="lede">접수하다가 안 되는 것, 이상한 것, 바랐으면 하는 것을 적어 주세요. 운영진이 보고 <b>미해결 → 해결 중 → 해결</b>로 표시하고 답을 달아요.</p>
   <div class="panel" style="display:grid;gap:10px">
     ${login?`<div class="hint">${esc(S.user.name)} 선생님 · ${esc((S.user.acads||[]).join(', '))}</div>`:`<div class="grid2"><label class="f" for="qName">이름 <span class="req">*</span><input type="text" id="qName" value="${esc(S.qName||'')}"></label><label class="f" for="qPhone">휴대전화 <span class="req">*</span><input type="tel" id="qPhone" inputmode="numeric" value="${esc(S.qPhone||'010-')}"></label></div><label class="f" for="qAcad">학원<input type="text" id="qAcad" value="${esc(S.qAcad||'')}"></label>`}
-    <label class="f" for="qWhere">어느 화면에서요?<select id="qWhere">${Q_WHERE.map(x=>`<option ${x===(S.qWhere||curWhere())?'selected':''}>${x}</option>`).join('')}</select></label>
+    <label class="f" for="qWhere">어떤 글인가요? <span class="hint">가족방 요청(같은 층·옆방·아기 침대 등)은 「가족방 요청」을 골라 주세요</span><select id="qWhere">${Q_WHERE.map(x=>`<option ${x===(S.qWhere||curWhere())?'selected':''}>${x}</option>`).join('')}</select></label>
     <label class="f" for="qText">무슨 일이 있었나요? <span class="req">*</span><textarea id="qText" rows="5" maxlength="2000" placeholder="무엇을 누르니 어떻게 됐는지 적어 주시면 빨리 고칠 수 있어요.">${esc(S.qText||'')}</textarea></label>
     <label class="f" for="qPic">화면 사진 <span class="hint">있으면 · 5MB까지</span><input type="file" id="qPic" accept="image/\x2a"></label>
     <div class="row" style="justify-content:flex-end"><span class="err" id="qErr" style="margin-right:auto"></span><button class="btn primary" type="button" id="qSend">올리기</button></div>
@@ -129,4 +129,3 @@ function sendQ(){const er=m=>{document.getElementById('qErr').textContent=m};con
   const d={text:g('qText'),where:g('qWhere'),name:g('qName'),phone:g('qPhone'),acad:g('qAcad'),env:`화면 ${(S.qBack||{}).view||''}/${(S.qBack||{}).step||''} · ${S.editNo?'수정 '+S.editNo+' · ':''}${navigator.userAgent.slice(0,200)}`};
   if(!S.user&&(!d.name||d.phone.replace(/\D/g,'').length<10))return er('이름과 휴대전화를 넣어 주세요.');
   if(d.text.length<2)return er('어떤 문제인지 적어 주세요.');
-  const f=document.getElementById('qPic');const go=file=>{d.file=file;

@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261024-110632 -->
+<!-- build: 20261024-131433 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -240,7 +240,7 @@ function render(){
   const st=stats();
   const VT=visTabs();if(!VT.some(([k])=>k===S.tab))S.tab=VT.length?VT[0][0]:'home';
   if(!VT.length){tabs.innerHTML='';document.getElementById('tabs2').innerHTML='';app.innerHTML='<div class="panel hint">아직 볼 수 있는 메뉴가 없어요. 총관리자에게 권한을 받아 주세요.</div>';return}
-  const vis=new Set(VT.map(x=>x[0])),cntOf=k=>k==='rp'?st.rp:k==='cx'?st.cx:k==='q'?st.q:0,badge=n=>n?`<span class="cnt">${n}</span>`:'';
+  const vis=new Set(VT.map(x=>x[0])),cntOf=k=>k==='rp'?st.rp:k==='cx'?st.cx:k==='q'?st.q:k==='room'?famReqOpen():0,badge=n=>n?`<span class="cnt">${n}</span>`:'';
   const cur=groupOf(S.tab);S.lastSub=S.lastSub||{};S.lastSub[cur[0]]=S.tab;
   const G=GROUPS.map(([g,l,ks])=>[g,l,ks.filter(k=>vis.has(k))]).filter(x=>x[2].length);
   tabs.innerHTML=G.map(([g,l,ks])=>`<button type="button" role="tab" data-g="${g}"${GROUPS.find(x=>x[0]===g)[2].length===1?` data-tab="${ks[0]}"`:''} aria-selected="${cur[0]===g}">${l}${badge(ks.reduce((t,k)=>t+cntOf(k),0))}</button>`).join('');
@@ -710,9 +710,11 @@ return {view,reload:()=>{L=null}};
 
 /* ================= 방 배정 (숙소 객실) =================
    시제품 「스즈키 캠프 방 배정」을 옮김. 방 = 시트 「방배정」(겨울 숙소 406실), 학원 인원 = 실제 접수(취소 뺌). 가족방 신청은 다른 곳에서 관리 */
+const famReqOpen=()=>(S.D&&S.D.issues||[]).filter(x=>x.where==='가족방 요청'&&x.state!=='해결').length;
 const ROOM=(()=>{
 let R=null,LOADING=false,ERR='';
 const A={v:'list',bld:'Stay Tower',fl:'',sel:'',open:''};
+document.addEventListener('input',e=>{if(e.target.id==='r_fq'){A.fq=e.target.value;render();keepFocus('r_fq')}});
 function run(fn,args,ok,fail){if(roBlock(fn)){fail&&fail(RO_MSG);return}google.script.run.withSuccessHandler(ok).withFailureHandler(e=>{const m=(e&&e.message)||String(e);fail&&fail(m)})[fn](S.tok,...args)}
 function load(){LOADING=true;ERR='';run('roomData',[],r=>{LOADING=false;R=r;render()},m=>{LOADING=false;ERR=m;render()})}
 const tot=r=>(+r.mn||0)+(+r.sn||0);
@@ -740,11 +742,48 @@ function editor(){const r=R.rooms.find(x=>x.no===A.sel);if(!r)return '';const M=
       <label class="f">메모<input type="text" id="r_memo" value="${esc(r.memo)}"></label></div>
     <datalist id="r_acads">${['교수진','본부',...AL].map(a=>`<option value="${esc(a)}">`).join('')}</datalist><datalist id="r_names">${names.map(n=>`<option value="${esc(n)}">`).join('')}</datalist>
     ${M[r.main]?`<p class="cap" style="margin:0">${esc(r.main)}: 참가 ${M[r.main].n}명 · 지금까지 방에 넣은 인원 ${got(r.main)}명</p>`:''}</div>`}
+/* 가족방 신청 현황: 접수의 가족방 신청(대표 + 같은 방 형제 + 가족) · 배정 방 = 방종류에 「가족방」이 든 방 중 비번 수신자·메모에 대표 이름이 있는 방 */
+function famRooms(){const L=[];(S.D.subs||[]).forEach(sb=>{const f=sb.form||{},room=f.room||{},join=f.join||{},fam=f.fam||[],info=f.info||{};
+  const P=k=>sb.ppl.find(p=>p.id===sb.no+'_'+k),live=k=>{const p=P(k);return p&&p.status!=='취소'};
+  Object.keys(room).filter(k=>room[k]&&live(k)).forEach(k=>{const heads=[k,...Object.keys(join).filter(j=>join[j]===k&&live(j))];
+    const fm=fam.filter(x=>heads.includes(x.link)&&live(x.id));const rep=P(k);
+    const mem=[...heads.map(h=>{const p=P(h);return {name:p.name,t:h===k?'대표':'형제·자녀'}}),...fm.map(x=>({name:(P(x.id)||{}).name||x.name,t:({'회원의 첫번째 보호자':'보호자','비회원 보호자':'보호자','동반가족 중 돌전아기':'돌 전 아기','비회원 돌전아기':'돌 전 아기'})[x.type]||'동반가족'}))];
+    const ids=[...heads,...fm.map(x=>x.id)].map(x=>P(x)).filter(Boolean);const due=ids.reduce((t,p)=>t+pAmt(p)-(+p.paidAmt||0),0);
+    const rs=(R?R.rooms:[]).filter(r=>/가족방/.test(r.kind)&&(r.pw.includes(rep.name)||r.memo.includes(rep.name)));
+    L.push({sb,rep,mem,n:mem.length,fee:+rep.room||0,paid:ids.every(p=>(+p.paidAmt||0)>0&&pAmt(p)-(+p.paidAmt||0)<=0),due,rs,req:(S.D.issues||[]).filter(x=>x.where==='가족방 요청'&&(x.name===sb.owner||x.acad===sb.acad)).length})})});
+  return L.sort((a,b)=>a.sb.acad.localeCompare(b.sb.acad,'ko')||a.rep.name.localeCompare(b.rep.name,'ko'))}
+function vFam(head){const L=famRooms(),q=(A.fq||'').trim(),cap=(S.D.camp&&S.D.camp.opt&&+S.D.camp.opt.roomCap)||4;
+  const show=L.filter(x=>(!q||[x.sb.acad,x.sb.owner,x.rep.name,...x.mem.map(m=>m.name)].some(v=>String(v).includes(q)))&&(A.ff!=='none'||!x.rs.length));
+  const tot=L.reduce((t,x)=>t+x.n,0),done=L.filter(x=>x.rs.length).length,byN={};L.forEach(x=>byN[x.n]=(byN[x.n]||0)+1);
+  return `<div class="act">${head}<div class="panel"><div class="spread"><div><b>가족방 신청 현황</b> <span class="hint">접수에서 「가족방 신청」한 가족 · 취소한 사람 빼고 · 방은 「방 목록」에서 방종류를 ○인가족방으로 하고 「비번 수신자」나 메모에 대표 이름을 넣으면 여기에 이어져요</span></div></div>
+    <div class="row" style="gap:6px;margin-top:8px"><span class="pill info">${L.length}가족 · ${tot}명</span>${Object.keys(byN).sort().map(n=>`<span class="pill">${n}명 ${byN[n]}가족</span>`).join('')}<span class="pill ${done===L.length?'ok':'due'}">방 배정 ${done}/${L.length}</span>
+      <button class="btn small ${A.ff==='none'?'primary':''}" type="button" data-rff="${A.ff==='none'?'':'none'}">방 미정만</button>
+      <input type="search" id="r_fq" value="${esc(A.fq||'')}" placeholder="학원·이름" style="margin-left:auto;width:min(200px,100%)"></div></div>
+  <div class="panel tbl"><table><thead><tr><th>학원</th><th>접수</th><th>대표</th><th>함께 쓰는 사람</th><th class="r">인원</th><th class="r">빈 자리 요금</th><th>입금</th><th>방</th><th>요청 글</th></tr></thead><tbody>
+  ${show.map(x=>`<tr><td><b>${esc(x.sb.acad)}</b></td><td><span class="num">${esc(x.sb.no)}</span><br><small class="faint">${esc(x.sb.owner)}${x.sb.contact?' · '+esc(x.sb.contact):''}</small></td><td><b>${esc(x.rep.name)}</b></td>
+    <td style="white-space:normal">${x.mem.map(m=>`${esc(m.name)} <small class="faint">${m.t}</small>`).join(', ')}</td><td class="r num"${x.n>cap?' style="color:var(--bad)"':''}>${x.n}</td><td class="r num">${x.fee?won(x.fee):'-'}</td>
+    <td>${x.paid?'<span class="pill ok">입금 확인</span>':`<span class="pill due">남은 ${won(x.due)}</span>`}</td>
+    <td>${x.rs.map(r=>`<button class="btn small" type="button" data-rgo="${esc(r.no)}">${esc(r.no)} ${esc(r.kind)}</button>`).join(' ')||'<span class="hint">미정</span>'}</td>
+    <td>${x.req?`<button class="btn small" type="button" data-rv="freq">${x.req}건</button>`:''}</td></tr>`).join('')||'<tr><td colspan="9" class="hint">해당하는 가족방 신청이 없어요.</td></tr>'}
+  </tbody></table></div></div>`}
+function vFreq(head){const all=(S.D.issues||[]).filter(x=>x.where==='가족방 요청').slice().reverse(),f=A.qf||'open';
+  const L=all.filter(x=>f==='all'||(f==='open'?x.state!=='해결':x.state===f));const pill=st=>st==='해결'?'<span class="pill ok">해결</span>':st==='해결 중'?'<span class="pill new">해결 중</span>':'<span class="pill due">미해결</span>';
+  const fams=famRooms();
+  return `<div class="act">${head}<div class="panel"><div class="spread"><div class="row" style="gap:6px">${[['open','안 끝난 것'],['all','전체 '+all.length],['해결','해결']].map(([k,l])=>`<button class="btn small ${f===k?'primary':''}" type="button" data-rqf="${k}">${l}</button>`).join('')}</div></div>
+    <span class="hint">선생님·보호자가 「오류·건의」에서 분류를 「가족방 요청」으로 골라 올린 글이에요. 답을 적어 저장하면 올린 분 화면에 보여요 (오류·건의 메뉴에도 같이 보여요).</span></div>
+  ${L.map(x=>{const fm=fams.filter(y=>y.sb.owner===x.name);return `<div class="panel" style="display:grid;gap:8px"><div class="spread"><span><b class="num">${esc(x.no)}</b> · ${esc(String(x.at).slice(5,16))} · <b>${esc(x.name)}</b>${x.p4?` <small class="faint">(…${esc(x.p4)})</small>`:''} · ${esc(x.acad)}</span>${pill(x.state)}</div>
+    <div style="white-space:pre-wrap">${esc(x.text)}</div>${x.pic?`<a href="${esc(x.pic)}" target="_blank" rel="noopener">사진 보기</a>`:''}
+    ${fm.length?`<div class="hint">이분의 가족방: ${fm.map(y=>`${esc(y.rep.name)} 가족 ${y.n}명 · ${y.rs.length?y.rs.map(r=>esc(r.no)).join(', '):'방 미정'}`).join(' / ')}</div>`:'<div class="hint">이 이름으로 접수한 가족방 신청은 없어요.</div>'}
+    <div class="row" style="gap:8px;align-items:flex-start;flex-wrap:wrap"><select id="qs_${x.row}">${['미해결','해결 중','해결'].map(o=>`<option ${o===x.state?'selected':''}>${o}</option>`).join('')}</select>
+      <textarea id="qr_${x.row}" rows="2" style="flex:1;min-width:220px" placeholder="올린 분께 보일 답변">${esc(x.reply)}</textarea><button class="btn small primary" type="button" data-qsave="${x.row}">저장</button></div>
+    ${x.by?`<small class="faint">${esc(x.by)}${x.done?' · '+kday(x.done):''}</small>`:''}</div>`}).join('')||'<div class="panel hint">해당하는 가족방 요청 글이 없어요.</div>'}</div>`}
 function view(){
   if(!R){if(!LOADING&&!ERR)load();return `<div class="panel">${ERR?`<span class="err">방 배정을 불러오지 못했어요 · ${esc(ERR)}</span> <button class="btn small" type="button" id="r_retry">다시</button>`:'방 배정을 불러오고 있어요…'}</div>`}
   const M=acads(),AL=Object.values(M),used=R.rooms.filter(r=>r.main||r.prof).length,short=AL.filter(x=>got(x.a)<x.n);
-  const head=`<div class="panel"><div class="spread"><div class="row" style="gap:6px">${[['list','방 목록'],['acad','학원별'],['prof','교수방']].map(([k,l])=>`<button class="btn small ${A.v===k?'primary':''}" type="button" data-rv="${k}">${l}</button>`).join('')}</div><button class="btn small" type="button" id="r_reload">새로 불러오기</button></div>
+  const head=`<div class="panel"><div class="spread"><div class="row" style="gap:6px">${[['list','방 목록'],['acad','학원별'],['fam','가족방 신청'],['freq','가족방 요청 글'],['prof','교수방']].map(([k,l])=>`<button class="btn small ${A.v===k?'primary':''}" type="button" data-rv="${k}">${l}${k==='freq'&&famReqOpen()?` <span class="pill due">${famReqOpen()}</span>`:''}</button>`).join('')}</div><button class="btn small" type="button" id="r_reload">새로 불러오기</button></div>
     <div class="row" style="gap:6px;margin-top:8px"><span class="pill info">배정된 방 ${used} / ${R.rooms.length}</span>${short.length?`<span class="pill due">방이 모자란 학원 ${short.length}</span>`:AL.length?'<span class="pill ok">학원 인원 모두 배정</span>':''}<span class="hint">방을 누르면 메인·보조 학원, 방종류, 인원, 비번 수신자를 정해요 · 저장하면 시트 「방배정」에 · 시간표 공개를 켜면 선생님 「내 시간표」에 우리 학원 방이 보여요</span></div></div>`;
+  if(A.v==='fam')return vFam(head);
+  if(A.v==='freq')return vFreq(head);
   if(A.v==='acad'){const L=AL.slice().sort((x,y)=>(got(x.a)-x.n)-(got(y.a)-y.n)||x.a.localeCompare(y.a,'ko'));
     return `<div class="act">${head}<div class="panel tbl"><table><thead><tr><th>학원</th><th class="r">참가</th><th class="r">교사</th><th class="r">학생</th><th class="r">가족</th><th class="r">방에 넣은 인원</th><th class="r">모자람</th><th>방</th></tr></thead><tbody>
     ${L.map(x=>{const g=got(x.a),rs=R.rooms.filter(r=>r.main===x.a||r.sub===x.a);return `<tr><td><b>${esc(x.a)}</b></td><td class="r num">${x.n}</td><td class="r num">${x.t||''}</td><td class="r num">${x.s||''}</td><td class="r num">${x.f||''}</td><td class="r num">${g}</td><td class="r num">${g<x.n?`<span class="pill due">${x.n-g}</span>`:g>x.n?`<span class="pill info">+${g-x.n}</span>`:'<span class="pill ok">0</span>'}</td>
@@ -771,6 +810,8 @@ document.addEventListener('click',ev=>{if(S.tab!=='room')return;const b=ev.targe
   if(b.id==='r_retry'||b.id==='r_reload'){R=null;ERR='';load();render();return}
   if(!R)return;
   if(d.rv){A.v=d.rv;A.sel='';render();return}
+  if(d.rff!==undefined){A.ff=d.rff;render();return}
+  if(d.rqf){A.qf=d.rqf;render();return}
   if(d.rbld!==undefined){A.bld=d.rbld;A.fl='';A.sel='';render();return}
   if(d.rfl!==undefined){A.fl=d.rfl;A.sel='';render();return}
   if(d.rroom){A.sel=A.sel===d.rroom?'':d.rroom;render();return}

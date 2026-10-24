@@ -1,4 +1,4 @@
-/* build: 20261024-110632 */
+/* build: 20261024-131433 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -1127,7 +1127,7 @@ function myIssues_(name) { return issues_().filter(x => x.name === name).reverse
 function myIssues(token) { const u = who_(token); return { ok: true, mine: myIssues_(u.name) }; }
 /** 관리자: 상태·답변 */
 function adminSetIssue(token, row, state, reply) {
-  const a = adm_(token); need_(a, 'q');
+  const a = adm_(token); need_(a, ['q', 'room']);   // 가족방 요청 글은 방 배정 담당도 답할 수 있음
   if (!ISS_STATES.includes(state)) throw new Error('상태를 골라 주세요.');
   const lock = lock_();
   try {

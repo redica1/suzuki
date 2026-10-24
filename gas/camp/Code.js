@@ -1,4 +1,4 @@
-/* build: 20261024-150810 */
+/* build: 20261024-152136 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -919,10 +919,119 @@ function progCell_(e, c, nameOf) {
   G.forEach((g, i) => { if (i === 0 && (e.cat === '레슨')) g.n.forEach(n => L.push(n)); else L.push((short[g.r] || g.r) + ': ' + g.n.join(', ')); });
   return L.join('\n');
 }
-function exportProgram(token) {
-  const a = adm_(token); if (!a.sup && !a.perms.act) throw new Error('교사 일정 권한이 있어야 보낼 수 있어요.');
+/** 오케스트라 파트 역할 (지휘 · 악장 · Vln 1 …) — 이 역할이 들어간 공연은 「오케 명단」에 나옴 */
+const ORCH_PARTS = ['지휘', '악장', 'Vln 1', 'Vln 2', 'Vla', 'Vc', 'D.B', '악보계'];
+const isPart_ = r => /^(악장|vln?\s*\d|vn\s*\d|vla|va|vc|d\.?\s*b|cb|fl\s*\d?)$/i.test(String(r || '').trim());
+/** 프로그램표 만들기 (미리보기 · 구글 시트 공통) → 날짜별 칸 값 V · 칸 색 F · 식사 줄 · 참가교사 · 오케 명단 */
+function progBuild_() {
   const c = actCfg_(), C = camp_(); const evs = actEvents_().map(e => Object.assign(e, { cat: ['공연', '레슨', '업무'].includes(e.type) ? e.type : ({ 오케스트라: '공연', 오후음악회: '공연', 음악회: '공연', 리허설: '공연', 대기: '업무' })[e.type] || '레슨' }));
   const ppl = actPeople_(c.people); const nm = {}; ppl.forEach(p => nm[p.id] = p.n); const nameOf = id => nm[id] || String(id).replace(/^[CP]:/, '');
+  const days = c.days || [], out = [];
+  const start = String(C.base.start || ''), dt0 = /^\d{4}-\d{2}-\d{2}$/.test(start) ? new Date(start + 'T00:00:00+09:00') : null;
+  const tabName = s => String(s).replace(/[\/\\?*:\[\]]/g, '.').slice(0, 90);
+  const dayDate = d => dt0 ? new Date(dt0.getTime() + d * 864e5) : null;
+  const mm = t => { const m = String(t).match(/^(\d+):(\d+)/); return m ? +m[1] * 60 + +m[2] : 0; };
+  days.forEach((dl, d) => {
+    const rooms = (c.rooms || {})[d] || [], E = evs.filter(e => e.d === d), M = (c.meals || []).filter(m => m.d === d);
+    const starts = [...new Set([...E.map(e => e.s), ...M.map(m => m.s)])].sort((x, y) => mm(x) - mm(y));
+    const W = Math.max(2, rooms.length + 1), V = [], F = [];
+    const dt = dayDate(d), note = (c.dayNotes || [])[d] || '';
+    V.push([note].concat(Array(W - 1).fill(''))); F.push(Array(W).fill(null));
+    V.push([dt ? `${dt.getMonth() + 1}월 ${dt.getDate()}일 스케쥴     ${MON_EN[dt.getMonth()]} ${ord_(dt.getDate())} ${WD_EN[dt.getDay()]} Schedule` : dl + ' 스케쥴'].concat(Array(W - 1).fill(''))); F.push(Array(W).fill(null));
+    V.push([''].concat(rooms.map(r => r[0]), Array(W - 1 - rooms.length).fill(''))); F.push(Array(W).fill('#e8eef0'));
+    V.push([''].concat(rooms.map(r => r[1] || ''), Array(W - 1 - rooms.length).fill(''))); F.push(Array(W).fill('#e8eef0'));
+    const meals = [];
+    starts.forEach(t => {
+      M.filter(m => m.s === t).forEach(m => { meals.push(V.length); V.push([m.s + '-' + m.e, m.t].concat(Array(W - 2).fill(''))); F.push(Array(W).fill('#f1f1f1')); });
+      const here = E.filter(e => e.s === t); if (!here.length) return;
+      const endMain = here.map(e => e.e).sort()[0];
+      const row = [t + '-' + endMain], col = [null];
+      rooms.forEach(r => { const xs = here.filter(e => e.room === r[0]); row.push(xs.map(e => (e.e !== endMain ? e.s + '-' + e.e + '\n' : '') + progCell_(e, c, nameOf)).join('\n\n')); col.push(xs.length ? ({ 공연: '#fdf3e1', 레슨: '#e9f4f5', 업무: '#f3f3f3' })[xs[0].cat] : null); });
+      while (row.length < W) { row.push(''); col.push(null); }
+      V.push(row); F.push(col);
+    });
+    out.push({ name: tabName(dl + ' 프로그램'), label: dl, V, F, meals, W });
+  });
+  // 참가교사 (학원 · 악기 · 교사)
+  const TT = ['교사', '연수생', '소속없는 중급연수생'], T = {};
+  loadSubs_().forEach(sb => sb.ppl.forEach(p => { if (p.status === '취소' || !TT.includes(p.type)) return; const k = sb.acad + '|' + (p.inst || ''); (T[k] = T[k] || []).push(p.name); }));
+  const teachers = [['학원', '악기', '교사']].concat(Object.keys(T).sort((x, y) => x.localeCompare(y, 'ko')).map(k => { const [ac, ins] = k.split('|'); return [ac, ({ 바이올린: 'Vn', 첼로: 'Vc', 플루트: 'Fl', 비올라: 'Va' })[ins] || ins, T[k].join(', ')]; }));
+  // 오케 명단: 파트 역할(악장 · Vln 1 …)이 들어간 공연을 종류(이름)별로 → 본공연 시각 · 리허설 시각 · 역할마다 이름
+  const G = {}; evs.filter(e => e.cat === '공연').forEach(e => { (G[e.title] = G[e.title] || []).push(e); });
+  const when = e => (days[e.d] || (e.d + 1) + '일') + ' ' + e.s + '-' + e.e;
+  const orch = [];
+  Object.keys(G).filter(k => G[k].some(e => e.ppl.some(p => isPart_(p.r)))).sort((x, y) => { const f = k => Math.min(...G[k].map(e => e.d * 1440 + mm(e.s))); return f(x) - f(y); }).forEach(k => {
+    const L = G[k].slice().sort((x, y) => x.d * 1440 + mm(x.s) - (y.d * 1440 + mm(y.s)));
+    const main = L.filter(e => !e.stage || e.stage === '본공연'), reh = L.filter(e => e.stage === '리허설');
+    orch.push({ k: 'h', v: [k + (main.length ? ' (' + main.map(when).join(', ') + ')' : '')] });
+    if (reh.length) orch.push({ k: 'r', v: ['리허설'].concat([...new Set(reh.map(when))]) });
+    const byMain = main.concat(L.filter(e => !main.includes(e)));   // 이름 순서: 본공연에 넣은 순서 먼저
+    const order = ORCH_PARTS.slice(); ((c.roleSets || {})['공연'] || []).forEach(r => { if (isPart_(r) && !order.includes(r)) order.push(r); });
+    L.forEach(e => e.ppl.forEach(p => { if (!order.includes(p.r)) order.push(p.r); }));
+    order.forEach(r => { const N = []; byMain.forEach(e => e.ppl.forEach(p => { if (p.r === r) { const n = nameOf(p.n); if (!N.includes(n)) N.push(n); } })); if (N.length) orch.push({ k: 'p', v: [r].concat(N) }); });
+    orch.push({ k: 'b', v: [''] });
+  });
+  return { title: C.base.name, days: out, teachers, orch, concerts: progConcerts_(c, C, evs, nameOf, dayDate) };
+}
+/** 음악회 프로그램 (오후음악회 · 이브닝 …): 「오후음악회」 탭의 연주 순서 그대로 · 같은 곡이 이어지면 한 번호로 묶고 학원별로 이름을 모음
+ *  곡 이름: 목록 곡 「V01-14 미뉴에트 2번 (바흐)」 → 「바흐 미뉴에트 2번」, 직접 입력은 작곡가 + 곡명 · 영어 곡명은 설정 songEn(관리자가 미리보기에서 입력) */
+const INST_PF = { 바이올린: 'Vln.', 첼로: 'Vc.', 플루트: 'Fl.', 비올라: 'Vla.', 피아노: 'Pf.' };
+function songKo_(i) {
+  if (i.other) return [i.oc, i.ot].map(x => String(x || '').trim()).filter(Boolean).join(' ');
+  const m = String(i.song || '').replace(/^[A-Z]\d+-\d+\s*/, '').match(/^(.*?)\s*\(([^()]*)\)\s*$/);
+  return m ? (m[2] && m[2] !== '스즈키' ? m[2] + ' ' : '스즈키 ') + m[1] : String(i.song || '').replace(/^[A-Z]\d+-\d+\s*/, '');
+}
+function progConcerts_(c, C, evs, nameOf, dayDate) {
+  const linked = (Array.isArray(c.kinds) ? c.kinds : ACT_KINDS).filter(k => k.link).map(k => k.n);
+  const concerts = Array.isArray(c.concerts) ? c.concerts : evs.filter(e => e.type === '오후음악회' || (linked.includes(e.title) && (!e.stage || e.stage === '본공연'))).sort((a, b) => a.d - b.d || a.s.localeCompare(b.s) || a.room.localeCompare(b.room))
+    .map(e => ({ id: 'c' + e.id, name: evName_(e) + ' ' + String((c.days || [])[e.d] || '').replace(/\(.\)/, ''), d: e.d, cs: e.s, room: e.room }));
+  const order = c.conorder || {}, EN = c.songEn || {}, info = {};
+  loadSubs_().forEach(sb => sb.ppl.forEach(p => { const k = p.id.slice(sb.no.length + 1); info[p.id] = { p, sb, i: (sb.form && sb.form.info && sb.form.info[k]) || {} }; }));
+  const WD = ['Sun.', 'Mon.', 'Tue.', 'Wed.', 'Thu.', 'Fri.', 'Sat.'];
+  const ampm = t => { const m = String(t || '').match(/^(\d+):(\d+)/); if (!m) return ''; const h = +m[1]; return ((h + 11) % 12 + 1) + ':' + m[2] + (h < 12 ? ' AM' : ' PM'); };
+  return concerts.map(x => {
+    const ev = evs.find(e => 'c' + e.id === x.id), dt = dayDate(x.d);
+    const room = ((c.rooms || {})[x.d] || []).find(r => r[0] === x.room);
+    const mc = ev ? [...new Set(ev.ppl.filter(p => /사회|진행/.test(p.r)).map(p => nameOf(p.n)))] : [];
+    const L = (order[x.id] || []).map(pid => info[pid]).filter(s => s && s.p.status !== '취소');
+    const items = []; L.forEach(s => { const ko = songKo_(s.i) || '(곡 미정)'; let it = items[items.length - 1]; if (!it || it.ko !== ko) items.push(it = { ko, en: EN[ko] || '', P: [] }); it.P.push({ n: s.p.name, a: s.sb.acad, ins: s.p.inst || s.i.inst || '' }); });
+    const rows = [{ k: 'f', v: ['', C.base.name] }, { k: 't', v: ['', x.name] }];
+    rows.push({ k: 'm', v: ['', '일시: ' + (dt ? `${dt.getFullYear()}년 ${dt.getMonth() + 1}월 ${dt.getDate()}일(${WD[dt.getDay()]}) ` : (c.days || [])[x.d] + ' ') + ampm(x.cs)] });
+    rows.push({ k: 'm', v: ['', '장소: ' + (x.room || '') + (room && room[1] ? ' (' + room[1] + ')' : '')] });
+    if (mc.length) rows.push({ k: 'm', v: ['', '사회 및 진행: ' + mc.join(', ') + ' 선생님'] });
+    rows.push({ k: 'b', v: [''] });
+    items.forEach((it, n) => {
+      const G = []; it.P.forEach(p => { let g = G[G.length - 1]; if (!g || g.a !== p.a || g.ins !== p.ins) G.push(g = { a: p.a, ins: p.ins, N: [] }); g.N.push(p.n); });
+      const lines = G.map((g, k) => (k === 0 || g.ins !== G[k - 1].ins ? (INST_PF[g.ins] || '') : '') + g.N.join(',') + (g.a ? '(' + g.a + ')' : ''));
+      const left = [it.ko, it.en];
+      for (let k = 0; k < Math.max(2, lines.length); k++) rows.push({ k: k === 0 ? 'i' : 'j', v: [k === 0 ? (n + 1) + '.' : '', left[k] || '', lines[k] || ''] });
+      rows.push({ k: 'b', v: [''] });
+    });
+    if (!items.length) rows.push({ k: 'j', v: ['', '(연주 순서가 아직 없어요 · 오후음악회 탭에서 순서를 정하면 나와요)', ''] });
+    return { id: x.id, name: x.name, rows, songs: items.map(it => it.ko) };
+  });
+}
+/** 영어 곡명 저장 (미리보기 › 음악회 탭) — { 한글 곡명: 영어 } 합쳐서 저장, 빈 값은 지움 */
+function songEnSave(token, map) {
+  const a = adm_(token); need_(a, ['act', 'con']);
+  const lock = lock_();
+  try {
+    const sh = actSheets_(), c = actCfg_(), o = Object.assign({}, c.songEn || {});
+    Object.keys(map || {}).slice(0, 300).forEach(k => { const v = String(map[k] || '').trim().slice(0, 120), kk = String(k).slice(0, 120); if (v) o[kk] = v; else delete o[kk]; });
+    const v = JSON.stringify(o); if (v.length > 45000) throw new Error('영어 곡명이 너무 많아요.');
+    const r = rows_(SH.ACTCFG).find(x => String(x['항목']) === 'songEn'); if (r) sh.cfg.getRange(r._row, 2).setValues([[v]]); else sh.cfg.appendRow(['songEn', v]);
+    log_(a.name, '영어 곡명 저장', Object.keys(map || {}).length + '곡');
+  } finally { lock.releaseLock(); }
+  return { ok: true };
+}
+/** 미리보기 (교사 일정 › 프로그램표 › 미리보기) — 시트에 쓰지 않음 */
+function progPreview(token) {
+  const a = adm_(token); if (!a.sup && !a.perms.act) throw new Error('교사 일정 권한이 있어야 볼 수 있어요.');
+  return progBuild_();
+}
+function exportProgram(token) {
+  const a = adm_(token); if (!a.sup && !a.perms.act) throw new Error('교사 일정 권한이 있어야 보낼 수 있어요.');
+  const P = progBuild_(), C = camp_();
   let ss = null, id = setting_('프로그램표 시트');
   if (id) { try { ss = SpreadsheetApp.openById(id); } catch (x) { ss = null; } }
   if (!ss) {
@@ -930,50 +1039,37 @@ function exportProgram(token) {
     ensureSettings_(); const st = SpreadsheetApp.getActive().getSheetByName('설정'); const r = rows_('설정').find(x => String(x['항목']) === '프로그램표 시트');
     if (r) st.getRange(r._row, 2).setValues([[ss.getId()]]); else st.appendRow(['프로그램표 시트', ss.getId(), '교사 일정 › 구글 시트로 보내기 결과 파일 (지우면 새로 만듦)']);
   }
-  const days = c.days || [], tabs = [];
-  const start = String(C.base.start || ''), dt0 = /^\d{4}-\d{2}-\d{2}$/.test(start) ? new Date(start + 'T00:00:00+09:00') : null;
-  const tabName = s => String(s).replace(/[\/\\?*:\[\]]/g, '.').slice(0, 90);
-  days.forEach((dl, d) => {
-    const rooms = (c.rooms || {})[d] || [], E = evs.filter(e => e.d === d), M = (c.meals || []).filter(m => m.d === d);
-    const starts = [...new Set([...E.map(e => e.s), ...M.map(m => m.s)])].sort();
-    const W = rooms.length + 1, V = [], F = [];   // 값 · 칸 색
-    const dt = dt0 ? new Date(dt0.getTime() + d * 864e5) : null;
-    const note = (c.dayNotes || [])[d] || '';
-    V.push([note].concat(Array(W - 1).fill(''))); F.push(Array(W).fill(null));
-    V.push([dt ? `${dt.getMonth() + 1}월 ${dt.getDate()}일 스케쥴     ${MON_EN[dt.getMonth()]} ${ord_(dt.getDate())} ${WD_EN[dt.getDay()]} Schedule` : dl + ' 스케쥴'].concat(Array(W - 1).fill(''))); F.push(Array(W).fill(null));
-    V.push([''].concat(rooms.map(r => r[0]))); F.push(Array(W).fill('#e8eef0'));
-    V.push([''].concat(rooms.map(r => r[1] || ''))); F.push(Array(W).fill('#e8eef0'));
-    const mealRows = [];
-    starts.forEach(t => {
-      const ms = M.filter(m => m.s === t);
-      ms.forEach(m => { mealRows.push(V.length); V.push([m.s + '-' + m.e, m.t].concat(Array(W - 2).fill(''))); F.push(Array(W).fill('#f1f1f1')); });
-      const here = E.filter(e => e.s === t); if (!here.length) return;
-      const ends = here.map(e => e.e).sort(), endMain = ends[0];
-      const row = [t + '-' + endMain], col = [null];
-      rooms.forEach(r => { const xs = here.filter(e => e.room === r[0]); row.push(xs.map(e => (e.e !== endMain ? e.s + '-' + e.e + '\n' : '') + progCell_(e, c, nameOf)).join('\n\n')); col.push(xs.length ? ({ 공연: '#fdf3e1', 레슨: '#e9f4f5', 업무: '#f3f3f3' })[xs[0].cat] : null); });
-      V.push(row); F.push(col);
-    });
-    const name = tabName(dl + ' 프로그램'); tabs.push(name);
-    let sh = ss.getSheetByName(name); if (!sh) sh = ss.insertSheet(name); else { sh.clear(); try { sh.getRange(1, 1, sh.getMaxRows(), sh.getMaxColumns()).breakApart(); } catch (x) {} }
+  const tabs = [];
+  const fresh = name => { let sh = ss.getSheetByName(name); if (!sh) sh = ss.insertSheet(name); else { sh.clear(); try { sh.getRange(1, 1, sh.getMaxRows(), sh.getMaxColumns()).breakApart(); } catch (x) {} } tabs.push(name); return sh; };
+  P.days.forEach(D => {
+    const { V, F, W } = D, sh = fresh(D.name);
     sh.getRange(1, 1, V.length, W).setValues(V);
-    const all = sh.getRange(1, 1, V.length, W);
-    all.setWrap(true).setVerticalAlignment('top').setFontSize(10);
+    sh.getRange(1, 1, V.length, W).setWrap(true).setVerticalAlignment('top').setFontSize(10);
     sh.getRange(1, 1, 1, W).merge().setFontColor('#b4423a'); sh.getRange(2, 1, 1, W).merge().setFontWeight('bold').setFontSize(13);
     sh.getRange(3, 1, 2, W).setFontWeight('bold').setHorizontalAlignment('center');
     sh.getRange(3, 1, V.length - 2, W).setBorder(true, true, true, true, true, true, '#c9d3d7', SpreadsheetApp.BorderStyle.SOLID);
     sh.getRange(5, 1, Math.max(1, V.length - 4), 1).setFontWeight('bold');
     sh.getRange(1, 1, V.length, W).setBackgrounds(F.map(r => r.map(x => x || '#ffffff')));
-    mealRows.forEach(r => sh.getRange(r + 1, 2, 1, W - 1).merge().setHorizontalAlignment('center'));
+    D.meals.forEach(r => sh.getRange(r + 1, 2, 1, W - 1).merge().setHorizontalAlignment('center'));
     sh.setColumnWidth(1, 90); for (let k = 2; k <= W; k++) sh.setColumnWidth(k, 150);
     sh.setFrozenRows(4); sh.setFrozenColumns(1);
   });
-  // 참가교사 (학원 · 악기 · 교사)
-  const TT = ['교사', '연수생', '소속없는 중급연수생'], T = {};
-  loadSubs_().forEach(sb => sb.ppl.forEach(p => { if (p.status === '취소' || !TT.includes(p.type)) return; const k = sb.acad + '|' + (p.inst || ''); (T[k] = T[k] || []).push(p.name); }));
-  const TV = [['학원', '악기', '교사']].concat(Object.keys(T).sort((x, y) => x.localeCompare(y, 'ko')).map(k => { const [ac, ins] = k.split('|'); return [ac, ({ 바이올린: 'Vn', 첼로: 'Vc', 플루트: 'Fl', 비올라: 'Va' })[ins] || ins, T[k].join(', ')]; }));
-  let ts = ss.getSheetByName('참가교사'); if (!ts) ts = ss.insertSheet('참가교사'); else ts.clear();
-  ts.getRange(1, 1, TV.length, 3).setValues(TV); ts.getRange(1, 1, 1, 3).setFontWeight('bold'); ts.setColumnWidth(1, 160); ts.setColumnWidth(3, 420); ts.setFrozenRows(1); tabs.push('참가교사');
-  // 처음 만들 때 생긴 빈 「시트1」 지우기 · 날짜 순서대로
+  const TV = P.teachers, ts = fresh('참가교사');
+  ts.getRange(1, 1, TV.length, 3).setValues(TV); ts.getRange(1, 1, 1, 3).setFontWeight('bold'); ts.setColumnWidth(1, 160); ts.setColumnWidth(3, 420); ts.setFrozenRows(1);
+  if (P.orch.length) {
+    const OW = Math.max(2, ...P.orch.map(r => r.v.length)), OV = P.orch.map(r => r.v.concat(Array(OW - r.v.length).fill(''))), os = fresh('오케 명단');
+    os.getRange(1, 1, OV.length, OW).setValues(OV);
+    P.orch.forEach((r, i) => { if (r.k === 'h') os.getRange(i + 1, 1, 1, OW).merge().setFontWeight('bold').setFontSize(12).setBackground('#fdf3e1'); if (r.k !== 'b') os.getRange(i + 1, 1).setFontWeight('bold'); });
+    os.setColumnWidth(1, 110); for (let k = 2; k <= OW; k++) os.setColumnWidth(k, 100);
+  }
+  (P.concerts || []).forEach(K => {
+    const R = K.rows, sh = fresh(String('음악회 ' + K.name).replace(/[\/\\?*:\[\]]/g, '.').slice(0, 90));
+    sh.getRange(1, 1, R.length, 3).setValues(R.map(r => r.v.concat(['', '', '']).slice(0, 3)));
+    sh.getRange(1, 1, R.length, 3).setWrap(true).setVerticalAlignment('top').setFontSize(10);
+    R.forEach((r, i) => { if (r.k === 't') sh.getRange(i + 1, 2).setFontWeight('bold').setFontSize(14); if (r.k === 'i') sh.getRange(i + 1, 1, 1, 2).setFontWeight('bold'); if (r.k === 'j' && R[i - 1] && R[i - 1].k === 'i') sh.getRange(i + 1, 2).setFontColor('#555555'); });
+    sh.setColumnWidth(1, 40); sh.setColumnWidth(2, 340); sh.setColumnWidth(3, 340);
+  });
+  // 처음 만들 때 생긴 빈 「시트1」 지우기
   ss.getSheets().forEach(s => { if (!tabs.includes(s.getName()) && s.getLastRow() === 0 && ss.getSheets().length > 1) ss.deleteSheet(s); });
   log_(a.name, '프로그램표 보냄', tabs.length + '탭');
   return { ok: true, url: ss.getUrl(), tabs };
@@ -1294,11 +1390,11 @@ const ACT_CATS = ['공연', '레슨', '업무'];
 const ACT_KINDS = [['Orch A', '공연'], ['Orch B', '공연'], ['Orch C', '공연'], ['Orch D', '공연'], ['Welcome Concert', '공연'], ['Ensemble Concert', '공연'], ['Evening Concert', '공연', 1], ['Afternoon Concert', '공연', 1], ['Twilight Concert', '공연', 1],
   ['그룹레슨', '레슨'], ['교사연수', '레슨'], ['마스터클래스', '레슨'], ['식당', '업무']].map(([n, c, l]) => ({ n, c, link: !!l }));
 const ACT_STAGES = ['본공연', '리허설', '무대 세팅'];
-const ACT_ROLESETS = { '공연': ['지휘', '반주자', '통역', '객석정리', '무대', '연주', '세팅', '진행', '사회'], '레슨': ['수업', '보조', '통역'], '업무': ['문지기', '배식', '안내'] };
+const ACT_ROLESETS = { '공연': ['지휘', '악장', 'Vln 1', 'Vln 2', 'Vla', 'Vc', 'D.B', '악보계', '반주자', '통역', '객석정리', '무대', '연주', '세팅', '진행', '사회'], '레슨': ['수업', '보조', '통역'], '업무': ['문지기', '배식', '안내'] };
 /** 대상 칩 { Vn:{b:[권], x:[지정학생…], m:메모}, Vc, Fl } → 시트에는 JSON (빈 악기는 뺌) */
 function tgClean_(tg) { const o = {}; ['Vn', 'Vc', 'Fl'].forEach(k => { const v = (tg || {})[k]; if (!v) return; const b = (v.b || []).map(x => String(x).slice(0, 6)).filter(x => /^(Pre|\d{1,2})[AB]{0,2}\+?$/.test(x)).slice(0, 20), x = (v.x || []).map(y => String(y).slice(0, 10)).slice(0, 6), m = String(v.m || '').slice(0, 60), sg = (v.s || []).map(y => String(y).slice(0, 40)).slice(0, 12); if (b.length || x.length || m || sg.length) o[k] = { b, x, m, s: sg }; }); return Object.keys(o).length ? JSON.stringify(o) : ''; }
 const evName_ = e => e.title + (e.stage && e.stage !== '본공연' ? ' ' + e.stage : '') + (e.sub ? ' · ' + e.sub : '');
-const ACT_KEYS = ['days', 'rooms', 'meals', 'rows', 'people', 'unav', 'req', 'target', 'kinds', 'stages', 'roleSets', 'tgSongs', 'en', 'bookDesc', 'dayNotes', 'roleShort', 'rev'];
+const ACT_KEYS = ['days', 'rooms', 'meals', 'rows', 'people', 'unav', 'req', 'target', 'kinds', 'stages', 'roleSets', 'tgSongs', 'en', 'bookDesc', 'dayNotes', 'roleShort', 'orchParts', 'rev'];
 function actSheets_() {
   const ss = SpreadsheetApp.getActive();
   const mk = (n, h) => { let sh = ss.getSheetByName(n); if (!sh) { sh = ss.insertSheet(n); sh.appendRow(h); } return sh; };
@@ -1342,11 +1438,16 @@ function actPeople_(saved) {
   (saved || []).forEach(p => { if (!have.has(p.id)) L.push(Object.assign({}, p, { out: true })); });
   return L;
 }
+/** 예전에 저장한 공연 역할 목록에 오케 파트를 한 번만 넣어 줌 (그다음 저장부터는 관리자가 지우면 그대로) */
+function orchMerge_(rs, done) {
+  if (done) return rs; const o = Object.assign({}, rs), L = (o['공연'] || []).slice(), at = Math.max(0, L.indexOf('지휘') + 1);
+  ORCH_PARTS.filter(r => !L.includes(r)).reverse().forEach(r => L.splice(r === '지휘' ? 0 : at, 0, r)); o['공연'] = L; return o;
+}
 function schedData(token) {
   adm_(token);
   const c = actCfg_();
   const log = rows_(SH.ACTLOG).slice(-300).reverse().map(r => ({ at: String(r['일시'] instanceof Date ? Utilities.formatDate(r['일시'], TZ, 'M/d HH:mm') : r['일시']).replace(/^\d{4}-0?(\d+)-0?(\d+)/, '$1/$2'), t: (r['관리자'] ? r['관리자'] + ' · ' : '') + String(r['내용'] || '') }));
-  return { days: c.days || [], rooms: c.rooms || {}, meals: c.meals || [], rows: c.rows || {}, people: actPeople_(c.people), unav: c.unav || {}, req: c.req || {}, target: c.target || { min: 2, max: 6 }, kinds: Array.isArray(c.kinds) && c.kinds.length ? c.kinds : ACT_KINDS, stages: Array.isArray(c.stages) && c.stages.length ? c.stages : ACT_STAGES, roleSets: c.roleSets && typeof c.roleSets === 'object' ? c.roleSets : ACT_ROLESETS, tgSongs: c.tgSongs && typeof c.tgSongs === 'object' ? c.tgSongs : null, en: c.en || ACT_EN, bookDesc: c.bookDesc || ACT_BOOKDESC, dayNotes: c.dayNotes || [], roleShort: c.roleShort || {}, rev: +c.rev || 0, events: actEvents_(), log };
+  return { days: c.days || [], rooms: c.rooms || {}, meals: c.meals || [], rows: c.rows || {}, people: actPeople_(c.people), unav: c.unav || {}, req: c.req || {}, target: c.target || { min: 2, max: 6 }, kinds: Array.isArray(c.kinds) && c.kinds.length ? c.kinds : ACT_KINDS, stages: Array.isArray(c.stages) && c.stages.length ? c.stages : ACT_STAGES, roleSets: c.roleSets && typeof c.roleSets === 'object' ? orchMerge_(c.roleSets, c.orchParts) : ACT_ROLESETS, tgSongs: c.tgSongs && typeof c.tgSongs === 'object' ? c.tgSongs : null, en: c.en || ACT_EN, bookDesc: c.bookDesc || ACT_BOOKDESC, dayNotes: c.dayNotes || [], roleShort: c.roleShort || {}, rev: +c.rev || 0, events: actEvents_(), log };
 }
 function schedSave(token, b) {
   const a = adm_(token); need_(a, 'act');
@@ -1368,7 +1469,7 @@ function schedSave(token, b) {
     sh.ev.getRange(1, 1, 1, ACT_HEAD.length).setValues([ACT_HEAD]);   // 머리줄 (「세부」 칸이 없던 시트도 맞춤)
     if (last > 1) sh.ev.getRange(2, 1, last - 1, ACT_HEAD.length).clearContent();
     if (rows.length) sh.ev.getRange(2, 1, rows.length, ACT_HEAD.length).setValues(rows);
-    const val = { days: b.days.map(x => t(x, 30)), rooms: b.rooms || {}, meals: b.meals || [], rows: b.rows || {}, people: (b.people || []).map(p => ({ id: t(p.id, 40), n: t(p.n, 60), acad: t(p.acad, 120), inst: t(p.inst, 20), kind: t(p.kind, 10), tid: p.tid ? t(p.tid, 20) : undefined })), unav: b.unav || {}, req: b.req || {}, target: b.target || { min: 2, max: 6 }, en: (() => { const o = {}; Object.keys(b.en || {}).slice(0, 300).forEach(k => { o[t(k, 40)] = t(b.en[k], 80); }); return o; })(), bookDesc: (() => { const o = {}; ['Vn', 'Vc', 'Fl'].forEach(k => { o[k] = {}; Object.keys((b.bookDesc || {})[k] || {}).slice(0, 40).forEach(x => { const v = b.bookDesc[k][x]; if (Array.isArray(v)) o[k][t(x, 6)] = [t(v[0], 60), t(v[1], 80)]; }); }); return o; })(), dayNotes: (b.dayNotes || []).map(x => t(x, 300)).slice(0, 20), roleShort: (() => { const o = {}; Object.keys(b.roleShort || {}).slice(0, 100).forEach(k => { const v = t(b.roleShort[k], 6).trim(); if (v) o[t(k, 12)] = v; }); return o; })(), meals: (b.meals || []).map(m => ({ d: +m.d || 0, s: t(m.s, 5), e: t(m.e, 5), t: t(m.t, 200) })).filter(m => /^\d{2}:\d{2}$/.test(m.s)).slice(0, 80), tgSongs: (() => { const o = {}; ['Vn', 'Vc', 'Fl'].forEach(k => { const L = (b.tgSongs || {})[k]; o[k] = (Array.isArray(L) ? L : []).map(x => t(x, 40).trim()).filter(Boolean).slice(0, 40); }); return o; })(), stages: (Array.isArray(b.stages) && b.stages.length ? b.stages : ACT_STAGES).map(x => t(x, 20).trim()).filter(Boolean).slice(0, 20), roleSets: (() => { const o = {}; ACT_CATS.forEach(c => { const L = ((b.roleSets || {})[c] || ACT_ROLESETS[c]); o[c] = (Array.isArray(L) ? L : []).map(x => t(x, 12).trim()).filter(Boolean).slice(0, 40); }); return o; })(), kinds: (Array.isArray(b.kinds) ? b.kinds : ACT_KINDS).map(k => ({ n: t(k.n, 40).trim(), c: ACT_CATS.includes(k.c) ? k.c : '레슨', link: !!k.link })).filter(k => k.n).slice(0, 80), rev: (+c.rev || 0) + 1 };
+    const val = { days: b.days.map(x => t(x, 30)), rooms: b.rooms || {}, meals: b.meals || [], rows: b.rows || {}, people: (b.people || []).map(p => ({ id: t(p.id, 40), n: t(p.n, 60), acad: t(p.acad, 120), inst: t(p.inst, 20), kind: t(p.kind, 10), tid: p.tid ? t(p.tid, 20) : undefined })), unav: b.unav || {}, req: b.req || {}, target: b.target || { min: 2, max: 6 }, en: (() => { const o = {}; Object.keys(b.en || {}).slice(0, 300).forEach(k => { o[t(k, 40)] = t(b.en[k], 80); }); return o; })(), bookDesc: (() => { const o = {}; ['Vn', 'Vc', 'Fl'].forEach(k => { o[k] = {}; Object.keys((b.bookDesc || {})[k] || {}).slice(0, 40).forEach(x => { const v = b.bookDesc[k][x]; if (Array.isArray(v)) o[k][t(x, 6)] = [t(v[0], 60), t(v[1], 80)]; }); }); return o; })(), dayNotes: (b.dayNotes || []).map(x => t(x, 300)).slice(0, 20), roleShort: (() => { const o = {}; Object.keys(b.roleShort || {}).slice(0, 100).forEach(k => { const v = t(b.roleShort[k], 6).trim(); if (v) o[t(k, 12)] = v; }); return o; })(), meals: (b.meals || []).map(m => ({ d: +m.d || 0, s: t(m.s, 5), e: t(m.e, 5), t: t(m.t, 200) })).filter(m => /^\d{2}:\d{2}$/.test(m.s)).slice(0, 80), tgSongs: (() => { const o = {}; ['Vn', 'Vc', 'Fl'].forEach(k => { const L = (b.tgSongs || {})[k]; o[k] = (Array.isArray(L) ? L : []).map(x => t(x, 40).trim()).filter(Boolean).slice(0, 40); }); return o; })(), stages: (Array.isArray(b.stages) && b.stages.length ? b.stages : ACT_STAGES).map(x => t(x, 20).trim()).filter(Boolean).slice(0, 20), roleSets: (() => { const o = {}; ACT_CATS.forEach(c => { const L = ((b.roleSets || {})[c] || ACT_ROLESETS[c]); o[c] = (Array.isArray(L) ? L : []).map(x => t(x, 12).trim()).filter(Boolean).slice(0, 40); }); return o; })(), kinds: (Array.isArray(b.kinds) ? b.kinds : ACT_KINDS).map(k => ({ n: t(k.n, 40).trim(), c: ACT_CATS.includes(k.c) ? k.c : '레슨', link: !!k.link })).filter(k => k.n).slice(0, 80), orchParts: 1, rev: (+c.rev || 0) + 1 };
     const cur = rows_(SH.ACTCFG);
     ACT_KEYS.forEach(k => {
       const s = JSON.stringify(val[k]); if (s.length > 45000) throw new Error(k + ' 내용이 너무 길어요.');

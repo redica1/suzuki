@@ -1,4 +1,4 @@
-/* build: 20261024-230052 */
+/* build: 20261024-231403 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -1555,6 +1555,10 @@ function lessonSet(token, op) {
       const p = sb && sb.ppl.find(q => q.id === op.pid);
       if (!p || p.status === '취소') throw new Error('참가자를 찾지 못했거나 취소된 사람이에요. 새로 불러와 주세요.');
       info = { name: p.name, acad: sb.acad, no: sb.no, inst: p.inst || '' };
+      { const k = p.id.slice(sb.no.length + 1), req = +(((sb.form || {}).info || {})[k] || {}).lessons || 0;
+        const have = L.filter(x => x.pid === op.pid && !(x.d === d && x.t === t && x.pr === pr)).length;
+        if (!req) throw new Error(p.name + ' 학생은 추가레슨을 신청하지 않았어요.');
+        if (have >= req) throw new Error(p.name + ' 학생은 신청한 ' + req + '회를 이미 다 배정했어요.'); }
       const row = [d, "'" + t, pr, op.pid, info.name, info.acad, info.no, info.inst, stamp_(), a.name];
       if (cur) sh.getRange(cur._row, 1, 1, LES_HEAD.length).setValues([row]); else sh.appendRow(row);
       log_('관리자 ' + a.name, '개인레슨 배정', d + '일 ' + t + ' ' + pr + ' · ' + info.name);

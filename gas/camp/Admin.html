@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261024-100302 -->
+<!-- build: 20261024-100727 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -214,13 +214,13 @@ function payPill(p){if(p.status!=='정상')return p.status==='취소요청'?'<sp
   return !(+p.paidAmt)?'<span class="pill due">입금 전</span>':d>0?`<span class="pill due">차액 ${won(d)}</span>`:d<0?`<span class="pill new">${won(-d)} 더 냄${p.ovReq?' · 돌려받기 요청':''}</span>`:'<span class="pill ok">입금 확인</span>'}
 
 /* ---------- 화면 ---------- */
-const TABS=[['home','한눈에'],['subs','접수 · 입금 확인'],['rp','입금 신고'],['cx','취소 · 환불'],['ens','앙상블'],['prof','교수진'],['act','교사 일정'],['tt','개인레슨'],['room','방 배정'],['stat','통계'],['q','오류·건의']];
+const TABS=[['home','한눈에'],['subs','접수 · 입금 확인'],['rp','입금 신고'],['cx','취소 · 환불'],['ens','앙상블'],['prof','교수진'],['act','교사 일정'],['tt','개인레슨'],['room','방 배정'],['con','오후음악회'],['stat','통계'],['q','오류·건의']];
 function render(){
   const app=document.getElementById('app'),tabs=document.getElementById('tabs');
   if(!S.D){tabs.innerHTML='';app.innerHTML=vLogin();return}
   const st=stats();
   tabs.innerHTML=TABS.map(([k,l])=>`<button type="button" role="tab" data-tab="${k}" aria-selected="${S.tab===k}">${l}${k==='rp'&&st.rp?`<span class="cnt">${st.rp}</span>`:''}${k==='cx'&&st.cx?`<span class="cnt">${st.cx}</span>`:''}${k==='q'&&st.q?`<span class="cnt">${st.q}</span>`:''}</button>`).join('');
-  app.innerHTML={home:vHome,subs:vSubs,rp:vRp,cx:vCx,ens:vEns,prof:vProf,act:()=>ACT.view(),tt:()=>LES.view(),room:()=>ROOM.view(),stat:vStat,q:vQ}[S.tab]();
+  app.innerHTML={home:vHome,subs:vSubs,rp:vRp,cx:vCx,ens:vEns,prof:vProf,act:()=>ACT.view(),tt:()=>LES.view(),room:()=>ROOM.view(),con:vCon,stat:vStat,q:vQ}[S.tab]();
   if(S.tab==='stat')reSort();
 }
 /* 통계 표 정렬: 같은 보기·같은 표면 다시 그려도 유지 */
@@ -750,6 +750,26 @@ document.addEventListener('click',ev=>{if(S.tab!=='room')return;const b=ev.targe
 return {view};
 })();
 
+/* ================= 오후음악회 (2026 여름 「오후음악회용」 시트처럼 신청 목록) ================= */
+const CON_KINDS=['오후','트와일라잇','이브닝','없음'];
+function conRows(){const L=[];(S.D.subs||[]).forEach(sb=>sb.ppl.forEach(p=>{if(p.status==='취소')return;const k=p.id.slice(sb.no.length+1),i=(sb.form&&sb.form.info&&sb.form.info[k])||{};
+  const type=p.type||i.type||'';if(!['학생','회원의 악기하는 자녀','교사','연수생','소속없는 중급연수생'].includes(type))return;
+  L.push({key:p.name+'('+String(sb.acad).replace(/스즈키$/,'')+')',at:String(p.addAt||sb.createdAt||''),round:sb.round||'',acad:sb.acad,owner:sb.owner||'',name:p.name,inst:p.inst||i.inst||'',by:i.by||'',type,prog:i.prog||'',con:i.concert||'없음',
+    song:i.other?'':(i.song||''),oc:i.other?(i.oc||''):'',ot:i.other?(i.ot||''):'',status:p.status})}));return L}
+function vCon(){const f=S.conf||'오후',ins=S.coni||'',q=(S.conq||'').trim();const all=conRows();
+  const L=all.filter(x=>(f==='all'||x.con===f)&&(!ins||x.inst===ins)&&(!q||[x.name,x.acad,x.owner,x.song,x.oc,x.ot].some(v=>String(v).includes(q))));
+  const cnt=k=>all.filter(x=>x.con===k).length;const INS=[...new Set(all.map(x=>x.inst).filter(Boolean))];
+  const H=['이름(학원)','접수 일시','차수','학원','접수 교사','참가자','악기','출생연도','참가 구분','진도','음악회','곡명 (목록)','작곡가 (그외 곡)','곡명 (원어)'];
+  const rows=L.map(x=>[x.key,x.at.slice(0,16),x.round,x.acad,x.owner,x.name+(x.status==='취소요청'?' (취소 요청)':''),x.inst,x.by,x.type,x.prog,x.con,x.song,x.oc,x.ot]);
+  S.conTSV=[H,...rows].map(r=>r.map(v=>String(v==null?'':v).replace(/[\t\n]/g,' ')).join('\t')).join('\n');
+  return `<div class="panel"><div class="spread"><div><b>음악회 신청</b> <span class="hint">2026 여름 「오후음악회용」 시트처럼 · 취소한 사람은 빠짐 · 머리 칸 눌러 정렬</span></div>
+    <div class="row" style="gap:6px"><button class="btn small" type="button" id="conCopy">표 복사 (시트에 붙여넣기)</button><button class="btn small" type="button" id="reload">새로 불러오기</button></div></div>
+    <div class="row" style="gap:6px;margin-top:8px">${[...CON_KINDS.slice(0,3),'없음','all'].map(k=>`<button class="btn small ${f===k?'primary':''}" type="button" data-conf="${k}">${k==='all'?'전체 '+all.length:k==='없음'?'신청 안 함 '+cnt(k):k+' '+cnt(k)}</button>`).join('')}
+      <span style="width:12px"></span>${['',...INS].map(k=>`<button class="btn small ${ins===k?'primary':''}" type="button" data-coni="${esc(k)}">${k?esc(k)+' '+L.filter(x=>x.inst===k).length:'악기 전체'}</button>`).join('')}
+      <input type="search" id="conq" value="${esc(S.conq||'')}" placeholder="이름·학원·교사·곡" style="margin-left:auto;width:min(220px,100%)"></div></div>
+  ${ST(H,rows.map(r=>r.map(esc)),null,H.length)}
+  ${L.length?'':'<div class="panel hint">해당하는 신청이 없어요.</div>'}`}
+
 /* ---------- 교수진 (캠프 교수 · 외부 초청 교수 포함) ---------- */
 const PF_INST=['바이올린','첼로','플루트','비올라','피아노','기타'];
 const pfCopy=()=>JSON.parse(JSON.stringify((S.D.profs||[]).map(p=>({name:p.name,inst:p.inst,lesson:!!p.lesson,mc:!!p.mc,min:p.min||'',fee:p.fee||'',org:p.org||'',on:p.on!==false,memo:p.memo||'',room:p.room||''}))));
@@ -882,6 +902,11 @@ document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)r
   if(d.pfsave){const L=S.pf.filter(p=>String(p.name).trim());const bad=L.find(p=>!p.inst)||L.find(p=>!p.lesson&&!p.mc)||L.find(p=>p.mc&&!+p.fee);
     if(bad){toast(bad.name+': '+(!bad.inst?'악기를 골라 주세요':!bad.lesson&&!bad.mc?'레슨이나 마스터클래스 중 하나는 골라 주세요':'마스터클래스 금액을 넣어 주세요'));return}
     call('adminSaveProfs',[L],r=>{S.pf=null;setData(r);toast('교수진 '+L.filter(p=>p.on).length+'명을 저장했어요 · 접수 화면에 바로 반영돼요')},'저장하고 있어요…');return}
+  if(d.conf){S.conf=d.conf;render();return}
+  if(d.coni!==undefined){S.coni=d.coni;render();return}
+  if(b.id==='conCopy'){const t=S.conTSV||'';const done=()=>toast('표를 복사했어요 · 구글 시트 칸에 붙여넣기 하세요');
+    if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(t).then(done,()=>{const x=document.createElement('textarea');x.value=t;document.body.appendChild(x);x.select();try{document.execCommand('copy');done()}catch(e){toast('복사하지 못했어요')}x.remove()});
+    else{const x=document.createElement('textarea');x.value=t;document.body.appendChild(x);x.select();try{document.execCommand('copy');done()}catch(e){toast('복사하지 못했어요')}x.remove()}return}
   if(d.sv){S.sv=d.sv;render();return}
   if(d.sv2){S.sv2=d.sv2;render();return}
   if(d.sv3){S.sv3=d.sv3;render();return}
@@ -934,6 +959,7 @@ document.addEventListener('change',e=>{const el=e.target;
 document.addEventListener('toggle',e=>{const d=e.target.dataset||{};if(d.sub)S.open[d.sub]=e.target.open;
   if(d.acad!==undefined&&S.openA[d.acad]!==e.target.open){S.openA[d.acad]=e.target.open;render()}
   if(d.rnd!==undefined&&S.openR[d.rnd]!==e.target.open){S.openR[d.rnd]=e.target.open;render()}},true);
+document.addEventListener('input',e=>{if(e.target.id==='conq'){S.conq=e.target.value;const p=e.target.selectionStart;render();const n=document.getElementById('conq');if(n){n.focus();n.setSelectionRange(p,p)}return}});
 document.addEventListener('input',e=>{if(e.target.id==='q'){S.q=e.target.value;const p=e.target.selectionStart;render();const n=document.getElementById('q');n.focus();n.setSelectionRange(p,p)}});
 document.addEventListener('keydown',e=>{if(e.key==='Enter'&&(e.target.id==='lpw'||e.target.id==='lid'))document.getElementById('doLogin').click()});
 (function(){let t='';try{t=sessionStorage.getItem('campAdmTok')||''}catch(x){}

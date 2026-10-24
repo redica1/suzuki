@@ -1,4 +1,4 @@
-/* build: 20261024-214658 */
+/* build: 20261024-222325 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -1606,7 +1606,7 @@ function adminGetSetting(token, key) { adm_(token); return { val: setting_(key) 
 /* ================= 방 배정 =================
  * 「방배정」: 한 줄 = 방 하나. 처음 열 때 겨울 숙소 객실 목록(Stay Tower S · Flex Tower P, 406실)으로 채움
  * 정원 기본: 18평 3명 · 23평 4명 · 27평 5명 · 표시 없음 5명 (방마다 고칠 수 있음) */
-const ROOM_HEAD = ['방번호', '건물', '층', '타입', '정원', '방종류', '메인학원', '메인 인원', '보조학원', '보조 인원', '비번 수신자', '교수', '메모', '고친 일시', '관리자', '배정', '사용 날짜', '공개'];
+const ROOM_HEAD = ['방번호', '건물', '층', '타입', '정원', '방종류', '메인학원', '메인 인원', '보조학원', '보조 인원', '비번 수신자', '교수', '메모', '고친 일시', '관리자', '배정', '사용 날짜', '공개', '색'];
 /* 배정(JSON) = 방을 쓰는 묶음 목록 [{k, v, n, a, days, tm, no}] — 맨 앞이 메인
  *   k: acad 학원 · grp 관리자가 만든 이름(본부방 · 애플방 …) · name 개인(교수 · 연수교사 …) · fam 가족방 신청 가족(no = 접수번호)
  *   n: 그 묶음이 자는 인원 · a: 인원을 셀 학원 · days: 쓰는 날짜(빈 값 = 방 사용 날짜 전부) · tm: 시간 메모(예: 14:00 이후)
@@ -1620,7 +1620,7 @@ function roomSheet_() {
     sh = ss.insertSheet(SH.ROOM); sh.appendRow(ROOM_HEAD);
     const cap = { '18': 3, '23': 4, '27': 5 };
     const rows = ROOM_INV.split(';').filter(Boolean).map(x => { const [no, type] = x.split(':'); return [no, no[0] === 'S' ? 'Stay Tower' : 'Flex Tower', no.slice(1, -2) + 'F', type || '', cap[String(type || '').slice(0, 2)] || 5, '', '', '', '', '', '', '', '', '', '']; });
-    sh.getRange(2, 1, rows.length, ROOM_HEAD.length).setValues(rows.map(r => r.concat(['', '', '']).slice(0, ROOM_HEAD.length)));
+    sh.getRange(2, 1, rows.length, ROOM_HEAD.length).setValues(rows.map(r => r.concat(Array(ROOM_HEAD.length).fill('')).slice(0, ROOM_HEAD.length)));
   } else ensureHead_(SH.ROOM, ROOM_HEAD);
   return sh;
 }
@@ -1638,14 +1638,15 @@ function rooms_() {
   return rows_(SH.ROOM).filter(r => String(r['방번호'] || '')).map(r => ({ no: String(r['방번호']), bld: String(r['건물'] || ''), fl: String(r['층'] || ''), type: String(r['타입'] || ''), cap: +r['정원'] || 0,
     kind: String(r['방종류'] || ''), main: String(r['메인학원'] || ''), mn: +r['메인 인원'] || 0, sub: String(r['보조학원'] || ''), sn: +r['보조 인원'] || 0, pw: String(r['비번 수신자'] || ''), prof: String(r['교수'] || ''), memo: String(r['메모'] || ''), _row: r._row,
     occ: (() => { try { const o = JSON.parse(String(r['배정'] || '[]')); return Array.isArray(o) ? o : []; } catch (x) { return []; } })(),
-    days: String(r['사용 날짜'] == null ? '' : r['사용 날짜']).split(',').map(x => x.trim()).filter(x => /^\d+$/.test(x)).map(Number), pub: String(r['공개'] || '') === '예' }))
+    days: String(r['사용 날짜'] == null ? '' : r['사용 날짜']).split(',').map(x => x.trim()).filter(x => /^\d+$/.test(x)).map(Number), pub: String(r['공개'] || '') === '예', color: /^#[0-9a-f]{6}$/i.test(String(r['색'] || '')) ? String(r['색']) : '' }))
     .map(r => Object.assign(r, { occ: roomOcc_(r) }));
 }
 /** 방 설정: 일괄 공개 · 공개 시각 · 메인에 고를 수 있는 이름(본부방 · 애플방 …) */
 function roomCfg_() {
   let names = []; try { names = JSON.parse(setting_('방 이름 목록') || '[]'); } catch (x) {}
   if (!Array.isArray(names) || !names.length) names = ['본부방', '교수진'];
-  return { pubAll: setting_('방 공개') === '예', pubAt: String(setting_('방 공개 시각') || '').replace(/^'/, ''), names };
+  let colors = {}; try { colors = JSON.parse(setting_('방 색') || '{}') || {}; } catch (x) {}
+  return { pubAll: setting_('방 공개') === '예', pubAt: String(setting_('방 공개 시각') || '').replace(/^'/, ''), names, colors: { mode: colors.mode === 'main' ? 'main' : 'kind', kind: colors.kind || {}, main: colors.main || {} } };
 }
 function roomPubNow_(cfg) { if (!cfg.pubAll) return false; if (!cfg.pubAt) return true; const t = new Date(cfg.pubAt.replace(' ', 'T') + ':00+09:00'); return isNaN(t) ? true : Date.now() >= t.getTime(); }
 function roomCfgSave(token, b) {
@@ -1657,6 +1658,8 @@ function roomCfgSave(token, b) {
   put('방 공개', b && b.pubAll ? '예' : '아니오', '「예」면 공개 시각부터 선생님 화면 「우리 방」에 방이 보여요 (방마다 따로 공개도 가능)');
   put('방 공개 시각', at ? "'" + at.replace('T', ' ') : '', '비우면 바로 공개 · 예) 2027-01-05 18:00');
   put('방 이름 목록', JSON.stringify(names), '방배정 메인에 학원 대신 고를 수 있는 이름');
+  if (b && b.colors) { const hx = v => /^#[0-9a-f]{6}$/i.test(String(v)) ? String(v) : ''; const cl = o => { const r = {}; Object.keys(o || {}).slice(0, 200).forEach(k => { const v = hx(o[k]); if (v) r[String(k).slice(0, 40)] = v; }); return r; };
+    put('방 색', JSON.stringify({ mode: b.colors.mode === 'main' ? 'main' : 'kind', kind: cl(b.colors.kind), main: cl(b.colors.main) }), '배치도 배정 칸 색: mode = kind(방종류별) · main(메인별)'); }
   log_('관리자 ' + a.name, '방 공개 설정', (b && b.pubAll ? '일괄 공개 ' + (at || '바로') : '일괄 공개 안 함') + ' · 이름 ' + names.join(', '));
   return roomData(token);
 }
@@ -1664,7 +1667,96 @@ function roomData(token) {
   adm_(token); let open = false; try { open = setting_('시간표 공개') === '예'; } catch (x) {}
   let days = []; try { days = actCfg_().days || []; } catch (x) {}
   const cfg = roomCfg_();
-  return { rooms: rooms_().map(r => { const o = Object.assign({}, r); delete o._row; return o; }), kinds: ROOM_KINDS, open, days, cfg: Object.assign({}, cfg, { live: roomPubNow_(cfg) }) };
+  return { rooms: rooms_().map(r => { const o = Object.assign({}, r); delete o._row; return o; }), kinds: ROOM_KINDS, open, days, cfg: Object.assign({}, cfg, { live: roomPubNow_(cfg) }), layout: layout_(), layoutTabs: layoutTabs_() };
+}
+
+/* ---------------- 객실배치도 (도면) ----------------
+ * 접수 DB 시트에 「배치도 …」로 시작하는 탭을 층마다 하나씩 그림 (예: 배치도 Stay 1F · 배치도 Flex 3F)
+ * 관리자 방배정 › 배치도 › 「도면 불러오기」 → 탭마다 칸 크기 · 병합 · 색 · 글자 · 테두리를 읽어 「배치도_데이터」에 저장 (탭 순서 = 층 버튼 순서)
+ * 방번호 = S101 · P302 꼴 글자가 든 칸, 그 바로 아래 칸(병합 영역) = 올해 배정이 보이는 칸
+ * 도면에 새로 생긴 방은 「방배정」에 줄을 더하고, 도면에서 사라진 방은 지우지 않고 알려 줌 */
+const LAYOUT_SH = '배치도_데이터';
+const LAYOUT_HEAD = ['탭', '건물', '층', '도면', '방 수', '불러온 일시', '관리자'];
+const ROOM_NO_RX = /^([A-Z]{1,2}\d{3,4})(?![0-9])/;
+function layoutTabs_() { return SpreadsheetApp.getActive().getSheets().map(s => s.getName()).filter(n => /^배치도\s/.test(n)); }
+function layout_() {
+  const sh = SpreadsheetApp.getActive().getSheetByName(LAYOUT_SH); if (!sh) return [];
+  const tabs = layoutTabs_();
+  return rows_(LAYOUT_SH).filter(r => r['탭'] && tabs.includes(String(r['탭']))).map(r => { try { return Object.assign(JSON.parse(String(r['도면'])), { tab: String(r['탭']), bld: String(r['건물']), fl: String(r['층']), at: String(r['불러온 일시'] || '') }); } catch (x) { return null; } })
+    .filter(Boolean).sort((a, b) => tabs.indexOf(a.tab) - tabs.indexOf(b.tab));
+}
+function bldOf_(tab) { const t = tab.replace(/^배치도\s*/, '').replace(/\s*\d+\s*F\b.*$/i, '').trim(); return /^stay/i.test(t) ? 'Stay Tower' : /^flex/i.test(t) ? 'Flex Tower' : (t || '건물'); }
+/** 탭 하나 읽기 → { cw, rh, cells: [[r, c, rs, cs, 글, 바탕, 글자색, 굵게, 크기, 테두리(위오아왼 0/1/2/3), 가로, 세로]], rooms: {방번호: [r, c, [아래 칸 r, c]]} } */
+function layoutRead_(sh) {
+  const lr = Math.min(Math.max(sh.getLastRow(), 1), 120), lc = Math.min(Math.max(sh.getLastColumn(), 1), 80);
+  const rg = sh.getRange(1, 1, lr, lc);
+  const V = rg.getDisplayValues(), BG = rg.getBackgrounds(), FC = rg.getFontColors(), FW = rg.getFontWeights(), FS = rg.getFontSizes(), HA = rg.getHorizontalAlignments(), VA = rg.getVerticalAlignments();
+  const M = rg.getMergedRanges().map(m => [m.getRow() - 1, m.getColumn() - 1, m.getNumRows(), m.getNumColumns()]);
+  const anchor = {}, cover = {}; M.forEach(([r, c, rs, cs]) => { anchor[r + ',' + c] = [rs, cs]; for (let i = r; i < r + rs; i++) for (let j = c; j < c + cs; j++) if (i !== r || j !== c) cover[i + ',' + j] = 1; });
+  // 실제로 그린 범위 (글 · 색 · 병합이 있는 곳)
+  let R1 = 0, C1 = 0; const white = x => !x || /^#ffffff$/i.test(x);
+  for (let i = 0; i < lr; i++) for (let j = 0; j < lc; j++) if (V[i][j] !== '' || !white(BG[i][j]) || anchor[i + ',' + j]) { R1 = Math.max(R1, i + 1); C1 = Math.max(C1, j + 1); }
+  M.forEach(([r, c, rs, cs]) => { R1 = Math.max(R1, r + rs); C1 = Math.max(C1, c + cs); });
+  R1 = Math.min(lr, R1 + 1); C1 = Math.min(lc, C1 + 1);
+  const bw = st => { const s = String(st || ''); return !s || /NONE/.test(s) ? '0' : /THICK|DOUBLE/.test(s) ? '3' : /MEDIUM/.test(s) ? '2' : '1'; };
+  let canB = true; const bd = (i, j) => { if (!canB) return null; try { const b = sh.getRange(i + 1, j + 1).getBorder(); if (!b) return '0000'; const one = x => { try { return x ? bw(x.getBorderStyle()) : '0'; } catch (e) { return '0'; } }; return one(b.getTop()) + one(b.getRight()) + one(b.getBottom()) + one(b.getLeft()); } catch (e) { canB = false; return null; } };
+  const cells = [];
+  for (let i = 0; i < R1; i++) for (let j = 0; j < C1; j++) {
+    if (cover[i + ',' + j]) continue;
+    const a = anchor[i + ',' + j] || [1, 1], has = V[i][j] !== '' || !white(BG[i][j]) || anchor[i + ',' + j];
+    let b = bd(i, j); if (b == null) b = has ? '1111' : '0000';
+    if (!has && b === '0000') continue;
+    const ha = String(HA[i][j] || ''), va = String(VA[i][j] || '');
+    cells.push([i, j, a[0], a[1], V[i][j], white(BG[i][j]) ? '' : BG[i][j], FC[i][j] || '', FW[i][j] === 'bold' ? 1 : 0, +FS[i][j] || 10, b, /center/.test(ha) ? 'C' : /right/.test(ha) ? 'R' : 'L', /top/.test(va) ? 'T' : /bottom/.test(va) ? 'B' : 'M']);
+  }
+  const rooms = {};
+  cells.forEach(x => { const m = String(x[4]).trim().match(ROOM_NO_RX); if (!m) return; const below = x[0] + x[2];
+    const lab = cells.find(y => y[0] === below && y[1] === x[1] && !ROOM_NO_RX.test(String(y[4]).trim())); rooms[m[1]] = [x[0], x[1], lab ? [lab[0], lab[1]] : (below < R1 ? [below, x[1]] : null)]; });
+  // 아래 칸이 비어 있어 cells에 없으면 빈 칸으로 넣어 줌 (배정이 보일 자리)
+  Object.values(rooms).forEach(v => { if (v[2] && !cells.some(y => y[0] === v[2][0] && y[1] === v[2][1])) cells.push([v[2][0], v[2][1], 1, 1, '', '', '', 0, 10, '1111', 'C', 'M']); });
+  const cw = [], rh = []; for (let j = 0; j < C1; j++) cw.push(sh.getColumnWidth(j + 1)); for (let i = 0; i < R1; i++) rh.push(sh.getRowHeight(i + 1));
+  return { cw, rh, cells, rooms, borders: canB ? 'sheet' : 'guess' };
+}
+/** 도면 불러오기 (탭 하나씩 — 클라이언트가 탭마다 부름) */
+function layoutImport(token, tab) {
+  const a = adm_(token); need_(a, 'room');
+  const ss = SpreadsheetApp.getActive(), sh = ss.getSheetByName(String(tab || ''));
+  if (!sh || !/^배치도\s/.test(sh.getName())) throw new Error('「배치도 …」 탭을 찾지 못했어요: ' + tab);
+  const L = layoutRead_(sh), name = sh.getName(), bld = bldOf_(name);
+  const flm = name.match(/(\d+)\s*F\b/i); const nos = Object.keys(L.rooms);
+  const fl = flm ? flm[1] + 'F' : (nos[0] ? nos[0].replace(/^[A-Z]+/, '').slice(0, -2) + 'F' : '');
+  const lock = lock_();
+  let added = [], missing = [];
+  try {
+    let ls = ss.getSheetByName(LAYOUT_SH); if (!ls) { ls = ss.insertSheet(LAYOUT_SH); ls.appendRow(LAYOUT_HEAD); try { ls.hideSheet(); } catch (x) {} }
+    const json = JSON.stringify({ cw: L.cw, rh: L.rh, cells: L.cells, rooms: L.rooms, borders: L.borders });
+    if (json.length > 49000) throw new Error(name + ' 도면이 너무 커요. 쓰지 않는 칸을 지우거나 층을 나눠 주세요.');
+    const ex = rows_(LAYOUT_SH).find(r => String(r['탭']) === name), row = [name, bld, fl, json, nos.length, stamp_(), a.name];
+    if (ex) ls.getRange(ex._row, 1, 1, LAYOUT_HEAD.length).setValues([row]); else ls.appendRow(row);
+    // 방 목록 맞추기
+    const rs = roomSheet_(), have = rooms_(), H = ROOM_HEAD.length;
+    added = nos.filter(n => !have.some(r => r.no === n));
+    if (added.length) rs.getRange(rs.getLastRow() + 1, 1, added.length, H).setValues(added.map(n => [n, bld, fl, '', 5].concat(Array(H - 5).fill(''))));
+    missing = have.filter(r => r.bld === bld && r.fl === fl && !nos.includes(r.no)).map(r => ({ no: r.no, used: r.occ.length > 0 }));
+    log_('관리자 ' + a.name, '도면 불러오기', name + ' · 방 ' + nos.length + (added.length ? ' · 새 방 ' + added.join(',') : ''));
+  } finally { lock.releaseLock(); }
+  return { ok: true, tab: name, rooms: nos.length, added, missing, borders: L.borders };
+}
+/** 방번호를 바꿨을 때: from 방의 배정을 to(빈 방)로 옮김 */
+function roomMove(token, from, to) {
+  const a = adm_(token); need_(a, 'room');
+  const lock = lock_();
+  try {
+    const sh = roomSheet_(), L = rooms_(), f = L.find(r => r.no === String(from)), t = L.find(r => r.no === String(to));
+    if (!f || !t) throw new Error('방을 찾지 못했어요.'); if (t.occ.length) throw new Error(t.no + ' 방에 이미 배정이 있어요. 먼저 비워 주세요.');
+    const H = ROOM_HEAD, fr = sh.getRange(f._row, 1, 1, H.length).getValues()[0], tr = sh.getRange(t._row, 1, 1, H.length).getValues()[0];
+    const keep = ['방번호', '건물', '층', '타입', '정원'];
+    const nr = H.map((h, i) => keep.includes(h) ? tr[i] : h === '고친 일시' ? stamp_() : h === '관리자' ? a.name : fr[i]);
+    const er = H.map((h, i) => keep.includes(h) ? fr[i] : h === '고친 일시' ? stamp_() : h === '관리자' ? a.name : '');
+    sh.getRange(t._row, 1, 1, H.length).setValues([nr]); sh.getRange(f._row, 1, 1, H.length).setValues([er]);
+    log_('관리자 ' + a.name, '방 배정 옮김', f.no + ' → ' + t.no);
+  } finally { lock.releaseLock(); }
+  return roomData(token);
 }
 /** 방 하나 저장: 배정 목록(occ)이 비면 방을 비움 · 날짜마다 인원 합계가 정원을 넘으면 막음 */
 function roomSave(token, x) {
@@ -1685,7 +1777,7 @@ function roomSave(token, x) {
     use.forEach(d => { const sum = occ.filter(o => !o.days.length || o.days.includes(d)).reduce((s2, o) => s2 + o.n, 0); if (sum > cap) throw new Error(`${r.no} 방: ${d + 1}번째 날 인원 ${sum}명이 정원 ${cap}명보다 많아요.`); });
     const m = occ[0] || {}, sub = occ.slice(1).find(o => o.k === 'acad' || o.k === 'grp'), pr = occ.find(o => o.k === 'name' && kind === '교수방');
     const row = [r.no, r.bld, r.fl, t(x.type, 10) || r.type, cap, clear ? '' : kind, clear ? '' : (m.v || ''), clear ? '' : m.n, clear ? '' : (sub ? sub.v : ''), clear ? '' : (sub ? sub.n : ''), clear ? '' : t(x.pw, 40), clear ? '' : (pr ? pr.v : ''), t(x.memo, 200), stamp_(), a.name,
-      clear ? '' : JSON.stringify(occ), days.length && days.length < all.length ? days.join(',') : '', x.pub && !clear ? '예' : ''];
+      clear ? '' : JSON.stringify(occ), days.length && days.length < all.length ? days.join(',') : '', x.pub && !clear ? '예' : '', /^#[0-9a-f]{6}$/i.test(String(x.color || '')) && !clear ? String(x.color) : ''];
     sh.getRange(r._row, 1, 1, ROOM_HEAD.length).setValues([row]);
     log_('관리자 ' + a.name, clear ? '방 비움' : '방 배정', r.no + (clear ? '' : ' · ' + occ.map(o => o.v + ' ' + o.n).join(', ') + ' ' + kind));
   } finally { lock.releaseLock(); }

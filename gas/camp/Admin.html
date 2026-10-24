@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261024-214658 -->
+<!-- build: 20261024-222325 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -1032,7 +1032,7 @@ function tile(r){const n=peak(r),part=r.days&&r.days.length&&r.days.length<allDa
   <span class="rno num">${esc(r.no)}${r.pub?' <small class="pill ok" style="padding:0 4px">공개</small>':''}</span><span class="rty">${esc(r.type||'타입 -')} · 정원 ${r.cap}</span>
   ${used(r)?`<b>${esc(sh(r.occ[0].v))}${r.occ.length>1?` <small>+ ${r.occ.slice(1).map(x=>esc(sh(x.v))).join(', ')}</small>`:''}</b><span class="rk">${esc(r.kind||'방종류 -')} · ${n}/${r.cap}${n>r.cap?' 넘침':''}${part?' · '+r.days.map(dayLab).join(','):''}</span>${r.pw?`<span class="rpw">비번 ${esc(r.pw)}</span>`:''}`:'<span class="rk">빈 방</span>'}</button>`}
 /* ---------- 방 편집 (A.ed = 고치는 중인 복사본) ---------- */
-function openEd(no){const r=R.rooms.find(x=>x.no===no);A.sel=no;A.ed=r?JSON.parse(JSON.stringify({no:r.no,kind:r.kind,cap:r.cap,pw:r.pw,memo:r.memo,pub:!!r.pub,days:r.days||[],occ:r.occ||[],type:r.type})):null}
+function openEd(no){const r=R.rooms.find(x=>x.no===no);A.sel=no;A.ed=r?JSON.parse(JSON.stringify({no:r.no,kind:r.kind,cap:r.cap,pw:r.pw,memo:r.memo,pub:!!r.pub,days:r.days||[],occ:r.occ||[],type:r.type,color:r.color||''})):null}
 function famList(){return famRooms()}
 function editor(){const e=A.ed,r=R.rooms.find(x=>x.no===A.sel);if(!e||!r)return '';const M=acads();const AL=Object.keys(M).sort((x,y)=>x.localeCompare(y,'ko'));
   const D=allDays(),rd=e.days.length?e.days:D,inOcc=v=>e.occ.some(o=>o.v===v);
@@ -1046,7 +1046,8 @@ function editor(){const e=A.ed,r=R.rooms.find(x=>x.no===A.sel);if(!e||!r)return 
       <label class="f">정원<input type="number" id="r_cap" min="1" max="30" value="${e.cap}"></label>
       <label class="f">공개 <span class="cap" style="margin:0">일괄 공개 전이라도 이 방만 선생님께 보이기</span><span class="row" style="gap:6px"><input type="checkbox" id="r_pub" ${e.pub?'checked':''}> 이 방 공개</span></label>
       <label class="f">비번 수신자<input type="text" id="r_pw" list="r_names" value="${esc(e.pw)}"></label>
-      <label class="f" style="grid-column:span 2">메모<input type="text" id="r_memo" value="${esc(e.memo)}"></label></div>
+      <label class="f">메모<input type="text" id="r_memo" value="${esc(e.memo)}"></label>
+      <label class="f">이 방 색 <span class="cap" style="margin:0">배치도 배정 칸</span><span class="row" style="gap:6px"><input type="checkbox" id="r_colOn" ${e.color?'checked':''}> 따로 정하기 <input type="color" id="r_col" value="${esc(e.color||'#ffd27a')}"></span></label></div>
     <datalist id="r_names">${pwNames.map(n=>`<option value="${esc(n)}">`).join('')}</datalist>
     <div class="row" style="gap:8px;flex-wrap:wrap"><b>사용 날짜</b>${D.map(d=>`<label class="row" style="gap:3px"><input type="checkbox" data-rday="${d}" ${rd.includes(d)?'checked':''}>${esc(dayLab(d))}</label>`).join('')}<span class="cap" style="margin:0">체크를 풀면 그날은 사용 안 함</span></div>
     <div class="tbl"><table class="pft occt"><thead><tr><th></th><th>구분</th><th>이름</th><th class="r">인원</th><th>쓰는 날짜</th><th>시간 메모</th><th></th></tr></thead><tbody>
@@ -1063,8 +1064,8 @@ function editor(){const e=A.ed,r=R.rooms.find(x=>x.no===A.sel);if(!e||!r)return 
       <div class="row" style="gap:6px;flex-wrap:nowrap"><input type="text" id="r_addP" list="r_ppl" placeholder="사람 이름 (예: 연수교사 · 교수)" style="flex:1"><datalist id="r_ppl">${ppl.map(p=>`<option value="${esc(p.n)}">${esc(p.t)} · ${esc(p.a)}</option>`).join('')}</datalist><button class="btn small" type="button" id="r_addName">＋ 사람</button></div>
       <div class="row" style="gap:6px;flex-wrap:nowrap"><select id="r_addF"><option value="">가족방 신청 가족 (${fams.length})</option>${fams.map(f=>`<option value="${esc(f.sb.no+'|'+f.rep.name)}">${esc(f.rep.name)} 가족 ${f.n}명 · ${esc(sh(f.sb.acad))}</option>`).join('')}</select><button class="btn small" type="button" id="r_addFam">＋ 가족</button></div>
     </div></div>`}
-function edRead(){const e=A.ed;if(!e)return;const g=id=>document.getElementById(id);if(!g('r_kind'))return;e.kind=g('r_kind').value;e.cap=+g('r_cap').value||e.cap;e.pub=g('r_pub').checked;e.pw=g('r_pw').value.trim();e.memo=g('r_memo').value.trim()}
-document.addEventListener('change',ev=>{if(S.tab!=='room'||!A.ed)return;const el=ev.target,d=el.dataset;
+function edRead(){const e=A.ed;if(!e)return;const g=id=>document.getElementById(id);if(!g('r_kind'))return;e.kind=g('r_kind').value;e.cap=+g('r_cap').value||e.cap;e.pub=g('r_pub').checked;e.pw=g('r_pw').value.trim();e.memo=g('r_memo').value.trim();e.color=g('r_colOn')&&g('r_colOn').checked?g('r_col').value:''}
+document.addEventListener('change',ev=>{if(S.tab==='room'&&ev.target.name==='rc_mode'){A.cMode=ev.target.value;A.cfgOpen=true;['kind','main'].forEach(k=>{const el=document.getElementById('rc_'+k);if(el)el.style.display=k===A.cMode?'':'none'});return}if(S.tab!=='room'||!A.ed)return;const el=ev.target,d=el.dataset;
   if(d.rday!==undefined){edRead();const D=allDays();let rd=A.ed.days.length?A.ed.days.slice():D.slice();const x=+d.rday;rd=el.checked?[...new Set([...rd,x])].sort((a,b)=>a-b):rd.filter(y=>y!==x);A.ed.days=rd.length===D.length?[]:rd;A.ed.occ.forEach(o=>{o.days=o.days.filter(y=>rd.includes(y));if(o.days.length===rd.length)o.days=[]});render();return}
   if(d.rod){edRead();const [i,x]=d.rod.split('|').map(Number);const o=A.ed.occ[i];const rd=A.ed.days.length?A.ed.days:allDays();let od=o.days.length?o.days.slice():rd.slice();od=el.checked?[...new Set([...od,x])].sort((a,b)=>a-b):od.filter(y=>y!==x);o.days=od.length===rd.length?[]:od;render();return}
   if(d.ro){edRead();const [i,f]=d.ro.split('|');const o=A.ed.occ[+i];if(f==='n')o.n=Math.max(0,+el.value||0);else if(f==='v'){o.v=el.value;if(o.k==='acad')o.a=el.value}else o[f]=el.value;render();return}
@@ -1105,34 +1106,56 @@ function vFreq(head){const all=(S.D.issues||[]).filter(x=>ROOM_REQ.includes(x.wh
     <div class="row" style="gap:8px;align-items:flex-start;flex-wrap:wrap"><select id="qs_${x.row}">${['미해결','해결 중','해결'].map(o=>`<option value="${o}" ${o===x.state?'selected':''}>${ST_LBL[o]}</option>`).join('')}</select>
       <textarea id="qr_${x.row}" rows="2" style="flex:1;min-width:220px" placeholder="올린 분께 보일 답변">${esc(x.reply)}</textarea><button class="btn small primary" type="button" data-qsave="${x.row}">저장</button></div>
     ${x.by?`<small class="faint">${esc(x.by)}${x.done?' · '+kday(x.done):''}</small>`:''}</div>`}).join('')||'<div class="panel hint">해당하는 방 요청 글이 없어요.</div>'}</div>`}
-/* ---------- 배치도: 「2026 겨울음악제 객실배치도」 시트 모양 그대로 + 올해 배정 ---------- */
-function vPlan(){const LY=ROOM_LAYOUT,st=LY.starts;if(A.lyF>=st.length)A.lyF=0;const i=A.lyF,r0=st[i],r1=i+1<st.length?st[i+1]:LY.rh.length;
-  const at={};LY.cells.forEach(x=>{if(x[0]>=r0&&x[0]<r1)at[x[0]+','+x[1]]=x});
-  const cover=new Set(),roomAt={},labelAt={};Object.entries(LY.rooms).forEach(([no,[r,c,lab]])=>{roomAt[r+','+c]=no;if(lab)labelAt[lab[0]+','+lab[1]]=no});
+/* ---------- 배치도 ----------
+   층 = 시트 「배치도 …」 탭에서 불러온 도면(있으면) · 없으면 2026 겨울 객실배치도 모양(기본)
+   배정 칸 색 = 방마다 따로 정한 색 → 색 기준(방종류별 / 메인별)의 색 */
+function builtinFloors(){const LY=ROOM_LAYOUT,st=LY.starts;return st.map((r0,i)=>{const r1=i+1<st.length?st[i+1]:LY.rh.length;const f=LY.fl[r0];
+  const rooms={};Object.entries(LY.rooms).forEach(([no,[r,c,lab]])=>{if(r>=r0&&r<r1)rooms[no]=[r-r0,c,lab?[lab[0]-r0,lab[1]]:null]});
+  return {name:f?'Stay '+f.split(' ')[0]:'Flex Tower',bld:f?'Stay Tower':'Flex Tower',fl:f?f.split(' ')[0]:'',cw:LY.cw,rh:LY.rh.slice(r0,r1),cells:LY.cells.filter(x=>x[0]>=r0&&x[0]<r1).map(x=>[x[0]-r0,...x.slice(1)]),rooms,builtin:true}})}
+function floors(){const B=builtinFloors(),I=(R.layout||[]).map(f=>Object.assign({},f,{name:f.tab.replace(/^배치도\s*/,'')}));
+  const out=B.map(b=>I.find(f=>f.bld===b.bld&&(f.fl===b.fl||(!b.fl&&b.bld==='Flex Tower')))||b);I.forEach(f=>{if(!out.includes(f))out.push(f)});
+  return out.filter((f,i)=>out.indexOf(f)===i)}
+const PAL=['#ffd27a','#bfe3c0','#c9d8ff','#f6c1d6','#d8c8ff','#ffe9b0','#b7e4ea','#f3d1a8','#d6ecef','#e4f0b5','#ffc9b9','#cfd8dc','#e1c6f5','#b9d9ff','#f5e1a4','#c8e6c9'];
+function mainsUsed(){return [...new Set(R.rooms.filter(used).map(r=>r.occ[0].v))].sort((a,b)=>a.localeCompare(b,'ko'))}
+function roomColor(q){if(q.color)return q.color;const C=(R.cfg&&R.cfg.colors)||{mode:'kind',kind:{},main:{}};
+  if(C.mode==='main'){const m=q.occ[0].v;if(C.main&&C.main[m])return C.main[m];const L=mainsUsed();return PAL[Math.max(0,L.indexOf(m))%PAL.length]}
+  return (C.kind&&C.kind[q.kind])||KCOL[q.kind]||'#eeeeee'}
+function vPlan(){const F=floors();if(A.lyF>=F.length)A.lyF=0;const Fl=F[A.lyF];
+  const at={};Fl.cells.forEach(x=>{at[x[0]+','+x[1]]=x});
+  const cover=new Set(),roomAt={},labelAt={};Object.entries(Fl.rooms).forEach(([no,[r,c,lab]])=>{roomAt[r+','+c]=no;if(lab)labelAt[lab[0]+','+lab[1]]=no});
   const byNo={};R.rooms.forEach(r=>byNo[r.no]=r);let html='';
-  for(let r=r0;r<r1;r++){let row='';
-    for(let c=0;c<LY.cw.length;c++){if(cover.has(r+','+c))continue;const x=at[r+','+c];if(!x){row+='<td></td>';continue}
-      const [,,rs0,cs,t,bg,fg,b,fs,bd,ha,va]=x;const rs=Math.min(rs0,r1-r);
+  for(let r=0;r<Fl.rh.length;r++){let row='';
+    for(let c=0;c<Fl.cw.length;c++){if(cover.has(r+','+c))continue;const x=at[r+','+c];if(!x){row+='<td></td>';continue}
+      const [,,rs0,cs0,t,bg,fg,b,fs,bd,ha,va]=x;const rs=Math.min(rs0,Fl.rh.length-r),cs=Math.min(cs0,Fl.cw.length-c);
       for(let rr=r;rr<r+rs;rr++)for(let cc=c;cc<c+cs;cc++)if(rr!==r||cc!==c)cover.add(rr+','+cc);
-      const bs=[...bd].map(n=>n==='0'?'none':`${n==='3'?3:1}px solid #333`);let text=t,bgc=bg,cls='',attr='';
+      const bs=[...String(bd||'0000')].map(n=>n==='0'?'none':`${n==='3'?3:n==='2'?2:1}px solid #333`);let text=t,bgc=bg,cls='',attr='';
       const rno=roomAt[r+','+c],lno=labelAt[r+','+c];
-      if(rno){const q=byNo[rno];cls='lyroom'+(A.sel===rno?' on':'');attr=` data-rroom="${rno}" title="${rno} 방 편집"`;if(q&&q.pub)text=rno+' *'}
-      if(lno){const q=byNo[lno];if(q&&used(q)){text=[q.occ.map(o=>sh(o.v)+(o.n?' '+o.n:'')).join('\n'),q.kind,`${peak(q)}/${q.cap}`,q.days&&q.days.length&&q.days.length<allDays().length?q.days.map(dayLab).join(','):''].filter(Boolean).join('\n');bgc=KCOL[q.kind]||'#eeeeee'}else{text='';bgc=''}cls+=' lylab';attr+=` data-rroom="${lno}"`}
-      const style=`${bgc?`background:${bgc};`:''}${fg&&fg!=='#000000'?`color:${fg};`:''}${b?'font-weight:700;':''}font-size:${Math.round(fs*1.1)}px;border-top:${bs[0]};border-right:${bs[1]};border-bottom:${bs[2]};border-left:${bs[3]};text-align:${ha==='C'?'center':ha==='R'?'right':'left'};vertical-align:${va==='T'?'top':va==='B'?'bottom':'middle'}`;
+      if(rno){const q=byNo[rno];cls='lyroom'+(A.sel===rno?' on':'');attr=` data-rroom="${rno}" title="${rno} 방 편집"`;if(q&&q.pub)text=t+' *'}
+      if(lno){const q=byNo[lno];if(q&&used(q)){text=[q.occ.map(o=>sh(o.v)+(o.n?' '+o.n:'')).join('\n'),q.kind,`${peak(q)}/${q.cap}`,q.days&&q.days.length&&q.days.length<allDays().length?q.days.map(dayLab).join(','):''].filter(Boolean).join('\n');bgc=roomColor(q)}else if(!Fl.builtin&&t){}else{text='';bgc=Fl.builtin?'':bg}cls+=' lylab';attr+=` data-rroom="${lno}"`}
+      const style=`${bgc?`background:${bgc};`:''}${fg&&!/^#0{6}$/.test(fg)?`color:${fg};`:''}${b?'font-weight:700;':''}font-size:${Math.round((+fs||10)*1.1)}px;border-top:${bs[0]};border-right:${bs[1]};border-bottom:${bs[2]};border-left:${bs[3]};text-align:${ha==='C'?'center':ha==='R'?'right':'left'};vertical-align:${va==='T'?'top':va==='B'?'bottom':'middle'}`;
       row+=`<td${rs>1?` rowspan="${rs}"`:''}${cs>1?` colspan="${cs}"`:''} class="${cls}"${attr} style="${style}">${esc(text).replace(/\n/g,'<br>')}</td>`}
-    html+=`<tr style="height:${LY.rh[r]}px">${row}</tr>`}
-  const names=st.map(r=>LY.fl[r]?'Stay '+LY.fl[r].split(' ')[0]:'Flex Tower');
-  return `<div class="row"><div class="seg" role="group" aria-label="층">${names.map((n,k)=>`<button type="button" data-rlyf="${k}" aria-pressed="${i===k}">${esc(n)}</button>`).join('')}</div>
-    <span class="legend cap" style="margin:0"><span class="sw cls"></span>클래스방<span class="sw fam"></span>가족방<span class="sw prof"></span>교수방<span class="sw etc"></span>그 외 · 방번호 옆 * = 공개</span></div>
+    html+=`<tr style="height:${Fl.rh[r]}px">${row}</tr>`}
+  const tabs=R.layoutTabs||[],res=A.lyRes;
+  return `<div class="row"><div class="seg" role="group" aria-label="층">${F.map((f,k)=>`<button type="button" data-rlyf="${k}" aria-pressed="${A.lyF===k}">${esc(f.name)}${f.builtin?'':' ·'}</button>`).join('')}</div></div>
+  <div class="panel"><div class="spread"><div><b>도면</b> <span class="hint">${Fl.builtin?'지금 층: 기본 도면(2026 겨울 객실배치도)':`지금 층: 시트 「${esc(Fl.tab)}」에서 불러옴 · ${esc(String(Fl.at||'').slice(0,16))}${Fl.borders==='guess'?' · 테두리는 추정':''}`} · 층 이름 옆 · = 시트에서 불러온 층</span></div>
+    <div class="row" style="gap:6px"><button class="btn small primary" type="button" id="r_lyImp" ${tabs.length?'':'disabled'}>도면 불러오기 (${tabs.length}탭)</button></div></div>
+    <p class="hint" style="margin:6px 0 0">접수 DB 시트에 층마다 「배치도 Stay 1F」처럼 <b>「배치도」로 시작하는 탭</b>을 만들어 그리면 돼요 (칸 크기 · 병합 · 색 · 테두리 그대로). 방번호(S101 꼴)를 적은 칸 <b>바로 아래 칸</b>에 올해 배정이 보여요. 탭 순서 = 층 버튼 순서.${tabs.length?' 지금 탭: '+tabs.map(esc).join(', '):''}</p>
+    ${res?`<div class="note" style="margin-top:8px">${res.map(x=>`<div><b>${esc(x.tab)}</b> · 방 ${x.rooms}개${x.added.length?` · 새로 더한 방: ${x.added.map(esc).join(', ')}`:''}${x.missing.length?` · <span class="pill due">도면에 없는 방 ${x.missing.length}</span> ${x.missing.map(m=>`<span class="row" style="gap:4px;display:inline-flex">${esc(m.no)}${m.used?` (배정 있음) → <select data-rmvto="${esc(m.no)}"><option value="">옮길 방</option>${R.rooms.filter(r=>!used(r)&&r.no!==m.no&&x.added.includes(r.no)).concat(R.rooms.filter(r=>!used(r)&&r.no!==m.no&&!x.added.includes(r.no)&&r.fl===m.fl)).slice(0,40).map(r=>`<option>${esc(r.no)}</option>`).join('')}</select><button class="btn small" type="button" data-rmv="${esc(m.no)}">배정 옮기기</button>`:''}</span>`).join(' ')}`:''}${x.borders==='guess'?' · 테두리를 읽지 못해 글 · 색이 있는 칸에 선을 그렸어요':''}</div>`).join('')}</div>`:''}</div>
   ${editor()}
-  <div class="sheetwrap"><table class="sheet"><colgroup>${LY.cw.map(w=>`<col style="width:${w}px">`).join('')}</colgroup><tbody>${html}</tbody></table></div>
-  <p class="cap" style="margin:0">「2026 겨울음악제 객실배치도」 시트의 칸 크기 · 병합 · 테두리를 그대로 옮겼어요. 방번호나 그 아래 칸을 누르면 그 방을 고쳐요.</p>`}
+  <div class="sheetwrap"><table class="sheet"><colgroup>${Fl.cw.map(w=>`<col style="width:${w}px">`).join('')}</colgroup><tbody>${html}</tbody></table></div>
+  <p class="cap" style="margin:0">방번호나 그 아래 칸을 누르면 그 방을 고쳐요. 방번호 옆 * = 공개된 방. 배정 칸 색은 「방 공개 · 메인 이름 · 색」에서 정해요.</p>`}
+function colorBox(){const C=(R.cfg&&R.cfg.colors)||{mode:'kind',kind:{},main:{}},mode=A.cMode||C.mode;const M=mainsUsed();
+  const pick=(t,k,v)=>`<label class="row" style="gap:4px;margin-right:10px"><input type="color" class="rc_col" data-t="${t}" data-k="${esc(k)}" value="${esc(v)}">${esc(k)}</label>`;
+  return `<div style="margin-top:10px"><div class="row" style="gap:10px"><b>배정 칸 색</b><label class="row" style="gap:4px"><input type="radio" name="rc_mode" value="kind" ${mode==='kind'?'checked':''}> 방종류별</label><label class="row" style="gap:4px"><input type="radio" name="rc_mode" value="main" ${mode==='main'?'checked':''}> 메인별 (학원 · 이름)</label><span class="cap" style="margin:0">방 하나만 다른 색은 방 편집의 「이 방 색」</span></div>
+    <div class="row" style="flex-wrap:wrap;margin-top:6px;${mode==='kind'?'':'display:none'}" id="rc_kind">${R.kinds.map(k=>pick('kind',k,(C.kind||{})[k]||KCOL[k]||'#eeeeee')).join('')}</div>
+    <div class="row" style="flex-wrap:wrap;margin-top:6px;${mode==='main'?'':'display:none'}" id="rc_main">${M.map((k,i)=>pick('main',k,(C.main||{})[k]||PAL[i%PAL.length])).join('')||'<span class="hint">아직 배정한 방이 없어요</span>'}</div></div>`}
 function pubPanel(){const c=R.cfg||{},np=R.rooms.filter(r=>r.pub&&used(r)).length,nu=R.rooms.filter(used).length;
-  return `<details class="panel" ${A.cfgOpen?'open':''}><summary><b>방 공개 · 메인 이름</b> <span class="hint">${c.pubAll?(c.live?'<span class="pill ok">일괄 공개 중</span>':`<span class="pill due">${esc(c.pubAt)} 공개 예정</span>`):'<span class="pill mute">일괄 공개 꺼짐</span>'} · 방마다 공개 ${np}/${nu}</span></summary>
+  return `<details class="panel" ${A.cfgOpen?'open':''}><summary><b>방 공개 · 메인 이름 · 색</b> <span class="hint">${c.pubAll?(c.live?'<span class="pill ok">일괄 공개 중</span>':`<span class="pill due">${esc(c.pubAt)} 공개 예정</span>`):'<span class="pill mute">일괄 공개 꺼짐</span>'} · 방마다 공개 ${np}/${nu}</span></summary>
     <div class="row" style="gap:10px;flex-wrap:wrap;margin-top:8px"><label class="row" style="gap:4px"><input type="checkbox" id="rc_all" ${c.pubAll?'checked':''}> 배정한 방 일괄 공개</label>
       <label class="row" style="gap:4px">공개 시각<input type="datetime-local" id="rc_at" value="${esc(String(c.pubAt||'').replace(' ','T'))}"></label><span class="cap" style="margin:0">비우면 저장하자마자 공개 · 선생님 화면 「내 시간표 › 우리 방」에 보여요</span></div>
     <div class="row" style="gap:6px;flex-wrap:wrap;margin-top:8px"><b>메인 이름 목록</b> <span class="cap" style="margin:0">학원 대신 메인으로 고를 수 있는 이름 (쉼표로)</span><input type="text" id="rc_names" value="${esc((c.names||[]).join(', '))}" style="flex:1;min-width:240px" placeholder="본부방, 애플방, 교수진"></div>
-    <div class="row" style="gap:6px;margin-top:8px"><button class="btn small primary" type="button" id="rc_save">공개 · 이름 저장</button><button class="btn small" type="button" id="rc_pubSel" ${A.ed?'':'disabled'}>지금 고른 방만 공개 ↔ 숨김</button></div></details>`}
+    ${colorBox()}
+    <div class="row" style="gap:6px;margin-top:8px"><button class="btn small primary" type="button" id="rc_save">공개 · 이름 · 색 저장</button><button class="btn small" type="button" id="rc_pubSel" ${A.ed?'':'disabled'}>지금 고른 방만 공개 ↔ 숨김</button></div></details>`}
 function view(){
   if(!R){if(!LOADING&&!ERR)load();return `<div class="panel">${ERR?`<span class="err">방 배정을 불러오지 못했어요 · ${esc(ERR)}</span> <button class="btn small" type="button" id="r_retry">다시</button>`:'방 배정을 불러오고 있어요…'}</div>`}
   if(A.v==='prof')A.v='list';
@@ -1156,7 +1179,7 @@ function view(){
     ${editor()}
     ${[...new Set(L.map(r=>r.fl))].map(f=>`<div class="floor"><span class="flab">${esc(A.bld)} ${esc(f)} · ${L.filter(r=>r.fl===f&&used(r)).length}/${L.filter(r=>r.fl===f).length}</span><div class="rgrid">${L.filter(r=>r.fl===f).map(tile).join('')}</div></div>`).join('')}</div>`}
 function save(clear){const e=A.ed;if(!e)return;edRead();
-  const x=clear?{no:e.no,occ:[],cap:e.cap,memo:e.memo}:{no:e.no,kind:e.kind,cap:e.cap,pw:e.pw,memo:e.memo,pub:e.pub,days:e.days,occ:e.occ};
+  const x=clear?{no:e.no,occ:[],cap:e.cap,memo:e.memo}:{no:e.no,kind:e.kind,cap:e.cap,pw:e.pw,memo:e.memo,pub:e.pub,days:e.days,occ:e.occ,color:e.color};
   if(!clear&&e.occ.length&&!e.kind){toast('방종류를 골라 주세요');return}
   if(!clear){const rd=e.days.length?e.days:allDays();const bad=rd.find(d=>e.occ.filter(o=>(o.days.length?o.days:rd).includes(d)).reduce((t,o)=>t+(+o.n||0),0)>e.cap);if(bad!=null){toast(dayLab(bad)+' 인원이 정원보다 많아요 · 정원을 고치거나 인원 · 날짜를 줄여 주세요');return}}
   run('roomSave',[x],d=>{R=d;A.sel='';A.ed=null;render();toast(clear?e.no+' 방을 비웠어요':e.no+' 방을 저장했어요')},m=>toast('저장하지 못했어요 · '+m))}
@@ -1182,9 +1205,15 @@ document.addEventListener('click',ev=>{if(S.tab!=='room')return;const b=ev.targe
   if(b.id==='r_save'){save(false);return}
   if(b.id==='r_clear'){save(true);return}
   if(b.id==='r_close'){A.sel='';A.ed=null;render();return}
+  if(b.id==='r_lyImp'){const tabs=(R.layoutTabs||[]).slice();if(!tabs.length)return;b.disabled=true;const out=[];let i=0;
+    const next=()=>{if(i>=tabs.length){A.lyRes=out;load();toast(`도면 ${out.length}탭을 불러왔어요`);return}b.textContent=`불러오는 중 ${i+1}/${tabs.length} · ${tabs[i]}`;
+      run('layoutImport',[tabs[i]],r=>{out.push(r);i++;next()},m=>{b.disabled=false;b.textContent='도면 불러오기';toast(tabs[i]+' 을(를) 불러오지 못했어요 · '+m)})};next();return}
+  if(d.rmv){const to=(document.querySelector(`[data-rmvto="${d.rmv}"]`)||{}).value;if(!to){toast('옮길 방을 골라 주세요');return}
+    run('roomMove',[d.rmv,to],r=>{R=r;(A.lyRes||[]).forEach(x=>x.missing.forEach(m=>{if(m.no===d.rmv)m.used=false}));render();toast(d.rmv+' 배정을 '+to+'(으)로 옮겼어요')},m=>toast('옮기지 못했어요 · '+m));return}
   if(b.id==='rc_pubSel'){if(!A.ed)return;edRead();A.ed.pub=!A.ed.pub;save(false);return}
   if(b.id==='rc_save'){const all=document.getElementById('rc_all').checked,at=(document.getElementById('rc_at').value||'').replace('T',' '),names=document.getElementById('rc_names').value.split(/[,，]/).map(x=>x.trim()).filter(Boolean);A.cfgOpen=true;
-    run('roomCfgSave',[{pubAll:all,pubAt:at,names}],r=>{R=r;render();toast(all?(at?at+'에 방이 공개돼요':'방을 일괄 공개했어요'):'일괄 공개를 껐어요 (방마다 공개한 방은 보여요)')},m=>toast('저장하지 못했어요 · '+m));return}});
+    const colors={mode:(document.querySelector('[name=rc_mode]:checked')||{}).value||'kind',kind:{},main:{}};document.querySelectorAll('.rc_col').forEach(x=>{colors[x.dataset.t][x.dataset.k]=x.value});
+    run('roomCfgSave',[{pubAll:all,pubAt:at,names,colors}],r=>{R=r;render();toast(all?(at?at+'에 방이 공개돼요':'방을 일괄 공개했어요'):'일괄 공개를 껐어요 (방마다 공개한 방은 보여요)')},m=>toast('저장하지 못했어요 · '+m));return}});
 return {view};
 })();
 
@@ -1317,7 +1346,7 @@ const ME=()=>(S.D&&S.D.me)||{sup:true,perms:{}};
 const permOf=k=>{const m=ME();if(m.sup)return '편집';if(k==='camp'||k==='staff'||k==='cons')return '';return (m.perms||{})[k]||''};
 const visTabs=()=>TABS.concat(SUP_TABS).filter(([k])=>permOf(k));
 const RO=()=>permOf(S.tab)==='보기';
-const WRITE_FN=/^(scholSave|adminConfirm|adminRejectReport|adminSaveEns|adminSaveProfs|adminRefund|adminSetIssue|schedSave|lessonSet|adminSetSetting|roomSave|conSave|campSave|staffSave|songEnSave|pvHideSave|roomCfgSave)$/;
+const WRITE_FN=/^(scholSave|adminConfirm|adminRejectReport|adminSaveEns|adminSaveProfs|adminRefund|adminSetIssue|schedSave|lessonSet|adminSetSetting|roomSave|conSave|campSave|staffSave|songEnSave|pvHideSave|roomCfgSave|layoutImport|roomMove)$/;
 const roBlock=fn=>WRITE_FN.test(fn)&&permOf(S.tab)!=='편집';
 const RO_MSG='보기만 할 수 있는 메뉴예요. 바꾸려면 총관리자에게 「편집」 권한을 받아 주세요.';
 

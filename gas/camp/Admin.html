@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261024-132531 -->
+<!-- build: 20261024-133010 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -403,10 +403,10 @@ let D=null,CHG=0,REV=0,DIRTY=false,SAVING=false,TIMER=null,LOADING=false,PEND=[]
 const A={tab:'grid',day:0,sel:null,swap:null,q:'',pq:'',filter:'zero',who:'',unav:{},req:{},log:[],target:{min:2,max:6},newSel:null,trainee:false};
 function run(fn,args,ok,fail){if(roBlock(fn)){fail&&fail(RO_MSG);return}google.script.run.withSuccessHandler(ok).withFailureHandler(e=>{const m=(e&&e.message)||String(e);fail&&fail(m)})[fn](S.tok,...args)}
 function load(){LOADING=true;ERR='';run('schedData',[],r=>{LOADING=false;applyData(r);render()},m=>{LOADING=false;ERR=m;render()})}
-function applyData(r){D={days:r.days||[],rooms:r.rooms||{},meals:r.meals||[],rows:r.rows||{},events:r.events||[],people:r.people||[]};
+function applyData(r){D={days:r.days||[],rooms:r.rooms||{},meals:r.meals||[],rows:r.rows||{},events:r.events||[],people:r.people||[],kinds:r.kinds||[]};
   A.unav=r.unav||{};A.req=r.req||{};A.target=r.target||{min:2,max:6};A.log=r.log||[];REV=r.rev||0;DIRTY=false;PEND=[];
   if(A.day>=D.days.length)A.day=0;ST=stats()}
-function payload(){return {rev:REV,days:D.days,rooms:D.rooms,meals:D.meals,rows:D.rows||{},events:D.events,people:D.people,unav:A.unav,req:A.req,target:A.target,log:PEND.slice()}}
+function payload(){return {rev:REV,kinds:D.kinds,days:D.days,rooms:D.rooms,meals:D.meals,rows:D.rows||{},events:D.events,people:D.people,unav:A.unav,req:A.req,target:A.target,log:PEND.slice()}}
 function save(){CHG++;DIRTY=true;clearTimeout(TIMER);TIMER=setTimeout(()=>flush(),1500);stat()}
 function flush(after){if(SAVING){setTimeout(()=>flush(after),500);return}if(!DIRTY){after&&after();return}
   SAVING=true;clearTimeout(TIMER);const body=payload();const sent=body.log.length,sentChg=CHG;stat();
@@ -458,7 +458,7 @@ function chip(e,p,i){const k=e.id+'|'+p.n;if(gone(p.n))return `<button type="but
   const sw=A.swap&&A.swap.eid===e.id&&A.swap.i===i;
   return `<button type="button" class="pchip ${bad?'bad':''} ${sw?'swapping':''} r-${p.r}" data-achip="${e.id}|${i}" title="${esc(LB(p.n))} · ${p.r}${bad?' · '+bad:''}"><span class="rl">${p.r}</span>${esc(short(NAME(p.n)))}${TAG(p.n)?`<small class="dtag">${esc(TAG(p.n))}</small>`:''}</button>`}
 function cellEv(e){const first=e.desc.slice(0,2).map(esc).join('<br>');
-  return `<div class="ev ${TCLS[e.type]||''} ${A.sel===e.id?'on':''}" data-aev="${e.id}"><div class="evh"><b>${esc(e.title)}</b><span class="num tm">${e.s}~${e.e}</span></div>${first?`<small>${first}</small>`:''}<div class="chips2">${e.ppl.map((p,i)=>chip(e,p,i)).join('')}</div></div>`}
+  return `<div class="ev ${TCLS[e.type]||''} ${A.sel===e.id?'on':''}" data-aev="${e.id}"><div class="evh"><b>${esc(e.title)}${e.sub?` <small>${esc(e.sub)}</small>`:''}</b><span class="num tm">${e.s}~${e.e}</span></div>${first?`<small>${first}</small>`:''}<div class="chips2">${e.ppl.map((p,i)=>chip(e,p,i)).join('')}</div></div>`}
 function vGrid(){
   const d=A.day, rooms=D.rooms[d]||[], evs=D.events.filter(e=>e.d===d), meals=D.meals.filter(m=>m.d===d);
   const extra=((D.rows||{})[d]||[]);
@@ -495,10 +495,11 @@ function editor(){
   const tsel=(id,v)=>hmIn(id,v,id==='a_edS'?'시작':'끝');
   return `<div class="picker edit"><div class="sec-h"><div><b>${D.days[e.d]} ${e.s}~${e.e} · ${esc(e.room)}</b> <span class="cap" style="margin:0">${esc(locOf(e.d,e.room))}</span></div>
       <div class="row"><button class="btn small" type="button" id="a_edDel">이 일정 지우기</button><button class="btn small" type="button" id="a_edClose">닫기</button></div></div>
-    <div class="g3"><label class="f" for="a_edT">이름 (반·행사)<input type="text" id="a_edT" value="${esc(e.title)}"></label>
-      <label class="f" for="a_edY">종류<select id="a_edY">${TYPES.map(t=>`<option ${t===e.type?'selected':''}>${t}</option>`).join('')}</select></label>
-      <div class="f"><span>시간 <span class="cap" style="margin:0">시 · 분</span></span><div class="row" style="flex-wrap:nowrap">${tsel('a_edS',e.s)}<span>~</span>${tsel('a_edE',e.e)}</div></div></div>
-    <div class="g2"><label class="f" for="a_edR">장소<select id="a_edR">${rooms.map(([r,l])=>`<option value="${esc(r)}" ${r===e.room?'selected':''}>${esc(r)} · ${esc(l)}</option>`).join('')}</select></label>
+    <div class="g3"><label class="f" for="a_edK">행사 종류 <span class="cap" style="margin:0">목록은 「날짜 · 장소」에서 고쳐요</span><select id="a_edK">${(D.kinds.some(k=>k.n===e.title)?[]:[{n:e.title,t:e.type,old:1}]).concat(D.kinds).map(k=>`<option value="${esc(k.n)}" data-t="${esc(k.t)}" ${k.n===e.title?'selected':''}>${esc(k.n)}${k.old?' (목록에 없음)':''}</option>`).join('')}</select></label>
+      <label class="f" for="a_edT">세부 이름 <span class="cap" style="margin:0">반 이름 등 · 없으면 비워 둠</span><input type="text" id="a_edT" value="${esc(e.sub||'')}" placeholder="예: Vn 1권 A반"></label>
+      <label class="f" for="a_edY">분류 <span class="cap" style="margin:0">색 · 기본 역할</span><select id="a_edY">${TYPES.map(t=>`<option ${t===e.type?'selected':''}>${t}</option>`).join('')}</select></label>
+</div>
+    <div class="g3"><div class="f"><span>시간 <span class="cap" style="margin:0">시 · 분</span></span><div class="row" style="flex-wrap:nowrap">${tsel('a_edS',e.s)}<span>~</span>${tsel('a_edE',e.e)}</div></div><label class="f" for="a_edR">장소<select id="a_edR">${rooms.map(([r,l])=>`<option value="${esc(r)}" ${r===e.room?'selected':''}>${esc(r)} · ${esc(l)}</option>`).join('')}</select></label>
       <label class="f" for="a_edD">설명 (한 줄에 하나 · 진도 범위 한/영 등)<textarea id="a_edD" rows="2">${esc(e.desc.join('\n'))}</textarea></label></div>
     <div class="f" style="display:grid;gap:6px"><span>사람</span>
       ${e.ppl.map((p,i)=>{const x=ST.st[p.n]||{roles:{}};const k=e.id+'|'+p.n;return `<div class="prow ${ST.clash.has(k)||ST.off.has(k)?'bad':''}"><select data-aprole="${i}" aria-label="역할">${ROLES.map(r=>`<option ${r===p.r?'selected':''}>${r}</option>`).join('')}</select>
@@ -548,8 +549,9 @@ function vWho(){
 function vLog(){return `<div class="sec-h"><div><h2>바꾼 기록</h2><p>시트 셀 메모와 「해결」 표시를 대신해요. 누가 언제 무엇을 바꿨는지 남아요.</p></div></div>
   <div class="panel">${A.log.length?`<div class="tbl"><table><thead><tr><th>시각</th><th>내용</th></tr></thead><tbody>${A.log.map(l=>`<tr><td class="num">${esc(l.at)}</td><td style="white-space:normal">${esc(l.t)}</td></tr>`).join('')}</tbody></table></div>`:'<p class="cap" style="margin:0">아직 바꾼 내용이 없어요. 프로그램표에서 사람을 바꾸거나 빼면 여기에 남아요.</p>'}</div>`}
 
+document.addEventListener('change',ev=>{if(S.tab!=='act'||ev.target.id!=='a_edK')return;const o=ev.target.selectedOptions[0],y=document.getElementById('a_edY');if(o&&y&&o.dataset.t)y.value=o.dataset.t});
 function readEditor(e){const g=id=>document.getElementById(id);if(!g('a_edT'))return;
-  e.title=g('a_edT').value.trim()||e.title;e.type=g('a_edY').value;e.room=g('a_edR').value;e.desc=g('a_edD').value.split('\n').map(x=>x.trim()).filter(Boolean);
+  e.title=g('a_edK').value||e.title;e.sub=g('a_edT').value.trim();e.type=g('a_edY').value;e.room=g('a_edR').value;e.desc=g('a_edD').value.split('\n').map(x=>x.trim()).filter(Boolean);
   const s=hmVal('a_edS'),en=hmVal('a_edE'); if(s&&en&&mins(en)>mins(s)){e.s=s;e.e=en}else if(s&&en)toast('끝나는 시간이 시작보다 늦어야 해요');}
 
 document.addEventListener('click',ev=>{if(S.tab!=='act'||!D)return;
@@ -566,8 +568,8 @@ document.addEventListener('click',ev=>{if(S.tab!=='act'||!D)return;
   if(b.id==='a_rowAdd'){const t=hmVal('a_rowT');A.rowT=t;const dd=A.day;D.rows=D.rows||{};const L=D.rows[dd]=D.rows[dd]||[];
     const has=D.events.some(e=>e.d===dd&&e.s===t)||L.includes(t);if(has){toast(`${t} 줄은 이미 있어요`);return}L.push(t);logIt(`시간 줄 추가: ${D.days[dd]} ${t}`);refresh();toast(`${D.days[dd]} ${t} 줄을 넣었어요 · 빈 칸의 +를 눌러 일정을 넣으세요`);return}
   if(d.arowdel){const L=(D.rows||{})[A.day]||[];const i=L.indexOf(d.arowdel);if(i>=0)L.splice(i,1);refresh();toast(`${d.arowdel} 줄을 뺐어요`);return}
-  if(d.anew){const [dd,room,t]=d.anew.split('|');const id='n'+Date.now();D.events.push({id,d:+dd,room,s:t,e:hhmm(mins(t)+50),title:'새 일정',desc:[],type:'레슨',ppl:[]});
-    logIt(`새 일정: ${D.days[+dd]} ${t} ${room}`);A.sel=id;refresh();setTimeout(()=>keepFocus('a_edT'));return}
+  if(d.anew){const [dd,room,t]=d.anew.split('|');const id='n'+Date.now();{const k0=D.kinds[0]||{n:'새 일정',t:'레슨'};D.events.push({id,d:+dd,room,s:t,e:hhmm(mins(t)+50),title:k0.n,sub:'',desc:[],type:k0.t,ppl:[]})}
+    logIt(`새 일정: ${D.days[+dd]} ${t} ${room}`);A.sel=id;refresh();setTimeout(()=>{const k=document.getElementById('a_edK');if(k)k.focus()});return}
   if(b.id==='a_edClose'){A.sel=null;render();return}
   if(b.id==='a_edSave'){const e=evById(A.sel);readEditor(e);logIt(`고침: ${D.days[e.d]} ${e.s} ${e.room} 「${e.title}」`);refresh();toast('저장했어요');return}
   if(b.id==='a_edDel'){const e=evById(A.sel);if(!b.dataset.sure){b.dataset.sure='1';b.textContent='정말 지울까요? 한 번 더 누르세요';return}
@@ -605,7 +607,21 @@ function vSet(){return `<div class="sec-h"><div><h2>날짜 · 장소</h2><p>캠�
   <div class="panel"><div class="row" style="gap:12px;align-items:flex-start">${D.days.map((x,i)=>`<label class="f" style="width:150px">${i+1}일째<input type="text" class="a_dayin" data-i="${i}" value="${esc(x)}"></label>`).join('')}
     <div class="row" style="gap:6px;align-self:end"><button class="btn small" type="button" id="a_dayAdd">＋ 날짜 추가</button>${D.days.length?`<button class="btn small ghost" type="button" id="a_dayDel">마지막 날짜 빼기</button>`:''}</div></div></div>
   <div class="g2">${D.days.map((x,i)=>`<div class="panel"><b>${esc(x)} 장소</b><textarea class="a_roomin" data-i="${i}" rows="${Math.max(4,(D.rooms[i]||[]).length+1)}" style="width:100%;font:inherit;padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)">${esc((D.rooms[i]||[]).map(r=>r[0]+(r[1]?' | '+r[1]:'')).join('\n'))}</textarea></div>`).join('')}</div>
-  <div class="row"><button class="btn small primary" type="button" id="a_setSave">날짜·장소 저장</button><span class="cap" style="margin:0">일정이 있는 장소를 빼면 그 일정은 표에서 안 보이니 먼저 옮겨 주세요.</span></div>`}
+  <div class="row"><button class="btn small primary" type="button" id="a_setSave">날짜·장소 저장</button><span class="cap" style="margin:0">일정이 있는 장소를 빼면 그 일정은 표에서 안 보이니 먼저 옮겨 주세요.</span></div>
+  <div class="panel"><div class="spread"><div><b>행사 종류</b> <span class="cap" style="margin:0">프로그램표 일정의 「행사 종류」 목록 · 분류는 칸 색과 사람을 넣을 때 기본 역할</span></div><button class="btn small" type="button" id="a_kindAdd">＋ 종류 추가</button></div>
+    <div class="tbl"><table class="pft"><thead><tr><th>#</th><th>행사 종류</th><th>분류</th><th class="r">쓰는 일정</th><th></th></tr></thead><tbody>
+    ${D.kinds.map((k,i)=>`<tr><td class="num">${i+1}</td><td><input type="text" class="a_kn" data-i="${i}" value="${esc(k.n)}" maxlength="40"></td><td><select class="a_kt" data-i="${i}">${TYPES.map(t=>`<option ${t===k.t?'selected':''}>${t}</option>`).join('')}</select></td><td class="r num">${D.events.filter(e=>e.title===k.n).length}</td>
+      <td><div class="row" style="gap:4px;flex-wrap:nowrap"><button class="btn small ghost" type="button" data-akup="${i}" ${i?'':'disabled'} aria-label="위로">▲</button><button class="btn small ghost" type="button" data-akdel="${i}">빼기</button></div></td></tr>`).join('')}</tbody></table></div>
+    ${(()=>{const other=[...new Set(D.events.map(e=>e.title).filter(t=>!D.kinds.some(k=>k.n===t)))];return other.length?`<p class="cap" style="margin:0">목록에 없는 이름을 쓰는 일정: ${other.slice(0,20).map(esc).join(', ')}${other.length>20?' …':''} · 일정을 눌러 행사 종류를 골라 주세요.</p>`:''})()}
+    <div class="row"><button class="btn small primary" type="button" id="a_kindSave">행사 종류 저장</button><span class="cap" style="margin:0">이름을 바꾸면 그 이름을 쓰던 일정도 같이 바뀌어요.</span></div></div>`}
+function readKinds(){const L=[];document.querySelectorAll('.a_kn').forEach(el=>{const i=+el.dataset.i,t=document.querySelector(`.a_kt[data-i="${i}"]`);L[i]={n:el.value.trim(),t:t?t.value:'레슨'}});return L}
+document.addEventListener('click',ev=>{if(S.tab!=='act'||!D)return;const b=ev.target.closest('button');if(!b)return;
+  if(b.id==='a_kindAdd'){D.kinds=readKinds().filter(Boolean);D.kinds.push({n:'',t:'레슨'});render();const ins=document.querySelectorAll('.a_kn');if(ins.length)ins[ins.length-1].focus();return}
+  if(b.dataset.akdel!==undefined){D.kinds=readKinds();const k=D.kinds[+b.dataset.akdel];const n=D.events.filter(e=>e.title===k.n).length;D.kinds.splice(+b.dataset.akdel,1);render();if(n)toast(`「${k.n}」 일정 ${n}개는 이름이 그대로 남아요 (목록에 없음)`);return}
+  if(b.dataset.akup!==undefined){D.kinds=readKinds();const i=+b.dataset.akup;[D.kinds[i-1],D.kinds[i]]=[D.kinds[i],D.kinds[i-1]];render();return}
+  if(b.id==='a_kindSave'){const old=D.kinds.slice(),L=readKinds();const names=L.map(k=>k.n).filter(Boolean);if(new Set(names).size!==names.length){toast('같은 이름이 두 번 있어요');return}
+    let ren=0;L.forEach((k,i)=>{const o=old[i];if(o&&o.n&&k.n&&o.n!==k.n)D.events.forEach(e=>{if(e.title===o.n){e.title=k.n;ren++}})});
+    D.kinds=L.filter(k=>k.n);logIt('행사 종류 고침: '+D.kinds.map(k=>k.n).join(', '));refresh();toast('행사 종류를 저장했어요'+(ren?` · 일정 ${ren}개 이름도 바꿈`:''));return}});
 document.addEventListener('click',ev=>{if(S.tab!=='act'||!D)return;const b=ev.target.closest('button');if(!b)return;
   if(b.id==='a_dayAdd'){D.days.push((D.days.length+1)+'일째');D.rooms[D.days.length-1]=JSON.parse(JSON.stringify(D.rooms[D.days.length-2]||[]));logIt('날짜 추가: '+D.days[D.days.length-1]);refresh();return}
   if(b.id==='a_dayDel'){const i=D.days.length-1;if(D.events.some(e=>e.d===i)){toast('그날 일정이 있어요. 일정을 먼저 지워 주세요');return}D.days.pop();delete D.rooms[i];logIt('날짜 빼기');refresh();return}

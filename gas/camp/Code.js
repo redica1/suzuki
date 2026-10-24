@@ -1,4 +1,4 @@
-/* build: 20261024-132531 */
+/* build: 20261024-133010 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -1184,8 +1184,11 @@ const MAPO = { acad: "마포스즈키", teachers: [], students: [], paid: {} }; 
  * 「교사일정」: 한 줄 = 일정 하나 (ID · 날짜(0부터) · 시작 · 끝 · 장소 · 이름 · 종류 · 설명 · 사람(JSON) · 사람(이름, 보기용))
  * 「일정설정」: 항목 · 값(JSON) — days · rooms · meals · rows · people · unav · req · target · rev
  * 「일정기록」: 일시 · 관리자 · 내용 */
-const ACT_HEAD = ['ID', '날짜', '시작', '끝', '장소', '이름', '종류', '설명', '사람', '사람(이름)'];
-const ACT_KEYS = ['days', 'rooms', 'meals', 'rows', 'people', 'unav', 'req', 'target', 'rev'];
+const ACT_HEAD = ['ID', '날짜', '시작', '끝', '장소', '이름', '종류', '설명', '사람', '사람(이름)', '세부'];   // 이름 = 행사 종류(관리자 목록), 세부 = 반 이름 등
+/** 행사 종류 (관리자가 「날짜 · 장소」에서 고침) · t = 분류(색·기본 역할) */
+const ACT_KINDS = [{ n: '그룹레슨', t: '레슨' }, { n: '교사연수', t: '교사연수' }, { n: '마스터클래스', t: '특별수업' }, { n: '리허설', t: '리허설' }, { n: '웰컴콘서트', t: '음악회' }, { n: '앙상블콘서트', t: '음악회' }, { n: 'Orch A', t: '오케스트라' }, { n: 'Orch B', t: '오케스트라' }];
+const evName_ = e => e.title + (e.sub ? ' · ' + e.sub : '');
+const ACT_KEYS = ['days', 'rooms', 'meals', 'rows', 'people', 'unav', 'req', 'target', 'kinds', 'rev'];
 function actSheets_() {
   const ss = SpreadsheetApp.getActive();
   const mk = (n, h) => { let sh = ss.getSheetByName(n); if (!sh) { sh = ss.insertSheet(n); sh.appendRow(h); } return sh; };
@@ -1201,7 +1204,7 @@ function actEvents_() {
   actSheets_();
   return rows_(SH.ACT).filter(r => String(r['ID'] || '')).map(r => {
     let ppl = []; try { ppl = JSON.parse(String(r['사람'] || '[]')); } catch (x) {}
-    return { id: String(r['ID']), d: +r['날짜'] || 0, s: hm_(r['시작']), e: hm_(r['끝']), room: String(r['장소'] || ''), title: String(r['이름'] || ''), type: String(r['종류'] || '레슨'),
+    return { id: String(r['ID']), d: +r['날짜'] || 0, s: hm_(r['시작']), e: hm_(r['끝']), room: String(r['장소'] || ''), title: String(r['이름'] || ''), sub: String(r['세부'] || ''), type: String(r['종류'] || '레슨'),
       desc: String(r['설명'] || '').split('\n').map(x => x.trim()).filter(Boolean), ppl: Array.isArray(ppl) ? ppl : [] };
   });
 }
@@ -1233,7 +1236,7 @@ function schedData(token) {
   adm_(token);
   const c = actCfg_();
   const log = rows_(SH.ACTLOG).slice(-300).reverse().map(r => ({ at: String(r['일시'] instanceof Date ? Utilities.formatDate(r['일시'], TZ, 'M/d HH:mm') : r['일시']).replace(/^\d{4}-0?(\d+)-0?(\d+)/, '$1/$2'), t: (r['관리자'] ? r['관리자'] + ' · ' : '') + String(r['내용'] || '') }));
-  return { days: c.days || [], rooms: c.rooms || {}, meals: c.meals || [], rows: c.rows || {}, people: actPeople_(c.people), unav: c.unav || {}, req: c.req || {}, target: c.target || { min: 2, max: 6 }, rev: +c.rev || 0, events: actEvents_(), log };
+  return { days: c.days || [], rooms: c.rooms || {}, meals: c.meals || [], rows: c.rows || {}, people: actPeople_(c.people), unav: c.unav || {}, req: c.req || {}, target: c.target || { min: 2, max: 6 }, kinds: Array.isArray(c.kinds) && c.kinds.length ? c.kinds : ACT_KINDS, rev: +c.rev || 0, events: actEvents_(), log };
 }
 function schedSave(token, b) {
   const a = adm_(token); need_(a, 'act');
@@ -1249,12 +1252,13 @@ function schedSave(token, b) {
     const rows = b.events.map(e => {
       if (!okT(e.s) || !okT(e.e)) throw new Error('시간 형식이 잘못된 일정이 있어요: ' + t(e.title, 30));
       const ppl = (e.ppl || []).map(p => ({ n: t(p.n, 40), r: t(p.r, 10) })).filter(p => p.n);
-      return [t(e.id, 40), +e.d || 0, "'" + e.s, "'" + e.e, t(e.room, 60), t(e.title, 120), t(e.type, 20), (e.desc || []).map(x => t(x, 200)).join('\n'), JSON.stringify(ppl), ppl.map(p => ((P[p.n] || {}).n || p.n) + '(' + p.r + ')').join(', ')];
+      return [t(e.id, 40), +e.d || 0, "'" + e.s, "'" + e.e, t(e.room, 60), t(e.title, 120), t(e.type, 20), (e.desc || []).map(x => t(x, 200)).join('\n'), JSON.stringify(ppl), ppl.map(p => ((P[p.n] || {}).n || p.n) + '(' + p.r + ')').join(', '), t(e.sub, 120)];
     });
     const last = sh.ev.getLastRow();
+    sh.ev.getRange(1, 1, 1, ACT_HEAD.length).setValues([ACT_HEAD]);   // 머리줄 (「세부」 칸이 없던 시트도 맞춤)
     if (last > 1) sh.ev.getRange(2, 1, last - 1, ACT_HEAD.length).clearContent();
     if (rows.length) sh.ev.getRange(2, 1, rows.length, ACT_HEAD.length).setValues(rows);
-    const val = { days: b.days.map(x => t(x, 30)), rooms: b.rooms || {}, meals: b.meals || [], rows: b.rows || {}, people: (b.people || []).map(p => ({ id: t(p.id, 40), n: t(p.n, 60), acad: t(p.acad, 120), inst: t(p.inst, 20), kind: t(p.kind, 10), tid: p.tid ? t(p.tid, 20) : undefined })), unav: b.unav || {}, req: b.req || {}, target: b.target || { min: 2, max: 6 }, rev: (+c.rev || 0) + 1 };
+    const val = { days: b.days.map(x => t(x, 30)), rooms: b.rooms || {}, meals: b.meals || [], rows: b.rows || {}, people: (b.people || []).map(p => ({ id: t(p.id, 40), n: t(p.n, 60), acad: t(p.acad, 120), inst: t(p.inst, 20), kind: t(p.kind, 10), tid: p.tid ? t(p.tid, 20) : undefined })), unav: b.unav || {}, req: b.req || {}, target: b.target || { min: 2, max: 6 }, kinds: (Array.isArray(b.kinds) ? b.kinds : ACT_KINDS).map(k => ({ n: t(k.n, 40).trim(), t: t(k.t, 20) || '레슨' })).filter(k => k.n).slice(0, 60), rev: (+c.rev || 0) + 1 };
     const cur = rows_(SH.ACTCFG);
     ACT_KEYS.forEach(k => {
       const s = JSON.stringify(val[k]); if (s.length > 45000) throw new Error(k + ' 내용이 너무 길어요.');
@@ -1275,7 +1279,7 @@ function lessons_() { lesSheet_(); return rows_(SH.LES).filter(r => String(r['�
 function lessonData(token) {
   adm_(token);
   let days = []; try { days = actCfg_().days || []; } catch (x) {}
-  let acts = []; try { acts = actEvents_().map(e => ({ d: e.d, s: e.s, e: e.e, room: e.room, title: e.title, ppl: e.ppl })); } catch (x) {}
+  let acts = []; try { acts = actEvents_().map(e => ({ d: e.d, s: e.s, e: e.e, room: e.room, title: evName_(e), ppl: e.ppl })); } catch (x) {}
   let people = []; try { people = (actCfg_().people || []).map(p => ({ id: p.id, n: p.n })); } catch (x) {}
   let open = false; try { open = setting_('시간표 공개') === '예'; } catch (x) {}
   return { days, rows: lessons_().map(x => ({ d: x.d, t: x.t, pr: x.pr, pid: x.pid })), acts, people, open };
@@ -1321,7 +1325,7 @@ function myTimetable(token) {
   const roomLoc = (d, r) => (((c.rooms || {})[d] || []).find(x => x[0] === r) || [])[1] || '';
   const mine = [];
   actEvents_().forEach(e => { const me = e.ppl.find(p => meIds.includes(p.n)); if (!me) return;
-    mine.push({ d: e.d, t: e.s, e: e.e, what: me.r, title: e.title, where: e.room, loc: roomLoc(e.d, e.room), with: e.ppl.filter(p => !meIds.includes(p.n)).map(p => pn(p.n) + '(' + p.r + ')').join(', ') }); });
+    mine.push({ d: e.d, t: e.s, e: e.e, what: me.r, title: evName_(e), where: e.room, loc: roomLoc(e.d, e.room), with: e.ppl.filter(p => !meIds.includes(p.n)).map(p => pn(p.n) + '(' + p.r + ')').join(', ') }); });
   const prof = profs_().find(p => p.on && p.lesson && nm(p.name) === nm(u.name));
   const subs = loadSubs_(); const byPid = {};
   subs.forEach(sb => sb.ppl.forEach(p => { if (p.status !== '취소') { const k = p.id.slice(sb.no.length + 1); byPid[p.id] = { p, sb, i: (sb.form && sb.form.info && sb.form.info[k]) || {} }; } }));
@@ -1401,7 +1405,7 @@ function conGet(token) {
   const c = actCfg_();
   let concerts = Array.isArray(c.concerts) ? c.concerts : null;
   if (!concerts) concerts = actEvents_().filter(e => e.type === '오후음악회').sort((a, b) => a.d - b.d || a.s.localeCompare(b.s) || a.room.localeCompare(b.room))
-    .map(e => ({ id: 'c' + e.id, name: e.title + ' ' + String((c.days || [])[e.d] || '').replace(/\(.\)/, ''), d: e.d, cs: e.s, rs: '', room: e.room, min: 5 }));
+    .map(e => ({ id: 'c' + e.id, name: evName_(e) + ' ' + String((c.days || [])[e.d] || '').replace(/\(.\)/, ''), d: e.d, cs: e.s, rs: '', room: e.room, min: 5 }));
   return { days: c.days || [], concerts, order: c.conorder || {}, rev: +c.conrev || 0 };
 }
 function conSave(token, b) {

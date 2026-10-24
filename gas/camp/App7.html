@@ -1,4 +1,66 @@
-/* build: 20261024-104106 */
+/* build: 20261024-105903 */
+    const names=sb.ppl.filter(p=>sel.includes(p.id)).map(p=>p.name);
+    if(paid){const f=document.getElementById('cxDoc'),req={no:sb.no,acad:sb.acad,names,ids:sel,why,amt,rule:`${r.label} · ${r.rate?r.rate+'% 환불':'환불 없음'}`,bank:(document.getElementById('cxBank')||{}).value||'',acct:((document.getElementById('cxAcct')||{}).value||'').replace(/[^\d-]/g,''),holder:((document.getElementById('cxHolder')||{}).value||'').trim()};
+      const go=file=>{req.file=file;api('cancelReq',[req],()=>{})};
+      if(f&&f.files&&f.files[0]){const fl=f.files[0];const rd=new FileReader();rd.onload=()=>go({name:fl.name,type:fl.type,data:String(rd.result).split(',')[1]});rd.readAsDataURL(fl)}else go(null)}
+    sb.ppl.forEach(p=>{if(sel.includes(p.id)){p.status=isPaid(p)?'취소요청':'취소';p.cxReqAt=nowStamp();if(!isPaid(p))p.cxWhy=why}});subSave();
+    delete S.cx[sb.no];S.cxOpen='';S.cxReason='';S.cxDone={names,amt,paid};render();window.scrollTo({top:0});toast(paid?'취소 요청을 보냈어요':'취소했어요');return}
+  if(b.id==='homeBtn'){S.view='form';if(S.step===6)Object.assign(S,{acad:'',verified:false,picked:{},extra:[],fam:[],info:{},room:{},join:{},ens:{on:false},agree:false});go(1);return}
+  if(d.tab){S.tab=d.tab;S.rq='';render();return}
+  if(d.ptab){S.ptab=d.ptab;S.rq='';render();return}
+  if(b.id==='addCart'){const L=selIds();const at=nowStamp();L.forEach(id=>{S.picked[id]=true;if(!S.cartAt[id])S.cartAt[id]=at});S.sel={};render();toast(`${L.length}명을 신청 명단에 추가했어요`);return}
+  if(d.uncart){const id=d.uncart;S.picked[id]=false;delete S.cartAt[id];delete S.sel[id];delete S.room[id];delete S.join[id];Object.keys(S.join).forEach(j=>{if(S.join[j]===id)delete S.join[j]});const n=S.fam.filter(f=>f.link===id).length;S.fam=S.fam.filter(f=>f.link!==id);render();toast(n?`명단에서 뺐어요 · 가족 ${n}명도 함께`:'명단에서 뺐어요');return}
+  if(d.pick){if(S.picked[d.pick]){render();return} S.sel[d.pick]=b.checked; const ab=document.getElementById('addCart'); if(ab) ab.outerHTML=addBtn(); return}
+  if(false){S.picked[d.pick]=b.checked; if(!b.checked){delete S.room[d.pick];delete S.join[d.pick];Object.keys(S.join).forEach(j=>{if(S.join[j]===d.pick)delete S.join[j]});const n=S.fam.filter(f=>f.link===d.pick).length; S.fam=S.fam.filter(f=>f.link!==d.pick); if(n)toast(`가족 ${n}명도 함께 뺐어요`)} render();return}
+  if(d.ext){const [k,v]=d.ext.split('|');const i=S.info[k];i.ext=v==='1';if(!i.ext){i.lessons=0;i.mc=[];i.p1='';i.p2=''}render();return}
+  if(d.gender){const [k,g]=d.gender.split('|');S.info[k].gender=g;render();return}
+  if(d.settype){const [k,v]=d.settype.split('|');const p=people().find(x=>x.key===k);if(p){info(p).type=v;render();toast(`${p.name}: ${v==='회원의 악기하는 자녀'?'악기하는 교사자녀':v} 금액으로 계산해요`)}return}
+  if(d.roomck&&b.matches('input')){if(b.checked)S.room[d.roomck]=true;else delete S.room[d.roomck];render();const tm=teams().find(x=>x.rep.key===d.roomck);toast(b.checked?(tm&&tm.fee?`가족방 ${tm.n}명 · ${won(tm.fee)}을 청구에 더했어요`:'가족방을 신청했어요 · 4명이라 추가 비용이 없어요'):'가족방 신청을 뺐어요');return}
+  if(d.sibpick!==undefined){S.sibOpen=S.sibOpen===d.sibpick?'':d.sibpick;render();return}
+  if(d.sib){const [a,b]=d.sib.split('|');const h=headOf(a);S.join[b]=h;delete S.room[b];sibsOf(b).forEach(j=>S.join[j]=h);S.sibOpen='';
+    const pp=people(),hp=pp.find(p=>p.key===h)||{},bp=pp.find(p=>p.key===b)||{};
+    if(hp.kind==='teacher'){const ib=info(bp);ib.type='회원의 악기하는 자녀'}
+    render();toast(hp.kind==='teacher'?`${bp.name}을(를) ${hp.name} 선생님의 자녀로 연결했어요 · 악기하는 교사자녀 참가비로 바뀌고 가족방은 한 방으로 계산돼요`:`${bp.name}을(를) ${hp.name}의 형제로 연결했어요 · 가족방은 한 방으로 계산돼요`);return}
+  if(d.unsib){const h=S.join[d.unsib];const hp=people().find(p=>p.key===h)||{};delete S.join[d.unsib];
+    if(hp.kind==='teacher'&&S.info[d.unsib]&&S.info[d.unsib].type==='회원의 악기하는 자녀')S.info[d.unsib].type='학생';render();toast('연결을 풀었어요');return}
+  if(d.addfam){const [k,t]=d.addfam.split('|');const id='f'+Date.now();S.fam.push({id,name:'',type:t,link:k});render();const n=document.getElementById('fn_'+id)||document.getElementById('fc_'+id);n&&n.focus();toast(`${FAM_SHORT[t]}를 추가했어요. 이름을 넣어 주세요`);return}
+  if(b.id==='allPaid'){const r=roster(),me=S.user.name;[...r.students.filter(x=>!S.mine||x.teacher===me),...(S.mine?[]:r.teachers)].forEach(x=>{if(x.paid&&!x.booked&&!S.picked[x.id])S.sel[x.id]=true});render();toast('회비 납부한 사람을 모두 선택했어요');return}
+  if(b.id==='openNew'){S.showNew=true;render();document.getElementById('nN').focus();return}
+  if(b.id==='cancelNew'){S.showNew=false;render();return}
+  if(b.id==='addNew'){
+    const gv=id=>{const e=document.getElementById(id);return e?e.value:''};
+    const n=gv('nN').trim(), y=+gv('nB'), ins=gv('nI'), sy=gv('nSy'), sm=gv('nSm'), st=sy&&sm?`${sy}.${sm}`:'', tc=gv('nT').trim(), G=isGuest();
+    if(!n||!(y>1990&&y<=2026)||(!tc&&!G)){document.getElementById('nErr').textContent=G?'아이 이름과 출생연도(4자리)를 넣어 주세요.':'이름, 출생연도(4자리), 담당 교사를 넣어 주세요.';return}
+    if(G&&S.extra.some(x=>x.name===n&&+x.birth===y)){document.getElementById('nErr').textContent='이미 넣은 아이예요.';return}
+    {const xid='x'+Date.now();S.cartAt[xid]=nowStamp();S.extra.push({id:xid,name:n,birth:y,inst:ins,start:st||'-',teacher:tc})}S.showNew=false;render();toast(G?`${n}을(를) 넣었어요`:`${n} 학생을 추가했어요 · 연회비 3만 원 추가`);return}
+  if(d.rmx){delete S.room[d.rmx];delete S.join[d.rmx];S.extra=S.extra.filter(x=>x.id!==d.rmx);S.fam=S.fam.filter(f=>f.link!==d.rmx);delete S.info[d.rmx];render();return}
+  if(b.id==='openFam'){S.showFam=true;render();return}
+  if(b.id==='cancelFam'){S.showFam=false;render();return}
+  if(b.id==='addFam'){
+    const n=document.getElementById('fN').value.trim(), ty=document.getElementById('fT').value, l=document.getElementById('fL');
+    if(!n){document.getElementById('fErr').textContent='이름을 넣어 주세요.';return}
+    S.fam.push({id:'f'+Date.now(),name:n,type:ty,link:l.value,linkName:l.options[l.selectedIndex].text});S.showFam=false;render();return}
+  if(d.rmf){const fm=S.fam.find(x=>x.id===d.rmf);S.fam=S.fam.filter(x=>x.id!==d.rmf);if(fm&&!S.fam.some(x=>x.link===fm.link))delete S.room[fm.link];delete S.info[d.rmf];render();return}
+  if(d.seg){const i=S.info[d.k];i.pref=d.v==='1';if(!i.pref){i.p1='';i.p2=''}render();return}
+  if(d.mc!==undefined&&b.matches('input')){const i=S.info[d.k];i.mc=b.checked?[...i.mc,d.mc]:i.mc.filter(x=>x!==d.mc);render();return}
+  if(d.other&&b.matches('input')){const i=S.info[d.other];i.other=b.checked;if(b.checked)i.song='';render();return}
+  if(d.ens&&b.matches('input[type=checkbox]')){S.ens[d.ens]=b.checked;return}
+  if(d.enson){if(d.enson!=='1'&&S.editNo&&S.ens.on&&teamMates(S.editNo).length){toast('함께하는 학원이 있어서 대표 신청을 취소할 수 없어요',true);return}S.ens.on=d.enson==='1';S.ens.member=d.enson==='m';if(S.ens.member&&!S.ens.joinNo){const t=teamOf(S.acad);if(t&&t.rep!==S.acad)S.ens.joinNo=t.no}render();return}
+  if(d.copy){copyText(d.copy);return}
+  if(d.cxwd){const [no,id]=d.cxwd.split('|');const sb=MY_SUBS.find(x=>x.no===no),p=sb&&sb.ppl.find(q=>q.id===id);
+    askBox('취소 요청을 거둘까요?',`<b>${esc(p?p.name:'')}</b>의 취소 요청을 거두고 다시 참가로 돌려요. 같은 요청에 함께 든 사람도 함께 돌아가요. 운영진이 이미 「환불 접수」를 했으면 거둘 수 없어요.`,'취소 요청 철회',()=>api('withdrawCx',[no,id],r=>{applyBundle(r);render();toast('취소 요청을 거뒀어요 · 다시 참가예요',true)},null,'처리하고 있어요…'));return}
+  if(d.rejoin){const [no,id]=d.rejoin.split('|');const sb=MY_SUBS.find(x=>x.no===no),p=sb&&sb.ppl.find(q=>q.id===id);if(!p)return;
+    askBox('다시 참가할까요?',`<b>${esc(p.name)}</b>을(를) 원래 자리로 되돌려요. 금액은 처음 접수한 차수(${esc(sb.round)}) 그대로예요. 입금이 필요하면 다시 입금 신고해 주세요.`,'다시 참가',()=>{p.status='정상';delete p.cxReqAt;subSave();render()});return}
+  if(d.ovr){const [no,id]=d.ovr.split('|');ovBox(no,[id]);return}
+  if(d.prp){S.prp=S.prp===d.prp?'':d.prp;render();return}
+  if(d.prpgo){const [no,id]=d.prpgo.split('|');const sb=MY_SUBS.find(x=>x.no===no),p=sb.ppl.find(q=>q.id===id);const g=k=>document.getElementById(k).value.trim();const er=m=>{document.getElementById('prpErr').textContent=m};
+    const name=g('prpN'),date=g('prpD'),amt=+g('prpA').replace(/\D/g,''),memo=g('prpM');
+    if(!name)return er('입금자명을 넣어 주세요.');if(name.length>20)return er('입금자명은 20자까지예요.');if(!date)return er('입금일을 선택해 주세요.');if(date>S.today)return er('입금일이 오늘보다 뒤예요.');if((S.bank||{}).from&&date<S.bank.from)return er('입금일을 확인해 주세요.');if(!amt)return er('입금 금액을 넣어 주세요.');if(amt!==dueOf(p)&&!memo)return er('청구액과 금액이 달라요. 메모를 적어 주세요.');
+    let rf=null;if(amt>dueOf(p)){rf={bank:g('prpRfB'),acct:g('prpRfA').replace(/[^\d-]/g,''),holder:g('prpRfH')};if(!rf.bank||rf.acct.replace(/-/g,'').length<6||!rf.holder)return er('더 낸 금액을 돌려받을 은행·계좌번호·예금주를 적어 주세요.')}
+    if(p.pay==='신고'&&p.rep){const r=p.rep;r.rows=r.rows||Object.fromEntries(r.ids.map(i=>[i,{name:r.name,date:r.date,a:i===p.id?r.amt:0}]));r.rows[p.id]={name,date,a:amt};if(rf)r.refund=rf;r.amt=r.ids.reduce((t,i)=>t+(+(r.rows[i]||{}).a||0),0);r.name=r.rows[r.ids[0]].name;r.date=r.rows[r.ids[0]].date;if(memo)r.memo=memo;r.edited=nowStamp();
+      MY_SUBS.forEach(x=>x.ppl.forEach(q=>{if(q.rep&&q.rep.id===r.id)q.rep=r}));S.prp='';subSave();render();toast(`${p.name} 입금 신고를 고쳤어요 · ${kday(date)} ${won(amt)}`);return}
+    const rows={[p.id]:{name,date,a:amt}};const rp={id:'R'+Date.now().toString(36),name,date,amt,memo,ids:[p.id],rows};if(rf)rp.refund=rf;p.pay='신고';p.rep=rp;delete S.rpRow[p.id];S.prp='';S.afterSave=()=>repDone([p.id]);subSave();render();toast(`${p.name} 입금 신고를 보냈어요 · ${kday(date)} ${won(amt)}`);return}
+  if(d.prpdel){const [no,id]=d.prpdel.split('|');const sb=MY_SUBS.find(x=>x.no===no),p=sb.ppl.find(q=>q.id===id);
     askBox('입금 신고를 취소할까요?',`<b>${esc(p.name)}</b>의 입금 신고를 지워요. 다시 「입금 신고」로 새로 낼 수 있어요.`,'신고 취소',()=>{const r=p.rep;r.ids=r.ids.filter(i=>i!==p.id);if(r.rows)delete r.rows[p.id];r.amt=r.ids.reduce((t,i)=>t+(+((r.rows||{})[i]||{}).a||0),0);
       MY_SUBS.forEach(x=>x.ppl.forEach(q=>{if(q.rep&&q.rep.id===r.id)q.rep=r}));p.pay='전';delete p.rep;S.prp='';subSave();render();toast(`${p.name} 입금 신고를 취소했어요`)});return}
   if(d.atab){S.atab=d.atab;render();return}
@@ -22,7 +84,12 @@ document.addEventListener('change',e=>{if(e.target.id==='qWhere'){S.qWhere=e.tar
   if(el.id==='cxWhy'){S.cxReason=el.value;return}
 });
 const fmtPhone=v=>{let d=String(v).replace(/\D/g,'');if(/^010010/.test(d))d=d.slice(3);d=d.slice(0,11);return d.length<4?d:d.length<8?d.slice(0,3)+'-'+d.slice(3):d.slice(0,3)+'-'+d.slice(3,7)+'-'+d.slice(7)};
-document.addEventListener('input',e=>{
+const consEv=e=>{
+  if(e.target.id==='consAll'){const v=e.target.checked;S.cons={};consItems().forEach(x=>S.cons[x.id]=v);S.verr='';render();return}
+  if(e.target.dataset&&e.target.dataset.cons){S.cons=S.cons||{};S.cons[e.target.dataset.cons]=e.target.checked;const a=document.getElementById('consAll');if(a)a.checked=consAll();return}
+  return true};
+document.addEventListener('change',consEv);
+document.addEventListener('input',e=>{if(e.target.type==='checkbox'&&(e.target.id==='consAll'||(e.target.dataset&&e.target.dataset.cons)))return;
   {const el=e.target;if(/^q(Name|Phone|Acad|Text)$/.test(el.id)){S[el.id]=el.value;return}}
   if(e.target.id==='lgEm'){const el=e.target;let d=el.value.replace(/\D/g,'');/* 습관대로 010부터 쳐도 됨: 0·01 은 잠깐 두고, 010 이 되면 뗌 (010 뒷자리는 0·1로 시작하지 않음) */if(/^01?$/.test(d)){S.lgEm='010-';return}if(d.startsWith('010'))d=d.slice(3);d=d.slice(0,8);const f=d.length>4?d.slice(0,4)+'-'+d.slice(4):d;if(f!==el.value){el.value=f;el.setSelectionRange(f.length,f.length)}S.lgEm='010-'+f;return}
   if(e.target.id==='prpA'){const box=document.getElementById('prpRf');if(box)box.hidden=!((+e.target.value.replace(/\D/g,'')||0)>(+e.target.dataset.due||0))}
@@ -73,6 +140,8 @@ document.addEventListener('toggle',e=>{if(e.target.id==='ensBox')S.ens.on=e.targ
   const b=document.createElement('div');b.className='kakao';b.innerHTML='카카오톡 안에서는 접수가 잘 안 될 수 있어요. <a href="kakaotalk:\/\/web/openExternal?url='+encodeURIComponent(u)+'" target="_top">브라우저로 열기</a>';document.body.prepend(b)})();
 /* 테스트 로그인(STG 설정에만 있음): 이름·휴대전화 칸을 미리 채움 */
 try{if(typeof TEST_LOGIN==='string'&&TEST_LOGIN){const [n,ph]=TEST_LOGIN.split('/');if(n)S.lgNm=n.trim();if(ph){const d=ph.replace(/\D/g,'').replace(/^010/,'').slice(0,8);S.lgEm='010-'+(d.length>4?d.slice(0,4)+'-'+d.slice(4):d)}}}catch(e){}
+/* 처음 화면: 회원/비회원 고르기 → 동의 → 로그인 (테스트 페이지만 TEST_AUTOCONSENT 로 바로 로그인 칸) */
+if(typeof TEST_AUTOCONSENT!=='undefined'&&TEST_AUTOCONSENT){S.mode='member';S.cons={};CONSENT.items.forEach(x=>S.cons[x.id]=true);S.auth='login'}else if(S.auth==='login')S.auth='pick';
 /* 캠프 설정(날짜·장소·차수·참가비)은 서버가 페이지에 넣어 보냄 */
 try{if(typeof CAMP_CFG==='object'&&CAMP_CFG)applyCamp(CAMP_CFG)}catch(e){}
 /* 처음 화면: 로그인부터 */

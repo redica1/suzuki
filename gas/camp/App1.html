@@ -1,4 +1,4 @@
-/* build: 20261024-104106 */
+/* build: 20261024-105903 */
 /* ---------- 캠프 설정 (관리자 화면에서 입력되는 값) ---------- */
 const ROOM = { cap:4, emptyFee:130000 }; // 가족방: 4인 기준, 빈 자리 1개당 추가 비용
 const CAMP = { id:'27W', ri:0, lessonFee:60000, lessonMax:5, mcFee:150000,
@@ -53,11 +53,12 @@ const nowStamp=()=>`${S.today} ${new Date().toTimeString().slice(0,8)}`;
 const stampTxt=x=>{if(!x)return '';const [d,t]=x.split(' ');return `${kday(d)}${t?' '+t.slice(0,5):''}`};
 function ensureRoster(a){
     if(!ROSTER[a]) ROSTER[a]=a===classOf(S.user)?{teachers:[],students:[]}:rosterFor(a);
-    if(!ROSTER[a].teachers.some(x=>bare(x.name)===bare(S.user.name))) ROSTER[a].teachers.unshift({id:S.user.id?'t_'+S.user.id:'me_'+S.user.phone,name:S.user.name,role:S.user.role||'강사',inst:S.user.inst,paid:!S.user.newReg,moved:!S.user.acads.includes(a)});}
+    if(!S.user.guest&&!ROSTER[a].teachers.some(x=>bare(x.name)===bare(S.user.name))) ROSTER[a].teachers.unshift({id:S.user.id?'t_'+S.user.id:'me_'+S.user.phone,name:S.user.name,role:S.user.role||'강사',inst:S.user.inst,paid:!S.user.newReg,moved:!S.user.acads.includes(a)});}
 const ROUNDS = [['1차','12월 1일 ~ 12월 10일'],['2차','12월 11일 ~ 12월 20일'],['3차','12월 21일 ~ 12월 28일']];
 const FEES = { // 참가자격 × 차수 (관리자 참가비표에서 입력, 2026 여름 금액을 예시로 사용)
   '교사':[560000,570000,590000],'연수생':[560000,570000,590000],'소속없는 중급연수생':[560000,570000,590000],'학생':[560000,570000,590000],'회원의 악기하는 자녀':[510000,520000,540000],
-  '회원의 첫번째 보호자':[510000,520000,540000],'회원의 그외 악기 안하는 동반가족':[410000,420000,440000],'동반가족 중 돌전아기':[310000,320000,340000] };
+  '회원의 첫번째 보호자':[510000,520000,540000],'회원의 그외 악기 안하는 동반가족':[410000,420000,440000],'동반가족 중 돌전아기':[310000,320000,340000],
+  '비회원 학생':[560000,570000,590000],'비회원 보호자':[510000,520000,540000],'비회원 동반가족':[410000,420000,440000],'비회원 돌전아기':[310000,320000,340000] };
 /* 캠프 설정: 관리자 「캠프 설정」 값으로 위의 기본값을 바꿈 (페이지를 열 때 + 로그인 · 저장할 때마다) */
 const WD='일월화수목금토';
 const dOf=d=>{const [y,m,dd]=d.split('-').map(Number);return new Date(Date.UTC(y,m-1,dd))};
@@ -70,17 +71,18 @@ function applyCamp(c){if(!c||!c.base||!Array.isArray(c.rounds)||!c.rounds.length
   if(c.fees)Object.keys(c.fees).forEach(t=>FEES[t]=c.fees[t]);
   if(c.refund&&Array.isArray(c.refund.rules)){REFUND.rules=c.refund.rules;if(c.refund.after)REFUND.after=c.refund.after;REFUND.duesRefund=!!c.refund.duesRefund}
   const ri=Math.max(0,Math.min(ROUNDS.length-1,+c.ri||0));if(keepRi)S.riBack=ri;else CAMP.ri=ri;
+  if(c.consent&&Array.isArray(c.consent.items)){CONSENT.ver=c.consent.ver;CONSENT.items=c.consent.items}GUEST_OPEN=b.guest!==false;
   CAMP.name=b.name;CAMP.start=b.start;CAMP.end=b.end;CAMP.place=b.place;
   try{const n=Math.round((dOf(b.end)-dOf(b.start))/864e5);const y1=b.start.slice(0,4),y2=b.end.slice(0,4);
     document.getElementById('campTitle').textContent=b.name+' 접수';document.title=b.name+' 접수';
     document.getElementById('campWhen').innerHTML=`<strong>${y1}. ${kdw(b.start)} ~ ${y2!==y1?y2+'. ':''}${kdw(b.end)}</strong>${n>0?` ${n}박 ${n+1}일`:''}`;
     document.getElementById('campPlace').textContent=b.place||'추후 안내'}catch(e){}}
 const TEACHER_TYPES = ['교사','연수생','소속없는 중급연수생'];
-const PLAYS = new Set([...TEACHER_TYPES,'학생','회원의 악기하는 자녀']); // 레슨·음악회 질문 대상 (현재 진도는 학생만)
+const PLAYS = new Set([...TEACHER_TYPES,'학생','회원의 악기하는 자녀','비회원 학생']); // 레슨·음악회 질문 대상 (현재 진도는 학생만)
 const FAMILY_TYPES = ['회원의 첫번째 보호자','회원의 그외 악기 안하는 동반가족','동반가족 중 돌전아기'];
 const FAM_CHIPS = { student:[['회원의 첫번째 보호자','보호자'],['회원의 그외 악기 안하는 동반가족','동반가족'],['동반가족 중 돌전아기','돌 전 아기']],
                     teacher:[['회원의 그외 악기 안하는 동반가족','동반가족'],['동반가족 중 돌전아기','돌 전 아기']] };
-const FAM_SHORT = {'회원의 첫번째 보호자':'보호자','회원의 그외 악기 안하는 동반가족':'동반가족','동반가족 중 돌전아기':'돌 전 아기'};
+const FAM_SHORT = {'비회원 보호자':'보호자','비회원 동반가족':'동반가족','비회원 돌전아기':'돌 전 아기','회원의 첫번째 보호자':'보호자','회원의 그외 악기 안하는 동반가족':'동반가족','동반가족 중 돌전아기':'돌 전 아기'};
 
 const PROF = {
   '바이올린':['곽은수','김소정','김유정','김한기','민연희','변지혜','서민정','신재원','양승돈','오영근','이광호','이슬비','정호진','황경익','황선영','Ayumi Moriyama','Jeffrey Solares','Motomichi Kisohara','Sara M. Gonzales'],
@@ -121,7 +123,7 @@ const yearBad=(p,v)=>p.kind==='student'?!okYear(v):(String(v||'').trim()!==''&&!
 function missingBasic(){ return people().filter(p=>{const i=info(p);return yearBad(p,i.by)||!i.gender}) }
 function missingProg(){ return people().filter(p=>p.kind==='student'&&PLAYS.has(info(p).type)&&!info(p).prog) }
 function missingPref(){ return people().filter(p=>p.kind!=='family'&&PLAYS.has(info(p).type)&&+info(p).lessons>0&&(PROF[p.inst]||[]).length&&!info(p).p1) }
-function missingTeacher(){ return people().filter(p=>p.kind==='student'&&!info(p).teacher) }
+function missingTeacher(){ return isGuest()?[]:people().filter(p=>p.kind==='student'&&!info(p).teacher) }
 function teams(){ // 가족방 팀: 대표(학생·교사) + 그 가족 + 같은 방으로 묶은 형제와 그 가족
   const ps=people(); const byKey=Object.fromEntries(ps.map(p=>[p.key,p]));
   return Object.keys(S.room).filter(k=>S.room[k]&&byKey[k]).map(k=>{
@@ -162,7 +164,7 @@ function people(){ // 선택된 사람들 (명단 + 신고 학생 + 가족)
   const r = roster(), out=[];
   r.teachers.forEach(t=>{ if(S.picked[t.id]) out.push({key:t.id,dtag:t.dtag,kind:'teacher',name:t.name,inst:t.inst,sub:t.role,paid:t.paid,defType:'교사'}) });
   r.students.forEach(s=>{ if(S.picked[s.id]) out.push({key:s.id,dtag:s.dtag,uid:s.uid,kind:'student',name:s.name,inst:s.inst,birth:s.birth,sub:s.birth?age(s.birth)+'세':'출생연도 없음',paid:s.paid,defType:'학생',teacher:s.teacher}) });
-  S.extra.filter(s=>s.on!==false).forEach(s=>out.push({key:s.id,kind:'student',name:s.name,inst:s.inst,birth:s.birth,sub:age(s.birth)+'세 · 신규 추가',paid:false,isNew:true,defType:'학생',teacher:s.teacher}));
+  S.extra.filter(s=>s.on!==false).forEach(s=>out.push({key:s.id,kind:'student',name:s.name,inst:s.inst,birth:s.birth,sub:age(s.birth)+(isGuest()?'세 · 비회원':'세 · 신규 추가'),paid:isGuest(),isNew:!isGuest(),defType:isGuest()?'비회원 학생':'학생',teacher:s.teacher}));
   /* 최근에 담은 사람이 위: 이번에 담은 사람(담은 시각 최근순) → 이미 접수된 사람(접수 시각 최근순) */
   {const sb=S.editNo?ALL_SUBS.find(x=>x.no===S.editNo):null;const key=p=>{const q=sb&&sb.ppl.find(z=>z.id===sb.no+'_'+p.key&&z.status!=='취소');return q?'0'+(q.addAt||sb.date):'1'+(S.cartAt[p.key]||'')};
    out.forEach((p,i)=>p._o=i);out.sort((a,b)=>{const ka=key(a),kb=key(b);return ka>kb?-1:ka<kb?1:a._o-b._o})}
@@ -179,31 +181,23 @@ function feeOf(p){
 function totals(){ const ps=people(); let camp=0,dues=0; ps.forEach(p=>{const f=feeOf(p);camp+=f.total-f.dues;dues+=f.dues}); const room=roomFee(); return {n:ps.length,camp,dues,room,all:camp+dues+room,waiting:ps.filter(p=>!p.paid).length,teams:teams()} }
 
 /* ---------- 화면 ---------- */
-function renderSteps(){
-  document.getElementById('steps').innerHTML = STEPS.map((t,i)=>{
-    const n=i+1, cls=n===S.step?'on':(n<S.step?'done':''); const can = n<S.step && S.step<6;
-    return `<li class="${cls}"><button type="button" ${can?`data-go="${n}"`:'disabled'} aria-current="${n===S.step?'step':'false'}"><span class="bar"></span>${n}. ${t}</button></li>`}).join('');
-}
-function login(t){S.user=t;S.who=t.name;S.phone=t.p4?`010-****-${t.p4}`:String(t.phone||'').replace(/(\d{3})(\d{4})(\d{4})/,'$1-$2-$3');S.email=t.email||'';S.verr='';S.auth='in'; loadMine(); if(MY_SUBS.length)S.view='mine'; render();}
-function findT(ph){ph=String(ph).replace(/\D/g,'');return TEACHER_DB.find(t=>t.phone===ph)}
-function classOf(u){return `${u.name} 클래스`}
-function vStep1(){
-  const u=S.user;
-  if(!u) return `<section class="sec"><h2>선생님 로그인</h2>
-  <p class="lede">회원 명단에 있는 선생님만 접수할 수 있어요. 이름과 휴대전화로 들어가요.</p>
-  <div class="panel" style="max-width:440px">
-    <label class="f" for="lgNm">이름<input type="text" id="lgNm" value="${esc(S.lgNm)}" autocomplete="name" placeholder=""></label>
-    <label class="f" for="lgEm">휴대전화<span class="phwrap"><span class="phpre" aria-hidden="true">010-</span><input type="tel" id="lgEm" value="${esc(String(S.lgEm||'').replace(/^010-?/,''))}" inputmode="numeric" placeholder="0000-0000" maxlength="9" autocomplete="tel-local" aria-label="휴대전화 010 뒤 8자리"></span></label>
-    <p class="hint">회원 명단의 이름과 휴대전화로 들어가요.</p>
-    ${S.verr?`<p class="err">${S.verr}</p>`:''}
-    <button class="btn primary" type="button" id="doLogin">로그인</button>
-    <div class="spread"><span></span><button class="btn ghost small" type="button" id="forgot">비밀번호를 잊었어요</button></div>
-    <div class="note info" style="display:grid;gap:8px"><b>처음이세요? 명단에 이름이 없나요?</b>
-      <span class="hint">「선생님 가입하기」에서 이름과 휴대전화로 본인 확인을 하고 계정을 만들어요. 명단에 없으면 새로 신청할 수 있어요. 협회가 승인하면 이메일로 알려 드리고, 그때부터 이 화면에서 로그인할 수 있어요.</span>
-      <a class="btn primary" href="${SIGNUP_URL}" target="_blank" rel="noopener" style="justify-self:start;text-decoration:none">선생님 가입하기 ↗</a></div>
-
-  </div></section>`;
-  // 로그인됨: 학원 고르기 (모든 학원 중 직접 선택)
-  const q=S.acQ.trim(); const mineA=u.home||u.acads;
-  const all=ACADEMIES.filter(a=>!q||a.name.includes(q)||a.region.includes(q)||(a.head||'').includes(q)).sort((x,y)=>(mineA.includes(y.name)?1:0)-(mineA.includes(x.name)?1:0)||x.name.localeCompare(y.name,'ko'));
-  return `${MY_SUBS.length?`<div class="note info spread" style="margin-bottom:12px"><span><b>내 접수 ${MY_SUBS.length}건</b> · 확인·취소는 여기서</span><button class="btn small primary" type="button" id="toMine">내 접수 보기</button></div>`:''}<section class="sec"><div class="spread"><h2>어느 학원으로 접수할까요?</h2><button class="btn small ghost" type="button" id="logout">로그아웃</button></div>
+/* ---------- 회원 / 비회원(학부모) · 개인정보 동의 ---------- */
+const GUEST_ACAD='비회원';
+const isGuest=()=>!!(S.user&&S.user.guest);
+const GUEST_FAM=['비회원 보호자','비회원 동반가족','비회원 돌전아기'];
+/* 동의 문구: 서버 「캠프 설정 › 동의」 값(페이지에 실려 옴)을 씀 · 없을 때만 아래 기본 */
+const CONSENT={ver:'2026-10-24',items:[
+  {id:'collect',title:'개인정보 수집·이용 동의',req:true,on:true,body:'수집 항목\n- 접수하는 분: 이름, 휴대전화, 이메일\n- 참가자: 이름, 성별, 출생연도, 악기·현재 진도, 담당 선생님, 레슨·음악회·가족방 신청 내용\n- 입금·환불: 입금자명, 입금일, 금액, 환불 받을 계좌(은행·계좌번호·예금주)\n\n이용 목적\n캠프 접수 확인, 반·레슨·숙소 배정, 일정 안내와 연락, 참가비 입금 확인과 환불\n\n보유 기간\n캠프가 끝나고 1년 동안 보관한 뒤 지워요. 회계 기록은 관련 법령이 정한 기간만큼 보관해요.\n\n동의하지 않을 수 있지만, 동의하지 않으면 캠프 접수를 할 수 없어요.'},
+  {id:'third',title:'개인정보 제3자 제공 동의',req:true,on:true,body:'제공받는 곳: 캠프 숙소(리조트)\n제공 항목: 참가자 이름, 성별, 학원(소속)\n제공 목적: 객실 배정과 투숙 관리\n보유 기간: 캠프가 끝나면 숙소의 방침에 따라 지워요.\n\n동의하지 않을 수 있지만, 동의하지 않으면 숙소 배정이 필요한 캠프 접수를 할 수 없어요.'},
+  {id:'minor',title:'만 14세 미만 참가자 보호자 동의',req:true,on:true,body:'만 14세 미만 참가자의 개인정보는 법정대리인(보호자)의 동의를 받아야 해요.\n- 선생님이 접수할 때: 접수하는 만 14세 미만 학생의 보호자에게 위 수집·이용, 제3자 제공 내용을 알리고 동의를 받았어요.\n- 보호자가 직접 접수할 때: 나는 접수하는 만 14세 미만 참가자의 법정대리인(보호자)이며 위 내용에 동의해요.'},
+  {id:'refund',title:'취소·환불 규정 확인',req:true,on:true,body:''},
+  {id:'photo',title:'사진·영상 촬영과 홍보 활용 동의 (선택)',req:false,on:true,body:'캠프 중 찍은 사진·영상(참가자 모습 포함)을 협회 홈페이지, SNS, 소식지 같은 홍보에 쓸 수 있어요.\n보유 기간: 게시물을 내려 달라고 요청할 때까지\n\n동의하지 않아도 접수할 수 있어요. 동의하지 않으면 홍보물에 쓰지 않아요.'}]};
+let GUEST_OPEN=true;
+const consItems=()=>CONSENT.items.filter(x=>x.on);
+const consAll=()=>consItems().every(x=>S.cons&&S.cons[x.id]);
+const consReqOk=()=>consItems().filter(x=>x.req).every(x=>S.cons&&S.cons[x.id]);
+function refundBody(){return REFUND.rules.map(r=>`- ${kday(r.until)}까지 (${r.label}): ${r.rate?`참가비 ${r.rate}% 환불`:'환불 없음'}${r.doc?' · 진단서 등 증빙이 있으면 운영진이 따로 판단':''}`).join('\n')+`\n- 그 뒤 (${REFUND.after.label}): ${REFUND.after.allow===false?'취소할 수 없어요':REFUND.after.rate?`참가비 ${REFUND.after.rate}% 환불`:'환불 없음'}\n\n취소를 요청한 날을 기준으로 위 규정을 적용해요. ${REFUND.duesRefund?'':'연회비는 환불되지 않아요. '}입금 전이면 바로 취소할 수 있어요.`}
+function vAuthPick(){return `<section class="sec"><h2>접수 시작</h2>
+  <p class="lede">어떻게 접수하시나요?</p>
+  <div class="pick2">
+    <button type="button" class="pickcard" data-mode="member"><b>회원 선생님</b><span>협회 회원 선생님이 학원 학생들을 접수해요. 이름과 휴대전화로 로그인해요.</span></button>

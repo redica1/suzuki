@@ -1,4 +1,4 @@
-/* build: 20261024-104106 */
+/* build: 20261024-105903 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -26,11 +26,13 @@ const JSON_CHUNK = 45000;                   // 시트 한 칸 글자 수 한도(
 const FEES = {
   '교사': [560000, 570000, 590000], '연수생': [560000, 570000, 590000], '소속없는 중급연수생': [560000, 570000, 590000], '학생': [560000, 570000, 590000],
   '회원의 악기하는 자녀': [510000, 520000, 540000], '회원의 첫번째 보호자': [510000, 520000, 540000],
-  '회원의 그외 악기 안하는 동반가족': [410000, 420000, 440000], '동반가족 중 돌전아기': [310000, 320000, 340000]
+  '회원의 그외 악기 안하는 동반가족': [410000, 420000, 440000], '동반가족 중 돌전아기': [310000, 320000, 340000],
+  /* 비회원(학부모 직접 접수) — 금액은 「캠프 설정」 참가비표에서 정함 (기본값은 회원 금액과 같게 넣어 둠) */
+  '비회원 학생': [560000, 570000, 590000], '비회원 보호자': [510000, 520000, 540000], '비회원 동반가족': [410000, 420000, 440000], '비회원 돌전아기': [310000, 320000, 340000]
 };
 const ROUND_NAMES = ['1차', '2차', '3차'];
 const OPT = { lessonFee: 60000, lessonMax: 5, studentDues: 30000, teacherDues: 300000, roomCap: 4, roomEmptyFee: 130000 };
-const PLAYS = ['교사', '연수생', '소속없는 중급연수생', '학생', '회원의 악기하는 자녀'];
+const PLAYS = ['교사', '연수생', '소속없는 중급연수생', '학생', '회원의 악기하는 자녀', '비회원 학생'];
 const MASTER = [{ n: '안드레아 부샤츠', fee: 150000 }, { n: '이성주', fee: 150000 }];
 /* 교수진: 「교수진」 시트에서 관리 (처음 한 번만 아래 목록으로 채움) */
 const PROF_SEED = {
@@ -166,13 +168,15 @@ function teachers_() {
 }
 
 /** 이름 + 휴대전화로 로그인 (시험 기간: 명단의 휴대전화 뒤 4자리와 비교) */
-function login(name, phone) {
+function login(name, phone, consent) {
   const ph = String(phone || '').replace(/\D/g, '');
   const nm = bare_(name);
   if (!nm || ph.length < 10) return { ok: false, msg: '이름과 휴대전화를 모두 넣어 주세요.' };
   const t = teachers_().find(x => bare_(x.name) === nm && x.p4 && ph.endsWith(x.p4));
   if (!t) return { ok: false, msg: '회원 명단의 이름·휴대전화와 맞지 않아요.' };
   if (t.state === '대기') return { ok: false, msg: '승인 대기 중이에요. 협회가 확인하면 이메일로 알려 드려요.' };
+  { const ce = consentErr_(consent); if (ce) return { ok: false, msg: ce }; }
+  consentLog_('회원(교사)', t.name, t.p4, consent);
   try { ensureSettings_(); } catch (x) {}
   const open = acadOpen_();
   const own = [...new Set(loadSubs_().filter(x => x.owner === t.name).map(x => x.acad))];
@@ -181,7 +185,7 @@ function login(name, phone) {
   const token = Utilities.getUuid();
   CacheService.getScriptCache().put('tok_' + token, JSON.stringify({ name: t.name, acads }), 21600);
   log_(t.name, '로그인', '');
-  return Object.assign({ ok: true, token, today: today_(), teacher: { id: t.id, name: t.name, role: t.role, inst: t.inst, acads, home: t.acads, p4: t.p4 }, myAcct: myAcct_(t.name) }, bundle_(acads));
+  return Object.assign({ ok: true, token, today: today_(), teacher: { id: t.id, name: t.name, role: t.role, inst: t.inst, acads, home: t.acads, p4: t.p4 }, myAcct: myAcct_(t.name) }, bundle_(acads, t.name));
 }
 
 /** 교사(선생님 본인 포함)는 모든 학원을 통틀어 한 번만 — 다른 학원(겸임·내 클래스)에는 학생만 */
@@ -217,7 +221,7 @@ function withdrawCx(token, no, pid) {
     markCx_(no, pid, '요청', '철회', '선생님이 취소 요청을 거둠');
     log_(u.name, '취소 요청 철회', no + ' · ' + r['참가자']);
   } finally { lock.releaseLock(); }
-  return Object.assign({ ok: true }, bundle_(who_(token).acads));
+  return Object.assign({ ok: true }, bundle_(who_(token).acads, who_(token).name));
 }
 /** 다른 학원 학생도 접수 (겸임) — 소속은 그대로, 이 로그인 동안 그 학원 명단·접수를 열어 줌 */
 function addAcad(token, acad) {
@@ -225,10 +229,11 @@ function addAcad(token, acad) {
   if (!v) throw new Error('로그인이 끝났어요. 화면을 새로 고쳐 다시 로그인해 주세요.');
   const u = JSON.parse(v); acad = String(acad || '').trim();
   if (!acad) throw new Error('학원을 골라 주세요.');
+  if (u.guest || acad === GUEST_ACAD) throw new Error('이 학원은 고를 수 없어요.');
   const own = acad === u.name + ' 클래스';   // 「직접 입력」: 학원 소속 없이 내 이름 클래스
   const open = acadOpen_(); if (!own && open && !open.includes(acad)) throw new Error('지금은 ' + open.join(', ') + '만 접수할 수 있어요.');
   if (!u.acads.includes(acad)) { u.acads.push(acad); C.put('tok_' + token, JSON.stringify(u), 21600); log_(u.name, '다른 학원 접수(겸임)', acad); }
-  return Object.assign({ ok: true, acads: u.acads }, bundle_(u.acads));
+  return Object.assign({ ok: true, acads: u.acads }, bundle_(u.acads, u.name));
 }
 function who_(token) {
   const v = CacheService.getScriptCache().get('tok_' + token);
@@ -237,7 +242,7 @@ function who_(token) {
 }
 
 /** 화면에 필요한 것: 학원 명단, 그 학원 접수 전부(다른 선생님 것 포함 — 중복 접수 막기용), 앙상블 팀 */
-function bundle_(acads) {
+function bundle_(acads, owner) {
   const profs = (() => { try { return profPublic_(); } catch (x) { return null; } })();
   const ts = teachers_();
   const st = rows_(SH.S);
@@ -253,7 +258,7 @@ function bundle_(acads) {
   });
   const all = loadSubs_();
   let camp = null; try { camp = campPublic_(); } catch (x) {}
-  return { rosters, subs: all.filter(sb => acads.includes(sb.acad)), teams: teams_(all), bank: bankInfo_(), today: today_(), profs, camp };
+  return { rosters, subs: all.filter(sb => acads.includes(sb.acad) && (sb.acad !== GUEST_ACAD || sb.owner === owner)), teams: teams_(all), bank: bankInfo_(), today: today_(), profs, camp };
 }
 
 /* ---------------- 접수 읽고 쓰기 ---------------- */
@@ -382,6 +387,7 @@ function recalc_(sb) {
   const CC = camp_(), FEES = CC.fees, OPT = CC.opt;
   const f = sb.form || {}, info = f.info || {}, ri = Math.max(0, Math.min(CC.rounds.length - 1, +f.ri || 0));
   sb.round = CC.rounds[ri].n;
+  const guest = sb.acad === GUEST_ACAD;   // 비회원: 연회비 없음 · 비회원 참가비
   const tPaid = {}; teachers_().forEach(t => tPaid['t_' + t.id] = !!t.paidDate);
   const sPaid = {}; rows_(SH.S).forEach(r => sPaid[String(r['ID'])] = !!dstr_(r['회비 납부일']));
   const key = p => p.id.slice(sb.no.length + 1);
@@ -401,8 +407,9 @@ function recalc_(sb) {
     const plays = PLAYS.includes(i.type);
     const les = plays ? Math.max(0, Math.min(OPT.lessonMax, +i.lessons || 0)) : 0;
     const mc = plays ? (i.mc || []).reduce((t, n) => t + ((mcList_().find(m => m.n === n) || {}).fee || 0), 0) : 0;
+    if (guest !== isGuestType_(i.type)) throw new Error(p.name + '의 참가 구분(' + i.type + ')을 확인해 주세요. ' + (guest ? '비회원 접수는 비회원 참가비로만 접수해요.' : ''));
     const isT = /^t_|^me_/.test(k), isFam = (f.fam || []).some(x => x.id === k);
-    const paid = isFam ? true : isT ? (k.indexOf('me_') === 0 ? true : !!tPaid[k]) : !!sPaid[k];
+    const paid = guest ? true : isFam ? true : isT ? (k.indexOf('me_') === 0 ? true : !!tPaid[k]) : !!sPaid[k];
     p.type = i.type; p.fee = FEES[i.type][ri]; p.lesson = les * OPT.lessonFee + mc;
     p.dues = paid ? 0 : (isT ? OPT.teacherDues : OPT.studentDues);
     p.room = roomBy[k] || 0;
@@ -450,7 +457,7 @@ function submitNew(token, sb) {
   try {
     const all = loadSubs_();
     // 응답이 늦어 다시 보냈거나 자동 재시도한 같은 요청이면 → 이미 만든 접수를 그대로 돌려줌
-    if (sb.reqId) { const done = all.find(x => x.reqId === sb.reqId); if (done) { lock.releaseLock(); return Object.assign({ ok: true, no: done.no, again: true }, bundle_(u.acads)); } }
+    if (sb.reqId) { const done = all.find(x => x.reqId === sb.reqId); if (done) { lock.releaseLock(); return Object.assign({ ok: true, no: done.no, again: true }, bundle_(u.acads, u.name)); } }
     // 같은 학원 다른 접수에 이미 있는 사람은 다시 못 넣음
     const key = id => id.slice(id.indexOf('_') + 1);
     const taken = {};
@@ -461,6 +468,7 @@ function submitNew(token, sb) {
     const no = camp_().base.id + '-' + String(n).padStart(3, '0');
     const tmp = sb.no;
     sb.no = no; sb.owner = u.name; sb.createdAt = stamp_();
+    if (u.guest) sb.contact = String(u.phone || '').replace(/(\d{3})(\d{3,4})(\d{4})/, '$1-$2-$3');   // 비회원 보호자 연락처 (관리자 화면 · 시트에만)
     sb.ppl.forEach(p => { p.id = no + p.id.slice(tmp.length); p.pay = '전'; p.paidAmt = 0; delete p.rep; });
     sb.rev = 1; recalc_(sb); checkEns_(sb, all);
     teacherDup_(all, sb);
@@ -469,7 +477,7 @@ function submitNew(token, sb) {
     log_(u.name, '새 접수', no + ' · ' + sb.ppl.length + '명');
     mail_(sb, u);
   } finally { lock.releaseLock(); }
-  return Object.assign({ ok: true, no: sb.no }, bundle_(u.acads));
+  return Object.assign({ ok: true, no: sb.no }, bundle_(u.acads, u.name));
 }
 
 /** 내 접수 저장 (인원 추가·정보 수정·입금 신고·신고 수정·취소) — 내가 낸 접수만 */
@@ -480,12 +488,12 @@ function saveSubs(token, subs) {
     const all = loadSubs_();
     // 다른 화면(원장님 PC·폰 등)에서 그 사이 먼저 고쳤으면 덮어쓰지 않고 새로 불러오게 함
     const stale = (subs || []).filter(sb => { const cur = all.find(x => x.no === sb.no); return cur && (+cur.rev || 0) !== (+sb.rev || 0); });
-    if (stale.length) { lock.releaseLock(); return Object.assign({ ok: false, conflict: true, msg: stale.map(x => x.no).join(', ') + ' 접수를 다른 화면에서 먼저 고쳤어요. 최신 내용으로 다시 불러왔으니 한 번 더 해 주세요.' }, bundle_(u.acads)); }
+    if (stale.length) { lock.releaseLock(); return Object.assign({ ok: false, conflict: true, msg: stale.map(x => x.no).join(', ') + ' 접수를 다른 화면에서 먼저 고쳤어요. 최신 내용으로 다시 불러왔으니 한 번 더 해 주세요.' }, bundle_(u.acads, u.name)); }
     (subs || []).forEach(sb => {
       const cur = all.find(x => x.no === sb.no);
       if (!cur) throw new Error(sb.no + ' 접수를 찾지 못했어요.');
       if (cur.owner !== u.name) throw new Error(sb.no + '는 ' + cur.owner + ' 선생님이 낸 접수라 고칠 수 없어요.');
-      sb.acad = cur.acad; sb.owner = cur.owner; sb.createdAt = cur.createdAt; sb.no = cur.no; sb.reqId = cur.reqId; sb.rev = (+cur.rev || 0) + 1;
+      sb.acad = cur.acad; sb.owner = cur.owner; if (cur.contact) sb.contact = cur.contact; else delete sb.contact; sb.createdAt = cur.createdAt; sb.no = cur.no; sb.reqId = cur.reqId; sb.rev = (+cur.rev || 0) + 1;
       recalc_(sb);
       teacherDup_(all, sb, sb.ppl.filter(p => !cur.ppl.some(c => c.id === p.id)).map(p => p.id));
       if (JSON.stringify((sb.form || {}).ens || {}) !== JSON.stringify((cur.form || {}).ens || {})) checkEns_(sb, all);
@@ -545,7 +553,7 @@ function saveSubs(token, subs) {
     });
     writeTeams_(all);
   } finally { lock.releaseLock(); }
-  return Object.assign({ ok: true }, bundle_(u.acads));
+  return Object.assign({ ok: true }, bundle_(u.acads, u.name));
 }
 
 /** 더 낸 금액(차액) 돌려받기 요청: 수정으로 청구액이 줄었거나 더 많이 입금한 사람. 취소가 아님 */
@@ -570,7 +578,7 @@ function overRefundReq(token, req) {
     sb.rev = (+sb.rev || 0) + 1; writeSub_(sb, false);
     log_(u.name, '차액 환불 요청', sb.no + ' · ' + sum);
   } finally { lock.releaseLock(); }
-  return Object.assign({ ok: true }, bundle_(u.acads));
+  return Object.assign({ ok: true }, bundle_(u.acads, u.name));
 }
 
 /** 환불 요청: 계좌·진단서는 「환불요청」 시트와 드라이브 폴더에만 (접수 내용 JSON에는 넣지 않음) */
@@ -668,16 +676,23 @@ function adm_(token) {
 /* ---------------- 캠프 설정 (「캠프설정」 시트 · 총관리자만 바꿈) ----------------
  * 시트 한 줄 = 한 묶음(기본 · 차수 · 참가비 · 옵션 · 환불), 값은 JSON. 시트가 없으면 아래 기본값을 씀 */
 const CAMPCFG = '캠프설정';
-const FEE_TYPES = ['교사', '연수생', '소속없는 중급연수생', '학생', '회원의 악기하는 자녀', '회원의 첫번째 보호자', '회원의 그외 악기 안하는 동반가족', '동반가족 중 돌전아기'];
+const FEE_TYPES = ['교사', '연수생', '소속없는 중급연수생', '학생', '회원의 악기하는 자녀', '회원의 첫번째 보호자', '회원의 그외 악기 안하는 동반가족', '동반가족 중 돌전아기', '비회원 학생', '비회원 보호자', '비회원 동반가족', '비회원 돌전아기'];
 const CAMP_DEF = {
-  base: { id: CAMP_ID, name: CAMP_NAME, start: '2027-01-11', end: '2027-01-15', place: '추후 안내', open: '2026-12-01', close: '2026-12-28', cur: 'auto' },
+  base: { id: CAMP_ID, name: CAMP_NAME, start: '2027-01-11', end: '2027-01-15', place: '추후 안내', open: '2026-12-01', close: '2026-12-28', cur: 'auto', guest: true },
   rounds: [{ n: '1차', from: '2026-12-01', to: '2026-12-10' }, { n: '2차', from: '2026-12-11', to: '2026-12-20' }, { n: '3차', from: '2026-12-21', to: '2026-12-28' }],
   fees: FEES,
   opt: { lessonFee: OPT.lessonFee, lessonMax: OPT.lessonMax, mcFee: 150000, studentDues: OPT.studentDues, teacherDues: OPT.teacherDues, roomCap: OPT.roomCap, roomEmptyFee: OPT.roomEmptyFee },
   refund: { rules: [{ until: '2026-12-10', label: '접수 마감 전', rate: 100, doc: false }, { until: '2026-12-28', label: '캠프 14일 전까지', rate: 50, doc: false }, { until: '2027-01-10', label: '캠프 전날까지', rate: 0, doc: true }],
-    after: { label: '캠프 시작 후', rate: 0, doc: true, allow: false }, duesRefund: false }
+    after: { label: '캠프 시작 후', rate: 0, doc: true, allow: false }, duesRefund: false },
+  consent: { ver: '2026-10-24', items: [
+    { id: 'collect', title: '개인정보 수집·이용 동의', req: true, on: true, body: '수집 항목\n- 접수하는 분: 이름, 휴대전화, 이메일\n- 참가자: 이름, 성별, 출생연도, 악기·현재 진도, 담당 선생님, 레슨·음악회·가족방 신청 내용\n- 입금·환불: 입금자명, 입금일, 금액, 환불 받을 계좌(은행·계좌번호·예금주)\n\n이용 목적\n캠프 접수 확인, 반·레슨·숙소 배정, 일정 안내와 연락, 참가비 입금 확인과 환불\n\n보유 기간\n캠프가 끝나고 1년 동안 보관한 뒤 지워요. 회계 기록은 관련 법령이 정한 기간만큼 보관해요.\n\n동의하지 않을 수 있지만, 동의하지 않으면 캠프 접수를 할 수 없어요.' },
+    { id: 'third', title: '개인정보 제3자 제공 동의', req: true, on: true, body: '제공받는 곳: 캠프 숙소(리조트)\n제공 항목: 참가자 이름, 성별, 학원(소속)\n제공 목적: 객실 배정과 투숙 관리\n보유 기간: 캠프가 끝나면 숙소의 방침에 따라 지워요.\n\n동의하지 않을 수 있지만, 동의하지 않으면 숙소 배정이 필요한 캠프 접수를 할 수 없어요.' },
+    { id: 'minor', title: '만 14세 미만 참가자 보호자 동의', req: true, on: true, body: '만 14세 미만 참가자의 개인정보는 법정대리인(보호자)의 동의를 받아야 해요.\n- 선생님이 접수할 때: 접수하는 만 14세 미만 학생의 보호자에게 위 수집·이용, 제3자 제공 내용을 알리고 동의를 받았어요.\n- 보호자가 직접 접수할 때: 나는 접수하는 만 14세 미만 참가자의 법정대리인(보호자)이며 위 내용에 동의해요.' },
+    { id: 'refund', title: '취소·환불 규정 확인', req: true, on: true, body: '' },
+    { id: 'photo', title: '사진·영상 촬영과 홍보 활용 동의 (선택)', req: false, on: true, body: '캠프 중 찍은 사진·영상(참가자 모습 포함)을 협회 홈페이지, SNS, 소식지 같은 홍보에 쓸 수 있어요.\n보유 기간: 게시물을 내려 달라고 요청할 때까지\n\n동의하지 않아도 접수할 수 있어요. 동의하지 않으면 홍보물에 쓰지 않아요.' }
+  ] },
 };
-const CAMP_KEYS = [['base', '기본'], ['rounds', '차수'], ['fees', '참가비'], ['opt', '옵션'], ['refund', '환불']];
+const CAMP_KEYS = [['base', '기본'], ['rounds', '차수'], ['fees', '참가비'], ['opt', '옵션'], ['refund', '환불'], ['consent', '동의']];
 let CAMP_CACHE = null;
 function camp_() {
   if (CAMP_CACHE) return CAMP_CACHE;
@@ -688,6 +703,8 @@ function camp_() {
     if (!k || !v) return;
     try { const o = JSON.parse(v); c[k] = Array.isArray(o) ? o : Object.assign(c[k], o); } catch (x) {}
   });
+  /* 참가비표 칸 수 = 차수 수 (새로 생긴 참가자격·차수는 마지막 금액으로 채움) */
+  FEE_TYPES.forEach(t => { const a = (c.fees[t] || []).slice(0, c.rounds.length); while (a.length < c.rounds.length) a.push(a.length ? a[a.length - 1] : 0); c.fees[t] = a; });
   return (CAMP_CACHE = c);
 }
 /** 지금 차수: 「현재 차수」를 정해 두면 그것, 자동이면 오늘 날짜가 든 차수 (마감 뒤면 마지막 차수) */
@@ -718,14 +735,18 @@ function campSave(token, c, rev) {
   rules.forEach((r, i) => { if (!ok.test(r.until) || !r.label) throw new Error((i + 1) + '번째 환불 규정의 날짜·이름을 확인해 주세요.'); if (i && r.until <= rules[i - 1].until) throw new Error('환불 규정은 날짜 순서대로 적어 주세요.'); });
   const af = rf.after || {}, refund = { rules, after: { label: String(af.label || '캠프 시작 후'), rate: Math.max(0, Math.min(100, Math.round(+af.rate || 0))), doc: !!af.doc, allow: !!af.allow }, duesRefund: !!rf.duesRefund };
   const cur = b.cur === 'auto' || b.cur === '' || b.cur == null ? 'auto' : String(Math.max(0, Math.min(rounds.length - 1, +b.cur || 0)));
-  const nc = { base: { id: String(b.id).trim(), name: String(b.name).trim(), start: b.start, end: b.end, place: String(b.place || '').trim(), open: b.open, close: b.close, cur }, rounds, fees, opt, refund };
+  const oc = (c.consent && c.consent.items) || [], dc = CAMP_DEF.consent.items;
+  const consent = { ver: today_(), items: dc.map(d => { const x = oc.find(y => y.id === d.id) || d; const fixed = d.id === 'collect';
+    return { id: d.id, title: String(x.title || d.title).trim().slice(0, 60) || d.title, req: fixed ? true : !!x.req, on: fixed ? true : !!x.on, body: String(x.body == null ? d.body : x.body).slice(0, 4000) }; }) };
+  { const old = camp_().consent; if (JSON.stringify(old.items) === JSON.stringify(consent.items)) consent.ver = old.ver; }
+  const nc = { base: { id: String(b.id).trim(), name: String(b.name).trim(), start: b.start, end: b.end, place: String(b.place || '').trim(), open: b.open, close: b.close, cur, guest: b.guest !== false }, rounds, fees, opt, refund, consent };
   const lock = lock_();
   try {
     const ss = SpreadsheetApp.getActive(); let sh = ss.getSheetByName(CAMPCFG);
     if (!sh) { sh = ss.insertSheet(CAMPCFG); sh.getRange(1, 1, 1, 3).setValues([['항목', '값', '설명']]).setFontWeight('bold'); sh.setFrozenRows(1); sh.getRange('B:B').setNumberFormat('@'); }
     CAMP_CACHE = null; const old = camp_();
     if ((+rev || 0) !== (old.rev || 0)) throw new Error('다른 분이 먼저 캠프 설정을 바꿨어요. 새로 고친 뒤 다시 해 주세요.');
-    const desc = { base: '캠프 코드 · 이름 · 날짜 · 장소 · 접수 기간', rounds: '차수 이름과 기간', fees: '참가자격 × 차수 참가비', opt: '추가 레슨 · 마스터클래스 · 회비 · 가족방', refund: '취소·환불 규정' };
+    const desc = { base: '캠프 코드 · 이름 · 날짜 · 장소 · 접수 기간 · 비회원 접수', rounds: '차수 이름과 기간', fees: '참가자격 × 차수 참가비', opt: '추가 레슨 · 마스터클래스 · 회비 · 가족방', refund: '취소·환불 규정', consent: '개인정보 동의 문구 (바꾸면 버전 날짜가 바뀜)' };
     const vals = CAMP_KEYS.map(k => [k[1], JSON.stringify(nc[k[0]]), desc[k[0]]]).concat([['rev', String((old.rev || 0) + 1), '바꾼 횟수 (건드리지 마세요)']]);
     sh.getRange(2, 1, Math.max(sh.getLastRow(), vals.length + 1), 3).clearContent();
     sh.getRange(2, 1, vals.length, 3).setValues(vals);
@@ -733,6 +754,54 @@ function campSave(token, c, rev) {
     log_(a.name, '캠프 설정 저장', nc.base.id + ' · ' + nc.base.start + '~' + nc.base.end);
   } finally { lock.releaseLock(); }
   return { ok: true, camp: campPublic_() };
+}
+
+
+/* ---------------- 비회원(학부모) 접수 · 동의 ----------------
+ * 비회원 = 보호자가 자기 아이(와 가족)를 직접 접수. 학원 = 「비회원」, 접수자 = 이름(휴대전화 뒤 4자리)
+ * 휴대전화 전체는 「비회원」 시트에만 (같은 이름·뒷번호를 다른 사람이 쓰지 못하게) */
+const GUEST_ACAD = '비회원';
+const GUEST_SH = '비회원';
+const CONSENT_SH = '동의기록';
+const isGuestType_ = t => /^비회원 /.test(String(t || ''));
+/** 동의 확인: 쓰는 항목 중 필수는 모두 true 여야 함 → 빠졌으면 안내 문구 */
+function consentErr_(c) {
+  const items = (camp_().consent.items || []).filter(x => x.on);
+  const miss = items.filter(x => x.req && !(c && c[x.id] === true));
+  return miss.length ? '필수 동의 항목에 동의해 주세요: ' + miss.map(x => x.title).join(', ') : '';
+}
+function consentLog_(kind, name, ph, c) {
+  try {
+    const ss = SpreadsheetApp.getActive(); let sh = ss.getSheetByName(CONSENT_SH);
+    const head = ['일시', '캠프', '구분', '이름', '휴대전화 뒤 4자리', '동의 문구 버전', '동의 항목'];
+    if (!sh) { sh = ss.insertSheet(CONSENT_SH); sh.getRange(1, 1, 1, head.length).setValues([head]).setFontWeight('bold'); sh.setFrozenRows(1); }
+    const C = camp_(), items = (C.consent.items || []).filter(x => x.on);
+    sh.appendRow([stamp_(), C.base.id, kind, name, "'" + String(ph).slice(-4), C.consent.ver, items.map(x => x.title + ': ' + (c && c[x.id] === true ? '동의' : '안 함')).join(' / ')]);
+  } catch (x) {}
+}
+function guestLogin(name, phone, consent) {
+  const C = camp_();
+  if (!C.base.guest) return { ok: false, msg: '지금은 비회원 접수를 받지 않아요. 다니는 학원 선생님께 접수를 부탁해 주세요.' };
+  const nm = String(name || '').trim().replace(/\s+/g, ' '), ph = String(phone || '').replace(/\D/g, '');
+  if (nm.length < 2 || nm.length > 20 || /[()]/.test(nm)) return { ok: false, msg: '보호자 이름을 2~20자로 넣어 주세요.' };
+  if (!/^01\d{8,9}$/.test(ph)) return { ok: false, msg: '휴대전화를 확인해 주세요.' };
+  const ce = consentErr_(consent); if (ce) return { ok: false, msg: ce };
+  const owner = nm + '(' + ph.slice(-4) + ')';
+  const lock = lock_();
+  try {
+    const ss = SpreadsheetApp.getActive(); let sh = ss.getSheetByName(GUEST_SH);
+    const head = ['접수자', '이름', '휴대전화', '처음', '마지막'];
+    if (!sh) { sh = ss.insertSheet(GUEST_SH); sh.getRange(1, 1, 1, head.length).setValues([head]).setFontWeight('bold'); sh.setFrozenRows(1); sh.getRange('C:C').setNumberFormat('@'); }
+    const r = rows_(GUEST_SH).find(x => String(x['접수자']) === owner);
+    if (r && String(r['휴대전화']).replace(/\D/g, '') !== ph) return { ok: false, msg: '같은 이름·휴대전화 뒷번호로 이미 접수한 분이 있어요. 협회로 문의해 주세요.' };
+    if (r) sh.getRange(r._row, 5).setValues([[stamp_()]]);
+    else sh.appendRow([owner, nm, "'" + ph.replace(/(\d{3})(\d{3,4})(\d{4})/, '$1-$2-$3'), stamp_(), stamp_()]);
+  } finally { lock.releaseLock(); }
+  consentLog_('비회원(보호자)', nm, ph, consent);
+  const token = Utilities.getUuid();
+  CacheService.getScriptCache().put('tok_' + token, JSON.stringify({ name: owner, acads: [GUEST_ACAD], guest: true, phone: ph }), 21600);
+  log_(owner, '비회원 로그인', '');
+  return Object.assign({ ok: true, token, today: today_(), teacher: { id: '', name: owner, real: nm, role: '보호자', inst: '', acads: [GUEST_ACAD], home: [GUEST_ACAD], p4: ph.slice(-4), guest: true }, myAcct: myAcct_(owner) }, bundle_([GUEST_ACAD], owner));
 }
 
 /* ---------------- 담당자 · 권한 (「담당자」 시트) ----------------
@@ -1188,7 +1257,7 @@ function myTimetable(token) {
   if (prof) L.filter(x => x.pr === prof.name).forEach(x => { const s = byPid[x.pid]; if (!s) return; mine.push({ d: x.d, t: x.t, e: '', what: '개인레슨', title: '개인레슨', where: prof.room || '레슨실', loc: '', with: s ? s.p.name + ' (' + s.sb.acad + ')' : '' }); });
   const stu = [];
   Object.keys(byPid).forEach(id => { const s = byPid[id]; const type = s.p.type || s.i.type || '';
-    if (!['학생', '회원의 악기하는 자녀'].includes(type)) return;
+    if (!['학생', '회원의 악기하는 자녀', '비회원 학생'].includes(type)) return;
     const mineSub = s.sb.owner === u.name, myPupil = nm(s.i.teacher) === nm(u.name) && u.acads.includes(s.sb.acad);
     if (!mineSub && !myPupil) return;
     stu.push({ name: s.p.name, acad: s.sb.acad, inst: s.p.inst || s.i.inst || '', teacher: s.i.teacher || '', req: +s.i.lessons || 0, lessons: L.filter(x => x.pid === id).map(x => ({ d: x.d, t: x.t, pr: x.pr, room: roomOf(x.pr) })) }); });

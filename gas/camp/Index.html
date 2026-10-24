@@ -1,5 +1,5 @@
 <!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
-<!-- build: 20261024-104106 -->
+<!-- build: 20261024-105903 -->
 <base target="_top">
 <script>/* 화면이 하얗게 될 때 원인을 화면에 보여 주는 진단 (STG) */
 window.addEventListener('error',function(e){try{var n=e.lineno||0,c=(e.colno||1)-1,out=[];
@@ -240,6 +240,13 @@ select{appearance:auto}
 .roomrow .pill{font-weight:500}
 .note{background:var(--rosin-soft);color:var(--ink);border-radius:8px;padding:10px 12px;font-size:13.5px;border-left:3px solid var(--rosin)}
 .note.info{background:var(--accent-soft);border-left-color:var(--accent)}
+.pick2{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin:6px 0 10px}
+.pickcard{all:unset;box-sizing:border-box;cursor:pointer;display:grid;gap:6px;padding:18px;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.pickcard b{font-size:17px}.pickcard span{color:var(--muted);font-size:14px;line-height:1.5}.pickcard:hover{border-color:var(--accent)}.pickcard:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.cons{display:grid;gap:8px}.consall{display:flex;gap:8px;align-items:center;padding:10px 12px;border-radius:8px;background:var(--bg);font-size:15px}
+.consit{border-top:1px solid var(--line);padding-top:8px}.consrow{display:flex;justify-content:space-between;gap:8px;align-items:center}.consrow label{display:flex;gap:6px;align-items:center;flex:1;min-width:0}.consrow .btn{flex-shrink:0;white-space:nowrap}.consrow .pill{flex-shrink:0}
+.consall input,.consrow input{width:18px;height:18px;accent-color:var(--accent)}
+.consbody{white-space:pre-wrap;font-size:13px;line-height:1.6;color:var(--muted);background:var(--bg);border-radius:8px;padding:10px 12px;margin-top:6px;max-height:260px;overflow:auto}
 .adder{border:1px dashed var(--line);border-radius:8px;padding:12px;display:grid;gap:10px;background:var(--bg)}
 
 /* participant cards */

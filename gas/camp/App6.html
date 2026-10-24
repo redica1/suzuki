@@ -1,4 +1,67 @@
-/* build: 20261024-104106 */
+/* build: 20261024-105903 */
+  for(const k in o){const f=findAcct(o[k],d+1);if(f)return f}return null}
+function fillAcct(){try{fillAcct_()}catch(e){}}
+function fillAcct_(){const m=S.myAcct;if(!m||!m.acct)return;ACCT_SETS.forEach(([b,a,h])=>{const A=document.getElementById(a);if(!A||A.dataset.af)return;A.dataset.af='1';
+  const B=document.getElementById(b),H=document.getElementById(h);if(A.value||(B&&B.value))return;if(B)B.value=m.bank;A.value=m.acct;if(H)H.value=m.holder;
+  const box=A.closest('.rpf,.grid2')||A.parentElement;if(box&&!box.nextElementSibling?.classList?.contains('afhint'))box.insertAdjacentHTML('afterend','<small class="hint afhint">지난번에 적은 계좌를 채워 뒀어요. 다르면 고쳐 주세요.</small>')})}
+try{new MutationObserver(fillAcct).observe(document.documentElement,{childList:true,subtree:true})}catch(e){}
+function fillBanks(){const d=document.getElementById('bankList');if(d&&!d.children.length)d.innerHTML=BANKS.map(b=>`<option value="${b}">`).join('')}
+function render(){fillBanks();
+  {const st=document.getElementById('steps');if(st)st.hidden=S.view==='mine'||S.view==='q'||!!(S.editNo&&S.quickEdit)}
+  if(S.view==='tt'){document.getElementById('app').innerHTML=vMyTT();['backBtn','nextBtn','mineBtn'].forEach(id=>{const e=document.getElementById(id);if(e)e.hidden=true});document.getElementById('dockLabel').textContent='내 시간표';document.getElementById('dockTotal').textContent='';const st=document.getElementById('steps');if(st)st.hidden=true;return}
+  if(S.view==='q'){document.getElementById('app').innerHTML=vQ();['backBtn','nextBtn','mineBtn'].forEach(id=>{const e=document.getElementById(id);if(e)e.hidden=true});document.getElementById('dockLabel').textContent='오류·건의';document.getElementById('dockTotal').textContent='';return}
+  {const mb=document.getElementById('mineBtn');if(mb){mb.hidden=!(S.user&&MY_SUBS.length&&S.view!=='mine');mb.textContent=`내 접수 ${MY_SUBS.length}건`}}
+  if(S.view==='mine'){document.getElementById('app').innerHTML=vMine();document.getElementById('backBtn').hidden=true;document.getElementById('nextBtn').hidden=true;document.getElementById('dockLabel').textContent='내 접수';document.getElementById('dockTotal').textContent=`${MY_SUBS.length}건`;return}
+  renderSteps();
+  const app=document.getElementById('app');
+  app.innerHTML = (S.editNo&&S.step<6?`<div class="note info spread" style="margin-bottom:12px"><span>${S.quickEdit?`<b>${(S.quickKeys||[]).map(k=>{const p=people().find(x=>x.key===k);return p?esc(p.name):''}).filter(Boolean).join(', ')}</b> 신청 내용 (${S.editNo}) · 보면서 고칠 수 있어요. 고쳤으면 아래 「수정 내용 저장」을 눌러요.`:`<b>${S.editNo} 접수를 고치는 중</b> · 인원을 추가하거나 정보를 바꾼 뒤 마지막 단계에서 「수정 내용 저장」을 눌러요. 입금된 사람은 금액이 바뀌면 차액만 입금하면 돼요.`}</span><button class="btn small" type="button" id="toMine">← 목록으로 돌아가기</button></div>`:'')+[vStep1,vStep2,vStep3,vEns,vStep4,vStep5][S.step-1]()+(S.editNo&&S.quickEdit&&S.step===3?quickBar():'')+(S.editNo&&S.step<6&&!(S.quickEdit&&S.step===3)?`<div class="row" style="justify-content:center;margin:18px 0 6px"><button class="btn" type="button" id="toMine2">← 저장하지 않고 목록으로 돌아가기</button></div>`:'');
+  const t=totals(), next=document.getElementById('nextBtn'), back=document.getElementById('backBtn');
+  document.getElementById('dockLabel').textContent = S.step===1?'접수 준비':`선택 ${t.n}명${t.teams.length?` · 가족방 ${t.teams.length}`:''}${t.waiting?` · 회비확인대기 ${t.waiting}명`:''}`;
+  document.getElementById('dockTotal').textContent = won(t.all);
+  if(S.editNo&&S.step>1&&S.step<6){const D=editDiff();if(D)document.getElementById('dockLabel').textContent=D.diff?`고친 내용: ${won(D.before)} → ${won(D.after)} (${sgn(D.diff)})`:(S.quickEdit?'신청 내용 보기 · 금액 그대로':'고치는 중 · 금액 그대로')}
+  back.hidden = S.step===1||S.step===6;
+  next.hidden = S.step===6;
+  next.textContent = S.step===5?(S.editNo?'수정 내용 저장':'접수하기'):(S.step===4&&S.editNo&&S.ensEdit?'앙상블 저장':S.step===3&&S.editNo&&S.quickEdit?'저장':'다음');
+  next.disabled = false; next.classList.toggle('dim', blocked());
+  if(S.editNo&&S.quickEdit&&S.step===3&&(S.quickKeys||[]).every(k=>lockedP(k)))next.hidden=true;
+  lockCards();
+  document.getElementById('roundChip').textContent = `${ROUNDS[CAMP.ri][0]} 접수 중 · ${ROUNDS[CAMP.ri][1]}`;
+  document.getElementById('roundSeg').innerHTML = ''&&ROUNDS.map((r,i)=>`<button type="button" data-round="${i}" aria-pressed="${CAMP.ri===i}" style="padding:2px 9px;font-size:12px">${r[0]}</button>`).join('');
+}
+/* 「다음」을 막는 조건: 그 단계에서 보이는 것만 (2단계는 사람이 1명 이상이면 통과, 가족 이름·가족방 인원은 3단계에서) */
+function blocked(){const t=totals();
+  return (S.step===1&&!(S.user&&S.acad))||(S.step===2&&(t.n===0||t.n>CAMP.perSubmitMax))
+    ||(S.step===3&&(missingTeacher().length>0||missingBasic().length>0||missingProg().length>0||missingPref().length>0||S.fam.some(f=>!f.name.trim())||t.teams.some(x=>x.over)))
+    ||(S.step===4&&S.ens.on&&!(S.ens.group||'').trim())||(S.step===4&&S.ens.member&&!S.ens.joinNo&&!(S.ens.joinRep||'').trim())||(S.step===5&&!S.agree)}
+function toast(m,force){if(S.saving&&!force){S.savedMsg=m;return}const el=document.getElementById('toast');el.textContent=m;el.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>el.hidden=true,2200)}
+function go(n){if(isGuest()&&n===4)n=S.step>4?3:5;S.step=n;render();window.scrollTo({top:0})}
+function setNext(){const nb=document.getElementById('nextBtn');if(nb){nb.disabled=false;nb.classList.toggle('dim',blocked())}}
+/* 필수 칸이 빠졌을 때: 띵 소리 + 진동 + 빠진 칸 반짝임 + 무엇이 빠졌는지 알림 */
+function beep(){try{const C=window.AudioContext||window.webkitAudioContext;if(!C)return;const a=beep.c||(beep.c=new C());if(a.state==='suspended')a.resume();
+  [[880,0],[660,.18]].forEach(([f,t])=>{const o=a.createOscillator(),g=a.createGain();o.type='sine';o.frequency.value=f;g.gain.setValueAtTime(.0001,a.currentTime+t);g.gain.exponentialRampToValueAtTime(.35,a.currentTime+t+.02);g.gain.exponentialRampToValueAtTime(.0001,a.currentTime+t+.16);o.connect(g);g.connect(a.destination);o.start(a.currentTime+t);o.stop(a.currentTime+t+.17)})}catch(e){}}
+function missWhat(){const t=totals(),L=[],el=[],Q=x=>{const e=typeof x==='string'?document.querySelector(x):x;if(e)el.push(e)};
+  if(S.step===1){L.push('로그인하고 학원을 골라 주세요')}
+  else if(S.step===2){if(t.n===0)L.push('참가자를 1명 이상 신청 명단에 추가해 주세요');else L.push(`한 번에 ${CAMP.perSubmitMax}명까지 접수할 수 있어요`)}
+  else if(S.step===3){
+    people().forEach(p=>{const i=info(p),m=[];
+      if(p.kind==='student'&&!i.teacher&&!isGuest()){m.push('담당 교사');Q('#tc_'+p.key)}
+      if(yearBad(p,i.by)){m.push('출생연도');Q('#ag_'+p.key)}
+      if(!i.gender){m.push('성별');const g=document.querySelector(`[data-gender^="${p.key}|"]`);if(g)Q(g.parentElement)}
+      if(p.kind==='student'&&PLAYS.has(i.type)&&!i.prog){m.push('현재 진도');Q('#pg_'+p.key)}
+      if(missingPref().some(x=>x.key===p.key)){m.push('선호 교수 1');Q('#p1_'+p.key)}
+      if(m.length)L.push(`${p.name}: ${m.join('·')}`)});
+    S.fam.filter(f=>!f.name.trim()).forEach(f=>{L.push(`${FAM_SHORT[f.type]||'가족'} 이름`);Q('#fn_'+f.id)});
+    if(t.teams.some(x=>x.over))L.push(`가족방은 한 방에 ${ROOM.cap}명까지예요`)}
+  else if(S.step===4){if(S.ens.on&&!(S.ens.group||'').trim()){L.push('앙상블 팀 이름');Q('#enG')}
+    if(S.ens.member&&!S.ens.joinNo&&!(S.ens.joinRep||'').trim()){L.push('함께할 팀을 고르거나 대표 학원 이름을 적어 주세요');Q('#enTq')}}
+  else if(S.step===5&&!S.agree){L.push('안내 사항 동의에 체크해 주세요');{const a=document.getElementById('agree');if(a)Q(a.closest('label')||a)}}
+  return {L,el}}
+function warnMissing(){const {L,el}=missWhat();beep();try{navigator.vibrate&&navigator.vibrate([120,60,120])}catch(e){}
+  document.querySelectorAll('.flash').forEach(x=>x.classList.remove('flash'));
+  el.forEach(x=>{void x.offsetWidth;x.classList.add('flash');setTimeout(()=>x.classList.remove('flash'),2000)});
+  if(el[0]){el[0].scrollIntoView({block:'center',behavior:'smooth'});if(el[0].focus&&/INPUT|SELECT/.test(el[0].tagName))setTimeout(()=>el[0].focus({preventScroll:true}),350)}
+  const m=L.length?'빠진 칸이 있어요 · '+L.slice(0,3).join(' / ')+(L.length>3?` 외 ${L.length-3}곳`:''):'빠진 칸을 확인해 주세요';
+  const tt=document.getElementById('toast');toast(m,true);clearTimeout(toast.t);toast.t=setTimeout(()=>tt.hidden=true,4500)}
 /* 접수 고치기 시작: only=null 이면 사람 추가(2단계), 사람 키 목록이면 그 사람들만 정보 수정(3단계) */
 function startEdit(no,only){const sb=MY_SUBS.find(x=>x.no===no);const f=JSON.parse(JSON.stringify(sb.form));S.acad=sb.acad;ensureRoster(sb.acad);S.verified=true;
   Object.assign(S,{picked:f.picked,extra:f.extra,fam:f.fam,info:f.info,room:f.room,join:f.join||{},ens:f.ens||{on:false},agree:false,sel:{},cartAt:{}});
@@ -24,12 +87,22 @@ document.addEventListener('click',e=>{
     if(!t){S.verr=`회원 명단에서 ${n} 선생님을 찾지 못했어요.`;render();return}
     if(t.state==='대기'){S.verr='승인 대기 중이에요. 협회가 확인하면 이메일로 알려 드려요.';render();return}
     login({...t,acads:t.acads.includes('마포스즈키')?['마포스즈키',...t.acads.filter(a=>a!=='마포스즈키')]:t.acads});if(t.acads.includes('마포스즈키')){document.querySelector('[data-acad="마포스즈키"]')||0}return}
+  if(d.mode){S.mode=d.mode;S.cons=S.cons||{};S.verr='';S.auth='consent';render();window.scrollTo({top:0});return}
+  if(b.id==='toPick'){S.auth='pick';S.verr='';render();return}
+  if(d.consopen){S.consOpen=S.consOpen||{};S.consOpen[d.consopen]=!S.consOpen[d.consopen];render();return}
+  if(b.id==='consNext'){if(!consReqOk()){const miss=consItems().filter(x=>x.req&&!(S.cons||{})[x.id]).map(x=>x.title);S.verr='필수 항목에 동의해 주세요: '+miss.join(', ');render();return}S.verr='';S.auth=S.mode==='guest'?'guest':'login';render();window.scrollTo({top:0});return}
+  if(b.id==='doGuest'){const nm=document.getElementById('lgNm').value.trim(),ph='010'+document.getElementById('lgEm').value.replace(/\D/g,'');S.lgNm=nm;S.lgEm='010-'+document.getElementById('lgEm').value;
+    if(nm.length<2||ph.length<11){S.verr='보호자 이름과 휴대전화를 모두 넣어 주세요.';render();return}
+    busy(true,'확인하고 있어요…');google.script.run.withSuccessHandler(r=>{busy(false);if(!r.ok){S.verr=r.msg;render();return}
+      S.token=r.token;S.today=r.today;S.myAcct=r.myAcct||null;loadFromServer(r);login({...r.teacher});
+      if(!MY_SUBS.length){S.acad=GUEST_ACAD;S.rq='';S.sel={};S.picked={};S.extra=[];S.fam=[];S.info={};S.room={};ensureRoster(GUEST_ACAD);S.verified=true;render()}})
+      .withFailureHandler(e=>{busy(false);S.verr='연결이 잠시 안 돼요. 다시 눌러 주세요. ('+((e&&e.message)||e)+')';render()}).guestLogin(nm,ph,S.cons||{});return}
   if(b.id==='doLogin'){const nm=document.getElementById('lgNm').value.trim(),ph='010'+document.getElementById('lgEm').value.replace(/\D/g,'');S.lgNm=nm;S.lgEm='010-'+document.getElementById('lgEm').value;
     if(!nm||ph.length<11){S.verr='이름과 휴대전화를 모두 넣어 주세요.';render();return}
     busy(true,'명단을 확인하고 있어요…');google.script.run.withSuccessHandler(r=>{busy(false);if(!r.ok){S.verr=r.msg;render();return}
       S.token=r.token;S.today=r.today;S.myAcct=r.myAcct||null;loadFromServer(r);login({...r.teacher,acads:r.teacher.acads});
       if(!MY_SUBS.length&&r.teacher.acads.length===1){const a=r.teacher.acads[0];S.acad=a;S.rq='';S.sel={};S.ptab='교사';S.picked={};S.extra=[];S.fam=[];S.info={};S.room={};ensureRoster(a);S.verified=true;render()}})
-      .withFailureHandler(e=>{busy(false);S.verr='연결이 잠시 안 돼요. 다시 눌러 주세요. ('+((e&&e.message)||e)+')';render()}).login(nm,ph);return}
+      .withFailureHandler(e=>{busy(false);S.verr='연결이 잠시 안 돼요. 다시 눌러 주세요. ('+((e&&e.message)||e)+')';render()}).login(nm,ph,S.cons||{});return}
   if(b.id==='toReg'){S.auth='reg';S.verr='';render();return}
   if(b.id==='doReg'){const g=id=>document.getElementById(id).value.trim();const nm=g('rgName'),ph=g('rgPhone').replace(/\D/g,'');
     if(!nm||ph.length<10){S.verr='이름과 휴대전화를 넣어 주세요.';render();return}
@@ -48,7 +121,7 @@ document.addEventListener('click',e=>{
     if(!S.consent){S.verr='개인정보 수집·이용에 동의해 주세요.';render();return}
     const t=TEACHER_DB.find(x=>x.phone===S.pending.phone);Object.assign(t,{email:document.getElementById('pfEmail').value.trim(),inst:document.getElementById('pfInst').value,role:document.getElementById('pfRole').value,hasPw:true});
     login(t);toast('비밀번호를 만들었어요. 다음부터 휴대전화와 비밀번호로 로그인해요');return}
-  if(b.id==='logout'){MY_SUBS.length=0;Object.assign(S,{user:null,auth:'login',acad:'',verified:false,picked:{},extra:[],fam:[],info:{},room:{},verr:''});render();return}
+  if(b.id==='logout'){MY_SUBS.length=0;Object.assign(S,{user:null,auth:'pick',cons:{},acad:'',verified:false,picked:{},extra:[],fam:[],info:{},room:{},verr:''});render();return}
   if(b.id==='nextBtn'&&S.step===2&&selIds().length){toast(`체크만 하고 아직 추가하지 않은 ${selIds().length}명이 있어요. 「신청 명단에 추가」를 눌러 주세요.`);const ab=document.getElementById('addCart');if(ab)ab.scrollIntoView({block:'center'});return}
   if(b.id==='otherAcad'){S.acOpen=true;S.acQ='';render();const n=document.getElementById('acQ');if(n)n.focus();return}
   if(b.id==='qBtn'){openQ();return}
@@ -106,63 +179,3 @@ document.addEventListener('click',e=>{
     const why=document.getElementById('cxWhy').value;if(!why)return er('취소 사유를 선택해 주세요.');
     if(r.doc&&paid){const f=document.getElementById('cxDoc');if(!f||!f.files.length)return er('이 기간에는 진단서를 올려야 취소할 수 있어요.')}
     if(paid&&amt>0){const bk=document.getElementById('cxBank').value,ac=document.getElementById('cxAcct').value.replace(/[^\d-]/g,''),ho=document.getElementById('cxHolder').value.trim();if(!bk||ac.length<8||!ho)return er('환불 받을 은행·계좌번호·예금주를 넣어 주세요.')}
-    const names=sb.ppl.filter(p=>sel.includes(p.id)).map(p=>p.name);
-    if(paid){const f=document.getElementById('cxDoc'),req={no:sb.no,acad:sb.acad,names,ids:sel,why,amt,rule:`${r.label} · ${r.rate?r.rate+'% 환불':'환불 없음'}`,bank:(document.getElementById('cxBank')||{}).value||'',acct:((document.getElementById('cxAcct')||{}).value||'').replace(/[^\d-]/g,''),holder:((document.getElementById('cxHolder')||{}).value||'').trim()};
-      const go=file=>{req.file=file;api('cancelReq',[req],()=>{})};
-      if(f&&f.files&&f.files[0]){const fl=f.files[0];const rd=new FileReader();rd.onload=()=>go({name:fl.name,type:fl.type,data:String(rd.result).split(',')[1]});rd.readAsDataURL(fl)}else go(null)}
-    sb.ppl.forEach(p=>{if(sel.includes(p.id)){p.status=isPaid(p)?'취소요청':'취소';p.cxReqAt=nowStamp();if(!isPaid(p))p.cxWhy=why}});subSave();
-    delete S.cx[sb.no];S.cxOpen='';S.cxReason='';S.cxDone={names,amt,paid};render();window.scrollTo({top:0});toast(paid?'취소 요청을 보냈어요':'취소했어요');return}
-  if(b.id==='homeBtn'){S.view='form';if(S.step===6)Object.assign(S,{acad:'',verified:false,picked:{},extra:[],fam:[],info:{},room:{},join:{},ens:{on:false},agree:false});go(1);return}
-  if(d.tab){S.tab=d.tab;S.rq='';render();return}
-  if(d.ptab){S.ptab=d.ptab;S.rq='';render();return}
-  if(b.id==='addCart'){const L=selIds();const at=nowStamp();L.forEach(id=>{S.picked[id]=true;if(!S.cartAt[id])S.cartAt[id]=at});S.sel={};render();toast(`${L.length}명을 신청 명단에 추가했어요`);return}
-  if(d.uncart){const id=d.uncart;S.picked[id]=false;delete S.cartAt[id];delete S.sel[id];delete S.room[id];delete S.join[id];Object.keys(S.join).forEach(j=>{if(S.join[j]===id)delete S.join[j]});const n=S.fam.filter(f=>f.link===id).length;S.fam=S.fam.filter(f=>f.link!==id);render();toast(n?`명단에서 뺐어요 · 가족 ${n}명도 함께`:'명단에서 뺐어요');return}
-  if(d.pick){if(S.picked[d.pick]){render();return} S.sel[d.pick]=b.checked; const ab=document.getElementById('addCart'); if(ab) ab.outerHTML=addBtn(); return}
-  if(false){S.picked[d.pick]=b.checked; if(!b.checked){delete S.room[d.pick];delete S.join[d.pick];Object.keys(S.join).forEach(j=>{if(S.join[j]===d.pick)delete S.join[j]});const n=S.fam.filter(f=>f.link===d.pick).length; S.fam=S.fam.filter(f=>f.link!==d.pick); if(n)toast(`가족 ${n}명도 함께 뺐어요`)} render();return}
-  if(d.ext){const [k,v]=d.ext.split('|');const i=S.info[k];i.ext=v==='1';if(!i.ext){i.lessons=0;i.mc=[];i.p1='';i.p2=''}render();return}
-  if(d.gender){const [k,g]=d.gender.split('|');S.info[k].gender=g;render();return}
-  if(d.settype){const [k,v]=d.settype.split('|');const p=people().find(x=>x.key===k);if(p){info(p).type=v;render();toast(`${p.name}: ${v==='회원의 악기하는 자녀'?'악기하는 교사자녀':v} 금액으로 계산해요`)}return}
-  if(d.roomck&&b.matches('input')){if(b.checked)S.room[d.roomck]=true;else delete S.room[d.roomck];render();const tm=teams().find(x=>x.rep.key===d.roomck);toast(b.checked?(tm&&tm.fee?`가족방 ${tm.n}명 · ${won(tm.fee)}을 청구에 더했어요`:'가족방을 신청했어요 · 4명이라 추가 비용이 없어요'):'가족방 신청을 뺐어요');return}
-  if(d.sibpick!==undefined){S.sibOpen=S.sibOpen===d.sibpick?'':d.sibpick;render();return}
-  if(d.sib){const [a,b]=d.sib.split('|');const h=headOf(a);S.join[b]=h;delete S.room[b];sibsOf(b).forEach(j=>S.join[j]=h);S.sibOpen='';
-    const pp=people(),hp=pp.find(p=>p.key===h)||{},bp=pp.find(p=>p.key===b)||{};
-    if(hp.kind==='teacher'){const ib=info(bp);ib.type='회원의 악기하는 자녀'}
-    render();toast(hp.kind==='teacher'?`${bp.name}을(를) ${hp.name} 선생님의 자녀로 연결했어요 · 악기하는 교사자녀 참가비로 바뀌고 가족방은 한 방으로 계산돼요`:`${bp.name}을(를) ${hp.name}의 형제로 연결했어요 · 가족방은 한 방으로 계산돼요`);return}
-  if(d.unsib){const h=S.join[d.unsib];const hp=people().find(p=>p.key===h)||{};delete S.join[d.unsib];
-    if(hp.kind==='teacher'&&S.info[d.unsib]&&S.info[d.unsib].type==='회원의 악기하는 자녀')S.info[d.unsib].type='학생';render();toast('연결을 풀었어요');return}
-  if(d.addfam){const [k,t]=d.addfam.split('|');const id='f'+Date.now();S.fam.push({id,name:'',type:t,link:k});render();const n=document.getElementById('fn_'+id)||document.getElementById('fc_'+id);n&&n.focus();toast(`${FAM_SHORT[t]}를 추가했어요. 이름을 넣어 주세요`);return}
-  if(b.id==='allPaid'){const r=roster(),me=S.user.name;[...r.students.filter(x=>!S.mine||x.teacher===me),...(S.mine?[]:r.teachers)].forEach(x=>{if(x.paid&&!x.booked&&!S.picked[x.id])S.sel[x.id]=true});render();toast('회비 납부한 사람을 모두 선택했어요');return}
-  if(b.id==='openNew'){S.showNew=true;render();document.getElementById('nN').focus();return}
-  if(b.id==='cancelNew'){S.showNew=false;render();return}
-  if(b.id==='addNew'){
-    const n=document.getElementById('nN').value.trim(), y=+document.getElementById('nB').value, ins=document.getElementById('nI').value, sy=document.getElementById('nSy').value, sm=document.getElementById('nSm').value, st=sy&&sm?`${sy}.${sm}`:'', tc=document.getElementById('nT').value;
-    if(!n||!(y>1990&&y<2026)||!tc){document.getElementById('nErr').textContent='이름, 출생연도(4자리), 담당 교사를 넣어 주세요.';return}
-    {const xid='x'+Date.now();S.cartAt[xid]=nowStamp();S.extra.push({id:xid,name:n,birth:y,inst:ins,start:st||'-',teacher:tc})}S.showNew=false;render();toast(`${n} 학생을 추가했어요 · 연회비 3만 원 추가`);return}
-  if(d.rmx){delete S.room[d.rmx];delete S.join[d.rmx];S.extra=S.extra.filter(x=>x.id!==d.rmx);S.fam=S.fam.filter(f=>f.link!==d.rmx);delete S.info[d.rmx];render();return}
-  if(b.id==='openFam'){S.showFam=true;render();return}
-  if(b.id==='cancelFam'){S.showFam=false;render();return}
-  if(b.id==='addFam'){
-    const n=document.getElementById('fN').value.trim(), ty=document.getElementById('fT').value, l=document.getElementById('fL');
-    if(!n){document.getElementById('fErr').textContent='이름을 넣어 주세요.';return}
-    S.fam.push({id:'f'+Date.now(),name:n,type:ty,link:l.value,linkName:l.options[l.selectedIndex].text});S.showFam=false;render();return}
-  if(d.rmf){const fm=S.fam.find(x=>x.id===d.rmf);S.fam=S.fam.filter(x=>x.id!==d.rmf);if(fm&&!S.fam.some(x=>x.link===fm.link))delete S.room[fm.link];delete S.info[d.rmf];render();return}
-  if(d.seg){const i=S.info[d.k];i.pref=d.v==='1';if(!i.pref){i.p1='';i.p2=''}render();return}
-  if(d.mc!==undefined&&b.matches('input')){const i=S.info[d.k];i.mc=b.checked?[...i.mc,d.mc]:i.mc.filter(x=>x!==d.mc);render();return}
-  if(d.other&&b.matches('input')){const i=S.info[d.other];i.other=b.checked;if(b.checked)i.song='';render();return}
-  if(d.ens&&b.matches('input[type=checkbox]')){S.ens[d.ens]=b.checked;return}
-  if(d.enson){if(d.enson!=='1'&&S.editNo&&S.ens.on&&teamMates(S.editNo).length){toast('함께하는 학원이 있어서 대표 신청을 취소할 수 없어요',true);return}S.ens.on=d.enson==='1';S.ens.member=d.enson==='m';if(S.ens.member&&!S.ens.joinNo){const t=teamOf(S.acad);if(t&&t.rep!==S.acad)S.ens.joinNo=t.no}render();return}
-  if(d.copy){copyText(d.copy);return}
-  if(d.cxwd){const [no,id]=d.cxwd.split('|');const sb=MY_SUBS.find(x=>x.no===no),p=sb&&sb.ppl.find(q=>q.id===id);
-    askBox('취소 요청을 거둘까요?',`<b>${esc(p?p.name:'')}</b>의 취소 요청을 거두고 다시 참가로 돌려요. 같은 요청에 함께 든 사람도 함께 돌아가요. 운영진이 이미 「환불 접수」를 했으면 거둘 수 없어요.`,'취소 요청 철회',()=>api('withdrawCx',[no,id],r=>{applyBundle(r);render();toast('취소 요청을 거뒀어요 · 다시 참가예요',true)},null,'처리하고 있어요…'));return}
-  if(d.rejoin){const [no,id]=d.rejoin.split('|');const sb=MY_SUBS.find(x=>x.no===no),p=sb&&sb.ppl.find(q=>q.id===id);if(!p)return;
-    askBox('다시 참가할까요?',`<b>${esc(p.name)}</b>을(를) 원래 자리로 되돌려요. 금액은 처음 접수한 차수(${esc(sb.round)}) 그대로예요. 입금이 필요하면 다시 입금 신고해 주세요.`,'다시 참가',()=>{p.status='정상';delete p.cxReqAt;subSave();render()});return}
-  if(d.ovr){const [no,id]=d.ovr.split('|');ovBox(no,[id]);return}
-  if(d.prp){S.prp=S.prp===d.prp?'':d.prp;render();return}
-  if(d.prpgo){const [no,id]=d.prpgo.split('|');const sb=MY_SUBS.find(x=>x.no===no),p=sb.ppl.find(q=>q.id===id);const g=k=>document.getElementById(k).value.trim();const er=m=>{document.getElementById('prpErr').textContent=m};
-    const name=g('prpN'),date=g('prpD'),amt=+g('prpA').replace(/\D/g,''),memo=g('prpM');
-    if(!name)return er('입금자명을 넣어 주세요.');if(name.length>20)return er('입금자명은 20자까지예요.');if(!date)return er('입금일을 선택해 주세요.');if(date>S.today)return er('입금일이 오늘보다 뒤예요.');if((S.bank||{}).from&&date<S.bank.from)return er('입금일을 확인해 주세요.');if(!amt)return er('입금 금액을 넣어 주세요.');if(amt!==dueOf(p)&&!memo)return er('청구액과 금액이 달라요. 메모를 적어 주세요.');
-    let rf=null;if(amt>dueOf(p)){rf={bank:g('prpRfB'),acct:g('prpRfA').replace(/[^\d-]/g,''),holder:g('prpRfH')};if(!rf.bank||rf.acct.replace(/-/g,'').length<6||!rf.holder)return er('더 낸 금액을 돌려받을 은행·계좌번호·예금주를 적어 주세요.')}
-    if(p.pay==='신고'&&p.rep){const r=p.rep;r.rows=r.rows||Object.fromEntries(r.ids.map(i=>[i,{name:r.name,date:r.date,a:i===p.id?r.amt:0}]));r.rows[p.id]={name,date,a:amt};if(rf)r.refund=rf;r.amt=r.ids.reduce((t,i)=>t+(+(r.rows[i]||{}).a||0),0);r.name=r.rows[r.ids[0]].name;r.date=r.rows[r.ids[0]].date;if(memo)r.memo=memo;r.edited=nowStamp();
-      MY_SUBS.forEach(x=>x.ppl.forEach(q=>{if(q.rep&&q.rep.id===r.id)q.rep=r}));S.prp='';subSave();render();toast(`${p.name} 입금 신고를 고쳤어요 · ${kday(date)} ${won(amt)}`);return}
-    const rows={[p.id]:{name,date,a:amt}};const rp={id:'R'+Date.now().toString(36),name,date,amt,memo,ids:[p.id],rows};if(rf)rp.refund=rf;p.pay='신고';p.rep=rp;delete S.rpRow[p.id];S.prp='';S.afterSave=()=>repDone([p.id]);subSave();render();toast(`${p.name} 입금 신고를 보냈어요 · ${kday(date)} ${won(amt)}`);return}
-  if(d.prpdel){const [no,id]=d.prpdel.split('|');const sb=MY_SUBS.find(x=>x.no===no),p=sb.ppl.find(q=>q.id===id);

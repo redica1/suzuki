@@ -1,4 +1,80 @@
-/* build: 20261024-104106 */
+/* build: 20261024-105903 */
+  ${D.map(d=>`<tr class="${d.fam?'famr':''}"><td>${d.fam?'<span class="cap">└ </span>':''}<b>${esc(d.p.name)}</b>${d.p.dtag?` <small class="dtag">${esc(d.p.dtag)}</small>`:''}<br><small class="hint">${d.i.by?d.i.by+'년':''}${d.i.gender?(d.i.by?' · ':'')+(d.i.gender==='남'?'남':'여'):''}</small></td>
+    ${COLS.map(([k])=>`<td>${d[k]?(k==='note'?`<span class="pill due">${esc(d[k])}</span>`:esc(d[k])):ALWAYS.has(k)&&(k==='room'||PLAYS.has(d.i.type))?'<span class="nil">신청 없음</span>':'<span class="nil">–</span>'}</td>`).join('')}</tr>`).join('')}
+  </tbody></table></div>
+  <p class="hint" style="margin:6px 0 0">신청한 것만 채워져요. 추가 레슨 · 마스터클래스 · 가족방은 안 했으면 「신청 없음」, 나머지 항목은 아무도 안 했으면 표에서 빠져요.</p>`}
+function detailRows(p){
+  const i=info(p), rows=[];
+  rows.push(['구분',i.type]); rows.push(['출생연도 · 성별',`${i.by?i.by+'년생':'-'} · ${i.gender==='남'?'남성':i.gender==='여'?'여성':'-'}`]);
+  if(p.kind!=='family') rows.push(['악기',p.inst||'-']);
+  if(p.kind==='student') rows.push(['담당 교사',i.teacher||'-']);
+  if(p.kind==='family') rows.push(['가족',`${people().find(x=>x.key===p.link)?.name||''}의 가족`]);
+  if(PLAYS.has(i.type)){
+    if(p.kind==='student') rows.push(['현재 진도',i.prog||'-']);
+    rows.push(['선호 교수',[i.p1,i.p2].filter(Boolean).join(', ')||'없음']);
+    rows.push(['추가 개인레슨',i.lessons?`${i.lessons}회`:'신청 안 함']);
+    if(mcOf(p.inst).length) rows.push(['마스터클래스',i.mc.length?i.mc.join(', '):'신청 안 함']);
+    if(p.kind!=='teacher') rows.push(['음악회',i.concert==='없음'?'참가 안 함':`${i.concert} · ${i.other?`${i.oc} ${i.ot}`.trim()||'곡명 미입력':(i.song||'곡 미선택')}`]);
+  }
+  if(!p.paid) rows.push(['연회비',p.isNew?'신규 추가 · 회비확인대기':'미납 · 회비확인대기']);
+  return rows;
+}
+/* 고치는 중: 기존 신청 금액 ↔ 수정 후 금액, 사람별 차이, 이미 입금된 돈 기준으로 더 낼 돈 / 돌려받을 돈 */
+function editDiff(){if(!S.editNo)return null;const old=ALL_SUBS.find(x=>x.no===S.editNo);if(!old)return null;let nw;try{nw=makeSub(old.no)}catch(e){return null}
+  /* 비교 대상: 취소된 사람만 빼고 모두 (취소 요청 중인 사람도 「추가」로 보지 않음). 합계는 참가(정상)인 사람만 */
+  const A=old.ppl.filter(p=>p.status!=='취소'),live=A.filter(p=>p.status==='정상'),rows=[];
+  const baseOf=o=>S.editBaseAmt&&S.editBaseAmt[o.id]!==undefined?S.editBaseAmt[o.id]:pAmt(o);
+  const kept=o=>isPaid(o)||o.pay==='신고'||o.status!=='정상';
+  nw.ppl.forEach(p=>{const o=A.find(q=>q.id===p.id);const b=pAmt(p);
+    if(!o)rows.push({name:p.name,a:null,b,paid:0});
+    else if(o.status==='정상'&&baseOf(o)!==b)rows.push({name:p.name,a:baseOf(o),b,paid:o.paidAmt||0})});
+  live.forEach(o=>{if(!nw.ppl.some(p=>p.id===o.id)&&!kept(o))rows.push({name:o.name,a:baseOf(o),b:null,paid:o.paidAmt||0})});
+  const inNew=id=>nw.ppl.some(p=>p.id===id);
+  const before=live.reduce((t,p)=>t+baseOf(p),0);
+  const after=nw.ppl.filter(p=>{const o=A.find(q=>q.id===p.id);return !o||o.status==='정상'}).reduce((t,p)=>t+pAmt(p),0)+live.filter(o=>!inNew(o.id)&&kept(o)).reduce((t,p)=>t+baseOf(p),0);
+  const paid=live.reduce((t,p)=>t+(p.paidAmt||0),0);let owe=0,back=0;
+  nw.ppl.forEach(p=>{const o=A.find(q=>q.id===p.id);if(o&&o.status!=='정상')return;const pd=o?(o.paidAmt||0):0,b=pAmt(p);owe+=Math.max(0,b-pd);back+=Math.max(0,pd-b)});
+  live.filter(o=>!inNew(o.id)&&kept(o)).forEach(o=>{const pd=o.paidAmt||0,b=baseOf(o);owe+=Math.max(0,b-pd);back+=Math.max(0,pd-b)});
+  return {rows,before,after,diff:after-before,paid,owe,back}}
+const sgn=n=>n>0?'+'+won(n):n<0?'−'+won(-n):'0원';
+function quickBar(){const allLocked=(S.quickKeys||[]).every(k=>lockedP(k));
+  return `${allLocked?'':editDiffHTML()}<div class="row" style="justify-content:center;gap:8px;margin:14px 0"><button class="btn" type="button" id="toMine3">← 목록으로</button>${allLocked?'':'<button class="btn primary" type="button" id="qeSaveBtn">수정 내용 저장</button>'}</div>${S.qSaved?`<p class="hint" style="text-align:center;margin:-6px 0 10px">✓ ${stampTxt(S.qSaved)} 저장했어요</p>`:''}`}
+function editDiffHTML(){const D=editDiff();if(!D)return '';
+  if(!D.rows.length&&!D.diff)return `<div class="note info" style="margin:10px 0">아직 고친 내용이 없어요 · 금액 그대로 <b class="num">${won(D.after)}</b>${D.paid&&D.owe?` · 남은 입금 ${won(D.owe)}`:''}</div>`;
+  const tag=D.diff>0?`<span class="pill due">고친 내용으로 ${won(D.diff)} 늘어요</span>`:D.diff<0?`<span class="pill new">고친 내용으로 ${won(-D.diff)} 줄어요</span>`:'<span class="pill ok">합계 그대로</span>';
+  return `<div class="panel" style="border:2px solid var(--accent)"><div class="spread"><h3 style="font-size:16px;margin:0">고친 내용에 따른 금액 · ${esc(S.editNo)}</h3>${tag}</div>
+    <dl class="kv" style="margin-top:8px"><dt>기존 신청 금액</dt><dd class="num">${won(D.before)}</dd><dt>수정 후 금액</dt><dd class="num"><b>${won(D.after)}</b></dd><dt>변동</dt><dd class="num"><b style="color:var(--${D.diff>0?'rosin':'accent'})">${sgn(D.diff)}</b></dd>
+      ${D.paid?`<dt>이미 입금 확인</dt><dd class="num">${won(D.paid)}</dd><dt>더 입금할 금액</dt><dd class="num"><b>${won(D.owe)}</b></dd>${D.back?`<dt>돌려받을 금액</dt><dd class="num"><b style="color:var(--accent)">${won(D.back)}</b></dd>`:''}`:''}</dl>
+    ${D.rows.length?`<div class="tbl" style="margin-top:8px"><table><thead><tr><th>이름</th><th class="r">기존</th><th class="r">수정 후</th><th class="r">차이</th></tr></thead><tbody>${D.rows.map(r=>`<tr><td><b>${esc(r.name)}</b>${r.a===null?' <span class="pill new">추가</span>':r.b===null?' <span class="pill">빠짐</span>':r.kept?' <span class="pill due">입금돼 있어 남음</span>':''}</td><td class="r num">${r.a===null?'-':won(r.a)}</td><td class="r num">${r.b===null?'-':won(r.b)}</td><td class="r num">${sgn((r.b||0)-(r.a||0))}</td></tr>`).join('')}</tbody></table></div>`:'<p class="hint" style="margin:6px 0 0">금액이 바뀐 사람이 없어요.</p>'}
+    <p class="hint" style="margin:8px 0 0">${[D.paid&&D.owe?'저장한 뒤 「내 접수」에서 더 낼 금액만 입금 신고하면 돼요.':'',D.back?'저장하면 돌려받을 계좌를 묻는 창이 떠요.':'','「수정 내용 저장」을 눌러야 바뀌어요.'].filter(Boolean).join(' ')}</p></div>`}
+function vStep4(){
+  const ps=people(), t=totals(), R=ROUNDS[CAMP.ri];
+  const edit=(n,l)=>`<button class="btn small ghost" type="button" data-go="${n}">${l} 수정</button>`;
+  return `<section class="sec"><h2>신청 확인</h2>
+  <p class="lede">접수하기 전에 신청 내용과 금액을 확인해 주세요. 고칠 곳이 있으면 「수정」을 누르면 돼요.</p>
+  ${editDiffHTML()}
+
+  <div class="panel"><div class="spread"><h3 style="font-size:16px">접수 정보</h3>${edit(1,'접수자')}</div>
+    <dl class="kv"><dt>학원</dt><dd>${esc(S.acad)}</dd><dt>접수자</dt><dd>${esc(S.who)} · ${esc(S.phone)}</dd><dt>이메일</dt><dd>${esc(S.email||'-')}</dd>
+    <dt>차수</dt><dd><span class="pill new">${R[0]} 접수</span> <span class="hint">${R[1]}</span></dd></dl></div>
+
+  <div class="panel"><div class="spread"><h3 style="font-size:16px">참가자별 신청 내용</h3>${edit(3,'신청 내용')}</div>
+    ${(()=>{const inRoom=new Set(t.teams.flatMap(x=>x.members.map(m=>m.key)));const T=[['all',`전체 ${t.n}명`,()=>true],['student',`학생 ${ps.filter(p=>p.kind==='student').length}`,p=>p.kind==='student'],['teacher',`교사 ${ps.filter(p=>p.kind==='teacher').length}`,p=>p.kind==='teacher'],['family',`가족 ${ps.filter(p=>p.kind==='family').length}`,p=>p.kind==='family'],['room',`가족방 ${t.teams.length}개${t.teams.length?` · ${inRoom.size}명`:''}`,p=>inRoom.has(p.key)]];
+      const cur=T.find(x=>x[0]===S.atab)||T[0];
+      return `<div class="seg atabs" role="tablist">${T.map(([k,l])=>`<button type="button" role="tab" data-atab="${k}" aria-pressed="${cur[0]===k}">${l}</button>`).join('')}</div>${applyTable(ps.filter(cur[2]),cur[0])}`})()}
+</div>
+
+  ${t.teams.length||S.ens.on?`<div class="g2c">
+    ${t.teams.length?`<div class="panel"><div class="spread"><h3 style="font-size:16px">가족방</h3>${edit(2,'가족방')}</div>
+      ${t.teams.map((x,ix)=>`<dl class="kv"><dt>가족방 ${ix+1}</dt><dd>${esc(x.rep.name)} 가족 ${x.n}명</dd><dt>함께 쓰는 사람</dt><dd>${x.members.map(m=>esc(m.name)).join(', ')}</dd></dl>`).join('')}</div>`:''}
+    ${S.ens.on?`<div class="panel"><div class="spread"><h3 style="font-size:16px">앙상블</h3>${edit(4,'앙상블')}</div>
+      <dl class="kv"><dt>팀 이름</dt><dd>${esc(S.ens.group||'-')}</dd><dt>함께하는 학원</dt><dd>${[S.acad+' (대표)',...(S.ens.acads||[])].map(esc).join(', ')}</dd>
+      <dt>곡</dt><dd>${[1,2].map(n=>songTxt(S.ens,n)).filter(Boolean).join('<br>')||'-'}</dd><dt>연주시간</dt><dd>${S.ens.tm||S.ens.ts?`${+S.ens.tm||0}분 ${+S.ens.ts||0}초`:'-'}</dd></dl></div>`:''}
+  </div>`:''}
+
+  <div class="panel"><h3 style="font-size:16px">금액</h3>
+    <div class="tbl"><table>
+    <thead><tr><th>참가자</th><th>구분</th><th class="r">참가비</th><th class="r">레슨·마스터</th><th class="r">연회비</th><th class="r">합계</th></tr></thead>
     <tbody>${ps.map(p=>{const i=info(p),f=feeOf(p);return `<tr><td>${esc(p.name)}</td><td>${esc(i.type)}</td><td class="r num">${won(f.base)}</td><td class="r num">${f.les+f.mc?won(f.les+f.mc):'-'}</td><td class="r num">${f.dues?won(f.dues):'-'}</td><td class="r num"><b>${won(f.total)}</b></td></tr>`}).join('')}
     ${t.teams.map((x,ix)=>`<tr><td>가족방 ${ix+1}</td><td>${esc(x.rep.name)} 가족 ${x.n}명</td><td></td><td></td><td></td><td class="r num"><b>${won(x.fee)}</b></td></tr>`).join('')}</tbody>
     <tfoot>
@@ -96,50 +172,3 @@ function payReport(){
       <div class="rpf"><input type="text" data-rpf="${p.id}|n" value="${esc(v.n)}" placeholder="입금자명" aria-label="${esc(p.name)} 입금자명" ${on?'':'disabled'}><input type="date" data-rpf="${p.id}|d" value="${v.d}" max="${S.today}" min="${(S.bank||{}).from||''}" aria-label="${esc(p.name)} 입금일" ${on?'':'disabled'}><input type="text" class="num" inputmode="numeric" data-rpf="${p.id}|a" value="${v.a?(+v.a).toLocaleString('ko-KR'):''}" placeholder="금액" aria-label="${esc(p.name)} 입금 금액" ${on?'':'disabled'}></div></li>`}).join('')}</ul>`).join('')}
     <div class="spread"><span class="hint">선택한 ${sel.length}명 · 청구 ${won(sum)} · 넣은 금액 <b class="num">${won(open.filter(x=>sel.includes(x.p.id)).reduce((t,x)=>t+(+rpv(x.p).a||0),0))}</b></span></div>
     <label class="f" for="rpMemo"><span>메모 <span class="hint">선택 · 금액이 청구액과 다르면 이유를 적어 주세요</span></span><input type="text" id="rpMemo" value="${esc(S.rpMemo||'')}"></label>
-    <details class="rfbox"><summary class="hint">청구액보다 많이 낸 사람이 있으면 · 환불 받을 계좌</summary><div class="rpf" style="margin-top:6px">${bankInp('rpRfB')}<input type="text" id="rpRfA" inputmode="numeric" placeholder="계좌번호"><input type="text" id="rpRfH" placeholder="예금주"></div></details>
-    <p class="err" id="rpErr"></p>
-    <button class="btn primary" type="button" id="rpGo">입금 신고하기</button>`:''}</div>`}
-function instOfP(sb,p){const k=p.id.slice(sb.no.length+1),i=(sb.form&&sb.form.info&&sb.form.info[k])||{},R=ROSTER[sb.acad]||{},x=(R.students||[]).find(q=>q.id===k)||((sb.form&&sb.form.extra)||[]).find(q=>q.id===k)||(R.teachers||[]).find(q=>q.id===k)||{};return p.inst||i.inst||x.inst||''}
-const catOf=(sb,p)=>p.kind==='교사'?'교사':p.kind==='가족'?'가족':(instOfP(sb,p)||'악기 미정');
-/* 내 접수 탭: 전체 · 교사 · 바이올린 · 첼로 … · 가족 */
-function mineTabs(list){const C={};(list||MY_SUBS).forEach(sb=>sb.ppl.filter(p=>p.status==='정상').forEach(p=>{const c=catOf(sb,p);C[c]=(C[c]||0)+1}));
-  const ins=Object.keys(C).filter(k=>k!=='교사'&&k!=='가족').sort((a,b)=>C[b]-C[a]);const T=[['전체',Object.values(C).reduce((a,b)=>a+b,0)]].concat(C['교사']?[['교사',C['교사']]]:[],ins.map(k=>[k,C[k]]),C['가족']?[['가족',C['가족']]]:[]);
-  if(!T.some(x=>x[0]===S.mtab))S.mtab='전체';
-  return `<div class="seg atabs" role="tablist" style="margin:8px 0">${T.map(([k,n])=>`<button type="button" role="tab" data-mtab="${esc(k)}" aria-pressed="${S.mtab===k}">${esc(k)} ${n}</button>`).join('')}</div>`}
-const mineOk=(sb,p)=>!S.mtab||S.mtab==='전체'||catOf(sb,p)===S.mtab;
-/* 접수 내역: 내가 낸 것 / 우리 학원 전체 (다른 선생님 접수는 보기만) */
-const acadSubs=()=>ALL_SUBS.filter(sb=>S.user&&(S.user.acads||[]).includes(sb.acad)&&true).slice().sort((a,b)=>String(b.createdAt||b.date).localeCompare(String(a.createdAt||a.date))||String(b.no).localeCompare(String(a.no)));
-function scopeSeg(){const A=acadSubs();return `<div class="seg atabs" role="tablist" style="margin:6px 0 10px"><button type="button" role="tab" data-mscope="mine" aria-pressed="${S.mscope!=='acad'}">내가 낸 접수 ${MY_SUBS.length}건</button><button type="button" role="tab" data-mscope="acad" aria-pressed="${S.mscope==='acad'}">우리 학원 전체 ${A.length}건</button></div>`}
-function vAcad(){const A=acadSubs();const live=A.flatMap(sb=>sb.ppl.filter(p=>p.status==='정상'));
-  const bill=live.reduce((t,p)=>t+pAmt(p),0),paid=live.reduce((t,p)=>t+(p.paidAmt||0),0);
-  const by={};A.forEach(sb=>{const o=by[sb.owner]||(by[sb.owner]={n:0,ppl:0,bill:0,paid:0,rp:0});o.n++;sb.ppl.filter(p=>p.status==='정상').forEach(p=>{o.ppl++;o.bill+=pAmt(p);o.paid+=p.paidAmt||0;if(p.pay==='신고')o.rp++})});
-  return `<section class="sec"><div class="spread"><h2>접수 내역</h2><button class="btn small ghost" type="button" id="toForm">← 새 접수하기</button></div>${scopeSeg()}
-  <p class="lede">${esc((S.user.acads||[]).join(', '))}에 들어온 접수 전부예요. 다른 선생님이 낸 접수는 <b>보기만</b> 돼요. 고칠 곳은 접수한 선생님께 알려 주세요.</p>
-  <div class="panel"><dl class="kv"><dt>접수</dt><dd>${A.length}건 · ${live.length}명<br><span class="compo">${compoTxt(A)}</span></dd><dt>청구 합계</dt><dd class="num">${won(bill)}</dd><dt>입금 확인</dt><dd class="num">${won(paid)}</dd><dt>남은 금액</dt><dd class="num">${won(Math.max(0,bill-paid))}</dd></dl></div>
-  <div class="panel tbl"><table><thead><tr><th>접수 교사</th><th class="r">접수</th><th class="r">인원</th><th class="r">청구</th><th class="r">입금 확인</th><th class="r">남은 금액</th><th>신고 대기</th></tr></thead><tbody>${Object.entries(by).map(([k,o])=>`<tr><td><b>${esc(k)}</b>${k===S.user.name?' <span class="pill new">나</span>':''}</td><td class="r num">${o.n}건</td><td class="r num">${o.ppl}명</td><td class="r num">${won(o.bill)}</td><td class="r num">${won(o.paid)}</td><td class="r num">${won(Math.max(0,o.bill-o.paid))}</td><td>${o.rp?o.rp+'명':'-'}</td></tr>`).join('')}</tbody></table></div>
-  ${A.length?mineTabs(A):''}
-  ${A.map(sb=>{const mine=sb.owner===S.user.name;const G=sb.ppl.filter(p=>mineOk(sb,p));
-    return `<div class="panel sub-card ${mine?'':'ro'}"><div class="spread"><div><b class="num">${sb.no}</b> <span class="hint">${sb.round} · ${kday(sb.date)} 접수 · ${esc(sb.acad)} · <b>접수 교사 ${esc(sb.owner)}</b>${mine?' (나)':''}</span><div class="compo">${compoTxt([sb])}</div></div><div>${subTag(sb)}</div></div>
-      ${G.length?`<ul class="roster ro">${G.map(p=>`<li class="${p.status!=='정상'?'locked':''}"><span class="who"><b>${esc(p.name)}${p.dtag?` <small class="dtag">${esc(p.dtag)}</small>`:''} <span class="kind ${p.kind==='교사'?'kt':'ks'}">${p.kind}</span> <span class="num">${won(pAmt(p))}</span></b><small>${esc(p.type)}${instOfP(sb,p)&&p.kind!=='가족'?' · '+esc(instOfP(sb,p)):''}</small></span><span class="row" style="flex-wrap:nowrap;gap:6px;justify-content:flex-end">${stTag(p.status,p)}${payTag(p)}</span></li>`).join('')}</ul>`:`<p class="hint" style="margin:6px 0">이 접수에는 「${esc(S.mtab)}」에 해당하는 사람이 없어요.</p>`}
-      ${mine?`<div class="row" style="justify-content:flex-end"><button class="btn small" type="button" data-mscope="mine">내 접수에서 고치기</button></div>`:''}</div>`}).join('')||'<p class="hint">아직 접수가 없어요.</p>'}
-  </section>`}
-/* 접수 인원 요약: 교사 n명 · 학생 n명 (바이올린 n · 첼로 n …) · 가족 n명 (취소 빼고) */
-function compoTxt(subs){let T=0,F=0,Sn=0;const I={};subs.forEach(sb=>sb.ppl.filter(p=>p.status==='정상').forEach(p=>{
-    if(p.kind==='교사')T++;else if(p.kind==='가족')F++;else{Sn++;const ins=instOfP(sb,p)||'악기 미정';I[ins]=(I[ins]||0)+1}}));
-  const ins=Object.entries(I).sort((a,b)=>b[1]-a[1]).map(([k,n])=>`${esc(k)} ${n}`).join(' · ');
-  return `<b>교사 ${T}명</b> · <b>학생 ${Sn}명</b>${ins?` <span class="hint">(${ins})</span>`:''} · <b>가족 ${F}명</b>`}
-function vMine(){
-  const r=refundRule(S.today);
-  const rulesTxt=REFUND.rules.map(x=>`<li><b>${kday(x.until)}까지</b> · ${x.label} — ${x.rate?`참가비 ${x.rate}% 환불`:'<b>환불 없음</b>'}${x.doc?' · <b>진단서 필요</b>':''}</li>`).join('')+`<li><b>그 이후</b> · ${REFUND.after.label} — ${REFUND.after.allow?'':'취소 불가'}</li>`;
-  const done=S.cxDone?`<div class="note ok"><b>${S.cxDone.paid?'취소 요청을 보냈어요.':'취소했어요.'}</b> ${S.cxDone.names.map(esc).join(', ')} · ${S.cxDone.paid?`환불 예정 ${won(S.cxDone.amt)} · 운영진이 확인한 뒤 ${S.cxDone.amt?'입력한 계좌로 보내 드려요':'처리 결과를 알려 드려요'}.`:'입금 전이라 바로 취소됐어요.'}</div>`:'';
-  const all=MY_SUBS.flatMap(sb=>sb.ppl.filter(p=>p.status==='정상')); const okAmt=all.reduce((t,p)=>t+(p.paidAmt||0),0), allAmt=all.reduce((t,p)=>t+pAmt(p),0);
-  if(S.mscope==='acad')return vAcad();
-  return `<section class="sec"><div class="spread"><h2>접수 내역</h2><span class="row" style="gap:6px"><button class="btn small" type="button" id="ttBtn">내 시간표</button><button class="btn small primary" type="button" id="toForm">＋ 새 접수 <small>(다른 학원도)</small></button></span></div>${scopeSeg()}
-  <p class="lede">${esc(S.user.name)} 선생님이 낸 접수예요. 사람마다 입금 상태가 보여요. 여기서 인원을 추가하거나 정보를 고치고, 입금 신고·취소를 해요.</p>
-  ${MY_SUBS.length?`<div class="panel"><dl class="kv"><dt>접수</dt><dd>${MY_SUBS.length}건 · ${all.length}명<br><span class="compo">${compoTxt(MY_SUBS)}</span></dd><dt>청구 합계</dt><dd class="num">${won(allAmt)}</dd><dt>입금 확인</dt><dd class="num">${won(okAmt)}</dd><dt>남은 금액</dt><dd class="num"><b>${won(Math.max(0,allAmt-okAmt))}</b>${okAmt>allAmt?` <span class="hint">${won(okAmt-allAmt)} 더 냄 · 운영진이 정리해요</span>`:''}</dd></dl></div>`:'<div class="note">아직 낸 접수가 없어요. 「새 접수하기」에서 접수하면 여기에 쌓여요.</div>'}
-  ${done}
-  ${payReport()}
-  ${(()=>{const last=[...MY_SUBS].reverse().find(sb=>sb.form);return last?`<button class="btn primary bigadd" type="button" data-subedit="${last.no}">＋ 인원 추가<small>${last.no}에 더해요 · ${last.round} 금액</small></button>`:''})()}
-  ${MY_SUBS.length?mineTabs():''}
-  ${MY_SUBS.map(sb=>{const sel=S.cx[sb.no]||[];const live=sb.ppl.filter(p=>p.status==='정상');const selCx=sel.filter(id=>{const p=sb.ppl.find(q=>q.id===id);return p&&canCxP(p)});
-    return `<div class="panel sub-card"><div class="spread"><div><b class="num">${sb.no}</b> <span class="hint">${sb.round} · ${kday(sb.date)} 접수 · ${esc(sb.acad)} · <b>접수 교사 ${esc(sb.owner)}</b> (나)</span><div class="compo">${compoTxt([sb])}</div></div><div>${subTag(sb)}</div></div>

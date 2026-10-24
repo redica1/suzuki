@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261024-104106 -->
+<!-- build: 20261024-105903 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -55,6 +55,7 @@ input[type=date]{width:140px}
 .tbl{overflow-x:auto}
 .robar{background:var(--rosin-soft);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:13.5px}
 .cc h3{font-size:15px;margin:0 0 8px}.cc .panel{margin-bottom:10px}.ccg{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px 14px}.ccg label{display:grid;gap:4px;font-size:13px;font-weight:600}.ccg label .hint{font-weight:400;font-size:11.5px}.ccg .w2{grid-column:span 2}
+.ccons{display:grid;gap:6px;padding:10px 0;border-top:1px solid var(--line)}.ccons textarea{width:100%;font:inherit;font-size:13px;line-height:1.55;padding:8px 10px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink);resize:vertical}.cct tr.gfee td{background:var(--sunk)}
 .ccg input,.ccg select,.cct input{padding:6px 8px;border:1px solid var(--line);border-radius:6px;font:inherit;background:var(--surface);color:var(--ink);min-width:0}.cct input[type=date]{min-width:140px}.cct td{vertical-align:middle}
 .sft td:first-child{white-space:nowrap}.sft select.pv{min-width:58px;padding:4px 5px}.sft .row .btn{white-space:nowrap}.cct th.r{text-align:left}.sft select.pv.e{background:var(--accent-soft);color:var(--accent);font-weight:600}.sft select.pv.v{background:var(--sunk)}.sft th.c{font-size:12px;white-space:nowrap}
 @media (max-width:640px){.ccg .w2{grid-column:auto}}
@@ -298,7 +299,7 @@ function acadGroups(subs,keep,q){const hit=sb=>S.f==='all'||sb.ppl.some(keep);co
 function subBlock(sb,keep,q,subs){const live=sb.ppl.filter(p=>p.status==='정상'),bill=live.reduce((t,p)=>t+pAmt(p),0),paid=sb.ppl.reduce((t,p)=>t+(+p.paidAmt||0),0);const L=sb.ppl.filter(keep);if(!L.length&&S.f!=='all')return '';
     const open=S.open[sb.no]!==undefined?S.open[sb.no]:(!!q||S.f!=='all'||subs.length<=3);
     const e=sb.form&&sb.form.ens||{};
-    return `<details class="panel sub" data-sub="${sb.no}" ${open?'open':''}><summary class="spread"><div><b class="num">${sb.no}</b> <b>${esc(sb.acad)}</b> <span class="hint">${esc(sb.owner)} · ${esc(sb.round)} · ${esc(String(sb.createdAt||'').slice(0,16))}${e.on?` · 앙상블 대표 「${esc(e.group)}」`:e.member?' · 앙상블 함께':''}</span></div>
+    return `<details class="panel sub" data-sub="${sb.no}" ${open?'open':''}><summary class="spread"><div><b class="num">${sb.no}</b> <b>${esc(sb.acad)}</b> <span class="hint">${esc(sb.owner)}${sb.contact?' · '+esc(sb.contact):''} · ${esc(sb.round)} · ${esc(String(sb.createdAt||'').slice(0,16))}${e.on?` · 앙상블 대표 「${esc(e.group)}」`:e.member?' · 앙상블 함께':''}</span></div>
       <div class="row"><span class="hint">${live.length}명</span><span class="num">청구 ${won(bill)}</span><span class="num">입금 ${won(paid)}</span>${bill-paid>0?`<span class="pill due">남음 ${won(bill-paid)}</span>`:'<span class="pill ok">완납</span>'}</div></summary>
       <div class="tbl"><table><thead><tr><th></th><th>이름</th><th>구분</th><th>차례</th><th class="r">청구</th><th>상태</th><th>선생님 신고</th><th>입금일 *</th><th class="r">입금액</th><th>메모</th><th></th></tr></thead><tbody>
       ${L.map(p=>{const r=repRow(p),a=S.D.admin[p.id]||{},on=+p.paidAmt>0,bn=p.batch||1;const live=p.status==='정상';
@@ -629,7 +630,7 @@ function load(){LOADING=true;ERR='';run('lessonData',[],r=>{LOADING=false;L=r;if
 const profs=()=>(S.D.profs||[]).filter(p=>p.on&&p.lesson).slice().sort((a,b)=>(IO.indexOf(a.inst)+1||9)-(IO.indexOf(b.inst)+1||9));
 let GONE={};
 function students(){const out=[];GONE={};(S.D.subs||[]).forEach(sb=>sb.ppl.forEach(p=>{if(p.status==='취소'){GONE[p.id]={name:p.name,acad:sb.acad};return}const k=p.id.slice(sb.no.length+1),i=(sb.form&&sb.form.info&&sb.form.info[k])||{};const type=p.type||i.type||'';
-  if(!['학생','회원의 악기하는 자녀'].includes(type))return;out.push({id:p.id,name:p.name,acad:sb.acad,no:sb.no,inst:p.inst||i.inst||'',teacher:i.teacher||'',prog:i.prog||'',req:+i.lessons||0,p1:i.p1||'',p2:i.p2||'',round:sb.round||''})}));return out}
+  if(!['학생','회원의 악기하는 자녀','비회원 학생'].includes(type))return;out.push({id:p.id,name:p.name,acad:sb.acad,no:sb.no,inst:p.inst||i.inst||'',teacher:i.teacher||'',prog:i.prog||'',req:+i.lessons||0,p1:i.p1||'',p2:i.p2||'',round:sb.round||''})}));return out}
 let SB={};const stuOf=id=>SB[id];
 const sh0=a=>String(a||'').replace(/스즈키$/,'');
 const at=(d,t,pr)=>L.rows.find(x=>x.d===d&&x.t===t&&x.pr===pr);
@@ -718,7 +719,7 @@ const tot=r=>(+r.mn||0)+(+r.sn||0);
 const kcls=k=>!k?'':k.includes('가족')?'fam':k==='교수방'?'prof':k==='클래스방'?'cls':'etc';
 const sh=a=>String(a||'').replace(/스즈키$/,'');
 function acads(){const m={};(S.D.subs||[]).forEach(sb=>sb.ppl.forEach(p=>{if(p.status==='취소')return;const k=p.id.slice(sb.no.length+1),i=(sb.form&&sb.form.info&&sb.form.info[k])||{};const x=m[sb.acad]=m[sb.acad]||{a:sb.acad,n:0,t:0,s:0,f:0,names:[]};
-  x.n++;const ty=p.type||i.type||'';if(['교사','연수생','소속없는 중급연수생'].includes(ty)){x.t++;x.names.push(p.name)}else if(['학생','회원의 악기하는 자녀'].includes(ty))x.s++;else{x.f++;x.names.push(p.name)}}));return m}
+  x.n++;const ty=p.type||i.type||'';if(['교사','연수생','소속없는 중급연수생'].includes(ty)){x.t++;x.names.push(p.name)}else if(['학생','회원의 악기하는 자녀','비회원 학생'].includes(ty))x.s++;else{x.f++;x.names.push(p.name)}}));return m}
 function got(a){return R.rooms.reduce((t,r)=>t+(r.main===a?+r.mn||0:0)+(r.sub===a?+r.sn||0:0),0)}
 function tile(r){const n=tot(r);return `<button type="button" class="rtile ${kcls(r.kind)} ${r.main||r.prof?'':'empty'} ${A.sel===r.no?'on':''}" data-rroom="${esc(r.no)}">
   <span class="rno num">${esc(r.no)}</span><span class="rty">${esc(r.type||'타입 -')} · 정원 ${r.cap}</span>
@@ -786,7 +787,7 @@ const CAMP_YEAR=2027, CAMP_DAY='01-11';   /* 캠프 첫날 기준 만 나이 (�
 const manAge=by=>{by=String(by||'').trim();if(!/^\d{4}/.test(by))return '';const y=+by.slice(0,4);const md=by.length>=10?by.slice(5,10):'';return CAMP_YEAR-y-(md&&md<=CAMP_DAY?0:1)};
 const bookNo=g=>{g=String(g||'');if(/pre/i.test(g))return 0;const m=g.match(/(\d+)권/);return m?+m[1]+(/B/.test(g.slice(m.index,m.index+4))?.5:0)+(/이상/.test(g)?.6:0):99};
 function conRows(){const L=[];(S.D.subs||[]).forEach(sb=>sb.ppl.forEach(p=>{if(p.status==='취소')return;const k=p.id.slice(sb.no.length+1),i=(sb.form&&sb.form.info&&sb.form.info[k])||{};
-  const type=p.type||i.type||'';if(!['학생','회원의 악기하는 자녀','교사','연수생','소속없는 중급연수생'].includes(type))return;
+  const type=p.type||i.type||'';if(!['학생','회원의 악기하는 자녀','비회원 학생','교사','연수생','소속없는 중급연수생'].includes(type))return;
   L.push({id:p.id,key:p.name+'('+String(sb.acad).replace(/스즈키$/,'')+')',at:String(p.addAt||sb.createdAt||''),round:sb.round||'',acad:sb.acad,owner:sb.owner||'',name:p.name,inst:p.inst||i.inst||'',by:i.by||'',age:manAge(i.by),type,prog:i.prog||'',con:i.concert||'없음',
     song:i.other?'':(i.song||''),oc:i.other?(i.oc||''):'',ot:i.other?(i.ot||''):'',status:p.status})}));return L}
 function conAll(){const m={};(S.D.subs||[]).forEach(sb=>sb.ppl.forEach(p=>{m[p.id]={name:p.name,acad:sb.acad,status:p.status}}));return m}
@@ -913,7 +914,7 @@ const roBlock=fn=>WRITE_FN.test(fn)&&permOf(S.tab)!=='편집';
 const RO_MSG='보기만 할 수 있는 메뉴예요. 바꾸려면 총관리자에게 「편집」 권한을 받아 주세요.';
 
 /* ---------- 캠프 설정 (총관리자) ---------- */
-const FEE_TYPES=['교사','연수생','소속없는 중급연수생','학생','회원의 악기하는 자녀','회원의 첫번째 보호자','회원의 그외 악기 안하는 동반가족','동반가족 중 돌전아기'];
+const FEE_TYPES=['교사','연수생','소속없는 중급연수생','학생','회원의 악기하는 자녀','회원의 첫번째 보호자','회원의 그외 악기 안하는 동반가족','동반가족 중 돌전아기','비회원 학생','비회원 보호자','비회원 동반가족','비회원 돌전아기'];
 const OPT_F=[['lessonFee','추가 개인레슨 1회 금액','원'],['lessonMax','추가 개인레슨 최대 횟수','회'],['studentDues','학생 연회비 (안 낸 학생만)','원'],['teacherDues','교사 연회비 (안 낸 교사만)','원'],['roomCap','가족방 정원','명'],['roomEmptyFee','가족방 빈 자리 1개 금액','원']];
 const ccCopy=()=>JSON.parse(JSON.stringify(S.D.camp||{}));
 const ccDirty=()=>S.cc&&JSON.stringify(S.cc)!==JSON.stringify(ccCopy());
@@ -937,13 +938,14 @@ function vCamp(){if(!S.cc)S.cc=ccCopy();const c=S.cc;if(!c.base)return '<div cla
     <label>끝나는 날 <small class="faint">${dw(b.end)}${days>0?` · ${days}박 ${days+1}일`:''}</small>${inp('base.end','date')}</label>
     <label class="w2">장소${inp('base.place','text','maxlength="80" placeholder="추후 안내"')}</label>
     <label>접수 시작${inp('base.open','date')}</label><label>접수 마감${inp('base.close','date')}</label>
+    <label>비회원(학부모) 접수<span class="hint">끄면 접수 화면에서 「비회원」 선택이 사라져요</span><span class="row" style="gap:6px;flex-wrap:nowrap">${inp('base.guest','check')} 받기</span></label>
     <label>지금 차수<span class="hint">새 접수에 매기는 차수</span><select data-cc="base.cur">${curOpts.map(([v,l])=>`<option value="${v}" ${String(b.cur)===v?'selected':''}>${esc(l)}</option>`).join('')}</select></label>
   </div><p class="hint">교사 일정(프로그램표)의 날짜는 「교사 일정 › 날짜 · 장소」에서 따로 맞춰요.</p></div>
   <div class="panel"><div class="spread"><h3>차수</h3><button class="btn small" type="button" data-ccr="add" ${R.length>=6?'disabled':''}>＋ 차수 추가</button></div>
     <table class="pft cct"><thead><tr><th>이름</th><th>시작</th><th>끝</th><th></th></tr></thead><tbody>${R.map((r,i)=>`<tr><td>${inp('rounds.'+i+'.n','text','maxlength="10" style="width:80px"')}</td><td>${inp('rounds.'+i+'.from','date')}</td><td>${inp('rounds.'+i+'.to','date')}</td><td>${R.length>1?`<button class="btn small ghost" type="button" data-ccr="del|${i}">빼기</button>`:''}</td></tr>`).join('')}</tbody></table>
     <p class="hint">차수를 늘리거나 줄이면 아래 참가비표 칸도 같이 바뀌어요. 이미 들어온 접수의 차수·금액은 그대로예요.</p></div>
   <div class="panel tbl"><h3>참가비표 <span class="hint">참가자격 × 차수 (원)</span></h3>
-    <table class="pft cct"><thead><tr><th>참가자격</th>${R.map(r=>`<th class="r">${esc(r.n)}</th>`).join('')}</tr></thead><tbody>${FEE_TYPES.map(t=>`<tr><td>${esc(t)}</td>${R.map((_,i)=>`<td>${inp('fees.'+t+'.'+i,'num','style="width:110px"')}</td>`).join('')}</tr>`).join('')}</tbody></table></div>
+    <table class="pft cct"><thead><tr><th>참가자격</th>${R.map(r=>`<th class="r">${esc(r.n)}</th>`).join('')}</tr></thead><tbody>${FEE_TYPES.map(t=>`<tr class="${/^비회원/.test(t)?'gfee':''}"><td>${esc(t)}</td>${R.map((_,i)=>`<td>${inp('fees.'+t+'.'+i,'num','style="width:110px"')}</td>`).join('')}</tr>`).join('')}</tbody></table></div>
   <div class="panel"><h3>추가 금액 · 가족방</h3><div class="ccg">${OPT_F.map(([k,l,u])=>`<label>${l}<span class="row" style="gap:4px;flex-wrap:nowrap">${inp('opt.'+k,'num','style="width:120px"')}<small class="faint">${u}</small></span></label>`).join('')}</div>
     <p class="hint">마스터클래스 금액은 교수마다 「교수진」 탭에서 정해요.</p></div>
   <div class="panel"><div class="spread"><h3>취소 · 환불 규정</h3><button class="btn small" type="button" data-ccf="add">＋ 규정 추가</button></div>
@@ -952,7 +954,14 @@ function vCamp(){if(!S.cc)S.cc=ccCopy();const c=S.cc;if(!c.base)return '<div cla
     <tr class="off"><td><small class="faint">그 뒤</small></td><td>${inp('refund.after.label','text','maxlength="30"')}</td><td>${inp('refund.after.rate','num','style="width:64px"')}</td><td class="c">${inp('refund.after.doc','check')}</td><td><label class="row" style="gap:4px;flex-wrap:nowrap"><small>취소 받기</small>${inp('refund.after.allow','check')}</label></td></tr></tbody></table>
     <label class="row" style="gap:6px;margin-top:6px">${inp('refund.duesRefund','check')} 연회비도 환불</label>
     <p class="hint">위에서부터 처음 맞는 규정을 써요 (취소 요청한 날 기준). 「취소 받기」를 끄면 캠프 시작 뒤에는 입금한 사람이 취소를 요청할 수 없어요.</p></div>
-  <div class="panel hint"><b>새 캠프(다음 학기)를 열 때</b><br>1) 지금 접수 DB 시트를 통째로 「사본 만들기」 → 지난 캠프 보관용으로 이름을 바꿔 둬요.<br>2) 이 시트에서 「접수」·「참가자」·「입금신고」·「환불요청」·「앙상블팀」·「교사일정」·「개인레슨」·「방배정」·「음악회순서」 탭의 내용(2행부터)을 지워요.<br>3) 여기 「캠프 설정」에서 캠프 코드(예: 27S)·이름·날짜·장소·차수·참가비·환불 규정을 새로 넣고 저장해요.<br>4) 「교사 일정 › 날짜 · 장소」에서 날짜를 맞추고, 「교수진」·「담당자」를 확인해요. 접수 화면 주소는 그대로예요.</div>
+  <div class="panel"><h3>개인정보 동의 문구</h3>
+    <p class="hint" style="margin-top:0">선생님·보호자가 로그인하기 전에 보는 동의 항목이에요. 문구를 바꿔 저장하면 버전 날짜가 바뀌고, 「동의기록」 시트에 누가 언제 무엇에 동의했는지 남아요. 「취소·환불 규정 확인」은 위 환불 규정이 자동으로 들어가고, 아래 칸은 덧붙일 말만 적어요.</p>
+    ${(c.consent&&c.consent.items||[]).map((x,i)=>`<div class="ccons"><div class="row" style="gap:10px"><b class="num">${i+1}</b>${inp('consent.items.'+i+'.title','text','maxlength="60" style="flex:1;min-width:200px"')}
+      <label class="row" style="gap:4px"><input type="checkbox" data-cc="consent.items.${i}.on" ${x.on?'checked':''} ${x.id==='collect'?'disabled':''}> 사용</label>
+      <label class="row" style="gap:4px"><input type="checkbox" data-cc="consent.items.${i}.req" ${x.req?'checked':''} ${x.id==='collect'?'disabled':''}> 필수</label></div>
+      <textarea data-cc="consent.items.${i}.body" rows="${x.id==='refund'?2:6}" placeholder="${x.id==='refund'?'덧붙일 말 (없으면 비워 둠)':''}">${esc(x.body||'')}</textarea></div>`).join('')}
+    <p class="hint">지금 버전: ${esc((c.consent||{}).ver||'')} · 「개인정보 수집·이용 동의」는 끌 수 없어요. 저는 법률 전문가가 아니라서, 문구는 협회에서 한 번 확인해 주세요.</p></div>
+  <div class="panel hint"><b>새 캠프(다음 학기)를 열 때</b><br>1) 지금 접수 DB 시트를 통째로 「사본 만들기」 → 지난 캠프 보관용으로 이름을 바꿔 둬요.<br>2) 이 시트에서 「접수」·「참가자」·「입금신고」·「환불요청」·「앙상블팀」·「교사일정」·「개인레슨」·「방배정」·「음악회순서」·「비회원」·「동의기록」 탭의 내용(2행부터)을 지워요.<br>3) 여기 「캠프 설정」에서 캠프 코드(예: 27S)·이름·날짜·장소·차수·참가비·환불 규정을 새로 넣고 저장해요.<br>4) 「교사 일정 › 날짜 · 장소」에서 날짜를 맞추고, 「교수진」·「담당자」를 확인해요. 접수 화면 주소는 그대로예요.</div>
   </div>`}
 document.addEventListener('input',e=>{const t=e.target;if(!t.dataset||!t.dataset.cc||!S.cc)return;const ty=t.dataset.cct;
   const v=t.type==='checkbox'?t.checked:ty==='num'?+(t.value.replace(/[^\d]/g,'')||0):t.value;ccSet(t.dataset.cc,v);
@@ -1075,8 +1084,8 @@ function stInst(L){const P=L.filter(x=>T_TEACH.includes(x.type)||T_PLAY.includes
     return `<div class="panel"><div class="spread"><b>${esc(i)} 학생 ${T}명</b> <span class="hint">학생 + 악기하는 교사자녀</span><span class="hint">권수는 현재 진도에서 셈 (1권A·1권B → 1권)</span></div><div class="stgrid"><div><b class="hint">권수별</b>${bookTbl}</div><div><b class="hint">진도별</b>${progTbl}</div></div></div>`}).join('');
   return top+per}
 /* 2026 여름 「학원별인원통계」「명찰통계」와 같은 표 */
-const TYPE_ORDER=['교사','연수생','소속없는 중급연수생','학생','회원의 악기하는 자녀','회원의 첫번째 보호자','회원의 그외 악기 안하는 동반가족','동반가족 중 돌전아기'];
-const T_TEACH=['교사','연수생','소속없는 중급연수생'],T_PLAY=['학생','회원의 악기하는 자녀'];
+const TYPE_ORDER=['교사','연수생','소속없는 중급연수생','학생','회원의 악기하는 자녀','회원의 첫번째 보호자','회원의 그외 악기 안하는 동반가족','동반가족 중 돌전아기','비회원 학생','비회원 보호자','비회원 동반가족','비회원 돌전아기'];
+const T_TEACH=['교사','연수생','소속없는 중급연수생'],T_PLAY=['학생','회원의 악기하는 자녀','비회원 학생'];
 const byTot=(A,f)=>A.map(a=>[a,f(a)]).sort((x,y)=>y[1]-x[1]||x[0].localeCompare(y[0],'ko')).map(x=>x[0]);
 const nz=n=>n||'';
 function stBadge(L){const A=[...L.map(x=>x.acad)].filter((x,i,arr)=>arr.indexOf(x)===i).sort((x,y)=>x.localeCompare(y,'ko'));const tc=G=>G.filter(x=>T_TEACH.includes(x.type)).length,pc=G=>G.filter(x=>T_PLAY.includes(x.type)).length,fc=G=>G.length-tc(G)-pc(G);

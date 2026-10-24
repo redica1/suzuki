@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261024-232958 -->
+<!-- build: 20261024-233305 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -1130,6 +1130,7 @@ function builtinFloors(){const LY=ROOM_LAYOUT,st=LY.starts;return st.map((r0,i)=
   const rooms={};Object.entries(LY.rooms).forEach(([no,[r,c,lab]])=>{if(r>=r0&&r<r1)rooms[no]=[r-r0,c,lab?[lab[0]-r0,lab[1]]:null]});
   return {name:f?'Stay '+f.split(' ')[0]:'Flex Tower',bld:f?'Stay Tower':'Flex Tower',fl:f?f.split(' ')[0]:'',cw:LY.cw,rh:LY.rh.slice(r0,r1),cells:LY.cells.filter(x=>x[0]>=r0&&x[0]<r1).map(x=>[x[0]-r0,...x.slice(1)]),rooms,builtin:true}})}
 function floors(){const B=builtinFloors(),I=(R.layout||[]).map(f=>Object.assign({},f,{name:f.tab.replace(/^배치도\s*/,'')}));
+  if((R.cfg||{}).layoutSrc&&I.length)return I; /* 도면 시트 주소를 넣고 불러왔으면 그 시트의 층만 */
   const out=B.map(b=>I.find(f=>f.bld===b.bld&&(f.fl===b.fl||(!b.fl&&b.bld==='Flex Tower')))||b);I.forEach(f=>{if(!out.includes(f))out.push(f)});
   return out.filter((f,i)=>out.indexOf(f)===i)}
 const PAL=['#ffd27a','#bfe3c0','#c9d8ff','#f6c1d6','#d8c8ff','#ffe9b0','#b7e4ea','#f3d1a8','#d6ecef','#e4f0b5','#ffc9b9','#cfd8dc','#e1c6f5','#b9d9ff','#f5e1a4','#c8e6c9'];
@@ -1167,7 +1168,7 @@ function vPlan(){const F=floors();if(A.lyF>=F.length)A.lyF=0;const Fl=F[A.lyF];
     <div class="row" style="gap:6px"><button class="btn small primary" type="button" id="r_lyImp" ${tabs.length?'':'disabled'}>도면 불러오기 (${tabs.length}탭)</button></div></div>
     <div class="row" style="gap:6px;margin-top:8px;flex-wrap:nowrap"><label class="cap" for="r_lySrc" style="margin:0;white-space:nowrap">도면 시트 주소</label><input type="url" id="r_lySrc" value="${esc((R.cfg||{}).layoutSrc||'')}" placeholder="https:\/\/docs.google.com/spreadsheets/d/… (비우면 이 접수 DB 시트)" style="flex:1;min-width:0"><button class="btn small" type="button" id="r_lySrcSave">주소 저장</button></div>
     ${R.layoutErr?`<div class="note bad" style="margin-top:6px">${esc(R.layoutErr)}</div>`:''}
-    <p class="hint" style="margin:6px 0 0">그 시트에서 이름이 <b>「Stay 1F」 「Flex 3F」처럼 건물 + 층</b>이거나 <b>「배치도」가 든 탭</b>을 층마다 하나씩 읽어요. 칸 크기 · 병합 · 색 · 테두리 그대로, 방번호(S101 꼴)를 적은 칸 <b>바로 아래 칸</b>에 올해 배정이 보여요. 탭 순서 = 층 버튼 순서, 숨긴 탭은 안 읽어요. 다른 시트를 쓰면 관리자 계정이 그 시트를 볼 수 있게 공유해 주세요.${tabs.length?' 지금 탭: '+tabs.map(esc).join(', '):''}</p>
+    <p class="hint" style="margin:6px 0 0">주소 끝에 <b>#gid=…</b>(탭 번호)가 있으면 <b>그 탭 하나만</b> 읽어요. gid를 지우면 그 시트에서 이름이 <b>「Stay 1F」 「Flex 3F」처럼 건물 + 층</b>이거나 <b>「배치도」가 든 탭</b>을 층마다 하나씩 모두 읽어요. 칸 크기 · 병합 · 색 · 테두리 그대로, 방번호(S101 꼴)를 적은 칸 <b>바로 아래 칸</b>에 올해 배정이 보여요. 탭 순서 = 층 버튼 순서, 숨긴 탭은 안 읽어요. 다른 시트를 쓰면 관리자 계정이 그 시트를 볼 수 있게 공유해 주세요.${tabs.length?' 지금 탭: '+tabs.map(esc).join(', '):''}</p>
     ${res?`<div class="note" style="margin-top:8px">${res.map(x=>`<div><b>${esc(x.tab)}</b> · 방 ${x.rooms}개${x.added.length?` · 새로 더한 방: ${x.added.map(esc).join(', ')}`:''}${x.missing.length?` · <span class="pill due">도면에 없는 방 ${x.missing.length}</span> ${x.missing.map(m=>`<span class="row" style="gap:4px;display:inline-flex">${esc(m.no)}${m.used?` (배정 있음) → <select data-rmvto="${esc(m.no)}"><option value="">옮길 방</option>${R.rooms.filter(r=>!used(r)&&r.no!==m.no&&x.added.includes(r.no)).concat(R.rooms.filter(r=>!used(r)&&r.no!==m.no&&!x.added.includes(r.no)&&r.fl===m.fl)).slice(0,40).map(r=>`<option>${esc(r.no)}</option>`).join('')}</select><button class="btn small" type="button" data-rmv="${esc(m.no)}">배정 옮기기</button>`:''}</span>`).join(' ')}`:''}${x.borders==='guess'?' · 테두리를 읽지 못해 글 · 색이 있는 칸에 선을 그렸어요':''}</div>`).join('')}</div>`:''}</div>
   ${editor()}
   <div class="sheetwrap"><table class="sheet"><colgroup>${Fl.cw.map(w=>`<col style="width:${w}px">`).join('')}</colgroup><tbody>${html}</tbody></table></div>

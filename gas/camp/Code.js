@@ -1,4 +1,4 @@
-/* build: 20261024-232958 */
+/* build: 20261024-233305 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -1667,7 +1667,7 @@ function roomCfgSave(token, b) {
   put('방 공개 시각', at ? "'" + at.replace('T', ' ') : '', '비우면 바로 공개 · 예) 2027-01-05 18:00');
   put('방 이름 목록', JSON.stringify(names), '방배정 메인에 학원 대신 고를 수 있는 이름');
   if (b && b.layoutSrc !== undefined) { const v = String(b.layoutSrc || '').trim(); if (v && !/\/d\/[a-zA-Z0-9_-]{20,}|^[a-zA-Z0-9_-]{20,}$/.test(v)) throw new Error('구글 시트 주소를 그대로 붙여 넣어 주세요 (https://docs.google.com/spreadsheets/d/…).');
-    put('배치도 시트', v, '방배정 도면을 그린 구글 시트 주소 (비우면 이 시트)'); try { CacheService.getScriptCache().remove('lytabs_' + (layoutSrcId_() || 'here')); } catch (x) {} }
+    put('배치도 시트', v, '방배정 도면을 그린 구글 시트 주소 (비우면 이 시트 · 주소에 gid가 있으면 그 탭 하나만)'); try { CacheService.getScriptCache().remove('lytabs_' + (layoutSrcId_() || 'here') + '_' + layoutGid_()); } catch (x) {} }
   if (b && b.typeColors) { const o = {}; Object.keys(b.typeColors).slice(0, 40).forEach(k => { if (/^#[0-9a-f]{6}$/i.test(k)) { const v = String(b.typeColors[k] || '').trim().slice(0, 40); if (v) o[k.toLowerCase()] = v; } });
     put('방 타입 색', JSON.stringify(o), '도면 방번호 칸 색 → 방 타입 이름 (배치도 위 범례)'); }
   if (b && b.colors) { const hx = v => /^#[0-9a-f]{6}$/i.test(String(v)) ? String(v) : ''; const cl = o => { const r = {}; Object.keys(o || {}).slice(0, 200).forEach(k => { const v = hx(o[k]); if (v) r[String(k).slice(0, 40)] = v; }); return r; };
@@ -1693,12 +1693,15 @@ const LAYOUT_HEAD = ['탭', '건물', '층', '도면', '방 수', '불러온 일
 const ROOM_NO_RX = /^([A-Z]{1,2}\d{3,4})(?![0-9])/;
 /** 도면을 그린 스프레드시트: 설정 「배치도 시트」(주소나 ID) · 비우면 이 접수 DB 시트 */
 function layoutSrcId_() { const v = String(setting_('배치도 시트') || '').trim(); const m = v.match(/\/d\/([a-zA-Z0-9_-]{20,})/) || v.match(/^([a-zA-Z0-9_-]{20,})$/); return m ? m[1] : ''; }
+/** 주소에 gid(탭 번호)가 있으면 그 탭 하나만 읽음 */
+function layoutGid_() { const m = String(setting_('배치도 시트') || '').match(/[#&?]gid=(\d+)/); return m ? m[1] : ''; }
 function layoutSS_() { const id = layoutSrcId_(); return id ? SpreadsheetApp.openById(id) : SpreadsheetApp.getActive(); }
 const isLayoutTab_ = n => n !== LAYOUT_SH && (/배치도/.test(n) || /(stay|flex|스테이|플렉스)\s*\d+\s*(f|층)/i.test(n));
 function layoutTabs_(fresh) {
-  const C = CacheService.getScriptCache(), key = 'lytabs_' + (layoutSrcId_() || 'here');
+  const C = CacheService.getScriptCache(), key = 'lytabs_' + (layoutSrcId_() || 'here') + '_' + layoutGid_();
   if (!fresh) { const v = C.get(key); if (v) try { return JSON.parse(v); } catch (x) {} }
-  let L = []; try { L = layoutSS_().getSheets().filter(s => { try { return !s.isSheetHidden(); } catch (x) { return true; } }).map(s => s.getName()).filter(isLayoutTab_); /* 숨긴 탭은 안 읽음 */ } catch (x) { return { err: '도면 시트를 열지 못했어요 · 주소와 공유(관리자 계정에 보기 권한)를 확인해 주세요.' }; }
+  const gid = layoutGid_();
+  let L = []; try { const SH_ = layoutSS_().getSheets(); L = gid ? SH_.filter(s => String(s.getSheetId()) === gid).map(s => s.getName()) : SH_.filter(s => { try { return !s.isSheetHidden(); } catch (x) { return true; } }).map(s => s.getName()).filter(isLayoutTab_); /* 숨긴 탭은 안 읽음 */ } catch (x) { return { err: '도면 시트를 열지 못했어요 · 주소와 공유(관리자 계정에 보기 권한)를 확인해 주세요.' }; }
   C.put(key, JSON.stringify(L), 600); return L;
 }
 function layout_() {
@@ -1747,7 +1750,7 @@ function layoutImport(token, tab) {
   const a = adm_(token); need_(a, 'room');
   const ss = SpreadsheetApp.getActive(); let src; try { src = layoutSS_(); } catch (x) { throw new Error('도면 시트를 열지 못했어요 · 주소와 공유를 확인해 주세요.'); }
   const sh = src.getSheetByName(String(tab || ''));
-  if (!sh || !isLayoutTab_(sh.getName())) throw new Error('「배치도」가 든 탭을 찾지 못했어요: ' + tab);
+  if (!sh || !(isLayoutTab_(sh.getName()) || (layoutGid_() && String(sh.getSheetId()) === layoutGid_()))) throw new Error('도면 탭을 찾지 못했어요: ' + tab);
   const L = layoutRead_(sh), name = sh.getName(); const nos = Object.keys(L.rooms), bld = bldOf_(name, nos);
   const flm = name.match(/(\d+)\s*F\b/i) || name.match(/(\d+)\s*층/);
   const fl = flm ? flm[1] + 'F' : (nos[0] ? nos[0].replace(/^[A-Z]+/, '').slice(0, -2) + 'F' : '');

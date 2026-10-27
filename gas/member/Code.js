@@ -1,4 +1,4 @@
-/* build: 20261028-004937 */
+/* build: 20261028-005217 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -27,7 +27,7 @@ const KEY = { '학원': '학원ID', '교사': '교사ID', '학생': '학생ID' }
 /* 화면에서 고칠 수 있는 칸 (나머지는 서버가 정함) */
 const EDIT = {
   '학원': ['학원명', '구분', '상태', '원장교사ID', '교실대표번호', '이메일', '교습과목', '시도', '시군구', '우편번호', '주소', '상세주소', '개원일', '계약체결일', '확인', '확인메모', '메모'],
-  '교사': ['이름', '구분글자', '휴대전화', '이메일', '학원1', '학원2', '학원3', '직급', '전공', '회원구분', '회비구분', '회비납부방법', '캠프교수', '내부외부', '상태', '확인', '확인메모', '메모'],
+  '교사': ['이름', '구분글자', '휴대전화', '이메일', '학원1', '학원2', '학원3', '직급', '전공', '회원구분', '본인자격', '회비구분', '회비납부방법', '캠프교수', '내부외부', '상태', '확인', '확인메모', '메모'],
   '학생': ['학원ID', '이름', '구분글자', '출생연도', '전공', '시작월', '상태', '담당교사ID', '확인', '확인메모', '메모'],
 };
 const SETTINGS = [
@@ -477,7 +477,7 @@ function cleanInfo_(n, isNew) {
   o.acads = (main ? [main] : []).concat(extras);
   o.role = ['원장', '강사', ''].indexOf(n.role) >= 0 ? n.role : ''; if (n.role == null) fail('직급을 골라 주세요.');
   if (INSTS_.indexOf(n.inst) < 0) fail('악기를 골라 주세요.'); o.inst = n.inst;
-  o.certs = (n.certs || []).filter(x => CERTS_.indexOf(x.n) >= 0).map(x => ({ n: x.n, y: /^(19|20)\d{2}$/.test(String(x.y)) ? String(x.y) : '' }));
+  o.certs = (n.certs || []).filter(x => CERTS_.indexOf(x.n) >= 0 && x.n !== '티처트레이너')   /* 티처트레이너는 관리자만 (10-28) */.map(x => ({ n: x.n, y: /^(19|20)\d{2}$/.test(String(x.y)) ? String(x.y) : '' }));
   o.certTxt = o.certs.map(x => x.n + (x.y ? ' ' + x.y : '')).join(', ');
   o.acadNames = o.noAcad ? '소속 없음' : (o.acadText ? ['(목록에 없음) ' + o.acadText] : []).concat(o.acads.map(id => an[id])).join(', ');
   return o;
@@ -505,6 +505,8 @@ function tCreate(token, d) {
       if (o.acadText) diff.push('주 근무 학원이 목록에 없음 「' + o.acadText + '」');
       if (g('직급') !== o.role) diff.push('직급 ' + (g('직급') || '없음') + ' → ' + (o.role || '없음'));
       if (g('전공') !== o.inst) diff.push('악기 ' + (g('전공') || '없음') + ' → ' + o.inst);
+      const tt = (g('본인자격').match(/티처트레이너[^,]*/) || [])[0] || (/티처트레이너/.test(g('명단자격')) ? '티처트레이너' : '');
+      if (tt) o.certTxt = [o.certTxt, tt.trim()].filter(Boolean).join(', ');   // 관리자가 넣은 티처트레이너는 지키기
       if (o.certTxt && o.certTxt !== g('명단자격')) diff.push('자격 (명단: ' + (g('명단자격') || '없음') + ') → ' + o.certTxt);
       const upd = { '학원1': newA[0] || '', '학원2': newA[1] || '', '학원3': newA[2] || '', '직급': o.role, '전공': o.inst, '회원구분': o.kind, '본인자격': o.certTxt, '수정일': stamp, '수정자': s.name + ' (가입)' };
       if (s.emailMatch) upd['이메일'] = s.email;

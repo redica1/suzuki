@@ -1,4 +1,4 @@
-/* build: 20261028-005217 */
+/* build: 20261028-010406 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -14,20 +14,20 @@ const CUR_Y = '2026';
 
 const HEAD = {
   '학원': ['학원ID', '학원명', '구분', '상태', '원장교사ID', '원장명', '교실대표번호', '이메일', '교습과목', '시도', '시군구', '우편번호', '주소', '상세주소', '개원일', '계약체결일', '확인', '확인메모', '메모', '원본', '수정일', '수정자'],
-  '교사': ['교사ID', '이름', '구분글자', '원래이름', '휴대전화', '이메일', '학원1', '학원2', '학원3', '직급', '전공', '회원구분', '명단자격', '명단취득', '회비구분', '캠프교수', '내부외부', '상태', '확인', '확인메모', '메모', '원본', '수정일', '수정자', '영문이름', '본인자격', '회비납부방법'],
+  '교사': ['교사ID', '이름', '구분글자', '원래이름', '휴대전화', '이메일', '학원1', '학원2', '학원3', '직급', '전공', '회원구분', '명단자격', '명단취득', '회비구분', '캠프교수', '내부외부', '상태', '확인', '확인메모', '메모', '원본', '수정일', '수정자', '영문이름', '본인자격', '회비납부방법', '강사료대상'],
   '학생': ['학생ID', '학원ID', '이름', '구분글자', '원래이름', '출생연도', '출생연도추정', '전공', '시작월', '상태', '담당교사ID', '확인', '확인메모', '메모', '원본', '수정일', '수정자'],
   '연회비': ['대상', 'ID', '년도', '부과', '납부', '납부일', '방식', '메모', '수정일', '수정자'],
   '설정': ['항목', '값', '설명'],
   '기록': ['일시', '누가', '표', 'ID', '동작', '내용'],
   '계정': ['이메일', '교사ID', '비번해시', '솔트', '상태', '경로', '만든날', '처리일', '마지막로그인', '메모'],
   '요청': ['요청ID', '종류', '교사ID', '이름', '휴대전화', '이메일', '내용', '상태', '신청일', '처리일', '처리자', '메모'],
-  '정산': ['교사ID', '은행', '계좌번호', '예금주', '우편번호', '주소', '상세주소', '수정일'],
+  '정산': ['교사ID', '은행', '계좌번호', '예금주', '우편번호', '주소', '상세주소', '수정일', '이메일', '집우편번호', '집주소', '집상세주소', '주민번호암호', '주민번호표시', '주민번호동의일'],   // 우편번호·주소·상세주소 = 우편물 받을 주소
 };
 const KEY = { '학원': '학원ID', '교사': '교사ID', '학생': '학생ID' };
 /* 화면에서 고칠 수 있는 칸 (나머지는 서버가 정함) */
 const EDIT = {
   '학원': ['학원명', '구분', '상태', '원장교사ID', '교실대표번호', '이메일', '교습과목', '시도', '시군구', '우편번호', '주소', '상세주소', '개원일', '계약체결일', '확인', '확인메모', '메모'],
-  '교사': ['이름', '구분글자', '휴대전화', '이메일', '학원1', '학원2', '학원3', '직급', '전공', '회원구분', '본인자격', '회비구분', '회비납부방법', '캠프교수', '내부외부', '상태', '확인', '확인메모', '메모'],
+  '교사': ['이름', '구분글자', '휴대전화', '이메일', '학원1', '학원2', '학원3', '직급', '전공', '회원구분', '본인자격', '회비구분', '회비납부방법', '강사료대상', '캠프교수', '내부외부', '상태', '확인', '확인메모', '메모'],
   '학생': ['학원ID', '이름', '구분글자', '출생연도', '전공', '시작월', '상태', '담당교사ID', '확인', '확인메모', '메모'],
 };
 const SETTINGS = [
@@ -52,8 +52,8 @@ function doGet(e) {
 function include(n) { return HtmlService.createHtmlOutputFromFile(n).getContent(); }
 
 function api(name, args) {
-  const open = { login, hello, tHello, tLookup, tStart, tResend, tVerify, tCreate, tLogin, tForgot, tReset, tMe, tSavePay, tLogout };
-  const fns = { boot, saveRow, setCheck, logs, importRoster, saveDues, delDues, reqs, reqDo, delAcad };
+  const open = { login, hello, tHello, tLookup, tStart, tResend, tVerify, tCreate, tLogin, tForgot, tReset, tMe, tSavePay, tSaveRrn, tLogout };
+  const fns = { boot, saveRow, setCheck, logs, importRoster, saveDues, delDues, reqs, reqDo, delAcad, payView, bulkSet };
   try {
     if (open[name]) return Object.assign({ ok: true }, open[name].apply(null, args || []));
     if (!fns[name]) throw new UserError('알 수 없는 요청이에요.');
@@ -99,6 +99,8 @@ function boot(who) {
   out.test = settings_()['테스트 표시'] === '예';
   const acc = {}; tbl_('계정').v.forEach(r => { if (r[1]) acc[r[1]] = r[4]; }); out.acc = acc;
   out.reqN = tbl_('요청').v.filter(r => r[7] === '대기').length;
+  const pf = {}; try { const P = payTbl_(), c = col_(P); P.v.forEach(r => { pf[r[0]] = { a: !!r[c['계좌번호']], h: !!r[c['집주소']], m: !!r[c['주소']], r: !!r[c['주민번호암호']] }; }); } catch (e) {}
+  out.pay = pf;   // 있음/없음만 (값은 「내용 보기」로)
   out.empty = !out['학원'].rows.length && !out['교사'].rows.length;
   out.now = now_();
   return out;
@@ -147,6 +149,19 @@ function delAcad(who, id) {
     A.sh.deleteRow(i + 2);
     log_(who.name, '학원', id, '삭제', name);
     return { ok2: true };
+  } finally { lock.releaseLock(); }
+}
+/** 관리자: 교사 여러 명에게 직급 · 캠프교수 · 회비면제 한꺼번에 (10-28) */
+function bulkSet(who, ids, ch) {
+  ch = ch || {}; const ok = { '직급': ['원장', '강사', ''], '캠프교수': ['예', '아니오'], '회비구분': ['납부', '면제'] };
+  const upd = {}; Object.keys(ok).forEach(k => { if (k in ch) { if (ok[k].indexOf(ch[k]) < 0) fail(k + ' 값이 틀렸어요.'); upd[k] = ch[k]; } });
+  if (!Object.keys(upd).length) fail('바꿀 것을 골라 주세요.');
+  const lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    const T = tbl_('교사'), stamp = now_(); let n = 0;
+    (ids || []).forEach(id => { const i = T.find('교사ID', id); if (i < 0) return; T.set(i, Object.assign({}, upd, { '수정일': stamp, '수정자': who.name })); n++; });
+    log_(who.name, '교사', (ids || []).slice(0, 20).join(','), '한꺼번에 바꾸기', Object.keys(upd).map(k => k + '=' + (upd[k] || '없음')).join(' · ') + ' · ' + n + '명');
+    return { n, stamp, upd };
   } finally { lock.releaseLock(); }
 }
 function setCheck(who, table, ids, val) {
@@ -212,6 +227,7 @@ function setup() {
   SETTINGS.forEach(r => { if (have.indexOf(r[0]) < 0) sh.appendRow(r); });
   const pwRow = sh.getDataRange().getDisplayValues().findIndex(r => r[0] === '관리자 비밀번호');
   if (pwRow >= 0) sh.getRange(pwRow + 1, 2).setBackground('#fff2a8');
+  rrnKey_();   // 주민번호 암호화 열쇠 (스크립트 속성, 시트에는 없음)
   const P = settings_();
   if (!P['정산 정보 시트']) {
     const f = SpreadsheetApp.create((P['테스트 표시'] === '예' ? '[STG] ' : '') + '스즈키 회원관리 – 정산 정보 (관리자 전용)');
@@ -487,7 +503,7 @@ function tCreate(token, d) {
   if (s.stage !== 'verified') fail('이메일 인증부터 해 주세요.');
   if (String(d.pw || '').length < 8) fail('비밀번호는 8자 이상으로 만들어 주세요.');
   if (!d.agree) fail('개인정보 수집·이용 동의에 체크해 주세요.');
-  const tid = s.tid, o = cleanInfo_(d.info, !tid);
+  const tid = s.tid, o = cleanInfo_(d.info, !tid), pay = cleanPay_(d.pay, true);
   const lock = LockService.getScriptLock(); lock.waitLock(20000);
   let state;
   try {
@@ -509,6 +525,7 @@ function tCreate(token, d) {
       if (tt) o.certTxt = [o.certTxt, tt.trim()].filter(Boolean).join(', ');   // 관리자가 넣은 티처트레이너는 지키기
       if (o.certTxt && o.certTxt !== g('명단자격')) diff.push('자격 (명단: ' + (g('명단자격') || '없음') + ') → ' + o.certTxt);
       const upd = { '학원1': newA[0] || '', '학원2': newA[1] || '', '학원3': newA[2] || '', '직급': o.role, '전공': o.inst, '회원구분': o.kind, '본인자격': o.certTxt, '수정일': stamp, '수정자': s.name + ' (가입)' };
+      putPay_(tid, s.email, pay);
       if (s.emailMatch) upd['이메일'] = s.email;
       if (diff.length) { upd['확인'] = '확인 필요'; upd['확인메모'] = [g('확인메모'), '가입 때 바꿈: ' + diff.join(' · ')].filter(Boolean).join(' · ').slice(0, 500); }
       T.set(i, upd);
@@ -518,6 +535,7 @@ function tCreate(token, d) {
     } else {
       state = '대기';
       tbl_('계정').append({ '이메일': s.email, '교사ID': '', '비번해시': hash_(d.pw, salt), '솔트': salt, '상태': '대기', '경로': '신규 회원', '만든날': stamp });
+      putPay_('E:' + s.email, s.email, pay);   // 승인되면 교사 번호로 바뀜
       addReq_('새 회원', '', s, { '가입 종류': o.type, '연수 과정': o.course, '회원 구분': o.kind, '소속 학원ID': o.acads.join(','), '소속 학원': o.acadNames, '직급': o.role || '없음', '악기': o.inst, '자격': o.certTxt });
       log_(s.name, '계정', s.email, '가입 신청', o.type + ' · ' + o.kind);
     }
@@ -571,24 +589,92 @@ function tMe(sess) {
   const p = payRow_(u.tid);
   const reqs = tbl_('요청').v.filter(q => q[2] === u.tid && q[7] === '대기').map(q => q[1]);
   return { me: { name: g('이름'), phone: g('휴대전화'), email: u.email, acads: [g('학원1'), g('학원2'), g('학원3')].filter(Boolean).map(id => an[id] || id), role: g('직급'), inst: g('전공'), kind: g('회원구분'), eng: g('영문이름'), heads,
-    pay: p ? { bank: p['은행'], acct: maskAcct_(p['계좌번호']), holder: p['예금주'], zip: p['우편번호'], addr: p['주소'], addr2: p['상세주소'] } : null, reqs } };
+    payee: g('강사료대상') === '예',
+    pay: p ? { bank: p['은행'], acct: maskAcct_(p['계좌번호']), holder: p['예금주'], zip: p['우편번호'], addr: p['주소'], addr2: p['상세주소'], hzip: p['집우편번호'], haddr: p['집주소'], haddr2: p['집상세주소'], rrn: p['주민번호표시'] || '', rrnAt: p['주민번호동의일'] || '' } : null, reqs } };
+}
+/** 계좌 · 집 주소 · 우편물 주소 검사. need=true 면 모두 필수 (가입 때, 10-28 결정) */
+function cleanPay_(d, need, hasAcct) {
+  d = d || {}; const o = {};
+  o.bank = String(d.bank || '').trim().slice(0, 20); o.holder = String(d.holder || '').trim().slice(0, 20); o.acct = String(d.acct || '').replace(/[^\d-]/g, '');
+  o.hzip = digits_(d.hzip).slice(0, 5); o.haddr = String(d.haddr || '').trim().slice(0, 120); o.haddr2 = String(d.haddr2 || '').trim().slice(0, 80);
+  o.same = d.same !== false;
+  o.zip = o.same ? o.hzip : digits_(d.zip).slice(0, 5); o.addr = o.same ? o.haddr : String(d.addr || '').trim().slice(0, 120); o.addr2 = o.same ? o.haddr2 : String(d.addr2 || '').trim().slice(0, 80);
+  if (o.acct && !/^[\d-]{8,20}$/.test(o.acct)) fail('계좌번호는 숫자와 - 로 넣어 주세요.');
+  if ((o.acct || need) && (!o.bank || !o.holder)) fail('은행과 예금주를 넣어 주세요.');
+  if (need && !o.acct && !hasAcct) fail('계좌번호를 넣어 주세요.');
+  if (need && !o.haddr) fail('집 주소를 넣어 주세요. 「주소 검색」을 눌러요.');
+  if (need && !o.addr) fail('우편물 받을 주소를 넣어 주세요.');
+  return o;
+}
+function putPay_(key, email, o) {
+  const P = payTbl_(), j = P.find('교사ID', key);
+  const row = { '교사ID': key, '이메일': email || '', '은행': o.bank, '예금주': o.holder, '우편번호': o.zip, '주소': o.addr, '상세주소': o.addr2, '집우편번호': o.hzip, '집주소': o.haddr, '집상세주소': o.haddr2, '수정일': now_() };
+  if (o.acct) row['계좌번호'] = o.acct; else if (j < 0) row['계좌번호'] = '';
+  if (j < 0) P.append(row); else P.set(j, row);
 }
 function tSavePay(sess, d) {
   const u = tsess_(sess); d = d || {};
-  const o = { '은행': String(d.bank || '').slice(0, 20), '예금주': String(d.holder || '').trim().slice(0, 20), '우편번호': digits_(d.zip).slice(0, 5), '주소': String(d.addr || '').trim().slice(0, 120), '상세주소': String(d.addr2 || '').trim().slice(0, 80) };
-  const acct = String(d.acct || '').replace(/[^\d-]/g, '');
-  if (acct && !/^[\d-]{8,20}$/.test(acct)) fail('계좌번호는 숫자와 - 로 넣어 주세요.');
-  if (acct && (!o['은행'] || !o['예금주'])) fail('은행과 예금주도 넣어 주세요.');
+  const old = payRow_(u.tid);
+  const o = cleanPay_(d, true, !!(old && old['계좌번호']));
   const eng = String(d.eng || '').trim().slice(0, 60); if (eng && !/^[A-Za-z .'-]+$/.test(eng)) fail('영문 이름은 영어로 넣어 주세요.');
   const lock = LockService.getScriptLock(); lock.waitLock(20000);
   try {
     const T = tbl_('교사'), i = T.find('교사ID', u.tid); if (i >= 0) T.set(i, { '영문이름': eng });
-    const P = payTbl_(), j = P.find('교사ID', u.tid), row = Object.assign({ '교사ID': u.tid, '수정일': now_() }, o);
-    if (acct) row['계좌번호'] = acct; else if (j < 0) row['계좌번호'] = '';
-    if (j < 0) P.append(row); else P.set(j, row);
-    log_(u.email, '정산', u.tid, '선생님이 수정', ['영문 이름', '주소'].concat(acct ? ['계좌'] : []).join(' · '));
+    putPay_(u.tid, u.email, o);
+    log_(u.email, '정산', u.tid, '선생님이 수정', ['영문 이름', '집 주소', '우편물 주소'].concat(o.acct ? ['계좌'] : []).join(' · '));
   } finally { lock.releaseLock(); }
   return tMe(sess);
+}
+/** 주민등록번호 — 관리자가 「강사료 대상」으로 표시한 선생님만 (강사료 원천징수용). 암호화해서 정산 파일에만 */
+function tSaveRrn(sess, rrn, agree) {
+  const u = tsess_(sess);
+  const T = tbl_('교사'), i = T.find('교사ID', u.tid); if (i < 0 || T.get(i, '강사료대상') !== '예') fail('강사료를 받는 선생님만 넣을 수 있어요.');
+  if (!agree) fail('고유식별정보 처리 안내를 읽고 동의에 체크해 주세요.');
+  const v = String(rrn || '').replace(/\s/g, ''); const m = v.match(/^(\d{2})(\d{2})(\d{2})-?([1-8])(\d{6})$/);
+  if (!m || +m[2] < 1 || +m[2] > 12 || +m[3] < 1 || +m[3] > 31) fail('주민등록번호 13자리를 확인해 주세요.');
+  const plain = m[1] + m[2] + m[3] + '-' + m[4] + m[5];
+  const lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    const P = payTbl_(), j = P.find('교사ID', u.tid);
+    const row = { '교사ID': u.tid, '주민번호암호': enc_(plain), '주민번호표시': plain.slice(0, 8) + '******', '주민번호동의일': now_(), '수정일': now_() };
+    if (j < 0) P.append(Object.assign({ '이메일': u.email }, row)); else P.set(j, row);
+    log_(u.email, '정산', u.tid, '주민번호 등록', '선생님이 직접 (값은 기록하지 않음)');
+  } finally { lock.releaseLock(); }
+  return tMe(sess);
+}
+/** 관리자: 정산 정보 전체 보기 — 열 때마다 기록 */
+function payView(who, tid) {
+  const p = payRow_(tid); if (!p) return { pay: null };
+  let rrn = ''; if (p['주민번호암호']) { try { rrn = dec_(p['주민번호암호']); } catch (e) { rrn = '(풀 수 없음: ' + e.message + ')'; } }
+  log_(who.name, '정산', tid, '관리자 열람', '계좌 · 주소' + (rrn ? ' · 주민번호' : ''));
+  return { pay: { bank: p['은행'], acct: p['계좌번호'], holder: p['예금주'], zip: p['우편번호'], addr: p['주소'], addr2: p['상세주소'], hzip: p['집우편번호'], haddr: p['집주소'], haddr2: p['집상세주소'], rrn, rrnAt: p['주민번호동의일'], at: p['수정일'] } };
+}
+
+/* ---------- 주민번호 암호화 ----------
+ * 열쇠: 스크립트 속성 RRN_KEY (32바이트, 시트·깃허브에 없음). 열쇠를 잃으면 풀 수 없으니 관리자만 따로 보관.
+ * 방식: HMAC-SHA256 을 키 스트림으로 쓰는 CTR 암호 + HMAC-SHA256 인증 태그 (encrypt-then-MAC). 저장 형식 v1.nonce.암호문.태그 (base64) */
+function rrnKey_() {
+  const P = PropertiesService.getScriptProperties(); let k = P.getProperty('RRN_KEY');
+  if (!k) { k = Utilities.base64Encode(rand_(32)); P.setProperty('RRN_KEY', k); }
+  return Utilities.base64Decode(k);
+}
+function rand_(n) { let out = []; while (out.length < n) out = out.concat(Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, Utilities.getUuid() + Utilities.getUuid() + Date.now() + Math.random())); return out.slice(0, n); }
+function hm_(key, bytes) { return Utilities.computeHmacSha256Signature(bytes, key); }
+function sub_(key, label) { return hm_(key, Utilities.newBlob(label).getBytes()); }
+function enc_(plain) {
+  const K = rrnKey_(), ek = sub_(K, 'enc'), mk = sub_(K, 'mac'), nonce = rand_(16);
+  const pt = Utilities.newBlob(plain).getBytes(), ct = [];
+  for (let b = 0; b * 32 < pt.length; b++) { const ks = hm_(ek, nonce.concat([0, 0, 0, b])); for (let i = 0; i < 32 && b * 32 + i < pt.length; i++) ct.push(((pt[b * 32 + i] ^ ks[i]) << 24) >> 24); }
+  const tag = hm_(mk, nonce.concat(ct)).slice(0, 16);
+  return 'v1.' + Utilities.base64Encode(nonce) + '.' + Utilities.base64Encode(ct) + '.' + Utilities.base64Encode(tag);
+}
+function dec_(s) {
+  const p = String(s).split('.'); if (p[0] !== 'v1' || p.length !== 4) throw new Error('형식이 달라요');
+  const K = rrnKey_(), ek = sub_(K, 'enc'), mk = sub_(K, 'mac'), nonce = Utilities.base64Decode(p[1]), ct = Utilities.base64Decode(p[2]), tag = Utilities.base64Decode(p[3]);
+  const t2 = hm_(mk, nonce.concat(ct)).slice(0, 16); let diff = 0; for (let i = 0; i < 16; i++) diff |= (t2[i] ^ tag[i]); if (diff) throw new Error('값이 바뀌었어요');
+  const pt = [];
+  for (let b = 0; b * 32 < ct.length; b++) { const ks = hm_(ek, nonce.concat([0, 0, 0, b])); for (let i = 0; i < 32 && b * 32 + i < ct.length; i++) pt.push(((ct[b * 32 + i] ^ ks[i]) << 24) >> 24); }
+  return Utilities.newBlob(pt).getDataAsString();
 }
 
 /* ---------- 관리자: 승인 대기 ---------- */
@@ -611,6 +697,7 @@ function reqDo(who, id, act, memo, linkTid) {
         T.append({ '교사ID': tid, '이름': name, '원래이름': name, '휴대전화': digits_(q[c['휴대전화']]), '이메일': email, '학원1': ac[0] || '', '학원2': ac[1] || '', '학원3': ac[2] || '', '직급': info['직급'] === '없음' ? '' : (info['직급'] || ''), '전공': info['악기'] || '', '회원구분': info['회원 구분'] || '확인 전', '본인자격': info['자격'] || '',
           '회비구분': '납부', '캠프교수': '아니오', '상태': '활동', '확인': '확인 전', '확인메모': (info['가입 종류'] || '') + ' 가입 신청' + (info['연수 과정'] ? ' · ' + info['연수 과정'] + ' 과정' : '') + (/목록에 없음/.test(info['소속 학원'] || '') ? ' · ' + info['소속 학원'] : ''), '원본': '가입 신청 ' + id, '수정일': now_(), '수정자': who.name }); }
       if (ai >= 0) A.set(ai, { '교사ID': tid, '상태': '사용', '처리일': now_() });
+      try { const P = payTbl_(), j = P.find('교사ID', 'E:' + email); if (j >= 0) { const old = P.find('교사ID', tid); if (old >= 0 && old !== j) P.sh.deleteRow(old + 2); const P2 = payTbl_(); P2.set(P2.find('교사ID', 'E:' + email), { '교사ID': tid }); } } catch (e) { console.warn('pay link', e); }
       mailTo = email; subj = '[스즈키] 회원 가입이 승인됐어요'; body = '<p>' + esc_(name) + ' 선생님, 협회가 확인하고 승인했어요.</p><p>이제 가입할 때 만든 이메일과 비밀번호로 로그인할 수 있어요.</p>';
     } else if (kind === '이메일 확인' && act === '승인') {
       if (ai >= 0) A.set(ai, { '상태': '사용', '처리일': now_() });
@@ -618,6 +705,7 @@ function reqDo(who, id, act, memo, linkTid) {
       mailTo = email; subj = '[스즈키] 계정이 열렸어요'; body = '<p>' + esc_(name) + ' 선생님, 협회가 새 이메일을 확인했어요.</p><p>이제 이 이메일과 비밀번호로 로그인할 수 있어요.</p>';
     } else if (act === '반려' && kind !== '정보 수정') {
       if (ai >= 0) A.set(ai, { '상태': '반려', '처리일': now_(), '메모': String(memo).slice(0, 200) });
+      if (kind === '새 회원') { try { const P = payTbl_(), j = P.find('교사ID', 'E:' + email); if (j >= 0) P.sh.deleteRow(j + 2); } catch (e) {} }   // 반려된 신청의 계좌·주소는 지움
       mailTo = email; subj = '[스즈키] 확인이 필요해요'; body = '<p>신청하신 내용을 승인하지 못했어요.</p><p><b>사유:</b> ' + esc_(memo) + '</p><p>다시 신청하거나 협회 카카오톡 채널로 문의해 주세요.</p>';
     }
     R.set(i, { '상태': act === '반려' ? '반려' : act === '처리' ? '처리' : '승인', '교사ID': tid || '', '처리일': now_(), '처리자': who.name, '메모': String(memo || '').slice(0, 300) });
@@ -643,7 +731,9 @@ function acadNames_() { const o = {}; tbl_('학원').v.forEach(r => o[r[0]] = r[
 function payTbl_() {
   const id = settings_()['정산 정보 시트']; if (!id) fail('정산 정보 파일이 아직 없어요. 관리자가 setup 을 한 번 더 실행해야 해요.');
   const ss = SpreadsheetApp.openById(id); const sh = ss.getSheetByName('정산') || ensure_(ss, '정산');
-  const all = sh.getDataRange().getDisplayValues(); const h = (all.shift() || HEAD['정산']).map(String); const v = all.filter(r => r.some(x => x !== ''));
+  let all = sh.getDataRange().getDisplayValues(); let h = (all.shift() || []).map(String);
+  if (h.length < HEAD['정산'].length || h[0] !== '교사ID') { sh.getRange(1, 1, 1, HEAD['정산'].length).setValues([HEAD['정산']]).setFontWeight('bold'); h = HEAD['정산'].slice(); }   // 칸이 늘면 머리글만 늘림 (기존 칸 순서 그대로)
+  const v = all.filter(r => r.some(x => x !== '')).map(r => { const x = r.slice(); while (x.length < h.length) x.push(''); return x; });
   return { sh, h, v, find(k, x) { const c = h.indexOf(k); return v.findIndex(r => String(r[c]) === String(x)); },
     set(i, obj) { const row = v[i].slice(); Object.keys(obj).forEach(k => { const c = h.indexOf(k); if (c >= 0) row[c] = String(obj[k]); }); sh.getRange(i + 2, 1, 1, h.length).setValues([row]); v[i] = row; },
     append(obj) { const row = h.map(k => obj[k] == null ? '' : String(obj[k])); sh.getRange(v.length + 2, 1, 1, h.length).setNumberFormat('@').setValues([row]); v.push(row); } };

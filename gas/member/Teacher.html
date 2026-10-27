@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261028-005217 -->
+<!-- build: 20261028-010406 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -107,7 +107,7 @@ input.bad,select.bad,textarea.bad{border-color:var(--bad);background:var(--bad-s
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:76px;background:var(--ink);color:var(--bg);padding:9px 15px;border-radius:9px;font-size:14px;z-index:9;max-width:calc(100vw - 32px)}
 .spin{display:inline-block;width:16px;height:16px;border-radius:50%;border:2px solid currentColor;border-right-color:transparent;animation:s .8s linear infinite;vertical-align:-3px}
 @keyframes s{to{transform:rotate(360deg)}}
-#postWrap{height:420px;border:1px solid var(--line);border-radius:9px;overflow:hidden}
+.postWrap{height:420px;border:1px solid var(--line);border-radius:9px;overflow:hidden}
 </style>
 </head><body>
 <div class="testband" id="testband" hidden>테스트(STG) — 여기서 만든 계정은 실제 회원 계정이 아니에요</div>
@@ -119,11 +119,11 @@ input.bad,select.bad,textarea.bad{border-color:var(--bad);background:var(--bad-s
 var INSTS=['바이올린','첼로','비올라','플루트','피아노'];
 var KINDS=['정식 교사','중급 연수','초급 연수'];
 var CERTS=['초급','중급','국민대학원','대구가톨릭대학원','전주대학원'];   /* 티처트레이너는 관리자만 넣음 */
-function blankJ(){return {type:'',course:'',kind:'',main:'',mainText:'',extras:[],noAcad:false,role:null,inst:'',certs:{}}}
+function blankJ(){return {type:'',course:'',kind:'',main:'',mainText:'',extras:[],noAcad:false,role:null,inst:'',certs:{},pay:blankPay('')}}
 var BANKS=['국민','신한','하나','우리','농협','기업','SC제일','부산','대구(iM뱅크)','경남','광주','카카오뱅크','토스뱅크','케이뱅크','새마을금고','신협','우체국','수협','씨티'];
 var S={mode:'member',v:'home',acadTyping:false,aqM:'',aqE:'',extraOpen:false,test:false,acads:[],busy:false,err:{},msg:'',name:'',phone:'',token:'',look:'',card:null,has:null,email:'',match:false,code:'',
   j:{},aq:'',pw:'',agree:false,
-  sess:'',me:null,state:'',fp:null,hist:[],pay:null,postOpen:false};
+  sess:'',me:null,state:'',fp:null,hist:[],pay:null,postFor:'',rrnEdit:false};
 
 function call(name,args){return new Promise(function(res){
   google.script.run.withSuccessHandler(function(r){res(r||{ok:false,msg:'응답이 없어요.'})}).withFailureHandler(function(e){res({ok:false,msg:'연결이 끊겼어요. 잠시 뒤 다시 해 주세요.'})}).api(name,args||[])})}
@@ -201,7 +201,7 @@ function certBox(){var j=S.j,ys=[];for(var y=new Date().getFullYear();y>=1985;y-
   return '<div class="f"><span>보유 자격 <span class="opt">있는 것 모두 · 취득 년도는 알면</span></span><div style="display:grid;gap:6px">'+CERTS.map(function(n){var on=n in j.certs;
     return '<div class="row" style="border:1px solid '+(on?'var(--accent)':'var(--line)')+';border-radius:9px;padding:6px 10px"><label class="agree" style="flex:1;align-items:center"><input type="checkbox" data-cert="'+n+'" '+(on?'checked':'')+'> '+n+'</label>'+
       (on?'<select data-cy="'+n+'" style="width:auto;padding:6px 8px" aria-label="'+n+' 취득 년도"><option value="">년도</option>'+ys.map(function(y){return '<option '+(j.certs[n]===y?'selected':'')+'>'+y+'</option>'}).join('')+'</select>':'')+'</div>'}).join('')+'</div></div>'}
-function vConfirm(){var j=S.j,nw=S.look!=='found';
+function vConfirm(){var j=S.j,nw=S.look!=='found';if(!j.pay.holder)j.pay.holder=S.name;
   var head=nw?'<div class="note"><b>인증을 마쳤어요.</b> 가입 신청 내용을 적어 주세요. 협회가 확인한 뒤 계정이 열려요.</div>':'<div class="note ok"><b>인증을 마쳤어요.</b> 지금 선생님 정보를 넣어 주세요. 넣은 내용으로 협회 명단이 바뀌어요.</div>';
   var body='<div class="card"><h3>'+(nw?'가입 신청':'내 정보')+'</h3>'+
     '<div class="two"><label class="f">이름<input type="text" value="'+esc(S.name)+'" disabled></label><label class="f">휴대전화<input type="text" value="'+esc(fmtPh(S.phone))+'" disabled></label></div>'+
@@ -211,12 +211,12 @@ function vConfirm(){var j=S.j,nw=S.look!=='found';
     acadFields(nw)+
     '<div class="f"><span>직급 <span class="req">*</span></span>'+seg('role',[['원장','원장'],['강사','강사'],['','해당 없음']],j.role==null?'-':j.role)+fe('role')+'</div>'+
     '<label class="f" for="jIns">악기 <span class="req">*</span><select id="jIns" '+bad('inst')+'><option value="">선택</option>'+INSTS.map(function(i){return '<option '+(i===j.inst?'selected':'')+'>'+i+'</option>'}).join('')+'</select>'+fe('inst')+'</label>'+
-    certBox()+'</div>';
+    certBox()+'</div>'+payFields(j.pay,false);
   return steps(4)+head+body+
-    '<div class="card"><h3>비밀번호</h3><label class="f" for="pw1">비밀번호 <span class="req">*</span> <span class="opt">8자 이상</span><input type="password" id="pw1" '+bad('pw')+' autocomplete="new-password"></label>'+
-    '<label class="f" for="pw2">비밀번호 확인 <span class="req">*</span><input type="password" id="pw2" '+bad('pw2')+' autocomplete="new-password"></label>'+fe('pw')+fe('pw2')+
+    '<div class="card"><h3>비밀번호</h3><label class="f" for="pw1">비밀번호 <span class="req">*</span> <span class="opt">8자 이상</span><input type="password" id="pw1" '+bad('pw')+' value="'+esc(S.pw1||'')+'" autocomplete="new-password"></label>'+
+    '<label class="f" for="pw2">비밀번호 확인 <span class="req">*</span><input type="password" id="pw2" '+bad('pw2')+' value="'+esc(S.pw2||'')+'" autocomplete="new-password"></label>'+fe('pw')+fe('pw2')+
     '<p class="hint">비밀번호는 선생님만 알아요. 협회도 볼 수 없어요.</p></div>'+
-    '<div class="card"><label class="agree" for="agr"><input type="checkbox" id="agr" '+(S.agree?'checked':'')+'><div><b>[필수] 개인정보 수집·이용 동의</b><details><summary>자세히</summary>수집 항목: 이름, 휴대전화, 이메일, 소속 학원, 직급, 악기, 회원 구분, 자격. 목적: 회원 관리, 캠프·졸업연주·연수 등 행사 신청과 안내, 참가 이력 관리. 보유 기간: 회원 탈퇴 시까지(법령에 정한 기간이 있으면 그 기간). 동의하지 않으면 회원 계정을 만들 수 없어요.</details></div></label>'+fe('agree')+'</div>'+
+    '<div class="card"><label class="agree" for="agr"><input type="checkbox" id="agr" '+(S.agree?'checked':'')+'><div><b>[필수] 개인정보 수집·이용 동의</b><details><summary>자세히</summary>수집 항목: 이름, 휴대전화, 이메일, 소속 학원, 직급, 악기, 회원 구분, 자격, 집 주소, 우편물 받을 주소, 계좌(은행·계좌번호·예금주). 목적: 회원 관리, 캠프·졸업연주·연수 등 행사 신청과 안내, 참가 이력 관리, 공문·포스터 발송, 강사료·환불 지급. 보유 기간: 회원 탈퇴 시까지(법령에 정한 기간이 있으면 그 기간). 동의하지 않으면 회원 계정을 만들 수 없어요.</details></div></label>'+fe('agree')+'</div>'+
     msgBox()+btn('create',nw?'가입 신청하기':'계정 만들기')+'<button class="btn ghost small" type="button" id="toCode">이전으로</button>'}
 function vDone(){
   if(S.state==='사용')return steps(5)+'<div class="card"><h2>계정을 만들었어요</h2><p class="lede">다음부터 <b>'+esc(S.email)+'</b> 와 비밀번호로 로그인해요.</p>'+
@@ -236,19 +236,45 @@ function vMe(){var m=S.me;if(!m)return '<div class="card"><span><span class="spi
     '<dl class="kv"><dt>이메일</dt><dd>'+esc(m.email)+'</dd><dt>휴대전화</dt><dd class="num">'+fmtPh(m.phone)+'</dd><dt>소속 학원</dt><dd>'+esc(m.acads.join(', ')||'소속 없음')+'</dd><dt>직급</dt><dd>'+esc(m.role||'-')+'</dd><dt>악기</dt><dd>'+esc(m.inst||'-')+'</dd><dt>회원 구분</dt><dd>'+(KINDS.indexOf(m.kind)>=0?'<span class="pill info">'+esc(m.kind)+'</span>':'<span class="pill due">확인 전</span>')+'</dd></dl>'+
     (m.heads&&m.heads.length?'<div class="note">원장으로 등록된 학원: <b>'+esc(m.heads.join(', '))+'</b> · 학원 정보와 학생 명단 메뉴는 곧 열려요.</div>':'')+
     '<p class="hint">이름·휴대전화·소속이 바뀌었으면 협회 카카오톡 채널로 알려 주세요.</p></div>'+
-    '<div class="lock"><h3>정산 정보</h3><dl class="kv"><dt>영문 이름</dt><dd>'+esc(m.eng||'-')+'</dd><dt>계좌</dt><dd>'+(p&&p.acct?esc(p.bank)+' <span class="num">'+esc(p.acct)+'</span> · '+esc(p.holder):'-')+'</dd><dt>우편물 주소</dt><dd>'+(p&&p.addr?(p.zip?'('+esc(p.zip)+') ':'')+esc(p.addr)+' '+esc(p.addr2):'-')+'</dd></dl>'+
-    '<button class="btn primary block" type="button" id="toPay">'+(p||m.eng?'정산 정보 고치기':'정산 정보 넣기')+'</button><p class="hint">협회 관리자만 볼 수 있어요. 학원이나 다른 선생님에게는 보이지 않아요.</p></div>'}
-function vPay(){var m=S.me||{},p=(m.pay)||{},d=S.pay||(S.pay={eng:m.eng||'',bank:p.bank||'',acct:'',holder:p.holder||m.name||'',zip:p.zip||'',addr:p.addr||'',addr2:p.addr2||''});
-  return '<div class="card"><h2>정산 정보</h2><p class="lede">모두 선택이에요. 넣은 것만 저장돼요.</p>'+
-    '<label class="f" for="pEng">영문 이름 <span class="opt">명찰·프로그램북 · 예: Kim Suzuki</span><input type="text" id="pEng" value="'+esc(d.eng)+'" autocomplete="off"></label>'+fe('eng')+
-    '<div class="lock"><h3>계좌 <span class="opt">강사료 지급·환불</span></h3>'+(p.acct?'<p class="hint">지금 등록된 계좌: <b class="num">'+esc(p.bank+' '+p.acct)+'</b> · 바꿀 때만 새로 넣어 주세요.</p>':'')+
-    '<div class="two"><label class="f" for="pBank">은행<select id="pBank"><option value="">선택</option>'+BANKS.map(function(b){return '<option '+(b===d.bank?'selected':'')+'>'+b+'</option>'}).join('')+'</select></label>'+
-    '<label class="f" for="pAcct">계좌번호<input type="text" id="pAcct" value="'+esc(d.acct)+'" inputmode="numeric" autocomplete="off" placeholder="숫자와 -"></label></div>'+
-    '<label class="f" for="pHold">예금주<input type="text" id="pHold" value="'+esc(d.holder)+'"></label>'+fe('acct')+'</div>'+
-    '<div class="f"><span>우편물 받을 주소 <span class="opt">공문·포스터 · 집이나 학원 어느 쪽이든</span></span>'+
-    '<div class="row" style="flex-wrap:nowrap"><input type="text" id="pZip" value="'+esc(d.zip)+'" class="num" style="width:100px;flex:none" placeholder="우편번호" inputmode="numeric"><input type="text" id="pAddr" value="'+esc(d.addr)+'" placeholder="주소 검색을 눌러 주세요"><button class="btn small" type="button" id="postBtn" style="flex:none">주소 검색</button></div>'+
-    '<div id="postWrap" '+(S.postOpen?'':'hidden')+'></div><input type="text" id="pAddr2" value="'+esc(d.addr2)+'" placeholder="상세주소 (동·호수)"></div>'+
-    msgBox()+btn('savePay','저장')+'<button class="btn block" type="button" id="toMe">'+(S.me&&(S.me.pay||S.me.eng)?'취소':'나중에 할게요')+'</button></div>'}
+    '<div class="lock"><h3>정산 정보</h3><dl class="kv"><dt>영문 이름</dt><dd>'+esc(m.eng||'-')+'</dd><dt>계좌</dt><dd>'+(p&&p.acct?esc(p.bank)+' <span class="num">'+esc(p.acct)+'</span> · '+esc(p.holder):'-')+'</dd>'+
+    '<dt>집 주소</dt><dd>'+(p&&p.haddr?(p.hzip?'('+esc(p.hzip)+') ':'')+esc(p.haddr)+' '+esc(p.haddr2):'-')+'</dd><dt>우편물 주소</dt><dd>'+(p&&p.addr?(p.addr===p.haddr&&p.addr2===p.haddr2?'집 주소와 같음':(p.zip?'('+esc(p.zip)+') ':'')+esc(p.addr)+' '+esc(p.addr2)):'-')+'</dd></dl>'+
+    '<button class="btn primary block" type="button" id="toPay">'+(p?'정산 정보 고치기':'정산 정보 넣기')+'</button><p class="hint">협회 관리자만 볼 수 있어요. 학원이나 다른 선생님에게는 보이지 않아요.</p></div>'+rrnBox(m)}
+function curPay(){return S.v==='pay'?S.pay:S.j.pay}
+function blankPay(name){return {hzip:'',haddr:'',haddr2:'',same:true,zip:'',addr:'',addr2:'',bank:'',acct:'',holder:name||''}}
+function addrBlock(k,label,d,pre){return '<div class="f"><span>'+label+' <span class="req">*</span></span>'+
+  '<div class="row" style="flex-wrap:nowrap"><input type="text" id="z_'+k+'" value="'+esc(d[pre+'zip'])+'" class="num" style="width:96px;flex:none" placeholder="우편번호" inputmode="numeric" aria-label="우편번호" '+bad('a_'+k)+'><input type="text" id="a_'+k+'" value="'+esc(d[pre+'addr'])+'" placeholder="주소 검색을 눌러 주세요" aria-label="기본주소" '+bad('a_'+k)+'><button class="btn small" type="button" data-post="'+k+'" style="flex:none">주소 검색</button></div>'+
+  '<div id="postWrap_'+k+'" class="postWrap" '+(S.postFor===k?'':'hidden')+'></div>'+
+  '<input type="text" id="d_'+k+'" value="'+esc(d[pre+'addr2'])+'" placeholder="상세주소 (동·호수)" aria-label="상세주소">'+fe('a_'+k)+'</div>'}
+function payFields(d,editing,cur){
+  return '<div class="lock"><h3>주소 · 계좌 <span class="opt">'+(editing?'':'필수 · ')+'협회 관리자만 볼 수 있어요</span></h3>'+
+    addrBlock('h','집 주소',d,'h')+
+    '<div class="f"><span>우편물 받을 주소 <span class="req">*</span> <span class="opt">공문·포스터</span></span><label class="agree" for="pSame"><input type="checkbox" id="pSame" '+(d.same?'checked':'')+'><div><b>집 주소와 같아요</b></div></label></div>'+
+    (d.same?'':addrBlock('m','우편물 받을 주소',d,''))+
+    '<h3 style="margin-top:4px">계좌 <span class="opt">강사료 지급·환불</span></h3>'+(cur&&cur.acct?'<p class="hint">지금 등록된 계좌: <b class="num">'+esc(cur.bank+' '+cur.acct)+'</b> · 바꿀 때만 새로 넣어 주세요.</p>':'')+
+    '<div class="two"><label class="f" for="pBank">은행 <span class="req">*</span><select id="pBank" '+bad('bank')+'><option value="">선택</option>'+BANKS.map(function(b){return '<option '+(b===d.bank?'selected':'')+'>'+b+'</option>'}).join('')+'</select></label>'+
+    '<label class="f" for="pAcct">계좌번호 '+(cur&&cur.acct?'<span class="opt">바꿀 때만</span>':'<span class="req">*</span>')+'<input type="text" id="pAcct" '+bad('acct')+' value="'+esc(d.acct)+'" inputmode="numeric" autocomplete="off" placeholder="숫자와 -"></label></div>'+
+    '<label class="f" for="pHold">예금주 <span class="req">*</span><input type="text" id="pHold" '+bad('holder')+' value="'+esc(d.holder)+'"></label>'+fe('bank')+fe('acct')+fe('holder')+'</div>'}
+function readPayIn(){var d=curPay();if(!d)return;var g=function(id){var e=document.getElementById(id);return e?e.value.trim():null};
+  var m={hzip:'z_h',haddr:'a_h',haddr2:'d_h',zip:'z_m',addr:'a_m',addr2:'d_m',bank:'pBank',acct:'pAcct',holder:'pHold',eng:'pEng'};
+  Object.keys(m).forEach(function(k){var x=g(m[k]);if(x!==null)d[k]=x});var s=document.getElementById('pSame');if(s)d.same=s.checked}
+function checkPay(d,hasAcct){var e={};if(!d.haddr)e.a_h='「주소 검색」으로 집 주소를 넣어 주세요.';if(!d.same&&!d.addr)e.a_m='「주소 검색」으로 우편물 받을 주소를 넣어 주세요.';
+  if(!d.bank)e.bank='은행을 골라 주세요.';if(!d.acct&&!hasAcct)e.acct='계좌번호를 넣어 주세요.';else if(d.acct&&!/^[\d-]{8,20}$/.test(d.acct))e.acct='계좌번호는 숫자와 - 로 넣어 주세요.';
+  if(!d.holder)e.holder='예금주를 넣어 주세요.';return e}
+function openPost(){var k=S.postFor,w=document.getElementById('postWrap_'+k);if(!w)return;w.hidden=false;
+  if(!window.daum||!daum.Postcode){w.innerHTML='<p class="hint" style="padding:12px">주소 검색을 불러오지 못했어요. 우편번호와 주소를 직접 넣어 주세요.</p>';w.style.height='auto';return}
+  new daum.Postcode({width:'100%',height:'100%',oncomplete:function(r){readPayIn();var d=curPay(),pre=k==='h'?'h':'';d[pre+'zip']=r.zonecode;d[pre+'addr']=r.roadAddress||r.jibunAddress;delete S.err['a_'+k];S.postFor='';render();var n=document.getElementById('d_'+k);if(n)n.focus()}}).embed(w)}
+function vPay(){var m=S.me||{},p=m.pay||{};
+  var d=S.pay||(S.pay={eng:m.eng||'',hzip:p.hzip||'',haddr:p.haddr||'',haddr2:p.haddr2||'',same:!p.addr||(p.addr===p.haddr&&p.addr2===p.haddr2),zip:p.zip||'',addr:p.addr||'',addr2:p.addr2||'',bank:p.bank||'',acct:'',holder:p.holder||m.name||''});
+  return '<div class="card"><h2>정산 정보 고치기</h2>'+
+    '<label class="f" for="pEng">영문 이름 <span class="opt">선택 · 명찰·프로그램북 · 예: Kim Suzuki</span><input type="text" id="pEng" value="'+esc(d.eng)+'" autocomplete="off"></label>'+fe('eng')+
+    payFields(d,true,p)+msgBox()+btn('savePay','저장')+'<button class="btn block" type="button" id="toMe">취소</button></div>'}
+function rrnBox(m){var p=m.pay||{};if(!m.payee)return '';
+  if(p.rrn&&!S.rrnEdit)return '<div class="lock"><h3>강사료 정보</h3><dl class="kv"><dt>주민등록번호</dt><dd class="num">'+esc(p.rrn)+'</dd><dt>넣은 날</dt><dd class="num">'+esc(p.rrnAt)+'</dd></dl><button class="btn small" type="button" id="rrnEdit">다시 넣기</button><p class="hint">암호화해서 보관하고, 협회 관리자만 볼 수 있어요.</p></div>';
+  return '<div class="lock"><h3>강사료 정보 <span class="opt">협회에서 강사료를 받는 선생님</span></h3>'+
+    '<p class="hint" style="color:var(--muted)">강사료를 드릴 때 세금(원천징수)을 신고하려면 주민등록번호가 필요해요. 소득세법에 따라 받고, 이 목적에만 써요.</p>'+
+    '<label class="f" for="rrnIn">주민등록번호 <span class="req">*</span><input type="password" id="rrnIn" inputmode="numeric" maxlength="14" autocomplete="off" placeholder="900101-2345678"></label>'+
+    '<label class="agree" for="rrnAg"><input type="checkbox" id="rrnAg"><div><b>[필수] 고유식별정보(주민등록번호) 처리 안내 확인</b><details><summary>자세히</summary>항목: 주민등록번호. 목적: 강사료 원천징수와 지급명세서 제출(소득세법). 보관: 세법이 정한 기간이 지나면 지워요. 암호화해서 보관하고 협회 관리자만 볼 수 있어요.</details></div></label>'+
+    msgBox()+btn('rrnSave','주민등록번호 저장')+(S.rrnEdit?'<button class="btn ghost small" type="button" id="rrnCancel">취소</button>':'')+'</div>'}
 
 /* ---------- 그리기 ---------- */
 function render(){var h;
@@ -256,23 +282,19 @@ function render(){var h;
   h=({home:vHome,find:vFind,email:vEmail,code:vCode,confirm:vConfirm,done:vDone,login:vLogin,me:vMe,pay:vPay})[S.v]();
   document.getElementById('app').innerHTML=h;
   document.getElementById('backBtn').hidden=!S.hist.length||S.v==='done'||S.v==='me';
-  if(S.postOpen)openPost();
+  if(S.postFor)openPost();
 }
-function go(v,keepHist){if(!keepHist&&S.v!==v)S.hist.push(S.v);S.v=v;S.err={};S.msg='';S.postOpen=false;render();window.scrollTo(0,0)}
+function go(v,keepHist){if(!keepHist&&S.v!==v)S.hist.push(S.v);S.v=v;S.err={};S.msg='';S.postFor='';render();window.scrollTo(0,0)}
 function run(fn){if(S.busy)return;S.busy=true;S.msg='';render();Promise.resolve(fn()).then(function(){S.busy=false;render()},function(){S.busy=false;render()})}
-function readPay(){var g=function(id){var e=document.getElementById(id);return e?e.value.trim():''};if(!S.pay)return;S.pay={eng:g('pEng'),bank:g('pBank'),acct:g('pAcct'),holder:g('pHold'),zip:g('pZip'),addr:g('pAddr'),addr2:g('pAddr2')}}
-function readConfirm(){var i=document.getElementById('jIns');if(i)S.j.inst=i.value;var a=document.getElementById('agr');if(a)S.agree=a.checked;
+function readConfirm(){readPayIn();var p1=document.getElementById('pw1');if(p1){S.pw1=p1.value;S.pw2=document.getElementById('pw2').value}var i=document.getElementById('jIns');if(i)S.j.inst=i.value;var a=document.getElementById('agr');if(a)S.agree=a.checked;
   document.querySelectorAll('[data-cy]').forEach(function(x){if(x.dataset.cy in S.j.certs)S.j.certs[x.dataset.cy]=x.value})}
-function openPost(){var w=document.getElementById('postWrap');if(!w)return;w.hidden=false;
-  if(!window.daum||!daum.Postcode){w.innerHTML='<p class="hint" style="padding:12px">주소 검색을 불러오지 못했어요. 우편번호와 주소를 직접 넣어 주세요.</p>';w.style.height='auto';return}
-  new daum.Postcode({width:'100%',height:'100%',oncomplete:function(r){readPay();S.pay.zip=r.zonecode;S.pay.addr=r.roadAddress||r.jibunAddress;S.postOpen=false;render();var n=document.getElementById('pAddr2');if(n)n.focus()}}).embed(w)}
 function loadMe(){return call('tMe',[S.sess]).then(function(r){if(!r.ok){if(/LOGIN/.test(r.msg)){S.sess='';try{sessionStorage.removeItem('tm-sess')}catch(x){}S.v='login';S.msg='로그인 시간이 지났어요. 다시 로그인해 주세요.';render();return}toast(r.msg);return}S.me=r.me;render()})}
 function setSess(t){S.sess=t;try{sessionStorage.setItem('tm-sess',t)}catch(x){}}
 
 document.addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;var d=b.dataset,v=function(id){var x=document.getElementById(id);return x?x.value:''};
   if(b.id==='homeBtn'||b.id==='goHome'){S.hist=[];go(S.sess?'me':'home',true);if(S.sess)loadMe();return}
   if(b.id==='backBtn'){var p=S.hist.pop();if(p){S.v=p;S.err={};S.msg='';render();window.scrollTo(0,0)}return}
-  if(b.id==='goFind'||b.id==='goNew'){S.mode=b.id==='goNew'?'new':'member';Object.assign(S,{name:'',phone:'',token:'',look:'',card:null,email:'',code:'',agree:false,j:blankJ(),acadTyping:false,aqM:'',aqE:'',extraOpen:false});go('find');return}
+  if(b.id==='goFind'||b.id==='goNew'){S.mode=b.id==='goNew'?'new':'member';Object.assign(S,{name:'',phone:'',token:'',look:'',card:null,email:'',code:'',agree:false,j:blankJ(),pw1:'',pw2:'',acadTyping:false,aqM:'',aqE:'',extraOpen:false});go('find');return}
   if(b.id==='goLogin'){S.fp=null;go('login');return}
   if(b.id==='lookup'){S.name=v('iNm').trim();S.phone=v('iPh').replace(/\D/g,'');var er={};if(!S.name)er.name='이름을 넣어 주세요.';if(!/^01\d{8,9}$/.test(S.phone))er.phone='휴대전화 번호를 확인해 주세요.';S.err=er;if(Object.keys(er).length){render();return}
     run(function(){return call('tLookup',[S.name,S.phone]).then(function(r){if(!r.ok){S.msg=r.msg;return}S.look=r.status;S.token=r.token||'';S.card=r.card||null;S.has=r;if(S.mode==='new'&&r.status==='none'){S.hist.push('find');S.v='email'}})});return}
@@ -306,10 +328,11 @@ document.addEventListener('click',function(e){var b=e.target.closest('button');i
     if(!(nw&&j.type==='연수교사회원')&&!j.noAcad&&!j.main&&!j.mainText)er2.acad='주로 근무하는 학원을 골라 주세요.';
     if(j.role==null)er2.role='직급을 골라 주세요.';if(!j.inst)er2.inst='악기를 골라 주세요.';
     if(pw.length<8)er2.pw='비밀번호는 8자 이상이에요.';else if(v('pw2')!==pw)er2.pw2='비밀번호 확인이 달라요.';
+    Object.assign(er2,checkPay(j.pay,false));
     if(!S.agree)er2.agree='동의에 체크해 주세요.';
     S.err=er2;if(Object.keys(er2).length){render();var f=document.querySelector('.fe');if(f)f.scrollIntoView({block:'center'});return}
     var info={type:j.type,course:j.course,kind:j.kind,main:j.main,mainText:j.mainText,extras:j.extras,noAcad:j.noAcad,role:j.role,inst:j.inst,certs:Object.keys(j.certs).map(function(n){return {n:n,y:j.certs[n]}})};
-    run(function(){return call('tCreate',[S.token,{pw:pw,agree:true,info:info}]).then(function(r){if(!r.ok){S.msg=r.msg;return}S.state=r.state;if(r.sess){setSess(r.sess);call('tMe',[r.sess]).then(function(x){if(x.ok)S.me=x.me})}S.hist=[];S.v='done';window.scrollTo(0,0)})});return}
+    run(function(){return call('tCreate',[S.token,{pw:pw,agree:true,info:info,pay:j.pay}]).then(function(r){if(!r.ok){S.msg=r.msg;return}S.state=r.state;if(r.sess){setSess(r.sess);call('tMe',[r.sess]).then(function(x){if(x.ok)S.me=x.me})}S.hist=[];S.v='done';S.pw1='';S.pw2='';window.scrollTo(0,0)})});return}
   if(b.id==='doLogin'){var em=readEmail('le'),lp=v('lp');S.email=em;
     run(function(){return call('tLogin',[em,lp]).then(function(r){if(!r.ok){S.msg=r.msg;return}setSess(r.sess);S.hist=[];S.v='me';S.me=null;loadMe()})});return}
   if(b.id==='forgot'){S.fp={email:readEmail('le'),sent:false};S.msg='';render();return}
@@ -320,17 +343,24 @@ document.addEventListener('click',function(e){var b=e.target.closest('button');i
   if(b.id==='logout'){call('tLogout',[S.sess]);S.sess='';S.me=null;try{sessionStorage.removeItem('tm-sess')}catch(x){}S.hist=[];go('home',true);return}
   if(b.id==='toPay'){S.pay=null;go('pay');return}
   if(b.id==='toMe'){S.hist=[];S.pay=null;go('me',true);loadMe();return}
-  if(b.id==='postBtn'){readPay();S.postOpen=!S.postOpen;render();return}
-  if(b.id==='savePay'){readPay();var q=S.pay,er3={};if(q.acct&&!/^[\d-]{8,20}$/.test(q.acct))er3.acct='계좌번호는 숫자와 - 로 넣어 주세요.';else if(q.acct&&(!q.bank||!q.holder))er3.acct='은행과 예금주도 넣어 주세요.';
-    if(q.eng&&!/^[A-Za-z .'-]+$/.test(q.eng))er3.eng='영문 이름은 영어로 넣어 주세요.';S.err=er3;if(Object.keys(er3).length){render();return}
+  if(d.post){readPayIn();S.postFor=S.postFor===d.post?'':d.post;render();return}
+  if(b.id==='savePay'){readPayIn();var q=S.pay,er3=checkPay(q,!!(S.me&&S.me.pay&&S.me.pay.acct));
+    if(q.eng&&!/^[A-Za-z .'-]+$/.test(q.eng))er3.eng='영문 이름은 영어로 넣어 주세요.';S.err=er3;if(Object.keys(er3).length){render();var f=document.querySelector('.fe');if(f)f.scrollIntoView({block:'center'});return}
     run(function(){return call('tSavePay',[S.sess,q]).then(function(r){if(!r.ok){S.msg=r.msg;return}S.me=r.me;S.pay=null;S.hist=[];S.v='me';toast('저장했어요')})});return}
+  if(b.id==='rrnEdit'){S.rrnEdit=true;render();return}
+  if(b.id==='rrnCancel'){S.rrnEdit=false;S.msg='';render();return}
+  if(b.id==='rrnSave'){var rv=v('rrnIn').trim(),ag=document.getElementById('rrnAg').checked;
+    if(!/^\d{6}-?[1-8]\d{6}$/.test(rv)){S.msg='주민등록번호 13자리를 확인해 주세요.';render();return}if(!ag){S.msg='처리 안내 확인에 체크해 주세요.';render();return}
+    run(function(){return call('tSaveRrn',[S.sess,rv,true]).then(function(r){if(!r.ok){S.msg=r.msg;return}S.me=r.me;S.rrnEdit=false;toast('주민등록번호를 저장했어요')})});return}
 });
 document.addEventListener('input',function(e){var el=e.target;
   if(el.id==='iPh'){el.value=ph010(el.value);var n=el.value.length;el.setSelectionRange(n,n)}
   if(el.id==='cCode'||el.id==='rc'||el.id==='pZip'){el.value=el.value.replace(/\D/g,'')}
   if(el.id==='pAcct'){el.value=el.value.replace(/[^\d-]/g,'')}
+  if(el.id==='z_h'||el.id==='z_m'){el.value=el.value.replace(/\D/g,'').slice(0,5)}
+  if(el.id==='rrnIn'){var x=el.value.replace(/\D/g,'').slice(0,13);el.value=x.length>6?x.slice(0,6)+'-'+x.slice(6):x}
   if(el.id==='aqM'||el.id==='aqE'){var sl=el.id==='aqM'?'m':'e';S[el.id]=el.value;document.getElementById(sl==='m'?'aListM':'aListE').innerHTML=aItems(sl,aHits(sl))}});
-document.addEventListener('change',function(e){var dm=e.target.dataset&&e.target.dataset.dom;if(dm){var x=document.getElementById(dm+'X');x.hidden=!!e.target.value;if(!e.target.value)x.focus();return}
+document.addEventListener('change',function(e){if(e.target.id==='pSame'){readPayIn();render();return}var dm=e.target.dataset&&e.target.dataset.dom;if(dm){var x=document.getElementById(dm+'X');x.hidden=!!e.target.value;if(!e.target.value)x.focus();return}
   var n=e.target.dataset&&e.target.dataset.cert;if(!n)return;readConfirm();if(e.target.checked)S.j.certs[n]='';else delete S.j.certs[n];render()});
 document.addEventListener('keydown',function(e){if(e.key!=='Enter')return;var m={iNm:'lookup',iPh:'lookup',eEmU:'sendCode',eEmX:'sendCode',cCode:'verify',leU:'doLogin',leX:'doLogin',lp:'doLogin',fe2U:'sendReset',fe2X:'sendReset',rp:'doReset'}[e.target.id];if(m){e.preventDefault();var b=document.getElementById(m);if(b)b.click()}});
 

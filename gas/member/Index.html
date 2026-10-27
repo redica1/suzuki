@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261028-012309 -->
+<!-- build: 20261028-012404 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -494,10 +494,18 @@ document.addEventListener('click',function(e){
   if(b.id==='imp'||b.id==='impRe'){if(b.id==='impRe'&&!confirm('STG 명단을 모두 지우고 원본에서 다시 불러올까요?'))return;b.disabled=true;b.innerHTML='<span class="spin"></span> 불러오는 중… (1분쯤)';
     callS('importRoster',b.id==='impRe').then(function(r){if(!r.ok){b.disabled=false;b.textContent='다시 해 보기';toast(r.msg);return}toast(r.msg);S.tab='home';load()});return}
 });
+/* 찾기 칸은 그대로 두고 표·쪽 번호만 새로 그림 (한글 입력이 깨지지 않게, 10-28) */
+function softList(){var live=document.getElementById('q');if(!live){render();return}
+  var html=({acad:vAcads,tch:vTeachers,stu:vStudents})[S.tab];if(!html){render();return}
+  var tmp=document.createElement('div');tmp.innerHTML=html();var tq=tmp.querySelector('#q');if(!tq){render();return}
+  var lp=live.closest('.panel'),tp=tq.closest('.panel'),lf=live.closest('.filters'),tf=tq.closest('.filters');
+  Array.prototype.slice.call(lp.childNodes).forEach(function(n){if(n!==lf)lp.removeChild(n)});
+  Array.prototype.slice.call(tp.childNodes).forEach(function(n){if(n!==tf)lp.appendChild(n)})}
+var qTimer=0;
 document.addEventListener('input',function(e){var el=e.target;
-  if(el.id==='q'){S.q=el.value;if(e.isComposing)return;S.page=0;render();keepFocus('q');return}
+  if(el.id==='q'){S.q=el.value;S.page=0;clearTimeout(qTimer);qTimer=setTimeout(softList,120);return}
   if(el.id==='e_출생연도'||el.id==='e_우편번호'){el.value=el.value.replace(/\D/g,'')}});
-document.addEventListener('compositionend',function(e){if(e.target.id==='q'){S.q=e.target.value;S.page=0;render();keepFocus('q')}});
+document.addEventListener('compositionend',function(e){if(e.target.id==='q'){S.q=e.target.value;S.page=0;clearTimeout(qTimer);qTimer=setTimeout(softList,120)}});
 document.addEventListener('change',function(e){var el=e.target,m={fst:'st',fck:'ck',fsd:'sd',fac:'ac',fins:'ins',fdu:'du',fpw:'pw',frl:'rl',fcp:'cp',ffr:'fr',fkd:'kd'}[el.id];
   if(m){S.f[m]=el.value;S.page=0;S.sel={};render();return}
   if(el.id==='e_학원ID'&&S.tab==='stu'){var keep=readEd();S.edAcad=el.value;render();Object.keys(keep).forEach(function(k){var n=document.getElementById('e_'+k);if(n&&k!=='담당교사ID')n.value=keep[k]})}});

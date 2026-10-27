@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261028-085608 -->
+<!-- build: 20261028-085826 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -38,7 +38,9 @@ button,input,select,textarea{font:inherit;color:inherit}
 .num{font-family:var(--mono);font-variant-numeric:tabular-nums}
 .testband{background:var(--rosin);color:#1b1306;text-align:center;font-size:13px;font-weight:700;padding:4px 8px}
 .band{background:var(--band);color:var(--band-ink)}
-.band .wrap{padding-top:18px;padding-bottom:16px;display:grid;gap:4px}
+.band .wrap{padding-top:18px;padding-bottom:16px;display:grid;gap:4px;position:relative}
+.gnbBtn{position:absolute;right:16px;top:50%;transform:translateY(-50%);display:inline-flex;flex-direction:column;align-items:center;gap:2px;background:transparent;border:1px solid var(--band-muted);color:var(--band-ink);border-radius:10px;padding:6px 9px;cursor:pointer;font-size:11px;line-height:1}
+.gnbBtn svg{width:20px;height:20px}.gnbBtn .dot{position:absolute;top:-4px;right:-4px;min-width:16px;height:16px;border-radius:8px;background:var(--rosin);color:#1b1306;font-size:10.5px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 4px}
 .org{font-size:13px;color:var(--band-muted)}
 .band h1{font-family:var(--display);font-size:24px;font-weight:700}
 main.wrap{padding-top:18px;padding-bottom:96px;display:grid;gap:14px}
@@ -117,7 +119,7 @@ input.bad,select.bad,textarea.bad{border-color:var(--bad);background:var(--bad-s
 </style>
 </head><body>
 <header class="gnb"><div class="testband" id="testband" hidden>테스트(STG) — 여기서 만든 계정은 실제 회원 계정이 아니에요</div>
-<div class="band"><div class="wrap"><div class="org">한국스즈키음악협회</div><h1>선생님 회원</h1></div></div></header>
+<div class="band"><div class="wrap"><div class="org">한국스즈키음악협회</div><h1>선생님 회원</h1><button class="gnbBtn" type="button" id="gnbAsk" hidden aria-label="내 문의"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/><path d="M8 9h8M8 12h5"/></svg><span>내 문의</span><span class="dot" id="gnbDot" hidden></span></button></div></div></header>
 <main class="wrap" id="app"><div class="card"><span><span class="spin"></span> 여는 중이에요…</span></div></main>
 <div class="homebar"><div class="wrap"><button class="btn ghost" type="button" id="homeBtn">&#8962; 처음</button><button class="btn ghost" type="button" id="backBtn">이전</button></div></div>
 <div class="toast" id="toast" hidden></div>
@@ -245,7 +247,7 @@ function vMe(){var m=S.me;if(!m)return '<div class="card"><span><span class="spi
     (m.reqs&&m.reqs.length?'<div class="note warn">협회가 확인 중인 요청: '+esc(m.reqs.join(', '))+'</div>':'')+
     '<dl class="kv"><dt>이메일</dt><dd>'+esc(m.email)+'</dd><dt>휴대전화</dt><dd class="num">'+fmtPh(m.phone)+'</dd>'+(m.ext?'<dt>구분</dt><dd><span class="pill info">외부인</span></dd><dt>악기</dt><dd>'+esc(m.inst||'-')+'</dd></dl>':'<dt>직급</dt><dd>'+esc(m.role||'-')+'</dd><dt>악기</dt><dd>'+esc(m.inst||'-')+'</dd><dt>회원 종류</dt><dd>'+(KINDS.indexOf(m.kind)>=0?'<span class="pill info">'+esc(kindLabel(m.kind))+'</span>':'<span class="pill due">확인 전</span>')+'</dd></dl>')+
     (m.heads&&m.heads.length?'<div class="note">원장으로 등록된 학원: <b>'+esc(m.heads.join(', '))+'</b> · 학원 정보와 학생 명단 메뉴는 곧 열려요.</div>':'')+
-    '<p class="hint">이름·휴대전화가 바뀌었으면 협회 카카오톡 채널로 알려 주세요.</p></div>'+(m.ext?'':workCard(m)+duesCard(m))+eventCard(m)+myAskCard()+
+    '</div>'+(m.ext?'':workCard(m)+duesCard(m))+eventCard(m)+
     payCards(m)+rrnBox(m)}
 function payCards(m){var p=m.pay||{},ed=S.payEd,d=S.pay||{};
   var edBtns=function(){return '<div class="two">'+btn('pedSave','저장')+'<button class="btn" type="button" id="pedNo">취소</button></div>'};
@@ -267,9 +269,9 @@ function payCards(m){var p=m.pay||{},ed=S.payEd,d=S.pay||{};
 var B_CATS=['회원가입','정보 수정','회비','캠프·행사','기타'];
 function stPill(s){return '<span class="pill '+(s==='완료'?'ok':s==='처리중'?'info':'due')+'">'+esc(s)+'</span>'}
 function vAsk(){var a=S.ask||(S.ask={cat:'',title:'',body:'',name:'',phone:''}),me=S.sess&&S.me;
-  if(S.askDone)return '<div class="card"><h2>문의를 받았어요</h2><p class="lede">협회가 확인하고 '+(me?'「내 정보 › 내 문의」에 답을 남기고 이메일로 알려 드려요.':'남겨 주신 휴대전화로 연락드려요.')+'</p>'+(me?'<button class="btn primary block" type="button" id="toMe">내 정보로</button>':'<button class="btn block" type="button" id="goHome">처음 화면</button>')+'</div>';
+  if(S.askDone)return '<div class="card"><h2>문의를 받았어요</h2><p class="lede">협회가 확인하고 '+(me?'오른쪽 위 「내 문의」에 답을 남기고 이메일로 알려 드려요.':'남겨 주신 휴대전화로 연락드려요.')+'</p>'+(me?'<button class="btn primary block" type="button" id="toMe">내 정보로</button>':'<button class="btn block" type="button" id="goHome">처음 화면</button>')+'</div>';
   return '<div class="card"><h2>문의 · 요청 남기기</h2><p class="lede">회원가입이 안 되거나, 정보를 고쳐야 하거나, 궁금한 점을 남겨 주세요. 협회 관리자만 봐요.</p>'+
-    (me?'<div class="note">'+esc(me.name)+' 선생님으로 남겨요. 답은 「내 정보 › 내 문의」에서 볼 수 있어요.</div>':
+    (me?'<div class="note">'+esc(me.name)+' 선생님으로 남겨요. 답은 오른쪽 위 「내 문의」에서 볼 수 있어요.</div>':
       '<div class="note">로그인하지 않고 남겨요. 답은 남겨 주신 휴대전화로 연락드려요. 계정이 있으면 <button class="btn small ghost" type="button" id="goLogin" style="padding:0 6px">로그인</button> 뒤 남기면 답을 화면에서 볼 수 있어요.</div>'+
       '<div class="two"><div><label class="f" for="aNm">이름 <span class="req">*</span><input type="text" id="aNm" value="'+esc(a.name)+'" autocomplete="name" '+bad('aname')+'></label>'+fe('aname')+'</div>'+
       '<div><label class="f" for="aPh">휴대전화 <span class="req">*</span><input type="tel" id="aPh" value="'+esc(a.phone)+'" inputmode="numeric" autocomplete="tel" '+bad('aphone')+'></label>'+fe('aphone')+'</div></div>')+
@@ -280,6 +282,10 @@ function vAsk(){var a=S.ask||(S.ask={cat:'',title:'',body:'',name:'',phone:''}),
     '<p class="hint">주민등록번호 · 계좌번호는 적지 말아 주세요.</p>'+msgBox()+btn('askSend','보내기')+'</div>'}
 function readAsk(){var a=S.ask;if(!a)return;var g=function(id){var e=document.getElementById(id);return e?e.value:null};var x;
   if((x=g('aNm'))!==null)a.name=x.trim();if((x=g('aPh'))!==null)a.phone=x.replace(/\D/g,'');if((x=g('aTi'))!==null)a.title=x;if((x=g('aBo'))!==null)a.body=x}
+function vMine(){return myAskCard()+'<button class="btn block" type="button" id="toMe">내 정보로</button>'}
+function gnbAsk(){var b=document.getElementById('gnbAsk');if(!b)return;b.hidden=!S.sess;b.setAttribute('aria-current',S.v==='mine'?'page':'false');
+  var n=(S.mine||[]).filter(function(q){var c=q.comments[q.comments.length-1];return q.state!=='완료'&&c&&c.who==='관리자'}).length,dt=document.getElementById('gnbDot');
+  dt.hidden=!n;dt.textContent=n;b.setAttribute('aria-label','내 문의'+(n?' · 새 답 '+n+'개':''))}
 function myAskCard(){var L=S.mine;
   return '<div class="card"><div class="spread"><h3>내 문의</h3><button class="btn small" type="button" id="goAsk">+ 새 문의</button></div>'+
     (!L?'<p class="hint"><span class="spin"></span> 불러오는 중…</p>':!L.length?'<p class="hint">남긴 문의가 없어요.</p>':
@@ -307,7 +313,7 @@ function workCard(m){var ws=m.works||[],cur=ws.filter(function(w){return !w.end}
   else add='<p class="hint">지금 근무지는 3곳까지예요. 그만둔 곳을 「종료」하면 다른 학원을 넣을 수 있어요.</p>';
   return '<div class="card"><h3>근무지</h3>'+(cur.length?'<ul class="hist">'+cur.map(li).join('')+'</ul>':'<p class="hint">현재 근무지 없음</p>')+add+
     (past.length?'<h3 style="margin-top:10px">지난 근무지</h3><ul class="hist">'+past.map(li).join('')+'</ul>':'')+
-    '<p class="hint">근무지와 근무 이력은 협회와 그 학원 원장님이 볼 수 있어요.</p></div>'}
+    '</div>'}
 function payOut(p){var o={};Object.keys(p).forEach(function(k){if(k!=='rrn'&&k!=='rrnAg')o[k]=p[k]});return o}
 function curPay(){return S.v==='pay'||S.payEd?S.pay:S.j.pay}
 function blankPay(name){return {hzip:'',haddr:'',haddr2:'',same:false,zip:'',addr:'',addr2:'',bank:'',acct:'',holder:name||''}}
@@ -361,13 +367,14 @@ function hSync(){var H=gh();if(!H||HIST.busy||S.v===HIST.last)return;var first=!
 function hBack(v){var need={email:1,code:1,confirm:1};
   if(!v)v=S.sess?'me':'home';
   if(S.v==='done'||(need[v]&&!S.token))v=S.sess?'me':'home';
-  if((v==='me'||v==='pay')&&!S.sess)v='login';
+  if((v==='me'||v==='pay'||v==='mine')&&!S.sess)v='login';if(v==='mine')loadMine();
   HIST.busy=true;HIST.last=v;S.v=v;S.err={};S.msg='';S.postFor='';S.payEd='';if(S.hist.length)S.hist.pop();render();HIST.busy=false;window.scrollTo(0,0);if(v==='me')loadMe()}
 (function(){var H=gh();if(H&&H.setChangeHandler)try{H.setChangeHandler(function(e){hBack(e&&e.state&&e.state.v)})}catch(x){}})();
 function render(){var h;
   document.getElementById('testband').hidden=!S.test;
-  h=({home:vHome,find:vFind,email:vEmail,code:vCode,confirm:vConfirm,done:vDone,login:vLogin,me:vMe,pay:vPay,ask:vAsk})[S.v]();
+  h=({home:vHome,find:vFind,email:vEmail,code:vCode,confirm:vConfirm,done:vDone,login:vLogin,me:vMe,pay:vPay,ask:vAsk,mine:vMine})[S.v]();
   document.getElementById('app').innerHTML=h;
+  gnbAsk();
   hSync();
   document.getElementById('backBtn').hidden=!S.hist.length||S.v==='done'||S.v==='me';
   if(S.postFor)openPost();
@@ -376,7 +383,7 @@ function go(v,keepHist){if(!keepHist&&S.v!==v)S.hist.push(S.v);S.v=v;S.payEd='';
 function run(fn){if(S.busy)return;S.busy=true;S.msg='';render();Promise.resolve(fn()).then(function(){S.busy=false;render()},function(){S.busy=false;render()})}
 function readConfirm(){readPayIn();readWorks();var xt=document.getElementById('jExT');if(xt)S.j.extRoleText=xt.value;var og=document.getElementById('jOrg');if(og)S.j.org=og.value;var p1=document.getElementById('pw1');if(p1){S.pw1=p1.value;S.pw2=document.getElementById('pw2').value}var i=document.getElementById('jIns');if(i)S.j.inst=i.value;var a=document.getElementById('agr');if(a)S.agree=a.checked;
   document.querySelectorAll('[data-cy]').forEach(function(x){if(x.dataset.cy in S.j.certs)S.j.certs[x.dataset.cy]=x.value})}
-function loadMine(){return call('bMine',[S.sess]).then(function(r){if(r.ok){S.mine=r.list;if(S.v==='me')render()}})}
+function loadMine(){return call('bMine',[S.sess]).then(function(r){if(r.ok){S.mine=r.list;if(S.v==='me'||S.v==='mine')render();else gnbAsk()}})}
 function loadMe(){loadMine();return call('tMe',[S.sess]).then(function(r){if(!r.ok){if(/LOGIN/.test(r.msg)){S.sess='';try{sessionStorage.removeItem('tm-sess')}catch(x){}S.v='login';S.msg='로그인 시간이 지났어요. 다시 로그인해 주세요.';render();return}toast(r.msg);return}S.me=r.me;render()})}
 function setSess(t){S.sess=t;try{sessionStorage.setItem('tm-sess',t)}catch(x){}}
 
@@ -452,6 +459,7 @@ document.addEventListener('click',function(e){var b=e.target.closest('button');i
     S.err=e4;if(Object.keys(e4).length){render();return}
     var send=k2==='acct'?{eng:q2.eng,bank:q2.bank,acct:q2.acct,holder:q2.holder}:k2==='home'?{hzip:q2.hzip,haddr:q2.haddr,haddr2:q2.haddr2}:{same:!!q2.same,zip:q2.zip,addr:q2.addr,addr2:q2.addr2};
     run(function(){return call('tSavePart',[S.sess,k2,send]).then(function(r){if(!r.ok){S.msg=r.msg;return}S.me=r.me;S.payEd='';S.pay=null;S.err={};toast('저장했어요')})});return}
+  if(b.id==='gnbAsk'){if(!S.sess)return;go('mine');loadMine();return}
   if(b.id==='goAsk'){S.ask=null;S.askDone=false;go('ask');return}
   if(d.seg==='acat'){readAsk();S.ask.cat=d.val;render();return}
   if(b.id==='askSend'){readAsk();var aq=S.ask,e5={},me5=S.sess&&S.me;

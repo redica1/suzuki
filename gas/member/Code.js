@@ -1,4 +1,4 @@
-/* build: 20261028-085608 */
+/* build: 20261028-085826 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -897,7 +897,7 @@ function bComment(who, qid, text) {
   bAddComment_(qid, '관리자', who.name, text);
   if (Q.get(i, '상태') === '접수') Q.set(i, { '상태': '처리중', '처리자': who.name, '수정일': now_() });
   const em = Q.get(i, '이메일');
-  if (em) { try { mail_(em, '[스즈키] 문의에 답이 달렸어요', '<p>「' + esc_(Q.get(i, '제목')) + '」 문의에 협회가 답을 남겼어요.</p><blockquote>' + esc_(text).replace(/\n/g, '<br>') + '</blockquote><p>로그인해서 「내 정보 › 내 문의」에서 볼 수 있어요.</p>'); } catch (e) {} }
+  if (em) { try { mail_(em, '[스즈키] 문의에 답이 달렸어요', '<p>「' + esc_(Q.get(i, '제목')) + '」 문의에 협회가 답을 남겼어요.</p><blockquote>' + esc_(text).replace(/\n/g, '<br>') + '</blockquote><p>로그인해서 오른쪽 위 「내 문의」에서 볼 수 있어요.</p>'); } catch (e) {} }
   log_(who.name, '문의', qid, '댓글', text.slice(0, 60));
   return bList(who);
 }

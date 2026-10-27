@@ -1,4 +1,4 @@
-/* build: 20261028-013946 */
+/* build: 20261028-083752 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -20,6 +20,8 @@ const HEAD = {
   '설정': ['항목', '값', '설명'],
   '기록': ['일시', '누가', '표', 'ID', '동작', '내용'],
   '참가이력': ['이력ID', '대상', 'ID', '행사', '년도', '기간', '역할', '상태', '메모', '수정일', '수정자'],   // 행사 참여 기록 (10-28): 캠프·졸업연주 등이 끝나면 여기에 모음
+  '문의': ['문의ID', '작성일', '교사ID', '이름', '휴대전화', '이메일', '분류', '제목', '내용', '상태', '처리일', '처리자', '수정일'],   // 문의·요청 게시판 (10-28): 상태 = 접수 · 처리중 · 완료
+  '댓글': ['댓글ID', '문의ID', '작성일', '쓴사람', '이름', '내용'],   // 쓴사람 = 관리자 · 작성자
   '근무': ['근무ID', '교사ID', '학원ID', '학원명', '시작', '종료', '주근무', '출처', '메모', '수정일', '수정자'],   // 근무지 이력 (10-28): 한 줄 = 한 근무지, 종료가 비면 지금 근무 중
   '계정': ['이메일', '교사ID', '비번해시', '솔트', '상태', '경로', '만든날', '처리일', '마지막로그인', '메모'],
   '요청': ['요청ID', '종류', '교사ID', '이름', '휴대전화', '이메일', '내용', '상태', '신청일', '처리일', '처리자', '메모'],
@@ -55,8 +57,8 @@ function doGet(e) {
 function include(n) { return HtmlService.createHtmlOutputFromFile(n).getContent(); }
 
 function api(name, args) {
-  const open = { login, hello, tHello, tLookup, tStart, tResend, tVerify, tCreate, tLogin, tForgot, tReset, tMe, tSavePay, tSavePart, tSaveRrn, tAddWork, tEndWork, tMainWork, tLogout };
-  const fns = { boot, saveRow, setCheck, logs, importRoster, saveDues, delDues, reqs, reqDo, delAcad, payView, bulkSet, saveWorks, importPastDues };
+  const open = { login, hello, tHello, tLookup, tStart, tResend, tVerify, tCreate, tLogin, tForgot, tReset, tMe, tSavePay, tSavePart, tSaveRrn, tAddWork, tEndWork, tMainWork, tLogout, bPost, bMine, bReply };
+  const fns = { boot, saveRow, setCheck, logs, importRoster, saveDues, delDues, reqs, reqDo, delAcad, payView, bulkSet, saveWorks, importPastDues, bList, bSet, bComment };
   try {
     if (open[name]) return Object.assign({ ok: true }, open[name].apply(null, args || []));
     if (!fns[name]) throw new UserError('알 수 없는 요청이에요.');
@@ -103,6 +105,7 @@ function boot(who) {
   const acc = {}; tbl_('계정').v.forEach(r => { if (r[1]) acc[r[1]] = r[4]; }); out.acc = acc;
   out.reqN = tbl_('요청').v.filter(r => r[7] === '대기').length;
   out.pdSrc = String(settings_()['지난 회비 원본'] || '');
+  out.bN = tbl_('문의').v.filter(r => r[9] === '접수').length;
   { const W = tbl_('근무'); out['근무'] = { h: W.h, rows: W.v }; }
   const pf = {}; try { const P = payTbl_(), c = col_(P); P.v.forEach(r => { pf[r[0]] = { a: !!r[c['계좌번호']], h: !!r[c['집주소']], m: !!r[c['주소']], r: !!r[c['주민번호암호']] }; }); } catch (e) {}
   out.pay = pf;   // 있음/없음만 (값은 「내용 보기」로)
@@ -827,6 +830,63 @@ function reqDo(who, id, act, memo, linkTid) {
   } finally { lock.releaseLock(); }
   if (mailTo) { try { mail_(mailTo, subj, body); } catch (e) { console.warn('mail', e); } }
   return reqs(who);
+}
+
+/* ---------- 문의·요청 게시판 (10-28) ---------- */
+const B_CATS = ['회원가입', '정보 수정', '회비', '캠프·행사', '기타'], B_STATES = ['접수', '처리중', '완료'];
+function bText_(v, n) { return String(v == null ? '' : v).replace(/\r\n?/g, '\n').trim().slice(0, n); }
+function bObjs_() { const Q = tbl_('문의'), C = tbl_('댓글'); const o = (T, r) => { const x = {}; T.h.forEach((k, j) => x[k] = r[j]); return x; };
+  const cm = {}; C.v.forEach(r => { const c = o(C, r); (cm[c['문의ID']] = cm[c['문의ID']] || []).push(c); });
+  return Q.v.map(r => { const q = o(Q, r); q.comments = cm[q['문의ID']] || []; return q; }).sort((a, b) => String(b['작성일']).localeCompare(String(a['작성일']))); }
+/** 글쓰기: 로그인했으면 그 회원으로, 아니면 이름 + 휴대전화 */
+function bPost(sess, d) {
+  d = d || {}; if (d.hp) fail('보내지 못했어요.');   /* 자동 등록 막기용 숨은 칸 */
+  let u = null; if (sess) { try { u = tsess_(sess); } catch (e) { u = null; } }
+  let tid = '', name, phone, email = '';
+  if (u) { const T = tbl_('교사'), i = T.find('교사ID', u.tid); tid = u.tid; name = i >= 0 ? T.get(i, '이름') : ''; phone = i >= 0 ? T.get(i, '휴대전화') : ''; email = u.email; }
+  else { name = bText_(d.name, 20); phone = digits_(d.phone); if (!name) fail('이름을 넣어 주세요.'); if (!/^01\d{8,9}$/.test(phone)) fail('휴대전화 번호를 확인해 주세요.'); }
+  const cat = B_CATS.indexOf(d.cat) >= 0 ? d.cat : '기타', title = bText_(d.title, 80), body = bText_(d.body, 2000);
+  if (!title) fail('제목을 넣어 주세요.'); if (body.length < 2) fail('내용을 넣어 주세요.');
+  limit_('bp:' + (phone || tid), 5, 3600, '한 시간에 5개까지 남길 수 있어요. 잠시 뒤 다시 해 주세요.');
+  limit_('bp:all', 300, 3600, '지금 글이 많이 들어오고 있어요. 잠시 뒤 다시 해 주세요.');
+  const lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    const Q = tbl_('문의'), id = 'Q' + Utilities.formatDate(new Date(), 'Asia/Seoul', 'yyMMddHHmmss') + Math.floor(Math.random() * 90 + 10);
+    Q.append({ '문의ID': id, '작성일': now_(), '교사ID': tid, '이름': name, '휴대전화': phone, '이메일': email, '분류': cat, '제목': title, '내용': body, '상태': '접수', '수정일': now_() });
+    log_(name, '문의', id, '새 문의', cat + ' · ' + title.slice(0, 40) + (tid ? '' : ' (비로그인)'));
+    return { id };
+  } finally { lock.releaseLock(); }
+}
+/** 로그인한 회원: 내가 쓴 문의와 댓글 */
+function bMine(sess) { const u = tsess_(sess); return { list: bObjs_().filter(q => q['교사ID'] === u.tid).map(q => ({ id: q['문의ID'], at: q['작성일'], cat: q['분류'], title: q['제목'], body: q['내용'], state: q['상태'], comments: q.comments.map(c => ({ at: c['작성일'], who: c['쓴사람'], name: c['쓴사람'] === '관리자' ? '협회' : c['이름'], text: c['내용'] })) })) }; }
+function bAddComment_(qid, who, name, text) { const C = tbl_('댓글'); C.append({ '댓글ID': 'C' + Utilities.formatDate(new Date(), 'Asia/Seoul', 'yyMMddHHmmss') + Math.floor(Math.random() * 90 + 10), '문의ID': qid, '작성일': now_(), '쓴사람': who, '이름': name, '내용': text }); }
+function bReply(sess, qid, text) {
+  const u = tsess_(sess); text = bText_(text, 1000); if (!text) fail('댓글을 넣어 주세요.');
+  const Q = tbl_('문의'), i = Q.find('문의ID', qid); if (i < 0 || Q.get(i, '교사ID') !== u.tid) fail('그 문의를 찾지 못했어요.');
+  limit_('bc:' + u.tid, 20, 3600, '댓글을 많이 남겼어요. 잠시 뒤 다시 해 주세요.');
+  const T = tbl_('교사'), ti = T.find('교사ID', u.tid);
+  bAddComment_(qid, '작성자', ti >= 0 ? T.get(ti, '이름') : u.email, text);
+  if (Q.get(i, '상태') === '완료') Q.set(i, { '상태': '처리중', '수정일': now_() });   /* 끝난 문의에 다시 물으면 처리중으로 */
+  return bMine(sess);
+}
+/** 관리자 */
+function bList(who) { const all = bObjs_(); return { list: all }; }
+function bSet(who, qid, state) {
+  if (B_STATES.indexOf(state) < 0) fail('상태를 골라 주세요.');
+  const Q = tbl_('문의'), i = Q.find('문의ID', qid); if (i < 0) fail('그 문의를 찾지 못했어요.');
+  Q.set(i, { '상태': state, '처리일': state === '완료' ? now_() : Q.get(i, '처리일'), '처리자': who.name, '수정일': now_() });
+  log_(who.name, '문의', qid, '상태', state);
+  return bList(who);
+}
+function bComment(who, qid, text) {
+  text = bText_(text, 1000); if (!text) fail('댓글을 넣어 주세요.');
+  const Q = tbl_('문의'), i = Q.find('문의ID', qid); if (i < 0) fail('그 문의를 찾지 못했어요.');
+  bAddComment_(qid, '관리자', who.name, text);
+  if (Q.get(i, '상태') === '접수') Q.set(i, { '상태': '처리중', '처리자': who.name, '수정일': now_() });
+  const em = Q.get(i, '이메일');
+  if (em) { try { mail_(em, '[스즈키] 문의에 답이 달렸어요', '<p>「' + esc_(Q.get(i, '제목')) + '」 문의에 협회가 답을 남겼어요.</p><blockquote>' + esc_(text).replace(/\n/g, '<br>') + '</blockquote><p>로그인해서 「내 정보 › 내 문의」에서 볼 수 있어요.</p>'); } catch (e) {} }
+  log_(who.name, '문의', qid, '댓글', text.slice(0, 60));
+  return bList(who);
 }
 
 /* ---------- 근무지 이력 ---------- */

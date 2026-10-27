@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261028-004346 -->
+<!-- build: 20261028-004507 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -234,6 +234,7 @@ function acadEditor(){var a=S.edit.id==='new'?{'구분':'학원','상태':'운�
     fld('e_교습과목','교습과목',a['교습과목'],{hint:'쉼표로 (바이올린, 첼로)'})+fld('e_개원일','개원일',a['개원일'],{type:'date'})+fld('e_계약체결일','협회 계약 체결일',a['계약체결일'],{type:'date',hint:'비우면 미체결'})+
     fld('e_시도','시·도',a['시도'])+fld('e_시군구','시·군·구',a['시군구'])+fld('e_우편번호','우편번호',a['우편번호'],{num:1,max:5})+
     fld('e_주소','주소',a['주소'],{wide:1})+fld('e_상세주소','상세주소',a['상세주소'])+fld('e_확인','확인',a['확인'],{sel:CHECKS})+fld('e_확인메모','확인 메모',a['확인메모'])+fld('e_메모','메모',a['메모'],{wide:1,area:1})+'</div>'+
+    (a['학원ID']?'<div class="row" style="justify-content:flex-end"><span class="cap">문 닫은 학원은 상태를 「탈퇴」로 · 잘못 넣은 학원만 삭제</span><button class="btn small" type="button" id="delAcad" style="color:var(--bad)">학원 삭제</button></div>':'')+
     (a['학원ID']?'<p class="cap">소속 교사 '+ts.length+'명: '+ts.map(function(t){return esc(t['이름'])+(t['직급']?'('+esc(t['직급'])+')':'')}).join(', ')+' · 재원 학생 '+S.D.stu.filter(function(s){return s['학원ID']===a['학원ID']&&s['상태']==='재원'}).length+'명</p>':'')+'<p class="err" id="edErr"></p></div>'}
 
 /* ---------- 교사 ---------- */
@@ -395,6 +396,8 @@ document.addEventListener('click',function(e){
   if(d.edit){var q2=d.edit.split('|');S.dEdit=null;S.edAcad=null;S.edit=S.edit&&S.edit.id===q2[1]?null:{kind:q2[0],id:q2[1]};render();window.scrollTo({top:0,behavior:'smooth'});return}
   if(d.new){S.edit={kind:d.new,id:'new'};S.edAcad=null;render();window.scrollTo(0,0);return}
   if(b.id==='closeEd'){S.edit=null;render();return}
+  if(b.id==='delAcad'){var da=A[S.edit.id];if(!confirm(da['학원명']+' 학원을 지울까요? 되돌릴 수 없어요.'))return;
+    callS('delAcad',S.edit.id).then(function(r){if(!r.ok){toast(r.msg);return}S.D.acad=S.D.acad.filter(function(x){return x['학원ID']!==S.edit.id});S.edit=null;index();render();toast(da['학원명']+' 을 지웠어요')});return}
   if(b.id==='saveEd'){saveEd(false);return}
   if(b.id==='saveOk'){saveEd(true);return}
   if(b.id==='selClr'){S.sel={};render();return}

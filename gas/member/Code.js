@@ -1,4 +1,4 @@
-/* build: 20261028-004346 */
+/* build: 20261028-004507 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -53,7 +53,7 @@ function include(n) { return HtmlService.createHtmlOutputFromFile(n).getContent(
 
 function api(name, args) {
   const open = { login, hello, tHello, tLookup, tStart, tResend, tVerify, tCreate, tLogin, tForgot, tReset, tMe, tSavePay, tLogout };
-  const fns = { boot, saveRow, setCheck, logs, importRoster, saveDues, delDues, reqs, reqDo };
+  const fns = { boot, saveRow, setCheck, logs, importRoster, saveDues, delDues, reqs, reqDo, delAcad };
   try {
     if (open[name]) return Object.assign({ ok: true }, open[name].apply(null, args || []));
     if (!fns[name]) throw new UserError('알 수 없는 요청이에요.');
@@ -133,6 +133,20 @@ function saveRow(who, table, obj, base) {
     }
     log_(who.name, table, id, i < 0 ? '추가' : '수정', diff.join(' · ').slice(0, 1000));
     const T2 = tbl_(table); return { row: T2.rowObj(T2.find(k, id)) };
+  } finally { lock.releaseLock(); }
+}
+/** 잘못 넣은 학원 지우기 — 소속 교사·학생·원장이 연결돼 있으면 막음 (그럴 땐 상태를 「탈퇴」로) */
+function delAcad(who, id) {
+  const lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    const A = tbl_('학원'), i = A.find('학원ID', id); if (i < 0) fail('학원을 찾지 못했어요.');
+    const name = A.get(i, '학원명');
+    const T = tbl_('교사'), tc = col_(T), nT = T.v.filter(r => [r[tc['학원1']], r[tc['학원2']], r[tc['학원3']]].indexOf(id) >= 0).length;
+    const S = tbl_('학생'), sc = col_(S), nS = S.v.filter(r => r[sc['학원ID']] === id).length;
+    if (nT || nS) fail(name + ' 에 소속 교사 ' + nT + '명 · 학생 ' + nS + '명이 있어 지울 수 없어요. 먼저 옮기거나, 상태를 「탈퇴」로 바꿔 주세요.');
+    A.sh.deleteRow(i + 2);
+    log_(who.name, '학원', id, '삭제', name);
+    return { ok2: true };
   } finally { lock.releaseLock(); }
 }
 function setCheck(who, table, ids, val) {
@@ -446,7 +460,7 @@ function cleanInfo_(n, isNew) {
     o.type = n.type; o.course = n.type === '연수교사회원' ? n.course : '';
     o.kind = n.type === '교사회원' ? '정식 교사' : n.course === '중급' ? '중급 연수' : '초급 연수';
   } else { if (KINDS.indexOf(n.kind) < 0) fail('회원 구분을 골라 주세요.'); o.kind = n.kind; }
-  o.noAcad = !!n.noAcad;
+  o.noAcad = !!n.noAcad || (isNew && o.type === '연수교사회원');   // 연수교사회원은 소속 없음 (10-28)
   o.acads = o.noAcad ? [] : [...new Set((n.acads || []).map(String))].filter(id => an[id]).slice(0, 3);
   o.acadText = o.noAcad ? '' : String(n.acadText || '').trim().slice(0, 60);
   if (!o.noAcad && !o.acads.length && !o.acadText) fail('소속 학원을 고르거나 「소속 학원 없음」을 눌러 주세요.');

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261028-004346 -->
+<!-- build: 20261028-004507 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -200,7 +200,7 @@ function vConfirm(){var j=S.j,nw=S.look!=='found';
     (nw?'<div class="f"><span>가입 종류 <span class="req">*</span></span>'+seg('type',['교사회원','연수교사회원'],j.type)+'<p class="hint">스즈키 교사 자격이 있으면 교사회원, 지금 연수 중이면 연수교사회원이에요.</p>'+fe('type')+'</div>'+
       (j.type==='연수교사회원'?'<div class="f"><span>연수 과정 <span class="req">*</span></span>'+seg('course',['초급','중급'],j.course)+fe('course')+'</div>':'')
      :'<div class="f"><span>회원 구분 <span class="req">*</span></span>'+seg('kind',KINDS,j.kind)+'<p class="hint">정식 교사 / 중급 과정 연수 중 / 초급 과정 연수 중</p>'+fe('kind')+'</div>')+
-    '<div class="f"><span>소속 학원 <span class="req">*</span> <span class="opt">3곳까지</span></span>'+acadPicker()+fe('acad')+'</div>'+
+    (nw&&j.type==='연수교사회원'?'<div class="note">연수교사회원은 소속 학원 없이 가입해요.</div>':'<div class="f"><span>소속 학원 <span class="req">*</span> <span class="opt">3곳까지</span></span>'+acadPicker()+fe('acad')+'</div>')+
     '<div class="f"><span>직급 <span class="req">*</span></span>'+seg('role',[['원장','원장'],['강사','강사'],['','해당 없음']],j.role==null?'-':j.role)+fe('role')+'</div>'+
     '<label class="f" for="jIns">악기 <span class="req">*</span><select id="jIns" '+bad('inst')+'><option value="">선택</option>'+INSTS.map(function(i){return '<option '+(i===j.inst?'selected':'')+'>'+i+'</option>'}).join('')+'</select>'+fe('inst')+'</label>'+
     certBox()+'</div>';
@@ -293,7 +293,7 @@ document.addEventListener('click',function(e){var b=e.target.closest('button');i
   if(b.id==='acadClr'){readConfirm();S.j.noAcad=false;render();return}
   if(b.id==='create'){readConfirm();var er2={},pw=v('pw1'),j=S.j,nw=S.look!=='found';
     if(nw){if(!j.type)er2.type='가입 종류를 골라 주세요.';if(j.type==='연수교사회원'&&!j.course)er2.course='연수 과정을 골라 주세요.'}else if(!j.kind)er2.kind='회원 구분을 골라 주세요.';
-    if(!j.noAcad&&!j.acads.length&&!j.acadText)er2.acad='소속 학원을 고르거나 「소속 학원 없음」을 눌러 주세요.';
+    if(!(nw&&j.type==='연수교사회원')&&!j.noAcad&&!j.acads.length&&!j.acadText)er2.acad='소속 학원을 고르거나 「소속 학원 없음」을 눌러 주세요.';
     if(j.role==null)er2.role='직급을 골라 주세요.';if(!j.inst)er2.inst='악기를 골라 주세요.';
     if(pw.length<8)er2.pw='비밀번호는 8자 이상이에요.';else if(v('pw2')!==pw)er2.pw2='비밀번호 확인이 달라요.';
     if(!S.agree)er2.agree='동의에 체크해 주세요.';

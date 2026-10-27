@@ -1,4 +1,4 @@
-/* build: 20261028-002705 */
+/* build: 20261028-003307 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -14,7 +14,7 @@ const CUR_Y = '2026';
 
 const HEAD = {
   '학원': ['학원ID', '학원명', '구분', '상태', '원장교사ID', '원장명', '교실대표번호', '이메일', '교습과목', '시도', '시군구', '우편번호', '주소', '상세주소', '개원일', '계약체결일', '확인', '확인메모', '메모', '원본', '수정일', '수정자'],
-  '교사': ['교사ID', '이름', '구분글자', '원래이름', '휴대전화', '이메일', '학원1', '학원2', '학원3', '직급', '전공', '회원구분', '명단자격', '명단취득', '회비구분', '캠프교수', '내부외부', '상태', '확인', '확인메모', '메모', '원본', '수정일', '수정자', '영문이름'],
+  '교사': ['교사ID', '이름', '구분글자', '원래이름', '휴대전화', '이메일', '학원1', '학원2', '학원3', '직급', '전공', '회원구분', '명단자격', '명단취득', '회비구분', '캠프교수', '내부외부', '상태', '확인', '확인메모', '메모', '원본', '수정일', '수정자', '영문이름', '본인자격'],
   '학생': ['학생ID', '학원ID', '이름', '구분글자', '원래이름', '출생연도', '출생연도추정', '전공', '시작월', '상태', '담당교사ID', '확인', '확인메모', '메모', '원본', '수정일', '수정자'],
   '연회비': ['대상', 'ID', '년도', '부과', '납부', '납부일', '방식', '메모', '수정일', '수정자'],
   '설정': ['항목', '값', '설명'],
@@ -397,18 +397,15 @@ function tLookup(name, phone) {
   const s = { tid: t ? t[c['교사ID']] : '', name: t ? t[c['이름']] : name, phone, rosterEmail: t ? String(t[c['이메일']] || '').trim().toLowerCase() : '', stage: 'ident' };
   cput_('tk:' + token, s, 3600);
   if (!t) return { status: 'none', token };
-  const an = acadNames_();
-  return { status: 'found', token, card: {
-    name: t[c['이름']], phone: maskPhone_(phone), acads: [t[c['학원1']], t[c['학원2']], t[c['학원3']]].filter(Boolean).map(id => an[id] || id),
-    inst: t[c['전공']], role: t[c['직급']], cert: t[c['명단자격']], certAt: t[c['명단취득']], kind: KINDS.indexOf(t[c['회원구분']]) >= 0 ? t[c['회원구분']] : '',
-    email: s.rosterEmail ? maskEmail_(s.rosterEmail) : '' } };
+  return { status: 'found', token };   // 명단 내용은 보여 주지 않음 (선생님이 처음부터 직접 넣음, 10-28 결정)
 }
 function tStart(token, email) {
   const s = tok_(token);
   email = String(email || '').trim().toLowerCase();
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) fail('이메일 주소를 확인해 주세요.');
   if (acctAll_().some(a => a.email === email && a.state !== '반려')) fail('이미 가입한 이메일이에요. 로그인해 주세요.');
-  Object.assign(s, { email, emailMatch: !!(s.tid && s.rosterEmail && s.rosterEmail === email), stage: 'code', sends: 0 });
+  /* 명단에 이메일이 있는데 다른 이메일이면 관리자 확인 (이름·번호만 아는 사람이 계정을 가로채지 못하게). 명단에 이메일이 없으면 바로 열림 */
+  Object.assign(s, { email, emailMatch: !!(s.tid && (!s.rosterEmail || s.rosterEmail === email)), stage: 'code', sends: 0 });
   return sendCode_(token, s);
 }
 function tResend(token) { const s = tok_(token); if (!s.email) fail('처음부터 다시 해 주세요.'); return sendCode_(token, s); }
@@ -429,38 +426,63 @@ function tVerify(token, code) {
   s.stage = 'verified'; cput_('tk:' + token, s, 3600);
   return { ok2: true };
 }
+const CERTS_ = ['초급', '중급', '티처트레이너', '국민대학원', '대구가톨릭대학원', '전주대학원'];
+/** 가입 때 선생님이 넣은 정보 검사 (기존 교사회원 · 신규 회원 같은 칸) */
+function cleanInfo_(n, isNew) {
+  n = n || {}; const an = acadNames_(); const o = {};
+  if (isNew) {
+    if (['교사회원', '연수교사회원'].indexOf(n.type) < 0) fail('가입 종류를 골라 주세요.');
+    if (n.type === '연수교사회원' && ['초급', '중급'].indexOf(n.course) < 0) fail('연수 과정을 골라 주세요.');
+    o.type = n.type; o.course = n.type === '연수교사회원' ? n.course : '';
+    o.kind = n.type === '교사회원' ? '정식 교사' : n.course === '중급' ? '중급 연수' : '초급 연수';
+  } else { if (KINDS.indexOf(n.kind) < 0) fail('회원 구분을 골라 주세요.'); o.kind = n.kind; }
+  o.noAcad = !!n.noAcad;
+  o.acads = o.noAcad ? [] : [...new Set((n.acads || []).map(String))].filter(id => an[id]).slice(0, 3);
+  o.acadText = o.noAcad ? '' : String(n.acadText || '').trim().slice(0, 60);
+  if (!o.noAcad && !o.acads.length && !o.acadText) fail('소속 학원을 고르거나 「소속 학원 없음」을 눌러 주세요.');
+  o.role = ['원장', '강사', ''].indexOf(n.role) >= 0 ? n.role : ''; if (n.role == null) fail('직급을 골라 주세요.');
+  if (INSTS_.indexOf(n.inst) < 0) fail('악기를 골라 주세요.'); o.inst = n.inst;
+  o.certs = (n.certs || []).filter(x => CERTS_.indexOf(x.n) >= 0).map(x => ({ n: x.n, y: /^(19|20)\d{2}$/.test(String(x.y)) ? String(x.y) : '' }));
+  o.certTxt = o.certs.map(x => x.n + (x.y ? ' ' + x.y : '')).join(', ');
+  o.acadNames = o.noAcad ? '소속 없음' : o.acads.map(id => an[id]).concat(o.acadText ? ['(목록에 없음) ' + o.acadText] : []).join(', ');
+  return o;
+}
 function tCreate(token, d) {
   const s = tok_(token); d = d || {};
   if (s.stage !== 'verified') fail('이메일 인증부터 해 주세요.');
   if (String(d.pw || '').length < 8) fail('비밀번호는 8자 이상으로 만들어 주세요.');
   if (!d.agree) fail('개인정보 수집·이용 동의에 체크해 주세요.');
-  const kind = KINDS.indexOf(d.kind) >= 0 ? d.kind : ''; if (!kind) fail('회원 구분을 골라 주세요.');
-  const note = x => String(x || '').trim().slice(0, 300);
+  const tid = s.tid, o = cleanInfo_(d.info, !tid);
   const lock = LockService.getScriptLock(); lock.waitLock(20000);
-  let state, tid = s.tid;
+  let state;
   try {
     if (acctAll_().some(a => a.email === s.email && a.state !== '반려')) fail('이미 가입한 이메일이에요.');
     const salt = Utilities.getUuid(), stamp = now_();
     if (tid) {
       state = s.emailMatch ? '사용' : '대기';
-      tbl_('계정').append({ '이메일': s.email, '교사ID': tid, '비번해시': hash_(d.pw, salt), '솔트': salt, '상태': state, '경로': s.emailMatch ? '명단 이메일' : '새 이메일', '만든날': stamp });
-      const T = tbl_('교사'), i = T.find('교사ID', tid); T.set(i, { '회원구분': kind, '수정일': stamp, '수정자': s.name + ' (가입)' });
-      if (!s.emailMatch) addReq_('이메일 확인', tid, s, { '명단 이메일': s.rosterEmail ? maskEmail_(s.rosterEmail) : '없음', '새 이메일': s.email });
-      const fix = [];
-      if (d.acadOk === false) fix.push('소속 학원: ' + note(d.acadNote));
-      if (d.instOk === false) fix.push('악기: ' + note(d.instNote));
-      if (d.kindNote) fix.push('회원 구분 메모: ' + note(d.kindNote));
-      if (fix.length) addReq_('정보 수정', tid, s, { '고칠 내용': fix.join(' / '), '고른 회원 구분': kind });
-      log_(s.name, '계정', tid, '가입', (s.emailMatch ? '명단 이메일 · 바로 사용' : '새 이메일 · 관리자 확인 대기') + ' · ' + kind);
+      tbl_('계정').append({ '이메일': s.email, '교사ID': tid, '비번해시': hash_(d.pw, salt), '솔트': salt, '상태': state, '경로': s.emailMatch ? '명단 확인' : '명단과 다른 이메일', '만든날': stamp });
+      /* 선생님이 넣은 정보로 명단을 고치고, 바뀐 칸은 「확인 필요」로 남김 */
+      const T = tbl_('교사'), i = T.find('교사ID', tid), r = T.rowObj(i), c = col_(T), g = k => String(r[c[k]] || '');
+      const an = acadNames_(), oldA = [g('학원1'), g('학원2'), g('학원3')].filter(Boolean);
+      const newA = o.noAcad ? [] : (o.acads.length ? o.acads : oldA);
+      const diff = [];
+      if (oldA.join(',') !== newA.join(',')) diff.push('소속 ' + (oldA.map(x => an[x] || x).join(', ') || '없음') + ' → ' + (newA.map(x => an[x] || x).join(', ') || '없음'));
+      if (o.acadText) diff.push('목록에 없는 학원 「' + o.acadText + '」');
+      if (g('직급') !== o.role) diff.push('직급 ' + (g('직급') || '없음') + ' → ' + (o.role || '없음'));
+      if (g('전공') !== o.inst) diff.push('악기 ' + (g('전공') || '없음') + ' → ' + o.inst);
+      if (o.certTxt && o.certTxt !== g('명단자격')) diff.push('자격 (명단: ' + (g('명단자격') || '없음') + ') → ' + o.certTxt);
+      const upd = { '학원1': newA[0] || '', '학원2': newA[1] || '', '학원3': newA[2] || '', '직급': o.role, '전공': o.inst, '회원구분': o.kind, '본인자격': o.certTxt, '수정일': stamp, '수정자': s.name + ' (가입)' };
+      if (s.emailMatch) upd['이메일'] = s.email;
+      if (diff.length) { upd['확인'] = '확인 필요'; upd['확인메모'] = [g('확인메모'), '가입 때 바꿈: ' + diff.join(' · ')].filter(Boolean).join(' · ').slice(0, 500); }
+      T.set(i, upd);
+      if (!s.emailMatch) addReq_('이메일 확인', tid, s, { '명단 이메일': maskEmail_(s.rosterEmail), '새 이메일': s.email });
+      if (o.acadText) addReq_('정보 수정', tid, s, { '목록에 없는 학원': o.acadText, '넣은 소속': o.acadNames });
+      log_(s.name, '계정', tid, '가입', (s.emailMatch ? '바로 사용' : '명단과 다른 이메일 · 관리자 확인 대기') + ' · ' + o.kind + (diff.length ? ' · 바뀜: ' + diff.join(' · ') : ''));
     } else {
-      const n = d.join || {};
-      if (['교사회원', '연수교사회원'].indexOf(n.type) < 0) fail('가입 종류를 골라 주세요.');
-      if (INSTS_.indexOf(n.inst) < 0) fail('악기를 골라 주세요.');
-      if (!n.acad && !n.acadText && !n.noAcad) fail('소속 학원을 고르거나 「소속 없음」을 눌러 주세요.');
       state = '대기';
-      tbl_('계정').append({ '이메일': s.email, '교사ID': '', '비번해시': hash_(d.pw, salt), '솔트': salt, '상태': '대기', '경로': '새 회원', '만든날': stamp });
-      addReq_('새 회원', '', s, { '가입 종류': n.type, '회원 구분': kind, '소속 학원ID': n.noAcad ? '' : String(n.acad || ''), '소속 학원': n.noAcad ? '소속 없음' : (acadNames_()[n.acad] || note(n.acadText)), '악기': n.inst, '연수 과정': n.course || '' });
-      log_(s.name, '계정', s.email, '가입 신청', n.type + ' · ' + kind);
+      tbl_('계정').append({ '이메일': s.email, '교사ID': '', '비번해시': hash_(d.pw, salt), '솔트': salt, '상태': '대기', '경로': '신규 회원', '만든날': stamp });
+      addReq_('새 회원', '', s, { '가입 종류': o.type, '연수 과정': o.course, '회원 구분': o.kind, '소속 학원ID': o.acads.join(','), '소속 학원': o.acadNames, '직급': o.role || '없음', '악기': o.inst, '자격': o.certTxt });
+      log_(s.name, '계정', s.email, '가입 신청', o.type + ' · ' + o.kind);
     }
   } finally { lock.releaseLock(); }
   CacheService.getScriptCache().remove('tk:' + token);
@@ -548,9 +570,9 @@ function reqDo(who, id, act, memo, linkTid) {
     if (kind === '새 회원' && act === '승인') {
       const T = tbl_('교사');
       if (linkTid) { if (T.find('교사ID', linkTid) < 0) fail('연결할 교사 번호를 찾지 못했어요.'); tid = linkTid; T.set(T.find('교사ID', tid), { '이메일': email, '회원구분': info['회원 구분'] || '확인 전', '수정일': now_(), '수정자': who.name }); }
-      else { tid = nextId_(T, '교사ID', 'T');
-        T.append({ '교사ID': tid, '이름': name, '원래이름': name, '휴대전화': digits_(q[c['휴대전화']]), '이메일': email, '학원1': info['소속 학원ID'] || '', '전공': info['악기'] || '', '회원구분': info['회원 구분'] || '확인 전',
-          '회비구분': '납부', '캠프교수': '아니오', '상태': '활동', '확인': '확인 전', '확인메모': (info['가입 종류'] || '') + ' 가입 신청' + (info['연수 과정'] ? ' · ' + info['연수 과정'] + ' 과정' : '') + (!info['소속 학원ID'] && info['소속 학원'] !== '소속 없음' ? ' · 적은 학원: ' + info['소속 학원'] : ''), '원본': '가입 신청 ' + id, '수정일': now_(), '수정자': who.name }); }
+      else { tid = nextId_(T, '교사ID', 'T'); const ac = String(info['소속 학원ID'] || '').split(',').filter(Boolean);
+        T.append({ '교사ID': tid, '이름': name, '원래이름': name, '휴대전화': digits_(q[c['휴대전화']]), '이메일': email, '학원1': ac[0] || '', '학원2': ac[1] || '', '학원3': ac[2] || '', '직급': info['직급'] === '없음' ? '' : (info['직급'] || ''), '전공': info['악기'] || '', '회원구분': info['회원 구분'] || '확인 전', '본인자격': info['자격'] || '',
+          '회비구분': '납부', '캠프교수': '아니오', '상태': '활동', '확인': '확인 전', '확인메모': (info['가입 종류'] || '') + ' 가입 신청' + (info['연수 과정'] ? ' · ' + info['연수 과정'] + ' 과정' : '') + (/목록에 없음/.test(info['소속 학원'] || '') ? ' · ' + info['소속 학원'] : ''), '원본': '가입 신청 ' + id, '수정일': now_(), '수정자': who.name }); }
       if (ai >= 0) A.set(ai, { '교사ID': tid, '상태': '사용', '처리일': now_() });
       mailTo = email; subj = '[스즈키] 회원 가입이 승인됐어요'; body = '<p>' + esc_(name) + ' 선생님, 협회가 확인하고 승인했어요.</p><p>이제 가입할 때 만든 이메일과 비밀번호로 로그인할 수 있어요.</p>';
     } else if (kind === '이메일 확인' && act === '승인') {

@@ -1,4 +1,4 @@
-/* build: 20261028-083752 */
+/* build: 20261028-084101 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -489,7 +489,7 @@ function tLookup(name, phone) {
     const a = A.find(x => x.tid === t[c['교사ID']] && (x.state === '사용' || x.state === '대기'));
     if (a) return { status: 'hasAccount', state: a.state, email: maskEmail_(a.email) };
   } else {
-    const q = tbl_('요청').v.find(r => (r[1] === '새 회원' || r[1] === '외부 참여자') && digits_(r[4]) === phone && r[7] === '대기');
+    const q = tbl_('요청').v.find(r => (r[1] === '새 회원' || r[1] === '외부인') && digits_(r[4]) === phone && r[7] === '대기');
     if (q) return { status: 'pending', email: maskEmail_(q[5]) };
   }
   const token = Utilities.getUuid();
@@ -517,18 +517,30 @@ function sendCode_(token, s) {
 }
 function tVerify(token, code) {
   const s = tok_(token);
-  if (s.stage === 'verified') return { ok2: true };
+  if (s.stage === 'verified') return { ok2: true, prefill: s.tid ? prefill_(s.tid) : null };
   if (s.stage !== 'code') fail('처음부터 다시 해 주세요.');
   if (Date.now() - s.codeAt > 10 * 60 * 1000) fail('코드 시간이 지났어요. 「코드 다시 받기」를 눌러 주세요.');
   if (++s.tries > 5) { cput_('tk:' + token, s, 3600); fail('5번 틀렸어요. 「코드 다시 받기」를 눌러 주세요.'); }
   if (String(code).trim() !== s.code) { cput_('tk:' + token, s, 3600); fail('코드가 맞지 않아요.'); }
   s.stage = 'verified'; cput_('tk:' + token, s, 3600);
-  return { ok2: true };
+  return { ok2: true, prefill: s.tid ? prefill_(s.tid) : null };
+}
+/** 명단에 있는 선생님: 이메일 인증 뒤 가입 화면에 기존 정보를 채워 줌 (10-28 결정 — 이전의 「처음부터 직접 입력」을 바꿈).
+ *  근무지 · 직급 · 전공 · 회원 종류 · 자격만. 주소 · 계좌 · 주민번호는 원본에서 가져오지 않으므로 비어 있음. */
+function prefill_(tid) {
+  const T = tbl_('교사'), i = T.find('교사ID', tid); if (i < 0) return null;
+  const g = k => String(T.get(i, k) || ''), kind = g('회원구분');
+  const type = kind === '정식 교사' ? '교사회원' : /연수/.test(kind) ? '연수교사회원' : '', course = kind === '중급 연수' ? '중급' : kind === '초급 연수' ? '초급' : '';
+  const works = worksOf_(tid).filter(w => !w['종료']).slice(0, 3).map(w => { const m = String(w['시작'] || '').match(/^(\d{4})-(\d{2})$/); return { id: w['학원ID'] || '', text: w['학원ID'] ? '' : w['학원명'], y: m ? m[1] : '', m: m ? m[2] : '' }; });
+  const certs = {}; String(g('본인자격') || g('명단자격')).split(/[,，、]/).forEach(x => { x = x.trim(); if (!x) return; const m = x.match(/^(.+?)\s*((?:19|20)\d{2})/); let n = (m ? m[1] : x).replace('카톨릭', '가톨릭').replace(/\s+/g, ''); if (n === '국민대') n = '국민대학원';
+    if (CERTS_.indexOf(n) >= 0 && n !== '티처트레이너') certs[n] = m ? m[2] : ''; });
+  const role = ['원장', '강사'].indexOf(g('직급')) >= 0 ? g('직급') : null;
+  return { type, course, works, noWork: false, role, inst: INSTS_.indexOf(g('전공')) >= 0 ? g('전공') : '', certs };
 }
 const CERTS_ = ['초급', '중급', '티처트레이너', '국민대학원', '대구가톨릭대학원', '전주대학원'];
 /** 가입 때 선생님이 넣은 정보 검사 (기존 교사회원 · 신규 회원 같은 칸) */
 const EXT_ROLES = ['반주자', '스태프', '통역', '초청 강사', '기타'];
-/** 가입 정보 검사. mode: member(명단에 있는 교사) · new(신규 교사회원/연수교사회원) · ext(외부 참여자) */
+/** 가입 정보 검사. mode: member(명단에 있는 교사) · new(신규 교사회원/연수교사회원) · ext(외부인) */
 function cleanInfo_(n, mode) {
   n = n || {}; const an = acadNames_(); const o = { mode };
   if (mode === 'ext') {
@@ -536,7 +548,7 @@ function cleanInfo_(n, mode) {
     o.extRole = n.extRole === '기타' ? '기타: ' + String(n.extRoleText || '').trim().slice(0, 30) : n.extRole;
     if (n.extRole === '기타' && !String(n.extRoleText || '').trim()) fail('하는 일을 적어 주세요.');
     o.org = String(n.org || '').trim().slice(0, 60); o.inst = INSTS_.indexOf(n.inst) >= 0 ? n.inst : '';
-    o.kind = '외부 참여자'; o.type = '외부 참여자'; o.role = ''; o.works = []; o.noWork = true; o.certs = []; o.certTxt = ''; o.acads = []; o.acadNames = o.org || '-';
+    o.kind = '외부인'; o.type = '외부인'; o.role = ''; o.works = []; o.noWork = true; o.certs = []; o.certTxt = ''; o.acads = []; o.acadNames = o.org || '-';
     return o;
   }
   if (mode === 'new') {
@@ -604,10 +616,10 @@ function tCreate(token, d) {
       log_(s.name, '계정', tid, '가입', (s.emailMatch ? '바로 사용' : '명단과 다른 이메일 · 관리자 확인 대기') + ' · ' + o.kind + (diff.length ? ' · 바뀜: ' + diff.join(' · ') : ''));
     } else {
       state = '대기';
-      tbl_('계정').append({ '이메일': s.email, '교사ID': '', '비번해시': hash_(d.pw, salt), '솔트': salt, '상태': '대기', '경로': mode === 'ext' ? '외부 참여자' : '신규 회원', '만든날': stamp });
+      tbl_('계정').append({ '이메일': s.email, '교사ID': '', '비번해시': hash_(d.pw, salt), '솔트': salt, '상태': '대기', '경로': mode === 'ext' ? '외부인' : '신규 회원', '만든날': stamp });
       putPay_('E:' + s.email, s.email, pay);   // 승인되면 교사 번호로 바뀜
       if (rr) putRrn_('E:' + s.email, rr);
-      addReq_(mode === 'ext' ? '외부 참여자' : '새 회원', '', s, mode === 'ext' ? { '가입 종류': '외부 참여자', '하는 일': o.extRole, '소속': o.org || '-', '악기': o.inst || '-', '주민번호': rr ? '넣음 (암호화)' : '' }
+      addReq_(mode === 'ext' ? '외부인' : '새 회원', '', s, mode === 'ext' ? { '가입 종류': '외부인', '하는 일': o.extRole, '소속': o.org || '-', '악기': o.inst || '-', '주민번호': rr ? '넣음 (암호화)' : '' }
         : { '가입 종류': o.type, '연수 과정': o.course, '회원 구분': o.kind, '근무지': o.acadNames, '_근무': o.works, '직급': o.role || '없음', '악기': o.inst, '자격': o.certTxt, '주민번호': rr ? '넣음 (암호화) · 승인하면 강사료 대상' : '' });
       log_(s.name, '계정', s.email, '가입 신청', o.type + ' · ' + o.kind);
     }
@@ -664,7 +676,7 @@ function tMe(sess) {
   const dues = tbl_('연회비').v.filter(d => d[0] === '교사' && d[1] === u.tid).map(d => ({ year: d[2], due: +d[3] || 0, paid: +d[4] || 0, date: d[5], way: d[6] })).sort((a, b) => String(b.year).localeCompare(String(a.year)));
   let events = tbl_('참가이력').v.filter(e => e[1] === '교사' && e[2] === u.tid).map(e => ({ name: e[3], year: e[4], period: e[5], role: e[6], state: e[7] })).sort((a, b) => String(b.year).localeCompare(String(a.year)));
   if (!events.length && settings_()['테스트 표시'] === '예') events = [{ sample: true, name: '2026 여름 스즈키 음악캠프', year: '2026', period: '2026.07.27 ~ 07.31', role: '교사', state: '참가' }];   // STG 예시 (더미)
-  return { me: { works, dues, events, duesWay: g('회비납부방법'), duesFree: g('회비구분') === '면제', ext: g('회원구분') === '외부 참여자', name: g('이름'), phone: g('휴대전화'), email: u.email, acads: [g('학원1'), g('학원2'), g('학원3')].filter(Boolean).map(id => an[id] || id), role: g('직급'), inst: g('전공'), kind: g('회원구분'), eng: g('영문이름'), heads,
+  return { me: { works, dues, events, duesWay: g('회비납부방법'), duesFree: g('회비구분') === '면제', ext: g('회원구분') === '외부인', name: g('이름'), phone: g('휴대전화'), email: u.email, acads: [g('학원1'), g('학원2'), g('학원3')].filter(Boolean).map(id => an[id] || id), role: g('직급'), inst: g('전공'), kind: g('회원구분'), eng: g('영문이름'), heads,
     payee: g('강사료대상') === '예',
     pay: p ? { bank: p['은행'], acct: maskAcct_(p['계좌번호']), holder: p['예금주'], zip: p['우편번호'], addr: p['주소'], addr2: p['상세주소'], hzip: p['집우편번호'], haddr: p['집주소'], haddr2: p['집상세주소'], rrn: p['주민번호표시'] || '', rrnAt: p['주민번호동의일'] || '' } : null, reqs } };
 }
@@ -802,12 +814,12 @@ function reqDo(who, id, act, memo, linkTid) {
     if (q[c['상태']] !== '대기') fail('이미 처리한 요청이에요.');
     const info = JSON.parse(q[c['내용']] || '{}'); const A = tbl_('계정'); const ai = A.v.findIndex(r => r[0] === email && (r[4] === '대기'));
     let tid = q[c['교사ID']];
-    if ((kind === '새 회원' || kind === '외부 참여자') && act === '승인') {
-      const ext = kind === '외부 참여자';
+    if ((kind === '새 회원' || kind === '외부인') && act === '승인') {
+      const ext = kind === '외부인';
       const T = tbl_('교사');
       if (linkTid) { if (T.find('교사ID', linkTid) < 0) fail('연결할 교사 번호를 찾지 못했어요.'); tid = linkTid; T.set(T.find('교사ID', tid), { '이메일': email, '회원구분': info['회원 구분'] || '확인 전', '수정일': now_(), '수정자': who.name }); }
       else if (ext) { tid = nextId_(T, '교사ID', 'X');
-        T.append({ '교사ID': tid, '이름': name, '원래이름': name, '휴대전화': digits_(q[c['휴대전화']]), '이메일': email, '전공': info['악기'] === '-' ? '' : (info['악기'] || ''), '회원구분': '외부 참여자', '회비구분': '면제', '캠프교수': '아니오', '내부외부': '외부', '강사료대상': '예', '상태': '활동', '확인': '확인 전', '확인메모': '외부 참여자 · ' + (info['하는 일'] || '') + (info['소속'] && info['소속'] !== '-' ? ' · ' + info['소속'] : ''), '원본': '외부 참여자 신청 ' + id, '수정일': now_(), '수정자': who.name }); }
+        T.append({ '교사ID': tid, '이름': name, '원래이름': name, '휴대전화': digits_(q[c['휴대전화']]), '이메일': email, '전공': info['악기'] === '-' ? '' : (info['악기'] || ''), '회원구분': '외부인', '회비구분': '면제', '캠프교수': '아니오', '내부외부': '외부', '강사료대상': '예', '상태': '활동', '확인': '확인 전', '확인메모': '외부인 · ' + (info['하는 일'] || '') + (info['소속'] && info['소속'] !== '-' ? ' · ' + info['소속'] : ''), '원본': '외부인 신청 ' + id, '수정일': now_(), '수정자': who.name }); }
       else { tid = nextId_(T, '교사ID', 'T'); const wk = (() => { try { return Array.isArray(info['_근무']) ? info['_근무'] : JSON.parse(info['근무JSON'] || '[]'); } catch (e) { return []; } })(); const ac = wk.filter(w => w.id).map(w => w.id);
         T.append({ '교사ID': tid, '이름': name, '원래이름': name, '휴대전화': digits_(q[c['휴대전화']]), '이메일': email, '학원1': ac[0] || '', '학원2': ac[1] || '', '학원3': ac[2] || '', '직급': info['직급'] === '없음' ? '' : (info['직급'] || ''), '전공': info['악기'] || '', '회원구분': info['회원 구분'] || '확인 전', '본인자격': info['자격'] || '',
           '회비구분': '납부', '캠프교수': '아니오', '상태': '활동', '확인': '확인 전', '확인메모': (info['가입 종류'] || '') + ' 가입 신청' + (info['연수 과정'] ? ' · ' + info['연수 과정'] + ' 과정' : '') + (/목록에 없음/.test(info['근무지'] || '') ? ' · ' + info['근무지'] : ''), '원본': '가입 신청 ' + id, '수정일': now_(), '수정자': who.name });
@@ -822,7 +834,7 @@ function reqDo(who, id, act, memo, linkTid) {
       mailTo = email; subj = '[스즈키] 계정이 열렸어요'; body = '<p>' + esc_(name) + ' 선생님, 협회가 새 이메일을 확인했어요.</p><p>이제 이 이메일과 비밀번호로 로그인할 수 있어요.</p>';
     } else if (act === '반려' && kind !== '정보 수정') {
       if (ai >= 0) A.set(ai, { '상태': '반려', '처리일': now_(), '메모': String(memo).slice(0, 200) });
-      if (kind === '새 회원' || kind === '외부 참여자') { try { const P = payTbl_(), j = P.find('교사ID', 'E:' + email); if (j >= 0) P.sh.deleteRow(j + 2); } catch (e) {} }   // 반려된 신청의 계좌·주소는 지움
+      if (kind === '새 회원' || kind === '외부인') { try { const P = payTbl_(), j = P.find('교사ID', 'E:' + email); if (j >= 0) P.sh.deleteRow(j + 2); } catch (e) {} }   // 반려된 신청의 계좌·주소는 지움
       mailTo = email; subj = '[스즈키] 확인이 필요해요'; body = '<p>신청하신 내용을 승인하지 못했어요.</p><p><b>사유:</b> ' + esc_(memo) + '</p><p>다시 신청하거나 협회 카카오톡 채널로 문의해 주세요.</p>';
     }
     R.set(i, { '상태': act === '반려' ? '반려' : act === '처리' ? '처리' : '승인', '교사ID': tid || '', '처리일': now_(), '처리자': who.name, '메모': String(memo || '').slice(0, 300) });

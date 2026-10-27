@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<!-- build: 20261028-001830 -->
+<html lang="ko"><head>
+<base target="_top">
+<meta charset="utf-8">
+<title>스즈키 선생님 회원</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap">
+<script src="https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
+<style>
+:root{
+  --bg:#f3f6f7; --surface:#ffffff; --sunk:#e9eef0; --line:#d5dee2;
+  --ink:#16232b; --muted:#5b6b74; --faint:#8a989f;
+  --accent:#1f5c63; --accent-ink:#ffffff; --accent-soft:#dcecee;
+  --rosin:#b7791f; --rosin-soft:#fbf0dc;
+  --ok:#2f7a4b; --ok-soft:#e1f1e6; --bad:#b4423a; --bad-soft:#f8e4e2;
+  --band:#16303a; --band-ink:#e8f1f3; --band-muted:#a9c0c7;
+  --display:"Gowun Batang","Nanum Myeongjo","AppleMyungjo",serif;
+  --body:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0f171b; --surface:#162228; --sunk:#1c2b32; --line:#2b3d45;
+  --ink:#e6eef1; --muted:#a2b3ba; --faint:#71848c;
+  --accent:#6fb8bd; --accent-ink:#0b1f22; --accent-soft:#1d3a3e;
+  --rosin:#e2a94e; --rosin-soft:#3a2e18;
+  --ok:#6cc58c; --ok-soft:#173326; --bad:#ec8a80; --bad-soft:#3d1f1c;
+  --band:#0b1418; --band-ink:#e6eef1; --band-muted:#8ea6ad; color-scheme:dark}}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.6}
+[hidden]{display:none!important}
+.wrap{max-width:560px;margin:0 auto;padding-left:16px;padding-right:16px}
+h1,h2,h3{margin:0}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.testband{background:var(--rosin);color:#1b1306;text-align:center;font-size:13px;font-weight:700;padding:4px 8px}
+.band{background:var(--band);color:var(--band-ink)}
+.band .wrap{padding-top:18px;padding-bottom:16px;display:grid;gap:4px}
+.org{font-size:13px;color:var(--band-muted)}
+.band h1{font-family:var(--display);font-size:24px;font-weight:700}
+main.wrap{padding-top:18px;padding-bottom:96px;display:grid;gap:14px}
+.steps{list-style:none;margin:0;padding:0;display:flex;gap:6px}
+.steps li{flex:1;font-size:12.5px;color:var(--faint);border-top:3px solid var(--line);padding-top:6px;display:flex;gap:5px;align-items:baseline;white-space:nowrap;overflow:hidden}
+.steps li .n{font-family:var(--mono);font-size:11.5px}
+.steps li.on{color:var(--ink);font-weight:600;border-color:var(--accent);flex:2.2}
+.steps li.done{color:var(--muted);border-color:var(--accent)}
+@media (max-width:420px){.steps li .t{display:none}.steps li.on .t{display:inline}}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px;display:grid;gap:14px}
+.card h2{font-family:var(--display);font-size:21px}
+.card h3{font-size:15.5px}
+.card.pick{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.lede{margin:0;color:var(--muted);font-size:14px}
+label.f,.f{display:flex;flex-wrap:wrap;align-items:baseline;column-gap:6px;row-gap:6px;font-size:13.5px;color:var(--muted);font-weight:500;min-width:0}
+.f>input,.f>select,.f>textarea,.f>div,.f>ul,.f>p,.f>button{flex:1 1 100%;min-width:0}
+.f>span:first-child{display:flex;gap:6px;align-items:baseline;flex-wrap:wrap}
+.req{color:var(--bad);font-weight:700}
+.opt{color:var(--faint);font-size:12px;font-weight:400}
+input[type=text],input[type=email],input[type=tel],input[type=password],input[type=search],select,textarea{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:9px;padding:11px 12px;font-size:16px;min-width:0;color:var(--ink)}
+input[disabled]{opacity:.7}
+input.bad,select.bad,textarea.bad{border-color:var(--bad);background:var(--bad-soft)}
+.hint{font-size:12.5px;color:var(--faint);margin:0}
+.fe{font-size:13px;color:var(--bad);margin:0}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:420px){.two{grid-template-columns:1fr}}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:9px;padding:11px 16px;cursor:pointer;font-weight:600;font-size:15px}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.block{width:100%}
+.btn.small{padding:5px 10px;font-size:13px;border-radius:7px}
+.btn.ghost{background:transparent}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.spread{display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:9px;overflow:hidden;background:var(--bg);flex-wrap:wrap}
+.seg button{all:unset;cursor:pointer;padding:9px 16px;font-size:15px;text-align:center}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed=true]{background:var(--accent);color:var(--accent-ink);font-weight:600}
+.note{border-radius:10px;padding:11px 13px;font-size:14px;background:var(--accent-soft);border-left:3px solid var(--accent)}
+.note.warn{background:var(--rosin-soft);border-left-color:var(--rosin)}
+.note.ok{background:var(--ok-soft);border-left-color:var(--ok)}
+.note.bad{background:var(--bad-soft);border-left-color:var(--bad)}
+.lock{background:var(--rosin-soft);border:1px solid color-mix(in srgb,var(--rosin) 45%,transparent);border-radius:12px;padding:16px;display:grid;gap:12px}
+.kv{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:6px 16px;margin:0;font-size:14.5px}
+.kv dt{color:var(--muted)}.kv dd{margin:0;min-width:0;overflow-wrap:anywhere}
+.ask{border:1px solid var(--line);border-radius:10px;padding:12px;display:grid;gap:8px}
+.ask .q{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}
+.list{list-style:none;margin:0;padding:4px;display:grid;gap:2px;border:1px solid var(--line);border-radius:9px;background:var(--surface);max-height:240px;overflow:auto}
+.list button{all:unset;cursor:pointer;display:flex;justify-content:space-between;gap:10px;width:100%;box-sizing:border-box;padding:9px 10px;border-radius:7px;font-size:14.5px}
+.list button:hover,.list button:focus-visible{background:var(--accent-soft)}
+.list small{color:var(--faint)}
+.chip{display:inline-flex;gap:6px;align-items:center;background:var(--accent-soft);color:var(--accent);border-radius:999px;padding:4px 12px;font-size:14px;font-weight:600}
+.agree{display:flex;gap:10px;align-items:flex-start;font-size:14px;line-height:1.5}
+.agree input{width:20px;height:20px;margin-top:2px;accent-color:var(--accent);flex:none}
+.agree details{margin-top:4px;color:var(--muted);font-size:13px}
+.agree summary{cursor:pointer;color:var(--accent);font-weight:600}
+.code{font-family:var(--mono);font-size:24px;letter-spacing:.35em;text-align:center}
+.pill{font-size:12.5px;font-weight:600;border-radius:999px;padding:2px 10px;display:inline-block}
+.pill.ok{background:var(--ok-soft);color:var(--ok)}
+.pill.due{background:var(--rosin-soft);color:var(--rosin)}
+.pill.info{background:var(--accent-soft);color:var(--accent)}
+.homebar{position:fixed;left:0;right:0;bottom:0;background:var(--surface);border-top:1px solid var(--line);z-index:8}
+.homebar .wrap{display:flex;gap:8px;padding-top:8px;padding-bottom:8px}
+.homebar .btn{flex:1}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:76px;background:var(--ink);color:var(--bg);padding:9px 15px;border-radius:9px;font-size:14px;z-index:9;max-width:calc(100vw - 32px)}
+.spin{display:inline-block;width:16px;height:16px;border-radius:50%;border:2px solid currentColor;border-right-color:transparent;animation:s .8s linear infinite;vertical-align:-3px}
+@keyframes s{to{transform:rotate(360deg)}}
+#postWrap{height:420px;border:1px solid var(--line);border-radius:9px;overflow:hidden}
+</style>
+</head><body>
+<div class="testband" id="testband" hidden>테스트(STG) — 여기서 만든 계정은 실제 회원 계정이 아니에요</div>
+<div class="band"><div class="wrap"><div class="org">한국스즈키음악협회</div><h1>선생님 회원</h1></div></div>
+<main class="wrap" id="app"><div class="card"><span><span class="spin"></span> 여는 중이에요…</span></div></main>
+<div class="homebar"><div class="wrap"><button class="btn ghost" type="button" id="homeBtn">&#8962; 처음</button><button class="btn ghost" type="button" id="backBtn">이전</button></div></div>
+<div class="toast" id="toast" hidden></div>
+<script>
+var INSTS=['바이올린','첼로','비올라','플루트','피아노'];
+var KINDS=['정식 교사','중급 연수','초급 연수'];
+var BANKS=['국민','신한','하나','우리','농협','기업','SC제일','부산','대구(iM뱅크)','경남','광주','카카오뱅크','토스뱅크','케이뱅크','새마을금고','신협','우체국','수협','씨티'];
+var S={v:'home',test:false,acads:[],busy:false,err:{},msg:'',name:'',phone:'',token:'',look:'',card:null,has:null,email:'',match:false,code:'',
+  c:{acadOk:null,acadNote:'',instOk:null,instNote:'',kind:'',kindNote:''},j:{type:'',acad:'',acadText:'',noAcad:false,inst:'',course:''},aq:'',pw:'',agree:false,
+  sess:'',me:null,state:'',fp:null,hist:[],pay:null,postOpen:false};
+
+function call(name,args){return new Promise(function(res){
+  google.script.run.withSuccessHandler(function(r){res(r||{ok:false,msg:'응답이 없어요.'})}).withFailureHandler(function(e){res({ok:false,msg:'연결이 끊겼어요. 잠시 뒤 다시 해 주세요.'})}).api(name,args||[])})}
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+function fmtPh(p){p=String(p||'').replace(/\D/g,'');return p.length===11?p.replace(/(\d{3})(\d{4})(\d{4})/,'$1-$2-$3'):p.length===10?p.replace(/(\d{3})(\d{3})(\d{4})/,'$1-$2-$3'):p}
+function ph010(v){var x=String(v||'').replace(/\D/g,'');x=x.indexOf('010')===0?x.slice(3):x.replace(/^0?1?0?/,'');x=x.slice(0,8);return '010-'+(x.length>4?x.slice(0,4)+'-'+x.slice(4):x)}
+function toast(m){var e=document.getElementById('toast');e.textContent=m;e.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(function(){e.hidden=true},2800)}
+function fe(k){return S.err[k]?'<p class="fe">'+esc(S.err[k])+'</p>':''}
+function bad(k){return S.err[k]?'class="bad" aria-invalid="true"':''}
+function msgBox(){return S.msg?'<div class="note warn">'+esc(S.msg)+'</div>':''}
+function btn(id,label,cls){return '<button class="btn '+(cls||'primary block')+'" type="button" id="'+id+'" '+(S.busy?'disabled':'')+'>'+(S.busy?'<span class="spin"></span> 잠시만요…':label)+'</button>'}
+function steps(n){var t=['본인 찾기','이메일','인증','확인','완료'];return '<ol class="steps" aria-label="진행 단계">'+t.map(function(x,i){return '<li class="'+(i+1===n?'on':i+1<n?'done':'')+'"><span class="n">'+(i+1)+'</span><span class="t">'+x+'</span></li>'}).join('')+'</ol>'}
+function seg(name,opts,v){return '<div class="seg" role="group">'+opts.map(function(o){var k=Array.isArray(o)?o[0]:o,l=Array.isArray(o)?o[1]:o;return '<button type="button" data-seg="'+name+'" data-val="'+esc(k)+'" aria-pressed="'+(String(v)===String(k))+'">'+esc(l)+'</button>'}).join('')+'</div>'}
+function newFlow(){return !S.card}
+
+/* ---------- 화면 ---------- */
+function vHome(){return '<div class="card"><h2>안녕하세요, 선생님</h2>'+
+  '<p class="lede">협회 회원 계정이에요. 이메일과 비밀번호로 로그인해서 캠프·졸업연주 등 협회 행사를 신청하고, 내 정보를 고쳐요.</p>'+
+  '<button class="btn primary block" type="button" id="goFind">처음이에요 · 계정 만들기</button>'+
+  '<button class="btn block" type="button" id="goLogin">계정이 있어요 · 로그인</button>'+
+  '<p class="hint">협회 명단에 없는 선생님도 「계정 만들기」에서 가입 신청을 할 수 있어요. 문의: 협회 카카오톡 채널.</p></div>'}
+function vFind(){var res='';
+  if(S.look==='found'){var c=S.card;res='<div class="card pick"><h3>이 정보가 선생님 맞나요?</h3><dl class="kv"><dt>이름</dt><dd><b>'+esc(c.name)+'</b></dd><dt>휴대전화</dt><dd class="num">'+esc(c.phone)+'</dd><dt>소속 학원</dt><dd>'+esc(c.acads.join(', ')||'등록된 소속 없음')+'</dd><dt>전공</dt><dd>'+esc(c.inst||'-')+(c.role?' · '+esc(c.role):'')+'</dd><dt>명단 이메일</dt><dd>'+(c.email?esc(c.email):'<span class="hint">없음</span>')+'</dd></dl>'+
+    '<div class="two"><button class="btn primary" type="button" id="isMe">네, 맞아요</button><button class="btn" type="button" id="notMe">아니에요</button></div></div>'}
+  else if(S.look==='hasAccount')res='<div class="note warn"><b>'+(S.has.state==='대기'?'이미 신청하셨어요. 협회가 확인하는 중이에요.':'이미 계정이 있어요.')+'</b> '+esc(S.has.email)+'</div><div class="two"><button class="btn" type="button" id="retry">다시 입력</button><button class="btn primary" type="button" id="goLogin">로그인하러 가기</button></div>';
+  else if(S.look==='pending')res='<div class="note warn"><b>가입 신청을 받아 확인하는 중이에요.</b> '+esc(S.has.email)+' 로 결과를 알려 드려요.</div><button class="btn" type="button" id="retry">다시 입력</button>';
+  else if(S.look==='none'||S.look==='notme')res='<div class="note warn">'+(S.look==='none'?'<b>협회 명단에서 찾지 못했어요.</b> 이름과 휴대전화를 다시 확인해 주세요. 번호가 바뀌었거나 명단에 없으면 가입 신청을 할 수 있어요.':'명단의 정보와 다르면 가입 신청으로 진행해 주세요. 협회가 확인한 뒤 맞는 정보로 연결해요.')+'</div>'+
+    '<div class="two"><button class="btn" type="button" id="retry">다시 입력</button><button class="btn primary" type="button" id="asNew">가입 신청하기</button></div>';
+  return steps(1)+'<div class="card"><h2>본인 찾기</h2><p class="lede">협회 명단에 있는 이름과 휴대전화로 선생님을 찾아요.</p>'+
+    '<div class="two"><div><label class="f" for="iNm">이름 <span class="req">*</span><input type="text" id="iNm" '+bad('name')+' value="'+esc(S.name)+'" autocomplete="name" '+(S.look?'disabled':'')+'></label>'+fe('name')+'</div>'+
+    '<div><label class="f" for="iPh">휴대전화 <span class="req">*</span><input type="tel" id="iPh" '+bad('phone')+' value="'+esc(ph010(S.phone))+'" inputmode="numeric" autocomplete="tel" '+(S.look?'disabled':'')+'></label>'+fe('phone')+'</div></div>'+
+    msgBox()+(S.look?'':btn('lookup','찾기'))+res+'</div>'}
+function vEmail(){var c=S.card;
+  return steps(2)+'<div class="card"><h2>이메일</h2><p class="lede">이메일이 로그인 아이디가 되고, 인증 코드와 안내 메일이 이 주소로 가요.</p>'+
+    (c?(c.email?'<div class="note">협회 명단에 <b>'+esc(c.email)+'</b> 이 있어요. <b>같은 이메일</b>을 넣으면 바로 계정이 열려요. 다른 이메일이면 협회가 확인한 뒤 열려요.</div>':'<div class="note warn">협회 명단에 이메일이 없어요. 새 이메일은 협회가 확인한 뒤 계정이 열려요.</div>'):'<div class="note">명단에 없는 선생님은 협회가 확인한 뒤 계정이 열려요.</div>')+
+    '<label class="f" for="eEm">이메일 <span class="req">*</span><input type="email" id="eEm" value="'+esc(S.email)+'" autocomplete="email" placeholder="name@naver.com"></label>'+
+    '<p class="hint">네이버·지메일을 권해요. hanmail·daum 은 메일이 늦거나 오지 않을 때가 있어요.</p>'+msgBox()+btn('sendCode','인증 코드 받기')+
+    '<button class="btn ghost small" type="button" id="toFind">본인 찾기로</button></div>'}
+function vCode(){return steps(3)+'<div class="card"><h2>이메일 인증</h2><p class="lede"><b>'+esc(S.email)+'</b> 로 6자리 코드를 보냈어요. 10분 안에 넣어 주세요. 메일이 안 보이면 스팸함도 확인해 주세요.</p>'+
+  '<label class="f" for="cCode">인증 코드<input type="text" id="cCode" class="code" inputmode="numeric" maxlength="6" autocomplete="one-time-code"></label>'+
+  (S.code?'<div class="note warn">테스트(STG)라 코드를 화면에도 보여 줘요: <b class="num">'+esc(S.code)+'</b></div>':'')+msgBox()+btn('verify','확인')+
+  '<div class="spread"><button class="btn ghost small" type="button" id="toEmail">이메일 고치기</button><button class="btn ghost small" type="button" id="resend" '+(S.busy?'disabled':'')+'>코드 다시 받기</button></div></div>'}
+function okAsk(key,label,val,okV,noteKey){return '<div class="ask"><div class="q"><span><span class="hint">'+label+'</span><br><b>'+esc(val||'명단에 없음')+'</b></span>'+seg(key,[[1,'맞아요'],[0,'달라요']],okV===true?1:okV===false?0:'')+'</div>'+
+  (okV===false?'<label class="f" for="n_'+key+'">무엇이 다른지 적어 주세요 <span class="opt">협회가 확인하고 고쳐요</span><textarea id="n_'+key+'" rows="2" '+bad(key)+'>'+esc(S.c[noteKey])+'</textarea></label>':'')+fe(key)+'</div>'}
+function acadPicker(){var j=S.j;if(j.noAcad)return '<div class="row"><span class="chip">소속 없음</span><button class="btn small ghost" type="button" id="acadClr">바꾸기</button></div>';
+  if(j.acad){var a=S.acads.filter(function(x){return x[0]===j.acad})[0];return '<div class="row"><span class="chip">'+esc(a?a[1]:j.acad)+'</span><button class="btn small ghost" type="button" id="acadClr">바꾸기</button></div>'}
+  if(j.acadText!=null&&S.acadTyping)return '<input type="text" id="jAcT" value="'+esc(j.acadText)+'" placeholder="학원 이름을 적어 주세요"><button class="btn small ghost" type="button" id="acadClr">목록에서 고르기</button>';
+  var q=S.aq.trim(),hits=S.acads.filter(function(a){return !q||a[1].indexOf(q)>=0}).slice(0,30);
+  return '<input type="search" id="aq" value="'+esc(S.aq)+'" placeholder="학원 이름으로 찾기" autocomplete="off" '+bad('acad')+'><ul class="list" id="aList">'+hits.map(function(a){return '<li><button type="button" data-acad="'+esc(a[0])+'"><span>'+esc(a[1])+'</span><small>'+esc(a[2]||'')+'</small></button></li>'}).join('')+'</ul>'+
+    '<div class="row"><button class="btn small" type="button" id="noAcad">소속 학원 없음</button><button class="btn small ghost" type="button" id="typeAcad">목록에 없어요 · 직접 적기</button></div>'}
+function vConfirm(){var c=S.card,x=S.c,j=S.j;
+  var head=c?'<div class="note ok"><b>인증을 마쳤어요.</b> 명단에 있는 정보가 맞는지만 봐 주세요. 달라도 계정은 만들어지고, 협회가 확인해서 고쳐요.</div>':'<div class="note"><b>인증을 마쳤어요.</b> 가입 신청 내용을 적어 주세요. 협회가 확인한 뒤 계정이 열려요.</div>';
+  var body;
+  if(c)body='<div class="card"><h3>명단 정보 확인</h3>'+okAsk('acadOk','소속 학원',c.acads.join(', '),x.acadOk,'acadNote')+okAsk('instOk','악기',c.inst,x.instOk,'instNote')+
+    '<div class="ask"><span class="hint">명단에 적힌 자격</span><b>'+esc(c.cert||'명단에 없음')+(c.certAt?' <span class="hint">('+esc(c.certAt)+')</span>':'')+'</b>'+
+    '<div class="f"><span>지금 회원 구분 <span class="req">*</span> <span class="opt">명단과 달라도 지금 기준으로 골라 주세요</span></span>'+seg('kind',KINDS,x.kind)+fe('kind')+'</div>'+
+    '<label class="f" for="n_kind">메모 <span class="opt">있으면 (예: 중급 연수 2025년 시작)</span><input type="text" id="n_kind" value="'+esc(x.kindNote)+'"></label></div></div>';
+  else body='<div class="card"><h3>가입 신청</h3>'+
+    '<div class="two"><label class="f">이름<input type="text" value="'+esc(S.name)+'" disabled></label><label class="f">휴대전화<input type="text" value="'+esc(fmtPh(S.phone))+'" disabled></label></div>'+
+    '<div class="f"><span>가입 종류 <span class="req">*</span></span>'+seg('type',['교사회원','연수교사회원'],j.type)+'<p class="hint">스즈키 교사 자격이 있으면 교사회원, 지금 연수 중이면 연수교사회원이에요.</p>'+fe('type')+'</div>'+
+    (j.type==='연수교사회원'?'<div class="f"><span>연수 과정 <span class="req">*</span></span>'+seg('course',['초급','중급'],j.course)+fe('course')+'</div>':'')+
+    '<div class="f"><span>소속 학원 <span class="req">*</span> <span class="opt">하나만 · 더 있으면 나중에 협회가 추가</span></span>'+acadPicker()+fe('acad')+'</div>'+
+    '<label class="f" for="jIns">악기 <span class="req">*</span><select id="jIns" '+bad('inst')+'><option value="">선택</option>'+INSTS.map(function(i){return '<option '+(i===j.inst?'selected':'')+'>'+i+'</option>'}).join('')+'</select>'+fe('inst')+'</label></div>';
+  return steps(4)+head+body+
+    '<div class="card"><h3>비밀번호</h3><label class="f" for="pw1">비밀번호 <span class="req">*</span> <span class="opt">8자 이상</span><input type="password" id="pw1" '+bad('pw')+' autocomplete="new-password"></label>'+
+    '<label class="f" for="pw2">비밀번호 확인 <span class="req">*</span><input type="password" id="pw2" '+bad('pw2')+' autocomplete="new-password"></label>'+fe('pw')+fe('pw2')+
+    '<p class="hint">비밀번호는 선생님만 알아요. 협회도 볼 수 없어요.</p></div>'+
+    '<div class="card"><label class="agree" for="agr"><input type="checkbox" id="agr" '+(S.agree?'checked':'')+'><div><b>[필수] 개인정보 수집·이용 동의</b><details><summary>자세히</summary>수집 항목: 이름, 휴대전화, 이메일, 소속 학원, 악기, 회원 구분. 목적: 회원 관리, 캠프·졸업연주·연수 등 행사 신청과 안내, 참가 이력 관리. 보유 기간: 회원 탈퇴 시까지(법령에 정한 기간이 있으면 그 기간). 동의하지 않으면 회원 계정을 만들 수 없어요.</details></div></label>'+fe('agree')+'</div>'+
+    msgBox()+btn('create',c?'계정 만들기':'가입 신청하기')+'<button class="btn ghost small" type="button" id="toCode">이전으로</button>'}
+function vDone(){
+  if(S.state==='사용')return steps(5)+'<div class="card"><h2>계정을 만들었어요</h2><p class="lede">다음부터 <b>'+esc(S.email)+'</b> 와 비밀번호로 로그인해요.</p>'+
+    '<div class="lock"><h3>정산 정보도 지금 넣을까요?</h3><p class="hint" style="color:var(--muted)">캠프 강사료 지급·환불에 쓰는 계좌, 명찰·프로그램북에 쓰는 영문 이름, 공문·포스터를 받을 주소예요. 나중에 「내 정보」에서 넣어도 돼요.</p>'+
+    '<div class="two"><button class="btn primary" type="button" id="toPay">지금 넣기</button><button class="btn" type="button" id="toMe">나중에 할게요</button></div></div></div>';
+  return steps(5)+'<div class="card"><h2>신청을 받았어요</h2><p class="lede">협회가 확인한 뒤 <b>'+esc(S.email)+'</b> 로 알려 드려요. 그다음 이메일과 지금 만든 비밀번호로 로그인할 수 있어요.</p><button class="btn block" type="button" id="goHome">처음 화면</button></div>'}
+function vLogin(){if(S.fp)return vForgot();
+  return '<div class="card"><h2>로그인</h2><label class="f" for="le">이메일<input type="email" id="le" value="'+esc(S.email)+'" autocomplete="username" placeholder="name@naver.com"></label>'+
+  '<label class="f" for="lp">비밀번호<input type="password" id="lp" autocomplete="current-password"></label>'+msgBox()+btn('doLogin','로그인')+
+  '<div class="spread"><button class="btn ghost small" type="button" id="goFind">계정 만들기</button><button class="btn ghost small" type="button" id="forgot">비밀번호를 잊었어요</button></div></div>'}
+function vForgot(){var f=S.fp;return '<div class="card"><h2>비밀번호 다시 만들기</h2>'+(f.sent?'<p class="lede"><b>'+esc(f.email)+'</b> 로 가입돼 있으면 6자리 코드를 보냈어요. 15분 안에 넣어 주세요.</p>'+(f.code?'<div class="note warn">테스트(STG) 코드: <b class="num">'+esc(f.code)+'</b></div>':'')+
+  '<label class="f" for="rc">재설정 코드<input type="text" id="rc" class="code" inputmode="numeric" maxlength="6"></label><label class="f" for="rp">새 비밀번호 <span class="opt">8자 이상</span><input type="password" id="rp" autocomplete="new-password"></label>'+msgBox()+btn('doReset','비밀번호 바꾸기')
+  :'<label class="f" for="fe2">가입한 이메일<input type="email" id="fe2" value="'+esc(f.email)+'" autocomplete="username"></label>'+msgBox()+btn('sendReset','재설정 코드 받기'))+'<button class="btn ghost small" type="button" id="fpBack">로그인으로</button></div>'}
+function vMe(){var m=S.me;if(!m)return '<div class="card"><span><span class="spin"></span> 불러오는 중…</span></div>';var p=m.pay;
+  return '<div class="card"><div class="spread"><h2>'+esc(m.name)+' 선생님</h2><button class="btn ghost small" type="button" id="logout">로그아웃</button></div>'+
+    (m.reqs&&m.reqs.length?'<div class="note warn">협회가 확인 중인 요청: '+esc(m.reqs.join(', '))+'</div>':'')+
+    '<dl class="kv"><dt>이메일</dt><dd>'+esc(m.email)+'</dd><dt>휴대전화</dt><dd class="num">'+fmtPh(m.phone)+'</dd><dt>소속 학원</dt><dd>'+esc(m.acads.join(', ')||'소속 없음')+'</dd><dt>직급</dt><dd>'+esc(m.role||'-')+'</dd><dt>악기</dt><dd>'+esc(m.inst||'-')+'</dd><dt>회원 구분</dt><dd>'+(KINDS.indexOf(m.kind)>=0?'<span class="pill info">'+esc(m.kind)+'</span>':'<span class="pill due">확인 전</span>')+'</dd></dl>'+
+    (m.heads&&m.heads.length?'<div class="note">원장으로 등록된 학원: <b>'+esc(m.heads.join(', '))+'</b> · 학원 정보와 학생 명단 메뉴는 곧 열려요.</div>':'')+
+    '<p class="hint">이름·휴대전화·소속이 바뀌었으면 협회 카카오톡 채널로 알려 주세요.</p></div>'+
+    '<div class="lock"><h3>정산 정보</h3><dl class="kv"><dt>영문 이름</dt><dd>'+esc(m.eng||'-')+'</dd><dt>계좌</dt><dd>'+(p&&p.acct?esc(p.bank)+' <span class="num">'+esc(p.acct)+'</span> · '+esc(p.holder):'-')+'</dd><dt>우편물 주소</dt><dd>'+(p&&p.addr?(p.zip?'('+esc(p.zip)+') ':'')+esc(p.addr)+' '+esc(p.addr2):'-')+'</dd></dl>'+
+    '<button class="btn primary block" type="button" id="toPay">'+(p||m.eng?'정산 정보 고치기':'정산 정보 넣기')+'</button><p class="hint">협회 관리자만 볼 수 있어요. 학원이나 다른 선생님에게는 보이지 않아요.</p></div>'}
+function vPay(){var m=S.me||{},p=(m.pay)||{},d=S.pay||(S.pay={eng:m.eng||'',bank:p.bank||'',acct:'',holder:p.holder||m.name||'',zip:p.zip||'',addr:p.addr||'',addr2:p.addr2||''});
+  return '<div class="card"><h2>정산 정보</h2><p class="lede">모두 선택이에요. 넣은 것만 저장돼요.</p>'+
+    '<label class="f" for="pEng">영문 이름 <span class="opt">명찰·프로그램북 · 예: Kim Suzuki</span><input type="text" id="pEng" value="'+esc(d.eng)+'" autocomplete="off"></label>'+fe('eng')+
+    '<div class="lock"><h3>계좌 <span class="opt">강사료 지급·환불</span></h3>'+(p.acct?'<p class="hint">지금 등록된 계좌: <b class="num">'+esc(p.bank+' '+p.acct)+'</b> · 바꿀 때만 새로 넣어 주세요.</p>':'')+
+    '<div class="two"><label class="f" for="pBank">은행<select id="pBank"><option value="">선택</option>'+BANKS.map(function(b){return '<option '+(b===d.bank?'selected':'')+'>'+b+'</option>'}).join('')+'</select></label>'+
+    '<label class="f" for="pAcct">계좌번호<input type="text" id="pAcct" value="'+esc(d.acct)+'" inputmode="numeric" autocomplete="off" placeholder="숫자와 -"></label></div>'+
+    '<label class="f" for="pHold">예금주<input type="text" id="pHold" value="'+esc(d.holder)+'"></label>'+fe('acct')+'</div>'+
+    '<div class="f"><span>우편물 받을 주소 <span class="opt">공문·포스터 · 집이나 학원 어느 쪽이든</span></span>'+
+    '<div class="row" style="flex-wrap:nowrap"><input type="text" id="pZip" value="'+esc(d.zip)+'" class="num" style="width:100px;flex:none" placeholder="우편번호" inputmode="numeric"><input type="text" id="pAddr" value="'+esc(d.addr)+'" placeholder="주소 검색을 눌러 주세요"><button class="btn small" type="button" id="postBtn" style="flex:none">주소 검색</button></div>'+
+    '<div id="postWrap" '+(S.postOpen?'':'hidden')+'></div><input type="text" id="pAddr2" value="'+esc(d.addr2)+'" placeholder="상세주소 (동·호수)"></div>'+
+    msgBox()+btn('savePay','저장')+'<button class="btn block" type="button" id="toMe">'+(S.me&&(S.me.pay||S.me.eng)?'취소':'나중에 할게요')+'</button></div>'}
+
+/* ---------- 그리기 ---------- */
+function render(){var h;
+  document.getElementById('testband').hidden=!S.test;
+  h=({home:vHome,find:vFind,email:vEmail,code:vCode,confirm:vConfirm,done:vDone,login:vLogin,me:vMe,pay:vPay})[S.v]();
+  document.getElementById('app').innerHTML=h;
+  document.getElementById('backBtn').hidden=!S.hist.length||S.v==='done'||S.v==='me';
+  if(S.postOpen)openPost();
+}
+function go(v,keepHist){if(!keepHist&&S.v!==v)S.hist.push(S.v);S.v=v;S.err={};S.msg='';S.postOpen=false;render();window.scrollTo(0,0)}
+function run(fn){if(S.busy)return;S.busy=true;S.msg='';render();Promise.resolve(fn()).then(function(){S.busy=false;render()},function(){S.busy=false;render()})}
+function readPay(){var g=function(id){var e=document.getElementById(id);return e?e.value.trim():''};if(!S.pay)return;S.pay={eng:g('pEng'),bank:g('pBank'),acct:g('pAcct'),holder:g('pHold'),zip:g('pZip'),addr:g('pAddr'),addr2:g('pAddr2')}}
+function readConfirm(){var g=function(id){var e=document.getElementById(id);return e?e.value:null};
+  ['acadOk','instOk','kind'].forEach(function(k){var v=g('n_'+k);if(v!=null)S.c[k==='acadOk'?'acadNote':k==='instOk'?'instNote':'kindNote']=v.trim()});
+  var i=g('jIns');if(i!=null)S.j.inst=i;var t=g('jAcT');if(t!=null)S.j.acadText=t;var a=document.getElementById('agr');if(a)S.agree=a.checked}
+function openPost(){var w=document.getElementById('postWrap');if(!w)return;w.hidden=false;
+  if(!window.daum||!daum.Postcode){w.innerHTML='<p class="hint" style="padding:12px">주소 검색을 불러오지 못했어요. 우편번호와 주소를 직접 넣어 주세요.</p>';w.style.height='auto';return}
+  new daum.Postcode({width:'100%',height:'100%',oncomplete:function(r){readPay();S.pay.zip=r.zonecode;S.pay.addr=r.roadAddress||r.jibunAddress;S.postOpen=false;render();var n=document.getElementById('pAddr2');if(n)n.focus()}}).embed(w)}
+function loadMe(){return call('tMe',[S.sess]).then(function(r){if(!r.ok){if(/LOGIN/.test(r.msg)){S.sess='';try{sessionStorage.removeItem('tm-sess')}catch(x){}S.v='login';S.msg='로그인 시간이 지났어요. 다시 로그인해 주세요.';render();return}toast(r.msg);return}S.me=r.me;render()})}
+function setSess(t){S.sess=t;try{sessionStorage.setItem('tm-sess',t)}catch(x){}}
+
+document.addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;var d=b.dataset,v=function(id){var x=document.getElementById(id);return x?x.value:''};
+  if(b.id==='homeBtn'||b.id==='goHome'){S.hist=[];go(S.sess?'me':'home',true);if(S.sess)loadMe();return}
+  if(b.id==='backBtn'){var p=S.hist.pop();if(p){S.v=p;S.err={};S.msg='';render();window.scrollTo(0,0)}return}
+  if(b.id==='goFind'){Object.assign(S,{name:'',phone:'',token:'',look:'',card:null,email:'',code:'',agree:false,c:{acadOk:null,acadNote:'',instOk:null,instNote:'',kind:'',kindNote:''},j:{type:'',acad:'',acadText:'',noAcad:false,inst:'',course:''}});go('find');return}
+  if(b.id==='goLogin'){S.fp=null;go('login');return}
+  if(b.id==='lookup'){S.name=v('iNm').trim();S.phone=v('iPh').replace(/\D/g,'');var er={};if(!S.name)er.name='이름을 넣어 주세요.';if(!/^01\d{8,9}$/.test(S.phone))er.phone='휴대전화 번호를 확인해 주세요.';S.err=er;if(Object.keys(er).length){render();return}
+    run(function(){return call('tLookup',[S.name,S.phone]).then(function(r){if(!r.ok){S.msg=r.msg;return}S.look=r.status;S.token=r.token||'';S.card=r.card||null;S.has=r})});return}
+  if(b.id==='retry'){S.look='';S.card=null;S.token='';render();return}
+  if(b.id==='notMe'){S.look='notme';S.card=null;render();return}
+  if(b.id==='isMe'){go('email');return}
+  if(b.id==='asNew'){S.card=null;go('email');return}
+  if(b.id==='toFind'){go('find');return}
+  if(b.id==='sendCode'){S.email=v('eEm').trim().toLowerCase();if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(S.email)){S.msg='이메일 주소를 확인해 주세요.';render();return}
+    run(function(){return call('tStart',[S.token,S.email]).then(function(r){if(!r.ok){S.msg=r.msg;return}S.match=r.match;S.code=r.code||'';S.hist.push('email');S.v='code';toast(S.email+' 로 인증 코드를 보냈어요')})});return}
+  if(b.id==='resend'){run(function(){return call('tResend',[S.token]).then(function(r){if(!r.ok){S.msg=r.msg;return}S.code=r.code||'';toast('코드를 다시 보냈어요')})});return}
+  if(b.id==='toEmail'){go('email');return}
+  if(b.id==='verify'){var cd=v('cCode').trim();if(!/^\d{6}$/.test(cd)){S.msg='6자리 코드를 넣어 주세요.';render();return}
+    run(function(){return call('tVerify',[S.token,cd]).then(function(r){if(!r.ok){S.msg=r.msg;return}S.hist.push('code');S.v='confirm';window.scrollTo(0,0);toast('이메일 인증을 마쳤어요')})});return}
+  if(b.id==='toCode'){readConfirm();go('code');return}
+  if(d.seg){readConfirm();var k=d.seg,val=d.val;
+    if(k==='acadOk'||k==='instOk')S.c[k]=val==='1';else if(k==='kind')S.c.kind=val;else if(k==='type'){S.j.type=val;if(val==='교사회원')S.j.course=''}else if(k==='course')S.j.course=val;
+    delete S.err[k];render();return}
+  if(d.acad){readConfirm();S.j.acad=d.acad;S.j.noAcad=false;S.acadTyping=false;delete S.err.acad;render();return}
+  if(b.id==='noAcad'){readConfirm();S.j.noAcad=true;S.j.acad='';S.acadTyping=false;delete S.err.acad;render();return}
+  if(b.id==='typeAcad'){readConfirm();S.acadTyping=true;S.j.acadText=S.aq||'';render();var n=document.getElementById('jAcT');if(n)n.focus();return}
+  if(b.id==='acadClr'){readConfirm();S.j.acad='';S.j.noAcad=false;S.acadTyping=false;S.j.acadText='';S.aq='';render();return}
+  if(b.id==='create'){readConfirm();var er2={},pw=v('pw1');
+    if(S.card){if(S.c.acadOk===null)er2.acadOk='맞아요 / 달라요 중 하나를 눌러 주세요.';else if(S.c.acadOk===false&&!S.c.acadNote)er2.acadOk='무엇이 다른지 적어 주세요.';
+      if(S.c.instOk===null)er2.instOk='맞아요 / 달라요 중 하나를 눌러 주세요.';else if(S.c.instOk===false&&!S.c.instNote)er2.instOk='무엇이 다른지 적어 주세요.';
+      if(!S.c.kind)er2.kind='회원 구분을 골라 주세요.'}
+    else{if(!S.j.type)er2.type='가입 종류를 골라 주세요.';if(S.j.type==='연수교사회원'&&!S.j.course)er2.course='연수 과정을 골라 주세요.';
+      if(!S.j.acad&&!S.j.noAcad&&!(S.acadTyping&&S.j.acadText.trim()))er2.acad='소속 학원을 고르거나 「소속 학원 없음」을 눌러 주세요.';if(!S.j.inst)er2.inst='악기를 골라 주세요.'}
+    if(pw.length<8)er2.pw='비밀번호는 8자 이상이에요.';else if(v('pw2')!==pw)er2.pw2='비밀번호 확인이 달라요.';
+    if(!S.agree)er2.agree='동의에 체크해 주세요.';
+    S.err=er2;if(Object.keys(er2).length){render();var f=document.querySelector('.fe');if(f)f.scrollIntoView({block:'center'});return}
+    var kind=S.card?S.c.kind:(S.j.type==='교사회원'?'정식 교사':S.j.course==='중급'?'중급 연수':'초급 연수');
+    var pl={pw:pw,agree:true,kind:kind,acadOk:S.c.acadOk,acadNote:S.c.acadNote,instOk:S.c.instOk,instNote:S.c.instNote,kindNote:S.c.kindNote,
+      join:{type:S.j.type,acad:S.j.acad,acadText:S.acadTyping?S.j.acadText:'',noAcad:S.j.noAcad,inst:S.j.inst,course:S.j.course}};
+    run(function(){return call('tCreate',[S.token,pl]).then(function(r){if(!r.ok){S.msg=r.msg;return}S.state=r.state;if(r.sess){setSess(r.sess);call('tMe',[r.sess]).then(function(x){if(x.ok)S.me=x.me})}S.hist=[];S.v='done';window.scrollTo(0,0)})});return}
+  if(b.id==='doLogin'){var em=v('le').trim().toLowerCase(),lp=v('lp');S.email=em;
+    run(function(){return call('tLogin',[em,lp]).then(function(r){if(!r.ok){S.msg=r.msg;return}setSess(r.sess);S.hist=[];S.v='me';S.me=null;loadMe()})});return}
+  if(b.id==='forgot'){S.fp={email:v('le').trim(),sent:false};S.msg='';render();return}
+  if(b.id==='fpBack'){S.fp=null;S.msg='';render();return}
+  if(b.id==='sendReset'){var em2=v('fe2').trim().toLowerCase();if(!em2){S.msg='가입한 이메일을 넣어 주세요.';render();return}
+    run(function(){return call('tForgot',[em2]).then(function(r){if(!r.ok){S.msg=r.msg;return}S.fp={email:em2,sent:true,code:r.code||''}})});return}
+  if(b.id==='doReset'){var rc=v('rc').trim(),rp=v('rp');run(function(){return call('tReset',[S.fp.email,rc,rp]).then(function(r){if(!r.ok){S.msg=r.msg;return}S.email=S.fp.email;S.fp=null;toast('비밀번호를 바꿨어요. 새 비밀번호로 로그인해 주세요.')})});return}
+  if(b.id==='logout'){call('tLogout',[S.sess]);S.sess='';S.me=null;try{sessionStorage.removeItem('tm-sess')}catch(x){}S.hist=[];go('home',true);return}
+  if(b.id==='toPay'){S.pay=null;go('pay');return}
+  if(b.id==='toMe'){S.hist=[];S.pay=null;go('me',true);loadMe();return}
+  if(b.id==='postBtn'){readPay();S.postOpen=!S.postOpen;render();return}
+  if(b.id==='savePay'){readPay();var q=S.pay,er3={};if(q.acct&&!/^[\d-]{8,20}$/.test(q.acct))er3.acct='계좌번호는 숫자와 - 로 넣어 주세요.';else if(q.acct&&(!q.bank||!q.holder))er3.acct='은행과 예금주도 넣어 주세요.';
+    if(q.eng&&!/^[A-Za-z .'-]+$/.test(q.eng))er3.eng='영문 이름은 영어로 넣어 주세요.';S.err=er3;if(Object.keys(er3).length){render();return}
+    run(function(){return call('tSavePay',[S.sess,q]).then(function(r){if(!r.ok){S.msg=r.msg;return}S.me=r.me;S.pay=null;S.hist=[];S.v='me';toast('저장했어요')})});return}
+});
+document.addEventListener('input',function(e){var el=e.target;
+  if(el.id==='iPh'){el.value=ph010(el.value);var n=el.value.length;el.setSelectionRange(n,n)}
+  if(el.id==='cCode'||el.id==='rc'||el.id==='pZip'){el.value=el.value.replace(/\D/g,'')}
+  if(el.id==='pAcct'){el.value=el.value.replace(/[^\d-]/g,'')}
+  if(el.id==='aq'){S.aq=el.value;var q=S.aq.trim(),hits=S.acads.filter(function(a){return !q||a[1].indexOf(q)>=0}).slice(0,30);
+    document.getElementById('aList').innerHTML=hits.map(function(a){return '<li><button type="button" data-acad="'+esc(a[0])+'"><span>'+esc(a[1])+'</span><small>'+esc(a[2]||'')+'</small></button></li>'}).join('')||'<li class="hint" style="padding:8px">찾는 학원이 없어요. 「직접 적기」를 눌러 주세요.</li>'}});
+document.addEventListener('keydown',function(e){if(e.key!=='Enter')return;var m={iNm:'lookup',iPh:'lookup',eEm:'sendCode',cCode:'verify',le:'doLogin',lp:'doLogin',fe2:'sendReset',rp:'doReset'}[e.target.id];if(m){e.preventDefault();var b=document.getElementById(m);if(b)b.click()}});
+
+(function start(){try{S.sess=sessionStorage.getItem('tm-sess')||''}catch(x){}
+  call('tHello').then(function(h){if(h.ok){S.test=!!h.test;S.acads=h.acads||[]}
+    if(S.sess){S.v='me';render();loadMe()}else render()})})();
+</script>
+</body></html>

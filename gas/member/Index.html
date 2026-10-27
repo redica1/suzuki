@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261027-233537 -->
+<!-- build: 20261028-001830 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -127,7 +127,7 @@ label.f.wide{grid-column:1/-1}
 <script>
 var INSTS=['바이올린','첼로','비올라','플루트','피아노'];
 var CHECKS=['확인 전','확인 필요','확인'];
-var TABS=[['home','한눈에'],['acad','학원정보'],['tch','교사정보'],['stu','학생정보'],['log','바뀐 기록'],['set','설정']];
+var TABS=[['home','한눈에'],['acad','학원정보'],['tch','교사정보'],['stu','학생정보'],['req','승인 대기'],['log','바뀐 기록'],['set','설정']];
 var S={sess:'',tab:'home',q:'',f:{},page:0,edit:null,sel:{},issue:'',D:null,test:false,busy:false,hist:[]};
 var A={},T={},ST={};
 
@@ -251,8 +251,8 @@ function vTeachers(){var list=tchList(),per=50,page=list.slice(S.page*per,(S.pag
   (S.edit&&S.edit.kind==='tch'?tchEditor():'')+issueBar()+
   '<div class="panel"><div class="filters"><input type="search" id="q" value="'+esc(S.q)+'" placeholder="이름·전화·학원" style="width:min(220px,100%)">'+
     sel('fac',acadOpts('학원 전체'),S.f.ac,'학원')+sel('fins',[['','전공 전체']].concat(INSTS),S.f.ins,'전공')+sel('fdu',[['','2026 회비 전체'],'납부','미납','면제'],S.f.du,'회비')+sel('fck',[['','확인 전체']].concat(CHECKS),S.f.ck,'확인')+'</div>'+bulkBar()+
-  '<div class="tbl"><table><thead><tr><th class="ck"><input type="checkbox" id="ckAll" aria-label="이 쪽 모두 선택"></th><th>번호</th><th>이름</th><th>소속 학원</th><th>직급</th><th>전공</th><th>휴대전화</th><th>이메일</th><th>회원 구분</th><th>명단 자격</th><th>2026 회비</th><th>구분</th><th>확인</th><th>확인 메모</th></tr></thead><tbody>'+
-  page.map(function(t){var id=t['교사ID'];return '<tr class="click '+(S.edit&&S.edit.id===id?'on':'')+'" data-edit="tch|'+id+'"><td class="ck"><input type="checkbox" data-ck="'+id+'" '+(S.sel[id]?'checked':'')+' aria-label="선택"></td><td class="num cap">'+id+'</td><td><b>'+nm(t)+'</b></td><td>'+esc(tAcadTxt(t))+'</td><td>'+esc(t['직급']||'-')+'</td><td>'+esc(t['전공'])+'</td><td class="num">'+(fmt(t['휴대전화'])||'<span class="pill due">없음</span>')+'</td><td>'+esc(t['이메일'])+'</td><td>'+(t['회원구분']==='확인 전'||!t['회원구분']?'<span class="pill mute">확인 전</span>':'<span class="pill info">'+esc(t['회원구분'])+'</span>')+'</td><td>'+esc(t['명단자격']||'-')+'</td><td>'+duesPill('교사',id,t)+'</td><td>'+(t['캠프교수']==='예'?'<span class="pill ok">캠프 교수</span> ':'')+(t['내부외부']==='외부'?'<span class="pill due">외부</span>':'')+'</td><td>'+ckPill(t['확인'])+'</td><td class="cap">'+esc(t['확인메모'])+'</td></tr>'}).join('')+
+  '<div class="tbl"><table><thead><tr><th class="ck"><input type="checkbox" id="ckAll" aria-label="이 쪽 모두 선택"></th><th>번호</th><th>이름</th><th>소속 학원</th><th>직급</th><th>전공</th><th>휴대전화</th><th>이메일</th><th>회원 구분</th><th>명단 자격</th><th>2026 회비</th><th>계정</th><th>구분</th><th>확인</th><th>확인 메모</th></tr></thead><tbody>'+
+  page.map(function(t){var id=t['교사ID'];return '<tr class="click '+(S.edit&&S.edit.id===id?'on':'')+'" data-edit="tch|'+id+'"><td class="ck"><input type="checkbox" data-ck="'+id+'" '+(S.sel[id]?'checked':'')+' aria-label="선택"></td><td class="num cap">'+id+'</td><td><b>'+nm(t)+'</b></td><td>'+esc(tAcadTxt(t))+'</td><td>'+esc(t['직급']||'-')+'</td><td>'+esc(t['전공'])+'</td><td class="num">'+(fmt(t['휴대전화'])||'<span class="pill due">없음</span>')+'</td><td>'+esc(t['이메일'])+'</td><td>'+(t['회원구분']==='확인 전'||!t['회원구분']?'<span class="pill mute">확인 전</span>':'<span class="pill info">'+esc(t['회원구분'])+'</span>')+'</td><td>'+esc(t['명단자격']||'-')+'</td><td>'+duesPill('교사',id,t)+'</td><td>'+accPill(id)+'</td><td>'+(t['캠프교수']==='예'?'<span class="pill ok">캠프 교수</span> ':'')+(t['내부외부']==='외부'?'<span class="pill due">외부</span>':'')+'</td><td>'+ckPill(t['확인'])+'</td><td class="cap">'+esc(t['확인메모'])+'</td></tr>'}).join('')+
   '</tbody></table></div>'+pager(list.length,per)+'</div>'}
 function tchEditor(){var t=S.edit.id==='new'?{'상태':'활동','회원구분':'확인 전','회비구분':'납부','캠프교수':'아니오','내부외부':'내부','확인':'확인 전'}:T[S.edit.id];
   var same=t['교사ID']?S.D.tch.filter(function(x){return x['이름']===t['이름']&&x['교사ID']!==t['교사ID']}):[];
@@ -307,6 +307,33 @@ function stuEditor(){var s=S.edit.id==='new'?{'학원ID':S.f.ac||'','상태':'�
     fld('e_확인메모','확인 메모',s['확인메모'],{wide:1})+fld('e_메모','메모',s['메모'],{wide:1,area:1})+'</div>'+
     (s['학생ID']?duesBox('학생',s['학생ID'],30000):'')+'<p class="err" id="edErr"></p></div>'}
 
+function accPill(id){var a=S.D.acc[id];return a==='사용'?'<span class="pill ok">가입</span>':a==='대기'?'<span class="pill due">확인 대기</span>':'<span class="pill mute">미가입</span>'}
+
+/* ---------- 승인 대기 ---------- */
+function loadReqs(){S.reqs=null;callS('reqs').then(function(r){if(r.ok){S.reqs=objs(r);S.D.reqN=S.reqs.filter(function(q){return q['상태']==='대기'}).length;if(S.tab==='req')render()}else toast(r.msg)})}
+function vReq(){var L=S.reqs;if(!L)return '<div class="panel"><span><span class="spin"></span> 불러오는 중…</span></div>';
+  var st=S.f.rs||'대기',list=L.filter(function(q){return st==='전체'||q['상태']===st});
+  var cnt=function(x){return x==='전체'?L.length:L.filter(function(q){return q['상태']===x}).length};
+  return '<div class="sec-h"><div><h2>승인 대기</h2><p>선생님이 계정을 만들며 보낸 요청이에요. 명단 이메일과 같으면 바로 열리고, 여기에는 확인이 필요한 것만 와요.</p></div>'+
+    '<div class="row">'+['대기','승인','처리','반려','전체'].map(function(x){return '<button class="btn small '+(st===x?'primary':'')+'" type="button" data-rs="'+x+'">'+x+' '+cnt(x)+'</button>'}).join('')+'<button class="btn small ghost" type="button" id="reqRe">새로 고침</button></div></div>'+
+    '<div class="tiles"><div class="tile"><span class="k">계정 있는 선생님</span><span class="v">'+Object.keys(S.D.acc).filter(function(k){return S.D.acc[k]==='사용'}).length+'</span><span class="s">교사 '+S.D.tch.length+'명 중</span></div>'+
+    '<div class="tile warn"><span class="k">새 회원 가입</span><span class="v">'+L.filter(function(q){return q['상태']==='대기'&&q['종류']==='새 회원'}).length+'</span><span class="s">명단에 없음</span></div>'+
+    '<div class="tile warn"><span class="k">이메일 확인</span><span class="v">'+L.filter(function(q){return q['상태']==='대기'&&q['종류']==='이메일 확인'}).length+'</span><span class="s">명단과 다른 이메일</span></div>'+
+    '<div class="tile"><span class="k">정보 수정</span><span class="v">'+L.filter(function(q){return q['상태']==='대기'&&q['종류']==='정보 수정'}).length+'</span><span class="s">「달라요」 메모</span></div></div>'+
+    (list.length?list.map(reqCard).join(''):'<div class="panel"><p class="cap">요청이 없어요.</p></div>')}
+function reqCard(q){var info={};try{info=JSON.parse(q['내용']||'{}')}catch(x){}
+  var t=q['교사ID']&&T[q['교사ID']];
+  var cand=q['종류']==='새 회원'?S.D.tch.filter(function(x){return x['이름']===q['이름']||(q['휴대전화']&&x['휴대전화']===q['휴대전화'])}):[];
+  var badge={'새 회원':'<span class="pill bad">새 회원</span>','이메일 확인':'<span class="pill due">이메일 확인</span>','정보 수정':'<span class="pill info">정보 수정</span>'}[q['종류']]||esc(q['종류']);
+  return '<div class="panel"><div class="sec-h"><h3>'+badge+' '+esc(q['이름'])+' <span class="cap num">'+esc(q['요청ID'])+'</span></h3><span class="cap">'+esc(q['신청일'])+' · '+esc(q['상태'])+(q['처리일']?' · '+esc(q['처리일'])+' '+esc(q['처리자']):'')+'</span></div>'+
+    '<dl class="kv"><dt>휴대전화</dt><dd class="num">'+fmt(q['휴대전화'])+'</dd><dt>이메일</dt><dd>'+esc(q['이메일'])+'</dd>'+(t?'<dt>명단</dt><dd><b>'+nm(t)+'</b> '+esc(tAcadTxt(t))+' · '+esc(t['전공'])+' <button class="btn small ghost" type="button" data-opent="'+t['교사ID']+'">교사 열기</button></dd>':'')+
+    Object.keys(info).map(function(k){return '<dt>'+esc(k)+'</dt><dd>'+esc(info[k])+'</dd>'}).join('')+(q['메모']?'<dt>처리 메모</dt><dd>'+esc(q['메모'])+'</dd>':'')+'</dl>'+
+    (q['상태']!=='대기'?'':
+     q['종류']==='새 회원'?(cand.length?'<div class="note">명단에 비슷한 선생님이 있어요: '+cand.map(function(x){return '<b>'+nm(x)+'</b> '+esc(tAcadTxt(x))+' · 뒷자리 '+String(x['휴대전화']).slice(-4)+' <button class="btn small" type="button" data-rq="'+q['요청ID']+'|승인|'+x['교사ID']+'">이 선생님에 연결</button>'}).join(' / ')+'</div>':'')+
+       '<div class="row"><button class="btn small primary" type="button" data-rq="'+q['요청ID']+'|승인|">승인 · 새 교사로 등록</button><input type="text" id="why_'+q['요청ID']+'" placeholder="반려 사유" style="flex:1;min-width:160px"><button class="btn small" type="button" data-rq="'+q['요청ID']+'|반려|">반려</button></div>'
+     :q['종류']==='이메일 확인'?'<div class="row"><button class="btn small primary" type="button" data-rq="'+q['요청ID']+'|승인|">승인 · 이 이메일로 계정 열기</button><input type="text" id="why_'+q['요청ID']+'" placeholder="반려 사유" style="flex:1;min-width:160px"><button class="btn small" type="button" data-rq="'+q['요청ID']+'|반려|">반려</button></div>'
+     :'<div class="row"><span class="cap">교사정보에서 고친 뒤</span><button class="btn small primary" type="button" data-rq="'+q['요청ID']+'|처리|">처리 완료</button></div>')+'</div>'}
+
 /* ---------- 기록 · 설정 ---------- */
 function vLog(){var L=S.logs;if(!L)return '<div class="panel"><span><span class="spin"></span> 불러오는 중…</span></div>';
   return '<div class="sec-h"><div><h2>바뀐 기록</h2><p>최근 300건. 시트 「기록」 탭에 모두 남아요.</p></div><button class="btn small" type="button" id="logRe">새로 고침</button></div><div class="panel"><div class="tbl"><table><thead><tr>'+L.h.map(function(x){return '<th>'+esc(x)+'</th>'}).join('')+'</tr></thead><tbody>'+
@@ -324,13 +351,13 @@ function render(){
   document.getElementById('homebar').hidden=false;
   who.innerHTML='<span><b>관리자</b></span><button type="button" id="reload">새로 고침</button><button type="button" id="logout">로그아웃</button>';
   var need=S.D.acad.concat(S.D.tch).filter(function(o){return o['확인']==='확인 필요'}).length;
-  tabs.innerHTML=TABS.map(function(t){return '<button role="tab" type="button" data-tab="'+t[0]+'" aria-selected="'+(S.tab===t[0])+'">'+t[1]+(t[0]==='home'&&need?'<span class="cnt">'+need+'</span>':'')+'</button>'}).join('');
-  app.innerHTML=({home:vHome,acad:vAcads,tch:vTeachers,stu:vStudents,log:vLog,set:vSet})[S.tab]();
+  tabs.innerHTML=TABS.map(function(t){return '<button role="tab" type="button" data-tab="'+t[0]+'" aria-selected="'+(S.tab===t[0])+'">'+t[1]+(t[0]==='home'&&need?'<span class="cnt">'+need+'</span>':'')+(t[0]==='req'&&S.D.reqN?'<span class="cnt">'+S.D.reqN+'</span>':'')+'</button>'}).join('');
+  app.innerHTML=({home:vHome,acad:vAcads,tch:vTeachers,stu:vStudents,req:vReq,log:vLog,set:vSet})[S.tab]();
   var i=TABS.map(function(t){return t[0]}).indexOf(S.tab);document.getElementById('prevBtn').disabled=i<=0;document.getElementById('nextBtn').disabled=i>=TABS.length-1;
 }
-function go(tab){if(tab!==S.tab)S.hist.push(S.tab);S.tab=tab;S.q='';S.f={};S.page=0;S.edit=null;S.sel={};S.issue='';S.dEdit=null;S.edAcad=null;if(tab==='log')loadLogs();render();window.scrollTo(0,0)}
+function go(tab){if(tab!==S.tab)S.hist.push(S.tab);S.tab=tab;S.q='';S.f={};S.page=0;S.edit=null;S.sel={};S.issue='';S.dEdit=null;S.edAcad=null;if(tab==='log')loadLogs();if(tab==='req')loadReqs();render();window.scrollTo(0,0)}
 function load(){return callS('boot').then(function(r){if(!r.ok){if(S.sess)toast(r.msg);return}
-  S.test=r.test;S.D={acad:objs(r['학원']),tch:objs(r['교사']),stu:objs(r['학생']),duesRows:objs(r['연회비']),empty:r.empty};index();render()})}
+  S.test=r.test;S.D={acad:objs(r['학원']),tch:objs(r['교사']),stu:objs(r['학생']),duesRows:objs(r['연회비']),empty:r.empty,acc:r.acc||{},reqN:r.reqN||0};index();render()})}
 function loadLogs(){S.logs=null;callS('logs').then(function(r){if(r.ok){S.logs=r;if(S.tab==='log')render()}else toast(r.msg)})}
 function keepFocus(id){var n=document.getElementById(id);if(n){n.focus();var v=n.value;n.value='';n.value=v}}
 function kindOf(){return {acad:'학원',tch:'교사',stu:'학생'}[S.tab]}
@@ -382,6 +409,12 @@ document.addEventListener('click',function(e){
   if(d.ddel){var p4=d.ddel.split('|');if(!confirm(p4[2]+'년 기록을 지울까요?'))return;
     callS('delDues',p4[0],p4[1],p4[2]).then(function(r){if(!r.ok){toast(r.msg);return}S.D.duesRows=r.rows.map(function(x){return {'대상':x[0],ID:x[1],'년도':x[2],'부과':x[3],'납부':x[4],'납부일':x[5],'방식':x[6],'메모':x[7]}});index();render();toast('지웠어요')});return}
   if(b.id==='logRe'){loadLogs();render();return}
+  if(d.rs){S.f.rs=d.rs;render();return}
+  if(b.id==='reqRe'){loadReqs();render();return}
+  if(d.opent){go('tch');S.edit={kind:'tch',id:d.opent};render();return}
+  if(d.rq){var rp=d.rq.split('|'),memo=(document.getElementById('why_'+rp[0])||{}).value||'';if(rp[1]==='반려'&&!memo.trim()){toast('반려 사유를 적어 주세요');return}
+    if(rp[2]&&!confirm('이 신청을 명단의 그 선생님 계정으로 연결할까요?'))return;if(S.busy)return;S.busy=true;
+    callS('reqDo',rp[0],rp[1],memo,rp[2]).then(function(r){S.busy=false;if(!r.ok){toast(r.msg);return}S.reqs=objs(r);S.D.reqN=S.reqs.filter(function(q){return q['상태']==='대기'}).length;toast(rp[1]+' · 메일을 보냈어요');load()});return}
   if(b.id==='imp'||b.id==='impRe'){if(b.id==='impRe'&&!confirm('STG 명단을 모두 지우고 원본에서 다시 불러올까요?'))return;b.disabled=true;b.innerHTML='<span class="spin"></span> 불러오는 중… (1분쯤)';
     callS('importRoster',b.id==='impRe').then(function(r){if(!r.ok){b.disabled=false;b.textContent='다시 해 보기';toast(r.msg);return}toast(r.msg);S.tab='home';load()});return}
 });

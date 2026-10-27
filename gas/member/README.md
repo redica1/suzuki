@@ -4,14 +4,15 @@
 
 | | 메인 | 테스트 (STG) |
 |---|---|---|
-| 보는 주소 | https://redica1.github.io/suzuki/member/ | https://redica1.github.io/suzuki/member/?test |
+| 선생님 (계정 만들기 · 로그인 · 내 정보) | https://redica1.github.io/suzuki/member/ | https://redica1.github.io/suzuki/member/?test |
+| 관리자 | https://redica1.github.io/suzuki/member/admin.html | https://redica1.github.io/suzuki/member/admin.html?test |
 | 시트 | 스즈키 회원관리 DB | [STG] 스즈키 회원관리 DB 테스트용 |
 
 - **이 저장소는 공개**예요. 명단은 구글 시트에만 있고 여기에는 화면 코드만 있어요. 주민등록번호 · 계좌 · 집 주소는 시트에도 넣지 않아요(원본에서 읽지 않음).
 - 고치는 순서: 이 폴더를 고침 → `python3 -I stamp.py`(빌드 번호 · 금지 글자 검사) → push → 도우미가 5분 안에 **STG 에만** 반영 → STG 에서 확인 → 도우미 `releaseNow` 로 메인 반영.
 
 ## 파일
-- `Code.js` 서버 · `Index.html` 화면 · `files.json` 도우미가 받아 갈 파일 목록
+- `Code.js` 서버 · `Index.html` 관리자 화면(`?page=admin`) · `Teacher.html` 선생님 화면(기본) · `files.json` 도우미가 받아 갈 파일 목록
 - `appsscript.json.txt` 앱스크립트 매니페스트(처음 한 번 붙여넣기)
 - `MemberDeploy.gs.txt` 「회원관리 자동 반영 도우미」 사본
 - `stamp.py` 올리기 전 검사
@@ -43,3 +44,11 @@
 - 화면 스크립트 안에 `//` 를 쓰지 않기(구글이 주석으로 보고 지움 → 하얀 화면). `stamp.py` 가 막아요.
 - 이모지 같은 4바이트 글자 쓰지 않기.
 - 매니페스트 액세스가 `ANYONE_ANONYMOUS` 가 아니면 도우미가 배포를 멈춰요.
+
+## 선생님 계정 (2026-10-28)
+- 흐름: 이름 + 휴대전화로 명단에서 찾기 → 이메일(명단 이메일과 같으면 바로, 다르면 관리자 「승인 대기」) → 6자리 코드 → 소속·악기 「맞아요/달라요」 + 회원 구분 → 비밀번호 + 동의 → 계정 → 정산 정보 권하기(건너뛰기 가능).
+- 명단에 없으면 같은 흐름으로 「가입 신청」(교사회원 / 연수교사회원 · 초급/중급) → 관리자 승인(새 교사 등록 또는 명단의 선생님에 연결) → 로그인.
+- 시트: 계정(이메일 · 교사ID · 비번해시 · 솔트 · 상태 사용/대기/반려) · 요청(새 회원 / 이메일 확인 / 정보 수정). 비밀번호는 솔트 + SHA-256 5,000번(`S256x5000$…`).
+- 정산 정보(계좌 · 우편물 주소)는 **별도 파일**(setup 이 만듦, 설정 「정산 정보 시트」). 영문 이름은 교사 탭.
+- 메일을 보내므로 매니페스트에 `script.send_mail` 이 있어야 해요. 매니페스트를 바꾼 뒤 편집기에서 `setup` 을 한 번 실행해 권한 허용.
+- STG 시험용 설정 「인증 코드 화면 표시」= 예 → 코드를 메일과 함께 화면에도 보여 줌 (메인은 꼭 아니오).

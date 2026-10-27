@@ -1,4 +1,4 @@
-/* build: 20261027-233537 */
+/* build: 20261028-001830 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -14,11 +14,14 @@ const CUR_Y = '2026';
 
 const HEAD = {
   '학원': ['학원ID', '학원명', '구분', '상태', '원장교사ID', '원장명', '교실대표번호', '이메일', '교습과목', '시도', '시군구', '우편번호', '주소', '상세주소', '개원일', '계약체결일', '확인', '확인메모', '메모', '원본', '수정일', '수정자'],
-  '교사': ['교사ID', '이름', '구분글자', '원래이름', '휴대전화', '이메일', '학원1', '학원2', '학원3', '직급', '전공', '회원구분', '명단자격', '명단취득', '회비구분', '캠프교수', '내부외부', '상태', '확인', '확인메모', '메모', '원본', '수정일', '수정자'],
+  '교사': ['교사ID', '이름', '구분글자', '원래이름', '휴대전화', '이메일', '학원1', '학원2', '학원3', '직급', '전공', '회원구분', '명단자격', '명단취득', '회비구분', '캠프교수', '내부외부', '상태', '확인', '확인메모', '메모', '원본', '수정일', '수정자', '영문이름'],
   '학생': ['학생ID', '학원ID', '이름', '구분글자', '원래이름', '출생연도', '출생연도추정', '전공', '시작월', '상태', '담당교사ID', '확인', '확인메모', '메모', '원본', '수정일', '수정자'],
   '연회비': ['대상', 'ID', '년도', '부과', '납부', '납부일', '방식', '메모', '수정일', '수정자'],
   '설정': ['항목', '값', '설명'],
   '기록': ['일시', '누가', '표', 'ID', '동작', '내용'],
+  '계정': ['이메일', '교사ID', '비번해시', '솔트', '상태', '경로', '만든날', '처리일', '마지막로그인', '메모'],
+  '요청': ['요청ID', '종류', '교사ID', '이름', '휴대전화', '이메일', '내용', '상태', '신청일', '처리일', '처리자', '메모'],
+  '정산': ['교사ID', '은행', '계좌번호', '예금주', '우편번호', '주소', '상세주소', '수정일'],
 };
 const KEY = { '학원': '학원ID', '교사': '교사ID', '학생': '학생ID' };
 /* 화면에서 고칠 수 있는 칸 (나머지는 서버가 정함) */
@@ -33,20 +36,24 @@ const SETTINGS = [
   ['테스트 표시', '아니오', 'STG 시트만 「예」 → 화면 위에 테스트 띠'],
   ['관리자 자동 로그인', '아니오', 'STG 시험용. 「예」면 비밀번호 없이 들어감 (메인에서는 꼭 아니오)'],
   ['원본 시트', SRC_ID, '처음 불러올 연회비 명단 시트 ID'],
+  ['보내는 이름', '한국스즈키음악협회', '인증·안내 메일의 보내는 사람 이름'],
+  ['인증 코드 화면 표시', '아니오', 'STG 시험용. 「예」면 메일과 함께 화면에도 인증 코드를 보여 줌 (메인에서는 꼭 아니오)'],
+  ['정산 정보 시트', '', 'setup 이 만드는 관리자 전용 파일 ID (계좌·우편물 주소). 공유하지 마세요'],
 ];
 
 /* ====================== 웹 앱 ====================== */
-function doGet() {
-  return HtmlService.createTemplateFromFile('Index').evaluate()
-    .setTitle('스즈키 회원관리')
+function doGet(e) {
+  const admin = e && e.parameter && e.parameter.page === 'admin';
+  return HtmlService.createTemplateFromFile(admin ? 'Index' : 'Teacher').evaluate()
+    .setTitle(admin ? '스즈키 회원관리' : '스즈키 선생님 회원')
     .addMetaTag('viewport', 'width=device-width, initial-scale=1')
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
 function include(n) { return HtmlService.createHtmlOutputFromFile(n).getContent(); }
 
 function api(name, args) {
-  const open = { login, hello };
-  const fns = { boot, saveRow, setCheck, logs, importRoster, saveDues, delDues };
+  const open = { login, hello, tHello, tLookup, tStart, tResend, tVerify, tCreate, tLogin, tForgot, tReset, tMe, tSavePay, tLogout };
+  const fns = { boot, saveRow, setCheck, logs, importRoster, saveDues, delDues, reqs, reqDo };
   try {
     if (open[name]) return Object.assign({ ok: true }, open[name].apply(null, args || []));
     if (!fns[name]) throw new UserError('알 수 없는 요청이에요.');
@@ -90,6 +97,8 @@ function boot(who) {
   const out = {};
   ['학원', '교사', '학생', '연회비'].forEach(n => { const T = tbl_(n); out[n] = { h: T.h, rows: T.v }; });
   out.test = settings_()['테스트 표시'] === '예';
+  const acc = {}; tbl_('계정').v.forEach(r => { if (r[1]) acc[r[1]] = r[4]; }); out.acc = acc;
+  out.reqN = tbl_('요청').v.filter(r => r[7] === '대기').length;
   out.empty = !out['학원'].rows.length && !out['교사'].rows.length;
   out.now = now_();
   return out;
@@ -188,6 +197,12 @@ function setup() {
   SETTINGS.forEach(r => { if (have.indexOf(r[0]) < 0) sh.appendRow(r); });
   const pwRow = sh.getDataRange().getDisplayValues().findIndex(r => r[0] === '관리자 비밀번호');
   if (pwRow >= 0) sh.getRange(pwRow + 1, 2).setBackground('#fff2a8');
+  const P = settings_();
+  if (!P['정산 정보 시트']) {
+    const f = SpreadsheetApp.create((P['테스트 표시'] === '예' ? '[STG] ' : '') + '스즈키 회원관리 – 정산 정보 (관리자 전용)');
+    f.getSheets()[0].setName('정산'); ensure_(f, '정산');
+    setSetting_('정산 정보 시트', f.getId());
+  }
   const d = ss.getSheetByName('시트1') || ss.getSheetByName('Sheet1'); if (d && d.getLastRow() === 0 && ss.getSheets().length > 1) ss.deleteSheet(d);
   try { SpreadsheetApp.getUi().alert('탭을 준비했어요. 「설정」 탭 관리자 비밀번호(노란 칸)를 적고 관리자 화면에서 원본 명단을 불러와 주세요.'); } catch (e) {}
 }
@@ -344,3 +359,247 @@ function ymd_(v) {
   const m2 = s.match(/(\d{4})\D+(\d{1,2})/); if (m2) return m2[1] + '-' + ('0' + m2[2]).slice(-2);
   return s;
 }
+
+function setSetting_(k, v) {
+  const sh = SpreadsheetApp.getActive().getSheetByName('설정'); const vals = sh.getDataRange().getDisplayValues();
+  const i = vals.findIndex(r => r[0] === k); if (i >= 0) sh.getRange(i + 1, 2).setValue(v); else sh.appendRow([k, v, '']);
+}
+
+/* ====================== 선생님 회원 (계정 · 가입 · 로그인) ======================
+ * 흐름: 이름 + 휴대전화로 명단에서 찾기 → 이메일(명단 이메일과 같으면 바로, 다르면 관리자 확인) → 6자리 인증 코드(10분, 5번)
+ *       → 소속·악기 「맞아요/달라요」 + 회원 구분 고르기 → 비밀번호 + 동의 → 계정
+ *       명단에 없으면 같은 흐름으로 「회원 가입 신청」 → 관리자 승인 뒤 로그인
+ * 비밀번호는 솔트 + SHA-256 5,000번 반복 해시만 저장 (관리자도 볼 수 없음). 나중에 다른 서버로 옮겨도 같은 계산으로 확인 가능. */
+const KINDS = ['정식 교사', '중급 연수', '초급 연수'];
+const INSTS_ = ['바이올린', '첼로', '비올라', '플루트', '피아노'];
+function tHello() {
+  const s = settings_();
+  const acads = tbl_('학원').v.filter(r => r[3] !== '탈퇴' && r[1]).map(r => [r[0], r[1], r[9]]).sort((a, b) => String(a[1]).localeCompare(String(b[1]), 'ko'));
+  return { test: s['테스트 표시'] === '예', acads };
+}
+function tLookup(name, phone) {
+  name = String(name || '').trim(); phone = digits_(phone);
+  if (!name) fail('이름을 넣어 주세요.');
+  if (!/^01\d{8,9}$/.test(phone)) fail('휴대전화 번호를 확인해 주세요.');
+  limit_('lk:' + phone, 10, 1800, '여러 번 시도했어요. 30분 뒤 다시 해 주세요.');
+  const T = tbl_('교사'); const c = col_(T);
+  const hits = T.v.filter(r => normN_(r[c['이름']]) === normN_(name) && digits_(r[c['휴대전화']]) === phone && r[c['상태']] !== '탈퇴');
+  const t = hits[0];
+  const A = acctAll_();
+  if (t) {
+    const a = A.find(x => x.tid === t[c['교사ID']] && (x.state === '사용' || x.state === '대기'));
+    if (a) return { status: 'hasAccount', state: a.state, email: maskEmail_(a.email) };
+  } else {
+    const q = tbl_('요청').v.find(r => r[1] === '새 회원' && digits_(r[4]) === phone && r[7] === '대기');
+    if (q) return { status: 'pending', email: maskEmail_(q[5]) };
+  }
+  const token = Utilities.getUuid();
+  const s = { tid: t ? t[c['교사ID']] : '', name: t ? t[c['이름']] : name, phone, rosterEmail: t ? String(t[c['이메일']] || '').trim().toLowerCase() : '', stage: 'ident' };
+  cput_('tk:' + token, s, 3600);
+  if (!t) return { status: 'none', token };
+  const an = acadNames_();
+  return { status: 'found', token, card: {
+    name: t[c['이름']], phone: maskPhone_(phone), acads: [t[c['학원1']], t[c['학원2']], t[c['학원3']]].filter(Boolean).map(id => an[id] || id),
+    inst: t[c['전공']], role: t[c['직급']], cert: t[c['명단자격']], certAt: t[c['명단취득']], kind: KINDS.indexOf(t[c['회원구분']]) >= 0 ? t[c['회원구분']] : '',
+    email: s.rosterEmail ? maskEmail_(s.rosterEmail) : '' } };
+}
+function tStart(token, email) {
+  const s = tok_(token);
+  email = String(email || '').trim().toLowerCase();
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) fail('이메일 주소를 확인해 주세요.');
+  if (acctAll_().some(a => a.email === email && a.state !== '반려')) fail('이미 가입한 이메일이에요. 로그인해 주세요.');
+  Object.assign(s, { email, emailMatch: !!(s.tid && s.rosterEmail && s.rosterEmail === email), stage: 'code', sends: 0 });
+  return sendCode_(token, s);
+}
+function tResend(token) { const s = tok_(token); if (!s.email) fail('처음부터 다시 해 주세요.'); return sendCode_(token, s); }
+function sendCode_(token, s) {
+  if (s.sends >= 5) fail('인증 메일을 너무 많이 보냈어요. 처음부터 다시 해 주세요.');
+  s.code = String(100000 + Math.floor(Math.random() * 900000)); s.codeAt = Date.now(); s.sends = (s.sends || 0) + 1; s.tries = 0;
+  cput_('tk:' + token, s, 3600);
+  mail_(s.email, '[스즈키] 인증 코드 ' + s.code, '<p>' + esc_(s.name) + ' 선생님, 안녕하세요.</p><p>회원 계정 인증 코드예요. 10분 안에 넣어 주세요.</p><p style="font-size:28px;font-weight:700;letter-spacing:4px">' + s.code + '</p><p style="color:#666">본인이 요청하지 않았다면 이 메일은 무시해 주세요.</p>');
+  return { email: s.email, match: s.emailMatch, code: settings_()['인증 코드 화면 표시'] === '예' ? s.code : '' };
+}
+function tVerify(token, code) {
+  const s = tok_(token);
+  if (s.stage === 'verified') return { ok2: true };
+  if (s.stage !== 'code') fail('처음부터 다시 해 주세요.');
+  if (Date.now() - s.codeAt > 10 * 60 * 1000) fail('코드 시간이 지났어요. 「코드 다시 받기」를 눌러 주세요.');
+  if (++s.tries > 5) { cput_('tk:' + token, s, 3600); fail('5번 틀렸어요. 「코드 다시 받기」를 눌러 주세요.'); }
+  if (String(code).trim() !== s.code) { cput_('tk:' + token, s, 3600); fail('코드가 맞지 않아요.'); }
+  s.stage = 'verified'; cput_('tk:' + token, s, 3600);
+  return { ok2: true };
+}
+function tCreate(token, d) {
+  const s = tok_(token); d = d || {};
+  if (s.stage !== 'verified') fail('이메일 인증부터 해 주세요.');
+  if (String(d.pw || '').length < 8) fail('비밀번호는 8자 이상으로 만들어 주세요.');
+  if (!d.agree) fail('개인정보 수집·이용 동의에 체크해 주세요.');
+  const kind = KINDS.indexOf(d.kind) >= 0 ? d.kind : ''; if (!kind) fail('회원 구분을 골라 주세요.');
+  const note = x => String(x || '').trim().slice(0, 300);
+  const lock = LockService.getScriptLock(); lock.waitLock(20000);
+  let state, tid = s.tid;
+  try {
+    if (acctAll_().some(a => a.email === s.email && a.state !== '반려')) fail('이미 가입한 이메일이에요.');
+    const salt = Utilities.getUuid(), stamp = now_();
+    if (tid) {
+      state = s.emailMatch ? '사용' : '대기';
+      tbl_('계정').append({ '이메일': s.email, '교사ID': tid, '비번해시': hash_(d.pw, salt), '솔트': salt, '상태': state, '경로': s.emailMatch ? '명단 이메일' : '새 이메일', '만든날': stamp });
+      const T = tbl_('교사'), i = T.find('교사ID', tid); T.set(i, { '회원구분': kind, '수정일': stamp, '수정자': s.name + ' (가입)' });
+      if (!s.emailMatch) addReq_('이메일 확인', tid, s, { '명단 이메일': s.rosterEmail ? maskEmail_(s.rosterEmail) : '없음', '새 이메일': s.email });
+      const fix = [];
+      if (d.acadOk === false) fix.push('소속 학원: ' + note(d.acadNote));
+      if (d.instOk === false) fix.push('악기: ' + note(d.instNote));
+      if (d.kindNote) fix.push('회원 구분 메모: ' + note(d.kindNote));
+      if (fix.length) addReq_('정보 수정', tid, s, { '고칠 내용': fix.join(' / '), '고른 회원 구분': kind });
+      log_(s.name, '계정', tid, '가입', (s.emailMatch ? '명단 이메일 · 바로 사용' : '새 이메일 · 관리자 확인 대기') + ' · ' + kind);
+    } else {
+      const n = d.join || {};
+      if (['교사회원', '연수교사회원'].indexOf(n.type) < 0) fail('가입 종류를 골라 주세요.');
+      if (INSTS_.indexOf(n.inst) < 0) fail('악기를 골라 주세요.');
+      if (!n.acad && !n.acadText && !n.noAcad) fail('소속 학원을 고르거나 「소속 없음」을 눌러 주세요.');
+      state = '대기';
+      tbl_('계정').append({ '이메일': s.email, '교사ID': '', '비번해시': hash_(d.pw, salt), '솔트': salt, '상태': '대기', '경로': '새 회원', '만든날': stamp });
+      addReq_('새 회원', '', s, { '가입 종류': n.type, '회원 구분': kind, '소속 학원ID': n.noAcad ? '' : String(n.acad || ''), '소속 학원': n.noAcad ? '소속 없음' : (acadNames_()[n.acad] || note(n.acadText)), '악기': n.inst, '연수 과정': n.course || '' });
+      log_(s.name, '계정', s.email, '가입 신청', n.type + ' · ' + kind);
+    }
+  } finally { lock.releaseLock(); }
+  CacheService.getScriptCache().remove('tk:' + token);
+  if (state === '사용') {
+    mail_(s.email, '[스즈키] 회원 계정을 만들었어요', '<p>' + esc_(s.name) + ' 선생님, 계정이 만들어졌어요.</p><p>다음부터 이 이메일과 비밀번호로 로그인해 주세요.</p>');
+    return { state, sess: newSess_({ email: s.email, tid }) };
+  }
+  mail_(s.email, '[스즈키] 신청을 받았어요', '<p>' + esc_(s.name) + ' 선생님, 신청해 주셔서 고마워요.</p><p>협회가 확인한 뒤 이 주소로 다시 알려 드려요. 그 뒤 이메일과 비밀번호로 로그인할 수 있어요.</p>');
+  return { state };
+}
+function tLogin(email, pw) {
+  email = String(email || '').trim().toLowerCase();
+  limit_('tl:' + email, 10, 900, '로그인을 여러 번 실패했어요. 15분 뒤 다시 해 주세요.');
+  const all = acctAll_().filter(a => a.email === email); const a = all.filter(x => x.state !== '반려').pop() || all.pop();
+  if (!a || hash_(pw, a.salt) !== a.hash) fail('이메일이나 비밀번호가 맞지 않아요.');
+  if (a.state === '대기') fail('협회가 확인하는 중이에요. 확인되면 이메일로 알려 드려요.');
+  if (a.state === '반려') fail('신청이 반려됐어요' + (a.memo ? ' (' + a.memo + ')' : '') + '. 협회 카카오톡 채널로 문의해 주세요.');
+  if (a.state !== '사용' || !a.tid) fail('사용할 수 없는 계정이에요. 협회에 문의해 주세요.');
+  CacheService.getScriptCache().remove('tl:' + email);
+  const A = tbl_('계정'); A.set(a.i, { '마지막로그인': now_() });
+  return { sess: newSess_({ email, tid: a.tid }) };
+}
+function tLogout(sess) { CacheService.getScriptCache().remove('ts:' + sess); return {}; }
+function tForgot(email) {
+  email = String(email || '').trim().toLowerCase();
+  limit_('fp:' + email, 3, 3600, '재설정 메일을 여러 번 보냈어요. 한 시간 뒤 다시 해 주세요.');
+  const a = acctAll_().find(x => x.email === email && x.state === '사용');
+  let code = '';
+  if (a) { code = String(100000 + Math.floor(Math.random() * 900000)); cput_('rp:' + email, { code, tries: 0 }, 900);
+    mail_(email, '[스즈키] 비밀번호 재설정 코드 ' + code, '<p>비밀번호 재설정 코드예요. 15분 안에 넣어 주세요.</p><p style="font-size:28px;font-weight:700;letter-spacing:4px">' + code + '</p>'); }
+  return { sent: true, code: settings_()['인증 코드 화면 표시'] === '예' ? code : '' };   // 가입 여부는 알려 주지 않음
+}
+function tReset(email, code, pw) {
+  email = String(email || '').trim().toLowerCase();
+  const r = cget_('rp:' + email); if (!r) fail('코드 시간이 지났어요. 다시 받아 주세요.');
+  if (++r.tries > 5) { CacheService.getScriptCache().remove('rp:' + email); fail('여러 번 틀렸어요. 코드를 다시 받아 주세요.'); }
+  if (String(code).trim() !== r.code) { cput_('rp:' + email, r, 900); fail('코드가 맞지 않아요.'); }
+  if (String(pw || '').length < 8) fail('비밀번호는 8자 이상으로 만들어 주세요.');
+  const a = acctAll_().find(x => x.email === email && x.state === '사용'); if (!a) fail('계정을 찾지 못했어요.');
+  const salt = Utilities.getUuid(); tbl_('계정').set(a.i, { '솔트': salt, '비번해시': hash_(pw, salt) });
+  CacheService.getScriptCache().remove('rp:' + email); log_(email, '계정', a.tid, '비밀번호 재설정', '');
+  return { done: true };
+}
+function tMe(sess) {
+  const u = tsess_(sess);
+  const T = tbl_('교사'), i = T.find('교사ID', u.tid); if (i < 0) fail('명단에서 선생님을 찾지 못했어요. 협회에 문의해 주세요.');
+  const r = T.rowObj(i), c = col_(T), an = acadNames_(), g = k => r[c[k]] || '';
+  const heads = tbl_('학원').v.filter(a => a[4] === u.tid && a[3] !== '탈퇴').map(a => a[1]);
+  const p = payRow_(u.tid);
+  const reqs = tbl_('요청').v.filter(q => q[2] === u.tid && q[7] === '대기').map(q => q[1]);
+  return { me: { name: g('이름'), phone: g('휴대전화'), email: u.email, acads: [g('학원1'), g('학원2'), g('학원3')].filter(Boolean).map(id => an[id] || id), role: g('직급'), inst: g('전공'), kind: g('회원구분'), eng: g('영문이름'), heads,
+    pay: p ? { bank: p['은행'], acct: maskAcct_(p['계좌번호']), holder: p['예금주'], zip: p['우편번호'], addr: p['주소'], addr2: p['상세주소'] } : null, reqs } };
+}
+function tSavePay(sess, d) {
+  const u = tsess_(sess); d = d || {};
+  const o = { '은행': String(d.bank || '').slice(0, 20), '예금주': String(d.holder || '').trim().slice(0, 20), '우편번호': digits_(d.zip).slice(0, 5), '주소': String(d.addr || '').trim().slice(0, 120), '상세주소': String(d.addr2 || '').trim().slice(0, 80) };
+  const acct = String(d.acct || '').replace(/[^\d-]/g, '');
+  if (acct && !/^[\d-]{8,20}$/.test(acct)) fail('계좌번호는 숫자와 - 로 넣어 주세요.');
+  if (acct && (!o['은행'] || !o['예금주'])) fail('은행과 예금주도 넣어 주세요.');
+  const eng = String(d.eng || '').trim().slice(0, 60); if (eng && !/^[A-Za-z .'-]+$/.test(eng)) fail('영문 이름은 영어로 넣어 주세요.');
+  const lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    const T = tbl_('교사'), i = T.find('교사ID', u.tid); if (i >= 0) T.set(i, { '영문이름': eng });
+    const P = payTbl_(), j = P.find('교사ID', u.tid), row = Object.assign({ '교사ID': u.tid, '수정일': now_() }, o);
+    if (acct) row['계좌번호'] = acct; else if (j < 0) row['계좌번호'] = '';
+    if (j < 0) P.append(row); else P.set(j, row);
+    log_(u.email, '정산', u.tid, '선생님이 수정', ['영문 이름', '주소'].concat(acct ? ['계좌'] : []).join(' · '));
+  } finally { lock.releaseLock(); }
+  return tMe(sess);
+}
+
+/* ---------- 관리자: 승인 대기 ---------- */
+function reqs(who) { const T = tbl_('요청'); return { h: T.h, rows: T.v.slice().reverse() }; }
+function reqDo(who, id, act, memo, linkTid) {
+  if (['승인', '반려', '처리'].indexOf(act) < 0) fail('처리 방법이 틀렸어요.');
+  if (act === '반려' && !String(memo || '').trim()) fail('반려 사유를 적어 주세요.');
+  const lock = LockService.getScriptLock(); lock.waitLock(20000);
+  let mailTo = '', subj = '', body = '';
+  try {
+    const R = tbl_('요청'), i = R.find('요청ID', id); if (i < 0) fail('요청을 찾지 못했어요.');
+    const q = R.rowObj(i), c = col_(R), kind = q[c['종류']], email = q[c['이메일']], name = q[c['이름']];
+    if (q[c['상태']] !== '대기') fail('이미 처리한 요청이에요.');
+    const info = JSON.parse(q[c['내용']] || '{}'); const A = tbl_('계정'); const ai = A.v.findIndex(r => r[0] === email && (r[4] === '대기'));
+    let tid = q[c['교사ID']];
+    if (kind === '새 회원' && act === '승인') {
+      const T = tbl_('교사');
+      if (linkTid) { if (T.find('교사ID', linkTid) < 0) fail('연결할 교사 번호를 찾지 못했어요.'); tid = linkTid; T.set(T.find('교사ID', tid), { '이메일': email, '회원구분': info['회원 구분'] || '확인 전', '수정일': now_(), '수정자': who.name }); }
+      else { tid = nextId_(T, '교사ID', 'T');
+        T.append({ '교사ID': tid, '이름': name, '원래이름': name, '휴대전화': digits_(q[c['휴대전화']]), '이메일': email, '학원1': info['소속 학원ID'] || '', '전공': info['악기'] || '', '회원구분': info['회원 구분'] || '확인 전',
+          '회비구분': '납부', '캠프교수': '아니오', '상태': '활동', '확인': '확인 전', '확인메모': (info['가입 종류'] || '') + ' 가입 신청' + (info['연수 과정'] ? ' · ' + info['연수 과정'] + ' 과정' : '') + (!info['소속 학원ID'] && info['소속 학원'] !== '소속 없음' ? ' · 적은 학원: ' + info['소속 학원'] : ''), '원본': '가입 신청 ' + id, '수정일': now_(), '수정자': who.name }); }
+      if (ai >= 0) A.set(ai, { '교사ID': tid, '상태': '사용', '처리일': now_() });
+      mailTo = email; subj = '[스즈키] 회원 가입이 승인됐어요'; body = '<p>' + esc_(name) + ' 선생님, 협회가 확인하고 승인했어요.</p><p>이제 가입할 때 만든 이메일과 비밀번호로 로그인할 수 있어요.</p>';
+    } else if (kind === '이메일 확인' && act === '승인') {
+      if (ai >= 0) A.set(ai, { '상태': '사용', '처리일': now_() });
+      const T = tbl_('교사'), ti = T.find('교사ID', tid); if (ti >= 0) T.set(ti, { '이메일': email, '수정일': now_(), '수정자': who.name });
+      mailTo = email; subj = '[스즈키] 계정이 열렸어요'; body = '<p>' + esc_(name) + ' 선생님, 협회가 새 이메일을 확인했어요.</p><p>이제 이 이메일과 비밀번호로 로그인할 수 있어요.</p>';
+    } else if (act === '반려' && kind !== '정보 수정') {
+      if (ai >= 0) A.set(ai, { '상태': '반려', '처리일': now_(), '메모': String(memo).slice(0, 200) });
+      mailTo = email; subj = '[스즈키] 확인이 필요해요'; body = '<p>신청하신 내용을 승인하지 못했어요.</p><p><b>사유:</b> ' + esc_(memo) + '</p><p>다시 신청하거나 협회 카카오톡 채널로 문의해 주세요.</p>';
+    }
+    R.set(i, { '상태': act === '반려' ? '반려' : act === '처리' ? '처리' : '승인', '교사ID': tid || '', '처리일': now_(), '처리자': who.name, '메모': String(memo || '').slice(0, 300) });
+    log_(who.name, '요청', id, kind + ' ' + act, String(memo || ''));
+  } finally { lock.releaseLock(); }
+  if (mailTo) { try { mail_(mailTo, subj, body); } catch (e) { console.warn('mail', e); } }
+  return reqs(who);
+}
+
+/* ---------- 계정 도우미 ---------- */
+function acctAll_() { const T = tbl_('계정'); return T.v.map((r, i) => ({ i, email: String(r[0]).toLowerCase(), tid: r[1], hash: r[2], salt: r[3], state: r[4], memo: r[9] })); }
+function addReq_(kind, tid, s, info) {
+  const R = tbl_('요청');
+  R.append({ '요청ID': 'R' + Utilities.formatDate(new Date(), 'Asia/Seoul', 'yyMMddHHmmss') + Math.floor(Math.random() * 90 + 10), '종류': kind, '교사ID': tid, '이름': s.name, '휴대전화': s.phone, '이메일': s.email, '내용': JSON.stringify(info), '상태': '대기', '신청일': now_() });
+}
+function newSess_(o) { const t = Utilities.getUuid(); cput_('ts:' + t, o, 6 * 3600); return t; }
+function tsess_(t) { const v = t && cget_('ts:' + t); if (!v) fail('LOGIN 로그인 시간이 지났어요. 다시 로그인해 주세요.'); cput_('ts:' + t, v, 6 * 3600); return v; }
+function tok_(token) { const s = cget_('tk:' + token); if (!s) fail('시간이 지났어요. 처음부터 다시 해 주세요.'); return s; }
+function cput_(k, v, sec) { CacheService.getScriptCache().put(k, JSON.stringify(v), sec); }
+function cget_(k) { const v = CacheService.getScriptCache().get(k); return v ? JSON.parse(v) : null; }
+function col_(T) { const o = {}; T.h.forEach((k, i) => o[k] = i); return o; }
+function acadNames_() { const o = {}; tbl_('학원').v.forEach(r => o[r[0]] = r[1]); return o; }
+function payTbl_() {
+  const id = settings_()['정산 정보 시트']; if (!id) fail('정산 정보 파일이 아직 없어요. 관리자가 setup 을 한 번 더 실행해야 해요.');
+  const ss = SpreadsheetApp.openById(id); const sh = ss.getSheetByName('정산') || ensure_(ss, '정산');
+  const all = sh.getDataRange().getDisplayValues(); const h = (all.shift() || HEAD['정산']).map(String); const v = all.filter(r => r.some(x => x !== ''));
+  return { sh, h, v, find(k, x) { const c = h.indexOf(k); return v.findIndex(r => String(r[c]) === String(x)); },
+    set(i, obj) { const row = v[i].slice(); Object.keys(obj).forEach(k => { const c = h.indexOf(k); if (c >= 0) row[c] = String(obj[k]); }); sh.getRange(i + 2, 1, 1, h.length).setValues([row]); v[i] = row; },
+    append(obj) { const row = h.map(k => obj[k] == null ? '' : String(obj[k])); sh.getRange(v.length + 2, 1, 1, h.length).setNumberFormat('@').setValues([row]); v.push(row); } };
+}
+function payRow_(tid) { try { const P = payTbl_(), j = P.find('교사ID', tid); if (j < 0) return null; const o = {}; P.h.forEach((k, i) => o[k] = P.v[j][i]); return o; } catch (e) { return null; } }
+function hash_(pw, salt) {
+  let h = salt + '|' + pw;
+  for (let i = 0; i < 5000; i++) h = Utilities.base64Encode(Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, h + salt, Utilities.Charset.UTF_8));
+  return 'S256x5000$' + h;
+}
+function mail_(to, subject, html) {
+  const name = settings_()['보내는 이름'] || '한국스즈키음악협회';
+  MailApp.sendEmail({ to, subject, name, htmlBody: '<div style="font-family:sans-serif;font-size:15px;line-height:1.6">' + html + '<hr><p style="color:#888;font-size:12px">' + esc_(name) + ' · 보내기 전용 메일이에요. 문의는 협회 카카오톡 채널로 해 주세요.</p></div>' });
+}
+function maskEmail_(e) { e = String(e || ''); const m = e.match(/^([^@]{0,2})[^@]*(@.*)$/); return m ? m[1] + '***' + m[2] : ''; }
+function maskPhone_(p) { p = digits_(p); return p.length >= 10 ? p.slice(0, 3) + '-****-' + p.slice(-4) : p; }
+function maskAcct_(a) { return a ? String(a).replace(/\d(?=[\d-]{4})/g, '*') : ''; }
+function esc_(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }

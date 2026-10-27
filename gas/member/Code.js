@@ -1,4 +1,4 @@
-/* build: 20261028-011713 */
+/* build: 20261028-012044 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -511,7 +511,7 @@ function cleanInfo_(n, mode) {
   o.acadText = o.works.filter(w => !w.id).map(w => w.text).join(', ');
   o.role = ['원장', '강사', ''].indexOf(n.role) >= 0 ? n.role : ''; if (n.role == null) fail('직급을 골라 주세요.');
   if (INSTS_.indexOf(n.inst) < 0) fail('악기를 골라 주세요.'); o.inst = n.inst;
-  o.certs = (n.certs || []).filter(x => CERTS_.indexOf(x.n) >= 0 && x.n !== '티처트레이너')   /* 티처트레이너는 관리자만 (10-28) */.map(x => ({ n: x.n, y: /^(19|20)\d{2}$/.test(String(x.y)) ? String(x.y) : '' }));
+  o.certs = (n.certs || []).filter(x => CERTS_.indexOf(x.n) >= 0 && x.n !== '티처트레이너')   /* 티처트레이너는 관리자만 (10-28) */.map(x => { if (!/^(19|20)\d{2}$/.test(String(x.y))) fail(x.n + ' 취득 년도를 골라 주세요.'); return { n: x.n, y: String(x.y) }; });
   o.certTxt = o.certs.map(x => x.n + (x.y ? ' ' + x.y : '')).join(', ');
   o.acadNames = o.noWork ? '현재 근무지 없음' : o.works.map(w => (an[w.id] || '(목록에 없음) ' + w.text) + ' ' + w.start + '~').join(', ');
   return o;

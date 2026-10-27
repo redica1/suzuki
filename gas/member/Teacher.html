@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261028-011713 -->
+<!-- build: 20261028-012044 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -208,9 +208,9 @@ function extFields(){var j=S.j;
     '<label class="f" for="jOrg">소속 <span class="opt">선택 · 학교·단체 등</span><input type="text" id="jOrg" value="'+esc(j.org)+'"></label>'+
     '<label class="f" for="jIns">악기 <span class="opt">선택</span><select id="jIns"><option value="">없음</option>'+INSTS.map(function(i){return '<option '+(i===j.inst?'selected':'')+'>'+i+'</option>'}).join('')+'</select></label>'}
 function certBox(){var j=S.j,ys=[];for(var y=new Date().getFullYear();y>=1985;y--)ys.push(String(y));
-  return '<div class="f"><span>보유 자격 <span class="opt">있는 것 모두 · 취득 년도는 알면</span></span><div style="display:grid;gap:6px">'+CERTS.map(function(n){var on=n in j.certs;
+  return '<div class="f"><span>보유 자격 <span class="opt">있는 것 모두 · 고르면 취득 년도 필수</span></span><div style="display:grid;gap:6px">'+CERTS.map(function(n){var on=n in j.certs;
     return '<div class="row" style="border:1px solid '+(on?'var(--accent)':'var(--line)')+';border-radius:9px;padding:6px 10px"><label class="agree" style="flex:1;align-items:center"><input type="checkbox" data-cert="'+n+'" '+(on?'checked':'')+'> '+n+'</label>'+
-      (on?'<select data-cy="'+n+'" style="width:auto;padding:6px 8px" aria-label="'+n+' 취득 년도"><option value="">년도</option>'+ys.map(function(y){return '<option '+(j.certs[n]===y?'selected':'')+'>'+y+'</option>'}).join('')+'</select>':'')+'</div>'}).join('')+'</div></div>'}
+      (on?'<select data-cy="'+n+'" style="width:auto;padding:6px 8px" aria-label="'+n+' 취득 년도" '+bad('cy_'+n)+'><option value="">년도</option>'+ys.map(function(y){return '<option '+(j.certs[n]===y?'selected':'')+'>'+y+'</option>'}).join('')+'</select>':'')+'</div>'+fe('cy_'+n)}).join('')+'</div></div>'}
 function vConfirm(){var j=S.j,nw=S.look!=='found',ext=nw&&S.mode==='ext';if(!j.pay.holder)j.pay.holder=S.name;
   var head=nw?'<div class="note"><b>인증을 마쳤어요.</b> 가입 신청 내용을 적어 주세요. 협회가 확인한 뒤 계정이 열려요.</div>':'<div class="note ok"><b>인증을 마쳤어요.</b> 지금 선생님 정보를 넣어 주세요. 넣은 내용으로 협회 명단이 바뀌어요.</div>';
   if(ext)head='<div class="note"><b>인증을 마쳤어요.</b> 등록 내용을 적어 주세요. 협회가 확인한 뒤 계정이 열려요.</div>';
@@ -359,7 +359,8 @@ document.addEventListener('click',function(e){var b=e.target.closest('button');i
     else{if(nw){if(!j.type)er2.type='가입 종류를 골라 주세요.';if(j.type==='연수교사회원'&&!j.course)er2.course='연수 과정을 골라 주세요.'}else if(!j.kind)er2.kind='회원 구분을 골라 주세요.';
     if(!j.noWork&&!j.works.length)er2.acad='근무하는 학원을 고르거나 「현재 근무지 없음」에 체크해 주세요.';
     if(!j.noWork)j.works.forEach(function(w,i){if(!w.y||!w.m)er2['w'+i]='근무 시작 년·월을 골라 주세요.'});
-    if(j.role==null)er2.role='직급을 골라 주세요.';if(!j.inst)er2.inst='악기를 골라 주세요.'}
+    if(j.role==null)er2.role='직급을 골라 주세요.';if(!j.inst)er2.inst='악기를 골라 주세요.';
+    Object.keys(j.certs).forEach(function(n){if(!j.certs[n])er2['cy_'+n]=n+' 취득 년도를 골라 주세요.'})}
     if(pw.length<8)er2.pw='비밀번호는 8자 이상이에요.';else if(v('pw2')!==pw)er2.pw2='비밀번호 확인이 달라요.';
     Object.assign(er2,checkPay(j.pay,false));
     if(!S.agree)er2.agree='동의에 체크해 주세요.';
@@ -394,7 +395,7 @@ document.addEventListener('input',function(e){var el=e.target;
   if(el.id==='rrnIn'){var x=el.value.replace(/\D/g,'').slice(0,13);el.value=x.length>6?x.slice(0,6)+'-'+x.slice(6):x}
   if(el.id==='aq'){S.aq=el.value;document.getElementById('aList').innerHTML=aItems(aHits())}});
 document.addEventListener('change',function(e){if(e.target.id==='pSame'){readPayIn();render();return}if(e.target.id==='noWork'){readConfirm();S.acadTyping=false;if(S.j.noWork)delete S.err.acad;render();return}var dm=e.target.dataset&&e.target.dataset.dom;if(dm){var x=document.getElementById(dm+'X');x.hidden=!!e.target.value;if(!e.target.value)x.focus();return}
-  var n=e.target.dataset&&e.target.dataset.cert;if(!n)return;readConfirm();if(e.target.checked)S.j.certs[n]='';else delete S.j.certs[n];render()});
+  var n=e.target.dataset&&e.target.dataset.cert;if(!n)return;readConfirm();if(e.target.checked)S.j.certs[n]='';else delete S.j.certs[n];delete S.err['cy_'+n];render()});
 document.addEventListener('keydown',function(e){if(e.key!=='Enter')return;var m={iNm:'lookup',iPh:'lookup',eEmU:'sendCode',eEmX:'sendCode',cCode:'verify',leU:'doLogin',leX:'doLogin',lp:'doLogin',fe2U:'sendReset',fe2X:'sendReset',rp:'doReset'}[e.target.id];if(m){e.preventDefault();var b=document.getElementById(m);if(b)b.click()}});
 
 (function start(){try{S.sess=sessionStorage.getItem('tm-sess')||''}catch(x){}

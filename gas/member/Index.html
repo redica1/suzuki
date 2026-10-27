@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261028-011713 -->
+<!-- build: 20261028-012044 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -64,6 +64,9 @@ main.wrap{padding-top:20px;padding-bottom:80px;display:grid;gap:16px}
 .tile.warn .v{color:var(--rosin)}
 .bar{height:6px;background:var(--sunk);border-radius:99px;overflow:hidden}.bar i{display:block;height:100%;background:var(--accent)}
 .filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.acs{position:relative;display:block}.filters .acs{display:inline-block;width:200px}.acs input{width:100%;padding-right:28px}.acs input::-webkit-search-cancel-button{display:none}.acs::after{content:'\25BE';position:absolute;right:10px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--muted);font-size:12px}
+.acs ul{position:absolute;z-index:40;left:0;right:0;top:calc(100% + 2px);max-height:260px;overflow:auto;margin:0;padding:4px;list-style:none;background:var(--bg);border:1px solid var(--line);border-radius:8px;box-shadow:0 6px 18px rgba(0,0,0,.15);min-width:200px}
+.acs li{padding:6px 8px;border-radius:6px;cursor:pointer}.acs li.on,.acs li:hover{background:var(--sunk)}.acs li.cur{font-weight:700}.acs li.none{color:var(--muted);cursor:default}
 input[type=text],input[type=tel],input[type=password],input[type=search],input[type=number],input[type=date],select,textarea{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;min-width:0}
 .btn{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:7px 12px;cursor:pointer;font-weight:600;font-size:13.5px}
 .btn:hover{border-color:var(--accent)}
@@ -371,6 +374,25 @@ function vSet(){return '<div class="sec-h"><div><h2>설정</h2><p>관리자 아�
   '</div><div class="panel"><h3>알아 둘 것</h3><p class="cap">모든 학원·교사·학생에는 바뀌지 않는 번호(A0001 · T0001 · S0001)가 붙어요. 캠프 · 졸업연주 · 교사연수는 이 번호로 연결해요. 데이터는 이 화면이 붙은 구글 시트에만 있고, 깃허브에는 화면 코드만 있어요.</p></div>'}
 
 /* ---------- 그리기 ---------- */
+/* ---------- 학원 고르기: 찾기 기능 (10-28) — 학원 번호(A0000)가 들어 있는 모든 select 에 자동으로 붙음 ---------- */
+function isAcadSel(el){if(el.tagName!=='SELECT'||el.dataset.acsOn)return false;for(var i=0;i<el.options.length;i++)if(/^A\d{4}$/.test(el.options[i].value))return true;return false}
+function acsLabel(sl){var o=sl.options[sl.selectedIndex];return o?o.text:''}
+function acsEnhance(root){(root||document).querySelectorAll('select').forEach(function(sl){if(!isAcadSel(sl))return;sl.dataset.acsOn='1';
+  var w=document.createElement('span');w.className='acs';var inp=document.createElement('input');inp.type='search';inp.autocomplete='off';inp.placeholder='학원 찾기';inp.setAttribute('aria-label',(sl.getAttribute('aria-label')||'학원')+' 찾기');
+  if(sl.getAttribute('aria-invalid'))inp.setAttribute('aria-invalid',sl.getAttribute('aria-invalid'));
+  var ul=document.createElement('ul');ul.hidden=true;ul.setAttribute('role','listbox');sl.parentNode.insertBefore(w,sl);w.appendChild(inp);w.appendChild(ul);w.appendChild(sl);sl.hidden=true;sl.style.display='none';
+  var first=sl.options[0]&&sl.options[0].value===''?sl.options[0]:null,hi=0,items=[];
+  inp.value=sl.value?acsLabel(sl):'';inp.placeholder=first?first.text+' · 학원 찾기':'학원 찾기';
+  function draw(){var q=inp.value.trim();if(q===acsLabel(sl))q='';items=[];for(var i=0;i<sl.options.length;i++){var o=sl.options[i];if(!q||o.text.indexOf(q)>=0||(!o.value&&!q))items.push(o)}
+    if(q&&first)items.unshift(first);hi=Math.max(0,Math.min(hi,items.length-1));
+    ul.innerHTML=items.length?items.slice(0,80).map(function(o,i){return '<li role="option" data-i="'+i+'" class="'+(i===hi?'on ':'')+(o.value===sl.value?'cur':'')+'">'+esc(o.text)+'</li>'}).join(''):'<li class="none">찾는 학원이 없어요</li>';ul.hidden=false}
+  function pick(o){if(!o)return;sl.value=o.value;inp.value=o.value?o.text:'';ul.hidden=true;sl.dispatchEvent(new Event('change',{bubbles:true}))}
+  inp.addEventListener('focus',function(){hi=0;draw();inp.select()});
+  inp.addEventListener('input',function(e){e.stopPropagation();hi=0;draw()});
+  inp.addEventListener('keydown',function(e){if(ul.hidden&&e.key!=='Escape')draw();if(e.key==='ArrowDown'){hi=Math.min(hi+1,items.length-1);draw();e.preventDefault()}else if(e.key==='ArrowUp'){hi=Math.max(hi-1,0);draw();e.preventDefault()}else if(e.key==='Enter'){e.preventDefault();e.stopPropagation();pick(items[hi])}else if(e.key==='Escape'){ul.hidden=true;inp.value=sl.value?acsLabel(sl):''}});
+  ul.addEventListener('mousedown',function(e){var li=e.target.closest('li[data-i]');e.preventDefault();if(li)pick(items[+li.dataset.i])});
+  inp.addEventListener('blur',function(){setTimeout(function(){ul.hidden=true;inp.value=sl.value?acsLabel(sl):''},120)})})}
+new MutationObserver(function(){acsEnhance()}).observe(document.documentElement,{childList:true,subtree:true});
 function render(){
   var tabs=document.getElementById('tabs'),app=document.getElementById('app'),who=document.getElementById('who');
   document.getElementById('testband').hidden=!S.test;
@@ -394,11 +416,11 @@ function readEd(table){var o={};document.querySelectorAll('[id^="e_"]').forEach(
 var CERTS=['초급','중급','티처트레이너','국민대학원','대구가톨릭대학원','전주대학원'];
 function parseCerts(txt){var o={};String(txt||'').split(',').forEach(function(x){x=x.trim();if(!x)return;var m=x.match(/^(.+?)\s+((?:19|20)\d{2})$/);var n=m?m[1]:x;n=n.replace('카톨릭','가톨릭');if(CERTS.indexOf(n)>=0)o[n]=m?m[2]:''});return o}
 function certAdmin(t){var c=parseCerts(t['본인자격']),ys=[''];for(var y=new Date().getFullYear();y>=1985;y--)ys.push(String(y));
-  return '<div class="f wide" style="grid-column:1/-1"><span>보유 자격 <span class="cap">관리자 기준 · 티처트레이너는 관리자만 넣어요 · 명단 원본: '+esc(t['명단자격']||'없음')+'</span></span><div class="row">'+
+  return '<div class="f wide" style="grid-column:1/-1"><span>보유 자격 <span class="cap">취득 년도 필수 · 관리자 기준 · 티처트레이너는 관리자만 넣어요 · 명단 원본: '+esc(t['명단자격']||'없음')+'</span></span><div class="row">'+
     CERTS.map(function(n){var on=n in c;return '<label class="pill '+(on?'info':'mute')+'" style="display:inline-flex;gap:6px;align-items:center;padding:4px 10px"><input type="checkbox" data-acert="'+n+'" '+(on?'checked':'')+'> '+n+
       ' <select data-acy="'+n+'" aria-label="'+n+' 취득 년도" style="padding:2px 4px">'+ys.map(function(y){return '<option value="'+y+'" '+(c[n]===y&&on?'selected':'')+'>'+(y||'년도')+'</option>'}).join('')+'</select></label>'}).join('')+'</div></div>'}
 function readAdminCerts(){var out=[];document.querySelectorAll('[data-acert]').forEach(function(x){if(x.checked){var y=document.querySelector('[data-acy="'+x.dataset.acert+'"]').value;out.push(x.dataset.acert+(y?' '+y:''))}});return out.join(', ')}
-function saveEd(ok){var table=kindOf(),k=keyOf(table),id=S.edit.id,o=readEd(table);if(table==='교사'&&document.querySelector('[data-acert]'))o['본인자격']=readAdminCerts();if(ok)o['확인']='확인';
+function saveEd(ok){var table=kindOf(),k=keyOf(table),id=S.edit.id,o=readEd(table);var noY=[];document.querySelectorAll('[data-acert]').forEach(function(x){if(x.checked&&!document.querySelector('[data-acy="'+x.dataset.acert+'"]').value)noY.push(x.dataset.acert)});if(noY.length){var ee=document.getElementById('edErr');ee.textContent=noY.join(', ')+' 취득 년도를 골라 주세요. 보유 자격은 년도가 꼭 있어야 해요.';ee.scrollIntoView({block:'center'});return}if(table==='교사'&&document.querySelector('[data-acert]'))o['본인자격']=readAdminCerts();if(ok)o['확인']='확인';
   if(id!=='new')o[k]=id;var cur=id!=='new'?(table==='학원'?A:table==='교사'?T:ST)[id]:null;
   var err=document.getElementById('edErr');err.textContent='';
   if(table==='교사'&&o['학원1']&&(o['학원1']===o['학원2']||o['학원1']===o['학원3'])||(o['학원2']&&o['학원2']===o['학원3'])){err.textContent='같은 학원을 두 번 골랐어요.';return}

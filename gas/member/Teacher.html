@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261028-001830 -->
+<!-- build: 20261028-002705 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -119,7 +119,7 @@ input.bad,select.bad,textarea.bad{border-color:var(--bad);background:var(--bad-s
 var INSTS=['바이올린','첼로','비올라','플루트','피아노'];
 var KINDS=['정식 교사','중급 연수','초급 연수'];
 var BANKS=['국민','신한','하나','우리','농협','기업','SC제일','부산','대구(iM뱅크)','경남','광주','카카오뱅크','토스뱅크','케이뱅크','새마을금고','신협','우체국','수협','씨티'];
-var S={v:'home',test:false,acads:[],busy:false,err:{},msg:'',name:'',phone:'',token:'',look:'',card:null,has:null,email:'',match:false,code:'',
+var S={mode:'member',v:'home',test:false,acads:[],busy:false,err:{},msg:'',name:'',phone:'',token:'',look:'',card:null,has:null,email:'',match:false,code:'',
   c:{acadOk:null,acadNote:'',instOk:null,instNote:'',kind:'',kindNote:''},j:{type:'',acad:'',acadText:'',noAcad:false,inst:'',course:''},aq:'',pw:'',agree:false,
   sess:'',me:null,state:'',fp:null,hist:[],pay:null,postOpen:false};
 
@@ -139,18 +139,22 @@ function newFlow(){return !S.card}
 
 /* ---------- 화면 ---------- */
 function vHome(){return '<div class="card"><h2>안녕하세요, 선생님</h2>'+
-  '<p class="lede">협회 회원 계정이에요. 이메일과 비밀번호로 로그인해서 캠프·졸업연주 등 협회 행사를 신청하고, 내 정보를 고쳐요.</p>'+
-  '<button class="btn primary block" type="button" id="goFind">처음이에요 · 계정 만들기</button>'+
-  '<button class="btn block" type="button" id="goLogin">계정이 있어요 · 로그인</button>'+
-  '<p class="hint">협회 명단에 없는 선생님도 「계정 만들기」에서 가입 신청을 할 수 있어요. 문의: 협회 카카오톡 채널.</p></div>'}
+  '<p class="lede">협회 회원 계정을 만들고, 이메일과 비밀번호로 캠프·졸업연주 등 협회 행사를 신청해요.</p>'+
+  '<div class="ask"><b>지금 협회 교사회원이에요</b><p class="hint">협회 명단에 있는 선생님이에요. 이름과 휴대전화로 명단을 확인하고 계정을 만들어요.</p>'+
+  '<button class="btn primary block" type="button" id="goFind">교사회원 확인 · 기존 교사회원</button></div>'+
+  '<div class="ask"><b>처음 가입해요</b><p class="hint">협회 명단에 없는 선생님, 지금 연수 중인 선생님이에요. 신청하면 협회가 확인한 뒤 계정이 열려요.</p>'+
+  '<button class="btn block" type="button" id="goNew">신규 회원 가입</button></div>'+
+  '<p class="hint">문의: 협회 카카오톡 채널</p></div>'+
+  '<div class="card"><div class="spread"><span class="hint">이미 계정을 만들었어요</span><button class="btn small" type="button" id="goLogin">로그인</button></div></div>'}
 function vFind(){var res='';
-  if(S.look==='found'){var c=S.card;res='<div class="card pick"><h3>이 정보가 선생님 맞나요?</h3><dl class="kv"><dt>이름</dt><dd><b>'+esc(c.name)+'</b></dd><dt>휴대전화</dt><dd class="num">'+esc(c.phone)+'</dd><dt>소속 학원</dt><dd>'+esc(c.acads.join(', ')||'등록된 소속 없음')+'</dd><dt>전공</dt><dd>'+esc(c.inst||'-')+(c.role?' · '+esc(c.role):'')+'</dd><dt>명단 이메일</dt><dd>'+(c.email?esc(c.email):'<span class="hint">없음</span>')+'</dd></dl>'+
+  if(S.look==='found'){var c=S.card;res=(S.mode==='new'?'<div class="note">협회 명단에 이미 있는 선생님이에요. 신규 가입 대신 <b>교사회원 확인</b>으로 계정을 만들어요.</div>':'')+'<div class="card pick"><h3>이 정보가 선생님 맞나요?</h3><dl class="kv"><dt>이름</dt><dd><b>'+esc(c.name)+'</b></dd><dt>휴대전화</dt><dd class="num">'+esc(c.phone)+'</dd><dt>소속 학원</dt><dd>'+esc(c.acads.join(', ')||'등록된 소속 없음')+'</dd><dt>전공</dt><dd>'+esc(c.inst||'-')+(c.role?' · '+esc(c.role):'')+'</dd><dt>명단 이메일</dt><dd>'+(c.email?esc(c.email):'<span class="hint">없음</span>')+'</dd></dl>'+
     '<div class="two"><button class="btn primary" type="button" id="isMe">네, 맞아요</button><button class="btn" type="button" id="notMe">아니에요</button></div></div>'}
   else if(S.look==='hasAccount')res='<div class="note warn"><b>'+(S.has.state==='대기'?'이미 신청하셨어요. 협회가 확인하는 중이에요.':'이미 계정이 있어요.')+'</b> '+esc(S.has.email)+'</div><div class="two"><button class="btn" type="button" id="retry">다시 입력</button><button class="btn primary" type="button" id="goLogin">로그인하러 가기</button></div>';
   else if(S.look==='pending')res='<div class="note warn"><b>가입 신청을 받아 확인하는 중이에요.</b> '+esc(S.has.email)+' 로 결과를 알려 드려요.</div><button class="btn" type="button" id="retry">다시 입력</button>';
   else if(S.look==='none'||S.look==='notme')res='<div class="note warn">'+(S.look==='none'?'<b>협회 명단에서 찾지 못했어요.</b> 이름과 휴대전화를 다시 확인해 주세요. 번호가 바뀌었거나 명단에 없으면 가입 신청을 할 수 있어요.':'명단의 정보와 다르면 가입 신청으로 진행해 주세요. 협회가 확인한 뒤 맞는 정보로 연결해요.')+'</div>'+
-    '<div class="two"><button class="btn" type="button" id="retry">다시 입력</button><button class="btn primary" type="button" id="asNew">가입 신청하기</button></div>';
-  return steps(1)+'<div class="card"><h2>본인 찾기</h2><p class="lede">협회 명단에 있는 이름과 휴대전화로 선생님을 찾아요.</p>'+
+    '<div class="two"><button class="btn" type="button" id="retry">다시 입력</button><button class="btn primary" type="button" id="asNew">신규 회원 가입으로</button></div>';
+  var nw=S.mode==='new';
+  return steps(1)+'<div class="card"><h2>'+(nw?'신규 회원 가입':'교사회원 확인')+'</h2><p class="lede">'+(nw?'이름과 휴대전화를 넣어 주세요. 협회 명단에 이미 있는 선생님인지 먼저 확인해요.':'협회 명단에 있는 이름과 휴대전화로 선생님을 찾아요.')+'</p>'+
     '<div class="two"><div><label class="f" for="iNm">이름 <span class="req">*</span><input type="text" id="iNm" '+bad('name')+' value="'+esc(S.name)+'" autocomplete="name" '+(S.look?'disabled':'')+'></label>'+fe('name')+'</div>'+
     '<div><label class="f" for="iPh">휴대전화 <span class="req">*</span><input type="tel" id="iPh" '+bad('phone')+' value="'+esc(ph010(S.phone))+'" inputmode="numeric" autocomplete="tel" '+(S.look?'disabled':'')+'></label>'+fe('phone')+'</div></div>'+
     msgBox()+(S.look?'':btn('lookup','찾기'))+res+'</div>'}
@@ -199,7 +203,7 @@ function vDone(){
 function vLogin(){if(S.fp)return vForgot();
   return '<div class="card"><h2>로그인</h2><label class="f" for="le">이메일<input type="email" id="le" value="'+esc(S.email)+'" autocomplete="username" placeholder="name@naver.com"></label>'+
   '<label class="f" for="lp">비밀번호<input type="password" id="lp" autocomplete="current-password"></label>'+msgBox()+btn('doLogin','로그인')+
-  '<div class="spread"><button class="btn ghost small" type="button" id="goFind">계정 만들기</button><button class="btn ghost small" type="button" id="forgot">비밀번호를 잊었어요</button></div></div>'}
+  '<div class="spread"><button class="btn ghost small" type="button" id="goHome">처음 화면</button><button class="btn ghost small" type="button" id="forgot">비밀번호를 잊었어요</button></div></div>'}
 function vForgot(){var f=S.fp;return '<div class="card"><h2>비밀번호 다시 만들기</h2>'+(f.sent?'<p class="lede"><b>'+esc(f.email)+'</b> 로 가입돼 있으면 6자리 코드를 보냈어요. 15분 안에 넣어 주세요.</p>'+(f.code?'<div class="note warn">테스트(STG) 코드: <b class="num">'+esc(f.code)+'</b></div>':'')+
   '<label class="f" for="rc">재설정 코드<input type="text" id="rc" class="code" inputmode="numeric" maxlength="6"></label><label class="f" for="rp">새 비밀번호 <span class="opt">8자 이상</span><input type="password" id="rp" autocomplete="new-password"></label>'+msgBox()+btn('doReset','비밀번호 바꾸기')
   :'<label class="f" for="fe2">가입한 이메일<input type="email" id="fe2" value="'+esc(f.email)+'" autocomplete="username"></label>'+msgBox()+btn('sendReset','재설정 코드 받기'))+'<button class="btn ghost small" type="button" id="fpBack">로그인으로</button></div>'}
@@ -246,10 +250,10 @@ function setSess(t){S.sess=t;try{sessionStorage.setItem('tm-sess',t)}catch(x){}}
 document.addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;var d=b.dataset,v=function(id){var x=document.getElementById(id);return x?x.value:''};
   if(b.id==='homeBtn'||b.id==='goHome'){S.hist=[];go(S.sess?'me':'home',true);if(S.sess)loadMe();return}
   if(b.id==='backBtn'){var p=S.hist.pop();if(p){S.v=p;S.err={};S.msg='';render();window.scrollTo(0,0)}return}
-  if(b.id==='goFind'){Object.assign(S,{name:'',phone:'',token:'',look:'',card:null,email:'',code:'',agree:false,c:{acadOk:null,acadNote:'',instOk:null,instNote:'',kind:'',kindNote:''},j:{type:'',acad:'',acadText:'',noAcad:false,inst:'',course:''}});go('find');return}
+  if(b.id==='goFind'||b.id==='goNew'){S.mode=b.id==='goNew'?'new':'member';Object.assign(S,{name:'',phone:'',token:'',look:'',card:null,email:'',code:'',agree:false,c:{acadOk:null,acadNote:'',instOk:null,instNote:'',kind:'',kindNote:''},j:{type:'',acad:'',acadText:'',noAcad:false,inst:'',course:''}});go('find');return}
   if(b.id==='goLogin'){S.fp=null;go('login');return}
   if(b.id==='lookup'){S.name=v('iNm').trim();S.phone=v('iPh').replace(/\D/g,'');var er={};if(!S.name)er.name='이름을 넣어 주세요.';if(!/^01\d{8,9}$/.test(S.phone))er.phone='휴대전화 번호를 확인해 주세요.';S.err=er;if(Object.keys(er).length){render();return}
-    run(function(){return call('tLookup',[S.name,S.phone]).then(function(r){if(!r.ok){S.msg=r.msg;return}S.look=r.status;S.token=r.token||'';S.card=r.card||null;S.has=r})});return}
+    run(function(){return call('tLookup',[S.name,S.phone]).then(function(r){if(!r.ok){S.msg=r.msg;return}S.look=r.status;S.token=r.token||'';S.card=r.card||null;S.has=r;if(S.mode==='new'&&r.status==='none'){S.hist.push('find');S.v='email'}})});return}
   if(b.id==='retry'){S.look='';S.card=null;S.token='';render();return}
   if(b.id==='notMe'){S.look='notme';S.card=null;render();return}
   if(b.id==='isMe'){go('email');return}

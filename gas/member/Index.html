@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261028-012044 -->
+<!-- build: 20261028-012309 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -351,13 +351,16 @@ function vReq(){var L=S.reqs;if(!L)return '<div class="panel"><span><span class=
     '<div class="tile warn"><span class="k">외부 참여자</span><span class="v">'+L.filter(function(q){return q['상태']==='대기'&&q['종류']==='외부 참여자'}).length+'</span><span class="s">반주자·스태프 등</span></div>'+
     '<div class="tile"><span class="k">정보 수정</span><span class="v">'+L.filter(function(q){return q['상태']==='대기'&&q['종류']==='정보 수정'}).length+'</span><span class="s">「달라요」 메모</span></div></div>'+
     (list.length?list.map(reqCard).join(''):'<div class="panel"><p class="cap">요청이 없어요.</p></div>')}
+function reqWorks(info){var w=info['_근무'];if(!Array.isArray(w)){try{w=JSON.parse(info['근무JSON']||'null')}catch(x){w=null}}
+  if(!Array.isArray(w)||!w.length)return esc(info['근무지']);
+  return w.map(function(x,i){return '<div>'+(i===0?'<span class="pill info">주 근무</span> ':'')+'<b>'+esc(x.id?((A[x.id]||{})['학원명']||x.id):x.text+' (목록에 없음)')+'</b> <span class="cap num">'+esc(String(x.start||'').replace('-','.'))+' ~ 근무 중</span></div>'}).join('')}
 function reqCard(q){var info={};try{info=JSON.parse(q['내용']||'{}')}catch(x){}
   var t=q['교사ID']&&T[q['교사ID']];
   var cand=q['종류']==='새 회원'||q['종류']==='외부 참여자'?S.D.tch.filter(function(x){return x['이름']===q['이름']||(q['휴대전화']&&x['휴대전화']===q['휴대전화'])}):[];
   var badge={'새 회원':'<span class="pill bad">새 회원</span>','이메일 확인':'<span class="pill due">이메일 확인</span>','정보 수정':'<span class="pill info">정보 수정</span>','외부 참여자':'<span class="pill due">외부 참여자</span>'}[q['종류']]||esc(q['종류']);
   return '<div class="panel"><div class="sec-h"><h3>'+badge+' '+esc(q['이름'])+' <span class="cap num">'+esc(q['요청ID'])+'</span></h3><span class="cap">'+esc(q['신청일'])+' · '+esc(q['상태'])+(q['처리일']?' · '+esc(q['처리일'])+' '+esc(q['처리자']):'')+'</span></div>'+
     '<dl class="kv"><dt>휴대전화</dt><dd class="num">'+fmt(q['휴대전화'])+'</dd><dt>이메일</dt><dd>'+esc(q['이메일'])+'</dd>'+(t?'<dt>명단</dt><dd><b>'+nm(t)+'</b> '+esc(tAcadTxt(t))+' · '+esc(t['전공'])+' <button class="btn small ghost" type="button" data-opent="'+t['교사ID']+'">교사 열기</button></dd>':'')+
-    Object.keys(info).filter(function(k){return k!=='근무JSON'}).map(function(k){return '<dt>'+esc(k)+'</dt><dd>'+esc(info[k])+'</dd>'}).join('')+(q['메모']?'<dt>처리 메모</dt><dd>'+esc(q['메모'])+'</dd>':'')+'</dl>'+
+    Object.keys(info).filter(function(k){return k.charAt(0)!=='_'&&k!=='근무JSON'&&info[k]!==''&&info[k]!=null}).map(function(k){return '<dt>'+esc(k)+'</dt><dd>'+(k==='근무지'?reqWorks(info):esc(info[k]))+'</dd>'}).join('')+(q['메모']?'<dt>처리 메모</dt><dd>'+esc(q['메모'])+'</dd>':'')+'</dl>'+
     (q['상태']!=='대기'?'':
      q['종류']==='새 회원'||q['종류']==='외부 참여자'?(cand.length?'<div class="note">명단에 비슷한 선생님이 있어요: '+cand.map(function(x){return '<b>'+nm(x)+'</b> '+esc(tAcadTxt(x))+' · 뒷자리 '+String(x['휴대전화']).slice(-4)+' <button class="btn small" type="button" data-rq="'+q['요청ID']+'|승인|'+x['교사ID']+'">이 선생님에 연결</button>'}).join(' / ')+'</div>':'')+
        '<div class="row"><button class="btn small primary" type="button" data-rq="'+q['요청ID']+'|승인|">'+(q['종류']==='외부 참여자'?'승인 · 외부 참여자로 등록 (강사료 대상)':'승인 · 새 교사로 등록')+'</button><input type="text" id="why_'+q['요청ID']+'" placeholder="반려 사유" style="flex:1;min-width:160px"><button class="btn small" type="button" data-rq="'+q['요청ID']+'|반려|">반려</button></div>'

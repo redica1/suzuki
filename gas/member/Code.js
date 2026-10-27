@@ -1,4 +1,4 @@
-/* build: 20261028-012044 */
+/* build: 20261028-012309 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -513,7 +513,7 @@ function cleanInfo_(n, mode) {
   if (INSTS_.indexOf(n.inst) < 0) fail('악기를 골라 주세요.'); o.inst = n.inst;
   o.certs = (n.certs || []).filter(x => CERTS_.indexOf(x.n) >= 0 && x.n !== '티처트레이너')   /* 티처트레이너는 관리자만 (10-28) */.map(x => { if (!/^(19|20)\d{2}$/.test(String(x.y))) fail(x.n + ' 취득 년도를 골라 주세요.'); return { n: x.n, y: String(x.y) }; });
   o.certTxt = o.certs.map(x => x.n + (x.y ? ' ' + x.y : '')).join(', ');
-  o.acadNames = o.noWork ? '현재 근무지 없음' : o.works.map(w => (an[w.id] || '(목록에 없음) ' + w.text) + ' ' + w.start + '~').join(', ');
+  o.acadNames = o.noWork ? '현재 근무지 없음' : o.works.map(w => (an[w.id] || w.text + ' (목록에 없음)') + ' ' + w.start.replace('-', '.') + '~').join(' · ');
   return o;
 }
 function tCreate(token, d) {
@@ -557,7 +557,7 @@ function tCreate(token, d) {
       tbl_('계정').append({ '이메일': s.email, '교사ID': '', '비번해시': hash_(d.pw, salt), '솔트': salt, '상태': '대기', '경로': mode === 'ext' ? '외부 참여자' : '신규 회원', '만든날': stamp });
       putPay_('E:' + s.email, s.email, pay);   // 승인되면 교사 번호로 바뀜
       addReq_(mode === 'ext' ? '외부 참여자' : '새 회원', '', s, mode === 'ext' ? { '가입 종류': '외부 참여자', '하는 일': o.extRole, '소속': o.org || '-', '악기': o.inst || '-' }
-        : { '가입 종류': o.type, '연수 과정': o.course, '회원 구분': o.kind, '근무지': o.acadNames, '근무JSON': JSON.stringify(o.works), '직급': o.role || '없음', '악기': o.inst, '자격': o.certTxt });
+        : { '가입 종류': o.type, '연수 과정': o.course, '회원 구분': o.kind, '근무지': o.acadNames, '_근무': o.works, '직급': o.role || '없음', '악기': o.inst, '자격': o.certTxt });
       log_(s.name, '계정', s.email, '가입 신청', o.type + ' · ' + o.kind);
     }
   } finally { lock.releaseLock(); }
@@ -718,7 +718,7 @@ function reqDo(who, id, act, memo, linkTid) {
       if (linkTid) { if (T.find('교사ID', linkTid) < 0) fail('연결할 교사 번호를 찾지 못했어요.'); tid = linkTid; T.set(T.find('교사ID', tid), { '이메일': email, '회원구분': info['회원 구분'] || '확인 전', '수정일': now_(), '수정자': who.name }); }
       else if (ext) { tid = nextId_(T, '교사ID', 'X');
         T.append({ '교사ID': tid, '이름': name, '원래이름': name, '휴대전화': digits_(q[c['휴대전화']]), '이메일': email, '전공': info['악기'] === '-' ? '' : (info['악기'] || ''), '회원구분': '외부 참여자', '회비구분': '면제', '캠프교수': '아니오', '내부외부': '외부', '강사료대상': '예', '상태': '활동', '확인': '확인 전', '확인메모': '외부 참여자 · ' + (info['하는 일'] || '') + (info['소속'] && info['소속'] !== '-' ? ' · ' + info['소속'] : ''), '원본': '외부 참여자 신청 ' + id, '수정일': now_(), '수정자': who.name }); }
-      else { tid = nextId_(T, '교사ID', 'T'); const wk = (() => { try { return JSON.parse(info['근무JSON'] || '[]'); } catch (e) { return []; } })(); const ac = wk.filter(w => w.id).map(w => w.id);
+      else { tid = nextId_(T, '교사ID', 'T'); const wk = (() => { try { return Array.isArray(info['_근무']) ? info['_근무'] : JSON.parse(info['근무JSON'] || '[]'); } catch (e) { return []; } })(); const ac = wk.filter(w => w.id).map(w => w.id);
         T.append({ '교사ID': tid, '이름': name, '원래이름': name, '휴대전화': digits_(q[c['휴대전화']]), '이메일': email, '학원1': ac[0] || '', '학원2': ac[1] || '', '학원3': ac[2] || '', '직급': info['직급'] === '없음' ? '' : (info['직급'] || ''), '전공': info['악기'] || '', '회원구분': info['회원 구분'] || '확인 전', '본인자격': info['자격'] || '',
           '회비구분': '납부', '캠프교수': '아니오', '상태': '활동', '확인': '확인 전', '확인메모': (info['가입 종류'] || '') + ' 가입 신청' + (info['연수 과정'] ? ' · ' + info['연수 과정'] + ' 과정' : '') + (/목록에 없음/.test(info['근무지'] || '') ? ' · ' + info['근무지'] : ''), '원본': '가입 신청 ' + id, '수정일': now_(), '수정자': who.name });
         setWorksAtSignup_(tid, wk, who.name + ' (가입 승인)'); }

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261028-085222 -->
+<!-- build: 20261028-085403 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -261,7 +261,7 @@ function payCards(m){var p=m.pay||{},ed=S.payEd,d=S.pay||{};
   var h='<div class="lock">'+head('집 주소','home')+(ed==='home'?addrBlock('h','집 주소',d,'h')+msgBox()+edBtns():
       '<p>'+(p.haddr?(p.hzip?'<span class="num">('+esc(p.hzip)+')</span> ':'')+esc(p.haddr)+' '+esc(p.haddr2):'<span class="hint">아직 없어요</span>')+'</p>')+'</div>';
   var ml='<div class="lock">'+head('우편물 받을 주소','mail','공문 · 포스터')+(ed==='mail'?
-      '<label class="agree" for="pSame"><input type="checkbox" id="pSame" '+(d.same?'checked':'')+'><div><b>집 주소와 같아요</b>'+(p.haddr?'<span class="hint"> '+esc(p.haddr)+'</span>':'')+'</div></label>'+(d.same?'':addrBlock('m','우편물 받을 주소',d,''))+msgBox()+edBtns():
+      mailBlock(d,p.haddr?p.haddr:'')+msgBox()+edBtns():
       '<p>'+(p.addr?(sameNow?'<span class="pill info">집 주소와 같음</span> ':'')+(p.zip?'<span class="num">('+esc(p.zip)+')</span> ':'')+esc(p.addr)+' '+esc(p.addr2):'<span class="hint">아직 없어요</span>')+'</p>')+'</div>';
   return a+h+ml+'<p class="hint" style="margin:-4px 4px 12px">정산 정보와 주소는 협회 관리자만 볼 수 있어요. 학원이나 다른 선생님에게는 보이지 않아요.</p>'}
 var B_CATS=['회원가입','정보 수정','회비','캠프·행사','기타'];
@@ -310,16 +310,18 @@ function workCard(m){var ws=m.works||[],cur=ws.filter(function(w){return !w.end}
     '<p class="hint">근무지와 근무 이력은 협회와 그 학원 원장님이 볼 수 있어요.</p></div>'}
 function payOut(p){var o={};Object.keys(p).forEach(function(k){if(k!=='rrn'&&k!=='rrnAg')o[k]=p[k]});return o}
 function curPay(){return S.v==='pay'||S.payEd?S.pay:S.j.pay}
-function blankPay(name){return {hzip:'',haddr:'',haddr2:'',same:true,zip:'',addr:'',addr2:'',bank:'',acct:'',holder:name||''}}
-function addrBlock(k,label,d,pre){return '<div class="f"><span>'+label+' <span class="req">*</span></span>'+
-  '<div class="row" style="flex-wrap:nowrap"><input type="text" id="z_'+k+'" value="'+esc(d[pre+'zip'])+'" class="num" style="width:96px;flex:none" placeholder="우편번호" inputmode="numeric" aria-label="우편번호" '+bad('a_'+k)+'><input type="text" id="a_'+k+'" value="'+esc(d[pre+'addr'])+'" placeholder="주소 검색을 눌러 주세요" aria-label="기본주소" '+bad('a_'+k)+'><button class="btn small" type="button" data-post="'+k+'" style="flex:none">주소 검색</button></div>'+
+function blankPay(name){return {hzip:'',haddr:'',haddr2:'',same:false,zip:'',addr:'',addr2:'',bank:'',acct:'',holder:name||''}}
+function addrBlock(k,label,d,pre,ro){var R=ro?' readonly tabindex="-1" style="opacity:.75"':'';return '<div class="f">'+(label?'<span>'+label+' <span class="req">*</span></span>':'')+
+  '<div class="row" style="flex-wrap:nowrap"><input type="text" id="z_'+k+'" value="'+esc(d[pre+'zip'])+'" class="num" style="width:96px;flex:none" placeholder="우편번호" inputmode="numeric" aria-label="우편번호" '+bad('a_'+k)+(ro?' readonly tabindex="-1"':'')+'><input type="text" id="a_'+k+'" value="'+esc(d[pre+'addr'])+'" placeholder="주소 검색을 눌러 주세요" aria-label="기본주소" '+bad('a_'+k)+R+'><button class="btn small" type="button" data-post="'+k+'" style="flex:none" '+(ro?'disabled':'')+'>주소 검색</button></div>'+
   '<div id="postWrap_'+k+'" class="postWrap" '+(S.postFor===k?'':'hidden')+'></div>'+
-  '<input type="text" id="d_'+k+'" value="'+esc(d[pre+'addr2'])+'" placeholder="상세주소 (동·호수)" aria-label="상세주소">'+fe('a_'+k)+'</div>'}
+  '<input type="text" id="d_'+k+'" value="'+esc(d[pre+'addr2'])+'" placeholder="상세주소 (동·호수)" aria-label="상세주소"'+R+'>'+fe('a_'+k)+'</div>'}
+function mailBlock(d,hint){return '<div class="f"><span>우편물 받을 주소 <span class="req">*</span> <span class="opt">공문·포스터</span></span>'+
+  '<label class="agree" for="pSame"><input type="checkbox" id="pSame" '+(d.same?'checked':'')+'><div><b>집 주소와 같아요</b>'+(hint?'<span class="hint"> '+esc(hint)+'</span>':'')+'</div></label></div>'+
+  addrBlock('m','',d,'',d.same)}
 function payFields(d,editing,cur){
   return '<div class="lock"><h3>주소 · 계좌 <span class="opt">'+(editing?'':'필수 · ')+'협회 관리자만 볼 수 있어요</span></h3>'+
     addrBlock('h','집 주소',d,'h')+
-    '<div class="f"><span>우편물 받을 주소 <span class="req">*</span> <span class="opt">공문·포스터</span></span><label class="agree" for="pSame"><input type="checkbox" id="pSame" '+(d.same?'checked':'')+'><div><b>집 주소와 같아요</b></div></label></div>'+
-    (d.same?'':addrBlock('m','우편물 받을 주소',d,''))+
+    mailBlock(d,'')+
     '<h3 style="margin-top:4px">계좌 <span class="opt">강사료 지급·환불</span></h3>'+(cur&&cur.acct?'<p class="hint">지금 등록된 계좌: <b class="num">'+esc(cur.bank+' '+cur.acct)+'</b> · 바꿀 때만 새로 넣어 주세요.</p>':'')+
     '<div class="two"><label class="f" for="pBank">은행 <span class="req">*</span><select id="pBank" '+bad('bank')+'><option value="">선택</option>'+BANKS.map(function(b){return '<option '+(b===d.bank?'selected':'')+'>'+b+'</option>'}).join('')+'</select></label>'+
     '<label class="f" for="pAcct">계좌번호 '+(cur&&cur.acct?'<span class="opt">바꿀 때만</span>':'<span class="req">*</span>')+'<input type="text" id="pAcct" '+bad('acct')+' value="'+esc(d.acct)+'" inputmode="numeric" autocomplete="off" placeholder="숫자와 -"></label></div>'+
@@ -331,13 +333,13 @@ function rrnSignup(d){return '<h3 style="margin-top:4px">주민등록번호 <spa
     '<label class="agree" for="pRrnAg"><input type="checkbox" id="pRrnAg" '+(d.rrnAg?'checked':'')+'><div><b>[주민등록번호를 넣을 때 필수] 고유식별정보 처리 안내 확인</b>'+rrnNotice()+'</div></label>'+fe('rrnAg')}
 function readPayIn(){var d=curPay();if(!d)return;var g=function(id){var e=document.getElementById(id);return e?e.value.trim():null};
   var m={hzip:'z_h',haddr:'a_h',haddr2:'d_h',zip:'z_m',addr:'a_m',addr2:'d_m',bank:'pBank',acct:'pAcct',holder:'pHold',eng:'pEng',rrn:'pRrn'};
-  Object.keys(m).forEach(function(k){var x=g(m[k]);if(x!==null)d[k]=x});var s=document.getElementById('pSame');if(s)d.same=s.checked;var ra=document.getElementById('pRrnAg');if(ra)d.rrnAg=ra.checked}
+  Object.keys(m).forEach(function(k){var x=g(m[k]);if(x!==null)d[k]=x});var s=document.getElementById('pSame');if(s)d.same=s.checked;var ra=document.getElementById('pRrnAg');if(ra)d.rrnAg=ra.checked;if(d.same){d.zip=d.hzip;d.addr=d.haddr;d.addr2=d.haddr2}}
 function checkPay(d,hasAcct){var e={};if(!d.haddr)e.a_h='「주소 검색」으로 집 주소를 넣어 주세요.';if(!d.same&&!d.addr)e.a_m='「주소 검색」으로 우편물 받을 주소를 넣어 주세요.';
   if(!d.bank)e.bank='은행을 골라 주세요.';if(!d.acct&&!hasAcct)e.acct='계좌번호를 넣어 주세요.';else if(d.acct&&!/^[\d-]{8,20}$/.test(d.acct))e.acct='계좌번호는 숫자와 - 로 넣어 주세요.';
   if(!d.holder)e.holder='예금주를 넣어 주세요.';return e}
 function openPost(){var k=S.postFor,w=document.getElementById('postWrap_'+k);if(!w)return;w.hidden=false;
   if(!window.daum||!daum.Postcode){w.innerHTML='<p class="hint" style="padding:12px">주소 검색을 불러오지 못했어요. 우편번호와 주소를 직접 넣어 주세요.</p>';w.style.height='auto';return}
-  new daum.Postcode({width:'100%',height:'100%',oncomplete:function(r){readPayIn();var d=curPay(),pre=k==='h'?'h':'';d[pre+'zip']=r.zonecode;d[pre+'addr']=r.roadAddress||r.jibunAddress;delete S.err['a_'+k];S.postFor='';render();var n=document.getElementById('d_'+k);if(n)n.focus()}}).embed(w)}
+  new daum.Postcode({width:'100%',height:'100%',oncomplete:function(r){readPayIn();var d=curPay(),pre=k==='h'?'h':'';d[pre+'zip']=r.zonecode;d[pre+'addr']=r.roadAddress||r.jibunAddress;if(d.same&&pre==='h'){d.zip=d.hzip;d.addr=d.haddr}delete S.err['a_'+k];S.postFor='';render();var n=document.getElementById('d_'+k);if(n)n.focus()}}).embed(w)}
 function vPay(){var m=S.me||{},p=m.pay||{};
   var d=S.pay||(S.pay={eng:m.eng||'',hzip:p.hzip||'',haddr:p.haddr||'',haddr2:p.haddr2||'',same:!p.addr||(p.addr===p.haddr&&p.addr2===p.haddr2),zip:p.zip||'',addr:p.addr||'',addr2:p.addr2||'',bank:p.bank||'',acct:'',holder:p.holder||m.name||''});
   return '<div class="card"><h2>정산 정보 고치기</h2>'+
@@ -469,7 +471,7 @@ document.addEventListener('input',function(e){var el=e.target;
   if(el.id==='z_h'||el.id==='z_m'){el.value=el.value.replace(/\D/g,'').slice(0,5)}
   if(el.id==='rrnIn'){var x=el.value.replace(/\D/g,'').slice(0,13);el.value=x.length>6?x.slice(0,6)+'-'+x.slice(6):x}
   if(el.id==='aq'){S.aq=el.value;document.getElementById('aList').innerHTML=aItems(aHits())}});
-document.addEventListener('change',function(e){if(e.target.id==='pSame'){readPayIn();render();return}if(e.target.id==='noWork'){readConfirm();S.acadTyping=false;if(S.j.noWork)delete S.err.acad;render();return}var dm=e.target.dataset&&e.target.dataset.dom;if(dm){var x=document.getElementById(dm+'X');x.hidden=!!e.target.value;if(!e.target.value)x.focus();return}
+document.addEventListener('change',function(e){if(e.target.id==='pSame'){readPayIn();var pd=curPay();if(pd&&pd.same){pd.zip=pd.hzip;pd.addr=pd.haddr;pd.addr2=pd.haddr2;delete S.err.a_m}render();return}if(e.target.id==='noWork'){readConfirm();S.acadTyping=false;if(S.j.noWork)delete S.err.acad;render();return}var dm=e.target.dataset&&e.target.dataset.dom;if(dm){var x=document.getElementById(dm+'X');x.hidden=!!e.target.value;if(!e.target.value)x.focus();return}
   var n=e.target.dataset&&e.target.dataset.cert;if(!n)return;readConfirm();if(e.target.checked)S.j.certs[n]='';else delete S.j.certs[n];delete S.err['cy_'+n];render()});
 document.addEventListener('keydown',function(e){if(e.key!=='Enter')return;var m={iNm:'lookup',iPh:'lookup',eEmU:'sendCode',eEmX:'sendCode',cCode:'verify',leU:'doLogin',leX:'doLogin',lp:'doLogin',fe2U:'sendReset',fe2X:'sendReset',rp:'doReset'}[e.target.id];if(m){e.preventDefault();var b=document.getElementById(m);if(b)b.click()}});
 

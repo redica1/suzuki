@@ -1,4 +1,4 @@
-/* build: 20261028-012404 */
+/* build: 20261028-013026 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -19,6 +19,7 @@ const HEAD = {
   '연회비': ['대상', 'ID', '년도', '부과', '납부', '납부일', '방식', '메모', '수정일', '수정자'],
   '설정': ['항목', '값', '설명'],
   '기록': ['일시', '누가', '표', 'ID', '동작', '내용'],
+  '참가이력': ['이력ID', '대상', 'ID', '행사', '년도', '기간', '역할', '상태', '메모', '수정일', '수정자'],   // 행사 참여 기록 (10-28): 캠프·졸업연주 등이 끝나면 여기에 모음
   '근무': ['근무ID', '교사ID', '학원ID', '학원명', '시작', '종료', '주근무', '출처', '메모', '수정일', '수정자'],   // 근무지 이력 (10-28): 한 줄 = 한 근무지, 종료가 비면 지금 근무 중
   '계정': ['이메일', '교사ID', '비번해시', '솔트', '상태', '경로', '만든날', '처리일', '마지막로그인', '메모'],
   '요청': ['요청ID', '종류', '교사ID', '이름', '휴대전화', '이메일', '내용', '상태', '신청일', '처리일', '처리자', '메모'],
@@ -610,7 +611,10 @@ function tMe(sess) {
   const p = payRow_(u.tid);
   const reqs = tbl_('요청').v.filter(q => q[2] === u.tid && q[7] === '대기').map(q => q[1]);
   const works = worksOf_(u.tid).map(w => ({ wid: w['근무ID'], aid: w['학원ID'], name: w['학원ID'] ? (an[w['학원ID']] || w['학원ID']) : w['학원명'] + ' (목록에 없음)', start: w['시작'], end: w['종료'], main: w['주근무'] === '예' }));
-  return { me: { works, ext: g('회원구분') === '외부 참여자', name: g('이름'), phone: g('휴대전화'), email: u.email, acads: [g('학원1'), g('학원2'), g('학원3')].filter(Boolean).map(id => an[id] || id), role: g('직급'), inst: g('전공'), kind: g('회원구분'), eng: g('영문이름'), heads,
+  const dues = tbl_('연회비').v.filter(d => d[0] === '교사' && d[1] === u.tid).map(d => ({ year: d[2], due: +d[3] || 0, paid: +d[4] || 0, date: d[5], way: d[6] })).sort((a, b) => String(b.year).localeCompare(String(a.year)));
+  let events = tbl_('참가이력').v.filter(e => e[1] === '교사' && e[2] === u.tid).map(e => ({ name: e[3], year: e[4], period: e[5], role: e[6], state: e[7] })).sort((a, b) => String(b.year).localeCompare(String(a.year)));
+  if (!events.length && settings_()['테스트 표시'] === '예') events = [{ sample: true, name: '2026 여름 스즈키 음악캠프', year: '2026', period: '2026.07.27 ~ 07.31', role: '교사', state: '참가' }];   // STG 예시 (더미)
+  return { me: { works, dues, events, duesWay: g('회비납부방법'), duesFree: g('회비구분') === '면제', ext: g('회원구분') === '외부 참여자', name: g('이름'), phone: g('휴대전화'), email: u.email, acads: [g('학원1'), g('학원2'), g('학원3')].filter(Boolean).map(id => an[id] || id), role: g('직급'), inst: g('전공'), kind: g('회원구분'), eng: g('영문이름'), heads,
     payee: g('강사료대상') === '예',
     pay: p ? { bank: p['은행'], acct: maskAcct_(p['계좌번호']), holder: p['예금주'], zip: p['우편번호'], addr: p['주소'], addr2: p['상세주소'], hzip: p['집우편번호'], haddr: p['집주소'], haddr2: p['집상세주소'], rrn: p['주민번호표시'] || '', rrnAt: p['주민번호동의일'] || '' } : null, reqs } };
 }

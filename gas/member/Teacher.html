@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261028-013539 -->
+<!-- build: 20261028-013819 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -274,6 +274,7 @@ function workCard(m){var ws=m.works||[],cur=ws.filter(function(w){return !w.end}
   return '<div class="card"><h3>근무지</h3>'+(cur.length?'<ul class="hist">'+cur.map(li).join('')+'</ul>':'<p class="hint">현재 근무지 없음</p>')+add+
     (past.length?'<h3 style="margin-top:10px">지난 근무지</h3><ul class="hist">'+past.map(li).join('')+'</ul>':'')+
     '<p class="hint">근무지와 근무 이력은 협회와 그 학원 원장님이 볼 수 있어요.</p></div>'}
+function payOut(p){var o={};Object.keys(p).forEach(function(k){if(k!=='rrn'&&k!=='rrnAg')o[k]=p[k]});return o}
 function curPay(){return S.v==='pay'?S.pay:S.j.pay}
 function blankPay(name){return {hzip:'',haddr:'',haddr2:'',same:true,zip:'',addr:'',addr2:'',bank:'',acct:'',holder:name||''}}
 function addrBlock(k,label,d,pre){return '<div class="f"><span>'+label+' <span class="req">*</span></span>'+
@@ -288,10 +289,15 @@ function payFields(d,editing,cur){
     '<h3 style="margin-top:4px">계좌 <span class="opt">강사료 지급·환불</span></h3>'+(cur&&cur.acct?'<p class="hint">지금 등록된 계좌: <b class="num">'+esc(cur.bank+' '+cur.acct)+'</b> · 바꿀 때만 새로 넣어 주세요.</p>':'')+
     '<div class="two"><label class="f" for="pBank">은행 <span class="req">*</span><select id="pBank" '+bad('bank')+'><option value="">선택</option>'+BANKS.map(function(b){return '<option '+(b===d.bank?'selected':'')+'>'+b+'</option>'}).join('')+'</select></label>'+
     '<label class="f" for="pAcct">계좌번호 '+(cur&&cur.acct?'<span class="opt">바꿀 때만</span>':'<span class="req">*</span>')+'<input type="text" id="pAcct" '+bad('acct')+' value="'+esc(d.acct)+'" inputmode="numeric" autocomplete="off" placeholder="숫자와 -"></label></div>'+
-    '<label class="f" for="pHold">예금주 <span class="req">*</span><input type="text" id="pHold" '+bad('holder')+' value="'+esc(d.holder)+'"></label>'+fe('bank')+fe('acct')+fe('holder')+'</div>'}
+    '<label class="f" for="pHold">예금주 <span class="req">*</span><input type="text" id="pHold" '+bad('holder')+' value="'+esc(d.holder)+'"></label>'+fe('bank')+fe('acct')+fe('holder')+(editing?'':rrnSignup(d))+'</div>'}
+function rrnNotice(){return '<details><summary>자세히</summary>항목: 주민등록번호. 목적: 강사료 원천징수와 지급명세서 제출(소득세법). 강사료를 받지 않으면 넣지 않아도 돼요. 보관: 세법이 정한 기간이 지나면 지워요. 암호화해서 보관하고 협회 관리자만 볼 수 있어요.</details>'}
+function rrnSignup(d){return '<h3 style="margin-top:4px">주민등록번호 <span class="opt">선택 · 강사료를 받으실 분만</span></h3>'+
+    '<p class="hint">캠프 교수·강사 등으로 협회에서 강사료를 받으면 세금(원천징수) 신고에 필요해요. 해당 없으면 비워 두세요. 나중에 「내 정보」에서 넣어도 돼요.</p>'+
+    '<label class="f" for="pRrn">주민등록번호<input type="password" id="pRrn" '+bad('rrn')+' value="'+esc(d.rrn||'')+'" inputmode="numeric" maxlength="14" autocomplete="off" placeholder="900101-2345678"></label>'+fe('rrn')+
+    '<label class="agree" for="pRrnAg"><input type="checkbox" id="pRrnAg" '+(d.rrnAg?'checked':'')+'><div><b>[주민등록번호를 넣을 때 필수] 고유식별정보 처리 안내 확인</b>'+rrnNotice()+'</div></label>'+fe('rrnAg')}
 function readPayIn(){var d=curPay();if(!d)return;var g=function(id){var e=document.getElementById(id);return e?e.value.trim():null};
-  var m={hzip:'z_h',haddr:'a_h',haddr2:'d_h',zip:'z_m',addr:'a_m',addr2:'d_m',bank:'pBank',acct:'pAcct',holder:'pHold',eng:'pEng'};
-  Object.keys(m).forEach(function(k){var x=g(m[k]);if(x!==null)d[k]=x});var s=document.getElementById('pSame');if(s)d.same=s.checked}
+  var m={hzip:'z_h',haddr:'a_h',haddr2:'d_h',zip:'z_m',addr:'a_m',addr2:'d_m',bank:'pBank',acct:'pAcct',holder:'pHold',eng:'pEng',rrn:'pRrn'};
+  Object.keys(m).forEach(function(k){var x=g(m[k]);if(x!==null)d[k]=x});var s=document.getElementById('pSame');if(s)d.same=s.checked;var ra=document.getElementById('pRrnAg');if(ra)d.rrnAg=ra.checked}
 function checkPay(d,hasAcct){var e={};if(!d.haddr)e.a_h='「주소 검색」으로 집 주소를 넣어 주세요.';if(!d.same&&!d.addr)e.a_m='「주소 검색」으로 우편물 받을 주소를 넣어 주세요.';
   if(!d.bank)e.bank='은행을 골라 주세요.';if(!d.acct&&!hasAcct)e.acct='계좌번호를 넣어 주세요.';else if(d.acct&&!/^[\d-]{8,20}$/.test(d.acct))e.acct='계좌번호는 숫자와 - 로 넣어 주세요.';
   if(!d.holder)e.holder='예금주를 넣어 주세요.';return e}
@@ -303,12 +309,12 @@ function vPay(){var m=S.me||{},p=m.pay||{};
   return '<div class="card"><h2>정산 정보 고치기</h2>'+
     '<label class="f" for="pEng">영문 이름 <span class="opt">선택 · 명찰·프로그램북 · 예: Kim Suzuki</span><input type="text" id="pEng" value="'+esc(d.eng)+'" autocomplete="off"></label>'+fe('eng')+
     payFields(d,true,p)+msgBox()+btn('savePay','저장')+'<button class="btn block" type="button" id="toMe">취소</button></div>'}
-function rrnBox(m){var p=m.pay||{};if(!m.payee)return '';
+function rrnBox(m){var p=m.pay||{};
   if(p.rrn&&!S.rrnEdit)return '<div class="lock"><h3>강사료 정보</h3><dl class="kv"><dt>주민등록번호</dt><dd class="num">'+esc(p.rrn)+'</dd><dt>넣은 날</dt><dd class="num">'+esc(p.rrnAt)+'</dd></dl><button class="btn small" type="button" id="rrnEdit">다시 넣기</button><p class="hint">암호화해서 보관하고, 협회 관리자만 볼 수 있어요.</p></div>';
-  return '<div class="lock"><h3>강사료 정보 <span class="opt">협회에서 강사료를 받는 선생님</span></h3>'+
+  return '<div class="lock"><h3>강사료 정보 <span class="opt">'+(m.payee?'협회에서 강사료를 받는 선생님':'선택 · 강사료를 받으실 분만')+'</span></h3>'+
     '<p class="hint" style="color:var(--muted)">강사료를 드릴 때 세금(원천징수)을 신고하려면 주민등록번호가 필요해요. 소득세법에 따라 받고, 이 목적에만 써요.</p>'+
     '<label class="f" for="rrnIn">주민등록번호 <span class="req">*</span><input type="password" id="rrnIn" inputmode="numeric" maxlength="14" autocomplete="off" placeholder="900101-2345678"></label>'+
-    '<label class="agree" for="rrnAg"><input type="checkbox" id="rrnAg"><div><b>[필수] 고유식별정보(주민등록번호) 처리 안내 확인</b><details><summary>자세히</summary>항목: 주민등록번호. 목적: 강사료 원천징수와 지급명세서 제출(소득세법). 보관: 세법이 정한 기간이 지나면 지워요. 암호화해서 보관하고 협회 관리자만 볼 수 있어요.</details></div></label>'+
+    '<label class="agree" for="rrnAg"><input type="checkbox" id="rrnAg"><div><b>[필수] 고유식별정보(주민등록번호) 처리 안내 확인</b>'+rrnNotice()+'</div></label>'+
     msgBox()+btn('rrnSave','주민등록번호 저장')+(S.rrnEdit?'<button class="btn ghost small" type="button" id="rrnCancel">취소</button>':'')+'</div>'}
 
 /* ---------- 그리기 ---------- */
@@ -374,10 +380,11 @@ document.addEventListener('click',function(e){var b=e.target.closest('button');i
     Object.keys(j.certs).forEach(function(n){if(!j.certs[n])er2['cy_'+n]=n+' 취득 년도를 골라 주세요.'})}
     if(pw.length<8)er2.pw='비밀번호는 8자 이상이에요.';else if(v('pw2')!==pw)er2.pw2='비밀번호 확인이 달라요.';
     Object.assign(er2,checkPay(j.pay,false));
+    if(j.pay.rrn){if(!/^\d{6}-?[1-8]\d{6}$/.test(j.pay.rrn.replace(/\s/g,'')))er2.rrn='주민등록번호 13자리를 확인해 주세요. 받지 않으면 비워 두세요.';else if(!j.pay.rrnAg)er2.rrnAg='주민등록번호를 넣으려면 안내 확인에 체크해 주세요.'}
     if(!S.agree)er2.agree='동의에 체크해 주세요.';
     S.err=er2;if(Object.keys(er2).length){render();var f=document.querySelector('.fe');if(f)f.scrollIntoView({block:'center'});return}
     var info=ext?{extRole:j.extRole,extRoleText:j.extRoleText,org:j.org,inst:j.inst}:{type:j.type,course:j.course,kind:j.kind,works:j.noWork?[]:j.works,noWork:j.noWork,role:j.role,inst:j.inst,certs:Object.keys(j.certs).map(function(n){return {n:n,y:j.certs[n]}})};
-    run(function(){return call('tCreate',[S.token,{pw:pw,agree:true,mode:ext?'ext':'',info:info,pay:j.pay}]).then(function(r){if(!r.ok){S.msg=r.msg;return}S.state=r.state;if(r.sess){setSess(r.sess);call('tMe',[r.sess]).then(function(x){if(x.ok)S.me=x.me})}S.hist=[];S.v='done';S.pw1='';S.pw2='';window.scrollTo(0,0)})});return}
+    run(function(){return call('tCreate',[S.token,{pw:pw,agree:true,mode:ext?'ext':'',info:info,pay:payOut(j.pay),rrn:j.pay.rrn||'',rrnAgree:!!j.pay.rrnAg}]).then(function(r){if(!r.ok){S.msg=r.msg;return}S.state=r.state;if(r.sess){setSess(r.sess);call('tMe',[r.sess]).then(function(x){if(x.ok)S.me=x.me})}S.hist=[];S.v='done';S.pw1='';S.pw2='';S.j.pay.rrn='';S.j.pay.rrnAg=false;window.scrollTo(0,0)})});return}
   if(b.id==='doLogin'){var em=readEmail('le'),lp=v('lp');S.email=em;
     run(function(){return call('tLogin',[em,lp]).then(function(r){if(!r.ok){S.msg=r.msg;return}setSess(r.sess);S.hist=[];S.v='me';S.me=null;loadMe()})});return}
   if(b.id==='forgot'){S.fp={email:readEmail('le'),sent:false};S.msg='';render();return}

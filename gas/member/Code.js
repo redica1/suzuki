@@ -1,4 +1,4 @@
-/* build: 20261028-013539 */
+/* build: 20261028-013819 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -569,6 +569,7 @@ function tCreate(token, d) {
   if (!d.agree) fail('개인정보 수집·이용 동의에 체크해 주세요.');
   const mode = d.mode === 'ext' && !s.tid ? 'ext' : s.tid ? 'member' : 'new';
   const tid = s.tid, o = cleanInfo_(d.info, mode), pay = cleanPay_(d.pay, true);
+  const rr = String(d.rrn || '').trim() ? rrnRow_(d.rrn, d.rrnAgree) : null;   /* 주민번호: 선택 (10-28) */
   const lock = LockService.getScriptLock(); lock.waitLock(20000);
   let state;
   try {
@@ -590,7 +591,7 @@ function tCreate(token, d) {
       if (tt) o.certTxt = [o.certTxt, tt.trim()].filter(Boolean).join(', ');   // 관리자가 넣은 티처트레이너는 지키기
       if (o.certTxt && o.certTxt !== g('명단자격')) diff.push('자격 (명단: ' + (g('명단자격') || '없음') + ') → ' + o.certTxt);
       const upd = { '학원1': newA[0] || '', '학원2': newA[1] || '', '학원3': newA[2] || '', '직급': o.role, '전공': o.inst, '회원구분': o.kind, '본인자격': o.certTxt, '수정일': stamp, '수정자': s.name + ' (가입)' };
-      putPay_(tid, s.email, pay);
+      putPay_(tid, s.email, pay); if (rr) { putRrn_(tid, rr); upd['강사료대상'] = '예'; }
       if (s.emailMatch) upd['이메일'] = s.email;
       if (diff.length) { upd['확인'] = '확인 필요'; upd['확인메모'] = [g('확인메모'), '가입 때 바꿈: ' + diff.join(' · ')].filter(Boolean).join(' · ').slice(0, 500); }
       T.set(i, upd);
@@ -602,8 +603,9 @@ function tCreate(token, d) {
       state = '대기';
       tbl_('계정').append({ '이메일': s.email, '교사ID': '', '비번해시': hash_(d.pw, salt), '솔트': salt, '상태': '대기', '경로': mode === 'ext' ? '외부 참여자' : '신규 회원', '만든날': stamp });
       putPay_('E:' + s.email, s.email, pay);   // 승인되면 교사 번호로 바뀜
-      addReq_(mode === 'ext' ? '외부 참여자' : '새 회원', '', s, mode === 'ext' ? { '가입 종류': '외부 참여자', '하는 일': o.extRole, '소속': o.org || '-', '악기': o.inst || '-' }
-        : { '가입 종류': o.type, '연수 과정': o.course, '회원 구분': o.kind, '근무지': o.acadNames, '_근무': o.works, '직급': o.role || '없음', '악기': o.inst, '자격': o.certTxt });
+      if (rr) putRrn_('E:' + s.email, rr);
+      addReq_(mode === 'ext' ? '외부 참여자' : '새 회원', '', s, mode === 'ext' ? { '가입 종류': '외부 참여자', '하는 일': o.extRole, '소속': o.org || '-', '악기': o.inst || '-', '주민번호': rr ? '넣음 (암호화)' : '' }
+        : { '가입 종류': o.type, '연수 과정': o.course, '회원 구분': o.kind, '근무지': o.acadNames, '_근무': o.works, '직급': o.role || '없음', '악기': o.inst, '자격': o.certTxt, '주민번호': rr ? '넣음 (암호화) · 승인하면 강사료 대상' : '' });
       log_(s.name, '계정', s.email, '가입 신청', o.type + ' · ' + o.kind);
     }
   } finally { lock.releaseLock(); }
@@ -677,6 +679,7 @@ function cleanPay_(d, need, hasAcct) {
   if (need && !o.addr) fail('우편물 받을 주소를 넣어 주세요.');
   return o;
 }
+function putRrn_(key, rr) { const P = payTbl_(), j = P.find('교사ID', key); if (j < 0) P.append(Object.assign({ '교사ID': key, '수정일': now_() }, rr)); else P.set(j, rr); }
 function putPay_(key, email, o) {
   const P = payTbl_(), j = P.find('교사ID', key);
   const row = { '교사ID': key, '이메일': email || '', '은행': o.bank, '예금주': o.holder, '우편번호': o.zip, '주소': o.addr, '상세주소': o.addr2, '집우편번호': o.hzip, '집주소': o.haddr, '집상세주소': o.haddr2, '수정일': now_() };
@@ -697,18 +700,24 @@ function tSavePay(sess, d) {
   return tMe(sess);
 }
 /** 주민등록번호 — 관리자가 「강사료 대상」으로 표시한 선생님만 (강사료 원천징수용). 암호화해서 정산 파일에만 */
-function tSaveRrn(sess, rrn, agree) {
-  const u = tsess_(sess);
-  const T = tbl_('교사'), i = T.find('교사ID', u.tid); if (i < 0 || T.get(i, '강사료대상') !== '예') fail('강사료를 받는 선생님만 넣을 수 있어요.');
-  if (!agree) fail('고유식별정보 처리 안내를 읽고 동의에 체크해 주세요.');
+/** 주민등록번호 검사 → 암호화 줄 (가입 때 · 내 정보 공통) */
+function rrnRow_(rrn, agree) {
+  if (!agree) fail('주민등록번호를 넣으려면 고유식별정보 처리 안내를 읽고 동의에 체크해 주세요.');
   const v = String(rrn || '').replace(/\s/g, ''); const m = v.match(/^(\d{2})(\d{2})(\d{2})-?([1-8])(\d{6})$/);
   if (!m || +m[2] < 1 || +m[2] > 12 || +m[3] < 1 || +m[3] > 31) fail('주민등록번호 13자리를 확인해 주세요.');
   const plain = m[1] + m[2] + m[3] + '-' + m[4] + m[5];
+  return { '주민번호암호': enc_(plain), '주민번호표시': plain.slice(0, 8) + '******', '주민번호동의일': now_() };
+}
+function tSaveRrn(sess, rrn, agree) {
+  const u = tsess_(sess);
+  const T = tbl_('교사'), i = T.find('교사ID', u.tid); if (i < 0) fail('명단에서 선생님을 찾지 못했어요.');
+  const rr = rrnRow_(rrn, agree);   /* 10-28: 강사료 대상이 아니어도 넣을 수 있음(선택) → 넣으면 강사료 대상 */
   const lock = LockService.getScriptLock(); lock.waitLock(20000);
   try {
     const P = payTbl_(), j = P.find('교사ID', u.tid);
-    const row = { '교사ID': u.tid, '주민번호암호': enc_(plain), '주민번호표시': plain.slice(0, 8) + '******', '주민번호동의일': now_(), '수정일': now_() };
+    const row = Object.assign({ '교사ID': u.tid, '수정일': now_() }, rr);
     if (j < 0) P.append(Object.assign({ '이메일': u.email }, row)); else P.set(j, row);
+    if (T.get(i, '강사료대상') !== '예') T.set(i, { '강사료대상': '예' });
     log_(u.email, '정산', u.tid, '주민번호 등록', '선생님이 직접 (값은 기록하지 않음)');
   } finally { lock.releaseLock(); }
   return tMe(sess);
@@ -772,6 +781,7 @@ function reqDo(who, id, act, memo, linkTid) {
           '회비구분': '납부', '캠프교수': '아니오', '상태': '활동', '확인': '확인 전', '확인메모': (info['가입 종류'] || '') + ' 가입 신청' + (info['연수 과정'] ? ' · ' + info['연수 과정'] + ' 과정' : '') + (/목록에 없음/.test(info['근무지'] || '') ? ' · ' + info['근무지'] : ''), '원본': '가입 신청 ' + id, '수정일': now_(), '수정자': who.name });
         setWorksAtSignup_(tid, wk, who.name + ' (가입 승인)'); }
       if (ai >= 0) A.set(ai, { '교사ID': tid, '상태': '사용', '처리일': now_() });
+      if (info['주민번호'] && tid) { const T3 = tbl_('교사'), k3 = T3.find('교사ID', tid); if (k3 >= 0) T3.set(k3, { '강사료대상': '예' }); }
       try { const P = payTbl_(), j = P.find('교사ID', 'E:' + email); if (j >= 0) { const old = P.find('교사ID', tid); if (old >= 0 && old !== j) P.sh.deleteRow(old + 2); const P2 = payTbl_(); P2.set(P2.find('교사ID', 'E:' + email), { '교사ID': tid }); } } catch (e) { console.warn('pay link', e); }
       mailTo = email; subj = '[스즈키] 회원 가입이 승인됐어요'; body = '<p>' + esc_(name) + ' 님, 협회가 확인하고 승인했어요.</p><p>이제 가입할 때 만든 이메일과 비밀번호로 로그인할 수 있어요.' + (ext ? ' 로그인한 뒤 「내 정보 › 강사료 정보」도 넣어 주세요.' : '') + '</p>';
     } else if (kind === '이메일 확인' && act === '승인') {

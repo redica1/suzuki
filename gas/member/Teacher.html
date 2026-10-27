@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261028-085124 -->
+<!-- build: 20261028-085222 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -184,7 +184,8 @@ function vCode(){return steps(3)+'<div class="card"><h2>이메일 인증</h2><p 
   (S.code?'<div class="note warn">테스트(STG)라 코드를 화면에도 보여 줘요: <b class="num">'+esc(S.code)+'</b></div>':'')+msgBox()+btn('verify','확인')+
   '<div class="spread"><button class="btn ghost small" type="button" id="toEmail">이메일 고치기</button><button class="btn ghost small" type="button" id="resend" '+(S.busy?'disabled':'')+'>코드 다시 받기</button></div></div>'}
 function aName(id){var a=S.acads.filter(function(x){return x[0]===id})[0];return a?a[1]:id}
-function aHits(){var q=(S.aq||'').trim(),taken=S.v==='me'?((S.me||{}).works||[]).filter(function(w){return !w.end}).map(function(w){return w.aid}):S.j.works.map(function(w){return w.id});return S.acads.filter(function(a){return taken.indexOf(a[0])<0&&(!q||a[1].indexOf(q)>=0)}).slice(0,30)}
+function nsp(x){return String(x||'').replace(/\s+/g,'').toLowerCase()}
+function aHits(){var q=nsp(S.aq),taken=S.v==='me'?((S.me||{}).works||[]).filter(function(w){return !w.end}).map(function(w){return w.aid}):S.j.works.map(function(w){return w.id});return S.acads.filter(function(a){return taken.indexOf(a[0])<0&&(!q||nsp(a[1]).indexOf(q)>=0||nsp(a[2]).indexOf(q)>=0)})}
 function aItems(hits){return hits.map(function(a){return '<li><button type="button" data-acad="'+esc(a[0])+'"><span>'+esc(a[1])+'</span><small>'+esc(a[2]||'')+'</small></button></li>'}).join('')||'<li class="hint" style="padding:8px">찾는 학원이 없어요. 「목록에 없어요」를 눌러 주세요.</li>'}
 function ymSel(pre,y,m,bk){var ys=[],ny=new Date().getFullYear();for(var i=ny;i>=1980;i--)ys.push(String(i));
   return '<select id="'+pre+'Y" aria-label="년" '+bad(bk||'')+'><option value="">년</option>'+ys.map(function(x){return '<option '+(String(y)===x?'selected':'')+'>'+x+'</option>'}).join('')+'</select>'+

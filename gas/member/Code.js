@@ -1,4 +1,4 @@
-/* build: 20261028-003307 */
+/* build: 20261028-003647 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -192,7 +192,8 @@ function clean_(table, o) {
 /* ====================== 처음 설정 · 원본 불러오기 ====================== */
 function setup() {
   const ss = SpreadsheetApp.getActive();
-  Object.keys(HEAD).forEach(n => ensure_(ss, n));
+  Object.keys(HEAD).filter(n => n !== '정산').forEach(n => ensure_(ss, n));   // 정산은 별도 파일에만
+  const stray = ss.getSheetByName('정산'); if (stray && stray.getLastRow() <= 1 && ss.getSheets().length > 1) ss.deleteSheet(stray);
   const sh = ss.getSheetByName('설정'); const have = sh.getDataRange().getDisplayValues().map(r => r[0]);
   SETTINGS.forEach(r => { if (have.indexOf(r[0]) < 0) sh.appendRow(r); });
   const pwRow = sh.getDataRange().getDisplayValues().findIndex(r => r[0] === '관리자 비밀번호');
@@ -223,7 +224,7 @@ function importRoster(who, replace) {
     const has = ['학원', '교사', '학생'].some(n => tbl_(n).v.length);
     if (has && !(replace && s['테스트 표시'] === '예')) fail('이미 명단이 들어 있어요. (지우고 다시 불러오기는 STG 에서만)');
     const src = SpreadsheetApp.openById(String(s['원본 시트'] || SRC_ID));
-    const A = readSrc_(src, '학원정보DB', '학원명', ['운영', '구분', '지역1', '지역2', '학원명', '원장명', '교실대표번호', '이메일', '주소', '계약서작성일', '개원일', '교습과목', '우편번호', '상세주소']);
+    const A = readSrc_(src, '학원정보DB', '학원명', ['운영', '구분', '지역1', '지역2', '학원명', '원장명', '교실대표번호', '이메일', '이메일주소', '주소', '학원주소', '계약서작성일', '개원일', '개설일', '교습과목', '우편번호', '상세주소']);
     const Tt = readSrc_(src, '교사정보DB', '교사명', ['소속스즈키', '내부외부', '회비기준', '지역1', '지역2', '학원1', '학원2', '학원3', '직급', '전공', '캠프기준', '교사명', '보유자격증1', '자격취득년도', '전화번호', '이메일', '납부방식', '납부연도', '교사부과회비', 'CMS이체', '직접이체', '환불금액', '교사미납회비', '납부일']);
     const St = readSrc_(src, '학생정보DB', '학생명', ['운영', '구분', '지역1', '지역2', '학원명', '원장명', '학생명', '출생년도', '전공', '시작월', '학생부과회비', '학생납부회비', '학생미납회비', '납부연도', '납부일']);
     const stamp = now_(), by = who.name + ' (원본 불러오기)';
@@ -233,13 +234,14 @@ function importRoster(who, replace) {
     A.rows.forEach(r => {
       const name = String(r['학원명'] || '').trim(); if (!name) return;
       const kind = String(r['구분'] || '').trim(), phone = digits_(r['교실대표번호']);
+      r['이메일'] = r['이메일'] || r['이메일주소']; r['주소'] = r['주소'] || r['학원주소']; r['개원일'] = r['개원일'] || r['개설일'];
       const notes = [];
       if (kind && ['학원', '클래스'].indexOf(kind) < 0) notes.push('구분 칸이 「' + kind + '」 — 열 밀림 의심');
       if (/[시군구]\s|로\s?\d|길\s?\d|동\s?\d/.test(name) && name.length > 12) notes.push('학원명 칸이 주소처럼 보여요');
       if (r['지역2'] && /@/.test(r['지역2'])) notes.push('지역2 칸에 이메일 — 열 밀림 의심');
       if (byName[normA_(name)]) notes.push('같은 이름 학원이 또 있어요');
       const addr = String(r['주소'] || '').trim();
-      addAcad({ '학원명': name, '구분': ['학원', '클래스'].indexOf(kind) >= 0 ? kind : (/클래스$/.test(name) ? '클래스' : '학원'), '상태': /휴|폐/.test(String(r['운영'])) ? '휴원' : '운영',
+      addAcad({ '학원명': name, '구분': ['학원', '클래스'].indexOf(kind) >= 0 ? kind : (/클래스$/.test(name) ? '클래스' : '학원'), '상태': /휴|폐|^no$|^n$|아니/i.test(String(r['운영']).trim()) ? '휴원' : '운영',
         '원장교사ID': '', '원장명': String(r['원장명'] || '').trim(), '교실대표번호': phone, '이메일': String(r['이메일'] || '').trim(), '교습과목': String(r['교습과목'] || '').trim(),
         '시도': String(r['지역1'] || '').trim() || addr.split(' ')[0] || '', '시군구': String(r['지역2'] || '').trim() || addr.split(' ')[1] || '', '우편번호': String(r['우편번호'] || '').trim(), '주소': addr, '상세주소': String(r['상세주소'] || '').trim(),
         '개원일': ymd_(r['개원일']), '계약체결일': ymd_(r['계약서작성일']), '확인': notes.length ? '확인 필요' : '확인 전', '확인메모': notes.join(' · '), '메모': '', '원본': '학원정보DB ' + r._row + '행', '수정일': stamp, '수정자': by });
@@ -357,6 +359,7 @@ function ymd_(v) {
   const s = String(v || '').trim(); if (!s) return '';
   const m = s.match(/(\d{4})\D+(\d{1,2})\D+(\d{1,2})/); if (m) return m[1] + '-' + ('0' + m[2]).slice(-2) + '-' + ('0' + m[3]).slice(-2);
   const m2 = s.match(/(\d{4})\D+(\d{1,2})/); if (m2) return m2[1] + '-' + ('0' + m2[2]).slice(-2);
+  const m3 = s.match(/^(\d{1,2})\D+(\d{4})$/); if (m3) return m3[2] + '-' + ('0' + m3[1]).slice(-2);   // 12/2023
   return s;
 }
 

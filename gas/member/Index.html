@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261028-084830 -->
+<!-- build: 20261028-085124 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -192,7 +192,8 @@ function vHome(){
   var tdue=tch.filter(function(t){return t['회비구분']!=='면제'}), tpaid=tdue.filter(function(t){var d=duesOf('교사',t['교사ID'],'2026');return d&&+d['납부']>=+d['부과']&&+d['부과']>0});
   var spaid=stu.filter(function(s){var d=duesOf('학생',s['학생ID'],'2026');return d&&+d['납부']>0});
   function tile(k,v,s,p,w){return '<div class="tile'+(w?' warn':'')+'"><span class="k">'+k+'</span><span class="v">'+v+'</span><span class="s">'+s+'</span>'+(p!=null?'<div class="bar"><i style="width:'+p+'%"></i></div>':'')+'</div>'}
-  return '<div class="sec-h"><div><h2>한눈에</h2><p>겨울 캠프 접수 전에 학원 · 교사 · 학생 명단을 정리해요. 한 줄씩 열어 고치고 「확인」으로 표시해요.</p></div></div>'+
+  var mw=S.D.mailLeft>=0&&S.D.mailLeft<30?'<div class="note warn"><b>오늘 더 보낼 수 있는 메일이 '+S.D.mailLeft+'통 남았어요.</b> 인증 코드 메일이 안 갈 수 있어요. <button class="btn small" type="button" data-tab="set">설정에서 보기</button></div>':'';
+  return mw+'<div class="sec-h"><div><h2>한눈에</h2><p>겨울 캠프 접수 전에 학원 · 교사 · 학생 명단을 정리해요. 한 줄씩 열어 고치고 「확인」으로 표시해요.</p></div></div>'+
   '<div class="tiles">'+tile('학원',acad.filter(function(a){return a['상태']==='운영'}).length,'확인 '+pa.n+' / '+acad.length+' ('+pa.p+'%)',pa.p)+
     tile('교사',tch.length,'확인 '+pt.n+' / '+tch.length+' ('+pt.p+'%)',pt.p)+
     tile('재원 학생',stu.length,'확인 '+ps.n+' / '+stu.length+' ('+ps.p+'%)',ps.p)+
@@ -393,7 +394,10 @@ function vLog(){var L=S.logs;if(!L)return '<div class="panel"><span><span class=
 function pdResult(r){return '<div class="note ok"><b>'+esc(r.year)+'년 교사 회비 '+r.n+'명을 넣었어요.</b> 휴대전화로 '+(r.how['전화']+r.how['전화+이름'])+'명 · 이름으로 '+r.how['이름']+'명</div>'+
   (r.nameOnly.length?'<p class="cap">이름으로 맞춘 선생님(확인해 주세요): '+esc(r.nameOnly.join(' · '))+'</p>':'')+
   (r.un.length?'<details><summary>지금 교사 명단에서 못 찾은 '+r.un.length+'줄 (그만둔 선생님 등 · 넣지 않음)</summary><p class="cap">'+esc(r.un.join(' · '))+'</p></details>':'')}
-function vSet(){return '<div class="sec-h"><div><h2>설정</h2><p>관리자 아이디·비밀번호·테스트 표시는 시트 「설정」 탭에서 바꿔요.</p></div></div>'+
+function mailBox(){var n=S.D.mailLeft;return '<div class="panel"><h3>메일 보내기</h3>'+(n<0?'<p class="cap">남은 수를 읽지 못했어요. 매니페스트에 script.send_mail 권한이 있는지 확인해 주세요.</p>':
+  '<div class="note '+(n<30?'warn':'ok')+'"><b>오늘 더 보낼 수 있는 메일: <span class="num">'+n+'</span>통</b>'+(n<30?' · 얼마 남지 않았어요. 인증 코드 · 승인 안내 메일이 안 갈 수 있어요.':'')+'</div>')+
+  '<p class="cap">인증 코드 · 승인 · 반려 · 문의 답 메일을 이 앱을 배포한 구글 계정으로 보내요. 일반 Gmail 은 하루 받는 사람 100명쯤, Google Workspace 는 1,500명쯤까지예요. 한도는 하루가 지나면 다시 채워져요. 「새로 고침」을 누르면 숫자가 바뀌어요.</p></div>'}
+function vSet(){return '<div class="sec-h"><div><h2>설정</h2><p>관리자 아이디·비밀번호·테스트 표시는 시트 「설정」 탭에서 바꿔요.</p></div></div>'+mailBox()+
   '<div class="panel"><h3>원본 명단 불러오기</h3><p class="cap">「[2026]스즈키교사 연회비납부명단」의 학원정보DB · 교사정보DB · 학생정보DB를 가져와요. 주민등록번호 · 계좌 · 집 주소 칸은 읽지 않아요. 이름 끝 A·B, 괄호 표기는 「구분 글자」로, Vn·vc 같은 전공은 바이올린·첼로로 바꾸고, 바꾼 것은 「확인 메모」에 남겨요.</p>'+
   (S.D.empty?'<div><button class="btn primary" type="button" id="imp">원본에서 불러오기</button></div>':S.test?'<div class="note">테스트(STG)라서 지우고 다시 불러올 수 있어요. 지금 STG 에서 고친 내용은 모두 사라져요.</div><div><button class="btn" type="button" id="impRe">지우고 다시 불러오기</button></div>':'<p class="cap">이미 명단이 들어 있어요. 메인은 다시 불러오지 않아요 (고친 내용을 지키기 위해).</p>')+
   '</div><div class="panel"><h3>지난 해 교사 회비 불러오기</h3><p class="cap">그 해 「교사정보DB」에서 이름 · 휴대전화 · 납부 칸만 읽어 지금 교사 번호에 맞춰요(휴대전화 → 이름). 선생님 「내 정보 › 교사 회비」에 년도별로 보여요. 다시 돌리면 그 해 교사 회비 줄을 새로 써요.</p>'+
@@ -434,7 +438,7 @@ function render(){
 }
 function go(tab){if(tab!==S.tab)S.hist.push(S.tab);S.tab=tab;S.q='';S.f={};S.page=0;S.edit=null;S.sel={};S.issue='';S.dEdit=null;S.edAcad=null;if(tab==='log')loadLogs();if(tab==='req')loadReqs();if(tab==='ask')loadAsk();render();window.scrollTo(0,0)}
 function load(){return callS('boot').then(function(r){if(!r.ok){if(S.sess)toast(r.msg);return}
-  S.test=r.test;S.pdSrc0=r.pdSrc||'';S.D={acad:objs(r['학원']),tch:objs(r['교사']),stu:objs(r['학생']),duesRows:objs(r['연회비']),empty:r.empty,acc:r.acc||{},reqN:r.reqN||0,payF:r.pay||{},bN:r.bN||0,works:objs(r['근무']||{h:[],rows:[]})};index();render()})}
+  S.test=r.test;S.pdSrc0=r.pdSrc||'';S.D={acad:objs(r['학원']),tch:objs(r['교사']),stu:objs(r['학생']),duesRows:objs(r['연회비']),empty:r.empty,acc:r.acc||{},reqN:r.reqN||0,payF:r.pay||{},bN:r.bN||0,mailLeft:r.mailLeft==null?-1:r.mailLeft,works:objs(r['근무']||{h:[],rows:[]})};index();render()})}
 function loadLogs(){S.logs=null;callS('logs').then(function(r){if(r.ok){S.logs=r;if(S.tab==='log')render()}else toast(r.msg)})}
 function keepFocus(id){var n=document.getElementById(id);if(n){n.focus();var v=n.value;n.value='';n.value=v}}
 function kindOf(){return {acad:'학원',tch:'교사',stu:'학생'}[S.tab]}

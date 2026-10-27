@@ -1,4 +1,4 @@
-/* build: 20261028-084830 */
+/* build: 20261028-085124 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -106,6 +106,7 @@ function boot(who) {
   out.reqN = tbl_('요청').v.filter(r => r[7] === '대기').length;
   out.pdSrc = String(settings_()['지난 회비 원본'] || '');
   out.bN = tbl_('문의').v.filter(r => r[9] === '접수').length;
+  try { out.mailLeft = MailApp.getRemainingDailyQuota(); } catch (e) { out.mailLeft = -1; }   /* 오늘 보낼 수 있는 메일 남은 수 (10-28) */
   { const W = tbl_('근무'); out['근무'] = { h: W.h, rows: W.v }; }
   const pf = {}; try { const P = payTbl_(), c = col_(P); P.v.forEach(r => { pf[r[0]] = { a: !!r[c['계좌번호']], h: !!r[c['집주소']], m: !!r[c['주소']], r: !!r[c['주민번호암호']] }; }); } catch (e) {}
   out.pay = pf;   // 있음/없음만 (값은 「내용 보기」로)

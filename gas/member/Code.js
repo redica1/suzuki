@@ -1,4 +1,4 @@
-/* build: 20261028-013819 */
+/* build: 20261028-013946 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -55,7 +55,7 @@ function doGet(e) {
 function include(n) { return HtmlService.createHtmlOutputFromFile(n).getContent(); }
 
 function api(name, args) {
-  const open = { login, hello, tHello, tLookup, tStart, tResend, tVerify, tCreate, tLogin, tForgot, tReset, tMe, tSavePay, tSaveRrn, tAddWork, tEndWork, tMainWork, tLogout };
+  const open = { login, hello, tHello, tLookup, tStart, tResend, tVerify, tCreate, tLogin, tForgot, tReset, tMe, tSavePay, tSavePart, tSaveRrn, tAddWork, tEndWork, tMainWork, tLogout };
   const fns = { boot, saveRow, setCheck, logs, importRoster, saveDues, delDues, reqs, reqDo, delAcad, payView, bulkSet, saveWorks, importPastDues };
   try {
     if (open[name]) return Object.assign({ ok: true }, open[name].apply(null, args || []));
@@ -696,6 +696,35 @@ function tSavePay(sess, d) {
     const T = tbl_('교사'), i = T.find('교사ID', u.tid); if (i >= 0) T.set(i, { '영문이름': eng });
     putPay_(u.tid, u.email, o);
     log_(u.email, '정산', u.tid, '선생님이 수정', ['영문 이름', '집 주소', '우편물 주소'].concat(o.acct ? ['계좌'] : []).join(' · '));
+  } finally { lock.releaseLock(); }
+  return tMe(sess);
+}
+/** 내 정보: 정산 정보 · 집 주소 · 우편물 받을 주소를 따로 고침 (10-28). part = acct | home | mail */
+function tSavePart(sess, part, d) {
+  const u = tsess_(sess); d = d || {};
+  const old = payRow_(u.tid) || {}, row = {}, T = tbl_('교사'), i = T.find('교사ID', u.tid);
+  if (part === 'acct') {
+    const bank = String(d.bank || '').trim().slice(0, 20), holder = String(d.holder || '').trim().slice(0, 20), acct = String(d.acct || '').replace(/[^\d-]/g, '');
+    if (!bank || !holder) fail('은행과 예금주를 넣어 주세요.');
+    if (acct && !/^[\d-]{8,20}$/.test(acct)) fail('계좌번호는 숫자와 - 로 넣어 주세요.');
+    if (!acct && !old['계좌번호']) fail('계좌번호를 넣어 주세요.');
+    const eng = String(d.eng || '').trim().slice(0, 60); if (eng && !/^[A-Za-z .'-]+$/.test(eng)) fail('영문 이름은 영어로 넣어 주세요.');
+    Object.assign(row, { '은행': bank, '예금주': holder }); if (acct) row['계좌번호'] = acct;
+    if (i >= 0) T.set(i, { '영문이름': eng });
+  } else if (part === 'home') {
+    const haddr = String(d.haddr || '').trim().slice(0, 120); if (!haddr) fail('집 주소를 넣어 주세요. 「주소 검색」을 눌러요.');
+    Object.assign(row, { '집우편번호': digits_(d.hzip).slice(0, 5), '집주소': haddr, '집상세주소': String(d.haddr2 || '').trim().slice(0, 80) });
+  } else if (part === 'mail') {
+    const same = d.same === true;
+    const zip = same ? old['집우편번호'] : digits_(d.zip).slice(0, 5), addr = same ? old['집주소'] : String(d.addr || '').trim().slice(0, 120), addr2 = same ? old['집상세주소'] : String(d.addr2 || '').trim().slice(0, 80);
+    if (!addr) fail(same ? '집 주소를 먼저 넣어 주세요.' : '우편물 받을 주소를 넣어 주세요. 「주소 검색」을 눌러요.');
+    Object.assign(row, { '우편번호': zip || '', '주소': addr, '상세주소': addr2 || '' });
+  } else fail('고칠 곳을 알 수 없어요.');
+  const lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    const P = payTbl_(), j = P.find('교사ID', u.tid); row['수정일'] = now_();
+    if (j < 0) P.append(Object.assign({ '교사ID': u.tid, '이메일': u.email }, row)); else P.set(j, row);
+    log_(u.email, '정산', u.tid, '선생님이 수정', { acct: '계좌 · 영문 이름', home: '집 주소', mail: '우편물 받을 주소' }[part]);
   } finally { lock.releaseLock(); }
   return tMe(sess);
 }

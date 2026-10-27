@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261028-013819 -->
+<!-- build: 20261028-013946 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -249,9 +249,24 @@ function vMe(){var m=S.me;if(!m)return '<div class="card"><span><span class="spi
     '<dl class="kv"><dt>이메일</dt><dd>'+esc(m.email)+'</dd><dt>휴대전화</dt><dd class="num">'+fmtPh(m.phone)+'</dd>'+(m.ext?'<dt>구분</dt><dd><span class="pill info">외부 참여자</span></dd><dt>악기</dt><dd>'+esc(m.inst||'-')+'</dd></dl>':'<dt>직급</dt><dd>'+esc(m.role||'-')+'</dd><dt>악기</dt><dd>'+esc(m.inst||'-')+'</dd><dt>회원 구분</dt><dd>'+(KINDS.indexOf(m.kind)>=0?'<span class="pill info">'+esc(m.kind)+'</span>':'<span class="pill due">확인 전</span>')+'</dd></dl>')+
     (m.heads&&m.heads.length?'<div class="note">원장으로 등록된 학원: <b>'+esc(m.heads.join(', '))+'</b> · 학원 정보와 학생 명단 메뉴는 곧 열려요.</div>':'')+
     '<p class="hint">이름·휴대전화가 바뀌었으면 협회 카카오톡 채널로 알려 주세요.</p></div>'+(m.ext?'':workCard(m)+duesCard(m))+eventCard(m)+
-    '<div class="lock"><h3>정산 정보</h3><dl class="kv"><dt>영문 이름</dt><dd>'+esc(m.eng||'-')+'</dd><dt>계좌</dt><dd>'+(p&&p.acct?esc(p.bank)+' <span class="num">'+esc(p.acct)+'</span> · '+esc(p.holder):'-')+'</dd>'+
-    '<dt>집 주소</dt><dd>'+(p&&p.haddr?(p.hzip?'('+esc(p.hzip)+') ':'')+esc(p.haddr)+' '+esc(p.haddr2):'-')+'</dd><dt>우편물 주소</dt><dd>'+(p&&p.addr?(p.addr===p.haddr&&p.addr2===p.haddr2?'집 주소와 같음':(p.zip?'('+esc(p.zip)+') ':'')+esc(p.addr)+' '+esc(p.addr2)):'-')+'</dd></dl>'+
-    '<button class="btn primary block" type="button" id="toPay">'+(p?'정산 정보 고치기':'정산 정보 넣기')+'</button><p class="hint">협회 관리자만 볼 수 있어요. 학원이나 다른 선생님에게는 보이지 않아요.</p></div>'+rrnBox(m)}
+    payCards(m)+rrnBox(m)}
+function payCards(m){var p=m.pay||{},ed=S.payEd,d=S.pay||{};
+  var edBtns=function(){return '<div class="two">'+btn('pedSave','저장')+'<button class="btn" type="button" id="pedNo">취소</button></div>'};
+  var head=function(t,k,sub){return '<div class="spread"><h3>'+t+(sub?' <span class="opt">'+sub+'</span>':'')+'</h3>'+(ed===k?'':'<button class="btn small" type="button" data-ped="'+k+'">'+(k==='acct'?(p.acct?'고치기':'넣기'):k==='home'?(p.haddr?'고치기':'넣기'):(p.addr?'고치기':'넣기'))+'</button>')+'</div>'};
+  var a='<div class="lock">'+head('정산 정보','acct','계좌 · 영문 이름')+(ed==='acct'?
+      '<label class="f" for="pEng">영문 이름 <span class="opt">선택 · 명찰·프로그램북 · 예: Kim Suzuki</span><input type="text" id="pEng" value="'+esc(d.eng)+'" autocomplete="off" '+bad('eng')+'></label>'+fe('eng')+
+      (p.acct?'<p class="hint">지금 등록된 계좌: <b class="num">'+esc(p.bank+' '+p.acct)+'</b> · 바꿀 때만 계좌번호를 새로 넣어 주세요.</p>':'')+
+      '<div class="two"><label class="f" for="pBank">은행 <span class="req">*</span><select id="pBank" '+bad('bank')+'><option value="">선택</option>'+BANKS.map(function(b){return '<option '+(b===d.bank?'selected':'')+'>'+b+'</option>'}).join('')+'</select></label>'+
+      '<label class="f" for="pAcct">계좌번호 '+(p.acct?'<span class="opt">바꿀 때만</span>':'<span class="req">*</span>')+'<input type="text" id="pAcct" '+bad('acct')+' value="'+esc(d.acct)+'" inputmode="numeric" autocomplete="off" placeholder="숫자와 -"></label></div>'+
+      '<label class="f" for="pHold">예금주 <span class="req">*</span><input type="text" id="pHold" '+bad('holder')+' value="'+esc(d.holder)+'"></label>'+fe('bank')+fe('acct')+fe('holder')+msgBox()+edBtns():
+      '<dl class="kv"><dt>영문 이름</dt><dd>'+esc(m.eng||'-')+'</dd><dt>계좌</dt><dd>'+(p.acct?esc(p.bank)+' <span class="num">'+esc(p.acct)+'</span> · '+esc(p.holder):'-')+'</dd></dl>')+'</div>';
+  var sameNow=p.addr&&p.addr===p.haddr&&p.addr2===p.haddr2&&p.zip===p.hzip;
+  var h='<div class="lock">'+head('집 주소','home')+(ed==='home'?addrBlock('h','집 주소',d,'h')+msgBox()+edBtns():
+      '<p>'+(p.haddr?(p.hzip?'<span class="num">('+esc(p.hzip)+')</span> ':'')+esc(p.haddr)+' '+esc(p.haddr2):'<span class="hint">아직 없어요</span>')+'</p>')+'</div>';
+  var ml='<div class="lock">'+head('우편물 받을 주소','mail','공문 · 포스터')+(ed==='mail'?
+      '<label class="agree" for="pSame"><input type="checkbox" id="pSame" '+(d.same?'checked':'')+'><div><b>집 주소와 같아요</b>'+(p.haddr?'<span class="hint"> '+esc(p.haddr)+'</span>':'')+'</div></label>'+(d.same?'':addrBlock('m','우편물 받을 주소',d,''))+msgBox()+edBtns():
+      '<p>'+(p.addr?(sameNow?'<span class="pill info">집 주소와 같음</span> ':'')+(p.zip?'<span class="num">('+esc(p.zip)+')</span> ':'')+esc(p.addr)+' '+esc(p.addr2):'<span class="hint">아직 없어요</span>')+'</p>')+'</div>';
+  return a+h+ml+'<p class="hint" style="margin:-4px 4px 12px">정산 정보와 주소는 협회 관리자만 볼 수 있어요. 학원이나 다른 선생님에게는 보이지 않아요.</p>'}
 function won(n){return Number(n||0).toLocaleString('ko-KR')+'원'}
 function duesCard(m){var ds=m.dues||[];
   var st=function(d){if(m.duesFree&&!d.due)return '<span class="pill info">면제</span>';if(d.due>0&&d.paid>=d.due)return '<span class="pill ok">완납</span>';if(d.paid>0)return '<span class="pill due">일부 납부</span>';if(d.due>0)return '<span class="pill due">미납</span>';return '<span class="hint">-</span>'};
@@ -275,7 +290,7 @@ function workCard(m){var ws=m.works||[],cur=ws.filter(function(w){return !w.end}
     (past.length?'<h3 style="margin-top:10px">지난 근무지</h3><ul class="hist">'+past.map(li).join('')+'</ul>':'')+
     '<p class="hint">근무지와 근무 이력은 협회와 그 학원 원장님이 볼 수 있어요.</p></div>'}
 function payOut(p){var o={};Object.keys(p).forEach(function(k){if(k!=='rrn'&&k!=='rrnAg')o[k]=p[k]});return o}
-function curPay(){return S.v==='pay'?S.pay:S.j.pay}
+function curPay(){return S.v==='pay'||S.payEd?S.pay:S.j.pay}
 function blankPay(name){return {hzip:'',haddr:'',haddr2:'',same:true,zip:'',addr:'',addr2:'',bank:'',acct:'',holder:name||''}}
 function addrBlock(k,label,d,pre){return '<div class="f"><span>'+label+' <span class="req">*</span></span>'+
   '<div class="row" style="flex-wrap:nowrap"><input type="text" id="z_'+k+'" value="'+esc(d[pre+'zip'])+'" class="num" style="width:96px;flex:none" placeholder="우편번호" inputmode="numeric" aria-label="우편번호" '+bad('a_'+k)+'><input type="text" id="a_'+k+'" value="'+esc(d[pre+'addr'])+'" placeholder="주소 검색을 눌러 주세요" aria-label="기본주소" '+bad('a_'+k)+'><button class="btn small" type="button" data-post="'+k+'" style="flex:none">주소 검색</button></div>'+
@@ -325,7 +340,7 @@ function render(){var h;
   document.getElementById('backBtn').hidden=!S.hist.length||S.v==='done'||S.v==='me';
   if(S.postFor)openPost();
 }
-function go(v,keepHist){if(!keepHist&&S.v!==v)S.hist.push(S.v);S.v=v;S.err={};S.msg='';S.postFor='';render();window.scrollTo(0,0)}
+function go(v,keepHist){if(!keepHist&&S.v!==v)S.hist.push(S.v);S.v=v;S.payEd='';S.err={};S.msg='';S.postFor='';render();window.scrollTo(0,0)}
 function run(fn){if(S.busy)return;S.busy=true;S.msg='';render();Promise.resolve(fn()).then(function(){S.busy=false;render()},function(){S.busy=false;render()})}
 function readConfirm(){readPayIn();readWorks();var xt=document.getElementById('jExT');if(xt)S.j.extRoleText=xt.value;var og=document.getElementById('jOrg');if(og)S.j.org=og.value;var p1=document.getElementById('pw1');if(p1){S.pw1=p1.value;S.pw2=document.getElementById('pw2').value}var i=document.getElementById('jIns');if(i)S.j.inst=i.value;var a=document.getElementById('agr');if(a)S.agree=a.checked;
   document.querySelectorAll('[data-cy]').forEach(function(x){if(x.dataset.cy in S.j.certs)S.j.certs[x.dataset.cy]=x.value})}
@@ -393,6 +408,17 @@ document.addEventListener('click',function(e){var b=e.target.closest('button');i
     run(function(){return call('tForgot',[em2]).then(function(r){if(!r.ok){S.msg=r.msg;return}S.fp={email:em2,sent:true,code:r.code||''}})});return}
   if(b.id==='doReset'){var rc=v('rc').trim(),rp=v('rp');run(function(){return call('tReset',[S.fp.email,rc,rp]).then(function(r){if(!r.ok){S.msg=r.msg;return}S.email=S.fp.email;S.fp=null;toast('비밀번호를 바꿨어요. 새 비밀번호로 로그인해 주세요.')})});return}
   if(b.id==='logout'){call('tLogout',[S.sess]);S.sess='';S.me=null;try{sessionStorage.removeItem('tm-sess')}catch(x){}S.hist=[];go('home',true);return}
+  if(d.ped){var pp=(S.me&&S.me.pay)||{},sm=!pp.addr||(pp.addr===pp.haddr&&pp.addr2===pp.haddr2&&pp.zip===pp.hzip);
+    S.pay={eng:S.me.eng||'',hzip:pp.hzip||'',haddr:pp.haddr||'',haddr2:pp.haddr2||'',same:sm,zip:pp.zip||'',addr:pp.addr||'',addr2:pp.addr2||'',bank:pp.bank||'',acct:'',holder:pp.holder||S.me.name||''};
+    S.payEd=d.ped;S.err={};S.msg='';S.postFor='';render();return}
+  if(b.id==='pedNo'){S.payEd='';S.pay=null;S.err={};S.msg='';S.postFor='';render();return}
+  if(b.id==='pedSave'){readPayIn();var q2=S.pay,k2=S.payEd,e4={},hasA=!!(S.me.pay&&S.me.pay.acct);
+    if(k2==='acct'){if(!q2.bank)e4.bank='은행을 골라 주세요.';if(!q2.acct&&!hasA)e4.acct='계좌번호를 넣어 주세요.';else if(q2.acct&&!/^[\d-]{8,20}$/.test(q2.acct))e4.acct='계좌번호는 숫자와 - 로 넣어 주세요.';if(!q2.holder)e4.holder='예금주를 넣어 주세요.';if(q2.eng&&!/^[A-Za-z .'-]+$/.test(q2.eng))e4.eng='영문 이름은 영어로 넣어 주세요.'}
+    if(k2==='home'&&!q2.haddr)e4.a_h='「주소 검색」으로 집 주소를 넣어 주세요.';
+    if(k2==='mail'&&!q2.same&&!q2.addr)e4.a_m='「주소 검색」으로 우편물 받을 주소를 넣어 주세요.';
+    S.err=e4;if(Object.keys(e4).length){render();return}
+    var send=k2==='acct'?{eng:q2.eng,bank:q2.bank,acct:q2.acct,holder:q2.holder}:k2==='home'?{hzip:q2.hzip,haddr:q2.haddr,haddr2:q2.haddr2}:{same:!!q2.same,zip:q2.zip,addr:q2.addr,addr2:q2.addr2};
+    run(function(){return call('tSavePart',[S.sess,k2,send]).then(function(r){if(!r.ok){S.msg=r.msg;return}S.me=r.me;S.payEd='';S.pay=null;S.err={};toast('저장했어요')})});return}
   if(b.id==='toPay'){S.pay=null;go('pay');return}
   if(b.id==='toMe'){S.hist=[];S.pay=null;go('me',true);loadMe();return}
   if(d.post){readPayIn();S.postFor=S.postFor===d.post?'':d.post;render();return}

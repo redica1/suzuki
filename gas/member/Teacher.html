@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261028-004157 -->
+<!-- build: 20261028-004346 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -131,6 +131,15 @@ function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return
 function fmtPh(p){p=String(p||'').replace(/\D/g,'');return p.length===11?p.replace(/(\d{3})(\d{4})(\d{4})/,'$1-$2-$3'):p.length===10?p.replace(/(\d{3})(\d{3})(\d{4})/,'$1-$2-$3'):p}
 function ph010(v){var x=String(v||'').replace(/\D/g,'');x=x.indexOf('010')===0?x.slice(3):x.replace(/^0?1?0?/,'');x=x.slice(0,8);return '010-'+(x.length>4?x.slice(0,4)+'-'+x.slice(4):x)}
 function toast(m){var e=document.getElementById('toast');e.textContent=m;e.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(function(){e.hidden=true},2800)}
+var DOMAINS=['naver.com','gmail.com','daum.net','hanmail.net','kakao.com','nate.com','icloud.com','hotmail.com'];
+function emailBox(id,label,val,req){val=String(val||'');var at=val.indexOf('@'),u=at>=0?val.slice(0,at):val,d=at>=0?val.slice(at+1):'naver.com',known=DOMAINS.indexOf(d)>=0;
+  return '<div class="f"><span>'+label+(req?' <span class="req">*</span>':'')+'</span><div class="row" style="flex-wrap:nowrap;gap:6px">'+
+    '<input type="text" id="'+id+'U" value="'+esc(u)+'" placeholder="아이디" autocomplete="username" autocapitalize="off" spellcheck="false" aria-label="이메일 아이디" style="flex:1 1 45%">'+
+    '<span style="flex:none;color:var(--muted)">@</span>'+
+    '<select id="'+id+'D" data-dom="'+id+'" aria-label="이메일 주소" style="flex:1 1 55%">'+DOMAINS.map(function(x){return '<option '+(x===d&&known?'selected':'')+'>'+x+'</option>'}).join('')+'<option value="" '+(!known?'selected':'')+'>직접 입력</option></select></div>'+
+    '<input type="text" id="'+id+'X" value="'+esc(known?'':d)+'" placeholder="예: school.ac.kr" autocapitalize="off" spellcheck="false" aria-label="이메일 주소 직접 입력" '+(known?'hidden':'')+'></div>'}
+function readEmail(id){var u=(document.getElementById(id+'U')||{}).value||'',dd=document.getElementById(id+'D'),d=dd&&dd.value?dd.value:((document.getElementById(id+'X')||{}).value||'');
+  u=u.trim().replace(/@.*$/,'');d=d.trim().replace(/^@/,'');return u&&d?(u+'@'+d).toLowerCase():u.toLowerCase()}
 function fe(k){return S.err[k]?'<p class="fe">'+esc(S.err[k])+'</p>':''}
 function bad(k){return S.err[k]?'class="bad" aria-invalid="true"':''}
 function msgBox(){return S.msg?'<div class="note warn">'+esc(S.msg)+'</div>':''}
@@ -162,7 +171,7 @@ function vFind(){var res='';
 function vEmail(){
   return steps(2)+'<div class="card"><h2>이메일</h2><p class="lede">이메일이 로그인 아이디가 되고, 인증 코드와 안내 메일이 이 주소로 가요.</p>'+
     (S.look==='found'?'<div class="note">협회에 알려 준 이메일과 다르면, 협회가 확인한 뒤 계정이 열려요.</div>':'<div class="note">신규 회원은 협회가 확인한 뒤 계정이 열려요.</div>')+
-    '<label class="f" for="eEm">이메일 <span class="req">*</span><input type="email" id="eEm" value="'+esc(S.email)+'" autocomplete="email" placeholder="name@naver.com"></label>'+
+    emailBox('eEm','이메일',S.email,true)+
     '<p class="hint">네이버·지메일을 권해요. hanmail·daum 은 메일이 늦거나 오지 않을 때가 있어요.</p>'+msgBox()+btn('sendCode','인증 코드 받기')+
     '<button class="btn ghost small" type="button" id="toFind">본인 찾기로</button></div>'}
 function vCode(){return steps(3)+'<div class="card"><h2>이메일 인증</h2><p class="lede"><b>'+esc(S.email)+'</b> 로 6자리 코드를 보냈어요. 10분 안에 넣어 주세요. 메일이 안 보이면 스팸함도 확인해 주세요.</p>'+
@@ -207,12 +216,12 @@ function vDone(){
     '<div class="two"><button class="btn primary" type="button" id="toPay">지금 넣기</button><button class="btn" type="button" id="toMe">나중에 할게요</button></div></div></div>';
   return steps(5)+'<div class="card"><h2>신청을 받았어요</h2><p class="lede">협회가 확인한 뒤 <b>'+esc(S.email)+'</b> 로 알려 드려요. 그다음 이메일과 지금 만든 비밀번호로 로그인할 수 있어요.</p><button class="btn block" type="button" id="goHome">처음 화면</button></div>'}
 function vLogin(){if(S.fp)return vForgot();
-  return '<div class="card"><h2>로그인</h2><label class="f" for="le">이메일<input type="email" id="le" value="'+esc(S.email)+'" autocomplete="username" placeholder="name@naver.com"></label>'+
+  return '<div class="card"><h2>로그인</h2>'+emailBox('le','이메일',S.email)+''+
   '<label class="f" for="lp">비밀번호<input type="password" id="lp" autocomplete="current-password"></label>'+msgBox()+btn('doLogin','로그인')+
   '<div class="spread"><button class="btn ghost small" type="button" id="goHome">처음 화면</button><button class="btn ghost small" type="button" id="forgot">비밀번호를 잊었어요</button></div></div>'}
 function vForgot(){var f=S.fp;return '<div class="card"><h2>비밀번호 다시 만들기</h2>'+(f.sent?'<p class="lede"><b>'+esc(f.email)+'</b> 로 가입돼 있으면 6자리 코드를 보냈어요. 15분 안에 넣어 주세요.</p>'+(f.code?'<div class="note warn">테스트(STG) 코드: <b class="num">'+esc(f.code)+'</b></div>':'')+
   '<label class="f" for="rc">재설정 코드<input type="text" id="rc" class="code" inputmode="numeric" maxlength="6"></label><label class="f" for="rp">새 비밀번호 <span class="opt">8자 이상</span><input type="password" id="rp" autocomplete="new-password"></label>'+msgBox()+btn('doReset','비밀번호 바꾸기')
-  :'<label class="f" for="fe2">가입한 이메일<input type="email" id="fe2" value="'+esc(f.email)+'" autocomplete="username"></label>'+msgBox()+btn('sendReset','재설정 코드 받기'))+'<button class="btn ghost small" type="button" id="fpBack">로그인으로</button></div>'}
+  :emailBox('fe2','가입한 이메일',f.email)+msgBox()+btn('sendReset','재설정 코드 받기'))+'<button class="btn ghost small" type="button" id="fpBack">로그인으로</button></div>'}
 function vMe(){var m=S.me;if(!m)return '<div class="card"><span><span class="spin"></span> 불러오는 중…</span></div>';var p=m.pay;
   return '<div class="card"><div class="spread"><h2>'+esc(m.name)+' 선생님</h2><button class="btn ghost small" type="button" id="logout">로그아웃</button></div>'+
     (m.reqs&&m.reqs.length?'<div class="note warn">협회가 확인 중인 요청: '+esc(m.reqs.join(', '))+'</div>':'')+
@@ -264,7 +273,7 @@ document.addEventListener('click',function(e){var b=e.target.closest('button');i
   if(b.id==='isMe'){go('email');return}
   if(b.id==='asNew'){S.card=null;S.look='none';go('email');return}
   if(b.id==='toFind'){go('find');return}
-  if(b.id==='sendCode'){S.email=v('eEm').trim().toLowerCase();if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(S.email)){S.msg='이메일 주소를 확인해 주세요.';render();return}
+  if(b.id==='sendCode'){S.email=readEmail('eEm');if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(S.email)){S.msg='이메일 주소를 확인해 주세요.';render();return}
     run(function(){return call('tStart',[S.token,S.email]).then(function(r){if(!r.ok){S.msg=r.msg;return}S.match=r.match;S.code=r.code||'';S.hist.push('email');S.v='code';toast(S.email+' 로 인증 코드를 보냈어요')})});return}
   if(b.id==='resend'){run(function(){return call('tResend',[S.token]).then(function(r){if(!r.ok){S.msg=r.msg;return}S.code=r.code||'';toast('코드를 다시 보냈어요')})});return}
   if(b.id==='toEmail'){go('email');return}
@@ -291,11 +300,11 @@ document.addEventListener('click',function(e){var b=e.target.closest('button');i
     S.err=er2;if(Object.keys(er2).length){render();var f=document.querySelector('.fe');if(f)f.scrollIntoView({block:'center'});return}
     var info={type:j.type,course:j.course,kind:j.kind,acads:j.acads,acadText:j.acadText,noAcad:j.noAcad,role:j.role,inst:j.inst,certs:Object.keys(j.certs).map(function(n){return {n:n,y:j.certs[n]}})};
     run(function(){return call('tCreate',[S.token,{pw:pw,agree:true,info:info}]).then(function(r){if(!r.ok){S.msg=r.msg;return}S.state=r.state;if(r.sess){setSess(r.sess);call('tMe',[r.sess]).then(function(x){if(x.ok)S.me=x.me})}S.hist=[];S.v='done';window.scrollTo(0,0)})});return}
-  if(b.id==='doLogin'){var em=v('le').trim().toLowerCase(),lp=v('lp');S.email=em;
+  if(b.id==='doLogin'){var em=readEmail('le'),lp=v('lp');S.email=em;
     run(function(){return call('tLogin',[em,lp]).then(function(r){if(!r.ok){S.msg=r.msg;return}setSess(r.sess);S.hist=[];S.v='me';S.me=null;loadMe()})});return}
-  if(b.id==='forgot'){S.fp={email:v('le').trim(),sent:false};S.msg='';render();return}
+  if(b.id==='forgot'){S.fp={email:readEmail('le'),sent:false};S.msg='';render();return}
   if(b.id==='fpBack'){S.fp=null;S.msg='';render();return}
-  if(b.id==='sendReset'){var em2=v('fe2').trim().toLowerCase();if(!em2){S.msg='가입한 이메일을 넣어 주세요.';render();return}
+  if(b.id==='sendReset'){var em2=readEmail('fe2');if(!em2){S.msg='가입한 이메일을 넣어 주세요.';render();return}
     run(function(){return call('tForgot',[em2]).then(function(r){if(!r.ok){S.msg=r.msg;return}S.fp={email:em2,sent:true,code:r.code||''}})});return}
   if(b.id==='doReset'){var rc=v('rc').trim(),rp=v('rp');run(function(){return call('tReset',[S.fp.email,rc,rp]).then(function(r){if(!r.ok){S.msg=r.msg;return}S.email=S.fp.email;S.fp=null;toast('비밀번호를 바꿨어요. 새 비밀번호로 로그인해 주세요.')})});return}
   if(b.id==='logout'){call('tLogout',[S.sess]);S.sess='';S.me=null;try{sessionStorage.removeItem('tm-sess')}catch(x){}S.hist=[];go('home',true);return}
@@ -312,8 +321,9 @@ document.addEventListener('input',function(e){var el=e.target;
   if(el.id==='pAcct'){el.value=el.value.replace(/[^\d-]/g,'')}
   if(el.id==='aq'){S.aq=el.value;var q=S.aq.trim(),hits=S.acads.filter(function(a){return !q||a[1].indexOf(q)>=0}).slice(0,30);
     hits=hits.filter(function(a){return S.j.acads.indexOf(a[0])<0});document.getElementById('aList').innerHTML=aItems(hits)}});
-document.addEventListener('change',function(e){var n=e.target.dataset&&e.target.dataset.cert;if(!n)return;readConfirm();if(e.target.checked)S.j.certs[n]='';else delete S.j.certs[n];render()});
-document.addEventListener('keydown',function(e){if(e.key!=='Enter')return;var m={iNm:'lookup',iPh:'lookup',eEm:'sendCode',cCode:'verify',le:'doLogin',lp:'doLogin',fe2:'sendReset',rp:'doReset'}[e.target.id];if(m){e.preventDefault();var b=document.getElementById(m);if(b)b.click()}});
+document.addEventListener('change',function(e){var dm=e.target.dataset&&e.target.dataset.dom;if(dm){var x=document.getElementById(dm+'X');x.hidden=!!e.target.value;if(!e.target.value)x.focus();return}
+  var n=e.target.dataset&&e.target.dataset.cert;if(!n)return;readConfirm();if(e.target.checked)S.j.certs[n]='';else delete S.j.certs[n];render()});
+document.addEventListener('keydown',function(e){if(e.key!=='Enter')return;var m={iNm:'lookup',iPh:'lookup',eEmU:'sendCode',eEmX:'sendCode',cCode:'verify',leU:'doLogin',leX:'doLogin',lp:'doLogin',fe2U:'sendReset',fe2X:'sendReset',rp:'doReset'}[e.target.id];if(m){e.preventDefault();var b=document.getElementById(m);if(b)b.click()}});
 
 (function start(){try{S.sess=sessionStorage.getItem('tm-sess')||''}catch(x){}
   call('tHello').then(function(h){if(h.ok){S.test=!!h.test;S.acads=h.acads||[]}

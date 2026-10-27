@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261028-085501 -->
+<!-- build: 20261028-085608 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -354,10 +354,21 @@ function rrnBox(m){var p=m.pay||{};
     msgBox()+btn('rrnSave','주민등록번호 저장')+(S.rrnEdit?'<button class="btn ghost small" type="button" id="rrnCancel">취소</button>':'')+'</div>'}
 
 /* ---------- 그리기 ---------- */
+/* 브라우저 뒤로가기 (10-28): 화면이 바뀔 때마다 기록을 남기고, 뒤로가기를 누르면 앱 안의 앞 화면으로 */
+var HIST={last:'',busy:false};
+function gh(){try{return window.google&&google.script&&google.script.history}catch(x){return null}}
+function hSync(){var H=gh();if(!H||HIST.busy||S.v===HIST.last)return;var first=!HIST.last;HIST.last=S.v;try{if(first)H.replace({v:S.v},{});else H.push({v:S.v},{})}catch(x){}}
+function hBack(v){var need={email:1,code:1,confirm:1};
+  if(!v)v=S.sess?'me':'home';
+  if(S.v==='done'||(need[v]&&!S.token))v=S.sess?'me':'home';
+  if((v==='me'||v==='pay')&&!S.sess)v='login';
+  HIST.busy=true;HIST.last=v;S.v=v;S.err={};S.msg='';S.postFor='';S.payEd='';if(S.hist.length)S.hist.pop();render();HIST.busy=false;window.scrollTo(0,0);if(v==='me')loadMe()}
+(function(){var H=gh();if(H&&H.setChangeHandler)try{H.setChangeHandler(function(e){hBack(e&&e.state&&e.state.v)})}catch(x){}})();
 function render(){var h;
   document.getElementById('testband').hidden=!S.test;
   h=({home:vHome,find:vFind,email:vEmail,code:vCode,confirm:vConfirm,done:vDone,login:vLogin,me:vMe,pay:vPay,ask:vAsk})[S.v]();
   document.getElementById('app').innerHTML=h;
+  hSync();
   document.getElementById('backBtn').hidden=!S.hist.length||S.v==='done'||S.v==='me';
   if(S.postFor)openPost();
 }

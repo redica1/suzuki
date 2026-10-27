@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261028-085501 -->
+<!-- build: 20261028-085608 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -425,6 +425,11 @@ function acsEnhance(root){(root||document).querySelectorAll('select').forEach(fu
   ul.addEventListener('mousedown',function(e){var li=e.target.closest('li[data-i]');e.preventDefault();if(li)pick(items[+li.dataset.i])});
   inp.addEventListener('blur',function(){setTimeout(function(){ul.hidden=true;inp.value=sl.value?acsLabel(sl):''},120)})})}
 new MutationObserver(function(){acsEnhance()}).observe(document.documentElement,{childList:true,subtree:true});
+/* 브라우저 뒤로가기 (10-28): 탭이 바뀔 때마다 기록, 뒤로가기는 앞 탭으로 */
+var HIST={last:'',busy:false};
+function gh(){try{return window.google&&google.script&&google.script.history}catch(x){return null}}
+function hSync(){var H=gh();if(!H||HIST.busy||!S.sess||!S.D||S.tab===HIST.last)return;var first=!HIST.last;HIST.last=S.tab;try{if(first)H.replace({tab:S.tab},{});else H.push({tab:S.tab},{})}catch(x){}}
+(function(){var H=gh();if(H&&H.setChangeHandler)try{H.setChangeHandler(function(e){var t=e&&e.state&&e.state.tab;if(!t||!S.sess||!S.D)return;HIST.busy=true;HIST.last=t;if(S.hist.length)S.hist.pop();go(t,true);HIST.busy=false})}catch(x){}})();
 function render(){
   var tabs=document.getElementById('tabs'),app=document.getElementById('app'),who=document.getElementById('who');
   document.getElementById('testband').hidden=!S.test;
@@ -435,8 +440,9 @@ function render(){
   tabs.innerHTML=TABS.map(function(t){return '<button role="tab" type="button" data-tab="'+t[0]+'" aria-selected="'+(S.tab===t[0])+'">'+t[1]+(t[0]==='home'&&need?'<span class="cnt">'+need+'</span>':'')+(t[0]==='req'&&S.D.reqN?'<span class="cnt">'+S.D.reqN+'</span>':'')+(t[0]==='ask'&&S.D.bN?'<span class="cnt">'+S.D.bN+'</span>':'')+'</button>'}).join('');
   app.innerHTML=({home:vHome,acad:vAcads,tch:vTeachers,stu:vStudents,req:vReq,ask:vAskA,log:vLog,set:vSet})[S.tab]();
   var i=TABS.map(function(t){return t[0]}).indexOf(S.tab);document.getElementById('prevBtn').disabled=i<=0;document.getElementById('nextBtn').disabled=i>=TABS.length-1;
+  hSync();
 }
-function go(tab){if(tab!==S.tab)S.hist.push(S.tab);S.tab=tab;S.q='';S.f={};S.page=0;S.edit=null;S.sel={};S.issue='';S.dEdit=null;S.edAcad=null;if(tab==='log')loadLogs();if(tab==='req')loadReqs();if(tab==='ask')loadAsk();render();window.scrollTo(0,0)}
+function go(tab,fromBack){if(tab!==S.tab&&!fromBack)S.hist.push(S.tab);S.tab=tab;S.q='';S.f={};S.page=0;S.edit=null;S.sel={};S.issue='';S.dEdit=null;S.edAcad=null;if(tab==='log')loadLogs();if(tab==='req')loadReqs();if(tab==='ask')loadAsk();render();window.scrollTo(0,0)}
 function load(){return callS('boot').then(function(r){if(!r.ok){if(S.sess)toast(r.msg);return}
   S.test=r.test;S.pdSrc0=r.pdSrc||'';S.D={acad:objs(r['학원']),tch:objs(r['교사']),stu:objs(r['학생']),duesRows:objs(r['연회비']),empty:r.empty,acc:r.acc||{},reqN:r.reqN||0,payF:r.pay||{},bN:r.bN||0,mailLeft:r.mailLeft==null?-1:r.mailLeft,works:objs(r['근무']||{h:[],rows:[]})};index();render()})}
 function loadLogs(){S.logs=null;callS('logs').then(function(r){if(r.ok){S.logs=r;if(S.tab==='log')render()}else toast(r.msg)})}

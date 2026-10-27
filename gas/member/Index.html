@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261028-013026 -->
+<!-- build: 20261028-013539 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -371,9 +371,15 @@ function reqCard(q){var info={};try{info=JSON.parse(q['내용']||'{}')}catch(x){
 function vLog(){var L=S.logs;if(!L)return '<div class="panel"><span><span class="spin"></span> 불러오는 중…</span></div>';
   return '<div class="sec-h"><div><h2>바뀐 기록</h2><p>최근 300건. 시트 「기록」 탭에 모두 남아요.</p></div><button class="btn small" type="button" id="logRe">새로 고침</button></div><div class="panel"><div class="tbl"><table><thead><tr>'+L.h.map(function(x){return '<th>'+esc(x)+'</th>'}).join('')+'</tr></thead><tbody>'+
   L.rows.map(function(r){return '<tr>'+r.map(function(c,i){return '<td'+(i===5?' class="wrapc"':'')+'>'+esc(c)+'</td>'}).join('')+'</tr>'}).join('')+'</tbody></table></div></div>'}
+function pdResult(r){return '<div class="note ok"><b>'+esc(r.year)+'년 교사 회비 '+r.n+'명을 넣었어요.</b> 휴대전화로 '+(r.how['전화']+r.how['전화+이름'])+'명 · 이름으로 '+r.how['이름']+'명</div>'+
+  (r.nameOnly.length?'<p class="cap">이름으로 맞춘 선생님(확인해 주세요): '+esc(r.nameOnly.join(' · '))+'</p>':'')+
+  (r.un.length?'<details><summary>지금 교사 명단에서 못 찾은 '+r.un.length+'줄 (그만둔 선생님 등 · 넣지 않음)</summary><p class="cap">'+esc(r.un.join(' · '))+'</p></details>':'')}
 function vSet(){return '<div class="sec-h"><div><h2>설정</h2><p>관리자 아이디·비밀번호·테스트 표시는 시트 「설정」 탭에서 바꿔요.</p></div></div>'+
   '<div class="panel"><h3>원본 명단 불러오기</h3><p class="cap">「[2026]스즈키교사 연회비납부명단」의 학원정보DB · 교사정보DB · 학생정보DB를 가져와요. 주민등록번호 · 계좌 · 집 주소 칸은 읽지 않아요. 이름 끝 A·B, 괄호 표기는 「구분 글자」로, Vn·vc 같은 전공은 바이올린·첼로로 바꾸고, 바꾼 것은 「확인 메모」에 남겨요.</p>'+
   (S.D.empty?'<div><button class="btn primary" type="button" id="imp">원본에서 불러오기</button></div>':S.test?'<div class="note">테스트(STG)라서 지우고 다시 불러올 수 있어요. 지금 STG 에서 고친 내용은 모두 사라져요.</div><div><button class="btn" type="button" id="impRe">지우고 다시 불러오기</button></div>':'<p class="cap">이미 명단이 들어 있어요. 메인은 다시 불러오지 않아요 (고친 내용을 지키기 위해).</p>')+
+  '</div><div class="panel"><h3>지난 해 교사 회비 불러오기</h3><p class="cap">그 해 「교사정보DB」에서 이름 · 휴대전화 · 납부 칸만 읽어 지금 교사 번호에 맞춰요(휴대전화 → 이름). 선생님 「내 정보 › 교사 회비」에 년도별로 보여요. 다시 돌리면 그 해 교사 회비 줄을 새로 써요.</p>'+
+  '<div class="filters"><input type="text" id="pdSrc" value="'+esc(S.D.pdSrc||S.pdSrc0||'')+'" placeholder="그 해 회비 시트 주소 (docs.google.com/spreadsheets/…)" style="flex:1;min-width:260px">'+sel('pdYear',(function(){var o=[],y=new Date().getFullYear()-1;for(var i=y;i>=2018;i--)o.push(String(i));return o})(),S.pdYear||String(new Date().getFullYear()-1),'년도')+'<button class="btn primary" type="button" id="pdGo">불러오기</button></div>'+
+  (S.pdRes?pdResult(S.pdRes):'')+
   '</div><div class="panel"><h3>알아 둘 것</h3><p class="cap">모든 학원·교사·학생에는 바뀌지 않는 번호(A0001 · T0001 · S0001)가 붙어요. 캠프 · 졸업연주 · 교사연수는 이 번호로 연결해요. 데이터는 이 화면이 붙은 구글 시트에만 있고, 깃허브에는 화면 코드만 있어요.</p></div>'}
 
 /* ---------- 그리기 ---------- */
@@ -409,7 +415,7 @@ function render(){
 }
 function go(tab){if(tab!==S.tab)S.hist.push(S.tab);S.tab=tab;S.q='';S.f={};S.page=0;S.edit=null;S.sel={};S.issue='';S.dEdit=null;S.edAcad=null;if(tab==='log')loadLogs();if(tab==='req')loadReqs();render();window.scrollTo(0,0)}
 function load(){return callS('boot').then(function(r){if(!r.ok){if(S.sess)toast(r.msg);return}
-  S.test=r.test;S.D={acad:objs(r['학원']),tch:objs(r['교사']),stu:objs(r['학생']),duesRows:objs(r['연회비']),empty:r.empty,acc:r.acc||{},reqN:r.reqN||0,payF:r.pay||{},works:objs(r['근무']||{h:[],rows:[]})};index();render()})}
+  S.test=r.test;S.pdSrc0=r.pdSrc||'';S.D={acad:objs(r['학원']),tch:objs(r['교사']),stu:objs(r['학생']),duesRows:objs(r['연회비']),empty:r.empty,acc:r.acc||{},reqN:r.reqN||0,payF:r.pay||{},works:objs(r['근무']||{h:[],rows:[]})};index();render()})}
 function loadLogs(){S.logs=null;callS('logs').then(function(r){if(r.ok){S.logs=r;if(S.tab==='log')render()}else toast(r.msg)})}
 function keepFocus(id){var n=document.getElementById(id);if(n){n.focus();var v=n.value;n.value='';n.value=v}}
 function kindOf(){return {acad:'학원',tch:'교사',stu:'학생'}[S.tab]}
@@ -491,6 +497,9 @@ document.addEventListener('click',function(e){
   if(d.rq){var rp=d.rq.split('|'),memo=(document.getElementById('why_'+rp[0])||{}).value||'';if(rp[1]==='반려'&&!memo.trim()){toast('반려 사유를 적어 주세요');return}
     if(rp[2]&&!confirm('이 신청을 명단의 그 선생님 계정으로 연결할까요?'))return;if(S.busy)return;S.busy=true;
     callS('reqDo',rp[0],rp[1],memo,rp[2]).then(function(r){S.busy=false;if(!r.ok){toast(r.msg);return}S.reqs=objs(r);S.D.reqN=S.reqs.filter(function(q){return q['상태']==='대기'}).length;toast(rp[1]+' · 메일을 보냈어요');load()});return}
+  if(b.id==='pdGo'){var src=document.getElementById('pdSrc').value.trim(),yr=document.getElementById('pdYear').value;S.pdYear=yr;S.D.pdSrc=src;if(!src){toast('시트 주소를 넣어 주세요');return}
+    b.disabled=true;b.innerHTML='<span class="spin"></span> 불러오는 중…';
+    callS('importPastDues',src,yr).then(function(r){if(!r.ok){b.disabled=false;b.textContent='불러오기';toast(r.msg);return}S.pdRes=r;S.D.duesRows=objs(r.dues);index();render();toast(r.year+'년 회비를 넣었어요')});return}
   if(b.id==='imp'||b.id==='impRe'){if(b.id==='impRe'&&!confirm('STG 명단을 모두 지우고 원본에서 다시 불러올까요?'))return;b.disabled=true;b.innerHTML='<span class="spin"></span> 불러오는 중… (1분쯤)';
     callS('importRoster',b.id==='impRe').then(function(r){if(!r.ok){b.disabled=false;b.textContent='다시 해 보기';toast(r.msg);return}toast(r.msg);S.tab='home';load()});return}
 });

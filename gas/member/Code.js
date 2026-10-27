@@ -1,4 +1,4 @@
-/* build: 20261028-013026 */
+/* build: 20261028-013539 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -41,6 +41,7 @@ const SETTINGS = [
   ['보내는 이름', '한국스즈키음악협회', '인증·안내 메일의 보내는 사람 이름'],
   ['인증 코드 화면 표시', '아니오', 'STG 시험용. 「예」면 메일과 함께 화면에도 인증 코드를 보여 줌 (메인에서는 꼭 아니오)'],
   ['정산 정보 시트', '', 'setup 이 만드는 관리자 전용 파일 ID (계좌·우편물 주소). 공유하지 마세요'],
+  ['지난 회비 원본', '', '설정 › 지난 해 교사 회비 불러오기에 마지막으로 넣은 시트 ID'],
 ];
 
 /* ====================== 웹 앱 ====================== */
@@ -55,7 +56,7 @@ function include(n) { return HtmlService.createHtmlOutputFromFile(n).getContent(
 
 function api(name, args) {
   const open = { login, hello, tHello, tLookup, tStart, tResend, tVerify, tCreate, tLogin, tForgot, tReset, tMe, tSavePay, tSaveRrn, tAddWork, tEndWork, tMainWork, tLogout };
-  const fns = { boot, saveRow, setCheck, logs, importRoster, saveDues, delDues, reqs, reqDo, delAcad, payView, bulkSet, saveWorks };
+  const fns = { boot, saveRow, setCheck, logs, importRoster, saveDues, delDues, reqs, reqDo, delAcad, payView, bulkSet, saveWorks, importPastDues };
   try {
     if (open[name]) return Object.assign({ ok: true }, open[name].apply(null, args || []));
     if (!fns[name]) throw new UserError('알 수 없는 요청이에요.');
@@ -101,6 +102,7 @@ function boot(who) {
   out.test = settings_()['테스트 표시'] === '예';
   const acc = {}; tbl_('계정').v.forEach(r => { if (r[1]) acc[r[1]] = r[4]; }); out.acc = acc;
   out.reqN = tbl_('요청').v.filter(r => r[7] === '대기').length;
+  out.pdSrc = String(settings_()['지난 회비 원본'] || '');
   { const W = tbl_('근무'); out['근무'] = { h: W.h, rows: W.v }; }
   const pf = {}; try { const P = payTbl_(), c = col_(P); P.v.forEach(r => { pf[r[0]] = { a: !!r[c['계좌번호']], h: !!r[c['집주소']], m: !!r[c['주소']], r: !!r[c['주민번호암호']] }; }); } catch (e) {}
   out.pay = pf;   // 있음/없음만 (값은 「내용 보기」로)
@@ -344,6 +346,49 @@ function importRoster(who, replace) {
   } finally { lock.releaseLock(); }
 }
 /** 원본 시트에서 머리글 이름으로 필요한 칸만 읽음 (주민번호·계좌·주소 칸은 이름을 적지 않았으므로 읽지 않음) */
+/** 지난 해 교사 회비 불러오기 (10-28). 그 해 교사정보DB 의 이름·전화·납부 칸만 읽어 교사 번호에 맞춰 연회비 탭에 넣음.
+ *  맞추는 순서: 휴대전화(한 명) → 휴대전화가 같은 사람 중 이름 → 이름(한 명). 다시 돌리면 그 해 교사 줄을 새로 씀. */
+function importPastDues(who, src, year) {
+  const id = (String(src || '').match(/\/d\/([\w-]{20,})/) || [])[1] || String(src || '').trim();
+  if (!/^[\w-]{20,}$/.test(id)) fail('구글 시트 주소를 넣어 주세요.');
+  year = String(year || ''); if (!/^20\d{2}$/.test(year)) fail('년도를 골라 주세요.');
+  if (year >= Utilities.formatDate(new Date(), 'Asia/Seoul', 'yyyy')) fail('올해 회비는 「원본에서 불러오기」로 들어와요. 지난 해만 골라 주세요.');
+  let ss; try { ss = SpreadsheetApp.openById(id); } catch (e) { fail('그 시트를 열지 못했어요. 이 앱을 만든 계정에 보기 권한이 있어야 해요.'); }
+  const { rows } = readSrc_(ss, '교사정보DB', '교사명', ['교사명', '전화번호', '납부방식', '납부연도', '교사부과회비', '교사납부회비', '납부일']);
+  const T = tbl_('교사'), c = col_(T), byP = {}, byN = {};
+  T.v.forEach(r => { const tid = r[c['교사ID']], p = digits_(r[c['휴대전화']]); if (p) (byP[p] = byP[p] || []).push(tid);
+    [r[c['이름']], String(r[c['원래이름']] || '').replace(/[A-Za-z()\s]+$/, '')].map(x => String(x || '').replace(/\s+/g, '')).filter(Boolean).forEach(n => { byN[n] = byN[n] || []; if (byN[n].indexOf(tid) < 0) byN[n].push(tid); }); });
+  const nm = r => String(r['교사명'] || '').replace(/\s+/g, '').replace(/(?<=[가-힣])[A-Za-z()]+$/, '');
+  const won = v => +String(v || '').replace(/[^\d-]/g, '') || 0;
+  const ymd = v => { const m = String(v || '').match(/(20\d{2})\D+(\d{1,2})\D+(\d{1,2})/); return m ? m[1] + '-' + m[2].padStart(2, '0') + '-' + m[3].padStart(2, '0') : ''; };
+  const got = {}, un = [], how = { '전화': 0, '전화+이름': 0, '이름': 0 }, nameOnly = [];
+  rows.forEach(r => {
+    const n = nm(r); if (!n || /^\d+$/.test(n)) return;
+    if (String(r['납부연도'] || year).replace(/\D/g, '').slice(0, 4) !== year) return;
+    const due = won(r['교사부과회비']), paid = won(r['교사납부회비']); if (!due && !paid) return;
+    const p = digits_(r['전화번호']); let tid = '', h = '';
+    if (p && byP[p] && byP[p].length === 1) { tid = byP[p][0]; h = '전화'; }
+    else if (p && byP[p]) { const x = byP[p].filter(t => (byN[n] || []).indexOf(t) >= 0); if (x.length === 1) { tid = x[0]; h = '전화+이름'; } }
+    if (!tid && (byN[n] || []).length === 1) { tid = byN[n][0]; h = '이름'; }
+    if (!tid) { un.push(String(r['교사명']).trim() + (p ? ' (' + p.slice(-4) + ')' : '') + ' ' + due.toLocaleString() + '/' + paid.toLocaleString() + ((byN[n] || []).length > 1 ? ' · 같은 이름 ' + byN[n].length + '명' : '')); return; }
+    const way = paid ? (/CMS/i.test(r['납부방식']) ? '자동이체' : /직접/.test(r['납부방식']) ? '직접입금' : String(r['납부방식'] || '').trim()) : '';
+    const row = { '대상': '교사', 'ID': tid, '년도': year, '부과': due, '납부': paid, '납부일': ymd(r['납부일']), '방식': way, '메모': year + ' 교사정보DB에서 불러옴' + (h === '이름' ? ' · 이름으로 맞춤(전화 ' + (p ? '다름' : '없음') + ')' : ''), '수정일': now_(), '수정자': who.name };
+    if (got[tid]) { const o = got[tid]; const keep = o._h !== '이름' ? o : row, other = keep === o ? row : o; keep['메모'] += ' · 원본에 같은 사람 줄이 하나 더 있음(' + other['부과'] + '/' + other['납부'] + (other['납부일'] ? ' ' + other['납부일'] : '') + ')'; keep._h = keep === o ? o._h : h; got[tid] = keep; return; }
+    row._h = h; got[tid] = row; how[h]++; if (h === '이름') nameOnly.push(String(r['교사명']).trim() + ' → ' + tid);
+  });
+  const lock = LockService.getScriptLock(); lock.waitLock(30000);
+  try {
+    const D = tbl_('연회비'), dc = col_(D);
+    const keep = D.v.filter(r => !(r[dc['대상']] === '교사' && String(r[dc['년도']]) === year && got[r[dc['ID']]]));
+    const add = Object.keys(got).map(t => D.h.map(k => got[t][k] == null ? '' : got[t][k]));
+    const all = keep.concat(add), sh = D.sh;
+    if (sh.getLastRow() > 1) sh.getRange(2, 1, sh.getLastRow() - 1, D.h.length).clearContent();
+    if (all.length) sh.getRange(2, 1, all.length, D.h.length).setValues(all);
+    setSetting_('지난 회비 원본', id);
+    log_(who.name, '연회비', year, '지난 회비 불러오기', '맞춘 ' + add.length + '명 · 못 맞춘 ' + un.length + '줄');
+    return { year, n: add.length, how, un, nameOnly, dues: { h: D.h, rows: tbl_('연회비').v } };
+  } finally { lock.releaseLock(); }
+}
 function readSrc_(ss, tab, mark, cols) {
   const sh = ss.getSheetByName(tab); if (!sh) fail('원본에 「' + tab + '」 탭이 없어요.');
   const last = sh.getLastRow(), lc = sh.getLastColumn();

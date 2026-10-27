@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261028-004507 -->
+<!-- build: 20261028-004709 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -261,7 +261,7 @@ function tchEditor(){var t=S.edit.id==='new'?{'상태':'활동','회원구분':'
     (same.length?'<div class="note">이름이 같은 교사: '+same.map(function(x){return '<b>'+nm(x)+'</b> '+esc(tAcadTxt(x))+' · '+esc(x['전공'])+' · 뒷자리 '+String(x['휴대전화']).slice(-4)}).join(' / ')+'</div>':'')+
     '<div class="fgrid">'+fld('e_이름','이름',t['이름'],{req:1,hint:'명찰·졸업장에 그대로'})+fld('e_구분글자','구분 글자',t['구분글자'],{hint:'동명이인 메모용 · 화면엔 작게'})+fld('e_휴대전화','휴대전화',fmt(t['휴대전화']),{type:'tel'})+
     fld('e_이메일','이메일',t['이메일'])+fld('e_직급','직급',t['직급'],{sel:[['','없음'],'원장','강사']})+fld('e_전공','전공',t['전공'],{sel:[['','선택']].concat(INSTS)})+
-    fld('e_학원1','소속 학원 1',t['학원1'],{sel:acadOpts('소속 없음')})+fld('e_학원2','소속 학원 2',t['학원2'],{sel:acadOpts('없음')})+fld('e_학원3','소속 학원 3',t['학원3'],{sel:acadOpts('없음')})+
+    fld('e_학원1','주 근무 학원',t['학원1'],{sel:acadOpts('소속 없음')})+fld('e_학원2','추가 근무 학원 1',t['학원2'],{sel:acadOpts('없음')})+fld('e_학원3','추가 근무 학원 2',t['학원3'],{sel:acadOpts('없음')})+
     fld('e_회원구분','회원 구분',t['회원구분'],{sel:['확인 전','정식 교사','중급 연수','초급 연수'],hint:'명단 자격: '+esc(t['명단자격']||'없음')+(t['명단취득']?' · '+esc(t['명단취득']):'')})+
     fld('e_상태','상태',t['상태'],{sel:['활동','휴직','활동정지','탈퇴']})+fld('e_확인','확인',t['확인'],{sel:CHECKS})+'</div>'+
     '<div class="panel" style="padding:12px;border-style:dashed"><b>관리자 구분 <span class="cap">선생님 화면에는 보이지 않아요</span></b><div class="fgrid">'+

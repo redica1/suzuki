@@ -1,4 +1,4 @@
-/* build: 20261028-004507 */
+/* build: 20261028-004709 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -460,15 +460,19 @@ function cleanInfo_(n, isNew) {
     o.type = n.type; o.course = n.type === '연수교사회원' ? n.course : '';
     o.kind = n.type === '교사회원' ? '정식 교사' : n.course === '중급' ? '중급 연수' : '초급 연수';
   } else { if (KINDS.indexOf(n.kind) < 0) fail('회원 구분을 골라 주세요.'); o.kind = n.kind; }
-  o.noAcad = !!n.noAcad || (isNew && o.type === '연수교사회원');   // 연수교사회원은 소속 없음 (10-28)
-  o.acads = o.noAcad ? [] : [...new Set((n.acads || []).map(String))].filter(id => an[id]).slice(0, 3);
-  o.acadText = o.noAcad ? '' : String(n.acadText || '').trim().slice(0, 60);
-  if (!o.noAcad && !o.acads.length && !o.acadText) fail('소속 학원을 고르거나 「소속 학원 없음」을 눌러 주세요.');
+  /* 소속: 주로 근무하는 학원 1곳(필수) + 추가 근무 학원 2곳까지 (10-28). 소속 없음은 연수 중인 선생님만 */
+  o.noAcad = !!n.noAcad || (isNew && o.type === '연수교사회원');
+  if (o.noAcad && o.kind === '정식 교사') fail('정식 교사는 주로 근무하는 학원을 꼭 골라 주세요.');
+  const main = o.noAcad ? '' : (an[n.main] ? String(n.main) : '');
+  o.acadText = o.noAcad || main ? '' : String(n.mainText || '').trim().slice(0, 60);
+  if (!o.noAcad && !main && !o.acadText) fail('주로 근무하는 학원을 골라 주세요.');
+  const extras = o.noAcad ? [] : [...new Set((n.extras || []).map(String))].filter(id => an[id] && id !== main).slice(0, 2);
+  o.acads = (main ? [main] : []).concat(extras);
   o.role = ['원장', '강사', ''].indexOf(n.role) >= 0 ? n.role : ''; if (n.role == null) fail('직급을 골라 주세요.');
   if (INSTS_.indexOf(n.inst) < 0) fail('악기를 골라 주세요.'); o.inst = n.inst;
   o.certs = (n.certs || []).filter(x => CERTS_.indexOf(x.n) >= 0).map(x => ({ n: x.n, y: /^(19|20)\d{2}$/.test(String(x.y)) ? String(x.y) : '' }));
   o.certTxt = o.certs.map(x => x.n + (x.y ? ' ' + x.y : '')).join(', ');
-  o.acadNames = o.noAcad ? '소속 없음' : o.acads.map(id => an[id]).concat(o.acadText ? ['(목록에 없음) ' + o.acadText] : []).join(', ');
+  o.acadNames = o.noAcad ? '소속 없음' : (o.acadText ? ['(목록에 없음) ' + o.acadText] : []).concat(o.acads.map(id => an[id])).join(', ');
   return o;
 }
 function tCreate(token, d) {
@@ -488,10 +492,10 @@ function tCreate(token, d) {
       /* 선생님이 넣은 정보로 명단을 고치고, 바뀐 칸은 「확인 필요」로 남김 */
       const T = tbl_('교사'), i = T.find('교사ID', tid), r = T.rowObj(i), c = col_(T), g = k => String(r[c[k]] || '');
       const an = acadNames_(), oldA = [g('학원1'), g('학원2'), g('학원3')].filter(Boolean);
-      const newA = o.noAcad ? [] : (o.acads.length ? o.acads : oldA);
+      const newA = o.noAcad ? [] : o.acads;   // 주 근무 학원이 목록에 없으면(직접 적음) 학원1은 비우고 「정보 수정」 요청
       const diff = [];
       if (oldA.join(',') !== newA.join(',')) diff.push('소속 ' + (oldA.map(x => an[x] || x).join(', ') || '없음') + ' → ' + (newA.map(x => an[x] || x).join(', ') || '없음'));
-      if (o.acadText) diff.push('목록에 없는 학원 「' + o.acadText + '」');
+      if (o.acadText) diff.push('주 근무 학원이 목록에 없음 「' + o.acadText + '」');
       if (g('직급') !== o.role) diff.push('직급 ' + (g('직급') || '없음') + ' → ' + (o.role || '없음'));
       if (g('전공') !== o.inst) diff.push('악기 ' + (g('전공') || '없음') + ' → ' + o.inst);
       if (o.certTxt && o.certTxt !== g('명단자격')) diff.push('자격 (명단: ' + (g('명단자격') || '없음') + ') → ' + o.certTxt);

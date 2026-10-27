@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261028-085403 -->
+<!-- build: 20261028-085501 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -473,6 +473,14 @@ document.addEventListener('input',function(e){var el=e.target;
   if(el.id==='aq'){S.aq=el.value;document.getElementById('aList').innerHTML=aItems(aHits())}});
 document.addEventListener('change',function(e){if(e.target.id==='pSame'){readPayIn();var pd=curPay();if(pd&&pd.same){pd.zip=pd.hzip;pd.addr=pd.haddr;pd.addr2=pd.haddr2;delete S.err.a_m}render();return}if(e.target.id==='noWork'){readConfirm();S.acadTyping=false;if(S.j.noWork)delete S.err.acad;render();return}var dm=e.target.dataset&&e.target.dataset.dom;if(dm){var x=document.getElementById(dm+'X');x.hidden=!!e.target.value;if(!e.target.value)x.focus();return}
   var n=e.target.dataset&&e.target.dataset.cert;if(!n)return;readConfirm();if(e.target.checked)S.j.certs[n]='';else delete S.j.certs[n];delete S.err['cy_'+n];render()});
+/* 휴대전화 칸: 앞의 010- 은 고르거나 지울 수 없게, 커서는 항상 010- 뒤로 (10-28) */
+function phClamp(el){if(!el||el.id!=='iPh'||el.disabled)return;var n=el.value.length,a=el.selectionStart,b=el.selectionEnd;
+  if(el.value.indexOf('010-')!==0){el.value=ph010(el.value);n=el.value.length}
+  if(a===0&&b===n){el.setSelectionRange(n,n);return}
+  if(a<4||b<4)el.setSelectionRange(Math.max(4,a),Math.max(4,b))}
+document.addEventListener('focusin',function(e){if(e.target.id==='iPh'){var el=e.target;setTimeout(function(){var n=el.value.length;try{el.setSelectionRange(n,n)}catch(x){}},0)}});
+['click','select','keyup','mouseup','touchend'].forEach(function(ev){document.addEventListener(ev,function(e){if(e.target&&e.target.id==='iPh')setTimeout(function(){try{phClamp(e.target)}catch(x){}},0)})});
+document.addEventListener('keydown',function(e){if(e.target&&e.target.id==='iPh'&&(e.key==='Backspace'&&e.target.selectionStart<=4&&e.target.selectionEnd<=4||e.key==='Home'||(e.key==='a'&&(e.ctrlKey||e.metaKey)))){e.preventDefault();if(e.key!=='Backspace'){var n=e.target.value.length;e.target.setSelectionRange(e.key==='Home'?4:4,e.key==='Home'?4:n)}}});
 document.addEventListener('keydown',function(e){if(e.key!=='Enter')return;var m={iNm:'lookup',iPh:'lookup',eEmU:'sendCode',eEmX:'sendCode',cCode:'verify',leU:'doLogin',leX:'doLogin',lp:'doLogin',fe2U:'sendReset',fe2X:'sendReset',rp:'doReset'}[e.target.id];if(m){e.preventDefault();var b=document.getElementById(m);if(b)b.click()}});
 
 (function start(){try{S.sess=sessionStorage.getItem('tm-sess')||''}catch(x){}

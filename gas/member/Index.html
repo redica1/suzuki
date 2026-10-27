@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261028-010406 -->
+<!-- build: 20261028-011713 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -36,7 +36,9 @@ button,input,select,textarea{font:inherit;color:inherit}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .num{font-family:var(--mono);font-variant-numeric:tabular-nums}
 .testband{background:var(--rosin);color:#1b1306;text-align:center;font-size:13px;font-weight:700;padding:4px 8px}
+.gnb{position:sticky;top:0;z-index:30;box-shadow:0 2px 6px rgba(0,0,0,.12)}
 .band{background:var(--band);color:var(--band-ink)}
+.wtab{width:100%;border-collapse:collapse}.wtab td,.wtab th{padding:4px 6px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}.wtab tr.past td{opacity:.65}.wtab input,.wtab select{padding:4px 6px}
 .band .wrap{padding-top:14px;display:grid;gap:8px}
 .top{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap}
 .band h1{font-family:var(--display);font-size:23px;font-weight:700}
@@ -113,11 +115,11 @@ label.f.wide{grid-column:1/-1}
 @keyframes s{to{transform:rotate(360deg)}}
 </style>
 </head><body>
-<div class="testband" id="testband" hidden>테스트(STG) — 여기서 고친 내용은 메인 명단에 들어가지 않아요</div>
+<header class="gnb"><div class="testband" id="testband" hidden>테스트(STG) — 여기서 고친 내용은 메인 명단에 들어가지 않아요</div>
 <div class="band"><div class="wrap">
   <div class="top"><h1>스즈키 회원관리</h1><div class="who" id="who"></div></div>
   <nav class="tabs" id="tabs" role="tablist"></nav>
-</div></div>
+</div></div></header>
 <main class="wrap" id="app"><div class="panel"><span><span class="spin"></span> 여는 중이에요…</span></div></main>
 <div class="homebar" id="homebar" hidden><div class="wrap">
   <button class="btn" type="button" data-tab="home">&#8962; 처음</button>
@@ -243,7 +245,7 @@ function tchList(){var qq=q(),f=S.f,is=S.issue,dn=dupNames(S.D.tch);
     if(is==='t_need'&&t['확인']!=='확인 필요')return false; if(is==='t_tag'&&!t['구분글자'])return false; if(is==='t_dup'&&!(dn[t['이름']]>1))return false;
     if(is==='t_nophone'&&t['휴대전화'])return false; if(is==='t_noacad'&&tAcads(t).length)return false;
     if(qq&&!((t['이름']+' '+t['원래이름']+' '+t['휴대전화']+' '+tAcadTxt(t)).indexOf(qq.replace(/-/g,''))>=0||(t['이름']+' '+tAcadTxt(t)).indexOf(qq)>=0))return false;
-    if(f.ac&&tAcads(t).indexOf(f.ac)<0)return false; if(f.ins&&t['전공']!==f.ins)return false; if(f.pw&&t['회비납부방법']!==f.pw)return false; if(f.rl&&(f.rl==='-'?t['직급']:t['직급']!==f.rl))return false; if(f.cp&&(t['캠프교수']==='예')!==(f.cp==='예'))return false; if(f.fr&&(t['회비구분']==='면제')!==(f.fr==='예'))return false; if(f.ck&&t['확인']!==f.ck)return false;
+    if(f.ac&&tAcads(t).indexOf(f.ac)<0)return false; if(f.ins&&t['전공']!==f.ins)return false; if(f.kd&&(f.kd==='-'?(t['회원구분']&&t['회원구분']!=='확인 전'):t['회원구분']!==f.kd))return false; if(f.pw&&t['회비납부방법']!==f.pw)return false; if(f.rl&&(f.rl==='-'?t['직급']:t['직급']!==f.rl))return false; if(f.cp&&(t['캠프교수']==='예')!==(f.cp==='예'))return false; if(f.fr&&(t['회비구분']==='면제')!==(f.fr==='예'))return false; if(f.ck&&t['확인']!==f.ck)return false;
     if(f.du){var d=duesOf('교사',t['교사ID'],'2026'),paid=d&&+d['부과']>0&&+d['납부']>=+d['부과'];if(f.du==='면제'?t['회비구분']!=='면제':f.du==='납부'?t['회비구분']==='면제'||!paid:t['회비구분']==='면제'||paid)return false}
     return true}).sort(function(x,y){return is==='t_dup'?x['이름'].localeCompare(y['이름'],'ko'):0})}
 function acadOpts(first){return [['',first]].concat(S.D.acad.filter(function(a){return a['상태']!=='탈퇴'}).map(function(a){return [a['학원ID'],a['학원명']]}).sort(function(x,y){return x[1].localeCompare(y[1],'ko')}))}
@@ -251,7 +253,7 @@ function vTeachers(){var list=tchList(),per=50,page=list.slice(S.page*per,(S.pag
   return '<div class="sec-h"><div><h2>교사정보</h2><p>회원 구분(정식 교사 · 중급 연수 · 초급 연수)은 짐작하지 않고 「확인 전」으로 두었어요. 명단 자격은 원본 그대로예요.</p></div><button class="btn primary" type="button" data-new="tch">+ 교사 추가</button></div>'+
   (S.edit&&S.edit.kind==='tch'?tchEditor():'')+issueBar()+
   '<div class="panel"><div class="filters"><input type="search" id="q" value="'+esc(S.q)+'" placeholder="이름·전화·학원" style="width:min(220px,100%)">'+
-    sel('fac',acadOpts('학원 전체'),S.f.ac,'학원')+sel('fins',[['','전공 전체']].concat(INSTS),S.f.ins,'전공')+sel('frl',[['','직급 전체'],'원장','강사',['-','없음']],S.f.rl,'직급')+sel('fcp',[['','캠프교수 전체'],['예','캠프교수 예'],['아니오','캠프교수 아니오']],S.f.cp,'캠프교수')+sel('ffr',[['','회비면제 전체'],['예','회비면제 예'],['아니오','회비면제 아니오']],S.f.fr,'회비면제')+sel('fdu',[['','2026 회비 전체'],'납부','미납'],S.f.du,'회비')+sel('fpw',[['','납부 방법 전체'],'자동이체','직접입금','단체납부','면제'],S.f.pw,'납부 방법')+sel('fck',[['','확인 전체']].concat(CHECKS),S.f.ck,'확인')+'</div>'+bulkBar()+
+    sel('fac',acadOpts('학원 전체'),S.f.ac,'학원')+sel('fins',[['','전공 전체']].concat(INSTS),S.f.ins,'전공')+sel('frl',[['','직급 전체'],'원장','강사',['-','없음']],S.f.rl,'직급')+sel('fcp',[['','캠프교수 전체'],['예','캠프교수 예'],['아니오','캠프교수 아니오']],S.f.cp,'캠프교수')+sel('ffr',[['','회비면제 전체'],['예','회비면제 예'],['아니오','회비면제 아니오']],S.f.fr,'회비면제')+sel('fdu',[['','2026 회비 전체'],'납부','미납'],S.f.du,'회비')+sel('fpw',[['','납부 방법 전체'],'자동이체','직접입금','단체납부','면제'],S.f.pw,'납부 방법')+sel('fkd',[['','회원 구분 전체'],'정식 교사','중급 연수','초급 연수','외부 참여자',['-','확인 전']],S.f.kd,'회원 구분')+sel('fck',[['','확인 전체']].concat(CHECKS),S.f.ck,'확인')+'</div>'+bulkBar()+
   '<div class="tbl"><table><thead><tr><th class="ck"><input type="checkbox" id="ckAll" aria-label="이 쪽 모두 선택"></th><th>번호</th><th>이름</th><th>소속 학원</th><th>직급</th><th>캠프교수</th><th>회비면제</th><th>전공</th><th>휴대전화</th><th>이메일</th><th>회원 구분</th><th>자격</th><th>납부 방법</th><th>2026 회비</th><th>계정</th><th>내부·외부</th><th>확인</th><th>확인 메모</th></tr></thead><tbody>'+
   page.map(function(t){var id=t['교사ID'];return '<tr class="click '+(S.edit&&S.edit.id===id?'on':'')+'" data-edit="tch|'+id+'"><td class="ck"><input type="checkbox" data-ck="'+id+'" '+(S.sel[id]?'checked':'')+' aria-label="선택"></td><td class="num cap">'+id+'</td><td><b>'+nm(t)+'</b></td><td>'+esc(tAcadTxt(t))+'</td><td>'+esc(t['직급']||'-')+'</td><td>'+(t['캠프교수']==='예'?'<span class="pill ok">예</span>':'<span class="cap">아니오</span>')+'</td><td>'+(t['회비구분']==='면제'?'<span class="pill info">예</span>':'<span class="cap">아니오</span>')+'</td><td>'+esc(t['전공'])+'</td><td class="num">'+(fmt(t['휴대전화'])||'<span class="pill due">없음</span>')+'</td><td>'+esc(t['이메일'])+'</td><td>'+(t['회원구분']==='확인 전'||!t['회원구분']?'<span class="pill mute">확인 전</span>':'<span class="pill info">'+esc(t['회원구분'])+'</span>')+'</td><td>'+(t['본인자격']?esc(t['본인자격']):t['명단자격']?esc(t['명단자격'])+' <span class="cap">(명단)</span>':'-')+'</td><td>'+esc(t['회비납부방법']||'-')+'</td><td>'+duesPill('교사',id,t)+'</td><td>'+accPill(id)+'</td><td>'+(t['내부외부']==='외부'?'<span class="pill due">외부</span>':esc(t['내부외부']||'-'))+'</td><td>'+ckPill(t['확인'])+'</td><td class="cap">'+esc(t['확인메모'])+'</td></tr>'}).join('')+
   '</tbody></table></div>'+pager(list.length,per)+'</div>'}
@@ -261,13 +263,28 @@ function tchEditor(){var t=S.edit.id==='new'?{'상태':'활동','회원구분':'
     (same.length?'<div class="note">이름이 같은 교사: '+same.map(function(x){return '<b>'+nm(x)+'</b> '+esc(tAcadTxt(x))+' · '+esc(x['전공'])+' · 뒷자리 '+String(x['휴대전화']).slice(-4)}).join(' / ')+'</div>':'')+
     '<div class="fgrid">'+fld('e_이름','이름',t['이름'],{req:1,hint:'명찰·졸업장에 그대로'})+fld('e_구분글자','구분 글자',t['구분글자'],{hint:'동명이인 메모용 · 화면엔 작게'})+fld('e_휴대전화','휴대전화',fmt(t['휴대전화']),{type:'tel'})+
     fld('e_이메일','이메일',t['이메일'])+fld('e_전공','전공',t['전공'],{sel:[['','선택']].concat(INSTS)})+
-    fld('e_학원1','주 근무 학원',t['학원1'],{sel:acadOpts('소속 없음')})+fld('e_학원2','추가 근무 학원 1',t['학원2'],{sel:acadOpts('없음')})+fld('e_학원3','추가 근무 학원 2',t['학원3'],{sel:acadOpts('없음')})+
-    fld('e_회원구분','회원 구분',t['회원구분'],{sel:['확인 전','정식 교사','중급 연수','초급 연수'],hint:'명단 자격: '+esc(t['명단자격']||'없음')+(t['명단취득']?' · '+esc(t['명단취득']):'')})+
+    (t['교사ID']?'':fld('e_학원1','주 근무 학원',t['학원1'],{sel:acadOpts('소속 없음')})+fld('e_학원2','추가 근무 학원 1',t['학원2'],{sel:acadOpts('없음')})+fld('e_학원3','추가 근무 학원 2',t['학원3'],{sel:acadOpts('없음')}))+
+    fld('e_회원구분','회원 구분',t['회원구분'],{sel:['확인 전','정식 교사','중급 연수','초급 연수','외부 참여자'],hint:'명단 자격: '+esc(t['명단자격']||'없음')+(t['명단취득']?' · '+esc(t['명단취득']):'')})+
     certAdmin(t)+fld('e_상태','상태',t['상태'],{sel:['활동','휴직','활동정지','탈퇴']})+fld('e_확인','확인',t['확인'],{sel:CHECKS})+'</div>'+
+    (t['교사ID']&&t['회원구분']!=='외부 참여자'?workBoxA(t['교사ID']):'')+
     '<div class="panel" style="padding:12px;border-style:dashed"><b>관리자 구분 <span class="cap">선생님 화면에는 보이지 않아요</span></b><div class="fgrid">'+
     fld('e_직급','직급',t['직급'],{sel:[['','없음'],'원장','강사']})+fld('e_캠프교수','캠프교수',t['캠프교수'],{sel:[['아니오','아니오'],['예','예 (캠프 때 교수)']]})+fld('e_회비구분','회비면제',t['회비구분'],{sel:[['납부','아니오 (납부 대상)'],['면제','예 (면제)']]})+fld('e_회비납부방법','회비 납부 방법',t['회비납부방법'],{sel:[['',''],'자동이체','직접입금','단체납부','면제']})+fld('e_강사료대상','강사료 대상',t['강사료대상'],{sel:[['','아니오'],['예','예 (주민번호 입력 열림)']]})+fld('e_내부외부','내부·외부',t['내부외부'],{sel:[['',''],'내부','외부']})+'</div></div>'+
     '<div class="fgrid">'+fld('e_확인메모','확인 메모',t['확인메모'],{wide:1})+fld('e_메모','메모',t['메모'],{wide:1,area:1})+'</div>'+
     (t['교사ID']?payBoxA(t['교사ID'])+duesBox('교사',t['교사ID'],t['회비구분']==='면제'?0:300000):'')+'<p class="err" id="edErr"></p></div>'}
+
+/* ---------- 근무지 이력 (10-28) ---------- */
+function worksOfA(tid){return S.D.works.filter(function(w){return w['교사ID']===tid}).sort(function(a,b){return (a['종료']?1:0)-(b['종료']?1:0)||(b['주근무']==='예')-(a['주근무']==='예')||String(b['시작']).localeCompare(String(a['시작']))})}
+function workBoxA(tid){var ed=S.wEd&&S.wEd.tid===tid?S.wEd:null,ws=worksOfA(tid);
+  if(!ed){var cur=ws.filter(function(w){return !w['종료']});
+    return '<div class="panel" style="padding:12px"><div class="sec-h"><b>근무지 · 이력 <span class="cap">지금 '+cur.length+'곳 · 3곳까지</span></b><button class="btn small" type="button" id="wEdit">근무지 고치기</button></div>'+
+      (ws.length?'<table class="wtab"><thead><tr><th>학원</th><th>시작</th><th>종료</th><th></th></tr></thead><tbody>'+ws.map(function(w){return '<tr class="'+(w['종료']?'past':'')+'"><td>'+(w['주근무']==='예'?'<span class="pill info">주 근무</span> ':'')+esc(w['학원ID']?(A[w['학원ID']]||{})['학원명']||w['학원ID']:w['학원명']+' (목록에 없음)')+'</td><td class="num">'+esc(w['시작']||'?')+'</td><td class="num">'+(w['종료']?esc(w['종료']):'<span class="pill ok">근무 중</span>')+'</td><td class="cap">'+esc(w['출처'])+'</td></tr>'}).join('')+'</tbody></table>':'<p class="cap">현재 근무지 없음</p>')+'</div>'}
+  return '<div class="panel" style="padding:12px"><b>근무지 고치기 <span class="cap">종료를 비우면 지금 근무 중 · 근무 중은 3곳까지 · 시작·종료는 2024-03 처럼</span></b>'+
+    '<table class="wtab"><thead><tr><th>학원</th><th>시작</th><th>종료</th><th>주 근무</th><th></th></tr></thead><tbody>'+ed.rows.map(function(r,i){
+      return '<tr><td>'+(r.t||r.text&&!r.id?'<input type="text" data-wf="'+i+'|text" value="'+esc(r.text)+'" placeholder="목록에 없는 학원">':'<select data-wf="'+i+'|id">'+acadOpts('학원 선택').map(function(o){return '<option value="'+esc(o[0])+'" '+(o[0]===r.id?'selected':'')+'>'+esc(o[1])+'</option>'}).join('')+'</select>')+'</td>'+
+        '<td><input type="month" data-wf="'+i+'|start" value="'+esc(r.start)+'"></td><td><input type="month" data-wf="'+i+'|end" value="'+esc(r.end)+'"></td>'+
+        '<td><input type="radio" name="wMain" data-wf="'+i+'|main" '+(r.main?'checked':'')+' aria-label="주 근무"></td><td><button class="btn small ghost" type="button" data-wdel="'+i+'">빼기</button></td></tr>'}).join('')+'</tbody></table>'+
+    '<div class="row" style="margin-top:6px"><button class="btn small" type="button" id="wAdd">+ 근무지 줄</button><button class="btn small ghost" type="button" id="wAddT">+ 목록에 없는 학원</button><span style="flex:1"></span><button class="btn small" type="button" id="wCancel">취소</button><button class="btn small primary" type="button" id="wSave">근무지 저장</button></div><p class="err" id="wErr"></p></div>'}
+function readWEd(){if(!S.wEd)return;document.querySelectorAll('[data-wf]').forEach(function(el){var p=el.dataset.wf.split('|'),r=S.wEd.rows[+p[0]];if(!r)return;if(p[1]==='main'){r.main=el.checked}else r[p[1]]=el.value.trim()})}
 
 /* ---------- 정산 정보 (관리자 전용 파일) ---------- */
 function payBoxA(id){var f=S.D.payF[id]||{},v=S.payOpen&&S.payOpen.id===id?S.payOpen.pay:null;
@@ -328,18 +345,19 @@ function vReq(){var L=S.reqs;if(!L)return '<div class="panel"><span><span class=
     '<div class="tiles"><div class="tile"><span class="k">계정 있는 선생님</span><span class="v">'+Object.keys(S.D.acc).filter(function(k){return S.D.acc[k]==='사용'}).length+'</span><span class="s">교사 '+S.D.tch.length+'명 중</span></div>'+
     '<div class="tile warn"><span class="k">새 회원 가입</span><span class="v">'+L.filter(function(q){return q['상태']==='대기'&&q['종류']==='새 회원'}).length+'</span><span class="s">명단에 없음</span></div>'+
     '<div class="tile warn"><span class="k">이메일 확인</span><span class="v">'+L.filter(function(q){return q['상태']==='대기'&&q['종류']==='이메일 확인'}).length+'</span><span class="s">명단과 다른 이메일</span></div>'+
+    '<div class="tile warn"><span class="k">외부 참여자</span><span class="v">'+L.filter(function(q){return q['상태']==='대기'&&q['종류']==='외부 참여자'}).length+'</span><span class="s">반주자·스태프 등</span></div>'+
     '<div class="tile"><span class="k">정보 수정</span><span class="v">'+L.filter(function(q){return q['상태']==='대기'&&q['종류']==='정보 수정'}).length+'</span><span class="s">「달라요」 메모</span></div></div>'+
     (list.length?list.map(reqCard).join(''):'<div class="panel"><p class="cap">요청이 없어요.</p></div>')}
 function reqCard(q){var info={};try{info=JSON.parse(q['내용']||'{}')}catch(x){}
   var t=q['교사ID']&&T[q['교사ID']];
-  var cand=q['종류']==='새 회원'?S.D.tch.filter(function(x){return x['이름']===q['이름']||(q['휴대전화']&&x['휴대전화']===q['휴대전화'])}):[];
-  var badge={'새 회원':'<span class="pill bad">새 회원</span>','이메일 확인':'<span class="pill due">이메일 확인</span>','정보 수정':'<span class="pill info">정보 수정</span>'}[q['종류']]||esc(q['종류']);
+  var cand=q['종류']==='새 회원'||q['종류']==='외부 참여자'?S.D.tch.filter(function(x){return x['이름']===q['이름']||(q['휴대전화']&&x['휴대전화']===q['휴대전화'])}):[];
+  var badge={'새 회원':'<span class="pill bad">새 회원</span>','이메일 확인':'<span class="pill due">이메일 확인</span>','정보 수정':'<span class="pill info">정보 수정</span>','외부 참여자':'<span class="pill due">외부 참여자</span>'}[q['종류']]||esc(q['종류']);
   return '<div class="panel"><div class="sec-h"><h3>'+badge+' '+esc(q['이름'])+' <span class="cap num">'+esc(q['요청ID'])+'</span></h3><span class="cap">'+esc(q['신청일'])+' · '+esc(q['상태'])+(q['처리일']?' · '+esc(q['처리일'])+' '+esc(q['처리자']):'')+'</span></div>'+
     '<dl class="kv"><dt>휴대전화</dt><dd class="num">'+fmt(q['휴대전화'])+'</dd><dt>이메일</dt><dd>'+esc(q['이메일'])+'</dd>'+(t?'<dt>명단</dt><dd><b>'+nm(t)+'</b> '+esc(tAcadTxt(t))+' · '+esc(t['전공'])+' <button class="btn small ghost" type="button" data-opent="'+t['교사ID']+'">교사 열기</button></dd>':'')+
-    Object.keys(info).map(function(k){return '<dt>'+esc(k)+'</dt><dd>'+esc(info[k])+'</dd>'}).join('')+(q['메모']?'<dt>처리 메모</dt><dd>'+esc(q['메모'])+'</dd>':'')+'</dl>'+
+    Object.keys(info).filter(function(k){return k!=='근무JSON'}).map(function(k){return '<dt>'+esc(k)+'</dt><dd>'+esc(info[k])+'</dd>'}).join('')+(q['메모']?'<dt>처리 메모</dt><dd>'+esc(q['메모'])+'</dd>':'')+'</dl>'+
     (q['상태']!=='대기'?'':
-     q['종류']==='새 회원'?(cand.length?'<div class="note">명단에 비슷한 선생님이 있어요: '+cand.map(function(x){return '<b>'+nm(x)+'</b> '+esc(tAcadTxt(x))+' · 뒷자리 '+String(x['휴대전화']).slice(-4)+' <button class="btn small" type="button" data-rq="'+q['요청ID']+'|승인|'+x['교사ID']+'">이 선생님에 연결</button>'}).join(' / ')+'</div>':'')+
-       '<div class="row"><button class="btn small primary" type="button" data-rq="'+q['요청ID']+'|승인|">승인 · 새 교사로 등록</button><input type="text" id="why_'+q['요청ID']+'" placeholder="반려 사유" style="flex:1;min-width:160px"><button class="btn small" type="button" data-rq="'+q['요청ID']+'|반려|">반려</button></div>'
+     q['종류']==='새 회원'||q['종류']==='외부 참여자'?(cand.length?'<div class="note">명단에 비슷한 선생님이 있어요: '+cand.map(function(x){return '<b>'+nm(x)+'</b> '+esc(tAcadTxt(x))+' · 뒷자리 '+String(x['휴대전화']).slice(-4)+' <button class="btn small" type="button" data-rq="'+q['요청ID']+'|승인|'+x['교사ID']+'">이 선생님에 연결</button>'}).join(' / ')+'</div>':'')+
+       '<div class="row"><button class="btn small primary" type="button" data-rq="'+q['요청ID']+'|승인|">'+(q['종류']==='외부 참여자'?'승인 · 외부 참여자로 등록 (강사료 대상)':'승인 · 새 교사로 등록')+'</button><input type="text" id="why_'+q['요청ID']+'" placeholder="반려 사유" style="flex:1;min-width:160px"><button class="btn small" type="button" data-rq="'+q['요청ID']+'|반려|">반려</button></div>'
      :q['종류']==='이메일 확인'?'<div class="row"><button class="btn small primary" type="button" data-rq="'+q['요청ID']+'|승인|">승인 · 이 이메일로 계정 열기</button><input type="text" id="why_'+q['요청ID']+'" placeholder="반려 사유" style="flex:1;min-width:160px"><button class="btn small" type="button" data-rq="'+q['요청ID']+'|반려|">반려</button></div>'
      :'<div class="row"><span class="cap">교사정보에서 고친 뒤</span><button class="btn small primary" type="button" data-rq="'+q['요청ID']+'|처리|">처리 완료</button></div>')+'</div>'}
 
@@ -366,7 +384,7 @@ function render(){
 }
 function go(tab){if(tab!==S.tab)S.hist.push(S.tab);S.tab=tab;S.q='';S.f={};S.page=0;S.edit=null;S.sel={};S.issue='';S.dEdit=null;S.edAcad=null;if(tab==='log')loadLogs();if(tab==='req')loadReqs();render();window.scrollTo(0,0)}
 function load(){return callS('boot').then(function(r){if(!r.ok){if(S.sess)toast(r.msg);return}
-  S.test=r.test;S.D={acad:objs(r['학원']),tch:objs(r['교사']),stu:objs(r['학생']),duesRows:objs(r['연회비']),empty:r.empty,acc:r.acc||{},reqN:r.reqN||0,payF:r.pay||{}};index();render()})}
+  S.test=r.test;S.D={acad:objs(r['학원']),tch:objs(r['교사']),stu:objs(r['학생']),duesRows:objs(r['연회비']),empty:r.empty,acc:r.acc||{},reqN:r.reqN||0,payF:r.pay||{},works:objs(r['근무']||{h:[],rows:[]})};index();render()})}
 function loadLogs(){S.logs=null;callS('logs').then(function(r){if(r.ok){S.logs=r;if(S.tab==='log')render()}else toast(r.msg)})}
 function keepFocus(id){var n=document.getElementById(id);if(n){n.focus();var v=n.value;n.value='';n.value=v}}
 function kindOf(){return {acad:'학원',tch:'교사',stu:'학생'}[S.tab]}
@@ -408,7 +426,17 @@ document.addEventListener('click',function(e){
   if(d.issue){var p=d.issue.split('|');go(p[0]);S.issue=p[1];render();return}
   if(b.id==='clrIssue'){S.issue='';S.page=0;render();return}
   if(d.pg){S.page+=+d.pg;render();window.scrollTo(0,0);return}
-  if(d.edit){var q2=d.edit.split('|');S.dEdit=null;S.payOpen=null;S.edAcad=null;S.edit=S.edit&&S.edit.id===q2[1]?null:{kind:q2[0],id:q2[1]};render();window.scrollTo({top:0,behavior:'smooth'});return}
+  if(b.id==='wEdit'){S.wEd={tid:S.edit.id,rows:worksOfA(S.edit.id).map(function(w){return {id:w['학원ID'],text:w['학원명'],t:!w['학원ID'],start:w['시작'],end:w['종료'],main:w['주근무']==='예'}})};render();return}
+  if(b.id==='wCancel'){S.wEd=null;render();return}
+  if(b.id==='wAdd'||b.id==='wAddT'){readWEd();S.wEd.rows.push({id:'',text:'',t:b.id==='wAddT',start:'',end:'',main:!S.wEd.rows.some(function(r){return r.main&&!r.end})});render();return}
+  if(d.wdel){readWEd();S.wEd.rows.splice(+d.wdel,1);render();return}
+  if(b.id==='wSave'){readWEd();var we=document.getElementById('wErr'),rows=S.wEd.rows.map(function(r){return {id:r.id,text:(r.text||'').trim(),start:r.start,end:r.end,main:r.main}});
+    if(rows.filter(function(r){return !r.end}).length>3){we.textContent='근무 중인 곳은 3곳까지예요. 그만둔 곳은 종료를 넣어 주세요.';return}
+    if(rows.some(function(r){return !r.id&&!r.text})){we.textContent='학원을 고르지 않은 줄이 있어요.';return}
+    if(S.busy)return;S.busy=true;we.textContent='저장하는 중…';
+    callS('saveWorks',S.wEd.tid,rows).then(function(r){S.busy=false;if(!r.ok){we.textContent=r.msg;return}S.D.works=objs(r.works);
+      var t=T[S.wEd.tid];if(t&&r.row){var h=Object.keys(t);h.forEach(function(c,i){t[c]=r.row[i]==null?'':r.row[i]})}S.wEd=null;index();render();toast('근무지를 저장했어요')});return}
+  if(d.edit){var q2=d.edit.split('|');S.wEd=null;S.dEdit=null;S.payOpen=null;S.edAcad=null;S.edit=S.edit&&S.edit.id===q2[1]?null:{kind:q2[0],id:q2[1]};render();window.scrollTo({top:0,behavior:'smooth'});return}
   if(d.new){S.edit={kind:d.new,id:'new'};S.edAcad=null;render();window.scrollTo(0,0);return}
   if(b.id==='closeEd'){S.edit=null;S.payOpen=null;render();return}
   if(d.payv){callS('payView',d.payv).then(function(r){if(!r.ok){toast(r.msg);return}if(!r.pay){toast('정산 정보가 아직 없어요');return}S.payOpen={id:d.payv,pay:r.pay};render()});return}
@@ -445,7 +473,7 @@ document.addEventListener('input',function(e){var el=e.target;
   if(el.id==='q'){S.q=el.value;if(e.isComposing)return;S.page=0;render();keepFocus('q');return}
   if(el.id==='e_출생연도'||el.id==='e_우편번호'){el.value=el.value.replace(/\D/g,'')}});
 document.addEventListener('compositionend',function(e){if(e.target.id==='q'){S.q=e.target.value;S.page=0;render();keepFocus('q')}});
-document.addEventListener('change',function(e){var el=e.target,m={fst:'st',fck:'ck',fsd:'sd',fac:'ac',fins:'ins',fdu:'du',fpw:'pw',frl:'rl',fcp:'cp',ffr:'fr'}[el.id];
+document.addEventListener('change',function(e){var el=e.target,m={fst:'st',fck:'ck',fsd:'sd',fac:'ac',fins:'ins',fdu:'du',fpw:'pw',frl:'rl',fcp:'cp',ffr:'fr',fkd:'kd'}[el.id];
   if(m){S.f[m]=el.value;S.page=0;S.sel={};render();return}
   if(el.id==='e_학원ID'&&S.tab==='stu'){var keep=readEd();S.edAcad=el.value;render();Object.keys(keep).forEach(function(k){var n=document.getElementById('e_'+k);if(n&&k!=='담당교사ID')n.value=keep[k]})}});
 

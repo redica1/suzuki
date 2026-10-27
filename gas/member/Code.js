@@ -1,4 +1,4 @@
-/* build: 20261028-010406 */
+/* build: 20261028-011713 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -19,6 +19,7 @@ const HEAD = {
   '연회비': ['대상', 'ID', '년도', '부과', '납부', '납부일', '방식', '메모', '수정일', '수정자'],
   '설정': ['항목', '값', '설명'],
   '기록': ['일시', '누가', '표', 'ID', '동작', '내용'],
+  '근무': ['근무ID', '교사ID', '학원ID', '학원명', '시작', '종료', '주근무', '출처', '메모', '수정일', '수정자'],   // 근무지 이력 (10-28): 한 줄 = 한 근무지, 종료가 비면 지금 근무 중
   '계정': ['이메일', '교사ID', '비번해시', '솔트', '상태', '경로', '만든날', '처리일', '마지막로그인', '메모'],
   '요청': ['요청ID', '종류', '교사ID', '이름', '휴대전화', '이메일', '내용', '상태', '신청일', '처리일', '처리자', '메모'],
   '정산': ['교사ID', '은행', '계좌번호', '예금주', '우편번호', '주소', '상세주소', '수정일', '이메일', '집우편번호', '집주소', '집상세주소', '주민번호암호', '주민번호표시', '주민번호동의일'],   // 우편번호·주소·상세주소 = 우편물 받을 주소
@@ -52,8 +53,8 @@ function doGet(e) {
 function include(n) { return HtmlService.createHtmlOutputFromFile(n).getContent(); }
 
 function api(name, args) {
-  const open = { login, hello, tHello, tLookup, tStart, tResend, tVerify, tCreate, tLogin, tForgot, tReset, tMe, tSavePay, tSaveRrn, tLogout };
-  const fns = { boot, saveRow, setCheck, logs, importRoster, saveDues, delDues, reqs, reqDo, delAcad, payView, bulkSet };
+  const open = { login, hello, tHello, tLookup, tStart, tResend, tVerify, tCreate, tLogin, tForgot, tReset, tMe, tSavePay, tSaveRrn, tAddWork, tEndWork, tMainWork, tLogout };
+  const fns = { boot, saveRow, setCheck, logs, importRoster, saveDues, delDues, reqs, reqDo, delAcad, payView, bulkSet, saveWorks };
   try {
     if (open[name]) return Object.assign({ ok: true }, open[name].apply(null, args || []));
     if (!fns[name]) throw new UserError('알 수 없는 요청이에요.');
@@ -99,6 +100,7 @@ function boot(who) {
   out.test = settings_()['테스트 표시'] === '예';
   const acc = {}; tbl_('계정').v.forEach(r => { if (r[1]) acc[r[1]] = r[4]; }); out.acc = acc;
   out.reqN = tbl_('요청').v.filter(r => r[7] === '대기').length;
+  { const W = tbl_('근무'); out['근무'] = { h: W.h, rows: W.v }; }
   const pf = {}; try { const P = payTbl_(), c = col_(P); P.v.forEach(r => { pf[r[0]] = { a: !!r[c['계좌번호']], h: !!r[c['집주소']], m: !!r[c['주소']], r: !!r[c['주민번호암호']] }; }); } catch (e) {}
   out.pay = pf;   // 있음/없음만 (값은 「내용 보기」로)
   out.empty = !out['학원'].rows.length && !out['교사'].rows.length;
@@ -332,7 +334,8 @@ function importRoster(who, replace) {
     /* 쓰기 */
     const put = (name, objs) => { const sh = ensure_(ss, name); if (sh.getLastRow() > 1) sh.getRange(2, 1, sh.getLastRow() - 1, sh.getLastColumn()).clearContent();
       if (objs.length) sh.getRange(2, 1, objs.length, HEAD[name].length).setValues(objs.map(o => HEAD[name].map(k => o[k] == null ? '' : String(o[k])))); };
-    put('학원', acads); put('교사', teachers); put('학생', students); put('연회비', dues);
+    const works = []; teachers.forEach(t => [t['학원1'], t['학원2'], t['학원3']].filter(Boolean).forEach((a, k) => works.push({ '근무ID': 'W' + String(works.length + 1).padStart(5, '0'), '교사ID': t['교사ID'], '학원ID': a, '시작': '', '종료': '', '주근무': k === 0 ? '예' : '', '출처': '원본', '수정일': stamp, '수정자': by })));
+    put('학원', acads); put('교사', teachers); put('학생', students); put('연회비', dues); put('근무', works);
     const sk = Object.keys(skipped);
     const msg = '학원 ' + acads.length + '곳 · 교사 ' + teachers.length + '명 · 학생 ' + students.length + '명 · 연회비 ' + dues.length + '줄' + (sk.length ? ' · 스즈키가 아니라 학원에서 뺀 이름 ' + sk.length + '개: ' + sk.slice(0, 15).join(', ') + (sk.length > 15 ? ' …' : '') : '');
     log_(who.name, '전체', '', '원본 불러오기', msg);
@@ -372,7 +375,7 @@ function tbl_(name) {
   };
   return T;
 }
-function nextId_(T, k, p) { const c = T.h.indexOf(k); let m = 0; T.v.forEach(r => { const n = +(String(r[c]).replace(/\D/g, '')) || 0; if (n > m) m = n; }); return p + String(m + 1).padStart(4, '0'); }
+function nextId_(T, k, p) { const c = T.h.indexOf(k); let m = 0; T.v.forEach(r => { if (String(r[c]).charAt(0) !== p) return; const n = +(String(r[c]).replace(/\D/g, '')) || 0; if (n > m) m = n; }); return p + String(m + 1).padStart(4, '0'); }
 function log_(who, table, id, act, what) { const ss = SpreadsheetApp.getActive(); const sh = ss.getSheetByName('기록') || ensure_(ss, '기록'); sh.appendRow([now_(), who, table, String(id), act, String(what || '')]); }
 function limit_(k, max, sec, msg) { const c = CacheService.getScriptCache(); const n = +(c.get(k) || 0) + 1; c.put(k, String(n), sec); if (n > max) fail(msg); }
 function digits_(v) { return String(v == null ? '' : v).replace(/\D/g, ''); }
@@ -437,7 +440,7 @@ function tLookup(name, phone) {
     const a = A.find(x => x.tid === t[c['교사ID']] && (x.state === '사용' || x.state === '대기'));
     if (a) return { status: 'hasAccount', state: a.state, email: maskEmail_(a.email) };
   } else {
-    const q = tbl_('요청').v.find(r => r[1] === '새 회원' && digits_(r[4]) === phone && r[7] === '대기');
+    const q = tbl_('요청').v.find(r => (r[1] === '새 회원' || r[1] === '외부 참여자') && digits_(r[4]) === phone && r[7] === '대기');
     if (q) return { status: 'pending', email: maskEmail_(q[5]) };
   }
   const token = Utilities.getUuid();
@@ -475,27 +478,42 @@ function tVerify(token, code) {
 }
 const CERTS_ = ['초급', '중급', '티처트레이너', '국민대학원', '대구가톨릭대학원', '전주대학원'];
 /** 가입 때 선생님이 넣은 정보 검사 (기존 교사회원 · 신규 회원 같은 칸) */
-function cleanInfo_(n, isNew) {
-  n = n || {}; const an = acadNames_(); const o = {};
-  if (isNew) {
+const EXT_ROLES = ['반주자', '스태프', '통역', '초청 강사', '기타'];
+/** 가입 정보 검사. mode: member(명단에 있는 교사) · new(신규 교사회원/연수교사회원) · ext(외부 참여자) */
+function cleanInfo_(n, mode) {
+  n = n || {}; const an = acadNames_(); const o = { mode };
+  if (mode === 'ext') {
+    if (EXT_ROLES.indexOf(n.extRole) < 0) fail('하는 일을 골라 주세요.');
+    o.extRole = n.extRole === '기타' ? '기타: ' + String(n.extRoleText || '').trim().slice(0, 30) : n.extRole;
+    if (n.extRole === '기타' && !String(n.extRoleText || '').trim()) fail('하는 일을 적어 주세요.');
+    o.org = String(n.org || '').trim().slice(0, 60); o.inst = INSTS_.indexOf(n.inst) >= 0 ? n.inst : '';
+    o.kind = '외부 참여자'; o.type = '외부 참여자'; o.role = ''; o.works = []; o.noWork = true; o.certs = []; o.certTxt = ''; o.acads = []; o.acadNames = o.org || '-';
+    return o;
+  }
+  if (mode === 'new') {
     if (['교사회원', '연수교사회원'].indexOf(n.type) < 0) fail('가입 종류를 골라 주세요.');
     if (n.type === '연수교사회원' && ['초급', '중급'].indexOf(n.course) < 0) fail('연수 과정을 골라 주세요.');
     o.type = n.type; o.course = n.type === '연수교사회원' ? n.course : '';
     o.kind = n.type === '교사회원' ? '정식 교사' : n.course === '중급' ? '중급 연수' : '초급 연수';
   } else { if (KINDS.indexOf(n.kind) < 0) fail('회원 구분을 골라 주세요.'); o.kind = n.kind; }
-  /* 소속: 주로 근무하는 학원 1곳(필수) + 추가 근무 학원 2곳까지 (10-28). 소속 없음은 연수 중인 선생님만 */
-  o.noAcad = !!n.noAcad || (isNew && o.type === '연수교사회원');
-  if (o.noAcad && o.kind === '정식 교사') fail('정식 교사는 주로 근무하는 학원을 꼭 골라 주세요.');
-  const main = o.noAcad ? '' : (an[n.main] ? String(n.main) : '');
-  o.acadText = o.noAcad || main ? '' : String(n.mainText || '').trim().slice(0, 60);
-  if (!o.noAcad && !main && !o.acadText) fail('주로 근무하는 학원을 골라 주세요.');
-  const extras = o.noAcad ? [] : [...new Set((n.extras || []).map(String))].filter(id => an[id] && id !== main).slice(0, 2);
-  o.acads = (main ? [main] : []).concat(extras);
+  /* 근무지 (10-28): 현재 근무지 3곳까지, 학원마다 시작 년·월 필수, 첫 번째가 주 근무. 다니는 학원이 없으면 「현재 근무지 없음」 */
+  o.noWork = !!n.noWork; const ny = +Utilities.formatDate(new Date(), 'Asia/Seoul', 'yyyy'), seen = {};
+  o.works = o.noWork ? [] : (n.works || []).slice(0, 3).map(w => {
+    const id = an[w.id] ? String(w.id) : '', text = id ? '' : String(w.text || '').trim().slice(0, 60);
+    if (!id && !text) fail('근무지 학원을 골라 주세요.');
+    const y = +w.y, m = String(w.m || '').padStart(2, '0');
+    if (!(y >= 1980 && y <= ny) || !/^(0[1-9]|1[0-2])$/.test(m)) fail((an[id] || text) + ' 근무 시작 년·월을 골라 주세요.');
+    const k = id || text; if (seen[k]) fail('같은 학원을 두 번 골랐어요.'); seen[k] = 1;
+    return { id, text, start: y + '-' + m };
+  });
+  if (!o.noWork && !o.works.length) fail('근무지를 고르거나 「현재 근무지 없음」에 체크해 주세요.');
+  o.acads = o.works.filter(w => w.id).map(w => w.id);
+  o.acadText = o.works.filter(w => !w.id).map(w => w.text).join(', ');
   o.role = ['원장', '강사', ''].indexOf(n.role) >= 0 ? n.role : ''; if (n.role == null) fail('직급을 골라 주세요.');
   if (INSTS_.indexOf(n.inst) < 0) fail('악기를 골라 주세요.'); o.inst = n.inst;
   o.certs = (n.certs || []).filter(x => CERTS_.indexOf(x.n) >= 0 && x.n !== '티처트레이너')   /* 티처트레이너는 관리자만 (10-28) */.map(x => ({ n: x.n, y: /^(19|20)\d{2}$/.test(String(x.y)) ? String(x.y) : '' }));
   o.certTxt = o.certs.map(x => x.n + (x.y ? ' ' + x.y : '')).join(', ');
-  o.acadNames = o.noAcad ? '소속 없음' : (o.acadText ? ['(목록에 없음) ' + o.acadText] : []).concat(o.acads.map(id => an[id])).join(', ');
+  o.acadNames = o.noWork ? '현재 근무지 없음' : o.works.map(w => (an[w.id] || '(목록에 없음) ' + w.text) + ' ' + w.start + '~').join(', ');
   return o;
 }
 function tCreate(token, d) {
@@ -503,7 +521,8 @@ function tCreate(token, d) {
   if (s.stage !== 'verified') fail('이메일 인증부터 해 주세요.');
   if (String(d.pw || '').length < 8) fail('비밀번호는 8자 이상으로 만들어 주세요.');
   if (!d.agree) fail('개인정보 수집·이용 동의에 체크해 주세요.');
-  const tid = s.tid, o = cleanInfo_(d.info, !tid), pay = cleanPay_(d.pay, true);
+  const mode = d.mode === 'ext' && !s.tid ? 'ext' : s.tid ? 'member' : 'new';
+  const tid = s.tid, o = cleanInfo_(d.info, mode), pay = cleanPay_(d.pay, true);
   const lock = LockService.getScriptLock(); lock.waitLock(20000);
   let state;
   try {
@@ -515,10 +534,10 @@ function tCreate(token, d) {
       /* 선생님이 넣은 정보로 명단을 고치고, 바뀐 칸은 「확인 필요」로 남김 */
       const T = tbl_('교사'), i = T.find('교사ID', tid), r = T.rowObj(i), c = col_(T), g = k => String(r[c[k]] || '');
       const an = acadNames_(), oldA = [g('학원1'), g('학원2'), g('학원3')].filter(Boolean);
-      const newA = o.noAcad ? [] : o.acads;   // 주 근무 학원이 목록에 없으면(직접 적음) 학원1은 비우고 「정보 수정」 요청
+      const newA = o.acads;
       const diff = [];
       if (oldA.join(',') !== newA.join(',')) diff.push('소속 ' + (oldA.map(x => an[x] || x).join(', ') || '없음') + ' → ' + (newA.map(x => an[x] || x).join(', ') || '없음'));
-      if (o.acadText) diff.push('주 근무 학원이 목록에 없음 「' + o.acadText + '」');
+      if (o.acadText) diff.push('목록에 없는 근무지 「' + o.acadText + '」');
       if (g('직급') !== o.role) diff.push('직급 ' + (g('직급') || '없음') + ' → ' + (o.role || '없음'));
       if (g('전공') !== o.inst) diff.push('악기 ' + (g('전공') || '없음') + ' → ' + o.inst);
       const tt = (g('본인자격').match(/티처트레이너[^,]*/) || [])[0] || (/티처트레이너/.test(g('명단자격')) ? '티처트레이너' : '');
@@ -529,14 +548,16 @@ function tCreate(token, d) {
       if (s.emailMatch) upd['이메일'] = s.email;
       if (diff.length) { upd['확인'] = '확인 필요'; upd['확인메모'] = [g('확인메모'), '가입 때 바꿈: ' + diff.join(' · ')].filter(Boolean).join(' · ').slice(0, 500); }
       T.set(i, upd);
+      setWorksAtSignup_(tid, o.works, s.name + ' (가입)');
       if (!s.emailMatch) addReq_('이메일 확인', tid, s, { '명단 이메일': maskEmail_(s.rosterEmail), '새 이메일': s.email });
-      if (o.acadText) addReq_('정보 수정', tid, s, { '목록에 없는 학원': o.acadText, '넣은 소속': o.acadNames });
+      if (o.acadText) addReq_('정보 수정', tid, s, { '목록에 없는 학원': o.acadText, '넣은 근무지': o.acadNames });
       log_(s.name, '계정', tid, '가입', (s.emailMatch ? '바로 사용' : '명단과 다른 이메일 · 관리자 확인 대기') + ' · ' + o.kind + (diff.length ? ' · 바뀜: ' + diff.join(' · ') : ''));
     } else {
       state = '대기';
-      tbl_('계정').append({ '이메일': s.email, '교사ID': '', '비번해시': hash_(d.pw, salt), '솔트': salt, '상태': '대기', '경로': '신규 회원', '만든날': stamp });
+      tbl_('계정').append({ '이메일': s.email, '교사ID': '', '비번해시': hash_(d.pw, salt), '솔트': salt, '상태': '대기', '경로': mode === 'ext' ? '외부 참여자' : '신규 회원', '만든날': stamp });
       putPay_('E:' + s.email, s.email, pay);   // 승인되면 교사 번호로 바뀜
-      addReq_('새 회원', '', s, { '가입 종류': o.type, '연수 과정': o.course, '회원 구분': o.kind, '소속 학원ID': o.acads.join(','), '소속 학원': o.acadNames, '직급': o.role || '없음', '악기': o.inst, '자격': o.certTxt });
+      addReq_(mode === 'ext' ? '외부 참여자' : '새 회원', '', s, mode === 'ext' ? { '가입 종류': '외부 참여자', '하는 일': o.extRole, '소속': o.org || '-', '악기': o.inst || '-' }
+        : { '가입 종류': o.type, '연수 과정': o.course, '회원 구분': o.kind, '근무지': o.acadNames, '근무JSON': JSON.stringify(o.works), '직급': o.role || '없음', '악기': o.inst, '자격': o.certTxt });
       log_(s.name, '계정', s.email, '가입 신청', o.type + ' · ' + o.kind);
     }
   } finally { lock.releaseLock(); }
@@ -588,7 +609,8 @@ function tMe(sess) {
   const heads = tbl_('학원').v.filter(a => a[4] === u.tid && a[3] !== '탈퇴').map(a => a[1]);
   const p = payRow_(u.tid);
   const reqs = tbl_('요청').v.filter(q => q[2] === u.tid && q[7] === '대기').map(q => q[1]);
-  return { me: { name: g('이름'), phone: g('휴대전화'), email: u.email, acads: [g('학원1'), g('학원2'), g('학원3')].filter(Boolean).map(id => an[id] || id), role: g('직급'), inst: g('전공'), kind: g('회원구분'), eng: g('영문이름'), heads,
+  const works = worksOf_(u.tid).map(w => ({ wid: w['근무ID'], aid: w['학원ID'], name: w['학원ID'] ? (an[w['학원ID']] || w['학원ID']) : w['학원명'] + ' (목록에 없음)', start: w['시작'], end: w['종료'], main: w['주근무'] === '예' }));
+  return { me: { works, ext: g('회원구분') === '외부 참여자', name: g('이름'), phone: g('휴대전화'), email: u.email, acads: [g('학원1'), g('학원2'), g('학원3')].filter(Boolean).map(id => an[id] || id), role: g('직급'), inst: g('전공'), kind: g('회원구분'), eng: g('영문이름'), heads,
     payee: g('강사료대상') === '예',
     pay: p ? { bank: p['은행'], acct: maskAcct_(p['계좌번호']), holder: p['예금주'], zip: p['우편번호'], addr: p['주소'], addr2: p['상세주소'], hzip: p['집우편번호'], haddr: p['집주소'], haddr2: p['집상세주소'], rrn: p['주민번호표시'] || '', rrnAt: p['주민번호동의일'] || '' } : null, reqs } };
 }
@@ -690,22 +712,26 @@ function reqDo(who, id, act, memo, linkTid) {
     if (q[c['상태']] !== '대기') fail('이미 처리한 요청이에요.');
     const info = JSON.parse(q[c['내용']] || '{}'); const A = tbl_('계정'); const ai = A.v.findIndex(r => r[0] === email && (r[4] === '대기'));
     let tid = q[c['교사ID']];
-    if (kind === '새 회원' && act === '승인') {
+    if ((kind === '새 회원' || kind === '외부 참여자') && act === '승인') {
+      const ext = kind === '외부 참여자';
       const T = tbl_('교사');
       if (linkTid) { if (T.find('교사ID', linkTid) < 0) fail('연결할 교사 번호를 찾지 못했어요.'); tid = linkTid; T.set(T.find('교사ID', tid), { '이메일': email, '회원구분': info['회원 구분'] || '확인 전', '수정일': now_(), '수정자': who.name }); }
-      else { tid = nextId_(T, '교사ID', 'T'); const ac = String(info['소속 학원ID'] || '').split(',').filter(Boolean);
+      else if (ext) { tid = nextId_(T, '교사ID', 'X');
+        T.append({ '교사ID': tid, '이름': name, '원래이름': name, '휴대전화': digits_(q[c['휴대전화']]), '이메일': email, '전공': info['악기'] === '-' ? '' : (info['악기'] || ''), '회원구분': '외부 참여자', '회비구분': '면제', '캠프교수': '아니오', '내부외부': '외부', '강사료대상': '예', '상태': '활동', '확인': '확인 전', '확인메모': '외부 참여자 · ' + (info['하는 일'] || '') + (info['소속'] && info['소속'] !== '-' ? ' · ' + info['소속'] : ''), '원본': '외부 참여자 신청 ' + id, '수정일': now_(), '수정자': who.name }); }
+      else { tid = nextId_(T, '교사ID', 'T'); const wk = (() => { try { return JSON.parse(info['근무JSON'] || '[]'); } catch (e) { return []; } })(); const ac = wk.filter(w => w.id).map(w => w.id);
         T.append({ '교사ID': tid, '이름': name, '원래이름': name, '휴대전화': digits_(q[c['휴대전화']]), '이메일': email, '학원1': ac[0] || '', '학원2': ac[1] || '', '학원3': ac[2] || '', '직급': info['직급'] === '없음' ? '' : (info['직급'] || ''), '전공': info['악기'] || '', '회원구분': info['회원 구분'] || '확인 전', '본인자격': info['자격'] || '',
-          '회비구분': '납부', '캠프교수': '아니오', '상태': '활동', '확인': '확인 전', '확인메모': (info['가입 종류'] || '') + ' 가입 신청' + (info['연수 과정'] ? ' · ' + info['연수 과정'] + ' 과정' : '') + (/목록에 없음/.test(info['소속 학원'] || '') ? ' · ' + info['소속 학원'] : ''), '원본': '가입 신청 ' + id, '수정일': now_(), '수정자': who.name }); }
+          '회비구분': '납부', '캠프교수': '아니오', '상태': '활동', '확인': '확인 전', '확인메모': (info['가입 종류'] || '') + ' 가입 신청' + (info['연수 과정'] ? ' · ' + info['연수 과정'] + ' 과정' : '') + (/목록에 없음/.test(info['근무지'] || '') ? ' · ' + info['근무지'] : ''), '원본': '가입 신청 ' + id, '수정일': now_(), '수정자': who.name });
+        setWorksAtSignup_(tid, wk, who.name + ' (가입 승인)'); }
       if (ai >= 0) A.set(ai, { '교사ID': tid, '상태': '사용', '처리일': now_() });
       try { const P = payTbl_(), j = P.find('교사ID', 'E:' + email); if (j >= 0) { const old = P.find('교사ID', tid); if (old >= 0 && old !== j) P.sh.deleteRow(old + 2); const P2 = payTbl_(); P2.set(P2.find('교사ID', 'E:' + email), { '교사ID': tid }); } } catch (e) { console.warn('pay link', e); }
-      mailTo = email; subj = '[스즈키] 회원 가입이 승인됐어요'; body = '<p>' + esc_(name) + ' 선생님, 협회가 확인하고 승인했어요.</p><p>이제 가입할 때 만든 이메일과 비밀번호로 로그인할 수 있어요.</p>';
+      mailTo = email; subj = '[스즈키] 회원 가입이 승인됐어요'; body = '<p>' + esc_(name) + ' 님, 협회가 확인하고 승인했어요.</p><p>이제 가입할 때 만든 이메일과 비밀번호로 로그인할 수 있어요.' + (ext ? ' 로그인한 뒤 「내 정보 › 강사료 정보」도 넣어 주세요.' : '') + '</p>';
     } else if (kind === '이메일 확인' && act === '승인') {
       if (ai >= 0) A.set(ai, { '상태': '사용', '처리일': now_() });
       const T = tbl_('교사'), ti = T.find('교사ID', tid); if (ti >= 0) T.set(ti, { '이메일': email, '수정일': now_(), '수정자': who.name });
       mailTo = email; subj = '[스즈키] 계정이 열렸어요'; body = '<p>' + esc_(name) + ' 선생님, 협회가 새 이메일을 확인했어요.</p><p>이제 이 이메일과 비밀번호로 로그인할 수 있어요.</p>';
     } else if (act === '반려' && kind !== '정보 수정') {
       if (ai >= 0) A.set(ai, { '상태': '반려', '처리일': now_(), '메모': String(memo).slice(0, 200) });
-      if (kind === '새 회원') { try { const P = payTbl_(), j = P.find('교사ID', 'E:' + email); if (j >= 0) P.sh.deleteRow(j + 2); } catch (e) {} }   // 반려된 신청의 계좌·주소는 지움
+      if (kind === '새 회원' || kind === '외부 참여자') { try { const P = payTbl_(), j = P.find('교사ID', 'E:' + email); if (j >= 0) P.sh.deleteRow(j + 2); } catch (e) {} }   // 반려된 신청의 계좌·주소는 지움
       mailTo = email; subj = '[스즈키] 확인이 필요해요'; body = '<p>신청하신 내용을 승인하지 못했어요.</p><p><b>사유:</b> ' + esc_(memo) + '</p><p>다시 신청하거나 협회 카카오톡 채널로 문의해 주세요.</p>';
     }
     R.set(i, { '상태': act === '반려' ? '반려' : act === '처리' ? '처리' : '승인', '교사ID': tid || '', '처리일': now_(), '처리자': who.name, '메모': String(memo || '').slice(0, 300) });
@@ -713,6 +739,90 @@ function reqDo(who, id, act, memo, linkTid) {
   } finally { lock.releaseLock(); }
   if (mailTo) { try { mail_(mailTo, subj, body); } catch (e) { console.warn('mail', e); } }
   return reqs(who);
+}
+
+/* ---------- 근무지 이력 ---------- */
+function workObjs_() { const W = tbl_('근무'); return { W, list: W.v.map((r, i) => { const o = { _i: i }; W.h.forEach((k, j) => o[k] = r[j]); return o; }) }; }
+/** 그 선생님의 근무 줄. 근무 탭에 없고 교사 탭에 학원1~3만 있으면(예전 불러오기) 그 자리에서 만들어 둠 */
+function worksOf_(tid) {
+  let { list } = workObjs_(); let mine = list.filter(w => w['교사ID'] === tid);
+  if (!mine.length) { const T = tbl_('교사'), i = T.find('교사ID', tid); if (i >= 0) { const W = tbl_('근무'); ['학원1', '학원2', '학원3'].map(k => T.get(i, k)).filter(Boolean).forEach((a, k) => W.append({ '근무ID': nextWid_(W), '교사ID': tid, '학원ID': a, '시작': '', '종료': '', '주근무': k === 0 ? '예' : '', '출처': '원본', '수정일': now_(), '수정자': '자동' })); mine = workObjs_().list.filter(w => w['교사ID'] === tid); } }
+  return mine.sort((a, b) => (a['종료'] ? 1 : 0) - (b['종료'] ? 1 : 0) || (b['주근무'] === '예') - (a['주근무'] === '예') || String(b['시작']).localeCompare(String(a['시작'])));
+}
+function nextWid_(W) { let m = 0; W.v.forEach(r => { const n = +String(r[0]).replace(/\D/g, '') || 0; if (n > m) m = n; }); return 'W' + String(m + 1).padStart(5, '0'); }
+/** 현재 근무지(종료 없음)로 교사 탭 학원1~3을 맞춤 (주 근무가 학원1) */
+function syncAcads_(tid) {
+  const cur = workObjs_().list.filter(w => w['교사ID'] === tid && !w['종료'] && w['학원ID']).sort((a, b) => (b['주근무'] === '예') - (a['주근무'] === '예') || String(a['시작']).localeCompare(String(b['시작'])));
+  const T = tbl_('교사'), i = T.find('교사ID', tid); if (i < 0) return;
+  T.set(i, { '학원1': (cur[0] || {})['학원ID'] || '', '학원2': (cur[1] || {})['학원ID'] || '', '학원3': (cur[2] || {})['학원ID'] || '' });
+}
+/** 가입 때: 원본에서 온 현재 근무 줄(시작 없음)은 지우고, 선생님이 넣은 근무지로 새로 씀. 지난 근무(종료 있음)는 그대로 */
+function setWorksAtSignup_(tid, works, by) {
+  let { W, list } = workObjs_();
+  list.filter(w => w['교사ID'] === tid && !w['종료']).map(w => w._i).sort((a, b) => b - a).forEach(i => W.sh.deleteRow(i + 2));
+  W = tbl_('근무');
+  (works || []).forEach((w, k) => W.append({ '근무ID': nextWid_(W), '교사ID': tid, '학원ID': w.id || '', '학원명': w.id ? '' : w.text, '시작': w.start, '종료': '', '주근무': k === 0 ? '예' : '', '출처': '선생님', '수정일': now_(), '수정자': by }));
+  syncAcads_(tid);
+}
+function ym_(y, m) { y = +y; m = String(m || '').padStart(2, '0'); const ny = +Utilities.formatDate(new Date(), 'Asia/Seoul', 'yyyy'); if (!(y >= 1980 && y <= ny + 1) || !/^(0[1-9]|1[0-2])$/.test(m)) fail('년·월을 골라 주세요.'); return y + '-' + m; }
+function tAddWork(sess, w) {
+  const u = tsess_(sess); w = w || {}; const an = acadNames_();
+  const lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    const cur = worksOf_(u.tid).filter(x => !x['종료']); if (cur.length >= 3) fail('지금 근무지는 3곳까지예요. 그만둔 곳은 먼저 「종료」해 주세요.');
+    const id = an[w.id] ? String(w.id) : '', text = id ? '' : String(w.text || '').trim().slice(0, 60); if (!id && !text) fail('학원을 골라 주세요.');
+    if (cur.some(x => id ? x['학원ID'] === id : x['학원명'] === text)) fail('이미 근무 중인 학원이에요.');
+    const W = tbl_('근무'); W.append({ '근무ID': nextWid_(W), '교사ID': u.tid, '학원ID': id, '학원명': text, '시작': ym_(w.y, w.m), '종료': '', '주근무': cur.length ? '' : '예', '출처': '선생님', '수정일': now_(), '수정자': u.email });
+    syncAcads_(u.tid);
+    if (text) { const T = tbl_('교사'), i = T.find('교사ID', u.tid); addReq_('정보 수정', u.tid, { name: T.get(i, '이름'), phone: T.get(i, '휴대전화'), email: u.email }, { '목록에 없는 학원': text }); }
+    log_(u.email, '근무', u.tid, '근무지 추가', (an[id] || text) + ' ' + ym_(w.y, w.m) + '~');
+  } finally { lock.releaseLock(); }
+  return tMe(sess);
+}
+function tEndWork(sess, wid, y, m) {
+  const u = tsess_(sess);
+  const lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    const { W, list } = workObjs_(); const w = list.find(x => x['근무ID'] === wid && x['교사ID'] === u.tid); if (!w) fail('근무지를 찾지 못했어요.');
+    if (w['종료']) fail('이미 종료한 근무지예요.');
+    const end = ym_(y, m); if (w['시작'] && end < w['시작']) fail('종료가 시작(' + w['시작'] + ')보다 빨라요.');
+    W.set(w._i, { '종료': end, '주근무': '', '수정일': now_(), '수정자': u.email });
+    if (w['주근무'] === '예') { const nx = worksOf_(u.tid).find(x => !x['종료']); if (nx) { const W2 = tbl_('근무'); W2.set(W2.find('근무ID', nx['근무ID']), { '주근무': '예' }); } }
+    syncAcads_(u.tid);
+    log_(u.email, '근무', u.tid, '근무지 종료', wid + ' ' + end);
+  } finally { lock.releaseLock(); }
+  return tMe(sess);
+}
+function tMainWork(sess, wid) {
+  const u = tsess_(sess);
+  const lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    const { W, list } = workObjs_(); if (!list.some(x => x['근무ID'] === wid && x['교사ID'] === u.tid && !x['종료'])) fail('근무지를 찾지 못했어요.');
+    list.filter(x => x['교사ID'] === u.tid && !x['종료']).forEach(x => W.set(x._i, { '주근무': x['근무ID'] === wid ? '예' : '' }));
+    syncAcads_(u.tid);
+  } finally { lock.releaseLock(); }
+  return tMe(sess);
+}
+/** 관리자: 한 선생님의 근무 이력 전체를 바꿈 */
+function saveWorks(who, tid, rows) {
+  const an = acadNames_();
+  const clean = (rows || []).slice(0, 30).map(r => {
+    const id = an[r.id] ? String(r.id) : '', text = id ? '' : String(r.text || '').trim().slice(0, 60); if (!id && !text) fail('학원을 골라 주세요.');
+    const st = String(r.start || ''), en = String(r.end || '');
+    if (st && !/^\d{4}-(0[1-9]|1[0-2])$/.test(st)) fail('시작은 2024-03 처럼 넣어 주세요.'); if (en && !/^\d{4}-(0[1-9]|1[0-2])$/.test(en)) fail('종료는 2025-02 처럼 넣어 주세요.');
+    if (st && en && en < st) fail((an[id] || text) + ' 종료가 시작보다 빨라요.');
+    return { id, text, st, en, main: !!r.main && !en };
+  });
+  if (clean.filter(x => !x.en).length > 3) fail('지금 근무지는 3곳까지예요.');
+  const lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    let { W, list } = workObjs_(); list.filter(w => w['교사ID'] === tid).map(w => w._i).sort((a, b) => b - a).forEach(i => W.sh.deleteRow(i + 2));
+    W = tbl_('근무'); let hasMain = clean.some(x => x.main);
+    clean.forEach(x => { const mn = x.main || (!hasMain && !x.en); if (mn) hasMain = true; W.append({ '근무ID': nextWid_(W), '교사ID': tid, '학원ID': x.id, '학원명': x.text, '시작': x.st, '종료': x.en, '주근무': mn ? '예' : '', '출처': '관리자', '수정일': now_(), '수정자': who.name }); });
+    syncAcads_(tid);
+    log_(who.name, '근무', tid, '근무 이력 수정', clean.map(x => (an[x.id] || x.text) + ' ' + (x.st || '?') + '~' + (x.en || '')).join(' · '));
+    const W2 = tbl_('근무'), T = tbl_('교사'); return { works: { h: W2.h, rows: W2.v }, row: T.rowObj(T.find('교사ID', tid)) };
+  } finally { lock.releaseLock(); }
 }
 
 /* ---------- 계정 도우미 ---------- */

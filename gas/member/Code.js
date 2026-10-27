@@ -1,4 +1,4 @@
-/* build: 20261028-003647 */
+/* build: 20261028-004157 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -229,10 +229,13 @@ function importRoster(who, replace) {
     const St = readSrc_(src, '학생정보DB', '학생명', ['운영', '구분', '지역1', '지역2', '학원명', '원장명', '학생명', '출생년도', '전공', '시작월', '학생부과회비', '학생납부회비', '학생미납회비', '납부연도', '납부일']);
     const stamp = now_(), by = who.name + ' (원본 불러오기)';
     /* 학원 */
-    const acads = [], byName = {};
+    const acads = [], byName = {}, skipped = {};
+    /* 이름에 「스즈키」가 들어간 곳만 학원 (10-28 결정). 협회 이름은 학원이 아님 */
+    const isAcad = n => /스즈키/.test(n) && !/스즈키\s*음악\s*협회/.test(n);
     const addAcad = (o) => { const id = 'A' + String(acads.length + 1).padStart(4, '0'); o['학원ID'] = id; acads.push(o); byName[normA_(o['학원명'])] = id; return id; };
     A.rows.forEach(r => {
       const name = String(r['학원명'] || '').trim(); if (!name) return;
+      if (!isAcad(name)) { skipped[name] = (skipped[name] || 0) + 1; return; }
       const kind = String(r['구분'] || '').trim(), phone = digits_(r['교실대표번호']);
       r['이메일'] = r['이메일'] || r['이메일주소']; r['주소'] = r['주소'] || r['학원주소']; r['개원일'] = r['개원일'] || r['개설일'];
       const notes = [];
@@ -246,7 +249,7 @@ function importRoster(who, replace) {
         '시도': String(r['지역1'] || '').trim() || addr.split(' ')[0] || '', '시군구': String(r['지역2'] || '').trim() || addr.split(' ')[1] || '', '우편번호': String(r['우편번호'] || '').trim(), '주소': addr, '상세주소': String(r['상세주소'] || '').trim(),
         '개원일': ymd_(r['개원일']), '계약체결일': ymd_(r['계약서작성일']), '확인': notes.length ? '확인 필요' : '확인 전', '확인메모': notes.join(' · '), '메모': '', '원본': '학원정보DB ' + r._row + '행', '수정일': stamp, '수정자': by });
     });
-    const acadId = (name, from) => { name = String(name || '').trim(); if (!name) return ''; const k = normA_(name); if (byName[k]) return byName[k];
+    const acadId = (name, from) => { name = String(name || '').trim(); if (!name) return ''; if (!isAcad(name)) { skipped[name] = (skipped[name] || 0) + 1; return ''; } const k = normA_(name); if (byName[k]) return byName[k];
       return addAcad({ '학원명': name, '구분': /클래스$/.test(name) ? '클래스' : '학원', '상태': '운영', '원장교사ID': '', '원장명': '', '교실대표번호': '', '이메일': '', '교습과목': '', '시도': '', '시군구': '', '우편번호': '', '주소': '', '상세주소': '', '개원일': '', '계약체결일': '',
         '확인': '확인 필요', '확인메모': '학원정보DB 에 없고 ' + from + ' 에만 있는 학원', '메모': '', '원본': from, '수정일': stamp, '수정자': by }); };
     /* 교사 */
@@ -255,8 +258,10 @@ function importRoster(who, replace) {
       const raw = String(r['교사명'] || '').trim(); if (!raw) return;
       const id = 'T' + String(teachers.length + 1).padStart(4, '0');
       const nm = splitName_(raw);
-      const ac = [...new Set([r['학원1'], r['학원2'], r['학원3']].map(x => String(x || '').trim()).filter(Boolean))].map(x => acadId(x, '교사정보DB'));
+      const rawAc = [...new Set([r['학원1'], r['학원2'], r['학원3']].map(x => String(x || '').trim()).filter(Boolean))];
+      const ac = rawAc.map(x => acadId(x, '교사정보DB')).filter(Boolean);
       const notes = [];
+      const outAc = rawAc.filter(x => !isAcad(x)); if (outAc.length) notes.push('스즈키 학원이 아닌 소속 「' + outAc.join(', ') + '」은 뺐어요');
       if (nm.tag) notes.push('이름 끝 구분 글자 「' + nm.tag + '」를 따로 뺐어요');
       if (!digits_(r['전화번호'])) notes.push('휴대전화 없음');
       const onlyName = !r['회비기준'] && !r['전공'] && !r['학원1'] && !r['보유자격증1'];
@@ -266,7 +271,7 @@ function importRoster(who, replace) {
         '학원1': ac[0] || '', '학원2': ac[1] || '', '학원3': ac[2] || '', '직급': String(r['직급'] || '').trim(), '전공': inst_(r['전공']),
         '회원구분': '확인 전', '명단자격': String(r['보유자격증1'] || '').trim(), '명단취득': String(r['자격취득년도'] || '').trim(),
         '회비구분': String(r['회비기준']).trim() === '교수' ? '면제' : '납부', '캠프교수': String(r['캠프기준']).trim() === '교수' ? '예' : '아니오', '내부외부': String(r['내부외부'] || '').trim(),
-        '상태': '활동', '확인': onlyName ? '확인 필요' : '확인 전', '확인메모': notes.join(' · '), '메모': '', '원본': '교사정보DB ' + r._row + '행', '수정일': stamp, '수정자': by });
+        '상태': '활동', '확인': onlyName || outAc.length ? '확인 필요' : '확인 전', '확인메모': notes.join(' · '), '메모': '', '원본': '교사정보DB ' + r._row + '행', '수정일': stamp, '수정자': by });
       if (fee || unpaid || r['납부일']) dues.push({ '대상': '교사', 'ID': id, '년도': String(r['납부연도'] || CUR_Y).replace(/\D/g, '').slice(0, 4) || CUR_Y, '부과': fee, '납부': Math.max(0, fee - unpaid), '납부일': ymd_(r['납부일']), '방식': String(r['납부방식'] || '').trim(), '메모': '원본에서', '수정일': stamp, '수정자': by });
     });
     /* 원장 연결: 학원 원장명 = 그 학원 소속 교사 이름 */
@@ -279,10 +284,11 @@ function importRoster(who, replace) {
       const raw = String(r['학생명'] || '').trim(); if (!raw) return;
       const id = 'S' + String(students.length + 1).padStart(4, '0');
       const nm = splitName_(raw), by_ = birth_(r['출생년도']);
-      const notes = []; if (nm.tag) notes.push('이름의 「' + nm.tag + '」를 따로 뺐어요'); if (!by_.y) notes.push('출생연도 없음'); if (by_.guess) notes.push('출생연도를 나이(' + r['출생년도'] + ')로 계산');
+      const rawA = String(r['학원명'] || '').trim(), sid = acadId(rawA, '학생정보DB');
+      const notes = []; if (!sid) notes.push(rawA ? '스즈키 학원이 아닌 「' + rawA + '」 — 학원을 정해 주세요' : '학원 없음'); if (nm.tag) notes.push('이름의 「' + nm.tag + '」를 따로 뺐어요'); if (!by_.y) notes.push('출생연도 없음'); if (by_.guess) notes.push('출생연도를 나이(' + r['출생년도'] + ')로 계산');
       const ins = inst_(r['전공']); if (r['전공'] && !ins) notes.push('전공 「' + r['전공'] + '」');
-      students.push({ '학생ID': id, '학원ID': acadId(r['학원명'], '학생정보DB'), '이름': nm.name, '구분글자': nm.tag, '원래이름': raw, '출생연도': by_.y, '출생연도추정': by_.guess ? '예' : '',
-        '전공': ins || String(r['전공'] || '').trim(), '시작월': String(r['시작월'] || '').trim(), '상태': '재원', '담당교사ID': '', '확인': '확인 전', '확인메모': notes.join(' · '), '메모': '', '원본': '학생정보DB ' + r._row + '행', '수정일': stamp, '수정자': by });
+      students.push({ '학생ID': id, '학원ID': sid, '이름': nm.name, '구분글자': nm.tag, '원래이름': raw, '출생연도': by_.y, '출생연도추정': by_.guess ? '예' : '',
+        '전공': ins || String(r['전공'] || '').trim(), '시작월': String(r['시작월'] || '').trim(), '상태': '재원', '담당교사ID': '', '확인': sid ? '확인 전' : '확인 필요', '확인메모': notes.join(' · '), '메모': '', '원본': '학생정보DB ' + r._row + '행', '수정일': stamp, '수정자': by });
       const due = num_(r['학생부과회비']), paid = num_(r['학생납부회비']);
       if (due || paid || r['납부일']) dues.push({ '대상': '학생', 'ID': id, '년도': String(r['납부연도'] || CUR_Y).replace(/\D/g, '').slice(0, 4) || CUR_Y, '부과': due, '납부': paid, '납부일': ymd_(r['납부일']), '방식': '', '메모': '원본에서', '수정일': stamp, '수정자': by });
     });
@@ -290,7 +296,8 @@ function importRoster(who, replace) {
     const put = (name, objs) => { const sh = ensure_(ss, name); if (sh.getLastRow() > 1) sh.getRange(2, 1, sh.getLastRow() - 1, sh.getLastColumn()).clearContent();
       if (objs.length) sh.getRange(2, 1, objs.length, HEAD[name].length).setValues(objs.map(o => HEAD[name].map(k => o[k] == null ? '' : String(o[k])))); };
     put('학원', acads); put('교사', teachers); put('학생', students); put('연회비', dues);
-    const msg = '학원 ' + acads.length + '곳 · 교사 ' + teachers.length + '명 · 학생 ' + students.length + '명 · 연회비 ' + dues.length + '줄';
+    const sk = Object.keys(skipped);
+    const msg = '학원 ' + acads.length + '곳 · 교사 ' + teachers.length + '명 · 학생 ' + students.length + '명 · 연회비 ' + dues.length + '줄' + (sk.length ? ' · 스즈키가 아니라 학원에서 뺀 이름 ' + sk.length + '개: ' + sk.slice(0, 15).join(', ') + (sk.length > 15 ? ' …' : '') : '');
     log_(who.name, '전체', '', '원본 불러오기', msg);
     return { msg };
   } finally { lock.releaseLock(); }

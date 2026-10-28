@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261028-215016 -->
+<!-- build: 20261028-215800 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -387,8 +387,8 @@ function acadHead(M){var a=M.data.acad,hs=(S.me&&S.me.heads)||[],ds=M.data.docs|
   var dl='<dl class="kv"><dt>'+(curKind()==='클래스'?'대표':'원장')+'</dt><dd>'+esc(a['원장명']||'-')+'</dd><dt>대표 번호</dt><dd class="num">'+esc(fmtTel(a['교실대표번호'])||'-')+'</dd><dt>이메일</dt><dd>'+esc(a['이메일']||'-')+'</dd>'+
     '<dt>주소</dt><dd>'+esc(a['주소']?a['주소']+' '+(a['상세주소']||''):'-')+'</dd><dt>교습 과목</dt><dd>'+esc(a['교습과목']||'-')+'</dd><dt>개원</dt><dd class="num">'+esc(a['개원일']||'-')+'</dd><dt>사업자번호</dt><dd class="num">'+esc(a['사업자번호']||'-')+'</dd><dt>교육청 인가</dt><dd class="num">'+esc(a['교육청인가번호']||'-')+'</dd></dl>';
   var st='<div class="ovst"><div class="spread"><b>협회 계약서</b>'+ct+'</div>'+DOC_SLOTS.map(function(sl){return '<div class="spread"><span>'+esc(sl[1])+'</span>'+sub(has(sl[0]))+'</div>'}).join('')+
-    '<div class="row" style="margin-top:4px"><button class="btn small" type="button" id="docOpen">서류 올리기</button></div></div>';
-  return '<div class="card full"><div class="spread"><h2>'+esc(a['학원명'])+' <span class="pill info" style="vertical-align:3px">'+(curKind()==='클래스'?'클래스 대표':'원장')+'</span> <button type="button" id="docOpen2" class="pill '+(a['상태']==='운영'?'ok':'due')+'" style="vertical-align:3px;border:0;cursor:pointer" title="서류 올리기">'+esc(a['상태']||'-')+' ›</button></h2>'+
+    '</div>';
+  return '<div class="card full"><div class="spread"><h2>'+esc(a['학원명'])+' <span class="pill info" style="vertical-align:3px">'+(curKind()==='클래스'?'클래스 대표':'원장')+'</span> <span class="pill '+(a['상태']==='운영'?'ok':'due')+'" style="vertical-align:3px">'+esc(a['상태']||'-')+'</span></h2>'+
     '<div class="row">'+(hs.length>1?hs.map(function(h){return '<button class="btn small'+(h.id===M.id?' primary':'')+'" type="button" data-myac="'+esc(h.id)+'">'+esc(h.name)+'</button>'}).join(''):'')+'<button class="btn small primary" type="button" id="acEdit">'+(curKind()==='클래스'?'클래스':'학원')+' 정보 수정</button></div></div>'+
     '<div class="ovgrid">'+dl+st+'</div></div>'}
 function statsCard(M){var L=M.data.students||[],T=(M.data.teachers||[]).filter(function(t){return !t.end});
@@ -420,7 +420,7 @@ function vMyAcad(){var M=S.myac;if(!M||!M.data)return '<div class="card"><span><
     '';
   if(tab==='tch')return acSwitch(M)+tchCard;
   if(tab==='stu')return acSwitch(M)+stuCard(M);
-  return acadHead(M)+statsCard(M)+stuView(M)+(M.ed?'<div class="sdlg-bg" id="acClose2"></div><div class="sdlg" role="dialog" aria-modal="true" aria-label="학원 정보 수정">'+info.replace('<div class="lock">','<div>')+'</div>':'')+docModal(M)+
+  return acadHead(M)+statsCard(M)+stuView(M)+(M.ed?'<div class="sdlg-bg" id="acClose2"></div><div class="sdlg" role="dialog" aria-modal="true" aria-label="학원 정보 수정">'+info.replace('<div class="lock">','<div>')+'<div class="sdsec">'+docCard(M).replace('<div class="card">','<div>')+'</div></div>':'')+
     '<button class="btn block" type="button" id="toMe">내 정보로</button>'}
 function vMine(){return myAskCard()+'<button class="btn block" type="button" id="toMe">내 정보로</button>'}
 function headInfo(){var hs=(S.sess&&S.me&&S.me.heads)||[];return {hs:hs,acad:hs.some(function(h){return h.kind!=='클래스'}),cls:hs.some(function(h){return h.kind==='클래스'})}}

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261028-221126 -->
+<!-- build: 20261028-221731 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -134,7 +134,7 @@ label.f.wide{grid-column:1/-1}
 <script>
 var INSTS=['바이올린','첼로','비올라','플루트','피아노'];
 var CHECKS=['확인 전','확인 필요','확인'];
-var TABS=[['home','한눈에'],['acad','학원정보'],['tch','교사정보'],['stu','학생정보'],['req','승인 대기'],['ask','문의'],['log','바뀐 기록'],['set','설정']];
+var TABS=[['home','한눈에'],['acad','학원정보'],['tch','교사정보'],['stu','학생정보'],['req','승인 대기'],['pay','입금 신고'],['ask','문의'],['log','바뀐 기록'],['set','설정']];
 var S={sess:'',tab:'home',q:'',f:{},page:0,edit:null,sel:{},issue:'',D:null,test:false,busy:false,hist:[]};
 var A={},T={},ST={};
 
@@ -418,6 +418,20 @@ function vAskA(){var L=S.asks;if(!L)return '<div class="panel"><span><span class
         q.comments.map(function(c){return '<div class="cmt'+(c['쓴사람']==='관리자'?' adm':'')+'"><b>'+esc(c['쓴사람']==='관리자'?'협회 · '+c['이름']:c['이름'])+'</b> <span class="cap num">'+esc(c['작성일'])+'</span><div class="qbody">'+esc(c['내용'])+'</div></div>'}).join('')+
         '<div class="row" style="align-items:flex-start;margin-top:6px"><textarea id="cm_'+esc(id)+'" rows="2" placeholder="댓글 (회원에게는 화면 · 이메일로 보여요)" style="flex:1;min-width:220px"></textarea><button class="btn small primary" type="button" data-bcm="'+esc(id)+'">댓글</button></div>'+
         '<div class="row" style="margin-top:6px"><span class="cap">상태</span>'+['접수','처리중','완료'].map(function(x){return '<button class="btn small '+(q['상태']===x?'primary':'')+'" type="button" data-bst="'+esc(id)+'|'+x+'">'+x+'</button>'}).join('')+(q['처리자']?'<span class="cap">'+esc(q['처리자'])+(q['처리일']?' · 완료 '+esc(q['처리일']):'')+'</span>':'')+'</div></div>'}).join(''):'<div class="panel"><p class="cap">문의가 없어요.</p></div>')}
+function loadPay(){S.pays=null;callS('payList').then(function(r){if(r.ok){S.pays=r.list;S.D.payN=r.payN;if(S.tab==='pay')render()}else toast(r.msg)})}
+function nextMon1(d){var y=+d.slice(0,4),m=+d.slice(5,7);m++;if(m>12){m=1;y++}return y+'-'+('0'+m).slice(-2)+'-01'}
+function vPay(){var L=S.pays;if(!L)return '<div class="panel"><span><span class="spin"></span> 불러오는 중…</span></div>';
+  var st=S.f.ps||'신고',nm={'신고':'확인 대기','확인':'확인','반려':'반려','전체':'전체'},list=L.filter(function(x){return st==='전체'||x.st===st});
+  var cnt=function(k){return k==='전체'?L.length:L.filter(function(x){return x.st===k}).length};
+  var row=function(x,i){var key=esc(x.sid)+'|'+esc(x.year);
+    var act=x.st==='신고'?'<td><input type="date" id="pd_'+i+'" value="'+esc(x.date)+'" style="width:auto"> <input type="number" id="pa_'+i+'" value="'+esc(x.paid)+'" step="1000" min="0" style="width:110px"></td><td><button class="btn small primary" type="button" data-pok="'+i+'">입금 확인</button> <input type="text" id="pr_'+i+'" placeholder="반려 사유" style="width:120px"> <button class="btn small ghost" type="button" data-pno="'+i+'">반려</button></td>'
+      :'<td class="num">'+esc(x.date||'-')+' · '+won(x.paid)+'</td><td><span class="pill '+(x.st==='확인'?'ok':'due')+'">'+esc(nm[x.st]||x.st)+'</span> <span class="cap">'+esc((x.okBy||'')+' '+String(x.okAt||'').slice(0,10))+'</span>'+(x.st==='반려'?' <span class="cap">'+esc(x.memo||'')+'</span>':'')+'</td>';
+    return '<tr><td class="num cap">'+esc(String(x.at).slice(0,16))+'</td><td>'+esc(x.acad||'-')+'</td><td><b>'+esc(x.name)+'</b> <span class="cap num">'+esc(x.sid)+'</span></td><td class="num">'+esc(x.year)+'</td><td class="r num">'+won(x.paid)+'</td><td class="num">'+esc(x.date||'-')+'</td>'+act+'</tr>'};
+  return '<div class="sec-h"><div><h2>학생 회비 입금 신고</h2><p>원장님이 학생 회비 입금을 신고한 목록이에요. 통장에서 실제 입금일과 금액을 확인하고 「입금 확인」을 누르면 <b>입금일 다음 달 1일부터 12개월</b> 회원 자격이 시작돼요(자격이 남아 있으면 끝난 다음 달부터 이어져요).</p></div>'+
+    '<div class="row">'+['신고','확인','반려','전체'].map(function(k){return '<button class="btn small '+(st===k?'primary':'')+'" type="button" data-ps="'+k+'">'+nm[k]+' '+cnt(k)+'</button>'}).join('')+'<button class="btn small ghost" type="button" id="payRe">새로 고침</button></div></div>'+
+    '<div class="panel"><div class="tbl"><table><thead><tr><th>신고한 때</th><th>학원</th><th>학생</th><th>년도</th><th class="r">신고 금액</th><th>신고 입금일</th><th>'+(st==='신고'?'확인한 입금일 · 금액':'확인 결과')+'</th><th></th></tr></thead><tbody>'+
+    (list.length?list.map(function(x){return row(x,L.indexOf(x))}).join(''):'<tr><td colspan="8" class="cap">'+(st==='신고'?'확인할 신고가 없어요.':'없어요.')+'</td></tr>')+'</tbody></table></div>'+
+    (st==='신고'&&list.length?'<p class="cap">입금일을 고치면 그 날짜 기준으로 자격이 계산돼요. 예: 11월 15일 입금 → 12월 1일부터.</p>':'')+'</div>'}
 function loadReqs(){S.reqs=null;callS('reqs').then(function(r){if(r.ok){S.reqs=objs(r);S.D.reqN=S.reqs.filter(function(q){return q['상태']==='대기'}).length;if(S.tab==='req')render()}else toast(r.msg)})}
 function vReq(){var L=S.reqs;if(!L)return '<div class="panel"><span><span class="spin"></span> 불러오는 중…</span></div>';
   var st=S.f.rs||'대기',list=L.filter(function(q){return st==='전체'||q['상태']===st});
@@ -496,14 +510,14 @@ function render(){
   document.getElementById('homebar').hidden=false;
   who.innerHTML='<span><b>관리자</b></span><button type="button" id="reload">새로 고침</button><button type="button" id="logout">로그아웃</button>';
   var need=S.D.acad.concat(S.D.tch).filter(function(o){return o['확인']==='확인 필요'}).length;
-  tabs.innerHTML=TABS.map(function(t){return '<button role="tab" type="button" data-tab="'+t[0]+'" aria-selected="'+(S.tab===t[0])+'">'+t[1]+(t[0]==='home'&&need?'<span class="cnt">'+need+'</span>':'')+(t[0]==='req'&&S.D.reqN?'<span class="cnt">'+S.D.reqN+'</span>':'')+(t[0]==='ask'&&S.D.bN?'<span class="cnt">'+S.D.bN+'</span>':'')+'</button>'}).join('');
-  app.innerHTML=({home:vHome,acad:vAcads,tch:vTeachers,stu:vStudents,req:vReq,ask:vAskA,log:vLog,set:vSet})[S.tab]();
+  tabs.innerHTML=TABS.map(function(t){return '<button role="tab" type="button" data-tab="'+t[0]+'" aria-selected="'+(S.tab===t[0])+'">'+t[1]+(t[0]==='home'&&need?'<span class="cnt">'+need+'</span>':'')+(t[0]==='req'&&S.D.reqN?'<span class="cnt">'+S.D.reqN+'</span>':'')+(t[0]==='pay'&&S.D.payN?'<span class="cnt">'+S.D.payN+'</span>':'')+(t[0]==='ask'&&S.D.bN?'<span class="cnt">'+S.D.bN+'</span>':'')+'</button>'}).join('');
+  app.innerHTML=({home:vHome,acad:vAcads,tch:vTeachers,stu:vStudents,req:vReq,pay:vPay,ask:vAskA,log:vLog,set:vSet})[S.tab]();
   var i=TABS.map(function(t){return t[0]}).indexOf(S.tab);document.getElementById('prevBtn').disabled=i<=0;document.getElementById('nextBtn').disabled=i>=TABS.length-1;
   hSync();
 }
-function go(tab,fromBack){if(tab!==S.tab&&!fromBack)S.hist.push(S.tab);S.tab=tab;S.q='';S.f={};S.page=0;S.edit=null;S.sel={};S.issue='';S.dEdit=null;S.edAcad=null;if(tab==='log')loadLogs();if(tab==='req')loadReqs();if(tab==='ask')loadAsk();render();window.scrollTo(0,0)}
+function go(tab,fromBack){if(tab!==S.tab&&!fromBack)S.hist.push(S.tab);S.tab=tab;S.q='';S.f={};S.page=0;S.edit=null;S.sel={};S.issue='';S.dEdit=null;S.edAcad=null;if(tab==='log')loadLogs();if(tab==='req')loadReqs();if(tab==='ask')loadAsk();if(tab==='pay')loadPay();render();window.scrollTo(0,0)}
 function load(){return callS('boot').then(function(r){if(!r.ok){if(S.sess)toast(r.msg);return}
-  S.test=r.test;S.pdSrc0=r.pdSrc||'';S.D={acad:objs(r['학원']),tch:objs(r['교사']),stu:objs(r['학생']),duesRows:objs(r['연회비']),empty:r.empty,acc:r.acc||{},reqN:r.reqN||0,payF:r.pay||{},bN:r.bN||0,rates:objs(r.rates||{h:[],rows:[]}),mailLeft:r.mailLeft==null?-1:r.mailLeft,works:objs(r['근무']||{h:[],rows:[]})};index();render()})}
+  S.test=r.test;S.pdSrc0=r.pdSrc||'';S.D={acad:objs(r['학원']),tch:objs(r['교사']),stu:objs(r['학생']),duesRows:objs(r['연회비']),empty:r.empty,acc:r.acc||{},reqN:r.reqN||0,payF:r.pay||{},bN:r.bN||0,payN:r.payN||0,rates:objs(r.rates||{h:[],rows:[]}),mailLeft:r.mailLeft==null?-1:r.mailLeft,works:objs(r['근무']||{h:[],rows:[]})};index();render()})}
 function loadLogs(){S.logs=null;callS('logs').then(function(r){if(r.ok){S.logs=r;if(S.tab==='log')render()}else toast(r.msg)})}
 function keepFocus(id){var n=document.getElementById(id);if(n){n.focus();var v=n.value;n.value='';n.value=v}}
 function kindOf(){return {acad:'학원',tch:'교사',stu:'학생'}[S.tab]}
@@ -593,6 +607,11 @@ document.addEventListener('click',function(e){
     callS('delDues',p4[0],p4[1],p4[2]).then(function(r){if(!r.ok){toast(r.msg);return}S.D.duesRows=r.rows.map(function(x){return {'대상':x[0],ID:x[1],'년도':x[2],'부과':x[3],'납부':x[4],'납부일':x[5],'방식':x[6],'메모':x[7]}});index();render();toast('지웠어요')});return}
   if(b.id==='logRe'){loadLogs();render();return}
   if(d.rs){S.f.rs=d.rs;render();return}
+  if(d.ps){S.f.ps=d.ps;render();return}
+  if(b.id==='payRe'){loadPay();render();return}
+  if(d.pok||d.pno){var k=+(d.pok||d.pno),x=S.pays[k];if(!x)return;var gv=function(id){var e=document.getElementById(id);return e?e.value.trim():''};
+    var pr=d.pok?callS('payOk',x.sid,x.year,gv('pd_'+k),gv('pa_'+k)):callS('payNo',x.sid,x.year,gv('pr_'+k));
+    b.disabled=true;pr.then(function(r){b.disabled=false;if(!r.ok){toast(r.msg);return}S.pays=r.list;S.D.payN=r.payN;render();toast(d.pok?x.name+' 입금을 확인했어요':x.name+' 신고를 반려했어요')});return}
   if(b.id==='reqRe'){loadReqs();render();return}
   if(d.opent){go('tch');S.edit={kind:'tch',id:d.opent};render();return}
   if(d.rq){var rp=d.rq.split('|'),memo=(document.getElementById('why_'+rp[0])||{}).value||'';if(rp[1]==='반려'&&!memo.trim()){toast('반려 사유를 적어 주세요');return}

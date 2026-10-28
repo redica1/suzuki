@@ -1,4 +1,4 @@
-/* build: 20261028-221126 */
+/* build: 20261028-221731 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -25,13 +25,13 @@ function memTerms_(rows) {
     });
   return out;
 }
-function memOf_(sid, all) { const rows = (all || tbl_('연회비').v).filter(d => d[0] === '학생' && d[1] === sid).map(d => ({ year: String(d[2]), paid: d[4], date: d[5], start: d[10] })); const t = memTerms_(rows); let last = null; Object.keys(t).forEach(y => { if (!last || t[y].end > last.end) last = t[y]; }); return { terms: t, last }; }
+function memOf_(sid, all) { const rows = (all || tbl_('연회비').v).filter(d => d[0] === '학생' && d[1] === sid && d[11] !== '신고' && d[11] !== '반려').map(d => ({ year: String(d[2]), paid: d[4], date: d[5], start: d[10] })); const t = memTerms_(rows); let last = null; Object.keys(t).forEach(y => { if (!last || t[y].end > last.end) last = t[y]; }); return { terms: t, last }; }
 
 const HEAD = {
   '학원': ['학원ID', '학원명', '구분', '상태', '원장교사ID', '원장명', '교실대표번호', '이메일', '교습과목', '시도', '시군구', '우편번호', '주소', '상세주소', '개원일', '계약체결일', '확인', '확인메모', '메모', '원본', '수정일', '수정자', '졸업연주지역', '사업자번호', '교육청인가번호'],
   '교사': ['교사ID', '이름', '구분글자', '원래이름', '휴대전화', '이메일', '학원1', '학원2', '학원3', '직급', '전공', '회원구분', '명단자격', '명단취득', '회비구분', '캠프교수', '내부외부', '상태', '확인', '확인메모', '메모', '원본', '수정일', '수정자', '영문이름', '본인자격', '회비납부방법', '강사료대상', '계약체결', '계약일'],
   '학생': ['학생ID', '학원ID', '이름', '구분글자', '원래이름', '출생연도', '출생연도추정', '전공', '시작월', '상태', '담당교사ID', '확인', '확인메모', '메모', '원본', '수정일', '수정자', '상태일'],
-  '연회비': ['대상', 'ID', '년도', '부과', '납부', '납부일', '방식', '메모', '수정일', '수정자', '자격시작'],
+  '연회비': ['대상', 'ID', '년도', '부과', '납부', '납부일', '방식', '메모', '수정일', '수정자', '자격시작', '확인', '신고일', '신고자', '확인일', '확인자'],
   '설정': ['항목', '값', '설명'],
   '기록': ['일시', '누가', '표', 'ID', '동작', '내용'],
   '참가이력': ['이력ID', '대상', 'ID', '행사', '년도', '기간', '역할', '상태', '메모', '수정일', '수정자'],   // 행사 참여 기록 (10-28): 캠프·졸업연주 등이 끝나면 여기에 모음
@@ -79,7 +79,7 @@ function include(n) { return HtmlService.createHtmlOutputFromFile(n).getContent(
 
 function api(name, args) {
   const open = { login, hello, tHello, tLookup, tStart, tResend, tVerify, tCreate, tLogin, tForgot, tReset, tMe, tSavePay, tSavePart, tSaveInfo, tSavePhoto, tAcad, tSaveAcad, tDocUp, tDocGet, tSaveStu, tSaveStus, tStuDetail, tStuSave, tStuTutor, tStuTutorDel, tStuState, tStuStateDel, tSaveRrn, tAddWork, tEndWork, tMainWork, tLogout, bPost, bMine, bReply };
-  const fns = { boot, saveRow, setCheck, logs, importRoster, saveDues, delDues, reqs, reqDo, delAcad, payView, bulkSet, saveWorks, importPastDues, bList, bSet, bComment, photoGet, photoDel, fillRegions, saveRates, docList, docUp, docGet, docDel };
+  const fns = { boot, saveRow, setCheck, logs, importRoster, saveDues, delDues, reqs, reqDo, delAcad, payView, bulkSet, saveWorks, importPastDues, bList, bSet, bComment, photoGet, photoDel, fillRegions, saveRates, docList, docUp, docGet, docDel, payList, payOk, payNo };
   try {
     if (open[name]) return Object.assign({ ok: true }, open[name].apply(null, args || []));
     if (!fns[name]) throw new UserError('알 수 없는 요청이에요.');
@@ -125,6 +125,7 @@ function boot(who) {
   out.test = settings_()['테스트 표시'] === '예';
   const acc = {}; tbl_('계정').v.forEach(r => { if (r[1]) acc[r[1]] = r[4]; }); out.acc = acc;
   out.reqN = tbl_('요청').v.filter(r => r[7] === '대기').length;
+  out.payN = tbl_('연회비').v.filter(r => r[0] === '학생' && r[11] === '신고').length;
   out.pdSrc = String(settings_()['지난 회비 원본'] || '');
   { const R = tbl_('회비기준'); out.rates = { h: R.h, rows: R.v }; }
   out.bN = tbl_('문의').v.filter(r => r[9] === '접수').length;
@@ -220,7 +221,7 @@ function saveDues(who, d) {
   try {
     const T = tbl_('연회비'); const stamp = now_();
     const i = T.v.findIndex(r => r[0] === d['대상'] && String(r[1]) === String(d.ID) && String(r[2]) === String(d['년도']));
-    const row = { '대상': d['대상'], 'ID': d.ID, '년도': String(d['년도']), '부과': due, '납부': paid, '납부일': String(d['납부일'] || ''), '방식': String(d['방식'] || '').slice(0, 20), '메모': String(d['메모'] || '').slice(0, 200), '수정일': stamp, '수정자': who.name, '자격시작': d['대상'] === '학생' ? ms : '' };
+    const row = { '대상': d['대상'], 'ID': d.ID, '년도': String(d['년도']), '부과': due, '납부': paid, '납부일': String(d['납부일'] || ''), '방식': String(d['방식'] || '').slice(0, 20), '메모': String(d['메모'] || '').slice(0, 200), '수정일': stamp, '수정자': who.name, '자격시작': d['대상'] === '학생' ? ms : '', '확인': paid > 0 ? '확인' : '', '확인일': paid > 0 ? stamp : '', '확인자': paid > 0 ? who.name : '' };
     if (i < 0) T.append(row); else T.set(i, row);
     log_(who.name, '연회비', d.ID, i < 0 ? '추가' : '수정', d['년도'] + ' 부과 ' + due + ' · 납부 ' + paid + ' ' + (d['납부일'] || ''));
     return { rows: tbl_('연회비').v };
@@ -876,7 +877,7 @@ function statesOf_(sid) { return rowsOf_('재원이력').list.filter(r => r['학
 function stuOf_(aid) { const S2 = tbl_('학생'), c = col_(S2), du = {}, DV = tbl_('연회비').v; DV.forEach(d => { if (d[0] === '학생' && String(d[2]) === CUR_Y) du[d[1]] = d; });
   const cur = {}; rowsOf_('담당').list.forEach(r => { if (!r['종료']) cur[r['학생ID']] = r['교사ID']; });
   return S2.v.filter(r => r[c['학원ID']] === aid).map(r => { const id = r[c['학생ID']], d = du[id] || [];
-    return { id, name: r[c['이름']], tag: r[c['구분글자']] || '', birth: r[c['출생연도']] || '', inst: r[c['전공']] || '', start: r[c['시작월']] || '', state: STU_STATES.indexOf(r[c['상태']]) >= 0 ? r[c['상태']] : '재원', stateAt: r[c['상태일']] || '', tid: cur[id] || r[c['담당교사ID']] || '', check: r[c['확인']] || '', due: d[3] || '', paid: d[4] || '', paidAt: d[5] || '', mem: memOf_(id, DV).last }; })
+    return { id, name: r[c['이름']], tag: r[c['구분글자']] || '', birth: r[c['출생연도']] || '', inst: r[c['전공']] || '', start: r[c['시작월']] || '', state: STU_STATES.indexOf(r[c['상태']]) >= 0 ? r[c['상태']] : '재원', stateAt: r[c['상태일']] || '', tid: cur[id] || r[c['담당교사ID']] || '', check: r[c['확인']] || '', due: d[3] || '', paid: d[4] || '', paidAt: d[5] || '', pay: d[11] || (+d[4] > 0 ? '확인' : ''), mem: memOf_(id, DV).last }; })
     .sort((a, b) => (a.state === '퇴원') - (b.state === '퇴원') || String(a.name).localeCompare(String(b.name), 'ko')); }
 function stuWho_(u) { const T = tbl_('교사'), ti = T.find('교사ID', u.tid); return (ti >= 0 ? T.get(ti, '이름') : u.email) + ' (원장)'; }
 function stuRow_(aid, sid) { const S2 = tbl_('학생'), i = S2.find('학생ID', sid); if (i < 0 || S2.get(i, '학원ID') !== aid) fail('그 학생을 찾지 못했어요. 새로 고침해 주세요.'); return { S2, i }; }
@@ -939,7 +940,7 @@ function tStuDetail(sess, aid, sid) {
   if (!tutors.length && g('담당교사ID')) tutors = [{ id: '', tid: g('담당교사ID'), name: tn[g('담당교사ID')] || g('담당교사ID'), start: g('시작월'), end: '', legacy: true }];
   let states = statesOf_(sid).map(r => ({ id: r['이력ID'], state: r['상태'], date: r['날짜'], memo: r['메모'] }));
   if (!states.length) { states = [{ id: '', state: '재원', date: g('시작월'), memo: '명단', legacy: true }]; if (g('상태') && g('상태') !== '재원') states.push({ id: '', state: g('상태'), date: g('상태일'), memo: '명단', legacy: true }); }
-  const mo = memOf_(sid), dues = tbl_('연회비').v.filter(d => d[0] === '학생' && d[1] === sid).map(d => ({ year: d[2], due: d[3], paid: d[4], date: d[5], way: d[6], mem: mo.terms[String(d[2])] || null })).sort((a, b) => String(b.year).localeCompare(String(a.year)));
+  const mo = memOf_(sid), dues = tbl_('연회비').v.filter(d => d[0] === '학생' && d[1] === sid).map(d => ({ year: d[2], due: d[3], paid: d[4], date: d[5], way: d[6], pay: d[11] || (+d[4] > 0 ? '확인' : ''), memo: d[11] === '반려' ? String(d[7] || '') : '', mem: mo.terms[String(d[2])] || null })).sort((a, b) => String(b.year).localeCompare(String(a.year)));
   return { mem: mo.last, stu: { id: sid, name: g('이름'), tag: g('구분글자'), birth: g('출생연도'), inst: g('전공'), start: g('시작월'), state: g('상태') || '재원', stateAt: g('상태일'), check: g('확인') }, tutors, states, dues, curY: CUR_Y };
 }
 /** 자세히: 이름 · 출생연도 · 전공 · 올해 낸 금액 · 낸 날짜 고치기 */
@@ -955,9 +956,11 @@ function tStuSave(sess, aid, sid, d) {
     if (diff.length) S2.set(i, Object.assign(o, { '수정일': now_(), '수정자': who }));
     const D = tbl_('연회비'), dc = col_(D), j = D.v.findIndex(r => r[dc['대상']] === '학생' && r[dc['ID']] === sid && String(r[dc['년도']]) === CUR_Y);
     const oldP = j >= 0 ? String(D.v[j][dc['납부']] || '') : '', oldD = j >= 0 ? String(D.v[j][dc['납부일']] || '') : '';
-    if (paid !== oldP || paidAt !== oldD) {
-      if (j >= 0) D.set(j, { '납부': paid, '납부일': paidAt, '메모': [String(D.v[j][dc['메모']] || ''), '원장이 넣음(' + md + ')'].filter(Boolean).join(' · ').slice(0, 200), '수정일': now_(), '수정자': who });
-      else if (paid || paidAt) D.append({ '대상': '학생', 'ID': sid, '년도': CUR_Y, '부과': '', '납부': paid, '납부일': paidAt, '메모': '원장이 넣음(' + md + ')', '수정일': now_(), '수정자': who });
+    if (paid !== oldP || paidAt !== oldD || (j >= 0 && D.v[j][11] === '반려' && +paid > 0)) {
+      if (+paid > 0 && !paidAt) fail('낸 날짜(입금일)를 넣어 주세요.');
+      const rp = +paid > 0 ? { '확인': '신고', '신고일': now_(), '신고자': who, '확인일': '', '확인자': '' } : { '확인': '', '신고일': '', '신고자': '', '확인일': '', '확인자': '' };
+      if (j >= 0) D.set(j, Object.assign({ '납부': paid, '납부일': paidAt, '메모': [String(D.v[j][dc['메모']] || ''), '원장이 입금 신고(' + md + ')'].filter(Boolean).join(' · ').slice(0, 200), '수정일': now_(), '수정자': who }, rp));
+      else if (paid || paidAt) D.append(Object.assign({ '대상': '학생', 'ID': sid, '년도': CUR_Y, '부과': '', '납부': paid, '납부일': paidAt, '메모': '원장이 입금 신고(' + md + ')', '수정일': now_(), '수정자': who }, rp));
       diff.push(CUR_Y + ' 회비 ' + (oldP || '없음') + ' → ' + (paid || '없음') + (paidAt ? '(' + paidAt + ')' : ''));
     }
     if (diff.length) { stuFlag_(aid, sid, '원장이 바꿈(' + md + '): ' + diff.join(' · '), who); log_(u.email, '학생', sid, '원장이 수정', diff.join(' · ').slice(0, 900)); }
@@ -1259,6 +1262,37 @@ function bReply(sess, qid, text) {
   return bMine(sess);
 }
 /** 관리자 */
+/* ---------- 학생 입금 신고 (원장 → 관리자 입금일 확인) ---------- */
+function payList(who) {
+  const D = tbl_('연회비'), S2 = tbl_('학생'), sc = col_(S2), A = tbl_('학원'), ac = col_(A), sn = {}, an = {};
+  S2.v.forEach(r => { sn[r[sc['학생ID']]] = { name: r[sc['이름']] + (r[sc['구분글자']] ? ' ' + r[sc['구분글자']] : ''), aid: r[sc['학원ID']] }; });
+  A.v.forEach(r => { an[r[ac['학원ID']]] = r[ac['학원명']]; });
+  const list = D.v.filter(r => r[0] === '학생' && r[12]).map(r => { const s = sn[r[1]] || {}; return { sid: r[1], name: s.name || r[1], aid: s.aid || '', acad: an[s.aid] || '', year: String(r[2]), paid: r[4], date: r[5], memo: r[7], st: r[11] || '', at: r[12], by: r[13], okAt: r[14], okBy: r[15] }; })
+    .sort((a, b) => String(b.at).localeCompare(String(a.at)));
+  return { list, payN: list.filter(x => x.st === '신고').length };
+}
+function duesRow_(sid, year) { const D = tbl_('연회비'), i = D.v.findIndex(r => r[0] === '학생' && String(r[1]) === String(sid) && String(r[2]) === String(year)); if (i < 0) fail('신고를 찾지 못했어요. 새로 고쳐 주세요.'); return { D, i }; }
+function payOk(who, sid, year, date, paid) {
+  date = String(date || '').trim(); if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) fail('확인한 입금일을 골라 주세요.');
+  const amt = num_(paid); if (!(amt > 0) || amt > 5000000) fail('입금 금액을 확인해 주세요.');
+  const lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    const { D, i } = duesRow_(sid, year), old = D.v[i];
+    D.set(i, { '납부': amt, '납부일': date, '확인': '확인', '확인일': now_(), '확인자': who.name, '수정일': now_(), '수정자': who.name });
+    log_(who.name, '연회비', sid, '입금 확인', year + ' 신고 ' + old[4] + '원 ' + old[5] + ' → 확인 ' + amt + '원 ' + date);
+  } finally { lock.releaseLock(); }
+  return payList(who);
+}
+function payNo(who, sid, year, why) {
+  why = String(why || '').trim().slice(0, 100); if (!why) fail('반려 사유를 넣어 주세요.');
+  const lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    const { D, i } = duesRow_(sid, year);
+    D.set(i, { '확인': '반려', '확인일': now_(), '확인자': who.name, '메모': ('반려: ' + why + ' · ' + String(D.v[i][7] || '')).slice(0, 200), '수정일': now_(), '수정자': who.name });
+    log_(who.name, '연회비', sid, '입금 반려', year + ' ' + why);
+  } finally { lock.releaseLock(); }
+  return payList(who);
+}
 function bList(who) { const all = bObjs_(); return { list: all }; }
 function bSet(who, qid, state) {
   if (B_STATES.indexOf(state) < 0) fail('상태를 골라 주세요.');

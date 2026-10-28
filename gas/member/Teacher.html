@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261028-090641 -->
+<!-- build: 20261028-181448 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -60,7 +60,7 @@ label.f,.f{display:flex;flex-wrap:wrap;align-items:baseline;column-gap:6px;row-g
 .f>span:first-child{display:flex;gap:6px;align-items:baseline;flex-wrap:wrap}
 .req{color:var(--bad);font-weight:700}
 .opt{color:var(--faint);font-size:12px;font-weight:400}
-input[type=text],input[type=email],input[type=tel],input[type=password],input[type=search],select,textarea{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:9px;padding:11px 12px;font-size:16px;min-width:0;color:var(--ink)}
+input[type=text],input[type=email],input[type=tel],input[type=password],input[type=search],input[type=month],input[type=date],select,textarea{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:9px;padding:11px 12px;font-size:16px;min-width:0;color:var(--ink)}
 input[disabled]{opacity:.7}
 input.bad,select.bad,textarea.bad{border-color:var(--bad);background:var(--bad-soft)}
 .hint{font-size:12.5px;color:var(--faint);margin:0}
@@ -259,7 +259,7 @@ function vMe(){var m=S.me;if(!m)return '<div class="card"><span><span class="spi
     '<div class="phbox"><div class="phimg">'+(m.photo?'<img src="'+esc(m.photo)+'" alt="내 사진">':'사진<br>없음')+'</div><div><b>사진</b><p class="hint">명찰 · 프로그램북에 쓰는 얼굴 사진이에요. 정면, 밝은 배경이면 좋아요.</p><label class="btn small" for="phIn" style="display:inline-block;cursor:pointer">'+(S.phBusy?'<span class="spin"></span> 올리는 중…':m.photo?'사진 바꾸기':'사진 넣기')+'</label><input type="file" id="phIn" accept="image/*" hidden></div></div>'+
     (m.reqs&&m.reqs.length?'<div class="note warn">협회가 확인 중인 요청: '+esc(m.reqs.join(', '))+'</div>':'')+
     (S.infoEd?infoEdit(m):'<dl class="kv"><dt>이메일</dt><dd>'+esc(m.email)+'</dd><dt>휴대전화</dt><dd class="num">'+fmtPh(m.phone)+'</dd>'+(m.ext?'<dt>구분</dt><dd><span class="pill info">외부인</span></dd><dt>악기</dt><dd>'+esc(m.inst||'-')+'</dd></dl>':'<dt>직급</dt><dd>'+esc(m.role||'-')+'</dd><dt>악기</dt><dd>'+esc(m.inst||'-')+'</dd><dt>회원 종류</dt><dd>'+(KINDS.indexOf(m.kind)>=0?'<span class="pill info">'+esc(kindLabel(m.kind))+'</span>':'<span class="pill due">확인 전</span>')+'</dd></dl>')+certLine(m)+'<button class="btn small block" type="button" id="infoEd">기본 정보 고치기</button>')+
-    (m.heads&&m.heads.length?'<div class="note">원장으로 등록된 학원: <b>'+esc(m.heads.join(', '))+'</b> · 학원 정보와 학생 명단 메뉴는 곧 열려요.</div>':'')+
+    (m.heads&&m.heads.length?'<div class="lock" style="margin-top:8px"><h3>우리 학원 <span class="opt">원장</span></h3>'+m.heads.map(function(a){return '<div class="spread" style="margin:4px 0"><b>'+esc(a.name)+'</b><button class="btn small primary" type="button" data-myac="'+esc(a.id)+'">학원 정보 · 선생님</button></div>'}).join('')+'<p class="hint">학생 명단 메뉴는 곧 열려요.</p></div>':'')+
     '</div>'+(m.ext?'':workCard(m)+duesCard(m))+eventCard(m)+
     payCards(m)+rrnBox(m)}
 function payCards(m){var p=m.pay||{},ed=S.payEd,d=S.pay||{};
@@ -295,6 +295,31 @@ function vAsk(){var a=S.ask||(S.ask={cat:'',title:'',body:'',name:'',phone:''}),
     '<p class="hint">주민등록번호 · 계좌번호는 적지 말아 주세요.</p>'+msgBox()+btn('askSend','보내기')+'</div>'}
 function readAsk(){var a=S.ask;if(!a)return;var g=function(id){var e=document.getElementById(id);return e?e.value:null};var x;
   if((x=g('aNm'))!==null)a.name=x.trim();if((x=g('aPh'))!==null)a.phone=x.replace(/\D/g,'');if((x=g('aTi'))!==null)a.title=x;if((x=g('aBo'))!==null)a.body=x}
+/* ---------- 원장: 우리 학원 (10-28) ---------- */
+function acForm(a){return {tel:a['교실대표번호']||'',email:a['이메일']||'',subj:String(a['교습과목']||'').split(/[,，、]/).map(function(x){return x.trim()}).filter(Boolean),zip:a['우편번호']||'',addr:a['주소']||'',addr2:a['상세주소']||'',sido:a['시도']||'',sigungu:a['시군구']||'',open:String(a['개원일']||'').slice(0,7)}}
+function readAcForm(){var M=S.myac;if(!M||!M.ed)return;var f=M.form,g=function(id){var e=document.getElementById(id);return e?e.value.trim():null},x;
+  if((x=g('acTel'))!==null)f.tel=x.replace(/\D/g,'');if((x=g('acEm'))!==null)f.email=x;if((x=g('z_ac'))!==null)f.zip=x;if((x=g('a_ac'))!==null)f.addr=x;if((x=g('d_ac'))!==null)f.addr2=x;if((x=g('acOpen'))!==null)f.open=x;
+  var sb=document.querySelectorAll('[data-subj]');if(sb.length){f.subj=[];sb.forEach(function(c){if(c.checked)f.subj.push(c.dataset.subj)})}}
+function fmtTel(v){var x=String(v||'').replace(/\D/g,'');if(/^02/.test(x))return x.length>9?x.slice(0,2)+'-'+x.slice(2,6)+'-'+x.slice(6):x.slice(0,2)+'-'+x.slice(2,5)+'-'+x.slice(5);return x.length>10?x.slice(0,3)+'-'+x.slice(3,7)+'-'+x.slice(7):x.length>6?x.slice(0,3)+'-'+x.slice(3,6)+'-'+x.slice(6):x}
+function vMyAcad(){var M=S.myac;if(!M||!M.data)return '<div class="card"><span><span class="spin"></span> 불러오는 중…</span></div>';
+  var a=M.data.acad,T=M.data.teachers,f=M.form,cur=T.filter(function(t){return !t.end}),past=T.filter(function(t){return t.end});
+  var info=M.ed?'<div class="lock"><h3>학원 정보 고치기 <span class="opt">바꾸면 협회가 확인해요</span></h3>'+
+      '<label class="f" for="acTel">교실 대표 번호<input type="tel" id="acTel" value="'+esc(fmtTel(f.tel))+'" inputmode="numeric" '+bad('tel')+'></label>'+fe('tel')+
+      '<label class="f" for="acEm">학원 이메일<input type="text" id="acEm" value="'+esc(f.email)+'" autocomplete="off" '+bad('email')+'></label>'+fe('email')+
+      '<div class="f"><span>교습 과목</span><div class="row">'+INSTS.map(function(i){return '<label class="agree" style="flex:0 0 auto"><input type="checkbox" data-subj="'+i+'" '+(f.subj.indexOf(i)>=0?'checked':'')+'> '+i+'</label>'}).join('')+'</div></div>'+
+      addrBlock('ac','학원 주소',f,'')+(f.sido?'<p class="hint">지역: '+esc(f.sido+' '+f.sigungu)+'</p>':'')+
+      '<label class="f" for="acOpen">개원 <span class="opt">년 · 월</span><input type="month" id="acOpen" value="'+esc(f.open)+'" '+bad('open')+'></label>'+fe('open')+
+      '<p class="hint">학원 이름 · 운영 상태 · 원장을 바꾸려면 오른쪽 위 「내 문의」로 알려 주세요.</p>'+msgBox()+
+      '<div class="two">'+btn('acSave','저장')+'<button class="btn" type="button" id="acNo">취소</button></div></div>':
+    '<div class="card"><div class="spread"><h2>'+esc(a['학원명'])+'</h2><span class="pill '+(a['상태']==='운영'?'ok':'due')+'">'+esc(a['상태']||'-')+'</span></div>'+
+      '<dl class="kv"><dt>원장</dt><dd>'+esc(a['원장명']||'-')+'</dd><dt>대표 번호</dt><dd class="num">'+esc(fmtTel(a['교실대표번호'])||'-')+'</dd><dt>이메일</dt><dd>'+esc(a['이메일']||'-')+'</dd><dt>교습 과목</dt><dd>'+esc(a['교습과목']||'-')+'</dd>'+
+      '<dt>주소</dt><dd>'+(a['주소']?(a['우편번호']?'<span class="num">('+esc(a['우편번호'])+')</span> ':'')+esc(a['주소']+' '+(a['상세주소']||'')):'-')+'</dd><dt>개원</dt><dd class="num">'+esc(a['개원일']||'-')+'</dd>'+(a['계약체결일']?'<dt>협회 계약</dt><dd class="num">'+esc(a['계약체결일'])+'</dd>':'')+'</dl>'+
+      '<button class="btn primary block" type="button" id="acEdit">학원 정보 고치기</button></div>';
+  var li=function(t){return '<li class="'+(t.end?'past':'')+'"><div class="spread"><b>'+(t.main&&!t.end?'<span class="pill info">주 소속</span> ':'')+esc(t.name)+'</b><span class="hint num">'+(t.start?esc(t.start.replace('-','.')):'?')+' ~ '+(t.end?esc(t.end.replace('-','.')):'지금')+'</span></div><span class="hint">'+esc([t.role,t.inst,kindLabel(t.kind)].filter(Boolean).join(' · ')||'-')+'</span></li>'};
+  return info+'<div class="card"><h3>소속 선생님 <span class="opt">지금 '+cur.length+'명</span></h3>'+(cur.length?'<ul class="hist">'+cur.map(li).join('')+'</ul>':'<p class="hint">지금 소속된 선생님이 없어요.</p>')+
+    (past.length?'<h3 style="margin-top:10px">지난 소속 선생님</h3><ul class="hist">'+past.map(li).join('')+'</ul>':'')+
+    '<p class="hint">선생님이 「내 정보 › 소속 학원」에서 넣은 내용이에요. 다르면 그 선생님에게 고쳐 달라고 해 주세요.</p></div>'+
+    '<button class="btn block" type="button" id="toMe">내 정보로</button>'}
 function vMine(){return myAskCard()+'<button class="btn block" type="button" id="toMe">내 정보로</button>'}
 function gnbAsk(){var b=document.getElementById('gnbAsk');if(!b)return;b.hidden=!S.sess;b.setAttribute('aria-current',S.v==='mine'?'page':'false');
   var n=(S.mine||[]).filter(function(q){var c=q.comments[q.comments.length-1];return q.state!=='완료'&&c&&c.who==='관리자'}).length,dt=document.getElementById('gnbDot');
@@ -358,7 +383,7 @@ function checkPay(d,hasAcct){var e={};if(!d.haddr)e.a_h='「주소 검색」으�
   if(!d.holder)e.holder='예금주를 넣어 주세요.';return e}
 function openPost(){var k=S.postFor,w=document.getElementById('postWrap_'+k);if(!w)return;w.hidden=false;
   if(!window.daum||!daum.Postcode){w.innerHTML='<p class="hint" style="padding:12px">주소 검색을 불러오지 못했어요. 우편번호와 주소를 직접 넣어 주세요.</p>';w.style.height='auto';return}
-  new daum.Postcode({width:'100%',height:'100%',oncomplete:function(r){readPayIn();var d=curPay(),pre=k==='h'?'h':'';d[pre+'zip']=r.zonecode;d[pre+'addr']=r.roadAddress||r.jibunAddress;if(d.same&&pre==='h'){d.zip=d.hzip;d.addr=d.haddr}delete S.err['a_'+k];S.postFor='';render();var n=document.getElementById('d_'+k);if(n)n.focus()}}).embed(w)}
+  new daum.Postcode({width:'100%',height:'100%',oncomplete:function(r){if(k==='ac'){readAcForm();var f=S.myac.form;f.zip=r.zonecode;f.addr=r.roadAddress||r.jibunAddress;f.sido=r.sido||f.sido;f.sigungu=r.sigungu||f.sigungu;delete S.err.a_ac;S.postFor='';render();var n2=document.getElementById('d_ac');if(n2)n2.focus();return}readPayIn();var d=curPay(),pre=k==='h'?'h':'';d[pre+'zip']=r.zonecode;d[pre+'addr']=r.roadAddress||r.jibunAddress;if(d.same&&pre==='h'){d.zip=d.hzip;d.addr=d.haddr}delete S.err['a_'+k];S.postFor='';render();var n=document.getElementById('d_'+k);if(n)n.focus()}}).embed(w)}
 function vPay(){var m=S.me||{},p=m.pay||{};
   var d=S.pay||(S.pay={eng:m.eng||'',hzip:p.hzip||'',haddr:p.haddr||'',haddr2:p.haddr2||'',same:!p.addr||(p.addr===p.haddr&&p.addr2===p.haddr2),zip:p.zip||'',addr:p.addr||'',addr2:p.addr2||'',bank:p.bank||'',acct:'',holder:p.holder||m.name||''});
   return '<div class="card"><h2>정산 정보 고치기</h2>'+
@@ -380,12 +405,12 @@ function hSync(){var H=gh();if(!H||HIST.busy||S.v===HIST.last)return;var first=!
 function hBack(v){var need={email:1,code:1,confirm:1};
   if(!v)v=S.sess?'me':'home';
   if(S.v==='done'||(need[v]&&!S.token))v=S.sess?'me':'home';
-  if((v==='me'||v==='pay'||v==='mine')&&!S.sess)v='login';if(v==='mine')loadMine();
+  if((v==='me'||v==='pay'||v==='mine'||v==='myacad')&&!S.sess)v='login';if(v==='myacad'&&!(S.myac&&S.myac.data))v='me';if(v==='mine')loadMine();
   HIST.busy=true;HIST.last=v;S.v=v;S.err={};S.msg='';S.postFor='';S.payEd='';if(S.hist.length)S.hist.pop();render();HIST.busy=false;window.scrollTo(0,0);if(v==='me')loadMe()}
 (function(){var H=gh();if(H&&H.setChangeHandler)try{H.setChangeHandler(function(e){hBack(e&&e.state&&e.state.v)})}catch(x){}})();
 function render(){var h;
   document.getElementById('testband').hidden=!S.test;
-  h=({home:vHome,find:vFind,email:vEmail,code:vCode,confirm:vConfirm,done:vDone,login:vLogin,me:vMe,pay:vPay,ask:vAsk,mine:vMine})[S.v]();
+  h=({home:vHome,find:vFind,email:vEmail,code:vCode,confirm:vConfirm,done:vDone,login:vLogin,me:vMe,pay:vPay,ask:vAsk,mine:vMine,myacad:vMyAcad})[S.v]();
   document.getElementById('app').innerHTML=h;
   gnbAsk();
   hSync();
@@ -480,6 +505,14 @@ document.addEventListener('click',function(e){var b=e.target.closest('button');i
     S.err=e6;if(Object.keys(e6).length){render();return}
     if(j6.type==='연수교사회원'&&!j6.course)j6.course='초급';
     run(function(){return call('tSaveInfo',[S.sess,{name:j6.name,phone:j6.phone,type:j6.type,course:j6.course,role:j6.role,inst:j6.inst,certs:Object.keys(j6.certs).map(function(n){return {n:n,y:j6.certs[n]}})}]).then(function(r){if(!r.ok){S.msg=r.msg;return}S.me=r.me;S.infoEd=false;S.err={};toast('저장했어요. 협회가 확인해요')})});return}
+  if(d.myac){S.myac={id:d.myac,data:null,ed:false,form:null};go('myacad');call('tAcad',[S.sess,d.myac]).then(function(r){if(!r.ok){toast(r.msg);S.v='me';render();return}S.myac.data=r;render()});return}
+  if(b.id==='acEdit'){S.myac.ed=true;S.myac.form=acForm(S.myac.data.acad);S.err={};S.msg='';render();return}
+  if(b.id==='acNo'){S.myac.ed=false;S.err={};S.msg='';S.postFor='';render();return}
+  if(b.id==='acSave'){readAcForm();var f7=S.myac.form,e7={};
+    if(f7.tel&&!/^0\d{8,10}$/.test(f7.tel))e7.tel='교실 대표 번호를 확인해 주세요.';if(f7.email&&!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(f7.email))e7.email='이메일 주소를 확인해 주세요.';
+    S.err=e7;if(Object.keys(e7).length){render();return}
+    var send={'교실대표번호':f7.tel,'이메일':f7.email,'교습과목':f7.subj.join(', '),'우편번호':f7.zip,'주소':f7.addr,'상세주소':f7.addr2,'시도':f7.sido,'시군구':f7.sigungu,'개원일':f7.open};
+    run(function(){return call('tSaveAcad',[S.sess,S.myac.id,send]).then(function(r){if(!r.ok){S.msg=r.msg;return}S.myac.data=r;S.myac.ed=false;S.err={};toast('저장했어요. 협회가 확인해요')})});return}
   if(b.id==='gnbAsk'){if(!S.sess)return;go('mine');loadMine();return}
   if(b.id==='goAsk'){S.ask=null;S.askDone=false;go('ask');return}
   if(d.seg==='acat'){readAsk();S.ask.cat=d.val;render();return}
@@ -494,7 +527,7 @@ document.addEventListener('click',function(e){var b=e.target.closest('button');i
     run(function(){return call('bReply',[S.sess,d.qrep,tx]).then(function(r){if(!r.ok){toast(r.msg);return}S.mine=r.list;toast('댓글을 남겼어요')})});return}
   if(b.id==='toPay'){S.pay=null;go('pay');return}
   if(b.id==='toMe'){S.hist=[];S.pay=null;go('me',true);loadMe();return}
-  if(d.post){readPayIn();S.postFor=S.postFor===d.post?'':d.post;render();return}
+  if(d.post){readAcForm();readPayIn();S.postFor=S.postFor===d.post?'':d.post;render();return}
   if(b.id==='savePay'){readPayIn();var q=S.pay,er3=checkPay(q,!!(S.me&&S.me.pay&&S.me.pay.acct));
     if(q.eng&&!/^[A-Za-z .'-]+$/.test(q.eng))er3.eng='영문 이름은 영어로 넣어 주세요.';S.err=er3;if(Object.keys(er3).length){render();var f=document.querySelector('.fe');if(f)f.scrollIntoView({block:'center'});return}
     run(function(){return call('tSavePay',[S.sess,q]).then(function(r){if(!r.ok){S.msg=r.msg;return}S.me=r.me;S.pay=null;S.hist=[];S.v='me';toast('저장했어요')})});return}

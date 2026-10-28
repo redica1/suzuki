@@ -1,4 +1,4 @@
-/* build: 20261028-090641 */
+/* build: 20261028-181448 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -58,7 +58,7 @@ function doGet(e) {
 function include(n) { return HtmlService.createHtmlOutputFromFile(n).getContent(); }
 
 function api(name, args) {
-  const open = { login, hello, tHello, tLookup, tStart, tResend, tVerify, tCreate, tLogin, tForgot, tReset, tMe, tSavePay, tSavePart, tSaveInfo, tSavePhoto, tSaveRrn, tAddWork, tEndWork, tMainWork, tLogout, bPost, bMine, bReply };
+  const open = { login, hello, tHello, tLookup, tStart, tResend, tVerify, tCreate, tLogin, tForgot, tReset, tMe, tSavePay, tSavePart, tSaveInfo, tSavePhoto, tAcad, tSaveAcad, tSaveRrn, tAddWork, tEndWork, tMainWork, tLogout, bPost, bMine, bReply };
   const fns = { boot, saveRow, setCheck, logs, importRoster, saveDues, delDues, reqs, reqDo, delAcad, payView, bulkSet, saveWorks, importPastDues, bList, bSet, bComment, photoGet, photoDel };
   try {
     if (open[name]) return Object.assign({ ok: true }, open[name].apply(null, args || []));
@@ -676,7 +676,7 @@ function tMe(sess) {
   const u = tsess_(sess);
   const T = tbl_('교사'), i = T.find('교사ID', u.tid); if (i < 0) fail('명단에서 선생님을 찾지 못했어요. 협회에 문의해 주세요.');
   const r = T.rowObj(i), c = col_(T), an = acadNames_(), g = k => r[c[k]] || '';
-  const heads = tbl_('학원').v.filter(a => a[4] === u.tid && a[3] !== '탈퇴').map(a => a[1]);
+  const heads = tbl_('학원').v.filter(a => a[4] === u.tid && a[3] !== '탈퇴').map(a => ({ id: a[0], name: a[1] }));
   const p = payRow_(u.tid);
   const reqs = tbl_('요청').v.filter(q => q[2] === u.tid && q[7] === '대기').map(q => q[1]);
   const works = worksOf_(u.tid).map(w => ({ wid: w['근무ID'], aid: w['학원ID'], name: w['학원ID'] ? (an[w['학원ID']] || w['학원ID']) : w['학원명'] + ' (목록에 없음)', start: w['시작'], end: w['종료'], main: w['주근무'] === '예' }));
@@ -721,6 +721,47 @@ function tSavePay(sess, d) {
   } finally { lock.releaseLock(); }
   return tMe(sess);
 }
+/* ---------- 원장: 우리 학원 (10-28) — 학원 탭 「원장교사ID」로 관리자가 지정한 원장만 ---------- */
+const ACAD_OWN = ['교실대표번호', '이메일', '교습과목', '시도', '시군구', '우편번호', '주소', '상세주소', '개원일'];
+function headOf_(u, aid) {
+  const A = tbl_('학원'), i = A.find('학원ID', aid);
+  if (i < 0 || A.get(i, '원장교사ID') !== u.tid || A.get(i, '상태') === '탈퇴') fail('원장으로 지정된 학원만 볼 수 있어요. 협회에 문의해 주세요.');
+  return { A, i };
+}
+function tAcad(sess, aid) {
+  const u = tsess_(sess), { A, i } = headOf_(u, aid), a = A.rowObj(i), c = col_(A);
+  const info = {}; ['학원ID', '학원명', '상태', '원장명', '계약체결일', '수정일'].concat(ACAD_OWN).forEach(k => info[k] = a[c[k]] || '');
+  /* 소속 선생님: 이 학원의 지금 · 지난 소속 이력 (이름 · 직급 · 전공 · 시작 · 종료만) */
+  const T = tbl_('교사'), tc = col_(T), byId = {}; T.v.forEach(r => byId[r[tc['교사ID']]] = r);
+  const ws = workObjs_().list.filter(w => w['학원ID'] === aid);
+  const seen = {}; ws.forEach(w => seen[w['교사ID']] = 1);
+  T.v.forEach(r => { if (!seen[r[tc['교사ID']]] && [r[tc['학원1']], r[tc['학원2']], r[tc['학원3']]].indexOf(aid) >= 0) ws.push({ '교사ID': r[tc['교사ID']], '시작': '', '종료': '', '주근무': r[tc['학원1']] === aid ? '예' : '' }); });
+  const teachers = ws.map(w => { const r = byId[w['교사ID']]; if (!r || r[tc['상태']] === '탈퇴') return null;
+    return { name: r[tc['이름']] + (r[tc['구분글자']] ? ' ' + r[tc['구분글자']] : ''), role: r[tc['직급']] || '', inst: r[tc['전공']] || '', kind: r[tc['회원구분']] || '', start: w['시작'] || '', end: w['종료'] || '', main: w['주근무'] === '예' }; })
+    .filter(Boolean).sort((x, y) => (x.end ? 1 : 0) - (y.end ? 1 : 0) || String(y.start).localeCompare(String(x.start)));
+  return { acad: info, teachers };
+}
+function tSaveAcad(sess, aid, d) {
+  const u = tsess_(sess); d = d || {};
+  const lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    const { A, i } = headOf_(u, aid), g = k => String(A.get(i, k) || '');
+    const o = {}; ACAD_OWN.forEach(k => { if (k in d) o[k] = String(d[k] == null ? '' : d[k]).trim().slice(0, k === '주소' ? 120 : 80); });
+    if ('교실대표번호' in o) { o['교실대표번호'] = digits_(o['교실대표번호']); if (o['교실대표번호'] && !/^0\d{8,10}$/.test(o['교실대표번호'])) fail('교실 대표 번호를 확인해 주세요.'); }
+    if (o['이메일'] && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(o['이메일'])) fail('이메일 주소를 확인해 주세요.');
+    if ('우편번호' in o) o['우편번호'] = digits_(o['우편번호']).slice(0, 5);
+    if (o['개원일'] && !/^\d{4}-\d{2}(-\d{2})?$/.test(o['개원일'])) fail('개원일은 2015-03 처럼 넣어 주세요.');
+    if ('교습과목' in o) o['교습과목'] = o['교습과목'].split(/[,，、]/).map(x => x.trim()).filter(x => INSTS_.indexOf(x) >= 0).join(', ');
+    const diff = []; Object.keys(o).forEach(k => { if (o[k] !== g(k)) diff.push(k + ' ' + (g(k) || '없음') + ' → ' + (o[k] || '없음')); });
+    if (diff.length) {
+      const T = tbl_('교사'), ti = T.find('교사ID', u.tid), who = ti >= 0 ? T.get(ti, '이름') : u.email;
+      A.set(i, Object.assign(o, { '확인': '확인 필요', '확인메모': [g('확인메모'), '원장이 바꿈(' + Utilities.formatDate(new Date(), 'Asia/Seoul', 'MM-dd') + '): ' + diff.join(' · ')].filter(Boolean).join(' · ').slice(0, 500), '수정일': now_(), '수정자': who + ' (원장)' }));
+      log_(u.email, '학원', aid, '원장이 학원 정보 수정', diff.join(' · ').slice(0, 900));
+    }
+  } finally { lock.releaseLock(); }
+  return tAcad(sess, aid);
+}
+
 /* ---------- 회원 사진 (10-28) ---------- */
 function photoOf_(tid) { const P = tbl_('사진'), i = P.find('교사ID', tid); return i >= 0 ? String(P.get(i, '사진') || '') : ''; }
 function tSavePhoto(sess, data) {

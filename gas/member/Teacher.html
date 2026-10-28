@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261028-214247 -->
+<!-- build: 20261028-215016 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -349,6 +349,11 @@ function stuCard(M){if(!S.stuRows||S.stuRowsFor!==M.id){S.stuRows=stuRowsFrom(M.
     msgBox()+'<div class="row" style="margin-top:8px"><span class="hint" id="stuDirty">'+(dn?'바뀐 줄 '+dn+'개 · 저장해야 반영돼요':'칸을 눌러 바로 고쳐요 · 이름 · 담당 선생님 · 년도별 회비는 「자세히」에서')+'</span><span style="flex:1"></span>'+(dn?'<button class="btn small" type="button" id="stuUndo">되돌리기</button>':'')+btn('stuSaveAll','저장','primary')+'</div>'+
     '<p class="hint">상태를 휴원 · 퇴원으로 바꾸면 그 날짜를 넣어 주세요. 바뀐 상태는 이력으로 남아요. 넣거나 고친 학생은 협회가 확인해요.</p></div>'+stuDetail(M)}
 function docModal(M){if(!S.docModal)return '';return '<div class="sdlg-bg" id="docClose2"></div><div class="sdlg" role="dialog" aria-modal="true" aria-label="학원 서류"><div class="spread"><h3>학원 서류 올리기</h3><button class="btn small" type="button" id="docClose">닫기</button></div>'+docCard(M).replace('<div class="card">','<div>')+'</div>'}
+function stuView(M){var L=M.data.students||[],tn={};(M.data.teachers||[]).forEach(function(t){tn[t.id]=t.name});var cy=new Date().getFullYear(),show=S.stuAllV?L:L.filter(function(s){return s.state==='재원'});
+  var pill=function(s){return '<span class="pill '+(s==='재원'?'ok':s==='휴원'?'info':'due')+'">'+esc(s)+'</span>'};
+  return '<div class="card full"><div class="spread"><h3>학생 명단 <span class="opt">재원 '+L.filter(function(s){return s.state==='재원'}).length+'명</span></h3><div class="row"><label class="agree" style="flex:none;align-items:center"><input type="checkbox" id="stuAllV" '+(S.stuAllV?'checked':'')+'> 휴원 · 퇴원도 보기</label><button class="btn small primary" type="button" data-mtab="stu">학생 관리에서 고치기</button></div></div>'+
+    '<div class="stbl"><table class="stt"><thead><tr><th>번호</th><th>이름</th><th>출생연도</th><th>전공</th><th>담당 선생님</th><th>상태</th><th>재원 시작</th>'+(S.stuAllV?'<th>휴원 · 퇴원 날짜</th>':'')+'<th class="r">'+cy+' 회비</th></tr></thead><tbody>'+
+    (show.length?show.map(function(s){return '<tr class="'+(s.state==='퇴원'?'past':'')+'"><td class="num hint">'+esc(s.id)+'</td><td><b>'+esc(s.name)+'</b>'+(s.tag?' <span class="hint">'+esc(s.tag)+'</span>':'')+'</td><td class="num">'+esc(s.birth||'-')+'</td><td>'+esc(s.inst||'-')+'</td><td>'+esc(s.tid?(tn[s.tid]||s.tid):'-')+'</td><td>'+pill(s.state)+'</td><td class="num">'+esc(s.start?s.start.replace('-','.'):'-')+'</td>'+(S.stuAllV?'<td class="num">'+esc(s.state==='재원'?'-':(s.stateAt||'-'))+'</td>':'')+'<td class="r num">'+(+s.paid>0?won(s.paid):'<span class="hint">'+(s.due?'미납':'-')+'</span>')+'</td></tr>'}).join(''):'<tr><td colspan="9" class="hint" style="padding:12px">학생이 없어요.</td></tr>')+'</tbody></table></div></div>'}
 function stuDetail(M){var D=S.stuDet;if(!D)return '';
   var head='<div class="sdlg-bg" id="sdClose2"></div><div class="sdlg" role="dialog" aria-modal="true" aria-label="학생 자세히"><div class="spread"><h3>'+(D.data?esc(D.data.stu.name)+' <span class="hint num">'+esc(D.data.stu.id)+'</span>':'학생 자세히')+'</h3><button class="btn small" type="button" id="sdClose">닫기</button></div>';
   if(!D.data)return head+'<p class="hint"><span class="spin"></span> 불러오는 중…</p></div>';
@@ -415,7 +420,7 @@ function vMyAcad(){var M=S.myac;if(!M||!M.data)return '<div class="card"><span><
     '';
   if(tab==='tch')return acSwitch(M)+tchCard;
   if(tab==='stu')return acSwitch(M)+stuCard(M);
-  return acadHead(M)+statsCard(M)+stuCard(M)+(M.ed?'<div class="sdlg-bg" id="acClose2"></div><div class="sdlg" role="dialog" aria-modal="true" aria-label="학원 정보 수정">'+info.replace('<div class="lock">','<div>')+'</div>':'')+docModal(M)+
+  return acadHead(M)+statsCard(M)+stuView(M)+(M.ed?'<div class="sdlg-bg" id="acClose2"></div><div class="sdlg" role="dialog" aria-modal="true" aria-label="학원 정보 수정">'+info.replace('<div class="lock">','<div>')+'</div>':'')+docModal(M)+
     '<button class="btn block" type="button" id="toMe">내 정보로</button>'}
 function vMine(){return myAskCard()+'<button class="btn block" type="button" id="toMe">내 정보로</button>'}
 function headInfo(){var hs=(S.sess&&S.me&&S.me.heads)||[];return {hs:hs,acad:hs.some(function(h){return h.kind!=='클래스'}),cls:hs.some(function(h){return h.kind==='클래스'})}}
@@ -669,7 +674,7 @@ document.addEventListener('click',function(e){if(e.target.id==='sdClose2'){S.stu
 function stuField(el){var p=el.dataset.sf.split('|'),r=S.stuRows&&S.stuRows[+p[0]];if(!r)return;var v=el.value;if(p[1]==='name')v=v.slice(0,20);if(String(r[p[1]]||'')===v)return;r[p[1]]=v;if(!r.dirty){r.dirty=true;var tr=el.closest('tr');if(tr)tr.classList.add('dirty')}
   var n=S.stuRows.filter(function(x){return x.dirty}).length,h=document.getElementById('stuDirty');if(h)h.textContent='바뀐 줄 '+n+'개 · 저장해야 반영돼요';if(p[1]==='name'&&v.trim()){delete S.err['sn'+p[0]];el.removeAttribute('aria-invalid')}}
 document.addEventListener('input',function(e){if(e.target.dataset&&e.target.dataset.sf){stuField(e.target);return}});
-document.addEventListener('change',function(e){if(e.target.dataset&&e.target.dataset.sf){stuField(e.target);if(e.target.dataset.sf.split('|')[1]==='state'){var tr=e.target.closest('tr');if(tr&&!tr.querySelector('[data-sf$="|stateAt"]')&&e.target.value!=='재원'){render();var d2=document.querySelector('[data-sf="'+e.target.dataset.sf.split('|')[0]+'|stateAt"]');if(d2)d2.focus();return}if(tr){tr.classList.toggle('past',e.target.value==='퇴원');var di=tr.querySelector('[data-sf$="|stateAt"]');if(di){di.disabled=e.target.value==='재원';if(e.target.value==='재원'){di.value='';stuField(di)}else di.focus()}}}return}if(e.target.id==='stuAll'){S.stuAll=e.target.checked;render();return}});
+document.addEventListener('change',function(e){if(e.target.dataset&&e.target.dataset.sf){stuField(e.target);if(e.target.dataset.sf.split('|')[1]==='state'){var tr=e.target.closest('tr');if(tr&&!tr.querySelector('[data-sf$="|stateAt"]')&&e.target.value!=='재원'){render();var d2=document.querySelector('[data-sf="'+e.target.dataset.sf.split('|')[0]+'|stateAt"]');if(d2)d2.focus();return}if(tr){tr.classList.toggle('past',e.target.value==='퇴원');var di=tr.querySelector('[data-sf$="|stateAt"]');if(di){di.disabled=e.target.value==='재원';if(e.target.value==='재원'){di.value='';stuField(di)}else di.focus()}}}return}if(e.target.id==='stuAll'){S.stuAll=e.target.checked;render();return}if(e.target.id==='stuAllV'){S.stuAllV=e.target.checked;render();return}});
 document.addEventListener('input',function(e){var el=e.target;
   if(el.id==='iPh'){el.value=ph010(el.value);var n=el.value.length;el.setSelectionRange(n,n)}
   if(el.id==='cCode'||el.id==='rc'||el.id==='pZip'){el.value=el.value.replace(/\D/g,'')}

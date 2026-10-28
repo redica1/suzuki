@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261028-182916 -->
+<!-- build: 20261028-183233 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -298,10 +298,13 @@ function readAsk(){var a=S.ask;if(!a)return;var g=function(id){var e=document.ge
 /* ---------- 원장: 우리 학원 (10-28) ---------- */
 function acForm(a){return {tel:a['교실대표번호']||'',email:a['이메일']||'',subj:String(a['교습과목']||'').split(/[,，、]/).map(function(x){return x.trim()}).filter(Boolean),zip:a['우편번호']||'',addr:a['주소']||'',addr2:a['상세주소']||'',sido:a['시도']||'',sigungu:a['시군구']||'',open:String(a['개원일']||'').slice(0,7),biz:a['사업자번호']||'',edu:a['교육청인가번호']||''}}
 function readAcForm(){var M=S.myac;if(!M||!M.ed)return;var f=M.form,g=function(id){var e=document.getElementById(id);return e?e.value.trim():null},x;
-  if((x=g('acTel'))!==null)f.tel=x.replace(/\D/g,'');if((x=g('acEm'))!==null)f.email=x;if((x=g('z_ac'))!==null)f.zip=x;if((x=g('a_ac'))!==null)f.addr=x;if((x=g('d_ac'))!==null)f.addr2=x;if((x=g('acOpen'))!==null)f.open=x;if((x=g('acBiz'))!==null)f.biz=x;if((x=g('acEdu'))!==null)f.edu=x;
+  var ta=document.getElementById('acTelA'),tr=document.getElementById('acTelR');if(ta&&tr){var rr=tr.value.replace(/\D/g,'');f.tel=ta.value===AREA_NONE||!ta.value?rr:ta.value+rr}if((x=g('acEm'))!==null)f.email=x;if((x=g('z_ac'))!==null)f.zip=x;if((x=g('a_ac'))!==null)f.addr=x;if((x=g('d_ac'))!==null)f.addr2=x;if((x=g('acOpen'))!==null)f.open=x;if((x=g('acBiz'))!==null)f.biz=x;if((x=g('acEdu'))!==null)f.edu=x;
   var sb=document.querySelectorAll('[data-subj]');if(sb.length){f.subj=[];sb.forEach(function(c){if(c.checked)f.subj.push(c.dataset.subj)})}}
 function sidoShort(x){x=String(x||'');var m={'강원특별자치도':'강원','전북특별자치도':'전북','제주특별자치도':'제주','세종특별자치시':'세종'};return m[x]||x.replace(/(특별시|광역시|특별자치시|특별자치도|도)$/,'')}
-function fmtTel(v){var x=String(v||'').replace(/\D/g,'');if(/^02/.test(x))return x.length>9?x.slice(0,2)+'-'+x.slice(2,6)+'-'+x.slice(6):x.slice(0,2)+'-'+x.slice(2,5)+'-'+x.slice(5);return x.length>10?x.slice(0,3)+'-'+x.slice(3,7)+'-'+x.slice(7):x.length>6?x.slice(0,3)+'-'+x.slice(3,6)+'-'+x.slice(6):x}
+var AREAS=['02','031','032','033','041','042','043','044','051','052','053','054','055','061','062','063','064','010','070','050'],AREA_NONE='(없음 · 1588 등)';
+function telParts(v){v=String(v||'').replace(/\D/g,'');if(!v)return ['',''];if(/^1[5-9]/.test(v))return [AREA_NONE,v];if(v.indexOf('02')===0)return ['02',v.slice(2)];var a3=v.slice(0,3);if(AREAS.indexOf(a3)>=0)return [a3,v.slice(3)];return ['',v]}
+function telBox(v){var p=telParts(v);return '<div class="f"><span>교실 대표 번호 <span class="opt">지역번호를 고르고 나머지 번호</span></span><div class="row" style="flex-wrap:nowrap"><select id="acTelA" style="width:auto;flex:none" aria-label="지역번호"><option value="">지역번호</option>'+AREAS.concat([AREA_NONE]).map(function(x){return '<option '+(x===p[0]?'selected':'')+'>'+x+'</option>'}).join('')+'</select><input type="tel" id="acTelR" value="'+esc(p[1])+'" inputmode="numeric" placeholder="1234-5678" aria-label="나머지 번호" '+bad('tel')+'></div></div>'}
+function fmtTel(v){var x=String(v||'').replace(/\D/g,'');if(/^1[5-9]\d{6}$/.test(x))return x.slice(0,4)+'-'+x.slice(4);if(/^02/.test(x))return x.length>9?x.slice(0,2)+'-'+x.slice(2,6)+'-'+x.slice(6):x.slice(0,2)+'-'+x.slice(2,5)+'-'+x.slice(5);return x.length>10?x.slice(0,3)+'-'+x.slice(3,7)+'-'+x.slice(7):x.length>6?x.slice(0,3)+'-'+x.slice(3,6)+'-'+x.slice(6):x}
 var DOC_SLOTS=[['사업자등록증','사업자등록증'],['교육청인가증','교육청 인가증'],['임대','임대계약서 · 등기부등본']];
 function fmtSize(n){n=+n||0;return n>1048576?(n/1048576).toFixed(1)+'MB':Math.max(1,Math.round(n/1024))+'KB'}
 function docCard(M){var ds=M.data.docs||[];
@@ -330,7 +333,7 @@ function openB64(name,mime,b64){var bin=atob(b64),n=bin.length,u8=new Uint8Array
 function vMyAcad(){var M=S.myac;if(!M||!M.data)return '<div class="card"><span><span class="spin"></span> 불러오는 중…</span></div>';
   var a=M.data.acad,T=M.data.teachers,f=M.form,cur=T.filter(function(t){return !t.end}),past=T.filter(function(t){return t.end});
   var info=M.ed?'<div class="lock"><h3>학원 정보 고치기 <span class="opt">바꾸면 협회가 확인해요</span></h3>'+
-      '<label class="f" for="acTel">교실 대표 번호<input type="tel" id="acTel" value="'+esc(fmtTel(f.tel))+'" inputmode="numeric" '+bad('tel')+'></label>'+fe('tel')+
+      telBox(f.tel)+fe('tel')+
       '<label class="f" for="acEm">학원 이메일<input type="text" id="acEm" value="'+esc(f.email)+'" autocomplete="off" '+bad('email')+'></label>'+fe('email')+
       '<div class="f"><span>교습 과목</span><div class="row">'+INSTS.map(function(i){return '<label class="agree" style="flex:0 0 auto"><input type="checkbox" data-subj="'+i+'" '+(f.subj.indexOf(i)>=0?'checked':'')+'> '+i+'</label>'}).join('')+'</div></div>'+
       addrBlock('ac','학원 주소',f,'')+(f.sido?'<p class="hint">지역: '+esc(f.sido+' '+f.sigungu)+'</p>':'')+
@@ -544,7 +547,7 @@ document.addEventListener('click',function(e){var b=e.target.closest('button');i
   if(b.id==='acEdit'){S.myac.ed=true;S.myac.form=acForm(S.myac.data.acad);S.err={};S.msg='';render();return}
   if(b.id==='acNo'){S.myac.ed=false;S.err={};S.msg='';S.postFor='';render();return}
   if(b.id==='acSave'){readAcForm();var f7=S.myac.form,e7={};
-    if(f7.tel&&!/^0\d{8,10}$/.test(f7.tel))e7.tel='교실 대표 번호를 확인해 주세요.';if(f7.email&&!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(f7.email))e7.email='이메일 주소를 확인해 주세요.';
+    if(f7.tel&&!/^(0\d{8,10}|1[5-9]\d{6})$/.test(f7.tel))e7.tel='교실 대표 번호를 확인해 주세요.';if(f7.email&&!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(f7.email))e7.email='이메일 주소를 확인해 주세요.';
     S.err=e7;if(Object.keys(e7).length){render();return}
     if(f7.biz&&f7.biz.replace(/\D/g,'').length!==10){S.err={biz:'사업자번호 10자리를 확인해 주세요.'};render();return}
     var send={'사업자번호':f7.biz,'교육청인가번호':f7.edu,'교실대표번호':f7.tel,'이메일':f7.email,'교습과목':f7.subj.join(', '),'우편번호':f7.zip,'주소':f7.addr,'상세주소':f7.addr2,'시도':f7.sido,'시군구':f7.sigungu,'개원일':f7.open};

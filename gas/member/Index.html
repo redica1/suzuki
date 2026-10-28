@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261028-182916 -->
+<!-- build: 20261028-183233 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -144,7 +144,7 @@ function callS(name){var a=[S.sess].concat([].slice.call(arguments,1));return ca
   if(!r.ok&&/^LOGIN/.test(r.msg||'')){S.sess='';try{sessionStorage.removeItem('mm-sess')}catch(e){}render();toast('로그인 시간이 지났어요. 다시 로그인해 주세요.')}
   if(!r.ok)r.msg=String(r.msg||'').replace(/^LOGIN /,'');return r})}
 function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
-function fmt(p){p=String(p||'').replace(/\D/g,'');if(!p)return '';if(p.indexOf('02')===0)return p.replace(/^(02)(\d{3,4})(\d{4})$/,'$1-$2-$3');return p.replace(/^(0\d{2})(\d{3,4})(\d{4})$/,'$1-$2-$3')}
+function fmt(p){p=String(p||'').replace(/\D/g,'');if(!p)return '';if(/^1[5-9]\d{6}$/.test(p))return p.slice(0,4)+'-'+p.slice(4);if(p.indexOf('02')===0)return p.replace(/^(02)(\d{3,4})(\d{4})$/,'$1-$2-$3');return p.replace(/^(0\d{2})(\d{3,4})(\d{4})$/,'$1-$2-$3')}
 function won(n){return (+n||0).toLocaleString('ko-KR')+'원'}
 function toast(m){var e=document.getElementById('toast');e.textContent=m;e.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(function(){e.hidden=true},2600)}
 function kindLabel(k){return {'정식 교사':'교사회원','중급 연수':'연수교사 · 중급','초급 연수':'연수교사 · 초급'}[k]||k}
@@ -271,7 +271,7 @@ function acadEditor(){var a=S.edit.id==='new'?{'구분':'학원','상태':'운�
   var heads=[['','선택 안 함']].concat((ts.length?ts:S.D.tch).map(function(t){return [t['교사ID'],t['이름']+(t['구분글자']?' ('+t['구분글자']+')':'')+' · '+tAcadTxt(t)]}));
   return '<div class="editor">'+edHead(a['학원ID']?esc(a['학원명'])+' <span class="cap num">'+a['학원ID']+'</span>':'학원 추가',a)+'<div class="fgrid">'+
     fld('e_학원명','학원명',a['학원명'],{req:1,hint:'「○○스즈키」 또는 「이름 클래스」'})+fld('e_구분','구분',a['구분'],{sel:['학원','클래스']})+fld('e_상태','상태',a['상태'],{sel:['운영','휴원','탈퇴']})+
-    fld('e_원장교사ID','원장',a['원장교사ID'],{sel:heads,hint:a['원장명']&&!a['원장교사ID']?'명단: '+esc(a['원장명']):''})+fld('e_교실대표번호','교실 대표번호',fmt(a['교실대표번호']),{type:'tel'})+fld('e_이메일','이메일',a['이메일'])+
+    fld('e_원장교사ID','원장',a['원장교사ID'],{sel:heads,hint:a['원장명']&&!a['원장교사ID']?'명단: '+esc(a['원장명']):''})+telBoxA(a['교실대표번호'])+fld('e_이메일','이메일',a['이메일'])+
     subjBox(a['교습과목'])+fld('e_개원일','개원일',a['개원일'],{type:'date'})+fld('e_계약체결일','협회 계약 체결일',a['계약체결일'],{type:'date',hint:'비우면 미체결'})+fld('e_사업자번호','사업자번호',a['사업자번호'],{num:1,hint:'000-00-00000'})+fld('e_교육청인가번호','교육청 인가번호',a['교육청인가번호'],{max:40})+
     addrBoxA(a)+fld('e_졸업연주지역','졸업연주 지역',a['졸업연주지역'],{sel:[['','선택']].concat(REGIONS),hint:regionOf(a['시도'])&&regionOf(a['시도'])!==a['졸업연주지역']?'시·도로는 「'+regionOf(a['시도'])+'」':''})+fld('e_확인','확인',a['확인'],{sel:CHECKS})+fld('e_확인메모','확인 메모',a['확인메모'])+fld('e_메모','메모',a['메모'],{wide:1,area:1})+'</div>'+
     (a['학원ID']?'<div class="row" style="justify-content:flex-end"><span class="cap">문 닫은 학원은 상태를 「탈퇴」로 · 잘못 넣은 학원만 삭제</span><button class="btn small" type="button" id="delAcad" style="color:var(--bad)">학원 삭제</button></div>':'')+
@@ -308,7 +308,7 @@ function tchEditor(){var t=S.edit.id==='new'?{'상태':'활동','회원구분':'
     '<div class="panel" style="padding:12px;border-style:dashed"><b>관리자 구분 <span class="cap">선생님 화면에는 보이지 않아요</span></b><div class="fgrid">'+
     fld('e_직급','직급',t['직급'],{sel:[['','없음'],'원장','강사']})+fld('e_캠프교수','캠프교수',t['캠프교수'],{sel:[['아니오','아니오'],['예','예 (캠프 때 교수)']]})+fld('e_회비구분','회비면제',t['회비구분'],{sel:[['납부','아니오 (납부 대상)'],['면제','예 (면제)']]})+fld('e_회비납부방법','회비 납부 방법',t['회비납부방법'],{sel:[['',''],'자동이체','직접입금','단체납부','면제']})+fld('e_강사료대상','강사료 대상',t['강사료대상'],{sel:[['','아니오'],['예','예 (주민번호 입력 열림)']]})+fld('e_내부외부','내부·외부',t['내부외부'],{sel:[['',''],'내부','외부']})+fld('e_계약체결','협회 계약 체결',t['계약체결'],{sel:[['','확인 전'],['예','예 (체결)'],['아니오','아니오']]})+'<label class="f" for="e_계약일"><span>계약일 <span class="cap">체결했으면</span></span><input type="date" id="e_계약일" value="'+esc(t['계약일'])+'"></label>'+'</div></div>'+
     '<div class="fgrid">'+fld('e_확인메모','확인 메모',t['확인메모'],{wide:1})+fld('e_메모','메모',t['메모'],{wide:1,area:1})+'</div>'+
-    (t['교사ID']?payBoxA(t['교사ID'])+duesBox('교사',t['교사ID'],t['회비구분']==='면제'?0:300000):'')+'<p class="err" id="edErr"></p></div>'}
+    (t['교사ID']?payBoxA(t['교사ID'])+duesBox('교사',t['교사ID'],t['회비구분']==='면제'?0:null,t['회원구분']):'')+'<p class="err" id="edErr"></p></div>'}
 
 /* ---------- 회원 사진 (10-28) ---------- */
 function photoBoxA(tid){var ph=S.photos&&S.photos[tid];if(ph===undefined){S.photos=S.photos||{};S.photos[tid]=null;callS('photoGet',tid).then(function(r){S.photos[tid]=r.ok?r.photo||'':'';if(S.edit&&S.edit.id===tid)render()})}
@@ -337,10 +337,30 @@ function payBoxA(id){var f=S.D.payF[id]||{},v=S.payOpen&&S.payOpen.id===id?S.pay
       :'<div class="row"><span class="cap">계좌</span> '+has(f.a)+' <span class="cap">집 주소</span> '+has(f.h)+' <span class="cap">우편물 주소</span> '+has(f.m)+' <span class="cap">주민번호</span> '+has(f.r)+'</div>')+'</div>'}
 
 /* ---------- 연회비 ---------- */
-function duesBox(kind,id,defDue){var H=(duesOf(kind,id)||[]).slice().sort(function(a,b){return String(b['년도']).localeCompare(String(a['년도']))});
-  var e=S.dEdit&&S.dEdit.ID===id?S.dEdit:(H.filter(function(h){return h['년도']==='2026'})[0]||{'년도':'2026','부과':defDue,'납부':'','납부일':'','방식':''});
-  var ys=[];for(var y=2027;y>=2018;y--)ys.push(String(y));
-  return '<div class="panel" style="padding:12px" id="duesWrap"><b>연회비</b><div class="fgrid">'+fld('d_y','년도',e['년도'],{sel:ys})+fld('d_due','부과 금액',e['부과'],{type:'number'})+fld('d_paid','납부 금액',e['납부'],{type:'number',hint:'안 냈으면 0'})+
+/* ---------- 전화번호: 지역번호 고르기 (10-28) ---------- */
+var AREAS=['02','031','032','033','041','042','043','044','051','052','053','054','055','061','062','063','064','010','070','050'],AREA_NONE='(없음 · 1588 등)';
+function telParts(v){v=String(v||'').replace(/\D/g,'');if(!v)return ['',''];if(/^1[5-9]/.test(v))return [AREA_NONE,v];if(v.indexOf('02')===0)return ['02',v.slice(2)];var a3=v.slice(0,3);if(AREAS.indexOf(a3)>=0)return [a3,v.slice(3)];if(v.indexOf('050')===0)return ['050',v.slice(3)];return ['',v]}
+function telBoxA(v){var p=telParts(v);return '<label class="f" for="telR"><span>교실 대표번호 <span class="cap">지역번호를 고르고 나머지 번호</span></span><div class="row" style="flex-wrap:nowrap"><select id="telA" style="width:auto;flex:none"><option value="">지역번호</option>'+AREAS.concat([AREA_NONE]).map(function(x){return '<option '+(x===p[0]?'selected':'')+'>'+x+'</option>'}).join('')+'</select><input type="tel" id="telR" value="'+esc(p[1])+'" inputmode="numeric" placeholder="1234-5678" style="flex:1"></div><input type="hidden" id="e_교실대표번호" value="'+esc(String(v||'').replace(/\D/g,''))+'"></label>'}
+function telSync(){var a=document.getElementById('telA').value,r=document.getElementById('telR').value.replace(/\D/g,''),h=document.getElementById('e_교실대표번호');h.value=a===AREA_NONE||!a?r:a+r}
+/* ---------- 기간별 회비 (10-28) ---------- */
+var RATE_KINDS=[['','전체'],['정식 교사','교사회원'],['초급 연수','연수교사 · 초급'],['중급 연수','연수교사 · 중급']];
+function rateRow(target,year,mk){var m=String(year)+'-01',R=(S.D.rates||[]).filter(function(r){return r['대상']===target&&r['시작']<=m&&(!r['종료']||r['종료']>=m)});
+  return R.filter(function(r){return r['회원종류']&&r['회원종류']===mk})[0]||R.filter(function(r){return !r['회원종류']})[0]||null}
+function rateFor(target,year,mk){var r=rateRow(target,year,mk);return r?+r['금액']:(target==='학생'?30000:300000)}
+function ratesBox(){var ed=S.rEd,R=S.D.rates||[],cy=new Date().getFullYear();
+  if(!ed)return '<div class="panel"><div class="sec-h"><h3>기간별 회비</h3><button class="btn small" type="button" id="rEdit">고치기</button></div>'+
+    '<p class="cap">교사 · 학생 연회비를 넣을 때, 그 해 1월에 맞는 기간의 금액이 「부과 금액」에 자동으로 들어가요. 회원 종류를 고른 줄이 「전체」보다 먼저예요. 기준이 없으면 교사 300,000원 · 학생 30,000원.</p>'+
+    (R.length?'<table class="wtab"><thead><tr><th>대상</th><th>회원 종류</th><th>기간</th><th class="r">금액</th><th>메모</th></tr></thead><tbody>'+R.map(function(r){var on=r['시작']<=cy+'-01'&&(!r['종료']||r['종료']>=cy+'-01');return '<tr'+(on?' style="font-weight:600"':'')+'><td>'+esc(r['대상'])+'</td><td>'+esc(kindLabel(r['회원종류'])||'전체')+'</td><td class="num">'+esc(r['시작'])+' ~ '+esc(r['종료']||'계속')+(on?' <span class="pill ok">올해</span>':'')+'</td><td class="r num">'+won(r['금액'])+'</td><td class="cap">'+esc(r['메모'])+'</td></tr>'}).join('')+'</tbody></table>':'<p class="cap">아직 기준이 없어요.</p>')+'</div>';
+  return '<div class="panel"><h3>기간별 회비 고치기</h3><p class="cap">시작 · 끝은 년 · 월, 끝을 비우면 계속이에요. 같은 대상 · 회원 종류끼리 기간이 겹치면 저장이 안 돼요.</p><table class="wtab"><thead><tr><th>대상</th><th>회원 종류</th><th>시작</th><th>끝</th><th>금액(원)</th><th>메모</th><th></th></tr></thead><tbody>'+
+    ed.map(function(r,i){return '<tr><td><select data-rf="'+i+'|target"><option '+(r.target==='교사'?'selected':'')+'>교사</option><option '+(r.target==='학생'?'selected':'')+'>학생</option></select></td><td><select data-rf="'+i+'|kind">'+RATE_KINDS.map(function(k){return '<option value="'+esc(k[0])+'" '+(k[0]===r.kind?'selected':'')+'>'+k[1]+'</option>'}).join('')+'</select></td>'+
+      '<td><input type="month" data-rf="'+i+'|start" value="'+esc(r.start)+'"></td><td><input type="month" data-rf="'+i+'|end" value="'+esc(r.end)+'"></td><td><input type="number" data-rf="'+i+'|amount" value="'+esc(r.amount)+'" style="width:120px"></td><td><input type="text" data-rf="'+i+'|memo" value="'+esc(r.memo)+'"></td><td><button class="btn small ghost" type="button" data-rdel="'+i+'">빼기</button></td></tr>'}).join('')+'</tbody></table>'+
+    '<div class="row" style="margin-top:6px"><button class="btn small" type="button" id="rAdd">+ 기간 줄</button><span style="flex:1"></span><button class="btn small" type="button" id="rNo">취소</button><button class="btn small primary" type="button" id="rSave">저장</button></div><p class="err" id="rErr"></p></div>'}
+function readREd(){if(!S.rEd)return;document.querySelectorAll('[data-rf]').forEach(function(el){var p=el.dataset.rf.split('|'),r=S.rEd[+p[0]];if(r)r[p[1]]=el.value.trim()})}
+function duesBox(kind,id,defDue,mk){var H=(duesOf(kind,id)||[]).slice().sort(function(a,b){return String(b['년도']).localeCompare(String(a['년도']))});var cy=String(new Date().getFullYear());
+  var dd=function(y){return defDue!=null?defDue:rateFor(kind,y,mk)};S.duesCtx={kind:kind,id:id,defDue:defDue,mk:mk,H:H};
+  var e=S.dEdit&&S.dEdit.ID===id?S.dEdit:(H.filter(function(h){return h['년도']===cy})[0]||{'년도':cy,'부과':dd(cy),'납부':'','납부일':'','방식':''});
+  var ys=[];for(var y=+cy+1;y>=2018;y--)ys.push(String(y));
+  return '<div class="panel" style="padding:12px" id="duesWrap"><b>연회비</b><div class="fgrid">'+fld('d_y','년도',e['년도'],{sel:ys})+fld('d_due','부과 금액',e['부과'],{type:'number',hint:defDue===0?'회비 면제':'기간별 회비 기준으로 채움'})+fld('d_paid','납부 금액',e['납부'],{type:'number',hint:'안 냈으면 0'})+
     fld('d_date','납부일',e['납부일'],{type:'date'})+fld('d_m','납부 방식',e['방식'],{sel:[['',''],'자동이체','직접입금','자동이체+직접입금','단체납부','기타']})+fld('d_memo','메모',e['메모'])+'</div>'+
     '<div class="row"><button class="btn small primary" type="button" data-dsave="'+kind+'|'+id+'">기록</button><span class="cap">같은 년도는 덮어써요</span></div>'+
     '<div class="tbl"><table><thead><tr><th>년도</th><th class="r">부과</th><th class="r">납부</th><th>납부일</th><th>방식</th><th>메모</th><th></th></tr></thead><tbody>'+
@@ -373,7 +393,7 @@ function stuEditor(){var s=S.edit.id==='new'?{'학원ID':S.f.ac||'','상태':'�
     fld('e_출생연도','출생연도',s['출생연도'],{num:1,max:4,hint:s['출생연도추정']?'나이로 계산한 값':''})+fld('e_전공','전공',s['전공'],{sel:[['','선택']].concat(INSTS)})+fld('e_시작월','시작월',s['시작월'],{hint:'예: 2025-03'})+
     fld('e_담당교사ID','담당교사',s['담당교사ID'],{sel:[['','미지정']].concat(ts)})+fld('e_상태','상태',s['상태'],{sel:['재원','퇴원']})+fld('e_확인','확인',s['확인'],{sel:CHECKS})+
     fld('e_확인메모','확인 메모',s['확인메모'],{wide:1})+fld('e_메모','메모',s['메모'],{wide:1,area:1})+'</div>'+
-    (s['학생ID']?duesBox('학생',s['학생ID'],30000):'')+'<p class="err" id="edErr"></p></div>'}
+    (s['학생ID']?duesBox('학생',s['학생ID'],null,''):'')+'<p class="err" id="edErr"></p></div>'}
 
 function accPill(id){var a=S.D.acc[id];return a==='사용'?'<span class="pill ok">가입</span>':a==='대기'?'<span class="pill due">확인 대기</span>':'<span class="pill mute">미가입</span>'}
 
@@ -433,7 +453,7 @@ function pdResult(r){return '<div class="note ok"><b>'+esc(r.year)+'년 교사 �
 function mailBox(){var n=S.D.mailLeft;return '<div class="panel"><h3>메일 보내기</h3>'+(n<0?'<p class="cap">남은 수를 읽지 못했어요. 매니페스트에 script.send_mail 권한이 있는지 확인해 주세요.</p>':
   '<div class="note '+(n<30?'warn':'ok')+'"><b>오늘 더 보낼 수 있는 메일: <span class="num">'+n+'</span>통</b>'+(n<30?' · 얼마 남지 않았어요. 인증 코드 · 승인 안내 메일이 안 갈 수 있어요.':'')+'</div>')+
   '<p class="cap">인증 코드 · 승인 · 반려 · 문의 답 메일을 이 앱을 배포한 구글 계정으로 보내요. 일반 Gmail 은 하루 받는 사람 100명쯤, Google Workspace 는 1,500명쯤까지예요. 한도는 하루가 지나면 다시 채워져요. 「새로 고침」을 누르면 숫자가 바뀌어요.</p></div>'}
-function vSet(){return '<div class="sec-h"><div><h2>설정</h2><p>관리자 아이디·비밀번호·테스트 표시는 시트 「설정」 탭에서 바꿔요.</p></div></div>'+mailBox()+
+function vSet(){return '<div class="sec-h"><div><h2>설정</h2><p>관리자 아이디·비밀번호·테스트 표시는 시트 「설정」 탭에서 바꿔요.</p></div></div>'+mailBox()+ratesBox()+
   '<div class="panel"><h3>원본 명단 불러오기</h3><p class="cap">「[2026]스즈키교사 연회비납부명단」의 학원정보DB · 교사정보DB · 학생정보DB를 가져와요. 주민등록번호 · 계좌 · 집 주소 칸은 읽지 않아요. 이름 끝 A·B, 괄호 표기는 「구분 글자」로, Vn·vc 같은 전공은 바이올린·첼로로 바꾸고, 바꾼 것은 「확인 메모」에 남겨요.</p>'+
   (S.D.empty?'<div><button class="btn primary" type="button" id="imp">원본에서 불러오기</button></div>':S.test?'<div class="note">테스트(STG)라서 지우고 다시 불러올 수 있어요. 지금 STG 에서 고친 내용은 모두 사라져요.</div><div><button class="btn" type="button" id="impRe">지우고 다시 불러오기</button></div>':'<p class="cap">이미 명단이 들어 있어요. 메인은 다시 불러오지 않아요 (고친 내용을 지키기 위해).</p>')+
   '</div><div class="panel"><h3>지난 해 교사 회비 불러오기</h3><p class="cap">그 해 「교사정보DB」에서 이름 · 휴대전화 · 납부 칸만 읽어 지금 교사 번호에 맞춰요(휴대전화 → 이름). 선생님 「내 정보 › 교사 회비」에 년도별로 보여요. 다시 돌리면 그 해 교사 회비 줄을 새로 써요.</p>'+
@@ -480,7 +500,7 @@ function render(){
 }
 function go(tab,fromBack){if(tab!==S.tab&&!fromBack)S.hist.push(S.tab);S.tab=tab;S.q='';S.f={};S.page=0;S.edit=null;S.sel={};S.issue='';S.dEdit=null;S.edAcad=null;if(tab==='log')loadLogs();if(tab==='req')loadReqs();if(tab==='ask')loadAsk();render();window.scrollTo(0,0)}
 function load(){return callS('boot').then(function(r){if(!r.ok){if(S.sess)toast(r.msg);return}
-  S.test=r.test;S.pdSrc0=r.pdSrc||'';S.D={acad:objs(r['학원']),tch:objs(r['교사']),stu:objs(r['학생']),duesRows:objs(r['연회비']),empty:r.empty,acc:r.acc||{},reqN:r.reqN||0,payF:r.pay||{},bN:r.bN||0,mailLeft:r.mailLeft==null?-1:r.mailLeft,works:objs(r['근무']||{h:[],rows:[]})};index();render()})}
+  S.test=r.test;S.pdSrc0=r.pdSrc||'';S.D={acad:objs(r['학원']),tch:objs(r['교사']),stu:objs(r['학생']),duesRows:objs(r['연회비']),empty:r.empty,acc:r.acc||{},reqN:r.reqN||0,payF:r.pay||{},bN:r.bN||0,rates:objs(r.rates||{h:[],rows:[]}),mailLeft:r.mailLeft==null?-1:r.mailLeft,works:objs(r['근무']||{h:[],rows:[]})};index();render()})}
 function loadLogs(){S.logs=null;callS('logs').then(function(r){if(r.ok){S.logs=r;if(S.tab==='log')render()}else toast(r.msg)})}
 function keepFocus(id){var n=document.getElementById(id);if(n){n.focus();var v=n.value;n.value='';n.value=v}}
 function kindOf(){return {acad:'학원',tch:'교사',stu:'학생'}[S.tab]}
@@ -533,6 +553,12 @@ document.addEventListener('click',function(e){
     callS('saveWorks',S.wEd.tid,rows).then(function(r){S.busy=false;if(!r.ok){we.textContent=r.msg;return}S.D.works=objs(r.works);
       var t=T[S.wEd.tid];if(t&&r.row){var h=Object.keys(t);h.forEach(function(c,i){t[c]=r.row[i]==null?'':r.row[i]})}S.wEd=null;index();render();toast('소속 학원를 저장했어요')});return}
   if(b.id==='acPost'){acPostOpen();return}
+  if(b.id==='rEdit'){S.rEd=(S.D.rates||[]).map(function(r){return {target:r['대상'],kind:r['회원종류'],start:r['시작'],end:r['종료'],amount:r['금액'],memo:r['메모']}});if(!S.rEd.length)S.rEd.push({target:'교사',kind:'',start:'',end:'',amount:'300000',memo:''});render();return}
+  if(b.id==='rAdd'){readREd();var last=S.rEd[S.rEd.length-1];S.rEd.push({target:last?last.target:'교사',kind:last?last.kind:'',start:'',end:'',amount:'',memo:''});render();return}
+  if(d.rdel){readREd();S.rEd.splice(+d.rdel,1);render();return}
+  if(b.id==='rNo'){S.rEd=null;render();return}
+  if(b.id==='rSave'){readREd();var er=document.getElementById('rErr');if(S.rEd.some(function(r){return !r.start||r.amount===''})){er.textContent='시작과 금액을 모두 넣어 주세요.';return}if(S.busy)return;S.busy=true;er.textContent='저장하는 중…';
+    callS('saveRates',S.rEd).then(function(r){S.busy=false;if(!r.ok){er.textContent=r.msg;return}S.D.rates=objs(r.rates);S.rEd=null;render();toast('기간별 회비를 저장했어요')});return}
   if(d.dview){b.disabled=true;callS('docGet',d.dview).then(function(r){b.disabled=false;if(!r.ok){toast(r.msg);return}b64Open(r.name,r.mime,r.b64)});return}
   if(d.ddel){var pp=d.ddel.split('|');if(!confirm('이 서류를 지울까요? 드라이브에서도 휴지통으로 가요.'))return;callS('docDel',pp[0]).then(function(r){if(!r.ok){toast(r.msg);return}S.docs[pp[1]]=r.docs;render();toast('지웠어요')});return}
   if(d.subjrm){var L=subjList(document.getElementById('e_교습과목').value).filter(function(x){return x!==d.subjrm});subjSet(L);return}
@@ -592,7 +618,8 @@ document.addEventListener('input',function(e){var el=e.target;
   if(el.id==='q'){S.q=el.value;S.page=0;clearTimeout(qTimer);qTimer=setTimeout(softList,120);return}
   if(el.id==='e_출생연도'||el.id==='e_우편번호'){el.value=el.value.replace(/\D/g,'')}});
 document.addEventListener('compositionend',function(e){if(e.target.id==='q'){S.q=e.target.value;S.page=0;clearTimeout(qTimer);qTimer=setTimeout(softList,120)}});
-document.addEventListener('change',function(e){var dsl=e.target.dataset&&e.target.dataset.daslot;if(dsl!=null&&dsl!==''){var i=+dsl,aid=e.target.dataset.aid,f=e.target.files&&e.target.files[0];if(!f)return;
+document.addEventListener('change',function(e){if(e.target.id==='d_y'&&S.duesCtx){var c=S.duesCtx,y=e.target.value,has=c.H.filter(function(h){return h['년도']===y})[0],du=document.getElementById('d_due');if(!has&&du)du.value=c.defDue!=null?c.defDue:rateFor(c.kind,y,c.mk);return}
+  if(e.target.id==='telA'||e.target.id==='telR'){telSync();return}var dsl=e.target.dataset&&e.target.dataset.daslot;if(dsl!=null&&dsl!==''){var i=+dsl,aid=e.target.dataset.aid,f=e.target.files&&e.target.files[0];if(!f)return;
     var mime=f.type==='image/jpg'?'image/jpeg':f.type;if(['application/pdf','image/jpeg','image/png'].indexOf(mime)<0){toast('PDF · JPG · PNG 파일만 올릴 수 있어요');return}if(f.size>10*1024*1024){toast('10MB 아래 파일로 올려 주세요');return}
     var kind=DOC_SLOTS_A[i][0]==='임대'?document.getElementById('dk_'+i).value:DOC_SLOTS_A[i][0];S.docBusyA=i;render();
     var fr=new FileReader();fr.onload=function(){var u=String(fr.result);callS('docUp',aid,kind,f.name,mime,u.slice(u.indexOf(',')+1)).then(function(r){S.docBusyA=null;if(!r.ok){toast(r.msg);render();return}S.docs[aid]=r.docs;render();toast(kind+'를 올렸어요')})};fr.readAsDataURL(f);return}

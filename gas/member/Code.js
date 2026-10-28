@@ -1,4 +1,4 @@
-/* build: 20261028-182916 */
+/* build: 20261028-183233 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -23,6 +23,7 @@ const HEAD = {
   '문의': ['문의ID', '작성일', '교사ID', '이름', '휴대전화', '이메일', '분류', '제목', '내용', '상태', '처리일', '처리자', '수정일'],   // 문의·요청 게시판 (10-28): 상태 = 접수 · 처리중 · 완료
   '댓글': ['댓글ID', '문의ID', '작성일', '쓴사람', '이름', '내용'],   // 쓴사람 = 관리자 · 작성자
   '사진': ['교사ID', '사진', '수정일'],
+  '회비기준': ['기준ID', '대상', '회원종류', '시작', '종료', '금액', '메모', '수정일', '수정자'],   // 기간별 회비 (10-28): 시작 · 종료 = YYYY-MM, 종료 비면 계속, 회원종류 비면 전체
   '학원서류': ['서류ID', '학원ID', '종류', '파일ID', '파일명', '형식', '크기', '올린날', '올린사람'],   // 학원 서류 (10-28): 파일은 관리자 전용 드라이브 폴더, 여기는 목록만   // 회원 사진 (10-28): 줄인 JPEG 를 data URL 로 (한 칸 5만 자 안)
   '근무': ['근무ID', '교사ID', '학원ID', '학원명', '시작', '종료', '주근무', '출처', '메모', '수정일', '수정자'],   // 소속 학원 이력 (10-28): 한 줄 = 한 소속 학원, 종료가 비면 지금 근무 중
   '계정': ['이메일', '교사ID', '비번해시', '솔트', '상태', '경로', '만든날', '처리일', '마지막로그인', '메모'],
@@ -61,7 +62,7 @@ function include(n) { return HtmlService.createHtmlOutputFromFile(n).getContent(
 
 function api(name, args) {
   const open = { login, hello, tHello, tLookup, tStart, tResend, tVerify, tCreate, tLogin, tForgot, tReset, tMe, tSavePay, tSavePart, tSaveInfo, tSavePhoto, tAcad, tSaveAcad, tDocUp, tDocGet, tSaveStu, tSaveRrn, tAddWork, tEndWork, tMainWork, tLogout, bPost, bMine, bReply };
-  const fns = { boot, saveRow, setCheck, logs, importRoster, saveDues, delDues, reqs, reqDo, delAcad, payView, bulkSet, saveWorks, importPastDues, bList, bSet, bComment, photoGet, photoDel, fillRegions, docList, docUp, docGet, docDel };
+  const fns = { boot, saveRow, setCheck, logs, importRoster, saveDues, delDues, reqs, reqDo, delAcad, payView, bulkSet, saveWorks, importPastDues, bList, bSet, bComment, photoGet, photoDel, fillRegions, saveRates, docList, docUp, docGet, docDel };
   try {
     if (open[name]) return Object.assign({ ok: true }, open[name].apply(null, args || []));
     if (!fns[name]) throw new UserError('알 수 없는 요청이에요.');
@@ -108,6 +109,7 @@ function boot(who) {
   const acc = {}; tbl_('계정').v.forEach(r => { if (r[1]) acc[r[1]] = r[4]; }); out.acc = acc;
   out.reqN = tbl_('요청').v.filter(r => r[7] === '대기').length;
   out.pdSrc = String(settings_()['지난 회비 원본'] || '');
+  { const R = tbl_('회비기준'); out.rates = { h: R.h, rows: R.v }; }
   out.bN = tbl_('문의').v.filter(r => r[9] === '접수').length;
   try { out.mailLeft = MailApp.getRemainingDailyQuota(); } catch (e) { out.mailLeft = -1; }   /* 오늘 보낼 수 있는 메일 남은 수 (10-28) */
   { const W = tbl_('근무'); out['근무'] = { h: W.h, rows: W.v }; }
@@ -219,7 +221,7 @@ function clean_(table, o) {
   const r = {};
   EDIT[table].forEach(c => { if (c in o) r[c] = String(o[c] == null ? '' : o[c]).trim().slice(0, 300); });
   if ('휴대전화' in r) r['휴대전화'] = digits_(r['휴대전화']);
-  if ('교실대표번호' in r) r['교실대표번호'] = digits_(r['교실대표번호']);
+  if ('교실대표번호' in r) { r['교실대표번호'] = digits_(r['교실대표번호']); if (r['교실대표번호'] && !TEL_RE.test(r['교실대표번호'])) fail('교실 대표 번호를 확인해 주세요.'); }
   if (table === '학원' && '학원명' in r && !r['학원명']) fail('학원명을 넣어 주세요.');
   if (table === '교사' && '이름' in r && !r['이름']) fail('이름을 넣어 주세요.');
   if (table === '학생') {
@@ -727,6 +729,29 @@ function tSavePay(sess, d) {
   } finally { lock.releaseLock(); }
   return tMe(sess);
 }
+/* ---------- 기간별 회비 (10-28) ---------- */
+const RATE_KINDS = ['', '정식 교사', '초급 연수', '중급 연수'];
+/** 관리자: 회비 기준 표 전체를 바꿈. 같은 대상 · 회원 종류끼리 기간이 겹치면 막음 */
+function saveRates(who, rows) {
+  const ym = v => { v = String(v || '').trim(); if (v && !/^\d{4}-(0[1-9]|1[0-2])$/.test(v)) fail('기간은 2025-01 처럼 넣어 주세요.'); return v; };
+  const clean = (rows || []).slice(0, 60).map(r => {
+    const t = r.target === '학생' ? '학생' : '교사', k = RATE_KINDS.indexOf(r.kind) >= 0 ? r.kind : '';
+    const st = ym(r.start), en = ym(r.end), amt = +String(r.amount || '').replace(/\D/g, '');
+    if (!st) fail('시작 년 · 월을 넣어 주세요.'); if (en && en < st) fail(st + ' 줄의 끝이 시작보다 빨라요.'); if (!(amt >= 0 && amt <= 10000000)) fail('금액을 확인해 주세요.');
+    return { t, k: t === '학생' ? '' : k, st, en, amt, memo: String(r.memo || '').trim().slice(0, 80) };
+  });
+  clean.forEach((a, i) => clean.forEach((b, j) => { if (j <= i || a.t !== b.t || a.k !== b.k) return;
+    if (a.st <= (b.en || '9999-12') && b.st <= (a.en || '9999-12')) fail((a.k || a.t + ' 전체') + ' 기간이 겹쳐요: ' + a.st + '~' + (a.en || '') + ' · ' + b.st + '~' + (b.en || '')); }));
+  const lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    const R = tbl_('회비기준'), sh = R.sh; if (sh.getLastRow() > 1) sh.getRange(2, 1, sh.getLastRow() - 1, R.h.length).clearContent();
+    const out = clean.sort((a, b) => a.t.localeCompare(b.t) || a.k.localeCompare(b.k) || a.st.localeCompare(b.st)).map((c, i) => { const o = { '기준ID': 'R' + String(i + 1).padStart(3, '0'), '대상': c.t, '회원종류': c.k, '시작': c.st, '종료': c.en, '금액': c.amt, '메모': c.memo, '수정일': now_(), '수정자': who.name }; return R.h.map(k => o[k] == null ? '' : String(o[k])); });
+    if (out.length) sh.getRange(2, 1, out.length, R.h.length).setNumberFormat('@').setValues(out);
+    log_(who.name, '회비기준', '-', '기간별 회비 저장', clean.map(c => c.t + (c.k ? '·' + c.k : '') + ' ' + c.st + '~' + c.en + ' ' + c.amt).join(' | ').slice(0, 900));
+  } finally { lock.releaseLock(); }
+  const R2 = tbl_('회비기준'); return { rates: { h: R2.h, rows: R2.v } };
+}
+
 /* ---------- 졸업연주 지역 (10-28) ---------- */
 const REGIONS = ['서울·경기·강원·제주', '대전·광주·충청·전라', '대구·부산·울산·경상'];
 function regionOf_(sido) { const x = String(sido || '');
@@ -742,6 +767,7 @@ function fillRegions(who) {
 }
 
 /* ---------- 원장: 우리 학원 (10-28) — 학원 탭 「원장교사ID」로 관리자가 지정한 원장만 ---------- */
+const TEL_RE = /^(0\d{8,10}|1[5-9]\d{6})$/;   /* 지역번호 · 010 · 070 · 1588 같은 대표번호 */
 const ACAD_OWN = ['교실대표번호', '이메일', '교습과목', '시도', '시군구', '우편번호', '주소', '상세주소', '개원일', '사업자번호', '교육청인가번호'];
 function bizNo_(v) { const x = digits_(v); if (!x) return ''; if (x.length !== 10) fail('사업자번호 10자리를 확인해 주세요.'); return x.slice(0, 3) + '-' + x.slice(3, 5) + '-' + x.slice(5); }
 function headOf_(u, aid) {
@@ -768,7 +794,7 @@ function tSaveAcad(sess, aid, d) {
   try {
     const { A, i } = headOf_(u, aid), g = k => String(A.get(i, k) || '');
     const o = {}; ACAD_OWN.forEach(k => { if (k in d) o[k] = String(d[k] == null ? '' : d[k]).trim().slice(0, k === '주소' ? 120 : 80); });
-    if ('교실대표번호' in o) { o['교실대표번호'] = digits_(o['교실대표번호']); if (o['교실대표번호'] && !/^0\d{8,10}$/.test(o['교실대표번호'])) fail('교실 대표 번호를 확인해 주세요.'); }
+    if ('교실대표번호' in o) { o['교실대표번호'] = digits_(o['교실대표번호']); if (o['교실대표번호'] && !TEL_RE.test(o['교실대표번호'])) fail('교실 대표 번호를 확인해 주세요.'); }
     if (o['이메일'] && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(o['이메일'])) fail('이메일 주소를 확인해 주세요.');
     if ('우편번호' in o) o['우편번호'] = digits_(o['우편번호']).slice(0, 5);
     if (o['개원일'] && !/^\d{4}-\d{2}(-\d{2})?$/.test(o['개원일'])) fail('개원일은 2015-03 처럼 넣어 주세요.');

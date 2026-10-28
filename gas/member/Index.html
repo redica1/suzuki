@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261028-231517 -->
+<!-- build: 20261028-231935 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -428,7 +428,7 @@ function vProg(){var R=S.prog;if(!R)return '<div class="panel"><span><span class
   var n0=function(v,bad){return v?'<b'+(bad?' style="color:#c0392b"':'')+'>'+v+'</b>':'<span class="cap">0</span>'};
   return '<div class="sec-h"><div><h2>원장 입력 현황</h2><p>11월 한 달 동안 원장님이 채울 것을 학원마다 보여 줘요. 빈칸은 <b>재원 학생</b> 기준이에요. 재원 시작은 년·월·일까지 있어야 채운 것으로 봐요.</p></div>'+
     '<div class="row"><button class="btn small ghost" type="button" id="progRe">새로 고침</button><button class="btn small" type="button" id="rosterGo">행사용 명단 지금 만들기</button></div></div>'+
-    (S.roster?'<div class="note info">행사용 명단을 만들었어요 · '+esc(S.roster.at)+' · 학원 '+S.roster.acad+' · 교사 '+S.roster.tch+' · 학생 '+S.roster.stu+' · <a href="'+esc(S.roster.url)+'" target="_blank" rel="noopener">파일 열기</a> (매시간 자동으로도 새로 써요)</div>':'')+
+    (S.roster?'<div class="note info">행사용 명단을 만들었어요 · '+esc(S.roster.at)+' · 학원 '+S.roster.acad+' · 교사 '+S.roster.tch+' · 학생 '+S.roster.stu+' · <a href="'+esc(S.roster.url)+'" target="_blank" rel="noopener">파일 열기</a> (바뀐 게 있으면 5분 안에 자동으로도 새로 써요)</div>':'')+
     '<div class="tiles"><div class="tile"><span class="k">원장 가입</span><span class="v">'+R.list.filter(function(a){return a.headAcc}).length+'</span><span class="s">학원 '+R.list.length+'곳 중</span></div>'+
     '<div class="tile warn"><span class="k">성별 빈칸</span><span class="v">'+tot('noSex')+'</span><span class="s">재원 '+tot('stu')+'명 중</span></div>'+
     '<div class="tile warn"><span class="k">담당 빈칸</span><span class="v">'+tot('noTutor')+'</span></div>'+

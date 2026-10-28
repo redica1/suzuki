@@ -1,4 +1,4 @@
-/* build: 20261028-231517 */
+/* build: 20261028-231935 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -88,7 +88,7 @@ const SETTINGS = [
   ['인증 코드 화면 표시', '아니오', 'STG 시험용. 「예」면 메일과 함께 화면에도 인증 코드를 보여 줌 (메인에서는 꼭 아니오)'],
   ['정산 정보 시트', '', 'setup 이 만드는 관리자 전용 파일 ID (계좌·우편물 주소). 공유하지 마세요'],
   ['지난 회비 원본', '', '설정 › 지난 해 교사 회비 불러오기에 마지막으로 넣은 시트 ID'],
-  ['행사 명단 시트', '', '캠프 · 졸업연주가 읽는 「행사용 명단」 파일 ID. 매시간 자동으로 새로 씀 (주민번호 · 계좌 · 주소 없음). 공유하지 마세요'],
+  ['행사 명단 시트', '', '캠프 · 졸업연주가 읽는 「행사용 명단」 파일 ID. 바뀌면 5분 안에(그리고 매시간) 자동으로 새로 씀 (주민번호 · 계좌 · 주소 없음). 공유하지 마세요'],
   ['서류 폴더', '', '학원 서류(사업자등록증 · 인가증 · 임대계약서)를 넣는 관리자 전용 드라이브 폴더 ID. 처음 올릴 때 자동으로 만듦'],
 ];
 
@@ -300,7 +300,7 @@ function setup() {
     f.getSheets()[0].setName('정산'); ensure_(f, '정산');
     setSetting_('정산 정보 시트', f.getId());
   }
-  try { ScriptApp.getProjectTriggers().filter(t => t.getHandlerFunction() === 'rosterHourly').forEach(t => ScriptApp.deleteTrigger(t)); ScriptApp.newTrigger('rosterHourly').timeBased().everyHours(1).create(); } catch (e) { Logger.log('행사용 명단 자동 갱신을 켜지 못했어요(매니페스트 script.scriptapp 권한 확인): ' + e.message); }
+  try { ScriptApp.getProjectTriggers().filter(t => ['rosterHourly', 'rosterTick'].indexOf(t.getHandlerFunction()) >= 0).forEach(t => ScriptApp.deleteTrigger(t)); ScriptApp.newTrigger('rosterHourly').timeBased().everyHours(1).create(); ScriptApp.newTrigger('rosterTick').timeBased().everyMinutes(5).create(); } catch (e) { Logger.log('행사용 명단 자동 갱신을 켜지 못했어요(매니페스트 script.scriptapp 권한 확인): ' + e.message); }
   try { rosterBuild_(); } catch (e) { Logger.log('행사용 명단: ' + e.message); }
   const d = ss.getSheetByName('시트1') || ss.getSheetByName('Sheet1'); if (d && d.getLastRow() === 0 && ss.getSheets().length > 1) ss.deleteSheet(d);
   try { SpreadsheetApp.getUi().alert('탭을 준비했어요. 「설정」 탭 관리자 비밀번호(노란 칸)를 적고 관리자 화면에서 원본 명단을 불러와 주세요.'); } catch (e) {}
@@ -314,6 +314,12 @@ const ROSTER_HEAD = {
   '갱신': ['만든 때', '학원', '교사', '학생', '메모']
 };
 function rosterHourly() { try { rosterBuild_(); } catch (e) { Logger.log(e.message); } }
+/** 5분마다: 바뀐 게 있으면 행사용 명단을 새로 씀 (캠프 접수 중 원장이 고친 내용이 5분 안에 반영) */
+function rosterTick() {
+  const P = PropertiesService.getScriptProperties(), d = P.getProperty('rosterDirty'); if (!d) return;
+  const lock = LockService.getScriptLock(); if (!lock.tryLock(1000)) return;
+  try { P.deleteProperty('rosterDirty'); rosterBuild_(); } catch (e) { P.setProperty('rosterDirty', d); Logger.log(e.message); } finally { lock.releaseLock(); }
+}
 function rosterNow(who) { const r = rosterBuild_(); log_(who.name, '행사명단', '', '지금 만들기', JSON.stringify(r)); return r; }
 function rosterBuild_() {
   const P = settings_(); let f;
@@ -527,6 +533,9 @@ function settings_() {
   const sh = SpreadsheetApp.getActive().getSheetByName('설정'); if (!sh) return {};
   const o = {}; sh.getDataRange().getDisplayValues().slice(1).forEach(r => { if (r[0]) o[String(r[0]).trim()] = String(r[1]).trim(); }); return o;
 }
+/** 행사용 명단에 들어가는 표가 바뀌면 표시만 해 둠 → 5분마다 rosterTick 이 바뀐 게 있을 때만 새로 씀 */
+let DIRTY_SET_ = false;
+function dirty_(name) { if (DIRTY_SET_ || ['학원', '교사', '학생', '연회비', '담당', '재원이력', '근무'].indexOf(name) < 0) return; DIRTY_SET_ = true; try { PropertiesService.getScriptProperties().setProperty('rosterDirty', String(Date.now())); } catch (e) { } }
 function tbl_(name) {
   const ss = SpreadsheetApp.getActive(); const sh = ss.getSheetByName(name) || ensure_(ss, name);
   const all = sh.getDataRange().getDisplayValues(); let h = (all.shift() || HEAD[name]).map(String);
@@ -538,8 +547,8 @@ function tbl_(name) {
     find(k, id) { const c = h.indexOf(k); return v.findIndex(r => String(r[c]) === String(id)); },
     get(i, k) { return v[i][h.indexOf(k)]; },
     rowObj(i) { return v[i]; },
-    set(i, obj) { const row = v[i].slice(); Object.keys(obj).forEach(k => { const c = h.indexOf(k); if (c >= 0) row[c] = obj[k] == null ? '' : String(obj[k]); }); sh.getRange(i + 2, 1, 1, h.length).setValues([row.slice(0, h.length)]); v[i] = row; },
-    append(obj) { const row = h.map(k => obj[k] == null ? '' : String(obj[k])); sh.getRange(v.length + 2, 1, 1, h.length).setNumberFormat('@').setValues([row]); v.push(row); },
+    set(i, obj) { dirty_(name); const row = v[i].slice(); Object.keys(obj).forEach(k => { const c = h.indexOf(k); if (c >= 0) row[c] = obj[k] == null ? '' : String(obj[k]); }); sh.getRange(i + 2, 1, 1, h.length).setValues([row.slice(0, h.length)]); v[i] = row; },
+    append(obj) { dirty_(name); const row = h.map(k => obj[k] == null ? '' : String(obj[k])); sh.getRange(v.length + 2, 1, 1, h.length).setNumberFormat('@').setValues([row]); v.push(row); },
   };
   return T;
 }

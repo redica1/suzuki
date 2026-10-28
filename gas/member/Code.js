@@ -1,4 +1,4 @@
-/* build: 20261028-181907 */
+/* build: 20261028-182916 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -13,7 +13,7 @@ const SRC_ID = '1CsIOTl_N7HlETEUJFLqklgYJOC1fYfTVdfuvUUkfDPs';   // [2026]스즈
 const CUR_Y = '2026';
 
 const HEAD = {
-  '학원': ['학원ID', '학원명', '구분', '상태', '원장교사ID', '원장명', '교실대표번호', '이메일', '교습과목', '시도', '시군구', '우편번호', '주소', '상세주소', '개원일', '계약체결일', '확인', '확인메모', '메모', '원본', '수정일', '수정자', '졸업연주지역'],
+  '학원': ['학원ID', '학원명', '구분', '상태', '원장교사ID', '원장명', '교실대표번호', '이메일', '교습과목', '시도', '시군구', '우편번호', '주소', '상세주소', '개원일', '계약체결일', '확인', '확인메모', '메모', '원본', '수정일', '수정자', '졸업연주지역', '사업자번호', '교육청인가번호'],
   '교사': ['교사ID', '이름', '구분글자', '원래이름', '휴대전화', '이메일', '학원1', '학원2', '학원3', '직급', '전공', '회원구분', '명단자격', '명단취득', '회비구분', '캠프교수', '내부외부', '상태', '확인', '확인메모', '메모', '원본', '수정일', '수정자', '영문이름', '본인자격', '회비납부방법', '강사료대상', '계약체결', '계약일'],
   '학생': ['학생ID', '학원ID', '이름', '구분글자', '원래이름', '출생연도', '출생연도추정', '전공', '시작월', '상태', '담당교사ID', '확인', '확인메모', '메모', '원본', '수정일', '수정자'],
   '연회비': ['대상', 'ID', '년도', '부과', '납부', '납부일', '방식', '메모', '수정일', '수정자'],
@@ -22,7 +22,8 @@ const HEAD = {
   '참가이력': ['이력ID', '대상', 'ID', '행사', '년도', '기간', '역할', '상태', '메모', '수정일', '수정자'],   // 행사 참여 기록 (10-28): 캠프·졸업연주 등이 끝나면 여기에 모음
   '문의': ['문의ID', '작성일', '교사ID', '이름', '휴대전화', '이메일', '분류', '제목', '내용', '상태', '처리일', '처리자', '수정일'],   // 문의·요청 게시판 (10-28): 상태 = 접수 · 처리중 · 완료
   '댓글': ['댓글ID', '문의ID', '작성일', '쓴사람', '이름', '내용'],   // 쓴사람 = 관리자 · 작성자
-  '사진': ['교사ID', '사진', '수정일'],   // 회원 사진 (10-28): 줄인 JPEG 를 data URL 로 (한 칸 5만 자 안)
+  '사진': ['교사ID', '사진', '수정일'],
+  '학원서류': ['서류ID', '학원ID', '종류', '파일ID', '파일명', '형식', '크기', '올린날', '올린사람'],   // 학원 서류 (10-28): 파일은 관리자 전용 드라이브 폴더, 여기는 목록만   // 회원 사진 (10-28): 줄인 JPEG 를 data URL 로 (한 칸 5만 자 안)
   '근무': ['근무ID', '교사ID', '학원ID', '학원명', '시작', '종료', '주근무', '출처', '메모', '수정일', '수정자'],   // 소속 학원 이력 (10-28): 한 줄 = 한 소속 학원, 종료가 비면 지금 근무 중
   '계정': ['이메일', '교사ID', '비번해시', '솔트', '상태', '경로', '만든날', '처리일', '마지막로그인', '메모'],
   '요청': ['요청ID', '종류', '교사ID', '이름', '휴대전화', '이메일', '내용', '상태', '신청일', '처리일', '처리자', '메모'],
@@ -31,7 +32,7 @@ const HEAD = {
 const KEY = { '학원': '학원ID', '교사': '교사ID', '학생': '학생ID' };
 /* 화면에서 고칠 수 있는 칸 (나머지는 서버가 정함) */
 const EDIT = {
-  '학원': ['학원명', '구분', '상태', '원장교사ID', '교실대표번호', '이메일', '교습과목', '시도', '시군구', '우편번호', '주소', '상세주소', '개원일', '계약체결일', '졸업연주지역', '확인', '확인메모', '메모'],
+  '학원': ['학원명', '구분', '상태', '원장교사ID', '교실대표번호', '이메일', '교습과목', '시도', '시군구', '우편번호', '주소', '상세주소', '개원일', '계약체결일', '졸업연주지역', '사업자번호', '교육청인가번호', '확인', '확인메모', '메모'],
   '교사': ['이름', '구분글자', '휴대전화', '이메일', '학원1', '학원2', '학원3', '직급', '전공', '회원구분', '본인자격', '회비구분', '회비납부방법', '강사료대상', '캠프교수', '내부외부', '계약체결', '계약일', '상태', '확인', '확인메모', '메모'],
   '학생': ['학원ID', '이름', '구분글자', '출생연도', '전공', '시작월', '상태', '담당교사ID', '확인', '확인메모', '메모'],
 };
@@ -45,6 +46,7 @@ const SETTINGS = [
   ['인증 코드 화면 표시', '아니오', 'STG 시험용. 「예」면 메일과 함께 화면에도 인증 코드를 보여 줌 (메인에서는 꼭 아니오)'],
   ['정산 정보 시트', '', 'setup 이 만드는 관리자 전용 파일 ID (계좌·우편물 주소). 공유하지 마세요'],
   ['지난 회비 원본', '', '설정 › 지난 해 교사 회비 불러오기에 마지막으로 넣은 시트 ID'],
+  ['서류 폴더', '', '학원 서류(사업자등록증 · 인가증 · 임대계약서)를 넣는 관리자 전용 드라이브 폴더 ID. 처음 올릴 때 자동으로 만듦'],
 ];
 
 /* ====================== 웹 앱 ====================== */
@@ -58,8 +60,8 @@ function doGet(e) {
 function include(n) { return HtmlService.createHtmlOutputFromFile(n).getContent(); }
 
 function api(name, args) {
-  const open = { login, hello, tHello, tLookup, tStart, tResend, tVerify, tCreate, tLogin, tForgot, tReset, tMe, tSavePay, tSavePart, tSaveInfo, tSavePhoto, tAcad, tSaveAcad, tSaveRrn, tAddWork, tEndWork, tMainWork, tLogout, bPost, bMine, bReply };
-  const fns = { boot, saveRow, setCheck, logs, importRoster, saveDues, delDues, reqs, reqDo, delAcad, payView, bulkSet, saveWorks, importPastDues, bList, bSet, bComment, photoGet, photoDel, fillRegions };
+  const open = { login, hello, tHello, tLookup, tStart, tResend, tVerify, tCreate, tLogin, tForgot, tReset, tMe, tSavePay, tSavePart, tSaveInfo, tSavePhoto, tAcad, tSaveAcad, tDocUp, tDocGet, tSaveStu, tSaveRrn, tAddWork, tEndWork, tMainWork, tLogout, bPost, bMine, bReply };
+  const fns = { boot, saveRow, setCheck, logs, importRoster, saveDues, delDues, reqs, reqDo, delAcad, payView, bulkSet, saveWorks, importPastDues, bList, bSet, bComment, photoGet, photoDel, fillRegions, docList, docUp, docGet, docDel };
   try {
     if (open[name]) return Object.assign({ ok: true }, open[name].apply(null, args || []));
     if (!fns[name]) throw new UserError('알 수 없는 요청이에요.');
@@ -227,6 +229,8 @@ function clean_(table, o) {
   if (r['확인'] && ['확인 전', '확인', '확인 필요'].indexOf(r['확인']) < 0) r['확인'] = '확인 전';
   if ('계약체결' in r && ['', '예', '아니오'].indexOf(r['계약체결']) < 0) r['계약체결'] = '';
   if ('졸업연주지역' in r && r['졸업연주지역'] && REGIONS.indexOf(r['졸업연주지역']) < 0) fail('졸업연주 지역을 골라 주세요.');
+  if ('사업자번호' in r) r['사업자번호'] = bizNo_(r['사업자번호']);
+  if ('교육청인가번호' in r) r['교육청인가번호'] = r['교육청인가번호'].slice(0, 40);
   if ('교습과목' in r) r['교습과목'] = r['교습과목'].split(/[,，、]/).map(x => x.trim()).filter((x, k, a) => x && a.indexOf(x) === k).join(', ');
   if (r['계약일'] && !/^\d{4}-\d{2}-\d{2}$/.test(r['계약일'])) fail('계약일은 2026-03-01 처럼 넣어 주세요.');
   if (r['계약체결'] === '아니오') r['계약일'] = '';
@@ -738,7 +742,8 @@ function fillRegions(who) {
 }
 
 /* ---------- 원장: 우리 학원 (10-28) — 학원 탭 「원장교사ID」로 관리자가 지정한 원장만 ---------- */
-const ACAD_OWN = ['교실대표번호', '이메일', '교습과목', '시도', '시군구', '우편번호', '주소', '상세주소', '개원일'];
+const ACAD_OWN = ['교실대표번호', '이메일', '교습과목', '시도', '시군구', '우편번호', '주소', '상세주소', '개원일', '사업자번호', '교육청인가번호'];
+function bizNo_(v) { const x = digits_(v); if (!x) return ''; if (x.length !== 10) fail('사업자번호 10자리를 확인해 주세요.'); return x.slice(0, 3) + '-' + x.slice(3, 5) + '-' + x.slice(5); }
 function headOf_(u, aid) {
   const A = tbl_('학원'), i = A.find('학원ID', aid);
   if (i < 0 || A.get(i, '원장교사ID') !== u.tid || A.get(i, '상태') === '탈퇴') fail('원장으로 지정된 학원만 볼 수 있어요. 협회에 문의해 주세요.');
@@ -753,9 +758,9 @@ function tAcad(sess, aid) {
   const seen = {}; ws.forEach(w => seen[w['교사ID']] = 1);
   T.v.forEach(r => { if (!seen[r[tc['교사ID']]] && [r[tc['학원1']], r[tc['학원2']], r[tc['학원3']]].indexOf(aid) >= 0) ws.push({ '교사ID': r[tc['교사ID']], '시작': '', '종료': '', '주근무': r[tc['학원1']] === aid ? '예' : '' }); });
   const teachers = ws.map(w => { const r = byId[w['교사ID']]; if (!r || r[tc['상태']] === '탈퇴') return null;
-    return { name: r[tc['이름']] + (r[tc['구분글자']] ? ' ' + r[tc['구분글자']] : ''), role: r[tc['직급']] || '', inst: r[tc['전공']] || '', kind: r[tc['회원구분']] || '', start: w['시작'] || '', end: w['종료'] || '', main: w['주근무'] === '예' }; })
+    return { id: r[tc['교사ID']], name: r[tc['이름']] + (r[tc['구분글자']] ? ' ' + r[tc['구분글자']] : ''), role: r[tc['직급']] || '', inst: r[tc['전공']] || '', kind: r[tc['회원구분']] || '', start: w['시작'] || '', end: w['종료'] || '', main: w['주근무'] === '예' }; })
     .filter(Boolean).sort((x, y) => (x.end ? 1 : 0) - (y.end ? 1 : 0) || String(y.start).localeCompare(String(x.start)));
-  return { acad: info, teachers };
+  return { acad: info, teachers, docs: docList_(aid), students: stuOf_(aid) };
 }
 function tSaveAcad(sess, aid, d) {
   const u = tsess_(sess); d = d || {};
@@ -767,6 +772,7 @@ function tSaveAcad(sess, aid, d) {
     if (o['이메일'] && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(o['이메일'])) fail('이메일 주소를 확인해 주세요.');
     if ('우편번호' in o) o['우편번호'] = digits_(o['우편번호']).slice(0, 5);
     if (o['개원일'] && !/^\d{4}-\d{2}(-\d{2})?$/.test(o['개원일'])) fail('개원일은 2015-03 처럼 넣어 주세요.');
+    if ('사업자번호' in o) o['사업자번호'] = bizNo_(o['사업자번호']);
     if ('교습과목' in o) o['교습과목'] = o['교습과목'].split(/[,，、]/).map(x => x.trim()).filter(x => INSTS_.indexOf(x) >= 0).join(', ');
     const diff = []; Object.keys(o).forEach(k => { if (o[k] !== g(k)) diff.push(k + ' ' + (g(k) || '없음') + ' → ' + (o[k] || '없음')); });
     if (diff.length && !g('졸업연주지역') && regionOf_(o['시도'])) o['졸업연주지역'] = regionOf_(o['시도']);   /* 졸업연주 지역이 비어 있으면 시·도로 */
@@ -774,6 +780,74 @@ function tSaveAcad(sess, aid, d) {
       const T = tbl_('교사'), ti = T.find('교사ID', u.tid), who = ti >= 0 ? T.get(ti, '이름') : u.email;
       A.set(i, Object.assign(o, { '확인': '확인 필요', '확인메모': [g('확인메모'), '원장이 바꿈(' + Utilities.formatDate(new Date(), 'Asia/Seoul', 'MM-dd') + '): ' + diff.join(' · ')].filter(Boolean).join(' · ').slice(0, 500), '수정일': now_(), '수정자': who + ' (원장)' }));
       log_(u.email, '학원', aid, '원장이 학원 정보 수정', diff.join(' · ').slice(0, 900));
+    }
+  } finally { lock.releaseLock(); }
+  return tAcad(sess, aid);
+}
+
+/* ---------- 학원 서류 (10-28) — 관리자 전용 드라이브 폴더에 저장 ---------- */
+const DOC_KINDS = ['사업자등록증', '교육청인가증', '임대계약서', '등기부등본'], DOC_MIME = { 'application/pdf': '.pdf', 'image/jpeg': '.jpg', 'image/png': '.png' };
+function docFolder_() {
+  const s = settings_(); let id = String(s['서류 폴더'] || '');
+  if (id) { try { return DriveApp.getFolderById(id); } catch (e) { id = ''; } }
+  const f = DriveApp.createFolder((s['테스트 표시'] === '예' ? '[STG] ' : '') + '스즈키 회원관리 – 학원 서류 (관리자 전용)');
+  setSetting_('서류 폴더', f.getId()); return f;
+}
+function docList_(aid) { const D = tbl_('학원서류'); return D.v.filter(r => r[1] === aid).map(r => ({ id: r[0], kind: r[2], name: r[4], mime: r[5], size: +r[6] || 0, at: r[7], by: r[8] })); }
+function docPut_(aid, kind, name, mime, b64, by) {
+  if (DOC_KINDS.indexOf(kind) < 0) fail('서류 종류를 골라 주세요.');
+  if (!DOC_MIME[mime]) fail('PDF · JPG · PNG 파일만 올릴 수 있어요.');
+  b64 = String(b64 || ''); if (!b64) fail('파일을 골라 주세요.'); if (b64.length > 14000000) fail('파일이 너무 커요. 10MB 아래로 올려 주세요.');
+  const bytes = Utilities.base64Decode(b64), A = tbl_('학원'), an = A.get(A.find('학원ID', aid), '학원명') || aid;
+  const fname = an + '_' + kind + '_' + Utilities.formatDate(new Date(), 'Asia/Seoul', 'yyMMdd') + DOC_MIME[mime];
+  const lock = LockService.getScriptLock(); lock.waitLock(30000);
+  try {
+    const file = docFolder_().createFile(Utilities.newBlob(bytes, mime, fname));
+    const D = tbl_('학원서류'); const same = kind === '임대계약서' || kind === '등기부등본' ? ['임대계약서', '등기부등본'] : [kind];
+    D.v.map((r, i) => ({ r, i })).filter(x => x.r[1] === aid && same.indexOf(x.r[2]) >= 0).sort((a, b) => b.i - a.i).forEach(x => { try { DriveApp.getFileById(x.r[3]).setTrashed(true); } catch (e) {} D.sh.deleteRow(x.i + 2); });
+    tbl_('학원서류').append({ '서류ID': 'D' + Utilities.formatDate(new Date(), 'Asia/Seoul', 'yyMMddHHmmss') + Math.floor(Math.random() * 90 + 10), '학원ID': aid, '종류': kind, '파일ID': file.getId(), '파일명': String(name || fname).slice(0, 80), '형식': mime, '크기': bytes.length, '올린날': now_(), '올린사람': by });
+    log_(by, '학원서류', aid, '서류 올림', kind + ' · ' + Math.round(bytes.length / 1024) + 'KB');
+  } finally { lock.releaseLock(); }
+}
+function docRead_(aid, did) { const D = tbl_('학원서류'), i = D.find('서류ID', did); if (i < 0 || (aid && D.get(i, '학원ID') !== aid)) fail('서류를 찾지 못했어요.');
+  const f = DriveApp.getFileById(D.get(i, '파일ID')); return { name: D.get(i, '파일명'), mime: D.get(i, '형식'), b64: Utilities.base64Encode(f.getBlob().getBytes()) }; }
+function tDocUp(sess, aid, kind, name, mime, b64) { const u = tsess_(sess); headOf_(u, aid); limit_('du:' + u.tid, 30, 3600, '파일을 여러 번 올렸어요. 잠시 뒤 다시 해 주세요.');
+  const T = tbl_('교사'), ti = T.find('교사ID', u.tid); docPut_(aid, kind, name, mime, b64, (ti >= 0 ? T.get(ti, '이름') : u.email) + ' (원장)');
+  const A = tbl_('학원'), i = A.find('학원ID', aid); A.set(i, { '확인': '확인 필요', '확인메모': [String(A.get(i, '확인메모') || ''), '원장이 ' + kind + ' 올림(' + Utilities.formatDate(new Date(), 'Asia/Seoul', 'MM-dd') + ')'].filter(Boolean).join(' · ').slice(0, 500) });
+  return tAcad(sess, aid); }
+function tDocGet(sess, aid, did) { const u = tsess_(sess); headOf_(u, aid); return docRead_(aid, did); }
+function docList(who, aid) { return { docs: docList_(aid) }; }
+function docUp(who, aid, kind, name, mime, b64) { docPut_(aid, kind, name, mime, b64, who.name + ' (관리자)'); return { docs: docList_(aid) }; }
+function docGet(who, did) { log_(who.name, '학원서류', did, '관리자 열람', ''); return docRead_('', did); }
+function docDel(who, did) { const D = tbl_('학원서류'), i = D.find('서류ID', did); if (i < 0) fail('서류를 찾지 못했어요.'); const aid = D.get(i, '학원ID');
+  try { DriveApp.getFileById(D.get(i, '파일ID')).setTrashed(true); } catch (e) {} D.sh.deleteRow(i + 2); log_(who.name, '학원서류', aid, '서류 지움', did); return { docs: docList_(aid) }; }
+
+/* ---------- 원장: 학생 명단 (10-28) ---------- */
+function stuOf_(aid) { const S2 = tbl_('학생'), c = col_(S2);
+  return S2.v.filter(r => r[c['학원ID']] === aid).map(r => ({ id: r[c['학생ID']], name: r[c['이름']], tag: r[c['구분글자']] || '', birth: r[c['출생연도']] || '', inst: r[c['전공']] || '', start: r[c['시작월']] || '', state: r[c['상태']] || '재원', tid: r[c['담당교사ID']] || '' }))
+    .sort((a, b) => (a.state === '퇴원') - (b.state === '퇴원') || String(a.name).localeCompare(String(b.name), 'ko')); }
+function tSaveStu(sess, aid, st) {
+  const u = tsess_(sess); headOf_(u, aid); st = st || {};
+  const name = String(st.name || '').trim().slice(0, 20); if (!name) fail('학생 이름을 넣어 주세요.');
+  const birth = digits_(st.birth).slice(0, 4); if (birth && !/^(19|20)\d{2}$/.test(birth)) fail('출생연도는 4자리로 넣어 주세요.');
+  const start = String(st.start || ''); if (start && !/^\d{4}-\d{2}$/.test(start)) fail('시작월은 2024-03 처럼 넣어 주세요.');
+  const inst = INSTS_.indexOf(st.inst) >= 0 ? st.inst : ''; const state = st.state === '퇴원' ? '퇴원' : '재원';
+  const mine = tAcad(sess, aid).teachers.map(t => t.id), tid = mine.indexOf(st.tid) >= 0 ? st.tid : '';
+  const T = tbl_('교사'), ti = T.find('교사ID', u.tid), who = (ti >= 0 ? T.get(ti, '이름') : u.email) + ' (원장)';
+  const lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    const S2 = tbl_('학생'), o = { '이름': name, '출생연도': birth, '전공': inst, '시작월': start, '상태': state, '담당교사ID': tid };
+    if (st.id) {
+      const i = S2.find('학생ID', st.id); if (i < 0 || S2.get(i, '학원ID') !== aid) fail('그 학생을 찾지 못했어요.');
+      const diff = Object.keys(o).filter(k => String(o[k]) !== String(S2.get(i, k) || '')).map(k => k + ' ' + (S2.get(i, k) || '없음') + ' → ' + (o[k] || '없음'));
+      if (!diff.length) return tAcad(sess, aid);
+      S2.set(i, Object.assign(o, { '확인': '확인 필요', '확인메모': [String(S2.get(i, '확인메모') || ''), '원장이 바꿈: ' + diff.join(' · ')].filter(Boolean).join(' · ').slice(0, 500), '수정일': now_(), '수정자': who }));
+      log_(u.email, '학생', st.id, '원장이 수정', diff.join(' · ').slice(0, 900));
+    } else {
+      limit_('sa:' + u.tid, 300, 3600, '학생을 많이 넣었어요. 잠시 뒤 다시 해 주세요.');
+      const id = nextId_(S2, '학생ID', 'S');
+      S2.append(Object.assign(o, { '학생ID': id, '학원ID': aid, '원래이름': name, '확인': '확인 필요', '확인메모': '원장이 추가', '원본': '원장 추가', '수정일': now_(), '수정자': who }));
+      log_(u.email, '학생', id, '원장이 추가', name);
     }
   } finally { lock.releaseLock(); }
   return tAcad(sess, aid);

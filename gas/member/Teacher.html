@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261028-181907 -->
+<!-- build: 20261028-182916 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -296,12 +296,37 @@ function vAsk(){var a=S.ask||(S.ask={cat:'',title:'',body:'',name:'',phone:''}),
 function readAsk(){var a=S.ask;if(!a)return;var g=function(id){var e=document.getElementById(id);return e?e.value:null};var x;
   if((x=g('aNm'))!==null)a.name=x.trim();if((x=g('aPh'))!==null)a.phone=x.replace(/\D/g,'');if((x=g('aTi'))!==null)a.title=x;if((x=g('aBo'))!==null)a.body=x}
 /* ---------- 원장: 우리 학원 (10-28) ---------- */
-function acForm(a){return {tel:a['교실대표번호']||'',email:a['이메일']||'',subj:String(a['교습과목']||'').split(/[,，、]/).map(function(x){return x.trim()}).filter(Boolean),zip:a['우편번호']||'',addr:a['주소']||'',addr2:a['상세주소']||'',sido:a['시도']||'',sigungu:a['시군구']||'',open:String(a['개원일']||'').slice(0,7)}}
+function acForm(a){return {tel:a['교실대표번호']||'',email:a['이메일']||'',subj:String(a['교습과목']||'').split(/[,，、]/).map(function(x){return x.trim()}).filter(Boolean),zip:a['우편번호']||'',addr:a['주소']||'',addr2:a['상세주소']||'',sido:a['시도']||'',sigungu:a['시군구']||'',open:String(a['개원일']||'').slice(0,7),biz:a['사업자번호']||'',edu:a['교육청인가번호']||''}}
 function readAcForm(){var M=S.myac;if(!M||!M.ed)return;var f=M.form,g=function(id){var e=document.getElementById(id);return e?e.value.trim():null},x;
-  if((x=g('acTel'))!==null)f.tel=x.replace(/\D/g,'');if((x=g('acEm'))!==null)f.email=x;if((x=g('z_ac'))!==null)f.zip=x;if((x=g('a_ac'))!==null)f.addr=x;if((x=g('d_ac'))!==null)f.addr2=x;if((x=g('acOpen'))!==null)f.open=x;
+  if((x=g('acTel'))!==null)f.tel=x.replace(/\D/g,'');if((x=g('acEm'))!==null)f.email=x;if((x=g('z_ac'))!==null)f.zip=x;if((x=g('a_ac'))!==null)f.addr=x;if((x=g('d_ac'))!==null)f.addr2=x;if((x=g('acOpen'))!==null)f.open=x;if((x=g('acBiz'))!==null)f.biz=x;if((x=g('acEdu'))!==null)f.edu=x;
   var sb=document.querySelectorAll('[data-subj]');if(sb.length){f.subj=[];sb.forEach(function(c){if(c.checked)f.subj.push(c.dataset.subj)})}}
 function sidoShort(x){x=String(x||'');var m={'강원특별자치도':'강원','전북특별자치도':'전북','제주특별자치도':'제주','세종특별자치시':'세종'};return m[x]||x.replace(/(특별시|광역시|특별자치시|특별자치도|도)$/,'')}
 function fmtTel(v){var x=String(v||'').replace(/\D/g,'');if(/^02/.test(x))return x.length>9?x.slice(0,2)+'-'+x.slice(2,6)+'-'+x.slice(6):x.slice(0,2)+'-'+x.slice(2,5)+'-'+x.slice(5);return x.length>10?x.slice(0,3)+'-'+x.slice(3,7)+'-'+x.slice(7):x.length>6?x.slice(0,3)+'-'+x.slice(3,6)+'-'+x.slice(6):x}
+var DOC_SLOTS=[['사업자등록증','사업자등록증'],['교육청인가증','교육청 인가증'],['임대','임대계약서 · 등기부등본']];
+function fmtSize(n){n=+n||0;return n>1048576?(n/1048576).toFixed(1)+'MB':Math.max(1,Math.round(n/1024))+'KB'}
+function docCard(M){var ds=M.data.docs||[];
+  return '<div class="card"><h3>학원 서류 <span class="opt">PDF · JPG · PNG · 10MB까지</span></h3><ul class="hist">'+DOC_SLOTS.map(function(sl,i){var kinds=sl[0]==='임대'?['임대계약서','등기부등본']:[sl[0]],d=ds.filter(function(x){return kinds.indexOf(x.kind)>=0})[0];
+    return '<li><div class="spread"><b>'+esc(sl[1])+'</b>'+(d?'<span class="pill ok">'+esc(d.kind==='등기부등본'?'등기부등본':'올림')+'</span>':'<span class="pill due">없음</span>')+'</div>'+
+      (d?'<span class="hint">'+esc(d.name)+' · '+fmtSize(d.size)+' · '+esc(String(d.at).slice(0,10))+'</span>':'')+
+      (sl[0]==='임대'?'<div class="f" style="margin:4px 0"><span class="hint">올릴 서류</span>'+seg('lease',[['임대계약서','임대계약서'],['등기부등본','등기부등본 (본인 건물)']],S.leaseKind||'임대계약서')+'</div>':'')+
+      '<div class="row">'+(d?'<button class="btn small" type="button" data-docview="'+esc(d.id)+'">보기</button>':'')+
+      '<label class="btn small'+(d?'':' primary')+'" for="du_'+i+'" style="cursor:pointer">'+(S.docBusy===i?'<span class="spin"></span> 올리는 중…':d?'다시 올리기':'올리기')+'</label><input type="file" id="du_'+i+'" data-dslot="'+i+'" accept="application/pdf,image/jpeg,image/png" hidden></div></li>'}).join('')+'</ul>'+
+    '<p class="hint">올린 서류는 협회 관리자만 봐요. 다시 올리면 예전 파일은 지워져요.</p></div>'}
+function stuCard(M){var L=M.data.students||[],T=(M.data.teachers||[]).filter(function(t){return !t.end}),tn={};(M.data.teachers||[]).forEach(function(t){tn[t.id]=t.name});var ed=S.stuEd,cur=L.filter(function(s){return s.state!=='퇴원'});
+  var form=function(s){var ys=['<option value="">모름</option>'];for(var y=new Date().getFullYear();y>=1990;y--)ys.push('<option '+(String(s.birth)===String(y)?'selected':'')+'>'+y+'</option>');
+    return '<div class="wk" style="margin:6px 0"><b>'+(s.id?'학생 고치기':'학생 추가')+'</b>'+
+      '<div class="two"><div><label class="f" for="sNm">이름 <span class="req">*</span><input type="text" id="sNm" value="'+esc(s.name)+'" '+bad('sname')+'></label>'+fe('sname')+'</div><label class="f" for="sBy">출생연도<select id="sBy">'+ys.join('')+'</select></label></div>'+
+      '<div class="two"><label class="f" for="sIn">전공<select id="sIn"><option value="">선택</option>'+INSTS.map(function(i){return '<option '+(i===s.inst?'selected':'')+'>'+i+'</option>'}).join('')+'</select></label><label class="f" for="sSt">시작<input type="month" id="sSt" value="'+esc(s.start)+'"></label></div>'+
+      '<div class="two"><label class="f" for="sTc">담당 선생님<select id="sTc"><option value="">선택 안 함</option>'+T.map(function(t){return '<option value="'+esc(t.id)+'" '+(t.id===s.tid?'selected':'')+'>'+esc(t.name)+'</option>'}).join('')+'</select></label><div class="f"><span>상태</span>'+seg('sstate',['재원','퇴원'],s.state||'재원')+'</div></div>'+
+      msgBox()+'<div class="two">'+btn('stuSave','저장','primary small')+'<button class="btn small" type="button" id="stuNo">취소</button></div></div>'};
+  return '<div class="card"><div class="spread"><h3>학생 명단 <span class="opt">재원 '+cur.length+'명</span></h3>'+(ed?'':'<button class="btn small primary" type="button" id="stuAdd">+ 학생 추가</button>')+'</div>'+
+    (ed&&!ed.id?form(ed):'')+(L.length?'<ul class="hist">'+L.map(function(s){return ed&&ed.id===s.id?'<li>'+form(ed)+'</li>':'<li class="'+(s.state==='퇴원'?'past':'')+'"><button type="button" data-stu="'+esc(s.id)+'" style="all:unset;cursor:pointer;display:block"><div class="spread"><b>'+esc(s.name)+(s.tag?' <span class="hint">'+esc(s.tag)+'</span>':'')+'</b>'+(s.state==='퇴원'?'<span class="pill due">퇴원</span>':'<span class="pill ok">재원</span>')+'</div><span class="hint num">'+esc([s.birth?s.birth+'년생':'',s.inst,s.start?s.start.replace('-','.')+' 시작':'',s.tid?'담당 '+(tn[s.tid]||s.tid):''].filter(Boolean).join(' · ')||'-')+'</span></button></li>'}).join('')+'</ul>':'<p class="hint">아직 학생이 없어요. 「+ 학생 추가」로 넣어 주세요.</p>')+
+    '<p class="hint">넣거나 고친 학생은 협회가 확인해요. 그만둔 학생은 지우지 말고 「퇴원」으로 바꿔 주세요.</p></div>'}
+function readStu(){var s=S.stuEd;if(!s)return;var g=function(id){var e=document.getElementById(id);return e?e.value.trim():null},x;
+  if((x=g('sNm'))!==null)s.name=x;if((x=g('sBy'))!==null)s.birth=x;if((x=g('sIn'))!==null)s.inst=x;if((x=g('sSt'))!==null)s.start=x;if((x=g('sTc'))!==null)s.tid=x}
+function fileB64(f){return new Promise(function(res,rej){var fr=new FileReader();fr.onerror=function(){rej('파일을 읽지 못했어요')};fr.onload=function(){var u=String(fr.result),k=u.indexOf(',');res(u.slice(k+1))};fr.readAsDataURL(f)})}
+function openB64(name,mime,b64){var bin=atob(b64),n=bin.length,u8=new Uint8Array(n);for(var i=0;i<n;i++)u8[i]=bin.charCodeAt(i);var url=URL.createObjectURL(new Blob([u8],{type:mime}));
+  var a=document.createElement('a');a.href=url;a.target='_blank';a.rel='noopener';a.download=name;document.body.appendChild(a);a.click();setTimeout(function(){a.remove();URL.revokeObjectURL(url)},60000)}
 function vMyAcad(){var M=S.myac;if(!M||!M.data)return '<div class="card"><span><span class="spin"></span> 불러오는 중…</span></div>';
   var a=M.data.acad,T=M.data.teachers,f=M.form,cur=T.filter(function(t){return !t.end}),past=T.filter(function(t){return t.end});
   var info=M.ed?'<div class="lock"><h3>학원 정보 고치기 <span class="opt">바꾸면 협회가 확인해요</span></h3>'+
@@ -310,14 +335,15 @@ function vMyAcad(){var M=S.myac;if(!M||!M.data)return '<div class="card"><span><
       '<div class="f"><span>교습 과목</span><div class="row">'+INSTS.map(function(i){return '<label class="agree" style="flex:0 0 auto"><input type="checkbox" data-subj="'+i+'" '+(f.subj.indexOf(i)>=0?'checked':'')+'> '+i+'</label>'}).join('')+'</div></div>'+
       addrBlock('ac','학원 주소',f,'')+(f.sido?'<p class="hint">지역: '+esc(f.sido+' '+f.sigungu)+'</p>':'')+
       '<label class="f" for="acOpen">개원 <span class="opt">년 · 월</span><input type="month" id="acOpen" value="'+esc(f.open)+'" '+bad('open')+'></label>'+fe('open')+
+      '<div class="two"><div><label class="f" for="acBiz">사업자번호<input type="text" id="acBiz" value="'+esc(f.biz)+'" inputmode="numeric" placeholder="000-00-00000" '+bad('biz')+'></label>'+fe('biz')+'</div><div><label class="f" for="acEdu">교육청 인가번호<input type="text" id="acEdu" value="'+esc(f.edu)+'" maxlength="40"></label></div></div>'+
       '<p class="hint">학원 이름 · 운영 상태 · 원장을 바꾸려면 오른쪽 위 「내 문의」로 알려 주세요.</p>'+msgBox()+
       '<div class="two">'+btn('acSave','저장')+'<button class="btn" type="button" id="acNo">취소</button></div></div>':
     '<div class="card"><div class="spread"><h2>'+esc(a['학원명'])+'</h2><span class="pill '+(a['상태']==='운영'?'ok':'due')+'">'+esc(a['상태']||'-')+'</span></div>'+
       '<dl class="kv"><dt>원장</dt><dd>'+esc(a['원장명']||'-')+'</dd><dt>대표 번호</dt><dd class="num">'+esc(fmtTel(a['교실대표번호'])||'-')+'</dd><dt>이메일</dt><dd>'+esc(a['이메일']||'-')+'</dd><dt>교습 과목</dt><dd>'+esc(a['교습과목']||'-')+'</dd>'+
-      '<dt>주소</dt><dd>'+(a['주소']?(a['우편번호']?'<span class="num">('+esc(a['우편번호'])+')</span> ':'')+esc(a['주소']+' '+(a['상세주소']||'')):'-')+'</dd><dt>개원</dt><dd class="num">'+esc(a['개원일']||'-')+'</dd>'+(a['계약체결일']?'<dt>협회 계약</dt><dd class="num">'+esc(a['계약체결일'])+'</dd>':'')+'</dl>'+
+      '<dt>주소</dt><dd>'+(a['주소']?(a['우편번호']?'<span class="num">('+esc(a['우편번호'])+')</span> ':'')+esc(a['주소']+' '+(a['상세주소']||'')):'-')+'</dd><dt>개원</dt><dd class="num">'+esc(a['개원일']||'-')+'</dd><dt>사업자번호</dt><dd class="num">'+esc(a['사업자번호']||'-')+'</dd><dt>교육청 인가</dt><dd class="num">'+esc(a['교육청인가번호']||'-')+'</dd>'+(a['계약체결일']?'<dt>협회 계약</dt><dd class="num">'+esc(a['계약체결일'])+'</dd>':'')+'</dl>'+
       '<button class="btn primary block" type="button" id="acEdit">학원 정보 고치기</button></div>';
   var li=function(t){return '<li class="'+(t.end?'past':'')+'"><div class="spread"><b>'+(t.main&&!t.end?'<span class="pill info">주 소속</span> ':'')+esc(t.name)+'</b><span class="hint num">'+(t.start?esc(t.start.replace('-','.')):'?')+' ~ '+(t.end?esc(t.end.replace('-','.')):'지금')+'</span></div><span class="hint">'+esc([t.role,t.inst,kindLabel(t.kind)].filter(Boolean).join(' · ')||'-')+'</span></li>'};
-  return info+'<div class="card"><h3>소속 선생님 <span class="opt">지금 '+cur.length+'명</span></h3>'+(cur.length?'<ul class="hist">'+cur.map(li).join('')+'</ul>':'<p class="hint">지금 소속된 선생님이 없어요.</p>')+
+  return info+docCard(M)+stuCard(M)+'<div class="card"><h3>소속 선생님 <span class="opt">지금 '+cur.length+'명</span></h3>'+(cur.length?'<ul class="hist">'+cur.map(li).join('')+'</ul>':'<p class="hint">지금 소속된 선생님이 없어요.</p>')+
     (past.length?'<h3 style="margin-top:10px">지난 소속 선생님</h3><ul class="hist">'+past.map(li).join('')+'</ul>':'')+
     '<p class="hint">선생님이 「내 정보 › 소속 학원」에서 넣은 내용이에요. 다르면 그 선생님에게 고쳐 달라고 해 주세요.</p></div>'+
     '<button class="btn block" type="button" id="toMe">내 정보로</button>'}
@@ -445,7 +471,7 @@ document.addEventListener('click',function(e){var b=e.target.closest('button');i
   if(b.id==='verify'){var cd=v('cCode').trim();if(!/^\d{6}$/.test(cd)){S.msg='6자리 코드를 넣어 주세요.';render();return}
     run(function(){return call('tVerify',[S.token,cd]).then(function(r){if(!r.ok){S.msg=r.msg;return}if(r.prefill&&S.mode==='member'){var pf=r.prefill;S.j.type=pf.type||'';S.j.course=pf.course||'';S.j.works=(pf.works||[]).map(function(w){return {id:w.id,text:w.text,y:w.y,m:w.m}});S.j.noWork=false;S.j.role=pf.role;S.j.inst=pf.inst||'';S.j.certs=pf.certs||{}}S.hist.push('code');S.v='confirm';window.scrollTo(0,0);toast('이메일 인증을 마쳤어요')})});return}
   if(b.id==='toCode'){readConfirm();go('code');return}
-  if(d.seg&&d.seg!=='acat'){readConfirm();var k=d.seg,val=d.val;
+  if(d.seg&&d.seg!=='acat'&&d.seg!=='lease'&&d.seg!=='sstate'){readConfirm();var k=d.seg,val=d.val;
     if(k==='type'){S.j.type=val;if(val==='교사회원')S.j.course='';else if(!S.j.course)S.j.course='초급'}else S.j[k]=val;
     delete S.err[k];render();return}
   if(d.acad){if(S.v==='me'){S.addW={id:d.acad,y:'',m:''};S.aq='';render();return}readConfirm();if(S.j.works.length<3)S.j.works.push({id:d.acad,text:'',y:'',m:''});S.j.noWork=false;S.aq='';delete S.err.acad;render();var aq=document.getElementById('aq');if(aq)aq.focus();return}
@@ -506,13 +532,22 @@ document.addEventListener('click',function(e){var b=e.target.closest('button');i
     S.err=e6;if(Object.keys(e6).length){render();return}
     if(j6.type==='연수교사회원'&&!j6.course)j6.course='초급';
     run(function(){return call('tSaveInfo',[S.sess,{name:j6.name,phone:j6.phone,type:j6.type,course:j6.course,role:j6.role,inst:j6.inst,certs:Object.keys(j6.certs).map(function(n){return {n:n,y:j6.certs[n]}})}]).then(function(r){if(!r.ok){S.msg=r.msg;return}S.me=r.me;S.infoEd=false;S.err={};toast('저장했어요. 협회가 확인해요')})});return}
-  if(d.myac){S.myac={id:d.myac,data:null,ed:false,form:null};go('myacad');call('tAcad',[S.sess,d.myac]).then(function(r){if(!r.ok){toast(r.msg);S.v='me';render();return}S.myac.data=r;render()});return}
+  if(d.myac){S.stuEd=null;S.myac={id:d.myac,data:null,ed:false,form:null};go('myacad');call('tAcad',[S.sess,d.myac]).then(function(r){if(!r.ok){toast(r.msg);S.v='me';render();return}S.myac.data=r;render()});return}
+  if(d.seg==='lease'){S.leaseKind=d.val;render();return}
+  if(d.seg==='sstate'){readStu();S.stuEd.state=d.val;render();return}
+  if(b.id==='stuAdd'){S.stuEd={id:'',name:'',birth:'',inst:'',start:'',state:'재원',tid:''};S.err={};S.msg='';render();var n=document.getElementById('sNm');if(n)n.focus();return}
+  if(d.stu){var st0=(S.myac.data.students||[]).filter(function(x){return x.id===d.stu})[0];if(st0){S.stuEd=JSON.parse(JSON.stringify(st0));S.err={};S.msg='';render()}return}
+  if(b.id==='stuNo'){S.stuEd=null;S.err={};S.msg='';render();return}
+  if(b.id==='stuSave'){readStu();var se=S.stuEd;if(!se.name){S.err={sname:'학생 이름을 넣어 주세요.'};render();return}
+    run(function(){return call('tSaveStu',[S.sess,S.myac.id,se]).then(function(r){if(!r.ok){S.msg=r.msg;return}S.myac.data=r;S.stuEd=null;S.err={};toast('저장했어요. 협회가 확인해요')})});return}
+  if(d.docview){b.disabled=true;call('tDocGet',[S.sess,S.myac.id,d.docview]).then(function(r){b.disabled=false;if(!r.ok){toast(r.msg);return}openB64(r.name,r.mime,r.b64)});return}
   if(b.id==='acEdit'){S.myac.ed=true;S.myac.form=acForm(S.myac.data.acad);S.err={};S.msg='';render();return}
   if(b.id==='acNo'){S.myac.ed=false;S.err={};S.msg='';S.postFor='';render();return}
   if(b.id==='acSave'){readAcForm();var f7=S.myac.form,e7={};
     if(f7.tel&&!/^0\d{8,10}$/.test(f7.tel))e7.tel='교실 대표 번호를 확인해 주세요.';if(f7.email&&!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(f7.email))e7.email='이메일 주소를 확인해 주세요.';
     S.err=e7;if(Object.keys(e7).length){render();return}
-    var send={'교실대표번호':f7.tel,'이메일':f7.email,'교습과목':f7.subj.join(', '),'우편번호':f7.zip,'주소':f7.addr,'상세주소':f7.addr2,'시도':f7.sido,'시군구':f7.sigungu,'개원일':f7.open};
+    if(f7.biz&&f7.biz.replace(/\D/g,'').length!==10){S.err={biz:'사업자번호 10자리를 확인해 주세요.'};render();return}
+    var send={'사업자번호':f7.biz,'교육청인가번호':f7.edu,'교실대표번호':f7.tel,'이메일':f7.email,'교습과목':f7.subj.join(', '),'우편번호':f7.zip,'주소':f7.addr,'상세주소':f7.addr2,'시도':f7.sido,'시군구':f7.sigungu,'개원일':f7.open};
     run(function(){return call('tSaveAcad',[S.sess,S.myac.id,send]).then(function(r){if(!r.ok){S.msg=r.msg;return}S.myac.data=r;S.myac.ed=false;S.err={};toast('저장했어요. 협회가 확인해요')})});return}
   if(b.id==='gnbAsk'){if(!S.sess)return;go('mine');loadMine();return}
   if(b.id==='goAsk'){S.ask=null;S.askDone=false;go('ask');return}
@@ -552,7 +587,12 @@ function shrinkPhoto(file){return new Promise(function(res,rej){var fr=new FileR
   var q=0.85,u=cv.toDataURL('image/jpeg',q);while(u.length>46000&&q>0.3){q-=0.1;u=cv.toDataURL('image/jpeg',q)}
   if(u.length>46000){cv.width=270;cv.height=360;cx=cv.getContext('2d');cx.drawImage(im,sx,sy,cw,ch,0,0,270,360);u=cv.toDataURL('image/jpeg',0.7)}
   res(u)};im.src=fr.result};fr.readAsDataURL(file)})}
-document.addEventListener('change',function(e){if(e.target.id==='phIn'){var f=e.target.files&&e.target.files[0];if(!f)return;if(String(f.type).indexOf('image/')!==0){toast('사진 파일을 골라 주세요');return}
+document.addEventListener('change',function(e){if(e.target.dataset&&e.target.dataset.dslot!=null&&e.target.dataset.dslot!==''){var slot=+e.target.dataset.dslot,f2=e.target.files&&e.target.files[0];if(!f2)return;
+    var mime=f2.type==='image/jpg'?'image/jpeg':f2.type;if(['application/pdf','image/jpeg','image/png'].indexOf(mime)<0){toast('PDF · JPG · PNG 파일만 올릴 수 있어요');e.target.value='';return}
+    if(f2.size>10*1024*1024){toast('10MB 아래 파일로 올려 주세요');e.target.value='';return}
+    var kind=DOC_SLOTS[slot][0]==='임대'?(S.leaseKind||'임대계약서'):DOC_SLOTS[slot][0];S.docBusy=slot;render();
+    fileB64(f2).then(function(b64){return call('tDocUp',[S.sess,S.myac.id,kind,f2.name,mime,b64])}).then(function(r){S.docBusy=null;if(!r.ok){toast(r.msg);render();return}S.myac.data=r;render();toast(kind+'를 올렸어요')},function(er){S.docBusy=null;render();toast(String(er))});return}
+  if(e.target.id==='phIn'){var f=e.target.files&&e.target.files[0];if(!f)return;if(String(f.type).indexOf('image/')!==0){toast('사진 파일을 골라 주세요');return}
   S.phBusy=true;render();shrinkPhoto(f).then(function(u){return call('tSavePhoto',[S.sess,u])}).then(function(r){S.phBusy=false;if(!r.ok){toast(r.msg);render();return}S.me=r.me;render();toast('사진을 넣었어요')},function(er){S.phBusy=false;render();toast(String(er))});return}
   if(e.target.id==='pSame'){readPayIn();var pd=curPay();if(pd&&pd.same){pd.zip=pd.hzip;pd.addr=pd.haddr;pd.addr2=pd.haddr2;delete S.err.a_m}render();return}if(e.target.id==='noWork'){readConfirm();S.acadTyping=false;if(S.j.noWork)delete S.err.acad;render();return}var dm=e.target.dataset&&e.target.dataset.dom;if(dm){var x=document.getElementById(dm+'X');x.hidden=!!e.target.value;if(!e.target.value)x.focus();return}
   var n=e.target.dataset&&e.target.dataset.cert;if(!n)return;readConfirm();if(e.target.checked)S.j.certs[n]='';else delete S.j.certs[n];delete S.err['cy_'+n];render()});

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261028-181907 -->
+<!-- build: 20261028-182916 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -253,16 +253,29 @@ function acPostOpen(){var w=document.getElementById('acPostWrap');if(!w)return;i
   if(!window.daum||!daum.Postcode){w.innerHTML='<p class="cap" style="padding:12px">주소 검색을 불러오지 못했어요. 직접 넣어 주세요.</p>';w.style.height='auto';return}
   new daum.Postcode({width:'100%',height:'100%',oncomplete:function(r){var g=function(id){return document.getElementById(id)};g('e_우편번호').value=r.zonecode;g('e_주소').value=r.roadAddress||r.jibunAddress;
     var sd=sidoShort(r.sido);g('e_시도').value=sd;g('e_시군구').value=r.sigungu||'';var rg=g('e_졸업연주지역');if(rg&&!rg.value)rg.value=regionOf(sd);w.hidden=true;w.innerHTML='';var d=g('e_상세주소');if(d)d.focus()}}).embed(w)}
+/* ---------- 학원 서류 · 소속 선생님 · 학생 (10-28) ---------- */
+var DOC_SLOTS_A=[['사업자등록증','사업자등록증'],['교육청인가증','교육청 인가증'],['임대','임대계약서 · 등기부등본']];
+function fmtSize(n){n=+n||0;return n>1048576?(n/1048576).toFixed(1)+'MB':Math.max(1,Math.round(n/1024))+'KB'}
+function docBoxA(aid){var ds=S.docs&&S.docs[aid];if(ds===undefined){S.docs=S.docs||{};S.docs[aid]=null;callS('docList',aid).then(function(r){S.docs[aid]=r.ok?r.docs:[];if(S.edit&&S.edit.id===aid)render()})}
+  return '<div class="panel" style="padding:12px"><b>학원 서류 <span class="cap">원장 또는 관리자가 올림 · 관리자 전용 드라이브 폴더 · PDF/JPG/PNG 10MB까지</span></b>'+(ds===null?'<p class="cap"><span class="spin"></span></p>':
+    '<table class="wtab"><tbody>'+DOC_SLOTS_A.map(function(sl,i){var kinds=sl[0]==='임대'?['임대계약서','등기부등본']:[sl[0]],d=(ds||[]).filter(function(x){return kinds.indexOf(x.kind)>=0})[0];
+      return '<tr><td><b>'+esc(sl[1])+'</b></td><td>'+(d?(d.kind==='등기부등본'?'<span class="pill info">등기부등본</span> ':'')+esc(d.name)+' <span class="cap">'+fmtSize(d.size)+' · '+esc(String(d.at).slice(0,16))+' · '+esc(d.by)+'</span>':'<span class="pill due">없음</span>')+'</td>'+
+        '<td style="white-space:nowrap">'+(d?'<button class="btn small" type="button" data-dview="'+esc(d.id)+'">보기</button> <button class="btn small ghost" type="button" data-ddel="'+esc(d.id)+'|'+esc(aid)+'">지우기</button> ':'')+
+        (sl[0]==='임대'?'<select id="dk_'+i+'" style="width:auto;padding:4px"><option>임대계약서</option><option>등기부등본</option></select> ':'')+'<label class="btn small" for="dua_'+i+'" style="cursor:pointer">'+(S.docBusyA===i?'올리는 중…':'올리기')+'</label><input type="file" id="dua_'+i+'" data-daslot="'+i+'" data-aid="'+esc(aid)+'" accept="application/pdf,image/jpeg,image/png" hidden></td></tr>'}).join('')+'</tbody></table>')+'</div>'}
+function peopleBoxA(aid,ts){var st=S.D.stu.filter(function(s){return s['학원ID']===aid}).sort(function(x,y){return (x['상태']==='퇴원')-(y['상태']==='퇴원')||String(x['이름']).localeCompare(String(y['이름']),'ko')});var cur=st.filter(function(s){return s['상태']==='재원'}).length;
+  return '<div class="panel" style="padding:12px"><b>소속 선생님 <span class="cap">'+ts.length+'명</span></b><div class="row" style="margin:6px 0">'+(ts.length?ts.map(function(t){return '<button class="btn small" type="button" data-opent="'+esc(t['교사ID'])+'">'+esc(t['이름'])+(t['직급']?' <span class="cap">'+esc(t['직급'])+'</span>':'')+'</button>'}).join(''):'<span class="cap">없음</span>')+'</div>'+
+    '<b>학생 명단 <span class="cap">재원 '+cur+'명 · 전체 '+st.length+'명</span></b>'+(st.length?'<table class="wtab"><thead><tr><th>번호</th><th>이름</th><th>출생연도</th><th>전공</th><th>시작</th><th>담당</th><th>상태</th><th>확인</th></tr></thead><tbody>'+st.map(function(s){return '<tr class="click" data-edit="stu|'+esc(s['학생ID'])+'" data-gostu="1"><td class="num cap">'+esc(s['학생ID'])+'</td><td><b>'+nm(s)+'</b></td><td class="num">'+esc(s['출생연도']||'-')+'</td><td>'+esc(s['전공']||'-')+'</td><td class="num">'+esc(s['시작월']||'-')+'</td><td>'+esc(s['담당교사ID']&&T[s['담당교사ID']]?T[s['담당교사ID']]['이름']:'-')+'</td><td>'+(s['상태']==='퇴원'?'<span class="pill due">퇴원</span>':'<span class="pill ok">재원</span>')+'</td><td>'+ckPill(s['확인'])+'</td></tr>'}).join('')+'</tbody></table>':'<p class="cap">학생이 없어요.</p>')+'</div>'}
+function b64Open(name,mime,b64){var bin=atob(b64),n=bin.length,u8=new Uint8Array(n);for(var i=0;i<n;i++)u8[i]=bin.charCodeAt(i);var url=URL.createObjectURL(new Blob([u8],{type:mime}));var a=document.createElement('a');a.href=url;a.target='_blank';a.rel='noopener';a.download=name;document.body.appendChild(a);a.click();setTimeout(function(){a.remove();URL.revokeObjectURL(url)},60000)}
 function acadEditor(){var a=S.edit.id==='new'?{'구분':'학원','상태':'운영','확인':'확인 전'}:A[S.edit.id];
   var ts=a['학원ID']?S.D.tch.filter(function(t){return tAcads(t).indexOf(a['학원ID'])>=0}):[];
   var heads=[['','선택 안 함']].concat((ts.length?ts:S.D.tch).map(function(t){return [t['교사ID'],t['이름']+(t['구분글자']?' ('+t['구분글자']+')':'')+' · '+tAcadTxt(t)]}));
   return '<div class="editor">'+edHead(a['학원ID']?esc(a['학원명'])+' <span class="cap num">'+a['학원ID']+'</span>':'학원 추가',a)+'<div class="fgrid">'+
     fld('e_학원명','학원명',a['학원명'],{req:1,hint:'「○○스즈키」 또는 「이름 클래스」'})+fld('e_구분','구분',a['구분'],{sel:['학원','클래스']})+fld('e_상태','상태',a['상태'],{sel:['운영','휴원','탈퇴']})+
     fld('e_원장교사ID','원장',a['원장교사ID'],{sel:heads,hint:a['원장명']&&!a['원장교사ID']?'명단: '+esc(a['원장명']):''})+fld('e_교실대표번호','교실 대표번호',fmt(a['교실대표번호']),{type:'tel'})+fld('e_이메일','이메일',a['이메일'])+
-    subjBox(a['교습과목'])+fld('e_개원일','개원일',a['개원일'],{type:'date'})+fld('e_계약체결일','협회 계약 체결일',a['계약체결일'],{type:'date',hint:'비우면 미체결'})+
+    subjBox(a['교습과목'])+fld('e_개원일','개원일',a['개원일'],{type:'date'})+fld('e_계약체결일','협회 계약 체결일',a['계약체결일'],{type:'date',hint:'비우면 미체결'})+fld('e_사업자번호','사업자번호',a['사업자번호'],{num:1,hint:'000-00-00000'})+fld('e_교육청인가번호','교육청 인가번호',a['교육청인가번호'],{max:40})+
     addrBoxA(a)+fld('e_졸업연주지역','졸업연주 지역',a['졸업연주지역'],{sel:[['','선택']].concat(REGIONS),hint:regionOf(a['시도'])&&regionOf(a['시도'])!==a['졸업연주지역']?'시·도로는 「'+regionOf(a['시도'])+'」':''})+fld('e_확인','확인',a['확인'],{sel:CHECKS})+fld('e_확인메모','확인 메모',a['확인메모'])+fld('e_메모','메모',a['메모'],{wide:1,area:1})+'</div>'+
     (a['학원ID']?'<div class="row" style="justify-content:flex-end"><span class="cap">문 닫은 학원은 상태를 「탈퇴」로 · 잘못 넣은 학원만 삭제</span><button class="btn small" type="button" id="delAcad" style="color:var(--bad)">학원 삭제</button></div>':'')+
-    (a['학원ID']?'<p class="cap">소속 교사 '+ts.length+'명: '+ts.map(function(t){return esc(t['이름'])+(t['직급']?'('+esc(t['직급'])+')':'')}).join(', ')+' · 재원 학생 '+S.D.stu.filter(function(s){return s['학원ID']===a['학원ID']&&s['상태']==='재원'}).length+'명</p>':'')+'<p class="err" id="edErr"></p></div>'}
+    (a['학원ID']?docBoxA(a['학원ID'])+peopleBoxA(a['학원ID'],ts):'')+'<p class="err" id="edErr"></p></div>'}
 
 /* ---------- 교사 ---------- */
 function tchList(){var qq=q(),f=S.f,is=S.issue,dn=dupNames(S.D.tch);
@@ -520,9 +533,12 @@ document.addEventListener('click',function(e){
     callS('saveWorks',S.wEd.tid,rows).then(function(r){S.busy=false;if(!r.ok){we.textContent=r.msg;return}S.D.works=objs(r.works);
       var t=T[S.wEd.tid];if(t&&r.row){var h=Object.keys(t);h.forEach(function(c,i){t[c]=r.row[i]==null?'':r.row[i]})}S.wEd=null;index();render();toast('소속 학원를 저장했어요')});return}
   if(b.id==='acPost'){acPostOpen();return}
+  if(d.dview){b.disabled=true;callS('docGet',d.dview).then(function(r){b.disabled=false;if(!r.ok){toast(r.msg);return}b64Open(r.name,r.mime,r.b64)});return}
+  if(d.ddel){var pp=d.ddel.split('|');if(!confirm('이 서류를 지울까요? 드라이브에서도 휴지통으로 가요.'))return;callS('docDel',pp[0]).then(function(r){if(!r.ok){toast(r.msg);return}S.docs[pp[1]]=r.docs;render();toast('지웠어요')});return}
   if(d.subjrm){var L=subjList(document.getElementById('e_교습과목').value).filter(function(x){return x!==d.subjrm});subjSet(L);return}
   if(b.id==='fillRg'){if(S.busy)return;S.busy=true;b.disabled=true;callS('fillRegions').then(function(r){S.busy=false;if(!r.ok){b.disabled=false;toast(r.msg);return}S.D.acad=objs(r.acad);index();render();toast(r.n+'곳을 채웠어요'+(r.left.length?' · 시·도가 없는 '+r.left.length+'곳은 직접 골라 주세요':''))});return}
   if(d.phdel){if(!confirm('이 선생님 사진을 지울까요?'))return;callS('photoDel',d.phdel).then(function(r){if(!r.ok){toast(r.msg);return}S.photos[d.phdel]='';render();toast('사진을 지웠어요')});return}
+  if(d.gostu){var sid=d.edit.split('|')[1];go('stu');S.edit={kind:'stu',id:sid};render();window.scrollTo(0,0);return}
   if(d.edit){var q2=d.edit.split('|');S.wEd=null;S.dEdit=null;S.payOpen=null;S.edAcad=null;S.edit=S.edit&&S.edit.id===q2[1]?null:{kind:q2[0],id:q2[1]};render();window.scrollTo({top:0,behavior:'smooth'});return}
   if(d.new){S.edit={kind:d.new,id:'new'};S.edAcad=null;render();window.scrollTo(0,0);return}
   if(b.id==='closeEd'){S.edit=null;S.payOpen=null;render();return}
@@ -576,7 +592,11 @@ document.addEventListener('input',function(e){var el=e.target;
   if(el.id==='q'){S.q=el.value;S.page=0;clearTimeout(qTimer);qTimer=setTimeout(softList,120);return}
   if(el.id==='e_출생연도'||el.id==='e_우편번호'){el.value=el.value.replace(/\D/g,'')}});
 document.addEventListener('compositionend',function(e){if(e.target.id==='q'){S.q=e.target.value;S.page=0;clearTimeout(qTimer);qTimer=setTimeout(softList,120)}});
-document.addEventListener('change',function(e){if(e.target.id==='subjAdd'){var v0=e.target.value;if(v0){var L=subjList(document.getElementById('e_교습과목').value);if(L.indexOf(v0)<0)L.push(v0);subjSet(L)}return}var el=e.target,m={fst:'st',fck:'ck',fsd:'sd',fac:'ac',fins:'ins',fdu:'du',fpw:'pw',frl:'rl',fcp:'cp',ffr:'fr',fkd:'kd',fct:'ct',frg:'rg'}[el.id];
+document.addEventListener('change',function(e){var dsl=e.target.dataset&&e.target.dataset.daslot;if(dsl!=null&&dsl!==''){var i=+dsl,aid=e.target.dataset.aid,f=e.target.files&&e.target.files[0];if(!f)return;
+    var mime=f.type==='image/jpg'?'image/jpeg':f.type;if(['application/pdf','image/jpeg','image/png'].indexOf(mime)<0){toast('PDF · JPG · PNG 파일만 올릴 수 있어요');return}if(f.size>10*1024*1024){toast('10MB 아래 파일로 올려 주세요');return}
+    var kind=DOC_SLOTS_A[i][0]==='임대'?document.getElementById('dk_'+i).value:DOC_SLOTS_A[i][0];S.docBusyA=i;render();
+    var fr=new FileReader();fr.onload=function(){var u=String(fr.result);callS('docUp',aid,kind,f.name,mime,u.slice(u.indexOf(',')+1)).then(function(r){S.docBusyA=null;if(!r.ok){toast(r.msg);render();return}S.docs[aid]=r.docs;render();toast(kind+'를 올렸어요')})};fr.readAsDataURL(f);return}
+  if(e.target.id==='subjAdd'){var v0=e.target.value;if(v0){var L=subjList(document.getElementById('e_교습과목').value);if(L.indexOf(v0)<0)L.push(v0);subjSet(L)}return}var el=e.target,m={fst:'st',fck:'ck',fsd:'sd',fac:'ac',fins:'ins',fdu:'du',fpw:'pw',frl:'rl',fcp:'cp',ffr:'fr',fkd:'kd',fct:'ct',frg:'rg'}[el.id];
   if(m){S.f[m]=el.value;S.page=0;S.sel={};render();return}
   if(el.id==='e_학원ID'&&S.tab==='stu'){var keep=readEd();S.edAcad=el.value;render();Object.keys(keep).forEach(function(k){var n=document.getElementById('e_'+k);if(n&&k!=='담당교사ID')n.value=keep[k]})}});
 

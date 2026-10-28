@@ -1,4 +1,4 @@
-/* build: 20261028-181448 */
+/* build: 20261028-181907 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -13,7 +13,7 @@ const SRC_ID = '1CsIOTl_N7HlETEUJFLqklgYJOC1fYfTVdfuvUUkfDPs';   // [2026]스즈
 const CUR_Y = '2026';
 
 const HEAD = {
-  '학원': ['학원ID', '학원명', '구분', '상태', '원장교사ID', '원장명', '교실대표번호', '이메일', '교습과목', '시도', '시군구', '우편번호', '주소', '상세주소', '개원일', '계약체결일', '확인', '확인메모', '메모', '원본', '수정일', '수정자'],
+  '학원': ['학원ID', '학원명', '구분', '상태', '원장교사ID', '원장명', '교실대표번호', '이메일', '교습과목', '시도', '시군구', '우편번호', '주소', '상세주소', '개원일', '계약체결일', '확인', '확인메모', '메모', '원본', '수정일', '수정자', '졸업연주지역'],
   '교사': ['교사ID', '이름', '구분글자', '원래이름', '휴대전화', '이메일', '학원1', '학원2', '학원3', '직급', '전공', '회원구분', '명단자격', '명단취득', '회비구분', '캠프교수', '내부외부', '상태', '확인', '확인메모', '메모', '원본', '수정일', '수정자', '영문이름', '본인자격', '회비납부방법', '강사료대상', '계약체결', '계약일'],
   '학생': ['학생ID', '학원ID', '이름', '구분글자', '원래이름', '출생연도', '출생연도추정', '전공', '시작월', '상태', '담당교사ID', '확인', '확인메모', '메모', '원본', '수정일', '수정자'],
   '연회비': ['대상', 'ID', '년도', '부과', '납부', '납부일', '방식', '메모', '수정일', '수정자'],
@@ -31,7 +31,7 @@ const HEAD = {
 const KEY = { '학원': '학원ID', '교사': '교사ID', '학생': '학생ID' };
 /* 화면에서 고칠 수 있는 칸 (나머지는 서버가 정함) */
 const EDIT = {
-  '학원': ['학원명', '구분', '상태', '원장교사ID', '교실대표번호', '이메일', '교습과목', '시도', '시군구', '우편번호', '주소', '상세주소', '개원일', '계약체결일', '확인', '확인메모', '메모'],
+  '학원': ['학원명', '구분', '상태', '원장교사ID', '교실대표번호', '이메일', '교습과목', '시도', '시군구', '우편번호', '주소', '상세주소', '개원일', '계약체결일', '졸업연주지역', '확인', '확인메모', '메모'],
   '교사': ['이름', '구분글자', '휴대전화', '이메일', '학원1', '학원2', '학원3', '직급', '전공', '회원구분', '본인자격', '회비구분', '회비납부방법', '강사료대상', '캠프교수', '내부외부', '계약체결', '계약일', '상태', '확인', '확인메모', '메모'],
   '학생': ['학원ID', '이름', '구분글자', '출생연도', '전공', '시작월', '상태', '담당교사ID', '확인', '확인메모', '메모'],
 };
@@ -59,7 +59,7 @@ function include(n) { return HtmlService.createHtmlOutputFromFile(n).getContent(
 
 function api(name, args) {
   const open = { login, hello, tHello, tLookup, tStart, tResend, tVerify, tCreate, tLogin, tForgot, tReset, tMe, tSavePay, tSavePart, tSaveInfo, tSavePhoto, tAcad, tSaveAcad, tSaveRrn, tAddWork, tEndWork, tMainWork, tLogout, bPost, bMine, bReply };
-  const fns = { boot, saveRow, setCheck, logs, importRoster, saveDues, delDues, reqs, reqDo, delAcad, payView, bulkSet, saveWorks, importPastDues, bList, bSet, bComment, photoGet, photoDel };
+  const fns = { boot, saveRow, setCheck, logs, importRoster, saveDues, delDues, reqs, reqDo, delAcad, payView, bulkSet, saveWorks, importPastDues, bList, bSet, bComment, photoGet, photoDel, fillRegions };
   try {
     if (open[name]) return Object.assign({ ok: true }, open[name].apply(null, args || []));
     if (!fns[name]) throw new UserError('알 수 없는 요청이에요.');
@@ -226,6 +226,8 @@ function clean_(table, o) {
   }
   if (r['확인'] && ['확인 전', '확인', '확인 필요'].indexOf(r['확인']) < 0) r['확인'] = '확인 전';
   if ('계약체결' in r && ['', '예', '아니오'].indexOf(r['계약체결']) < 0) r['계약체결'] = '';
+  if ('졸업연주지역' in r && r['졸업연주지역'] && REGIONS.indexOf(r['졸업연주지역']) < 0) fail('졸업연주 지역을 골라 주세요.');
+  if ('교습과목' in r) r['교습과목'] = r['교습과목'].split(/[,，、]/).map(x => x.trim()).filter((x, k, a) => x && a.indexOf(x) === k).join(', ');
   if (r['계약일'] && !/^\d{4}-\d{2}-\d{2}$/.test(r['계약일'])) fail('계약일은 2026-03-01 처럼 넣어 주세요.');
   if (r['계약체결'] === '아니오') r['계약일'] = '';
   return r;
@@ -721,6 +723,20 @@ function tSavePay(sess, d) {
   } finally { lock.releaseLock(); }
   return tMe(sess);
 }
+/* ---------- 졸업연주 지역 (10-28) ---------- */
+const REGIONS = ['서울·경기·강원·제주', '대전·광주·충청·전라', '대구·부산·울산·경상'];
+function regionOf_(sido) { const x = String(sido || '');
+  if (/^(서울|경기|인천|강원|제주)/.test(x)) return REGIONS[0];
+  if (/^(대전|광주|세종|충북|충남|충청|전북|전남|전라)/.test(x)) return REGIONS[1];
+  if (/^(대구|부산|울산|경북|경남|경상)/.test(x)) return REGIONS[2]; return ''; }
+/** 졸업연주 지역이 빈 학원을 시·도로 채움 */
+function fillRegions(who) {
+  const A = tbl_('학원'); let n = 0, left = [];
+  A.v.forEach((r, i) => { if (A.get(i, '졸업연주지역')) return; const g = regionOf_(A.get(i, '시도')); if (g) { A.set(i, { '졸업연주지역': g, '수정일': now_(), '수정자': who.name + ' (시도로 채움)' }); n++; } else left.push(A.get(i, '학원명')); });
+  log_(who.name, '학원', '-', '졸업연주 지역 채우기', n + '곳 · 시도 없음 ' + left.length + '곳');
+  const A2 = tbl_('학원'); return { n, left, acad: { h: A2.h, rows: A2.v } };
+}
+
 /* ---------- 원장: 우리 학원 (10-28) — 학원 탭 「원장교사ID」로 관리자가 지정한 원장만 ---------- */
 const ACAD_OWN = ['교실대표번호', '이메일', '교습과목', '시도', '시군구', '우편번호', '주소', '상세주소', '개원일'];
 function headOf_(u, aid) {
@@ -753,6 +769,7 @@ function tSaveAcad(sess, aid, d) {
     if (o['개원일'] && !/^\d{4}-\d{2}(-\d{2})?$/.test(o['개원일'])) fail('개원일은 2015-03 처럼 넣어 주세요.');
     if ('교습과목' in o) o['교습과목'] = o['교습과목'].split(/[,，、]/).map(x => x.trim()).filter(x => INSTS_.indexOf(x) >= 0).join(', ');
     const diff = []; Object.keys(o).forEach(k => { if (o[k] !== g(k)) diff.push(k + ' ' + (g(k) || '없음') + ' → ' + (o[k] || '없음')); });
+    if (diff.length && !g('졸업연주지역') && regionOf_(o['시도'])) o['졸업연주지역'] = regionOf_(o['시도']);   /* 졸업연주 지역이 비어 있으면 시·도로 */
     if (diff.length) {
       const T = tbl_('교사'), ti = T.find('교사ID', u.tid), who = ti >= 0 ? T.get(ti, '이름') : u.email;
       A.set(i, Object.assign(o, { '확인': '확인 필요', '확인메모': [g('확인메모'), '원장이 바꿈(' + Utilities.formatDate(new Date(), 'Asia/Seoul', 'MM-dd') + '): ' + diff.join(' · ')].filter(Boolean).join(' · ').slice(0, 500), '수정일': now_(), '수정자': who + ' (원장)' }));

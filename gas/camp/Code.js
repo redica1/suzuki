@@ -1,4 +1,4 @@
-/* build: 20261028-233022 */
+/* build: 20261028-234556 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -72,6 +72,9 @@ const SETTINGS = [['관리자 아이디', 'admin', '관리자 화면(?page=admin
   ['예금주', '', '입금 계좌 예금주'],
   ['입금 시작일', '2026-10-01', '이 날짜보다 앞선 입금일로는 신고할 수 없어요'],
   ['공유주소', 'https://redica1.github.io/suzuki/camp/', '카카오톡 안에서 열었을 때 바깥 브라우저로 넘길 주소'],
+  ['회원관리 시트', '', '회원관리 DB 시트 ID 또는 주소 — 선생님 로그인(이메일 · 비밀번호)을 회원관리 계정으로 확인. 비우면 이름 + 휴대전화'],
+  ['로그인 방식', '회원관리 계정', '「회원관리 계정」 = 이메일 · 비밀번호 / 「이름+휴대전화」 = 예전 방식(시험용)'],
+  ['회원관리 주소', 'https://redica1.github.io/suzuki/member/', '선생님 가입 · 비밀번호 찾기 안내에 쓰는 회원관리 주소 (STG 는 끝에 ?test)'],
   ['회원 명단 파일', '', '회원관리가 만드는 「행사용 명단」 파일 ID 또는 주소. 넣으면 명단_교사 · 명단_학생을 그 파일로 5분마다 맞춤 (비우면 지금처럼 이 시트의 명단 그대로)'],
   ['접수 가능 학원', '마포스즈키', '「전체」 또는 학원 이름을 쉼표로 (예: 마포스즈키, 미사스즈키)'],
   ['시간표 공개', '아니오', '「예」면 선생님 화면 「내 시간표」에 교사 일정·개인레슨이 보여요']];
@@ -92,7 +95,7 @@ function doGet(e) {
   let page, cname = CAMP_NAME, cj = '';
   try { const c = campPublic_(); cname = c.base.name; cj = JSON.stringify(c); } catch (x) {}
   if (admin) page = HtmlService.createHtmlOutputFromFile('Admin');
-  else { const t = HtmlService.createTemplateFromFile('Index'); let share = ''; let tl = ''; try { ensureSettings_(); share = setting_('공유주소'); tl = setting_('테스트 로그인'); } catch (x) {} t.shareUrl = share; t.testLogin = tl; t.campJson = cj; /* 테스트 로그인: STG 「설정」에만 (이름/휴대전화) — 로그인 칸을 미리 채움 · campJson: 「캠프설정」 시트 값 (날짜·장소·차수·참가비) */ page = t.evaluate(); }
+  else { const t = HtmlService.createTemplateFromFile('Index'); let share = ''; let tl = ''; try { ensureSettings_(); share = setting_('공유주소'); tl = setting_('테스트 로그인'); } catch (x) {} t.shareUrl = share; t.testLogin = tl; t.campJson = cj; try { t.loginPw = pwMode_() ? '1' : ''; t.memberUrl = setting_('회원관리 주소'); } catch (x) { t.loginPw = ''; t.memberUrl = ''; } /* 테스트 로그인: STG 「설정」에만 (이름/휴대전화) — 로그인 칸을 미리 채움 · campJson: 「캠프설정」 시트 값 (날짜·장소·차수·참가비) */ page = t.evaluate(); }
   return page
     .setTitle(cname + (admin ? ' 접수 관리' : ' 접수'))
     .addMetaTag('viewport', 'width=device-width, initial-scale=1')
@@ -169,12 +172,46 @@ function teachers_() {
 }
 
 /** 이름 + 휴대전화로 로그인 (시험 기간: 명단의 휴대전화 뒤 4자리와 비교) */
+/* ---------------- 회원관리 계정 로그인 (10-28) ----------------
+ * 회원관리 시트 「계정」 탭(이메일 · 교사ID · 비번해시 · 솔트 · 상태)을 읽어 회원관리와 같은 방식(솔트 + SHA-256 5,000번)으로 확인.
+ * 맞으면 그 교사ID 로 명단_교사(회원관리에서 맞춘 것)에서 선생님을 찾음. 비밀번호는 캠프에 저장하지 않음. */
+function memberSheetId_() { const v = setting_('회원관리 시트'); const m = v.match(/\/d\/([a-zA-Z0-9_-]{20,})/); return m ? m[1] : (/^[a-zA-Z0-9_-]{20,}$/.test(v) ? v : ''); }
+function pwMode_() { return setting_('로그인 방식') !== '이름+휴대전화' && !!memberSheetId_(); }
+function mHash_(pw, salt) { let h = salt + '|' + pw; for (let i = 0; i < 5000; i++) h = Utilities.base64Encode(Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, h + salt, Utilities.Charset.UTF_8)); return 'S256x5000$' + h; }
+function acctCheck_(email, pw) {
+  email = String(email || '').trim().toLowerCase(); pw = String(pw || '');
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email) || !pw) throw new Error('이메일과 비밀번호를 넣어 주세요.');
+  const C = CacheService.getScriptCache(), k = 'cl_' + email, n = +(C.get(k) || 0);
+  if (n >= 10) throw new Error('로그인을 여러 번 실패했어요. 15분 뒤 다시 해 주세요.');
+  const sh = SpreadsheetApp.openById(memberSheetId_()).getSheetByName('계정'); if (!sh) throw new Error('회원관리 계정 표를 찾지 못했어요. 운영진에게 알려 주세요.');
+  const v = sh.getDataRange().getDisplayValues(), h = v[0], ix = x => h.indexOf(x);
+  const L = v.slice(1).filter(r => String(r[ix('이메일')]).trim().toLowerCase() === email), a = L.filter(r => r[ix('상태')] !== '반려').pop() || L.pop();
+  if (!a || mHash_(pw, a[ix('솔트')]) !== a[ix('비번해시')]) { C.put(k, String(n + 1), 900); throw new Error('이메일이나 비밀번호가 맞지 않아요. 회원관리(선생님 회원)에서 만든 이메일 · 비밀번호로 들어가요.'); }
+  if (a[ix('상태')] === '대기') throw new Error('협회가 회원 가입을 확인하는 중이에요. 확인되면 이메일로 알려 드려요.');
+  if (a[ix('상태')] !== '사용' || !a[ix('교사ID')]) throw new Error('사용할 수 없는 계정이에요. 협회에 문의해 주세요.');
+  C.remove(k);
+  const t = teachers_().find(x => x.id === String(a[ix('교사ID')]));
+  if (!t) throw new Error('캠프 회원 명단에 아직 선생님이 없어요(회원관리에서 막 바뀌었다면 5분 뒤 다시 해 주세요). 계속 안 되면 운영진에게 알려 주세요.');
+  return t;
+}
+function authCheckPw(email, pw) {
+  try { const t = acctCheck_(email, pw); const subs = loadSubs_().filter(x => x.owner === t.name); return { ok: true, name: t.name, subs: subs.map(x => x.no), fresh: !subs.length }; }
+  catch (e) { return { ok: false, msg: e.message }; }
+}
+function loginPw(email, pw, consent) {
+  let t; try { t = acctCheck_(email, pw); } catch (e) { return { ok: false, msg: e.message }; }
+  return loginT_(t, consent);
+}
 function login(name, phone, consent) {
+  if (pwMode_()) return { ok: false, msg: '이메일 · 비밀번호로 로그인해 주세요. 화면을 새로 고쳐 주세요.' };
   const ph = String(phone || '').replace(/\D/g, '');
   const nm = bare_(name);
   if (!nm || ph.length < 10) return { ok: false, msg: '이름과 휴대전화를 모두 넣어 주세요.' };
   const t = teachers_().find(x => bare_(x.name) === nm && x.p4 && ph.endsWith(x.p4));
   if (!t) return { ok: false, msg: '회원 명단의 이름·휴대전화와 맞지 않아요.' };
+  return loginT_(t, consent);
+}
+function loginT_(t, consent) {
   if (t.state === '대기') return { ok: false, msg: '승인 대기 중이에요. 협회가 확인하면 이메일로 알려 드려요.' };
   { const ce = consentErr_(consent); if (ce) return { ok: false, msg: ce }; }
   consentLog_('회원(교사)', t.name, t.p4, consent);
@@ -817,6 +854,7 @@ function authCheck(kind, name, phone) {
     const subs = loadSubs_().filter(x => x.acad === GUEST_ACAD && x.owner === owner);
     return { ok: true, name: nm, subs: subs.map(x => x.no), fresh: !g };
   }
+  if (pwMode_()) return { ok: false, msg: '이메일 · 비밀번호로 로그인해 주세요. 화면을 새로 고쳐 주세요.' };
   const nm = bare_(name);
   if (!nm || ph.length < 10) return { ok: false, msg: '이름과 휴대전화를 모두 넣어 주세요.' };
   const t = teachers_().find(x => bare_(x.name) === nm && x.p4 && ph.endsWith(x.p4));

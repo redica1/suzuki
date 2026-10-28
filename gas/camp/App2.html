@@ -1,4 +1,4 @@
-/* build: 20261028-233022 */
+/* build: 20261028-234556 */
 function vAuthPick(){return `<section class="sec"><h2>접수 시작</h2>
   <p class="lede">어떻게 접수하시나요?</p>
   <div class="pick2">
@@ -54,6 +54,10 @@ function doMemberLogin(nm,ph){busy(true,'들어가고 있어요…');google.scri
       S.token=r.token;S.today=r.today;S.myAcct=r.myAcct||null;loadFromServer(r);login({...r.teacher,acads:r.teacher.acads});
       if(!MY_SUBS.length&&r.teacher.acads.length===1){const a=r.teacher.acads[0];S.acad=a;S.rq='';S.sel={};S.ptab='교사';S.picked={};S.extra=[];S.fam=[];S.info={};S.room={};ensureRoster(a);S.verified=true;render()}})
       .withFailureHandler(e=>{busy(false);S.verr='연결이 잠시 안 돼요. 다시 눌러 주세요. ('+((e&&e.message)||e)+')';render()}).login(nm,ph,S.cons||{})}
+function doMemberLoginPw(em,pw){busy(true,'들어가고 있어요…');google.script.run.withSuccessHandler(r=>{busy(false);if(!r.ok){S.verr=r.msg;if(S.auth==='consent'&&!/동의/.test(r.msg))S.auth='login';render();return}
+      S.token=r.token;S.today=r.today;S.myAcct=r.myAcct||null;loadFromServer(r);login({...r.teacher,acads:r.teacher.acads});
+      if(!MY_SUBS.length&&r.teacher.acads.length===1){const a=r.teacher.acads[0];S.acad=a;S.rq='';S.sel={};S.ptab='교사';S.picked={};S.extra=[];S.fam=[];S.info={};S.room={};ensureRoster(a);S.verified=true;render()}})
+      .withFailureHandler(e=>{busy(false);S.verr='연결이 잠시 안 돼요. 다시 눌러 주세요. ('+((e&&e.message)||e)+')';render()}).loginPw(em,pw,S.cons||{})}
 function doGuestLogin(nm,ph){busy(true,'들어가고 있어요…');google.script.run.withSuccessHandler(r=>{busy(false);if(!r.ok){S.verr=r.msg;if(S.auth==='consent'&&!/동의/.test(r.msg))S.auth='guest';render();return}
       S.token=r.token;S.today=r.today;S.myAcct=r.myAcct||null;loadFromServer(r);login({...r.teacher});
       if(!MY_SUBS.length){S.acad=GUEST_ACAD;S.rq='';S.sel={};S.picked={};S.extra=[];S.fam=[];S.info={};S.room={};ensureRoster(GUEST_ACAD);S.verified=true;render()}})
@@ -74,6 +78,18 @@ function vStep1(){
   if(!u&&S.auth==='consent') return vConsent();
   if(!u&&S.auth==='guest') return vGuestLogin();
   if(u&&u.guest) return vGuestStep1();
+  if(!u&&LOGIN_PW) return `<section class="sec"><h2>선생님 로그인</h2>
+  <p class="lede">협회 회원관리(선생님 회원)에서 만든 <b>이메일과 비밀번호</b>로 들어가요.</p>
+  <div class="panel" style="max-width:440px">
+    <label class="f" for="lgId">이메일<input type="email" id="lgId" value="${esc(S.lgId||'')}" autocomplete="username" inputmode="email"></label>
+    <label class="f" for="lgPw">비밀번호<input type="password" id="lgPw" autocomplete="current-password"></label>
+    ${S.verr?`<p class="err">${S.verr}</p>`:''}
+    <button class="btn primary" type="button" id="doLogin">로그인</button>
+    <div class="spread"><button class="btn ghost small" type="button" id="toPick">← 처음으로</button><a class="btn ghost small" href="${esc(MEMBER_URL||SIGNUP_URL)}" target="_blank" rel="noopener" style="text-decoration:none">비밀번호를 잊었어요 ↗</a></div>
+    <div class="note info" style="display:grid;gap:8px"><b>아직 회원 가입을 안 하셨나요?</b>
+      <span class="hint">협회 선생님 회원에서 이름과 휴대전화로 확인한 뒤 이메일 · 비밀번호를 만들어요. 가입이 끝나면 같은 이메일 · 비밀번호로 여기에 들어올 수 있어요.</span>
+      <a class="btn primary" href="${esc(MEMBER_URL||SIGNUP_URL)}" target="_blank" rel="noopener" style="justify-self:start;text-decoration:none">선생님 회원 가입하기 ↗</a></div>
+  </div></section>`;
   if(!u) return `<section class="sec"><h2>선생님 로그인</h2>
   <p class="lede">회원 명단에 있는 선생님만 접수할 수 있어요. 이름과 휴대전화로 들어가요.</p>
   <div class="panel" style="max-width:440px">

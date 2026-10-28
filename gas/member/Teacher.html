@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261028-090000 -->
+<!-- build: 20261028-090158 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -115,6 +115,7 @@ input.bad,select.bad,textarea.bad{border-color:var(--bad);background:var(--bad-s
 .hist{display:grid;gap:6px;margin:0;padding:0;list-style:none}.hist li{border:1px solid var(--line);border-radius:9px;padding:8px 10px;display:grid;gap:4px}.hist li.past{opacity:.7}.hist select{width:auto;padding:6px 8px}
 .dues{width:100%;border-collapse:collapse;font-size:14px}.dues th,.dues td{padding:7px 6px;border-bottom:1px solid var(--line);text-align:left}.dues th{font-size:12px;color:var(--muted);font-weight:600}.dues td.n{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums}.dues th.n{text-align:right}
 .qbody{white-space:pre-wrap;word-break:break-word;margin:4px 0}.cmt{border-left:3px solid var(--line);padding:4px 10px;margin:6px 0}.cmt.adm{border-color:var(--accent);background:var(--accent-soft);border-radius:0 8px 8px 0}.hp{position:absolute;left:-5000px;width:1px;height:1px;overflow:hidden}
+.phbox{display:flex;gap:12px;align-items:center;margin:6px 0 10px}.phimg{width:78px;height:104px;border-radius:10px;border:1px solid var(--line);background:var(--bg);overflow:hidden;flex:none;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:12px;text-align:center}.phimg img{width:100%;height:100%;object-fit:cover}
 .postWrap{height:420px;border:1px solid var(--line);border-radius:9px;overflow:hidden}
 </style>
 </head><body>
@@ -160,7 +161,7 @@ function seg(name,opts,v){return '<div class="seg" role="group">'+opts.map(funct
 /* ---------- 화면 ---------- */
 var HTYPES=[['교사회원','교사회원','스즈키 교사 자격이 있는 선생님'],['연수교사','연수교사','지금 초급 연수 중인 선생님'],['외부인','외부인','반주자 · 스태프 · 통역 · 초청 강사 등 (강사료 · 수고비 지급용)']];
 function vHome(){var res='';
-  if(S.look==='found')res='<div class="card pick"><h3>협회 명단에 선생님 정보가 있어요</h3><p class="lede"><b>교사회원</b>으로 가입해요. 이메일 인증을 마치면 협회에 있는 정보(근무지 · 직급 · 전공 · 자격)를 불러와요. 맞는지 확인하고 고쳐 주세요.</p>'+
+  if(S.look==='found')res='<div class="card pick"><h3>협회 명단에 선생님 정보가 있어요</h3><p class="lede"><b>교사회원</b>으로 가입해요. 이메일 인증을 마치면 협회에 있는 정보(소속 학원 · 직급 · 전공 · 자격)를 불러와요. 맞는지 확인하고 고쳐 주세요.</p>'+
     '<div class="two"><button class="btn primary" type="button" id="isMe">교사회원 가입하기</button><button class="btn" type="button" id="retry">다시 입력</button></div></div>';
   else if(S.look==='hasAccount')res='<div class="note warn"><b>'+(S.has.state==='대기'?'이미 신청하셨어요. 협회가 확인하는 중이에요.':'이미 계정이 있어요.')+'</b> '+esc(S.has.email)+'</div><div class="two"><button class="btn" type="button" id="retry">다시 입력</button><button class="btn primary" type="button" id="goLogin">로그인하러 가기</button></div>';
   else if(S.look==='pending')res='<div class="note warn"><b>가입 신청을 받아 확인하는 중이에요.</b> '+esc(S.has.email)+' 로 결과를 알려 드려요.</div><button class="btn" type="button" id="retry">다시 입력</button>';
@@ -196,13 +197,13 @@ function readWorks(){if(!S.j)return;(S.j.works||[]).forEach(function(w,i){var y=
 function workList(){var j=S.j;return j.works.map(function(w,i){return '<div class="wk"><div class="spread"><b>'+(i===0?'<span class="pill info">주 근무</span> ':'')+esc(w.id?aName(w.id):w.text+' (목록에 없음)')+'</b><button class="btn small ghost" type="button" data-rmw="'+i+'">빼기</button></div>'+
   '<div class="row"><span class="hint">근무 시작 <span class="req">*</span></span>'+ymSel('w'+i,w.y,w.m,'w'+i)+'</div>'+fe('w'+i)+'</div>'}).join('')}
 function acadFields(){var j=S.j;
-  var pick=j.noWork?'':(j.works.length>=3?'<p class="hint">지금 근무지는 3곳까지예요.</p>':
+  var pick=j.noWork?'':(j.works.length>=3?'<p class="hint">지금 소속 학원는 3곳까지예요.</p>':
     (S.acadTyping?'<div class="row" style="flex-wrap:nowrap"><input type="text" id="jAcT" placeholder="학원 이름을 적어 주세요"><button class="btn small" type="button" id="addText" style="flex:none">넣기</button></div><div><button class="btn small ghost" type="button" id="acadList">목록에서 고르기</button></div>':
-     '<input type="search" id="aq" value="'+esc(S.aq||'')+'" placeholder="'+(j.works.length?'다른 근무지 더 찾기':'학원 이름으로 찾기')+'" autocomplete="off" '+bad('acad')+'><ul class="list" id="aList">'+aItems(aHits())+'</ul>'+
+     '<input type="search" id="aq" value="'+esc(S.aq||'')+'" placeholder="'+(j.works.length?'다른 소속 학원 더 찾기':'학원 이름으로 찾기')+'" autocomplete="off" '+bad('acad')+'><ul class="list" id="aList">'+aItems(aHits())+'</ul>'+
      '<div class="row"><button class="btn small ghost" type="button" id="typeAcad">목록에 없어요 · 직접 적기</button></div>'));
   return '<div class="f"><span>지금 근무하는 학원 <span class="req">*</span> <span class="opt">3곳까지 · 처음 고른 곳이 주 근무</span></span>'+
     (j.noWork?'':workList())+pick+
-    '<label class="agree" for="noWork"><input type="checkbox" id="noWork" '+(j.noWork?'checked':'')+'><div><b>현재 근무지 없음</b><span class="hint"> 지금 다니는 학원이 없어요</span></div></label>'+fe('acad')+
+    '<label class="agree" for="noWork"><input type="checkbox" id="noWork" '+(j.noWork?'checked':'')+'><div><b>현재 소속 학원 없음</b><span class="hint"> 지금 다니는 학원이 없어요</span></div></label>'+fe('acad')+
     '<p class="hint">그만둔 학원은 가입한 뒤 「내 정보」에서 종료 날짜를 넣으면 근무 이력으로 남아요.</p></div>'}
 function extFields(){var j=S.j;
   return '<div class="f"><span>하는 일 <span class="req">*</span></span>'+seg('extRole',EXT_ROLES,j.extRole)+fe('extRole')+'</div>'+
@@ -255,6 +256,7 @@ function infoEdit(m){var j=S.j;
     '<div class="two">'+btn('infoSave','저장')+'<button class="btn" type="button" id="infoNo">취소</button></div></div>'}
 function vMe(){var m=S.me;if(!m)return '<div class="card"><span><span class="spin"></span> 불러오는 중…</span></div>';var p=m.pay;
   return '<div class="card"><div class="spread"><h2>'+esc(m.name)+' 선생님</h2><button class="btn ghost small" type="button" id="logout">로그아웃</button></div>'+
+    '<div class="phbox"><div class="phimg">'+(m.photo?'<img src="'+esc(m.photo)+'" alt="내 사진">':'사진<br>없음')+'</div><div><b>사진</b><p class="hint">명찰 · 프로그램북에 쓰는 얼굴 사진이에요. 정면, 밝은 배경이면 좋아요.</p><label class="btn small" for="phIn" style="display:inline-block;cursor:pointer">'+(S.phBusy?'<span class="spin"></span> 올리는 중…':m.photo?'사진 바꾸기':'사진 넣기')+'</label><input type="file" id="phIn" accept="image/*" hidden></div></div>'+
     (m.reqs&&m.reqs.length?'<div class="note warn">협회가 확인 중인 요청: '+esc(m.reqs.join(', '))+'</div>':'')+
     (S.infoEd?infoEdit(m):'<dl class="kv"><dt>이메일</dt><dd>'+esc(m.email)+'</dd><dt>휴대전화</dt><dd class="num">'+fmtPh(m.phone)+'</dd>'+(m.ext?'<dt>구분</dt><dd><span class="pill info">외부인</span></dd><dt>악기</dt><dd>'+esc(m.inst||'-')+'</dd></dl>':'<dt>직급</dt><dd>'+esc(m.role||'-')+'</dd><dt>악기</dt><dd>'+esc(m.inst||'-')+'</dd><dt>회원 종류</dt><dd>'+(KINDS.indexOf(m.kind)>=0?'<span class="pill info">'+esc(kindLabel(m.kind))+'</span>':'<span class="pill due">확인 전</span>')+'</dd></dl>')+certLine(m)+'<button class="btn small block" type="button" id="infoEd">기본 정보 고치기</button>')+
     (m.heads&&m.heads.length?'<div class="note">원장으로 등록된 학원: <b>'+esc(m.heads.join(', '))+'</b> · 학원 정보와 학생 명단 메뉴는 곧 열려요.</div>':'')+
@@ -308,7 +310,7 @@ function duesCard(m){var ds=m.dues||[];
   var st=function(d){if(m.duesFree&&!d.due)return '<span class="pill info">면제</span>';if(d.due>0&&d.paid>=d.due)return '<span class="pill ok">완납</span>';if(d.paid>0)return '<span class="pill due">일부 납부</span>';if(d.due>0)return '<span class="pill due">미납</span>';return '<span class="hint">-</span>'};
   return '<div class="card"><h3>교사 회비</h3><dl class="kv"><dt>납부 방법</dt><dd>'+esc(m.duesFree?'면제':(m.duesWay||'-'))+'</dd></dl>'+
     (ds.length?'<ul class="hist">'+ds.map(function(d){return '<li><div class="spread"><b class="num">'+esc(d.year)+'년</b>'+st(d)+'</div><span class="hint num">회비 '+(d.due?won(d.due):'-')+' · 낸 금액 '+(d.paid?won(d.paid):'-')+(d.date?' · 입금 '+esc(String(d.date).replace(/-/g,'.')):'')+(d.way?' · '+esc(d.way):'')+'</span></li>'}).join('')+'</ul>':'<p class="hint">회비 기록이 아직 없어요.</p>')+
-    '<p class="hint">입금했는데 다르게 보이면 협회 카카오톡 채널로 알려 주세요.</p></div>'}
+    '</div>'}
 function eventCard(m){var es=m.events||[];
   return '<div class="card"><h3>행사 참여</h3>'+(es.length?'<ul class="hist">'+es.map(function(e){return '<li><div class="spread"><b>'+esc(e.name)+'</b>'+(e.sample?'<span class="pill mute">예시</span>':'<span class="pill ok">'+esc(e.state||'참가')+'</span>')+'</div><span class="hint num">'+esc(e.period||e.year)+(e.role?' · '+esc(e.role):'')+'</span></li>'}).join('')+'</ul>':'<p class="hint">아직 기록이 없어요.</p>')+
     '<p class="hint">캠프·졸업연주 등 협회 행사가 끝나면 여기에 모여요.'+(es.some(function(e){return e.sample})?' 지금은 테스트용 예시예요.':'')+'</p></div>'}
@@ -318,12 +320,12 @@ function workCard(m){var ws=m.works||[],cur=ws.filter(function(w){return !w.end}
     (w.end?'':ending?'<div class="row"><span class="hint">종료</span>'+ymSel('eW','','','endW')+'<button class="btn small primary" type="button" data-endok="'+esc(w.wid)+'">종료</button><button class="btn small ghost" type="button" id="endNo">취소</button></div>'+fe('endW'):
       '<div class="row">'+(w.main||cur.length<2?'':'<button class="btn small ghost" type="button" data-mainw="'+esc(w.wid)+'">주 근무로</button>')+'<button class="btn small" type="button" data-endw="'+esc(w.wid)+'">종료</button></div>')+'</li>'};
   var add='';
-  if(cur.length<3){if(S.addW){var a=S.addW;add='<div class="wk"><b>근무지 추가</b>'+(a.id||a.text?'<div class="spread"><span>'+esc(a.id?aName(a.id):a.text+' (목록에 없음)')+'</span><button class="btn small ghost" type="button" id="addWClr">다시 고르기</button></div><div class="row"><span class="hint">근무 시작</span>'+ymSel('aW',a.y,a.m,'addW')+'</div>'+fe('addW')+'<div class="row">'+btn('addWOk','추가','primary small')+'<button class="btn small ghost" type="button" id="addWNo">취소</button></div>':
+  if(cur.length<3){if(S.addW){var a=S.addW;add='<div class="wk"><b>소속 학원 추가</b>'+(a.id||a.text?'<div class="spread"><span>'+esc(a.id?aName(a.id):a.text+' (목록에 없음)')+'</span><button class="btn small ghost" type="button" id="addWClr">다시 고르기</button></div><div class="row"><span class="hint">근무 시작</span>'+ymSel('aW',a.y,a.m,'addW')+'</div>'+fe('addW')+'<div class="row">'+btn('addWOk','추가','primary small')+'<button class="btn small ghost" type="button" id="addWNo">취소</button></div>':
       (S.acadTyping?'<div class="row" style="flex-wrap:nowrap"><input type="text" id="jAcT" placeholder="학원 이름을 적어 주세요"><button class="btn small" type="button" id="addText" style="flex:none">넣기</button></div>':'<input type="search" id="aq" value="'+esc(S.aq||'')+'" placeholder="학원 이름으로 찾기" autocomplete="off"><ul class="list" id="aList">'+aItems(aHits())+'</ul><div class="row"><button class="btn small ghost" type="button" id="typeAcad">목록에 없어요 · 직접 적기</button><button class="btn small ghost" type="button" id="addWNo">취소</button></div>'))+'</div>'}
-    else add='<button class="btn block" type="button" id="addW">+ 근무지 추가</button>'}
-  else add='<p class="hint">지금 근무지는 3곳까지예요. 그만둔 곳을 「종료」하면 다른 학원을 넣을 수 있어요.</p>';
-  return '<div class="card"><h3>근무지</h3>'+(cur.length?'<ul class="hist">'+cur.map(li).join('')+'</ul>':'<p class="hint">현재 근무지 없음</p>')+add+
-    (past.length?'<h3 style="margin-top:10px">지난 근무지</h3><ul class="hist">'+past.map(li).join('')+'</ul>':'')+
+    else add='<button class="btn block" type="button" id="addW">+ 소속 학원 추가</button>'}
+  else add='<p class="hint">지금 소속 학원는 3곳까지예요. 그만둔 곳을 「종료」하면 다른 학원을 넣을 수 있어요.</p>';
+  return '<div class="card"><h3>소속 학원</h3>'+(cur.length?'<ul class="hist">'+cur.map(li).join('')+'</ul>':'<p class="hint">현재 소속 학원 없음</p>')+add+
+    (past.length?'<h3 style="margin-top:10px">지난 소속 학원</h3><ul class="hist">'+past.map(li).join('')+'</ul>':'')+
     '</div>'}
 function payOut(p){var o={};Object.keys(p).forEach(function(k){if(k!=='rrn'&&k!=='rrnAg')o[k]=p[k]});return o}
 function curPay(){return S.v==='pay'||S.payEd?S.pay:S.j.pay}
@@ -430,17 +432,17 @@ document.addEventListener('click',function(e){var b=e.target.closest('button');i
   if(b.id==='addWNo'){S.addW=null;S.acadTyping=false;render();return}
   if(b.id==='addWClr'){S.addW={};render();return}
   if(b.id==='addWOk'){var a=S.addW,ay=v('aWY'),am=v('aWM');a.y=ay;a.m=am;if(!ay||!am){S.err={addW:'근무 시작 년·월을 골라 주세요.'};render();return}
-    run(function(){return call('tAddWork',[S.sess,{id:a.id,text:a.text,y:ay,m:am}]).then(function(r){if(!r.ok){S.err={addW:r.msg};return}S.me=r.me;S.addW=null;S.err={};toast('근무지를 넣었어요')})});return}
+    run(function(){return call('tAddWork',[S.sess,{id:a.id,text:a.text,y:ay,m:am}]).then(function(r){if(!r.ok){S.err={addW:r.msg};return}S.me=r.me;S.addW=null;S.err={};toast('소속 학원를 넣었어요')})});return}
   if(d.endw){S.endW=d.endw;S.err={};render();return}
   if(b.id==='endNo'){S.endW='';render();return}
   if(d.endok){var ey=v('eWY'),emo=v('eWM');if(!ey||!emo){S.err={endW:'종료 년·월을 골라 주세요.'};render();return}
-    run(function(){return call('tEndWork',[S.sess,d.endok,ey,emo]).then(function(r){if(!r.ok){S.err={endW:r.msg};return}S.me=r.me;S.endW='';S.err={};toast('종료했어요. 지난 근무지에 남아요')})});return}
+    run(function(){return call('tEndWork',[S.sess,d.endok,ey,emo]).then(function(r){if(!r.ok){S.err={endW:r.msg};return}S.me=r.me;S.endW='';S.err={};toast('종료했어요. 지난 소속 학원에 남아요')})});return}
   if(d.mainw){run(function(){return call('tMainWork',[S.sess,d.mainw]).then(function(r){if(!r.ok){toast(r.msg);return}S.me=r.me;toast('주 근무를 바꿨어요')})});return}
   if(b.id==='create'){readConfirm();var er2={},pw=v('pw1'),j=S.j,nw=S.look!=='found';
     var ext=nw&&S.mode==='ext';
     if(ext){if(!j.extRole)er2.extRole='하는 일을 골라 주세요.';else if(j.extRole==='기타'&&!j.extRoleText.trim())er2.extRoleText='하는 일을 적어 주세요.'}
     else{if(!j.type)er2.type='회원 종류를 골라 주세요.';if(j.type==='연수교사회원'&&!j.course)j.course='초급';
-    if(!j.noWork&&!j.works.length)er2.acad='근무하는 학원을 고르거나 「현재 근무지 없음」에 체크해 주세요.';
+    if(!j.noWork&&!j.works.length)er2.acad='근무하는 학원을 고르거나 「현재 소속 학원 없음」에 체크해 주세요.';
     if(!j.noWork)j.works.forEach(function(w,i){if(!w.y||!w.m)er2['w'+i]='근무 시작 년·월을 골라 주세요.'});
     if(j.role==null)er2.role='직급을 골라 주세요.';if(!j.inst)er2.inst='악기를 골라 주세요.';
     Object.keys(j.certs).forEach(function(n){if(!j.certs[n])er2['cy_'+n]=n+' 취득 년도를 골라 주세요.'})}
@@ -509,7 +511,16 @@ document.addEventListener('input',function(e){var el=e.target;
   if(el.id==='z_h'||el.id==='z_m'){el.value=el.value.replace(/\D/g,'').slice(0,5)}
   if(el.id==='rrnIn'){var x=el.value.replace(/\D/g,'').slice(0,13);el.value=x.length>6?x.slice(0,6)+'-'+x.slice(6):x}
   if(el.id==='aq'){S.aq=el.value;document.getElementById('aList').innerHTML=aItems(aHits())}});
-document.addEventListener('change',function(e){if(e.target.id==='pSame'){readPayIn();var pd=curPay();if(pd&&pd.same){pd.zip=pd.hzip;pd.addr=pd.haddr;pd.addr2=pd.haddr2;delete S.err.a_m}render();return}if(e.target.id==='noWork'){readConfirm();S.acadTyping=false;if(S.j.noWork)delete S.err.acad;render();return}var dm=e.target.dataset&&e.target.dataset.dom;if(dm){var x=document.getElementById(dm+'X');x.hidden=!!e.target.value;if(!e.target.value)x.focus();return}
+/* 사진: 3:4 로 가운데를 잘라 360x480 JPEG 로 줄여서 보냄 (시트 한 칸에 들어가게) */
+function shrinkPhoto(file){return new Promise(function(res,rej){var fr=new FileReader();fr.onerror=function(){rej('읽지 못했어요')};fr.onload=function(){var im=new Image();im.onerror=function(){rej('사진 파일이 아니에요')};im.onload=function(){
+  var W=360,H=480,r=W/H,sw=im.width,sh=im.height,cw=sw,ch=sh;if(sw/sh>r)cw=sh*r;else ch=sw/r;var sx=(sw-cw)/2,sy=(sh-ch)/2;
+  var cv=document.createElement('canvas');cv.width=W;cv.height=H;var cx=cv.getContext('2d');cx.fillStyle='#fff';cx.fillRect(0,0,W,H);cx.drawImage(im,sx,sy,cw,ch,0,0,W,H);
+  var q=0.85,u=cv.toDataURL('image/jpeg',q);while(u.length>46000&&q>0.3){q-=0.1;u=cv.toDataURL('image/jpeg',q)}
+  if(u.length>46000){cv.width=270;cv.height=360;cx=cv.getContext('2d');cx.drawImage(im,sx,sy,cw,ch,0,0,270,360);u=cv.toDataURL('image/jpeg',0.7)}
+  res(u)};im.src=fr.result};fr.readAsDataURL(file)})}
+document.addEventListener('change',function(e){if(e.target.id==='phIn'){var f=e.target.files&&e.target.files[0];if(!f)return;if(!/^image\//.test(f.type)){toast('사진 파일을 골라 주세요');return}
+  S.phBusy=true;render();shrinkPhoto(f).then(function(u){return call('tSavePhoto',[S.sess,u])}).then(function(r){S.phBusy=false;if(!r.ok){toast(r.msg);render();return}S.me=r.me;render();toast('사진을 넣었어요')},function(er){S.phBusy=false;render();toast(String(er))});return}
+  if(e.target.id==='pSame'){readPayIn();var pd=curPay();if(pd&&pd.same){pd.zip=pd.hzip;pd.addr=pd.haddr;pd.addr2=pd.haddr2;delete S.err.a_m}render();return}if(e.target.id==='noWork'){readConfirm();S.acadTyping=false;if(S.j.noWork)delete S.err.acad;render();return}var dm=e.target.dataset&&e.target.dataset.dom;if(dm){var x=document.getElementById(dm+'X');x.hidden=!!e.target.value;if(!e.target.value)x.focus();return}
   var n=e.target.dataset&&e.target.dataset.cert;if(!n)return;readConfirm();if(e.target.checked)S.j.certs[n]='';else delete S.j.certs[n];delete S.err['cy_'+n];render()});
 /* 휴대전화 칸: 앞의 010- 은 고르거나 지울 수 없게, 커서는 항상 010- 뒤로 (10-28) */
 function phClamp(el){if(!el||el.id!=='iPh'||el.disabled)return;var n=el.value.length,a=el.selectionStart,b=el.selectionEnd;

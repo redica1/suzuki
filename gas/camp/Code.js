@@ -1,4 +1,4 @@
-/* build: 20261028-234556 */
+/* build: 20261029-002003 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -1151,7 +1151,7 @@ function exportProgram(token) {
  * 담당자 = 교사 회원 중에서 골라 메뉴마다 편집 / 보기 / 없음 → 관리자 화면에 이름 + 휴대전화로 로그인 */
 const STAFF = '담당자';
 const STAFF_HEAD = ['교사ID', '이름', '학원', '권한', '사용', '메모', '바꾼 날'];
-const ADMIN_TABS = [['home', '한눈에'], ['subs', '접수 · 입금 확인'], ['rp', '입금 신고'], ['cx', '취소 · 환불'], ['ens', '앙상블'], ['prof', '교수진'], ['act', '교사 일정'], ['tt', '개인레슨'], ['room', '방 배정'], ['con', '오후음악회'], ['stat', '통계'], ['q', '오류·건의'], ['schol', '장학금'], ['mem', '회원 명단']];
+const ADMIN_TABS = [['home', '한눈에'], ['subs', '접수 · 입금 확인'], ['rp', '입금 신고'], ['cx', '취소 · 환불'], ['ens', '앙상블'], ['prof', '교수진'], ['act', '교사 일정'], ['tt', '개인레슨'], ['room', '방 배정'], ['con', '오후음악회'], ['stat', '통계'], ['q', '오류·건의'], ['schol', '장학금'], ['mem', '회원 명단'], ['bplan', '예산 계획'], ['bset', '결산']];
 function staff_() {
   return rows_(STAFF).filter(r => r['교사ID']).map(r => { let p = {}; try { p = JSON.parse(String(r['권한'] || '{}')); } catch (x) {}
     return { tid: String(r['교사ID']), name: String(r['이름']), acad: String(r['학원'] || ''), perms: p, on: String(r['사용'] || '예') !== '아니오', memo: String(r['메모'] || '') }; });
@@ -2001,4 +2001,96 @@ function conSave(token, b) {
     log_('관리자 ' + a.name, '음악회 순서 저장', concerts.length + '개 공연 · ' + rows.length + '명');
     return { ok: true, rev: (+c.conrev || 0) + 1 };
   } finally { try { lock.releaseLock(); } catch (x) {} }
+}
+
+/* ================= 예산 · 결산 =================
+ * 시트 「예산결산」: 항목 · 값(JSON) · 설명. 값이 길면 plan, plan2 … 로 45,000자씩 나눠 저장 + rev(동시 수정 막기)
+ * plan = { base, mix, inc, lines }
+ *   base: n 예상 인원(유료 참가자) · price 기준가(학생·교사 1차) · fx 환율 {USD, JPY} · cut 수입에서 떼는 몫 {pct, parts:[[이름, %]…]}
+ *         hotelFix 인원별 손익에서 호텔(객실·식사·홀)을 계약대로 고정할지 · sMin/sMax/sStep 인원표 범위
+ *   mix:  참가자격별 인원 비율(평균 참가비 계산용) {참가자격: 인원}
+ *   inc:  참가비 밖 수입 줄 { id, name, amt(예산), cur, scale, sys(접수 입금에 이미 들어감), act(실제), memo }
+ *   lines: 지출 줄 { id, cat, name, unit, qty, times, cur, scale('fixed'|'person'), guar(보증 최소 수량), auto, conf(확정·견적), paid(지급), date, how, memo }
+ * 권한: 메뉴 bplan(예산 계획) · bset(결산). 보기 = budData, 편집 = budSave */
+const BUD_SH = '예산결산';
+const BUD_CATS = ['room', 'meal', 'hall', 'prof', 'teach', 'staff', 'print', 'equip', 'ad', 'bus', 'schol', 'etc'];
+const BUD_CUR = ['KRW', 'USD', 'JPY'];
+const BUD_HOW = ['', '통장', '카드', '현금', '달러', '엔화', '기타'];
+function budSeed_() {
+  let k = 0; const L = o => Object.assign({ id: 'l' + (++k), unit: 0, qty: 1, times: 1, cur: 'KRW', scale: 'fixed', guar: '', auto: '', conf: '', paid: '', date: '', how: '', memo: '' }, o);
+  let j = 0; const I = o => Object.assign({ id: 'i' + (++j), amt: 0, cur: 'KRW', scale: 'fixed', sys: false, act: '', memo: '' }, o);
+  return {
+    base: { n: 600, price: 550000, fx: { USD: 1450, JPY: 9.5 }, cut: { pct: 10, parts: [['7%', 7], ['3%', 3]] }, hotelFix: true, sMin: 350, sMax: 700, sStep: 25 },
+    mix: { '학생': 266, '교사': 95, '연수생': 26, '회원의 악기하는 자녀': 20, '회원의 첫번째 보호자': 69, '회원의 그외 악기 안하는 동반가족': 29, '동반가족 중 돌전아기': 1, '비회원 학생': 2, '비회원 보호자': 2 },
+    inc: [
+      I({ name: '추가 레슨 · 마스터클래스', amt: 4200000, scale: 'person', sys: true, memo: '26 여름: 추가 레슨 24명 · 마스터클래스 9명 · 접수 입금에 함께 들어옴' }),
+      I({ name: '해외 참가 달러 수입', amt: 0, cur: 'USD', memo: '26 겨울 $29,495 (통장 밖 · 환전 25,000,000원)' }),
+      I({ name: '기타 수입 (식비 · 티켓 등)', amt: 0, memo: '26 여름 식비 270,000 · 티켓 260,000' })],
+    lines: [
+      L({ cat: 'room', name: '객실 S25 · S30 (4인실)', unit: 135000, qty: 200, times: 4, scale: 'person', memo: '스플라스 리솜 견적 26.10.21 · 600명 기준 · 4박' }),
+      L({ cat: 'meal', name: '조식 (자율배식)', unit: 12000, qty: 540, times: 4, scale: 'person', auto: 'meal', memo: '1/12~15 · 보증인원 = 비용 (메뉴 변경 3일 전까지)' }),
+      L({ cat: 'meal', name: '중식 · 석식 (자율배식)', unit: 12000, qty: 640, times: 7, scale: 'person', auto: 'meal', memo: '1/11 석식 ~ 1/14 석식' }),
+      L({ cat: 'hall', name: '연회장 7곳 일괄 (그랜드홀 · 루비노홀 · 스페이스 · 스튜디오)', unit: 3000000, memo: '빔프로젝터 · 인터넷 포함' }),
+      L({ cat: 'prof', name: '내국 교수진', unit: 26950000, memo: '26 겨울 실지출' }),
+      L({ cat: 'prof', name: '외국 교수진', unit: 14300000, memo: '26 겨울 실지출 ($7,895 + ¥297,000)' }),
+      L({ cat: 'teach', name: '교사 수당', unit: 200000, qty: 95, scale: 'person', auto: 'teach', memo: '26 겨울 실지출 19,000,000' }),
+      L({ cat: 'staff', name: '스텝', unit: 2650000, memo: '26 겨울 실지출' }),
+      L({ cat: 'staff', name: '외부 연주자', unit: 10000000, memo: '26 겨울 실지출 (예산 900,000에서 크게 늘었던 항목)' }),
+      L({ cat: 'print', name: '프로그램북', unit: 1266000 }),
+      L({ cat: 'print', name: '악보', unit: 300000 }),
+      L({ cat: 'equip', name: '피아노 대여 · 조율', unit: 1650000, memo: '그랜드1 · 업라이트2' }),
+      L({ cat: 'ad', name: '잡지 광고', unit: 1000000 }),
+      L({ cat: 'bus', name: '버스비 지원', unit: 3700000 }),
+      L({ cat: 'schol', name: '장학금', unit: 5900000, auto: 'schol', memo: '학생 20명↑ 80만 · 10명↑ 40만 + 첼로 지원' }),
+      L({ cat: 'etc', name: '호텔 기타 (음료 · 추가 침구 등)', unit: 2000000 }),
+      L({ cat: 'etc', name: '잡비', unit: 1500000 })]
+  };
+}
+function budRead_() {
+  const R = rows_(BUD_SH); let rev = 0; const parts = [];
+  R.forEach(r => { const k = String(r['항목'] || ''), v = String(r['값'] == null ? '' : r['값']);
+    if (k === 'rev') rev = +v || 0; else { const m = k.match(/^plan(\d*)$/); if (m) parts.push([+(m[1] || 1), v]); } });
+  if (!parts.length) return { plan: null, rev };
+  try { return { plan: JSON.parse(parts.sort((a, b) => a[0] - b[0]).map(x => x[1]).join('')), rev }; } catch (x) { return { plan: null, rev, err: '예산결산 시트의 값을 읽지 못했어요.' }; }
+}
+function budCanSee_(a) { if (!a.sup && !['bplan', 'bset'].some(k => a.perms[k] === '보기' || a.perms[k] === '편집')) throw new Error('예산 · 결산을 볼 권한이 없어요.'); }
+function budData(token) {
+  const a = adm_(token); budCanSee_(a);
+  const r = budRead_();
+  let schol = 0, scholN = 0; try { scholRows_().forEach(x => { if (x.state === '해당 없음') return; const v = x.amt === '' || x.amt == null ? +x.base || 0 : +x.amt || 0; schol += v; if (v) scholN++; }); } catch (x) {}
+  let lessons = 0; try { lessons = lessons_().length; } catch (x) {}
+  let rooms = 0; try { rooms = rooms_().filter(x => (x.occ || []).length).length; } catch (x) {}
+  const c = camp_();
+  return { plan: r.plan || budSeed_(), rev: r.rev, seeded: !r.plan, err: r.err || '', auto: { schol, scholN, lessons, rooms }, fees: c.fees, rounds: c.rounds.map(x => x.n), camp: c.base };
+}
+function budSave(token, plan, rev) {
+  const a = adm_(token); need_(a, ['bplan', 'bset']);
+  const n = v => { const x = Math.round((+v || 0) * 100) / 100; return isFinite(x) ? x : 0; }, opt = v => v === '' || v == null ? '' : n(v);
+  const s = (v, m) => String(v == null ? '' : v).trim().slice(0, m || 120), okD = v => /^\d{4}-\d{2}-\d{2}$/.test(String(v || '')) ? String(v) : '';
+  const p = plan || {}, b = p.base || {}, fx = b.fx || {}, cut = b.cut || {};
+  const base = { n: Math.max(1, Math.round(+b.n || 0)), price: Math.max(0, Math.round(+b.price || 0)), fx: { USD: Math.max(0, n(fx.USD)), JPY: Math.max(0, n(fx.JPY)) },
+    cut: { pct: Math.max(0, Math.min(100, n(cut.pct))), parts: (cut.parts || []).slice(0, 6).map(x => [s(x[0], 20), Math.max(0, Math.min(100, n(x[1])))]).filter(x => x[0]) },
+    hotelFix: !!b.hotelFix, sMin: Math.max(1, Math.round(+b.sMin || 300)), sMax: Math.max(1, Math.round(+b.sMax || 700)), sStep: Math.max(1, Math.round(+b.sStep || 25)) };
+  if (base.sMax <= base.sMin) throw new Error('인원표의 끝 인원을 시작 인원보다 크게 넣어 주세요.');
+  if ((base.sMax - base.sMin) / base.sStep > 80) throw new Error('인원표 줄이 너무 많아요. 간격을 넓혀 주세요.');
+  const mix = {}; FEE_TYPES.forEach(t => { const v = Math.max(0, Math.round(+((p.mix || {})[t]) || 0)); if (v) mix[t] = v; });
+  const ids = {}; const uid = (x, pre) => { let id = s(x, 20) || pre + Utilities.getUuid().slice(0, 6); while (ids[id]) id = pre + Utilities.getUuid().slice(0, 6); ids[id] = 1; return id; };
+  const inc = (p.inc || []).slice(0, 60).map(x => ({ id: uid(x.id, 'i'), name: s(x.name, 60), amt: n(x.amt), cur: BUD_CUR.includes(x.cur) ? x.cur : 'KRW', scale: x.scale === 'person' ? 'person' : 'fixed', sys: !!x.sys, act: opt(x.act), memo: s(x.memo, 300) })).filter(x => x.name);
+  const lines = (p.lines || []).slice(0, 200).map(x => ({ id: uid(x.id, 'l'), cat: BUD_CATS.includes(x.cat) ? x.cat : 'etc', name: s(x.name, 80), unit: n(x.unit), qty: n(x.qty === '' || x.qty == null ? 1 : x.qty), times: n(x.times === '' || x.times == null ? 1 : x.times),
+    cur: BUD_CUR.includes(x.cur) ? x.cur : 'KRW', scale: x.scale === 'person' ? 'person' : 'fixed', guar: opt(x.guar), auto: ['schol', 'teach', 'meal', 'room'].includes(x.auto) ? x.auto : '',
+    conf: opt(x.conf), paid: opt(x.paid), date: okD(x.date), how: BUD_HOW.includes(x.how) ? x.how : '', memo: s(x.memo, 300) })).filter(x => x.name);
+  const json = JSON.stringify({ base, mix, inc, lines });
+  const lock = lock_();
+  try {
+    const ss = SpreadsheetApp.getActive(); let sh = ss.getSheetByName(BUD_SH);
+    if (!sh) { sh = ss.insertSheet(BUD_SH); sh.getRange(1, 1, 1, 3).setValues([['항목', '값', '설명']]).setFontWeight('bold'); sh.setFrozenRows(1); sh.getRange('B:B').setNumberFormat('@'); }
+    const cur = budRead_();
+    if ((+rev || 0) !== (cur.rev || 0)) throw new Error('다른 분이 먼저 예산 · 결산을 바꿨어요. 새로 불러온 뒤 다시 해 주세요.');
+    const vals = []; for (let i = 0; i * JSON_CHUNK < json.length; i++) vals.push(['plan' + (i ? i + 1 : ''), json.slice(i * JSON_CHUNK, (i + 1) * JSON_CHUNK), i ? '앞 줄에 이어짐' : '예산 계획 · 결산 (관리자 예산 · 결산 메뉴에서 바꿈 · 직접 고치지 마세요)']);
+    vals.push(['rev', String((cur.rev || 0) + 1), '바꾼 횟수 (건드리지 마세요)']);
+    if (sh.getLastRow() > 1) sh.getRange(2, 1, sh.getLastRow() - 1, 3).clearContent();
+    sh.getRange(2, 1, vals.length, 3).setValues(vals);
+    log_('관리자 ' + a.name, '예산 · 결산 저장', '수입 줄 ' + inc.length + ' · 지출 줄 ' + lines.length + ' · 예상 인원 ' + base.n + ' · 기준가 ' + base.price);
+  } finally { lock.releaseLock(); }
+  return budData(token);
 }

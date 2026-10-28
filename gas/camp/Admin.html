@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261028-234556 -->
+<!-- build: 20261029-002003 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -249,6 +249,7 @@ tr.off td{opacity:.5}
 .act .sw.cls{border-left:4px solid var(--accent)}.act .sw.fam{background:var(--accent-soft)}.act .sw.prof{background:var(--rosin-soft)}.act .sw.etc{background:var(--sunk)}.act .sw.empty{border-style:dashed}
 .cotbl input[type=text],.cotbl input[type=number],.cotbl select{padding:4px 7px;border:1px solid var(--line);border-radius:6px;font:inherit;background:var(--surface);color:var(--ink);min-width:60px}.cotbl input.empty{border-color:var(--rosin)}.cotbl td{vertical-align:middle}tr.cogone td{color:var(--faint);background:var(--sunk)}
 @media (max-width:640px){.band h1{font-size:15px}.band .meta{font-size:11.5px;margin-left:0}.tabs,.tabs2{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}.tabs::-webkit-scrollbar,.tabs2::-webkit-scrollbar{display:none}.tabs button,.tabs2 button{white-space:nowrap;padding-left:11px;padding-right:11px}.tabs2 .grp{display:contents}}
+.bud tr.bcat td{background:var(--sunk)}.bud td.num{width:auto;white-space:nowrap}.bud tr.me td{background:var(--accent-soft)}.bud tr.be td{border-top:2px solid var(--ok)}.bud .bbar{height:10px;border-radius:3px;min-width:2px}.bneg{color:var(--bad)}.bpos{color:var(--ok)}.bud .tabs2{border-bottom:1px solid var(--line)}
 </style></head>
 <body>
 <div class="hdr" id="hdr"><div class="band"><div class="wrap">
@@ -274,7 +275,7 @@ function call(fn,args,ok,msg,tries){if(roBlock(fn)){toast(RO_MSG);return}tries=t
   if(/BUSY|lock|timed out|timeout|network|네트워크|시간 초과/i.test(m)&&tries<4){busy(true,'접속이 많아 다시 보내고 있어요… ('+(tries+1)+'/4)');setTimeout(()=>call(fn,args,ok,msg,tries+1),1500*(tries+1));return}
   busy(false);if(/로그인이 끝났/.test(m)){try{sessionStorage.removeItem('campAdmTok')}catch(x){}S.tok='';S.D=null;render();toast('로그인 시간이 끝났어요. 다시 로그인해 주세요.');return}
   toast('안 됐어요 · '+(/BUSY/.test(m)?'지금 접속이 많아요. 잠시 뒤 다시 해 주세요.':m))})[fn](S.tok,...args)}
-function goTab(t){if(!t)return;if(t==='staff'&&S.tab!=='staff'){S.SF=null;S.sf=null}if((t==='camp'||t==='cons')&&S.tab!==t&&!ccDirty())S.cc=null;if(t==='cons'){S.consR=null;S.consL=0}if(t==='schol'&&S.tab!=='schol'&&!scDirty()){S.SC=null;S.sc=null}if(S.tab==='act'&&t!=='act')ACT.flush();if(S.tab==='con'&&t!=='con')CORD.flush();S.tab=t;render()}
+function goTab(t){if(!t)return;if(t==='staff'&&S.tab!=='staff'){S.SF=null;S.sf=null}if((t==='camp'||t==='cons')&&S.tab!==t&&!ccDirty())S.cc=null;if(t==='cons'){S.consR=null;S.consL=0}if(t==='schol'&&S.tab!=='schol'&&!scDirty()){S.SC=null;S.sc=null}if(S.tab==='act'&&t!=='act')ACT.flush();if(S.tab==='con'&&t!=='con')CORD.flush();if((t==='bplan'||t==='bset')&&S.tab!=='bplan'&&S.tab!=='bset')BUD.enter();S.tab=t;render()}
 /* 한글 입력: 글자를 조합하는 동안에는 다시 그리지 않음 (다시 그리면 「ㅎㅏㄴ」처럼 깨짐) → 조합이 끝나면 한 번 */
 document.addEventListener('input',e=>{if(e.isComposing&&e.target.matches&&e.target.matches('input[type=search],input[type=text]'))e.stopImmediatePropagation()},true);
 document.addEventListener('compositionend',e=>{const t=e.target;if(t.matches&&t.matches('input[type=search],input[type=text]'))setTimeout(()=>{if(document.body.contains(t))t.dispatchEvent(new Event('input',{bubbles:true}))},0)},true);
@@ -298,10 +299,10 @@ function payPill(p){if(p.status!=='정상')return p.status==='취소요청'?'<sp
 
 /* ---------- 화면 ---------- */
 /* GNB: 1단(묶음) › 2단(메뉴). 권한은 2단 메뉴마다 · 아래 메뉴가 다 「없음」이면 묶음도 숨김 */
-const GROUPS=[['dash','대시보드',['home']],['ops','운영관리',['subs','rp','cx','schol','q']],['sch','스케줄관리',['act','tt','ens','con']],['room','방배정',['room']],['stat','통계',['stat']],['cfg','설정',['camp','mem','cons','prof','staff']]];
-const SUBL={mem:'회원 명단',home:'대시보드',subs:'접수 · 입금 확인',rp:'입금 신고',cx:'취소 · 환불',q:'오류 · 건의',act:'교사 일정',tt:'개인레슨',ens:'앙상블',con:'오후음악회',room:'방배정',stat:'통계',schol:'장학금',cons:'동의서',camp:'캠프 설정',prof:'교수진',staff:'담당자'};
+const GROUPS=[['dash','대시보드',['home']],['ops','운영관리',['subs','rp','cx','schol','q']],['sch','스케줄관리',['act','tt','ens','con']],['room','방배정',['room']],['stat','통계',['stat']],['fin','예산 · 결산',['bplan','bset']],['cfg','설정',['camp','mem','cons','prof','staff']]];
+const SUBL={mem:'회원 명단',home:'대시보드',subs:'접수 · 입금 확인',rp:'입금 신고',cx:'취소 · 환불',q:'오류 · 건의',act:'교사 일정',tt:'개인레슨',ens:'앙상블',con:'오후음악회',room:'방배정',stat:'통계',schol:'장학금',cons:'동의서',camp:'캠프 설정',prof:'교수진',staff:'담당자',bplan:'예산 계획',bset:'결산'};
 const groupOf=t=>(GROUPS.find(g=>g[2].includes(t))||GROUPS[0]);
-const TABS=[['home','한눈에'],['subs','접수 · 입금 확인'],['rp','입금 신고'],['cx','취소 · 환불'],['ens','앙상블'],['prof','교수진'],['act','교사 일정'],['tt','개인레슨'],['room','방 배정'],['con','오후음악회'],['stat','통계'],['q','오류·건의'],['schol','장학금'],['mem','회원 명단']];
+const TABS=[['home','한눈에'],['subs','접수 · 입금 확인'],['rp','입금 신고'],['cx','취소 · 환불'],['ens','앙상블'],['prof','교수진'],['act','교사 일정'],['tt','개인레슨'],['room','방 배정'],['con','오후음악회'],['stat','통계'],['q','오류·건의'],['schol','장학금'],['mem','회원 명단'],['bplan','예산 계획'],['bset','결산']];
 function render(){
   const app=document.getElementById('app'),tabs=document.getElementById('tabs');
   if(!S.D){tabs.innerHTML='';document.getElementById('tabs2').innerHTML='';app.innerHTML=vLogin();return}
@@ -317,7 +318,7 @@ function render(){
   /* 지금 묶음에 2단이 없으면 빈칸으로 → 줄이 안 보임 */
   document.getElementById('tabs2').classList.toggle('none',!document.querySelector('#tabs2 .grp:not([hidden])'));hdrH();
   const ro=RO();app.classList.toggle('ro',ro);
-  app.innerHTML=(ro?`<div class="robar">보기만 할 수 있는 메뉴예요 · 바꿔도 저장되지 않아요 (총관리자에게 「편집」 권한을 받으면 저장돼요)</div>`:'')+{home:vHome,subs:vSubs,rp:vRp,cx:vCx,ens:vEns,prof:vProf,act:()=>ACT.view(),tt:()=>LES.view(),room:()=>ROOM.view(),con:vCon,stat:vStat,q:vQ,camp:vCamp,staff:vStaff,cons:vCons,schol:vSchol,mem:vMem}[S.tab]();
+  app.innerHTML=(ro?`<div class="robar">보기만 할 수 있는 메뉴예요 · 바꿔도 저장되지 않아요 (총관리자에게 「편집」 권한을 받으면 저장돼요)</div>`:'')+{home:vHome,subs:vSubs,rp:vRp,cx:vCx,ens:vEns,prof:vProf,act:()=>ACT.view(),tt:()=>LES.view(),room:()=>ROOM.view(),con:vCon,stat:vStat,q:vQ,camp:vCamp,staff:vStaff,cons:vCons,schol:vSchol,mem:vMem,bplan:()=>BUD.view('plan'),bset:()=>BUD.view('set')}[S.tab]();
   if(S.tab==='stat'||S.tab==='home')reSort();
 }
 /* 통계 표 정렬: 같은 보기·같은 표면 다시 그려도 유지 */
@@ -1408,7 +1409,7 @@ const ME=()=>(S.D&&S.D.me)||{sup:true,perms:{}};
 const permOf=k=>{const m=ME();if(m.sup)return '편집';if(k==='camp'||k==='staff'||k==='cons')return '';return (m.perms||{})[k]||''};
 const visTabs=()=>TABS.concat(SUP_TABS).filter(([k])=>permOf(k));
 const RO=()=>permOf(S.tab)==='보기';
-const WRITE_FN=/^(scholSave|adminConfirm|adminRejectReport|adminSaveEns|adminSaveProfs|adminRefund|adminSetIssue|schedSave|lessonSet|adminSetSetting|roomSave|conSave|campSave|staffSave|songEnSave|pvHideSave|roomCfgSave|layoutImport|roomMove)$/;
+const WRITE_FN=/^(scholSave|adminConfirm|adminRejectReport|adminSaveEns|adminSaveProfs|adminRefund|adminSetIssue|schedSave|lessonSet|adminSetSetting|roomSave|conSave|campSave|staffSave|songEnSave|pvHideSave|roomCfgSave|layoutImport|roomMove|budSave)$/;
 const roBlock=fn=>WRITE_FN.test(fn)&&permOf(S.tab)!=='편집';
 const RO_MSG='보기만 할 수 있는 메뉴예요. 바꾸려면 총관리자에게 「편집」 권한을 받아 주세요.';
 
@@ -1715,6 +1716,196 @@ function stLes(L){const LS=L.filter(x=>x.lessons>0);const M=L.filter(x=>x.mc.len
 function stCon(L){const C=L.filter(x=>x.concert);return ['오후','트와일라잇','이브닝'].map(c=>{const Q=C.filter(x=>x.concert===c);return `<div class="panel tbl"><b>${c} 음악회 ${Q.length}명</b>${Q.length?`<table style="margin-top:6px"><thead><tr><th>이름</th><th>학원</th><th>악기</th><th>곡</th></tr></thead><tbody>${Q.map(x=>`<tr><td>${esc(x.p.name)}</td><td>${esc(x.acad)}</td><td>${esc(x.inst)}</td><td>${esc(x.song)}</td></tr>`).join('')}</tbody></table>`:''}</div>`}).join('')}
 function stRoom(L){const R=L.filter(x=>x.room);return ST(['학원','가족방 수','대표'],[...new Set(R.map(x=>x.acad))].map(a=>{const Q=R.filter(x=>x.acad===a);return [esc(a),Q.length,Q.map(x=>esc(x.p.name)).join(', ')]}),['합계',R.length,''])}
 
+/* ================= 예산 · 결산 =================
+   예산 계획(bplan): 지출 줄(단가 × 수량 × 횟수) · 수입(참가자격 구성 × 참가비 + 그 밖의 수입) · 인원별 손익표
+   결산(bset): 같은 지출 줄에 확정(견적 · 계약) · 지급 · 지급일 · 방법, 참가비 수입은 접수 입금에서 자동
+   시트 「예산결산」(값 JSON) · 서버 budData / budSave · 확정 · 지급 · 실제 금액은 모두 원(KRW) */
+const BUD=(()=>{
+const CATS=[['room','호텔 · 객실'],['meal','호텔 · 식사'],['hall','호텔 · 홀'],['prof','교수 인건비'],['teach','교사 인건비'],['staff','스텝 · 외부 연주자'],['print','인쇄'],['equip','장비'],['ad','광고'],['bus','교통'],['schol','장학금'],['etc','기타 · 잡비']];
+const HOTEL=['room','meal','hall'];
+/* 26 겨울(2026.1) 결산 시트의 실지출 — 묶음별 비교용 */
+const REF={room:105000000,meal:87090000,hall:0,prof:41250000,teach:19000000,staff:12650000,print:1566000,equip:1650000,ad:1000000,bus:3700000,schol:5900000,etc:1500000};
+const REF_INC=336060000,REF_COST=280306000;
+const MIX26={'학생':266,'교사':95,'연수생':26,'회원의 악기하는 자녀':20,'회원의 첫번째 보호자':69,'회원의 그외 악기 안하는 동반가족':29,'동반가족 중 돌전아기':1,'비회원 학생':2,'비회원 보호자':2};
+const CUR=[['KRW','원'],['USD','달러'],['JPY','엔']];
+const HOW=['','통장','카드','현금','달러','엔화','기타'];
+const B={D:null,P:null,L:false,err:'',sub:'cost'};
+const cp=o=>JSON.parse(JSON.stringify(o));
+const dirty=()=>!!(B.D&&B.P&&JSON.stringify(B.P)!==JSON.stringify(B.D.plan));
+const pn=v=>{const s=String(v==null?'':v).replace(/[^\d.\-]/g,'');return s===''||s==='-'||s==='.'?'':+s};
+const fmt=v=>v===''||v==null?'':(+v).toLocaleString('ko-KR',{maximumFractionDigits:2});
+const W=v=>won(Math.round(+v||0));
+const sg=v=>{v=Math.round(+v||0);return `<span class="${v<0?'bneg':v>0?'bpos':''}">${v>0?'+':''}${v.toLocaleString('ko-KR')}원</span>`};
+function load(){B.L=true;B.err='';google.script.run.withSuccessHandler(r=>{B.L=false;B.D=r;B.P=cp(r.plan);render()}).withFailureHandler(e=>{B.L=false;B.err=(e&&e.message)||String(e);render()}).budData(S.tok)}
+function enter(){if(!dirty()){B.D=null;B.P=null}}
+
+/* ---------- 계산 ---------- */
+const nb=()=>Math.max(1,+B.P.base.n||1);
+const fx=c=>!c||c==='KRW'?1:+((B.P.base.fx||{})[c])||0;
+function qty(l,N,sc){if(l.scale!=='person'||(sc&&B.P.base.hotelFix&&HOTEL.includes(l.cat)))return +l.qty||0;return Math.max(+l.guar||0,Math.round((+l.qty||0)*N/nb()))}
+const amt=(l,N,sc)=>(+l.unit||0)*qty(l,N==null?nb():N,sc)*(+l.times||0)*fx(l.cur);
+const fee1=t=>+(((B.D.fees||{})[t]||[])[0])||0;
+const shift=()=>{const p=+B.P.base.price||0;return p?p-fee1('학생'):0};
+const feeOf=t=>Math.max(0,fee1(t)+shift());
+function avgFee(){const M=B.P.mix||{};let n=0,s=0;Object.keys(M).forEach(t=>{n+=+M[t]||0;s+=(+M[t]||0)*feeOf(t)});return n?s/n:0}
+const incAmt=(i,N)=>(+i.amt||0)*fx(i.cur)*(i.scale==='person'?(N==null?nb():N)/nb():1);
+function calc(N,sc){const fee=N*avgFee(),inc=B.P.inc.reduce((t,i)=>t+incAmt(i,N),0),cost=B.P.lines.reduce((t,l)=>t+amt(l,N,sc),0),rev=fee+inc,cut=rev*(+B.P.base.cut.pct||0)/100;return {N,fee,inc,rev,cost,pro:rev-cost,cut,after:rev-cost-cut}}
+function bep(hf){const keep=B.P.base.hotelFix;B.P.base.hotelFix=hf;let r=0;for(let N=1;N<=3000;N++){if(calc(N,true).pro>=0){r=N;break}}B.P.base.hotelFix=keep;return r}
+const nowAmt=l=>l.paid!==''&&l.paid!=null?+l.paid:l.conf!==''&&l.conf!=null?+l.conf:amt(l);
+function liveTypes(){const m={};(S.D.subs||[]).forEach(sb=>sb.ppl.forEach(p=>{if(p.status!=='정상')return;const k=p.id.slice(sb.no.length+1),i=(sb.form&&sb.form.info&&sb.form.info[k])||{};const t=p.type||i.type||'';if(t)m[t]=(m[t]||0)+1}));return m}
+const liveN=()=>Object.values(liveTypes()).reduce((t,v)=>t+v,0);
+const liveTeach=()=>{const m=liveTypes();return T_TEACH.reduce((t,k)=>t+(m[k]||0),0)};
+
+/* ---------- 공통 조각 ---------- */
+const tile=(k,v,s,cls)=>`<div class="tile ${cls||''}"><span class="k">${k}</span><span class="v">${v}</span><span class="s">${s||''}</span></div>`;
+const nIn=(attr,v,w,ph)=>`<input type="text" inputmode="decimal" class="num" ${attr} value="${esc(fmt(v))}" style="width:${w||110}px"${ph?` placeholder="${esc(ph)}"`:''}>`;
+const pill=()=>dirty()?'<span class="pill due">저장 안 한 변경 있음</span><button class="btn small ghost" type="button" data-breset="1">되돌리기</button>':'<span class="pill ok">저장됨</span>';
+function bar(title,sub){return `<div class="panel"><div class="spread"><div><b>${title}</b> <span class="hint">${sub}</span></div>
+  <div class="row" style="gap:6px"><span id="bDirty" class="row" style="gap:6px">${pill()}</span><button class="btn small" type="button" data-breload="1">새로 불러오기</button><button class="btn small primary" type="button" data-bsave="1">저장</button></div></div>
+  ${B.D.seeded?'<p class="hint" style="margin:8px 0 0">아직 저장한 예산이 없어서 <b>2027 겨울 리솜 견적(26.10.21)</b> + <b>26 겨울 결산 실지출</b>로 채운 초안을 보여 드려요. 고친 뒤 「저장」을 누르면 시트 「예산결산」에 남아요.</p>':''}
+  ${B.D.err?`<p class="err">${esc(B.D.err)} · 초안을 대신 보여 드려요.</p>`:''}</div>`}
+function view(kind){
+  if(!B.D){if(!B.L&&!B.err)setTimeout(load,0);return B.err?`<div class="panel"><span class="err">예산 · 결산을 불러오지 못했어요 · ${esc(B.err)}</span> <button class="btn small" type="button" data-breload="1">다시</button></div>`:'<div class="panel hint">예산 · 결산을 불러오고 있어요…</div>'}
+  return `<div class="bud">${kind==='plan'?vPlan():vSet()}</div>`}
+
+/* ---------- 예산 계획 ---------- */
+function vPlan(){const b=B.P.base,c=calc(nb(),true),e1=bep(true),e2=bep(false),avg=avgFee();
+  const S2=[['cost','지출 계획'],['inc','수입 계획'],['ppl','인원별 손익'],['set','기본 값']];
+  return bar('예산 계획',`예상 인원 · 기준가를 정하고 지출 줄을 채우면, 인원별로 얼마가 남는지 바로 계산돼요`)+
+  `<div class="tiles">${tile('예상 인원 (유료 참가자)',nb()+'명',`기준가 ${W(b.price)} · 평균 참가비 ${W(avg)}`)}
+    ${tile('예상 수입',W(c.rev),`참가비 ${W(c.fee)} · 그 밖 ${W(c.inc)}`)}
+    ${tile('예상 지출',W(c.cost),`1인당 ${W(c.cost/nb())}`)}
+    ${tile('예상 남는 돈',W(c.pro),`${+b.cut.pct?`수입의 ${fmt(b.cut.pct)}% 뗀 뒤 ${W(c.after)}`:'떼는 몫 없음'}`,c.pro<0?'warn':'')}
+    ${tile('손익분기 인원',e1?e1+'명':'-',`호텔 ${b.hotelFix?'계약대로 고정':'인원 따라 조정'} · ${b.hotelFix?`호텔도 조정하면 ${e2?e2+'명':'-'}`:`호텔 고정이면 ${bepFix()}`}`,e1>nb()?'warn':'')}</div>
+  <nav class="tabs2" style="margin-bottom:14px">${S2.map(([k,l])=>`<button type="button" data-bsub="${k}" aria-selected="${B.sub===k}">${l}</button>`).join('')}</nav>
+  ${B.sub==='inc'?incPlan():B.sub==='ppl'?pplPlan():B.sub==='set'?setPlan():costPlan()}`}
+const bepFix=()=>{const n=bep(true);return n?n+'명':'-'};
+function costPlan(){const L=B.P.lines,tot=L.reduce((t,l)=>t+amt(l),0);
+  return `<div class="panel tbl"><table class="pft bt2"><thead><tr><th>항목</th><th class="r">단가</th><th class="r">수량</th><th class="r">횟수</th><th>통화</th><th class="c">인원 따라</th><th class="r">보증 최소</th><th class="r">금액</th><th>메모</th><th></th></tr></thead><tbody>
+  ${CATS.map(([k,lab])=>{const R=L.filter(l=>l.cat===k),sub=R.reduce((t,l)=>t+amt(l),0);
+    return `<tr class="bcat"><td colspan="7"><b>${lab}</b> <span class="hint">${R.length}줄 · 26 겨울 실지출 ${W(REF[k])}</span></td><td class="r num"><b>${W(sub)}</b></td><td colspan="2"><button class="btn small ghost" type="button" data-badd="${k}">＋ 줄</button></td></tr>`+
+    R.map(l=>`<tr><td><input type="text" data-bl="${l.id}|name" value="${esc(l.name)}" maxlength="80" style="min-width:200px"></td>
+      <td class="r">${nIn(`data-bl="${l.id}|unit"`,l.unit,110)}</td><td class="r">${nIn(`data-bl="${l.id}|qty"`,l.qty,70)}</td><td class="r">${nIn(`data-bl="${l.id}|times"`,l.times,56)}</td>
+      <td><select data-bl="${l.id}|cur" style="min-width:66px">${CUR.map(([v,t])=>`<option value="${v}" ${l.cur===v?'selected':''}>${t}</option>`).join('')}</select></td>
+      <td class="c"><input type="checkbox" data-bl="${l.id}|scale" ${l.scale==='person'?'checked':''} aria-label="인원 따라 늘고 줄기"></td>
+      <td class="r">${l.scale==='person'?nIn(`data-bl="${l.id}|guar"`,l.guar,70,'없음'):'<span class="faint">-</span>'}</td>
+      <td class="r num"><b>${W(amt(l))}</b>${l.cur!=='KRW'?`<br><small class="faint">${fmt((+l.unit||0)*(+l.qty||0)*(+l.times||0))} ${l.cur}</small>`:''}</td>
+      <td><input type="text" data-bl="${l.id}|memo" value="${esc(l.memo)}" maxlength="300" style="min-width:180px"></td>
+      <td><button class="btn small ghost" type="button" data-bdel="${l.id}">빼기</button></td></tr>`).join('')}).join('')}
+  <tr class="foot"><td colspan="7"><b>지출 합계</b> <span class="hint">26 겨울 실지출 ${W(REF_COST)}</span></td><td class="r num"><b>${W(tot)}</b></td><td colspan="2"></td></tr></tbody></table>
+  <p class="hint">금액 = 단가 × 수량 × 횟수 (수량 = 실 · 명 · 개, 횟수 = 박 · 끼 · 회). 「인원 따라」를 켠 줄은 인원별 손익표에서 수량이 예상 인원 ${nb()}명 대비 비율로 늘고 줄어요 (보증 최소 아래로는 안 내려감). 달러 · 엔 줄은 「기본 값」의 환율로 원화가 돼요.</p></div>`}
+function incPlan(){const M=B.P.mix,tot=Object.values(M).reduce((t,v)=>t+(+v||0),0),sh=shift(),c=calc(nb(),true),lt=liveN();
+  return `<div class="panel tbl"><div class="spread"><div><b>참가비</b> <span class="hint">참가자격 구성 비율 × 참가비로 평균 참가비를 내요 · 참가비는 「캠프 설정 › 참가비표」 1차 금액${sh?`에 기준가 차이 ${sh>0?'+':''}${fmt(sh)}원을 더해서`:''} 계산</span></div>
+    <div class="row" style="gap:6px">${lt?`<button class="btn small" type="button" data-bmix="now">지금 접수 구성으로 (${lt}명)</button>`:''}<button class="btn small ghost" type="button" data-bmix="s26">26 여름 구성으로</button></div></div>
+    <table class="pft" style="margin-top:8px"><thead><tr><th>참가자격</th><th class="r">구성 (인원)</th><th class="r">비중</th><th class="r">캠프 설정 1차</th><th class="r">계산에 쓰는 참가비</th></tr></thead><tbody>
+    ${FEE_TYPES.map(t=>`<tr class="${+M[t]?'':'off'}"><td>${esc(t)}</td><td class="r">${nIn(`data-bm="${esc(t)}"`,M[t]||'',70,'0')}</td><td class="r num">${tot?fmt(Math.round((+M[t]||0)/tot*1000)/10)+'%':'-'}</td><td class="r num">${W(fee1(t))}</td><td class="r num"><b>${W(feeOf(t))}</b></td></tr>`).join('')}
+    <tr class="foot"><td>평균 참가비</td><td class="r num">${tot}명</td><td></td><td></td><td class="r num"><b>${W(avgFee())}</b></td></tr></tbody></table>
+    <p class="hint">구성은 비율만 써요 (인원 수 자체는 「예상 인원」). 교수진 · 무료 참가는 넣지 않아요.</p>
+    ${sh&&ME().sup?`<div class="row" style="gap:8px;margin-top:6px"><span class="hint">캠프 설정 참가비표는 아직 학생 1차 ${W(fee1('학생'))}이에요.</span><button class="btn small" type="button" data-bfee="1">기준가 ${W(B.P.base.price)}을 캠프 설정 참가비표에 반영</button></div>`:''}</div>
+  <div class="panel tbl"><div class="spread"><div><b>그 밖의 수입</b> <span class="hint">예상 인원 기준 금액 · 「접수 입금에 포함」은 결산 때 접수 입금과 겹치지 않게 따로 세지 않아요</span></div><button class="btn small ghost" type="button" data-biadd="1">＋ 줄</button></div>
+    <table class="pft" style="margin-top:8px"><thead><tr><th>항목</th><th class="r">금액</th><th>통화</th><th class="c">인원 따라</th><th class="c">접수 입금에 포함</th><th class="r">원화</th><th>메모</th><th></th></tr></thead><tbody>
+    ${B.P.inc.map(i=>`<tr><td><input type="text" data-bi="${i.id}|name" value="${esc(i.name)}" maxlength="60" style="min-width:180px"></td><td class="r">${nIn(`data-bi="${i.id}|amt"`,i.amt,120)}</td>
+      <td><select data-bi="${i.id}|cur" style="min-width:66px">${CUR.map(([v,t])=>`<option value="${v}" ${i.cur===v?'selected':''}>${t}</option>`).join('')}</select></td>
+      <td class="c"><input type="checkbox" data-bi="${i.id}|scale" ${i.scale==='person'?'checked':''}></td><td class="c"><input type="checkbox" data-bi="${i.id}|sys" ${i.sys?'checked':''}></td>
+      <td class="r num">${W(incAmt(i))}</td><td><input type="text" data-bi="${i.id}|memo" value="${esc(i.memo)}" maxlength="300" style="min-width:200px"></td><td><button class="btn small ghost" type="button" data-bidel="${i.id}">빼기</button></td></tr>`).join('')||'<tr><td colspan="8" class="hint">없음</td></tr>'}
+    <tr class="foot"><td><b>수입 합계</b> <span class="hint">참가비 ${W(c.fee)} + 그 밖 ${W(c.inc)}</span></td><td colspan="4"></td><td class="r num"><b>${W(c.rev)}</b></td><td colspan="2"><span class="hint">26 겨울 수입 ${W(REF_INC)} (달러 포함)</span></td></tr></tbody></table></div>`}
+function pplPlan(){const b=B.P.base,R=[];for(let N=b.sMin;N<=b.sMax&&R.length<=80;N+=b.sStep)R.push(N);if(!R.includes(nb()))R.push(nb());R.sort((x,y)=>x-y);
+  const C=R.map(N=>calc(N,true)),mx=Math.max(1,...C.map(c=>Math.abs(c.pro))),first=(C.find(c=>c.pro>=0)||{}).N,e=bep(true);
+  const parts=(b.cut.parts||[]).filter(p=>p[0]);
+  return `<div class="panel row" style="gap:10px;flex-wrap:wrap;align-items:center">
+    <label class="row" style="gap:4px">인원 ${nIn('data-bb="sMin"',b.sMin,60)}명부터</label><label class="row" style="gap:4px">${nIn('data-bb="sMax"',b.sMax,60)}명까지</label><label class="row" style="gap:4px">${nIn('data-bb="sStep"',b.sStep,50)}명 간격</label>
+    <label class="row" style="gap:6px"><input type="checkbox" data-bb="hotelFix" ${b.hotelFix?'checked':''}> 호텔(객실 · 식사 · 홀)은 계약 수량대로 고정</label>
+    <span class="hint">끄면 「인원 따라」 켠 호텔 줄도 인원 비율로 줄어요 (계약 전 · 보증인원 조정이 될 때)</span></div>
+  <div class="panel tbl"><p style="margin:0 0 8px"><b>손익분기 ${e?e+'명':'-'}</b> <span class="hint">이 인원부터 남아요 · 예상 인원 ${nb()}명 줄은 파란색${parts.length?` · 수입의 ${fmt(b.cut.pct)}% = ${parts.map(p=>/%$/.test(p[0])?esc(p[0]):esc(p[0])+' '+fmt(p[1])+'%').join(' + ')}`:''}</span></p>
+  <table class="pft"><thead><tr><th class="r">인원</th><th class="r">참가비</th><th class="r">그 밖 수입</th><th class="r">수입 합계</th><th class="r">지출</th><th class="r">1인당 지출</th><th class="r">남는 돈</th>${+b.cut.pct?`<th class="r">${fmt(b.cut.pct)}% 뗀 뒤</th>`:''}<th style="min-width:160px"></th></tr></thead><tbody>
+  ${C.map(c=>`<tr class="${c.N===nb()?'me':''} ${c.N===first?'be':''}"><td class="r num"><b>${c.N}명</b>${c.N===nb()?' <span class="pill info">예상</span>':''}${c.N===first?' <span class="pill ok">여기부터 남음</span>':''}</td>
+    <td class="r num">${W(c.fee)}</td><td class="r num">${W(c.inc)}</td><td class="r num">${W(c.rev)}</td><td class="r num">${W(c.cost)}</td><td class="r num">${W(c.cost/c.N)}</td>
+    <td class="r num"><b>${sg(c.pro)}</b></td>${+b.cut.pct?`<td class="r num">${sg(c.after)}</td>`:''}
+    <td><div class="bbar" style="width:${Math.round(Math.abs(c.pro)/mx*100)}%;background:var(--${c.pro<0?'bad':'ok'})"></div></td></tr>`).join('')}</tbody></table>
+  <p class="hint">수입 = 인원 × 평균 참가비 ${W(avgFee())} + 그 밖 수입 · 지출 = 고정 줄 + 「인원 따라」 줄(수량 × 인원 ÷ ${nb()}명)${b.hotelFix?' · 호텔 줄은 계약 수량 그대로':''}</p></div>`}
+function setPlan(){const b=B.P.base;
+  return `<div class="panel"><h3 style="margin:0 0 10px;font-size:15px">기본 값</h3><table class="pft" style="max-width:760px"><tbody>
+    <tr><td>예상 인원 (유료 참가자)</td><td>${nIn('data-bb="n"',b.n,90)} 명</td><td class="hint">교수진 · 무료 참가는 빼고</td></tr>
+    <tr><td>기준가 (학생 · 교사 1차)</td><td>${nIn('data-bb="price"',b.price,110)} 원</td><td class="hint">캠프 설정 학생 1차 ${W(fee1('학생'))} · 다르면 모든 참가자격을 같은 금액만큼 올리거나 내려서 계산</td></tr>
+    <tr><td>환율</td><td>1달러 ${nIn('data-bb="fx.USD"',b.fx.USD,80)} 원 · 1엔 ${nIn('data-bb="fx.JPY"',b.fx.JPY,60)} 원</td><td class="hint">달러 · 엔 줄을 원화로 바꿀 때</td></tr>
+    <tr><td>수입에서 떼는 몫</td><td>${nIn('data-bb="cut.pct"',b.cut.pct,50)} %</td><td class="hint">25·26 예산 시트의 「수입의 10% (7% + 3%)」 · 0이면 안 뗌</td></tr>
+    ${(b.cut.parts||[]).map((p,i)=>`<tr><td style="padding-left:24px">└ <input type="text" data-bcp="${i}|0" value="${esc(p[0])}" maxlength="20" style="width:140px"></td><td>${nIn(`data-bcp="${i}|1"`,p[1],50)} % <button class="btn small ghost" type="button" data-bcpdel="${i}">빼기</button></td><td class="hint">나누는 곳 이름 (예: 협회 적립)</td></tr>`).join('')}
+    <tr><td></td><td><button class="btn small ghost" type="button" data-bcpadd="1">＋ 나누는 곳</button></td><td></td></tr></tbody></table></div>`}
+
+/* ---------- 결산 ---------- */
+function vSet(){const st=stats(),L=B.P.lines,cx=(S.D.cx||[]).filter(c=>c.state==='환불 완료').reduce((t,c)=>t+(+c.amt||0),0);
+  const ext=B.P.inc.filter(i=>!i.sys),extAct=ext.reduce((t,i)=>t+(+i.act||0),0),extPlan=ext.reduce((t,i)=>t+incAmt(i),0);
+  const plan=calc(nb(),true),now=L.reduce((t,l)=>t+nowAmt(l),0),paid=L.reduce((t,l)=>t+(+l.paid||0),0),conf=L.reduce((t,l)=>t+(l.conf!==''&&l.conf!=null?+l.conf:0),0);
+  const revNow=st.paid+extAct,revFull=st.bill+extAct,A=B.D.auto||{},lt=liveN(),tc=liveTeach();
+  const ref=l=>{if(l.auto==='schol')return `<small>장학금 메뉴 <b class="num">${W(A.schol)}</b> (${A.scholN||0}곳)</small>${A.schol?` <button class="btn small ghost" type="button" data-bauto="${l.id}|${A.schol}">확정에 넣기</button>`:''}`;
+    if(l.auto==='teach'){const v=tc*(+l.unit||0);return `<small>접수 교사 <b>${tc}명</b> × ${W(l.unit)} = <b class="num">${W(v)}</b></small>${v?` <button class="btn small ghost" type="button" data-bauto="${l.id}|${v}">확정에 넣기</button>`:''}`}
+    if(l.auto==='meal')return `<small class="${lt>(+l.qty||0)?'bneg':''}">접수 ${lt}명 (취소 뺌) · 보증 ${fmt(l.qty)}명</small>`;
+    if(l.cat==='room')return `<small>방 배정 ${A.rooms||0}실 쓰는 중 · 계획 ${fmt(l.qty)}실</small>`;return ''};
+  return bar('결산','지출 줄마다 확정(견적 · 계약) · 지급 금액을 넣어요 · 참가비 수입은 접수 · 입금 확인에서 자동')+
+  `<div class="tiles">${tile('참가비 입금 (확인된 금액)',W(st.paid),`청구 ${W(st.bill)} · 남음 ${W(st.left)} · 환불 완료 ${W(cx)}`)}
+    ${tile('그 밖의 수입 (실제)',W(extAct),`예산 ${W(extPlan)}`)}
+    ${tile('지출 (지금 기준)',W(now),`예산 ${W(plan.cost)} · 차이 ${(now-plan.cost>=0?'+':'')+Math.round(now-plan.cost).toLocaleString('ko-KR')}원`,now>plan.cost?'warn':'')}
+    ${tile('지급 완료',W(paid),`확정 ${W(conf)}`)}
+    ${tile('남는 돈 (지금 기준)',W(revNow-now),`청구를 다 받으면 ${W(revFull-now)}`,revNow-now<0?'warn':'')}
+    ${tile('예산 계획의 남는 돈',W(plan.pro),`예상 인원 ${nb()}명 · 지금 접수 ${lt}명`)}</div>
+  <div class="panel tbl"><b>수입</b>
+    <table class="pft" style="margin-top:8px"><thead><tr><th>항목</th><th class="r">예산</th><th class="r">실제 (원)</th><th class="r">차이</th><th>메모</th></tr></thead><tbody>
+    <tr><td><b>참가비 (접수 자동)</b><br><small class="faint">추가 레슨 · 마스터클래스 · 연회비 · 가족방 포함 · 확인된 입금 기준</small></td><td class="r num">${W(plan.fee+B.P.inc.filter(i=>i.sys).reduce((t,i)=>t+incAmt(i),0))}</td><td class="r num"><b>${W(st.paid)}</b><br><small class="faint">청구 ${W(st.bill)}</small></td><td class="r num">${sg(st.paid-plan.fee-B.P.inc.filter(i=>i.sys).reduce((t,i)=>t+incAmt(i),0))}</td><td class="hint">입금 전 · 차액 ${st.unpaid}명 ${W(st.left)}</td></tr>
+    ${ext.map(i=>`<tr><td>${esc(i.name)}${i.cur!=='KRW'?` <small class="faint">(${i.cur})</small>`:''}</td><td class="r num">${W(incAmt(i))}</td><td class="r">${nIn(`data-bi="${i.id}|act"`,i.act,120,'받은 금액')}</td><td class="r num">${i.act===''||i.act==null?'<span class="faint">-</span>':sg(+i.act-incAmt(i))}</td><td><input type="text" data-bi="${i.id}|memo" value="${esc(i.memo)}" maxlength="300" style="min-width:200px"></td></tr>`).join('')}
+    <tr class="foot"><td><b>수입 합계</b></td><td class="r num">${W(plan.rev)}</td><td class="r num"><b>${W(revNow)}</b></td><td class="r num">${sg(revNow-plan.rev)}</td><td class="hint">26 겨울 ${W(REF_INC)}</td></tr></tbody></table></div>
+  <div class="panel tbl"><div class="spread"><b>지출</b><span class="hint">지금 기준 = 지급했으면 지급액, 아니면 확정액, 아니면 예산 · 금액은 모두 원화</span></div>
+    <table class="pft" style="margin-top:8px"><thead><tr><th>항목</th><th class="r">예산</th><th class="r">확정 (견적 · 계약)</th><th class="r">지급</th><th>지급일</th><th>방법</th><th class="r">지금 기준</th><th class="r">예산 대비</th><th>참고</th><th>메모</th><th></th></tr></thead><tbody>
+    ${CATS.map(([k,lab])=>{const R=L.filter(l=>l.cat===k);const sp=R.reduce((t,l)=>t+amt(l),0),sn=R.reduce((t,l)=>t+nowAmt(l),0),spd=R.reduce((t,l)=>t+(+l.paid||0),0);
+      return `<tr class="bcat"><td><b>${lab}</b></td><td class="r num">${W(sp)}</td><td></td><td class="r num">${W(spd)}</td><td colspan="2"></td><td class="r num"><b>${W(sn)}</b></td><td class="r num">${sg(sn-sp)}</td><td colspan="2"><span class="hint">26 겨울 ${W(REF[k])}</span></td><td><button class="btn small ghost" type="button" data-badd="${k}">＋ 줄</button></td></tr>`+
+      R.map(l=>`<tr><td><input type="text" data-bl="${l.id}|name" value="${esc(l.name)}" maxlength="80" style="min-width:170px"></td><td class="r num">${W(amt(l))}</td>
+        <td class="r">${nIn(`data-bl="${l.id}|conf"`,l.conf,110,'비면 예산')}</td><td class="r">${nIn(`data-bl="${l.id}|paid"`,l.paid,110,'아직')}</td>
+        <td><input type="date" data-bl="${l.id}|date" value="${esc(l.date||'')}"></td>
+        <td><select data-bl="${l.id}|how" style="min-width:70px">${HOW.map(h=>`<option value="${h}" ${l.how===h?'selected':''}>${h||'-'}</option>`).join('')}</select></td>
+        <td class="r num"><b>${W(nowAmt(l))}</b></td><td class="r num">${sg(nowAmt(l)-amt(l))}</td><td>${ref(l)}</td>
+        <td><input type="text" data-bl="${l.id}|memo" value="${esc(l.memo)}" maxlength="300" style="min-width:160px"></td><td><button class="btn small ghost" type="button" data-bdel="${l.id}">빼기</button></td></tr>`).join('')}).join('')}
+    <tr class="foot"><td><b>지출 합계</b></td><td class="r num">${W(plan.cost)}</td><td class="r num">${W(conf)}</td><td class="r num">${W(paid)}</td><td colspan="2"></td><td class="r num"><b>${W(now)}</b></td><td class="r num">${sg(now-plan.cost)}</td><td colspan="3"><span class="hint">26 겨울 ${W(REF_COST)}</span></td></tr></tbody></table>
+    <p class="hint">예산 금액은 「예산 계획」에서 바꿔요 (단가 · 수량 · 횟수). 여기서 줄을 더하면 예산 0원 줄로 생겨요.</p></div>`}
+
+/* ---------- 입력 · 버튼 ---------- */
+const lineOf=id=>B.P.lines.find(l=>l.id===id),incOf=id=>B.P.inc.find(i=>i.id===id);
+const NUMF=/^(unit|qty|times|guar|conf|paid|amt|act)$/;
+function setv(o,k,el){if(el.type==='checkbox'){if(k==='scale')o.scale=el.checked?'person':'fixed';else o[k]=el.checked;return}o[k]=NUMF.test(k)?pn(el.value):el.value;if((k==='qty'||k==='times'||k==='unit'||k==='amt')&&o[k]==='')o[k]=0}
+function onInput(el){const d=el.dataset;if(!B.P)return false;
+  if(d.bl){const [id,k]=d.bl.split('|'),l=lineOf(id);if(l)setv(l,k,el)}
+  else if(d.bi){const [id,k]=d.bi.split('|'),i=incOf(id);if(i)setv(i,k,el)}
+  else if(d.bm){const v=pn(el.value);if(v===''||!+v)delete B.P.mix[d.bm];else B.P.mix[d.bm]=Math.max(0,Math.round(v))}
+  else if(d.bb){const b=B.P.base;if(d.bb==='hotelFix')b.hotelFix=el.checked;else if(d.bb.indexOf('.')>0){const [x,y]=d.bb.split('.');b[x][y]=pn(el.value)===''?0:pn(el.value)}else b[d.bb]=pn(el.value)===''?0:Math.round(pn(el.value))}
+  else if(d.bcp){const [i,j]=d.bcp.split('|'),p=B.P.base.cut.parts[+i];if(p)p[+j]=+j?(pn(el.value)===''?0:pn(el.value)):el.value}
+  else return false;
+  const p=document.getElementById('bDirty');if(p)p.innerHTML=pill();return true}
+const KEYS=['bl','bi','bm','bb','bcp'];
+function rerender(){setTimeout(()=>{const a=document.activeElement,k=a&&a.dataset&&KEYS.find(x=>a.dataset[x]!==undefined);const v=k?a.dataset[k]:'';render();
+  if(k){const el=document.querySelector(`[data-${k}="${CSS.escape(v)}"]`);if(el){el.focus();try{if(el.select&&el.type==='text')el.select()}catch(x){}}}},0)}
+document.addEventListener('input',e=>{if(S.tab!=='bplan'&&S.tab!=='bset')return;const el=e.target;if(!el.dataset||!KEYS.some(x=>el.dataset[x]!==undefined))return;onInput(el);if(el.type==='checkbox'||el.tagName==='SELECT'||el.type==='date')rerender()});
+document.addEventListener('change',e=>{if(S.tab!=='bplan'&&S.tab!=='bset')return;const el=e.target;if(!el.dataset||!KEYS.some(x=>el.dataset[x]!==undefined))return;onInput(el);rerender()});
+let seq=0;const nid=p=>{let id;do{id=p+Date.now().toString(36).slice(-4)+(++seq)}while(lineOf(id)||incOf(id));return id};
+function click(b,d){if(S.tab!=='bplan'&&S.tab!=='bset')return false;
+  if(d.bsub){B.sub=d.bsub;render();return true}
+  if(d.breload){const go=()=>{B.D=null;B.P=null;B.err='';render()};if(dirty())ask('새로 불러올까요?','저장하지 않은 변경은 사라져요.',go,'새로 불러오기');else go();return true}
+  if(d.breset){B.P=cp(B.D.plan);render();return true}
+  if(d.bsave){call('budSave',[B.P,B.D.rev],r=>{B.D=r;B.P=cp(r.plan);render();toast('예산 · 결산을 저장했어요')},'저장하고 있어요…');return true}
+  if(d.badd){B.P.lines.push({id:nid('l'),cat:d.badd,name:'새 항목',unit:0,qty:1,times:1,cur:'KRW',scale:'fixed',guar:'',auto:'',conf:'',paid:'',date:'',how:'',memo:''});render();
+    const ins=document.querySelectorAll('[data-bl$="|name"]');const el=[...ins].find(x=>x.value==='새 항목');if(el){el.focus();el.select()}return true}
+  if(d.bdel){const l=lineOf(d.bdel);const go=()=>{B.P.lines=B.P.lines.filter(x=>x.id!==d.bdel);render()};if(l&&(+l.unit||l.conf!==''||l.paid!==''))ask('이 줄을 뺄까요?',`<b>${esc(l.name)}</b> · 저장을 눌러야 시트에 반영돼요.`,go,'빼기');else go();return true}
+  if(d.biadd){B.P.inc.push({id:nid('i'),name:'새 수입',amt:0,cur:'KRW',scale:'fixed',sys:false,act:'',memo:''});render();return true}
+  if(d.bidel){B.P.inc=B.P.inc.filter(x=>x.id!==d.bidel);render();return true}
+  if(d.bmix){B.P.mix=d.bmix==='now'?liveTypes():cp(MIX26);render();toast(d.bmix==='now'?'지금 접수 구성으로 바꿨어요':'26 여름 구성으로 바꿨어요');return true}
+  if(d.bcpadd){B.P.base.cut.parts.push(['',0]);render();return true}
+  if(d.bcpdel!==undefined){B.P.base.cut.parts.splice(+d.bcpdel,1);render();return true}
+  if(d.bauto){const [id,v]=d.bauto.split('|'),l=lineOf(id);if(l){l.conf=+v;render();toast('확정 금액에 넣었어요 · 저장을 눌러 주세요')}return true}
+  if(d.bfee){const c=cp(S.D.camp),sh=shift(),F=c.fees||{};
+    ask('캠프 설정 참가비표를 바꿀까요?',`모든 참가자격 · 모든 차수의 참가비를 <b>${sh>0?'+':''}${fmt(sh)}원</b> 바꿔요 (학생 1차 ${W(fee1('학생'))} → <b>${W(fee1('학생')+sh)}</b>).<br>접수 화면 참가비가 바로 바뀌고, 이미 접수한 사람은 그 접수를 고쳐 저장할 때 새 금액으로 다시 계산돼요.`,()=>{
+      Object.keys(F).forEach(t=>{F[t]=(F[t]||[]).map(v=>Math.max(0,(+v||0)+sh))});
+      call('campSave',[c,c.rev||0],r=>{S.D.camp=r.camp;applyCampAdm(r.camp);B.D.fees=r.camp.fees;S.cc=null;render();toast('캠프 설정 참가비표를 바꿨어요')},'저장하고 있어요…')},'참가비표 바꾸기');return true}
+  return false}
+return {view,click,enter,dirty};
+})();
+
 /* ---------- 동작 ---------- */
 const num=id=>+String((document.getElementById(id)||{}).value||'').replace(/\D/g,'')||0;
 const val=id=>((document.getElementById(id)||{}).value||'').trim();
@@ -1724,7 +1915,7 @@ function confirmOne(pid){const d=val('d_'+pid),a=num('a_'+pid);
   call('adminConfirm',[[{pid,date:d,amt:a,memo:val('m_'+pid)}]],r=>{setData(r);toast('입금 확인 · '+kday(d)+' '+won(a))})}
 document.addEventListener('click',e=>{const tr=e.target.closest('tr.ensrow');if(tr&&!e.target.closest('button,input,label')){S.ensOpen=S.ensOpen===tr.dataset.ensopen?'':tr.dataset.ensopen;render()}});
 document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const d=b.dataset;
-  if(ccClick(b,d)||sfClick(b,d)||scClick(b,d))return;
+  if(ccClick(b,d)||sfClick(b,d)||scClick(b,d)||BUD.click(b,d))return;
   if(d.lmode){S.lmode=d.lmode;render();return}
   if(d.qf){S.qf=d.qf;render();return}
   if(d.pff){S.pff=d.pff;render();return}

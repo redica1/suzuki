@@ -1,4 +1,4 @@
-/* build: 20261028-215800 */
+/* build: 20261028-220427 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -882,7 +882,7 @@ function tSaveStus(sess, aid, rows) {
     const at = (k + 1) + '번째 줄' + (st.name ? '(' + String(st.name).trim() + ')' : '') + ': ';
     const name = String(st.name || '').trim().slice(0, 20); if (!st.id && !name) fail(at + '학생 이름을 넣어 주세요.');
     const birth = digits_(st.birth).slice(0, 4); if (birth && !/^(19|20)\d{2}$/.test(birth)) fail(at + '출생연도는 4자리로 넣어 주세요.');
-    const start = String(st.start || '').trim(); if (start && !/^\d{4}-\d{2}$/.test(start)) fail(at + '재원 시작은 2024-03 처럼 넣어 주세요.');
+    const start = String(st.start || '').trim(); if (start && !/^\d{4}-\d{2}(-\d{2})?$/.test(start)) fail(at + '재원 시작은 2024-03-02 처럼 넣어 주세요.');
     const state = STU_STATES.indexOf(st.state) >= 0 ? st.state : '재원'; let stateAt = String(st.stateAt || '').trim(); try { stateAt = ymd2_(stateAt); } catch (e) { fail(at + e.message); }
     if (state !== '재원' && !stateAt) fail(at + state + ' 날짜를 넣어 주세요.');
     return { id: st.id || '', name, birth, inst: INSTS_.indexOf(st.inst) >= 0 ? st.inst : '', start, state, stateAt, tid: mine.indexOf(st.tid) >= 0 ? st.tid : '' };
@@ -896,7 +896,7 @@ function tSaveStus(sess, aid, rows) {
         S2.append({ '학생ID': id, '학원ID': aid, '이름': x.name, '원래이름': x.name, '출생연도': x.birth, '전공': x.inst, '시작월': x.start, '상태': x.state, '상태일': x.state === '재원' ? '' : x.stateAt, '담당교사ID': x.tid, '확인': '확인 필요', '확인메모': '원장이 추가(' + md + ')', '원본': '원장 추가', '수정일': now_(), '수정자': who });
         const H = tbl_('재원이력'); H.append({ '이력ID': rid_('H'), '학생ID': id, '상태': '재원', '날짜': x.start || '', '메모': '원장이 추가', '수정일': now_(), '수정자': who });
         if (x.state !== '재원') tbl_('재원이력').append({ '이력ID': rid_('H'), '학생ID': id, '상태': x.state, '날짜': x.stateAt, '메모': '', '수정일': now_(), '수정자': who });
-        if (x.tid) tbl_('담당').append({ '담당ID': rid_('P'), '학생ID': id, '교사ID': x.tid, '시작': x.start || today.slice(0, 7), '종료': '', '수정일': now_(), '수정자': who });
+        if (x.tid) tbl_('담당').append({ '담당ID': rid_('P'), '학생ID': id, '교사ID': x.tid, '시작': (x.start || today).slice(0, 7), '종료': '', '수정일': now_(), '수정자': who });
         nNew++; return;
       }
       const { i } = stuRow_(aid, x.id), g = k => String(S2.get(i, k) || ''), diff = [];
@@ -1008,7 +1008,7 @@ function tSaveStu(sess, aid, st) {
   const u = tsess_(sess); headOf_(u, aid); st = st || {};
   const name = String(st.name || '').trim().slice(0, 20); if (!name) fail('학생 이름을 넣어 주세요.');
   const birth = digits_(st.birth).slice(0, 4); if (birth && !/^(19|20)\d{2}$/.test(birth)) fail('출생연도는 4자리로 넣어 주세요.');
-  const start = String(st.start || ''); if (start && !/^\d{4}-\d{2}$/.test(start)) fail('시작월은 2024-03 처럼 넣어 주세요.');
+  const start = String(st.start || ''); if (start && !/^\d{4}-\d{2}(-\d{2})?$/.test(start)) fail('재원 시작은 2024-03-02 처럼 넣어 주세요.');
   const inst = INSTS_.indexOf(st.inst) >= 0 ? st.inst : ''; const state = st.state === '퇴원' ? '퇴원' : '재원';
   const mine = tAcad(sess, aid).teachers.map(t => t.id), tid = mine.indexOf(st.tid) >= 0 ? st.tid : '';
   const T = tbl_('교사'), ti = T.find('교사ID', u.tid), who = (ti >= 0 ? T.get(ti, '이름') : u.email) + ' (원장)';

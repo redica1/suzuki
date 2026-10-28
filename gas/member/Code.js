@@ -1,4 +1,4 @@
-/* build: 20261028-222038 */
+/* build: 20261028-222357 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -29,8 +29,8 @@ function memOf_(sid, all) { const rows = (all || tbl_('연회비').v).filter(d =
 
 const HEAD = {
   '학원': ['학원ID', '학원명', '구분', '상태', '원장교사ID', '원장명', '교실대표번호', '이메일', '교습과목', '시도', '시군구', '우편번호', '주소', '상세주소', '개원일', '계약체결일', '확인', '확인메모', '메모', '원본', '수정일', '수정자', '졸업연주지역', '사업자번호', '교육청인가번호'],
-  '교사': ['교사ID', '이름', '구분글자', '원래이름', '휴대전화', '이메일', '학원1', '학원2', '학원3', '직급', '전공', '회원구분', '명단자격', '명단취득', '회비구분', '캠프교수', '내부외부', '상태', '확인', '확인메모', '메모', '원본', '수정일', '수정자', '영문이름', '본인자격', '회비납부방법', '강사료대상', '계약체결', '계약일'],
-  '학생': ['학생ID', '학원ID', '이름', '구분글자', '원래이름', '출생연도', '출생연도추정', '전공', '시작월', '상태', '담당교사ID', '확인', '확인메모', '메모', '원본', '수정일', '수정자', '상태일'],
+  '교사': ['교사ID', '이름', '구분글자', '원래이름', '휴대전화', '이메일', '학원1', '학원2', '학원3', '직급', '전공', '회원구분', '명단자격', '명단취득', '회비구분', '캠프교수', '내부외부', '상태', '확인', '확인메모', '메모', '원본', '수정일', '수정자', '영문이름', '본인자격', '회비납부방법', '강사료대상', '계약체결', '계약일', '성별'],
+  '학생': ['학생ID', '학원ID', '이름', '구분글자', '원래이름', '출생연도', '출생연도추정', '전공', '시작월', '상태', '담당교사ID', '확인', '확인메모', '메모', '원본', '수정일', '수정자', '상태일', '성별'],
   '연회비': ['대상', 'ID', '년도', '부과', '납부', '납부일', '방식', '메모', '수정일', '수정자', '자격시작', '확인', '신고일', '신고자', '확인일', '확인자'],
   '설정': ['항목', '값', '설명'],
   '기록': ['일시', '누가', '표', 'ID', '동작', '내용'],
@@ -51,8 +51,8 @@ const KEY = { '학원': '학원ID', '교사': '교사ID', '학생': '학생ID' }
 /* 화면에서 고칠 수 있는 칸 (나머지는 서버가 정함) */
 const EDIT = {
   '학원': ['학원명', '구분', '상태', '원장교사ID', '교실대표번호', '이메일', '교습과목', '시도', '시군구', '우편번호', '주소', '상세주소', '개원일', '계약체결일', '졸업연주지역', '사업자번호', '교육청인가번호', '확인', '확인메모', '메모'],
-  '교사': ['이름', '구분글자', '휴대전화', '이메일', '학원1', '학원2', '학원3', '직급', '전공', '회원구분', '본인자격', '회비구분', '회비납부방법', '강사료대상', '캠프교수', '내부외부', '계약체결', '계약일', '상태', '확인', '확인메모', '메모'],
-  '학생': ['학원ID', '이름', '구분글자', '출생연도', '전공', '시작월', '상태', '담당교사ID', '확인', '확인메모', '메모'],
+  '교사': ['이름', '구분글자', '휴대전화', '이메일', '학원1', '학원2', '학원3', '직급', '전공', '회원구분', '본인자격', '회비구분', '회비납부방법', '강사료대상', '캠프교수', '내부외부', '계약체결', '계약일', '성별', '상태', '확인', '확인메모', '메모'],
+  '학생': ['학원ID', '이름', '구분글자', '성별', '출생연도', '전공', '시작월', '상태', '담당교사ID', '확인', '확인메모', '메모'],
 };
 const SETTINGS = [
   ['관리자 아이디', 'admin', '관리자 화면 아이디'],
@@ -247,6 +247,7 @@ function clean_(table, o) {
     if ('이름' in r && !r['이름']) fail('학생 이름을 넣어 주세요.');
     if (r['출생연도'] && !/^(19|20)\d{2}$/.test(r['출생연도'])) fail('출생연도는 4자리로 넣어 주세요.');
   }
+  if ('성별' in r && ['', '남', '여'].indexOf(r['성별']) < 0) fail('성별은 남 · 여 중에 골라 주세요.');
   if (r['확인'] && ['확인 전', '확인', '확인 필요'].indexOf(r['확인']) < 0) r['확인'] = '확인 전';
   if ('계약체결' in r && ['', '예', '아니오'].indexOf(r['계약체결']) < 0) r['계약체결'] = '';
   if ('졸업연주지역' in r && r['졸업연주지역'] && REGIONS.indexOf(r['졸업연주지역']) < 0) fail('졸업연주 지역을 골라 주세요.');
@@ -569,7 +570,7 @@ function prefill_(tid) {
   const certs = {}; String(g('본인자격') || g('명단자격')).split(/[,，、]/).forEach(x => { x = x.trim(); if (!x) return; const m = x.match(/^(.+?)\s*((?:19|20)\d{2})/); let n = (m ? m[1] : x).replace('카톨릭', '가톨릭').replace(/\s+/g, ''); if (n === '국민대') n = '국민대학원';
     if (CERTS_.indexOf(n) >= 0 && n !== '티처트레이너') certs[n] = m ? m[2] : ''; });
   const role = ['원장', '강사'].indexOf(g('직급')) >= 0 ? g('직급') : null;
-  return { type, course, works, noWork: false, role, inst: INSTS_.indexOf(g('전공')) >= 0 ? g('전공') : '', certs };
+  return { sex: ['남', '여'].indexOf(g('성별')) >= 0 ? g('성별') : '', type, course, works, noWork: false, role, inst: INSTS_.indexOf(g('전공')) >= 0 ? g('전공') : '', certs };
 }
 const CERTS_ = ['초급', '중급', '티처트레이너', '국민대학원', '대구가톨릭대학원', '전주대학원'];
 /** 가입 때 선생님이 넣은 정보 검사 (기존 교사회원 · 신규 회원 같은 칸) */
@@ -577,6 +578,7 @@ const EXT_ROLES = ['반주자', '스태프', '통역', '초청 강사', '기타'
 /** 가입 정보 검사. mode: member(명단에 있는 교사) · new(신규 교사회원/연수교사회원) · ext(외부인) */
 function cleanInfo_(n, mode) {
   n = n || {}; const an = acadNames_(); const o = { mode };
+  if (['남', '여'].indexOf(n.sex) < 0) fail('성별을 골라 주세요.'); o.sex = n.sex;
   if (mode === 'ext') {
     if (EXT_ROLES.indexOf(n.extRole) < 0) fail('하는 일을 골라 주세요.');
     o.extRole = n.extRole === '기타' ? '기타: ' + String(n.extRoleText || '').trim().slice(0, 30) : n.extRole;
@@ -636,10 +638,11 @@ function tCreate(token, d) {
       if (o.acadText) diff.push('목록에 없는 소속 학원 「' + o.acadText + '」');
       if (g('직급') !== o.role) diff.push('직급 ' + (g('직급') || '없음') + ' → ' + (o.role || '없음'));
       if (g('전공') !== o.inst) diff.push('악기 ' + (g('전공') || '없음') + ' → ' + o.inst);
+      if (g('성별') && g('성별') !== o.sex) diff.push('성별 ' + g('성별') + ' → ' + o.sex);
       const tt = (g('본인자격').match(/티처트레이너[^,]*/) || [])[0] || (/티처트레이너/.test(g('명단자격')) ? '티처트레이너' : '');
       if (tt) o.certTxt = [o.certTxt, tt.trim()].filter(Boolean).join(', ');   // 관리자가 넣은 티처트레이너는 지키기
       if (o.certTxt && o.certTxt !== g('명단자격')) diff.push('자격 (명단: ' + (g('명단자격') || '없음') + ') → ' + o.certTxt);
-      const upd = { '학원1': newA[0] || '', '학원2': newA[1] || '', '학원3': newA[2] || '', '직급': o.role, '전공': o.inst, '회원구분': o.kind, '본인자격': o.certTxt, '수정일': stamp, '수정자': s.name + ' (가입)' };
+      const upd = { '학원1': newA[0] || '', '학원2': newA[1] || '', '학원3': newA[2] || '', '직급': o.role, '전공': o.inst, '성별': o.sex, '회원구분': o.kind, '본인자격': o.certTxt, '수정일': stamp, '수정자': s.name + ' (가입)' };
       putPay_(tid, s.email, pay); if (rr) { putRrn_(tid, rr); upd['강사료대상'] = '예'; }
       if (s.emailMatch) upd['이메일'] = s.email;
       if (diff.length) { upd['확인'] = '확인 필요'; upd['확인메모'] = [g('확인메모'), '가입 때 바꿈: ' + diff.join(' · ')].filter(Boolean).join(' · ').slice(0, 500); }
@@ -653,8 +656,8 @@ function tCreate(token, d) {
       tbl_('계정').append({ '이메일': s.email, '교사ID': '', '비번해시': hash_(d.pw, salt), '솔트': salt, '상태': '대기', '경로': mode === 'ext' ? '외부인' : '신규 회원', '만든날': stamp });
       putPay_('E:' + s.email, s.email, pay);   // 승인되면 교사 번호로 바뀜
       if (rr) putRrn_('E:' + s.email, rr);
-      addReq_(mode === 'ext' ? '외부인' : '새 회원', '', s, mode === 'ext' ? { '가입 종류': '외부인', '하는 일': o.extRole, '소속': o.org || '-', '악기': o.inst || '-', '주민번호': rr ? '넣음 (암호화)' : '' }
-        : { '가입 종류': o.type, '연수 과정': o.course, '회원 구분': o.kind, '소속 학원': o.acadNames, '_근무': o.works, '직급': o.role || '없음', '악기': o.inst, '자격': o.certTxt, '주민번호': rr ? '넣음 (암호화) · 승인하면 강사료 대상' : '' });
+      addReq_(mode === 'ext' ? '외부인' : '새 회원', '', s, mode === 'ext' ? { '가입 종류': '외부인', '성별': o.sex, '하는 일': o.extRole, '소속': o.org || '-', '악기': o.inst || '-', '주민번호': rr ? '넣음 (암호화)' : '' }
+        : { '가입 종류': o.type, '성별': o.sex, '연수 과정': o.course, '회원 구분': o.kind, '소속 학원': o.acadNames, '_근무': o.works, '직급': o.role || '없음', '악기': o.inst, '자격': o.certTxt, '주민번호': rr ? '넣음 (암호화) · 승인하면 강사료 대상' : '' });
       log_(s.name, '계정', s.email, '가입 신청', o.type + ' · ' + o.kind);
     }
   } finally { lock.releaseLock(); }
@@ -710,7 +713,7 @@ function tMe(sess) {
   const dues = tbl_('연회비').v.filter(d => d[0] === '교사' && d[1] === u.tid).map(d => ({ year: d[2], due: +d[3] || 0, paid: +d[4] || 0, date: d[5], way: d[6] })).sort((a, b) => String(b.year).localeCompare(String(a.year)));
   let events = tbl_('참가이력').v.filter(e => e[1] === '교사' && e[2] === u.tid).map(e => ({ name: e[3], year: e[4], period: e[5], role: e[6], state: e[7] })).sort((a, b) => String(b.year).localeCompare(String(a.year)));
   if (!events.length && settings_()['테스트 표시'] === '예') events = [{ sample: true, name: '2026 여름 스즈키 음악캠프', year: '2026', period: '2026.07.27 ~ 07.31', role: '교사', state: '참가' }];   // STG 예시 (더미)
-  return { me: { works, dues, events, duesWay: g('회비납부방법'), duesFree: g('회비구분') === '면제', ext: g('회원구분') === '외부인', name: g('이름'), phone: g('휴대전화'), email: u.email, acads: [g('학원1'), g('학원2'), g('학원3')].filter(Boolean).map(id => an[id] || id), role: g('직급'), inst: g('전공'), kind: g('회원구분'), certs: g('본인자격') || g('명단자격'), eng: g('영문이름'), photo: photoOf_(u.tid), heads,
+  return { me: { works, dues, events, duesWay: g('회비납부방법'), duesFree: g('회비구분') === '면제', ext: g('회원구분') === '외부인', sex: g('성별'), name: g('이름'), phone: g('휴대전화'), email: u.email, acads: [g('학원1'), g('학원2'), g('학원3')].filter(Boolean).map(id => an[id] || id), role: g('직급'), inst: g('전공'), kind: g('회원구분'), certs: g('본인자격') || g('명단자격'), eng: g('영문이름'), photo: photoOf_(u.tid), heads,
     payee: g('강사료대상') === '예',
     pay: p ? { bank: p['은행'], acct: maskAcct_(p['계좌번호']), holder: p['예금주'], zip: p['우편번호'], addr: p['주소'], addr2: p['상세주소'], hzip: p['집우편번호'], haddr: p['집주소'], haddr2: p['집상세주소'], rrn: p['주민번호표시'] || '', rrnAt: p['주민번호동의일'] || '' } : null, reqs } };
 }
@@ -804,7 +807,7 @@ function tAcad(sess, aid) {
   T.v.forEach(r => { if (!seen[r[tc['교사ID']]] && [r[tc['학원1']], r[tc['학원2']], r[tc['학원3']]].indexOf(aid) >= 0) ws.push({ '교사ID': r[tc['교사ID']], '시작': '', '종료': '', '주근무': r[tc['학원1']] === aid ? '예' : '' }); });
   const tdu = {}; tbl_('연회비').v.forEach(d => { if (d[0] === '교사' && String(d[2]) === CUR_Y) tdu[d[1]] = d; });
   const teachers = ws.map(w => { const r = byId[w['교사ID']]; if (!r || r[tc['상태']] === '탈퇴') return null; const du = tdu[r[tc['교사ID']]] || [];
-    return { id: r[tc['교사ID']], name: r[tc['이름']] + (r[tc['구분글자']] ? ' ' + r[tc['구분글자']] : ''), role: r[tc['직급']] || '', inst: r[tc['전공']] || '', kind: r[tc['회원구분']] || '', start: w['시작'] || '', end: w['종료'] || '', main: w['주근무'] === '예',
+    return { id: r[tc['교사ID']], name: r[tc['이름']] + (r[tc['구분글자']] ? ' ' + r[tc['구분글자']] : ''), role: r[tc['직급']] || '', inst: r[tc['전공']] || '', sex: r[tc['성별']] || '', kind: r[tc['회원구분']] || '', start: w['시작'] || '', end: w['종료'] || '', main: w['주근무'] === '예',
       phone: w['종료'] ? '' : (r[tc['휴대전화']] || ''), cert: r[tc['본인자격']] || r[tc['명단자격']] || '', due: du[3] || '', paid: du[4] || '', paidAt: du[5] || '', duesFree: r[tc['회비구분']] === '면제', contract: r[tc['계약체결']] || '', contractAt: r[tc['계약일']] || '' }; })
     .filter(Boolean).sort((x, y) => (x.end ? 1 : 0) - (y.end ? 1 : 0) || String(y.start).localeCompare(String(x.start)));
   return { acad: info, teachers, docs: docList_(aid), students: stuOf_(aid) };
@@ -879,7 +882,7 @@ function statesOf_(sid) { return rowsOf_('재원이력').list.filter(r => r['학
 function stuOf_(aid) { const S2 = tbl_('학생'), c = col_(S2), du = {}, DV = tbl_('연회비').v; DV.forEach(d => { if (d[0] === '학생' && String(d[2]) === CUR_Y) du[d[1]] = d; });
   const cur = {}; rowsOf_('담당').list.forEach(r => { if (!r['종료']) cur[r['학생ID']] = r['교사ID']; });
   return S2.v.filter(r => r[c['학원ID']] === aid).map(r => { const id = r[c['학생ID']], d = du[id] || [];
-    return { id, name: r[c['이름']], tag: r[c['구분글자']] || '', birth: r[c['출생연도']] || '', inst: r[c['전공']] || '', start: r[c['시작월']] || '', state: STU_STATES.indexOf(r[c['상태']]) >= 0 ? r[c['상태']] : '재원', stateAt: r[c['상태일']] || '', tid: cur[id] || r[c['담당교사ID']] || '', check: r[c['확인']] || '', due: d[3] || '', paid: d[4] || '', paidAt: d[5] || '', pay: d[11] || (+d[4] > 0 ? '확인' : ''), mem: memOf_(id, DV).last }; })
+    return { id, name: r[c['이름']], tag: r[c['구분글자']] || '', sex: r[c['성별']] || '', birth: r[c['출생연도']] || '', inst: r[c['전공']] || '', start: r[c['시작월']] || '', state: STU_STATES.indexOf(r[c['상태']]) >= 0 ? r[c['상태']] : '재원', stateAt: r[c['상태일']] || '', tid: cur[id] || r[c['담당교사ID']] || '', check: r[c['확인']] || '', due: d[3] || '', paid: d[4] || '', paidAt: d[5] || '', pay: d[11] || (+d[4] > 0 ? '확인' : ''), mem: memOf_(id, DV).last }; })
     .sort((a, b) => (a.state === '퇴원') - (b.state === '퇴원') || String(a.name).localeCompare(String(b.name), 'ko')); }
 function stuWho_(u) { const T = tbl_('교사'), ti = T.find('교사ID', u.tid); return (ti >= 0 ? T.get(ti, '이름') : u.email) + ' (원장)'; }
 function stuRow_(aid, sid) { const S2 = tbl_('학생'), i = S2.find('학생ID', sid); if (i < 0 || S2.get(i, '학원ID') !== aid) fail('그 학생을 찾지 못했어요. 새로 고침해 주세요.'); return { S2, i }; }
@@ -901,10 +904,11 @@ function tSaveStus(sess, aid, rows) {
     const at = (k + 1) + '번째 줄' + (st.name ? '(' + String(st.name).trim() + ')' : '') + ': ';
     const name = String(st.name || '').trim().slice(0, 20); if (!st.id && !name) fail(at + '학생 이름을 넣어 주세요.');
     const birth = digits_(st.birth).slice(0, 4); if (birth && !/^(19|20)\d{2}$/.test(birth)) fail(at + '출생연도는 4자리로 넣어 주세요.');
+    const sex = String(st.sex || ''); if (['남', '여'].indexOf(sex) < 0) fail(at + '성별을 골라 주세요.');
     const start = String(st.start || '').trim(); if (start && !/^\d{4}-\d{2}(-\d{2})?$/.test(start)) fail(at + '재원 시작은 2024-03-02 처럼 넣어 주세요.');
     const state = STU_STATES.indexOf(st.state) >= 0 ? st.state : '재원'; let stateAt = String(st.stateAt || '').trim(); try { stateAt = ymd2_(stateAt); } catch (e) { fail(at + e.message); }
     if (state !== '재원' && !stateAt) fail(at + state + ' 날짜를 넣어 주세요.');
-    return { id: st.id || '', name, birth, inst: INSTS_.indexOf(st.inst) >= 0 ? st.inst : '', start, state, stateAt, tid: mine.indexOf(st.tid) >= 0 ? st.tid : '' };
+    return { id: st.id || '', name, sex, birth, inst: INSTS_.indexOf(st.inst) >= 0 ? st.inst : '', start, state, stateAt, tid: mine.indexOf(st.tid) >= 0 ? st.tid : '' };
   });
   const lock = LockService.getScriptLock(); lock.waitLock(30000); let nNew = 0, nEdit = 0;
   try {
@@ -912,14 +916,14 @@ function tSaveStus(sess, aid, rows) {
       const S2 = tbl_('학생');
       if (!x.id) {
         const id = nextId_(S2, '학생ID', 'S');
-        S2.append({ '학생ID': id, '학원ID': aid, '이름': x.name, '원래이름': x.name, '출생연도': x.birth, '전공': x.inst, '시작월': x.start, '상태': x.state, '상태일': x.state === '재원' ? '' : x.stateAt, '담당교사ID': x.tid, '확인': '확인 필요', '확인메모': '원장이 추가(' + md + ')', '원본': '원장 추가', '수정일': now_(), '수정자': who });
+        S2.append({ '학생ID': id, '학원ID': aid, '이름': x.name, '원래이름': x.name, '성별': x.sex, '출생연도': x.birth, '전공': x.inst, '시작월': x.start, '상태': x.state, '상태일': x.state === '재원' ? '' : x.stateAt, '담당교사ID': x.tid, '확인': '확인 필요', '확인메모': '원장이 추가(' + md + ')', '원본': '원장 추가', '수정일': now_(), '수정자': who });
         const H = tbl_('재원이력'); H.append({ '이력ID': rid_('H'), '학생ID': id, '상태': '재원', '날짜': x.start || '', '메모': '원장이 추가', '수정일': now_(), '수정자': who });
         if (x.state !== '재원') tbl_('재원이력').append({ '이력ID': rid_('H'), '학생ID': id, '상태': x.state, '날짜': x.stateAt, '메모': '', '수정일': now_(), '수정자': who });
         if (x.tid) tbl_('담당').append({ '담당ID': rid_('P'), '학생ID': id, '교사ID': x.tid, '시작': (x.start || today).slice(0, 7), '종료': '', '수정일': now_(), '수정자': who });
         nNew++; return;
       }
       const { i } = stuRow_(aid, x.id), g = k => String(S2.get(i, k) || ''), diff = [];
-      const o = {}; if (x.birth !== g('출생연도')) o['출생연도'] = x.birth; if (x.inst !== g('전공')) o['전공'] = x.inst; if (x.start !== g('시작월')) o['시작월'] = x.start;
+      const o = {}; if (x.sex !== g('성별')) o['성별'] = x.sex; if (x.birth !== g('출생연도')) o['출생연도'] = x.birth; if (x.inst !== g('전공')) o['전공'] = x.inst; if (x.start !== g('시작월')) o['시작월'] = x.start;
       Object.keys(o).forEach(k => diff.push(k + ' ' + (g(k) || '없음') + ' → ' + (o[k] || '없음')));
       if (Object.keys(o).length) S2.set(i, Object.assign(o, { '수정일': now_(), '수정자': who }));
       const curState = STU_STATES.indexOf(g('상태')) >= 0 ? g('상태') : '재원';
@@ -943,17 +947,18 @@ function tStuDetail(sess, aid, sid) {
   let states = statesOf_(sid).map(r => ({ id: r['이력ID'], state: r['상태'], date: r['날짜'], memo: r['메모'] }));
   if (!states.length) { states = [{ id: '', state: '재원', date: g('시작월'), memo: '명단', legacy: true }]; if (g('상태') && g('상태') !== '재원') states.push({ id: '', state: g('상태'), date: g('상태일'), memo: '명단', legacy: true }); }
   const mo = memOf_(sid), dues = tbl_('연회비').v.filter(d => d[0] === '학생' && d[1] === sid).map(d => ({ year: d[2], due: d[3], paid: d[4], date: d[5], way: d[6], pay: d[11] || (+d[4] > 0 ? '확인' : ''), memo: d[11] === '반려' ? String(d[7] || '') : '', mem: mo.terms[String(d[2])] || null })).sort((a, b) => String(b.year).localeCompare(String(a.year)));
-  return { mem: mo.last, stu: { id: sid, name: g('이름'), tag: g('구분글자'), birth: g('출생연도'), inst: g('전공'), start: g('시작월'), state: g('상태') || '재원', stateAt: g('상태일'), check: g('확인') }, tutors, states, dues, curY: CUR_Y };
+  return { mem: mo.last, stu: { id: sid, name: g('이름'), tag: g('구분글자'), sex: g('성별'), birth: g('출생연도'), inst: g('전공'), start: g('시작월'), state: g('상태') || '재원', stateAt: g('상태일'), check: g('확인') }, tutors, states, dues, curY: CUR_Y };
 }
 /** 자세히: 이름 · 출생연도 · 전공 · 올해 낸 금액 · 낸 날짜 고치기 */
 function tStuSave(sess, aid, sid, d) {
   const u = tsess_(sess); headOf_(u, aid); d = d || {}; const who = stuWho_(u), md = Utilities.formatDate(new Date(), 'Asia/Seoul', 'MM-dd');
   const name = String(d.name || '').trim().slice(0, 20); if (!name) fail('학생 이름을 넣어 주세요.');
   const birth = digits_(d.birth).slice(0, 4); if (birth && !/^(19|20)\d{2}$/.test(birth)) fail('출생연도는 4자리로 넣어 주세요.');
+  if (['남', '여'].indexOf(d.sex) < 0) fail('성별을 골라 주세요.');
   const paid = String(d.paid == null ? '' : d.paid).replace(/[^\d]/g, ''), paidAt = String(d.paidAt || '').trim(); if (paidAt && !/^\d{4}-\d{2}-\d{2}$/.test(paidAt)) fail('낸 날짜를 확인해 주세요.');
   const lock = LockService.getScriptLock(); lock.waitLock(20000);
   try {
-    const { S2, i } = stuRow_(aid, sid), g = k => String(S2.get(i, k) || ''), diff = [], o = { '이름': name, '출생연도': birth, '전공': INSTS_.indexOf(d.inst) >= 0 ? d.inst : '' };
+    const { S2, i } = stuRow_(aid, sid), g = k => String(S2.get(i, k) || ''), diff = [], o = { '이름': name, '성별': d.sex, '출생연도': birth, '전공': INSTS_.indexOf(d.inst) >= 0 ? d.inst : '' };
     Object.keys(o).forEach(k => { if (o[k] !== g(k)) diff.push(k + ' ' + (g(k) || '없음') + ' → ' + (o[k] || '없음')); });
     if (diff.length) S2.set(i, Object.assign(o, { '수정일': now_(), '수정자': who }));
     const D = tbl_('연회비'), dc = col_(D), j = D.v.findIndex(r => r[dc['대상']] === '학생' && r[dc['ID']] === sid && String(r[dc['년도']]) === CUR_Y);
@@ -1076,7 +1081,8 @@ function tSaveInfo(sess, d) {
     const name = String(d.name || '').trim().slice(0, 20), phone = digits_(d.phone);
     if (!name) fail('이름을 넣어 주세요.'); if (!/^01\d{8,9}$/.test(phone)) fail('휴대전화 번호를 확인해 주세요.');
     if (phone !== digits_(g('휴대전화')) && T.v.some((r, j) => j !== i && digits_(r[T.h.indexOf('휴대전화')]) === phone && r[T.h.indexOf('상태')] !== '탈퇴')) fail('그 휴대전화 번호는 다른 회원이 쓰고 있어요. 「문의 · 요청」으로 알려 주세요.');
-    const upd = { '이름': name, '휴대전화': phone }, diff = [];
+    if (['남', '여'].indexOf(d.sex) < 0) fail('성별을 골라 주세요.');
+    const upd = { '이름': name, '휴대전화': phone, '성별': d.sex }, diff = [];
     const inst = INSTS_.indexOf(d.inst) >= 0 ? d.inst : ''; if (!ext && !inst) fail('악기를 골라 주세요.'); upd['전공'] = inst;
     if (!ext) {
       if (['교사회원', '연수교사회원'].indexOf(d.type) < 0) fail('회원 종류를 골라 주세요.');
@@ -1201,9 +1207,9 @@ function reqDo(who, id, act, memo, linkTid) {
       const T = tbl_('교사');
       if (linkTid) { if (T.find('교사ID', linkTid) < 0) fail('연결할 교사 번호를 찾지 못했어요.'); tid = linkTid; T.set(T.find('교사ID', tid), { '이메일': email, '회원구분': info['회원 구분'] || '확인 전', '수정일': now_(), '수정자': who.name }); }
       else if (ext) { tid = nextId_(T, '교사ID', 'X');
-        T.append({ '교사ID': tid, '이름': name, '원래이름': name, '휴대전화': digits_(q[c['휴대전화']]), '이메일': email, '전공': info['악기'] === '-' ? '' : (info['악기'] || ''), '회원구분': '외부인', '회비구분': '면제', '캠프교수': '아니오', '내부외부': '외부', '강사료대상': '예', '상태': '활동', '확인': '확인 전', '확인메모': '외부인 · ' + (info['하는 일'] || '') + (info['소속'] && info['소속'] !== '-' ? ' · ' + info['소속'] : ''), '원본': '외부인 신청 ' + id, '수정일': now_(), '수정자': who.name }); }
+        T.append({ '교사ID': tid, '이름': name, '원래이름': name, '휴대전화': digits_(q[c['휴대전화']]), '이메일': email, '전공': info['악기'] === '-' ? '' : (info['악기'] || ''), '성별': info['성별'] || '', '회원구분': '외부인', '회비구분': '면제', '캠프교수': '아니오', '내부외부': '외부', '강사료대상': '예', '상태': '활동', '확인': '확인 전', '확인메모': '외부인 · ' + (info['하는 일'] || '') + (info['소속'] && info['소속'] !== '-' ? ' · ' + info['소속'] : ''), '원본': '외부인 신청 ' + id, '수정일': now_(), '수정자': who.name }); }
       else { tid = nextId_(T, '교사ID', 'T'); const wk = (() => { try { return Array.isArray(info['_근무']) ? info['_근무'] : JSON.parse(info['근무JSON'] || '[]'); } catch (e) { return []; } })(); const ac = wk.filter(w => w.id).map(w => w.id);
-        T.append({ '교사ID': tid, '이름': name, '원래이름': name, '휴대전화': digits_(q[c['휴대전화']]), '이메일': email, '학원1': ac[0] || '', '학원2': ac[1] || '', '학원3': ac[2] || '', '직급': info['직급'] === '없음' ? '' : (info['직급'] || ''), '전공': info['악기'] || '', '회원구분': info['회원 구분'] || '확인 전', '본인자격': info['자격'] || '',
+        T.append({ '교사ID': tid, '이름': name, '원래이름': name, '휴대전화': digits_(q[c['휴대전화']]), '이메일': email, '학원1': ac[0] || '', '학원2': ac[1] || '', '학원3': ac[2] || '', '직급': info['직급'] === '없음' ? '' : (info['직급'] || ''), '전공': info['악기'] || '', '성별': info['성별'] || '', '회원구분': info['회원 구분'] || '확인 전', '본인자격': info['자격'] || '',
           '회비구분': '납부', '캠프교수': '아니오', '상태': '활동', '확인': '확인 전', '확인메모': (info['가입 종류'] || '') + ' 가입 신청' + (info['연수 과정'] ? ' · ' + info['연수 과정'] + ' 과정' : '') + (/목록에 없음/.test(info['소속 학원'] || '') ? ' · ' + info['소속 학원'] : ''), '원본': '가입 신청 ' + id, '수정일': now_(), '수정자': who.name });
         setWorksAtSignup_(tid, wk, who.name + ' (가입 승인)'); }
       if (ai >= 0) A.set(ai, { '교사ID': tid, '상태': '사용', '처리일': now_() });

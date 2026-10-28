@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261028-222038 -->
+<!-- build: 20261028-222357 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -300,7 +300,7 @@ function tchEditor(){var t=S.edit.id==='new'?{'상태':'활동','회원구분':'
   return '<div class="editor">'+edHead(t['교사ID']?nm(t)+' 선생님 <span class="cap num">'+t['교사ID']+'</span>':'교사 추가',t)+
     (same.length?'<div class="note">이름이 같은 교사: '+same.map(function(x){return '<b>'+nm(x)+'</b> '+esc(tAcadTxt(x))+' · '+esc(x['전공'])+' · 뒷자리 '+String(x['휴대전화']).slice(-4)}).join(' / ')+'</div>':'')+
     '<div class="fgrid">'+fld('e_이름','이름',t['이름'],{req:1,hint:'명찰·졸업장에 그대로'})+fld('e_구분글자','구분 글자',t['구분글자'],{hint:'동명이인 메모용 · 화면엔 작게'})+fld('e_휴대전화','휴대전화',fmt(t['휴대전화']),{type:'tel'})+
-    fld('e_이메일','이메일',t['이메일'])+fld('e_전공','전공',t['전공'],{sel:[['','선택']].concat(INSTS)})+
+    fld('e_이메일','이메일',t['이메일'])+fld('e_성별','성별',t['성별']||'',{sel:[['','선택'],'남','여']})+fld('e_전공','전공',t['전공'],{sel:[['','선택']].concat(INSTS)})+
     (t['교사ID']?'':fld('e_학원1','주 소속 학원',t['학원1'],{sel:acadOpts('소속 없음')})+fld('e_학원2','추가 근무 학원 1',t['학원2'],{sel:acadOpts('없음')})+fld('e_학원3','추가 근무 학원 2',t['학원3'],{sel:acadOpts('없음')}))+
     fld('e_회원구분','회원 종류',t['회원구분'],{sel:['확인 전',['정식 교사','교사회원'],['중급 연수','연수교사 · 중급'],['초급 연수','연수교사 · 초급'],'외부인'],hint:'명단 자격: '+esc(t['명단자격']||'없음')+(t['명단취득']?' · '+esc(t['명단취득']):'')})+
     certAdmin(t)+fld('e_상태','상태',t['상태'],{sel:['활동','휴직','활동정지','탈퇴']})+fld('e_확인','확인',t['확인'],{sel:CHECKS})+'</div>'+
@@ -393,7 +393,7 @@ function stuEditor(){var s=S.edit.id==='new'?{'학원ID':S.f.ac||'','상태':'�
   var ts=S.D.tch.filter(function(t){return tAcads(t).indexOf(ac)>=0}).map(function(t){return [t['교사ID'],t['이름']+' · '+t['전공']]});
   return '<div class="editor">'+edHead(s['학생ID']?nm(s)+' <span class="cap num">'+s['학생ID']+'</span>':'학생 추가',s)+'<div class="fgrid">'+
     fld('e_학원ID','학원',ac,{sel:acadOpts('선택'),req:1})+fld('e_이름','이름',s['이름'],{req:1})+fld('e_구분글자','구분 글자',s['구분글자'],{hint:'예: 남A · 화면엔 작게'})+
-    fld('e_출생연도','출생연도',s['출생연도'],{num:1,max:4,hint:s['출생연도추정']?'나이로 계산한 값':''})+fld('e_전공','전공',s['전공'],{sel:[['','선택']].concat(INSTS)})+fld('e_시작월','시작월',s['시작월'],{hint:'예: 2025-03'})+
+    fld('e_성별','성별',s['성별']||'',{sel:[['','선택'],'남','여']})+fld('e_출생연도','출생연도',s['출생연도'],{num:1,max:4,hint:s['출생연도추정']?'나이로 계산한 값':''})+fld('e_전공','전공',s['전공'],{sel:[['','선택']].concat(INSTS)})+fld('e_시작월','시작월',s['시작월'],{hint:'예: 2025-03'})+
     fld('e_담당교사ID','담당교사',s['담당교사ID'],{sel:[['','미지정']].concat(ts)})+fld('e_상태','상태',s['상태'],{sel:['재원','퇴원']})+fld('e_확인','확인',s['확인'],{sel:CHECKS})+
     fld('e_확인메모','확인 메모',s['확인메모'],{wide:1})+fld('e_메모','메모',s['메모'],{wide:1,area:1})+'</div>'+
     (s['학생ID']?duesBox('학생',s['학생ID'],null,''):'')+'<p class="err" id="edErr"></p></div>'}

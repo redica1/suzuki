@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261028-090223 -->
+<!-- build: 20261028-090641 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -278,7 +278,7 @@ function payCards(m){var p=m.pay||{},ed=S.payEd,d=S.pay||{};
   var ml='<div class="lock">'+head('우편물 받을 주소','mail','공문 · 포스터')+(ed==='mail'?
       mailBlock(d,p.haddr?p.haddr:'')+msgBox()+edBtns():
       '<p>'+(p.addr?(sameNow?'<span class="pill info">집 주소와 같음</span> ':'')+(p.zip?'<span class="num">('+esc(p.zip)+')</span> ':'')+esc(p.addr)+' '+esc(p.addr2):'<span class="hint">아직 없어요</span>')+'</p>')+'</div>';
-  return a+h+ml+'<p class="hint" style="margin:-4px 4px 12px">정산 정보와 주소는 협회 관리자만 볼 수 있어요. 학원이나 다른 선생님에게는 보이지 않아요.</p>'}
+  return a+h+ml}
 var B_CATS=['회원가입','정보 수정','회비','캠프·행사','기타'];
 function stPill(s){return '<span class="pill '+(s==='완료'?'ok':s==='처리중'?'info':'due')+'">'+esc(s)+'</span>'}
 function vAsk(){var a=S.ask||(S.ask={cat:'',title:'',body:'',name:'',phone:''}),me=S.sess&&S.me;

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261028-230209 -->
+<!-- build: 20261028-230544 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -436,6 +436,23 @@ function tchDetail(M){var id=S.tchDet;if(!id)return '';var all=(M.data.teachers|
         (cand.length?'<div class="asg">'+cand.map(function(x){return '<label><input type="checkbox" data-asg="'+esc(x.id)+'" '+((S.asgSel||{})[x.id]?'checked':'')+'> <b>'+esc(x.name)+'</b> <span class="hint">'+esc(x.inst||'전공 없음')+' · '+(x.tid?esc(tn[x.tid]||x.tid)+' 담당':'담당 없음')+(x.state==='휴원'?' · 휴원':'')+'</span></label>'}).join('')+'</div>'+
         '<div class="row" style="margin-top:6px"><span class="hint">담당 시작</span><input type="date" id="asgD" value="'+esc(todayYmd())+'" style="width:auto" aria-label="담당 시작 날짜"><button class="btn small primary" type="button" id="asgGo">고른 학생 배정</button></div><p class="hint">고른 날부터 이 선생님이 맡고, 앞 담당 선생님은 그 전날까지로 이력에 남아요.</p>'
         :'<p class="hint">'+(t.inst&&!S.asgAll?t.inst+' 학생 중 배정할 학생이 없어요. 「다른 전공 학생도 보기」를 눌러 보세요.':'배정할 학생이 없어요.')+'</p>')+'</div>':'')+'</div></div>'}
+function loadMyStu(){S.my=null;S.myLd=1;call('tMyStu',[S.sess]).then(function(r){S.myLd=0;if(!r.ok){toast(r.msg);return}S.my=r;if(!S.myA||!r.acads.some(function(a){return a.id===S.myA}))S.myA=(r.acads.filter(function(a){return a.main})[0]||r.acads[0]||{}).id;render()})}
+function vMyStu(){var R=S.my;if(!R){if(!S.myLd){S.myLd=1;setTimeout(function(){loadMyStu()},0)}return '<div class="card full"><p class="hint"><span class="spin"></span> 불러오는 중…</p></div>'}
+  if(!R.acads.length)return '<div class="card full"><h3>내 학생</h3><p class="hint">지금 근무 중인 학원이 없어요. 「내 정보 › 소속 학원」을 확인해 주세요.</p></div>';
+  var A=R.acads.filter(function(a){return a.id===S.myA})[0]||R.acads[0],L=A.students,cy=new Date().getFullYear(),base=S.myAll?L:L.filter(function(x){return x.state==='재원'}),show=instPick(base,'M');
+  var pill=function(x){return '<span class="pill '+(x==='재원'?'ok':x==='휴원'?'info':'due')+'">'+esc(x)+'</span>'};
+  return '<div class="card full"><div class="spread"><h2>내 학생 <span class="opt">재원 '+L.filter(function(x){return x.state==='재원'}).length+'명</span></h2>'+(R.acads.length>1?'<div class="row">'+R.acads.map(function(a){return '<button class="btn small'+(a.id===A.id?' primary':'')+'" type="button" data-mya="'+esc(a.id)+'">'+esc(a.name)+' '+a.students.filter(function(x){return x.state==='재원'}).length+'</button>'}).join('')+'</div>':'<span class="hint">'+esc(A.name)+'</span>')+'</div>'+
+    '<div class="spread"><span class="hint">원장님이 배정한 학생이에요. 「보기」에서 회비 입금 신고를 할 수 있어요.</span><label class="agree" style="flex:none;align-items:center"><input type="checkbox" id="myAll" '+(S.myAll?'checked':'')+'> 휴원 · 퇴원도 보기</label></div>'+instTabs(base,'M')+
+    '<div class="stbl"><table class="stt" data-stick="3"><thead><tr><th>번호</th><th>상태</th><th>이름</th><th>성별</th><th>출생연도</th><th>전공</th><th>재원 시작</th>'+(S.myAll?'<th>휴원 · 퇴원 날짜</th>':'')+'<th>회원 잔여기간</th><th>'+cy+' 회비</th><th></th></tr></thead><tbody>'+
+    (show.length?show.map(function(x){return '<tr class="'+(x.state==='퇴원'?'past':'')+'"><td class="num hint">'+esc(x.id)+'</td><td>'+pill(x.state)+'</td><td><b>'+esc(x.name)+'</b>'+(x.tag?' <span class="hint">'+esc(x.tag)+'</span>':'')+'</td><td>'+esc(x.sex||'-')+'</td><td class="num">'+esc(x.birth||'-')+'</td><td>'+esc(x.inst||'-')+'</td><td class="num">'+esc(ymd(x.start))+'</td>'+(S.myAll?'<td class="num">'+esc(x.state==='재원'?'-':ymd(x.stateAt))+'</td>':'')+'<td class="num">'+remainCell(x.mem,x.pay)+'</td><td>'+feePill(x)+'</td><td class="r"><button class="btn small" type="button" data-mydet="'+esc(x.id)+'">보기</button></td></tr>'}).join(''):'<tr><td colspan="11" class="hint" style="padding:12px">'+(L.length?'재원 학생이 없어요.':'아직 배정된 학생이 없어요. 원장님께 배정을 부탁해 주세요.')+'</td></tr>')+'</tbody></table></div></div>'+myDetail(A)}
+function myDetail(A){var D=S.myDet;if(!D)return '';
+  var head='<div class="sdlg-bg" id="myClose2"></div><div class="sdlg" role="dialog" aria-modal="true" aria-label="학생 보기"><div class="spread"><h3>'+(D.data?esc(D.data.stu.name)+' <span class="hint num">'+esc(D.data.stu.id)+'</span>':'학생 보기')+'</h3><button class="btn small" type="button" id="myClose">닫기</button></div>';
+  if(!D.data)return head+'<p class="hint"><span class="spin"></span> 불러오는 중…</p></div>';
+  var d=D.data,cd=(d.dues||[]).filter(function(x){return String(x.year)===String(d.curY)})[0]||{},locked=cd.pay==='확인'&&+cd.paid>0;
+  var pay='<div class="sdsec"><b>'+esc(d.curY)+' 회비 입금 신고</b>'+(locked?'<p class="hint">협회가 확인한 회비예요('+esc(ymd(cd.date))+' · '+won(cd.paid)+'). 바꿀 게 있으면 원장님께 알려 주세요.</p>':
+    '<div class="two"><label class="f" for="myPd">낸 금액 <span class="req">*</span><input type="number" id="myPd" value="'+esc(D.paid!=null?D.paid:(cd.paid||''))+'" min="0" step="1000"></label><label class="f" for="myPa">낸 날짜(입금일) <span class="req">*</span><input type="date" id="myPa" value="'+esc(D.paidAt!=null?D.paidAt:(cd.date||''))+'"></label></div>'+
+    '<p class="hint">학부모님이 회비를 냈다고 알려 주시면 금액과 입금일을 넣고 신고해 주세요. 협회가 통장에서 확인하면 회원 자격이 생겨요.'+(cd.pay==='신고'?' 지금 <b>확인 대기</b> 중이에요.':cd.pay==='반려'?' <b class="red">반려됐어요: '+esc(cd.memo||'')+'</b>':'')+'</p>'+msgBox()+btn('myPay','입금 신고','primary small'))+'</div>';
+  return head+pay+stuDetailRO(d)+'</div>'}
 function stuView(M,top){var L=M.data.students||[],tn={};(M.data.teachers||[]).forEach(function(t){tn[t.id]=t.name});var cy=new Date().getFullYear(),base=S.stuAllV?L:L.filter(function(s){return s.state==='재원'}),show=instPick(base,'A');
   var pill=function(s){return '<span class="pill '+(s==='재원'?'ok':s==='휴원'?'info':'due')+'">'+esc(s)+'</span>'};
   return '<div class="card full">'+(top||'')+'<div class="spread"><h3>학생 명단 <span class="opt">재원 '+L.filter(function(s){return s.state==='재원'}).length+'명</span></h3><div class="row"><label class="agree" style="flex:none;align-items:center"><input type="checkbox" id="stuAllV" '+(S.stuAllV?'checked':'')+'> 휴원 · 퇴원도 보기</label><button class="btn small primary" type="button" data-mtab="stu">학생 관리에서 고치기</button></div></div>'+instTabs(base,'A')+
@@ -518,7 +535,7 @@ function vMyAcad(){var M=S.myac;if(!M||!M.data)return '<div class="card"><span><
 function vMine(){return myAskCard()+'<button class="btn block" type="button" id="toMe">내 정보로</button>'}
 function headInfo(){var hs=(S.sess&&S.me&&S.me.heads)||[];return {hs:hs,acad:hs.some(function(h){return h.kind!=='클래스'}),cls:hs.some(function(h){return h.kind==='클래스'})}}
 function curKind(){var hs=headInfo().hs,id=S.myac&&S.myac.id,h=hs.filter(function(x){return x.id===id})[0]||hs[0];return h&&h.kind==='클래스'?'클래스':'학원'}
-function gnbNav(){var H=headInfo(),nav=document.getElementById('mnav'),t=document.getElementById('gnbTitle');if(t)t.textContent=H.acad?'원장님 회원':'선생님 회원';if(!nav)return;nav.hidden=!H.hs.length;if(!H.hs.length)return;
+function gnbNav(){var H=headInfo(),nav=document.getElementById('mnav'),t=document.getElementById('gnbTitle');if(t)t.textContent=H.acad?'원장님 회원':'선생님 회원';if(!nav)return;var tm=!H.hs.length&&S.sess&&S.me&&!S.me.ext;nav.hidden=!H.hs.length&&!tm;if(tm){var c2=S.v==='mystu'?'mystu':S.v==='me'?'me':'';nav.firstChild.innerHTML=[['mystu','내 학생'],['me','내 정보']].map(function(x){return '<button type="button" data-mtab="'+x[0]+'" aria-current="'+(c2===x[0]?'page':'false')+'">'+x[1]+'</button>'}).join('');return}if(!H.hs.length)return;
   var k=curKind(),cur=S.v==='myacad'?(S.acTab||'acad'):S.v==='me'?'me':'';
   nav.firstChild.innerHTML=[['acad',k+' 관리'],['tch','교사 관리'],['stu','학생 관리'],['me','내 정보']].map(function(x){return '<button type="button" data-mtab="'+x[0]+'" aria-current="'+(cur===x[0]?'page':'false')+'">'+x[1]+'</button>'}).join('')}
 function gnbAsk(){gnbNav();var b=document.getElementById('gnbAsk');if(!b)return;b.hidden=!S.sess;b.setAttribute('aria-current',S.v==='mine'?'page':'false');
@@ -613,10 +630,10 @@ function stickCols(){document.querySelectorAll('table[data-stick]').forEach(func
 window.addEventListener('resize',function(){stickCols()});
 function render(){var h;
   document.getElementById('testband').hidden=!S.test;
-  h=({home:vHome,find:vFind,email:vEmail,code:vCode,confirm:vConfirm,done:vDone,login:vLogin,me:vMe,pay:vPay,ask:vAsk,mine:vMine,myacad:vMyAcad})[S.v]();
+  h=({home:vHome,find:vFind,email:vEmail,code:vCode,confirm:vConfirm,done:vDone,login:vLogin,me:vMe,pay:vPay,ask:vAsk,mine:vMine,myacad:vMyAcad,mystu:vMyStu})[S.v]();
   document.getElementById('app').innerHTML=h;
   try{stickCols()}catch(e){}
-  document.body.classList.toggle('wide',S.v==='myacad');
+  document.body.classList.toggle('wide',S.v==='myacad'||S.v==='mystu');
   gnbAsk();
   hSync();
   document.getElementById('backBtn').hidden=!S.hist.length||S.v==='done'||S.v==='me';
@@ -630,7 +647,7 @@ function loadMine(){return call('bMine',[S.sess]).then(function(r){if(r.ok){S.mi
 function loadMe(){loadMine();return call('tMe',[S.sess]).then(function(r){if(!r.ok){if(/LOGIN/.test(r.msg)){S.sess='';try{sessionStorage.removeItem('tm-sess')}catch(x){}S.v='login';S.msg='로그인 시간이 지났어요. 다시 로그인해 주세요.';render();return}toast(r.msg);return}S.me=r.me;render()})}
 function setSess(t){S.sess=t;try{sessionStorage.setItem('tm-sess',t)}catch(x){}}
 
-document.addEventListener('click',function(e){if(e.target.id==='sdClose2'){S.stuDet=null;S.msg='';render();return}if(e.target.id==='tdClose2'){S.tchDet=null;S.asgSel={};S.msg='';render();return}if(e.target.id==='docClose2'){S.docModal=false;render();return}if(e.target.id==='acClose2'){S.myac.ed=false;S.err={};S.msg='';S.postFor='';render();return}var b=e.target.closest('button');if(!b)return;var d=b.dataset,v=function(id){var x=document.getElementById(id);return x?x.value:''};
+document.addEventListener('click',function(e){if(e.target.id==='sdClose2'){S.stuDet=null;S.msg='';render();return}if(e.target.id==='myClose2'){S.myDet=null;S.msg='';render();return}if(e.target.id==='tdClose2'){S.tchDet=null;S.asgSel={};S.msg='';render();return}if(e.target.id==='docClose2'){S.docModal=false;render();return}if(e.target.id==='acClose2'){S.myac.ed=false;S.err={};S.msg='';S.postFor='';render();return}var b=e.target.closest('button');if(!b)return;var d=b.dataset,v=function(id){var x=document.getElementById(id);return x?x.value:''};
   if(b.id==='homeBtn'||b.id==='goHome'){S.hist=[];go(S.sess?'me':'home',true);if(S.sess)loadMe();return}
   if(b.id==='backBtn'){var p=S.hist.pop();if(p){S.v=p;S.err={};S.msg='';render();window.scrollTo(0,0)}return}
   if(b.id==='goLogin'){S.fp=null;go('login');return}
@@ -716,6 +733,11 @@ document.addEventListener('click',function(e){if(e.target.id==='sdClose2'){S.stu
   if(d.myac){S.stuDet=null;S.docModal=false;if(S.v!=='myacad')S.acTab='acad';openAcad(d.myac);return}
   if(d.sdet){S.stuDet={id:d.sdet,data:null,form:null,ro:d.sro==='1'};S.msg='';render();call('tStuDetail',[S.sess,S.myac.id,d.sdet]).then(function(r){if(!r.ok){toast(r.msg);S.stuDet=null;render();return}S.stuDet.data=r;S.stuDet.form=sdForm(r);render()});return}
   if(b.id==='sdClose'){S.stuDet=null;S.msg='';render();return}
+  if(d.mya){S.myA=d.mya;S.myDet=null;render();return}
+  if(d.mydet){var A9=(S.my.acads.filter(function(a){return a.id===S.myA})[0]||S.my.acads[0]);S.myDet={aid:A9.id,sid:d.mydet,data:null};S.msg='';render();call('tMyStuDetail',[S.sess,A9.id,d.mydet]).then(function(r){if(!r.ok){toast(r.msg);S.myDet=null;render();return}if(S.myDet)S.myDet.data=r;render()});return}
+  if(b.id==='myClose'){S.myDet=null;S.msg='';render();return}
+  if(b.id==='myPay'){var D9=S.myDet,pd=(document.getElementById('myPd')||{}).value||'',pa=(document.getElementById('myPa')||{}).value||'';D9.paid=pd;D9.paidAt=pa;if(!(+pd>0)||!pa){S.msg='낸 금액과 입금일을 넣어 주세요.';render();return}
+    run(function(){return call('tMyStuPay',[S.sess,D9.aid,D9.sid,pd,pa]).then(function(r){if(!r.ok){S.msg=r.msg;return}S.msg='';D9.data=r;D9.paid=null;D9.paidAt=null;toast('입금 신고를 보냈어요 · 협회가 확인해요');call('tMyStu',[S.sess]).then(function(x){if(x.ok){S.my=x;render()}})})});return}
   if(b.id==='tdClose'){S.tchDet=null;S.asgSel={};S.msg='';render();return}
   if(b.id==='tchUndo'){S.tchRows=tchRowsFrom(S.myac.data.teachers);S.err={};S.msg='';render();return}
   if(d.tsave!=null&&S.tchRows){var x1=S.tchRows[+d.tsave];if(!x1)return;if(!x1.dirty){toast('이 줄은 바뀐 게 없어요');return}S.tchOnly=+d.tsave;b.id='tchSaveAll'}
@@ -763,7 +785,7 @@ document.addEventListener('click',function(e){if(e.target.id==='sdClose2'){S.stu
     if(f7.biz&&f7.biz.replace(/\D/g,'').length!==10){S.err={biz:'사업자번호 10자리를 확인해 주세요.'};render();return}
     var send={'사업자번호':f7.biz,'교육청인가번호':f7.edu,'교실대표번호':f7.tel,'이메일':f7.email,'교습과목':f7.subj.join(', '),'우편번호':f7.zip,'주소':f7.addr,'상세주소':f7.addr2,'시도':f7.sido,'시군구':f7.sigungu,'개원일':f7.open};
     run(function(){return call('tSaveAcad',[S.sess,S.myac.id,send]).then(function(r){if(!r.ok){S.msg=r.msg;return}S.myac.data=r;S.myac.ed=false;S.err={};toast('저장했어요. 협회가 확인해요')})});return}
-  if(d.mtab){var hs=S.me&&S.me.heads||[];if(d.mtab==='me'){S.hist=[];go('me');loadMe();return}if(!hs.length)return;S.acTab=d.mtab;if(S.v==='myacad'&&S.myac&&S.myac.data){render();window.scrollTo(0,0);return}openAcad(S.myac&&S.myac.id&&hs.some(function(h){return h.id===S.myac.id})?S.myac.id:hs[0].id);return}
+  if(d.mtab){var hs=S.me&&S.me.heads||[];if(d.mtab==='me'){S.hist=[];go('me');loadMe();return}if(d.mtab==='mystu'){S.hist=[];go('mystu');loadMyStu();return}if(!hs.length)return;S.acTab=d.mtab;if(S.v==='myacad'&&S.myac&&S.myac.data){render();window.scrollTo(0,0);return}openAcad(S.myac&&S.myac.id&&hs.some(function(h){return h.id===S.myac.id})?S.myac.id:hs[0].id);return}
   if(b.id==='gnbAsk'){if(!S.sess)return;go('mine');loadMine();return}
   if(b.id==='goAsk'){S.ask=null;S.askDone=false;go('ask');return}
   if(d.seg==='acat'){readAsk();S.ask.cat=d.val;render();return}
@@ -791,7 +813,7 @@ document.addEventListener('click',function(e){if(e.target.id==='sdClose2'){S.stu
 function stuField(el){var p=el.dataset.sf.split('|'),r=S.stuRows&&S.stuRows[+p[0]];if(!r)return;var v=el.value;if(p[1]==='name')v=v.slice(0,20);if(String(r[p[1]]||'')===v)return;r[p[1]]=v;if(!r.dirty){r.dirty=true;var tr=el.closest('tr');if(tr)tr.classList.add('dirty')}
   var n=S.stuRows.filter(function(x){return x.dirty}).length,h=document.getElementById('stuDirty');if(h)h.textContent='바뀐 줄 '+n+'개 · 저장해야 반영돼요';if(p[1]==='name'&&v.trim()){delete S.err['sn'+p[0]];el.removeAttribute('aria-invalid')}}
 document.addEventListener('input',function(e){if(e.target.dataset&&e.target.dataset.sf){stuField(e.target);return}});
-document.addEventListener('change',function(e){if(e.target.dataset&&e.target.dataset.asg){S.asgSel=S.asgSel||{};S.asgSel[e.target.dataset.asg]=e.target.checked;return}if(e.target.id==='asgAll'){S.asgAll=e.target.checked;render();return}
+document.addEventListener('change',function(e){if(e.target.dataset&&e.target.dataset.asg){S.asgSel=S.asgSel||{};S.asgSel[e.target.dataset.asg]=e.target.checked;return}if(e.target.id==='asgAll'){S.asgAll=e.target.checked;render();return}if(e.target.id==='myAll'){S.myAll=e.target.checked;render();return}
   if(e.target.dataset&&e.target.dataset.tc){var pc=e.target.dataset.tc.split('|'),xc=S.tchRows&&S.tchRows[+pc[0]];if(xc){if(e.target.checked){if(!(pc[1] in xc.certs))xc.certs[pc[1]]=''}else delete xc.certs[pc[1]];var sm=document.querySelector('[data-csum="'+pc[0]+'"]');if(sm)sm.textContent=certTxt(xc);if(!xc.dirty){xc.dirty=true;var trc=e.target.closest('tr');if(trc)trc.classList.add('dirty');tchDirtyN()}}return}
   if(e.target.dataset&&e.target.dataset.tf){tchField(e.target);if(e.target.dataset.tf.split('|')[1]==='state'){render();var q5=document.querySelector('[data-tf="'+e.target.dataset.tf.split('|')[0]+'|stateAt"]');if(q5)q5.focus()}return}if(e.target.dataset&&e.target.dataset.sf){stuField(e.target);var fk=e.target.dataset.sf.split('|')[1];if(fk==='inst'||fk==='tid'){render();return}if(e.target.dataset.sf.split('|')[1]==='state'){var tr=e.target.closest('tr');if(tr&&!tr.querySelector('[data-sf$="|stateAt"]')&&e.target.value!=='재원'){render();var d2=document.querySelector('[data-sf="'+e.target.dataset.sf.split('|')[0]+'|stateAt"]');if(d2)d2.focus();return}if(tr){tr.classList.toggle('past',e.target.value==='퇴원');var di=tr.querySelector('[data-sf$="|stateAt"]');if(di){di.disabled=e.target.value==='재원';if(e.target.value==='재원'){di.value='';stuField(di)}else di.focus()}}}return}if(e.target.id==='stuAll'){S.stuAll=e.target.checked;render();return}if(e.target.id==='stuAllV'){S.stuAllV=e.target.checked;render();return}if(e.target.dataset&&e.target.dataset.tpast){S['tchPast'+e.target.dataset.tpast]=e.target.checked;render();return}});
 document.addEventListener('input',function(e){var el=e.target;

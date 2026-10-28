@@ -1,4 +1,4 @@
-/* build: 20261028-230209 */
+/* build: 20261028-230544 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -102,7 +102,7 @@ function doGet(e) {
 function include(n) { return HtmlService.createHtmlOutputFromFile(n).getContent(); }
 
 function api(name, args) {
-  const open = { login, hello, tHello, tLookup, tStart, tResend, tVerify, tCreate, tLogin, tForgot, tReset, tMe, tSavePay, tSavePart, tSaveInfo, tSavePhoto, tAcad, tSaveAcad, tDocUp, tDocGet, tSaveStu, tSaveStus, tStuDetail, tStuSave, tStuTutor, tStuTutorDel, tStuState, tStuStateDel, tTchSaves, tTchEnd, tTchEvent, tTchAssign, tTchStart, tSaveRrn, tAddWork, tEndWork, tMainWork, tLogout, bPost, bMine, bReply };
+  const open = { login, hello, tHello, tLookup, tStart, tResend, tVerify, tCreate, tLogin, tForgot, tReset, tMe, tSavePay, tSavePart, tSaveInfo, tSavePhoto, tAcad, tSaveAcad, tDocUp, tDocGet, tSaveStu, tSaveStus, tStuDetail, tStuSave, tStuTutor, tStuTutorDel, tStuState, tStuStateDel, tMyStu, tMyStuDetail, tMyStuPay, tTchSaves, tTchEnd, tTchEvent, tTchAssign, tTchStart, tSaveRrn, tAddWork, tEndWork, tMainWork, tLogout, bPost, bMine, bReply };
   const fns = { boot, saveRow, setCheck, logs, importRoster, saveDues, delDues, reqs, reqDo, delAcad, payView, bulkSet, saveWorks, importPastDues, bList, bSet, bComment, photoGet, photoDel, fillRegions, saveRates, docList, docUp, docGet, docDel, payList, payOk, payNo, memView };
   try {
     if (open[name]) return Object.assign({ ok: true }, open[name].apply(null, args || []));
@@ -967,8 +967,9 @@ function tSaveStus(sess, aid, rows) {
   return Object.assign(tAcad(sess, aid), { saved: { nNew, nEdit } });
 }
 /** 학생 자세히: 기본 · 담당 이력 · 재원 이력 · 년도별 회비 */
-function tStuDetail(sess, aid, sid) {
-  const u = tsess_(sess); headOf_(u, aid); const { S2, i } = stuRow_(aid, sid), g = k => String(S2.get(i, k) || '');
+function tStuDetail(sess, aid, sid) { const u = tsess_(sess); headOf_(u, aid); return stuDetail_(aid, sid); }
+function stuDetail_(aid, sid) {
+  const { S2, i } = stuRow_(aid, sid), g = k => String(S2.get(i, k) || '');
   const tn = {}; const T = tbl_('교사'), tc = col_(T); T.v.forEach(r => tn[r[tc['교사ID']]] = r[tc['이름']]);
   let tutors = tutorsOf_(sid).map(r => ({ id: r['담당ID'], tid: r['교사ID'], name: tn[r['교사ID']] || r['교사ID'], start: r['시작'], end: r['종료'] }));
   if (!tutors.length && g('담당교사ID')) tutors = [{ id: '', tid: g('담당교사ID'), name: tn[g('담당교사ID')] || g('담당교사ID'), start: g('시작월'), end: '', legacy: true }];
@@ -989,18 +990,40 @@ function tStuSave(sess, aid, sid, d) {
     const { S2, i } = stuRow_(aid, sid), g = k => String(S2.get(i, k) || ''), diff = [], o = { '이름': name, '성별': d.sex, '출생연도': birth, '전공': INSTS_.indexOf(d.inst) >= 0 ? d.inst : '' };
     Object.keys(o).forEach(k => { if (o[k] !== g(k)) diff.push(k + ' ' + (g(k) || '없음') + ' → ' + (o[k] || '없음')); });
     if (diff.length) S2.set(i, Object.assign(o, { '수정일': now_(), '수정자': who }));
-    const D = tbl_('연회비'), dc = col_(D), j = D.v.findIndex(r => r[dc['대상']] === '학생' && r[dc['ID']] === sid && String(r[dc['년도']]) === CUR_Y);
-    const oldP = j >= 0 ? String(D.v[j][dc['납부']] || '') : '', oldD = j >= 0 ? String(D.v[j][dc['납부일']] || '') : '';
-    if (paid !== oldP || paidAt !== oldD || (j >= 0 && D.v[j][11] === '반려' && +paid > 0)) {
-      if (+paid > 0 && !paidAt) fail('낸 날짜(입금일)를 넣어 주세요.');
-      const rp = +paid > 0 ? { '확인': '신고', '신고일': now_(), '신고자': who, '확인일': '', '확인자': '' } : { '확인': '', '신고일': '', '신고자': '', '확인일': '', '확인자': '' };
-      if (j >= 0) D.set(j, Object.assign({ '납부': paid, '납부일': paidAt, '메모': [String(D.v[j][dc['메모']] || ''), '원장이 입금 신고(' + md + ')'].filter(Boolean).join(' · ').slice(0, 200), '수정일': now_(), '수정자': who }, rp));
-      else if (paid || paidAt) D.append(Object.assign({ '대상': '학생', 'ID': sid, '년도': CUR_Y, '부과': '', '납부': paid, '납부일': paidAt, '메모': '원장이 입금 신고(' + md + ')', '수정일': now_(), '수정자': who }, rp));
-      diff.push(CUR_Y + ' 회비 ' + (oldP || '없음') + ' → ' + (paid || '없음') + (paidAt ? '(' + paidAt + ')' : ''));
-    }
+    const dr = duesReport_(sid, paid, paidAt, who, '원장', md); if (dr) diff.push(dr);
     if (diff.length) { stuFlag_(aid, sid, '원장이 바꿈(' + md + '): ' + diff.join(' · '), who); log_(u.email, '학생', sid, '원장이 수정', diff.join(' · ').slice(0, 900)); }
   } finally { lock.releaseLock(); }
   return tStuDetail(sess, aid, sid);
+}
+/** 학생 올해 회비 입금 신고 (잠금은 부르는 쪽에서). 바뀌면 설명 글을, 아니면 '' */
+function duesReport_(sid, paid, paidAt, who, by, md) {
+  const D = tbl_('연회비'), dc = col_(D), j = D.v.findIndex(r => r[dc['대상']] === '학생' && r[dc['ID']] === sid && String(r[dc['년도']]) === CUR_Y);
+  const oldP = j >= 0 ? String(D.v[j][dc['납부']] || '') : '', oldD = j >= 0 ? String(D.v[j][dc['납부일']] || '') : '';
+  if (!(paid !== oldP || paidAt !== oldD || (j >= 0 && D.v[j][11] === '반려' && +paid > 0))) return '';
+  if (+paid > 0 && !paidAt) fail('낸 날짜(입금일)를 넣어 주세요.');
+  if (j >= 0 && D.v[j][11] === '확인' && +oldP > 0 && by !== '원장') fail('협회가 이미 확인한 회비예요. 바꿀 게 있으면 원장님이나 「내 문의」로 알려 주세요.');
+  const rp = +paid > 0 ? { '확인': '신고', '신고일': now_(), '신고자': who, '확인일': '', '확인자': '' } : { '확인': '', '신고일': '', '신고자': '', '확인일': '', '확인자': '' };
+  if (j >= 0) D.set(j, Object.assign({ '납부': paid, '납부일': paidAt, '메모': [String(D.v[j][dc['메모']] || ''), by + '이 입금 신고(' + md + ')'].filter(Boolean).join(' · ').slice(0, 200), '수정일': now_(), '수정자': who }, rp));
+  else if (paid || paidAt) D.append(Object.assign({ '대상': '학생', 'ID': sid, '년도': CUR_Y, '부과': '', '납부': paid, '납부일': paidAt, '메모': by + '이 입금 신고(' + md + ')', '수정일': now_(), '수정자': who }, rp));
+  return CUR_Y + ' 회비 ' + (oldP || '없음') + ' → ' + (paid || '없음') + (paidAt ? '(' + paidAt + ')' : '');
+}
+/* ---------- 선생님 회원: 내가 담당하는 학생 (보기 + 입금 신고) ---------- */
+function myAcads_(u) { const an = acadNames_(); return worksOf_(u.tid).filter(w => !w['종료'] && w['학원ID']).map(w => ({ id: w['학원ID'], name: an[w['학원ID']] || w['학원ID'], main: w['주근무'] === '예' })).filter((x, k, a) => a.findIndex(y => y.id === x.id) === k); }
+function myStuOk_(u, aid, sid) {
+  if (!myAcads_(u).some(a => a.id === aid)) fail('지금 근무하는 학원의 학생만 볼 수 있어요.');
+  const { S2, i } = stuRow_(aid, sid); let cur = ''; rowsOf_('담당').list.forEach(r => { if (r['학생ID'] === sid && !r['종료']) cur = r['교사ID']; }); if (!cur) cur = String(S2.get(i, '담당교사ID') || '');
+  if (cur !== u.tid) fail('담당하는 학생만 볼 수 있어요.');
+}
+function tMyStu(sess) { const u = tsess_(sess); return { acads: myAcads_(u).map(a => Object.assign(a, { students: stuOf_(a.id).filter(s => s.tid === u.tid) })) }; }
+function tMyStuDetail(sess, aid, sid) { const u = tsess_(sess); myStuOk_(u, aid, sid); return stuDetail_(aid, sid); }
+function tMyStuPay(sess, aid, sid, paid, paidAt) {
+  const u = tsess_(sess); myStuOk_(u, aid, sid); const T = tbl_('교사'), ti = T.find('교사ID', u.tid), who = (ti >= 0 ? T.get(ti, '이름') : u.email) + ' (선생님)', md = Utilities.formatDate(new Date(), 'Asia/Seoul', 'MM-dd');
+  paid = String(paid == null ? '' : paid).replace(/[^\d]/g, ''); paidAt = String(paidAt || '').trim(); if (paidAt && !/^\d{4}-\d{2}-\d{2}$/.test(paidAt)) fail('낸 날짜를 확인해 주세요.');
+  if (!(+paid > 0)) fail('낸 금액을 넣어 주세요.');
+  const lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try { const dr = duesReport_(sid, paid, paidAt, who, '선생님', md); if (dr) { stuFlag_(aid, sid, '선생님이 입금 신고(' + md + '): ' + dr, who); log_(u.email, '학생', sid, '선생님이 입금 신고', dr); } }
+  finally { lock.releaseLock(); }
+  return stuDetail_(aid, sid);
 }
 /** 담당 선생님 바꾸기: 새 선생님 · 시작 년월 → 지금 담당은 그 전 달로 종료 */
 /** 담당 바꾸기 본체(잠금은 부르는 쪽에서): start 날짜부터 새 담당, 지금 담당은 전날(년·월이면 전 달)까지 */

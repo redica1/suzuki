@@ -1,4 +1,4 @@
-/* build: 20261028-185630 */
+/* build: 20261028-185837 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -686,7 +686,7 @@ function tMe(sess) {
   const u = tsess_(sess);
   const T = tbl_('교사'), i = T.find('교사ID', u.tid); if (i < 0) fail('명단에서 선생님을 찾지 못했어요. 협회에 문의해 주세요.');
   const r = T.rowObj(i), c = col_(T), an = acadNames_(), g = k => r[c[k]] || '';
-  const heads = tbl_('학원').v.filter(a => a[4] === u.tid && a[3] !== '탈퇴').map(a => ({ id: a[0], name: a[1] }));
+  const heads = tbl_('학원').v.filter(a => a[4] === u.tid && a[3] !== '탈퇴').map(a => ({ id: a[0], name: a[1], kind: a[2] === '클래스' ? '클래스' : '학원' }));
   const p = payRow_(u.tid);
   const reqs = tbl_('요청').v.filter(q => q[2] === u.tid && q[7] === '대기').map(q => q[1]);
   const works = worksOf_(u.tid).map(w => ({ wid: w['근무ID'], aid: w['학원ID'], name: w['학원ID'] ? (an[w['학원ID']] || w['학원ID']) : w['학원명'] + ' (목록에 없음)', start: w['시작'], end: w['종료'], main: w['주근무'] === '예' }));

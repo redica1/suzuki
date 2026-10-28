@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261028-225149 -->
+<!-- build: 20261028-225939 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -136,6 +136,7 @@ table.tcht td,table.tcht th{white-space:nowrap}
 .asg{display:grid;gap:4px;max-height:260px;overflow:auto;border:1px solid var(--line);border-radius:8px;padding:8px}.asg label{display:flex;gap:6px;align-items:center;cursor:pointer}
 .msel{position:relative;min-width:150px}.msel summary{list-style:none;cursor:pointer;border:1px solid var(--line);border-radius:8px;padding:7px 26px 7px 10px;background:var(--bg);max-width:190px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14px;position:relative}.msel summary:after{content:"\25BE";position:absolute;right:9px;top:50%;transform:translateY(-50%);color:var(--muted)}.msel summary::-webkit-details-marker{display:none}.mselp{margin-top:4px;background:#fff;border:1px solid var(--line);border-radius:8px;box-shadow:0 6px 20px rgba(0,0,0,.12);padding:8px 10px;display:grid;gap:6px;min-width:190px}.mselp label{display:flex;gap:6px;align-items:center;white-space:nowrap;cursor:pointer;font-size:14px}
 .mselp label{justify-content:flex-start;text-align:left}.mselp input[type=checkbox]{width:auto;flex:none;margin:0}
+table[data-stick] .sk{position:sticky;z-index:2;background:var(--surface)}table[data-stick] thead .sk{z-index:3}table[data-stick] .skl{box-shadow:6px 0 6px -6px rgba(0,0,0,.25)}tr.dirty td.sk{background:var(--rosin-soft)}tr.past td.sk{opacity:1;color:var(--muted)}
 </style>
 </head><body>
 <header class="gnb"><div class="testband" id="testband" hidden>테스트(STG) — 여기서 만든 계정은 실제 회원 계정이 아니에요</div>
@@ -355,8 +356,8 @@ function stuCard(M){if(!S.stuRows||S.stuRowsFor!==M.id){S.stuRows=stuRowsFrom(M.
   var ys='<option value="">-</option>';for(var y=cy;y>=1990;y--)ys+='<option>'+y+'</option>';
   var opt=function(list,v){return list.map(function(o){var k=Array.isArray(o)?o[0]:o,l=Array.isArray(o)?o[1]:o;return '<option value="'+esc(k)+'" '+(String(k)===String(v||'')?'selected':'')+'>'+esc(l)+'</option>'}).join('')};
   var row=function(r){var i=R.indexOf(r),nw=!r.id;return '<tr class="'+(r.dirty?'dirty ':'')+(r.state==='퇴원'?'past':'')+'">'+
-    '<td class="w-st"><select data-sf="'+i+'|state">'+opt(['재원','휴원','퇴원'],r.state)+'</select></td>'+
     '<td class="num hint">'+(nw?'새로':esc(r.id))+'</td>'+
+    '<td class="w-st"><select data-sf="'+i+'|state">'+opt(['재원','휴원','퇴원'],r.state)+'</select></td>'+
     '<td class="w-name">'+(nw?'<input type="text" data-sf="'+i+'|name" value="'+esc(r.name)+'" placeholder="이름" '+(S.err['sn'+i]?'aria-invalid="true"':'')+'>':'<b>'+esc(r.name)+'</b>'+(r.tag?' <span class="hint">'+esc(r.tag)+'</span>':''))+'</td>'+
     '<td class="w-sx"><select data-sf="'+i+'|sex" '+(S.err['sx'+i]?'aria-invalid="true"':'')+'><option value="">-</option>'+opt(['남','여'],r.sex)+'</select></td>'+
     '<td class="w-y"><select data-sf="'+i+'|birth">'+ys.replace('<option>'+r.birth+'</option>','<option selected>'+r.birth+'</option>')+'</select></td>'+
@@ -368,7 +369,7 @@ function stuCard(M){if(!S.stuRows||S.stuRowsFor!==M.id){S.stuRows=stuRowsFrom(M.
     '<td>'+(nw?'<button class="btn small ghost" type="button" data-srm="'+i+'">빼기</button>':'<button class="btn small" type="button" data-sdet="'+esc(r.id)+'">자세히</button>')+'</td></tr>'};
   return '<div class="card full"><div class="spread"><h3>학생 명단 <span class="opt">재원 '+R.filter(function(r){return r.id&&r.state==='재원'}).length+'명 · 휴원 '+R.filter(function(r){return r.id&&r.state==='휴원'}).length+'명</span></h3>'+
     '<div class="row"><label class="agree" style="flex:none;align-items:center"><input type="checkbox" id="stuAll" '+(S.stuAll?'checked':'')+'> 휴원 · 퇴원도 보기</label><button class="btn small" type="button" id="stuAdd">+ 학생 추가</button></div></div>'+
-    instTabs(base.filter(function(r){return r.id}),'S')+'<div class="stbl"><table class="stu"><thead><tr><th>상태</th><th>번호</th><th>이름</th><th>성별 <span class="req">*</span></th><th>출생연도</th><th>전공</th><th>담당 선생님</th><th>재원 시작</th>'+(showD?'<th>휴원 · 퇴원 날짜</th>':'')+'<th>회원 잔여기간</th><th>'+cy+' 회비</th><th></th></tr></thead><tbody>'+
+    instTabs(base.filter(function(r){return r.id}),'S')+'<div class="stbl"><table class="stu" data-stick="3"><thead><tr><th>번호</th><th>상태</th><th>이름</th><th>성별 <span class="req">*</span></th><th>출생연도</th><th>전공</th><th>담당 선생님</th><th>재원 시작</th>'+(showD?'<th>휴원 · 퇴원 날짜</th>':'')+'<th>회원 잔여기간</th><th>'+cy+' 회비</th><th></th></tr></thead><tbody>'+
     (show.length?show.map(row).join(''):'<tr><td colspan="12" class="hint" style="padding:14px">'+(R.length?'재원 학생이 없어요. 「휴원 · 퇴원도 보기」를 눌러 보세요.':'아직 학생이 없어요. 「+ 학생 추가」로 넣어 주세요.')+'</td></tr>')+'</tbody></table></div>'+
     msgBox()+'<div class="row" style="margin-top:8px"><span class="hint" id="stuDirty">'+(dn?'바뀐 줄 '+dn+'개 · 저장해야 반영돼요':'칸을 눌러 바로 고쳐요 · 담당 선생님은 학생 전공에 맞는 선생님만 나와요 · 이름 · 년도별 회비는 「자세히」에서')+'</span><span style="flex:1"></span>'+(dn?'<button class="btn small" type="button" id="stuUndo">되돌리기</button>':'')+btn('stuSaveAll','저장','primary')+'</div>'+
     '<p class="hint">회비는 「자세히」에서 입금 신고하고, 협회가 입금일을 확인하면 그 다음 달 1일부터 12개월 회원 자격이에요(휴원 중에도 이어져요). 자격이 남았을 때 미리 내면 끝난 다음 달부터 이어 붙어요.</p><p class="hint">상태를 휴원 · 퇴원으로 바꾸면 그 날짜를 넣어 주세요. 바뀐 상태는 이력으로 남아요. 넣거나 고친 학생은 협회가 확인해요.</p></div>'+stuDetail(M)}
@@ -385,7 +386,7 @@ function tchView(M,key,top){var all=M.data.teachers||[],cy=new Date().getFullYea
   var ct=function(t){return t.contract==='예'?'<span class="pill ok">체결</span>'+(t.contractAt?' <span class="hint num">'+esc(ymd(t.contractAt))+'</span>':''):'<span class="pill due">미체결</span>'};
   var row=function(t){return '<tr class="'+(t.end?'past':'')+'"><td class="num hint">'+esc(t.id||'-')+'</td><td>'+(t.main&&!t.end?'<span class="pill info">주 소속</span>':'<span class="hint">-</span>')+'</td><td>'+(t.end?'<span class="pill">퇴직</span>':t.wstate==='휴직'?'<span class="pill info">휴직</span>':'<span class="pill ok">근무</span>')+'</td><td><b>'+esc(t.name)+'</b></td><td>'+(t.sex?esc(t.sex):'<span class="pill due">없음</span>')+'</td><td>'+esc(t.role||'-')+'</td><td>'+esc(t.inst||'-')+'</td><td>'+esc(kindLabel(t.kind)||'-')+'</td><td>'+esc(t.cert||'-')+'</td><td class="num">'+esc(t.phone?fmtTel(t.phone):'-')+'</td><td class="num">'+esc(t.start?ymd(t.start):'-')+'</td>'+(S[pk]?'<td class="num">'+esc(t.end?ymd(t.end):'-')+'</td>':'')+'<td class="num r">'+(t.end?'-':nStu(t))+'</td><td>'+fee(t)+'</td><td>'+ct(t)+'</td><td class="r">'+(t.id?'<button class="btn small" type="button" data-tdet="'+esc(t.id)+'">보기</button>':'')+'</td></tr>'};
   return '<div class="card full">'+(top||'')+'<div class="spread"><h3>교사 명단 <span class="opt">지금 '+all.filter(function(t){return !t.end}).length+'명</span></h3><div class="row"><label class="agree" style="flex:none;align-items:center"><input type="checkbox" data-tpast="'+key+'" '+(S[pk]?'checked':'')+'> 퇴직 선생님도 보기</label></div></div>'+instTabs(base,key)+
-    '<div class="stbl"><table class="stt tcht"><thead><tr><th>번호</th><th>주 소속</th><th>상태</th><th>이름</th><th>성별</th><th>직급</th><th>전공</th><th>회원 구분</th><th>자격</th><th>휴대전화</th><th>근무 시작</th>'+(S[pk]?'<th>퇴직</th>':'')+'<th class="r">담당 학생</th><th>'+cy+' 교사 회비</th><th>협회 계약</th><th></th></tr></thead><tbody>'+
+    '<div class="stbl"><table class="stt tcht" data-stick="4"><thead><tr><th>번호</th><th>주 소속</th><th>상태</th><th>이름</th><th>성별</th><th>직급</th><th>전공</th><th>회원 구분</th><th>자격</th><th>휴대전화</th><th>근무 시작</th>'+(S[pk]?'<th>퇴직</th>':'')+'<th class="r">담당 학생</th><th>'+cy+' 교사 회비</th><th>협회 계약</th><th></th></tr></thead><tbody>'+
     (show.length?show.map(row).join(''):'<tr><td colspan="17" class="hint" style="padding:12px">선생님이 없어요.</td></tr>')+'</tbody></table></div>'+
     (key==='T'?'<p class="hint">선생님이 「내 정보 › 소속 학원」에서 넣은 내용과 협회 명단이에요. 원장님이 고칠 항목은 정해지는 대로 이 표에서 바로 고치게 바뀌어요.</p>':'')+'</div>'+tchDetail(M)}
 var CERTS_ALL=['초급','중급','티처트레이너','국민대학원','대구가톨릭대학원','전주대학원'];
@@ -412,7 +413,7 @@ function tchEdit(M){if(!S.tchRows||S.tchRowsFor!==M.id){S.tchRows=tchRowsFrom(M.
     '<td class="r"><button class="btn small" type="button" data-tdet="'+esc(x.id)+'">자세히</button></td></tr>'};
   var prow=function(t){return '<tr class="past"><td class="num hint">'+esc(t.id||'-')+'</td><td><span class="hint">-</span></td><td><span class="pill">퇴직</span></td><td><b>'+esc(t.name)+'</b></td><td>'+esc(t.sex||'-')+'</td><td>-</td><td>'+esc(t.role||'-')+'</td><td>'+esc(t.inst||'-')+'</td><td>'+esc(kindLabel(t.kind)||'-')+'</td><td>'+esc(t.cert||'-')+'</td><td class="num">'+esc(t.start?ymd(t.start):'-')+' ~ '+esc(ymd(t.end))+'</td><td class="num r">-</td><td></td><td></td><td class="r">'+(t.id?'<button class="btn small" type="button" data-tdet="'+esc(t.id)+'">보기</button>':'')+'</td></tr>'};
   return '<div class="card full"><div class="spread"><h3>교사 명단 <span class="opt">지금 '+R.length+'명</span></h3><div class="row"><label class="agree" style="flex:none;align-items:center"><input type="checkbox" data-tpast="T" '+(S.tchPastT?'checked':'')+'> 퇴직 선생님도 보기</label><span class="hint" id="tchDirty">'+(dn?'바뀐 줄 '+dn+'개':'')+'</span>'+(dn?'<button class="btn small" type="button" id="tchUndo">되돌리기</button>':'')+'<button class="btn primary" type="button" id="tchSaveAll">저장</button></div></div>'+instTabs(R,'T')+
-    '<div class="stbl"><table class="stu tedit"><thead><tr><th>번호</th><th>주 소속</th><th>상태</th><th>이름 <span class="req">*</span></th><th>성별 <span class="req">*</span></th><th>휴대전화 <span class="req">*</span></th><th>직급</th><th>전공 <span class="req">*</span></th><th>회원 구분 <span class="req">*</span></th><th>자격</th><th>근무 시작</th><th class="r">담당 학생</th><th>'+cy+' 교사 회비</th><th>협회 계약</th><th></th></tr></thead><tbody>'+
+    '<div class="stbl"><table class="stu tedit" data-stick="4"><thead><tr><th>번호</th><th>주 소속</th><th>상태</th><th>이름 <span class="req">*</span></th><th>성별 <span class="req">*</span></th><th>휴대전화 <span class="req">*</span></th><th>직급</th><th>전공 <span class="req">*</span></th><th>회원 구분 <span class="req">*</span></th><th>자격</th><th>근무 시작</th><th class="r">담당 학생</th><th>'+cy+' 교사 회비</th><th>협회 계약</th><th></th></tr></thead><tbody>'+
     (show.length||past.length?show.map(row).join('')+past.map(prow).join(''):'<tr><td colspan="15" class="hint" style="padding:12px">선생님이 없어요.</td></tr>')+'</tbody></table></div>'+
     msgBox()+
     '<p class="hint">칸을 고친 뒤 위 「저장」을 누르면 바뀐 줄이 한꺼번에 저장돼요. 근무 시작 · 휴직 · 복귀 · 퇴직은 「자세히」에서 날짜를 골라 처리해요. 고친 내용은 바로 반영되고, 협회가 확인해요. 회비 · 협회 계약은 협회가 관리해요. 이메일(로그인 아이디)은 선생님이 「내 문의」로 바꿔요.</p></div>'+tchDetail(M)}
@@ -438,8 +439,8 @@ function tchDetail(M){var id=S.tchDet;if(!id)return '';var all=(M.data.teachers|
 function stuView(M,top){var L=M.data.students||[],tn={};(M.data.teachers||[]).forEach(function(t){tn[t.id]=t.name});var cy=new Date().getFullYear(),base=S.stuAllV?L:L.filter(function(s){return s.state==='재원'}),show=instPick(base,'A');
   var pill=function(s){return '<span class="pill '+(s==='재원'?'ok':s==='휴원'?'info':'due')+'">'+esc(s)+'</span>'};
   return '<div class="card full">'+(top||'')+'<div class="spread"><h3>학생 명단 <span class="opt">재원 '+L.filter(function(s){return s.state==='재원'}).length+'명</span></h3><div class="row"><label class="agree" style="flex:none;align-items:center"><input type="checkbox" id="stuAllV" '+(S.stuAllV?'checked':'')+'> 휴원 · 퇴원도 보기</label><button class="btn small primary" type="button" data-mtab="stu">학생 관리에서 고치기</button></div></div>'+instTabs(base,'A')+
-    '<div class="stbl"><table class="stt"><thead><tr><th>상태</th><th>번호</th><th>이름</th><th>성별</th><th>출생연도</th><th>전공</th><th>담당 선생님</th><th>재원 시작</th>'+(S.stuAllV?'<th>휴원 · 퇴원 날짜</th>':'')+'<th>회원 잔여기간</th><th>'+cy+' 회비</th><th></th></tr></thead><tbody>'+
-    (show.length?show.map(function(s){return '<tr class="'+(s.state==='퇴원'?'past':'')+'"><td>'+pill(s.state)+'</td><td class="num hint">'+esc(s.id)+'</td><td><b>'+esc(s.name)+'</b>'+(s.tag?' <span class="hint">'+esc(s.tag)+'</span>':'')+'</td><td>'+(s.sex?esc(s.sex):'<span class="pill due">없음</span>')+'</td><td class="num">'+esc(s.birth||'-')+'</td><td>'+esc(s.inst||'-')+'</td><td>'+esc(s.tid?(tn[s.tid]||s.tid):'-')+'</td><td class="num">'+esc(ymd(s.start))+'</td>'+(S.stuAllV?'<td class="num">'+esc(s.state==='재원'?'-':ymd(s.stateAt))+'</td>':'')+'<td class="num">'+remainCell(s.mem,s.pay)+'</td><td>'+feePill(s)+'</td><td class="r"><button class="btn small" type="button" data-sdet="'+esc(s.id)+'" data-sro="1">보기</button></td></tr>'}).join(''):'<tr><td colspan="12" class="hint" style="padding:12px">학생이 없어요.</td></tr>')+'</tbody></table></div></div>'+stuDetail(M)}
+    '<div class="stbl"><table class="stt" data-stick="3"><thead><tr><th>번호</th><th>상태</th><th>이름</th><th>성별</th><th>출생연도</th><th>전공</th><th>담당 선생님</th><th>재원 시작</th>'+(S.stuAllV?'<th>휴원 · 퇴원 날짜</th>':'')+'<th>회원 잔여기간</th><th>'+cy+' 회비</th><th></th></tr></thead><tbody>'+
+    (show.length?show.map(function(s){return '<tr class="'+(s.state==='퇴원'?'past':'')+'"><td class="num hint">'+esc(s.id)+'</td><td>'+pill(s.state)+'</td><td><b>'+esc(s.name)+'</b>'+(s.tag?' <span class="hint">'+esc(s.tag)+'</span>':'')+'</td><td>'+(s.sex?esc(s.sex):'<span class="pill due">없음</span>')+'</td><td class="num">'+esc(s.birth||'-')+'</td><td>'+esc(s.inst||'-')+'</td><td>'+esc(s.tid?(tn[s.tid]||s.tid):'-')+'</td><td class="num">'+esc(ymd(s.start))+'</td>'+(S.stuAllV?'<td class="num">'+esc(s.state==='재원'?'-':ymd(s.stateAt))+'</td>':'')+'<td class="num">'+remainCell(s.mem,s.pay)+'</td><td>'+feePill(s)+'</td><td class="r"><button class="btn small" type="button" data-sdet="'+esc(s.id)+'" data-sro="1">보기</button></td></tr>'}).join(''):'<tr><td colspan="12" class="hint" style="padding:12px">학생이 없어요.</td></tr>')+'</tbody></table></div></div>'+stuDetail(M)}
 function stuDetail(M){var D=S.stuDet;if(!D)return '';
   var head='<div class="sdlg-bg" id="sdClose2"></div><div class="sdlg" role="dialog" aria-modal="true" aria-label="학생 자세히"><div class="spread"><h3>'+(D.data?esc(D.data.stu.name)+' <span class="hint num">'+esc(D.data.stu.id)+'</span>':'학생 자세히')+'</h3><button class="btn small" type="button" id="sdClose">닫기</button></div>';
   if(!D.data)return head+'<p class="hint"><span class="spin"></span> 불러오는 중…</p></div>';
@@ -607,10 +608,14 @@ function hBack(v){var need={email:1,code:1,confirm:1};
   if((v==='me'||v==='pay'||v==='mine'||v==='myacad')&&!S.sess)v='login';if(v==='myacad'&&!(S.myac&&S.myac.data))v='me';if(v==='mine')loadMine();
   HIST.busy=true;HIST.last=v;S.v=v;S.err={};S.msg='';S.postFor='';S.payEd='';if(S.hist.length)S.hist.pop();render();HIST.busy=false;window.scrollTo(0,0);if(v==='me')loadMe()}
 (function(){var H=gh();if(H&&H.setChangeHandler)try{H.setChangeHandler(function(e){hBack(e&&e.state&&e.state.v)})}catch(x){}})();
+function stickCols(){document.querySelectorAll('table[data-stick]').forEach(function(t){var n=+t.dataset.stick,hr=t.tHead&&t.tHead.rows[0];if(!hr)return;var off=[],x=0;for(var k=0;k<n&&k<hr.cells.length;k++){off.push(x);x+=hr.cells[k].getBoundingClientRect().width}
+  [].forEach.call(t.rows,function(row){for(var k=0;k<n&&k<row.cells.length;k++){if(row.cells[k].colSpan>1)break;var c=row.cells[k];c.classList.add('sk');c.style.left=off[k]+'px';c.classList.toggle('skl',k===n-1)}})})}
+window.addEventListener('resize',function(){stickCols()});
 function render(){var h;
   document.getElementById('testband').hidden=!S.test;
   h=({home:vHome,find:vFind,email:vEmail,code:vCode,confirm:vConfirm,done:vDone,login:vLogin,me:vMe,pay:vPay,ask:vAsk,mine:vMine,myacad:vMyAcad})[S.v]();
   document.getElementById('app').innerHTML=h;
+  try{stickCols()}catch(e){}
   document.body.classList.toggle('wide',S.v==='myacad');
   gnbAsk();
   hSync();

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261028-184159 -->
+<!-- build: 20261028-184515 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -301,7 +301,7 @@ function tchEditor(){var t=S.edit.id==='new'?{'상태':'활동','회원구분':'
     (same.length?'<div class="note">이름이 같은 교사: '+same.map(function(x){return '<b>'+nm(x)+'</b> '+esc(tAcadTxt(x))+' · '+esc(x['전공'])+' · 뒷자리 '+String(x['휴대전화']).slice(-4)}).join(' / ')+'</div>':'')+
     '<div class="fgrid">'+fld('e_이름','이름',t['이름'],{req:1,hint:'명찰·졸업장에 그대로'})+fld('e_구분글자','구분 글자',t['구분글자'],{hint:'동명이인 메모용 · 화면엔 작게'})+fld('e_휴대전화','휴대전화',fmt(t['휴대전화']),{type:'tel'})+
     fld('e_이메일','이메일',t['이메일'])+fld('e_전공','전공',t['전공'],{sel:[['','선택']].concat(INSTS)})+
-    (t['교사ID']?'':fld('e_학원1','주 근무 학원',t['학원1'],{sel:acadOpts('소속 없음')})+fld('e_학원2','추가 근무 학원 1',t['학원2'],{sel:acadOpts('없음')})+fld('e_학원3','추가 근무 학원 2',t['학원3'],{sel:acadOpts('없음')}))+
+    (t['교사ID']?'':fld('e_학원1','주 소속 학원',t['학원1'],{sel:acadOpts('소속 없음')})+fld('e_학원2','추가 근무 학원 1',t['학원2'],{sel:acadOpts('없음')})+fld('e_학원3','추가 근무 학원 2',t['학원3'],{sel:acadOpts('없음')}))+
     fld('e_회원구분','회원 종류',t['회원구분'],{sel:['확인 전',['정식 교사','교사회원'],['중급 연수','연수교사 · 중급'],['초급 연수','연수교사 · 초급'],'외부인'],hint:'명단 자격: '+esc(t['명단자격']||'없음')+(t['명단취득']?' · '+esc(t['명단취득']):'')})+
     certAdmin(t)+fld('e_상태','상태',t['상태'],{sel:['활동','휴직','활동정지','탈퇴']})+fld('e_확인','확인',t['확인'],{sel:CHECKS})+'</div>'+
     (t['교사ID']?photoBoxA(t['교사ID']):'')+(t['교사ID']&&t['회원구분']!=='외부인'?workBoxA(t['교사ID']):'')+
@@ -319,12 +319,12 @@ function worksOfA(tid){return S.D.works.filter(function(w){return w['교사ID']=
 function workBoxA(tid){var ed=S.wEd&&S.wEd.tid===tid?S.wEd:null,ws=worksOfA(tid);
   if(!ed){var cur=ws.filter(function(w){return !w['종료']});
     return '<div class="panel" style="padding:12px"><div class="sec-h"><b>소속 학원 · 이력 <span class="cap">지금 '+cur.length+'곳 · 3곳까지</span></b><button class="btn small" type="button" id="wEdit">소속 학원 고치기</button></div>'+
-      (ws.length?'<table class="wtab"><thead><tr><th>학원</th><th>시작</th><th>종료</th><th></th></tr></thead><tbody>'+ws.map(function(w){return '<tr class="'+(w['종료']?'past':'')+'"><td>'+(w['주근무']==='예'?'<span class="pill info">주 근무</span> ':'')+esc(w['학원ID']?(A[w['학원ID']]||{})['학원명']||w['학원ID']:w['학원명']+' (목록에 없음)')+'</td><td class="num">'+esc(w['시작']||'?')+'</td><td class="num">'+(w['종료']?esc(w['종료']):'<span class="pill ok">근무 중</span>')+'</td><td class="cap">'+esc(w['출처'])+'</td></tr>'}).join('')+'</tbody></table>':'<p class="cap">현재 소속 학원 없음</p>')+'</div>'}
+      (ws.length?'<table class="wtab"><thead><tr><th>학원</th><th>시작</th><th>종료</th><th></th></tr></thead><tbody>'+ws.map(function(w){return '<tr class="'+(w['종료']?'past':'')+'"><td>'+(w['주근무']==='예'?'<span class="pill info">주 소속</span> ':'')+esc(w['학원ID']?(A[w['학원ID']]||{})['학원명']||w['학원ID']:w['학원명']+' (목록에 없음)')+'</td><td class="num">'+esc(w['시작']||'?')+'</td><td class="num">'+(w['종료']?esc(w['종료']):'<span class="pill ok">근무 중</span>')+'</td><td class="cap">'+esc(w['출처'])+'</td></tr>'}).join('')+'</tbody></table>':'<p class="cap">현재 소속 학원 없음</p>')+'</div>'}
   return '<div class="panel" style="padding:12px"><b>소속 학원 고치기 <span class="cap">종료를 비우면 지금 근무 중 · 근무 중은 3곳까지 · 시작·종료는 2024-03 처럼</span></b>'+
-    '<table class="wtab"><thead><tr><th>학원</th><th>시작</th><th>종료</th><th>주 근무</th><th></th></tr></thead><tbody>'+ed.rows.map(function(r,i){
+    '<table class="wtab"><thead><tr><th>학원</th><th>시작</th><th>종료</th><th>주 소속</th><th></th></tr></thead><tbody>'+ed.rows.map(function(r,i){
       return '<tr><td>'+(r.t||r.text&&!r.id?'<input type="text" data-wf="'+i+'|text" value="'+esc(r.text)+'" placeholder="목록에 없는 학원">':'<select data-wf="'+i+'|id">'+acadOpts('학원 선택').map(function(o){return '<option value="'+esc(o[0])+'" '+(o[0]===r.id?'selected':'')+'>'+esc(o[1])+'</option>'}).join('')+'</select>')+'</td>'+
         '<td><input type="month" data-wf="'+i+'|start" value="'+esc(r.start)+'"></td><td><input type="month" data-wf="'+i+'|end" value="'+esc(r.end)+'"></td>'+
-        '<td><input type="radio" name="wMain" data-wf="'+i+'|main" '+(r.main?'checked':'')+' aria-label="주 근무"></td><td><button class="btn small ghost" type="button" data-wdel="'+i+'">빼기</button></td></tr>'}).join('')+'</tbody></table>'+
+        '<td><input type="radio" name="wMain" data-wf="'+i+'|main" '+(r.main?'checked':'')+' aria-label="주 소속"></td><td><button class="btn small ghost" type="button" data-wdel="'+i+'">빼기</button></td></tr>'}).join('')+'</tbody></table>'+
     '<div class="row" style="margin-top:6px"><button class="btn small" type="button" id="wAdd">+ 소속 학원 줄</button><button class="btn small ghost" type="button" id="wAddT">+ 목록에 없는 학원</button><span style="flex:1"></span><button class="btn small" type="button" id="wCancel">취소</button><button class="btn small primary" type="button" id="wSave">소속 학원 저장</button></div><p class="err" id="wErr"></p></div>'}
 function readWEd(){if(!S.wEd)return;document.querySelectorAll('[data-wf]').forEach(function(el){var p=el.dataset.wf.split('|'),r=S.wEd.rows[+p[0]];if(!r)return;if(p[1]==='main'){r.main=el.checked}else r[p[1]]=el.value.trim()})}
 
@@ -429,7 +429,7 @@ function vReq(){var L=S.reqs;if(!L)return '<div class="panel"><span><span class=
     (list.length?list.map(reqCard).join(''):'<div class="panel"><p class="cap">요청이 없어요.</p></div>')}
 function reqWorks(info){var w=info['_근무'];if(!Array.isArray(w)){try{w=JSON.parse(info['근무JSON']||'null')}catch(x){w=null}}
   if(!Array.isArray(w)||!w.length)return esc(info['소속 학원']||info['근무지']);
-  return w.map(function(x,i){return '<div>'+(i===0?'<span class="pill info">주 근무</span> ':'')+'<b>'+esc(x.id?((A[x.id]||{})['학원명']||x.id):x.text+' (목록에 없음)')+'</b> <span class="cap num">'+esc(String(x.start||'').replace('-','.'))+' ~ 근무 중</span></div>'}).join('')}
+  return w.map(function(x,i){return '<div>'+(i===0?'<span class="pill info">주 소속</span> ':'')+'<b>'+esc(x.id?((A[x.id]||{})['학원명']||x.id):x.text+' (목록에 없음)')+'</b> <span class="cap num">'+esc(String(x.start||'').replace('-','.'))+' ~ 근무 중</span></div>'}).join('')}
 function reqCard(q){var info={};try{info=JSON.parse(q['내용']||'{}')}catch(x){}
   var t=q['교사ID']&&T[q['교사ID']];
   var cand=q['종류']==='새 회원'||q['종류']==='외부인'?S.D.tch.filter(function(x){return x['이름']===q['이름']||(q['휴대전화']&&x['휴대전화']===q['휴대전화'])}):[];

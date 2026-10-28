@@ -1,4 +1,4 @@
-/* build: 20261028-184159 */
+/* build: 20261028-184515 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -572,7 +572,7 @@ function cleanInfo_(n, mode) {
     o.type = n.type; o.course = n.type === '연수교사회원' ? n.course : '';
     o.kind = n.type === '교사회원' ? '정식 교사' : n.course === '중급' ? '중급 연수' : '초급 연수';
   } else { if (KINDS.indexOf(n.kind) < 0) fail('회원 구분을 골라 주세요.'); o.kind = n.kind; }
-  /* 소속 학원 (10-28): 현재 소속 학원 3곳까지, 학원마다 시작 년·월 필수, 첫 번째가 주 근무. 다니는 학원이 없으면 「현재 소속 학원 없음」 */
+  /* 소속 학원 (10-28): 현재 소속 학원 3곳까지, 학원마다 시작 년·월 필수, 첫 번째가 주 소속. 다니는 학원이 없으면 「현재 소속 학원 없음」 */
   o.noWork = !!n.noWork; const ny = +Utilities.formatDate(new Date(), 'Asia/Seoul', 'yyyy'), seen = {};
   o.works = o.noWork ? [] : (n.works || []).slice(0, 3).map(w => {
     const id = an[w.id] ? String(w.id) : '', text = id ? '' : String(w.text || '').trim().slice(0, 60);
@@ -1156,7 +1156,7 @@ function worksOf_(tid) {
   return mine.sort((a, b) => (a['종료'] ? 1 : 0) - (b['종료'] ? 1 : 0) || (b['주근무'] === '예') - (a['주근무'] === '예') || String(b['시작']).localeCompare(String(a['시작'])));
 }
 function nextWid_(W) { let m = 0; W.v.forEach(r => { const n = +String(r[0]).replace(/\D/g, '') || 0; if (n > m) m = n; }); return 'W' + String(m + 1).padStart(5, '0'); }
-/** 현재 소속 학원(종료 없음)로 교사 탭 학원1~3을 맞춤 (주 근무가 학원1) */
+/** 현재 소속 학원(종료 없음)로 교사 탭 학원1~3을 맞춤 (주 소속가 학원1) */
 function syncAcads_(tid) {
   const cur = workObjs_().list.filter(w => w['교사ID'] === tid && !w['종료'] && w['학원ID']).sort((a, b) => (b['주근무'] === '예') - (a['주근무'] === '예') || String(a['시작']).localeCompare(String(b['시작'])));
   const T = tbl_('교사'), i = T.find('교사ID', tid); if (i < 0) return;

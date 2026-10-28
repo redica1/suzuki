@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261028-184159 -->
+<!-- build: 20261028-184515 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -39,7 +39,8 @@ button,input,select,textarea{font:inherit;color:inherit}
 .testband{background:var(--rosin);color:#1b1306;text-align:center;font-size:13px;font-weight:700;padding:4px 8px}
 .band{background:var(--band);color:var(--band-ink)}
 .band .wrap{padding-top:18px;padding-bottom:16px;display:grid;gap:4px;position:relative}
-.gnbBtn{position:absolute;right:16px;top:50%;transform:translateY(-50%);display:inline-flex;flex-direction:column;align-items:center;gap:2px;background:transparent;border:1px solid var(--band-muted);color:var(--band-ink);border-radius:10px;padding:6px 9px;cursor:pointer;font-size:11px;line-height:1}
+.gnbBox{position:absolute;right:16px;top:50%;transform:translateY(-50%);display:flex;gap:8px}
+.gnbBtn{position:relative;display:inline-flex;flex-direction:column;align-items:center;gap:2px;background:transparent;border:1px solid var(--band-muted);color:var(--band-ink);border-radius:10px;padding:6px 9px;cursor:pointer;font-size:11px;line-height:1}
 .gnbBtn svg{width:20px;height:20px}.gnbBtn .dot{position:absolute;top:-4px;right:-4px;min-width:16px;height:16px;border-radius:8px;background:var(--rosin);color:#1b1306;font-size:10.5px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 4px}
 .org{font-size:13px;color:var(--band-muted)}
 .band h1{font-family:var(--display);font-size:24px;font-weight:700}
@@ -117,14 +118,17 @@ input.bad,select.bad,textarea.bad{border-color:var(--bad);background:var(--bad-s
 .qbody{white-space:pre-wrap;word-break:break-word;margin:4px 0}.cmt{border-left:3px solid var(--line);padding:4px 10px;margin:6px 0}.cmt.adm{border-color:var(--accent);background:var(--accent-soft);border-radius:0 8px 8px 0}.hp{position:absolute;left:-5000px;width:1px;height:1px;overflow:hidden}
 .phbox{display:flex;gap:12px;align-items:center;margin:6px 0 10px}.phimg{width:78px;height:104px;border-radius:10px;border:1px solid var(--line);background:var(--bg);overflow:hidden;flex:none;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:12px;text-align:center}.phimg img{width:100%;height:100%;object-fit:cover}
 body.wide .wrap{max-width:1180px}
-.stbl{overflow-x:auto;margin:6px -4px 0}.stbl table{border-collapse:collapse;width:100%;min-width:980px;font-size:14px}.stbl th{font-size:12px;color:var(--muted);font-weight:600;text-align:left;padding:6px 4px;border-bottom:1px solid var(--line);white-space:nowrap}.stbl th.r,.stbl td.r{text-align:right}
+.stbl{overflow-x:auto;margin:6px -4px 0}.stbl table{border-collapse:collapse;width:100%;font-size:14px}.stbl table.stu{min-width:980px}.two>*{min-width:0}.stbl th{font-size:12px;color:var(--muted);font-weight:600;text-align:left;padding:6px 4px;border-bottom:1px solid var(--line);white-space:nowrap}.stbl th.r,.stbl td.r{text-align:right}
 .stbl td{padding:3px 4px;border-bottom:1px solid var(--line);vertical-align:middle}.stbl input,.stbl select{padding:6px 7px;font-size:14px;border-radius:7px;width:100%}.stbl tr.dirty td{background:var(--rosin-soft)}.stbl td.r,.stbl .btn{white-space:nowrap}.stbl .w-name{min-width:130px}.stbl .w-st{min-width:78px}.stbl .w-in{min-width:96px}.stbl .w-y{min-width:76px}.stbl .w-t{min-width:110px}
 body.wide #app>*:not(.full){max-width:760px;margin-left:auto;margin-right:auto}.stbl tr.past td{opacity:.6}.stbl td:first-child{white-space:nowrap}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}.tile{border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:grid;gap:2px}.tile .k{font-size:12.5px;color:var(--muted)}.tile .v{font-size:24px}
+.stt{border-collapse:collapse;width:100%;font-size:14px}.stt th{font-size:12px;color:var(--muted);font-weight:600;text-align:left;padding:5px 6px;border-bottom:1px solid var(--line);white-space:nowrap}.stt td{padding:5px 6px;border-bottom:1px solid var(--line)}.stt .r{text-align:right}.stt tr.sum td{font-weight:600;border-top:2px solid var(--line)}
+@media (min-width:900px){body.wide .two{grid-template-columns:1fr 1fr}}
 .postWrap{height:420px;border:1px solid var(--line);border-radius:9px;overflow:hidden}
 </style>
 </head><body>
 <header class="gnb"><div class="testband" id="testband" hidden>테스트(STG) — 여기서 만든 계정은 실제 회원 계정이 아니에요</div>
-<div class="band"><div class="wrap"><div class="org">한국스즈키음악협회</div><h1>선생님 회원</h1><button class="gnbBtn" type="button" id="gnbAsk" hidden aria-label="내 문의"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/><path d="M8 9h8M8 12h5"/></svg><span>내 문의</span><span class="dot" id="gnbDot" hidden></span></button></div></div></header>
+<div class="band"><div class="wrap"><div class="org">한국스즈키음악협회</div><h1>선생님 회원</h1><div class="gnbBox"><button class="gnbBtn" type="button" id="gnbAcad" hidden aria-label="학원 관리"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h18M5 21V8l7-4 7 4v13"/><path d="M9 21v-5h6v5M9 11h.01M15 11h.01"/></svg><span>학원 관리</span></button><button class="gnbBtn" type="button" id="gnbAsk" hidden aria-label="내 문의"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/><path d="M8 9h8M8 12h5"/></svg><span>내 문의</span><span class="dot" id="gnbDot" hidden></span></button></div></div></div></header>
 <main class="wrap" id="app"><div class="card"><span><span class="spin"></span> 여는 중이에요…</span></div></main>
 <div class="homebar"><div class="wrap"><button class="btn ghost" type="button" id="homeBtn">&#8962; 처음</button><button class="btn ghost" type="button" id="backBtn">이전</button></div></div>
 <div class="toast" id="toast" hidden></div>
@@ -198,14 +202,14 @@ function ymSel(pre,y,m,bk){var ys=[],ny=new Date().getFullYear();for(var i=ny;i>
   return '<select id="'+pre+'Y" aria-label="년" '+bad(bk||'')+'><option value="">년</option>'+ys.map(function(x){return '<option '+(String(y)===x?'selected':'')+'>'+x+'</option>'}).join('')+'</select>'+
     '<select id="'+pre+'M" aria-label="월" '+bad(bk||'')+'><option value="">월</option>'+[1,2,3,4,5,6,7,8,9,10,11,12].map(function(x){var v=String(x).padStart(2,'0');return '<option value="'+v+'" '+(String(m)===v?'selected':'')+'>'+x+'월</option>'}).join('')+'</select>'}
 function readWorks(){if(!S.j)return;(S.j.works||[]).forEach(function(w,i){var y=document.getElementById('w'+i+'Y'),m=document.getElementById('w'+i+'M');if(y)w.y=y.value;if(m)w.m=m.value});var n=document.getElementById('noWork');if(n)S.j.noWork=n.checked}
-function workList(){var j=S.j;return j.works.map(function(w,i){return '<div class="wk"><div class="spread"><b>'+(i===0?'<span class="pill info">주 근무</span> ':'')+esc(w.id?aName(w.id):w.text+' (목록에 없음)')+'</b><button class="btn small ghost" type="button" data-rmw="'+i+'">빼기</button></div>'+
+function workList(){var j=S.j;return j.works.map(function(w,i){return '<div class="wk"><div class="spread"><b>'+(i===0?'<span class="pill info">주 소속</span> ':'')+esc(w.id?aName(w.id):w.text+' (목록에 없음)')+'</b><button class="btn small ghost" type="button" data-rmw="'+i+'">빼기</button></div>'+
   '<div class="row"><span class="hint">근무 시작 <span class="req">*</span></span>'+ymSel('w'+i,w.y,w.m,'w'+i)+'</div>'+fe('w'+i)+'</div>'}).join('')}
 function acadFields(){var j=S.j;
   var pick=j.noWork?'':(j.works.length>=3?'<p class="hint">지금 소속 학원는 3곳까지예요.</p>':
     (S.acadTyping?'<div class="row" style="flex-wrap:nowrap"><input type="text" id="jAcT" placeholder="학원 이름을 적어 주세요"><button class="btn small" type="button" id="addText" style="flex:none">넣기</button></div><div><button class="btn small ghost" type="button" id="acadList">목록에서 고르기</button></div>':
      '<input type="search" id="aq" value="'+esc(S.aq||'')+'" placeholder="'+(j.works.length?'다른 소속 학원 더 찾기':'학원 이름으로 찾기')+'" autocomplete="off" '+bad('acad')+'><ul class="list" id="aList">'+aItems(aHits())+'</ul>'+
      '<div class="row"><button class="btn small ghost" type="button" id="typeAcad">목록에 없어요 · 직접 적기</button></div>'));
-  return '<div class="f"><span>지금 근무하는 학원 <span class="req">*</span> <span class="opt">3곳까지 · 처음 고른 곳이 주 근무</span></span>'+
+  return '<div class="f"><span>지금 근무하는 학원 <span class="req">*</span> <span class="opt">3곳까지 · 처음 고른 곳이 주 소속</span></span>'+
     (j.noWork?'':workList())+pick+
     '<label class="agree" for="noWork"><input type="checkbox" id="noWork" '+(j.noWork?'checked':'')+'><div><b>현재 소속 학원 없음</b><span class="hint"> 지금 다니는 학원이 없어요</span></div></label>'+fe('acad')+
     '<p class="hint">그만둔 학원은 가입한 뒤 「내 정보」에서 종료 날짜를 넣으면 근무 이력으로 남아요.</p></div>'}
@@ -259,11 +263,11 @@ function infoEdit(m){var j=S.j;
     (m.ext?'':certBox())+'<p class="hint">이메일(로그인 아이디)을 바꾸려면 「내 문의」로 알려 주세요.</p>'+msgBox()+
     '<div class="two">'+btn('infoSave','저장')+'<button class="btn" type="button" id="infoNo">취소</button></div></div>'}
 function vMe(){var m=S.me;if(!m)return '<div class="card"><span><span class="spin"></span> 불러오는 중…</span></div>';var p=m.pay;
-  return '<div class="card"><div class="spread"><h2>'+esc(m.name)+' 선생님</h2><button class="btn ghost small" type="button" id="logout">로그아웃</button></div>'+
+  return '<div class="card"><div class="spread"><h2>'+esc(m.name)+' 선생님'+(m.heads&&m.heads.length?' <span class="pill info" style="vertical-align:3px">원장</span>':'')+'</h2><button class="btn ghost small" type="button" id="logout">로그아웃</button></div>'+
     '<div class="phbox"><div class="phimg">'+(m.photo?'<img src="'+esc(m.photo)+'" alt="내 사진">':'사진<br>없음')+'</div><div><b>사진</b><p class="hint">명찰 · 프로그램북에 쓰는 얼굴 사진이에요. 정면, 밝은 배경이면 좋아요.</p><label class="btn small" for="phIn" style="display:inline-block;cursor:pointer">'+(S.phBusy?'<span class="spin"></span> 올리는 중…':m.photo?'사진 바꾸기':'사진 넣기')+'</label><input type="file" id="phIn" accept="image/*" hidden></div></div>'+
     (m.reqs&&m.reqs.length?'<div class="note warn">협회가 확인 중인 요청: '+esc(m.reqs.join(', '))+'</div>':'')+
     (S.infoEd?infoEdit(m):'<dl class="kv"><dt>이메일</dt><dd>'+esc(m.email)+'</dd><dt>휴대전화</dt><dd class="num">'+fmtPh(m.phone)+'</dd>'+(m.ext?'<dt>구분</dt><dd><span class="pill info">외부인</span></dd><dt>악기</dt><dd>'+esc(m.inst||'-')+'</dd></dl>':'<dt>직급</dt><dd>'+esc(m.role||'-')+'</dd><dt>악기</dt><dd>'+esc(m.inst||'-')+'</dd><dt>회원 종류</dt><dd>'+(KINDS.indexOf(m.kind)>=0?'<span class="pill info">'+esc(kindLabel(m.kind))+'</span>':'<span class="pill due">확인 전</span>')+'</dd></dl>')+certLine(m)+'<button class="btn small block" type="button" id="infoEd">기본 정보 고치기</button>')+
-    (m.heads&&m.heads.length?'<div class="lock" style="margin-top:8px"><h3>우리 학원 <span class="opt">원장</span></h3>'+m.heads.map(function(a){return '<div class="spread" style="margin:4px 0"><b>'+esc(a.name)+'</b><button class="btn small primary" type="button" data-myac="'+esc(a.id)+'">학원 정보 · 선생님</button></div>'}).join('')+'<p class="hint">학생 명단 메뉴는 곧 열려요.</p></div>':'')+
+    (m.heads&&m.heads.length?'<div class="lock" style="margin-top:8px"><h3>우리 학원 <span class="opt">원장</span></h3>'+m.heads.map(function(a){return '<div class="spread" style="margin:4px 0"><b>'+esc(a.name)+'</b><button class="btn small primary" type="button" data-myac="'+esc(a.id)+'">학원 관리</button></div>'}).join('')+'</div>':'')+
     '</div>'+(m.ext?'':workCard(m)+duesCard(m))+eventCard(m)+
     payCards(m)+rrnBox(m)}
 function payCards(m){var p=m.pay||{},ed=S.payEd,d=S.pay||{};
@@ -338,7 +342,7 @@ function stuCard(M){if(!S.stuRows||S.stuRowsFor!==M.id){S.stuRows=stuRowsFrom(M.
     '<td>'+(r.id?(r.check==='확인'?'<span class="pill ok">확인</span>':r.check==='확인 필요'?'<span class="pill due">확인 중</span>':''):'<button class="btn small ghost" type="button" data-srm="'+i+'" aria-label="이 줄 빼기">빼기</button>')+'</td></tr>'};
   return '<div class="card full"><div class="spread"><h3>학생 명단 <span class="opt">재원 '+R.filter(function(r){return r.id&&r.state!=='퇴원'}).length+'명 · '+cy+' 회비</span></h3>'+
     '<div class="row"><label class="agree" style="flex:none;align-items:center"><input type="checkbox" id="stuAll" '+(S.stuAll?'checked':'')+'> 퇴원도 보기</label><button class="btn small" type="button" id="stuAdd">+ 줄 추가</button></div></div>'+
-    '<div class="stbl"><table><thead><tr><th>번호</th><th>이름 *</th><th>출생연도</th><th>전공</th><th>시작</th><th>담당 선생님</th><th>상태</th><th class="r">'+cy+' 회비</th><th>낸 금액</th><th>낸 날짜</th><th></th></tr></thead><tbody>'+
+    '<div class="stbl"><table class="stu"><thead><tr><th>번호</th><th>이름 *</th><th>출생연도</th><th>전공</th><th>시작</th><th>담당 선생님</th><th>상태</th><th class="r">'+cy+' 회비</th><th>낸 금액</th><th>낸 날짜</th><th></th></tr></thead><tbody>'+
     (show.length?show.map(row).join(''):'<tr><td colspan="11" class="hint" style="padding:14px">아직 학생이 없어요. 「+ 줄 추가」로 넣어 주세요.</td></tr>')+'</tbody></table></div>'+
     msgBox()+'<div class="row" style="margin-top:8px"><span class="hint" id="stuDirty">'+(dn?'바뀐 줄 '+dn+'개 · 저장해야 반영돼요':'칸을 눌러 바로 고쳐요')+'</span><span style="flex:1"></span>'+(dn?'<button class="btn small" type="button" id="stuUndo">되돌리기</button>':'')+btn('stuSaveAll','저장','primary')+'</div>'+
     '<p class="hint">'+cy+' 회비는 협회가 정한 금액이고, 낸 금액 · 낸 날짜는 원장님이 넣어요. 넣거나 고친 학생은 협회가 확인해요. 그만둔 학생은 지우지 말고 「퇴원」으로 바꿔 주세요.</p></div>'}
@@ -347,6 +351,26 @@ function readStu(){var s=S.stuEd;if(!s)return;var g=function(id){var e=document.
 function fileB64(f){return new Promise(function(res,rej){var fr=new FileReader();fr.onerror=function(){rej('파일을 읽지 못했어요')};fr.onload=function(){var u=String(fr.result),k=u.indexOf(',');res(u.slice(k+1))};fr.readAsDataURL(f)})}
 function openB64(name,mime,b64){var bin=atob(b64),n=bin.length,u8=new Uint8Array(n);for(var i=0;i<n;i++)u8[i]=bin.charCodeAt(i);var url=URL.createObjectURL(new Blob([u8],{type:mime}));
   var a=document.createElement('a');a.href=url;a.target='_blank';a.rel='noopener';a.download=name;document.body.appendChild(a);a.click();setTimeout(function(){a.remove();URL.revokeObjectURL(url)},60000)}
+function openAcad(id){S.stuEd=null;S.stuRows=null;S.myac={id:id,data:null,ed:false,form:null};go('myacad');call('tAcad',[S.sess,id]).then(function(r){if(!r.ok){toast(r.msg);S.v='me';render();return}S.myac.data=r;render()})}
+function acadHead(M){var a=M.data.acad,hs=(S.me&&S.me.heads)||[];
+  return '<div class="card full"><div class="spread"><h2>'+esc(a['학원명'])+' <span class="pill info" style="vertical-align:3px">원장</span> <span class="pill '+(a['상태']==='운영'?'ok':'due')+'" style="vertical-align:3px">'+esc(a['상태']||'-')+'</span></h2>'+
+    '<div class="row">'+(hs.length>1?hs.map(function(h){return '<button class="btn small'+(h.id===M.id?' primary':'')+'" type="button" data-myac="'+esc(h.id)+'">'+esc(h.name)+'</button>'}).join(''):'')+'<button class="btn small" type="button" id="goInfo">학원 정보 · 서류</button></div></div>'+
+    '<p class="hint">'+esc([a['주소'],fmtTel(a['교실대표번호'])].filter(Boolean).join(' · ')||'학원 정보를 넣어 주세요')+'</p></div>'}
+function statsCard(M){var L=M.data.students||[],T=(M.data.teachers||[]).filter(function(t){return !t.end}),cy=new Date().getFullYear();
+  var on=L.filter(function(s){return s.state!=='퇴원'}),off=L.length-on.length,paid=on.filter(function(s){return +s.paid>0}).length;
+  var insts=INSTS.filter(function(i){return L.some(function(s){return s.inst===i})});if(L.some(function(s){return !s.inst}))insts.push('');
+  var lab=function(i){return i||'미정'};
+  var tile=function(k,v,sub){return '<div class="tile"><span class="k">'+k+'</span><b class="v num">'+v+'</b>'+(sub?'<span class="hint">'+sub+'</span>':'')+'</div>'};
+  var byInst='<table class="stt"><thead><tr><th>전공</th><th class="r">재원</th><th class="r">퇴원</th><th class="r">'+cy+' 회비 낸 학생</th></tr></thead><tbody>'+insts.map(function(i){var g=L.filter(function(s){return (s.inst||'')===i}),o=g.filter(function(s){return s.state!=='퇴원'});
+      return '<tr><td>'+esc(lab(i))+'</td><td class="r num"><b>'+o.length+'</b></td><td class="r num">'+(g.length-o.length)+'</td><td class="r num">'+o.filter(function(s){return +s.paid>0}).length+'</td></tr>'}).join('')+
+    '<tr class="sum"><td>합계</td><td class="r num"><b>'+on.length+'</b></td><td class="r num">'+off+'</td><td class="r num">'+paid+'</td></tr></tbody></table>';
+  var gm=S.grp==='월',key=function(s){var x=String(s.start||'');return x?(gm?x.slice(0,7):x.slice(0,4)):''},keys=[];L.forEach(function(s){var k=key(s);if(keys.indexOf(k)<0)keys.push(k)});
+  keys.sort(function(a,b){return a===''?1:b===''?-1:b.localeCompare(a)});
+  var byDate='<table class="stt"><thead><tr><th>들어온 '+(gm?'년 · 월':'년도')+'</th>'+insts.map(function(i){return '<th class="r">'+esc(lab(i))+'</th>'}).join('')+'<th class="r">들어온 학생</th><th class="r">지금 재원</th></tr></thead><tbody>'+
+    keys.map(function(k){var g=L.filter(function(s){return key(s)===k});return '<tr><td class="num">'+(k?esc(gm?k.replace('-','.'):k+'년'):'<span class="hint">모름</span>')+'</td>'+insts.map(function(i){var n=g.filter(function(s){return (s.inst||'')===i}).length;return '<td class="r num">'+(n||'<span class="hint">·</span>')+'</td>'}).join('')+'<td class="r num"><b>'+g.length+'</b></td><td class="r num">'+g.filter(function(s){return s.state!=='퇴원'}).length+'</td></tr>'}).join('')+'</tbody></table>';
+  return '<div class="card full"><h3>전체 현황</h3><div class="tiles">'+tile('재원 학생',on.length,'퇴원 '+off+'명')+tile('소속 선생님',T.length)+tile(cy+' 회비 낸 학생',paid,'재원 '+on.length+'명 중')+tile('시작월 없는 학생',L.filter(function(s){return !s.start}).length,'명단에서 넣어 주세요')+'</div>'+
+    '<div class="two" style="align-items:start;margin-top:10px"><div><h3 style="font-size:15px">전공별</h3><div class="stbl">'+byInst+'</div></div>'+
+    '<div><div class="spread"><h3 style="font-size:15px">들어온 날짜별 · 전공</h3>'+seg('grp',[['년','년별'],['월','월별']],gm?'월':'년')+'</div><div class="stbl">'+byDate+'</div></div></div></div>'}
 function vMyAcad(){var M=S.myac;if(!M||!M.data)return '<div class="card"><span><span class="spin"></span> 불러오는 중…</span></div>';
   var a=M.data.acad,T=M.data.teachers,f=M.form,cur=T.filter(function(t){return !t.end}),past=T.filter(function(t){return t.end});
   var info=M.ed?'<div class="lock"><h3>학원 정보 고치기 <span class="opt">바꾸면 협회가 확인해요</span></h3>'+
@@ -358,17 +382,18 @@ function vMyAcad(){var M=S.myac;if(!M||!M.data)return '<div class="card"><span><
       '<div class="two"><div><label class="f" for="acBiz">사업자번호<input type="text" id="acBiz" value="'+esc(f.biz)+'" inputmode="numeric" placeholder="000-00-00000" '+bad('biz')+'></label>'+fe('biz')+'</div><div><label class="f" for="acEdu">교육청 인가번호<input type="text" id="acEdu" value="'+esc(f.edu)+'" maxlength="40"></label></div></div>'+
       '<p class="hint">학원 이름 · 운영 상태 · 원장을 바꾸려면 오른쪽 위 「내 문의」로 알려 주세요.</p>'+msgBox()+
       '<div class="two">'+btn('acSave','저장')+'<button class="btn" type="button" id="acNo">취소</button></div></div>':
-    '<div class="card"><div class="spread"><h2>'+esc(a['학원명'])+'</h2><span class="pill '+(a['상태']==='운영'?'ok':'due')+'">'+esc(a['상태']||'-')+'</span></div>'+
+    '<div class="card"><div class="spread"><h3>학원 정보</h3><button class="btn small" type="button" id="acEdit">학원 정보 수정</button></div>'+
       '<dl class="kv"><dt>원장</dt><dd>'+esc(a['원장명']||'-')+'</dd><dt>대표 번호</dt><dd class="num">'+esc(fmtTel(a['교실대표번호'])||'-')+'</dd><dt>이메일</dt><dd>'+esc(a['이메일']||'-')+'</dd><dt>교습 과목</dt><dd>'+esc(a['교습과목']||'-')+'</dd>'+
       '<dt>주소</dt><dd>'+(a['주소']?(a['우편번호']?'<span class="num">('+esc(a['우편번호'])+')</span> ':'')+esc(a['주소']+' '+(a['상세주소']||'')):'-')+'</dd><dt>개원</dt><dd class="num">'+esc(a['개원일']||'-')+'</dd><dt>사업자번호</dt><dd class="num">'+esc(a['사업자번호']||'-')+'</dd><dt>교육청 인가</dt><dd class="num">'+esc(a['교육청인가번호']||'-')+'</dd>'+(a['계약체결일']?'<dt>협회 계약</dt><dd class="num">'+esc(a['계약체결일'])+'</dd>':'')+'</dl>'+
-      '<button class="btn primary block" type="button" id="acEdit">학원 정보 고치기</button></div>';
+      '</div>';
   var li=function(t){return '<li class="'+(t.end?'past':'')+'"><div class="spread"><b>'+(t.main&&!t.end?'<span class="pill info">주 소속</span> ':'')+esc(t.name)+'</b><span class="hint num">'+(t.start?esc(t.start.replace('-','.')):'?')+' ~ '+(t.end?esc(t.end.replace('-','.')):'지금')+'</span></div><span class="hint">'+esc([t.role,t.inst,kindLabel(t.kind)].filter(Boolean).join(' · ')||'-')+'</span></li>'};
-  return info+docCard(M)+stuCard(M)+'<div class="card full"><h3>소속 선생님 <span class="opt">지금 '+cur.length+'명</span></h3>'+(cur.length?'<ul class="hist">'+cur.map(li).join('')+'</ul>':'<p class="hint">지금 소속된 선생님이 없어요.</p>')+
+  return acadHead(M)+statsCard(M)+stuCard(M)+'<div class="card full"><h3>소속 선생님 <span class="opt">지금 '+cur.length+'명</span></h3>'+(cur.length?'<ul class="hist">'+cur.map(li).join('')+'</ul>':'<p class="hint">지금 소속된 선생님이 없어요.</p>')+
     (past.length?'<h3 style="margin-top:10px">지난 소속 선생님</h3><ul class="hist">'+past.map(li).join('')+'</ul>':'')+
     '<p class="hint">선생님이 「내 정보 › 소속 학원」에서 넣은 내용이에요. 다르면 그 선생님에게 고쳐 달라고 해 주세요.</p></div>'+
+    '<div id="acInfo"></div>'+info+docCard(M)+
     '<button class="btn block" type="button" id="toMe">내 정보로</button>'}
 function vMine(){return myAskCard()+'<button class="btn block" type="button" id="toMe">내 정보로</button>'}
-function gnbAsk(){var b=document.getElementById('gnbAsk');if(!b)return;b.hidden=!S.sess;b.setAttribute('aria-current',S.v==='mine'?'page':'false');
+function gnbAsk(){var ga=document.getElementById('gnbAcad');if(ga){ga.hidden=!(S.sess&&S.me&&S.me.heads&&S.me.heads.length);ga.setAttribute('aria-current',S.v==='myacad'?'page':'false')}var b=document.getElementById('gnbAsk');if(!b)return;b.hidden=!S.sess;b.setAttribute('aria-current',S.v==='mine'?'page':'false');
   var n=(S.mine||[]).filter(function(q){var c=q.comments[q.comments.length-1];return q.state!=='완료'&&c&&c.who==='관리자'}).length,dt=document.getElementById('gnbDot');
   dt.hidden=!n;dt.textContent=n;b.setAttribute('aria-label','내 문의'+(n?' · 새 답 '+n+'개':''))}
 function myAskCard(){var L=S.mine;
@@ -388,9 +413,9 @@ function eventCard(m){var es=m.events||[];
     '<p class="hint">캠프·졸업연주 등 협회 행사가 끝나면 여기에 모여요.'+(es.some(function(e){return e.sample})?' 지금은 테스트용 예시예요.':'')+'</p></div>'}
 function fmYm(x){return x?String(x).replace('-','.'):'?'}
 function workCard(m){var ws=m.works||[],cur=ws.filter(function(w){return !w.end}),past=ws.filter(function(w){return w.end});
-  var li=function(w){var ending=S.endW===w.wid;return '<li class="'+(w.end?'past':'')+'"><div class="spread"><b>'+(w.main?'<span class="pill info">주 근무</span> ':'')+esc(w.name)+'</b><span class="num hint">'+fmYm(w.start)+' ~ '+(w.end?fmYm(w.end):'지금')+'</span></div>'+
+  var li=function(w){var ending=S.endW===w.wid;return '<li class="'+(w.end?'past':'')+'"><div class="spread"><b>'+(w.main?'<span class="pill info">주 소속</span> ':'')+esc(w.name)+'</b><span class="num hint">'+fmYm(w.start)+' ~ '+(w.end?fmYm(w.end):'지금')+'</span></div>'+
     (w.end?'':ending?'<div class="row"><span class="hint">종료</span>'+ymSel('eW','','','endW')+'<button class="btn small primary" type="button" data-endok="'+esc(w.wid)+'">종료</button><button class="btn small ghost" type="button" id="endNo">취소</button></div>'+fe('endW'):
-      '<div class="row">'+(w.main||cur.length<2?'':'<button class="btn small ghost" type="button" data-mainw="'+esc(w.wid)+'">주 근무로</button>')+'<button class="btn small" type="button" data-endw="'+esc(w.wid)+'">종료</button></div>')+'</li>'};
+      '<div class="row">'+(w.main||cur.length<2?'':'<button class="btn small ghost" type="button" data-mainw="'+esc(w.wid)+'">주 소속로</button>')+'<button class="btn small" type="button" data-endw="'+esc(w.wid)+'">종료</button></div>')+'</li>'};
   var add='';
   if(cur.length<3){if(S.addW){var a=S.addW;add='<div class="wk"><b>소속 학원 추가</b>'+(a.id||a.text?'<div class="spread"><span>'+esc(a.id?aName(a.id):a.text+' (목록에 없음)')+'</span><button class="btn small ghost" type="button" id="addWClr">다시 고르기</button></div><div class="row"><span class="hint">근무 시작</span>'+ymSel('aW',a.y,a.m,'addW')+'</div>'+fe('addW')+'<div class="row">'+btn('addWOk','추가','primary small')+'<button class="btn small ghost" type="button" id="addWNo">취소</button></div>':
       (S.acadTyping?'<div class="row" style="flex-wrap:nowrap"><input type="text" id="jAcT" placeholder="학원 이름을 적어 주세요"><button class="btn small" type="button" id="addText" style="flex:none">넣기</button></div>':'<input type="search" id="aq" value="'+esc(S.aq||'')+'" placeholder="학원 이름으로 찾기" autocomplete="off"><ul class="list" id="aList">'+aItems(aHits())+'</ul><div class="row"><button class="btn small ghost" type="button" id="typeAcad">목록에 없어요 · 직접 적기</button><button class="btn small ghost" type="button" id="addWNo">취소</button></div>'))+'</div>'}
@@ -492,7 +517,7 @@ document.addEventListener('click',function(e){var b=e.target.closest('button');i
   if(b.id==='verify'){var cd=v('cCode').trim();if(!/^\d{6}$/.test(cd)){S.msg='6자리 코드를 넣어 주세요.';render();return}
     run(function(){return call('tVerify',[S.token,cd]).then(function(r){if(!r.ok){S.msg=r.msg;return}if(r.prefill&&S.mode==='member'){var pf=r.prefill;S.j.type=pf.type||'';S.j.course=pf.course||'';S.j.works=(pf.works||[]).map(function(w){return {id:w.id,text:w.text,y:w.y,m:w.m}});S.j.noWork=false;S.j.role=pf.role;S.j.inst=pf.inst||'';S.j.certs=pf.certs||{}}S.hist.push('code');S.v='confirm';window.scrollTo(0,0);toast('이메일 인증을 마쳤어요')})});return}
   if(b.id==='toCode'){readConfirm();go('code');return}
-  if(d.seg&&d.seg!=='acat'&&d.seg!=='lease'&&d.seg!=='sstate'){readConfirm();var k=d.seg,val=d.val;
+  if(d.seg&&d.seg!=='acat'&&d.seg!=='lease'&&d.seg!=='sstate'&&d.seg!=='grp'){readConfirm();var k=d.seg,val=d.val;
     if(k==='type'){S.j.type=val;if(val==='교사회원')S.j.course='';else if(!S.j.course)S.j.course='초급'}else S.j[k]=val;
     delete S.err[k];render();return}
   if(d.acad){if(S.v==='me'){S.addW={id:d.acad,y:'',m:''};S.aq='';render();return}readConfirm();if(S.j.works.length<3)S.j.works.push({id:d.acad,text:'',y:'',m:''});S.j.noWork=false;S.aq='';delete S.err.acad;render();var aq=document.getElementById('aq');if(aq)aq.focus();return}
@@ -510,7 +535,7 @@ document.addEventListener('click',function(e){var b=e.target.closest('button');i
   if(b.id==='endNo'){S.endW='';render();return}
   if(d.endok){var ey=v('eWY'),emo=v('eWM');if(!ey||!emo){S.err={endW:'종료 년·월을 골라 주세요.'};render();return}
     run(function(){return call('tEndWork',[S.sess,d.endok,ey,emo]).then(function(r){if(!r.ok){S.err={endW:r.msg};return}S.me=r.me;S.endW='';S.err={};toast('종료했어요. 지난 소속 학원에 남아요')})});return}
-  if(d.mainw){run(function(){return call('tMainWork',[S.sess,d.mainw]).then(function(r){if(!r.ok){toast(r.msg);return}S.me=r.me;toast('주 근무를 바꿨어요')})});return}
+  if(d.mainw){run(function(){return call('tMainWork',[S.sess,d.mainw]).then(function(r){if(!r.ok){toast(r.msg);return}S.me=r.me;toast('주 소속를 바꿨어요')})});return}
   if(b.id==='create'){readConfirm();var er2={},pw=v('pw1'),j=S.j,nw=S.look!=='found';
     var ext=nw&&S.mode==='ext';
     if(ext){if(!j.extRole)er2.extRole='하는 일을 골라 주세요.';else if(j.extRole==='기타'&&!j.extRoleText.trim())er2.extRoleText='하는 일을 적어 주세요.'}
@@ -553,7 +578,9 @@ document.addEventListener('click',function(e){var b=e.target.closest('button');i
     S.err=e6;if(Object.keys(e6).length){render();return}
     if(j6.type==='연수교사회원'&&!j6.course)j6.course='초급';
     run(function(){return call('tSaveInfo',[S.sess,{name:j6.name,phone:j6.phone,type:j6.type,course:j6.course,role:j6.role,inst:j6.inst,certs:Object.keys(j6.certs).map(function(n){return {n:n,y:j6.certs[n]}})}]).then(function(r){if(!r.ok){S.msg=r.msg;return}S.me=r.me;S.infoEd=false;S.err={};toast('저장했어요. 협회가 확인해요')})});return}
-  if(d.myac){S.stuEd=null;S.stuRows=null;S.myac={id:d.myac,data:null,ed:false,form:null};go('myacad');call('tAcad',[S.sess,d.myac]).then(function(r){if(!r.ok){toast(r.msg);S.v='me';render();return}S.myac.data=r;render()});return}
+  if(d.myac){openAcad(d.myac);return}
+  if(d.seg==='grp'){S.grp=d.val;render();return}
+  if(b.id==='goInfo'){var ai=document.getElementById('acInfo');if(ai)ai.scrollIntoView({behavior:'smooth',block:'start'});return}
   if(d.seg==='lease'){S.leaseKind=d.val;render();return}
   if(d.seg==='sstate'){readStu();S.stuEd.state=d.val;render();return}
   if(b.id==='stuAdd'){S.stuRows.push({id:'',name:'',birth:'',inst:'',start:'',state:'재원',tid:'',due:'',paid:'',paidAt:'',dirty:true});render();var ins=document.querySelectorAll('[data-sf$="|name"]');if(ins.length)ins[ins.length-1].focus();return}
@@ -567,7 +594,7 @@ document.addEventListener('click',function(e){var b=e.target.closest('button');i
   if(b.id==='stuSave'){readStu();var se=S.stuEd;if(!se.name){S.err={sname:'학생 이름을 넣어 주세요.'};render();return}
     run(function(){return call('tSaveStu',[S.sess,S.myac.id,se]).then(function(r){if(!r.ok){S.msg=r.msg;return}S.myac.data=r;S.stuEd=null;S.err={};toast('저장했어요. 협회가 확인해요')})});return}
   if(d.docview){b.disabled=true;call('tDocGet',[S.sess,S.myac.id,d.docview]).then(function(r){b.disabled=false;if(!r.ok){toast(r.msg);return}openB64(r.name,r.mime,r.b64)});return}
-  if(b.id==='acEdit'){S.myac.ed=true;S.myac.form=acForm(S.myac.data.acad);S.err={};S.msg='';render();return}
+  if(b.id==='acEdit'){S.myac.ed=true;S.myac.form=acForm(S.myac.data.acad);S.err={};S.msg='';render();var ai2=document.getElementById('acInfo');if(ai2)ai2.scrollIntoView({block:'start'});return}
   if(b.id==='acNo'){S.myac.ed=false;S.err={};S.msg='';S.postFor='';render();return}
   if(b.id==='acSave'){readAcForm();var f7=S.myac.form,e7={};
     if(f7.tel&&!/^(0\d{8,10}|1[5-9]\d{6})$/.test(f7.tel))e7.tel='교실 대표 번호를 확인해 주세요.';if(f7.email&&!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(f7.email))e7.email='이메일 주소를 확인해 주세요.';
@@ -575,6 +602,7 @@ document.addEventListener('click',function(e){var b=e.target.closest('button');i
     if(f7.biz&&f7.biz.replace(/\D/g,'').length!==10){S.err={biz:'사업자번호 10자리를 확인해 주세요.'};render();return}
     var send={'사업자번호':f7.biz,'교육청인가번호':f7.edu,'교실대표번호':f7.tel,'이메일':f7.email,'교습과목':f7.subj.join(', '),'우편번호':f7.zip,'주소':f7.addr,'상세주소':f7.addr2,'시도':f7.sido,'시군구':f7.sigungu,'개원일':f7.open};
     run(function(){return call('tSaveAcad',[S.sess,S.myac.id,send]).then(function(r){if(!r.ok){S.msg=r.msg;return}S.myac.data=r;S.myac.ed=false;S.err={};toast('저장했어요. 협회가 확인해요')})});return}
+  if(b.id==='gnbAcad'){var hs=S.me&&S.me.heads||[];if(!hs.length)return;openAcad(S.myac&&S.myac.id&&hs.some(function(h){return h.id===S.myac.id})?S.myac.id:hs[0].id);return}
   if(b.id==='gnbAsk'){if(!S.sess)return;go('mine');loadMine();return}
   if(b.id==='goAsk'){S.ask=null;S.askDone=false;go('ask');return}
   if(d.seg==='acat'){readAsk();S.ask.cat=d.val;render();return}

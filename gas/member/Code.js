@@ -1,4 +1,4 @@
-/* build: 20261028-224350 */
+/* build: 20261028-225149 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -79,7 +79,7 @@ function doGet(e) {
 function include(n) { return HtmlService.createHtmlOutputFromFile(n).getContent(); }
 
 function api(name, args) {
-  const open = { login, hello, tHello, tLookup, tStart, tResend, tVerify, tCreate, tLogin, tForgot, tReset, tMe, tSavePay, tSavePart, tSaveInfo, tSavePhoto, tAcad, tSaveAcad, tDocUp, tDocGet, tSaveStu, tSaveStus, tStuDetail, tStuSave, tStuTutor, tStuTutorDel, tStuState, tStuStateDel, tTchSaves, tTchEnd, tTchEvent, tTchAssign, tSaveRrn, tAddWork, tEndWork, tMainWork, tLogout, bPost, bMine, bReply };
+  const open = { login, hello, tHello, tLookup, tStart, tResend, tVerify, tCreate, tLogin, tForgot, tReset, tMe, tSavePay, tSavePart, tSaveInfo, tSavePhoto, tAcad, tSaveAcad, tDocUp, tDocGet, tSaveStu, tSaveStus, tStuDetail, tStuSave, tStuTutor, tStuTutorDel, tStuState, tStuStateDel, tTchSaves, tTchEnd, tTchEvent, tTchAssign, tTchStart, tSaveRrn, tAddWork, tEndWork, tMainWork, tLogout, bPost, bMine, bReply };
   const fns = { boot, saveRow, setCheck, logs, importRoster, saveDues, delDues, reqs, reqDo, delAcad, payView, bulkSet, saveWorks, importPastDues, bList, bSet, bComment, photoGet, photoDel, fillRegions, saveRates, docList, docUp, docGet, docDel, payList, payOk, payNo };
   try {
     if (open[name]) return Object.assign({ ok: true }, open[name].apply(null, args || []));
@@ -1095,6 +1095,23 @@ function tTchEvent(sess, aid, tid, kind, date) {
     const T = tbl_('교사'), j = T.find('교사ID', tid), md = Utilities.formatDate(new Date(), 'Asia/Seoul', 'MM-dd');
     if (j >= 0) T.set(j, { '확인': '확인 필요', '확인메모': [String(T.get(j, '확인메모') || ''), '원장이 근무 기록(' + aname + ' ' + kind + ' ' + date + ', ' + md + ')'].filter(Boolean).join(' · ').slice(0, 500) });
     log_(who, '근무', tid, '원장이 근무 기록', aid + ' ' + kind + ' ' + date);
+  } finally { lock.releaseLock(); }
+  return tAcad(sess, aid);
+}
+/** 원장: 지금 근무의 근무 시작 날짜 고치기 */
+function tTchStart(sess, aid, tid, date) {
+  const u = tsess_(sess), { A, i } = headOf_(u, aid), aname = A.get(i, '학원명'), who = stuWho_(u);
+  date = String(date || ''); if (!/^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/.test(date)) fail('근무 시작 날짜를 골라 주세요.');
+  const lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    const mine = worksOf_(tid).filter(w => w['학원ID'] === aid), cur = mine.find(w => !w['종료']); if (!cur) fail('지금 근무 중인 선생님만 고칠 수 있어요.');
+    const lastEnd = mine.filter(w => w['종료']).map(w => String(w['종료'])).sort().pop() || ''; if (lastEnd && date <= lastEnd) fail('지난 퇴직(' + lastEnd + ')보다 뒤의 날짜를 골라 주세요.');
+    const firstEv = rowsOf_('근무이력').list.filter(e => e['근무ID'] === cur['근무ID']).map(e => String(e['날짜'])).sort()[0]; if (firstEv && date > firstEv) fail('휴직 · 복귀 기록(' + firstEv + ')보다 앞 날짜여야 해요.');
+    const old = String(cur['시작'] || ''); if (old === date) return tAcad(sess, aid);
+    const W = tbl_('근무'); W.set(W.find('근무ID', cur['근무ID']), { '시작': date, '수정일': now_(), '수정자': who });
+    const T = tbl_('교사'), j = T.find('교사ID', tid), md = Utilities.formatDate(new Date(), 'Asia/Seoul', 'MM-dd');
+    if (j >= 0) T.set(j, { '확인': '확인 필요', '확인메모': [String(T.get(j, '확인메모') || ''), '원장이 근무 시작 고침(' + aname + ' ' + (old || '없음') + ' → ' + date + ', ' + md + ')'].filter(Boolean).join(' · ').slice(0, 500) });
+    log_(who, '근무', tid, '원장이 근무 시작 고침', aid + ' ' + (old || '없음') + ' → ' + date);
   } finally { lock.releaseLock(); }
   return tAcad(sess, aid);
 }

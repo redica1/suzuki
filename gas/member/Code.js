@@ -1,4 +1,4 @@
-/* build: 20261028-230544 */
+/* build: 20261028-231517 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -88,6 +88,7 @@ const SETTINGS = [
   ['인증 코드 화면 표시', '아니오', 'STG 시험용. 「예」면 메일과 함께 화면에도 인증 코드를 보여 줌 (메인에서는 꼭 아니오)'],
   ['정산 정보 시트', '', 'setup 이 만드는 관리자 전용 파일 ID (계좌·우편물 주소). 공유하지 마세요'],
   ['지난 회비 원본', '', '설정 › 지난 해 교사 회비 불러오기에 마지막으로 넣은 시트 ID'],
+  ['행사 명단 시트', '', '캠프 · 졸업연주가 읽는 「행사용 명단」 파일 ID. 매시간 자동으로 새로 씀 (주민번호 · 계좌 · 주소 없음). 공유하지 마세요'],
   ['서류 폴더', '', '학원 서류(사업자등록증 · 인가증 · 임대계약서)를 넣는 관리자 전용 드라이브 폴더 ID. 처음 올릴 때 자동으로 만듦'],
 ];
 
@@ -103,7 +104,7 @@ function include(n) { return HtmlService.createHtmlOutputFromFile(n).getContent(
 
 function api(name, args) {
   const open = { login, hello, tHello, tLookup, tStart, tResend, tVerify, tCreate, tLogin, tForgot, tReset, tMe, tSavePay, tSavePart, tSaveInfo, tSavePhoto, tAcad, tSaveAcad, tDocUp, tDocGet, tSaveStu, tSaveStus, tStuDetail, tStuSave, tStuTutor, tStuTutorDel, tStuState, tStuStateDel, tMyStu, tMyStuDetail, tMyStuPay, tTchSaves, tTchEnd, tTchEvent, tTchAssign, tTchStart, tSaveRrn, tAddWork, tEndWork, tMainWork, tLogout, bPost, bMine, bReply };
-  const fns = { boot, saveRow, setCheck, logs, importRoster, saveDues, delDues, reqs, reqDo, delAcad, payView, bulkSet, saveWorks, importPastDues, bList, bSet, bComment, photoGet, photoDel, fillRegions, saveRates, docList, docUp, docGet, docDel, payList, payOk, payNo, memView };
+  const fns = { boot, saveRow, setCheck, logs, importRoster, saveDues, delDues, reqs, reqDo, delAcad, payView, bulkSet, saveWorks, importPastDues, bList, bSet, bComment, photoGet, photoDel, fillRegions, saveRates, docList, docUp, docGet, docDel, payList, payOk, payNo, memView, rosterNow, inputStatus };
   try {
     if (open[name]) return Object.assign({ ok: true }, open[name].apply(null, args || []));
     if (!fns[name]) throw new UserError('알 수 없는 요청이에요.');
@@ -299,8 +300,67 @@ function setup() {
     f.getSheets()[0].setName('정산'); ensure_(f, '정산');
     setSetting_('정산 정보 시트', f.getId());
   }
+  try { ScriptApp.getProjectTriggers().filter(t => t.getHandlerFunction() === 'rosterHourly').forEach(t => ScriptApp.deleteTrigger(t)); ScriptApp.newTrigger('rosterHourly').timeBased().everyHours(1).create(); } catch (e) { Logger.log('행사용 명단 자동 갱신을 켜지 못했어요(매니페스트 script.scriptapp 권한 확인): ' + e.message); }
+  try { rosterBuild_(); } catch (e) { Logger.log('행사용 명단: ' + e.message); }
   const d = ss.getSheetByName('시트1') || ss.getSheetByName('Sheet1'); if (d && d.getLastRow() === 0 && ss.getSheets().length > 1) ss.deleteSheet(d);
   try { SpreadsheetApp.getUi().alert('탭을 준비했어요. 「설정」 탭 관리자 비밀번호(노란 칸)를 적고 관리자 화면에서 원본 명단을 불러와 주세요.'); } catch (e) {}
+}
+/* ====================== 행사용 명단 (캠프 · 졸업연주가 읽기만) ======================
+   별도 파일에 학원 · 교사 · 학생 · 갱신 탭을 통째로 새로 씀. 주민번호 · 계좌 · 주소 · 학생 연락처 없음. */
+const ROSTER_HEAD = {
+  '학원': ['학원ID', '학원명', '구분', '상태', '원장교사ID', '원장명', '시도', '시군구', '졸업연주지역', '교습과목'],
+  '교사': ['교사ID', '이름', '구분글자', '성별', '휴대전화', '회원구분', '직급', '전공', '자격', '캠프교수', '회비구분', '학원1', '학원2', '학원3', '상태', '올해회비', '올해납부일'],
+  '학생': ['학생ID', '학원ID', '학원명', '이름', '구분글자', '성별', '출생연도', '전공', '상태', '상태일', '담당교사ID', '담당교사명', '재원시작', '자격시작', '자격끝', '자격상태', '회비확인대기', '올해납부일'],
+  '갱신': ['만든 때', '학원', '교사', '학생', '메모']
+};
+function rosterHourly() { try { rosterBuild_(); } catch (e) { Logger.log(e.message); } }
+function rosterNow(who) { const r = rosterBuild_(); log_(who.name, '행사명단', '', '지금 만들기', JSON.stringify(r)); return r; }
+function rosterBuild_() {
+  const P = settings_(); let f;
+  if (P['행사 명단 시트']) { try { f = SpreadsheetApp.openById(P['행사 명단 시트']); } catch (e) { f = null; } }
+  if (!f) { f = SpreadsheetApp.create((P['테스트 표시'] === '예' ? '[STG] ' : '') + '스즈키 회원관리 – 행사용 명단 (읽기 전용 · 자동)'); setSetting_('행사 명단 시트', f.getId()); }
+  const an = acadNames_(), today = Utilities.formatDate(new Date(), 'Asia/Seoul', 'yyyy-MM'), cy = CUR_Y;
+  const A = tbl_('학원'), ac = col_(A), T = tbl_('교사'), tc = col_(T), S2 = tbl_('학생'), sc = col_(S2), DV = tbl_('연회비').v;
+  const tdu = {}; DV.forEach(d => { if (d[0] === '교사' && String(d[2]) === cy) tdu[d[1]] = d; });
+  const sdu = {}; DV.forEach(d => { if (d[0] === '학생' && String(d[2]) === cy) sdu[d[1]] = d; });
+  const tn = {}; T.v.forEach(r => tn[r[tc['교사ID']]] = r[tc['이름']]);
+  const cur = {}; rowsOf_('담당').list.forEach(r => { if (!r['종료']) cur[r['학생ID']] = r['교사ID']; });
+  const evs = {}; rowsOf_('재원이력').list.forEach(h => { (evs[h['학생ID']] = evs[h['학생ID']] || []).push({ s: h['상태'], d: String(h['날짜'] || '') }); });
+  const rows = {};
+  rows['학원'] = A.v.map(r => ROSTER_HEAD['학원'].map(k => k === '교습과목' || k in ac ? String(r[ac[k]] || '') : ''));
+  rows['교사'] = T.v.filter(r => r[tc['상태']] !== '탈퇴').map(r => { const id = r[tc['교사ID']], d = tdu[id] || [], free = r[tc['회비구분']] === '면제';
+    const o = { '교사ID': id, '이름': r[tc['이름']], '구분글자': r[tc['구분글자']], '성별': r[tc['성별']], '휴대전화': r[tc['휴대전화']], '회원구분': r[tc['회원구분']], '직급': r[tc['직급']], '전공': r[tc['전공']], '자격': r[tc['본인자격']] || r[tc['명단자격']], '캠프교수': r[tc['캠프교수']], '회비구분': r[tc['회비구분']], '학원1': r[tc['학원1']], '학원2': r[tc['학원2']], '학원3': r[tc['학원3']], '상태': r[tc['상태']],
+      '올해회비': free ? '면제' : (+d[4] > 0 && (+d[4] >= +d[3] || !+d[3]) ? '납부' : +d[4] > 0 ? '일부' : '미납'), '올해납부일': d[5] || '' };
+    return ROSTER_HEAD['교사'].map(k => String(o[k] == null ? '' : o[k])); });
+  rows['학생'] = S2.v.filter(r => r[sc['학원ID']]).map(r => { const id = r[sc['학생ID']], d = sdu[id] || [], tid = cur[id] || r[sc['담당교사ID']] || '';
+    const m = memOf_(id, DV, { start0: String(r[sc['시작월']] || ''), events: evs[id] || [] }).last;
+    const st = !m ? '없음' : m.start > today ? '시작 전' : m.end < today ? '만료' : '유효';
+    const o = { '학생ID': id, '학원ID': r[sc['학원ID']], '학원명': an[r[sc['학원ID']]] || '', '이름': r[sc['이름']], '구분글자': r[sc['구분글자']], '성별': r[sc['성별']], '출생연도': r[sc['출생연도']], '전공': r[sc['전공']], '상태': r[sc['상태']] || '재원', '상태일': r[sc['상태일']], '담당교사ID': tid, '담당교사명': tn[tid] || '', '재원시작': r[sc['시작월']],
+      '자격시작': m ? m.start : '', '자격끝': m ? m.end : '', '자격상태': st, '회비확인대기': d[11] === '신고' ? '예' : '', '올해납부일': d[11] === '신고' || d[11] === '반려' ? '' : (d[5] || '') };
+    return ROSTER_HEAD['학생'].map(k => String(o[k] == null ? '' : o[k])); });
+  const stamp = now_();
+  rows['갱신'] = [[stamp, String(rows['학원'].length), String(rows['교사'].length), String(rows['학생'].length), '회원관리가 자동으로 씀 · 고치지 마세요 (고쳐도 다음 갱신 때 지워짐)']];
+  Object.keys(ROSTER_HEAD).forEach(n => {
+    let sh = f.getSheetByName(n); if (!sh) sh = f.insertSheet(n);
+    const h = ROSTER_HEAD[n], data = [h].concat(rows[n]);
+    sh.clearContents(); sh.getRange(1, 1, data.length, h.length).setNumberFormat('@').setValues(data); sh.getRange(1, 1, 1, h.length).setFontWeight('bold').setBackground('#e9eef0'); sh.setFrozenRows(1);
+  });
+  const s1 = f.getSheetByName('시트1') || f.getSheetByName('Sheet1'); if (s1 && f.getSheets().length > 1) f.deleteSheet(s1);
+  return { at: stamp, acad: rows['학원'].length, tch: rows['교사'].length, stu: rows['학생'].length, id: f.getId(), url: f.getUrl() };
+}
+/* ====================== 원장 입력 현황 (관리자) ====================== */
+function inputStatus(who) {
+  const A = tbl_('학원'), ac = col_(A), S2 = tbl_('학생'), sc = col_(S2), acc = {}; acctAll_().forEach(a => { if (a.tid && a.state === '사용') acc[a.tid] = 1; });
+  const docs = {}; tbl_('학원서류').v.forEach(r => { (docs[r[1]] = docs[r[1]] || {})[/임대|등기/.test(r[2]) ? '임대' : r[2]] = 1; });
+  const tch = {}; workObjs_().list.forEach(w => { if (!w['종료'] && w['학원ID']) tch[w['학원ID']] = (tch[w['학원ID']] || 0) + 1; });
+  const cur = {}; rowsOf_('담당').list.forEach(r => { if (!r['종료']) cur[r['학생ID']] = r['교사ID']; });
+  const pend = {}; tbl_('연회비').v.forEach(d => { if (d[0] === '학생' && d[11] === '신고') pend[d[1]] = 1; });
+  const by = {}; S2.v.forEach(r => { const a = r[sc['학원ID']]; if (!a || (r[sc['상태']] || '재원') !== '재원') return; const o = by[a] = by[a] || { n: 0, sex: 0, tutor: 0, start: 0, pend: 0, edit: '' };
+    o.n++; if (!r[sc['성별']]) o.sex++; if (!(cur[r[sc['학생ID']]] || r[sc['담당교사ID']])) o.tutor++; if (!/^\d{4}-\d{2}-\d{2}$/.test(String(r[sc['시작월']] || ''))) o.start++; if (pend[r[sc['학생ID']]]) o.pend++;
+    if (String(r[sc['수정자']] || '').indexOf('(원장)') >= 0 && String(r[sc['수정일']] || '') > o.edit) o.edit = String(r[sc['수정일']]); });
+  const list = A.v.filter(r => r[ac['상태']] !== '탈퇴').map(r => { const id = r[ac['학원ID']], o = by[id] || { n: 0, sex: 0, tutor: 0, start: 0, pend: 0, edit: '' }, dd = docs[id] || {}, head = r[ac['원장교사ID']] || '';
+    return { id, name: r[ac['학원명']], kind: r[ac['구분']], head, headName: r[ac['원장명']], headAcc: !!acc[head], acadEdit: String(r[ac['수정자']] || '').indexOf('(원장)') >= 0 ? String(r[ac['수정일']] || '') : '', docs: ['사업자등록증', '교육청인가증', '임대'].filter(k => dd[k]).length, contract: !!r[ac['계약체결일']], tch: tch[id] || 0, stu: o.n, noSex: o.sex, noTutor: o.tutor, noStart: o.start, pend: o.pend, stuEdit: o.edit }; });
+  return { list, at: now_() };
 }
 function ensure_(ss, name) {
   let sh = ss.getSheetByName(name); if (!sh) sh = ss.insertSheet(name);

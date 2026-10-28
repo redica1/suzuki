@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261028-230544 -->
+<!-- build: 20261028-231517 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -134,7 +134,7 @@ label.f.wide{grid-column:1/-1}
 <script>
 var INSTS=['바이올린','첼로','비올라','플루트','피아노'];
 var CHECKS=['확인 전','확인 필요','확인'];
-var TABS=[['home','한눈에'],['acad','학원정보'],['tch','교사정보'],['stu','학생정보'],['req','승인 대기'],['pay','입금 신고'],['ask','문의'],['log','바뀐 기록'],['set','설정']];
+var TABS=[['home','한눈에'],['acad','학원정보'],['tch','교사정보'],['stu','학생정보'],['req','승인 대기'],['pay','입금 신고'],['prog','입력 현황'],['ask','문의'],['log','바뀐 기록'],['set','설정']];
 var S={sess:'',tab:'home',q:'',f:{},page:0,edit:null,sel:{},issue:'',D:null,test:false,busy:false,hist:[]};
 var A={},T={},ST={};
 
@@ -419,6 +419,24 @@ function vAskA(){var L=S.asks;if(!L)return '<div class="panel"><span><span class
         q.comments.map(function(c){return '<div class="cmt'+(c['쓴사람']==='관리자'?' adm':'')+'"><b>'+esc(c['쓴사람']==='관리자'?'협회 · '+c['이름']:c['이름'])+'</b> <span class="cap num">'+esc(c['작성일'])+'</span><div class="qbody">'+esc(c['내용'])+'</div></div>'}).join('')+
         '<div class="row" style="align-items:flex-start;margin-top:6px"><textarea id="cm_'+esc(id)+'" rows="2" placeholder="댓글 (회원에게는 화면 · 이메일로 보여요)" style="flex:1;min-width:220px"></textarea><button class="btn small primary" type="button" data-bcm="'+esc(id)+'">댓글</button></div>'+
         '<div class="row" style="margin-top:6px"><span class="cap">상태</span>'+['접수','처리중','완료'].map(function(x){return '<button class="btn small '+(q['상태']===x?'primary':'')+'" type="button" data-bst="'+esc(id)+'|'+x+'">'+x+'</button>'}).join('')+(q['처리자']?'<span class="cap">'+esc(q['처리자'])+(q['처리일']?' · 완료 '+esc(q['처리일']):'')+'</span>':'')+'</div></div>'}).join(''):'<div class="panel"><p class="cap">문의가 없어요.</p></div>')}
+function loadProg(){S.prog=null;callS('inputStatus').then(function(r){if(r.ok){S.prog=r;if(S.tab==='prog')render()}else toast(r.msg)})}
+function vProg(){var R=S.prog;if(!R)return '<div class="panel"><span><span class="spin"></span> 불러오는 중…</span></div>';
+  var f=S.f.pg||'전체',L=R.list.filter(function(a){return f==='전체'||(f==='미가입'?!a.headAcc:f==='원장 없음'?!a.head:f==='빈칸 있음'?(a.noSex||a.noTutor||a.noStart):f==='서류 부족'?a.docs<3:f==='신고 대기'?a.pend:true)});
+  var q=(S.q||'').replace(/\s/g,'');if(q)L=L.filter(function(a){return String(a.name+a.headName).replace(/\s/g,'').indexOf(q)>=0});
+  var cnt=function(k){return R.list.filter(function(a){return k==='전체'||(k==='미가입'?!a.headAcc:k==='원장 없음'?!a.head:k==='빈칸 있음'?(a.noSex||a.noTutor||a.noStart):k==='서류 부족'?a.docs<3:k==='신고 대기'?a.pend:true)}).length};
+  var tot=function(k){return R.list.reduce(function(s,a){return s+(+a[k]||0)},0)};
+  var n0=function(v,bad){return v?'<b'+(bad?' style="color:#c0392b"':'')+'>'+v+'</b>':'<span class="cap">0</span>'};
+  return '<div class="sec-h"><div><h2>원장 입력 현황</h2><p>11월 한 달 동안 원장님이 채울 것을 학원마다 보여 줘요. 빈칸은 <b>재원 학생</b> 기준이에요. 재원 시작은 년·월·일까지 있어야 채운 것으로 봐요.</p></div>'+
+    '<div class="row"><button class="btn small ghost" type="button" id="progRe">새로 고침</button><button class="btn small" type="button" id="rosterGo">행사용 명단 지금 만들기</button></div></div>'+
+    (S.roster?'<div class="note info">행사용 명단을 만들었어요 · '+esc(S.roster.at)+' · 학원 '+S.roster.acad+' · 교사 '+S.roster.tch+' · 학생 '+S.roster.stu+' · <a href="'+esc(S.roster.url)+'" target="_blank" rel="noopener">파일 열기</a> (매시간 자동으로도 새로 써요)</div>':'')+
+    '<div class="tiles"><div class="tile"><span class="k">원장 가입</span><span class="v">'+R.list.filter(function(a){return a.headAcc}).length+'</span><span class="s">학원 '+R.list.length+'곳 중</span></div>'+
+    '<div class="tile warn"><span class="k">성별 빈칸</span><span class="v">'+tot('noSex')+'</span><span class="s">재원 '+tot('stu')+'명 중</span></div>'+
+    '<div class="tile warn"><span class="k">담당 빈칸</span><span class="v">'+tot('noTutor')+'</span></div>'+
+    '<div class="tile warn"><span class="k">재원 시작일 빈칸</span><span class="v">'+tot('noStart')+'</span></div>'+
+    '<div class="tile"><span class="k">입금 신고 대기</span><span class="v">'+tot('pend')+'</span></div></div>'+
+    '<div class="row" style="margin:8px 0">'+['전체','미가입','원장 없음','빈칸 있음','서류 부족','신고 대기'].map(function(k){return '<button class="btn small '+(f===k?'primary':'')+'" type="button" data-pg="'+k+'">'+k+' '+cnt(k)+'</button>'}).join('')+'</div>'+
+    '<div class="panel"><div class="filters"><input type="search" id="q" placeholder="학원 · 원장 찾기" value="'+esc(S.q||'')+'" style="max-width:240px"></div><div class="tbl"><table><thead><tr><th>학원</th><th>원장</th><th>원장 가입</th><th>학원 정보</th><th>서류</th><th>협회 계약</th><th class="r">교사</th><th class="r">재원 학생</th><th class="r">성별 빈칸</th><th class="r">담당 빈칸</th><th class="r">시작일 빈칸</th><th class="r">신고 대기</th><th>학생 마지막 수정</th></tr></thead><tbody>'+
+    (L.length?L.map(function(a){return '<tr><td><b>'+esc(a.name)+'</b>'+(a.kind==='클래스'?' <span class="cap">클래스</span>':'')+'</td><td>'+(a.head?esc(a.headName||a.head):'<span class="pill bad">없음</span>')+'</td><td>'+(a.headAcc?'<span class="pill ok">가입</span>':'<span class="pill due">미가입</span>')+'</td><td class="num cap">'+(a.acadEdit?esc(String(a.acadEdit).slice(0,10)):'-')+'</td><td>'+(a.docs>=3?'<span class="pill ok">3/3</span>':'<span class="pill due">'+a.docs+'/3</span>')+'</td><td>'+(a.contract?'<span class="pill ok">체결</span>':'<span class="cap">-</span>')+'</td><td class="r num">'+a.tch+'</td><td class="r num">'+a.stu+'</td><td class="r num">'+n0(a.noSex,1)+'</td><td class="r num">'+n0(a.noTutor,1)+'</td><td class="r num">'+n0(a.noStart,1)+'</td><td class="r num">'+n0(a.pend)+'</td><td class="num cap">'+(a.stuEdit?esc(String(a.stuEdit).slice(0,10)):'-')+'</td></tr>'}).join(''):'<tr><td colspan="13" class="cap">없어요.</td></tr>')+'</tbody></table></div><p class="cap">기준 시각 '+esc(R.at)+'</p></div>'}
 function loadPay(){S.pays=null;callS('payList').then(function(r){if(r.ok){S.pays=r.list;S.D.payN=r.payN;if(S.tab==='pay')render()}else toast(r.msg)})}
 function nextMon1(d){var y=+d.slice(0,4),m=+d.slice(5,7);m++;if(m>12){m=1;y++}return y+'-'+('0'+m).slice(-2)+'-01'}
 function vPay(){var L=S.pays;if(!L)return '<div class="panel"><span><span class="spin"></span> 불러오는 중…</span></div>';
@@ -512,11 +530,11 @@ function render(){
   who.innerHTML='<span><b>관리자</b></span><button type="button" id="reload">새로 고침</button><button type="button" id="logout">로그아웃</button>';
   var need=S.D.acad.concat(S.D.tch).filter(function(o){return o['확인']==='확인 필요'}).length;
   tabs.innerHTML=TABS.map(function(t){return '<button role="tab" type="button" data-tab="'+t[0]+'" aria-selected="'+(S.tab===t[0])+'">'+t[1]+(t[0]==='home'&&need?'<span class="cnt">'+need+'</span>':'')+(t[0]==='req'&&S.D.reqN?'<span class="cnt">'+S.D.reqN+'</span>':'')+(t[0]==='pay'&&S.D.payN?'<span class="cnt">'+S.D.payN+'</span>':'')+(t[0]==='ask'&&S.D.bN?'<span class="cnt">'+S.D.bN+'</span>':'')+'</button>'}).join('');
-  app.innerHTML=({home:vHome,acad:vAcads,tch:vTeachers,stu:vStudents,req:vReq,pay:vPay,ask:vAskA,log:vLog,set:vSet})[S.tab]();
+  app.innerHTML=({home:vHome,acad:vAcads,tch:vTeachers,stu:vStudents,req:vReq,pay:vPay,prog:vProg,ask:vAskA,log:vLog,set:vSet})[S.tab]();
   var i=TABS.map(function(t){return t[0]}).indexOf(S.tab);document.getElementById('prevBtn').disabled=i<=0;document.getElementById('nextBtn').disabled=i>=TABS.length-1;
   hSync();
 }
-function go(tab,fromBack){if(tab!==S.tab&&!fromBack)S.hist.push(S.tab);S.tab=tab;S.q='';S.f={};S.page=0;S.edit=null;S.sel={};S.issue='';S.dEdit=null;S.edAcad=null;if(tab==='log')loadLogs();if(tab==='req')loadReqs();if(tab==='ask')loadAsk();if(tab==='pay')loadPay();render();window.scrollTo(0,0)}
+function go(tab,fromBack){if(tab!==S.tab&&!fromBack)S.hist.push(S.tab);S.tab=tab;S.q='';S.f={};S.page=0;S.edit=null;S.sel={};S.issue='';S.dEdit=null;S.edAcad=null;if(tab==='log')loadLogs();if(tab==='req')loadReqs();if(tab==='ask')loadAsk();if(tab==='pay')loadPay();if(tab==='prog')loadProg();render();window.scrollTo(0,0)}
 function load(){return callS('boot').then(function(r){if(!r.ok){if(S.sess)toast(r.msg);return}
   S.test=r.test;S.pdSrc0=r.pdSrc||'';S.D={acad:objs(r['학원']),tch:objs(r['교사']),stu:objs(r['학생']),duesRows:objs(r['연회비']),empty:r.empty,acc:r.acc||{},reqN:r.reqN||0,payF:r.pay||{},bN:r.bN||0,payN:r.payN||0,rates:objs(r.rates||{h:[],rows:[]}),mailLeft:r.mailLeft==null?-1:r.mailLeft,works:objs(r['근무']||{h:[],rows:[]})};index();render()})}
 function loadLogs(){S.logs=null;callS('logs').then(function(r){if(r.ok){S.logs=r;if(S.tab==='log')render()}else toast(r.msg)})}
@@ -609,6 +627,9 @@ document.addEventListener('click',function(e){
   if(b.id==='logRe'){loadLogs();render();return}
   if(d.rs){S.f.rs=d.rs;render();return}
   if(d.ps){S.f.ps=d.ps;render();return}
+  if(d.pg){S.f.pg=d.pg;render();return}
+  if(b.id==='progRe'){loadProg();render();return}
+  if(b.id==='rosterGo'){b.disabled=true;callS('rosterNow').then(function(r){b.disabled=false;if(!r.ok){toast(r.msg);return}S.roster=r;render();toast('행사용 명단을 만들었어요')});return}
   if(b.id==='payRe'){loadPay();render();return}
   if(d.pok||d.pno){var k=+(d.pok||d.pno),x=S.pays[k];if(!x)return;var gv=function(id){var e=document.getElementById(id);return e?e.value.trim():''};
     var pr=d.pok?callS('payOk',x.sid,x.year,gv('pd_'+k),gv('pa_'+k)):callS('payNo',x.sid,x.year,gv('pr_'+k));
@@ -631,7 +652,7 @@ document.addEventListener('click',function(e){
 });
 /* 찾기 칸은 그대로 두고 표·쪽 번호만 새로 그림 (한글 입력이 깨지지 않게, 10-28) */
 function softList(){var live=document.getElementById('q');if(!live){render();return}
-  var html=({acad:vAcads,tch:vTeachers,stu:vStudents})[S.tab];if(!html){render();return}
+  var html=({acad:vAcads,tch:vTeachers,stu:vStudents,prog:vProg})[S.tab];if(!html){render();return}
   var tmp=document.createElement('div');tmp.innerHTML=html();var tq=tmp.querySelector('#q');if(!tq){render();return}
   var lp=live.closest('.panel'),tp=tq.closest('.panel'),lf=live.closest('.filters'),tf=tq.closest('.filters');
   Array.prototype.slice.call(lp.childNodes).forEach(function(n){if(n!==lf)lp.removeChild(n)});

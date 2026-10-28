@@ -1,4 +1,4 @@
-/* build: 20261028-221731 */
+/* build: 20261028-222038 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -802,8 +802,10 @@ function tAcad(sess, aid) {
   const ws = workObjs_().list.filter(w => w['학원ID'] === aid);
   const seen = {}; ws.forEach(w => seen[w['교사ID']] = 1);
   T.v.forEach(r => { if (!seen[r[tc['교사ID']]] && [r[tc['학원1']], r[tc['학원2']], r[tc['학원3']]].indexOf(aid) >= 0) ws.push({ '교사ID': r[tc['교사ID']], '시작': '', '종료': '', '주근무': r[tc['학원1']] === aid ? '예' : '' }); });
-  const teachers = ws.map(w => { const r = byId[w['교사ID']]; if (!r || r[tc['상태']] === '탈퇴') return null;
-    return { id: r[tc['교사ID']], name: r[tc['이름']] + (r[tc['구분글자']] ? ' ' + r[tc['구분글자']] : ''), role: r[tc['직급']] || '', inst: r[tc['전공']] || '', kind: r[tc['회원구분']] || '', start: w['시작'] || '', end: w['종료'] || '', main: w['주근무'] === '예' }; })
+  const tdu = {}; tbl_('연회비').v.forEach(d => { if (d[0] === '교사' && String(d[2]) === CUR_Y) tdu[d[1]] = d; });
+  const teachers = ws.map(w => { const r = byId[w['교사ID']]; if (!r || r[tc['상태']] === '탈퇴') return null; const du = tdu[r[tc['교사ID']]] || [];
+    return { id: r[tc['교사ID']], name: r[tc['이름']] + (r[tc['구분글자']] ? ' ' + r[tc['구분글자']] : ''), role: r[tc['직급']] || '', inst: r[tc['전공']] || '', kind: r[tc['회원구분']] || '', start: w['시작'] || '', end: w['종료'] || '', main: w['주근무'] === '예',
+      phone: w['종료'] ? '' : (r[tc['휴대전화']] || ''), cert: r[tc['본인자격']] || r[tc['명단자격']] || '', due: du[3] || '', paid: du[4] || '', paidAt: du[5] || '', duesFree: r[tc['회비구분']] === '면제', contract: r[tc['계약체결']] || '', contractAt: r[tc['계약일']] || '' }; })
     .filter(Boolean).sort((x, y) => (x.end ? 1 : 0) - (y.end ? 1 : 0) || String(y.start).localeCompare(String(x.start)));
   return { acad: info, teachers, docs: docList_(aid), students: stuOf_(aid) };
 }

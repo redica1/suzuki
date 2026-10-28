@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261028-220427 -->
+<!-- build: 20261028-221126 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -337,6 +337,9 @@ function payBoxA(id){var f=S.D.payF[id]||{},v=S.payOpen&&S.payOpen.id===id?S.pay
       :'<div class="row"><span class="cap">계좌</span> '+has(f.a)+' <span class="cap">집 주소</span> '+has(f.h)+' <span class="cap">우편물 주소</span> '+has(f.m)+' <span class="cap">주민번호</span> '+has(f.r)+'</div>')+'</div>'}
 
 /* ---------- 연회비 ---------- */
+function addMon(ym,n){var y=+ym.slice(0,4),m=+ym.slice(5,7)-1+n;return (y+Math.floor(m/12))+'-'+('0'+(((m%12)+12)%12+1)).slice(-2)}
+function memTerms(H){var out={},prev='';H.filter(function(h){return +h['납부']>0&&/^\d{4}-\d{2}-\d{2}/.test(String(h['납부일']||''))&&String(h['년도'])>='2026'}).sort(function(a,b){return String(a['납부일']).localeCompare(String(b['납부일']))}).forEach(function(h){
+  var s0=/^\d{4}-\d{2}$/.test(String(h['자격시작']||''))?String(h['자격시작']):'';if(!s0){s0=addMon(String(h['납부일']).slice(0,7),1);if(prev&&addMon(prev,1)>s0)s0=addMon(prev,1);if('2026-04'>s0)s0='2026-04'}var e=addMon(s0,11);out[h['년도']]={start:s0,end:e};prev=e});return out}
 /* ---------- 전화번호: 지역번호 고르기 (10-28) ---------- */
 var AREAS=['02','031','032','033','041','042','043','044','051','052','053','054','055','061','062','063','064','010','070','050'],AREA_NONE='(없음 · 1588 등)';
 function telParts(v){v=String(v||'').replace(/\D/g,'');if(!v)return ['',''];if(/^1[5-9]/.test(v))return [AREA_NONE,v];if(v.indexOf('02')===0)return ['02',v.slice(2)];var a3=v.slice(0,3);if(AREAS.indexOf(a3)>=0)return [a3,v.slice(3)];if(v.indexOf('050')===0)return ['050',v.slice(3)];return ['',v]}
@@ -359,12 +362,12 @@ function readREd(){if(!S.rEd)return;document.querySelectorAll('[data-rf]').forEa
 function duesBox(kind,id,defDue,mk){var H=(duesOf(kind,id)||[]).slice().sort(function(a,b){return String(b['년도']).localeCompare(String(a['년도']))});var cy=String(new Date().getFullYear());
   var refR=function(y){var r=rateRow(kind,y,mk);return r?won(r['금액']):''};S.duesCtx={kind:kind,id:id,defDue:defDue,mk:mk,H:H};
   var e=S.dEdit&&S.dEdit.ID===id?S.dEdit:(H.filter(function(h){return h['년도']===cy})[0]||{'년도':cy,'부과':'','납부':'','납부일':'','방식':''});
-  var ys=[];for(var y=+cy+1;y>=2018;y--)ys.push(String(y));
+  var ys=[];for(var y=+cy+1;y>=2018;y--)ys.push(String(y));var MT=kind==='학생'?memTerms(H):{};
   return '<div class="panel" style="padding:12px" id="duesWrap"><b>연회비</b><div class="fgrid">'+fld('d_y','년도',e['년도'],{sel:ys})+fld('d_due','부과 금액',e['부과'],{type:'number',hint:defDue===0?'회비 면제 선생님':(refR(e['년도'])?'<span id="d_ref">참고: 기준 '+refR(e['년도'])+'</span>':'<span id="d_ref">직접 넣어 주세요</span>')})+fld('d_paid','납부 금액',e['납부'],{type:'number',hint:'안 냈으면 0'})+
-    fld('d_date','납부일',e['납부일'],{type:'date'})+fld('d_m','납부 방식',e['방식'],{sel:[['',''],'자동이체','직접입금','자동이체+직접입금','단체납부','기타']})+fld('d_memo','메모',e['메모'])+'</div>'+
+    fld('d_date','납부일',e['납부일'],{type:'date'})+fld('d_m','납부 방식',e['방식'],{sel:[['',''],'자동이체','직접입금','자동이체+직접입금','단체납부','기타']})+fld('d_memo','메모',e['메모'])+(kind==='학생'?fld('d_ms','회원 자격 시작',e['자격시작']||'',{type:'month',hint:'비우면 자동: 입금 다음 달 (빨라도 2026-04, 앞 자격 끝나면 이어서)'}):'')+'</div>'+
     '<div class="row"><button class="btn small primary" type="button" data-dsave="'+kind+'|'+id+'">기록</button><span class="cap">같은 년도는 덮어써요</span></div>'+
-    '<div class="tbl"><table><thead><tr><th>년도</th><th class="r">부과</th><th class="r">납부</th><th>납부일</th><th>방식</th><th>메모</th><th></th></tr></thead><tbody>'+
-    (H.map(function(h){return '<tr><td class="num">'+esc(h['년도'])+'</td><td class="r num">'+won(h['부과'])+'</td><td class="r num">'+won(h['납부'])+'</td><td class="num">'+esc(h['납부일']||'-')+'</td><td>'+esc(h['방식']||'-')+'</td><td class="cap">'+esc(h['메모'])+'</td><td><button class="btn small ghost" type="button" data-dedit="'+kind+'|'+id+'|'+esc(h['년도'])+'">고치기</button><button class="btn small ghost" type="button" data-ddel="'+kind+'|'+id+'|'+esc(h['년도'])+'">삭제</button></td></tr>'}).join('')||'<tr><td colspan="7" class="cap">기록이 없어요.</td></tr>')+'</tbody></table></div></div>'}
+    '<div class="tbl"><table><thead><tr><th>년도</th><th class="r">부과</th><th class="r">납부</th><th>납부일</th><th>방식</th>'+(kind==='학생'?'<th>회원 자격</th>':'')+'<th>메모</th><th></th></tr></thead><tbody>'+
+    (H.map(function(h){return '<tr><td class="num">'+esc(h['년도'])+'</td><td class="r num">'+won(h['부과'])+'</td><td class="r num">'+won(h['납부'])+'</td><td class="num">'+esc(h['납부일']||'-')+'</td><td>'+esc(h['방식']||'-')+'</td>'+(kind==='학생'?'<td class="num">'+esc(MT[h['년도']]?MT[h['년도']].start+' ~ '+MT[h['년도']].end+(h['자격시작']?' (직접)':''):'-')+'</td>':'')+'<td class="cap">'+esc(h['메모'])+'</td><td><button class="btn small ghost" type="button" data-dedit="'+kind+'|'+id+'|'+esc(h['년도'])+'">고치기</button><button class="btn small ghost" type="button" data-ddel="'+kind+'|'+id+'|'+esc(h['년도'])+'">삭제</button></td></tr>'}).join('')||'<tr><td colspan="7" class="cap">기록이 없어요.</td></tr>')+'</tbody></table></div></div>'}
 
 /* ---------- 학생 ---------- */
 function stuList(){var qq=q(),f=S.f,is=S.issue;
@@ -582,9 +585,9 @@ document.addEventListener('click',function(e){
     callS('setCheck',table,ids,d.bulk).then(function(r){S.busy=false;if(!r.ok){toast(r.msg);return}
       var M=table==='학원'?A:table==='교사'?T:ST;ids.forEach(function(id){if(M[id]){M[id]['확인']=d.bulk;M[id]['수정일']=r.stamp;M[id]['수정자']='관리자'}});S.sel={};render();toast(r.n+'개를 「'+d.bulk+'」로 표시했어요')});return}
   if(d.dsave){var pp=d.dsave.split('|'),g=function(id){return document.getElementById(id).value.trim()};
-    var rec={'대상':pp[0],ID:pp[1],'년도':g('d_y'),'부과':g('d_due'),'납부':g('d_paid'),'납부일':g('d_date'),'방식':g('d_m'),'메모':g('d_memo')};
+    var rec={'대상':pp[0],ID:pp[1],'년도':g('d_y'),'부과':g('d_due'),'납부':g('d_paid'),'납부일':g('d_date'),'방식':g('d_m'),'메모':g('d_memo'),'자격시작':g('d_ms')};
     if(+rec['납부']>0&&!rec['납부일']){toast('납부일을 골라 주세요');return}
-    callS('saveDues',rec).then(function(r){if(!r.ok){toast(r.msg);return}S.D.duesRows=r.rows.map(function(x){return {'대상':x[0],ID:x[1],'년도':x[2],'부과':x[3],'납부':x[4],'납부일':x[5],'방식':x[6],'메모':x[7]}});S.dEdit=null;index();render();toast(rec['년도']+'년 연회비를 기록했어요')});return}
+    callS('saveDues',rec).then(function(r){if(!r.ok){toast(r.msg);return}S.D.duesRows=r.rows.map(function(x){return {'대상':x[0],ID:x[1],'년도':x[2],'부과':x[3],'납부':x[4],'납부일':x[5],'방식':x[6],'메모':x[7],'자격시작':x[10]||''}});S.dEdit=null;index();render();toast(rec['년도']+'년 연회비를 기록했어요')});return}
   if(d.dedit){var p3=d.dedit.split('|');S.dEdit=Object.assign({},duesOf(p3[0],p3[1],p3[2]));render();return}
   if(d.ddel){var p4=d.ddel.split('|');if(!confirm(p4[2]+'년 기록을 지울까요?'))return;
     callS('delDues',p4[0],p4[1],p4[2]).then(function(r){if(!r.ok){toast(r.msg);return}S.D.duesRows=r.rows.map(function(x){return {'대상':x[0],ID:x[1],'년도':x[2],'부과':x[3],'납부':x[4],'납부일':x[5],'방식':x[6],'메모':x[7]}});index();render();toast('지웠어요')});return}

@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261029-002003 -->
+<!-- build: 20261029-002547 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -1744,9 +1744,14 @@ const nb=()=>Math.max(1,+B.P.base.n||1);
 const fx=c=>!c||c==='KRW'?1:+((B.P.base.fx||{})[c])||0;
 function qty(l,N,sc){if(l.scale!=='person'||(sc&&B.P.base.hotelFix&&HOTEL.includes(l.cat)))return +l.qty||0;return Math.max(+l.guar||0,Math.round((+l.qty||0)*N/nb()))}
 const amt=(l,N,sc)=>(+l.unit||0)*qty(l,N==null?nb():N,sc)*(+l.times||0)*fx(l.cur);
-const fee1=t=>+(((B.D.fees||{})[t]||[])[0])||0;
-const shift=()=>{const p=+B.P.base.price||0;return p?p-fee1('학생'):0};
-const feeOf=t=>Math.max(0,fee1(t)+shift());
+/* 참가비 = 캠프 설정 참가비표 그대로 (참가자격 × 차수) · 차수 비율로 평균 */
+const CF=()=>(S.D&&S.D.camp&&S.D.camp.fees)||B.D.fees||{};
+const RN=()=>{const r=S.D&&S.D.camp&&S.D.camp.rounds;return r&&r.length?r.map(x=>x.n):(B.D.rounds||['1차'])};
+const feeR=(t,r)=>+((CF()[t]||[])[r])||0;
+const fee1=t=>feeR(t,0);
+function rmix(){const n=RN().length,R=(B.P.base.rmix||[]).slice(0,n).map(v=>+v||0);while(R.length<n)R.push(R.length?0:1);return R.some(v=>v>0)?R:R.map((v,i)=>i?0:1)}
+function feeOf(t){const R=rmix(),tot=R.reduce((a,v)=>a+v,0);return R.reduce((a,v,i)=>a+v*feeR(t,i),0)/tot}
+function liveRounds(){const n=RN(),m=n.map(()=>0);(S.D.subs||[]).forEach(sb=>{const i=n.indexOf(sb.round);if(i<0)return;sb.ppl.forEach(p=>{if(p.status==='정상')m[i]++})});return m}
 function avgFee(){const M=B.P.mix||{};let n=0,s=0;Object.keys(M).forEach(t=>{n+=+M[t]||0;s+=(+M[t]||0)*feeOf(t)});return n?s/n:0}
 const incAmt=(i,N)=>(+i.amt||0)*fx(i.cur)*(i.scale==='person'?(N==null?nb():N)/nb():1);
 function calc(N,sc){const fee=N*avgFee(),inc=B.P.inc.reduce((t,i)=>t+incAmt(i,N),0),cost=B.P.lines.reduce((t,l)=>t+amt(l,N,sc),0),rev=fee+inc,cut=rev*(+B.P.base.cut.pct||0)/100;return {N,fee,inc,rev,cost,pro:rev-cost,cut,after:rev-cost-cut}}
@@ -1771,8 +1776,8 @@ function view(kind){
 /* ---------- 예산 계획 ---------- */
 function vPlan(){const b=B.P.base,c=calc(nb(),true),e1=bep(true),e2=bep(false),avg=avgFee();
   const S2=[['cost','지출 계획'],['inc','수입 계획'],['ppl','인원별 손익'],['set','기본 값']];
-  return bar('예산 계획',`예상 인원 · 기준가를 정하고 지출 줄을 채우면, 인원별로 얼마가 남는지 바로 계산돼요`)+
-  `<div class="tiles">${tile('예상 인원 (유료 참가자)',nb()+'명',`기준가 ${W(b.price)} · 평균 참가비 ${W(avg)}`)}
+  return bar('예산 계획',`참가비는 캠프 설정에서 불러오고, 예상 인원과 지출 줄을 채우면 인원별로 얼마가 남는지 바로 계산돼요`)+
+  `<div class="tiles">${tile('예상 인원 (유료 참가자)',nb()+'명',`평균 참가비 ${W(avg)} · 캠프 설정 학생 1차 ${W(fee1('학생'))}`)}
     ${tile('예상 수입',W(c.rev),`참가비 ${W(c.fee)} · 그 밖 ${W(c.inc)}`)}
     ${tile('예상 지출',W(c.cost),`1인당 ${W(c.cost/nb())}`)}
     ${tile('예상 남는 돈',W(c.pro),`${+b.cut.pct?`수입의 ${fmt(b.cut.pct)}% 뗀 뒤 ${W(c.after)}`:'떼는 몫 없음'}`,c.pro<0?'warn':'')}
@@ -1794,14 +1799,14 @@ function costPlan(){const L=B.P.lines,tot=L.reduce((t,l)=>t+amt(l),0);
       <td><button class="btn small ghost" type="button" data-bdel="${l.id}">빼기</button></td></tr>`).join('')}).join('')}
   <tr class="foot"><td colspan="7"><b>지출 합계</b> <span class="hint">26 겨울 실지출 ${W(REF_COST)}</span></td><td class="r num"><b>${W(tot)}</b></td><td colspan="2"></td></tr></tbody></table>
   <p class="hint">금액 = 단가 × 수량 × 횟수 (수량 = 실 · 명 · 개, 횟수 = 박 · 끼 · 회). 「인원 따라」를 켠 줄은 인원별 손익표에서 수량이 예상 인원 ${nb()}명 대비 비율로 늘고 줄어요 (보증 최소 아래로는 안 내려감). 달러 · 엔 줄은 「기본 값」의 환율로 원화가 돼요.</p></div>`}
-function incPlan(){const M=B.P.mix,tot=Object.values(M).reduce((t,v)=>t+(+v||0),0),sh=shift(),c=calc(nb(),true),lt=liveN();
-  return `<div class="panel tbl"><div class="spread"><div><b>참가비</b> <span class="hint">참가자격 구성 비율 × 참가비로 평균 참가비를 내요 · 참가비는 「캠프 설정 › 참가비표」 1차 금액${sh?`에 기준가 차이 ${sh>0?'+':''}${fmt(sh)}원을 더해서`:''} 계산</span></div>
-    <div class="row" style="gap:6px">${lt?`<button class="btn small" type="button" data-bmix="now">지금 접수 구성으로 (${lt}명)</button>`:''}<button class="btn small ghost" type="button" data-bmix="s26">26 여름 구성으로</button></div></div>
-    <table class="pft" style="margin-top:8px"><thead><tr><th>참가자격</th><th class="r">구성 (인원)</th><th class="r">비중</th><th class="r">캠프 설정 1차</th><th class="r">계산에 쓰는 참가비</th></tr></thead><tbody>
-    ${FEE_TYPES.map(t=>`<tr class="${+M[t]?'':'off'}"><td>${esc(t)}</td><td class="r">${nIn(`data-bm="${esc(t)}"`,M[t]||'',70,'0')}</td><td class="r num">${tot?fmt(Math.round((+M[t]||0)/tot*1000)/10)+'%':'-'}</td><td class="r num">${W(fee1(t))}</td><td class="r num"><b>${W(feeOf(t))}</b></td></tr>`).join('')}
-    <tr class="foot"><td>평균 참가비</td><td class="r num">${tot}명</td><td></td><td></td><td class="r num"><b>${W(avgFee())}</b></td></tr></tbody></table>
-    <p class="hint">구성은 비율만 써요 (인원 수 자체는 「예상 인원」). 교수진 · 무료 참가는 넣지 않아요.</p>
-    ${sh&&ME().sup?`<div class="row" style="gap:8px;margin-top:6px"><span class="hint">캠프 설정 참가비표는 아직 학생 1차 ${W(fee1('학생'))}이에요.</span><button class="btn small" type="button" data-bfee="1">기준가 ${W(B.P.base.price)}을 캠프 설정 참가비표에 반영</button></div>`:''}</div>
+function incPlan(){const M=B.P.mix,tot=Object.values(M).reduce((t,v)=>t+(+v||0),0),c=calc(nb(),true),lt=liveN(),RR=RN(),R=rmix(),rt=R.reduce((a,v)=>a+v,0),lr=liveRounds();
+  return `<div class="panel tbl"><div class="spread"><div><b>참가비</b> <span class="hint">금액은 「캠프 설정 › 참가비표」를 그대로 불러와요 (여기서는 못 바꿔요) · 참가자격 구성 × 차수 비율로 평균 참가비를 내요</span></div>
+    <div class="row" style="gap:6px">${lt?`<button class="btn small" type="button" data-bmix="now">지금 접수 구성으로 (${lt}명)</button>`:''}<button class="btn small ghost" type="button" data-bmix="s26">26 여름 구성으로</button>${ME().sup?'<button class="btn small" type="button" data-bgocamp="1">캠프 설정 참가비표 열기</button>':''}</div></div>
+    <table class="pft" style="margin-top:8px"><thead><tr><th>참가자격</th><th class="r">구성 (인원)</th><th class="r">비중</th>${RR.map(n=>`<th class="r">${esc(n)}</th>`).join('')}<th class="r">차수 비율 반영</th></tr></thead><tbody>
+    <tr class="bcat"><td><b>차수 비율</b> <span class="hint">몇 %가 어느 차수에 접수할지</span></td><td></td><td></td>${RR.map((n,i)=>`<td class="r">${nIn(`data-brm="${i}"`,(B.P.base.rmix||[])[i]==null?'':(B.P.base.rmix||[])[i],56,'0')} <small class="faint">${rt?fmt(Math.round(R[i]/rt*1000)/10):0}%</small></td>`).join('')}<td class="r">${lr.some(v=>v)?`<button class="btn small ghost" type="button" data-brmnow="1">지금 접수 차수로</button>`:''}</td></tr>
+    ${FEE_TYPES.map(t=>`<tr class="${+M[t]?'':'off'}"><td>${esc(t)}</td><td class="r">${nIn(`data-bm="${esc(t)}"`,M[t]||'',70,'0')}</td><td class="r num">${tot?fmt(Math.round((+M[t]||0)/tot*1000)/10)+'%':'-'}</td>${RR.map((n,i)=>`<td class="r num">${W(feeR(t,i))}</td>`).join('')}<td class="r num"><b>${W(feeOf(t))}</b></td></tr>`).join('')}
+    <tr class="foot"><td>평균 참가비</td><td class="r num">${tot}명</td><td></td>${RR.map(()=>'<td></td>').join('')}<td class="r num"><b>${W(avgFee())}</b></td></tr></tbody></table>
+    <p class="hint">구성 · 차수 비율은 비율만 써요 (인원 수 자체는 「예상 인원」). 교수진 · 무료 참가는 넣지 않아요. 캠프 설정에서 참가비를 바꾸면 여기 계산도 바로 따라가요.</p></div>
   <div class="panel tbl"><div class="spread"><div><b>그 밖의 수입</b> <span class="hint">예상 인원 기준 금액 · 「접수 입금에 포함」은 결산 때 접수 입금과 겹치지 않게 따로 세지 않아요</span></div><button class="btn small ghost" type="button" data-biadd="1">＋ 줄</button></div>
     <table class="pft" style="margin-top:8px"><thead><tr><th>항목</th><th class="r">금액</th><th>통화</th><th class="c">인원 따라</th><th class="c">접수 입금에 포함</th><th class="r">원화</th><th>메모</th><th></th></tr></thead><tbody>
     ${B.P.inc.map(i=>`<tr><td><input type="text" data-bi="${i.id}|name" value="${esc(i.name)}" maxlength="60" style="min-width:180px"></td><td class="r">${nIn(`data-bi="${i.id}|amt"`,i.amt,120)}</td>
@@ -1826,7 +1831,7 @@ function pplPlan(){const b=B.P.base,R=[];for(let N=b.sMin;N<=b.sMax&&R.length<=8
 function setPlan(){const b=B.P.base;
   return `<div class="panel"><h3 style="margin:0 0 10px;font-size:15px">기본 값</h3><table class="pft" style="max-width:760px"><tbody>
     <tr><td>예상 인원 (유료 참가자)</td><td>${nIn('data-bb="n"',b.n,90)} 명</td><td class="hint">교수진 · 무료 참가는 빼고</td></tr>
-    <tr><td>기준가 (학생 · 교사 1차)</td><td>${nIn('data-bb="price"',b.price,110)} 원</td><td class="hint">캠프 설정 학생 1차 ${W(fee1('학생'))} · 다르면 모든 참가자격을 같은 금액만큼 올리거나 내려서 계산</td></tr>
+    <tr><td>참가비</td><td>캠프 설정 학생 1차 <b class="num">${W(fee1('학생'))}</b> · 평균 <b class="num">${W(avgFee())}</b></td><td class="hint">참가자격 × 차수 금액은 「캠프 설정 › 참가비표」에서 불러와요 · 구성과 차수 비율은 「수입 계획」에서${ME().sup?' · <button class="btn small ghost" type="button" data-bgocamp="1">캠프 설정 열기</button>':''}</td></tr>
     <tr><td>환율</td><td>1달러 ${nIn('data-bb="fx.USD"',b.fx.USD,80)} 원 · 1엔 ${nIn('data-bb="fx.JPY"',b.fx.JPY,60)} 원</td><td class="hint">달러 · 엔 줄을 원화로 바꿀 때</td></tr>
     <tr><td>수입에서 떼는 몫</td><td>${nIn('data-bb="cut.pct"',b.cut.pct,50)} %</td><td class="hint">25·26 예산 시트의 「수입의 10% (7% + 3%)」 · 0이면 안 뗌</td></tr>
     ${(b.cut.parts||[]).map((p,i)=>`<tr><td style="padding-left:24px">└ <input type="text" data-bcp="${i}|0" value="${esc(p[0])}" maxlength="20" style="width:140px"></td><td>${nIn(`data-bcp="${i}|1"`,p[1],50)} % <button class="btn small ghost" type="button" data-bcpdel="${i}">빼기</button></td><td class="hint">나누는 곳 이름 (예: 협회 적립)</td></tr>`).join('')}
@@ -1875,10 +1880,11 @@ function onInput(el){const d=el.dataset;if(!B.P)return false;
   else if(d.bi){const [id,k]=d.bi.split('|'),i=incOf(id);if(i)setv(i,k,el)}
   else if(d.bm){const v=pn(el.value);if(v===''||!+v)delete B.P.mix[d.bm];else B.P.mix[d.bm]=Math.max(0,Math.round(v))}
   else if(d.bb){const b=B.P.base;if(d.bb==='hotelFix')b.hotelFix=el.checked;else if(d.bb.indexOf('.')>0){const [x,y]=d.bb.split('.');b[x][y]=pn(el.value)===''?0:pn(el.value)}else b[d.bb]=pn(el.value)===''?0:Math.round(pn(el.value))}
+  else if(d.brm!==undefined){const R=(B.P.base.rmix||[]).slice();while(R.length<=+d.brm)R.push(0);const v=pn(el.value);R[+d.brm]=v===''?0:Math.max(0,v);B.P.base.rmix=R}
   else if(d.bcp){const [i,j]=d.bcp.split('|'),p=B.P.base.cut.parts[+i];if(p)p[+j]=+j?(pn(el.value)===''?0:pn(el.value)):el.value}
   else return false;
   const p=document.getElementById('bDirty');if(p)p.innerHTML=pill();return true}
-const KEYS=['bl','bi','bm','bb','bcp'];
+const KEYS=['bl','bi','bm','bb','bcp','brm'];
 function rerender(){setTimeout(()=>{const a=document.activeElement,k=a&&a.dataset&&KEYS.find(x=>a.dataset[x]!==undefined);const v=k?a.dataset[k]:'';render();
   if(k){const el=document.querySelector(`[data-${k}="${CSS.escape(v)}"]`);if(el){el.focus();try{if(el.select&&el.type==='text')el.select()}catch(x){}}}},0)}
 document.addEventListener('input',e=>{if(S.tab!=='bplan'&&S.tab!=='bset')return;const el=e.target;if(!el.dataset||!KEYS.some(x=>el.dataset[x]!==undefined))return;onInput(el);if(el.type==='checkbox'||el.tagName==='SELECT'||el.type==='date')rerender()});
@@ -1898,10 +1904,8 @@ function click(b,d){if(S.tab!=='bplan'&&S.tab!=='bset')return false;
   if(d.bcpadd){B.P.base.cut.parts.push(['',0]);render();return true}
   if(d.bcpdel!==undefined){B.P.base.cut.parts.splice(+d.bcpdel,1);render();return true}
   if(d.bauto){const [id,v]=d.bauto.split('|'),l=lineOf(id);if(l){l.conf=+v;render();toast('확정 금액에 넣었어요 · 저장을 눌러 주세요')}return true}
-  if(d.bfee){const c=cp(S.D.camp),sh=shift(),F=c.fees||{};
-    ask('캠프 설정 참가비표를 바꿀까요?',`모든 참가자격 · 모든 차수의 참가비를 <b>${sh>0?'+':''}${fmt(sh)}원</b> 바꿔요 (학생 1차 ${W(fee1('학생'))} → <b>${W(fee1('학생')+sh)}</b>).<br>접수 화면 참가비가 바로 바뀌고, 이미 접수한 사람은 그 접수를 고쳐 저장할 때 새 금액으로 다시 계산돼요.`,()=>{
-      Object.keys(F).forEach(t=>{F[t]=(F[t]||[]).map(v=>Math.max(0,(+v||0)+sh))});
-      call('campSave',[c,c.rev||0],r=>{S.D.camp=r.camp;applyCampAdm(r.camp);B.D.fees=r.camp.fees;S.cc=null;render();toast('캠프 설정 참가비표를 바꿨어요')},'저장하고 있어요…')},'참가비표 바꾸기');return true}
+  if(d.bgocamp){goTab('camp');return true}
+  if(d.brmnow){B.P.base.rmix=liveRounds();render();toast('지금 접수 차수 비율로 바꿨어요');return true}
   return false}
 return {view,click,enter,dirty};
 })();

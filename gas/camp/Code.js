@@ -1,4 +1,4 @@
-/* build: 20261029-002003 */
+/* build: 20261029-002547 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -2006,7 +2006,7 @@ function conSave(token, b) {
 /* ================= 예산 · 결산 =================
  * 시트 「예산결산」: 항목 · 값(JSON) · 설명. 값이 길면 plan, plan2 … 로 45,000자씩 나눠 저장 + rev(동시 수정 막기)
  * plan = { base, mix, inc, lines }
- *   base: n 예상 인원(유료 참가자) · price 기준가(학생·교사 1차) · fx 환율 {USD, JPY} · cut 수입에서 떼는 몫 {pct, parts:[[이름, %]…]}
+ *   base: n 예상 인원(유료 참가자) · rmix 차수 비율 [1차, 2차 …] (참가비 금액은 캠프 설정 참가비표에서 불러옴) · fx 환율 {USD, JPY} · cut 수입에서 떼는 몫 {pct, parts:[[이름, %]…]}
  *         hotelFix 인원별 손익에서 호텔(객실·식사·홀)을 계약대로 고정할지 · sMin/sMax/sStep 인원표 범위
  *   mix:  참가자격별 인원 비율(평균 참가비 계산용) {참가자격: 인원}
  *   inc:  참가비 밖 수입 줄 { id, name, amt(예산), cur, scale, sys(접수 입금에 이미 들어감), act(실제), memo }
@@ -2020,7 +2020,7 @@ function budSeed_() {
   let k = 0; const L = o => Object.assign({ id: 'l' + (++k), unit: 0, qty: 1, times: 1, cur: 'KRW', scale: 'fixed', guar: '', auto: '', conf: '', paid: '', date: '', how: '', memo: '' }, o);
   let j = 0; const I = o => Object.assign({ id: 'i' + (++j), amt: 0, cur: 'KRW', scale: 'fixed', sys: false, act: '', memo: '' }, o);
   return {
-    base: { n: 600, price: 550000, fx: { USD: 1450, JPY: 9.5 }, cut: { pct: 10, parts: [['7%', 7], ['3%', 3]] }, hotelFix: true, sMin: 350, sMax: 700, sStep: 25 },
+    base: { n: 600, rmix: [474, 39, 7], fx: { USD: 1450, JPY: 9.5 }, cut: { pct: 10, parts: [['7%', 7], ['3%', 3]] }, hotelFix: true, sMin: 350, sMax: 700, sStep: 25 },
     mix: { '학생': 266, '교사': 95, '연수생': 26, '회원의 악기하는 자녀': 20, '회원의 첫번째 보호자': 69, '회원의 그외 악기 안하는 동반가족': 29, '동반가족 중 돌전아기': 1, '비회원 학생': 2, '비회원 보호자': 2 },
     inc: [
       I({ name: '추가 레슨 · 마스터클래스', amt: 4200000, scale: 'person', sys: true, memo: '26 여름: 추가 레슨 24명 · 마스터클래스 9명 · 접수 입금에 함께 들어옴' }),
@@ -2068,7 +2068,7 @@ function budSave(token, plan, rev) {
   const n = v => { const x = Math.round((+v || 0) * 100) / 100; return isFinite(x) ? x : 0; }, opt = v => v === '' || v == null ? '' : n(v);
   const s = (v, m) => String(v == null ? '' : v).trim().slice(0, m || 120), okD = v => /^\d{4}-\d{2}-\d{2}$/.test(String(v || '')) ? String(v) : '';
   const p = plan || {}, b = p.base || {}, fx = b.fx || {}, cut = b.cut || {};
-  const base = { n: Math.max(1, Math.round(+b.n || 0)), price: Math.max(0, Math.round(+b.price || 0)), fx: { USD: Math.max(0, n(fx.USD)), JPY: Math.max(0, n(fx.JPY)) },
+  const base = { n: Math.max(1, Math.round(+b.n || 0)), rmix: (Array.isArray(b.rmix) ? b.rmix : []).slice(0, 6).map(v => Math.max(0, n(v))), fx: { USD: Math.max(0, n(fx.USD)), JPY: Math.max(0, n(fx.JPY)) },
     cut: { pct: Math.max(0, Math.min(100, n(cut.pct))), parts: (cut.parts || []).slice(0, 6).map(x => [s(x[0], 20), Math.max(0, Math.min(100, n(x[1])))]).filter(x => x[0]) },
     hotelFix: !!b.hotelFix, sMin: Math.max(1, Math.round(+b.sMin || 300)), sMax: Math.max(1, Math.round(+b.sMax || 700)), sStep: Math.max(1, Math.round(+b.sStep || 25)) };
   if (base.sMax <= base.sMin) throw new Error('인원표의 끝 인원을 시작 인원보다 크게 넣어 주세요.');
@@ -2090,7 +2090,7 @@ function budSave(token, plan, rev) {
     vals.push(['rev', String((cur.rev || 0) + 1), '바꾼 횟수 (건드리지 마세요)']);
     if (sh.getLastRow() > 1) sh.getRange(2, 1, sh.getLastRow() - 1, 3).clearContent();
     sh.getRange(2, 1, vals.length, 3).setValues(vals);
-    log_('관리자 ' + a.name, '예산 · 결산 저장', '수입 줄 ' + inc.length + ' · 지출 줄 ' + lines.length + ' · 예상 인원 ' + base.n + ' · 기준가 ' + base.price);
+    log_('관리자 ' + a.name, '예산 · 결산 저장', '수입 줄 ' + inc.length + ' · 지출 줄 ' + lines.length + ' · 예상 인원 ' + base.n);
   } finally { lock.releaseLock(); }
   return budData(token);
 }

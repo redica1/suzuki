@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261028-085826 -->
+<!-- build: 20261028-090000 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -242,10 +242,21 @@ function vLogin(){if(S.fp)return vForgot();
 function vForgot(){var f=S.fp;return '<div class="card"><h2>비밀번호 다시 만들기</h2>'+(f.sent?'<p class="lede"><b>'+esc(f.email)+'</b> 로 가입돼 있으면 6자리 코드를 보냈어요. 15분 안에 넣어 주세요.</p>'+(f.code?'<div class="note warn">테스트(STG) 코드: <b class="num">'+esc(f.code)+'</b></div>':'')+
   '<label class="f" for="rc">재설정 코드<input type="text" id="rc" class="code" inputmode="numeric" maxlength="6"></label><label class="f" for="rp">새 비밀번호 <span class="opt">8자 이상</span><input type="password" id="rp" autocomplete="new-password"></label>'+msgBox()+btn('doReset','비밀번호 바꾸기')
   :emailBox('fe2','가입한 이메일',f.email)+msgBox()+btn('sendReset','재설정 코드 받기'))+'<button class="btn ghost small" type="button" id="fpBack">로그인으로</button></div>'}
+function parseCerts(t){var o={};String(t||'').split(/[,，、]/).forEach(function(x){x=x.trim();if(!x)return;var m=x.match(/^(.+?)\s*((?:19|20)\d{2})/),n=(m?m[1]:x).replace('카톨릭','가톨릭').replace(/\s+/g,'');if(n==='국민대')n='국민대학원';if(CERTS.indexOf(n)>=0)o[n]=m?m[2]:''});return o}
+function certLine(m){if(m.ext)return '';var c=parseCerts(m.certs),k=Object.keys(c);return '<dl class="kv"><dt>자격</dt><dd>'+(k.length?esc(k.map(function(n){return n+(c[n]?' '+c[n]:'')}).join(', ')):'-')+'</dd></dl>'}
+function infoEdit(m){var j=S.j;
+  return '<div class="lock" style="margin:8px 0"><h3>기본 정보 고치기 <span class="opt">바꾸면 협회가 확인해요</span></h3>'+
+    '<div class="two"><div><label class="f" for="eNm">이름 <span class="req">*</span><input type="text" id="eNm" value="'+esc(j.name)+'" '+bad('ename')+'></label>'+fe('ename')+'</div>'+
+    '<div><label class="f" for="ePh">휴대전화 <span class="req">*</span><input type="tel" id="ePh" value="'+esc(fmtPh(j.phone))+'" inputmode="numeric" '+bad('ephone')+'></label>'+fe('ephone')+'</div></div>'+
+    (m.ext?'':'<div class="f"><span>회원 종류 <span class="req">*</span></span>'+seg('type',[['교사회원','교사회원'],['연수교사회원','연수교사']],j.type)+fe('type')+'</div>'+
+      '<div class="f"><span>직급 <span class="req">*</span></span>'+seg('role',[['원장','원장'],['강사','강사'],['','해당 없음']],j.role==null?'-':j.role)+fe('role')+'</div>')+
+    '<label class="f" for="jIns">악기 '+(m.ext?'<span class="opt">선택</span>':'<span class="req">*</span>')+'<select id="jIns" '+bad('inst')+'><option value="">'+(m.ext?'없음':'선택')+'</option>'+INSTS.map(function(i){return '<option '+(i===j.inst?'selected':'')+'>'+i+'</option>'}).join('')+'</select>'+fe('inst')+'</label>'+
+    (m.ext?'':certBox())+'<p class="hint">이메일(로그인 아이디)을 바꾸려면 「내 문의」로 알려 주세요.</p>'+msgBox()+
+    '<div class="two">'+btn('infoSave','저장')+'<button class="btn" type="button" id="infoNo">취소</button></div></div>'}
 function vMe(){var m=S.me;if(!m)return '<div class="card"><span><span class="spin"></span> 불러오는 중…</span></div>';var p=m.pay;
   return '<div class="card"><div class="spread"><h2>'+esc(m.name)+' 선생님</h2><button class="btn ghost small" type="button" id="logout">로그아웃</button></div>'+
     (m.reqs&&m.reqs.length?'<div class="note warn">협회가 확인 중인 요청: '+esc(m.reqs.join(', '))+'</div>':'')+
-    '<dl class="kv"><dt>이메일</dt><dd>'+esc(m.email)+'</dd><dt>휴대전화</dt><dd class="num">'+fmtPh(m.phone)+'</dd>'+(m.ext?'<dt>구분</dt><dd><span class="pill info">외부인</span></dd><dt>악기</dt><dd>'+esc(m.inst||'-')+'</dd></dl>':'<dt>직급</dt><dd>'+esc(m.role||'-')+'</dd><dt>악기</dt><dd>'+esc(m.inst||'-')+'</dd><dt>회원 종류</dt><dd>'+(KINDS.indexOf(m.kind)>=0?'<span class="pill info">'+esc(kindLabel(m.kind))+'</span>':'<span class="pill due">확인 전</span>')+'</dd></dl>')+
+    (S.infoEd?infoEdit(m):'<dl class="kv"><dt>이메일</dt><dd>'+esc(m.email)+'</dd><dt>휴대전화</dt><dd class="num">'+fmtPh(m.phone)+'</dd>'+(m.ext?'<dt>구분</dt><dd><span class="pill info">외부인</span></dd><dt>악기</dt><dd>'+esc(m.inst||'-')+'</dd></dl>':'<dt>직급</dt><dd>'+esc(m.role||'-')+'</dd><dt>악기</dt><dd>'+esc(m.inst||'-')+'</dd><dt>회원 종류</dt><dd>'+(KINDS.indexOf(m.kind)>=0?'<span class="pill info">'+esc(kindLabel(m.kind))+'</span>':'<span class="pill due">확인 전</span>')+'</dd></dl>')+certLine(m)+'<button class="btn small block" type="button" id="infoEd">기본 정보 고치기</button>')+
     (m.heads&&m.heads.length?'<div class="note">원장으로 등록된 학원: <b>'+esc(m.heads.join(', '))+'</b> · 학원 정보와 학생 명단 메뉴는 곧 열려요.</div>':'')+
     '</div>'+(m.ext?'':workCard(m)+duesCard(m))+eventCard(m)+
     payCards(m)+rrnBox(m)}
@@ -379,7 +390,7 @@ function render(){var h;
   document.getElementById('backBtn').hidden=!S.hist.length||S.v==='done'||S.v==='me';
   if(S.postFor)openPost();
 }
-function go(v,keepHist){if(!keepHist&&S.v!==v)S.hist.push(S.v);S.v=v;S.payEd='';S.err={};S.msg='';S.postFor='';render();window.scrollTo(0,0)}
+function go(v,keepHist){if(!keepHist&&S.v!==v)S.hist.push(S.v);S.v=v;S.payEd='';S.infoEd=false;S.err={};S.msg='';S.postFor='';render();window.scrollTo(0,0)}
 function run(fn){if(S.busy)return;S.busy=true;S.msg='';render();Promise.resolve(fn()).then(function(){S.busy=false;render()},function(){S.busy=false;render()})}
 function readConfirm(){readPayIn();readWorks();var xt=document.getElementById('jExT');if(xt)S.j.extRoleText=xt.value;var og=document.getElementById('jOrg');if(og)S.j.org=og.value;var p1=document.getElementById('pw1');if(p1){S.pw1=p1.value;S.pw2=document.getElementById('pw2').value}var i=document.getElementById('jIns');if(i)S.j.inst=i.value;var a=document.getElementById('agr');if(a)S.agree=a.checked;
   document.querySelectorAll('[data-cy]').forEach(function(x){if(x.dataset.cy in S.j.certs)S.j.certs[x.dataset.cy]=x.value})}
@@ -459,6 +470,14 @@ document.addEventListener('click',function(e){var b=e.target.closest('button');i
     S.err=e4;if(Object.keys(e4).length){render();return}
     var send=k2==='acct'?{eng:q2.eng,bank:q2.bank,acct:q2.acct,holder:q2.holder}:k2==='home'?{hzip:q2.hzip,haddr:q2.haddr,haddr2:q2.haddr2}:{same:!!q2.same,zip:q2.zip,addr:q2.addr,addr2:q2.addr2};
     run(function(){return call('tSavePart',[S.sess,k2,send]).then(function(r){if(!r.ok){S.msg=r.msg;return}S.me=r.me;S.payEd='';S.pay=null;S.err={};toast('저장했어요')})});return}
+  if(b.id==='infoEd'){var mm=S.me;S.j=blankJ();Object.assign(S.j,{name:mm.name,phone:mm.phone,type:mm.kind==='정식 교사'?'교사회원':/연수/.test(mm.kind)?'연수교사회원':'',course:mm.kind==='중급 연수'?'중급':mm.kind==='초급 연수'?'초급':'',role:['원장','강사'].indexOf(mm.role)>=0?mm.role:(mm.role===''?'':null),inst:mm.inst||'',certs:parseCerts(mm.certs)});S.infoEd=true;S.err={};S.msg='';render();return}
+  if(b.id==='infoNo'){S.infoEd=false;S.err={};S.msg='';render();return}
+  if(b.id==='infoSave'){readConfirm();var j6=S.j,e6={},mm6=S.me;j6.name=(document.getElementById('eNm').value||'').trim();j6.phone=(document.getElementById('ePh').value||'').replace(/\D/g,'');
+    if(!j6.name)e6.ename='이름을 넣어 주세요.';if(!/^01\d{8,9}$/.test(j6.phone))e6.ephone='휴대전화 번호를 확인해 주세요.';
+    if(!mm6.ext){if(!j6.type)e6.type='회원 종류를 골라 주세요.';if(j6.role==null)e6.role='직급을 골라 주세요.';if(!j6.inst)e6.inst='악기를 골라 주세요.';Object.keys(j6.certs).forEach(function(n){if(!j6.certs[n])e6['cy_'+n]=n+' 취득 년도를 골라 주세요.'})}
+    S.err=e6;if(Object.keys(e6).length){render();return}
+    if(j6.type==='연수교사회원'&&!j6.course)j6.course='초급';
+    run(function(){return call('tSaveInfo',[S.sess,{name:j6.name,phone:j6.phone,type:j6.type,course:j6.course,role:j6.role,inst:j6.inst,certs:Object.keys(j6.certs).map(function(n){return {n:n,y:j6.certs[n]}})}]).then(function(r){if(!r.ok){S.msg=r.msg;return}S.me=r.me;S.infoEd=false;S.err={};toast('저장했어요. 협회가 확인해요')})});return}
   if(b.id==='gnbAsk'){if(!S.sess)return;go('mine');loadMine();return}
   if(b.id==='goAsk'){S.ask=null;S.askDone=false;go('ask');return}
   if(d.seg==='acat'){readAsk();S.ask.cat=d.val;render();return}

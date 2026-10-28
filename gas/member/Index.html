@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261028-183233 -->
+<!-- build: 20261028-183428 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -349,7 +349,7 @@ function rateRow(target,year,mk){var m=String(year)+'-01',R=(S.D.rates||[]).filt
 function rateFor(target,year,mk){var r=rateRow(target,year,mk);return r?+r['금액']:(target==='학생'?30000:300000)}
 function ratesBox(){var ed=S.rEd,R=S.D.rates||[],cy=new Date().getFullYear();
   if(!ed)return '<div class="panel"><div class="sec-h"><h3>기간별 회비</h3><button class="btn small" type="button" id="rEdit">고치기</button></div>'+
-    '<p class="cap">교사 · 학생 연회비를 넣을 때, 그 해 1월에 맞는 기간의 금액이 「부과 금액」에 자동으로 들어가요. 회원 종류를 고른 줄이 「전체」보다 먼저예요. 기준이 없으면 교사 300,000원 · 학생 30,000원.</p>'+
+    '<p class="cap">기간별 금액 기준표예요. 회비는 자동으로 부과하지 않아요. 연회비 상자에서 관리자가 부과 금액을 직접 넣고, 이 표의 금액은 「참고」로만 보여요.</p>'+
     (R.length?'<table class="wtab"><thead><tr><th>대상</th><th>회원 종류</th><th>기간</th><th class="r">금액</th><th>메모</th></tr></thead><tbody>'+R.map(function(r){var on=r['시작']<=cy+'-01'&&(!r['종료']||r['종료']>=cy+'-01');return '<tr'+(on?' style="font-weight:600"':'')+'><td>'+esc(r['대상'])+'</td><td>'+esc(kindLabel(r['회원종류'])||'전체')+'</td><td class="num">'+esc(r['시작'])+' ~ '+esc(r['종료']||'계속')+(on?' <span class="pill ok">올해</span>':'')+'</td><td class="r num">'+won(r['금액'])+'</td><td class="cap">'+esc(r['메모'])+'</td></tr>'}).join('')+'</tbody></table>':'<p class="cap">아직 기준이 없어요.</p>')+'</div>';
   return '<div class="panel"><h3>기간별 회비 고치기</h3><p class="cap">시작 · 끝은 년 · 월, 끝을 비우면 계속이에요. 같은 대상 · 회원 종류끼리 기간이 겹치면 저장이 안 돼요.</p><table class="wtab"><thead><tr><th>대상</th><th>회원 종류</th><th>시작</th><th>끝</th><th>금액(원)</th><th>메모</th><th></th></tr></thead><tbody>'+
     ed.map(function(r,i){return '<tr><td><select data-rf="'+i+'|target"><option '+(r.target==='교사'?'selected':'')+'>교사</option><option '+(r.target==='학생'?'selected':'')+'>학생</option></select></td><td><select data-rf="'+i+'|kind">'+RATE_KINDS.map(function(k){return '<option value="'+esc(k[0])+'" '+(k[0]===r.kind?'selected':'')+'>'+k[1]+'</option>'}).join('')+'</select></td>'+
@@ -357,10 +357,10 @@ function ratesBox(){var ed=S.rEd,R=S.D.rates||[],cy=new Date().getFullYear();
     '<div class="row" style="margin-top:6px"><button class="btn small" type="button" id="rAdd">+ 기간 줄</button><span style="flex:1"></span><button class="btn small" type="button" id="rNo">취소</button><button class="btn small primary" type="button" id="rSave">저장</button></div><p class="err" id="rErr"></p></div>'}
 function readREd(){if(!S.rEd)return;document.querySelectorAll('[data-rf]').forEach(function(el){var p=el.dataset.rf.split('|'),r=S.rEd[+p[0]];if(r)r[p[1]]=el.value.trim()})}
 function duesBox(kind,id,defDue,mk){var H=(duesOf(kind,id)||[]).slice().sort(function(a,b){return String(b['년도']).localeCompare(String(a['년도']))});var cy=String(new Date().getFullYear());
-  var dd=function(y){return defDue!=null?defDue:rateFor(kind,y,mk)};S.duesCtx={kind:kind,id:id,defDue:defDue,mk:mk,H:H};
-  var e=S.dEdit&&S.dEdit.ID===id?S.dEdit:(H.filter(function(h){return h['년도']===cy})[0]||{'년도':cy,'부과':dd(cy),'납부':'','납부일':'','방식':''});
+  var refR=function(y){var r=rateRow(kind,y,mk);return r?won(r['금액']):''};S.duesCtx={kind:kind,id:id,defDue:defDue,mk:mk,H:H};
+  var e=S.dEdit&&S.dEdit.ID===id?S.dEdit:(H.filter(function(h){return h['년도']===cy})[0]||{'년도':cy,'부과':'','납부':'','납부일':'','방식':''});
   var ys=[];for(var y=+cy+1;y>=2018;y--)ys.push(String(y));
-  return '<div class="panel" style="padding:12px" id="duesWrap"><b>연회비</b><div class="fgrid">'+fld('d_y','년도',e['년도'],{sel:ys})+fld('d_due','부과 금액',e['부과'],{type:'number',hint:defDue===0?'회비 면제':'기간별 회비 기준으로 채움'})+fld('d_paid','납부 금액',e['납부'],{type:'number',hint:'안 냈으면 0'})+
+  return '<div class="panel" style="padding:12px" id="duesWrap"><b>연회비</b><div class="fgrid">'+fld('d_y','년도',e['년도'],{sel:ys})+fld('d_due','부과 금액',e['부과'],{type:'number',hint:defDue===0?'회비 면제 선생님':(refR(e['년도'])?'<span id="d_ref">참고: 기준 '+refR(e['년도'])+'</span>':'<span id="d_ref">직접 넣어 주세요</span>')})+fld('d_paid','납부 금액',e['납부'],{type:'number',hint:'안 냈으면 0'})+
     fld('d_date','납부일',e['납부일'],{type:'date'})+fld('d_m','납부 방식',e['방식'],{sel:[['',''],'자동이체','직접입금','자동이체+직접입금','단체납부','기타']})+fld('d_memo','메모',e['메모'])+'</div>'+
     '<div class="row"><button class="btn small primary" type="button" data-dsave="'+kind+'|'+id+'">기록</button><span class="cap">같은 년도는 덮어써요</span></div>'+
     '<div class="tbl"><table><thead><tr><th>년도</th><th class="r">부과</th><th class="r">납부</th><th>납부일</th><th>방식</th><th>메모</th><th></th></tr></thead><tbody>'+
@@ -618,7 +618,7 @@ document.addEventListener('input',function(e){var el=e.target;
   if(el.id==='q'){S.q=el.value;S.page=0;clearTimeout(qTimer);qTimer=setTimeout(softList,120);return}
   if(el.id==='e_출생연도'||el.id==='e_우편번호'){el.value=el.value.replace(/\D/g,'')}});
 document.addEventListener('compositionend',function(e){if(e.target.id==='q'){S.q=e.target.value;S.page=0;clearTimeout(qTimer);qTimer=setTimeout(softList,120)}});
-document.addEventListener('change',function(e){if(e.target.id==='d_y'&&S.duesCtx){var c=S.duesCtx,y=e.target.value,has=c.H.filter(function(h){return h['년도']===y})[0],du=document.getElementById('d_due');if(!has&&du)du.value=c.defDue!=null?c.defDue:rateFor(c.kind,y,c.mk);return}
+document.addEventListener('change',function(e){if(e.target.id==='d_y'&&S.duesCtx){var c=S.duesCtx,y=e.target.value,has=c.H.filter(function(h){return h['년도']===y})[0],du=document.getElementById('d_due');var rf=document.getElementById('d_ref');if(rf){var rr=rateRow(c.kind,y,c.mk);rf.textContent=rr?'참고: 기준 '+won(rr['금액']):'직접 넣어 주세요'}return}
   if(e.target.id==='telA'||e.target.id==='telR'){telSync();return}var dsl=e.target.dataset&&e.target.dataset.daslot;if(dsl!=null&&dsl!==''){var i=+dsl,aid=e.target.dataset.aid,f=e.target.files&&e.target.files[0];if(!f)return;
     var mime=f.type==='image/jpg'?'image/jpeg':f.type;if(['application/pdf','image/jpeg','image/png'].indexOf(mime)<0){toast('PDF · JPG · PNG 파일만 올릴 수 있어요');return}if(f.size>10*1024*1024){toast('10MB 아래 파일로 올려 주세요');return}
     var kind=DOC_SLOTS_A[i][0]==='임대'?document.getElementById('dk_'+i).value:DOC_SLOTS_A[i][0];S.docBusyA=i;render();

@@ -1,4 +1,4 @@
-/* build: 20261028-223230 */
+/* build: 20261028-223507 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -899,7 +899,7 @@ function stuSyncState_(sid) {
 /** 원장: 학생 명단 표 저장 — 이름은 새 학생만, 있는 학생은 출생연도 · 전공 · 상태(바뀌면 이력 + 날짜) · 재원 시작 */
 function tSaveStus(sess, aid, rows) {
   const u = tsess_(sess); headOf_(u, aid); rows = (rows || []).slice(0, 400);
-  const mine = tAcad(sess, aid).teachers.map(t => t.id), who = stuWho_(u), md = Utilities.formatDate(new Date(), 'Asia/Seoul', 'MM-dd'), today = Utilities.formatDate(new Date(), 'Asia/Seoul', 'yyyy-MM-dd');
+  const mine = tAcad(sess, aid).teachers.filter(t => !t.end).map(t => t.id), who = stuWho_(u), md = Utilities.formatDate(new Date(), 'Asia/Seoul', 'MM-dd'), today = Utilities.formatDate(new Date(), 'Asia/Seoul', 'yyyy-MM-dd');
   const clean = rows.map((st, k) => {
     const at = (k + 1) + '번째 줄' + (st.name ? '(' + String(st.name).trim() + ')' : '') + ': ';
     const name = String(st.name || '').trim().slice(0, 20); if (!st.id && !name) fail(at + '학생 이름을 넣어 주세요.');
@@ -908,7 +908,7 @@ function tSaveStus(sess, aid, rows) {
     const start = String(st.start || '').trim(); if (start && !/^\d{4}-\d{2}(-\d{2})?$/.test(start)) fail(at + '재원 시작은 2024-03-02 처럼 넣어 주세요.');
     const state = STU_STATES.indexOf(st.state) >= 0 ? st.state : '재원'; let stateAt = String(st.stateAt || '').trim(); try { stateAt = ymd2_(stateAt); } catch (e) { fail(at + e.message); }
     if (state !== '재원' && !stateAt) fail(at + state + ' 날짜를 넣어 주세요.');
-    return { id: st.id || '', name, sex, birth, inst: INSTS_.indexOf(st.inst) >= 0 ? st.inst : '', start, state, stateAt, tid: mine.indexOf(st.tid) >= 0 ? st.tid : '' };
+    return { at, id: st.id || '', name, sex, birth, inst: INSTS_.indexOf(st.inst) >= 0 ? st.inst : '', start, state, stateAt, tid: mine.indexOf(st.tid) >= 0 ? st.tid : '', tidFrom: String(st.tidFrom || '').trim() || today };
   });
   const lock = LockService.getScriptLock(); lock.waitLock(30000); let nNew = 0, nEdit = 0;
   try {
@@ -926,6 +926,7 @@ function tSaveStus(sess, aid, rows) {
       const o = {}; if (x.sex !== g('성별')) o['성별'] = x.sex; if (x.birth !== g('출생연도')) o['출생연도'] = x.birth; if (x.inst !== g('전공')) o['전공'] = x.inst; if (x.start !== g('시작월')) o['시작월'] = x.start;
       Object.keys(o).forEach(k => diff.push(k + ' ' + (g(k) || '없음') + ' → ' + (o[k] || '없음')));
       if (Object.keys(o).length) S2.set(i, Object.assign(o, { '수정일': now_(), '수정자': who }));
+      if (x.tid && x.tid !== g('담당교사ID')) { tutorSet_(aid, x.id, x.tid, x.tidFrom, who, x.at); diff.push('담당 → ' + x.tid + ' (' + x.tidFrom + '~)'); }
       const curState = STU_STATES.indexOf(g('상태')) >= 0 ? g('상태') : '재원';
       if (x.state !== curState || (x.state !== '재원' && x.stateAt !== g('상태일'))) {
         if (!statesOf_(x.id).length) tbl_('재원이력').append({ '이력ID': rid_('H'), '학생ID': x.id, '상태': '재원', '날짜': x.start || g('시작월') || '', '메모': '처음 기록(명단)', '수정일': now_(), '수정자': who });
@@ -975,23 +976,26 @@ function tStuSave(sess, aid, sid, d) {
   return tStuDetail(sess, aid, sid);
 }
 /** 담당 선생님 바꾸기: 새 선생님 · 시작 년월 → 지금 담당은 그 전 달로 종료 */
+/** 담당 바꾸기 본체(잠금은 부르는 쪽에서): start 날짜부터 새 담당, 지금 담당은 전날(년·월이면 전 달)까지 */
+function tutorSet_(aid, sid, tid, start, who, at) {
+  at = at || '';
+  start = String(start || ''); if (!/^\d{4}-(0[1-9]|1[0-2])(-(0[1-9]|[12]\d|3[01]))?$/.test(start)) fail(at + '담당 시작 날짜를 골라 주세요.');
+  const { T, list } = rowsOf_('담당'), mine = list.filter(r => r['학생ID'] === sid);
+  if (!mine.length) { const S2 = tbl_('학생'), i = S2.find('학생ID', sid), old = S2.get(i, '담당교사ID'); if (old && old !== tid) T.append({ '담당ID': rid_('P'), '학생ID': sid, '교사ID': old, '시작': S2.get(i, '시작월') || '', '종료': '', '수정일': now_(), '수정자': '명단' }); }
+  const P = rowsOf_('담당'); const cur = P.list.filter(r => r['학생ID'] === sid && !r['종료']);
+  cur.forEach(r => { if (r['시작'] && r['시작'] >= start) fail(at + '지금 담당(' + r['시작'] + '~)보다 뒤의 날짜를 골라 주세요.'); });
+  const y = +start.slice(0, 4), m = +start.slice(5, 7);
+  const prev = start.length > 7 ? Utilities.formatDate(new Date(y, m - 1, +start.slice(8, 10) - 1), 'Asia/Seoul', 'yyyy-MM-dd') : (m === 1 ? (y - 1) + '-12' : y + '-' + String(m - 1).padStart(2, '0'));
+  cur.forEach(r => P.T.set(r._i, { '종료': prev, '수정일': now_(), '수정자': who }));
+  tbl_('담당').append({ '담당ID': rid_('P'), '학생ID': sid, '교사ID': tid, '시작': start, '종료': '', '수정일': now_(), '수정자': who });
+  const S2 = tbl_('학생'), i = S2.find('학생ID', sid); S2.set(i, { '담당교사ID': tid });
+  stuFlag_(aid, sid, '원장이 담당 바꿈: ' + tid + ' ' + start + '~', who);
+}
 function tStuTutor(sess, aid, sid, tid, start) {
   const u = tsess_(sess); headOf_(u, aid); stuRow_(aid, sid); const who = stuWho_(u);
-  if (tAcad(sess, aid).teachers.map(t => t.id).indexOf(tid) < 0) fail('이 학원 소속 선생님을 골라 주세요.');
-  start = String(start || ''); if (!/^\d{4}-(0[1-9]|1[0-2])(-(0[1-9]|[12]\d|3[01]))?$/.test(start)) fail('담당 시작 날짜를 골라 주세요.');
+  if (tAcad(sess, aid).teachers.filter(t => !t.end).map(t => t.id).indexOf(tid) < 0) fail('이 학원 소속 선생님을 골라 주세요.');
   const lock = LockService.getScriptLock(); lock.waitLock(20000);
-  try {
-    const { T, list } = rowsOf_('담당'), mine = list.filter(r => r['학생ID'] === sid);
-    if (!mine.length) { const S2 = tbl_('학생'), i = S2.find('학생ID', sid), old = S2.get(i, '담당교사ID'); if (old && old !== tid) T.append({ '담당ID': rid_('P'), '학생ID': sid, '교사ID': old, '시작': S2.get(i, '시작월') || '', '종료': '', '수정일': now_(), '수정자': '명단' }); }
-    const P = rowsOf_('담당'); const cur = P.list.filter(r => r['학생ID'] === sid && !r['종료']);
-    cur.forEach(r => { if (r['시작'] && r['시작'] >= start) fail('지금 담당(' + r['시작'] + '~)보다 뒤의 날짜를 골라 주세요.'); });
-    const y = +start.slice(0, 4), m = +start.slice(5, 7);
-    const prev = start.length > 7 ? Utilities.formatDate(new Date(y, m - 1, +start.slice(8, 10) - 1), 'Asia/Seoul', 'yyyy-MM-dd') : (m === 1 ? (y - 1) + '-12' : y + '-' + String(m - 1).padStart(2, '0'));
-    cur.forEach(r => P.T.set(r._i, { '종료': prev, '수정일': now_(), '수정자': who }));
-    tbl_('담당').append({ '담당ID': rid_('P'), '학생ID': sid, '교사ID': tid, '시작': start, '종료': '', '수정일': now_(), '수정자': who });
-    const S2 = tbl_('학생'), i = S2.find('학생ID', sid); S2.set(i, { '담당교사ID': tid });
-    stuFlag_(aid, sid, '원장이 담당 바꿈: ' + tid + ' ' + start + '~', who);
-  } finally { lock.releaseLock(); }
+  try { tutorSet_(aid, sid, tid, start, who); } finally { lock.releaseLock(); }
   return tStuDetail(sess, aid, sid);
 }
 function tStuTutorDel(sess, aid, sid, pid) {

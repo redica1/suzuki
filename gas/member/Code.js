@@ -1,4 +1,4 @@
-/* build: 20261028-223059 */
+/* build: 20261028-223230 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -919,7 +919,7 @@ function tSaveStus(sess, aid, rows) {
         S2.append({ '학생ID': id, '학원ID': aid, '이름': x.name, '원래이름': x.name, '성별': x.sex, '출생연도': x.birth, '전공': x.inst, '시작월': x.start, '상태': x.state, '상태일': x.state === '재원' ? '' : x.stateAt, '담당교사ID': x.tid, '확인': '확인 필요', '확인메모': '원장이 추가(' + md + ')', '원본': '원장 추가', '수정일': now_(), '수정자': who });
         const H = tbl_('재원이력'); H.append({ '이력ID': rid_('H'), '학생ID': id, '상태': '재원', '날짜': x.start || '', '메모': '원장이 추가', '수정일': now_(), '수정자': who });
         if (x.state !== '재원') tbl_('재원이력').append({ '이력ID': rid_('H'), '학생ID': id, '상태': x.state, '날짜': x.stateAt, '메모': '', '수정일': now_(), '수정자': who });
-        if (x.tid) tbl_('담당').append({ '담당ID': rid_('P'), '학생ID': id, '교사ID': x.tid, '시작': (x.start || today).slice(0, 7), '종료': '', '수정일': now_(), '수정자': who });
+        if (x.tid) tbl_('담당').append({ '담당ID': rid_('P'), '학생ID': id, '교사ID': x.tid, '시작': x.start || today, '종료': '', '수정일': now_(), '수정자': who });
         nNew++; return;
       }
       const { i } = stuRow_(aid, x.id), g = k => String(S2.get(i, k) || ''), diff = [];
@@ -978,14 +978,15 @@ function tStuSave(sess, aid, sid, d) {
 function tStuTutor(sess, aid, sid, tid, start) {
   const u = tsess_(sess); headOf_(u, aid); stuRow_(aid, sid); const who = stuWho_(u);
   if (tAcad(sess, aid).teachers.map(t => t.id).indexOf(tid) < 0) fail('이 학원 소속 선생님을 골라 주세요.');
-  start = String(start || ''); if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(start)) fail('담당 시작 년 · 월을 골라 주세요.');
+  start = String(start || ''); if (!/^\d{4}-(0[1-9]|1[0-2])(-(0[1-9]|[12]\d|3[01]))?$/.test(start)) fail('담당 시작 날짜를 골라 주세요.');
   const lock = LockService.getScriptLock(); lock.waitLock(20000);
   try {
     const { T, list } = rowsOf_('담당'), mine = list.filter(r => r['학생ID'] === sid);
     if (!mine.length) { const S2 = tbl_('학생'), i = S2.find('학생ID', sid), old = S2.get(i, '담당교사ID'); if (old && old !== tid) T.append({ '담당ID': rid_('P'), '학생ID': sid, '교사ID': old, '시작': S2.get(i, '시작월') || '', '종료': '', '수정일': now_(), '수정자': '명단' }); }
     const P = rowsOf_('담당'); const cur = P.list.filter(r => r['학생ID'] === sid && !r['종료']);
-    cur.forEach(r => { if (r['시작'] && r['시작'] >= start) fail('지금 담당(' + r['시작'] + '~)보다 뒤의 년 · 월을 골라 주세요.'); });
-    const y = +start.slice(0, 4), m = +start.slice(5), prev = (m === 1 ? (y - 1) + '-12' : y + '-' + String(m - 1).padStart(2, '0'));
+    cur.forEach(r => { if (r['시작'] && r['시작'] >= start) fail('지금 담당(' + r['시작'] + '~)보다 뒤의 날짜를 골라 주세요.'); });
+    const y = +start.slice(0, 4), m = +start.slice(5, 7);
+    const prev = start.length > 7 ? Utilities.formatDate(new Date(y, m - 1, +start.slice(8, 10) - 1), 'Asia/Seoul', 'yyyy-MM-dd') : (m === 1 ? (y - 1) + '-12' : y + '-' + String(m - 1).padStart(2, '0'));
     cur.forEach(r => P.T.set(r._i, { '종료': prev, '수정일': now_(), '수정자': who }));
     tbl_('담당').append({ '담당ID': rid_('P'), '학생ID': sid, '교사ID': tid, '시작': start, '종료': '', '수정일': now_(), '수정자': who });
     const S2 = tbl_('학생'), i = S2.find('학생ID', sid); S2.set(i, { '담당교사ID': tid });

@@ -1,4 +1,4 @@
-/* build: 20261028-222357 */
+/* build: 20261028-223059 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -78,7 +78,7 @@ function doGet(e) {
 function include(n) { return HtmlService.createHtmlOutputFromFile(n).getContent(); }
 
 function api(name, args) {
-  const open = { login, hello, tHello, tLookup, tStart, tResend, tVerify, tCreate, tLogin, tForgot, tReset, tMe, tSavePay, tSavePart, tSaveInfo, tSavePhoto, tAcad, tSaveAcad, tDocUp, tDocGet, tSaveStu, tSaveStus, tStuDetail, tStuSave, tStuTutor, tStuTutorDel, tStuState, tStuStateDel, tSaveRrn, tAddWork, tEndWork, tMainWork, tLogout, bPost, bMine, bReply };
+  const open = { login, hello, tHello, tLookup, tStart, tResend, tVerify, tCreate, tLogin, tForgot, tReset, tMe, tSavePay, tSavePart, tSaveInfo, tSavePhoto, tAcad, tSaveAcad, tDocUp, tDocGet, tSaveStu, tSaveStus, tStuDetail, tStuSave, tStuTutor, tStuTutorDel, tStuState, tStuStateDel, tTchSaves, tTchEnd, tSaveRrn, tAddWork, tEndWork, tMainWork, tLogout, bPost, bMine, bReply };
   const fns = { boot, saveRow, setCheck, logs, importRoster, saveDues, delDues, reqs, reqDo, delAcad, payView, bulkSet, saveWorks, importPastDues, bList, bSet, bComment, photoGet, photoDel, fillRegions, saveRates, docList, docUp, docGet, docDel, payList, payOk, payNo };
   try {
     if (open[name]) return Object.assign({ ok: true }, open[name].apply(null, args || []));
@@ -713,7 +713,7 @@ function tMe(sess) {
   const dues = tbl_('연회비').v.filter(d => d[0] === '교사' && d[1] === u.tid).map(d => ({ year: d[2], due: +d[3] || 0, paid: +d[4] || 0, date: d[5], way: d[6] })).sort((a, b) => String(b.year).localeCompare(String(a.year)));
   let events = tbl_('참가이력').v.filter(e => e[1] === '교사' && e[2] === u.tid).map(e => ({ name: e[3], year: e[4], period: e[5], role: e[6], state: e[7] })).sort((a, b) => String(b.year).localeCompare(String(a.year)));
   if (!events.length && settings_()['테스트 표시'] === '예') events = [{ sample: true, name: '2026 여름 스즈키 음악캠프', year: '2026', period: '2026.07.27 ~ 07.31', role: '교사', state: '참가' }];   // STG 예시 (더미)
-  return { me: { works, dues, events, duesWay: g('회비납부방법'), duesFree: g('회비구분') === '면제', ext: g('회원구분') === '외부인', sex: g('성별'), name: g('이름'), phone: g('휴대전화'), email: u.email, acads: [g('학원1'), g('학원2'), g('학원3')].filter(Boolean).map(id => an[id] || id), role: g('직급'), inst: g('전공'), kind: g('회원구분'), certs: g('본인자격') || g('명단자격'), eng: g('영문이름'), photo: photoOf_(u.tid), heads,
+  return { me: { tid: u.tid, works, dues, events, duesWay: g('회비납부방법'), duesFree: g('회비구분') === '면제', ext: g('회원구분') === '외부인', sex: g('성별'), name: g('이름'), phone: g('휴대전화'), email: u.email, acads: [g('학원1'), g('학원2'), g('학원3')].filter(Boolean).map(id => an[id] || id), role: g('직급'), inst: g('전공'), kind: g('회원구분'), certs: g('본인자격') || g('명단자격'), eng: g('영문이름'), photo: photoOf_(u.tid), heads,
     payee: g('강사료대상') === '예',
     pay: p ? { bank: p['은행'], acct: maskAcct_(p['계좌번호']), holder: p['예금주'], zip: p['우편번호'], addr: p['주소'], addr2: p['상세주소'], hzip: p['집우편번호'], haddr: p['집주소'], haddr2: p['집상세주소'], rrn: p['주민번호표시'] || '', rrnAt: p['주민번호동의일'] || '' } : null, reqs } };
 }
@@ -807,7 +807,7 @@ function tAcad(sess, aid) {
   T.v.forEach(r => { if (!seen[r[tc['교사ID']]] && [r[tc['학원1']], r[tc['학원2']], r[tc['학원3']]].indexOf(aid) >= 0) ws.push({ '교사ID': r[tc['교사ID']], '시작': '', '종료': '', '주근무': r[tc['학원1']] === aid ? '예' : '' }); });
   const tdu = {}; tbl_('연회비').v.forEach(d => { if (d[0] === '교사' && String(d[2]) === CUR_Y) tdu[d[1]] = d; });
   const teachers = ws.map(w => { const r = byId[w['교사ID']]; if (!r || r[tc['상태']] === '탈퇴') return null; const du = tdu[r[tc['교사ID']]] || [];
-    return { id: r[tc['교사ID']], name: r[tc['이름']] + (r[tc['구분글자']] ? ' ' + r[tc['구분글자']] : ''), role: r[tc['직급']] || '', inst: r[tc['전공']] || '', sex: r[tc['성별']] || '', kind: r[tc['회원구분']] || '', start: w['시작'] || '', end: w['종료'] || '', main: w['주근무'] === '예',
+    return { id: r[tc['교사ID']], name: r[tc['이름']] + (r[tc['구분글자']] ? ' ' + r[tc['구분글자']] : ''), nm: r[tc['이름']], role: r[tc['직급']] || '', inst: r[tc['전공']] || '', sex: r[tc['성별']] || '', kind: r[tc['회원구분']] || '', start: w['시작'] || '', end: w['종료'] || '', main: w['주근무'] === '예',
       phone: w['종료'] ? '' : (r[tc['휴대전화']] || ''), cert: r[tc['본인자격']] || r[tc['명단자격']] || '', due: du[3] || '', paid: du[4] || '', paidAt: du[5] || '', duesFree: r[tc['회비구분']] === '면제', contract: r[tc['계약체결']] || '', contractAt: r[tc['계약일']] || '' }; })
     .filter(Boolean).sort((x, y) => (x.end ? 1 : 0) - (y.end ? 1 : 0) || String(y.start).localeCompare(String(x.start)));
   return { acad: info, teachers, docs: docList_(aid), students: stuOf_(aid) };
@@ -1019,6 +1019,54 @@ function tStuState(sess, aid, sid, state, date, memo) {
     stuSyncState_(sid); stuFlag_(aid, sid, '원장이 ' + state + ' 기록(' + date + ')', who);
   } finally { lock.releaseLock(); }
   return tStuDetail(sess, aid, sid);
+}
+/* ---------- 원장: 소속 선생님 정보 고치기 (바로 반영 + 협회 확인 필요 표시) ---------- */
+const TCH_KINDS_ = ['정식 교사', '초급 연수', '중급 연수'];
+function tchApply_(aid, aname, who, d, k) {
+  const at = k == null ? '' : (k + 1) + '번째 줄' + (d.name ? '(' + String(d.name).trim() + ')' : '') + ': ';
+  const tid = String(d.id || ''), T = tbl_('교사'), i = T.find('교사ID', tid); if (i < 0) fail(at + '선생님을 찾지 못했어요. 새로 고침해 주세요.');
+  const cur = worksOf_(tid).find(w => w['학원ID'] === aid && !w['종료']); if (!cur) fail(at + '지금 이 학원에 소속된 선생님만 고칠 수 있어요.');
+  const g = kk => String(T.get(i, kk) || '');
+  const name = String(d.name || '').trim().slice(0, 20); if (!name) fail(at + '이름을 넣어 주세요.');
+  const sex = String(d.sex || ''); if (['남', '여'].indexOf(sex) < 0) fail(at + '성별을 골라 주세요.');
+  const phone = digits_(d.phone); if (!/^01\d{8,9}$/.test(phone)) fail(at + '휴대전화 번호를 확인해 주세요.');
+  if (phone !== digits_(g('휴대전화')) && T.v.some((r, j) => j !== i && digits_(r[T.h.indexOf('휴대전화')]) === phone && r[T.h.indexOf('상태')] !== '탈퇴')) fail(at + '그 휴대전화 번호는 다른 회원이 쓰고 있어요.');
+  const role = String(d.role == null ? '' : d.role); if (['원장', '강사', ''].indexOf(role) < 0) fail(at + '직급을 골라 주세요.');
+  const inst = String(d.inst || ''); if (INSTS_.indexOf(inst) < 0) fail(at + '전공을 골라 주세요.');
+  const ext = g('회원구분') === '외부인', kind = ext ? '외부인' : String(d.kind || ''); if (!ext && TCH_KINDS_.indexOf(kind) < 0) fail(at + '회원 구분을 골라 주세요.');
+  const cert = String(d.cert || '').trim().slice(0, 120);
+  const start = String(d.start || '').trim(); if (start && !/^\d{4}-(0[1-9]|1[0-2])$/.test(start)) fail(at + '근무 시작은 2020-03 처럼 골라 주세요.');
+  const o = { '이름': name, '성별': sex, '휴대전화': phone, '직급': role, '전공': inst, '회원구분': kind, '본인자격': cert }, diff = [];
+  Object.keys(o).forEach(kk => { const old = kk === '본인자격' ? (g('본인자격') || g('명단자격')) : g(kk); if (String(o[kk]) !== old) diff.push(kk + ' ' + (old || '없음') + ' → ' + (o[kk] || '없음')); else if (kk === '본인자격') delete o[kk]; });
+  if (start !== String(cur['시작'] || '')) { const W = tbl_('근무'); W.set(W.find('근무ID', cur['근무ID']), { '시작': start, '수정일': now_(), '수정자': who }); diff.push('근무 시작 ' + (cur['시작'] || '없음') + ' → ' + (start || '없음')); }
+  if (!diff.length) return 0;
+  const md = Utilities.formatDate(new Date(), 'Asia/Seoul', 'MM-dd');
+  T.set(i, Object.assign(o, { '확인': '확인 필요', '확인메모': [g('확인메모'), '원장이 고침(' + aname + ' ' + md + '): ' + diff.join(' · ')].filter(Boolean).join(' · ').slice(0, 500), '수정일': now_(), '수정자': who }));
+  log_(who, '교사', tid, '원장이 수정', diff.join(' · ').slice(0, 900));
+  return 1;
+}
+function tTchSaves(sess, aid, rows) {
+  const u = tsess_(sess), { A, i } = headOf_(u, aid), aname = A.get(i, '학원명'), who = stuWho_(u); rows = (rows || []).slice(0, 100);
+  const lock = LockService.getScriptLock(); lock.waitLock(30000); let n = 0;
+  try { rows.forEach((d, k) => { n += tchApply_(aid, aname, who, d || {}, rows.length > 1 ? k : null); }); } finally { lock.releaseLock(); }
+  const r = tAcad(sess, aid); r.saved = n; return r;
+}
+function tTchEnd(sess, aid, tid, end) {
+  const u = tsess_(sess), { A, i } = headOf_(u, aid), aname = A.get(i, '학원명'), who = stuWho_(u);
+  end = String(end || ''); if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(end)) fail('근무 끝 년 · 월을 골라 주세요.');
+  if (tid === u.tid) fail('원장님 본인의 근무는 「내 정보 › 소속 학원」에서 끝내 주세요.');
+  const lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    const w = worksOf_(tid).find(x => x['학원ID'] === aid && !x['종료']); if (!w) fail('지금 이 학원에 소속된 선생님이 아니에요.');
+    if (w['시작'] && end < w['시작']) fail('근무 끝이 시작(' + w['시작'] + ')보다 빨라요.');
+    const W = tbl_('근무'); W.set(W.find('근무ID', w['근무ID']), { '종료': end, '주근무': '', '수정일': now_(), '수정자': who });
+    if (w['주근무'] === '예') { const nx = worksOf_(tid).find(x => !x['종료']); if (nx) { const W2 = tbl_('근무'); W2.set(W2.find('근무ID', nx['근무ID']), { '주근무': '예' }); } }
+    syncAcads_(tid);
+    const T = tbl_('교사'), j = T.find('교사ID', tid), md = Utilities.formatDate(new Date(), 'Asia/Seoul', 'MM-dd');
+    if (j >= 0) T.set(j, { '확인': '확인 필요', '확인메모': [String(T.get(j, '확인메모') || ''), '원장이 근무 끝냄(' + aname + ' ' + end + ', ' + md + ')'].filter(Boolean).join(' · ').slice(0, 500) });
+    log_(who, '근무', tid, '원장이 근무 끝냄', aid + ' ' + end);
+  } finally { lock.releaseLock(); }
+  return tAcad(sess, aid);
 }
 function tStuStateDel(sess, aid, sid, hid) {
   const u = tsess_(sess); headOf_(u, aid); stuRow_(aid, sid); const who = stuWho_(u);

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261028-223713 -->
+<!-- build: 20261028-223818 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -402,13 +402,13 @@ function tchEdit(M){if(!S.tchRows||S.tchRowsFor!==M.id){S.tchRows=tchRowsFrom(M.
     '<td><input type="text" data-tf="'+i+'|cert" value="'+esc(x.cert)+'" placeholder="예: 8권 2019" style="width:150px"></td>'+
     '<td><input type="date" data-tf="'+i+'|start" value="'+esc(/^\d{4}-\d{2}$/.test(x.start||'')?x.start+'-01':x.start)+'" aria-label="근무 시작"></td>'+
     '<td class="num r">'+nStu(x.id)+'</td><td>'+(t.duesFree?'<span class="pill info">면제</span>':feePill({paid:t.paid}))+'</td><td>'+(t.contract==='예'?'<span class="pill ok">체결</span>':'<span class="pill due">미체결</span>')+'</td>'+
-    '<td class="r"><button class="btn small" type="button" data-tdet="'+esc(x.id)+'">자세히</button></td></tr>'};
+    '<td class="r" style="white-space:nowrap"><button class="btn small primary" type="button" data-tsave="'+i+'">저장</button> <button class="btn small" type="button" data-tdet="'+esc(x.id)+'">자세히</button></td></tr>'};
   var prow=function(t){return '<tr class="past"><td><span class="pill">퇴직</span></td><td class="num hint">'+esc(t.id||'-')+'</td><td><b>'+esc(t.name)+'</b></td><td>'+esc(t.sex||'-')+'</td><td>-</td><td>'+esc(t.role||'-')+'</td><td>'+esc(t.inst||'-')+'</td><td>'+esc(kindLabel(t.kind)||'-')+'</td><td>'+esc(t.cert||'-')+'</td><td class="num">'+esc(t.start?ymd(t.start):'-')+' ~ '+esc(ymd(t.end))+'</td><td class="num r">-</td><td></td><td></td><td class="r">'+(t.id?'<button class="btn small" type="button" data-tdet="'+esc(t.id)+'">보기</button>':'')+'</td></tr>'};
   return '<div class="card full"><div class="spread"><h3>교사 명단 <span class="opt">지금 '+R.length+'명</span></h3><div class="row"><label class="agree" style="flex:none;align-items:center"><input type="checkbox" data-tpast="T" '+(S.tchPastT?'checked':'')+'> 퇴직 선생님도 보기</label></div></div>'+instTabs(R,'T')+
     '<div class="stbl"><table class="stu tedit"><thead><tr><th>상태 · 날짜</th><th>번호</th><th>이름 <span class="req">*</span></th><th>성별 <span class="req">*</span></th><th>휴대전화 <span class="req">*</span></th><th>직급</th><th>전공 <span class="req">*</span></th><th>회원 구분 <span class="req">*</span></th><th>자격</th><th>근무 시작</th><th class="r">담당 학생</th><th>'+cy+' 교사 회비</th><th>협회 계약</th><th></th></tr></thead><tbody>'+
     (show.length||past.length?show.map(row).join('')+past.map(prow).join(''):'<tr><td colspan="14" class="hint" style="padding:12px">선생님이 없어요.</td></tr>')+'</tbody></table></div>'+
     msgBox()+'<div class="row" style="margin-top:8px"><span class="hint">'+(dn?'바뀐 줄 '+dn+'개 · 저장해야 반영돼요':'칸을 눌러 바로 고쳐요 · 상태를 휴직 · 퇴직으로 바꾸면 그 날짜를 넣어요')+'</span><span style="flex:1"></span>'+(dn?'<button class="btn small" type="button" id="tchUndo">되돌리기</button>':'')+btn('tchSaveAll','저장','primary')+'</div>'+
-    '<p class="hint">고친 내용은 바로 반영되고, 협회가 확인해요. 회비 · 협회 계약은 협회가 관리해요. 이메일(로그인 아이디)은 선생님이 「내 문의」로 바꿔요.</p></div>'+tchDetail(M)}
+    '<p class="hint">줄마다 「저장」으로 그 선생님만 저장하거나, 아래 「저장」으로 바뀐 줄을 한꺼번에 저장해요. 고친 내용은 바로 반영되고, 협회가 확인해요. 회비 · 협회 계약은 협회가 관리해요. 이메일(로그인 아이디)은 선생님이 「내 문의」로 바꿔요.</p></div>'+tchDetail(M)}
 function tchField(el){var p=el.dataset.tf.split('|'),x=S.tchRows&&S.tchRows[+p[0]];if(!x)return;var v=el.value;if(p[1]==='phone')v=v.replace(/\D/g,'');if(String(x[p[1]]||'')===v)return;x[p[1]]=v;if(!x.dirty){x.dirty=true;var tr=el.closest('tr');if(tr)tr.classList.add('dirty')}}
 function tchDetail(M){var id=S.tchDet;if(!id)return '';var all=(M.data.teachers||[]).filter(function(t){return t.id===id});if(!all.length)return '';var t=all.filter(function(x){return !x.end})[0]||all[0],L=(M.data.students||[]).filter(function(x){return x.tid===id&&x.state!=='퇴원'});
   return '<div class="sdlg-bg" id="tdClose2"></div><div class="sdlg" role="dialog" aria-modal="true" aria-label="선생님 보기"><div class="spread"><h3>'+esc(t.name)+' <span class="hint num">'+esc(id)+'</span></h3><button class="btn small" type="button" id="tdClose">닫기</button></div>'+
@@ -693,10 +693,11 @@ document.addEventListener('click',function(e){if(e.target.id==='sdClose2'){S.stu
   if(b.id==='sdClose'){S.stuDet=null;S.msg='';render();return}
   if(b.id==='tdClose'){S.tchDet=null;render();return}
   if(b.id==='tchUndo'){S.tchRows=tchRowsFrom(S.myac.data.teachers);S.err={};S.msg='';render();return}
-  if(b.id==='tchSaveAll'){var ch2=S.tchRows.filter(function(x){return x.dirty});if(!ch2.length){toast('바뀐 줄이 없어요');return}
-    var e9={};S.tchRows.forEach(function(x,i){if(!x.dirty)return;if(!String(x.name).trim())e9['tn'+i]=1;if(!x.sex)e9['tx'+i]=1;if(!/^01\d{8,9}$/.test(x.phone))e9['tp'+i]=1;if(!x.inst)e9['ti'+i]=1;if(!x.ext&&!x.kind)e9['tk'+i]=1;if(x.state!=='근무'&&!x.stateAt)e9['ts'+i]=1});
+  if(d.tsave!=null&&S.tchRows){var x1=S.tchRows[+d.tsave];if(!x1)return;if(!x1.dirty){toast('이 줄은 바뀐 게 없어요');return}S.tchOnly=+d.tsave;b.id='tchSaveAll'}
+  if(b.id==='tchSaveAll'){var only=S.tchOnly;S.tchOnly=null;var ch2=S.tchRows.filter(function(x,i){return x.dirty&&(only==null||i===only)});if(!ch2.length){toast('바뀐 줄이 없어요');return}
+    var e9={};S.tchRows.forEach(function(x,i){if(!x.dirty||(only!=null&&i!==only))return;if(!String(x.name).trim())e9['tn'+i]=1;if(!x.sex)e9['tx'+i]=1;if(!/^01\d{8,9}$/.test(x.phone))e9['tp'+i]=1;if(!x.inst)e9['ti'+i]=1;if(!x.ext&&!x.kind)e9['tk'+i]=1;if(x.state!=='근무'&&!x.stateAt)e9['ts'+i]=1});
     if(Object.keys(e9).length){S.err=e9;S.msg='빨간 칸을 채워 주세요. 이름 · 성별 · 휴대전화 · 전공 · 회원 구분은 꼭 있어야 하고, 휴직 · 퇴직은 그 날짜가 있어야 해요.';render();return}
-    run(function(){return call('tTchSaves',[S.sess,S.myac.id,ch2.map(function(x){return {id:x.id,name:x.name,sex:x.sex,phone:x.phone,role:x.role,inst:x.inst,kind:x.kind,cert:x.cert,start:x.start,state:x.state,stateAt:x.state==='근무'?'':x.stateAt}})]).then(function(r){if(!r.ok){S.msg=r.msg;return}S.myac.data=r;S.tchRows=tchRowsFrom(r.teachers);S.err={};toast('저장했어요 · '+r.saved+'명 고침 · 협회가 확인해요')})});return}
+    run(function(){return call('tTchSaves',[S.sess,S.myac.id,ch2.map(function(x){return {id:x.id,name:x.name,sex:x.sex,phone:x.phone,role:x.role,inst:x.inst,kind:x.kind,cert:x.cert,start:x.start,state:x.state,stateAt:x.state==='근무'?'':x.stateAt}})]).then(function(r){if(!r.ok){S.msg=r.msg;return}var keep=only==null?[]:S.tchRows.filter(function(x,i){return x.dirty&&i!==only});S.myac.data=r;S.tchRows=tchRowsFrom(r.teachers).map(function(x){var k=keep.filter(function(y){return y.id===x.id})[0];return k||x});S.err={};S.msg='';toast('저장했어요 · '+r.saved+'명 고침 · 협회가 확인해요')})});return}
   if(b.id==='tdEndGo'){var ev=(document.getElementById('tdEnd')||{}).value||'';if(!ev){toast('퇴직 날짜를 골라 주세요');return}var tid9=S.tchDet;
     run(function(){return call('tTchEnd',[S.sess,S.myac.id,tid9,ev]).then(function(r){if(!r.ok){toast(r.msg);return}S.myac.data=r;S.tchRows=tchRowsFrom(r.teachers);S.tchDet=null;toast('퇴직으로 바꿨어요')})});return}
   if(d.tdet){S.tchDet=d.tdet;render();return}

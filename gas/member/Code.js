@@ -1,4 +1,4 @@
-/* build: 20261028-183428 */
+/* build: 20261028-184159 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -61,7 +61,7 @@ function doGet(e) {
 function include(n) { return HtmlService.createHtmlOutputFromFile(n).getContent(); }
 
 function api(name, args) {
-  const open = { login, hello, tHello, tLookup, tStart, tResend, tVerify, tCreate, tLogin, tForgot, tReset, tMe, tSavePay, tSavePart, tSaveInfo, tSavePhoto, tAcad, tSaveAcad, tDocUp, tDocGet, tSaveStu, tSaveRrn, tAddWork, tEndWork, tMainWork, tLogout, bPost, bMine, bReply };
+  const open = { login, hello, tHello, tLookup, tStart, tResend, tVerify, tCreate, tLogin, tForgot, tReset, tMe, tSavePay, tSavePart, tSaveInfo, tSavePhoto, tAcad, tSaveAcad, tDocUp, tDocGet, tSaveStu, tSaveStus, tSaveRrn, tAddWork, tEndWork, tMainWork, tLogout, bPost, bMine, bReply };
   const fns = { boot, saveRow, setCheck, logs, importRoster, saveDues, delDues, reqs, reqDo, delAcad, payView, bulkSet, saveWorks, importPastDues, bList, bSet, bComment, photoGet, photoDel, fillRegions, saveRates, docList, docUp, docGet, docDel };
   try {
     if (open[name]) return Object.assign({ ok: true }, open[name].apply(null, args || []));
@@ -849,9 +849,46 @@ function docDel(who, did) { const D = tbl_('학원서류'), i = D.find('서류ID
   try { DriveApp.getFileById(D.get(i, '파일ID')).setTrashed(true); } catch (e) {} D.sh.deleteRow(i + 2); log_(who.name, '학원서류', aid, '서류 지움', did); return { docs: docList_(aid) }; }
 
 /* ---------- 원장: 학생 명단 (10-28) ---------- */
-function stuOf_(aid) { const S2 = tbl_('학생'), c = col_(S2);
-  return S2.v.filter(r => r[c['학원ID']] === aid).map(r => ({ id: r[c['학생ID']], name: r[c['이름']], tag: r[c['구분글자']] || '', birth: r[c['출생연도']] || '', inst: r[c['전공']] || '', start: r[c['시작월']] || '', state: r[c['상태']] || '재원', tid: r[c['담당교사ID']] || '' }))
+function stuOf_(aid) { const S2 = tbl_('학생'), c = col_(S2), du = {}; tbl_('연회비').v.forEach(d => { if (d[0] === '학생' && String(d[2]) === CUR_Y) du[d[1]] = d; });
+  return S2.v.filter(r => r[c['학원ID']] === aid).map(r => { const d = du[r[c['학생ID']]] || []; return { id: r[c['학생ID']], name: r[c['이름']], tag: r[c['구분글자']] || '', birth: r[c['출생연도']] || '', inst: r[c['전공']] || '', start: r[c['시작월']] || '', state: r[c['상태']] || '재원', tid: r[c['담당교사ID']] || '', check: r[c['확인']] || '', due: d[3] || '', paid: d[4] || '', paidAt: d[5] || '' }; })
     .sort((a, b) => (a.state === '퇴원') - (b.state === '퇴원') || String(a.name).localeCompare(String(b.name), 'ko')); }
+/** 원장: 학생 명단 표에서 바뀐 줄을 한꺼번에 저장 (10-28). 올해 회비는 낸 금액 · 낸 날짜만 (부과는 관리자) */
+function tSaveStus(sess, aid, rows) {
+  const u = tsess_(sess); headOf_(u, aid); rows = (rows || []).slice(0, 400);
+  const mine = tAcad(sess, aid).teachers.map(t => t.id);
+  const T = tbl_('교사'), ti = T.find('교사ID', u.tid), who = (ti >= 0 ? T.get(ti, '이름') : u.email) + ' (원장)', md = Utilities.formatDate(new Date(), 'Asia/Seoul', 'MM-dd');
+  const clean = rows.map((st, k) => {
+    const at = (k + 1) + '번째 줄' + (st.name ? '(' + String(st.name).trim() + ')' : '') + ': ';
+    const name = String(st.name || '').trim().slice(0, 20); if (!name) fail(at + '학생 이름을 넣어 주세요.');
+    const birth = digits_(st.birth).slice(0, 4); if (birth && !/^(19|20)\d{2}$/.test(birth)) fail(at + '출생연도는 4자리로 넣어 주세요.');
+    const start = String(st.start || '').trim(); if (start && !/^\d{4}-\d{2}$/.test(start)) fail(at + '시작은 2024-03 처럼 넣어 주세요.');
+    const paid = String(st.paid == null ? '' : st.paid).replace(/[^\d]/g, ''), paidAt = String(st.paidAt || '').trim(); if (paidAt && !/^\d{4}-\d{2}-\d{2}$/.test(paidAt)) fail(at + '낸 날짜를 확인해 주세요.');
+    return { id: st.id || '', o: { '이름': name, '출생연도': birth, '전공': INSTS_.indexOf(st.inst) >= 0 ? st.inst : '', '시작월': start, '상태': st.state === '퇴원' ? '퇴원' : '재원', '담당교사ID': mine.indexOf(st.tid) >= 0 ? st.tid : '' }, paid, paidAt };
+  });
+  const lock = LockService.getScriptLock(); lock.waitLock(30000);
+  let nNew = 0, nEdit = 0;
+  try {
+    const S2 = tbl_('학생'), D = tbl_('연회비'), dc = col_(D);
+    clean.forEach(x => {
+      let id = x.id, diff = [];
+      if (id) {
+        const i = S2.find('학생ID', id); if (i < 0 || S2.get(i, '학원ID') !== aid) fail('다른 학원 학생이 섞여 있어요. 새로 고침해 주세요.');
+        diff = Object.keys(x.o).filter(k => String(x.o[k]) !== String(S2.get(i, k) || '')).map(k => k + ' ' + (S2.get(i, k) || '없음') + ' → ' + (x.o[k] || '없음'));
+        if (diff.length) S2.set(i, Object.assign({}, x.o, { '수정일': now_(), '수정자': who }));
+      } else { id = nextId_(S2, '학생ID', 'S'); S2.append(Object.assign({}, x.o, { '학생ID': id, '학원ID': aid, '원래이름': x.o['이름'], '확인': '확인 필요', '확인메모': '원장이 추가(' + md + ')', '원본': '원장 추가', '수정일': now_(), '수정자': who })); nNew++; }
+      const j = D.v.findIndex(r => r[dc['대상']] === '학생' && r[dc['ID']] === id && String(r[dc['년도']]) === CUR_Y);
+      const oldP = j >= 0 ? String(D.v[j][dc['납부']] || '') : '', oldD = j >= 0 ? String(D.v[j][dc['납부일']] || '') : '';
+      if (x.paid !== oldP || x.paidAt !== oldD) {
+        if (j >= 0) D.set(j, { '납부': x.paid, '납부일': x.paidAt, '메모': [String(D.v[j][dc['메모']] || ''), '원장이 넣음(' + md + ')'].filter(Boolean).join(' · ').slice(0, 200), '수정일': now_(), '수정자': who });
+        else if (x.paid || x.paidAt) D.append({ '대상': '학생', 'ID': id, '년도': CUR_Y, '부과': '', '납부': x.paid, '납부일': x.paidAt, '메모': '원장이 넣음(' + md + ')', '수정일': now_(), '수정자': who });
+        diff.push(CUR_Y + ' 회비 ' + (oldP || '없음') + (oldD ? '(' + oldD + ')' : '') + ' → ' + (x.paid || '없음') + (x.paidAt ? '(' + x.paidAt + ')' : ''));
+      }
+      if (x.id && diff.length) { const i = S2.find('학생ID', id); S2.set(i, { '확인': '확인 필요', '확인메모': [String(S2.get(i, '확인메모') || ''), '원장이 바꿈(' + md + '): ' + diff.join(' · ')].filter(Boolean).join(' · ').slice(0, 500) }); nEdit++; }
+    });
+    log_(u.email, '학생', aid, '원장이 학생 명단 저장', '새로 ' + nNew + '명 · 고침 ' + nEdit + '명');
+  } finally { lock.releaseLock(); }
+  return Object.assign(tAcad(sess, aid), { saved: { nNew, nEdit } });
+}
 function tSaveStu(sess, aid, st) {
   const u = tsess_(sess); headOf_(u, aid); st = st || {};
   const name = String(st.name || '').trim().slice(0, 20); if (!name) fail('학생 이름을 넣어 주세요.');

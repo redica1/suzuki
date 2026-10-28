@@ -1,4 +1,4 @@
-/* build: 20261025-002404 */
+/* build: 20261028-233022 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -72,6 +72,7 @@ const SETTINGS = [['관리자 아이디', 'admin', '관리자 화면(?page=admin
   ['예금주', '', '입금 계좌 예금주'],
   ['입금 시작일', '2026-10-01', '이 날짜보다 앞선 입금일로는 신고할 수 없어요'],
   ['공유주소', 'https://redica1.github.io/suzuki/camp/', '카카오톡 안에서 열었을 때 바깥 브라우저로 넘길 주소'],
+  ['회원 명단 파일', '', '회원관리가 만드는 「행사용 명단」 파일 ID 또는 주소. 넣으면 명단_교사 · 명단_학생을 그 파일로 5분마다 맞춤 (비우면 지금처럼 이 시트의 명단 그대로)'],
   ['접수 가능 학원', '마포스즈키', '「전체」 또는 학원 이름을 쉼표로 (예: 마포스즈키, 미사스즈키)'],
   ['시간표 공개', '아니오', '「예」면 선생님 화면 「내 시간표」에 교사 일정·개인레슨이 보여요']];
 
@@ -1161,13 +1162,56 @@ function staffSave(token, list) {
   return { ok: true, staff: staff_() };
 }
 
+/* ---------------- 회원관리 연동 (10-28) ----------------
+ * 회원관리 「행사용 명단」 파일(학원 · 교사 · 학생 · 갱신)을 읽어 명단_교사 · 명단_학생을 통째로 다시 씀. 나머지 캠프 코드는 그대로.
+ * 학생 「회비 납부일」 = 회원 자격이 유효 · 시작 전이면 그 해 납부일(없으면 자격 시작월 1일). 확인 대기 · 만료 · 없음은 빈칸(→ 접수 때 연회비 추가).
+ * 교사 「회비 납부일」 = 올해 납부면 납부일, 면제면 「면제」. 퇴원 학생 · 탈퇴 교사는 넣지 않음. */
+function memberSrcId_() { const v = setting_('회원 명단 파일'); const m = v.match(/\/d\/([a-zA-Z0-9_-]{20,})/); return m ? m[1] : (/^[a-zA-Z0-9_-]{20,}$/.test(v) ? v : ''); }
+function memberSync_(force) {
+  const id = memberSrcId_(); if (!id) return { skip: true, msg: '설정 「회원 명단 파일」이 비어 있어요.' };
+  const f = SpreadsheetApp.openById(id), get = n => { const sh = f.getSheetByName(n); if (!sh || sh.getLastRow() < 1) return []; const v = sh.getDataRange().getDisplayValues(), h = v[0]; return v.slice(1).map(r => { const o = {}; h.forEach((k, j) => o[k] = r[j]); return o; }); };
+  const stamp = (get('갱신')[0] || {})['만든 때'] || '', P = PropertiesService.getScriptProperties();
+  if (!force && stamp && stamp === P.getProperty('memberStamp')) return { same: true, at: stamp };
+  const an = {}; get('학원').forEach(a => an[a['학원ID']] = a['학원명']);
+  const T = get('교사').filter(t => t['교사ID'] && t['상태'] !== '탈퇴').map(t => {
+    const paid = t['올해회비'] === '면제' ? '면제' : t['올해회비'] === '납부' ? (t['올해납부일'] || '납부') : '';
+    return [t['교사ID'], t['이름'], t['직급'] || '강사', t['전공'] || '', String(t['휴대전화'] || '').replace(/\D/g, '').slice(-4), ['학원1', '학원2', '학원3'].map(k => an[t[k]] || '').filter(Boolean).join(', '), paid, +t['올해부과'] || 0, '승인'];
+  });
+  const S = get('학생').filter(s => s['학생ID'] && s['학원명'] && s['상태'] !== '퇴원').map(s => {
+    const ok = s['자격상태'] === '유효' || s['자격상태'] === '시작 전';
+    return [s['학생ID'], s['학생ID'], s['이름'], s['구분글자'] || '', s['학원명'], s['전공'] || '', s['출생연도'] || '', s['담당교사명'] || '', ok ? (s['올해납부일'] || (s['자격시작'] ? s['자격시작'] + '-01' : '납부')) : ''];
+  });
+  const ss = SpreadsheetApp.getActive();
+  const put = (name, head, rows) => {
+    let sh = ss.getSheetByName(name); if (!sh) sh = ss.insertSheet(name);
+    if (!P.getProperty('memberBackup_' + name) && sh.getLastRow() > 1) { const b = sh.copyTo(ss); b.setName(name + '_이전(' + Utilities.formatDate(new Date(), TZ, 'MMdd') + ')'); P.setProperty('memberBackup_' + name, b.getName()); }
+    sh.clearContents(); const data = [head].concat(rows); sh.getRange(1, 1, data.length, head.length).setNumberFormat('@').setValues(data); sh.setFrozenRows(1); sh.getRange(1, 1, 1, head.length).setFontWeight('bold');
+  };
+  const lock = lock_();
+  try {
+    put(SH.T, ['ID', '이름', '직급', '악기', '휴대전화 뒤 4자리', '소속 학원', '회비 납부일', '연회비', '상태'], T);
+    put(SH.S, ['ID', '고유번호', '이름', '구분 표시', '학원', '악기', '출생연도', '담당 교사', '회비 납부일'], S);
+  } finally { lock.releaseLock(); }
+  P.setProperty('memberStamp', stamp); P.setProperty('memberSyncAt', stamp_());
+  log_('회원관리 연동', '명단 맞춤', '교사 ' + T.length + ' · 학생 ' + S.length + ' · 회원관리 ' + stamp);
+  return { ok: true, at: stamp, t: T.length, s: S.length };
+}
+function memberSyncTick() { try { memberSync_(false); } catch (e) { Logger.log('회원관리 연동: ' + e.message); } }
+/** 관리자(총관리자): 지금 불러오기 + 5분마다 자동 켜기 */
+function memberSyncNow(token) {
+  const a = adm_(token); needSup_(a);
+  try { if (!ScriptApp.getProjectTriggers().some(t => t.getHandlerFunction() === 'memberSyncTick')) ScriptApp.newTrigger('memberSyncTick').timeBased().everyMinutes(5).create(); } catch (e) { }
+  const r = memberSync_(true); if (r.skip) throw new Error(r.msg);
+  return Object.assign({ ok: true }, r, memberData(token));
+}
+function memberInfo_() { const P = PropertiesService.getScriptProperties(); return { src: !!memberSrcId_(), stamp: P.getProperty('memberStamp') || '', at: P.getProperty('memberSyncAt') || '' }; }
 /** 설정 › 회원 명단: 명단_교사 · 명단_학생 전체 + 이번 캠프 접수 여부 (취소 뺌). 휴대전화 · 생일 같은 건 보내지 않음 */
 function memberData(token) {
   const a = adm_(token); if (!a.sup && !a.perms.mem) throw new Error('회원 명단을 볼 권한이 없어요.');
   const on = {}; loadSubs_().forEach(sb => sb.ppl.forEach(p => { if (p.status === '취소') return; const k = p.id.slice(sb.no.length + 1); on[k] = on[k] || { no: sb.no, type: p.type || '', acad: sb.acad }; }));
   const T = teachers_().map(t => ({ id: t.id, name: t.name, acad: t.acads.join(', '), inst: t.inst, role: t.role, state: t.state, on: on['t_' + t.id] || null }));
   const S_ = rows_(SH.S).filter(r => r['ID']).map(r => ({ id: String(r['ID']), name: String(r['이름']), acad: String(r['학원'] || ''), inst: String(r['악기'] || ''), teacher: String(r['담당 교사'] || ''), on: on[String(r['ID'])] || null }));
-  return { teachers: T, students: S_ };
+  return { teachers: T, students: S_, sync: memberInfo_() };
 }
 /* ---------------- 테스트용 가상 접수 (총관리자 · 캠프 설정 맨 아래 버튼) ----------------
  * 「가상○○스즈키」 학원으로 교사 · 학생 접수를 만듦. 이름은 무작위 조합(실제 회원 아님) · 입금 전 · 연회비 없음. sb.fake = true

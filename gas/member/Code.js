@@ -1,4 +1,4 @@
-/* build: 20261028-225939 */
+/* build: 20261028-230209 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -11,22 +11,45 @@
 
 const SRC_ID = '1CsIOTl_N7HlETEUJFLqklgYJOC1fYfTVdfuvUUkfDPs';   // [2026]스즈키교사 연회비납부명단 (읽기만)
 const CUR_Y = '2026';
-/* 학생회원 자격: 입금일 다음 달 1일부터 12개월. 이미 자격이 있으면 끝난 다음 달부터 이어 붙임. 2026년 이전 기록은 셈하지 않고, 가장 빨라도 2026-04 시작(기존 학생 전환). */
-const MEM_FROM = '2026-04';
+/* 학생회원 자격 (10-28 정함)
+   · 12개월. 이미 자격이 있고 그 뒤로 계속 재원이면 끝난 다음 달부터 이어 붙임(늦게 내도 끊김 없이 소급).
+   · 처음 내거나 퇴원 뒤 다시 등록했으면 재원 시작 다음 달부터(입금이 늦어도 소급). 재원 시작을 모르면 입금 다음 달.
+   · RULE2_FROM 앞에 낸 기록(예전 방식)은 입금 다음 달부터 · 앞 자격과 이어 붙이기만.
+   · 2026년 이전 기록은 셈하지 않고, 가장 빨라도 2026-04 시작(기존 학생 전환). 휴원은 멈추지 않음. */
+const MEM_FROM = '2026-04', RULE2_FROM = '2026-10-29';
 function addMon_(ym, n) { const y = +ym.slice(0, 4), m = +ym.slice(5, 7) - 1 + n; return (y + Math.floor(m / 12)) + '-' + ('0' + ((m % 12 + 12) % 12 + 1)).slice(-2); }
-function memTerms_(rows) {
-  const out = {}; let prev = '';
+function memTerms_(rows, st) {
+  st = st || {}; const ev = (st.events || []).filter(e => e.d).sort((a, b) => String(a.d).localeCompare(String(b.d)));
+  const out = {}; let prev = '', prevS = '';
   rows.filter(r => +r.paid > 0 && /^\d{4}-\d{2}-\d{2}/.test(String(r.date || '')) && String(r.year) >= MEM_FROM.slice(0, 4))
     .sort((a, b) => String(a.date).localeCompare(String(b.date)))
     .forEach(r => {
-      let s = /^\d{4}-\d{2}$/.test(String(r.start || '')) ? String(r.start) : '';
-      if (!s) { s = addMon_(String(r.date).slice(0, 7), 1); if (prev && addMon_(prev, 1) > s) s = addMon_(prev, 1); if (MEM_FROM > s) s = MEM_FROM; }
-      const e = addMon_(s, 11); out[r.year] = { start: s, end: e }; prev = e;
+      const pd = String(r.date); let s = /^\d{4}-\d{2}$/.test(String(r.start || '')) ? String(r.start) : '';
+      if (!s) {
+        const pm = addMon_(pd.slice(0, 7), 1);
+        if (pd < RULE2_FROM) { s = pm; if (prev && addMon_(prev, 1) > s) s = addMon_(prev, 1); }
+        else {
+          const outs = ev.filter(e => e.s === '퇴원' && String(e.d) <= pd), lastOut = outs.length ? String(outs[outs.length - 1].d) : '';
+          const cont = prev && !(lastOut && lastOut.slice(0, 7) >= prevS);
+          if (cont) s = addMon_(prev, 1);
+          else {
+            const ins = ev.filter(e => e.s === '재원' && (!lastOut || String(e.d) > lastOut)), en = ins.length ? String(ins[0].d) : (!lastOut ? String(st.start0 || '') : '');
+            s = /^\d{4}-\d{2}/.test(en) ? addMon_(en.slice(0, 7), 1) : pm;
+          }
+        }
+        if (MEM_FROM > s) s = MEM_FROM;
+      }
+      const e = addMon_(s, 11); out[r.year] = { start: s, end: e }; prev = e; prevS = s;
     });
   return out;
 }
-function memOf_(sid, all) { const rows = (all || tbl_('연회비').v).filter(d => d[0] === '학생' && d[1] === sid && d[11] !== '신고' && d[11] !== '반려').map(d => ({ year: String(d[2]), paid: d[4], date: d[5], start: d[10] })); const t = memTerms_(rows); let last = null; Object.keys(t).forEach(y => { if (!last || t[y].end > last.end) last = t[y]; }); return { terms: t, last }; }
-
+function memOf_(sid, all, st) {
+  const rows = (all || tbl_('연회비').v).filter(d => d[0] === '학생' && d[1] === sid && d[11] !== '신고' && d[11] !== '반려').map(d => ({ year: String(d[2]), paid: d[4], date: d[5], start: d[10] }));
+  if (!st) { const S2 = tbl_('학생'), i = S2.find('학생ID', sid); st = { start0: i >= 0 ? String(S2.get(i, '시작월') || '') : '', events: statesOf_(sid).map(h => ({ s: h['상태'], d: String(h['날짜'] || '') })) }; }
+  const t = memTerms_(rows, st); let last = null; Object.keys(t).forEach(y => { if (!last || t[y].end > last.end) last = t[y]; }); return { terms: t, last };
+}
+/** 관리자: 학생 회원 자격 기간(년도별) */
+function memView(who, sid) { return { terms: memOf_(String(sid || '')).terms }; }
 const HEAD = {
   '학원': ['학원ID', '학원명', '구분', '상태', '원장교사ID', '원장명', '교실대표번호', '이메일', '교습과목', '시도', '시군구', '우편번호', '주소', '상세주소', '개원일', '계약체결일', '확인', '확인메모', '메모', '원본', '수정일', '수정자', '졸업연주지역', '사업자번호', '교육청인가번호'],
   '교사': ['교사ID', '이름', '구분글자', '원래이름', '휴대전화', '이메일', '학원1', '학원2', '학원3', '직급', '전공', '회원구분', '명단자격', '명단취득', '회비구분', '캠프교수', '내부외부', '상태', '확인', '확인메모', '메모', '원본', '수정일', '수정자', '영문이름', '본인자격', '회비납부방법', '강사료대상', '계약체결', '계약일', '성별'],
@@ -80,7 +103,7 @@ function include(n) { return HtmlService.createHtmlOutputFromFile(n).getContent(
 
 function api(name, args) {
   const open = { login, hello, tHello, tLookup, tStart, tResend, tVerify, tCreate, tLogin, tForgot, tReset, tMe, tSavePay, tSavePart, tSaveInfo, tSavePhoto, tAcad, tSaveAcad, tDocUp, tDocGet, tSaveStu, tSaveStus, tStuDetail, tStuSave, tStuTutor, tStuTutorDel, tStuState, tStuStateDel, tTchSaves, tTchEnd, tTchEvent, tTchAssign, tTchStart, tSaveRrn, tAddWork, tEndWork, tMainWork, tLogout, bPost, bMine, bReply };
-  const fns = { boot, saveRow, setCheck, logs, importRoster, saveDues, delDues, reqs, reqDo, delAcad, payView, bulkSet, saveWorks, importPastDues, bList, bSet, bComment, photoGet, photoDel, fillRegions, saveRates, docList, docUp, docGet, docDel, payList, payOk, payNo };
+  const fns = { boot, saveRow, setCheck, logs, importRoster, saveDues, delDues, reqs, reqDo, delAcad, payView, bulkSet, saveWorks, importPastDues, bList, bSet, bComment, photoGet, photoDel, fillRegions, saveRates, docList, docUp, docGet, docDel, payList, payOk, payNo, memView };
   try {
     if (open[name]) return Object.assign({ ok: true }, open[name].apply(null, args || []));
     if (!fns[name]) throw new UserError('알 수 없는 요청이에요.');
@@ -884,8 +907,9 @@ function tutorsOf_(sid) { return rowsOf_('담당').list.filter(r => r['학생ID'
 function statesOf_(sid) { return rowsOf_('재원이력').list.filter(r => r['학생ID'] === sid).sort((a, b) => String(a['날짜']).localeCompare(String(b['날짜'])) || a._i - b._i); }
 function stuOf_(aid) { const S2 = tbl_('학생'), c = col_(S2), du = {}, DV = tbl_('연회비').v; DV.forEach(d => { if (d[0] === '학생' && String(d[2]) === CUR_Y) du[d[1]] = d; });
   const cur = {}; rowsOf_('담당').list.forEach(r => { if (!r['종료']) cur[r['학생ID']] = r['교사ID']; });
+  const evs = {}; rowsOf_('재원이력').list.forEach(h => { (evs[h['학생ID']] = evs[h['학생ID']] || []).push({ s: h['상태'], d: String(h['날짜'] || '') }); });
   return S2.v.filter(r => r[c['학원ID']] === aid).map(r => { const id = r[c['학생ID']], d = du[id] || [];
-    return { id, name: r[c['이름']], tag: r[c['구분글자']] || '', sex: r[c['성별']] || '', birth: r[c['출생연도']] || '', inst: r[c['전공']] || '', start: r[c['시작월']] || '', state: STU_STATES.indexOf(r[c['상태']]) >= 0 ? r[c['상태']] : '재원', stateAt: r[c['상태일']] || '', tid: cur[id] || r[c['담당교사ID']] || '', check: r[c['확인']] || '', due: d[3] || '', paid: d[4] || '', paidAt: d[5] || '', pay: d[11] || (+d[4] > 0 ? '확인' : ''), mem: memOf_(id, DV).last }; })
+    return { id, name: r[c['이름']], tag: r[c['구분글자']] || '', sex: r[c['성별']] || '', birth: r[c['출생연도']] || '', inst: r[c['전공']] || '', start: r[c['시작월']] || '', state: STU_STATES.indexOf(r[c['상태']]) >= 0 ? r[c['상태']] : '재원', stateAt: r[c['상태일']] || '', tid: cur[id] || r[c['담당교사ID']] || '', check: r[c['확인']] || '', due: d[3] || '', paid: d[4] || '', paidAt: d[5] || '', pay: d[11] || (+d[4] > 0 ? '확인' : ''), mem: memOf_(id, DV, { start0: String(r[c['시작월']] || ''), events: evs[id] || [] }).last }; })
     .sort((a, b) => (a.state === '퇴원') - (b.state === '퇴원') || String(a.name).localeCompare(String(b.name), 'ko')); }
 function stuWho_(u) { const T = tbl_('교사'), ti = T.find('교사ID', u.tid); return (ti >= 0 ? T.get(ti, '이름') : u.email) + ' (원장)'; }
 function stuRow_(aid, sid) { const S2 = tbl_('학생'), i = S2.find('학생ID', sid); if (i < 0 || S2.get(i, '학원ID') !== aid) fail('그 학생을 찾지 못했어요. 새로 고침해 주세요.'); return { S2, i }; }

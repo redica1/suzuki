@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261101-003159 -->
+<!-- build: 20261101-003630 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -58,7 +58,7 @@ main.wrap{padding-top:20px;padding-bottom:80px;display:grid;gap:16px}
 .panel h3{font-size:17px}
 .cap{font-size:14.5px;color:var(--faint);margin:0}
 .tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(175px,1fr));gap:0;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);margin-bottom:10px}
-@media (max-width:820px){.tiles{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:820px){.tiles{grid-template-columns:repeat(2,minmax(0,1fr))}.tiles.igrid{overflow-x:auto}}.tiles.igrid .tile{min-width:128px}
 .tile{background:var(--surface);padding:7px 12px;display:flex;align-items:center;justify-content:space-between;gap:8px;min-width:0;box-shadow:inset -1px 0 0 var(--line),inset 0 -1px 0 var(--line)}
 .tile .k{font-size:14.5px;color:var(--muted);display:flex;align-items:center;gap:4px;min-width:0;white-space:nowrap}
 .tile .v{font-family:var(--mono);font-size:19px;line-height:1.3;white-space:nowrap}
@@ -234,13 +234,18 @@ function acadList(){var qq=q(),f=S.f,is=S.issue;
     if(f.st==='off'?(!a['상태']||a['상태']==='운영'):(a['상태']&&a['상태']!=='운영'))return false; if(f.ck&&a['확인']!==f.ck)return false; if(f.kn&&a['구분']!==f.kn)return false; if(f.sd&&a['시도']!==f.sd)return false; if(f.rg&&(f.rg==='-'?a['졸업연주지역']:a['졸업연주지역']!==f.rg))return false; return true})}
 function acadTiles(list){var ids={},n=0,by={},none=0,tc=0,tseen={};list.forEach(function(a){ids[a['학원ID']]=1});
   S.D.stu.forEach(function(x){if(x['상태']!=='재원'||!ids[x['학원ID']])return;n++;var k=x['전공']||'';if(INSTS.indexOf(k)<0)none++;else by[k]=(by[k]||0)+1});
-  S.D.tch.forEach(function(t){if(t['상태']==='탈퇴'||tseen[t['교사ID']])return;if(tAcads(t).some(function(id){return ids[id]})){tseen[t['교사ID']]=1;tc++}});
+  var tby={},tnone=0;S.D.tch.forEach(function(t){if(t['상태']==='탈퇴'||t['회원구분']==='외부인'||tseen[t['교사ID']])return;if(tAcads(t).some(function(id){return ids[id]})){tseen[t['교사ID']]=1;tc++;var k=t['전공']||'';if(T_INSTS.indexOf(k)<0)tnone++;else tby[k]=(tby[k]||0)+1}});
   var all=S.D.acad.length,cut=list.length!==S.D.acad.filter(function(a){return S.f.st==='off'?(a['상태']&&a['상태']!=='운영'):(!a['상태']||a['상태']==='운영')}).length;
   var tile=function(k,v,sub,w){return '<div class="tile'+(w?' warn':'')+'"><span class="k">'+k+'</span><span class="v">'+v.toLocaleString()+'</span>'+(sub?'<span class="s">'+sub+'</span>':'')+'</div>'};
   var sn={};S.D.stu.forEach(function(x){if(x['상태']==='재원')sn[x['학원ID']]=(sn[x['학원ID']]||0)+1});
   var cls=list.filter(function(a){return a['구분']==='클래스'}),ac=list.filter(function(a){return a['구분']!=='클래스'&&a['구분']!=='협회'}),empty=cls.filter(function(a){return !sn[a['학원ID']]}).length;
-  return '<div class="tiles" style="margin:0 0 10px">'+tile(S.f.st==='off'?'휴원 · 탈퇴 학원':'학원',ac.length,cut?'지금 고른 조건 · 전체 '+all+'곳':'협회 빼고 · 전체 '+all+'곳 중')+tile('클래스',cls.length,'개인 레슨'+(empty?' · 학생 없음 '+empty+'곳':''))+(empty?tile('학생 없는 클래스',empty,'캠프 · 졸업연주 명단에서 빠져요',1):'')+tile('선생님',tc,'탈퇴 빼고 · 여러 학원은 한 번')+tile('재원 학생',n,'이 학원들 소속')+
-    INSTS.filter(function(k){return by[k]}).map(function(k){return tile(k,by[k],n?Math.round(by[k]*100/n)+'%':'')}).join('')+(none?tile('전공 없음',none,'학생정보에서 채워 주세요',1):'')+'</div>'}
+  return '<div class="tiles" style="margin:0 0 10px">'+tile(S.f.st==='off'?'휴원 · 탈퇴 학원':'학원',ac.length,cut?'지금 고른 조건 · 전체 '+all+'곳':'협회 빼고 · 전체 '+all+'곳 중')+tile('클래스',cls.length,'개인 레슨'+(empty?' · 학생 없음 '+empty+'곳':''))+(empty?tile('학생 없는 클래스',empty,'캠프 · 졸업연주 명단에서 빠져요',1):'')+'</div>'+instGrid([['선생님',tc,tby,tnone,'탈퇴 · 관계자 빼고 · 여러 학원은 한 번','교사정보에서 채워 주세요'],['재원 학생',n,by,none,'이 학원들 소속','학생정보에서 채워 주세요']])}
+/* 전공별 인원: 줄마다(선생님 · 학생) 같은 칸 순서라 위아래가 맞음 */
+function instGrid(rows){var cols=T_INSTS.filter(function(k){return rows.some(function(r){return r[2][k]})}),nn=rows.some(function(r){return r[3]});
+  var tl=function(k,v,sub,w){return '<div class="tile'+(w?' warn':'')+'"><span class="k">'+k+'</span><span class="v">'+(+v).toLocaleString()+'</span>'+(sub?'<span class="s">'+sub+'</span>':'')+'</div>'};
+  var pc=function(a,b){return b?Math.round(a*100/b)+'%':''};
+  return '<div class="tiles igrid" style="grid-template-columns:minmax(150px,1.3fr) repeat('+(cols.length+(nn?1:0))+',minmax(128px,1fr))">'+rows.map(function(r){
+    return tl('<b>'+r[0]+'</b>',r[1],r[4])+cols.map(function(k){return tl(k,r[2][k]||0,pc(r[2][k]||0,r[1]))}).join('')+(nn?tl('전공 없음',r[3],r[3]?r[5]:'',r[3]>0):'')}).join('')+'</div>'}
 function clsFix(){var RE=/스즈키 학원이 아닌 「([^」]+)」/,n=0,names={};S.D.stu.forEach(function(x){if(x['학원ID'])return;var m=String(x['확인메모']||'').match(RE);if(m){n++;names[m[1]]=1}});
   if(!n)return '';var k=Object.keys(names);return '<div class="note warn row" style="justify-content:space-between;margin:0 0 10px"><span>학원이 비어 있는 학생 <b>'+n+'명</b> — 원본 명단에서 「'+esc(k.slice(0,4).join('」, 「'))+'」'+(k.length>4?' 외 '+(k.length-4)+'곳':'')+'으로 적혀 있었어요. 「○○ 클래스」는 클래스로 만들어 연결할 수 있어요.</span><button class="btn small primary" type="button" id="clsFix">클래스 만들고 학생 연결</button></div>'}
 function acadSeg(){var on=S.D.acad.filter(function(a){return !a['상태']||a['상태']==='운영'}).length,off=S.D.acad.length-on,x=S.f.st==='off';

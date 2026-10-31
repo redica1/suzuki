@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261031-234141 -->
+<!-- build: 20261031-234526 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -284,7 +284,7 @@ function infoEdit(m){var j=S.j;
     '<div class="two"><div><label class="f" for="eNm">이름 <span class="req">*</span><input type="text" id="eNm" value="'+esc(j.name)+'" '+bad('ename')+'></label>'+fe('ename')+'</div>'+
     '<div><label class="f" for="ePh">휴대전화 <span class="req">*</span><input type="tel" id="ePh" value="'+esc(fmtPh(j.phone))+'" inputmode="numeric" '+bad('ephone')+'></label>'+fe('ephone')+'</div></div>'+
     '<div class="f"><span>성별 <span class="req">*</span></span>'+seg('sex',[['남','남'],['여','여']],j.sex)+fe('sex')+'</div>'+
-    (m.ext?'':'<div class="f"><span>회원 종류 <span class="req">*</span></span>'+seg('type',[['교사회원','교사회원'],['연수교사회원','연수교사']],j.type)+fe('type')+'</div>'+
+    (m.ext?'':(m.kind==='비회원'||m.kind==='외국인')?'<div class="f"><span>회원 종류</span><p><b>'+m.kind+'</b> <span class="hint">바꾸려면 협회에 문의해 주세요</span></p></div>'+'<div class="f"><span>직급 <span class="req">*</span></span>'+seg('role',[['원장','원장'],['강사','강사'],['','해당 없음']],j.role==null?'-':j.role)+fe('role')+'</div>':'<div class="f"><span>회원 종류 <span class="req">*</span></span>'+seg('type',[['교사회원','교사회원'],['연수교사회원','연수교사']],j.type)+fe('type')+'</div>'+
       '<div class="f"><span>직급 <span class="req">*</span></span>'+seg('role',[['원장','원장'],['강사','강사'],['','해당 없음']],j.role==null?'-':j.role)+fe('role')+'</div>')+
     '<label class="f" for="jIns">악기 '+(m.ext?'<span class="opt">선택</span>':'<span class="req">*</span>')+'<select id="jIns" '+bad('inst')+'><option value="">'+(m.ext?'없음':'선택')+'</option>'+T_INSTS.map(function(i){return '<option '+(i===j.inst?'selected':'')+'>'+i+'</option>'}).join('')+'</select>'+fe('inst')+'</label>'+
     (m.ext?'':certBox())+'<p class="hint">이메일(로그인 아이디)을 바꾸려면 「내 문의」로 알려 주세요.</p>'+msgBox()+
@@ -750,7 +750,7 @@ document.addEventListener('click',function(e){if(e.target.id==='sdClose2'){S.stu
   if(b.id==='infoNo'){S.infoEd=false;S.err={};S.msg='';render();return}
   if(b.id==='infoSave'){readConfirm();var j6=S.j,e6={},mm6=S.me;j6.name=(document.getElementById('eNm').value||'').trim();j6.phone=(document.getElementById('ePh').value||'').replace(/\D/g,'');
     if(!j6.name)e6.ename='이름을 넣어 주세요.';if(!/^01\d{8,9}$/.test(j6.phone))e6.ephone='휴대전화 번호를 확인해 주세요.';if(!j6.sex)e6.sex='성별을 골라 주세요.';
-    if(!mm6.ext){if(!j6.type)e6.type='회원 종류를 골라 주세요.';if(j6.role==null)e6.role='직급을 골라 주세요.';if(!j6.inst)e6.inst='악기를 골라 주세요.';Object.keys(j6.certs).forEach(function(n){if(!j6.certs[n])e6['cy_'+n]=n+' 취득 년도를 골라 주세요.'})}
+    if(!mm6.ext){if(!j6.type&&mm6.kind!=='비회원'&&mm6.kind!=='외국인')e6.type='회원 종류를 골라 주세요.';if(j6.role==null)e6.role='직급을 골라 주세요.';if(!j6.inst)e6.inst='악기를 골라 주세요.';Object.keys(j6.certs).forEach(function(n){if(!j6.certs[n])e6['cy_'+n]=n+' 취득 년도를 골라 주세요.'})}
     S.err=e6;if(Object.keys(e6).length){render();return}
     if(j6.type==='연수교사회원'&&!j6.course)j6.course='초급';
     run(function(){return call('tSaveInfo',[S.sess,{sex:j6.sex,name:j6.name,phone:j6.phone,type:j6.type,course:j6.course,role:j6.role,inst:j6.inst,certs:Object.keys(j6.certs).map(function(n){return {n:n,y:j6.certs[n]}})}]).then(function(r){if(!r.ok){S.msg=r.msg;return}S.me=r.me;S.infoEd=false;S.err={};toast('저장했어요. 협회가 확인해요')})});return}

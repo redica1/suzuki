@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261031-212006 -->
+<!-- build: 20261031-212954 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -476,7 +476,7 @@ function vReq(){var L=S.reqs;if(!L)return '<div class="panel"><span><span class=
     '<div class="tiles"><div class="tile"><span class="k">계정 있는 선생님</span><span class="v">'+Object.keys(S.D.acc).filter(function(k){return S.D.acc[k]==='사용'}).length+'</span><span class="s">교사 '+S.D.tch.length+'명 중</span></div>'+
     '<div class="tile warn"><span class="k">새 회원 가입</span><span class="v">'+L.filter(function(q){return q['상태']==='대기'&&q['종류']==='새 회원'}).length+'</span><span class="s">명단에 없음</span></div>'+
     '<div class="tile warn"><span class="k">이메일 확인</span><span class="v">'+L.filter(function(q){return q['상태']==='대기'&&q['종류']==='이메일 확인'}).length+'</span><span class="s">명단과 다른 이메일</span></div>'+
-    '<div class="tile warn"><span class="k">외부인</span><span class="v">'+L.filter(function(q){return q['상태']==='대기'&&q['종류']==='외부인'}).length+'</span><span class="s">반주자·스태프 등</span></div>'+
+    '<div class="tile warn"><span class="k">외부인</span><span class="v">'+L.filter(function(q){return q['상태']==='대기'&&q['종류']==='외부인'}).length+'</span><span class="s">초빙교수·반주자 등</span></div>'+
     '<div class="tile"><span class="k">정보 수정</span><span class="v">'+L.filter(function(q){return q['상태']==='대기'&&q['종류']==='정보 수정'}).length+'</span><span class="s">「달라요」 메모</span></div></div>'+
     (list.length?list.map(reqCard).join(''):'<div class="panel"><p class="cap">요청이 없어요.</p></div>')}
 function reqWorks(info){var w=info['_근무'];if(!Array.isArray(w)){try{w=JSON.parse(info['근무JSON']||'null')}catch(x){w=null}}

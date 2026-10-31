@@ -1,4 +1,4 @@
-/* build: 20261031-212006 */
+/* build: 20261031-212954 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -726,12 +726,13 @@ function prefill_(tid) {
 }
 const CERTS_ = ['초급', '중급', '티처트레이너', '국민대학원', '대구가톨릭대학원', '전주대학원'];
 /** 가입 때 선생님이 넣은 정보 검사 (기존 교사회원 · 신규 회원 같은 칸) */
-const EXT_ROLES = ['반주자', '스태프', '통역', '초청 강사', '기타'];
+const EXT_ROLES = ['초빙교수', '반주자', '지휘자', '통역', '초청강사', '스태프', '기타'];   // 10-31 순서 · 항목 바꿈 (예전 값 「초청 강사」도 받음)
 /** 가입 정보 검사. mode: member(명단에 있는 교사) · new(신규 교사회원/연수교사회원) · ext(외부인) */
 function cleanInfo_(n, mode) {
   n = n || {}; const an = acadNames_(); const o = { mode };
   if (['남', '여'].indexOf(n.sex) < 0) fail('성별을 골라 주세요.'); o.sex = n.sex;
   if (mode === 'ext') {
+    if (n.extRole === '초청 강사') n.extRole = '초청강사';
     if (EXT_ROLES.indexOf(n.extRole) < 0) fail('하는 일을 골라 주세요.');
     o.extRole = n.extRole === '기타' ? '기타: ' + String(n.extRoleText || '').trim().slice(0, 30) : n.extRole;
     if (n.extRole === '기타' && !String(n.extRoleText || '').trim()) fail('하는 일을 적어 주세요.');

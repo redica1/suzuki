@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261031-212006 -->
+<!-- build: 20261031-212954 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -160,7 +160,7 @@ h1,h2,h3,.band h1,.sec>h2,.card h2{font-weight:800;letter-spacing:0}
 var INSTS=['바이올린','첼로','비올라','플루트','피아노'];
 var KINDS=['정식 교사','중급 연수','초급 연수'];
 function kindLabel(k){return {'정식 교사':'교사회원','중급 연수':'연수교사 · 중급','초급 연수':'연수교사 · 초급','외부인':'외부인'}[k]||k}
-var EXT_ROLES=['반주자','스태프','통역','초청 강사','기타'];
+var EXT_ROLES=['초빙교수','반주자','지휘자','통역','초청강사','스태프','기타'];
 var CERTS=['초급','중급','국민대학원','대구가톨릭대학원','전주대학원'];   /* 티처트레이너는 관리자만 넣음 */
 function blankJ(){return {sex:'',type:'',course:'',kind:'',works:[],noWork:false,role:null,inst:'',certs:{},extRole:'',extRoleText:'',org:'',pay:blankPay('')}}
 var BANKS=['국민','신한','하나','우리','농협','기업','SC제일','부산','대구(iM뱅크)','경남','광주','카카오뱅크','토스뱅크','케이뱅크','새마을금고','신협','우체국','수협','씨티'];
@@ -191,7 +191,7 @@ function steps(n){var t=['본인 찾기','이메일','인증','확인','완료']
 function seg(name,opts,v){return '<div class="seg" role="group">'+opts.map(function(o){var k=Array.isArray(o)?o[0]:o,l=Array.isArray(o)?o[1]:o;return '<button type="button" data-seg="'+name+'" data-val="'+esc(k)+'" aria-pressed="'+(String(v)===String(k))+'">'+esc(l)+'</button>'}).join('')+'</div>'}
 
 /* ---------- 화면 ---------- */
-var HTYPES=[['교사회원','교사회원','스즈키 교사 자격이 있는 선생님'],['연수교사','연수교사','지금 초급 연수 중인 선생님'],['외부인','외부인','반주자 · 스태프 · 통역 · 초청 강사 등 (강사료 · 수고비 지급용)']];
+var HTYPES=[['교사회원','교사회원','스즈키 교사 자격이 있는 선생님'],['연수교사','연수교사','지금 초급 연수 중인 선생님'],['외부인','외부인','초빙교수 · 반주자 · 지휘자 · 통역 · 초청강사 · 스태프 등 (강사료 · 수고비 지급용)']];
 function vHome(){var res='';
   if(S.look==='found')res='<div class="card pick"><h3>협회 명단에 선생님 정보가 있어요</h3><p class="lede"><b>교사회원</b>으로 가입해요. 이메일 인증을 마치면 협회에 있는 정보(소속 학원 · 직급 · 전공 · 자격)를 불러와요. 맞는지 확인하고 고쳐 주세요.</p>'+
     '<div class="two"><button class="btn primary" type="button" id="isMe">교사회원 가입하기</button><button class="btn" type="button" id="retry">다시 입력</button></div></div>';

@@ -1,10 +1,11 @@
-/* build: 20261031-221422 */
+/* build: 20261031-221547 */
 function vAuthPick(){return `<section class="sec"><h2>접수 시작</h2>
   <p class="lede">어떻게 접수하시나요?</p>
   <div class="pick2">
     ${MEMBER_OPEN?`<button type="button" class="pickcard" data-mode="member"><b>회원 선생님</b><span>협회 회원 선생님이 학원 학생들을 접수해요. 회원 이메일 · 비밀번호로 로그인해요.</span></button>`:''}
     ${GUEST_OPEN?`<button type="button" class="pickcard" data-mode="guest"><b>비회원 (학부모)</b><span>회원 학원에 다니지 않는 아이를 보호자가 직접 접수해요. 보호자 이름과 휴대전화만 있으면 돼요.</span></button>`:''}
     ${STAFF_OPEN?`<button type="button" class="pickcard" data-mode="staff"><b>관계자</b><span>초빙교수 · 반주자 · 지휘자 · 통역 · 초청강사 · 스태프. 협회 회원관리에 「외부인」으로 가입한 이메일 · 비밀번호로 로그인해요.</span></button>`:''}
+    ${INTL_OPEN?`<a class="pickcard" href="${esc(intlUrl())}" target="_blank" rel="noopener" style="text-decoration:none;color:inherit" lang="en"><b>Overseas participants <small style="font-weight:500">· 해외 참가</small></b><span>For groups from other countries. Registration is in English and fees are in USD. Your group leader signs in with the access code from the association. ↗</span></a>`:''}
   </div>
   ${typeof TEST_LOGIN==='string'&&TEST_LOGIN?`<button class="btn ghost" type="button" id="tLogin" style="border-style:dashed;margin-top:10px">STG 시험: ${esc(TEST_LOGIN.split('/')[0])} 선생님으로 바로 로그인</button>`:''}
   ${GUEST_OPEN?'<p class="hint">회원 학원에 다니는 학생은 담당 선생님이 한꺼번에 접수해요. 잘 모르겠으면 다니는 학원 선생님께 먼저 여쭤 주세요.</p>':''}</section>`}

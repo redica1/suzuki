@@ -1,4 +1,4 @@
-/* build: 20261101-001214 */
+/* build: 20261101-001406 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -104,8 +104,8 @@ function doGet(e) {
 function include(n) { return HtmlService.createHtmlOutputFromFile(n).getContent(); }
 
 function api(name, args) {
-  const open = { login, hello, tHello, tEvents, tLookup, tStart, tResend, tVerify, tCreate, tLogin, tForgot, tReset, tMe, tSavePay, tSavePart, tSaveInfo, tSavePhoto, tAcad, tSaveAcad, tDocUp, tDocGet, tSaveStu, tSaveStus, tStuDetail, tStuSave, tStuTutor, tStuTutorDel, tStuState, tStuStateDel, tMyStu, tMyStuDetail, tMyStuPay, tTchSaves, tTchEnd, tTchEvent, tTchAssign, tTchStart, tSaveRrn, tAddWork, tEndWork, tMainWork, tLogout, bPost, bMine, bReply };
-  const fns = { boot, saveRow, setCheck, logs, importRoster, saveDues, delDues, reqs, reqDo, delAcad, payView, bulkSet, saveWorks, importPastDues, bList, bSet, bComment, photoGet, photoDel, fillRegions, saveRates, docList, docUp, docGet, docDel, payList, payOk, payNo, memView, rosterNow, inputStatus, inboxDone, acctReset };
+  const open = { login, hello, tHello, tEvents, tLookup, tStart, tResend, tVerify, tCreate, tLogin, tForgot, tReset, tMe, tSavePay, tSavePart, tSaveInfo, tSavePhoto, tAcad, tSaveAcad, tDocUp, tDocGet, tSaveStu, tSaveStus, tStuDetail, tStuSave, tStuTutor, tStuTutorDel, tStuState, tStuStateDel, tMyStu, tMyStuDetail, tMyStuPay, tTchSaves, tTchEnd, tTchEvent, tTchAssign, tTchStart, tSaveRrn, tAddWork, tClassCreate, tEndWork, tMainWork, tLogout, bPost, bMine, bReply };
+  const fns = { boot, saveRow, setCheck, logs, importRoster, saveDues, delDues, reqs, reqDo, delAcad, payView, bulkSet, saveWorks, importPastDues, bList, bSet, bComment, photoGet, photoDel, fillRegions, saveRates, docList, docUp, docGet, docDel, payList, payOk, payNo, memView, rosterNow, inputStatus, inboxDone, acctReset, classFromStudents };
   try {
     if (open[name]) return Object.assign({ ok: true }, open[name].apply(null, args || []));
     if (!fns[name]) throw new UserError('알 수 없는 요청이에요.');
@@ -960,6 +960,42 @@ function regionOf_(sido) { const x = String(sido || '');
   if (/^(대전|광주|세종|충북|충남|충청|전북|전남|전라)/.test(x)) return REGIONS[1];
   if (/^(대구|부산|울산|경북|경남|경상)/.test(x)) return REGIONS[2]; return ''; }
 /** 졸업연주 지역이 빈 학원을 시·도로 채움 */
+/** 원본 불러오기 때 「스즈키 학원이 아닌 ○○ 클래스」로 학원이 비었던 학생 → 클래스를 만들어(이미 있으면 그곳) 연결 (11-01).
+ *  「이름 클래스」「이름클래스」「이름 플루트」처럼 끝이 클래스 · 악기면 「이름 클래스」로 통일. 대표 = 같은 이름의 교사(한 명일 때). 그 밖의 이름(오케스트라 등)은 그대로 둠 */
+function classFromStudents(who) {
+  const lock = LockService.getScriptLock(); lock.waitLock(30000);
+  const made = [], left = {}; let moved = 0;
+  try {
+    const A = tbl_('학원'), S2 = tbl_('학생'), T = tbl_('교사'), stamp = now_();
+    const byName = {}; A.v.forEach((r, i) => byName[normA_(A.get(i, '학원명'))] = A.get(i, '학원ID'));
+    const RE = /스즈키 학원이 아닌 「([^」]+)」 — 학원을 정해 주세요/;
+    S2.v.forEach((r, i) => {
+      if (S2.get(i, '학원ID')) return; const memo = String(S2.get(i, '확인메모') || ''), m = memo.match(RE); if (!m) return;
+      const raw = m[1].trim(); let id = byName[normA_(raw)];
+      if (!id) {
+        const base = raw.replace(/\s*(클래스|플루트|바이올린|첼로|비올라|피아노)$/, '').trim();
+        if (base === raw || !base) { left[raw] = (left[raw] || 0) + 1; return; }
+        const cname = base + ' 클래스'; id = byName[normA_(cname)];
+        if (!id) {
+          const hs = T.v.map((x, j) => j).filter(j => T.get(j, '이름') === base && T.get(j, '상태') !== '탈퇴' && T.get(j, '회원구분') !== '외부인');
+          const hid = hs.length === 1 ? T.get(hs[0], '교사ID') : '', ph = hid ? digits_(T.get(hs[0], '휴대전화')) : '';
+          id = nextId_(A, '학원ID', 'A');
+          A.append({ '학원ID': id, '학원명': cname, '구분': '클래스', '상태': '운영', '원장교사ID': hid, '원장명': base, '교실대표번호': ph, '대표번호원장': ph ? '예' : '', '이메일': hid ? T.get(hs[0], '이메일') : '',
+            '확인': '확인 필요', '확인메모': '학생 명단의 「' + raw + '」로 만든 클래스' + (hid ? '' : ' · 대표 선생님을 정해 주세요'), '원본': '학생정보DB', '수정일': stamp, '수정자': who.name + ' (클래스 정리)' });
+          byName[normA_(cname)] = id; made.push(cname + (hid ? '' : ' (대표 없음)'));
+          if (hid && !worksOf_(hid).some(w => !w['종료'] && w['학원ID'] === id) && worksOf_(hid).filter(w => !w['종료']).length < 3) {
+            const W = tbl_('근무'); W.append({ '근무ID': nextWid_(W), '교사ID': hid, '학원ID': id, '학원명': '', '시작': '', '종료': '', '주근무': worksOf_(hid).some(w => !w['종료']) ? '' : '예', '출처': '클래스 정리', '수정일': stamp, '수정자': who.name }); syncAcads_(hid);
+          }
+        }
+        if (raw !== cname) byName[normA_(raw)] = id;
+      }
+      const rest = memo.replace(RE, '').replace(/^\s*·\s*|\s*·\s*$/g, '').trim();
+      S2.set(i, { '학원ID': id, '확인메모': rest, '확인': rest ? S2.get(i, '확인') : '확인 전', '수정일': stamp, '수정자': who.name + ' (클래스 정리)' }); moved++;
+    });
+    log_(who.name, '학원', '-', '클래스 정리', '새 클래스 ' + made.length + '곳 · 학생 ' + moved + '명 연결 · 남음 ' + Object.keys(left).map(k => k + ' ' + left[k]).join(', '));
+  } finally { lock.releaseLock(); }
+  return { made, moved, left };
+}
 function fillRegions(who) {
   const A = tbl_('학원'); let n = 0, left = [];
   A.v.forEach((r, i) => { if (A.get(i, '졸업연주지역')) return; const g = regionOf_(A.get(i, '시도')); if (g) { A.set(i, { '졸업연주지역': g, '수정일': now_(), '수정자': who.name + ' (시도로 채움)' }); n++; } else left.push(A.get(i, '학원명')); });

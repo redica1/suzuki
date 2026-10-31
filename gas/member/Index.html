@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261101-001214 -->
+<!-- build: 20261101-001406 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -241,6 +241,8 @@ function acadTiles(list){var ids={},n=0,by={},none=0,tc=0,tseen={};list.forEach(
   var cls=list.filter(function(a){return a['구분']==='클래스'}),ac=list.filter(function(a){return a['구분']!=='클래스'&&a['구분']!=='협회'}),empty=cls.filter(function(a){return !sn[a['학원ID']]}).length;
   return '<div class="tiles" style="margin:0 0 10px">'+tile(S.f.st==='off'?'휴원 · 탈퇴 학원':'학원',ac.length,cut?'지금 고른 조건 · 전체 '+all+'곳':'협회 빼고 · 전체 '+all+'곳 중')+tile('클래스',cls.length,'개인 레슨'+(empty?' · 학생 없음 '+empty+'곳':''))+(empty?tile('학생 없는 클래스',empty,'캠프 · 졸업연주 명단에서 빠져요',1):'')+tile('선생님',tc,'탈퇴 빼고 · 여러 학원은 한 번')+tile('재원 학생',n,'이 학원들 소속')+
     INSTS.filter(function(k){return by[k]}).map(function(k){return tile(k,by[k],n?Math.round(by[k]*100/n)+'%':'')}).join('')+(none?tile('전공 없음',none,'학생정보에서 채워 주세요',1):'')+'</div>'}
+function clsFix(){var RE=/스즈키 학원이 아닌 「([^」]+)」/,n=0,names={};S.D.stu.forEach(function(x){if(x['학원ID'])return;var m=String(x['확인메모']||'').match(RE);if(m){n++;names[m[1]]=1}});
+  if(!n)return '';var k=Object.keys(names);return '<div class="note warn row" style="justify-content:space-between;margin:0 0 10px"><span>학원이 비어 있는 학생 <b>'+n+'명</b> — 원본 명단에서 「'+esc(k.slice(0,4).join('」, 「'))+'」'+(k.length>4?' 외 '+(k.length-4)+'곳':'')+'으로 적혀 있었어요. 「○○ 클래스」는 클래스로 만들어 연결할 수 있어요.</span><button class="btn small primary" type="button" id="clsFix">클래스 만들고 학생 연결</button></div>'}
 function acadSeg(){var on=S.D.acad.filter(function(a){return !a['상태']||a['상태']==='운영'}).length,off=S.D.acad.length-on,x=S.f.st==='off';
   return '<div class="row" role="group" aria-label="학원 보기" style="margin:0 0 10px"><button class="btn'+(x?'':' primary')+'" type="button" data-ast="" aria-pressed="'+!x+'">운영 중 '+on+'곳</button><button class="btn'+(x?' primary':'')+'" type="button" data-ast="off" aria-pressed="'+x+'">휴원 · 탈퇴 '+off+'곳</button>'+(x?'<span class="cap">다시 운영하면 학원을 열어 상태를 「운영」으로 바꾸세요. 그러면 운영 중 목록 · 선생님 화면 · 행사 명단에 다시 나와요.</span>':'')+'</div>'}
 function vAcads(){
@@ -248,7 +250,7 @@ function vAcads(){
   var tc={},sc={};S.D.tch.forEach(function(t){tAcads(t).forEach(function(id){tc[id]=(tc[id]||0)+1})});S.D.stu.forEach(function(s){if(s['상태']==='재원')sc[s['학원ID']]=(sc[s['학원ID']]||0)+1});
   var sds=[];S.D.acad.forEach(function(a){if(a['시도']&&sds.indexOf(a['시도'])<0)sds.push(a['시도'])});
   return '<div class="sec-h"><div><h2>학원정보</h2><p>학원은 관리자가 만들고, 원장으로 지정된 선생님은 자기 학원 연락처 · 주소 · 교습과목을 고칠 수 있어요(고치면 「확인 필요」).</p></div><button class="btn primary" type="button" data-new="acad">+ 학원 추가</button></div>'+
-  (S.edit&&S.edit.kind==='acad'?acadEditor():'')+acadSeg()+acadTiles(list)+issueBar()+
+  (S.edit&&S.edit.kind==='acad'?acadEditor():'')+acadSeg()+acadTiles(list)+clsFix()+issueBar()+
   '<div class="panel"><div class="filters"><input type="search" id="q" value="'+esc(S.q)+'" placeholder="학원명·원장·주소·번호" style="width:min(240px,100%)">'+
     sel('fkn',[['','학원 · 클래스 전체'],'학원','클래스','협회'],S.f.kn,'구분')+sel('fck',[['','확인 전체']].concat(CHECKS),S.f.ck,'확인')+sel('fsd',[['','시·도 전체']].concat(sds.sort()),S.f.sd,'시도')+'</div>'+bulkBar()+
   '<div class="tbl"><table><thead><tr><th class="ck"><input type="checkbox" id="ckAll" aria-label="이 쪽 모두 선택"></th><th>번호</th><th>상태</th><th>학원명</th><th>구분</th><th>지역</th><th>원장</th><th>원장 휴대전화</th><th>교실 대표번호</th><th class="r">교사</th><th class="r">학생</th><th>계약</th><th>확인</th></tr></thead><tbody>'+
@@ -701,6 +703,7 @@ document.addEventListener('click',function(e){
   if(b.id==='progRe'){loadProg();render();return}
   if(d.ibx){b.disabled=true;callS('inboxDone',d.ibx).then(function(r){b.disabled=false;if(!r.ok){toast(r.msg);return}S.prog=r;render();toast('확인했어요')});return}
   if(b.dataset&&b.dataset.ast!==undefined){S.f.st=b.dataset.ast;S.page=0;S.sel={};S.issue='';render();return}
+  if(b.id==='clsFix'){b.disabled=true;b.innerHTML='<span class="spin"></span> 정리하는 중…';callS('classFromStudents').then(function(r){if(!r.ok){b.disabled=false;b.textContent='다시 해 보기';toast(r.msg);return}var lf=Object.keys(r.left||{});toast('클래스 '+r.made.length+'곳 만들고 학생 '+r.moved+'명 연결했어요'+(lf.length?' · 남은 곳: '+lf.join(', '):''));load()});return}
   if(b.id==='rosterGo'){b.disabled=true;callS('rosterNow').then(function(r){b.disabled=false;if(!r.ok){toast(r.msg);return}S.roster=r;render();toast('행사용 명단을 만들었어요')});return}
   if(b.id==='payRe'){loadPay();render();return}
   if(d.pok||d.pno){var k=+(d.pok||d.pno),x=S.pays[k];if(!x)return;var gv=function(id){var e=document.getElementById(id);return e?e.value.trim():''};

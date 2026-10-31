@@ -1,4 +1,4 @@
-/* build: 20261031-212954 */
+/* build: 20261031-213048 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -658,6 +658,7 @@ function setSetting_(k, v) {
  * 비밀번호는 솔트 + SHA-256 5,000번 반복 해시만 저장 (관리자도 볼 수 없음). 나중에 다른 서버로 옮겨도 같은 계산으로 확인 가능. */
 const KINDS = ['정식 교사', '중급 연수', '초급 연수'];
 const INSTS_ = ['바이올린', '첼로', '비올라', '플루트', '피아노'];
+const T_INSTS_ = INSTS_.concat(['지휘', '기타']);   /* 선생님 · 외부인 악기 (10-31: 지휘 · 기타 더함). 학생 전공 · 학원 교습과목은 INSTS_ 그대로 */
 function tHello() {
   const s = settings_();
   const acads = tbl_('학원').v.filter(r => r[3] !== '탈퇴' && r[1]).map(r => [r[0], r[1], r[9]]).sort((a, b) => String(a[1]).localeCompare(String(b[1]), 'ko'));
@@ -722,7 +723,7 @@ function prefill_(tid) {
   const certs = {}; String(g('본인자격') || g('명단자격')).split(/[,，、]/).forEach(x => { x = x.trim(); if (!x) return; const m = x.match(/^(.+?)\s*((?:19|20)\d{2})/); let n = (m ? m[1] : x).replace('카톨릭', '가톨릭').replace(/\s+/g, ''); if (n === '국민대') n = '국민대학원';
     if (CERTS_.indexOf(n) >= 0 && n !== '티처트레이너') certs[n] = m ? m[2] : ''; });
   const role = ['원장', '강사'].indexOf(g('직급')) >= 0 ? g('직급') : null;
-  return { sex: ['남', '여'].indexOf(g('성별')) >= 0 ? g('성별') : '', type, course, works, noWork: false, role, inst: INSTS_.indexOf(g('전공')) >= 0 ? g('전공') : '', certs };
+  return { sex: ['남', '여'].indexOf(g('성별')) >= 0 ? g('성별') : '', type, course, works, noWork: false, role, inst: T_INSTS_.indexOf(g('전공')) >= 0 ? g('전공') : '', certs };
 }
 const CERTS_ = ['초급', '중급', '티처트레이너', '국민대학원', '대구가톨릭대학원', '전주대학원'];
 /** 가입 때 선생님이 넣은 정보 검사 (기존 교사회원 · 신규 회원 같은 칸) */
@@ -736,7 +737,7 @@ function cleanInfo_(n, mode) {
     if (EXT_ROLES.indexOf(n.extRole) < 0) fail('하는 일을 골라 주세요.');
     o.extRole = n.extRole === '기타' ? '기타: ' + String(n.extRoleText || '').trim().slice(0, 30) : n.extRole;
     if (n.extRole === '기타' && !String(n.extRoleText || '').trim()) fail('하는 일을 적어 주세요.');
-    o.org = String(n.org || '').trim().slice(0, 60); o.inst = INSTS_.indexOf(n.inst) >= 0 ? n.inst : '';
+    o.org = String(n.org || '').trim().slice(0, 60); o.inst = T_INSTS_.indexOf(n.inst) >= 0 ? n.inst : '';
     o.kind = '외부인'; o.type = '외부인'; o.role = ''; o.works = []; o.noWork = true; o.certs = []; o.certTxt = ''; o.acads = []; o.acadNames = o.org || '-';
     return o;
   }
@@ -760,7 +761,7 @@ function cleanInfo_(n, mode) {
   o.acads = o.works.filter(w => w.id).map(w => w.id);
   o.acadText = o.works.filter(w => !w.id).map(w => w.text).join(', ');
   o.role = ['원장', '강사', ''].indexOf(n.role) >= 0 ? n.role : ''; if (n.role == null) fail('직급을 골라 주세요.');
-  if (INSTS_.indexOf(n.inst) < 0) fail('악기를 골라 주세요.'); o.inst = n.inst;
+  if (T_INSTS_.indexOf(n.inst) < 0) fail('악기를 골라 주세요.'); o.inst = n.inst;
   o.certs = (n.certs || []).filter(x => CERTS_.indexOf(x.n) >= 0 && x.n !== '티처트레이너')   /* 티처트레이너는 관리자만 (10-28) */.map(x => { if (!/^(19|20)\d{2}$/.test(String(x.y))) fail(x.n + ' 취득 년도를 골라 주세요.'); return { n: x.n, y: String(x.y) }; });
   o.certTxt = o.certs.map(x => x.n + (x.y ? ' ' + x.y : '')).join(', ');
   o.acadNames = o.noWork ? '현재 소속 학원 없음' : o.works.map(w => (an[w.id] || w.text + ' (목록에 없음)') + ' ' + w.start.replace('-', '.') + '~').join(' · ');
@@ -1216,7 +1217,7 @@ function tchApply_(aid, aname, who, d, k) {
   const phone = digits_(d.phone); if (!/^01\d{8,9}$/.test(phone)) fail(at + '휴대전화 번호를 확인해 주세요.');
   if (phone !== digits_(g('휴대전화')) && T.v.some((r, j) => j !== i && digits_(r[T.h.indexOf('휴대전화')]) === phone && r[T.h.indexOf('상태')] !== '탈퇴')) fail(at + '그 휴대전화 번호는 다른 회원이 쓰고 있어요.');
   const role = String(d.role == null ? '' : d.role); if (['원장', '강사', ''].indexOf(role) < 0) fail(at + '직급을 골라 주세요.');
-  const inst = String(d.inst || ''); if (INSTS_.indexOf(inst) < 0) fail(at + '전공을 골라 주세요.');
+  const inst = String(d.inst || ''); if (T_INSTS_.indexOf(inst) < 0) fail(at + '전공을 골라 주세요.');
   const ext = g('회원구분') === '외부인', kind = ext ? '외부인' : String(d.kind || ''); if (!ext && TCH_KINDS_.indexOf(kind) < 0) fail(at + '회원 구분을 골라 주세요.');
   let cert = String(d.cert || '').trim().slice(0, 120);
   if (Array.isArray(d.certs)) { const seen = {}; cert = d.certs.filter(x => x && CERTS_.indexOf(x.n) >= 0 && !seen[x.n] && (seen[x.n] = 1)).sort((a, b) => CERTS_.indexOf(a.n) - CERTS_.indexOf(b.n)).map(x => x.n + (/^(19|20)\d{2}$/.test(String(x.y || '')) ? ' ' + x.y : '')).concat(String(d.certX || '').trim() ? [String(d.certX).trim().slice(0, 60)] : []).join(', '); }
@@ -1386,7 +1387,7 @@ function tSaveInfo(sess, d) {
     if (phone !== digits_(g('휴대전화')) && T.v.some((r, j) => j !== i && digits_(r[T.h.indexOf('휴대전화')]) === phone && r[T.h.indexOf('상태')] !== '탈퇴')) fail('그 휴대전화 번호는 다른 회원이 쓰고 있어요. 「문의 · 요청」으로 알려 주세요.');
     if (['남', '여'].indexOf(d.sex) < 0) fail('성별을 골라 주세요.');
     const upd = { '이름': name, '휴대전화': phone, '성별': d.sex }, diff = [];
-    const inst = INSTS_.indexOf(d.inst) >= 0 ? d.inst : ''; if (!ext && !inst) fail('악기를 골라 주세요.'); upd['전공'] = inst;
+    const inst = T_INSTS_.indexOf(d.inst) >= 0 ? d.inst : ''; if (!ext && !inst) fail('악기를 골라 주세요.'); upd['전공'] = inst;
     if (!ext) {
       if (['교사회원', '연수교사회원'].indexOf(d.type) < 0) fail('회원 종류를 골라 주세요.');
       upd['회원구분'] = d.type === '교사회원' ? '정식 교사' : d.course === '중급' ? '중급 연수' : '초급 연수';

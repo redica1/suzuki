@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261031-212954 -->
+<!-- build: 20261031-213048 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -145,6 +145,7 @@ h1,h2,h3{font-weight:800;letter-spacing:0}
 <div class="toast" id="toast" hidden></div>
 <script>
 var INSTS=['바이올린','첼로','비올라','플루트','피아노'];
+var T_INSTS=INSTS.concat(['지휘','기타']);
 var CHECKS=['확인 전','확인 필요','확인'];
 var TABS=[['home','한눈에'],['acad','학원정보'],['tch','교사정보'],['stu','학생정보'],['req','승인 대기'],['pay','입금 신고'],['prog','입력 현황'],['ask','문의'],['log','바뀐 기록'],['set','설정']];
 var S={sess:'',tab:'home',q:'',f:{},page:0,edit:null,sel:{},issue:'',D:null,test:false,busy:false,hist:[]};
@@ -303,7 +304,7 @@ function vTeachers(){var list=tchList(),per=50,page=list.slice(S.page*per,(S.pag
   return '<div class="sec-h"><div><h2>교사정보</h2><p>회원 구분(정식 교사 · 중급 연수 · 초급 연수)은 짐작하지 않고 「확인 전」으로 두었어요. 명단 자격은 원본 그대로예요.</p></div><button class="btn primary" type="button" data-new="tch">+ 교사 추가</button></div>'+
   (S.edit&&S.edit.kind==='tch'?tchEditor():'')+issueBar()+
   '<div class="panel"><div class="filters"><input type="search" id="q" value="'+esc(S.q)+'" placeholder="이름·전화·학원" style="width:min(220px,100%)">'+
-    sel('fac',acadOpts('학원 전체'),S.f.ac,'학원')+sel('fins',[['','전공 전체']].concat(INSTS),S.f.ins,'전공')+sel('frl',[['','직급 전체'],'원장','강사',['-','없음']],S.f.rl,'직급')+sel('fcp',[['','캠프교수 전체'],['예','캠프교수 예'],['아니오','캠프교수 아니오']],S.f.cp,'캠프교수')+sel('ffr',[['','회비면제 전체'],['예','회비면제 예'],['아니오','회비면제 아니오']],S.f.fr,'회비면제')+sel('fdu',[['','2026 회비 전체'],'납부','미납'],S.f.du,'회비')+sel('fpw',[['','납부 방법 전체'],'자동이체','직접입금','단체납부','면제'],S.f.pw,'납부 방법')+sel('fct',[['','협회 계약 전체'],['예','계약 체결'],['아니오','계약 안 함'],['-','계약 확인 전']],S.f.ct,'협회 계약')+sel('fkd',[['','회원 종류 전체'],['정식 교사','교사회원'],['중급 연수','연수교사 · 중급'],['초급 연수','연수교사 · 초급'],'외부인',['-','확인 전']],S.f.kd,'회원 종류')+sel('fck',[['','확인 전체']].concat(CHECKS),S.f.ck,'확인')+'</div>'+bulkBar()+
+    sel('fac',acadOpts('학원 전체'),S.f.ac,'학원')+sel('fins',[['','전공 전체']].concat(T_INSTS),S.f.ins,'전공')+sel('frl',[['','직급 전체'],'원장','강사',['-','없음']],S.f.rl,'직급')+sel('fcp',[['','캠프교수 전체'],['예','캠프교수 예'],['아니오','캠프교수 아니오']],S.f.cp,'캠프교수')+sel('ffr',[['','회비면제 전체'],['예','회비면제 예'],['아니오','회비면제 아니오']],S.f.fr,'회비면제')+sel('fdu',[['','2026 회비 전체'],'납부','미납'],S.f.du,'회비')+sel('fpw',[['','납부 방법 전체'],'자동이체','직접입금','단체납부','면제'],S.f.pw,'납부 방법')+sel('fct',[['','협회 계약 전체'],['예','계약 체결'],['아니오','계약 안 함'],['-','계약 확인 전']],S.f.ct,'협회 계약')+sel('fkd',[['','회원 종류 전체'],['정식 교사','교사회원'],['중급 연수','연수교사 · 중급'],['초급 연수','연수교사 · 초급'],'외부인',['-','확인 전']],S.f.kd,'회원 종류')+sel('fck',[['','확인 전체']].concat(CHECKS),S.f.ck,'확인')+'</div>'+bulkBar()+
   '<div class="tbl"><table><thead><tr><th class="ck"><input type="checkbox" id="ckAll" aria-label="이 쪽 모두 선택"></th><th>번호</th><th>이름</th><th>소속 학원</th><th>직급</th><th>캠프교수</th><th>회비면제</th><th>전공</th><th>휴대전화</th><th>이메일</th><th>회원 종류</th><th>자격</th><th>납부 방법</th><th>2026 회비</th><th>계정</th><th>내부·외부</th><th>협회 계약</th><th>확인</th><th>확인 메모</th></tr></thead><tbody>'+
   page.map(function(t){var id=t['교사ID'];return '<tr class="click '+(S.edit&&S.edit.id===id?'on':'')+'" data-edit="tch|'+id+'"><td class="ck"><input type="checkbox" data-ck="'+id+'" '+(S.sel[id]?'checked':'')+' aria-label="선택"></td><td class="num cap">'+id+'</td><td><b>'+nm(t)+'</b></td><td>'+esc(tAcadTxt(t))+'</td><td>'+esc(t['직급']||'-')+'</td><td>'+(t['캠프교수']==='예'?'<span class="pill ok">예</span>':'<span class="cap">아니오</span>')+'</td><td>'+(t['회비구분']==='면제'?'<span class="pill info">예</span>':'<span class="cap">아니오</span>')+'</td><td>'+esc(t['전공'])+'</td><td class="num">'+(fmt(t['휴대전화'])||'<span class="pill due">없음</span>')+'</td><td>'+esc(t['이메일'])+'</td><td>'+(t['회원구분']==='확인 전'||!t['회원구분']?'<span class="pill mute">확인 전</span>':'<span class="pill info">'+esc(kindLabel(t['회원구분']))+'</span>')+'</td><td>'+(t['본인자격']?esc(t['본인자격']):t['명단자격']?esc(t['명단자격'])+' <span class="cap">(명단)</span>':'-')+'</td><td>'+esc(t['회비납부방법']||'-')+'</td><td>'+duesPill('교사',id,t)+'</td><td>'+accPill(id)+'</td><td>'+(t['내부외부']==='외부'?'<span class="pill due">외부</span>':esc(t['내부외부']||'-'))+'</td><td>'+(t['계약체결']==='예'?'<span class="pill ok">체결</span>'+(t['계약일']?' <span class="cap num">'+esc(t['계약일'])+'</span>':''):t['계약체결']==='아니오'?'<span class="pill bad">아니오</span>':'<span class="cap">-</span>')+'</td><td>'+ckPill(t['확인'])+'</td><td class="cap">'+esc(t['확인메모'])+'</td></tr>'}).join('')+
   '</tbody></table></div>'+pager(list.length,per)+'</div>'}
@@ -312,7 +313,7 @@ function tchEditor(){var t=S.edit.id==='new'?{'상태':'활동','회원구분':'
   return '<div class="editor">'+edHead(t['교사ID']?nm(t)+' 선생님 <span class="cap num">'+t['교사ID']+'</span>':'교사 추가',t)+
     (same.length?'<div class="note">이름이 같은 교사: '+same.map(function(x){return '<b>'+nm(x)+'</b> '+esc(tAcadTxt(x))+' · '+esc(x['전공'])+' · 뒷자리 '+String(x['휴대전화']).slice(-4)}).join(' / ')+'</div>':'')+
     '<div class="fgrid">'+fld('e_이름','이름',t['이름'],{req:1,hint:'명찰·졸업장에 그대로'})+fld('e_구분글자','구분 글자',t['구분글자'],{hint:'동명이인 메모용 · 화면엔 작게'})+fld('e_휴대전화','휴대전화',fmt(t['휴대전화']),{type:'tel'})+
-    fld('e_이메일','이메일',t['이메일'])+fld('e_성별','성별',t['성별']||'',{sel:[['','선택'],'남','여']})+fld('e_전공','전공',t['전공'],{sel:[['','선택']].concat(INSTS)})+
+    fld('e_이메일','이메일',t['이메일'])+fld('e_성별','성별',t['성별']||'',{sel:[['','선택'],'남','여']})+fld('e_전공','전공',t['전공'],{sel:[['','선택']].concat(T_INSTS)})+
     (t['교사ID']?'':fld('e_학원1','주 소속 학원',t['학원1'],{sel:acadOpts('소속 없음')})+fld('e_학원2','추가 근무 학원 1',t['학원2'],{sel:acadOpts('없음')})+fld('e_학원3','추가 근무 학원 2',t['학원3'],{sel:acadOpts('없음')}))+
     fld('e_회원구분','회원 종류',t['회원구분'],{sel:['확인 전',['정식 교사','교사회원'],['중급 연수','연수교사 · 중급'],['초급 연수','연수교사 · 초급'],'외부인'],hint:'명단 자격: '+esc(t['명단자격']||'없음')+(t['명단취득']?' · '+esc(t['명단취득']):'')})+
     certAdmin(t)+fld('e_상태','상태',t['상태'],{sel:['활동','휴직','활동정지','탈퇴']})+fld('e_확인','확인',t['확인'],{sel:CHECKS})+'</div>'+

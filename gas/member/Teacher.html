@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261031-212954 -->
+<!-- build: 20261031-213048 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -158,6 +158,7 @@ h1,h2,h3,.band h1,.sec>h2,.card h2{font-weight:800;letter-spacing:0}
 <div class="toast" id="toast" hidden></div>
 <script>
 var INSTS=['바이올린','첼로','비올라','플루트','피아노'];
+var T_INSTS=INSTS.concat(['지휘','기타']);
 var KINDS=['정식 교사','중급 연수','초급 연수'];
 function kindLabel(k){return {'정식 교사':'교사회원','중급 연수':'연수교사 · 중급','초급 연수':'연수교사 · 초급','외부인':'외부인'}[k]||k}
 var EXT_ROLES=['초빙교수','반주자','지휘자','통역','초청강사','스태프','기타'];
@@ -242,7 +243,7 @@ function extFields(){var j=S.j;
     (j.extRole==='기타'?'<label class="f" for="jExT">하는 일 적기 <span class="req">*</span><input type="text" id="jExT" value="'+esc(j.extRoleText)+'" '+bad('extRoleText')+'></label>'+fe('extRoleText'):'')+
     '<div class="f"><span>성별 <span class="req">*</span></span>'+seg('sex',[['남','남'],['여','여']],j.sex)+fe('sex')+'</div>'+
     '<label class="f" for="jOrg">소속 <span class="opt">선택 · 학교·단체 등</span><input type="text" id="jOrg" value="'+esc(j.org)+'"></label>'+
-    '<label class="f" for="jIns">악기 <span class="opt">선택</span><select id="jIns"><option value="">없음</option>'+INSTS.map(function(i){return '<option '+(i===j.inst?'selected':'')+'>'+i+'</option>'}).join('')+'</select></label>'}
+    '<label class="f" for="jIns">악기 <span class="opt">선택</span><select id="jIns"><option value="">없음</option>'+T_INSTS.map(function(i){return '<option '+(i===j.inst?'selected':'')+'>'+i+'</option>'}).join('')+'</select></label>'}
 function certBox(){var j=S.j,ys=[];for(var y=new Date().getFullYear();y>=1985;y--)ys.push(String(y));
   return '<div class="f"><span>보유 자격 <span class="opt">있는 것 모두 · 고르면 취득 년도 필수</span></span><div style="display:grid;gap:6px">'+CERTS.map(function(n){var on=n in j.certs;
     return '<div class="row" style="border:1px solid '+(on?'var(--accent)':'var(--line)')+';border-radius:9px;padding:6px 10px"><label class="agree" style="flex:1;align-items:center"><input type="checkbox" data-cert="'+n+'" '+(on?'checked':'')+'> '+n+'</label>'+
@@ -256,7 +257,7 @@ function vConfirm(){var j=S.j,nw=S.look!=='found',ext=nw&&S.mode==='ext';if(!j.p
       (j.type==='연수교사회원'?'<p class="hint">연수 과정: <b>'+(j.course==='중급'?'중급 (협회 명단 기준)':'초급')+'</b></p>':''))+
     (ext?'':'<div class="f"><span>성별 <span class="req">*</span></span>'+seg('sex',[['남','남'],['여','여']],j.sex)+fe('sex')+'</div>'+acadFields()+
     '<div class="f"><span>직급 <span class="req">*</span></span>'+seg('role',[['원장','원장'],['강사','강사'],['','해당 없음']],j.role==null?'-':j.role)+fe('role')+'</div>'+
-    '<label class="f" for="jIns">악기 <span class="req">*</span><select id="jIns" '+bad('inst')+'><option value="">선택</option>'+INSTS.map(function(i){return '<option '+(i===j.inst?'selected':'')+'>'+i+'</option>'}).join('')+'</select>'+fe('inst')+'</label>'+
+    '<label class="f" for="jIns">악기 <span class="req">*</span><select id="jIns" '+bad('inst')+'><option value="">선택</option>'+T_INSTS.map(function(i){return '<option '+(i===j.inst?'selected':'')+'>'+i+'</option>'}).join('')+'</select>'+fe('inst')+'</label>'+
     certBox())+'</div>'+payFields(j.pay,false);
   return steps(4)+head+body+
     '<div class="card"><h3>비밀번호</h3><label class="f" for="pw1">비밀번호 <span class="req">*</span> <span class="opt">8자 이상</span><input type="password" id="pw1" '+bad('pw')+' value="'+esc(S.pw1||'')+'" autocomplete="new-password"></label>'+
@@ -285,7 +286,7 @@ function infoEdit(m){var j=S.j;
     '<div class="f"><span>성별 <span class="req">*</span></span>'+seg('sex',[['남','남'],['여','여']],j.sex)+fe('sex')+'</div>'+
     (m.ext?'':'<div class="f"><span>회원 종류 <span class="req">*</span></span>'+seg('type',[['교사회원','교사회원'],['연수교사회원','연수교사']],j.type)+fe('type')+'</div>'+
       '<div class="f"><span>직급 <span class="req">*</span></span>'+seg('role',[['원장','원장'],['강사','강사'],['','해당 없음']],j.role==null?'-':j.role)+fe('role')+'</div>')+
-    '<label class="f" for="jIns">악기 '+(m.ext?'<span class="opt">선택</span>':'<span class="req">*</span>')+'<select id="jIns" '+bad('inst')+'><option value="">'+(m.ext?'없음':'선택')+'</option>'+INSTS.map(function(i){return '<option '+(i===j.inst?'selected':'')+'>'+i+'</option>'}).join('')+'</select>'+fe('inst')+'</label>'+
+    '<label class="f" for="jIns">악기 '+(m.ext?'<span class="opt">선택</span>':'<span class="req">*</span>')+'<select id="jIns" '+bad('inst')+'><option value="">'+(m.ext?'없음':'선택')+'</option>'+T_INSTS.map(function(i){return '<option '+(i===j.inst?'selected':'')+'>'+i+'</option>'}).join('')+'</select>'+fe('inst')+'</label>'+
     (m.ext?'':certBox())+'<p class="hint">이메일(로그인 아이디)을 바꾸려면 「내 문의」로 알려 주세요.</p>'+msgBox()+
     '<div class="two">'+btn('infoSave','저장')+'<button class="btn" type="button" id="infoNo">취소</button></div></div>'}
 function vMe(){var m=S.me;if(!m)return '<div class="card"><span><span class="spin"></span> 불러오는 중…</span></div>';var p=m.pay;
@@ -417,7 +418,7 @@ function tchEdit(M){if(!S.tchRows||S.tchRowsFor!==M.id){S.tchRows=tchRowsFrom(M.
     '<td class="w-sx"><select data-tf="'+i+'|sex"'+bad('tx'+i)+'><option value="">-</option>'+opt(['남','여'],x.sex)+'</select></td>'+
     '<td><input type="tel" data-tf="'+i+'|phone" value="'+esc(fmtTel(x.phone))+'" inputmode="numeric" style="width:140px"'+bad('tp'+i)+'></td>'+
     '<td><select data-tf="'+i+'|role">'+opt([['원장','원장'],['강사','강사'],['','없음']],x.role)+'</select></td>'+
-    '<td><select data-tf="'+i+'|inst"'+bad('ti'+i)+'><option value="">-</option>'+opt(INSTS,x.inst)+'</select></td>'+
+    '<td><select data-tf="'+i+'|inst"'+bad('ti'+i)+'><option value="">-</option>'+opt(T_INSTS,x.inst)+'</select></td>'+
     '<td>'+(x.ext?'<span class="hint">외부인</span>':'<select data-tf="'+i+'|kind"'+bad('tk'+i)+'><option value="">-</option>'+opt(TKINDS,x.kind)+'</select>')+'</td>'+
     '<td>'+certSel(x,i)+'</td>'+
     '<td class="num">'+esc(x.start?ymd(x.start):'-')+'</td>'+

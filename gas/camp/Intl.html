@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head>
-<!-- build: 20261031-215550 -->
+<!-- build: 20261031-221108 -->
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <base target="_top">
 <title>Suzuki Winter Music Camp · Overseas Registration</title>
@@ -34,14 +34,14 @@ table{width:100%;border-collapse:collapse;font-size:15px}th,td{text-align:left;p
 <main class="wrap" id="app"></main>
 <div class="toast" id="toast" hidden></div><div class="busy" id="busy" hidden>Saving…</div>
 <script>
-var S={tok:'',D:null,list:[],dirty:false,err:'',rep:{cur:'KRW'}};
+var S={tok:'',D:null,list:[],dirty:false,err:'',rep:{cur:'USD'}};
 var TYPES=[['해외 학생','Student (plays an instrument)'],['해외 교사','Teacher'],['해외 보호자','Parent / guardian'],['해외 동반가족','Accompanying family (does not play)'],['해외 돌전아기','Infant (under 1 year)']];
 var TL={};TYPES.forEach(function(t){TL[t[0]]=t[1]});
 var INST=[['바이올린','Violin'],['첼로','Cello'],['비올라','Viola'],['플루트','Flute'],['피아노','Piano']];var IL={};INST.forEach(function(t){IL[t[0]]=t[1]});
 var BOOK=[['Pre-Twinkle','Pre-Twinkle'],['1권','Book 1'],['2권','Book 2'],['3권','Book 3'],['4권','Book 4'],['5권','Book 5'],['6권','Book 6'],['7권','Book 7'],['8권','Book 8'],['9권','Book 9'],['10권','Book 10'],['10권 이상','Above Book 10']];
 var BL={};BOOK.forEach(function(t){BL[t[0]]=t[1]});
 function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
-function won(n){return 'KRW '+Math.round(+n||0).toLocaleString('en-US')}
+function won(n){return 'USD '+(Math.round((+n||0)*100)/100).toLocaleString('en-US')}
 function opt(L,v,ph){return (ph?'<option value="">'+ph+'</option>':'')+L.map(function(o){return '<option value="'+esc(o[0])+'"'+(o[0]===v?' selected':'')+'>'+esc(o[1])+'</option>'}).join('')}
 function toast(m){var t=document.getElementById('toast');t.textContent=m;t.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(function(){t.hidden=true},2600)}
 function busy(on,m){var b=document.getElementById('busy');b.textContent=m||'Saving…';b.hidden=!on}
@@ -80,7 +80,7 @@ function vMain(){var D=S.D,s=sum();
     (D.remit?'<div class="note" style="white-space:pre-wrap">'+esc(D.remit)+'</div>':'<div class="note">Bank details will be sent by the association.</div>')+
     '<div class="spread" style="margin-top:10px"><b>Total '+won(s.tot)+'</b><span>Confirmed '+won(s.paid)+'</span>'+(s.tot-s.paid>0?'<span class="pill due">Balance '+won(s.tot-s.paid)+'</span>':'<span class="pill ok">Fully paid</span>')+'</div>'+
     (D.reps.length?'<table style="margin-top:10px"><thead><tr><th>Reported</th><th>Date sent</th><th class="r">Amount</th><th>Sender</th></tr></thead><tbody>'+D.reps.map(function(r){return '<tr><td class="num">'+esc(String(r.at).slice(0,16))+'</td><td class="num">'+esc(r.date)+'</td><td class="r num">'+esc(r.cur)+' '+Number(r.amt).toLocaleString('en-US')+'</td><td>'+esc(r.name)+'</td></tr>'}).join('')+'</tbody></table>':'')+
-    '<h3 style="margin-top:14px">Report a transfer</h3><div class="grid"><label>Date sent<input type="date" id="rd" value="'+esc(S.rep.date||'')+'" max="'+esc(D.today)+'"></label><label>Currency<select id="rc">'+opt([['KRW','KRW'],['USD','USD'],['PHP','PHP'],['JPY','JPY'],['EUR','EUR']],S.rep.cur)+'</select></label>'+
+    '<h3 style="margin-top:14px">Report a transfer</h3><div class="grid"><label>Date sent<input type="date" id="rd" value="'+esc(S.rep.date||'')+'" max="'+esc(D.today)+'"></label><label>Currency<select id="rc">'+opt([['USD','USD'],['PHP','PHP'],['KRW','KRW'],['JPY','JPY'],['EUR','EUR']],S.rep.cur)+'</select></label>'+
     '<label>Amount<input id="ra" inputmode="decimal" value="'+esc(S.rep.amt||'')+'"></label><label>Sender name<input id="rn" value="'+esc(S.rep.name||'')+'"></label></div><div class="row" style="margin-top:10px"><button class="btn" type="button" id="rep" '+(D.no?'':'disabled')+'>Report transfer</button>'+(D.no?'':'<span class="hint">Save the participant list first.</span>')+'</div></div>'+
     '<div class="sticky"><div class="spread wrap" style="padding:0"><span>'+S.list.length+' people · <b>'+won(s.tot)+'</b>'+(S.dirty?' · <span class="err">not saved</span>':'')+'</span><button class="btn primary" type="button" id="save"'+(S.dirty?'':' disabled')+'>Save list</button></div>'+(S.err?'<p class="err" style="margin:6px 0 0">'+esc(S.err)+'</p>':'')+'</div>'}
 function render(){document.getElementById('app').innerHTML=S.D?vMain():vLogin()}

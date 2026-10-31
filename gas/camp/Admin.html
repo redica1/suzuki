@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261031-215550 -->
+<!-- build: 20261031-221108 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -371,12 +371,13 @@ function vHome(){const st=stats();const t=(k,v,s,w,cls)=>`<div class="tile ${w?'
   <div class="hsec"><div class="spread"><h3>학원별 접수 인원</h3><button class="btn small" type="button" id="reload">새로 불러오기</button></div>
   ${L.length?stAcad(L,true):'<div class="panel hint">아직 접수가 없어요.</div>'}</div>`}
 const isGuestSb=sb=>sb.acad==='비회원';
+const G0=()=>S.IG||{};
 /* ---------- 해외 단체 (10-31): 접수 · 입금 확인 › 해외 — 단체 만들기 · 접속 코드 · 송금 신고 보기 ---------- */
 function vIntlAdm(){const G=S.IG;if(!G){if(!S.igL){S.igL=1;call('intlAdmin',[{}],r=>{S.igL=0;S.IG=r;render()},'해외 단체를 불러오고 있어요…')}return '<div class="panel hint" style="margin-bottom:12px">해외 단체를 불러오고 있어요…</div>'}
   const F=S.igf||(S.igf={});
   return `<div class="panel" style="margin-bottom:12px"><div class="spread"><div><b>해외 단체</b> <span class="hint">단체를 만들면 접속 코드가 생겨요 · 대표에게 영어 접수 주소 + 이메일 + 코드를 보내 주세요 · 참가비는 캠프 설정 참가비표의 「해외 …」 줄 · 연회비 없음 · 송금 안내 글은 설정 탭 「해외 송금 안내」</span></div></div>
   <p class="hint" style="margin:6px 0">영어 접수 주소: <b>${esc(G.url||'(설정 「공유주소」 확인)')}</b> <span class="hint">(STG 시험은 끝에 ?test)</span></p>
-  ${G.groups.length?`<div class="tbl"><table><thead><tr><th>단체</th><th>나라</th><th>대표 · 이메일</th><th>접속 코드</th><th class="r">인원</th><th class="r">청구</th><th class="r">입금 확인</th><th>송금 신고</th><th></th></tr></thead><tbody>${G.groups.map(g=>`<tr class="${g.on?'':'off'}"><td><b>${esc(g.name)}</b>${g.no?`<br><span class="hint">${esc(g.no)}</span>`:''}</td><td>${esc(g.country)}</td><td>${esc(g.lead)}<br><span class="hint">${esc(g.email)}</span></td><td class="num"><b>${esc(g.code)}</b></td><td class="r num">${g.n}</td><td class="r num">${won(g.bill)}</td><td class="r num">${won(g.paid)}</td><td>${(g.reps||[]).map(r=>`<div class="hint num">${esc(r.date)} · ${esc(r.cur)} ${Number(r.amt).toLocaleString()}${r.name?' · '+esc(r.name):''}</div>`).join('')||'-'}</td><td><button class="btn small ghost" type="button" data-igcode="${esc(g.id)}">코드 새로</button> <button class="btn small ghost" type="button" data-igon="${esc(g.id)}|${g.on?0:1}">${g.on?'끄기':'켜기'}</button></td></tr>`).join('')}</tbody></table></div>`:'<p class="hint">아직 해외 단체가 없어요.</p>'}
+  ${G.groups.length?`<div class="tbl"><table><thead><tr><th>단체</th><th>나라</th><th>대표 · 이메일</th><th>접속 코드</th><th class="r">인원</th><th class="r">청구 (USD · 원)</th><th class="r">입금 확인</th><th>송금 신고</th><th></th></tr></thead><tbody>${G.groups.map(g=>`<tr class="${g.on?'':'off'}"><td><b>${esc(g.name)}</b>${g.no?`<br><span class="hint">${esc(g.no)}</span>`:''}</td><td>${esc(g.country)}</td><td>${esc(g.lead)}<br><span class="hint">${esc(g.email)}</span></td><td class="num"><b>${esc(g.code)}</b></td><td class="r num">${g.n}</td><td class="r num">USD ${Number(g.usd||0).toLocaleString()}<br><span class="hint">${won(g.bill)}</span></td><td class="r num">${won(g.paid)}<br><span class="hint">≈ USD ${Math.round((g.paid||0)/(G.rate||1450)).toLocaleString()}</span></td><td>${(g.reps||[]).map(r=>`<div class="hint num">${esc(r.date)} · ${esc(r.cur)} ${Number(r.amt).toLocaleString()}${r.name?' · '+esc(r.name):''}</div>`).join('')||'-'}</td><td>${g.no?`<button class="btn small primary" type="button" data-igpay="${esc(g.id)}">USD 입금 확인</button> `:''}<button class="btn small ghost" type="button" data-igcode="${esc(g.id)}">코드 새로</button> <button class="btn small ghost" type="button" data-igon="${esc(g.id)}|${g.on?0:1}">${g.on?'끄기':'켜기'}</button></td></tr>`).join('')}</tbody></table></div>`:'<p class="hint">아직 해외 단체가 없어요.</p>'}
   <div class="row" style="flex-wrap:wrap;gap:8px;margin-top:12px;align-items:flex-end"><b style="align-self:center">새 단체</b>
     <label>단체 이름 *<input type="text" id="ig_name" value="${esc(F.name||'')}" placeholder="Philippines Suzuki" style="width:180px"></label>
     <label>나라<input type="text" id="ig_country" value="${esc(F.country||'')}" placeholder="Philippines" style="width:130px"></label>
@@ -390,6 +391,8 @@ document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest
     if(!F.name.trim()||!F.email.trim()){toast('단체 이름과 대표 이메일을 넣어 주세요');return}
     call('intlAdmin',[{act:'add',name:F.name,country:F.country,lead:F.lead,email:F.email}],r=>{S.igf={};S.IG=r;render();toast(F.name+' 단체를 만들었어요 · 접속 코드를 대표에게 보내 주세요')},'만들고 있어요…');return}
   if(d.igcode){ask('접속 코드를 새로 만들까요?','지금 코드는 더 이상 쓸 수 없어요. 새 코드를 대표에게 다시 보내야 해요.',()=>call('intlAdmin',[{act:'code',id:d.igcode}],r=>{S.IG=r;render();toast('새 코드를 만들었어요')}),'새로 만들기');return}
+  if(d.igpay){const usd=prompt('받은 금액 (USD) — 사람 순서대로 남은 금액을 채워요 · 1 USD = '+(G0().rate||1450)+'원','');if(!usd)return;const dt=prompt('입금일 (YYYY-MM-DD)',new Date(Date.now()+9*3600e3).toISOString().slice(0,10));if(!dt)return;const mm=prompt('메모 (선택: 송금 수수료 · 환율 차이 등)','')||'';
+    call('intlConfirm',[d.igpay,dt,usd,mm],r=>{S.IG=r;call('adminData',[],x=>{setData(x);toast(r.n+'명 입금 확인'+(r.left>0?' · 남은 USD '+r.left:''))},'불러오고 있어요…')},'입금 확인하고 있어요…');return}
   if(d.igon){const [id,on]=d.igon.split('|');call('intlAdmin',[{act:'on',id,on:on==='1'}],r=>{S.IG=r;render()});return}});
 /* ---------- 관계자 대신 등록 (10-31): 접수 · 입금 확인 › 관계자 ---------- */
 const STAFF_TYPES=['초빙교수','반주자','지휘자','통역','초청강사','스태프','기타 관계자'];
@@ -1477,7 +1480,7 @@ const RO_MSG='보기만 할 수 있는 메뉴예요. 바꾸려면 총관리자�
 
 /* ---------- 캠프 설정 (총관리자) ---------- */
 const FEE_TYPES=['교사','연수생','소속없는 중급연수생','학생','회원의 악기하는 자녀','회원의 첫번째 보호자','회원의 그외 악기 안하는 동반가족','동반가족 중 돌전아기','비회원 학생','비회원 보호자','비회원 동반가족','비회원 돌전아기','초빙교수','반주자','지휘자','통역','초청강사','스태프','기타 관계자','해외 학생','해외 교사','해외 보호자','해외 동반가족','해외 돌전아기'];
-const OPT_F=[['lessonFee','추가 개인레슨 1회 금액','원'],['lessonMax','추가 개인레슨 최대 횟수','회'],['studentDues','학생 연회비 (안 낸 학생만)','원'],['teacherDues','교사 연회비 (안 낸 교사만)','원'],['roomCap','가족방 정원','명'],['roomEmptyFee','가족방 빈 자리 1개 금액','원']];
+const OPT_F=[['lessonFee','추가 개인레슨 1회 금액','원'],['lessonMax','추가 개인레슨 최대 횟수','회'],['studentDues','학생 연회비 (안 낸 학생만)','원'],['teacherDues','교사 연회비 (안 낸 교사만)','원'],['roomCap','가족방 정원','명'],['roomEmptyFee','가족방 빈 자리 1개 금액','원'],['usdRate','해외 참가비 환율 (1 USD)','원']];
 const ccCopy=()=>JSON.parse(JSON.stringify(S.D.camp||{}));
 const ccDirty=()=>S.cc&&JSON.stringify(S.cc)!==JSON.stringify(ccCopy());
 const WDK='일월화수목금토';
@@ -1510,7 +1513,7 @@ function vCamp(){if(!S.cc)S.cc=ccCopy();const c=S.cc;if(!c.base)return '<div cla
     <table class="pft cct"><thead><tr><th>이름</th><th>시작</th><th>끝</th><th></th></tr></thead><tbody>${R.map((r,i)=>`<tr><td>${inp('rounds.'+i+'.n','text','maxlength="10" style="width:80px"')}</td><td>${inp('rounds.'+i+'.from','date')}</td><td>${inp('rounds.'+i+'.to','date')}</td><td>${R.length>1?`<button class="btn small ghost" type="button" data-ccr="del|${i}">빼기</button>`:''}</td></tr>`).join('')}</tbody></table>
     <p class="hint">차수를 늘리거나 줄이면 아래 참가비표 칸도 같이 바뀌어요. 이미 들어온 접수의 차수·금액은 그대로예요.</p></div>
   <div class="panel tbl"><h3>참가비표 <span class="hint">참가자격 × 차수 (원)</span></h3>
-    <table class="pft cct"><thead><tr><th>참가자격</th>${R.map(r=>`<th class="r">${esc(r.n)}</th>`).join('')}</tr></thead><tbody>${FEE_TYPES.map(t=>`<tr class="${/^(비회원|해외) /.test(t)||STAFF_TYPES.includes(t)?'gfee':''}"><td>${esc(t)}</td>${R.map((_,i)=>`<td>${inp('fees.'+t+'.'+i,'num','style="width:110px"')}</td>`).join('')}</tr>`).join('')}</tbody></table></div>
+    <table class="pft cct"><thead><tr><th>참가자격</th>${R.map(r=>`<th class="r">${esc(r.n)}</th>`).join('')}</tr></thead><tbody>${FEE_TYPES.map(t=>`<tr class="${/^(비회원|해외) /.test(t)||STAFF_TYPES.includes(t)?'gfee':''}"><td>${esc(t)}${/^해외 /.test(t)?' <b class="hint">USD</b>':''}</td>${R.map((_,i)=>`<td>${inp('fees.'+t+'.'+i,'num','style="width:110px"')}</td>`).join('')}</tr>`).join('')}</tbody></table><p class="hint">「해외 …」 줄은 <b>USD</b>로 넣어요. 영어 접수 화면에 USD로 보이고, 원화 청구액은 아래 「해외 참가비 환율」로 계산해요.</p></div>
   <div class="panel"><h3>추가 금액 · 가족방</h3><div class="ccg">${OPT_F.map(([k,l,u])=>`<label>${l}<span class="row" style="gap:4px;flex-wrap:nowrap">${inp('opt.'+k,'num','style="width:120px"')}<small class="faint">${u}</small></span></label>`).join('')}</div>
     <p class="hint">마스터클래스 금액은 교수마다 「교수진」 탭에서 정해요.</p></div>
   <div class="panel"><div class="spread"><h3>취소 · 환불 규정</h3><button class="btn small" type="button" data-ccf="add">＋ 규정 추가</button></div>

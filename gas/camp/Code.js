@@ -1,4 +1,4 @@
-/* build: 20261031-215550 */
+/* build: 20261031-221108 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -32,7 +32,7 @@ const FEES = {
   /* 관계자 (10-31) — 금액은 「캠프 설정」 참가비표에서 (기본 0원) */
   '초빙교수': [0, 0, 0], '반주자': [0, 0, 0], '지휘자': [0, 0, 0], '통역': [0, 0, 0], '초청강사': [0, 0, 0], '스태프': [0, 0, 0], '기타 관계자': [0, 0, 0],
   /* 해외 단체 (10-31, 영어 화면) — 금액은 「캠프 설정」 참가비표에서, 연회비 없음 */
-  '해외 학생': [560000, 570000, 590000], '해외 교사': [560000, 570000, 590000], '해외 보호자': [510000, 520000, 540000], '해외 동반가족': [410000, 420000, 440000], '해외 돌전아기': [310000, 320000, 340000]
+  '해외 학생': [0, 0, 0], '해외 교사': [0, 0, 0], '해외 보호자': [0, 0, 0], '해외 동반가족': [0, 0, 0], '해외 돌전아기': [0, 0, 0]   /* 해외 줄은 USD (opt.usdRate 로 원화 청구액 계산) */
 };
 const ROUND_NAMES = ['1차', '2차', '3차'];
 const OPT = { lessonFee: 60000, lessonMax: 5, studentDues: 30000, teacherDues: 300000, roomCap: 4, roomEmptyFee: 130000 };
@@ -271,7 +271,8 @@ function intlAdmin(token, op) {
   }
   const subs = loadSubs_();
   return { groups: intlGroups_().map(g => { const sb = subs.find(x => x.intl && x.intlId === g.id); const live = sb ? sb.ppl.filter(p => p.status === '정상') : [];
-    return Object.assign({}, g, { _row: undefined, no: sb ? sb.no : '', n: live.length, bill: live.reduce((t, p) => t + amt_(p), 0), paid: sb ? sb.ppl.reduce((t, p) => t + (+p.paidAmt || 0), 0) : 0, reps: sb ? (sb.intlRep || []) : [] }); }),
+    return Object.assign({}, g, { _row: undefined, no: sb ? sb.no : '', n: live.length, bill: live.reduce((t, p) => t + amt_(p), 0), usd: live.reduce((t, p) => t + (+p.usd || 0), 0), paid: sb ? sb.ppl.reduce((t, p) => t + (+p.paidAmt || 0), 0) : 0, reps: sb ? (sb.intlRep || []) : [] }); }),
+    rate: +camp_().opt.usdRate || 1450,
     url: setting_('공유주소') ? String(setting_('공유주소')).replace(/\/$/, '') + '/intl.html' : '' };
 }
 function intlWho_(token) { const v = CacheService.getScriptCache().get('intl_' + token); if (!v) throw new Error('Your session has ended. Please reload the page and sign in again.'); return JSON.parse(v); }
@@ -294,10 +295,11 @@ function intlLogin(email, code, agree) {
 function intlData_(gid) {
   const g = intlGroups_().find(x => x.id === gid); if (!g) throw new Error('Group not found.');
   const C = camp_(), sb = loadSubs_().find(x => x.intl && x.intlId === gid), ri = sb ? (+((sb.form || {}).ri) || 0) : curRound_(C);
+  const rate = +C.opt.usdRate || 1450;
   const ppl = sb ? sb.ppl.filter(p => p.status !== '취소').map(p => { const k = p.id.slice(sb.no.length + 1), i = (sb.form.info || {})[k] || {};
-    return { key: k, first: i.first || '', last: i.last || '', type: p.type, gender: i.gender || '', by: i.by || '', inst: i.inst || p.inst || '', prog: i.prog || '', note: i.note || '', fee: +p.fee || 0, paid: +p.paidAmt || 0, pay: p.pay }; }) : [];
-  const fees = {}; INTL_TYPES.forEach(t => fees[t] = (C.fees[t] || [])[ri] || 0);
-  return { group: { id: g.id, name: g.name, country: g.country, lead: g.lead, email: g.email }, no: sb ? sb.no : '', ppl, fees, round: C.rounds[ri].n,
+    return { key: k, first: i.first || '', last: i.last || '', type: p.type, gender: i.gender || '', by: i.by || '', inst: i.inst || p.inst || '', prog: i.prog || '', note: i.note || '', fee: +p.usd || Math.round((+p.fee || 0) / rate), paid: Math.round((+p.paidAmt || 0) / rate), pay: p.pay }; }) : [];
+  const fees = {}; INTL_TYPES.forEach(t => fees[t] = (C.fees[t] || [])[ri] || 0);   /* USD */
+  return { group: { id: g.id, name: g.name, country: g.country, lead: g.lead, email: g.email }, no: sb ? sb.no : '', ppl, fees, cur: 'USD', round: C.rounds[ri].n,
     camp: { name: C.base.name, start: C.base.start, end: C.base.end, place: C.base.place }, remit: setting_('해외 송금 안내'), reps: sb ? (sb.intlRep || []) : [], today: today_() };
 }
 function intlData(token) { const u = intlWho_(token); return Object.assign({ ok: true }, intlData_(u.id)); }
@@ -345,6 +347,27 @@ function intlSave(token, list) {
     log_('해외 ' + g.name, isNew ? '새 접수' : '명단 저장', sb.no + ' · ' + sb.ppl.filter(p => p.status === '정상').length + '명');
   } finally { lock.releaseLock(); }
   return Object.assign({ ok: true }, intlData_(g.id));
+}
+/** 관리자: 해외 단체가 보낸 USD 를 받은 대로 입금 확인 — 사람 순서대로 남은 금액을 채움(원화 = USD × 환율), 메모에 USD */
+function intlConfirm(token, gid, date, usd, memo) {
+  const a = adm_(token); need_(a, ['subs', 'rp']);
+  date = String(date || ''); usd = +String(usd || '').replace(/[^\d.]/g, '') || 0;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) throw new Error('입금일을 넣어 주세요 (예: 2026-12-05).');
+  if (!(usd > 0)) throw new Error('받은 USD 금액을 넣어 주세요.');
+  const rate = +camp_().opt.usdRate || 1450, lock = lock_(); let left = usd, n = 0;
+  try {
+    const all = loadSubs_(), sb = all.find(x => x.intl && x.intlId === gid); if (!sb) throw new Error('이 단체 접수가 아직 없어요.');
+    sb.ppl.filter(p => p.status === '정상').forEach(p => {
+      if (left <= 0.004) return;
+      const dueKrw = amt_(p) - (+p.paidAmt || 0); if (dueKrw <= 0) return;
+      const dueUsd = dueKrw / rate, payUsd = Math.min(dueUsd, left), payKrw = payUsd >= dueUsd - 0.004 ? dueKrw : Math.round(payUsd * rate);
+      setAdminCols_(p.id, [date, (+p.paidAmt || 0) + payKrw, ('USD ' + (Math.round(payUsd * 100) / 100) + ' (1 USD = ' + rate + '원)' + (memo ? ' · ' + String(memo).slice(0, 60) : '')).slice(0, 200)]);
+      left -= payUsd; n++;
+    });
+    writeSubRow_(loadSubs_().find(x => x.no === sb.no));
+    log_('관리자 ' + a.name, '해외 USD 입금 확인', sb.no + ' · ' + date + ' · USD ' + usd + ' → ' + n + '명' + (left > 0.004 ? ' · 남은 USD ' + (Math.round(left * 100) / 100) : ''));
+  } finally { lock.releaseLock(); }
+  return Object.assign({ left: Math.round(left * 100) / 100, n }, intlAdmin(token, {}));
 }
 /** 대표: 송금 신고 (단체 전체 한 번에) — 운영진이 받은 금액으로 사람마다 입금 확인 */
 function intlReport(token, r) {
@@ -669,7 +692,8 @@ function recalc_(sb) {
     if (p.status !== '취소' && plays && i.concert === '이브닝' && !/^https?:\S{6,}$/i.test(String(i.video || '').trim())) throw new Error(p.name + ': 이브닝 음악회는 오디션 영상 주소(https…)를 넣어 주세요.');
     const isT = /^t_|^me_/.test(k), isFam = (f.fam || []).some(x => x.id === k);
     const paid = viaCamp[p.id] ? false : guest || staff || intl ? true : isFam ? true : isT ? (k.indexOf('me_') === 0 ? true : !!tPaid[k]) : !!sPaid[k];
-    p.type = i.type; p.fee = FEES[i.type][ri]; p.lesson = les * OPT.lessonFee + mc;
+    p.type = i.type; p.fee = FEES[i.type][ri];
+    if (intl) { p.usd = +FEES[i.type][ri] || 0; p.fee = Math.round(p.usd * (+OPT.usdRate || 1450)); }   /* 해외: 참가비표 값 = USD, 원화 청구액 = USD × 환율 */ p.lesson = les * OPT.lessonFee + mc;
     p.dues = paid ? 0 : (isT ? OPT.teacherDues : OPT.studentDues);
     p.room = roomBy[k] || 0;
   });
@@ -942,7 +966,7 @@ const CAMP_DEF = {
   base: { id: CAMP_ID, name: CAMP_NAME, start: '2027-01-11', end: '2027-01-15', place: '추후 안내', open: '2026-12-01', close: '2026-12-28', cur: 'auto', guest: true, staff: true, member: true, intl: true },
   rounds: [{ n: '1차', from: '2026-12-01', to: '2026-12-10' }, { n: '2차', from: '2026-12-11', to: '2026-12-20' }, { n: '3차', from: '2026-12-21', to: '2026-12-28' }],
   fees: FEES,
-  opt: { lessonFee: OPT.lessonFee, lessonMax: OPT.lessonMax, mcFee: 150000, studentDues: OPT.studentDues, teacherDues: OPT.teacherDues, roomCap: OPT.roomCap, roomEmptyFee: OPT.roomEmptyFee },
+  opt: { lessonFee: OPT.lessonFee, lessonMax: OPT.lessonMax, mcFee: 150000, studentDues: OPT.studentDues, teacherDues: OPT.teacherDues, roomCap: OPT.roomCap, roomEmptyFee: OPT.roomEmptyFee, usdRate: 1450 },
   refund: { rules: [{ until: '2026-12-10', label: '접수 마감 전', rate: 100, doc: false }, { until: '2026-12-28', label: '캠프 14일 전까지', rate: 50, doc: false }, { until: '2027-01-10', label: '캠프 전날까지', rate: 0, doc: true }],
     after: { label: '캠프 시작 후', rate: 0, doc: true, allow: false }, duesRefund: false },
   /* 식사 시간: 교사 일정 모든 날짜에 식사 줄로 들어감 · first/last = 첫날 · 마지막 날에도 넣을지 */

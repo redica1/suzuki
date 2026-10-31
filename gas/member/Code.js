@@ -1,4 +1,4 @@
-/* build: 20261031-233343 */
+/* build: 20261031-233929 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -51,7 +51,7 @@ function memOf_(sid, all, st) {
 /** 관리자: 학생 회원 자격 기간(년도별) */
 function memView(who, sid) { return { terms: memOf_(String(sid || '')).terms }; }
 const HEAD = {
-  '학원': ['학원ID', '학원명', '구분', '상태', '원장교사ID', '원장명', '교실대표번호', '이메일', '교습과목', '시도', '시군구', '우편번호', '주소', '상세주소', '개원일', '계약체결일', '확인', '확인메모', '메모', '원본', '수정일', '수정자', '졸업연주지역', '사업자번호', '교육청인가번호', '공동원장ID', '계약문서ID'],
+  '학원': ['학원ID', '학원명', '구분', '상태', '원장교사ID', '원장명', '교실대표번호', '이메일', '교습과목', '시도', '시군구', '우편번호', '주소', '상세주소', '개원일', '계약체결일', '확인', '확인메모', '메모', '원본', '수정일', '수정자', '졸업연주지역', '사업자번호', '교육청인가번호', '공동원장ID', '계약문서ID', '대표번호원장'],
   '교사': ['교사ID', '이름', '구분글자', '원래이름', '휴대전화', '이메일', '학원1', '학원2', '학원3', '직급', '전공', '회원구분', '명단자격', '명단취득', '회비구분', '캠프교수', '내부외부', '상태', '확인', '확인메모', '메모', '원본', '수정일', '수정자', '영문이름', '본인자격', '회비납부방법', '강사료대상', '계약체결', '계약일', '성별', '하는일', '소속기관', '계약문서ID'],   // 하는일 · 소속기관 = 외부인(관계자) 정보 (10-31)
   '학생': ['학생ID', '학원ID', '이름', '구분글자', '원래이름', '출생연도', '출생연도추정', '전공', '시작월', '상태', '담당교사ID', '확인', '확인메모', '메모', '원본', '수정일', '수정자', '상태일', '성별'],
   '연회비': ['대상', 'ID', '년도', '부과', '납부', '납부일', '방식', '메모', '수정일', '수정자', '자격시작', '확인', '신고일', '신고자', '확인일', '확인자'],
@@ -75,7 +75,7 @@ const HEAD = {
 const KEY = { '학원': '학원ID', '교사': '교사ID', '학생': '학생ID' };
 /* 화면에서 고칠 수 있는 칸 (나머지는 서버가 정함) */
 const EDIT = {
-  '학원': ['학원명', '구분', '상태', '원장교사ID', '공동원장ID', '교실대표번호', '이메일', '교습과목', '시도', '시군구', '우편번호', '주소', '상세주소', '개원일', '계약체결일', '졸업연주지역', '사업자번호', '교육청인가번호', '확인', '확인메모', '메모'],
+  '학원': ['학원명', '구분', '상태', '원장교사ID', '공동원장ID', '대표번호원장', '교실대표번호', '이메일', '교습과목', '시도', '시군구', '우편번호', '주소', '상세주소', '개원일', '계약체결일', '졸업연주지역', '사업자번호', '교육청인가번호', '확인', '확인메모', '메모'],
   '교사': ['이름', '구분글자', '휴대전화', '이메일', '학원1', '학원2', '학원3', '직급', '전공', '회원구분', '본인자격', '회비구분', '회비납부방법', '강사료대상', '캠프교수', '내부외부', '계약체결', '계약일', '성별', '상태', '확인', '확인메모', '메모', '하는일', '소속기관'],
   '학생': ['학원ID', '이름', '구분글자', '성별', '출생연도', '전공', '시작월', '상태', '담당교사ID', '확인', '확인메모', '메모'],
 };
@@ -178,6 +178,11 @@ function saveRow(who, table, obj, base) {
     if (obj[k] && i < 0) fail('그 번호를 찾지 못했어요. 새로 고침해 주세요.');
     if (i >= 0 && base && String(T.get(i, '수정일')) !== String(base)) fail('다른 사람이 먼저 고쳤어요 (' + T.get(i, '수정일') + '). 새로 고침 뒤 다시 해 주세요.');
     const stamp = now_();
+    if (table === '학원') {   /* 「대표번호 = 원장 번호」면 원장 휴대전화를 대표번호로 (10-31) */
+      const flag = '대표번호원장' in o ? o['대표번호원장'] : (i >= 0 ? T.get(i, '대표번호원장') : '');
+      if (flag === '예') { const hid = '원장교사ID' in o ? o['원장교사ID'] : (i >= 0 ? T.get(i, '원장교사ID') : ''); const ph = hid ? headPhone_(hid) : '';
+        if (!ph) fail(hid ? '원장 선생님 휴대전화가 비어 있어요. 교사정보에서 먼저 넣어 주세요.' : '「원장 번호로 하기」는 원장을 먼저 골라 주세요.'); o['교실대표번호'] = ph; }
+    }
     let id = obj[k], diff = [];
     if (i < 0) {
       id = nextId_(T, k, { '학원': 'A', '교사': 'T', '학생': 'S' }[table]);
@@ -191,6 +196,7 @@ function saveRow(who, table, obj, base) {
       if (!diff.length) return { row: T.rowObj(i), same: true };
       T.set(i, Object.assign({}, o, { '수정일': stamp, '수정자': who.name }));
     }
+    if (table === '교사' && '휴대전화' in o) headPhoneSync_(id, o['휴대전화'], who.name);
     log_(who.name, table, id, i < 0 ? '추가' : '수정', diff.join(' · ').slice(0, 1000));
     const T2 = tbl_(table); return { row: T2.rowObj(T2.find(k, id)) };
   } finally { lock.releaseLock(); }
@@ -268,6 +274,7 @@ function clean_(table, o) {
   if ('휴대전화' in r) r['휴대전화'] = digits_(r['휴대전화']);
   if ('교실대표번호' in r) { r['교실대표번호'] = digits_(r['교실대표번호']); if (r['교실대표번호'] && !TEL_RE.test(r['교실대표번호'])) fail('교실 대표 번호를 확인해 주세요.'); }
   if (table === '학원' && '학원명' in r && !r['학원명']) fail('학원명을 넣어 주세요.');
+  if ('대표번호원장' in r) r['대표번호원장'] = r['대표번호원장'] === '예' ? '예' : '';
   if (table === '교사' && '이름' in r && !r['이름']) fail('이름을 넣어 주세요.');
   if (table === '학생') {
     if ('이름' in r && !r['이름']) fail('학생 이름을 넣어 주세요.');
@@ -964,6 +971,12 @@ const ACAD_OWN = ['교실대표번호', '이메일', '교습과목', '시도', '
 function bizNo_(v) { const x = digits_(v); if (!x) return ''; if (x.length !== 10) fail('사업자번호 10자리를 확인해 주세요.'); return x.slice(0, 3) + '-' + x.slice(3, 5) + '-' + x.slice(5); }
 /* 원장 = 「원장교사ID」 한 명 + 「공동원장ID」(쉼표로 여러 명 가능, 11-01). 둘 다 「우리 학원」을 똑같이 봄 */
 function isHeadOf_(head, co, tid) { return !!tid && (head === tid || String(co || '').split(/[,\s]+/).indexOf(tid) >= 0); }
+function headPhone_(tid) { const T = tbl_('교사'), i = T.find('교사ID', tid); return i < 0 ? '' : digits_(T.get(i, '휴대전화')); }
+/** 원장 휴대전화가 바뀌면 「대표번호 = 원장 번호」인 학원의 교실대표번호도 같이 (10-31) */
+function headPhoneSync_(tid, phone, who) {
+  phone = digits_(phone); if (!tid || !phone) return;
+  const A = tbl_('학원'); A.v.forEach((r, i) => { if (A.get(i, '대표번호원장') === '예' && A.get(i, '원장교사ID') === tid && A.get(i, '교실대표번호') !== phone) { A.set(i, { '교실대표번호': phone, '수정일': now_(), '수정자': who + ' (원장 번호 따라감)' }); log_(who, '학원', A.get(i, '학원ID'), '수정', '교실대표번호 → ' + phone + ' (원장 휴대전화)'); } });
+}
 function headOf_(u, aid) {
   const A = tbl_('학원'), i = A.find('학원ID', aid);
   if (i < 0 || !isHeadOf_(A.get(i, '원장교사ID'), A.get(i, '공동원장ID'), u.tid) || A.get(i, '상태') === '탈퇴') fail('원장으로 지정된 학원만 볼 수 있어요. 협회에 문의해 주세요.');
@@ -993,6 +1006,7 @@ function tSaveAcad(sess, aid, d) {
     const { A, i } = headOf_(u, aid), g = k => String(A.get(i, k) || '');
     const o = {}; ACAD_OWN.forEach(k => { if (k in d) o[k] = String(d[k] == null ? '' : d[k]).trim().slice(0, k === '주소' ? 120 : 80); });
     if ('교실대표번호' in o) { o['교실대표번호'] = digits_(o['교실대표번호']); if (o['교실대표번호'] && !TEL_RE.test(o['교실대표번호'])) fail('교실 대표 번호를 확인해 주세요.'); }
+    if ('교실대표번호' in o && g('대표번호원장') === '예' && o['교실대표번호'] !== g('교실대표번호')) o['대표번호원장'] = '';   /* 원장이 다른 번호를 넣으면 「원장 번호로」 해제 */
     if (o['이메일'] && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(o['이메일'])) fail('이메일 주소를 확인해 주세요.');
     if ('우편번호' in o) o['우편번호'] = digits_(o['우편번호']).slice(0, 5);
     if (o['개원일'] && !/^\d{4}-\d{2}(-\d{2})?$/.test(o['개원일'])) fail('개원일은 2015-03 처럼 넣어 주세요.');
@@ -1254,6 +1268,7 @@ function tchApply_(aid, aname, who, d, k) {
   if (!diff.length) return 0;
   const md = Utilities.formatDate(new Date(), 'Asia/Seoul', 'MM-dd');
   T.set(i, Object.assign(o, { '확인': '확인 필요', '확인메모': [g('확인메모'), '원장이 고침(' + aname + ' ' + md + '): ' + diff.join(' · ')].filter(Boolean).join(' · ').slice(0, 500), '수정일': now_(), '수정자': who }));
+  if ('휴대전화' in o) headPhoneSync_(tid, o['휴대전화'], who);
   log_(who, '교사', tid, '원장이 수정', diff.join(' · ').slice(0, 900));
   return 1;
 }
@@ -1419,8 +1434,10 @@ function tSaveInfo(sess, d) {
     if (!diff.length) return tMe(sess);
     upd['확인'] = '확인 필요'; upd['확인메모'] = [g('확인메모'), '내 정보에서 바꿈(' + Utilities.formatDate(new Date(), 'Asia/Seoul', 'MM-dd') + '): ' + diff.join(' · ')].filter(Boolean).join(' · ').slice(0, 500);
     upd['수정일'] = now_(); upd['수정자'] = name + ' (내 정보)';
+    const oldPh = g('휴대전화');
     T.set(i, upd);
     log_(u.email, '교사', u.tid, '선생님이 기본 정보 수정', diff.join(' · ').slice(0, 900));
+    if (upd['휴대전화'] !== oldPh) headPhoneSync_(u.tid, upd['휴대전화'], name + ' (내 정보)');
   } finally { lock.releaseLock(); }
   return tMe(sess);
 }

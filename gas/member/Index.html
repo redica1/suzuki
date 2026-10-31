@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261101-012536 -->
+<!-- build: 20261101-012904 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -226,7 +226,7 @@ function pager(total,per){var pages=Math.max(1,Math.ceil(total/per));if(S.page>=
   return '<div class="pager"><span>'+total+'개'+(pages>1?' 중 '+(S.page*per+1)+'–'+Math.min(total,(S.page+1)*per):'')+'</span>'+(pages>1?'<button class="btn small" type="button" data-pg="-1" '+(S.page===0?'disabled':'')+'>이전</button><button class="btn small" type="button" data-pg="1" '+(S.page>=pages-1?'disabled':'')+'>다음</button>':'')+'</div>'}
 function issueBar(){if(!S.issue)return '';var x=issues().filter(function(i){return i[1]===S.issue})[0];return x?'<div class="note info row" style="justify-content:space-between"><span>「'+esc(x[2])+'」만 보는 중 · '+x[3]+'개</span><button class="btn small" type="button" id="clrIssue">모두 보기</button></div>':''}
 function sel(id,opts,v,label){return '<select id="'+id+'" aria-label="'+esc(label)+'">'+opts.map(function(o){var k=Array.isArray(o)?o[0]:o,l=Array.isArray(o)?o[1]:o;return '<option value="'+esc(k)+'" '+(String(k)===String(v||'')?'selected':'')+'>'+esc(l)+'</option>'}).join('')+'</select>'}
-function bulkBar(kind){var n=Object.keys(S.sel).length;return n?'<div class="row note info"><b>'+n+'개 선택</b>'+(S.tab==='tch'?'<span class="cap">한꺼번에 바꾸기</span>'+sel('bCamp',[['*','캠프교수 그대로'],['예','캠프교수 예'],['아니오','캠프교수 아니오']],'*','캠프교수')+sel('bFree',[['*','회비면제 그대로'],['면제','회비면제 예'],['납부','회비면제 아니오']],'*','회비면제')+'<button class="btn small primary" type="button" id="bApply">선택한 '+n+'명에게 적용</button><span class="cap">· 확인 표시:</span>':'')+'<button class="btn small primary" type="button" data-bulk="확인">확인으로</button><button class="btn small" type="button" data-bulk="확인 필요">확인 필요로</button><button class="btn small ghost" type="button" data-bulk="확인 전">확인 전으로</button>'+(S.tab==='stu'?'<button class="btn small" type="button" id="bDelStu" style="color:var(--bad)">선택 삭제</button>':'')+'<button class="btn small ghost" type="button" id="selClr">선택 풀기</button></div>':''}
+function bulkBar(kind){var n=Object.keys(S.sel).length;return n?'<div class="row note info"><b>'+n+'개 선택</b>'+(S.tab==='tch'?'<span class="cap">한꺼번에 바꾸기</span>'+sel('bKind',[['*','회원 종류 그대로'],['정식 교사','교사회원'],['중급 연수','연수교사 · 중급'],['초급 연수','연수교사 · 초급'],['확인 전','확인 전'],['비회원','비회원'],['외국인','외국인']],'*','회원 종류')+sel('bCamp',[['*','캠프교수 그대로'],['예','캠프교수 예'],['아니오','캠프교수 아니오']],'*','캠프교수')+sel('bFree',[['*','회비면제 그대로'],['면제','회비면제 예'],['납부','회비면제 아니오']],'*','회비면제')+'<button class="btn small primary" type="button" id="bApply">선택한 '+n+'명에게 적용</button><span class="cap">· 확인 표시:</span>':'')+'<button class="btn small primary" type="button" data-bulk="확인">확인으로</button><button class="btn small" type="button" data-bulk="확인 필요">확인 필요로</button><button class="btn small ghost" type="button" data-bulk="확인 전">확인 전으로</button>'+(S.tab==='stu'?'<button class="btn small" type="button" id="bDelStu" style="color:var(--bad)">선택 삭제</button>':'')+'<button class="btn small ghost" type="button" id="selClr">선택 풀기</button></div>':''}
 function q(){return S.q.trim()}
 
 /* ---------- 학원 ---------- */
@@ -711,7 +711,7 @@ document.addEventListener('click',function(e){
   if(b.id==='saveEd'){saveEd(false);return}
   if(b.id==='saveOk'){saveEd(true);return}
   if(b.id==='selClr'){S.sel={};render();return}
-  if(b.id==='bApply'){var ch={},bv=function(id){return document.getElementById(id).value};if(bv('bCamp')!=='*')ch['캠프교수']=bv('bCamp');if(bv('bFree')!=='*')ch['회비구분']=bv('bFree');
+  if(b.id==='bApply'){var ch={},bv=function(id){return document.getElementById(id).value};if(bv('bKind')!=='*')ch['회원구분']=bv('bKind');if(bv('bCamp')!=='*')ch['캠프교수']=bv('bCamp');if(bv('bFree')!=='*')ch['회비구분']=bv('bFree');
     var bids=Object.keys(S.sel);if(!Object.keys(ch).length){toast('바꿀 것을 골라 주세요');return}if(!confirm(bids.length+'명을 한꺼번에 바꿀까요?'))return;if(S.busy)return;S.busy=true;
     callS('bulkSet',bids,ch).then(function(r){S.busy=false;if(!r.ok){toast(r.msg);return}bids.forEach(function(id){if(T[id])Object.assign(T[id],r.upd,{'수정일':r.stamp,'수정자':'관리자'})});S.sel={};render();toast(r.n+'명을 바꿨어요')});return}
   if(d.bulk){var ids=Object.keys(S.sel),table=kindOf();if(S.busy)return;S.busy=true;

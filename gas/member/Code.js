@@ -1,4 +1,4 @@
-/* build: 20261101-012536 */
+/* build: 20261101-012904 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -236,9 +236,10 @@ function delStus(who, ids) {
 }
 /** 관리자: 교사 여러 명에게 직급 · 캠프교수 · 회비면제 한꺼번에 (10-28) */
 function bulkSet(who, ids, ch) {
-  ch = ch || {}; const ok = { '직급': ['원장', '강사', ''], '캠프교수': ['예', '아니오'], '회비구분': ['납부', '면제'] };
+  ch = ch || {}; const ok = { '회원구분': TCH_KINDS_.concat(['확인 전'], NONMEM_), '캠프교수': ['예', '아니오'], '회비구분': ['납부', '면제'] };   /* 직급은 자동 (11-01) */
   const upd = {}; Object.keys(ok).forEach(k => { if (k in ch) { if (ok[k].indexOf(ch[k]) < 0) fail(k + ' 값이 틀렸어요.'); upd[k] = ch[k]; } });
   if (!Object.keys(upd).length) fail('바꿀 것을 골라 주세요.');
+  if (NONMEM_.indexOf(upd['회원구분']) >= 0) upd['회비구분'] = '면제';   /* 비회원 · 외국인 = 연회비 면제 */
   const lock = LockService.getScriptLock(); lock.waitLock(20000);
   try {
     const T = tbl_('교사'), stamp = now_(); let n = 0;

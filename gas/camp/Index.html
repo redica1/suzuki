@@ -1,8 +1,8 @@
 <!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
-<!-- build: 20261031-221547 -->
+<!-- build: 20261031-221902 -->
 <base target="_top">
-<script>/* 화면이 하얗게 될 때 원인을 화면에 보여 주는 진단 (STG) */
-window.addEventListener('error',function(e){try{var n=e.lineno||0,c=(e.colno||1)-1,out=[];
+<script>/* 화면이 하얗게 될 때 원인을 화면에 보여 주는 진단 — STG(설정 「테스트 로그인」이 있을 때)만 보임, 메인에서는 조용히 (10-31) */
+window.addEventListener('error',function(e){try{if(!(typeof TEST_LOGIN==='string'&&TEST_LOGIN))return;var n=e.lineno||0,c=(e.colno||1)-1,out=[];
 function odd(t){var cs=[];for(var k=0;k<t.length;k++){var cc=t.charCodeAt(k);if((cc<32&&cc!==9)||cc===0x2028||cc===0x2029||(cc>=0xD800&&cc<=0xDFFF)||cc===0xFEFF||cc===0xFFFD||cc===0x5C&&/[^nrtu'"`\\\/dDsSwWbB.\[\]()*+?{}|^$\-0-9xc]/.test(t[k+1]||''))cs.push(k+':U+'+cc.toString(16)+(cc===0x5C?'('+t.substr(k,2)+')':''))}return cs.length?'   [특이 '+cs.slice(0,12).join(',')+']':''}
 function show(title,L){out.push('— '+title+' ('+L.length+'줄)');for(var i=Math.max(1,n-2);i<=Math.min(L.length,n+2);i++){var t=L[i-1]||'';var v=i===n?t.slice(Math.max(0,c-200),c)+' ⟦여기⟧ '+t.slice(c,c+200):t.slice(0,200);out.push(i+': '+v+(i===n?odd(t.slice(Math.max(0,c-200),c+200)):''))}}
 var sc=[].slice.call(document.scripts).sort(function(x,y){return y.text.length-x.text.length})[0];if(sc)show('큰 스크립트 기준',sc.text.split('\n'));show('문서 기준',document.documentElement.outerHTML.split('\n'));

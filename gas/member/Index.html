@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261101-004411 -->
+<!-- build: 20261101-004746 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -210,12 +210,13 @@ function vHome(){
   var spaid=stu.filter(function(s){var d=duesOf('학생',s['학생ID'],'2026');return d&&+d['납부']>0});
   function tile(k,v,s,p,w){return '<div class="tile'+(w?' warn':'')+'"><span class="k">'+k+'</span><span class="v">'+v+'</span><span class="s">'+s+'</span>'+(p!=null?'<div class="bar"><i style="width:'+p+'%"></i></div>':'')+'</div>'}
   var mw=S.D.mailLeft>=0&&S.D.mailLeft<30?'<div class="note warn"><b>오늘 더 보낼 수 있는 메일이 '+S.D.mailLeft+'통 남았어요.</b> 인증 코드 메일이 안 갈 수 있어요. <button class="btn small" type="button" data-tab="set">설정에서 보기</button></div>':'';
-  return mw+'<div class="sec-h"><div><h2>한눈에</h2><p>겨울 캠프 접수 전에 학원 · 교사 · 학생 명단을 정리해요. 한 줄씩 열어 고치고 「확인」으로 표시해요.</p></div></div>'+
-  '<div class="tiles">'+tile('학원',acad.filter(function(a){return a['상태']==='운영'}).length,'확인 '+pa.n+' / '+acad.length+' ('+pa.p+'%)',pa.p)+
-    tile('교사',tch.length,'확인 '+pt.n+' / '+tch.length+' ('+pt.p+'%)',pt.p)+
-    tile('재원 학생',stu.length,'확인 '+ps.n+' / '+stu.length+' ('+ps.p+'%)',ps.p)+
-    tile('교사 연회비 2026','납부 '+tpaid.length,'납부 대상 '+tdue.length+'명 · 미납 '+(tdue.length-tpaid.length),null,tdue.length>tpaid.length)+
-    tile('학생 연회비 2026','납부 '+spaid.length,'재원 '+stu.length+'명 · 기록 없음·미납 '+(stu.length-spaid.length),null,stu.length>spaid.length)+'</div>'+
+  var hh=function(t,tab){return '<div class="spread" style="margin:14px 0 6px"><h3 style="font-size:17px">'+t+'</h3><button class="btn small ghost" type="button" data-tab="'+tab+'">'+t+' 열기 →</button></div>'};
+  var ext=tch.filter(function(t){return t['회원구분']==='외부인'});
+  return mw+'<div class="sec-h"><div><h2>한눈에</h2><p>학원 · 교사 · 학생 · 관계자 명단을 한 화면에서 봐요. 숫자 옆 ⓘ에 설명이 있어요.</p></div></div>'+
+    hh('학원정보','acad')+acadTiles(acad.filter(function(a){return !a['상태']||a['상태']==='운영'}))+
+    hh('교사정보','tch')+tchTiles(tch.filter(function(t){return t['회원구분']!=='외부인'&&t['상태']!=='탈퇴'}))+
+    hh('학생정보','stu')+stuTiles(S.D.stu)+
+    hh('관계자정보','ext')+extTiles(ext)+
   '<div class="panel"><h3>정리할 것</h3><div class="issues">'+issues().filter(function(x){return x[3]}).map(function(x){
     return '<div class="issue"><div><b>'+esc(x[2])+'</b> <span class="cap">'+esc(x[4])+'</span></div><div class="row"><b class="num">'+x[3]+'</b><button class="btn small" type="button" data-issue="'+x[0]+'|'+x[1]+'">보기</button></div></div>'}).join('')+'</div>'+
     '<p class="cap">원본 연회비 명단에서 불러올 때 이름 끝 A·B 글자와 괄호 표기는 「구분 글자」 칸으로 옮겼어요. 화면과 명찰에는 이름만 쓰여요.</p></div>'}
@@ -324,6 +325,9 @@ function tchList(){var qq=q(),f=S.f,is=S.issue,dn=dupNames(S.D.tch);
 function acadOpts(first){var by=function(x,y){return x[1].localeCompare(y[1],'ko')};return [['',first]].concat(S.D.acad.filter(function(a){return !a['상태']||a['상태']==='운영'}).map(function(a){return [a['학원ID'],a['학원명']]}).sort(by)).concat(S.D.acad.filter(function(a){return a['상태']==='휴원'}).map(function(a){return [a['학원ID'],a['학원명']+' (휴원)']}).sort(by))}
 /* ---------- 관계자정보 (10-31): 회원관리 외부인(X0001) — 초빙교수 · 반주자 · 지휘자 · 통역 · 초청강사 · 스태프 ---------- */
 var EXT_ROLES=['초빙교수','반주자','지휘자','통역','초청강사','스태프','기타'];
+function extRole(t){var r=String(t['하는일']||'');if(!r){var m=String(t['확인메모']||'').match(/외부인 · ([^·(]+)/);r=m?m[1].trim():''}return r}
+function extTiles(all){var acc=S.D.acc||{},cnt={};all.forEach(function(t){var r=extRole(t).replace(/^기타.*/,'기타')||'미정';cnt[r]=(cnt[r]||0)+1});var a=all.filter(function(t){return acc[t['교사ID']]==='사용'}).length;
+  return '<div class="tiles">'+tileH('관계자',all.length,'외부인 회원')+tileH('계정 있음',a,pct(a,all.length))+tileH('강사료 대상',all.filter(function(t){return t['강사료대상']==='예'}).length)+EXT_ROLES.concat(['미정']).filter(function(r){return cnt[r]}).map(function(r){return tileH(r,cnt[r])}).join('')+'</div>'}
 function vExt(){var qq=q(),fr=S.f.xr||'',acc=S.D.acc||{};
   var all=S.D.tch.filter(function(t){return t['회원구분']==='외부인'});
   var roleOf=function(t){var r=String(t['하는일']||'');if(!r){var m=String(t['확인메모']||'').match(/외부인 · ([^·(]+)/);r=m?m[1].trim():''}return r};

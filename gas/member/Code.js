@@ -1,4 +1,4 @@
-/* build: 20261031-235557 */
+/* build: 20261101-000149 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -343,7 +343,8 @@ function rosterBuild_() {
   const cur = {}; rowsOf_('담당').list.forEach(r => { if (!r['종료']) cur[r['학생ID']] = r['교사ID']; });
   const evs = {}; rowsOf_('재원이력').list.forEach(h => { (evs[h['학생ID']] = evs[h['학생ID']] || []).push({ s: h['상태'], d: String(h['날짜'] || '') }); });
   const rows = {};
-  rows['학원'] = A.v.map(r => ROSTER_HEAD['학원'].map(k => k === '교습과목' || k in ac ? String(r[ac[k]] || '') : ''));
+  const stuN = {}; S2.v.forEach(r => { if ((r[sc['상태']] || '재원') === '재원') stuN[r[sc['학원ID']]] = (stuN[r[sc['학원ID']]] || 0) + 1; });
+  rows['학원'] = A.v.filter(r => r[ac['구분']] !== '클래스' || stuN[r[ac['학원ID']]]).map(r => ROSTER_HEAD['학원'].map(k => k === '교습과목' || k in ac ? String(r[ac[k]] || '') : ''));
   rows['교사'] = T.v.filter(r => r[tc['상태']] !== '탈퇴').map(r => { const id = r[tc['교사ID']], d = tdu[id] || [], free = r[tc['회비구분']] === '면제';
     const o = { '교사ID': id, '이름': r[tc['이름']], '구분글자': r[tc['구분글자']], '성별': r[tc['성별']], '휴대전화': r[tc['휴대전화']], '회원구분': r[tc['회원구분']], '직급': r[tc['직급']], '전공': r[tc['전공']], '자격': r[tc['본인자격']] || r[tc['명단자격']], '캠프교수': r[tc['캠프교수']], '회비구분': r[tc['회비구분']], '학원1': r[tc['학원1']], '학원2': r[tc['학원2']], '학원3': r[tc['학원3']], '상태': r[tc['상태']],
       '올해회비': free ? '면제' : (+d[4] > 0 && (+d[4] >= +d[3] || !+d[3]) ? '납부' : +d[4] > 0 ? '일부' : '미납'), '올해납부일': d[5] || '', '올해부과': d[3] || '' };
@@ -1412,6 +1413,31 @@ function tSavePhoto(sess, data) {
 function photoGet(who, tid) { return { photo: photoOf_(tid) }; }
 function photoDel(who, tid) { const P = tbl_('사진'), i = P.find('교사ID', tid); if (i >= 0) P.sh.deleteRow(i + 2); log_(who.name, '사진', tid, '관리자가 사진 지움', ''); return { photo: '' }; }
 /** 내 정보: 기본 정보 고치기 (10-28). 바로 바꾸고, 바뀐 칸은 「확인 필요 · 내 정보에서 바꿈」으로 협회가 확인 */
+/** 선생님이 직접 「이름 클래스」를 만듦 (11-01). 승인 없이 바로 대표 · 학생 1명 이상이어야 행사 명단에 나감. 관리자에겐 「확인 필요」 */
+function tClassCreate(sess) {
+  const u = tsess_(sess); const lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    const T = tbl_('교사'), i = T.find('교사ID', u.tid); if (i < 0) fail('명단에서 선생님을 찾지 못했어요.');
+    const g = k => String(T.get(i, k) || '');
+    if (g('회원구분') === '외부인') fail('관계자는 클래스를 만들 수 없어요.');
+    if (g('상태') === '탈퇴') fail('탈퇴한 회원은 클래스를 만들 수 없어요.');
+    const A = tbl_('학원');
+    if (A.v.some((r, j) => A.get(j, '구분') === '클래스' && A.get(j, '원장교사ID') === u.tid && A.get(j, '상태') !== '탈퇴')) fail('이미 만든 클래스가 있어요. 「우리 학원 · 클래스」에서 관리해 주세요.');
+    const taken = n => A.v.some((r, j) => normA_(A.get(j, '학원명')) === normA_(n));
+    let name = g('이름').trim() + ' 클래스';
+    if (taken(name) && g('구분글자')) name = g('이름').trim() + g('구분글자') + ' 클래스';   /* 동명이인: 김소연B 클래스 */
+    if (taken(name)) fail('「' + name + '」이 이미 있어요. 협회에 문의해 주세요.');
+    const cur = worksOf_(u.tid).filter(w => !w['종료']); if (cur.length >= 3) fail('소속은 3곳까지예요. 「내 정보 › 소속 학원」에서 끝난 곳을 정리해 주세요.');
+    const id = nextId_(A, '학원ID', 'A'), ph = digits_(g('휴대전화')), stamp = now_(), who = g('이름') + ' (선생님)';
+    A.append({ '학원ID': id, '학원명': name, '구분': '클래스', '상태': '운영', '원장교사ID': u.tid, '원장명': g('이름'), '교실대표번호': ph, '대표번호원장': ph ? '예' : '', '이메일': u.email || g('이메일'),
+      '교습과목': INSTS_.indexOf(g('전공')) >= 0 ? g('전공') : '', '확인': '확인 필요', '확인메모': '선생님이 직접 만든 클래스 (' + Utilities.formatDate(new Date(), 'Asia/Seoul', 'MM-dd') + ')', '원본': '선생님이 만듦', '수정일': stamp, '수정자': who });
+    const W = tbl_('근무');
+    W.append({ '근무ID': nextWid_(W), '교사ID': u.tid, '학원ID': id, '학원명': '', '시작': Utilities.formatDate(new Date(), 'Asia/Seoul', 'yyyy-MM-dd'), '종료': '', '주근무': cur.length ? '' : '예', '출처': '선생님', '수정일': stamp, '수정자': who });
+    syncAcads_(u.tid);
+    log_(u.email, '학원', id, '선생님이 클래스 만듦', name);
+  } finally { lock.releaseLock(); }
+  return tMe(sess);
+}
 function tSaveInfo(sess, d) {
   const u = tsess_(sess); d = d || {};
   const lock = LockService.getScriptLock(); lock.waitLock(20000);

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261031-235557 -->
+<!-- build: 20261101-000149 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -295,6 +295,7 @@ function vMe(){var m=S.me;if(!m)return '<div class="card"><span><span class="spi
     (m.reqs&&m.reqs.length?'<div class="note warn">협회가 확인 중인 요청: '+esc(m.reqs.join(', '))+'</div>':'')+
     (S.infoEd?infoEdit(m):'<dl class="kv"><dt>이메일</dt><dd>'+esc(m.email)+'</dd><dt>휴대전화</dt><dd class="num">'+fmtPh(m.phone)+'</dd><dt>성별</dt><dd>'+(m.sex?esc(m.sex):'<span class="pill due">없음</span> <button class="btn small" type="button" id="infoEd2">넣기</button>')+'</dd>'+(m.ext?'<dt>구분</dt><dd><span class="pill info">외부인</span></dd><dt>악기</dt><dd>'+esc(m.inst||'-')+'</dd></dl>':'<dt>직급</dt><dd>'+esc(m.role||'-')+'</dd><dt>악기</dt><dd>'+esc(m.inst||'-')+'</dd><dt>회원 종류</dt><dd>'+(KINDS.indexOf(m.kind)>=0?'<span class="pill info">'+esc(kindLabel(m.kind))+'</span>':'<span class="pill due">확인 전</span>')+'</dd></dl>')+certLine(m)+'<button class="btn small block" type="button" id="infoEd">기본 정보 고치기</button>')+
     (m.heads&&m.heads.length?'<div class="lock" style="margin-top:8px"><h3>우리 학원 · 클래스</h3>'+m.heads.map(function(a){return '<div class="spread" style="margin:4px 0"><b>'+esc(a.name)+' <span class="hint">'+(a.kind==='클래스'?'클래스 대표':'원장')+'</span></b><button class="btn small primary" type="button" data-myac="'+esc(a.id)+'">'+(a.kind==='클래스'?'클래스':'학원')+' 관리</button></div>'}).join('')+'</div>':'')+
+    (!m.ext&&!(m.heads||[]).some(function(h){return h.kind==='클래스'})?'<div class="lock" style="margin-top:8px"><h3>개인 레슨 · 클래스</h3>'+(S.clsAsk?'<p>「<b>'+esc(m.name)+' 클래스</b>」를 만들까요? 만든 뒤 바로 대표로 학생을 넣을 수 있어요. <span class="hint">학생이 1명 이상 있어야 캠프 · 졸업연주에 클래스 이름으로 나가요.</span></p><div class="two">'+btn('clsGo','만들기')+'<button class="btn" type="button" id="clsNo">취소</button></div>':'<div class="spread"><span class="hint">학원 말고 개인 레슨을 하시면 「'+esc(m.name)+' 클래스」를 만들 수 있어요.</span><button class="btn small" type="button" id="clsAsk">클래스 만들기</button></div>')+'</div>':'')+
     '</div>'+(m.ext?'':workCard(m)+duesCard(m))+eventCard(m)+
     payCards(m)+rrnBox(m)}
 function payCards(m){var p=m.pay||{},ed=S.payEd,d=S.pay||{};
@@ -746,6 +747,8 @@ document.addEventListener('click',function(e){if(e.target.id==='sdClose2'){S.stu
     var send=k2==='acct'?{eng:q2.eng,bank:q2.bank,acct:q2.acct,holder:q2.holder}:k2==='home'?{hzip:q2.hzip,haddr:q2.haddr,haddr2:q2.haddr2}:{same:!!q2.same,zip:q2.zip,addr:q2.addr,addr2:q2.addr2};
     run(function(){return call('tSavePart',[S.sess,k2,send]).then(function(r){if(!r.ok){S.msg=r.msg;return}S.me=r.me;S.payEd='';S.pay=null;S.err={};toast('저장했어요')})});return}
   if(b.id==='infoEd2'){var ie=document.getElementById('infoEd');if(ie)ie.click();return}
+  if(b.id==='clsAsk'){S.clsAsk=true;render();return}if(b.id==='clsNo'){S.clsAsk=false;render();return}
+  if(b.id==='clsGo'){run(function(){return call('tClassCreate',[S.sess]).then(function(r){if(!r.ok){S.msg=r.msg;toast(r.msg);return}S.me=r.me;S.clsAsk=false;toast('클래스를 만들었어요. 「클래스 관리」에서 학생을 넣어 주세요')})});return}
   if(b.id==='infoEd'){var mm=S.me;S.j=blankJ();Object.assign(S.j,{sex:mm.sex||'',name:mm.name,phone:mm.phone,type:mm.kind==='정식 교사'?'교사회원':/연수/.test(mm.kind)?'연수교사회원':'',course:mm.kind==='중급 연수'?'중급':mm.kind==='초급 연수'?'초급':'',role:['원장','강사'].indexOf(mm.role)>=0?mm.role:(mm.role===''?'':null),inst:mm.inst||'',certs:parseCerts(mm.certs)});S.infoEd=true;S.err={};S.msg='';render();return}
   if(b.id==='infoNo'){S.infoEd=false;S.err={};S.msg='';render();return}
   if(b.id==='infoSave'){readConfirm();var j6=S.j,e6={},mm6=S.me;j6.name=(document.getElementById('eNm').value||'').trim();j6.phone=(document.getElementById('ePh').value||'').replace(/\D/g,'');

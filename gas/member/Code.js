@@ -1,4 +1,4 @@
-/* build: 20261031-215729 */
+/* build: 20261031-215832 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -105,7 +105,7 @@ function include(n) { return HtmlService.createHtmlOutputFromFile(n).getContent(
 
 function api(name, args) {
   const open = { login, hello, tHello, tEvents, tLookup, tStart, tResend, tVerify, tCreate, tLogin, tForgot, tReset, tMe, tSavePay, tSavePart, tSaveInfo, tSavePhoto, tAcad, tSaveAcad, tDocUp, tDocGet, tSaveStu, tSaveStus, tStuDetail, tStuSave, tStuTutor, tStuTutorDel, tStuState, tStuStateDel, tMyStu, tMyStuDetail, tMyStuPay, tTchSaves, tTchEnd, tTchEvent, tTchAssign, tTchStart, tSaveRrn, tAddWork, tEndWork, tMainWork, tLogout, bPost, bMine, bReply };
-  const fns = { boot, saveRow, setCheck, logs, importRoster, saveDues, delDues, reqs, reqDo, delAcad, payView, bulkSet, saveWorks, importPastDues, bList, bSet, bComment, photoGet, photoDel, fillRegions, saveRates, docList, docUp, docGet, docDel, payList, payOk, payNo, memView, rosterNow, inputStatus, inboxDone };
+  const fns = { boot, saveRow, setCheck, logs, importRoster, saveDues, delDues, reqs, reqDo, delAcad, payView, bulkSet, saveWorks, importPastDues, bList, bSet, bComment, photoGet, photoDel, fillRegions, saveRates, docList, docUp, docGet, docDel, payList, payOk, payNo, memView, rosterNow, inputStatus, inboxDone, acctReset };
   try {
     if (open[name]) return Object.assign({ ok: true }, open[name].apply(null, args || []));
     if (!fns[name]) throw new UserError('알 수 없는 요청이에요.');
@@ -1725,6 +1725,21 @@ function saveWorks(who, tid, rows) {
 }
 
 /* ---------- 계정 도우미 ---------- */
+/** 관리자: 선생님(관계자 포함) 비밀번호를 임시 비밀번호로 바꿈 (10-31). 관리자 화면에 한 번 보여 주고, 선생님 이메일로도 보냄. 로그인 뒤 「비밀번호를 잊었어요」나 내 정보에서 바꾸게 안내 */
+function acctReset(who, tid, mail) {
+  tid = String(tid || ''); const L = acctAll_().filter(a => String(a.tid) === tid && a.state === '사용');
+  if (!L.length) fail('이 선생님은 쓰는 계정이 없어요(가입 전이거나 확인 대기).');
+  const A = 'abcdefghjkmnpqrstuvwxyz23456789'; let pw = ''; for (let i = 0; i < 10; i++) pw += A[Math.floor(Math.random() * A.length)];
+  pw = pw.slice(0, 5) + '-' + pw.slice(5);
+  const T = tbl_('계정'), lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try { L.forEach(a => { const salt = Utilities.getUuid(); T.set(a.i, { '솔트': salt, '비번해시': hash_(pw, salt), '메모': ('임시 비밀번호 ' + now_() + ' ' + who.name + ' · ' + String(a.memo || '')).slice(0, 200) }); }); }
+  finally { lock.releaseLock(); }
+  log_(who.name, '계정', tid, '비밀번호 초기화', L.map(a => maskEmail_(a.email)).join(', '));
+  let sent = false;
+  if (mail !== false) { try { L.forEach(a => mail_(a.email, '[스즈키] 임시 비밀번호를 보내 드려요',
+    '<p>협회 관리자가 선생님 회원 비밀번호를 새로 만들었어요.</p><p>임시 비밀번호: <b style="font-size:18px;letter-spacing:.05em">' + esc_(pw) + '</b></p><p>이 비밀번호로 로그인한 뒤, 로그인 화면의 「비밀번호를 잊었어요」에서 원하는 비밀번호로 바꿔 주세요.</p><p>직접 요청하지 않았다면 협회에 알려 주세요.</p>')); sent = true; } catch (e) { } }
+  return { pw, emails: L.map(a => a.email), sent };
+}
 function acctAll_() { const T = tbl_('계정'); return T.v.map((r, i) => ({ i, email: String(r[0]).toLowerCase(), tid: r[1], hash: r[2], salt: r[3], state: r[4], memo: r[9] })); }
 function addReq_(kind, tid, s, info) {
   const R = tbl_('요청');

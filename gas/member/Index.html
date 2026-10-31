@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261031-215729 -->
+<!-- build: 20261031-215832 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -326,6 +326,7 @@ function vTeachers(){var list=tchList(),per=50,page=list.slice(S.page*per,(S.pag
 function tchEditor(){var t=S.edit.id==='new'?{'상태':'활동','회원구분':'확인 전','회비구분':'납부','캠프교수':'아니오','내부외부':'내부','확인':'확인 전'}:T[S.edit.id];
   var same=t['교사ID']?S.D.tch.filter(function(x){return x['이름']===t['이름']&&x['교사ID']!==t['교사ID']}):[];
   return '<div class="editor">'+edHead(t['교사ID']?nm(t)+' 선생님 <span class="cap num">'+t['교사ID']+'</span>':'교사 추가',t)+
+    (t['교사ID']&&S.D.acc[t['교사ID']]==='사용'?'<div class="row note info" style="margin:8px 0"><span>계정 있음 · 비밀번호를 잊었다고 하면</span><button class="btn small" type="button" data-pwreset="'+t['교사ID']+'">임시 비밀번호 만들기</button><span class="cap">선생님 이메일로도 보내요</span></div>':'')+
     (same.length?'<div class="note">이름이 같은 교사: '+same.map(function(x){return '<b>'+nm(x)+'</b> '+esc(tAcadTxt(x))+' · '+esc(x['전공'])+' · 뒷자리 '+String(x['휴대전화']).slice(-4)}).join(' / ')+'</div>':'')+
     '<div class="fgrid">'+fld('e_이름','이름',t['이름'],{req:1,hint:'명찰·졸업장에 그대로'})+fld('e_구분글자','구분 글자',t['구분글자'],{hint:'동명이인 메모용 · 화면엔 작게'})+fld('e_휴대전화','휴대전화',fmt(t['휴대전화']),{type:'tel'})+
     fld('e_이메일','이메일',t['이메일'])+fld('e_성별','성별',t['성별']||'',{sel:[['','선택'],'남','여']})+fld('e_전공','전공',t['전공'],{sel:[['','선택']].concat(T_INSTS)})+(t['회원구분']==='외부인'?fld('e_하는일','하는 일',t['하는일']||'',{sel:[['','선택']].concat(EXT_ROLES,t['하는일']&&EXT_ROLES.indexOf(t['하는일'])<0?[t['하는일']]:[])})+fld('e_소속기관','소속(기관)',t['소속기관']||'',{hint:'오케스트라 · 대학 · 나라 등'}):'')+
@@ -631,6 +632,9 @@ document.addEventListener('click',function(e){
   if(d.ddel){var pp=d.ddel.split('|');if(!confirm('이 서류를 지울까요? 드라이브에서도 휴지통으로 가요.'))return;callS('docDel',pp[0]).then(function(r){if(!r.ok){toast(r.msg);return}S.docs[pp[1]]=r.docs;render();toast('지웠어요')});return}
   if(d.subjrm){var L=subjList(document.getElementById('e_교습과목').value).filter(function(x){return x!==d.subjrm});subjSet(L);return}
   if(b.id==='fillRg'){if(S.busy)return;S.busy=true;b.disabled=true;callS('fillRegions').then(function(r){S.busy=false;if(!r.ok){b.disabled=false;toast(r.msg);return}S.D.acad=objs(r.acad);index();render();toast(r.n+'곳을 채웠어요'+(r.left.length?' · 시·도가 없는 '+r.left.length+'곳은 직접 골라 주세요':''))});return}
+  if(d.pwreset){var pt=T[d.pwreset]||{};if(!confirm(nm(pt).replace(/<[^>]+>/g,'')+' 선생님 비밀번호를 임시 비밀번호로 바꿀까요? 지금 비밀번호로는 더 이상 로그인할 수 없어요.'))return;
+    b.disabled=true;callS('acctReset',d.pwreset,true).then(function(r){b.disabled=false;if(!r.ok){toast(r.msg);return}
+      prompt('임시 비밀번호예요 (지금 한 번만 보여요). '+(r.sent?'선생님 이메일('+r.emails.join(', ')+')로도 보냈어요.':'메일을 보내지 못했어요. 직접 알려 주세요.')+' 복사해 두세요:',r.pw)});return}
   if(d.phdel){if(!confirm('이 선생님 사진을 지울까요?'))return;callS('photoDel',d.phdel).then(function(r){if(!r.ok){toast(r.msg);return}S.photos[d.phdel]='';render();toast('사진을 지웠어요')});return}
   if(d.gostu){var sid=d.edit.split('|')[1];go('stu');S.edit={kind:'stu',id:sid};render();window.scrollTo(0,0);return}
   if(d.edit){var q2=d.edit.split('|');S.wEd=null;S.dEdit=null;S.payOpen=null;S.edAcad=null;S.edit=S.edit&&S.edit.id===q2[1]?null:{kind:q2[0],id:q2[1]};render();window.scrollTo({top:0,behavior:'smooth'});return}

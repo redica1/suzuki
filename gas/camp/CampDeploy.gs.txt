@@ -15,7 +15,7 @@
  *   4) deployStgNow 실행 → 권한 허용 → 로그에 「배포 완료」 확인 → setupTrigger 실행
  *
  * ■ STG 지금 적용 화면 (v4, 10-31) — 버튼으로 캠프 · 회원관리 STG 를 바로 반영
- *   1) 이 코드를 붙여 넣기 전에 지금 도우미의 STG.scriptId · PROD.scriptId 두 줄을 복사해 두었다가, 붙여 넣은 뒤 다시 채우기
+ *   1) 이 코드를 통째로 붙여 넣기 (STG · 메인 스크립트 ID 는 이미 채워 둠, 10-31)
  *   2) 매니페스트를 아래 MANIFEST 로 바꾸기 ("webapp" 줄이 새로 생김) → 저장 → deployStgNow 한 번 실행해 권한 다시 허용
  *   3) 배포 › 새 배포 › 유형 「웹 앱」 · 실행 = 나 · 액세스 = 「나만」 → 나온 웹 앱 주소(…/exec)를 Claude 에게
  *   - 그 주소를 열면 캠프 · 회원관리 줄마다 체크 상자 + 「적용」 버튼, 아래 「선택한 것 동시 적용」. STG 만 바꿈(메인 반영은 버튼 없음)
@@ -31,12 +31,12 @@
 const SRC = 'https://raw.githubusercontent.com/redica1/suzuki/main/gas/camp/';
 const STG = {
   key: 'stg', name: '캠프 접수 (테스트 STG)',
-  scriptId: '',                                                                     // ← [STG] 2027 겨울캠프접수 › 프로젝트 설정 › 스크립트 ID
+  scriptId: '19bGG_AvwUhRiFGkw-trVFZY1CfCZpoBJWGDXf7jZlanNJEFQtRU44reX',   // [STG] 2027 겨울캠프접수
   deploymentId: 'AKfycby2WK6m-LkmOgUM3V2P_yA0f2kobvlfJw7qmNE36Tzxg6xvj6dQPKJuVFmT68zP7_55'
 };
 const PROD = {
   key: 'prod', name: '캠프 접수 (메인)',
-  scriptId: '',                                                                     // ← 2027 겨울캠프접수 › 프로젝트 설정 › 스크립트 ID
+  scriptId: '1y7WXyELG1xqII4rOoBUmYjGEjl46Zwg_xRnvQZ-Rf2T59e_HMV4EJirE',   // 2027 겨울캠프접수 (메인)
   deploymentId: 'AKfycbzrzYgEsPnHVcBIjobN9xB6nGBcZ7nPYMX7hDtx3OoI7WYokszGDLhcO0lHWYz9rWAt7w',
   sheetId: '17lM8Gq23Pe40o9f2oi9wuZoJ15vGvt4aCyULDyjj_mA'                          // 메인 시트 (반영 전에 백업)
 };

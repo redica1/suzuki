@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261101-004954 -->
+<!-- build: 20261101-005314 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -226,7 +226,7 @@ function pager(total,per){var pages=Math.max(1,Math.ceil(total/per));if(S.page>=
   return '<div class="pager"><span>'+total+'개'+(pages>1?' 중 '+(S.page*per+1)+'–'+Math.min(total,(S.page+1)*per):'')+'</span>'+(pages>1?'<button class="btn small" type="button" data-pg="-1" '+(S.page===0?'disabled':'')+'>이전</button><button class="btn small" type="button" data-pg="1" '+(S.page>=pages-1?'disabled':'')+'>다음</button>':'')+'</div>'}
 function issueBar(){if(!S.issue)return '';var x=issues().filter(function(i){return i[1]===S.issue})[0];return x?'<div class="note info row" style="justify-content:space-between"><span>「'+esc(x[2])+'」만 보는 중 · '+x[3]+'개</span><button class="btn small" type="button" id="clrIssue">모두 보기</button></div>':''}
 function sel(id,opts,v,label){return '<select id="'+id+'" aria-label="'+esc(label)+'">'+opts.map(function(o){var k=Array.isArray(o)?o[0]:o,l=Array.isArray(o)?o[1]:o;return '<option value="'+esc(k)+'" '+(String(k)===String(v||'')?'selected':'')+'>'+esc(l)+'</option>'}).join('')+'</select>'}
-function bulkBar(kind){var n=Object.keys(S.sel).length;return n?'<div class="row note info"><b>'+n+'개 선택</b>'+(S.tab==='tch'?'<span class="cap">한꺼번에 바꾸기</span>'+sel('bRole',[['*','직급 그대로'],'원장','강사',['','없음']],'*','직급')+sel('bCamp',[['*','캠프교수 그대로'],['예','캠프교수 예'],['아니오','캠프교수 아니오']],'*','캠프교수')+sel('bFree',[['*','회비면제 그대로'],['면제','회비면제 예'],['납부','회비면제 아니오']],'*','회비면제')+'<button class="btn small primary" type="button" id="bApply">선택한 '+n+'명에게 적용</button><span class="cap">· 확인 표시:</span>':'')+'<button class="btn small primary" type="button" data-bulk="확인">확인으로</button><button class="btn small" type="button" data-bulk="확인 필요">확인 필요로</button><button class="btn small ghost" type="button" data-bulk="확인 전">확인 전으로</button><button class="btn small ghost" type="button" id="selClr">선택 풀기</button></div>':''}
+function bulkBar(kind){var n=Object.keys(S.sel).length;return n?'<div class="row note info"><b>'+n+'개 선택</b>'+(S.tab==='tch'?'<span class="cap">한꺼번에 바꾸기</span>'+sel('bCamp',[['*','캠프교수 그대로'],['예','캠프교수 예'],['아니오','캠프교수 아니오']],'*','캠프교수')+sel('bFree',[['*','회비면제 그대로'],['면제','회비면제 예'],['납부','회비면제 아니오']],'*','회비면제')+'<button class="btn small primary" type="button" id="bApply">선택한 '+n+'명에게 적용</button><span class="cap">· 확인 표시:</span>':'')+'<button class="btn small primary" type="button" data-bulk="확인">확인으로</button><button class="btn small" type="button" data-bulk="확인 필요">확인 필요로</button><button class="btn small ghost" type="button" data-bulk="확인 전">확인 전으로</button><button class="btn small ghost" type="button" id="selClr">선택 풀기</button></div>':''}
 function q(){return S.q.trim()}
 
 /* ---------- 학원 ---------- */
@@ -384,7 +384,7 @@ function tchEditor(){var t=S.edit.id==='new'?{'상태':'활동','회원구분':'
     certAdmin(t)+fld('e_상태','상태',t['상태'],{sel:['활동','휴직','활동정지','탈퇴']})+fld('e_확인','확인',t['확인'],{sel:CHECKS})+'</div>'+
     (t['교사ID']?photoBoxA(t['교사ID']):'')+(t['교사ID']&&t['회원구분']!=='외부인'?workBoxA(t['교사ID']):'')+
     '<div class="panel" style="padding:12px;border-style:dashed"><b>관리자 구분 <span class="cap">선생님 화면에는 보이지 않아요</span></b><div class="fgrid">'+
-    fld('e_직급','직급',t['직급'],{sel:[['','없음'],'원장','강사']})+fld('e_캠프교수','캠프교수',t['캠프교수'],{sel:[['아니오','아니오'],['예','예 (캠프 때 교수)']]})+fld('e_회비구분','회비면제',t['회비구분'],{sel:[['납부','아니오 (납부 대상)'],['면제','예 (면제)']]})+fld('e_회비납부방법','회비 납부 방법',t['회비납부방법'],{sel:[['',''],'자동이체','직접입금','단체납부','면제']})+fld('e_강사료대상','강사료 대상',t['강사료대상'],{sel:[['','아니오'],['예','예 (주민번호 입력 열림)']]})+fld('e_계약체결','협회 계약 체결',t['계약체결'],{sel:[['','확인 전'],['예','예 (체결)'],['아니오','아니오']]})+'<label class="f" for="e_계약일"><span>계약일 <span class="cap">체결했으면</span></span><input type="date" id="e_계약일" value="'+esc(t['계약일'])+'"></label>'+'</div></div>'+
+    '<div class="f"><span>직급 <span class="cap">자동 · 대표면 원장, 소속만 있으면 강사</span></span><p style="margin:6px 0 0"><b>'+esc(t['직급']||'없음')+'</b></p></div>'+fld('e_캠프교수','캠프교수',t['캠프교수'],{sel:[['아니오','아니오'],['예','예 (캠프 때 교수)']]})+fld('e_회비구분','회비면제',t['회비구분'],{sel:[['납부','아니오 (납부 대상)'],['면제','예 (면제)']]})+fld('e_회비납부방법','회비 납부 방법',t['회비납부방법'],{sel:[['',''],'자동이체','직접입금','단체납부','면제']})+fld('e_강사료대상','강사료 대상',t['강사료대상'],{sel:[['','아니오'],['예','예 (주민번호 입력 열림)']]})+fld('e_계약체결','협회 계약 체결',t['계약체결'],{sel:[['','확인 전'],['예','예 (체결)'],['아니오','아니오']]})+'<label class="f" for="e_계약일"><span>계약일 <span class="cap">체결했으면</span></span><input type="date" id="e_계약일" value="'+esc(t['계약일'])+'"></label>'+'</div></div>'+
     '<div class="fgrid">'+fld('e_확인메모','확인 메모',t['확인메모'],{wide:1})+fld('e_메모','메모',t['메모'],{wide:1,area:1})+'</div>'+
     (t['교사ID']?payBoxA(t['교사ID'])+duesBox('교사',t['교사ID'],t['회비구분']==='면제'?0:null,t['회원구분']):'')+'<p class="err" id="edErr"></p></div>'}
 
@@ -701,7 +701,7 @@ document.addEventListener('click',function(e){
   if(b.id==='saveEd'){saveEd(false);return}
   if(b.id==='saveOk'){saveEd(true);return}
   if(b.id==='selClr'){S.sel={};render();return}
-  if(b.id==='bApply'){var ch={},bv=function(id){return document.getElementById(id).value};if(bv('bRole')!=='*')ch['직급']=bv('bRole');if(bv('bCamp')!=='*')ch['캠프교수']=bv('bCamp');if(bv('bFree')!=='*')ch['회비구분']=bv('bFree');
+  if(b.id==='bApply'){var ch={},bv=function(id){return document.getElementById(id).value};if(bv('bCamp')!=='*')ch['캠프교수']=bv('bCamp');if(bv('bFree')!=='*')ch['회비구분']=bv('bFree');
     var bids=Object.keys(S.sel);if(!Object.keys(ch).length){toast('바꿀 것을 골라 주세요');return}if(!confirm(bids.length+'명을 한꺼번에 바꿀까요?'))return;if(S.busy)return;S.busy=true;
     callS('bulkSet',bids,ch).then(function(r){S.busy=false;if(!r.ok){toast(r.msg);return}bids.forEach(function(id){if(T[id])Object.assign(T[id],r.upd,{'수정일':r.stamp,'수정자':'관리자'})});S.sel={};render();toast(r.n+'명을 바꿨어요')});return}
   if(d.bulk){var ids=Object.keys(S.sel),table=kindOf();if(S.busy)return;S.busy=true;

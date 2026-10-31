@@ -1,11 +1,12 @@
 <!doctype html>
-<!-- build: 20261031-211509 -->
+<!-- build: 20261031-211711 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
 <title>캠프 접수 관리</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap">
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&display=swap">
 <style>
 :root{
   --bg:#f3f6f7; --surface:#ffffff; --sunk:#e9eef0; --line:#d5dee2;
@@ -250,6 +251,18 @@ tr.off td{opacity:.5}
 .cotbl input[type=text],.cotbl input[type=number],.cotbl select{padding:4px 7px;border:1px solid var(--line);border-radius:6px;font:inherit;background:var(--surface);color:var(--ink);min-width:60px}.cotbl input.empty{border-color:var(--rosin)}.cotbl td{vertical-align:middle}tr.cogone td{color:var(--faint);background:var(--sunk)}
 @media (max-width:640px){.band h1{font-size:15px}.band .meta{font-size:11.5px;margin-left:0}.tabs,.tabs2{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}.tabs::-webkit-scrollbar,.tabs2::-webkit-scrollbar{display:none}.tabs button,.tabs2 button{white-space:nowrap;padding-left:11px;padding-right:11px}.tabs2 .grp{display:contents}}
 .bud tr.bcat td{background:var(--sunk)}.bud td.num{width:auto;white-space:nowrap}.bud tr.me td{background:var(--accent-soft)}.bud tr.be td{border-top:2px solid var(--ok)}.bud .bbar{height:10px;border-radius:3px;min-width:2px}.bneg{color:var(--bad)}.bpos{color:var(--ok)}.bud .tabs2{border-bottom:1px solid var(--line)}
+</style>
+<style>
+/* 디자인 (10-31): 글꼴 Pretendard · 캠프 청록(#0f9d9a) 색 · 자간 · 행간 · 낱말 단위 줄바꿈 (관리자 화면은 표가 많아 조금 촘촘하게) — 위 색 정의를 덮어씀 */
+:root{--bg:#f2fafa; --surface:#ffffff; --sunk:#e6f4f3; --line:#cdebe9; --ink:#132a2c; --muted:#4f6668; --faint:#7f9698; --accent:#0b7a78; --accent-ink:#ffffff; --accent-soft:#e3f5f4; --band:#0f9d9a; --band-ink:#ffffff; --band-muted:#dcf4f2;
+  --display:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  --body:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0c1918; --surface:#132423; --sunk:#182e2d; --line:#24403e; --ink:#e4f2f1; --muted:#9fbcba; --faint:#6f8c8a; --accent:#5fd4cf; --accent-ink:#062221; --accent-soft:#163634; --band:#0b4f4d; --band-ink:#ffffff; --band-muted:#bfe7e4;}}
+:root[data-theme="dark"]{--bg:#0c1918; --surface:#132423; --sunk:#182e2d; --line:#24403e; --ink:#e4f2f1; --muted:#9fbcba; --faint:#6f8c8a; --accent:#5fd4cf; --accent-ink:#062221; --accent-soft:#163634; --band:#0b4f4d; --band-ink:#ffffff; --band-muted:#bfe7e4;}
+body{line-height:1.65;letter-spacing:.015em;word-break:keep-all;overflow-wrap:anywhere}
+h1,h2,h3{font-weight:800;letter-spacing:0}
+.num,input,select,textarea{word-break:normal}
+.login .btn{box-sizing:border-box}
 </style></head>
 <body>
 <div class="hdr" id="hdr"><div class="band"><div class="wrap">

@@ -1,5 +1,5 @@
 <!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
-<!-- build: 20261031-201603 -->
+<!-- build: 20261031-211509 -->
 <base target="_top">
 <script>/* 화면이 하얗게 될 때 원인을 화면에 보여 주는 진단 (STG) */
 window.addEventListener('error',function(e){try{var n=e.lineno||0,c=(e.colno||1)-1,out=[];
@@ -16,7 +16,8 @@ d.textContent='[진단] '+e.message+' · 줄 '+n+' 칸 '+e.colno+'\n'+out.join('
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap">
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&display=swap">
 <style>
 /* Layout: one narrow column (max 720px) like a paper application, a winter-ink header band, a sticky running-total bar at the bottom. */
 :root{
@@ -345,6 +346,17 @@ select:disabled{opacity:.5}
 .ex{margin-left:2px}
 .rp{display:grid;gap:10px;border-color:var(--accent)}
 .ttday{display:grid;gap:4px;padding:8px 0;border-top:1px solid var(--line)}.ttday:first-child{border-top:0}.ttdl{font-weight:700}.ttit{display:grid;grid-template-columns:5.4em 1fr;gap:8px;padding:3px 0;font-size:14px}.ttit .num small{display:block;color:var(--faint);font-size:11px}.ttrole{display:inline-block;font-size:11px;font-weight:600;border-radius:4px;padding:0 5px;margin-right:5px;background:var(--accent-soft);color:var(--accent)}.ttrole.les{background:var(--accent);color:var(--accent-ink)}.ttstu{display:grid;gap:4px;margin-bottom:8px}.ttstu .ttit{grid-template-columns:7.2em 1fr}
+</style>
+<style>
+/* 디자인 (10-31): 글꼴 Pretendard · 캠프 청록(#0f9d9a) 색 · 자간 .02em · 행간 1.75 · 낱말 단위 줄바꿈 — 위 색 정의를 덮어씀 */
+:root{--bg:#f2fafa; --surface:#ffffff; --sunk:#e6f4f3; --line:#cdebe9; --ink:#132a2c; --muted:#4f6668; --faint:#7f9698; --accent:#0b7a78; --accent-ink:#ffffff; --accent-soft:#e3f5f4; --band:#0f9d9a; --band-ink:#ffffff; --band-muted:#dcf4f2;
+  --display:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  --body:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0c1918; --surface:#132423; --sunk:#182e2d; --line:#24403e; --ink:#e4f2f1; --muted:#9fbcba; --faint:#6f8c8a; --accent:#5fd4cf; --accent-ink:#062221; --accent-soft:#163634; --band:#0b4f4d; --band-ink:#ffffff; --band-muted:#bfe7e4;}}
+:root[data-theme="dark"]{--bg:#0c1918; --surface:#132423; --sunk:#182e2d; --line:#24403e; --ink:#e4f2f1; --muted:#9fbcba; --faint:#6f8c8a; --accent:#5fd4cf; --accent-ink:#062221; --accent-soft:#163634; --band:#0b4f4d; --band-ink:#ffffff; --band-muted:#bfe7e4;}
+body{line-height:1.75;letter-spacing:.02em;word-break:keep-all}
+h1,h2,h3,.band h1,.sec>h2,.card h2{font-weight:800;letter-spacing:0}
+.num,.code,input,select,textarea{word-break:normal}
 </style>
 
 <div class="band">

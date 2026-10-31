@@ -76,7 +76,7 @@ footer{color:var(--muted);font-size:14px;text-align:center;padding:0 16px 32px}
 <header><div class="in">
   <div class="top"><small>Korea Suzuki Music Association</small>
     <nav class="stg" aria-label="테스트(STG) 바로가기"><span>STG</span>
-      <a href="../camp/?test">캠프 접수</a><a href="../camp/admin.html?test">캠프 관리자</a><a href="../member/?test">회원관리</a><a href="../member/admin.html?test">회원관리 관리자</a><a id="stgNow" target="_blank" rel="noopener" hidden>STG 지금 적용 ↗</a></nav></div>
+      <a href="../camp/?test" target="_blank" rel="noopener">캠프 접수</a><a href="../camp/admin.html?test" target="_blank" rel="noopener">캠프 관리자</a><a href="../member/?test" target="_blank" rel="noopener">회원관리</a><a href="../member/admin.html?test" target="_blank" rel="noopener">회원관리 관리자</a><a id="stgNow" target="_blank" rel="noopener" hidden>STG 지금 적용 ↗</a></nav></div>
   <h1>사단법인 한국스즈키음악협회<span class="test" id="testTag" hidden>테스트(STG)</span></h1>
   <p>선생님 회원 계정 하나로 회원 정보 · 캠프 접수를 함께 써요.</p>
 </div></header>
@@ -102,7 +102,7 @@ footer{color:var(--muted);font-size:14px;text-align:center;padding:0 16px 32px}
   if (STG_NOW) { var g = document.getElementById('stgNow'); g.href = STG_NOW; g.hidden = false; }
   var test = /[?&]test\b/i.test(location.search), base = location.pathname.replace(/home\/(index\.html)?$/, '');
   if (test) document.getElementById('testTag').hidden = false;
-  [].forEach.call(document.querySelectorAll('a[data-href]'), function (a) { a.href = base + a.getAttribute('data-href') + (test ? '?test' : ''); });
+  [].forEach.call(document.querySelectorAll('a[data-href]'), function (a) { a.href = base + a.getAttribute('data-href') + (test ? '?test' : ''); a.target = '_blank'; a.rel = 'noopener'; });
 })();
 </script>
 </body>

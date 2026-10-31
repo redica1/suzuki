@@ -1,4 +1,4 @@
-/* build: 20261101-020432 */
+/* build: 20261101-021227 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -105,7 +105,7 @@ function include(n) { return HtmlService.createHtmlOutputFromFile(n).getContent(
 
 function api(name, args) {
   const open = { login, hello, tHello, tEvents, tLookup, tStart, tResend, tVerify, tCreate, tLogin, tForgot, tReset, tMe, tSavePay, tSavePart, tSaveInfo, tSavePhoto, tAcad, tSaveAcad, tDocUp, tDocGet, tSaveStu, tSaveStus, tStuDetail, tStuSave, tStuTutor, tStuTutorDel, tStuState, tStuStateDel, tMyStu, tMyStuDetail, tMyStuPay, tTchSaves, tTchEnd, tTchEvent, tTchAssign, tTchStart, tSaveRrn, tAddWork, tClassCreate, tEndWork, tMainWork, tLogout, bPost, bMine, bReply };
-  const fns = { boot, saveRow, setCheck, logs, importRoster, saveDues, delDues, reqs, reqDo, delAcad, payView, bulkSet, saveWorks, importPastDues, bList, bSet, bComment, photoGet, photoDel, fillRegions, saveRates, docList, docUp, docGet, docDel, payList, payOk, payOkMany, payNo, memView, rosterNow, inputStatus, inboxDone, acctReset, classFromStudents, delStus, asTeacher, bankImport, bankList, bankSet, bankDues, bankFromSheet };
+  const fns = { boot, saveRow, setCheck, logs, importRoster, saveDues, delDues, reqs, reqDo, delAcad, payView, bulkSet, saveWorks, importPastDues, bList, bSet, bComment, photoGet, photoDel, fillRegions, saveRates, docList, docUp, docGet, docDel, payList, payOk, payOkMany, payNo, memView, rosterNow, inputStatus, inboxDone, acctReset, classFromStudents, delStus, asTeacher, bankImport, bankList, bankSet, bankDues, bankFromSheet, bankMeta };
   try {
     if (open[name]) return Object.assign({ ok: true }, open[name].apply(null, args || []));
     if (!fns[name]) throw new UserError('알 수 없는 요청이에요.');
@@ -1898,19 +1898,64 @@ function acadNames_() { const o = {}; tbl_('학원').v.forEach(r => o[r[0]] = r[
 /* ====================== 통장 (11-01) ======================
  * 협회 통장 거래내역을 관리자 전용 「정산 정보」 파일의 「통장」 탭에 모음. 은행 엑셀을 화면에서 읽어 줄로 보냄(겹치는 줄은 건너뜀).
  * 줄마다 구분(입금 · 지출) · 학원 · 선생님 · 메모를 정하고, 교사회비 · 학생회비는 회원관리 연회비 「확인」까지 이어 줌. */
-const BANK_HEAD = ['거래ID', '거래일시', '보낸분받는분', '출금', '입금', '잔액', '적요', '내통장표시', '처리점', '구분', '학원ID', '교사ID', '메모', '상태', '연결', '올린때', '수정일', '수정자'];
+const BANK_HEAD = ['거래ID', '거래일시', '보낸분받는분', '출금', '입금', '잔액', '적요', '내통장표시', '처리점', '구분', '학원ID', '교사ID', '메모', '상태', '연결', '올린때', '수정일', '수정자', '통장ID', '프로젝트ID'];
 const BANK_IN = ['교사회비', '학생회비', '졸업연주', '졸연티켓', '캠프 참가비', '캠프 가족방', '교사연수', '기타 입금'];
 const BANK_OUT = ['임대료', '행사비', '인쇄 · 제작', '환불', '교통 · 출장', '통신 · 공과금', '인건비 · 강사료', '카드대금', '내부 이체', '기타 지출'];
-function bankTbl_() {
+function bankSheet_(name, HEAD, seed) {
   const id = settings_()['정산 정보 시트']; if (!id) fail('정산 정보 파일이 아직 없어요. 관리자가 setup 을 한 번 더 실행해야 해요.');
-  const ss = SpreadsheetApp.openById(id); let sh = ss.getSheetByName('통장');
-  if (!sh) { sh = ss.insertSheet('통장'); sh.getRange(1, 1, 1, BANK_HEAD.length).setValues([BANK_HEAD]).setFontWeight('bold').setBackground('#e9eef0'); sh.setFrozenRows(1); sh.getRange(1, 1, Math.max(sh.getMaxRows(), 2), BANK_HEAD.length).setNumberFormat('@'); }
+  const ss = SpreadsheetApp.openById(id); let sh = ss.getSheetByName(name);
+  if (!sh) { sh = ss.insertSheet(name); sh.getRange(1, 1, 1, HEAD.length).setValues([HEAD]).setFontWeight('bold').setBackground('#e9eef0'); sh.setFrozenRows(1); sh.getRange(1, 1, Math.max(sh.getMaxRows(), 2), HEAD.length).setNumberFormat('@');
+    if (seed && seed.length) sh.getRange(2, 1, seed.length, HEAD.length).setValues(seed.map(r => HEAD.map((k, j) => r[j] == null ? '' : String(r[j])))); }
   const all = sh.getDataRange().getDisplayValues(); let h = (all.shift() || []).map(String);
-  const miss = BANK_HEAD.filter(k => h.indexOf(k) < 0); if (miss.length) { sh.getRange(1, h.length + 1, 1, miss.length).setValues([miss]).setFontWeight('bold'); h = h.concat(miss); }
+  const miss = HEAD.filter(k => h.indexOf(k) < 0); if (miss.length) { sh.getRange(1, h.length + 1, 1, miss.length).setValues([miss]).setFontWeight('bold'); h = h.concat(miss); }
   const v = all.filter(r => r.some(x => x !== '')).map(r => { const x = r.slice(); while (x.length < h.length) x.push(''); return x; });
-  return { sh, h, v, c: k => h.indexOf(k), get(i, k) { return v[i][h.indexOf(k)]; }, find(id) { const c = h.indexOf('거래ID'); return v.findIndex(r => r[c] === id); },
-    set(i, o) { const row = v[i].slice(); Object.keys(o).forEach(k => { const c = h.indexOf(k); if (c >= 0) row[c] = o[k] == null ? '' : String(o[k]); }); sh.getRange(i + 2, 1, 1, h.length).setValues([row]); v[i] = row; },
+  return { sh, h, v, c: k => h.indexOf(k), get(i, k) { return v[i][h.indexOf(k)]; }, find(id) { return v.findIndex(r => r[0] === id); },
+    obj(i) { const o = {}; h.forEach((k, j) => o[k] = v[i][j]); return o; }, objs() { return v.map((r, i) => this.obj(i)); },
+    put(i, o) { const row = v[i].slice(); Object.keys(o).forEach(k => { const c = h.indexOf(k); if (c >= 0) row[c] = o[k] == null ? '' : String(o[k]); }); v[i] = row; },
+    set(i, o) { this.put(i, o); sh.getRange(i + 2, 1, 1, h.length).setValues([v[i]]); },
+    flush() { if (v.length) sh.getRange(2, 1, v.length, h.length).setNumberFormat('@').setValues(v); },
     appendMany(objs) { if (!objs.length) return; const rows = objs.map(o => h.map(k => o[k] == null ? '' : String(o[k]))); sh.getRange(v.length + 2, 1, rows.length, h.length).setNumberFormat('@').setValues(rows); rows.forEach(r => v.push(r)); } };
+}
+function bankTbl_() { return bankSheet_('통장', BANK_HEAD); }
+/* 통장 목록 · 프로젝트 · 구분 (11-01). 프로젝트 = 회비 · 캠프 · 졸업연주 · 교사연수처럼 돈을 따로 셈하는 묶음: 기간 · 통장 · 쓰는 구분을 정함 */
+const BANK_ACCT_HEAD = ['통장ID', '이름', '은행', '계좌번호', '예금주', '메모', '사용', '수정일', '수정자'];
+const BANK_PROJ_HEAD = ['프로젝트ID', '이름', '시작일', '끝일', '통장ID', '구분', '메모', '사용', '수정일', '수정자'];
+const BANK_CAT_HEAD = ['구분', '입출', '대분류', '중분류', '순서', '사용'];   /* 구분 = 소분류 (거래 줄에서 고르는 것) */
+const BANK_CAT_TREE = { '교사회비': ['수입', '회비'], '학생회비': ['수입', '회비'], '졸업연주': ['수입', '행사 수입'], '졸연티켓': ['수입', '행사 수입'], '캠프 참가비': ['수입', '행사 수입'], '캠프 가족방': ['수입', '행사 수입'], '교사연수': ['수입', '행사 수입'], '기타 입금': ['수입', '기타 수입'],
+  '임대료': ['지출', '운영비'], '통신 · 공과금': ['지출', '운영비'], '카드대금': ['지출', '운영비'], '행사비': ['지출', '행사비'], '인쇄 · 제작': ['지출', '행사비'], '교통 · 출장': ['지출', '행사비'], '인건비 · 강사료': ['지출', '인건비'], '환불': ['지출', '환불'], '내부 이체': ['이체', '통장 사이 이체'], '기타 지출': ['지출', '기타 지출'] };
+function bankCatTbl_() { const t = k => BANK_CAT_TREE[k] || ['', '']; return bankSheet_('통장구분', BANK_CAT_HEAD, BANK_IN.map((k, i) => [k, '입금', t(k)[0], t(k)[1], i + 1, '사용']).concat(BANK_OUT.map((k, i) => [k, '출금', t(k)[0], t(k)[1], 100 + i + 1, '사용']))); }
+function bankCats_(C) { C = C || bankCatTbl_(); const L = C.objs().sort((a, b) => (+a['순서'] || 0) - (+b['순서'] || 0)), on = L.filter(o => o['사용'] !== '안씀');
+  return { in: on.filter(o => o['입출'] === '입금').map(o => o['구분']), out: on.filter(o => o['입출'] === '출금').map(o => o['구분']), rows: L }; }
+function bankMetaAll_() { const A = bankSheet_('통장목록', BANK_ACCT_HEAD), P = bankSheet_('프로젝트', BANK_PROJ_HEAD), c = bankCats_(); return { accts: A.objs(), projs: P.objs(), cats: { in: c.in, out: c.out }, catRows: c.rows }; }
+/** 통장 · 프로젝트 · 구분 등록 · 고치기. kind: acct | proj | cat */
+function bankMeta(who, kind, o) {
+  o = o || {}; const stamp = now_(), lock = LockService.getScriptLock(); lock.waitLock(30000);
+  try {
+    if (kind === 'acct' || kind === 'proj') {
+      const isA = kind === 'acct', M = isA ? bankSheet_('통장목록', BANK_ACCT_HEAD) : bankSheet_('프로젝트', BANK_PROJ_HEAD), key = isA ? '통장ID' : '프로젝트ID';
+      const nm = String(o['이름'] || '').trim().slice(0, 40); if (!nm) fail(isA ? '통장 이름을 적어 주세요. (예: 국민 협회 통장)' : '프로젝트 이름을 적어 주세요. (예: 2027 겨울캠프)');
+      const row = { '이름': nm, '메모': String(o['메모'] || '').slice(0, 200), '사용': o['사용'] === '안씀' ? '안씀' : '사용', '수정일': stamp, '수정자': who.name };
+      if (isA) { row['은행'] = String(o['은행'] || '').trim().slice(0, 20); row['계좌번호'] = String(o['계좌번호'] || '').trim().slice(0, 30); row['예금주'] = String(o['예금주'] || '').trim().slice(0, 20); }
+      else { const d = x => { x = String(x || '').trim(); if (x && !/^\d{4}-\d{2}-\d{2}$/.test(x)) fail('날짜는 2026-01-31 처럼 적어 주세요.'); return x; };
+        row['시작일'] = d(o['시작일']); row['끝일'] = d(o['끝일']); if (row['시작일'] && row['끝일'] && row['끝일'] < row['시작일']) fail('끝일이 시작일보다 앞이에요.');
+        row['통장ID'] = [].concat(o['통장ID'] || []).join(','); row['구분'] = [].concat(o['구분'] || []).join(','); }
+      if (M.v.some((r, i) => M.get(i, '이름') === nm && M.get(i, key) !== o[key])) fail('같은 이름이 이미 있어요.');
+      let i = o[key] ? M.find(o[key]) : -1, id = o[key];
+      if (i >= 0) M.set(i, row);
+      else { const pre = isA ? 'K' : 'P', n = M.v.reduce((m, r) => Math.max(m, +String(r[0]).slice(1) || 0), 0) + 1; id = pre + String(n).padStart(2, '0'); M.appendMany([Object.assign({ [key]: id }, row)]); }
+      log_(who.name, isA ? '통장목록' : '프로젝트', id, i >= 0 ? '수정' : '추가', nm);
+    } else if (kind === 'cat') {
+      const C = bankCatTbl_(), k = String(o['구분'] || '').trim().replace(/[,|]/g, ' ').slice(0, 20); if (!k) fail('구분 이름을 적어 주세요.');
+      const i = C.v.findIndex(r => r[0] === k);
+      const big = String(o['대분류'] || '').trim().slice(0, 20), mid = String(o['중분류'] || '').trim().slice(0, 20);
+      if (o.toggle) { if (i < 0) fail('그 구분이 없어요.'); C.set(i, { '사용': C.get(i, '사용') === '안씀' ? '사용' : '안씀' }); }
+      else if (o.edit) { if (i < 0) fail('그 구분이 없어요.'); C.set(i, { '대분류': big, '중분류': mid }); }
+      else { if (i >= 0) fail('같은 구분이 이미 있어요.'); const io = o['입출'] === '출금' ? '출금' : '입금', base = io === '입금' ? 0 : 100, oc = C.c('순서'), mx = C.v.filter((r, j) => C.get(j, '입출') === io).reduce((m, r) => Math.max(m, +r[oc] || 0), base);
+        C.appendMany([{ '구분': k, '입출': io, '대분류': big || (io === '입금' ? '수입' : '지출'), '중분류': mid, '순서': mx + 1, '사용': '사용' }]); }
+      log_(who.name, '통장구분', k, o.toggle ? '사용 바꿈' : '추가', k);
+    } else fail('알 수 없는 요청이에요.');
+    return bankList(who);
+  } finally { lock.releaseLock(); }
 }
 function bankNorm_(s) { return String(s || '').replace(/[\s　()（）\[\]·.,\-_/]/g, '').toLowerCase(); }
 function bankAt_(s) {   /* '2026.09.28 18:53:20' · '2026-09-28 18:53' · '2026.02.1821:16:43' → 'YYYY-MM-DD HH:MM:SS' */
@@ -1951,11 +1996,12 @@ function bankCtx_(B) {
   return ctx;
 }
 /** 화면이 은행 엑셀에서 읽은 줄들. rows: [{at, who, out, in, bal, memo, mine, branch}] */
-function bankImport(who, rows) {
+function bankImport(who, rows, acct) {
   rows = (rows || []).slice(0, 5000); if (!rows.length) fail('올릴 거래가 없어요.');
   const lock = LockService.getScriptLock(); lock.waitLock(30000);
   try {
-    const B = bankTbl_(), ctx = bankCtx_(B), have = {}, stamp = now_(), add = [];
+    const B = bankTbl_(), ctx = bankCtx_(B), have = {}, stamp = now_(), add = [], cs = bankCats_(), okK = cs.in.concat(cs.out);
+    acct = String(acct || ''); if (acct && bankSheet_('통장목록', BANK_ACCT_HEAD).find(acct) < 0) fail('그 통장을 찾지 못했어요.');
     B.v.forEach((r, i) => have[B.get(i, '거래ID')] = 1);
     const seen = {}; let skip = 0, bad = 0;
     rows.forEach(x => {
@@ -1964,18 +2010,18 @@ function bankImport(who, rows) {
       const id = 'B' + Utilities.base64EncodeWebSafe(Utilities.computeDigest(Utilities.DigestAlgorithm.MD5, base + '#' + seen[sk], Utilities.Charset.UTF_8)).slice(0, 14);
       if (have[id]) { skip++; return; } have[id] = 1;
       const o = { '거래ID': id, '거래일시': at, '보낸분받는분': String(x.who || '').trim().slice(0, 60), '출금': out || '', '입금': inn || '', '잔액': x.bal ? num_(x.bal) : '', '적요': String(x.memo || '').slice(0, 60), '내통장표시': String(x.mine || '').slice(0, 60), '처리점': String(x.branch || '').slice(0, 40), '올린때': stamp, '수정일': stamp, '수정자': who.name };
-      const g = x.k ? { k: x.k, a: x.a || '', t: x.t || '' } : bankGuess_(o, ctx); o['구분'] = g.k; o['학원ID'] = g.a; o['교사ID'] = g.t; o['상태'] = x.st || (g.k ? '추천' : '미분류'); o['메모'] = String(x.note || '').slice(0, 200); o['연결'] = String(x.link || '');
+      const g = x.k ? { k: x.k, a: x.a || '', t: x.t || '' } : bankGuess_(o, ctx); if (g.k && (x.k ? cs.rows.map(c => c['구분']) : okK).indexOf(g.k) < 0) g.k = ''; o['구분'] = g.k; o['통장ID'] = acct; o['학원ID'] = g.a; o['교사ID'] = g.t; o['상태'] = x.st || (g.k ? '추천' : '미분류'); o['메모'] = String(x.note || '').slice(0, 200); o['연결'] = String(x.link || '');
       add.push(o);
     });
     add.sort((p, q) => p['거래일시'].localeCompare(q['거래일시']));
     B.appendMany(add);
-    log_(who.name, '통장', '-', '올리기', '새 거래 ' + add.length + ' · 이미 있음 ' + skip + (bad ? ' · 읽지 못함 ' + bad : ''));
+    log_(who.name, '통장', acct || '-', '올리기', '새 거래 ' + add.length + ' · 이미 있음 ' + skip + (bad ? ' · 읽지 못함 ' + bad : ''));
     return Object.assign(bankList(who), { added: add.length, skip, bad });
   } finally { lock.releaseLock(); }
 }
 function bankList(who) {
   const B = bankTbl_();
-  return { h: B.h, rows: B.v, cats: { in: BANK_IN, out: BANK_OUT } };
+  return Object.assign({ h: B.h, rows: B.v }, bankMetaAll_());
 }
 /** 예전 통장 구글시트(거래일시 · 보낸분/받는분 · 출금액 · 입금액 · 내통장표시 · 적요 · 처리점 · 비고(구분) · 처리 · 학생수 · 학원명)를 그대로 가져옴 (11-01).
  *  비고 칸 구분을 이 도구의 구분으로 바꾸고, 학원명 칸으로 학원 · 선생님을 찾음. 처리 칸이 입력 · 적용이면 이미 회원 회비에 반영된 것으로 보고 「연결」 */
@@ -1994,7 +2040,7 @@ function bankLabel_(lab, inAmt) {
   if (/인쇄|액자|제작|뱃지/.test(l)) return inAmt ? '기타 입금' : '인쇄 · 제작';
   return inAmt ? '기타 입금' : '기타 지출';
 }
-function bankFromSheet(who, url) {
+function bankFromSheet(who, url, acct) {
   const m = String(url || '').match(/\/d\/([a-zA-Z0-9_-]{20,})/), id = m ? m[1] : String(url || '').trim(); if (!/^[a-zA-Z0-9_-]{20,}$/.test(id)) fail('구글시트 주소를 확인해 주세요.');
   let ss; try { ss = SpreadsheetApp.openById(id); } catch (e) { fail('그 시트를 열 수 없어요. 이 회원관리 앱을 만든 계정에 시트 보기 권한이 있어야 해요.'); }
   const ctx = bankCtx_(null), rows = [], per = []; let noDate = 0;
@@ -2022,25 +2068,29 @@ function bankFromSheet(who, url) {
     per.push(sh.getName() + ' ' + n + '건');
   });
   if (!rows.length) fail('「거래일시」 · 「입금액」 머리줄이 있는 탭을 찾지 못했어요.');
-  const r = bankImport(who, rows);
+  const r = bankImport(who, rows, acct);
   log_(who.name, '통장', '-', '예전 시트 가져오기', per.join(' · ') + ' · 날짜 없는 줄 ' + noDate);
   return Object.assign(r, { per, noDate });
 }
 /** 한 줄 고치기: 구분 · 학원 · 선생님 · 메모. 사람이 고치면 「확정」 */
 function bankSet(who, ids, o) {
-  ids = [].concat(ids || []).slice(0, 2000); o = o || {}; const up = {};
-  if ('구분' in o) { const k = String(o['구분'] || ''); if (k && BANK_IN.indexOf(k) < 0 && BANK_OUT.indexOf(k) < 0) fail('구분을 골라 주세요.'); up['구분'] = k; }
+  ids = [].concat(ids || []).slice(0, 8000); o = o || {}; const up = {};
+  if ('구분' in o) { const k = String(o['구분'] || ''), cs = bankCats_().rows.map(x => x['구분']); if (k && cs.indexOf(k) < 0) fail('구분을 골라 주세요.'); up['구분'] = k; }
+  if ('통장ID' in o) up['통장ID'] = String(o['통장ID'] || '');
+  if ('프로젝트ID' in o) up['프로젝트ID'] = String(o['프로젝트ID'] || '');
   if ('학원ID' in o) up['학원ID'] = String(o['학원ID'] || '');
   if ('교사ID' in o) up['교사ID'] = String(o['교사ID'] || '');
   if ('메모' in o) up['메모'] = String(o['메모'] || '').slice(0, 200);
   const lock = LockService.getScriptLock(); lock.waitLock(30000);
   try {
-    const B = bankTbl_(), stamp = now_(); let n = 0;
-    ids.forEach(id => { const i = B.find(id); if (i < 0) return; const st = B.get(i, '상태'), k = '구분' in up ? up['구분'] : B.get(i, '구분');
+    const B = bankTbl_(), stamp = now_(), many = ids.length > 30, ix = {}; let n = 0;
+    if (many) B.v.forEach((r, i) => ix[r[0]] = i);
+    ids.forEach(id => { const i = many ? (id in ix ? ix[id] : -1) : B.find(id); if (i < 0) return; const st = B.get(i, '상태'), k = '구분' in up ? up['구분'] : B.get(i, '구분');
       const ns = st === '연결' ? '연결' : (o.confirm || '구분' in up || '학원ID' in up || '교사ID' in up) ? (k ? '확정' : '미분류') : st;
-      B.set(i, Object.assign({}, up, { '상태': ns, '수정일': stamp, '수정자': who.name })); n++; });
+      B[many ? 'put' : 'set'](i, Object.assign({}, up, { '상태': ns, '수정일': stamp, '수정자': who.name })); n++; });
+    if (many && n) B.flush();
     if (n) log_(who.name, '통장', ids.length === 1 ? ids[0] : '-', o.confirm ? '확정' : '수정', n + '줄 ' + Object.keys(up).map(k => k + '=' + up[k]).join(' · '));
-    return { n, h: B.h, upd: ids.map(id => B.find(id)).filter(i => i >= 0).map(i => B.v[i]) };
+    return many ? Object.assign({ n, all: 1 }, bankList(who)) : { n, h: B.h, upd: ids.map(id => B.find(id)).filter(i => i >= 0).map(i => B.v[i]) };
   } finally { lock.releaseLock(); }
 }
 /** 회비 확인 잇기. 교사회비: 그 선생님 연회비(거래 연도)에 납부 더하고 확인. 학생회비: 고른 입금 신고를 거래 날짜로 확인 */

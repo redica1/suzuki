@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261101-020432 -->
+<!-- build: 20261101-021227 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -549,49 +549,98 @@ function vPay(){var L=S.pays;if(!L)return '<div class="panel"><span><span class=
     (st==='신고'&&list.length?'<p class="cap">예: 9월 1일 등록 · 12월 1일 입금 → 10월부터 자격(12월에 내도 이득 없음).</p>':'')+'</div>'}
 /* ---------- 통장 (11-01): 은행 엑셀 올리기 · 구분 · 학원 · 선생님 · 회비 잇기 · 합계 ---------- */
 function loadBank(){S.bank=null;callS('bankList').then(function(r){if(r.ok){bankTake(r);if(S.tab==='bank')render()}else toast(r.msg)})}
-function bankTake(r){S.bank=objs(r);S.bcats=r.cats||S.bcats||{'in':[],out:[]}}
+function bankTake(r){S.bank=objs(r);S.bcats=r.cats||S.bcats||{'in':[],out:[]};if(r.accts)S.bAccts=r.accts;if(r.projs)S.bProjs=r.projs;if(r.catRows)S.bCatRows=r.catRows}
+/* 통장 · 프로젝트 · 분류 (11-01) */
+function bSplit(x){return String(x||'').split(',').filter(Boolean)}
+function bAcName(id){var a=(S.bAccts||[]).filter(function(x){return x['통장ID']===id})[0];return a?a['이름']:''}
+function bPj(id){return (S.bProjs||[]).filter(function(x){return x['프로젝트ID']===id})[0]}
+function bCatRow(k){return (S.bCatRows||[]).filter(function(x){return x['구분']===k})[0]}
+/* 프로젝트: 직접 고른 것 > 자동(기간 안 · 그 통장 · 그 구분을 쓰는 프로젝트 중 가장 좁은 것) */
+function bProj(o){if(o['프로젝트ID'])return {id:o['프로젝트ID'],auto:false};var d=String(o['거래일시']).slice(0,10),ac=o['통장ID'],k=o['구분'];
+  var c=(S.bProjs||[]).filter(function(p){if(p['사용']==='안씀')return false;if(p['시작일']&&d<p['시작일'])return false;if(p['끝일']&&d>p['끝일'])return false;var A=bSplit(p['통장ID']),K=bSplit(p['구분']);if(A.length&&A.indexOf(ac)<0)return false;if(K.length&&k&&K.indexOf(k)<0)return false;return true});
+  if(c.length>1){var sc=function(p){var K=bSplit(p['구분']),A=bSplit(p['통장ID']),sp=p['시작일']&&p['끝일']?(new Date(p['끝일'])-new Date(p['시작일']))/864e5:1e5;return (k&&K.indexOf(k)>=0?1e7:0)+(A.length?1e6:0)-sp};c.sort(function(a,b){return sc(b)-sc(a)})}
+  return c.length?{id:c[0]['프로젝트ID'],auto:true}:null}
+function bCatOpts(inn,v,pj){var io=inn?'입금':'출금',R=(S.bCatRows||[]).filter(function(x){return x['입출']===io&&(x['사용']!=='안씀'||x['구분']===v)}),p=pj&&bPj(pj.id),K=p?bSplit(p['구분']):[];
+  var o=function(x){return '<option value="'+esc(x['구분'])+'"'+(x['구분']===v?' selected':'')+'>'+esc(x['구분'])+'</option>'},h='<option value="">구분 없음</option>';
+  if(K.length){var a=R.filter(function(x){return K.indexOf(x['구분'])>=0}),b=R.filter(function(x){return K.indexOf(x['구분'])<0});return h+'<optgroup label="'+esc(p['이름'])+'">'+a.map(o).join('')+'</optgroup>'+(b.length?'<optgroup label="그 밖의 구분">'+b.map(o).join('')+'</optgroup>':'')}
+  var g={},ord=[];R.forEach(function(x){var l=[x['대분류'],x['중분류']].filter(Boolean).join(' › ')||'분류 없음';if(!g[l]){g[l]=[];ord.push(l)}g[l].push(x)});
+  return h+ord.map(function(l){return '<optgroup label="'+esc(l)+'">'+g[l].map(o).join('')+'</optgroup>'}).join('')}
+function bPjOpts(o){var p=bProj(o),auto=p&&p.auto?bPj(p.id):null;return '<option value="">'+(auto?'자동: '+esc(auto['이름']):'자동 (없음)')+'</option>'+(S.bProjs||[]).filter(function(x){return x['사용']!=='안씀'||x['프로젝트ID']===o['프로젝트ID']}).map(function(x){return '<option value="'+esc(x['프로젝트ID'])+'"'+(x['프로젝트ID']===o['프로젝트ID']?' selected':'')+'>'+esc(x['이름'])+'</option>'}).join('')}
+function bAcOptsK(){return (S.bAccts||[]).filter(function(a){return a['사용']!=='안씀'}).map(function(a){return [a['통장ID'],a['이름']]})}
 function bankUpd(r){var L=objs({h:r.h,rows:r.upd||[]}),m={};L.forEach(function(o){m[o['거래ID']]=o});S.bank=S.bank.map(function(o){return m[o['거래ID']]||o})}
 function bIn(o){return +String(o['입금']||'').replace(/[^\d]/g,'')||0}
 function bOut(o){return +String(o['출금']||'').replace(/[^\d]/g,'')||0}
 function bankList(){var f=S.bf||{},q=(f.q||'').replace(/\s+/g,'');
   return (S.bank||[]).filter(function(o){if(f.m&&String(o['거래일시']).slice(0,f.m.length)!==f.m)return false;if(f.io==='입금'&&!bIn(o))return false;if(f.io==='출금'&&!bOut(o))return false;
-    if(f.k){if(f.k==='-'?o['구분']:o['구분']!==f.k)return false}if(f.st&&o['상태']!==f.st)return false;if(f.a&&o['학원ID']!==f.a)return false;
+    if(f.k){if(f.k==='-'?o['구분']:o['구분']!==f.k)return false}if(f.st&&o['상태']!==f.st)return false;if(f.ac&&(f.ac==='-'?o['통장ID']:o['통장ID']!==f.ac))return false;if(f.pj){var pp=bProj(o);if(f.pj==='-'?pp:(!pp||pp.id!==f.pj))return false}if(f.a&&o['학원ID']!==f.a)return false;
     if(q&&(o['보낸분받는분']+o['적요']+o['내통장표시']+o['메모']+aName(o['학원ID'])+(T[o['교사ID']]?T[o['교사ID']]['이름']:'')).replace(/\s+/g,'').indexOf(q)<0)return false;return true})
     .sort(function(x,y){return String(y['거래일시']).localeCompare(String(x['거래일시']))})}
 function bSt(st){return {'추천':'<span class="pill info">추천</span>','미분류':'<span class="pill due">미분류</span>','확정':'<span class="pill mute">확정</span>','연결':'<span class="pill ok">회비 확인</span>'}[st]||esc(st)}
 function bOpts(L,v,first){return '<option value="">'+first+'</option>'+L.map(function(x){var k=Array.isArray(x)?x[0]:x,l=Array.isArray(x)?x[1]:x;return '<option value="'+esc(k)+'"'+(String(k)===String(v||'')?' selected':'')+'>'+esc(l)+'</option>'}).join('')}
 function bTchOpts(){if(S.bTO)return S.bTO;S.bTO=S.D.tch.filter(function(t){return t['상태']!=='탈퇴'&&t['회원구분']!=='외부인'}).map(function(t){return [t['교사ID'],t['이름']+(t['구분글자']?' '+t['구분글자']:'')+' · '+tAcadTxt(t)]}).sort(function(a,b){return a[1].localeCompare(b[1],'ko')});return S.bTO}
 function bAcOpts(){return acadOpts('').slice(1).concat(S.D.acad.filter(function(a){return a['상태']==='탈퇴'}).map(function(a){return [a['학원ID'],a['학원명']+' (탈퇴)']}))}
+function vBankHead(){var v=S.bv||'list',A=bAcOptsK();
+  var seg='<div class="row" style="margin:0 0 8px">'+[['list','거래 내역'],['sum','합계표'],['set','통장 · 프로젝트 · 분류']].map(function(x){return '<button class="btn'+(v===x[0]?' primary':'')+'" type="button" data-bv="'+x[0]+'">'+x[1]+'</button>'}).join('')+'</div>';
+  return '<div class="sec-h"><div><h2>통장</h2><p>은행 거래내역 엑셀(xls · xlsx · csv)을 <b>어느 통장 것인지 골라</b> 올리면 겹치는 거래는 건너뛰고 새 거래만 더해요. 거래마다 구분(소분류)을 정하면 대분류 · 중분류로 묶이고, <b>프로젝트</b>(기간 · 통장 · 쓰는 구분)에 맞으면 자동으로 그 프로젝트에 들어가요. 교사회비 · 학생회비는 「회비 확인」으로 회원 회비까지 이어요.</p></div>'+
+    '<div class="row">'+(A.length?sel('bAcct',[['','어느 통장?']].concat(A),S.bAcct,'올릴 통장'):'')+'<label class="btn primary" for="bankFile" style="cursor:pointer">'+(S.bBusy?'<span class="spin"></span> 읽는 중…':'은행 엑셀 올리기')+'</label><input type="file" id="bankFile" accept=".xls,.xlsx,.csv" hidden><button class="btn" type="button" id="bankOld">예전 통장 시트 가져오기</button><button class="btn small ghost" type="button" id="bankRe">새로 고침</button></div></div>'+
+    (S.bOld?'<div class="panel" style="border-color:var(--accent)"><b>예전 통장 구글시트 가져오기</b><p class="cap">거래일시 · 보낸분/받는분 · 출금액 · 입금액 · 비고(구분) · 학원명 칸이 있는 시트의 모든 탭을 읽어요. 비고에 적힌 구분과 학원명을 그대로 옮기고, 처리 칸이 「입력 · 적용」인 회비는 이미 반영된 것으로 표시해요. 날짜가 없는 줄은 건너뛰어요. 같은 거래를 두 번 가져와도 한 번만 들어가요.'+(A.length?' <b>위에서 고른 통장</b>으로 들어가요.':'')+'</p><div class="row"><input type="url" id="bankOldUrl" value="'+esc(S.bOldUrl||'')+'" placeholder="구글시트 주소" style="flex:1;min-width:240px"><button class="btn primary" type="button" id="bankOldGo">가져오기</button><button class="btn" type="button" id="bankOldNo">닫기</button></div></div>':'')+seg}
+function vBankSet(){var A=S.bAccts||[],P=S.bProjs||[],R=S.bCatRows||[],all=S.bank||[],cntA={},noA=[],pt={},kc={};
+  all.forEach(function(o){if(o['통장ID'])cntA[o['통장ID']]=(cntA[o['통장ID']]||0)+1;else noA.push(o['거래ID']);var p=bProj(o);if(p){var x=pt[p.id]=pt[p.id]||{n:0,i:0,o:0};x.n++;x.i+=bIn(o);x.o+=bOut(o)}if(o['구분'])kc[o['구분']]=(kc[o['구분']]||0)+1});
+  var ea=S.bEA,ep=S.bEP,ca=ea&&ea!=='new'?A.filter(function(x){return x['통장ID']===ea})[0]||{}:{},cp=ep&&ep!=='new'?bPj(ep)||{}:{};
+  var inp=function(id,v,ph,w,ty){return '<input type="'+(ty||'text')+'" id="'+id+'" value="'+esc(v||'')+'" placeholder="'+esc(ph||'')+'" style="width:'+(w||'160px')+'">'};
+  var aForm=ea?'<div class="panel" style="border-color:var(--accent);margin:8px 0"><b>'+(ea==='new'?'통장 등록':'통장 고치기')+'</b><div class="row" style="margin-top:6px">'+inp('ka_이름',ca['이름'],'이름 (예: 국민 협회 통장)','220px')+inp('ka_은행',ca['은행'],'은행','110px')+inp('ka_계좌번호',ca['계좌번호'],'계좌번호','170px')+inp('ka_예금주',ca['예금주'],'예금주','110px')+inp('ka_메모',ca['메모'],'메모 (용도)','220px')+
+    '<label class="row" style="gap:4px"><input type="checkbox" id="ka_안씀" '+(ca['사용']==='안씀'?'checked':'')+'> 안 쓰는 통장</label></div><div class="row" style="margin-top:6px"><button class="btn primary" type="button" id="bAcSave">저장</button><button class="btn" type="button" id="bAcNo">닫기</button></div></div>':'';
+  var t1='<div class="row" style="justify-content:space-between;margin:4px 0 6px"><h3 style="margin:0">통장</h3><button class="btn small primary" type="button" id="bAcNew">+ 통장 등록</button></div>'+aForm+
+    (A.length?'<div class="tbl" style="max-height:none"><table><thead><tr><th>이름</th><th>은행</th><th>계좌번호</th><th>예금주</th><th>메모</th><th class="r">거래</th><th>사용</th><th></th></tr></thead><tbody>'+A.map(function(a){return '<tr><td><b>'+esc(a['이름'])+'</b></td><td>'+esc(a['은행'])+'</td><td class="num">'+esc(a['계좌번호'])+'</td><td>'+esc(a['예금주'])+'</td><td class="cap">'+esc(a['메모'])+'</td><td class="r num">'+(cntA[a['통장ID']]||0)+'</td><td>'+(a['사용']==='안씀'?'<span class="pill mute">안 씀</span>':'<span class="pill ok">사용</span>')+'</td><td><button class="btn small" type="button" data-bea="'+esc(a['통장ID'])+'">고치기</button></td></tr>'}).join('')+'</tbody></table></div>':'<p class="cap">아직 등록한 통장이 없어요. 협회 통장 · 캠프 통장 · 연수 통장처럼 돈이 들어오는 통장을 모두 등록하세요.</p>')+
+    (noA.length&&A.length?'<div class="note info row" style="margin-top:6px"><span>통장을 안 정한 거래 <b>'+noA.length+'건</b>을</span>'+sel('bNoA',[['','통장 고르기']].concat(bAcOptsK()),'','통장')+'<button class="btn small primary" type="button" id="bNoAGo">이 통장 거래로 정하기</button></div>':'');
+  var pAc=bSplit(cp['통장ID']),pK=bSplit(cp['구분']);
+  var ck=function(attr,v,on,l){return '<label class="row" style="gap:4px;font-weight:500"><input type="checkbox" '+attr+'="'+esc(v)+'" '+(on?'checked':'')+'> '+esc(l)+'</label>'};
+  var catGroups=function(io){var g={},ord=[];R.filter(function(x){return x['입출']===io&&(x['사용']!=='안씀'||pK.indexOf(x['구분'])>=0)}).forEach(function(x){var l=[x['대분류'],x['중분류']].filter(Boolean).join(' › ')||'분류 없음';if(!g[l]){g[l]=[];ord.push(l)}g[l].push(x)});
+    return ord.map(function(l){return '<div class="row" style="gap:10px;align-items:flex-start"><span class="cap" style="min-width:120px">'+esc(l)+'</span>'+g[l].map(function(x){return ck('data-kpk',x['구분'],pK.indexOf(x['구분'])>=0,x['구분'])}).join('')+'</div>'}).join('')};
+  var pForm=ep?'<div class="panel" style="border-color:var(--accent);margin:8px 0"><b>'+(ep==='new'?'프로젝트 만들기':'프로젝트 고치기')+'</b><div class="row" style="margin-top:6px">'+inp('kp_이름',cp['이름'],'이름 (예: 2027 겨울캠프)','220px')+'<span class="cap">기간</span>'+inp('kp_시작일',cp['시작일'],'','150px','date')+'<span class="cap">~</span>'+inp('kp_끝일',cp['끝일'],'','150px','date')+inp('kp_메모',cp['메모'],'메모','220px')+
+    '<label class="row" style="gap:4px"><input type="checkbox" id="kp_안씀" '+(cp['사용']==='안씀'?'checked':'')+'> 마감 (자동 배정 안 함)</label></div>'+
+    '<div style="margin-top:8px"><b class="cap">쓰는 통장</b> <span class="cap">(아무것도 안 고르면 모든 통장)</span><div class="row" style="gap:12px">'+(A.length?A.map(function(a){return ck('data-kpa',a['통장ID'],pAc.indexOf(a['통장ID'])>=0,a['이름'])}).join(''):'<span class="cap">통장을 먼저 등록하세요</span>')+'</div></div>'+
+    '<div style="margin-top:8px"><b class="cap">쓰는 구분</b> <span class="cap">(아무것도 안 고르면 모든 구분 · 고르면 거래 줄 구분 목록 맨 위에 나와요)</span><div style="display:grid;gap:4px;margin-top:4px"><div class="cap"><b>입금</b></div>'+catGroups('입금')+'<div class="cap"><b>출금</b></div>'+catGroups('출금')+'</div></div>'+
+    '<div class="row" style="margin-top:8px"><button class="btn primary" type="button" id="bPjSave">저장</button><button class="btn" type="button" id="bPjNo">닫기</button></div></div>':'';
+  var t2='<div class="row" style="justify-content:space-between;margin:16px 0 6px"><h3 style="margin:0">프로젝트</h3><button class="btn small primary" type="button" id="bPjNew">+ 프로젝트 만들기</button></div><p class="cap" style="margin:0 0 6px">회비 · 캠프 · 졸업연주 · 교사연수처럼 돈을 따로 셈하는 묶음이에요. 거래가 기간 안에 있고, 정한 통장 · 구분에 맞으면 자동으로 들어가요(거래 줄에서 직접 바꿀 수도 있어요). 여러 프로젝트에 맞으면 기간이 가장 좁은 쪽으로 가요.</p>'+pForm+
+    (P.length?'<div class="tbl" style="max-height:none"><table><thead><tr><th>이름</th><th>기간</th><th>통장</th><th>구분</th><th class="r">거래</th><th class="r">입금</th><th class="r">출금</th><th class="r">차액</th><th></th></tr></thead><tbody>'+P.map(function(p){var x=pt[p['프로젝트ID']]||{n:0,i:0,o:0},K=bSplit(p['구분']);return '<tr'+(p['사용']==='안씀'?' style="opacity:.6"':'')+'><td><b>'+esc(p['이름'])+'</b>'+(p['사용']==='안씀'?' <span class="pill mute">마감</span>':'')+(p['메모']?'<div class="cap">'+esc(p['메모'])+'</div>':'')+'</td><td class="num cap">'+esc((p['시작일']||'처음')+' ~ '+(p['끝일']||'계속'))+'</td><td class="cap">'+esc(bSplit(p['통장ID']).map(bAcName).join(', ')||'모든 통장')+'</td><td class="cap">'+esc(K.length?(K.length>4?K.slice(0,4).join(', ')+' 외 '+(K.length-4):K.join(', ')):'모든 구분')+'</td><td class="r num">'+x.n+'</td><td class="r num">'+won(x.i)+'</td><td class="r num">'+won(x.o)+'</td><td class="r num"><b>'+won(x.i-x.o)+'</b></td><td><button class="btn small" type="button" data-bep="'+esc(p['프로젝트ID'])+'">고치기</button> <button class="btn small ghost" type="button" data-bpgo="'+esc(p['프로젝트ID'])+'">거래 보기</button></td></tr>'}).join('')+'</tbody></table></div>':'<p class="cap">아직 프로젝트가 없어요. 예: 「2026 회비」(2026-01-01 ~ 2026-12-31 · 교사회비 · 학생회비), 「2027 겨울캠프」(기간 · 캠프 통장).</p>');
+  var big=[],gm={};R.forEach(function(x){var b=x['대분류']||'분류 없음';if(big.indexOf(b)<0)big.push(b);var m=b+'|'+(x['중분류']||'');(gm[m]=gm[m]||[]).push(x)});
+  var t3='<h3 style="margin:16px 0 6px">분류 (대분류 › 중분류 › 구분)</h3><p class="cap" style="margin:0 0 6px">거래 줄에서 고르는 것은 <b>구분(소분류)</b>이에요. 대분류 · 중분류 칸을 고치면 바로 저장되고, 합계표가 그대로 묶여요. 안 쓰는 구분은 「숨기기」하면 목록에서 빠져요(예전 거래는 그대로).</p>'+
+    '<div class="tbl" style="max-height:none"><table><thead><tr><th>입출</th><th>대분류</th><th>중분류</th><th>구분 (소분류)</th><th class="r">거래</th><th></th></tr></thead><tbody>'+
+    R.slice().sort(function(a,b){return (a['입출']+a['대분류']+a['중분류']).localeCompare(b['입출']+b['대분류']+b['중분류'],'ko')||(+a['순서']||0)-(+b['순서']||0)}).map(function(x){var k=esc(x['구분']);return '<tr'+(x['사용']==='안씀'?' style="opacity:.55"':'')+'><td class="cap">'+esc(x['입출'])+'</td><td><input type="text" data-kcb="'+k+'" value="'+esc(x['대분류'])+'" style="width:110px"></td><td><input type="text" data-kcm="'+k+'" value="'+esc(x['중분류'])+'" style="width:130px"></td><td><b>'+k+'</b></td><td class="r num">'+(kc[x['구분']]||0)+'</td><td><button class="btn small ghost" type="button" data-kct="'+k+'">'+(x['사용']==='안씀'?'다시 쓰기':'숨기기')+'</button></td></tr>'}).join('')+
+    '<tr><td>'+sel('kc_입출',['입금','출금'],'입금','입출')+'</td><td>'+inp('kc_대분류','','대분류 (예: 수입)','110px')+'</td><td>'+inp('kc_중분류','','중분류 (예: 후원)','130px')+'</td><td>'+inp('kc_구분','','새 구분 (예: 후원금)','150px')+'</td><td></td><td><button class="btn small primary" type="button" id="bCatAdd">+ 구분 추가</button></td></tr></tbody></table></div>';
+  return '<div class="panel">'+t1+t2+t3+'</div>'}
+function bankMetaGo(kind,o,msg,btn){if(btn)btn.disabled=true;return callS('bankMeta',kind,o).then(function(r){if(btn)btn.disabled=false;if(!r.ok){toast(r.msg);return false}bankTake(r);render();if(msg)toast(msg);return true})}
 function vBank(){
   if(!S.bank)return '<div class="panel"><span><span class="spin"></span> 불러오는 중…</span></div>';
+  if(S.bv==='set')return vBankHead()+vBankSet();
   var all=S.bank,list=bankList(),f=S.bf||{},cats=S.bcats||{'in':[],out:[]},sum=S.bv==='sum';
   var tin=0,tout=0;list.forEach(function(o){tin+=bIn(o);tout+=bOut(o)});
   var cnt=function(fn){return all.filter(fn).length};
   var months=[];all.forEach(function(o){var m=String(o['거래일시']).slice(0,7);if(m&&months.indexOf(m)<0)months.push(m)});months.sort().reverse();
   var years=[];months.forEach(function(m){var y=m.slice(0,4);if(years.indexOf(y)<0)years.push(y)});
   var mOpts=[];years.forEach(function(y){mOpts.push([y,y+'년 전체']);months.filter(function(m){return m.indexOf(y)===0}).forEach(function(m){mOpts.push([m,'　'+m.replace('-','년 ')+'월'])})});
-  var head='<div class="sec-h"><div><h2>통장</h2><p>은행에서 받은 거래내역 엑셀(xls · xlsx · csv)을 올리면 겹치는 거래는 건너뛰고 새 거래만 더해요. 이름 · 낱말로 구분 · 학원 · 선생님을 <b>추천</b>하고, 고치거나 「확정」하면 다음부터 같은 이름은 그대로 따라가요. 교사회비 · 학생회비는 「회비 확인」으로 회원 회비까지 이어요.</p></div>'+
-    '<div class="row"><label class="btn primary" for="bankFile" style="cursor:pointer">'+(S.bBusy?'<span class="spin"></span> 읽는 중…':'은행 엑셀 올리기')+'</label><input type="file" id="bankFile" accept=".xls,.xlsx,.csv" hidden><button class="btn" type="button" id="bankOld">예전 통장 시트 가져오기</button><button class="btn small ghost" type="button" id="bankRe">새로 고침</button></div></div>'+(S.bOld?'<div class="panel" style="border-color:var(--accent)"><b>예전 통장 구글시트 가져오기</b><p class="cap">거래일시 · 보낸분/받는분 · 출금액 · 입금액 · 비고(구분) · 학원명 칸이 있는 시트의 모든 탭을 읽어요. 비고에 적힌 구분과 학원명을 그대로 옮기고, 처리 칸이 「입력 · 적용」인 회비는 이미 반영된 것으로 표시해요. 날짜가 없는 줄은 건너뛰어요. 같은 거래를 두 번 가져와도 한 번만 들어가요.</p><div class="row"><input type="url" id="bankOldUrl" value="'+esc(S.bOldUrl||'')+'" placeholder="구글시트 주소" style="flex:1;min-width:240px"><button class="btn primary" type="button" id="bankOldGo">가져오기</button><button class="btn" type="button" id="bankOldNo">닫기</button></div></div>':'');
+  var head=vBankHead();
   var tiles='<div class="tiles">'+tileH('입금',won(tin),list.length+'건 · 지금 고른 조건',0,'span2')+tileH('출금',won(tout),'지금 고른 조건',0,'span2')+tileH('차액',won(tin-tout),'',0,'span2')+
     tileH('추천 · 확정 전',cnt(function(o){return o['상태']==='추천'}),'눌러서 추천만 보기',0,'','')+tileH('미분류',cnt(function(o){return o['상태']==='미분류'}),'',cnt(function(o){return o['상태']==='미분류'})>0)+
     tileH('회비 확인 남음',cnt(function(o){return (o['구분']==='교사회비'||o['구분']==='학생회비')&&o['상태']!=='연결'}),'교사회비 · 학생회비 중 회비 확인 전')+'</div>';
-  var seg='<div class="row" style="margin:0 0 8px"><button class="btn'+(sum?'':' primary')+'" type="button" data-bv="list">거래 내역</button><button class="btn'+(sum?' primary':'')+'" type="button" data-bv="sum">합계표</button></div>';
+
   var filt='<div class="filters">'+sel('bfm',[['','전체 기간']].concat(mOpts),f.m,'기간')+sel('bfio',[['','입금 · 출금'],'입금','출금'],f.io,'입출')+
-    sel('bfk',[['','구분 전체'],['-','구분 없음']].concat(cats['in'],cats.out),f.k,'구분')+(sum?'':sel('bfst',[['','상태 전체'],'추천','미분류','확정',['연결','회비 확인']],f.st,'상태')+sel('bfa',[['','학원 전체']].concat(bAcOpts()),f.a,'학원'))+
+    sel('bfk',[['','구분 전체'],['-','구분 없음']].concat(cats['in'],cats.out),f.k,'구분')+((S.bProjs||[]).length?sel('bfpj',[['','프로젝트 전체'],['-','프로젝트 없음']].concat((S.bProjs||[]).map(function(p){return [p['프로젝트ID'],p['이름']]})),f.pj,'프로젝트'):'')+((S.bAccts||[]).length?sel('bfac',[['','통장 전체'],['-','통장 안 정함']].concat((S.bAccts||[]).map(function(a){return [a['통장ID'],a['이름']]})),f.ac,'통장'):'')+(sum?'':sel('bfst',[['','상태 전체'],'추천','미분류','확정',['연결','회비 확인']],f.st,'상태')+sel('bfa',[['','학원 전체']].concat(bAcOpts()),f.a,'학원'))+
     '<input type="search" id="bq" value="'+esc(f.q||'')+'" placeholder="이름 · 메모 · 학원" style="width:min(200px,100%)"></div>';
   if(!all.length)return head+'<div class="panel"><p>아직 거래가 없어요. 위 「은행 엑셀 올리기」로 거래내역 파일을 올려 주세요. KB 인터넷뱅킹 「거래내역 조회 → 엑셀 저장」 파일을 그대로 쓰면 돼요.</p></div>';
-  return head+tiles+seg+'<div class="panel">'+filt+(sum?bankSum(list,cats):bankLinkBox()+bankBulk(list)+bankTable(list))+'</div>'}
+  return head+tiles+'<div class="panel">'+filt+(sum?bankSum(list,cats):bankLinkBox()+bankBulk(list)+bankTable(list))+'</div>'}
 function bankBulk(list){var n=Object.keys(S.bSel||{}).length,rec=list.filter(function(o){return o['상태']==='추천'}).length,c=S.bcats||{'in':[],out:[]};
-  return '<div class="row note info" style="justify-content:space-between"><span>'+(n?'<b>'+n+'줄 고름</b> · 구분 '+sel('bBk',[['','고르기']].concat(c['in'],c.out),'','구분')+'<button class="btn small primary" type="button" id="bBkGo">고른 줄에 적용</button>':'줄 왼쪽 칸을 고르면 한꺼번에 구분을 바꿀 수 있어요.')+'</span>'+
+  return '<div class="row note info" style="justify-content:space-between"><span>'+(n?'<b>'+n+'줄 고름</b> · '+sel('bBk',[['','구분 그대로']].concat(c['in'],c.out),'','구분')+((S.bProjs||[]).length?' '+sel('bBp',[['','프로젝트 그대로'],['*','자동으로 되돌리기']].concat((S.bProjs||[]).map(function(p){return [p['프로젝트ID'],p['이름']]})),'','프로젝트'):'')+((S.bAccts||[]).length?' '+sel('bBa',[['','통장 그대로']].concat(bAcOptsK()),'','통장'):'')+' <button class="btn small primary" type="button" id="bBkGo">고른 줄에 적용</button>':'줄 왼쪽 칸을 고르면 한꺼번에 구분 · 프로젝트 · 통장을 바꿀 수 있어요.')+'</span>'+
     (rec?'<button class="btn small" type="button" id="bRecOk">보이는 추천 '+rec+'건 그대로 확정</button>':'')+'</div>'}
 function bankTable(list){var per=100,pages=Math.max(1,Math.ceil(list.length/per));if((S.bp||0)>=pages)S.bp=pages-1;var page=list.slice((S.bp||0)*per,((S.bp||0)+1)*per),c=S.bcats||{'in':[],out:[]},acO=bAcOpts();
   var pager='<div class="pager"><span>'+list.length+'건'+(pages>1?' 중 '+((S.bp||0)*per+1)+'–'+Math.min(list.length,((S.bp||0)+1)*per):'')+'</span>'+(pages>1?'<button class="btn small" type="button" data-bpg="-1" '+((S.bp||0)===0?'disabled':'')+'>이전</button><button class="btn small" type="button" data-bpg="1" '+((S.bp||0)>=pages-1?'disabled':'')+'>다음</button>':'')+'</div>';
-  return '<div class="tbl"><table><thead><tr><th class="ck"><input type="checkbox" id="bAll" aria-label="이 쪽 모두 고르기"></th><th>거래일시</th><th>보낸분 · 받는분</th><th class="r">입금</th><th class="r">출금</th><th>구분</th><th>학원 · 선생님</th><th>메모</th><th>상태</th></tr></thead><tbody>'+
+  return '<div class="tbl"><table><thead><tr><th class="ck"><input type="checkbox" id="bAll" aria-label="이 쪽 모두 고르기"></th><th>거래일시</th><th>보낸분 · 받는분</th><th class="r">입금</th><th class="r">출금</th><th>구분</th>'+((S.bProjs||[]).length?'<th>프로젝트</th>':'')+'<th>학원 · 선생님</th><th>메모</th><th>상태</th></tr></thead><tbody>'+
     page.map(function(o){var id=o['거래ID'],inn=bIn(o),out=bOut(o),k=o['구분'],tch=k==='교사회비',sub=[o['적요'],o['내통장표시']].filter(Boolean).join(' · ');
       var act=o['상태']==='추천'?' <button class="btn small" type="button" data-bok="'+id+'">확정</button>':(o['상태']==='확정'&&((tch&&o['교사ID'])||(k==='학생회비'&&o['학원ID'])))?' <button class="btn small primary" type="button" data-bdu="'+id+'">회비 확인</button>':'';
-      return '<tr'+(o['상태']==='미분류'?' style="background:var(--rosin-soft,#fff7ed)"':'')+'><td class="ck"><input type="checkbox" data-bck="'+id+'" '+(S.bSel&&S.bSel[id]?'checked':'')+' aria-label="고르기"></td><td class="num cap">'+esc(String(o['거래일시']).slice(2,16).replace(/-/g,'.'))+'</td><td><b>'+esc(o['보낸분받는분'])+'</b>'+(sub?'<div class="cap">'+esc(sub)+'</div>':'')+'</td>'+
+      return '<tr'+(o['상태']==='미분류'?' style="background:var(--rosin-soft,#fff7ed)"':'')+'><td class="ck"><input type="checkbox" data-bck="'+id+'" '+(S.bSel&&S.bSel[id]?'checked':'')+' aria-label="고르기"></td><td class="num cap">'+esc(String(o['거래일시']).slice(2,16).replace(/-/g,'.'))+(o['통장ID']?'<div>'+esc(bAcName(o['통장ID']))+'</div>':'')+'</td><td><b>'+esc(o['보낸분받는분'])+'</b>'+(sub?'<div class="cap">'+esc(sub)+'</div>':'')+'</td>'+
         '<td class="r num">'+(inn?won(inn):'')+'</td><td class="r num" style="color:var(--muted)">'+(out?won(out):'')+'</td>'+
-        '<td><select data-bk="'+id+'" aria-label="구분">'+bOpts(inn?c['in']:c.out,k,'구분 없음')+'</select></td>'+
+        '<td><select data-bk="'+id+'" aria-label="구분">'+bCatOpts(inn,k,bProj(o))+'</select>'+(bCatRow(k)&&bCatRow(k)['중분류']?'<div class="cap">'+esc(bCatRow(k)['중분류'])+'</div>':'')+'</td>'+((S.bProjs||[]).length?'<td><select data-bpj="'+id+'" aria-label="프로젝트" style="max-width:180px'+(o['프로젝트ID']?'':';color:var(--muted)')+'">'+bPjOpts(o)+'</select></td>':'')+
         '<td>'+(tch?'<select data-bt="'+id+'" aria-label="선생님" style="max-width:220px">'+bOpts(bTchOpts(),o['교사ID'],'선생님 고르기')+'</select>':inn?'<select data-ba="'+id+'" aria-label="학원" style="max-width:220px">'+bOpts(acO,o['학원ID'],'학원 고르기')+'</select>':'<span class="cap">-</span>')+'</td>'+
         '<td><input type="text" data-bm="'+id+'" value="'+esc(o['메모'])+'" placeholder="메모" style="min-width:120px"></td>'+
         '<td>'+bSt(o['상태'])+act+(o['연결']?'<div class="cap">'+esc(o['연결'])+'</div>':'')+'</td></tr>'}).join('')+'</tbody></table></div>'+pager}
@@ -606,8 +655,15 @@ function bankSum(list,cats){var by={},ac={},tc={},mo={},col=['학생회비','졸
     var b=by[k]=by[k]||{n:0,i:0,o:0};b.n++;b.i+=inn;b.o+=out;var mm=mo[m]=mo[m]||{i:0,o:0};mm.i+=inn;mm.o+=out;
     if(inn&&col.indexOf(k)>=0){var a=o['학원ID']||'-',r=ac[a]=ac[a]||{};r[k]=(r[k]||0)+inn}
     if(inn&&k==='교사회비'){var t=o['교사ID']||'-';var x=tc[t]=tc[t]||{s:0,d:[]};x.s+=inn;x.d.push(String(o['거래일시']).slice(5,10).replace('-','/'))}});
-  var keys=cats['in'].concat(cats.out,['(구분 없음)']).filter(function(k){return by[k]});
-  var t1='<h3 style="margin:10px 0 6px">구분별</h3><div class="tbl" style="max-height:none"><table><thead><tr><th>구분</th><th class="r">건수</th><th class="r">입금</th><th class="r">출금</th></tr></thead><tbody>'+keys.map(function(k){var b=by[k];return '<tr class="click" data-bsk="'+esc(k==='(구분 없음)'?'-':k)+'"><td><b>'+esc(k)+'</b></td><td class="r num">'+b.n+'</td><td class="r num">'+(b.i?won(b.i):'')+'</td><td class="r num">'+(b.o?won(b.o):'')+'</td></tr>'}).join('')+'</tbody></table></div>';
+  var tree={},ordB=[];Object.keys(by).forEach(function(k){var r=bCatRow(k)||{},B=r['대분류']||(k==='(구분 없음)'?'(구분 없음)':'분류 없음'),M=r['중분류']||'';if(!tree[B]){tree[B]={};ordB.push(B)}(tree[B][M]=tree[B][M]||[]).push(k)});
+  var bo=['수입','지출','이체'];ordB.sort(function(x,y){var i=bo.indexOf(x),j=bo.indexOf(y);return (i<0?9:i)-(j<0?9:j)||x.localeCompare(y,'ko')});
+  var add=function(L){var t={n:0,i:0,o:0};L.forEach(function(k){t.n+=by[k].n;t.i+=by[k].i;t.o+=by[k].o});return t},cell=function(t){return '<td class="r num">'+t.n+'</td><td class="r num">'+(t.i?won(t.i):'')+'</td><td class="r num">'+(t.o?won(t.o):'')+'</td><td class="r num">'+won(t.i-t.o)+'</td>'};
+  var t1='<h3 style="margin:10px 0 6px">분류별 (대분류 › 중분류 › 구분)</h3><div class="tbl" style="max-height:none"><table><thead><tr><th>분류</th><th class="r">건수</th><th class="r">입금</th><th class="r">출금</th><th class="r">차액</th></tr></thead><tbody>'+ordB.map(function(B){var all=[];Object.keys(tree[B]).forEach(function(M){all=all.concat(tree[B][M])});
+      return '<tr style="background:var(--sunk)"><td><b>'+esc(B)+'</b></td>'+cell(add(all)).replace(/<td class="r num">/g,'<td class="r num" style="font-weight:700">')+'</tr>'+Object.keys(tree[B]).sort(function(x,y){return x.localeCompare(y,'ko')}).map(function(M){var L=tree[B][M];
+        return (M?'<tr><td style="padding-left:18px"><b>'+esc(M)+'</b></td>'+cell(add(L))+'</tr>':'')+L.map(function(k){return '<tr class="click" data-bsk="'+esc(k==='(구분 없음)'?'-':k)+'"><td style="padding-left:'+(M?36:18)+'px">'+esc(k)+'</td>'+cell(by[k])+'</tr>'}).join('')}).join('')}).join('')+'</tbody></table></div>';
+  var pj={},pjo=[];list.forEach(function(o){var p=bProj(o),id=p?p.id:'-';if(!pj[id]){pj[id]={n:0,i:0,o:0};pjo.push(id)}pj[id].n++;pj[id].i+=bIn(o);pj[id].o+=bOut(o)});
+  var t0=(S.bProjs||[]).length?'<h3 style="margin:10px 0 6px">프로젝트별</h3><div class="tbl" style="max-height:none"><table><thead><tr><th>프로젝트</th><th class="r">건수</th><th class="r">입금</th><th class="r">출금</th><th class="r">차액</th></tr></thead><tbody>'+pjo.sort(function(x,y){return x==='-'?1:y==='-'?-1:0}).map(function(id){var p=bPj(id);return '<tr class="click" data-bspj="'+esc(id)+'"><td><b>'+esc(p?p['이름']:'(프로젝트 없음)')+'</b></td>'+cell(pj[id])+'</tr>'}).join('')+'</tbody></table></div>':'';
+  t1=t0+t1;
   var as=Object.keys(ac).sort(function(x,y){return aName(x).localeCompare(aName(y),'ko')}),tot={};
   var t2='<h3 style="margin:14px 0 6px">학원별 입금</h3><div class="tbl" style="max-height:none"><table><thead><tr><th>학원</th>'+col.map(function(k){return '<th class="r">'+k+'</th>'}).join('')+'<th class="r">합계</th></tr></thead><tbody>'+as.map(function(a){var r=ac[a],s=0;return '<tr class="click" data-bsa="'+esc(a)+'"><td><b>'+esc(a==='-'?'(학원 없음)':aName(a))+'</b></td>'+col.map(function(k){s+=r[k]||0;tot[k]=(tot[k]||0)+(r[k]||0);return '<td class="r num">'+(r[k]?won(r[k]):'')+'</td>'}).join('')+'<td class="r num"><b>'+won(s)+'</b></td></tr>'}).join('')+
     '<tr><td><b>합계</b></td>'+col.map(function(k){return '<td class="r num"><b>'+(tot[k]?won(tot[k]):'')+'</b></td>'}).join('')+'<td class="r num"><b>'+won(col.reduce(function(s,k){return s+(tot[k]||0)},0))+'</b></td></tr></tbody></table></div>';
@@ -626,9 +682,10 @@ function bankParse(aoa){var hi=-1,H=[];for(var i=0;i<Math.min(aoa.length,40);i++
 function bankUpload(file){S.bBusy=true;render();
   xlsxLib().then(function(X){return new Promise(function(res,rej){var fr=new FileReader();fr.onload=function(){try{var wb=X.read(new Uint8Array(fr.result),{type:'array',cellDates:false});var rows=null;wb.SheetNames.some(function(n){rows=bankParse(X.utils.sheet_to_json(wb.Sheets[n],{header:1,raw:false,defval:''}));return rows&&rows.length});res(rows||[])}catch(e){rej(e)}};fr.onerror=function(){rej(new Error('파일을 읽지 못했어요'))};fr.readAsArrayBuffer(file)})})
   .then(function(rows){if(!rows.length){S.bBusy=false;render();toast('「거래일시」 · 「입금」 칸이 있는 표를 찾지 못했어요. 은행 거래내역 엑셀인지 확인해 주세요');return}
-    return callS('bankImport',rows).then(function(r){S.bBusy=false;if(!r.ok){render();toast(r.msg);return}bankTake(r);render();toast('새 거래 '+r.added+'건 더했어요'+(r.skip?' · 이미 있던 '+r.skip+'건은 건너뜀':'')+(r.bad?' · 읽지 못한 '+r.bad+'줄':''))})})
+    if((S.bAccts||[]).length&&!S.bAcct){S.bBusy=false;render();toast('어느 통장 거래내역인지 위에서 먼저 골라 주세요');return}
+    return callS('bankImport',rows,S.bAcct||'').then(function(r){S.bBusy=false;if(!r.ok){render();toast(r.msg);return}bankTake(r);render();toast('새 거래 '+r.added+'건 더했어요'+(r.skip?' · 이미 있던 '+r.skip+'건은 건너뜀':'')+(r.bad?' · 읽지 못한 '+r.bad+'줄':''))})})
   .catch(function(e){S.bBusy=false;render();toast(e.message||String(e))})}
-function bankSave(ids,o,msg){return callS('bankSet',ids,o).then(function(r){if(!r.ok){toast(r.msg);render();return}bankUpd(r);render();if(msg)toast(msg.replace('%n',r.n))})}
+function bankSave(ids,o,msg){return callS('bankSet',ids,o).then(function(r){if(!r.ok){toast(r.msg);render();return}if(r.all)bankTake(r);else bankUpd(r);render();if(msg)toast(msg.replace('%n',r.n))})}
 function loadReqs(){S.reqs=null;callS('reqs').then(function(r){if(r.ok){S.reqs=objs(r);S.D.reqN=S.reqs.filter(function(q){return q['상태']==='대기'}).length;if(S.tab==='req')render()}else toast(r.msg)})}
 function vReq(){var L=S.reqs;if(!L)return '<div class="panel"><span><span class="spin"></span> 불러오는 중…</span></div>';
   var st=S.f.rs||'대기',list=L.filter(function(q){return st==='전체'||q['상태']===st});
@@ -749,7 +806,7 @@ document.addEventListener('submit',function(e){if(e.target.id!=='loginF')return;
 document.addEventListener('click',function(e){
   var ck=e.target.closest('input[data-ck]');if(ck){e.stopPropagation();if(ck.checked)S.sel[ck.dataset.ck]=1;else delete S.sel[ck.dataset.ck];render();return}
   if(e.target.id==='ckAll'){var per=50,l=listOf().slice(S.page*per,(S.page+1)*per),k=keyOf(kindOf());l.forEach(function(o){if(e.target.checked)S.sel[o[k]]=1;else delete S.sel[o[k]]});render();return}
-  var bs=e.target.closest('tr[data-bsk],tr[data-bsa]');if(bs){S.bf=S.bf||{};if(bs.dataset.bsk!=null)S.bf.k=bs.dataset.bsk;if(bs.dataset.bsa!=null){S.bf.a=bs.dataset.bsa==='-'?'':bs.dataset.bsa;S.bf.io='입금'}S.bv='list';S.bp=0;render();return}
+  var bs=e.target.closest('tr[data-bsk],tr[data-bsa],tr[data-bspj]');if(bs){S.bf=S.bf||{};if(bs.dataset.bspj!=null)S.bf.pj=bs.dataset.bspj;if(bs.dataset.bsk!=null)S.bf.k=bs.dataset.bsk;if(bs.dataset.bsa!=null){S.bf.a=bs.dataset.bsa==='-'?'':bs.dataset.bsa;S.bf.io='입금'}S.bv='list';S.bp=0;render();return}
   var tg=e.target.closest('.tile[data-go]');if(tg&&!e.target.closest('.tip')){goTile(tg.getAttribute('data-go'));return}
   var b=e.target.closest('button,tr[data-edit]');if(!b)return;var d=b.dataset;
   if(d.tab){go(d.tab);return}
@@ -828,11 +885,21 @@ document.addEventListener('click',function(e){
   if(b.id==='bankOld'){S.bOld=!S.bOld;if(!S.bOldUrl)S.bOldUrl='https:'+'/'+'/docs.google.com/spreadsheets/d/1Xznrbcootc-LCnJR6ZdrqgnjbyuWBSI8TOXDtGf5q24/edit';render();return}
   if(b.id==='bankOldNo'){S.bOld=false;render();return}
   if(b.id==='bankOldGo'){var ou=document.getElementById('bankOldUrl').value.trim();S.bOldUrl=ou;b.disabled=true;b.innerHTML='<span class="spin"></span> 가져오는 중… (1~2분)';
-    callS('bankFromSheet',ou).then(function(r){if(!r.ok){b.disabled=false;b.textContent='가져오기';toast(r.msg);return}bankTake(r);S.bOld=false;render();toast('가져왔어요 · 새 거래 '+r.added+'건'+(r.skip?' · 이미 있던 '+r.skip+'건 건너뜀':'')+(r.noDate?' · 날짜 없는 '+r.noDate+'줄 건너뜀':'')+' ('+r.per.join(', ')+')')});return}
+    if((S.bAccts||[]).length&&!S.bAcct){b.disabled=false;b.textContent='가져오기';toast('어느 통장 거래인지 위에서 먼저 골라 주세요');return}
+    callS('bankFromSheet',ou,S.bAcct||'').then(function(r){if(!r.ok){b.disabled=false;b.textContent='가져오기';toast(r.msg);return}bankTake(r);S.bOld=false;render();toast('가져왔어요 · 새 거래 '+r.added+'건'+(r.skip?' · 이미 있던 '+r.skip+'건 건너뜀':'')+(r.noDate?' · 날짜 없는 '+r.noDate+'줄 건너뜀':'')+' ('+r.per.join(', ')+')')});return}
   if(b.id==='bankRe'){S.bSel={};loadBank();render();return}
   if(d.bok){bankSave([d.bok],{confirm:true},'확정했어요');return}
   if(b.id==='bRecOk'){var rids=bankList().filter(function(o){return o['상태']==='추천'}).map(function(o){return o['거래ID']});if(!confirm('보이는 추천 '+rids.length+'건을 그대로 확정할까요?'))return;b.disabled=true;bankSave(rids,{confirm:true},'%n건 확정했어요');return}
-  if(b.id==='bBkGo'){var bk=document.getElementById('bBk').value,sids=Object.keys(S.bSel||{});if(!bk){toast('구분을 골라 주세요');return}b.disabled=true;bankSave(sids,{'구분':bk},'%n줄 바꿨어요').then(function(){S.bSel={};render()});return}
+  if(b.id==='bBkGo'){var bk=document.getElementById('bBk').value,bpe=document.getElementById('bBp'),bae=document.getElementById('bBa'),bo2={},sids=Object.keys(S.bSel||{});if(bk)bo2['구분']=bk;if(bpe&&bpe.value)bo2['프로젝트ID']=bpe.value==='*'?'':bpe.value;if(bae&&bae.value)bo2['통장ID']=bae.value;if(!Object.keys(bo2).length){toast('바꿀 것을 골라 주세요');return}b.disabled=true;bankSave(sids,bo2,'%n줄 바꿨어요').then(function(){S.bSel={};render()});return}
+  if(b.id==='bAcNew'){S.bEA='new';render();return}if(d.bea){S.bEA=d.bea;render();return}if(b.id==='bAcNo'){S.bEA=null;render();return}
+  if(b.id==='bAcSave'){var ko={'통장ID':S.bEA==='new'?'':S.bEA};['이름','은행','계좌번호','예금주','메모'].forEach(function(k){ko[k]=document.getElementById('ka_'+k).value});ko['사용']=document.getElementById('ka_안씀').checked?'안씀':'사용';bankMetaGo('acct',ko,'통장을 저장했어요',b).then(function(ok){if(ok){S.bEA=null;render()}});return}
+  if(b.id==='bPjNew'){S.bEP='new';render();return}if(d.bep){S.bEP=d.bep;render();return}if(b.id==='bPjNo'){S.bEP=null;render();return}
+  if(d.bpgo){S.bf={pj:d.bpgo};S.bv='list';S.bp=0;render();return}
+  if(b.id==='bPjSave'){var po={'프로젝트ID':S.bEP==='new'?'':S.bEP};['이름','시작일','끝일','메모'].forEach(function(k){po[k]=document.getElementById('kp_'+k).value});po['사용']=document.getElementById('kp_안씀').checked?'안씀':'사용';
+    po['통장ID']=[].map.call(document.querySelectorAll('[data-kpa]:checked'),function(x){return x.dataset.kpa});po['구분']=[].map.call(document.querySelectorAll('[data-kpk]:checked'),function(x){return x.dataset.kpk});bankMetaGo('proj',po,'프로젝트를 저장했어요',b).then(function(ok){if(ok){S.bEP=null;render()}});return}
+  if(d.kct){bankMetaGo('cat',{'구분':d.kct,toggle:1},'',b);return}
+  if(b.id==='bCatAdd'){bankMetaGo('cat',{'구분':document.getElementById('kc_구분').value,'입출':document.getElementById('kc_입출').value,'대분류':document.getElementById('kc_대분류').value,'중분류':document.getElementById('kc_중분류').value},'구분을 더했어요',b);return}
+  if(b.id==='bNoAGo'){var na=document.getElementById('bNoA').value;if(!na){toast('통장을 골라 주세요');return}var nids=(S.bank||[]).filter(function(o){return !o['통장ID']}).map(function(o){return o['거래ID']});if(!confirm('통장을 안 정한 거래 '+nids.length+'건을 「'+bAcName(na)+'」 거래로 정할까요?'))return;b.disabled=true;b.innerHTML='<span class="spin"></span> 저장 중…';bankSave(nids,{'통장ID':na},'%n건 정했어요');return}
   if(d.bdu){var bo=S.bank.filter(function(x){return x['거래ID']===d.bdu})[0];if(!bo)return;
     if(bo['구분']==='교사회비'){var tn=T[bo['교사ID']]?T[bo['교사ID']]['이름']:'';if(!confirm(tn+' 선생님 '+String(bo['거래일시']).slice(0,4)+' 회비로 '+won(bIn(bo))+'을 확인할까요?'))return;b.disabled=true;
       callS('bankDues',d.bdu,[]).then(function(r){if(!r.ok){b.disabled=false;toast(r.msg);return}bankTake(r);index();render();toast(r.link)});return}
@@ -876,7 +943,10 @@ document.addEventListener('input',function(e){var el=e.target;
   if(el.dataset&&el.dataset.pick){pickOpts(el.dataset.pick,el.value);var hs=document.getElementById(el.dataset.pick);if(hs&&hs.id==='e_원장교사ID'&&document.getElementById('telHead'))headTelFill();return}});
 document.addEventListener('compositionend',function(e){if(e.target.id==='q'){S.q=e.target.value;S.page=0;clearTimeout(qTimer);qTimer=setTimeout(softList,120)}});
 document.addEventListener('change',function(e){var bt=e.target,bd=bt.dataset||{};
-  var bfm={bfm:'m',bfio:'io',bfk:'k',bfst:'st',bfa:'a',bq:'q'}[bt.id];if(bfm){S.bf=S.bf||{};S.bf[bfm]=bt.value;S.bp=0;S.bSel={};render();return}
+  if(bt.id==='bAcct'){S.bAcct=bt.value;return}
+  if(bd.kcb!=null||bd.kcm!=null){var kk=bd.kcb||bd.kcm,row=bCatRow(kk)||{};bankMetaGo('cat',{'구분':kk,edit:1,'대분류':bd.kcb?bt.value:row['대분류'],'중분류':bd.kcm?bt.value:row['중분류']},'분류를 바꿨어요');return}
+  if(bd.bpj){bankSave([bd.bpj],{'프로젝트ID':bt.value});return}
+  var bfm={bfm:'m',bfio:'io',bfk:'k',bfst:'st',bfa:'a',bq:'q',bfpj:'pj',bfac:'ac'}[bt.id];if(bfm){S.bf=S.bf||{};S.bf[bfm]=bt.value;S.bp=0;S.bSel={};render();return}
   if(bt.id==='bankFile'){var bfl=bt.files&&bt.files[0];bt.value='';if(bfl)bankUpload(bfl);return}
   if(bd.bk){bankSave([bd.bk],{'구분':bt.value});return}if(bd.ba){bankSave([bd.ba],{'학원ID':bt.value});return}if(bd.bt){bankSave([bd.bt],{'교사ID':bt.value});return}if(bd.bm){bankSave([bd.bm],{'메모':bt.value});return}
   if(bd.bck){S.bSel=S.bSel||{};if(bt.checked)S.bSel[bd.bck]=1;else delete S.bSel[bd.bck];render();return}

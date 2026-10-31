@@ -1,4 +1,4 @@
-/* build: 20261029-002547 */
+/* build: 20261031-201603 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -73,7 +73,7 @@ const SETTINGS = [['관리자 아이디', 'admin', '관리자 화면(?page=admin
   ['입금 시작일', '2026-10-01', '이 날짜보다 앞선 입금일로는 신고할 수 없어요'],
   ['공유주소', 'https://redica1.github.io/suzuki/camp/', '카카오톡 안에서 열었을 때 바깥 브라우저로 넘길 주소'],
   ['회원관리 시트', '', '회원관리 DB 시트 ID 또는 주소 — 선생님 로그인(이메일 · 비밀번호)을 회원관리 계정으로 확인. 비우면 이름 + 휴대전화'],
-  ['로그인 방식', '회원관리 계정', '「회원관리 계정」 = 이메일 · 비밀번호 / 「이름+휴대전화」 = 예전 방식(시험용)'],
+  ['로그인 방식', '둘 다', '「둘 다」 = 이메일 · 비밀번호 + (회원 가입 전 선생님은) 이름 + 휴대전화 / 「회원관리 계정」 = 이메일 · 비밀번호만 / 「이름+휴대전화」 = 예전 방식'],
   ['회원관리 주소', 'https://redica1.github.io/suzuki/member/', '선생님 가입 · 비밀번호 찾기 안내에 쓰는 회원관리 주소 (STG 는 끝에 ?test)'],
   ['회원 명단 파일', '', '회원관리가 만드는 「행사용 명단」 파일 ID 또는 주소. 넣으면 명단_교사 · 명단_학생을 그 파일로 5분마다 맞춤 (비우면 지금처럼 이 시트의 명단 그대로)'],
   ['접수 가능 학원', '마포스즈키', '「전체」 또는 학원 이름을 쉼표로 (예: 마포스즈키, 미사스즈키)'],
@@ -95,7 +95,7 @@ function doGet(e) {
   let page, cname = CAMP_NAME, cj = '';
   try { const c = campPublic_(); cname = c.base.name; cj = JSON.stringify(c); } catch (x) {}
   if (admin) page = HtmlService.createHtmlOutputFromFile('Admin');
-  else { const t = HtmlService.createTemplateFromFile('Index'); let share = ''; let tl = ''; try { ensureSettings_(); share = setting_('공유주소'); tl = setting_('테스트 로그인'); } catch (x) {} t.shareUrl = share; t.testLogin = tl; t.campJson = cj; try { t.loginPw = pwMode_() ? '1' : ''; t.memberUrl = setting_('회원관리 주소'); } catch (x) { t.loginPw = ''; t.memberUrl = ''; } /* 테스트 로그인: STG 「설정」에만 (이름/휴대전화) — 로그인 칸을 미리 채움 · campJson: 「캠프설정」 시트 값 (날짜·장소·차수·참가비) */ page = t.evaluate(); }
+  else { const t = HtmlService.createTemplateFromFile('Index'); let share = ''; let tl = ''; try { ensureSettings_(); share = setting_('공유주소'); tl = setting_('테스트 로그인'); } catch (x) {} t.shareUrl = share; t.testLogin = tl; t.campJson = cj; try { t.loginPw = { pw: '1', both: '2' }[loginMode_()] || ''; t.memberUrl = setting_('회원관리 주소'); } catch (x) { t.loginPw = ''; t.memberUrl = ''; } /* 테스트 로그인: STG 「설정」에만 (이름/휴대전화) — 로그인 칸을 미리 채움 · campJson: 「캠프설정」 시트 값 (날짜·장소·차수·참가비) */ page = t.evaluate(); }
   return page
     .setTitle(cname + (admin ? ' 접수 관리' : ' 접수'))
     .addMetaTag('viewport', 'width=device-width, initial-scale=1')
@@ -176,7 +176,9 @@ function teachers_() {
  * 회원관리 시트 「계정」 탭(이메일 · 교사ID · 비번해시 · 솔트 · 상태)을 읽어 회원관리와 같은 방식(솔트 + SHA-256 5,000번)으로 확인.
  * 맞으면 그 교사ID 로 명단_교사(회원관리에서 맞춘 것)에서 선생님을 찾음. 비밀번호는 캠프에 저장하지 않음. */
 function memberSheetId_() { const v = setting_('회원관리 시트'); const m = v.match(/\/d\/([a-zA-Z0-9_-]{20,})/); return m ? m[1] : (/^[a-zA-Z0-9_-]{20,}$/.test(v) ? v : ''); }
-function pwMode_() { return setting_('로그인 방식') !== '이름+휴대전화' && !!memberSheetId_(); }
+/** 로그인 방식: 'pw' = 이메일 · 비밀번호만, 'both' = 둘 다(가입 전 선생님은 이름 + 휴대전화), '' = 이름 + 휴대전화만 (10-31) */
+function loginMode_() { if (!memberSheetId_()) return ''; const v = setting_('로그인 방식'); return v === '이름+휴대전화' ? '' : v === '회원관리 계정' ? 'pw' : 'both'; }
+function pwMode_() { return loginMode_() === 'pw'; }
 function mHash_(pw, salt) { let h = salt + '|' + pw; for (let i = 0; i < 5000; i++) h = Utilities.base64Encode(Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, h + salt, Utilities.Charset.UTF_8)); return 'S256x5000$' + h; }
 function acctCheck_(email, pw) {
   email = String(email || '').trim().toLowerCase(); pw = String(pw || '');
@@ -428,6 +430,7 @@ function recalc_(sb) {
   const guest = sb.acad === GUEST_ACAD;   // 비회원: 연회비 없음 · 비회원 참가비
   const tPaid = {}; teachers_().forEach(t => tPaid['t_' + t.id] = !!t.paidDate);
   const sPaid = {}; rows_(SH.S).forEach(r => sPaid[String(r['ID'])] = !!dstr_(r['회비 납부일']));
+  const viaCamp = duesViaCamp_();   /* 이 캠프에서 받은 연회비는 회원관리에 납부로 남아도 그대로 청구 (10-31) */
   const key = p => p.id.slice(sb.no.length + 1);
   const live = sb.ppl.filter(p => p.status !== '취소');
   const liveKeys = live.map(key);
@@ -449,7 +452,7 @@ function recalc_(sb) {
     if (p.status !== '취소' && ['학생', '회원의 악기하는 자녀', '비회원 학생'].includes(i.type) && !String(i.prog || '').trim()) throw new Error(p.name + '의 권수(현재 진도)를 골라 주세요.');
     if (p.status !== '취소' && plays && i.concert === '이브닝' && !/^https?:\S{6,}$/i.test(String(i.video || '').trim())) throw new Error(p.name + ': 이브닝 음악회는 오디션 영상 주소(https…)를 넣어 주세요.');
     const isT = /^t_|^me_/.test(k), isFam = (f.fam || []).some(x => x.id === k);
-    const paid = guest ? true : isFam ? true : isT ? (k.indexOf('me_') === 0 ? true : !!tPaid[k]) : !!sPaid[k];
+    const paid = viaCamp[p.id] ? false : guest ? true : isFam ? true : isT ? (k.indexOf('me_') === 0 ? true : !!tPaid[k]) : !!sPaid[k];
     p.type = i.type; p.fee = FEES[i.type][ri]; p.lesson = les * OPT.lessonFee + mc;
     p.dues = paid ? 0 : (isT ? OPT.teacherDues : OPT.studentDues);
     p.room = roomBy[k] || 0;
@@ -1162,12 +1165,21 @@ function need_(a, tabs) {
   if (a.sup) return;
   if (![].concat(tabs).some(t => a.perms[t] === '편집')) throw new Error('이 메뉴는 보기만 할 수 있어요. 바꾸려면 총관리자에게 「편집」 권한을 받아 주세요.');
 }
+/** 담당 선생님 로그인 (10-31): 첫 칸에 이메일(@)이 오면 회원관리 계정(이메일 · 비밀번호), 아니면 이름 + 휴대전화(로그인 방식이 「회원관리 계정」이면 막음) */
+function staffMode() { return { pw: !!memberSheetId_(), phone: !pwMode_() }; }
 function staffLogin(name, phone) {
   const C = CacheService.getScriptCache(), fails = +C.get('stf_fail') || 0;
   if (fails >= 15) return { ok: false, msg: '여러 번 틀려서 5분 동안 잠겼어요. 잠시 뒤 다시 해 주세요.' };
-  const ph = String(phone || '').replace(/\D/g, ''), nm = bare_(name);
-  if (!nm || ph.length < 10) return { ok: false, msg: '이름과 휴대전화를 모두 넣어 주세요.' };
-  const t = teachers_().find(x => bare_(x.name) === nm && x.p4 && ph.endsWith(x.p4));
+  let t;
+  if (String(name || '').indexOf('@') > 0) {
+    if (!memberSheetId_()) return { ok: false, msg: '회원관리 계정 로그인이 아직 꺼져 있어요(설정 「회원관리 시트」). 이름 + 휴대전화로 들어와 주세요.' };
+    try { t = acctCheck_(name, phone); } catch (e) { C.put('stf_fail', String(fails + 1), 300); return { ok: false, msg: e.message }; }
+  } else {
+    if (pwMode_()) return { ok: false, msg: '회원관리 이메일 · 비밀번호로 들어와 주세요.' };
+    const ph = String(phone || '').replace(/\D/g, ''), nm = bare_(name);
+    if (!nm || ph.length < 10) return { ok: false, msg: '이름과 휴대전화를 모두 넣어 주세요.' };
+    t = teachers_().find(x => bare_(x.name) === nm && x.p4 && ph.endsWith(x.p4));
+  }
   const s = t && staff_().find(x => x.tid === t.id && x.on);
   if (!s) { C.put('stf_fail', String(fails + 1), 300); Utilities.sleep(600); return { ok: false, msg: t ? '담당자로 등록되지 않았어요. 총관리자에게 문의해 주세요.' : '회원 명단의 이름·휴대전화와 맞지 않아요.' }; }
   C.remove('stf_fail');
@@ -1202,7 +1214,7 @@ function staffSave(token, list) {
 
 /* ---------------- 회원관리 연동 (10-28) ----------------
  * 회원관리 「행사용 명단」 파일(학원 · 교사 · 학생 · 갱신)을 읽어 명단_교사 · 명단_학생을 통째로 다시 씀. 나머지 캠프 코드는 그대로.
- * 학생 「회비 납부일」 = 회원 자격이 유효 · 시작 전이면 그 해 납부일(없으면 자격 시작월 1일). 확인 대기 · 만료 · 없음은 빈칸(→ 접수 때 연회비 추가).
+ * 학생 「회비 납부일」 = 회원 자격이 유효 · 시작 전이면 그 해 납부일(없으면 자격 시작월 1일). 회원관리에 입금 신고 · 확인 대기면 「확인 중」(회원처럼 연회비 없음, 10-31). 만료 · 없음은 빈칸(→ 접수 때 연회비 추가).
  * 교사 「회비 납부일」 = 올해 납부면 납부일, 면제면 「면제」. 퇴원 학생 · 탈퇴 교사는 넣지 않음. */
 function memberSrcId_() { const v = setting_('회원 명단 파일'); const m = v.match(/\/d\/([a-zA-Z0-9_-]{20,})/); return m ? m[1] : (/^[a-zA-Z0-9_-]{20,}$/.test(v) ? v : ''); }
 function memberSync_(force) {
@@ -1216,8 +1228,8 @@ function memberSync_(force) {
     return [t['교사ID'], t['이름'], t['직급'] || '강사', t['전공'] || '', String(t['휴대전화'] || '').replace(/\D/g, '').slice(-4), ['학원1', '학원2', '학원3'].map(k => an[t[k]] || '').filter(Boolean).join(', '), paid, +t['올해부과'] || 0, '승인'];
   });
   const S = get('학생').filter(s => s['학생ID'] && s['학원명'] && s['상태'] !== '퇴원').map(s => {
-    const ok = s['자격상태'] === '유효' || s['자격상태'] === '시작 전';
-    return [s['학생ID'], s['학생ID'], s['이름'], s['구분글자'] || '', s['학원명'], s['전공'] || '', s['출생연도'] || '', s['담당교사명'] || '', ok ? (s['올해납부일'] || (s['자격시작'] ? s['자격시작'] + '-01' : '납부')) : ''];
+    const ok = s['자격상태'] === '유효' || s['자격상태'] === '시작 전', wait = !ok && s['회비확인대기'] === '예';   /* 확인 대기 = 회원처럼 접수 (10-31) */
+    return [s['학생ID'], s['학생ID'], s['이름'], s['구분글자'] || '', s['학원명'], s['전공'] || '', s['출생연도'] || '', s['담당교사명'] || '', ok ? (s['올해납부일'] || (s['자격시작'] ? s['자격시작'] + '-01' : '납부')) : wait ? '확인 중' : ''];
   });
   const ss = SpreadsheetApp.getActive();
   const put = (name, head, rows) => {
@@ -1234,15 +1246,66 @@ function memberSync_(force) {
   log_('회원관리 연동', '명단 맞춤', '교사 ' + T.length + ' · 학생 ' + S.length + ' · 회원관리 ' + stamp);
   return { ok: true, at: stamp, t: T.length, s: S.length };
 }
-function memberSyncTick() { try { memberSync_(false); } catch (e) { Logger.log('회원관리 연동: ' + e.message); } }
+function memberSyncTick() { try { memberSync_(false); } catch (e) { Logger.log('회원관리 연동: ' + e.message); } try { memberReport_(); } catch (e) { Logger.log('회원관리 보고: ' + e.message); } }
 /** 관리자(총관리자): 지금 불러오기 + 5분마다 자동 켜기 */
 function memberSyncNow(token) {
   const a = adm_(token); needSup_(a);
   try { if (!ScriptApp.getProjectTriggers().some(t => t.getHandlerFunction() === 'memberSyncTick')) ScriptApp.newTrigger('memberSyncTick').timeBased().everyMinutes(5).create(); } catch (e) { }
   const r = memberSync_(true); if (r.skip) throw new Error(r.msg);
+  try { r.report = memberReport_(); } catch (e) { r.report = { err: e.message }; }
   return Object.assign({ ok: true }, r, memberData(token));
 }
-function memberInfo_() { const P = PropertiesService.getScriptProperties(); return { src: !!memberSrcId_(), stamp: P.getProperty('memberStamp') || '', at: P.getProperty('memberSyncAt') || '' }; }
+function memberInfo_() { const P = PropertiesService.getScriptProperties(); return { src: !!memberSrcId_(), stamp: P.getProperty('memberStamp') || '', at: P.getProperty('memberSyncAt') || '', rep: !!memberSheetId_(), repAt: P.getProperty('memberRepAt') || '', repN: +(P.getProperty('memberRepN') || 0) }; }
+/* ---------------- 캠프 → 회원관리 보고 (10-31) ----------------
+ * 5분마다(memberSyncTick) 이번 캠프의 참가 · 연회비 입금 확인을 회원관리 시트 「행사보고」 탭에 줄로 보냄. 회원관리는 그 줄을 읽어
+ * 「참가이력」 · 「연회비」에 반영함(행사 앱은 회원관리 표를 직접 고치지 않음). 보낸 내용은 이 시트 「회원관리보고」에 남겨 두고, 바뀐 것만 다시 보냄.
+ *  - 참가: 회원 번호가 있는 사람(교사 T · 외부인 X · 학생 S)만. 상태 = 참가 · 취소 요청 · 취소 · 빠짐(접수에서 지움)
+ *  - 회비: 연회비가 붙은 사람의 입금이 확인되면(입금확인액 > 0) 그 연회비 금액 · 입금일. 확인을 지우면 「취소」로 다시 보냄.
+ *  - 캠프에서 받은 연회비는 회원관리에 납부로 남아도 이 접수의 청구액에서 빼지 않음(recalc_ 가 이 표를 봄 → 차액 환불이 생기지 않게). */
+const REP_SH = '회원관리보고', REP_HEAD = ['키', '종류', '대상', 'ID', '이름', '값', '보낸 때'];
+const INBOX = '행사보고', INBOX_HEAD = ['보고ID', '보낸때', '보낸곳', '종류', '대상', 'ID', '이름', '값', '처리', '처리일', '처리메모'];
+function memKey_(k) { let m = String(k || '').match(/^t_([TX]\d{4,})$/); if (m) return { t: '교사', id: m[1] }; m = String(k || '').match(/^(S\d{4,})$/); return m ? { t: '학생', id: m[1] } : null; }
+function repSent_() {
+  const o = {}; rows_(REP_SH).forEach(r => { const k = String(r['키'] || ''); if (k) o[k] = { kind: String(r['종류']), t: String(r['대상']), id: String(r['ID']), name: String(r['이름']), val: String(r['값'] || ''), at: String(r['보낸 때'] || ''), row: r._row }; });
+  return o;
+}
+/** 캠프가 받은 연회비(회원관리에 보낸 것) — 참가자ID 목록. recalc_ 에서 이 사람은 회원관리에 납부로 보여도 연회비를 그대로 둠 */
+function duesViaCamp_() { const o = {}; try { Object.values(repSent_()).forEach(x => { if (x.kind !== '회비') return; try { const v = JSON.parse(x.val); if (!v.취소 && v.참가자ID) o[v.참가자ID] = 1; } catch (e) { } }); } catch (e) { } return o; }
+function repWant_() {
+  const c = camp_(), ev = (c.base.name || CAMP_NAME) + ' (' + (c.base.id || CAMP_ID) + ')', yr = String(c.base.start || '').slice(0, 4), per = c.base.start + '~' + c.base.end, out = {};
+  loadSubs_().forEach(sb => { if (sb.fake || sb.acad === GUEST_ACAD) return; (sb.ppl || []).forEach(p => {
+    const m = memKey_(p.id.slice(sb.no.length + 1)); if (!m) return;
+    const st = p.status === '취소' ? '취소' : p.status === '취소요청' ? '취소 요청' : '참가', pk = '참가|' + m.t + '|' + m.id, cur = out[pk];
+    if (!cur || (cur.v.상태 !== '참가' && st === '참가')) out[pk] = { kind: '참가', t: m.t, id: m.id, name: p.name, v: { 행사: ev, 년도: yr, 기간: per, 역할: p.type || '', 상태: st, 메모: sb.no + ' · ' + sb.acad } };
+    if ((+p.dues || 0) > 0 && (+p.paidAmt || 0) > 0) out['회비|' + m.t + '|' + m.id] = { kind: '회비', t: m.t, id: m.id, name: p.name, v: { 행사: ev, 금액: +p.dues, 입금일: (p.rep && p.rep.ok) || today_(), 접수번호: sb.no, 참가자ID: p.id } };
+  }); });
+  return out;
+}
+function memberReport_() {
+  const mid = memberSheetId_(); if (!mid) return { skip: true };
+  const lock = lock_();
+  try {
+    const want = repWant_(), sent = repSent_(), send = [];
+    Object.keys(want).forEach(k => { const w = want[k], val = JSON.stringify(w.v); if (!sent[k] || sent[k].val !== val) send.push({ k, kind: w.kind, t: w.t, id: w.id, name: w.name, val }); });
+    Object.keys(sent).forEach(k => { if (want[k]) return; const x = sent[k]; let v = {}; try { v = JSON.parse(x.val); } catch (e) { }
+      if (x.kind === '회비') { if (v.취소) return; v.취소 = true; } else { if (v.상태 === '빠짐') return; v.상태 = '빠짐'; }
+      send.push({ k, kind: x.kind, t: x.t, id: x.id, name: x.name, val: JSON.stringify(v) }); });
+    if (!send.length) return { n: 0 };
+    const at = stamp_(), from = '캠프 ' + (camp_().base.id || CAMP_ID);
+    const mf = SpreadsheetApp.openById(mid); let ib = mf.getSheetByName(INBOX);
+    if (!ib) { ib = mf.insertSheet(INBOX); ib.getRange(1, 1, 1, INBOX_HEAD.length).setValues([INBOX_HEAD]).setFontWeight('bold').setBackground('#e9eef0'); ib.setFrozenRows(1); }
+    const rows = send.map((x, i) => ['R' + Utilities.formatDate(new Date(), TZ, 'yyMMddHHmmss') + String(Math.floor(Math.random() * 900) + 100) + String(i).padStart(3, '0'), at, from, x.kind, x.t, x.id, x.name, x.val, '', '', '']);
+    ib.getRange(ib.getLastRow() + 1, 1, rows.length, INBOX_HEAD.length).setNumberFormat('@').setValues(rows);
+    const ss = SpreadsheetApp.getActive(); let sh = ss.getSheetByName(REP_SH);
+    if (!sh) { sh = ss.insertSheet(REP_SH); sh.getRange(1, 1, 1, REP_HEAD.length).setValues([REP_HEAD]).setFontWeight('bold'); sh.setFrozenRows(1); }
+    const add = [];
+    send.forEach(x => { const r = [x.k, x.kind, x.t, x.id, x.name, x.val, at]; if (sent[x.k]) sh.getRange(sent[x.k].row, 1, 1, REP_HEAD.length).setNumberFormat('@').setValues([r]); else add.push(r); });
+    if (add.length) sh.getRange(sh.getLastRow() + 1, 1, add.length, REP_HEAD.length).setNumberFormat('@').setValues(add);
+    const P = PropertiesService.getScriptProperties(); P.setProperty('memberRepAt', at); P.setProperty('memberRepN', String(Object.keys(want).length));
+    log_('회원관리 보고', '보냄', send.length + '줄 (참가 ' + send.filter(x => x.kind === '참가').length + ' · 회비 ' + send.filter(x => x.kind === '회비').length + ')');
+    return { n: send.length };
+  } finally { lock.releaseLock(); }
+}
 /** 설정 › 회원 명단: 명단_교사 · 명단_학생 전체 + 이번 캠프 접수 여부 (취소 뺌). 휴대전화 · 생일 같은 건 보내지 않음 */
 function memberData(token) {
   const a = adm_(token); if (!a.sup && !a.perms.mem) throw new Error('회원 명단을 볼 권한이 없어요.');

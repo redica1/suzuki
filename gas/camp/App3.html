@@ -1,4 +1,4 @@
-/* build: 20261029-002547 */
+/* build: 20261031-201603 */
     ${S.extra.length?`<div class="xhead">명단에 없어 추가한 학생 ${S.extra.length}명 <span class="hint">체크한 학생만 접수돼요 · 연회비 30,000원이 함께 청구돼요 · 「빼기」는 목록에서 지워요</span></div><ul class="roster">${S.extra.map(s=>`<li><input type="checkbox" id="xk_${s.id}" ${s.on!==false?'checked':''} data-xon="${s.id}" aria-label="${esc(s.name)} 선택"><label class="who" for="xk_${s.id}"><b>${esc(s.name)} <span class="kind ks">학생</span></b><small>${age(s.birth)}세 · ${s.inst} · 담당 ${esc(s.teacher)}</small></label><span class="row" style="flex-wrap:nowrap"><span class="pill new">신규 추가</span><button class="btn small ghost" type="button" data-rmx="${s.id}">빼기</button></span></li>`).join('')}</ul>`:''}
     ${S.showNew?`<div class="adder"><b>명단에 없는 학생 추가</b>
       <p class="hint">늦게 들어온 학생은 여기서 추가하고 연회비 30,000원을 캠프비와 함께 입금해 주세요. 운영진이 확인하면 정식 접수돼요.</p>
@@ -18,7 +18,7 @@
 function teachersFor(inst,cur){const all=roster().teachers;const L=all.filter(t=>t.inst===inst);const out=(L.length?L:all).map(t=>t.name);if(cur&&!out.includes(cur))out.push(cur);return out}
 function opts(list,val,ph){ return `<option value="">${ph}</option>`+list.map(x=>`<option ${x===val?'selected':''}>${esc(x)}</option>`).join('') }
 function duesTxt(p){const r=roster();const x=(p.kind==='teacher'?r.teachers:r.students).find(y=>y.id===p.key)||{};
-  return p.kind==='teacher'?`교사회비 납부${x.dueAmt?' '+won(x.dueAmt):''}${x.paidDate?' · '+x.paidDate.replace(/-/g,'.'):''}`:`학생회비 납부 ${won(x.paidAmt||CAMP.studentDues)}${x.paidDate?' · '+x.paidDate.replace(/-/g,'.'):''}`}
+  return p.kind==='teacher'?`교사회비 납부${x.dueAmt?' '+won(x.dueAmt):''}${x.paidDate?' · '+x.paidDate.replace(/-/g,'.'):''}`:x.paidDate==='확인 중'?'학생회비 입금 확인 중 (회원관리에서 확인하고 있어요)':`학생회비 납부 ${won(x.paidAmt||CAMP.studentDues)}${x.paidDate?' · '+x.paidDate.replace(/-/g,'.'):''}`}
 /* 입금 신고 후 운영진 확인 전인 사람은 정보(금액이 바뀌는 것)를 못 고침 — 신고 수정·신고 취소는 됨 */
 function lockedP(key){if(!S.editNo)return false;const sb=ALL_SUBS.find(x=>x.no===S.editNo);const o=sb&&sb.ppl.find(q=>q.id===S.editNo+'_'+key);return !!(o&&o.status==='정상'&&o.pay==='신고')}
 function lockCards(){if(!S.editNo)return;document.querySelectorAll('.pcard').forEach(c=>{const key=c.id.slice(5);if(!lockedP(key))return;

@@ -1,4 +1,4 @@
-/* build: 20261029-002547 */
+/* build: 20261031-201603 */
 function vAuthPick(){return `<section class="sec"><h2>접수 시작</h2>
   <p class="lede">어떻게 접수하시나요?</p>
   <div class="pick2">
@@ -78,7 +78,7 @@ function vStep1(){
   if(!u&&S.auth==='consent') return vConsent();
   if(!u&&S.auth==='guest') return vGuestLogin();
   if(u&&u.guest) return vGuestStep1();
-  if(!u&&LOGIN_PW) return `<section class="sec"><h2>선생님 로그인</h2>
+  if(!u&&LOGIN_PW&&!S.lgAlt) return `<section class="sec"><h2>선생님 로그인</h2>
   <p class="lede">협회 회원관리(선생님 회원)에서 만든 <b>이메일과 비밀번호</b>로 들어가요.</p>
   <div class="panel" style="max-width:440px">
     <label class="f" for="lgId">이메일<input type="email" id="lgId" value="${esc(S.lgId||'')}" autocomplete="username" inputmode="email"></label>
@@ -88,14 +88,16 @@ function vStep1(){
     <div class="spread"><button class="btn ghost small" type="button" id="toPick">← 처음으로</button><a class="btn ghost small" href="${esc(MEMBER_URL||SIGNUP_URL)}" target="_blank" rel="noopener" style="text-decoration:none">비밀번호를 잊었어요 ↗</a></div>
     <div class="note info" style="display:grid;gap:8px"><b>아직 회원 가입을 안 하셨나요?</b>
       <span class="hint">협회 선생님 회원에서 이름과 휴대전화로 확인한 뒤 이메일 · 비밀번호를 만들어요. 가입이 끝나면 같은 이메일 · 비밀번호로 여기에 들어올 수 있어요.</span>
-      <a class="btn primary" href="${esc(MEMBER_URL||SIGNUP_URL)}" target="_blank" rel="noopener" style="justify-self:start;text-decoration:none">선생님 회원 가입하기 ↗</a></div>
+      <a class="btn primary" href="${esc(MEMBER_URL||SIGNUP_URL)}" target="_blank" rel="noopener" style="justify-self:start;text-decoration:none">선생님 회원 가입하기 ↗</a>
+      ${LOGIN_PW==='2'?`<span class="hint">이번 겨울 캠프는 가입 전이어도 접수할 수 있어요.</span><button class="btn ghost small" type="button" id="toPhone" style="justify-self:start">가입 전이에요 · 이름과 휴대전화로 들어가기</button>`:''}</div>
   </div></section>`;
   if(!u) return `<section class="sec"><h2>선생님 로그인</h2>
   <p class="lede">회원 명단에 있는 선생님만 접수할 수 있어요. 이름과 휴대전화로 들어가요.</p>
   <div class="panel" style="max-width:440px">
     <label class="f" for="lgNm">이름<input type="text" id="lgNm" value="${esc(S.lgNm)}" autocomplete="name" placeholder=""></label>
     <label class="f" for="lgEm">휴대전화<span class="phwrap"><span class="phpre" aria-hidden="true">010-</span><input type="tel" id="lgEm" value="${esc(String(S.lgEm||'').replace(/^010-?/,''))}" inputmode="numeric" placeholder="0000-0000" maxlength="9" autocomplete="tel-local" aria-label="휴대전화 010 뒤 8자리"></span></label>
-    <p class="hint">회원 명단의 이름과 휴대전화로 들어가요.</p>
+    <p class="hint">회원 명단의 이름과 휴대전화로 들어가요.${LOGIN_PW?' 회원 가입을 하셨다면 이메일 · 비밀번호로 들어가 주세요.':''}</p>
+    ${LOGIN_PW?`<button class="btn ghost small" type="button" id="toEmail" style="justify-self:start">← 이메일 · 비밀번호로 들어가기</button>`:''}
     ${S.verr?`<p class="err">${S.verr}</p>`:''}
     <button class="btn primary" type="button" id="doLogin">로그인</button>
     <div class="spread"><button class="btn ghost small" type="button" id="toPick">← 처음으로</button><button class="btn ghost small" type="button" id="forgot">비밀번호를 잊었어요</button></div>

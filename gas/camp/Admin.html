@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261029-002547 -->
+<!-- build: 20261031-201603 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -333,10 +333,13 @@ document.addEventListener('click',e=>{const th=e.target.closest&&e.target.closes
 function vLogin(){const m=S.lmode||'sup';return `<div class="panel login"><h2 style="font-family:var(--display);font-size:19px;margin:0 0 10px">관리자 로그인</h2>
   <div class="row lmode" role="tablist" style="gap:6px;margin-bottom:10px"><button class="btn small ${m==='sup'?'primary':''}" type="button" data-lmode="sup" aria-pressed="${m==='sup'}">총관리자</button><button class="btn small ${m==='stf'?'primary':''}" type="button" data-lmode="stf" aria-pressed="${m==='stf'}">담당 선생님</button></div>
   ${m==='sup'?`<label>아이디<input type="text" id="lid" autocomplete="username" value="admin"></label>
-  <label>비밀번호<input type="password" id="lpw" autocomplete="current-password"></label>`:`<label>이름<input type="text" id="lnm" autocomplete="name" placeholder="회원 명단의 이름"></label>
-  <label>휴대전화<input type="tel" id="lph" inputmode="tel" autocomplete="tel" placeholder="010-0000-0000"></label>`}
+  <label>비밀번호<input type="password" id="lpw" autocomplete="current-password"></label>`:!S.lalt?`<label>이메일<input type="email" id="lem" autocomplete="username" inputmode="email" placeholder="회원관리 선생님 회원 이메일"></label>
+  <label>비밀번호<input type="password" id="lpw2" autocomplete="current-password"></label>
+  <button class="btn ghost small" type="button" id="lalt">회원 가입 전이에요 · 이름과 휴대전화로</button>`:`<label>이름<input type="text" id="lnm" autocomplete="name" placeholder="회원 명단의 이름"></label>
+  <label>휴대전화<input type="tel" id="lph" inputmode="tel" autocomplete="tel" placeholder="010-0000-0000"></label>
+  <button class="btn ghost small" type="button" id="lalt">← 이메일 · 비밀번호로</button>`}
   <p class="err" id="lerr"></p><button class="btn primary" type="button" id="doLogin" style="width:100%;justify-content:center">들어가기</button>
-  <p class="hint">${m==='sup'?'아이디·비밀번호는 접수 DB 시트의 「설정」 탭에서 정해요.':'총관리자가 「담당자」에 등록한 교사 회원만 들어올 수 있어요. 메뉴는 받은 권한만큼 보여요.'}</p></div>`}
+  <p class="hint">${m==='sup'?'아이디·비밀번호는 접수 DB 시트의 「설정」 탭에서 정해요.':'총관리자가 「담당자」에 등록한 교사 회원만 들어올 수 있어요. 협회 회원관리(선생님 회원)의 이메일 · 비밀번호로 들어와요. 메뉴는 받은 권한만큼 보여요.'}</p></div>`}
 function vHome(){const st=stats();const t=(k,v,s,w,cls)=>`<div class="tile ${w?'warn':''} ${cls||''}"><span class="k">${k}</span><span class="v">${v}</span><span class="s">${s||''}</span></div>`;
   const L=statRows(),T=L.filter(x=>T_TEACH.includes(x.type)),Sx=L.filter(x=>T_PLAY.includes(x.type)),fam=L.length-T.length-Sx.length;
   const ins=[...new Set([...T,...Sx].map(x=>x.inst||'미정'))].sort(instSort);
@@ -1527,7 +1530,7 @@ function vMem(){if(!S.MEM){if(!S.memL)setTimeout(memLoad,0);return '<div class="
   S.conTSV=[['학원','전공','이름','참가','접수번호'],...L.map(x=>[x.acad,x.inst,x.name,x.on?'참가':'미참가',x.on?x.on.no:''])].map(r=>r.join('\t')).join('\n');
   return `<div class="cc"><div class="panel"><div class="spread"><div><b>회원 명단</b> <span class="hint">시트 「명단_교사」 · 「명단_학생」 전체 · 이번 캠프에 접수한 사람은 <b>참가</b>(진하게), 아닌 사람은 미참가(흐리게) · 취소한 사람은 미참가</span></div>
     <div class="row" style="gap:6px"><button class="btn small" type="button" id="conCopy">표 복사</button><button class="btn small" type="button" data-memre="1">새로 불러오기</button><button class="btn small primary" type="button" data-memsync="1">회원관리에서 지금 가져오기</button></div></div>
-    <div class="hint" style="margin-top:6px">${S.MEM.sync&&S.MEM.sync.src?('회원관리 연동 켜짐 · 회원관리 명단 '+esc(S.MEM.sync.stamp||'-')+' · 캠프에 맞춘 때 '+esc(S.MEM.sync.at||'-')+' · 5분마다 바뀐 게 있으면 자동으로 맞춰요'):'회원관리 연동 꺼짐 · 설정 「회원 명단 파일」에 회원관리 「행사용 명단」 파일 ID를 넣으면 켜져요'}</div>
+    <div class="hint" style="margin-top:6px">${S.MEM.sync&&S.MEM.sync.src?('회원관리 연동 켜짐 · 회원관리 명단 '+esc(S.MEM.sync.stamp||'-')+' · 캠프에 맞춘 때 '+esc(S.MEM.sync.at||'-')+' · 5분마다 바뀐 게 있으면 자동으로 맞춰요'):'회원관리 연동 꺼짐 · 설정 「회원 명단 파일」에 회원관리 「행사용 명단」 파일 ID를 넣으면 켜져요'}${S.MEM.sync&&S.MEM.sync.rep?'<br>회원관리 보고 켜짐 · 참가 · 연회비 입금 확인을 회원관리 「참가이력」 · 「연회비」로 보내요 · 마지막으로 보낸 때 '+esc(S.MEM.sync.repAt||'아직 없음'):''}</div>
     <div class="row" style="gap:6px;margin-top:8px;flex-wrap:wrap">${[['t','교사 '+S.MEM.teachers.length],['s','학생 '+S.MEM.students.length]].map(([v,l])=>`<button class="btn small ${k===v?'primary':''}" type="button" data-memk="${v}">${l}</button>`).join('')}<span style="width:10px"></span>
       ${[['all','전체 '+all.length],['on','참가 '+nOn],['off','미참가 '+(all.length-nOn)]].map(([v,l])=>`<button class="btn small ${f===v?'primary':''}" type="button" data-memf="${v}">${l}</button>`).join('')}
       <select id="memA"><option value="">학원 전체</option>${acads.map(a=>`<option ${a===ac?'selected':''}>${esc(a)}</option>`).join('')}</select>
@@ -1576,7 +1579,7 @@ function vStaff(){if(!S.SF){if(!S.sfLoading)setTimeout(stLoad,0);return '<div cl
   const L=S.sf,T=S.SF.tabs,q=(S.sfq||'').trim().replace(/\s/g,'');
   const have=new Set(L.map(s=>s.tid));
   const cand=q?S.SF.teachers.filter(t=>!have.has(t.id)&&(t.name.replace(/\s/g,'').includes(q)||(t.acad||'').replace(/\s/g,'').includes(q))).slice(0,12):[];
-  return `<div class="panel"><div class="spread"><div><b>담당자 · 권한</b> <span class="hint">교사 회원 중에서 골라 메뉴마다 「편집 / 보기 / 없음」을 정해요 · 담당자는 관리자 화면에서 「담당 선생님」으로 이름 + 휴대전화로 들어와요</span></div>
+  return `<div class="panel"><div class="spread"><div><b>담당자 · 권한</b> <span class="hint">교사 회원 중에서 골라 메뉴마다 「편집 / 보기 / 없음」을 정해요 · 담당자는 관리자 화면 「담당 선생님」에서 회원관리 이메일 · 비밀번호로 들어와요</span></div>
     <div class="row" style="gap:6px"><span id="sfDirty" class="row" style="gap:6px">${sfPill()}</span><button class="btn small primary" type="button" data-sfsave="1">저장</button></div></div>
     <div class="row" style="gap:6px;margin-top:10px"><input type="search" id="sfq" placeholder="담당자 추가: 교사 이름이나 학원" value="${esc(S.sfq||'')}" style="min-width:240px;padding:6px 9px;border:1px solid var(--line);border-radius:6px;font:inherit;background:var(--surface);color:var(--ink)"></div>
     <div id="sfCand">${sfCandHTML()}</div></div>
@@ -1948,7 +1951,8 @@ document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)r
     const other=p.acads.filter(a=>(S.D.teams||[]).some(t=>t.no!==d.enssave&&(t.rep===a||(t.acads||[]).includes(a))));
     const go=()=>call('adminSaveEns',[d.enssave,p],r=>{setData(r);toast('앙상블 「'+p.group+'」 팀을 고쳤어요')});
     if(other.length)ask('다른 팀에도 들어 있는 학원이 있어요','<b>'+other.map(esc).join(', ')+'</b>은(는) 다른 팀에도 있어요. 그래도 저장할까요?',go,'그래도 저장');else go();return}
-  if(b.id==='doLogin'&&S.lmode==='stf'){const nm=val('lnm'),ph=val('lph');busy(true,'확인하고 있어요…');
+  if(b.id==='lalt'){S.lalt=!S.lalt;render();return}
+  if(b.id==='doLogin'&&S.lmode==='stf'){const nm=S.lalt?val('lnm'):val('lem'),ph=S.lalt?val('lph'):document.getElementById('lpw2').value;busy(true,'확인하고 있어요…');
     google.script.run.withSuccessHandler(r=>{busy(false);if(!r.ok){document.getElementById('lerr').textContent=r.msg;return}S.tok=r.token;try{sessionStorage.setItem('campAdmTok',r.token);sessionStorage.removeItem('campAdmId')}catch(x){}setData(r)}).withFailureHandler(x=>{busy(false);document.getElementById('lerr').textContent=(x&&x.message)||String(x)}).staffLogin(nm,ph);return}
   if(b.id==='doLogin'){const id=val('lid'),pw=document.getElementById('lpw').value;busy(true,'확인하고 있어요…');
     google.script.run.withSuccessHandler(r=>{busy(false);if(!r.ok){document.getElementById('lerr').textContent=r.msg;return}S.tok=r.token;try{sessionStorage.setItem('campAdmTok',r.token);sessionStorage.setItem('campAdmId',id)}catch(x){}document.getElementById('who').textContent='관리자 '+id;setData(r)}).withFailureHandler(x=>{busy(false);document.getElementById('lerr').textContent=(x&&x.message)||String(x)}).adminLogin(id,pw);return}

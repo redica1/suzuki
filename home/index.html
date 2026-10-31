@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>스즈키 협회 시스템</title>
+<!--
+  스즈키 시스템 홈 (2026-10-31) — 회원관리 · 캠프 · 교사연수 · 졸업연주로 가는 첫 화면
+  · https://redica1.github.io/suzuki/home/        → 메인
+  · https://redica1.github.io/suzuki/home/?test   → 테스트(STG): 모든 링크 뒤에 ?test 가 붙음
+  · 로그인은 모두 회원관리(선생님 회원)의 이메일 · 비밀번호 하나로 (캠프 · 캠프 담당자 화면도 같은 계정)
+  · 이 페이지는 링크만 있음. 명단 · 접수 내용은 깃허브에 없음.
+-->
+<meta name="description" content="스즈키 협회 선생님 회원 · 캠프 접수 · 교사연수 · 졸업연주">
+<meta property="og:type" content="website">
+<meta property="og:title" content="스즈키 협회 시스템">
+<meta property="og:description" content="선생님 회원 · 캠프 접수 · 교사연수 · 졸업연주를 한곳에서">
+<meta property="og:url" content="https://redica1.github.io/suzuki/home/">
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  --bg:#f3f6f7; --surface:#ffffff; --line:#d5dee2; --ink:#16232b; --muted:#5b6b74;
+  --accent:#1f5c63; --accent-soft:#dcecee; --rosin:#b7791f; --rosin-soft:#fbf0dc;
+  --band:#16303a; --band-ink:#e8f1f3; --band-muted:#a9c0c7;
+  --display:"Gowun Batang","Nanum Myeongjo",serif;
+  --body:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f171b; --surface:#162228; --line:#2b3d45; --ink:#e6eef1; --muted:#a2b3ba;
+  --accent:#6fb8bd; --accent-soft:#1d3a3e; --rosin:#e2a94e; --rosin-soft:#3a2e18;
+  --band:#0b1418; --band-ink:#e6eef1; --band-muted:#8ea6ad; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f171b; --surface:#162228; --line:#2b3d45; --ink:#e6eef1; --muted:#a2b3ba;
+  --accent:#6fb8bd; --accent-soft:#1d3a3e; --rosin:#e2a94e; --rosin-soft:#3a2e18;
+  --band:#0b1418; --band-ink:#e6eef1; --band-muted:#8ea6ad; color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.6}
+header{background:var(--band);color:var(--band-ink);padding:36px 16px 30px}
+header .in,main{max-width:720px;margin:0 auto}
+header small{color:var(--band-muted);letter-spacing:.08em}
+header h1{font-family:var(--display);font-weight:700;font-size:28px;margin:4px 0 6px;line-height:1.3}
+header p{margin:0;color:var(--band-muted)}
+.test{display:inline-block;margin-top:10px;background:var(--rosin);color:#1a1205;border-radius:6px;padding:2px 10px;font-weight:700;font-size:13px}
+main{padding:22px 16px 48px}
+h2{font-family:var(--display);font-size:18px;margin:26px 0 10px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}
+a.card{display:grid;gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px;text-decoration:none;color:inherit;transition:border-color .15s,transform .15s}
+a.card:hover{border-color:var(--accent);transform:translateY(-1px)}
+a.card b{font-size:16px}
+a.card span{color:var(--muted);font-size:13px}
+a.card.main{border-left:4px solid var(--accent)}
+a.card.off{opacity:.55;pointer-events:none}
+.note{background:var(--accent-soft);border-radius:10px;padding:14px 16px;margin-top:18px}
+.note b{display:block;margin-bottom:2px}
+.pill{display:inline-block;font-size:11px;font-weight:700;border-radius:999px;padding:0 8px;background:var(--rosin-soft);color:var(--rosin);margin-left:4px;vertical-align:middle}
+footer{color:var(--muted);font-size:12px;text-align:center;padding:0 16px 32px}
+</style>
+</head>
+<body>
+<header><div class="in">
+  <small>SUZUKI · 한국 스즈키 협회</small>
+  <h1>스즈키 협회 시스템</h1>
+  <p>선생님 회원 계정 하나로 회원 정보 · 캠프 접수를 함께 써요.</p>
+  <span class="test" id="testTag" hidden>테스트(STG)</span>
+</div></header>
+<main>
+  <h2>선생님</h2>
+  <div class="grid">
+    <a class="card main" data-href="member/"><b>선생님 회원</b><span>가입 · 로그인 · 내 정보 · 우리 학원 · 학생 명단 · 회비 신고</span></a>
+    <a class="card main" data-href="camp/"><b>겨울 음악제(캠프) 접수</b><span>회원 이메일 · 비밀번호로 로그인 · 접수 · 입금 신고 · 내 접수</span></a>
+    <a class="card" data-href=""><b>교사연수 신청</b><span>연수 신청 · 입금 신고 · 출석</span></a>
+    <a class="card off"><b>졸업연주 신청 <span class="pill">준비 중</span></b><span>회원 명단으로 신청 (1월 대구)</span></a>
+  </div>
+  <div class="note"><b>로그인은 하나로</b>회원관리(선생님 회원)에서 만든 이메일 · 비밀번호로 캠프 접수에도 들어가요. 비밀번호를 잊으면 선생님 회원에서 바꿔 주세요. 이번 겨울 캠프는 회원 가입 전이어도 이름 · 휴대전화로 접수할 수 있어요.</div>
+  <h2>운영진</h2>
+  <div class="grid">
+    <a class="card" data-href="member/admin.html"><b>회원관리 관리자</b><span>학원 · 교사 · 학생 · 연회비 · 승인 · 행사에서 온 보고</span></a>
+    <a class="card" data-href="camp/admin.html"><b>캠프 관리자</b><span>총관리자 · 담당 선생님(회원 이메일로 로그인)</span></a>
+  </div>
+</main>
+<footer>명단과 접수 내용은 협회 구글 시트에만 있어요.</footer>
+<script>
+(function () {
+  var test = /[?&]test\b/i.test(location.search), base = location.pathname.replace(/home\/(index\.html)?$/, '');
+  if (test) document.getElementById('testTag').hidden = false;
+  [].forEach.call(document.querySelectorAll('a[data-href]'), function (a) { a.href = base + a.getAttribute('data-href') + (test ? '?test' : ''); });
+})();
+</script>
+</body>
+</html>

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261028-233022 -->
+<!-- build: 20261031-201603 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -420,6 +420,9 @@ function vAskA(){var L=S.asks;if(!L)return '<div class="panel"><span><span class
         '<div class="row" style="align-items:flex-start;margin-top:6px"><textarea id="cm_'+esc(id)+'" rows="2" placeholder="댓글 (회원에게는 화면 · 이메일로 보여요)" style="flex:1;min-width:220px"></textarea><button class="btn small primary" type="button" data-bcm="'+esc(id)+'">댓글</button></div>'+
         '<div class="row" style="margin-top:6px"><span class="cap">상태</span>'+['접수','처리중','완료'].map(function(x){return '<button class="btn small '+(q['상태']===x?'primary':'')+'" type="button" data-bst="'+esc(id)+'|'+x+'">'+x+'</button>'}).join('')+(q['처리자']?'<span class="cap">'+esc(q['처리자'])+(q['처리일']?' · 완료 '+esc(q['처리일']):'')+'</span>':'')+'</div></div>'}).join(''):'<div class="panel"><p class="cap">문의가 없어요.</p></div>')}
 function loadProg(){S.prog=null;callS('inputStatus').then(function(r){if(r.ok){S.prog=r;if(S.tab==='prog')render()}else toast(r.msg)})}
+function vInbox(X){if(!X)return '';var n=X.need.length;
+  return '<div class="panel" style="margin-bottom:12px"><div class="spread"><div><b>행사에서 온 보고</b> <span class="cap">캠프가 보낸 참가 · 연회비를 5분마다 「참가이력」 · 「연회비」로 옮겨요 · 옮김 '+X.done+'줄'+(X.wait?' · 기다리는 줄 '+X.wait:'')+(X.last?' · 마지막 보고 '+esc(String(X.last).slice(0,16)):'')+'</span></div>'+(n?'<span class="pill bad">확인 필요 '+n+'</span>':'<span class="pill ok">확인할 것 없음</span>')+'</div>'+
+    (n?'<div class="tbl" style="margin-top:8px"><table><thead><tr><th>보낸 때</th><th>보낸 곳</th><th>종류</th><th>대상</th><th>이름</th><th>내용</th><th></th></tr></thead><tbody>'+X.need.map(function(x){return '<tr><td class="num cap">'+esc(String(x.at).slice(0,16))+'</td><td>'+esc(x.from)+'</td><td>'+esc(x.kind)+'</td><td class="num">'+esc(x.t)+' '+esc(x.id)+'</td><td><b>'+esc(x.name)+'</b></td><td>'+esc(x.memo)+'</td><td><button class="btn small ghost" type="button" data-ibx="'+esc(x.rid)+'">확인했어요</button></td></tr>'}).join('')+'</tbody></table></div><p class="cap">연회비 표를 고친 뒤 「확인했어요」를 눌러 주세요. 회비가 겹쳤으면 어느 쪽을 돌려줄지 정해 주세요.</p>':'')+'</div>'}
 function vProg(){var R=S.prog;if(!R)return '<div class="panel"><span><span class="spin"></span> 불러오는 중…</span></div>';
   var f=S.f.pg||'전체',L=R.list.filter(function(a){return f==='전체'||(f==='미가입'?!a.headAcc:f==='원장 없음'?!a.head:f==='빈칸 있음'?(a.noSex||a.noTutor||a.noStart):f==='서류 부족'?a.docs<3:f==='신고 대기'?a.pend:true)});
   var q=(S.q||'').replace(/\s/g,'');if(q)L=L.filter(function(a){return String(a.name+a.headName).replace(/\s/g,'').indexOf(q)>=0});
@@ -429,6 +432,7 @@ function vProg(){var R=S.prog;if(!R)return '<div class="panel"><span><span class
   return '<div class="sec-h"><div><h2>원장 입력 현황</h2><p>11월 한 달 동안 원장님이 채울 것을 학원마다 보여 줘요. 빈칸은 <b>재원 학생</b> 기준이에요. 재원 시작은 년·월·일까지 있어야 채운 것으로 봐요.</p></div>'+
     '<div class="row"><button class="btn small ghost" type="button" id="progRe">새로 고침</button><button class="btn small" type="button" id="rosterGo">행사용 명단 지금 만들기</button></div></div>'+
     (S.roster?'<div class="note info">행사용 명단을 만들었어요 · '+esc(S.roster.at)+' · 학원 '+S.roster.acad+' · 교사 '+S.roster.tch+' · 학생 '+S.roster.stu+' · <a href="'+esc(S.roster.url)+'" target="_blank" rel="noopener">파일 열기</a> (바뀐 게 있으면 5분 안에 자동으로도 새로 써요)</div>':'')+
+    vInbox(R.inbox)+
     '<div class="tiles"><div class="tile"><span class="k">원장 가입</span><span class="v">'+R.list.filter(function(a){return a.headAcc}).length+'</span><span class="s">학원 '+R.list.length+'곳 중</span></div>'+
     '<div class="tile warn"><span class="k">성별 빈칸</span><span class="v">'+tot('noSex')+'</span><span class="s">재원 '+tot('stu')+'명 중</span></div>'+
     '<div class="tile warn"><span class="k">담당 빈칸</span><span class="v">'+tot('noTutor')+'</span></div>'+
@@ -629,6 +633,7 @@ document.addEventListener('click',function(e){
   if(d.ps){S.f.ps=d.ps;render();return}
   if(d.pg){S.f.pg=d.pg;render();return}
   if(b.id==='progRe'){loadProg();render();return}
+  if(d.ibx){b.disabled=true;callS('inboxDone',d.ibx).then(function(r){b.disabled=false;if(!r.ok){toast(r.msg);return}S.prog=r;render();toast('확인했어요')});return}
   if(b.id==='rosterGo'){b.disabled=true;callS('rosterNow').then(function(r){b.disabled=false;if(!r.ok){toast(r.msg);return}S.roster=r;render();toast('행사용 명단을 만들었어요')});return}
   if(b.id==='payRe'){loadPay();render();return}
   if(d.pok||d.pno){var k=+(d.pok||d.pno),x=S.pays[k];if(!x)return;var gv=function(id){var e=document.getElementById(id);return e?e.value.trim():''};

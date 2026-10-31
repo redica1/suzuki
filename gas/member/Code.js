@@ -1,4 +1,4 @@
-/* build: 20261028-233022 */
+/* build: 20261031-201603 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -67,6 +67,7 @@ const HEAD = {
   '학원서류': ['서류ID', '학원ID', '종류', '파일ID', '파일명', '형식', '크기', '올린날', '올린사람'],   // 학원 서류 (10-28): 파일은 관리자 전용 드라이브 폴더, 여기는 목록만   // 회원 사진 (10-28): 줄인 JPEG 를 data URL 로 (한 칸 5만 자 안)
   '근무이력': ['이력ID', '근무ID', '교사ID', '학원ID', '상태', '날짜', '메모', '수정일', '수정자'],
   '근무': ['근무ID', '교사ID', '학원ID', '학원명', '시작', '종료', '주근무', '출처', '메모', '수정일', '수정자', '상태', '상태일'],   // 소속 학원 이력 (10-28): 한 줄 = 한 소속 학원, 종료가 비면 지금 근무 중
+  '행사보고': ['보고ID', '보낸때', '보낸곳', '종류', '대상', 'ID', '이름', '값', '처리', '처리일', '처리메모'],   // 행사 앱(캠프 등)이 보내는 줄 (10-31): 5분마다 참가이력 · 연회비로 옮김
   '계정': ['이메일', '교사ID', '비번해시', '솔트', '상태', '경로', '만든날', '처리일', '마지막로그인', '메모'],
   '요청': ['요청ID', '종류', '교사ID', '이름', '휴대전화', '이메일', '내용', '상태', '신청일', '처리일', '처리자', '메모'],
   '정산': ['교사ID', '은행', '계좌번호', '예금주', '우편번호', '주소', '상세주소', '수정일', '이메일', '집우편번호', '집주소', '집상세주소', '주민번호암호', '주민번호표시', '주민번호동의일'],   // 우편번호·주소·상세주소 = 우편물 받을 주소
@@ -104,7 +105,7 @@ function include(n) { return HtmlService.createHtmlOutputFromFile(n).getContent(
 
 function api(name, args) {
   const open = { login, hello, tHello, tLookup, tStart, tResend, tVerify, tCreate, tLogin, tForgot, tReset, tMe, tSavePay, tSavePart, tSaveInfo, tSavePhoto, tAcad, tSaveAcad, tDocUp, tDocGet, tSaveStu, tSaveStus, tStuDetail, tStuSave, tStuTutor, tStuTutorDel, tStuState, tStuStateDel, tMyStu, tMyStuDetail, tMyStuPay, tTchSaves, tTchEnd, tTchEvent, tTchAssign, tTchStart, tSaveRrn, tAddWork, tEndWork, tMainWork, tLogout, bPost, bMine, bReply };
-  const fns = { boot, saveRow, setCheck, logs, importRoster, saveDues, delDues, reqs, reqDo, delAcad, payView, bulkSet, saveWorks, importPastDues, bList, bSet, bComment, photoGet, photoDel, fillRegions, saveRates, docList, docUp, docGet, docDel, payList, payOk, payNo, memView, rosterNow, inputStatus };
+  const fns = { boot, saveRow, setCheck, logs, importRoster, saveDues, delDues, reqs, reqDo, delAcad, payView, bulkSet, saveWorks, importPastDues, bList, bSet, bComment, photoGet, photoDel, fillRegions, saveRates, docList, docUp, docGet, docDel, payList, payOk, payNo, memView, rosterNow, inputStatus, inboxDone };
   try {
     if (open[name]) return Object.assign({ ok: true }, open[name].apply(null, args || []));
     if (!fns[name]) throw new UserError('알 수 없는 요청이에요.');
@@ -316,6 +317,7 @@ const ROSTER_HEAD = {
 function rosterHourly() { try { rosterBuild_(); } catch (e) { Logger.log(e.message); } }
 /** 5분마다: 바뀐 게 있으면 행사용 명단을 새로 씀 (캠프 접수 중 원장이 고친 내용이 5분 안에 반영) */
 function rosterTick() {
+  try { inboxRun_(); } catch (e) { Logger.log('행사보고: ' + e.message); }
   const P = PropertiesService.getScriptProperties(), d = P.getProperty('rosterDirty'); if (!d) return;
   const lock = LockService.getScriptLock(); if (!lock.tryLock(1000)) return;
   try { P.deleteProperty('rosterDirty'); rosterBuild_(); } catch (e) { P.setProperty('rosterDirty', d); Logger.log(e.message); } finally { lock.releaseLock(); }
@@ -354,6 +356,62 @@ function rosterBuild_() {
   const s1 = f.getSheetByName('시트1') || f.getSheetByName('Sheet1'); if (s1 && f.getSheets().length > 1) f.deleteSheet(s1);
   return { at: stamp, acad: rows['학원'].length, tch: rows['교사'].length, stu: rows['학생'].length, id: f.getId(), url: f.getUrl() };
 }
+/* ====================== 행사보고 → 참가이력 · 연회비 (10-31) ======================
+   캠프 같은 행사 앱은 회원관리 표를 직접 고치지 않고 「행사보고」 탭에 줄만 보냄. 여기서 5분마다(rosterTick) 읽어 옮기고 「처리」를 적음.
+   - 참가: 참가이력(대상 · ID · 행사 한 줄)을 만들거나 고침. 상태 = 참가 · 취소 요청 · 취소 · 빠짐
+   - 회비: 행사에서 받은 연회비(그 행사 운영진이 입금 확인) → 올해 연회비 줄을 「확인」 · 방식 「캠프」로. 이미 다른 길로 확인된 회비가 있거나
+     원장 입금 신고가 확인 대기면 고치지 않고 「확인 필요」로 남김(겹친 입금을 관리자가 봄). 취소가 오면 그 행사가 넣은 줄만 되돌림. */
+function inboxRun_() {
+  const I = tbl_('행사보고'), c = col_(I), todo = [];
+  I.v.forEach((r, i) => { if (!r[c['처리']] && r[c['보고ID']]) todo.push(i); });
+  if (!todo.length) return 0;
+  const lock = LockService.getScriptLock(); if (!lock.tryLock(20000)) return 0;
+  try {
+    const X = { T: tbl_('교사'), S: tbl_('학생'), H: tbl_('참가이력'), D: tbl_('연회비') }, t0 = Date.now(), at = now_();   /* 표는 한 번만 읽고 돌려 씀 */
+    todo.slice(0, 500).forEach(i => { if (Date.now() - t0 > 240000) return; let res; try { res = inboxOne_(I.v[i], c, X); } catch (e) { res = ['확인 필요', (e && e.message) || String(e)]; }
+      I.v[i][c['처리']] = res[0]; I.v[i][c['처리일']] = at; I.v[i][c['처리메모']] = String(res[1] || '').slice(0, 300); });
+    const c0 = c['처리'];   /* 처리 · 처리일 · 처리메모 세 칸을 한 번에 씀 */
+    I.sh.getRange(2, c0 + 1, I.v.length, 3).setNumberFormat('@').setValues(I.v.map(r => [r[c0], r[c0 + 1], r[c0 + 2]]));
+  } finally { lock.releaseLock(); }
+  return todo.length;
+}
+function inboxOne_(r, c, X) {
+  const kind = r[c['종류']], t = r[c['대상']], id = String(r[c['ID']] || ''), from = String(r[c['보낸곳']] || '행사');
+  let v; try { v = JSON.parse(r[c['값']] || '{}'); } catch (e) { return ['확인 필요', '값을 읽지 못했어요']; }
+  const T = t === '학생' ? X.S : X.T; if (T.find(t === '학생' ? '학생ID' : '교사ID', id) < 0) return ['확인 필요', '회원관리 명단에 없는 번호예요: ' + id];
+  if (kind === '참가') {
+    const H = X.H, hc = col_(H), j = H.v.findIndex(x => x[hc['대상']] === t && String(x[hc['ID']]) === id && x[hc['행사']] === v.행사);
+    const o = { '대상': t, 'ID': id, '행사': v.행사 || '', '년도': v.년도 || '', '기간': v.기간 || '', '역할': v.역할 || '', '상태': v.상태 || '', '메모': v.메모 || '', '수정일': now_(), '수정자': from };
+    if (j >= 0) H.set(j, o); else H.append(Object.assign({ '이력ID': rid_('H') }, o));
+    return ['완료', '참가이력 ' + (v.상태 || '')];
+  }
+  if (kind !== '회비') return ['확인 필요', '알 수 없는 종류: ' + kind];
+  const D = X.D, dc = col_(D), j = D.v.findIndex(x => x[dc['대상']] === t && String(x[dc['ID']]) === id && String(x[dc['년도']]) === CUR_Y);
+  const old = j >= 0 ? D.v[j] : null, tag = from + ' ' + (v.참가자ID || v.접수번호 || ''), mine = !!old && String(old[dc['메모']] || '').indexOf(tag) >= 0;
+  if (v.취소) {
+    if (!mine || old[dc['방식']] !== '캠프') return ['확인 필요', from + '에서 회비 입금 확인을 지웠어요. ' + CUR_Y + ' 연회비 줄을 확인해 주세요.'];
+    D.set(j, { '납부': '', '납부일': '', '방식': '', '확인': '', '확인일': '', '확인자': '', '메모': (tag + ' 입금 확인 취소 · ' + String(old[dc['메모']] || '')).slice(0, 200), '수정일': now_(), '수정자': from });
+    log_(from, '연회비', id, '행사 회비 취소', CUR_Y);
+    return ['완료', '연회비 되돌림'];
+  }
+  if (old && !mine && old[dc['확인']] === '신고') return ['확인 필요', '원장 입금 신고(' + old[dc['납부']] + '원 ' + old[dc['납부일']] + ')가 확인 대기인데 ' + from + '에서도 ' + v.금액 + '원을 받았어요. 겹친 입금인지 확인해 주세요.'];
+  if (old && !mine && +old[dc['납부']] > 0 && old[dc['확인']] !== '반려') return ['확인 필요', '이미 납부된 ' + CUR_Y + ' 회비(' + old[dc['납부']] + '원 ' + old[dc['납부일']] + ')가 있는데 ' + from + '에서도 ' + v.금액 + '원을 받았어요. 겹친 금액을 확인해 주세요.'];
+  const o = { '납부': +v.금액 || 0, '납부일': v.입금일 || Utilities.formatDate(new Date(), 'Asia/Seoul', 'yyyy-MM-dd'), '방식': '캠프', '확인': '확인', '확인일': now_(), '확인자': from + ' 운영진',
+    '메모': [tag + ' 입금 확인', old && !mine ? String(old[dc['메모']] || '') : ''].filter(Boolean).join(' · ').slice(0, 200), '수정일': now_(), '수정자': from };
+  if (j >= 0) D.set(j, o); else D.append(Object.assign({ '대상': t, 'ID': id, '년도': CUR_Y, '부과': '' }, o));
+  log_(from, '연회비', id, '행사 회비 확인', CUR_Y + ' ' + o.납부 + '원 ' + o.납부일);
+  return ['완료', '연회비 ' + o.납부 + '원 확인'];
+}
+function inboxDone(who, rid) {
+  const I = tbl_('행사보고'), i = I.find('보고ID', rid); if (i < 0) fail('그 줄을 찾지 못했어요.');
+  I.set(i, { '처리': '확인함', '처리일': now_(), '처리메모': (String(I.get(i, '처리메모') || '') + ' · ' + who.name + ' 확인').slice(0, 300) });
+  log_(who.name, '행사보고', rid, '확인함', ''); return inputStatus(who);
+}
+function inboxView_() {
+  const I = tbl_('행사보고'), c = col_(I), need = [], cnt = { 완료: 0, wait: 0 };
+  I.v.forEach(r => { const st = r[c['처리']]; if (st === '확인 필요') need.push({ rid: r[c['보고ID']], at: r[c['보낸때']], from: r[c['보낸곳']], kind: r[c['종류']], t: r[c['대상']], id: r[c['ID']], name: r[c['이름']], memo: r[c['처리메모']] }); else if (!st) cnt.wait++; else cnt.완료++; });
+  return { need: need.reverse().slice(0, 100), done: cnt.완료, wait: cnt.wait, last: I.v.length ? I.v[I.v.length - 1][c['보낸때']] : '' };
+}
 /* ====================== 원장 입력 현황 (관리자) ====================== */
 function inputStatus(who) {
   const A = tbl_('학원'), ac = col_(A), S2 = tbl_('학생'), sc = col_(S2), acc = {}; acctAll_().forEach(a => { if (a.tid && a.state === '사용') acc[a.tid] = 1; });
@@ -366,7 +424,8 @@ function inputStatus(who) {
     if (String(r[sc['수정자']] || '').indexOf('(원장)') >= 0 && String(r[sc['수정일']] || '') > o.edit) o.edit = String(r[sc['수정일']]); });
   const list = A.v.filter(r => r[ac['상태']] !== '탈퇴').map(r => { const id = r[ac['학원ID']], o = by[id] || { n: 0, sex: 0, tutor: 0, start: 0, pend: 0, edit: '' }, dd = docs[id] || {}, head = r[ac['원장교사ID']] || '';
     return { id, name: r[ac['학원명']], kind: r[ac['구분']], head, headName: r[ac['원장명']], headAcc: !!acc[head], acadEdit: String(r[ac['수정자']] || '').indexOf('(원장)') >= 0 ? String(r[ac['수정일']] || '') : '', docs: ['사업자등록증', '교육청인가증', '임대'].filter(k => dd[k]).length, contract: !!r[ac['계약체결일']], tch: tch[id] || 0, stu: o.n, noSex: o.sex, noTutor: o.tutor, noStart: o.start, pend: o.pend, stuEdit: o.edit }; });
-  return { list, at: now_() };
+  let inbox = null; try { inbox = inboxView_(); } catch (e) { }
+  return { list, at: now_(), inbox };
 }
 function ensure_(ss, name) {
   let sh = ss.getSheetByName(name); if (!sh) sh = ss.insertSheet(name);

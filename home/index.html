@@ -19,15 +19,17 @@
 <meta name="robots" content="noindex">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+<!-- 본문: Pretendard (CDN) · 머리 제목(H1)만: Hahmlet (구글 웹폰트, 명조) -->
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hahmlet:wght@600;700&display=swap">
 <style>
 :root{
   --bg:#fffaf3; --surface:#ffffff; --line:#f0e2cf; --ink:#2b2233; --muted:#7a6c80;
   --accent:#e2557a; --accent-soft:#fde7ee; --rosin:#f59e0b; --rosin-soft:#fff3d6;
   --band:linear-gradient(120deg,#ff8a7a 0%,#ffb86b 50%,#ffd86b 100%); --band-ink:#3a1f2b; --band-muted:#6b4250;
   --link:#ffffffcc;
-  --display:"Gowun Batang","Nanum Myeongjo",serif;
-  --body:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+  --display:"Hahmlet","Nanum Myeongjo",serif;
+  --body:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --bg:#1a1420; --surface:#241c2b; --line:#3a2e44; --ink:#f4ecf6; --muted:#b9a8c0;
@@ -48,11 +50,11 @@ header{background:var(--band);color:var(--band-ink);padding:14px 16px 16px}
 .stg a:hover{text-decoration-thickness:2px}
 header .in,main{max-width:720px;margin:0 auto}
 header small{color:var(--band-muted);letter-spacing:.08em}
-header h1{font-family:var(--display);font-weight:700;font-size:22px;margin:6px 0 2px;line-height:1.3}
+header h1{font-family:var(--display);font-weight:700;font-size:30px;margin:6px 0 2px;line-height:1.25;letter-spacing:-.01em}
 header p{margin:0;color:var(--band-muted);font-size:13.5px}
 .test{display:inline-block;margin-left:6px;font-family:var(--body);background:#fff;color:var(--accent);border-radius:6px;padding:0 8px;font-weight:700;font-size:12px;vertical-align:middle}
-main{padding:22px 16px 48px}
-h2{font-family:var(--display);font-size:18px;margin:26px 0 10px}
+main{padding:22px 16px 48px;box-sizing:content-box}
+h2{font-size:19px;font-weight:700;margin:26px 0 10px}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}
 a.card{display:grid;gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px;text-decoration:none;color:inherit;transition:border-color .15s,transform .15s}
 a.card:hover{border-color:var(--accent);transform:translateY(-1px)}

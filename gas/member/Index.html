@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261031-231937 -->
+<!-- build: 20261031-233034 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -231,7 +231,7 @@ function acadList(){var qq=q(),f=S.f,is=S.issue;
     if(is==='a_need'&&a['확인']!=='확인 필요')return false;
     if(is==='a_nophone'&&(a['상태']==='탈퇴'||a['교실대표번호']))return false;
     if(qq&&!((a['학원명']+' '+a['원장명']+' '+a['주소']+' '+a['교실대표번호']).indexOf(qq)>=0))return false;
-    if(f.st&&a['상태']!==f.st)return false; if(f.ck&&a['확인']!==f.ck)return false; if(f.sd&&a['시도']!==f.sd)return false; if(f.rg&&(f.rg==='-'?a['졸업연주지역']:a['졸업연주지역']!==f.rg))return false; return true})}
+    if(!f.st&&a['상태']&&a['상태']!=='운영')return false; if(f.st&&f.st!=='*'&&a['상태']!==f.st)return false; if(f.ck&&a['확인']!==f.ck)return false; if(f.sd&&a['시도']!==f.sd)return false; if(f.rg&&(f.rg==='-'?a['졸업연주지역']:a['졸업연주지역']!==f.rg))return false; return true})}
 function vAcads(){
   var list=acadList(),per=50,page=list.slice(S.page*per,(S.page+1)*per);
   var tc={},sc={};S.D.tch.forEach(function(t){tAcads(t).forEach(function(id){tc[id]=(tc[id]||0)+1})});S.D.stu.forEach(function(s){if(s['상태']==='재원')sc[s['학원ID']]=(sc[s['학원ID']]||0)+1});
@@ -239,7 +239,7 @@ function vAcads(){
   return '<div class="sec-h"><div><h2>학원정보</h2><p>학원은 관리자가 만들고, 원장으로 지정된 선생님은 자기 학원 연락처 · 주소 · 교습과목을 고칠 수 있어요(고치면 「확인 필요」).</p></div><button class="btn primary" type="button" data-new="acad">+ 학원 추가</button></div>'+
   (S.edit&&S.edit.kind==='acad'?acadEditor():'')+issueBar()+
   '<div class="panel"><div class="filters"><input type="search" id="q" value="'+esc(S.q)+'" placeholder="학원명·원장·주소·번호" style="width:min(240px,100%)">'+
-    sel('fst',[['','상태 전체'],'운영','휴원','탈퇴'],S.f.st,'상태')+sel('fck',[['','확인 전체']].concat(CHECKS),S.f.ck,'확인')+sel('fsd',[['','시·도 전체']].concat(sds.sort()),S.f.sd,'시도')+sel('frg',[['','졸업연주 지역 전체']].concat(REGIONS).concat([['-','미정']]),S.f.rg,'졸업연주 지역')+'<button class="btn small" type="button" id="fillRg">빈 졸업연주 지역을 시·도로 채우기</button></div>'+bulkBar()+
+    sel('fst',[['','운영 중만'],['*','상태 전체'],'운영','휴원','탈퇴'],S.f.st,'상태')+sel('fck',[['','확인 전체']].concat(CHECKS),S.f.ck,'확인')+sel('fsd',[['','시·도 전체']].concat(sds.sort()),S.f.sd,'시도')+sel('frg',[['','졸업연주 지역 전체']].concat(REGIONS).concat([['-','미정']]),S.f.rg,'졸업연주 지역')+'<button class="btn small" type="button" id="fillRg">빈 졸업연주 지역을 시·도로 채우기</button></div>'+bulkBar()+
   '<div class="tbl"><table><thead><tr><th class="ck"><input type="checkbox" id="ckAll" aria-label="이 쪽 모두 선택"></th><th>번호</th><th>학원명</th><th>구분</th><th>지역</th><th>졸업연주</th><th>원장</th><th>교실 대표번호</th><th class="r">교사</th><th class="r">학생</th><th>계약</th><th>상태</th><th>확인</th><th>확인 메모</th></tr></thead><tbody>'+
   page.map(function(a){var id=a['학원ID'];return '<tr class="click '+(S.edit&&S.edit.id===id?'on':'')+'" data-edit="acad|'+id+'"><td class="ck"><input type="checkbox" data-ck="'+id+'" '+(S.sel[id]?'checked':'')+' aria-label="선택"></td><td class="num cap">'+id+'</td><td><b>'+esc(a['학원명'])+'</b></td><td>'+esc(a['구분'])+'</td><td>'+esc(a['시도'])+' '+esc(a['시군구'])+'</td><td>'+(a['졸업연주지역']?'<span class="cap">'+esc(a['졸업연주지역'])+'</span>':'<span class="pill due">미정</span>')+'</td><td>'+(a['원장교사ID']?esc(T[a['원장교사ID']]?T[a['원장교사ID']]['이름']:a['원장명'])+(a['공동원장ID']&&T[a['공동원장ID']]?' · '+esc(T[a['공동원장ID']]['이름']):''):(a['원장명']?esc(a['원장명'])+' <span class="pill due">연결 안 됨</span>':'-'))+'</td><td class="num">'+fmt(a['교실대표번호'])+'</td><td class="r num">'+(tc[id]||0)+'</td><td class="r num">'+(sc[id]||0)+'</td><td>'+(a['계약체결일']?'<span class="pill ok num">'+esc(a['계약체결일'])+'</span>':'<span class="pill mute">미체결</span>')+'</td><td>'+(a['상태']==='운영'?'<span class="pill ok">운영</span>':'<span class="pill mute">'+esc(a['상태'])+'</span>')+'</td><td>'+ckPill(a['확인'])+'</td><td class="cap">'+esc(a['확인메모'])+'</td></tr>'}).join('')+
   '</tbody></table></div>'+pager(list.length,per)+'</div>'}

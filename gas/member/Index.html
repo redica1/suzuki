@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261101-004746 -->
+<!-- build: 20261101-004936 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -342,12 +342,14 @@ function vExt(){var qq=q(),fr=S.f.xr||'',acc=S.D.acc||{};
   '</tbody></table></div></div>'}
 function tileH(k,v,sub,w){return '<div class="tile'+(w?' warn':'')+'"><span class="k">'+k+'</span><span class="v">'+(+v).toLocaleString()+'</span>'+(sub?'<span class="s">'+sub+'</span>':'')+'</div>'}
 function pct(a,b){return b?Math.round(a*100/b)+'%':''}
-function tchTiles(list){var n=list.length,all=S.D.tch.filter(function(t){return t['회원구분']!=='외부인'}).length,c=function(f){return list.filter(f).length},by={};
-  list.forEach(function(t){var k=t['전공']||'-';by[k]=(by[k]||0)+1});
-  var paid=c(function(t){if(t['회비구분']==='면제')return true;var d=duesOf('교사',t['교사ID'],'2026');return d&&+d['납부']>=+d['부과']&&+d['부과']>0});
-  return '<div class="tiles" style="margin:0 0 10px">'+tileH('선생님',n,n===all?'전체':'지금 고른 조건 · 전체 '+all+'명')+tileH('원장',c(function(t){return t['직급']==='원장'}))+tileH('강사',c(function(t){return t['직급']==='강사'}))+
-    T_INSTS.filter(function(k){return by[k]}).map(function(k){return tileH(k,by[k],pct(by[k],n))}).join('')+(by['-']?tileH('전공 없음',by['-'],'',1):'')+
-    tileH('협회 계약',c(function(t){return t['계약체결']==='예'}),pct(c(function(t){return t['계약체결']==='예'}),n))+tileH('계정 있음',c(function(t){return S.D.acc[t['교사ID']]==='사용'}),pct(c(function(t){return S.D.acc[t['교사ID']]==='사용'}),n))+tileH('2026 회비 완료',paid,'면제 포함 · '+pct(paid,n))+'</div>'}
+function tchTiles(list){var n=list.length,all=S.D.tch.filter(function(t){return t['회원구분']!=='외부인'}).length,c=function(f){return list.filter(f).length},by={},none=0;
+  list.forEach(function(t){var k=t['전공']||'';if(INSTS.indexOf(k)<0)none++;else by[k]=(by[k]||0)+1});
+  var due=0,paid=0,done=0,un=0,free=0;list.forEach(function(t){if(t['회비구분']==='면제'){free++;return}var d=duesOf('교사',t['교사ID'],'2026'),a=d?+d['부과']||0:0,b=d?+d['납부']||0:0;due+=a;paid+=b;if(b&&b>=a)done++;else un++});
+  var w=INSTS.length+1,blank=function(k){return new Array(k+1).join('<div class="tile blank"></div>')};
+  return '<div class="tiles igrid" style="grid-template-columns:repeat('+w+',minmax(128px,1fr))">'+
+    tileH('<b>선생님</b>',n,n===all?'관계자 빼고 전체':'지금 고른 조건 · 전체 '+all+'명')+tileH('원장',c(function(t){return t['직급']==='원장'}))+tileH('강사',c(function(t){return t['직급']==='강사'}))+tileH('소속 없음',c(function(t){return !tAcads(t).length}),'학원 · 클래스에 소속되지 않은 선생님')+blank(w-4)+
+    INSTS.map(function(k){return tileH(k,by[k]||0,pct(by[k]||0,n))}).join('')+tileH('전공 없음',none,none?'교사정보에서 채워 주세요':'',none>0)+
+    tileH('총회비',due,'2026 부과 합계 (원) · 면제 '+free+'명 빼고')+tileH('납부회비',paid,'2026 납부 합계 (원) · '+pct(paid,due))+tileH('납부 완료',done,'명 · 면제 빼고')+tileH('미납',un,'명 · 일부 납부 포함',un>0)+blank(w-4)+'</div>'}
 function stuTiles(list){var all=S.D.stu.length,cur=list.filter(function(x){return x['상태']==='재원'}),n=cur.length,by={},sx={남:0,여:0,'':0};
   cur.forEach(function(x){var k=INSTS.indexOf(x['전공'])>=0?x['전공']:'-';by[k]=(by[k]||0)+1;sx[x['성별']==='남'||x['성별']==='여'?x['성별']:'']++});
   var paid=cur.filter(function(x){var d=duesOf('학생',x['학생ID'],'2026');return d&&+d['납부']>0}).length;

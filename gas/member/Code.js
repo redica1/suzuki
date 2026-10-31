@@ -1,4 +1,4 @@
-/* build: 20261101-021227 */
+/* build: 20261101-021606 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -105,7 +105,7 @@ function include(n) { return HtmlService.createHtmlOutputFromFile(n).getContent(
 
 function api(name, args) {
   const open = { login, hello, tHello, tEvents, tLookup, tStart, tResend, tVerify, tCreate, tLogin, tForgot, tReset, tMe, tSavePay, tSavePart, tSaveInfo, tSavePhoto, tAcad, tSaveAcad, tDocUp, tDocGet, tSaveStu, tSaveStus, tStuDetail, tStuSave, tStuTutor, tStuTutorDel, tStuState, tStuStateDel, tMyStu, tMyStuDetail, tMyStuPay, tTchSaves, tTchEnd, tTchEvent, tTchAssign, tTchStart, tSaveRrn, tAddWork, tClassCreate, tEndWork, tMainWork, tLogout, bPost, bMine, bReply };
-  const fns = { boot, saveRow, setCheck, logs, importRoster, saveDues, delDues, reqs, reqDo, delAcad, payView, bulkSet, saveWorks, importPastDues, bList, bSet, bComment, photoGet, photoDel, fillRegions, saveRates, docList, docUp, docGet, docDel, payList, payOk, payOkMany, payNo, memView, rosterNow, inputStatus, inboxDone, acctReset, classFromStudents, delStus, asTeacher, bankImport, bankList, bankSet, bankDues, bankFromSheet, bankMeta };
+  const fns = { boot, saveRow, setCheck, logs, importRoster, saveDues, delDues, reqs, reqDo, delAcad, payView, bulkSet, saveWorks, importPastDues, bList, bSet, bComment, photoGet, photoDel, fillRegions, saveRates, docList, docUp, docGet, docDel, payList, payOk, payOkMany, payNo, memView, rosterNow, inputStatus, inboxDone, acctReset, classFromStudents, delStus, asTeacher, bankImport, bankList, bankSet, bankDues, bankFromSheet, bankMeta, bankSplitSave };
   try {
     if (open[name]) return Object.assign({ ok: true }, open[name].apply(null, args || []));
     if (!fns[name]) throw new UserError('알 수 없는 요청이에요.');
@@ -1920,13 +1920,30 @@ function bankTbl_() { return bankSheet_('통장', BANK_HEAD); }
 /* 통장 목록 · 프로젝트 · 구분 (11-01). 프로젝트 = 회비 · 캠프 · 졸업연주 · 교사연수처럼 돈을 따로 셈하는 묶음: 기간 · 통장 · 쓰는 구분을 정함 */
 const BANK_ACCT_HEAD = ['통장ID', '이름', '은행', '계좌번호', '예금주', '메모', '사용', '수정일', '수정자'];
 const BANK_PROJ_HEAD = ['프로젝트ID', '이름', '시작일', '끝일', '통장ID', '구분', '메모', '사용', '수정일', '수정자'];
-const BANK_CAT_HEAD = ['구분', '입출', '대분류', '중분류', '순서', '사용'];   /* 구분 = 소분류 (거래 줄에서 고르는 것) */
+const BANK_CAT_HEAD = ['구분', '입출', '대분류', '중분류', '순서', '사용', '이름'];   /* 이름 = 화면에 보이는 소분류 (비면 구분). 예: 구분 「졸업연주 › 대전연주 › 참가비」 · 이름 「참가비」 */   /* 구분 = 소분류 (거래 줄에서 고르는 것) */
 const BANK_CAT_TREE = { '교사회비': ['수입', '회비'], '학생회비': ['수입', '회비'], '졸업연주': ['수입', '행사 수입'], '졸연티켓': ['수입', '행사 수입'], '캠프 참가비': ['수입', '행사 수입'], '캠프 가족방': ['수입', '행사 수입'], '교사연수': ['수입', '행사 수입'], '기타 입금': ['수입', '기타 수입'],
   '임대료': ['지출', '운영비'], '통신 · 공과금': ['지출', '운영비'], '카드대금': ['지출', '운영비'], '행사비': ['지출', '행사비'], '인쇄 · 제작': ['지출', '행사비'], '교통 · 출장': ['지출', '행사비'], '인건비 · 강사료': ['지출', '인건비'], '환불': ['지출', '환불'], '내부 이체': ['이체', '통장 사이 이체'], '기타 지출': ['지출', '기타 지출'] };
 function bankCatTbl_() { const t = k => BANK_CAT_TREE[k] || ['', '']; return bankSheet_('통장구분', BANK_CAT_HEAD, BANK_IN.map((k, i) => [k, '입금', t(k)[0], t(k)[1], i + 1, '사용']).concat(BANK_OUT.map((k, i) => [k, '출금', t(k)[0], t(k)[1], 100 + i + 1, '사용']))); }
 function bankCats_(C) { C = C || bankCatTbl_(); const L = C.objs().sort((a, b) => (+a['순서'] || 0) - (+b['순서'] || 0)), on = L.filter(o => o['사용'] !== '안씀');
   return { in: on.filter(o => o['입출'] === '입금').map(o => o['구분']), out: on.filter(o => o['입출'] === '출금').map(o => o['구분']), rows: L }; }
-function bankMetaAll_() { const A = bankSheet_('통장목록', BANK_ACCT_HEAD), P = bankSheet_('프로젝트', BANK_PROJ_HEAD), c = bankCats_(); return { accts: A.objs(), projs: P.objs(), cats: { in: c.in, out: c.out }, catRows: c.rows }; }
+/* 한 입금을 사람별로 나누기 (11-01): 예) 반석애플스즈키 300,000 = 학생 6명 × 50,000 */
+const BANK_SPLIT_HEAD = ['거래ID', '순번', '대상', 'ID', '이름', '금액', '메모', '수정일', '수정자'];
+function bankSplitSave(who, id, lines) {
+  lines = (lines || []).slice(0, 300); const lock = LockService.getScriptLock(); lock.waitLock(30000);
+  try {
+    const B = bankTbl_(), i = B.find(id); if (i < 0) fail('거래를 찾지 못했어요. 새로 고쳐 주세요.');
+    const P = bankSheet_('통장상세', BANK_SPLIT_HEAD), stamp = now_(), old = P.v.length;
+    const keep = P.v.filter(r => r[0] !== id), add = lines.map((x, n) => { const nm = String(x['이름'] || '').trim().slice(0, 40); if (!nm) fail((n + 1) + '번째 줄 이름이 비었어요.');
+      return BANK_SPLIT_HEAD.map(k => ({ '거래ID': id, '순번': n + 1, '대상': ['학생', '교사', '기타'].indexOf(x['대상']) >= 0 ? x['대상'] : '기타', 'ID': String(x['ID'] || ''), '이름': nm, '금액': num_(x['금액']) || '', '메모': String(x['메모'] || '').slice(0, 100), '수정일': stamp, '수정자': who.name })[k]).map(v => v == null ? '' : String(v)); });
+    const nv = keep.concat(add).map(r => { r = r.slice(0, P.h.length); while (r.length < P.h.length) r.push(''); return r; });
+    if (old) P.sh.getRange(2, 1, old, P.h.length).clearContent();
+    if (nv.length) P.sh.getRange(2, 1, nv.length, P.h.length).setNumberFormat('@').setValues(nv);
+    const sum = add.reduce((s, r) => s + (num_(r[5]) || 0), 0);
+    log_(who.name, '통장', id, '사람별 나누기', add.length + '명 · ' + sum + '원');
+    return Object.assign(bankList(who), { n: add.length, sum });
+  } finally { lock.releaseLock(); }
+}
+function bankMetaAll_() { const A = bankSheet_('통장목록', BANK_ACCT_HEAD), P = bankSheet_('프로젝트', BANK_PROJ_HEAD), c = bankCats_(); const D = bankSheet_('통장상세', BANK_SPLIT_HEAD); return { accts: A.objs(), projs: P.objs(), cats: { in: c.in, out: c.out }, catRows: c.rows, splits: D.objs() }; }
 /** 통장 · 프로젝트 · 구분 등록 · 고치기. kind: acct | proj | cat */
 function bankMeta(who, kind, o) {
   o = o || {}; const stamp = now_(), lock = LockService.getScriptLock(); lock.waitLock(30000);
@@ -1945,13 +1962,18 @@ function bankMeta(who, kind, o) {
       else { const pre = isA ? 'K' : 'P', n = M.v.reduce((m, r) => Math.max(m, +String(r[0]).slice(1) || 0), 0) + 1; id = pre + String(n).padStart(2, '0'); M.appendMany([Object.assign({ [key]: id }, row)]); }
       log_(who.name, isA ? '통장목록' : '프로젝트', id, i >= 0 ? '수정' : '추가', nm);
     } else if (kind === 'cat') {
-      const C = bankCatTbl_(), k = String(o['구분'] || '').trim().replace(/[,|]/g, ' ').slice(0, 20); if (!k) fail('구분 이름을 적어 주세요.');
-      const i = C.v.findIndex(r => r[0] === k);
+      const C = bankCatTbl_(), nm = String(o['구분'] || '').trim().replace(/[,|]/g, ' ').slice(0, 20); if (!nm) fail('구분 이름을 적어 주세요.');
+      let i = C.v.findIndex(r => r[0] === nm), k = nm;
       const big = String(o['대분류'] || '').trim().slice(0, 20), mid = String(o['중분류'] || '').trim().slice(0, 20);
       if (o.toggle) { if (i < 0) fail('그 구분이 없어요.'); C.set(i, { '사용': C.get(i, '사용') === '안씀' ? '사용' : '안씀' }); }
       else if (o.edit) { if (i < 0) fail('그 구분이 없어요.'); C.set(i, { '대분류': big, '중분류': mid }); }
-      else { if (i >= 0) fail('같은 구분이 이미 있어요.'); const io = o['입출'] === '출금' ? '출금' : '입금', base = io === '입금' ? 0 : 100, oc = C.c('순서'), mx = C.v.filter((r, j) => C.get(j, '입출') === io).reduce((m, r) => Math.max(m, +r[oc] || 0), base);
-        C.appendMany([{ '구분': k, '입출': io, '대분류': big || (io === '입금' ? '수입' : '지출'), '중분류': mid, '순서': mx + 1, '사용': '사용' }]); }
+      else {
+        const dn = j => C.get(j, '이름') || C.v[j][0];
+        if (C.v.some((r, j) => dn(j) === nm && (C.get(j, '대분류') || '') === big && (C.get(j, '중분류') || '') === mid)) fail('같은 분류에 같은 구분이 이미 있어요.');
+        if (i >= 0) k = [big, mid, nm].filter(Boolean).join(' › ');   /* 이름이 겹치면(참가비 등) 대분류 › 중분류 › 이름 으로 따로 둠 */
+        if (C.v.some(r => r[0] === k)) fail('같은 구분이 이미 있어요.');
+        const io = o['입출'] === '출금' ? '출금' : '입금', base = io === '입금' ? 0 : 100, oc = C.c('순서'), mx = C.v.filter((r, j) => C.get(j, '입출') === io).reduce((m, r) => Math.max(m, +r[oc] || 0), base);
+        C.appendMany([{ '구분': k, '이름': nm, '입출': io, '대분류': big || (io === '입금' ? '수입' : '지출'), '중분류': mid, '순서': mx + 1, '사용': '사용' }]); }
       log_(who.name, '통장구분', k, o.toggle ? '사용 바꿈' : '추가', k);
     } else fail('알 수 없는 요청이에요.');
     return bankList(who);

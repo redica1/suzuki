@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261101-013408 -->
+<!-- build: 20261101-014330 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -538,11 +538,12 @@ function vPay(){var L=S.pays;if(!L)return '<div class="panel"><span><span class=
   var row=function(x,i){var key=esc(x.sid)+'|'+esc(x.year);
     var act=x.st==='신고'?'<td><input type="date" id="pd_'+i+'" value="'+esc(x.date)+'" style="width:auto"> <input type="number" id="pa_'+i+'" value="'+esc(x.paid)+'" step="1000" min="0" style="width:110px"></td><td><button class="btn small primary" type="button" data-pok="'+i+'">입금 확인</button> <input type="text" id="pr_'+i+'" placeholder="반려 사유" style="width:120px"> <button class="btn small ghost" type="button" data-pno="'+i+'">반려</button></td>'
       :'<td class="num">'+esc(x.date||'-')+' · '+won(x.paid)+'</td><td><span class="pill '+(x.st==='확인'?'ok':'due')+'">'+esc(nm[x.st]||x.st)+'</span> <span class="cap">'+esc((x.okBy||'')+' '+String(x.okAt||'').slice(0,10))+'</span>'+(x.st==='반려'?' <span class="cap">'+esc(x.memo||'')+'</span>':'')+'</td>';
-    return '<tr><td class="num cap">'+esc(String(x.at).slice(0,16))+'</td><td>'+esc(x.acad||'-')+'</td><td><b>'+esc(x.name)+'</b> <span class="cap num">'+esc(x.sid)+'</span></td><td class="num">'+esc(x.year)+'</td><td class="r num">'+won(x.paid)+'</td><td class="num">'+esc(x.date||'-')+'</td>'+act+'</tr>'};
+    var memo=String(x.memo||'').split(' · ').filter(function(m){return /입금 신고\(.*\): /.test(m)}).map(function(m){return m.replace(/^.*?입금 신고\([^)]*\): /,'')}).pop()||'';
+    return '<tr>'+(st==='신고'?'<td class="ck"><input type="checkbox" data-pck="'+key+'" '+(S.pSel&&S.pSel[x.sid+'|'+x.year]?'checked':'')+' aria-label="선택"></td>':'')+'<td class="num cap">'+esc(String(x.at).slice(0,16))+'</td><td>'+esc(x.acad||'-')+'</td><td><b>'+esc(x.name)+'</b> <span class="cap num">'+esc(x.sid)+'</span>'+(memo?'<div class="cap" style="color:var(--rosin)">메모: '+esc(memo)+'</div>':'')+'</td><td class="num">'+esc(x.year)+'</td><td class="r num">'+won(x.paid)+'</td><td class="num">'+esc(x.date||'-')+'</td>'+act+'</tr>'};
   return '<div class="sec-h"><div><h2>학생 회비 입금 신고</h2><p>원장님이 학생 회비 입금을 신고한 목록이에요. 통장에서 실제 입금일과 금액을 확인하고 「입금 확인」을 누르면 <b>12개월</b> 회원 자격이 생겨요. 처음이면 <b>재원 시작 다음 달</b>부터, 계속 다니는 학생은 <b>앞 자격이 끝난 다음 달</b>부터 이어져요(늦게 내도 거슬러 계산).</p></div>'+
     '<div class="row">'+['신고','확인','반려','전체'].map(function(k){return '<button class="btn small '+(st===k?'primary':'')+'" type="button" data-ps="'+k+'">'+nm[k]+' '+cnt(k)+'</button>'}).join('')+'<button class="btn small ghost" type="button" id="payRe">새로 고침</button></div></div>'+
-    '<div class="panel"><div class="tbl"><table><thead><tr><th>신고한 때</th><th>학원</th><th>학생</th><th>년도</th><th class="r">신고 금액</th><th>신고 입금일</th><th>'+(st==='신고'?'확인한 입금일 · 금액':'확인 결과')+'</th><th></th></tr></thead><tbody>'+
-    (list.length?list.map(function(x){return row(x,L.indexOf(x))}).join(''):'<tr><td colspan="8" class="cap">'+(st==='신고'?'확인할 신고가 없어요.':'없어요.')+'</td></tr>')+'</tbody></table></div>'+
+    (st==='신고'&&list.length?'<div class="row note info" style="justify-content:space-between"><span>고른 신고를 <b>신고한 날짜 · 금액 그대로</b> 한꺼번에 확인해요. 통장과 다른 건 줄에서 고쳐서 하나씩 확인해 주세요.</span><span class="row"><button class="btn small" type="button" id="pAll">모두 고르기</button><button class="btn small primary" type="button" id="pOkMany">고른 '+Object.keys(S.pSel||{}).length+'건 입금 확인</button></span></div>':'')+'<div class="panel"><div class="tbl"><table><thead><tr>'+(st==='신고'?'<th class="ck"></th>':'')+'<th>신고한 때</th><th>학원</th><th>학생</th><th>년도</th><th class="r">신고 금액</th><th>신고 입금일</th><th>'+(st==='신고'?'확인한 입금일 · 금액':'확인 결과')+'</th><th></th></tr></thead><tbody>'+
+    (list.length?list.map(function(x){return row(x,L.indexOf(x))}).join(''):'<tr><td colspan="9" class="cap">'+(st==='신고'?'확인할 신고가 없어요.':'없어요.')+'</td></tr>')+'</tbody></table></div>'+
     (st==='신고'&&list.length?'<p class="cap">예: 9월 1일 등록 · 12월 1일 입금 → 10월부터 자격(12월에 내도 이득 없음).</p>':'')+'</div>'}
 function loadReqs(){S.reqs=null;callS('reqs').then(function(r){if(r.ok){S.reqs=objs(r);S.D.reqN=S.reqs.filter(function(q){return q['상태']==='대기'}).length;if(S.tab==='req')render()}else toast(r.msg)})}
 function vReq(){var L=S.reqs;if(!L)return '<div class="panel"><span><span class="spin"></span> 불러오는 중…</span></div>';
@@ -733,6 +734,9 @@ document.addEventListener('click',function(e){
   if(d.ibx){b.disabled=true;callS('inboxDone',d.ibx).then(function(r){b.disabled=false;if(!r.ok){toast(r.msg);return}S.prog=r;render();toast('확인했어요')});return}
   if(b.dataset&&b.dataset.ast!==undefined){S.f.st=b.dataset.ast;S.page=0;S.sel={};S.issue='';render();return}
   if(b.id==='clsFix'){b.disabled=true;b.innerHTML='<span class="spin"></span> 정리하는 중…';callS('classFromStudents').then(function(r){if(!r.ok){b.disabled=false;b.textContent='다시 해 보기';toast(r.msg);return}var lf=Object.keys(r.left||{});toast('클래스 '+r.made.length+'곳 만들고 학생 '+r.moved+'명 연결했어요'+(lf.length?' · 남은 곳: '+lf.join(', '):''));load()});return}
+  if(b.id==='pAll'){S.pSel={};(S.pays||[]).forEach(function(x){if(x.st==='신고')S.pSel[x.sid+'|'+x.year]=1});render();return}
+  if(b.id==='pOkMany'){var ks=Object.keys(S.pSel||{});if(!ks.length){toast('확인할 신고를 골라 주세요');return}if(!confirm(ks.length+'건을 신고한 날짜 · 금액 그대로 입금 확인할까요?'))return;b.disabled=true;
+    callS('payOkMany',ks).then(function(r){b.disabled=false;if(!r.ok){toast(r.msg);return}S.pays=r.list;S.D.payN=r.payN;S.pSel={};render();toast(r.n+'건 입금 확인했어요'+(r.bad.length?' · 날짜/금액이 없어 건너뜀 '+r.bad.length+'건':''))});return}
   if(b.id==='rosterGo'){b.disabled=true;callS('rosterNow').then(function(r){b.disabled=false;if(!r.ok){toast(r.msg);return}S.roster=r;render();toast('행사용 명단을 만들었어요')});return}
   if(b.id==='payRe'){loadPay();render();return}
   if(d.pok||d.pno){var k=+(d.pok||d.pno),x=S.pays[k];if(!x)return;var gv=function(id){var e=document.getElementById(id);return e?e.value.trim():''};
@@ -767,7 +771,7 @@ document.addEventListener('input',function(e){var el=e.target;
   if(el.id==='e_출생연도'||el.id==='e_우편번호'){el.value=el.value.replace(/\D/g,'')}
   if(el.dataset&&el.dataset.pick){pickOpts(el.dataset.pick,el.value);var hs=document.getElementById(el.dataset.pick);if(hs&&hs.id==='e_원장교사ID'&&document.getElementById('telHead'))headTelFill();return}});
 document.addEventListener('compositionend',function(e){if(e.target.id==='q'){S.q=e.target.value;S.page=0;clearTimeout(qTimer);qTimer=setTimeout(softList,120)}});
-document.addEventListener('change',function(e){if(e.target.id==='d_y'&&S.duesCtx){var c=S.duesCtx,y=e.target.value,has=c.H.filter(function(h){return h['년도']===y})[0],du=document.getElementById('d_due');var rf=document.getElementById('d_ref');if(rf){var rr=rateRow(c.kind,y,c.mk);rf.textContent=rr?'참고: 기준 '+won(rr['금액']):'직접 넣어 주세요'}return}
+document.addEventListener('change',function(e){if(e.target.dataset&&e.target.dataset.pck){S.pSel=S.pSel||{};if(e.target.checked)S.pSel[e.target.dataset.pck]=1;else delete S.pSel[e.target.dataset.pck];var pb=document.getElementById('pOkMany');if(pb)pb.textContent='고른 '+Object.keys(S.pSel).length+'건 입금 확인';return}if(e.target.id==='d_y'&&S.duesCtx){var c=S.duesCtx,y=e.target.value,has=c.H.filter(function(h){return h['년도']===y})[0],du=document.getElementById('d_due');var rf=document.getElementById('d_ref');if(rf){var rr=rateRow(c.kind,y,c.mk);rf.textContent=rr?'참고: 기준 '+won(rr['금액']):'직접 넣어 주세요'}return}
   if(e.target.id==='kGrp'||e.target.id==='kSub'){kindSync();return}
   if(e.target.id==='telA'||e.target.id==='telR'){telSync();return}if(e.target.id==='telHead'||(e.target.id==='e_원장교사ID'&&document.getElementById('telHead'))){headTelFill();return}var dsl=e.target.dataset&&e.target.dataset.daslot;if(dsl!=null&&dsl!==''){var i=+dsl,aid=e.target.dataset.aid,f=e.target.files&&e.target.files[0];if(!f)return;
     var mime=f.type==='image/jpg'?'image/jpeg':f.type;if(['application/pdf','image/jpeg','image/png'].indexOf(mime)<0){toast('PDF · JPG · PNG 파일만 올릴 수 있어요');return}if(f.size>10*1024*1024){toast('10MB 아래 파일로 올려 주세요');return}

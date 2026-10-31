@@ -1,4 +1,4 @@
-/* build: 20261031-221301 */
+/* build: 20261031-221422 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -302,6 +302,10 @@ function intlData_(gid) {
   return { group: { id: g.id, name: g.name, country: g.country, lead: g.lead, email: g.email }, no: sb ? sb.no : '', ppl, fees, cur: 'USD', roomCap: +C.opt.roomCap || 4, roomEmptyUsd: Math.round((+C.opt.roomEmptyFee || 0) / rate), round: C.rounds[ri].n,
     camp: { name: C.base.name, start: C.base.start, end: C.base.end, place: C.base.place }, remit: setting_('해외 송금 안내'), reps: sb ? (sb.intlRep || []) : [], today: today_() };
 }
+/** STG 시험: 설정 「해외 테스트 로그인」 = 이메일/접속코드 가 있으면 영어 화면에 「STG: 시험 단체로 바로 로그인」 버튼 (메인 시트에는 이 줄을 넣지 않음) */
+function intlTest_() { const v = String(setting_('해외 테스트 로그인') || '').trim(), m = v.match(/^(\S+@\S+)\s*\/\s*(\S+)$/); return m ? { email: m[1], code: m[2] } : null; }
+function intlTestInfo() { const t = intlTest_(); return { ok: true, test: !!t }; }
+function intlTestLogin() { const t = intlTest_(); if (!t) return { ok: false, msg: 'Test sign-in is off.' }; return intlLogin(t.email, t.code, true); }
 function intlData(token) { const u = intlWho_(token); return Object.assign({ ok: true }, intlData_(u.id)); }
 /** 대표: 명단 저장 (전체를 보냄). 지운 사람은 입금 확인 전이면 「취소」, 확인된 사람은 지울 수 없음 */
 function intlSave(token, list) {

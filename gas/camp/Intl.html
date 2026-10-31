@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head>
-<!-- build: 20261031-221108 -->
+<!-- build: 20261031-221301 -->
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <base target="_top">
 <title>Suzuki Winter Music Camp · Overseas Registration</title>
@@ -46,7 +46,7 @@ function opt(L,v,ph){return (ph?'<option value="">'+ph+'</option>':'')+L.map(fun
 function toast(m){var t=document.getElementById('toast');t.textContent=m;t.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(function(){t.hidden=true},2600)}
 function busy(on,m){var b=document.getElementById('busy');b.textContent=m||'Saving…';b.hidden=!on}
 function run(fn,args,ok){busy(true);google.script.run.withSuccessHandler(function(r){busy(false);if(r&&r.ok===false){S.err=r.msg;render();toast(r.msg);return}ok(r)}).withFailureHandler(function(e){busy(false);var m=(e&&e.message)||String(e);S.err=m;render();toast(m)})[fn].apply(null,args)}
-function setD(r){S.D=r;S.list=(r.ppl||[]).map(function(p){return {key:p.key,first:p.first,last:p.last,type:p.type,gender:p.gender,by:p.by,inst:p.inst,prog:p.prog,note:p.note,fee:p.fee,paid:p.paid,pay:p.pay}});S.dirty=false;S.err='';
+function setD(r){S.D=r;S.list=(r.ppl||[]).map(function(p){return {key:p.key,first:p.first,last:p.last,type:p.type,gender:p.gender,by:p.by,inst:p.inst,prog:p.prog,note:p.note,room:p.room||'',fee:p.fee,paid:p.paid,pay:p.pay}});S.dirty=false;S.err='';
   var c=r.camp||{};document.getElementById('ttl').textContent=(c.name?c.name.replace('스즈키 겨울 음악제','Suzuki Winter Music Camp'):'Suzuki Winter Music Camp');
   document.getElementById('when').textContent=(c.start||'')+' ~ '+(c.end||'')+' · Overseas group registration · '+r.group.name}
 function vLogin(){return '<div class="card" style="max-width:520px"><h2>Group leader sign in</h2>'+
@@ -56,7 +56,9 @@ function vLogin(){return '<div class="card" style="max-width:520px"><h2>Group le
   '<label style="display:flex;gap:10px;align-items:flex-start;font-weight:400"><input type="checkbox" id="ag" style="width:22px;min-height:22px;margin-top:3px"><span>I agree that the association collects and uses the participants’ names, gender, birth year, instrument and level to run the camp (room assignment, lessons, name tags), and shares names and gender with the camp hotel. I confirm that guardians of participants under 14 have agreed. The data is deleted after the camp settlement.</span></label>'+
   (S.err?'<p class="err">'+esc(S.err)+'</p>':'')+'<button class="btn primary" type="button" id="go">Sign in</button>'+
   '<p class="hint">No access code? Please email the association to receive one for your group.</p></div></div>'}
-function sum(){var L=S.list,by={},tot=0,paid=0;L.forEach(function(p){by[p.type]=(by[p.type]||0)+1;var f=S.D.fees[p.type]||0;tot+=f;paid+=+p.paid||0});return {by:by,tot:tot,paid:paid}}
+function rooms(){var g={};S.list.forEach(function(p,i){var t=String(p.room||'').trim().toLowerCase();if(t)(g[t]=g[t]||[]).push(i)});return g}
+function roomFeeOf(){var g=rooms(),out={},cap=S.D.roomCap||4;Object.keys(g).forEach(function(t){out[t]={n:g[t].length,fee:Math.max(0,cap-g[t].length)*(S.D.roomEmptyUsd||0),over:g[t].length>cap,first:g[t][0]}});return out}
+function sum(){var L=S.list,by={},tot=0,paid=0,room=0;L.forEach(function(p){by[p.type]=(by[p.type]||0)+1;var f=S.D.fees[p.type]||0;tot+=f;paid+=+p.paid||0});var R=roomFeeOf();Object.keys(R).forEach(function(t){room+=R[t].fee});return {by:by,tot:tot+room,paid:paid,room:room,rooms:R}}
 function vPerson(p,i){var plays=p.type==='해외 학생'||p.type==='해외 교사';
   return '<div class="person'+(p.key?'':' new')+'"><div class="spread"><b>'+(i+1)+'. '+esc((p.first||'')+' '+(p.last||'')).trim()+(p.key?'':' <span class="pill">new</span>')+'</b><div class="row">'+(p.paid>0?'<span class="pill ok">paid '+won(p.paid)+'</span>':'')+'<span class="num">'+won(S.D.fees[p.type]||0)+'</span>'+(p.paid>0?'':'<button class="btn small ghost" type="button" data-rm="'+i+'">Remove</button>')+'</div></div>'+
   '<div class="grid" style="margin-top:8px">'+
@@ -67,15 +69,22 @@ function vPerson(p,i){var plays=p.type==='해외 학생'||p.type==='해외 교�
   '<label>Birth year *<input data-f="by" data-i="'+i+'" value="'+esc(p.by)+'" inputmode="numeric" maxlength="4" placeholder="2015"></label>'+
   (plays?'<label>Instrument *<select data-f="inst" data-i="'+i+'">'+opt(INST,p.inst,'Choose')+'</select></label>':'')+
   (p.type==='해외 학생'?'<label>Current book *<select data-f="prog" data-i="'+i+'">'+opt(BOOK,p.prog,'Choose')+'</select></label>':'')+
-  '<label>Note<input data-f="note" data-i="'+i+'" value="'+esc(p.note)+'" placeholder="family of …, allergy, etc."></label></div></div>'}
+  '<label>Family room<input data-f="room" data-i="'+i+'" value="'+esc(p.room)+'" placeholder="e.g. Dela Cruz family" list="roomNames"></label>'+
+  '<label>Note<input data-f="note" data-i="'+i+'" value="'+esc(p.note)+'" placeholder="allergy, etc."></label></div></div>'}
 function vMain(){var D=S.D,s=sum();
   var fee='<table><thead><tr><th>Participant type</th><th class="r">Fee ('+esc(String(D.round).replace(/(\d+)\s*차/,'round $1'))+')</th><th class="r">People</th></tr></thead><tbody>'+TYPES.map(function(t){return '<tr><td>'+esc(t[1])+'</td><td class="r num">'+won(D.fees[t[0]]||0)+'</td><td class="r num">'+(s.by[t[0]]||0)+'</td></tr>'}).join('')+
+    (s.room?'<tr><td>Family room empty beds</td><td class="r num">'+won(s.room)+'</td><td></td></tr>':'')+
     '<tr><td><b>Total</b></td><td class="r num"><b>'+won(s.tot)+'</b></td><td class="r num"><b>'+S.list.length+'</b></td></tr></tbody></table>';
+  var RR=s.rooms,rk=Object.keys(RR),cap=D.roomCap||4;
+  var roomBox='<div class="card"><h2>Family rooms</h2><p class="hint">A family room is for one family, up to '+cap+' people. Type the same family room name (for example “Dela Cruz family”) for everyone who will share the room. If fewer than '+cap+' people stay, each empty bed costs '+won(D.roomEmptyUsd||0)+'. Leave it blank for people who stay in the group rooms.</p>'+
+    (rk.length?'<table><thead><tr><th>Family room</th><th class="r">People</th><th class="r">Empty beds</th></tr></thead><tbody>'+rk.map(function(t){var x=RR[t];return '<tr><td>'+esc(S.list[x.first].room)+(x.over?' <span class="pill due">max '+cap+'</span>':'')+'</td><td class="r num">'+x.n+'</td><td class="r num">'+won(x.fee)+'</td></tr>'}).join('')+'</tbody></table>':'<p class="hint">No family rooms yet.</p>')+
+    '<datalist id="roomNames">'+rk.map(function(t){return '<option value="'+esc(S.list[RR[t].first].room)+'">'}).join('')+'</datalist></div>';
   return '<div class="card"><div class="spread"><div><h2>'+esc(D.group.name)+'</h2><span class="hint">'+esc(D.group.country)+(D.group.lead?' · leader '+esc(D.group.lead):'')+' · '+esc(D.group.email)+(D.no?' · registration '+esc(D.no):'')+'</span></div><button class="btn small ghost" type="button" id="out">Sign out</button></div>'+
     '<p class="hint" style="margin-top:8px">Camp: '+esc(D.camp.start)+' ~ '+esc(D.camp.end)+(D.camp.place&&D.camp.place!=='추후 안내'?' · '+esc(D.camp.place):'')+'. Fees include the camp program, room and meals. No membership fee for overseas participants.</p>'+fee+'</div>'+
     '<div class="card"><div class="spread"><h2>Participants</h2><div class="row"><button class="btn small" type="button" data-add="해외 학생">+ Student</button><button class="btn small" type="button" data-add="해외 교사">+ Teacher</button><button class="btn small" type="button" data-add="해외 보호자">+ Parent</button><button class="btn small" type="button" data-add="해외 동반가족">+ Family</button><button class="btn small" type="button" data-add="해외 돌전아기">+ Infant</button></div></div>'+
     '<p class="hint">Enter every person who will come. Names in English as in the passport. You can come back later to add or change people. People whose payment is confirmed cannot be removed here.</p>'+
     (S.list.length?S.list.map(vPerson).join(''):'<p class="hint">No one yet. Use the buttons above to add people.</p>')+'</div>'+
+    roomBox+
     '<div class="card"><h2>Payment</h2><p class="hint">Please send the total for the whole group in one transfer, then report it below. The association confirms each person after the money arrives.</p>'+
     (D.remit?'<div class="note" style="white-space:pre-wrap">'+esc(D.remit)+'</div>':'<div class="note">Bank details will be sent by the association.</div>')+
     '<div class="spread" style="margin-top:10px"><b>Total '+won(s.tot)+'</b><span>Confirmed '+won(s.paid)+'</span>'+(s.tot-s.paid>0?'<span class="pill due">Balance '+won(s.tot-s.paid)+'</span>':'<span class="pill ok">Fully paid</span>')+'</div>'+
@@ -85,14 +94,14 @@ function vMain(){var D=S.D,s=sum();
     '<div class="sticky"><div class="spread wrap" style="padding:0"><span>'+S.list.length+' people · <b>'+won(s.tot)+'</b>'+(S.dirty?' · <span class="err">not saved</span>':'')+'</span><button class="btn primary" type="button" id="save"'+(S.dirty?'':' disabled')+'>Save list</button></div>'+(S.err?'<p class="err" style="margin:6px 0 0">'+esc(S.err)+'</p>':'')+'</div>'}
 function render(){document.getElementById('app').innerHTML=S.D?vMain():vLogin()}
 document.addEventListener('input',function(e){var t=e.target;if(t.dataset&&t.dataset.f!==undefined){var p=S.list[+t.dataset.i];p[t.dataset.f]=t.value;S.dirty=true;var b=document.getElementById('save');if(b)b.disabled=false}});
-document.addEventListener('change',function(e){var t=e.target;if(t.dataset&&t.dataset.f!==undefined&&t.tagName==='SELECT'){var p=S.list[+t.dataset.i];p[t.dataset.f]=t.value;S.dirty=true;render()}});
+document.addEventListener('change',function(e){var t=e.target;if(t.dataset&&t.dataset.f!==undefined&&(t.tagName==='SELECT'||t.dataset.f==='room')){var p=S.list[+t.dataset.i];p[t.dataset.f]=t.value;S.dirty=true;render()}});
 document.addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;var d=b.dataset;
   if(b.id==='go'){var em=document.getElementById('em').value.trim(),cd=document.getElementById('cd').value.trim(),ag=document.getElementById('ag').checked;if(!em||!cd){S.err='Please enter your email and access code.';render();return}if(!ag){S.err='Please agree to the collection and use of personal information.';render();return}
     run('intlLogin',[em,cd,true],function(r){S.tok=r.token;setD(r);render()});return}
   if(b.id==='out'){if(S.dirty&&!confirm('You have unsaved changes. Sign out anyway?'))return;S.tok='';S.D=null;S.err='';render();return}
   if(d.add){S.list.push({key:'',first:'',last:'',type:d.add,gender:'',by:'',inst:'',prog:'',note:'',paid:0});S.dirty=true;render();var L=document.querySelectorAll('[data-f="first"]');if(L.length)L[L.length-1].focus();return}
   if(d.rm!==undefined){var p=S.list[+d.rm];if(p.key&&!confirm('Remove '+((p.first||'')+' '+(p.last||'')).trim()+'?'))return;S.list.splice(+d.rm,1);S.dirty=true;render();return}
-  if(b.id==='save'){run('intlSave',[S.tok,S.list.map(function(p){return {key:p.key,first:p.first,last:p.last,type:p.type,gender:p.gender,by:p.by,inst:p.inst,prog:p.prog,note:p.note}})],function(r){setD(r);render();toast('Saved · '+r.ppl.length+' people')});return}
+  if(b.id==='save'){run('intlSave',[S.tok,S.list.map(function(p){return {key:p.key,first:p.first,last:p.last,type:p.type,gender:p.gender,by:p.by,inst:p.inst,prog:p.prog,note:p.note,room:p.room}})],function(r){setD(r);render();toast('Saved · '+r.ppl.length+' people')});return}
   if(b.id==='rep'){S.rep={date:document.getElementById('rd').value,cur:document.getElementById('rc').value,amt:document.getElementById('ra').value,name:document.getElementById('rn').value};
     if(!S.rep.date||!S.rep.amt){toast('Please enter the date and amount.');return}
     run('intlReport',[S.tok,S.rep],function(r){S.rep={cur:S.rep.cur};var keep=S.dirty?S.list:null;setD(r);if(keep){S.list=keep;S.dirty=true}render();toast('Transfer reported. Thank you!')});return}});

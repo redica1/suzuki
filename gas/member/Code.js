@@ -1,4 +1,4 @@
-/* build: 20261101-015232 */
+/* build: 20261101-015937 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -105,7 +105,7 @@ function include(n) { return HtmlService.createHtmlOutputFromFile(n).getContent(
 
 function api(name, args) {
   const open = { login, hello, tHello, tEvents, tLookup, tStart, tResend, tVerify, tCreate, tLogin, tForgot, tReset, tMe, tSavePay, tSavePart, tSaveInfo, tSavePhoto, tAcad, tSaveAcad, tDocUp, tDocGet, tSaveStu, tSaveStus, tStuDetail, tStuSave, tStuTutor, tStuTutorDel, tStuState, tStuStateDel, tMyStu, tMyStuDetail, tMyStuPay, tTchSaves, tTchEnd, tTchEvent, tTchAssign, tTchStart, tSaveRrn, tAddWork, tClassCreate, tEndWork, tMainWork, tLogout, bPost, bMine, bReply };
-  const fns = { boot, saveRow, setCheck, logs, importRoster, saveDues, delDues, reqs, reqDo, delAcad, payView, bulkSet, saveWorks, importPastDues, bList, bSet, bComment, photoGet, photoDel, fillRegions, saveRates, docList, docUp, docGet, docDel, payList, payOk, payOkMany, payNo, memView, rosterNow, inputStatus, inboxDone, acctReset, classFromStudents, delStus, asTeacher, bankImport, bankList, bankSet, bankDues };
+  const fns = { boot, saveRow, setCheck, logs, importRoster, saveDues, delDues, reqs, reqDo, delAcad, payView, bulkSet, saveWorks, importPastDues, bList, bSet, bComment, photoGet, photoDel, fillRegions, saveRates, docList, docUp, docGet, docDel, payList, payOk, payOkMany, payNo, memView, rosterNow, inputStatus, inboxDone, acctReset, classFromStudents, delStus, asTeacher, bankImport, bankList, bankSet, bankDues, bankFromSheet };
   try {
     if (open[name]) return Object.assign({ ok: true }, open[name].apply(null, args || []));
     if (!fns[name]) throw new UserError('알 수 없는 요청이에요.');
@@ -1960,11 +1960,11 @@ function bankImport(who, rows) {
     const seen = {}; let skip = 0, bad = 0;
     rows.forEach(x => {
       const at = bankAt_(x.at), out = num_(x.out), inn = num_(x.in); if (!at || (!out && !inn)) { bad++; return; }
-      const base = [at, bankNorm_(x.who), out, inn, num_(x.bal) || ''].join('|'); seen[base] = (seen[base] || 0) + 1;
-      const id = 'B' + Utilities.base64EncodeWebSafe(Utilities.computeDigest(Utilities.DigestAlgorithm.MD5, base + '#' + seen[base], Utilities.Charset.UTF_8)).slice(0, 14);
+      const base = [at, bankNorm_(x.who), out, inn].join('|'), sk = (x.src || '') + '\u0001' + base; seen[sk] = (seen[sk] || 0) + 1;   /* 같은 초 같은 금액 거래는 한 출처(파일 · 탭) 안에서 몇 번째인지로 구분 → 두 탭에 겹친 거래는 한 번만 */   /* 잔액은 키에 넣지 않음: 예전 시트 · 은행 엑셀 어느 쪽으로 올려도 같은 거래면 한 번만 */
+      const id = 'B' + Utilities.base64EncodeWebSafe(Utilities.computeDigest(Utilities.DigestAlgorithm.MD5, base + '#' + seen[sk], Utilities.Charset.UTF_8)).slice(0, 14);
       if (have[id]) { skip++; return; } have[id] = 1;
       const o = { '거래ID': id, '거래일시': at, '보낸분받는분': String(x.who || '').trim().slice(0, 60), '출금': out || '', '입금': inn || '', '잔액': x.bal ? num_(x.bal) : '', '적요': String(x.memo || '').slice(0, 60), '내통장표시': String(x.mine || '').slice(0, 60), '처리점': String(x.branch || '').slice(0, 40), '올린때': stamp, '수정일': stamp, '수정자': who.name };
-      const g = bankGuess_(o, ctx); o['구분'] = g.k; o['학원ID'] = g.a; o['교사ID'] = g.t; o['상태'] = g.k ? '추천' : '미분류'; o['메모'] = '';
+      const g = x.k ? { k: x.k, a: x.a || '', t: x.t || '' } : bankGuess_(o, ctx); o['구분'] = g.k; o['학원ID'] = g.a; o['교사ID'] = g.t; o['상태'] = x.st || (g.k ? '추천' : '미분류'); o['메모'] = String(x.note || '').slice(0, 200); o['연결'] = String(x.link || '');
       add.push(o);
     });
     add.sort((p, q) => p['거래일시'].localeCompare(q['거래일시']));
@@ -1976,6 +1976,55 @@ function bankImport(who, rows) {
 function bankList(who) {
   const B = bankTbl_();
   return { h: B.h, rows: B.v, cats: { in: BANK_IN, out: BANK_OUT } };
+}
+/** 예전 통장 구글시트(거래일시 · 보낸분/받는분 · 출금액 · 입금액 · 내통장표시 · 적요 · 처리점 · 비고(구분) · 처리 · 학생수 · 학원명)를 그대로 가져옴 (11-01).
+ *  비고 칸 구분을 이 도구의 구분으로 바꾸고, 학원명 칸으로 학원 · 선생님을 찾음. 처리 칸이 입력 · 적용이면 이미 회원 회비에 반영된 것으로 보고 「연결」 */
+function bankLabel_(lab, inAmt) {
+  const l = String(lab || '').replace(/\s+/g, '');
+  if (!l) return '';
+  if (/티켓/.test(l)) return inAmt ? '졸연티켓' : '환불';
+  if (/환불/.test(l)) return inAmt ? '기타 입금' : '환불';
+  if (/교사회비|교사연회비/.test(l)) return '교사회비';
+  if (/학생회비|연회비/.test(l)) return '학생회비';
+  if (/가족방/.test(l)) return '캠프 가족방';
+  if (/캠프|참가비/.test(l)) return inAmt ? '캠프 참가비' : '행사비';
+  if (/졸업|졸연/.test(l)) return inAmt ? '졸업연주' : '행사비';
+  if (/연수/.test(l)) return inAmt ? '교사연수' : '행사비';
+  if (/임대/.test(l)) return '임대료';
+  if (/인쇄|액자|제작|뱃지/.test(l)) return inAmt ? '기타 입금' : '인쇄 · 제작';
+  return inAmt ? '기타 입금' : '기타 지출';
+}
+function bankFromSheet(who, url) {
+  const m = String(url || '').match(/\/d\/([a-zA-Z0-9_-]{20,})/), id = m ? m[1] : String(url || '').trim(); if (!/^[a-zA-Z0-9_-]{20,}$/.test(id)) fail('구글시트 주소를 확인해 주세요.');
+  let ss; try { ss = SpreadsheetApp.openById(id); } catch (e) { fail('그 시트를 열 수 없어요. 이 회원관리 앱을 만든 계정에 시트 보기 권한이 있어야 해요.'); }
+  const ctx = bankCtx_(null), rows = [], per = []; let noDate = 0;
+  const findA = nm => { const n = bankNorm_(nm); if (!n) return ''; let best = '', bl = 0; ctx.acads.forEach(x => { if (x.core === n || (n.indexOf(x.core) >= 0 && x.core.length >= 2)) { const sc = x.core === n ? 999 : x.core.length; if (sc > bl) { best = x.id; bl = sc; } } }); return best; };
+  const findT = nm => { const n = bankNorm_(nm); const ts = ctx.teachers.filter(x => x.n === n); const ids = ts.map(x => x.id).filter((x, k, s) => s.indexOf(x) === k); return ids.length === 1 ? ids[0] : ''; };
+  ss.getSheets().forEach(sh => {
+    const v = sh.getDataRange().getDisplayValues(); let hi = -1;
+    for (let i = 0; i < Math.min(v.length, 6); i++) { const r = v[i].map(x => String(x).replace(/\s+/g, '')); if (r.some(x => /거래일시/.test(x)) && r.some(x => /입금액/.test(x))) { hi = i; break; } }
+    if (hi < 0) return;
+    const H = v[hi].map(x => String(x).replace(/\s+/g, '')), c = re => H.findIndex(x => re.test(x));
+    const C = { at: c(/거래일시/), who: c(/보낸분|받는분/), out: c(/출금액/), inn: c(/입금액/), mine: c(/내통장/), memo: c(/^적요/), br: c(/처리점/), lab: c(/^비고/), cnt: c(/학생수/), ac: c(/학원명/) };
+    let n = 0;
+    v.slice(hi + 1).forEach(r => {
+      const g = k => C[k] >= 0 ? String(r[C[k]] || '').trim() : '';
+      const at = g('at'), inn = num_(g('inn')), out = num_(g('out')); if (!inn && !out) return;
+      if (!bankAt_(at)) { noDate++; return; }
+      const lab = g('lab'), proc = C.lab >= 0 ? String(r[C.lab + 1] || '').trim() : '', an = g('ac'), cnt = g('cnt'), k = bankLabel_(lab, inn);
+      let a = '', t = '';
+      if (k === '교사회비') { t = findT(an) || findT(g('who')); if (!t) a = ''; } else if (an) { a = findA(an); if (!a) { const tt = findT(an); if (tt && ctx.tAcad[tt]) a = ctx.tAcad[tt]; } }
+      const note = [lab && !/^20\d\d\s*(교사|학생)회비$/.test(lab) ? lab : '', an && !a && !t ? '학원명: ' + an : '', cnt && /^\d+$/.test(cnt) ? '학생 ' + cnt + '명' : (cnt && !/^\d+$/.test(cnt) ? cnt : '')].filter(Boolean).join(' · ');
+      const done = /입력|적용|완료/.test(proc) && (k === '교사회비' || k === '학생회비');
+      rows.push({ src: sh.getName(), at, who: g('who'), out, in: inn, memo: g('memo'), mine: g('mine'), branch: g('br'), k, a, t, note, st: k ? (done ? '연결' : '확정') : '', link: done ? '예전 통장 시트에서 처리(' + proc + ')' : '' });
+      n++;
+    });
+    per.push(sh.getName() + ' ' + n + '건');
+  });
+  if (!rows.length) fail('「거래일시」 · 「입금액」 머리줄이 있는 탭을 찾지 못했어요.');
+  const r = bankImport(who, rows);
+  log_(who.name, '통장', '-', '예전 시트 가져오기', per.join(' · ') + ' · 날짜 없는 줄 ' + noDate);
+  return Object.assign(r, { per, noDate });
 }
 /** 한 줄 고치기: 구분 · 학원 · 선생님 · 메모. 사람이 고치면 「확정」 */
 function bankSet(who, ids, o) {

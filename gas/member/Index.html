@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261101-015232 -->
+<!-- build: 20261101-015937 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -570,7 +570,7 @@ function vBank(){
   var years=[];months.forEach(function(m){var y=m.slice(0,4);if(years.indexOf(y)<0)years.push(y)});
   var mOpts=[];years.forEach(function(y){mOpts.push([y,y+'년 전체']);months.filter(function(m){return m.indexOf(y)===0}).forEach(function(m){mOpts.push([m,'　'+m.replace('-','년 ')+'월'])})});
   var head='<div class="sec-h"><div><h2>통장</h2><p>은행에서 받은 거래내역 엑셀(xls · xlsx · csv)을 올리면 겹치는 거래는 건너뛰고 새 거래만 더해요. 이름 · 낱말로 구분 · 학원 · 선생님을 <b>추천</b>하고, 고치거나 「확정」하면 다음부터 같은 이름은 그대로 따라가요. 교사회비 · 학생회비는 「회비 확인」으로 회원 회비까지 이어요.</p></div>'+
-    '<div class="row"><label class="btn primary" for="bankFile" style="cursor:pointer">'+(S.bBusy?'<span class="spin"></span> 읽는 중…':'은행 엑셀 올리기')+'</label><input type="file" id="bankFile" accept=".xls,.xlsx,.csv" hidden><button class="btn small ghost" type="button" id="bankRe">새로 고침</button></div></div>';
+    '<div class="row"><label class="btn primary" for="bankFile" style="cursor:pointer">'+(S.bBusy?'<span class="spin"></span> 읽는 중…':'은행 엑셀 올리기')+'</label><input type="file" id="bankFile" accept=".xls,.xlsx,.csv" hidden><button class="btn" type="button" id="bankOld">예전 통장 시트 가져오기</button><button class="btn small ghost" type="button" id="bankRe">새로 고침</button></div></div>'+(S.bOld?'<div class="panel" style="border-color:var(--accent)"><b>예전 통장 구글시트 가져오기</b><p class="cap">거래일시 · 보낸분/받는분 · 출금액 · 입금액 · 비고(구분) · 학원명 칸이 있는 시트의 모든 탭을 읽어요. 비고에 적힌 구분과 학원명을 그대로 옮기고, 처리 칸이 「입력 · 적용」인 회비는 이미 반영된 것으로 표시해요. 날짜가 없는 줄은 건너뛰어요. 같은 거래를 두 번 가져와도 한 번만 들어가요.</p><div class="row"><input type="url" id="bankOldUrl" value="'+esc(S.bOldUrl||'')+'" placeholder="구글시트 주소" style="flex:1;min-width:240px"><button class="btn primary" type="button" id="bankOldGo">가져오기</button><button class="btn" type="button" id="bankOldNo">닫기</button></div></div>':'');
   var tiles='<div class="tiles">'+tileH('입금',won(tin),list.length+'건 · 지금 고른 조건',0,'span2')+tileH('출금',won(tout),'지금 고른 조건',0,'span2')+tileH('차액',won(tin-tout),'',0,'span2')+
     tileH('추천 · 확정 전',cnt(function(o){return o['상태']==='추천'}),'눌러서 추천만 보기',0,'','')+tileH('미분류',cnt(function(o){return o['상태']==='미분류'}),'',cnt(function(o){return o['상태']==='미분류'})>0)+
     tileH('회비 확인 남음',cnt(function(o){return (o['구분']==='교사회비'||o['구분']==='학생회비')&&o['상태']!=='연결'}),'교사회비 · 학생회비 중 회비 확인 전')+'</div>';
@@ -824,6 +824,10 @@ document.addEventListener('click',function(e){
   if(d.viewas){var w=window.open('about:blank','_blank');callS('asTeacher',d.viewas).then(function(r){if(!r.ok){if(w)w.close();toast(r.msg);return}var u=r.url+(r.url.indexOf('?')>=0?'&':'?')+'as='+encodeURIComponent(r.token);if(w)w.location.href=u;else window.open(u,'_blank')});return}
   if(d.bv){S.bv=d.bv;render();return}
   if(d.bpg){S.bp=(S.bp||0)+(+d.bpg);render();window.scrollTo(0,0);return}
+  if(b.id==='bankOld'){S.bOld=!S.bOld;if(!S.bOldUrl)S.bOldUrl='https:'+'/'+'/docs.google.com/spreadsheets/d/1Xznrbcootc-LCnJR6ZdrqgnjbyuWBSI8TOXDtGf5q24/edit';render();return}
+  if(b.id==='bankOldNo'){S.bOld=false;render();return}
+  if(b.id==='bankOldGo'){var ou=document.getElementById('bankOldUrl').value.trim();S.bOldUrl=ou;b.disabled=true;b.innerHTML='<span class="spin"></span> 가져오는 중… (1~2분)';
+    callS('bankFromSheet',ou).then(function(r){if(!r.ok){b.disabled=false;b.textContent='가져오기';toast(r.msg);return}bankTake(r);S.bOld=false;render();toast('가져왔어요 · 새 거래 '+r.added+'건'+(r.skip?' · 이미 있던 '+r.skip+'건 건너뜀':'')+(r.noDate?' · 날짜 없는 '+r.noDate+'줄 건너뜀':'')+' ('+r.per.join(', ')+')')});return}
   if(b.id==='bankRe'){S.bSel={};loadBank();render();return}
   if(d.bok){bankSave([d.bok],{confirm:true},'확정했어요');return}
   if(b.id==='bRecOk'){var rids=bankList().filter(function(o){return o['상태']==='추천'}).map(function(o){return o['거래ID']});if(!confirm('보이는 추천 '+rids.length+'건을 그대로 확정할까요?'))return;b.disabled=true;bankSave(rids,{confirm:true},'%n건 확정했어요');return}

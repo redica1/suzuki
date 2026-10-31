@@ -1,4 +1,4 @@
-/* build: 20261101-021606 */
+/* build: 20261101-022021 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -105,7 +105,7 @@ function include(n) { return HtmlService.createHtmlOutputFromFile(n).getContent(
 
 function api(name, args) {
   const open = { login, hello, tHello, tEvents, tLookup, tStart, tResend, tVerify, tCreate, tLogin, tForgot, tReset, tMe, tSavePay, tSavePart, tSaveInfo, tSavePhoto, tAcad, tSaveAcad, tDocUp, tDocGet, tSaveStu, tSaveStus, tStuDetail, tStuSave, tStuTutor, tStuTutorDel, tStuState, tStuStateDel, tMyStu, tMyStuDetail, tMyStuPay, tTchSaves, tTchEnd, tTchEvent, tTchAssign, tTchStart, tSaveRrn, tAddWork, tClassCreate, tEndWork, tMainWork, tLogout, bPost, bMine, bReply };
-  const fns = { boot, saveRow, setCheck, logs, importRoster, saveDues, delDues, reqs, reqDo, delAcad, payView, bulkSet, saveWorks, importPastDues, bList, bSet, bComment, photoGet, photoDel, fillRegions, saveRates, docList, docUp, docGet, docDel, payList, payOk, payOkMany, payNo, memView, rosterNow, inputStatus, inboxDone, acctReset, classFromStudents, delStus, asTeacher, bankImport, bankList, bankSet, bankDues, bankFromSheet, bankMeta, bankSplitSave };
+  const fns = { boot, saveRow, setCheck, logs, importRoster, saveDues, delDues, reqs, reqDo, delAcad, payView, bulkSet, saveWorks, importPastDues, bList, bSet, bComment, photoGet, photoDel, fillRegions, saveRates, docList, docUp, docGet, docDel, payList, payOk, payOkMany, payNo, memView, rosterNow, inputStatus, inboxDone, acctReset, classFromStudents, delStus, asTeacher, bankImport, bankList, bankSet, bankDues, bankFromSheet, bankMeta, bankSplitSave, bankPay };
   try {
     if (open[name]) return Object.assign({ ok: true }, open[name].apply(null, args || []));
     if (!fns[name]) throw new UserError('알 수 없는 요청이에요.');
@@ -1943,7 +1943,41 @@ function bankSplitSave(who, id, lines) {
     return Object.assign(bankList(who), { n: add.length, sum });
   } finally { lock.releaseLock(); }
 }
-function bankMetaAll_() { const A = bankSheet_('통장목록', BANK_ACCT_HEAD), P = bankSheet_('프로젝트', BANK_PROJ_HEAD), c = bankCats_(); const D = bankSheet_('통장상세', BANK_SPLIT_HEAD); return { accts: A.objs(), projs: P.objs(), cats: { in: c.in, out: c.out }, catRows: c.rows, splits: D.objs() }; }
+/* 지급 결정 (11-01): 행사마다 정한 인건비 · 강사료를 사람별로 적고, 통장 출금과 하나씩 맞춤 → 연말 소득신고 자료
+ * 세율: 3.3(사업소득 3% + 지방 0.3%) · 8.8(기타소득, 필요경비 60% 빼고 20% + 지방 2%) · 0(원천징수 없음). 10원 미만 버림 */
+const BANK_PAY_HEAD = ['지급ID', '프로젝트ID', '교사ID', '이름', '내용', '지급액', '세율', '소득세', '지방세', '원천세', '실지급액', '지급예정일', '거래ID', '상태', '메모', '수정일', '수정자'];
+function bankTax_(g, r) { g = Math.max(0, Math.round(num_(g) || 0)); const f = x => Math.floor(x / 10) * 10; let it = 0;
+  if (String(r) === '3.3') it = f(g * 0.03); else if (String(r) === '8.8') it = f(g * 0.4 * 0.2);
+  const lt = f(it * 0.1); return { '지급액': g, '소득세': it, '지방세': lt, '원천세': it + lt, '실지급액': g - it - lt }; }
+/** op: add(rows) · set({지급ID, ...}) · del(ids) · link([{지급ID, 거래ID}]) */
+function bankPay(who, op, data) {
+  const lock = LockService.getScriptLock(); lock.waitLock(30000);
+  try {
+    const P = bankSheet_('지급', BANK_PAY_HEAD), stamp = now_(), by = { '수정일': stamp, '수정자': who.name }; let n = 0;
+    const fix = (o, base) => { const r = ['3.3', '8.8', '0'].indexOf(String(o['세율'] != null ? o['세율'] : base['세율'])) >= 0 ? String(o['세율'] != null ? o['세율'] : base['세율']) : '3.3';
+      const x = Object.assign({}, bankTax_(o['지급액'] != null ? o['지급액'] : base['지급액'], r), { '세율': r });
+      ['프로젝트ID', '교사ID', '이름', '내용', '지급예정일', '메모'].forEach(k => { if (k in o) x[k] = String(o[k] || '').slice(0, k === '메모' ? 200 : 60); });
+      if (x['지급예정일'] && !/^\d{4}-\d{2}-\d{2}$/.test(x['지급예정일'])) fail('지급예정일은 2026-01-31 처럼 적어 주세요.'); return x; };
+    if (op === 'add') {
+      const mx = P.v.reduce((m, r) => Math.max(m, +String(r[0]).slice(1) || 0), 0), add = [];
+      (data || []).slice(0, 500).forEach((o, k) => { if (!String(o['이름'] || '').trim()) fail('이름이 빈 줄이 있어요.'); if (!(num_(o['지급액']) > 0)) fail('지급액을 적어 주세요.');
+        add.push(Object.assign({ '지급ID': 'Y' + String(mx + k + 1).padStart(5, '0'), '상태': '결정', '거래ID': '' }, fix(o, {}), by)); });
+      P.appendMany(add); n = add.length;
+    } else if (op === 'set') {
+      const i = P.find(data['지급ID']); if (i < 0) fail('그 지급을 찾지 못했어요.'); P.set(i, Object.assign(fix(data, P.obj(i)), by)); n = 1;
+    } else if (op === 'del') {
+      const ids = [].concat(data || []), keep = P.v.filter(r => ids.indexOf(r[0]) < 0), old = P.v.length; n = old - keep.length;
+      if (old) P.sh.getRange(2, 1, old, P.h.length).clearContent(); if (keep.length) P.sh.getRange(2, 1, keep.length, P.h.length).setNumberFormat('@').setValues(keep); P.v.length = 0; keep.forEach(r => P.v.push(r));
+    } else if (op === 'link') {
+      const ix = {}; P.v.forEach((r, i) => ix[r[0]] = i);
+      (data || []).slice(0, 2000).forEach(x => { const i = ix[x['지급ID']]; if (i == null) return; P.put(i, Object.assign({ '거래ID': String(x['거래ID'] || ''), '상태': x['거래ID'] ? '지급' : '결정' }, by)); n++; });
+      if (n) P.flush();
+    } else fail('알 수 없는 요청이에요.');
+    log_(who.name, '지급', '-', op, n + '줄');
+    return Object.assign(bankList(who), { n });
+  } finally { lock.releaseLock(); }
+}
+function bankMetaAll_() { const A = bankSheet_('통장목록', BANK_ACCT_HEAD), P = bankSheet_('프로젝트', BANK_PROJ_HEAD), c = bankCats_(); const D = bankSheet_('통장상세', BANK_SPLIT_HEAD); return { accts: A.objs(), projs: P.objs(), cats: { in: c.in, out: c.out }, catRows: c.rows, splits: D.objs(), pays: bankSheet_('지급', BANK_PAY_HEAD).objs() }; }
 /** 통장 · 프로젝트 · 구분 등록 · 고치기. kind: acct | proj | cat */
 function bankMeta(who, kind, o) {
   o = o || {}; const stamp = now_(), lock = LockService.getScriptLock(); lock.waitLock(30000);

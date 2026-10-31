@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261101-021606 -->
+<!-- build: 20261101-022021 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -549,7 +549,7 @@ function vPay(){var L=S.pays;if(!L)return '<div class="panel"><span><span class=
     (st==='신고'&&list.length?'<p class="cap">예: 9월 1일 등록 · 12월 1일 입금 → 10월부터 자격(12월에 내도 이득 없음).</p>':'')+'</div>'}
 /* ---------- 통장 (11-01): 은행 엑셀 올리기 · 구분 · 학원 · 선생님 · 회비 잇기 · 합계 ---------- */
 function loadBank(){S.bank=null;callS('bankList').then(function(r){if(r.ok){bankTake(r);if(S.tab==='bank')render()}else toast(r.msg)})}
-function bankTake(r){S.bank=objs(r);S.bcats=r.cats||S.bcats||{'in':[],out:[]};if(r.accts)S.bAccts=r.accts;if(r.projs)S.bProjs=r.projs;if(r.catRows)S.bCatRows=r.catRows;if(r.splits){S.bSplits={};r.splits.forEach(function(x){(S.bSplits[x['거래ID']]=S.bSplits[x['거래ID']]||[]).push(x)})}}
+function bankTake(r){S.bank=objs(r);S.bcats=r.cats||S.bcats||{'in':[],out:[]};if(r.accts)S.bAccts=r.accts;if(r.projs)S.bProjs=r.projs;if(r.catRows)S.bCatRows=r.catRows;if(r.pays)S.bPays=r.pays;if(r.splits){S.bSplits={};r.splits.forEach(function(x){(S.bSplits[x['거래ID']]=S.bSplits[x['거래ID']]||[]).push(x)})}}
 function bCatName(k){var r=bCatRow(k);return r&&r['이름']?r['이름']:k}
 /* 통장 · 프로젝트 · 분류 (11-01) */
 function bSplit(x){return String(x||'').split(',').filter(Boolean)}
@@ -581,7 +581,7 @@ function bOpts(L,v,first){return '<option value="">'+first+'</option>'+L.map(fun
 function bTchOpts(){if(S.bTO)return S.bTO;S.bTO=S.D.tch.filter(function(t){return t['상태']!=='탈퇴'&&t['회원구분']!=='외부인'}).map(function(t){return [t['교사ID'],t['이름']+(t['구분글자']?' '+t['구분글자']:'')+' · '+tAcadTxt(t)]}).sort(function(a,b){return a[1].localeCompare(b[1],'ko')});return S.bTO}
 function bAcOpts(){return acadOpts('').slice(1).concat(S.D.acad.filter(function(a){return a['상태']==='탈퇴'}).map(function(a){return [a['학원ID'],a['학원명']+' (탈퇴)']}))}
 function vBankHead(){var v=S.bv||'list',A=bAcOptsK();
-  var seg='<div class="row" style="margin:0 0 8px">'+[['list','거래 내역'],['sum','합계표'],['set','통장 · 프로젝트 · 분류']].map(function(x){return '<button class="btn'+(v===x[0]?' primary':'')+'" type="button" data-bv="'+x[0]+'">'+x[1]+'</button>'}).join('')+'</div>';
+  var seg='<div class="row" style="margin:0 0 8px">'+[['list','거래 내역'],['sum','합계표'],['pay','지급 (인건비)'],['set','통장 · 프로젝트 · 분류']].map(function(x){return '<button class="btn'+(v===x[0]?' primary':'')+'" type="button" data-bv="'+x[0]+'">'+x[1]+'</button>'}).join('')+'</div>';
   return '<div class="sec-h"><div><h2>통장</h2><p>은행 거래내역 엑셀(xls · xlsx · csv)을 <b>어느 통장 것인지 골라</b> 올리면 겹치는 거래는 건너뛰고 새 거래만 더해요. 거래마다 구분(소분류)을 정하면 대분류 · 중분류로 묶이고, <b>프로젝트</b>(기간 · 통장 · 쓰는 구분)에 맞으면 자동으로 그 프로젝트에 들어가요. 교사회비 · 학생회비는 「회비 확인」으로 회원 회비까지 이어요.</p></div>'+
     '<div class="row">'+(A.length?sel('bAcct',[['','어느 통장?']].concat(A),S.bAcct,'올릴 통장'):'')+'<label class="btn primary" for="bankFile" style="cursor:pointer">'+(S.bBusy?'<span class="spin"></span> 읽는 중…':'은행 엑셀 올리기')+'</label><input type="file" id="bankFile" accept=".xls,.xlsx,.csv" hidden><button class="btn" type="button" id="bankOld">예전 통장 시트 가져오기</button><button class="btn small ghost" type="button" id="bankRe">새로 고침</button></div></div>'+
     (S.bOld?'<div class="panel" style="border-color:var(--accent)"><b>예전 통장 구글시트 가져오기</b><p class="cap">거래일시 · 보낸분/받는분 · 출금액 · 입금액 · 비고(구분) · 학원명 칸이 있는 시트의 모든 탭을 읽어요. 비고에 적힌 구분과 학원명을 그대로 옮기고, 처리 칸이 「입력 · 적용」인 회비는 이미 반영된 것으로 표시해요. 날짜가 없는 줄은 건너뛰어요. 같은 거래를 두 번 가져와도 한 번만 들어가요.'+(A.length?' <b>위에서 고른 통장</b>으로 들어가요.':'')+'</p><div class="row"><input type="url" id="bankOldUrl" value="'+esc(S.bOldUrl||'')+'" placeholder="구글시트 주소" style="flex:1;min-width:240px"><button class="btn primary" type="button" id="bankOldGo">가져오기</button><button class="btn" type="button" id="bankOldNo">닫기</button></div></div>':'')+seg}
@@ -615,6 +615,7 @@ function bankMetaGo(kind,o,msg,btn){if(btn)btn.disabled=true;return callS('bankM
 function vBank(){
   if(!S.bank)return '<div class="panel"><span><span class="spin"></span> 불러오는 중…</span></div>';
   if(S.bv==='set')return vBankHead()+vBankSet();
+  if(S.bv==='pay')return vBankHead()+vBankPay();
   var all=S.bank,list=bankList(),f=S.bf||{},cats=S.bcats||{'in':[],out:[]},sum=S.bv==='sum';
   var tin=0,tout=0;list.forEach(function(o){tin+=bIn(o);tout+=bOut(o)});
   var cnt=function(fn){return all.filter(fn).length};
@@ -645,11 +646,11 @@ function bankTable(list){var per=100,pages=Math.max(1,Math.ceil(list.length/per)
         '<td>'+(tch?'<select data-bt="'+id+'" aria-label="선생님" style="max-width:220px">'+bOpts(bTchOpts(),o['교사ID'],'선생님 고르기')+'</select>':inn?'<select data-ba="'+id+'" aria-label="학원" style="max-width:220px">'+bOpts(acO,o['학원ID'],'학원 고르기')+'</select>':'<span class="cap">-</span>')+'</td>'+
         '<td><input type="text" data-bm="'+id+'" value="'+esc(o['메모'])+'" placeholder="메모" style="min-width:120px"></td>'+
         '<td>'+bSt(o['상태'])+act+(o['연결']?'<div class="cap">'+esc(o['연결'])+'</div>':'')+'</td></tr>'}).join('')+'</tbody></table></div>'+pager}
-function bSpTxt(o){var L=(S.bSplits||{})[o['거래ID']]||[],inn=bIn(o);if(!inn)return '';var sm=0;L.forEach(function(x){sm+=+x['금액']||0});
+function bSpTxt(o){var L=(S.bSplits||{})[o['거래ID']]||[],inn=bIn(o)||bOut(o);if(!inn)return '';var sm=0;L.forEach(function(x){sm+=+x['금액']||0});
   return L.length?'<div class="cap"><button class="btn small ghost" type="button" data-bsp="'+esc(o['거래ID'])+'" style="padding:0 5px">'+L.length+'명</button> '+esc(L.slice(0,4).map(function(x){return x['이름']}).join(', ')+(L.length>4?' 외 '+(L.length-4):''))+(sm!==inn?' <span style="color:var(--rosin)">(합 '+won(sm)+')</span>':'')+'</div>':'<div><button class="btn small ghost" type="button" data-bsp="'+esc(o['거래ID'])+'" style="padding:0 6px">사람별 나누기</button></div>'}
 /* 한 입금을 사람별로: 학원 재원 학생 · 선생님을 체크하면 1인 금액으로 줄이 생김 */
 function bankSplitBox(){var id=S.bSp;if(!id)return '';var o=(S.bank||[]).filter(function(x){return x['거래ID']===id})[0];if(!o)return '';
-  var L=S.bSpL||[],amt=bIn(o),sm=0,ac=S.bSpA!=null?S.bSpA:(o['학원ID']||''),on={};L.forEach(function(x){sm+=+x['금액']||0;if(x.ID)on[x['대상']+'|'+x.ID]=1});
+  var L=S.bSpL||[],amt=bIn(o)||bOut(o),sm=0,ac=S.bSpA!=null?S.bSpA:(o['학원ID']||''),on={};L.forEach(function(x){sm+=+x['금액']||0;if(x.ID)on[x['대상']+'|'+x.ID]=1});
   var stu=ac?S.D.stu.filter(function(x){return x['학원ID']===ac&&x['상태']==='재원'}).sort(function(a,b){return String(a['이름']).localeCompare(b['이름'],'ko')}):[];
   var tch=ac?S.D.tch.filter(function(t){return t['상태']!=='탈퇴'&&tAcadTxt(t).indexOf(aName(ac))>=0}):[];
   var box=function(kind,x,idk,nm){var key=kind+'|'+x[idk];return '<label data-nm="'+esc(nm)+'"><input type="checkbox" data-bsps="'+esc(key)+'" data-nmv="'+esc(nm)+'" '+(on[key]?'checked':'')+'> '+esc(nm)+'</label>'};
@@ -658,6 +659,40 @@ function bankSplitBox(){var id=S.bSp;if(!id)return '';var o=(S.bank||[]).filter(
     (ac?'<div class="bspg">'+(stu.length?stu.map(function(x){return box('학생',x,'학생ID',x['이름']+(x['구분글자']?' '+x['구분글자']:''))}).join(''):'<span class="cap">재원 학생이 없어요</span>')+(tch.length?tch.map(function(t){return box('교사',t,'교사ID',t['이름']+' 선생님')}).join(''):'')+'</div>':'<p class="cap">학원을 고르면 그 학원 재원 학생 · 선생님이 나와요.</p>')+
     '<div class="tbl btbl" style="max-height:260px;margin-top:6px"><table><thead><tr><th>#</th><th>이름</th><th>대상</th><th class="r">금액</th><th>메모</th><th></th></tr></thead><tbody>'+L.map(function(x,i){return '<tr><td class="num cap">'+(i+1)+'</td><td><b>'+esc(x['이름'])+'</b></td><td class="cap">'+esc(x['대상'])+'</td><td class="r"><input type="number" data-bspm="'+i+'" value="'+esc(x['금액'])+'" step="1000" style="width:100px"></td><td><input type="text" data-bspn="'+i+'" value="'+esc(x['메모']||'')+'" style="width:160px"></td><td><button class="btn small ghost" type="button" data-bspx="'+i+'">빼기</button></td></tr>'}).join('')+'</tbody></table></div>'+
     '<div class="row" style="margin-top:6px"><input type="text" id="bspNm" placeholder="명단에 없는 이름" style="width:160px"><button class="btn small" type="button" id="bspAdd">+ 이름 더하기</button><span style="flex:1"></span><button class="btn primary" type="button" id="bspGo">저장</button><button class="btn" type="button" id="bspNo">닫기</button></div></div>'}
+/* ---------- 지급 (인건비 · 강사료) : 행사마다 정한 사람별 지급 ↔ 통장 출금 ---------- */
+function bNorm(x){return String(x||'').replace(/[\s　()（）\[\]·.,\-_/]/g,'').toLowerCase()}
+function bTax(g,r){g=Math.max(0,Math.round(+String(g||'').replace(/[^\d]/g,'')||0));var f=function(x){return Math.floor(x/10)*10},it=r==='3.3'?f(g*0.03):r==='8.8'?f(g*0.4*0.2):0,lt=f(it*0.1);return {g:g,it:it,lt:lt,t:it+lt,net:g-it-lt}}
+function bPayUsed(){var u={};(S.bPays||[]).forEach(function(p){if(p['거래ID'])u[p['거래ID']]=(u[p['거래ID']]||0)+1});return u}
+/* 이 지급과 맞을 출금: 실지급액이 같거나(사람별 나눈 줄 금액 포함) · 받는분에 이름이 있으면 앞으로 */
+function bPayCands(p,used){var net=+p['실지급액']||0,nm=bNorm(p['이름']),d0=p['지급예정일']||'',out=[];if(!net)return out;
+  (S.bank||[]).forEach(function(o){var amt=bOut(o);if(!amt)return;var id=o['거래ID'],sp=((S.bSplits||{})[id]||[]).filter(function(x){return (p['교사ID']&&x['ID']===p['교사ID'])||bNorm(x['이름'])===nm}),hitS=sp.some(function(x){return +x['금액']===net});
+    if(amt!==net&&!hitS)return;if(used[id]&&!hitS&&id!==p['거래ID'])return;var who=bNorm(o['보낸분받는분']+o['적요']+o['내통장표시']),nameHit=hitS||(nm&&who.indexOf(nm)>=0);
+    var dd=d0?Math.abs((new Date(String(o['거래일시']).slice(0,10))-new Date(d0))/864e5):0;if(d0&&dd>150&&!nameHit)return;out.push({o:o,s:(nameHit?1000:0)-dd,name:nameHit})});
+  return out.sort(function(a,b){return b.s-a.s}).slice(0,8)}
+function bPayProj(){var P=(S.bProjs||[]);if(S.bPayP==null)S.bPayP=(P.filter(function(p){return p['사용']!=='안씀'})[0]||{})['프로젝트ID']||'';return S.bPayP}
+function vBankPay(){var pj=bPayProj(),P=S.bProjs||[],all=(S.bPays||[]),L=all.filter(function(p){return !pj||p['프로젝트ID']===pj}),used=bPayUsed(),tx={};(S.bank||[]).forEach(function(o){tx[o['거래ID']]=o});
+  var sum=function(A,k){return A.reduce(function(s,p){return s+(+p[k]||0)},0)},done=L.filter(function(p){return p['거래ID']&&tx[p['거래ID']]}),wait=L.filter(function(p){return !(p['거래ID']&&tx[p['거래ID']])});
+  var labor=(S.bank||[]).filter(function(o){if(!bOut(o)||used[o['거래ID']])return false;var r=bCatRow(o['구분'])||{};if(!(o['구분']==='인건비 · 강사료'||r['중분류']==='인건비'||/인건비|강사료|수당/.test(o['구분']||'')))return false;if(!pj)return true;var bp=bProj(o);return bp&&bp.id===pj});
+  var tiles='<div class="tiles">'+tileH('지급 결정',L.length+'명',won(sum(L,'실지급액'))+' 실지급 · 세전 '+won(sum(L,'지급액')))+tileH('통장에 찍힘',done.length+'명',won(sum(done,'실지급액')))+tileH('아직 안 찍힘',wait.length+'명',won(sum(wait,'실지급액')),wait.length>0)+tileH('결정에 없는 인건비 출금',labor.length+'건',won(labor.reduce(function(s,o){return s+bOut(o)},0)),labor.length>0)+'</div>';
+  var top='<div class="row" style="margin:0 0 8px">'+sel('bPayP',[['','모든 프로젝트']].concat(P.map(function(p){return [p['프로젝트ID'],p['이름']+(p['사용']==='안씀'?' (마감)':'')]})),pj,'프로젝트')+'<button class="btn primary" type="button" id="bPayNew">+ 지급 결정 더하기</button><button class="btn" type="button" id="bPayAuto">이름 · 금액 같은 출금 자동 연결</button><span class="cap">세전 지급액을 적으면 원천세(3.3% · 8.8%)를 빼고 실지급액을 계산해요. 실지급액과 같은 출금을 통장에서 찾아 이어요.</span></div>';
+  var add='';if(S.bPayAdd){var on=S.bPaySel||{},T2=S.D.tch.filter(function(t){return t['상태']!=='탈퇴'}).sort(function(a,b){return String(a['이름']).localeCompare(b['이름'],'ko')}),ta=bTax(S.bPayG,S.bPayR||'3.3');
+    add='<div class="panel" style="border-color:var(--accent);margin-bottom:8px"><b>지급 결정 더하기 · '+esc(pj&&bPj(pj)?bPj(pj)['이름']:'프로젝트 없음')+'</b><div class="row" style="margin:6px 0"><input type="text" id="bpyC" value="'+esc(S.bPayC||'')+'" placeholder="내용 (예: 2027 겨울캠프 교사 수당)" style="width:240px"><span class="cap">세전</span><input type="number" id="bpyG" value="'+esc(S.bPayG||'')+'" step="1000" style="width:120px">'+sel('bpyR',[['3.3','3.3% 사업소득'],['8.8','8.8% 기타소득'],['0','원천징수 없음']],S.bPayR||'3.3','세율')+'<span class="cap">예정일</span><input type="date" id="bpyD" value="'+esc(S.bPayD||'')+'" style="width:150px"><span class="cap">1명 실지급 <b class="num">'+won(ta.net)+'</b> (원천세 '+won(ta.t)+')</span></div>'+
+      '<div class="row" style="margin:0 0 4px"><input type="search" id="bspQ" placeholder="이름 찾기" style="width:160px"><span class="cap" id="bpyCnt">'+Object.keys(on).length+'명 고름</span></div><div class="bspg">'+T2.map(function(t){var nm=t['이름']+(t['구분글자']?' '+t['구분글자']:'');return '<label data-nm="'+esc(nm)+'"><input type="checkbox" data-bpys="'+esc(t['교사ID'])+'" '+(on[t['교사ID']]?'checked':'')+'> '+esc(nm)+' <span class="cap">'+esc(tAcadTxt(t))+'</span></label>'}).join('')+'</div>'+
+      '<div class="row" style="margin-top:6px"><input type="text" id="bpyN" placeholder="명단에 없는 이름 (쉼표로 여러 명)" style="width:260px"><span style="flex:1"></span><button class="btn primary" type="button" id="bPayAdd">더하기</button><button class="btn" type="button" id="bPayNo">닫기</button></div></div>'}
+  var rows=L.slice().sort(function(a,b){return String(a['이름']).localeCompare(b['이름'],'ko')}).map(function(p){var id=p['지급ID'],o=p['거래ID']&&tx[p['거래ID']],c=o?null:bPayCands(p,used);
+      var bank=o?'<span class="pill ok">찍힘</span> <span class="cap">'+esc(String(o['거래일시']).slice(0,10)+' · '+o['보낸분받는분']+' '+won(bOut(o)))+'</span> <button class="btn small ghost" type="button" data-pyu="'+id+'">풀기</button>'
+        :(c.length?'<select data-pyl="'+id+'" style="max-width:260px"><option value="">'+(c[0].name?'후보 '+c.length+'건 · 이름 맞음':'같은 금액 출금 '+c.length+'건')+'</option>'+c.map(function(x){return '<option value="'+esc(x.o['거래ID'])+'">'+esc(String(x.o['거래일시']).slice(0,10)+' '+x.o['보낸분받는분']+' '+won(bOut(x.o))+(x.name?' ✓':''))+'</option>'}).join('')+'</select>':'<span class="pill due">안 찍힘</span>');
+      return '<tr><td><b>'+esc(p['이름'])+'</b>'+(p['교사ID']?'':' <span class="cap">명단 밖</span>')+'</td><td><input type="text" data-pyc="'+id+'" value="'+esc(p['내용'])+'" style="width:170px"></td><td class="r"><input type="number" data-pyg="'+id+'" value="'+esc(p['지급액'])+'" step="1000" style="width:100px"></td><td><select data-pyr="'+id+'">'+['3.3','8.8','0'].map(function(r){return '<option value="'+r+'"'+(String(p['세율'])===r?' selected':'')+'>'+(r==='0'?'없음':r+'%')+'</option>'}).join('')+'</select></td><td class="r num">'+won(p['원천세'])+'</td><td class="r num"><b>'+won(p['실지급액'])+'</b></td><td><input type="date" data-pyd="'+id+'" value="'+esc(p['지급예정일'])+'" style="width:130px"></td><td>'+bank+'</td><td><button class="btn small ghost" type="button" data-pyx="'+id+'">지우기</button></td></tr>'}).join('');
+  var tbl=L.length?'<div class="tbl btbl"><table><thead><tr><th>이름</th><th>내용</th><th class="r">세전</th><th>세율</th><th class="r">원천세</th><th class="r">실지급</th><th>예정일</th><th>통장</th><th></th></tr></thead><tbody>'+rows+'<tr><td><b>합계</b></td><td></td><td class="r num"><b>'+won(sum(L,'지급액'))+'</b></td><td></td><td class="r num"><b>'+won(sum(L,'원천세'))+'</b></td><td class="r num"><b>'+won(sum(L,'실지급액'))+'</b></td><td colspan="3"></td></tr></tbody></table></div>':'<p class="cap">이 프로젝트의 지급 결정이 아직 없어요. 「+ 지급 결정 더하기」로 선생님을 고르고 세전 금액을 적어 주세요.</p>';
+  var extra=labor.length?'<h3 style="margin:14px 0 6px">결정에 없는 인건비 출금 '+labor.length+'건</h3><p class="cap" style="margin:0 0 6px">구분이 인건비인데 어느 지급 결정과도 안 이어진 출금이에요. 지급 결정을 더하거나, 구분을 고쳐 주세요.</p><div class="tbl btbl" style="max-height:260px"><table><tbody>'+labor.map(function(o){return '<tr><td class="num cap">'+esc(String(o['거래일시']).slice(0,10))+'</td><td><b>'+esc(o['보낸분받는분'])+'</b></td><td class="r num">'+won(bOut(o))+'</td><td class="cap">'+esc(bCatName(o['구분']))+'</td><td class="cap">'+esc(o['메모'])+'</td></tr>'}).join('')+'</tbody></table></div>':'';
+  /* 소득신고: 통장에 찍힌 지급만, 찍힌 날짜의 연도로 */
+  var ys=[],byP={};all.forEach(function(p){var o=p['거래ID']&&tx[p['거래ID']];if(!o)return;var y=String(o['거래일시']).slice(0,4);if(ys.indexOf(y)<0)ys.push(y)});ys.sort().reverse();var yy=S.bPayY||ys[0]||'';
+  all.forEach(function(p){var o=p['거래ID']&&tx[p['거래ID']];if(!o||String(o['거래일시']).slice(0,4)!==yy)return;var k=p['교사ID']||'@'+p['이름'],x=byP[k]=byP[k]||{nm:p['이름'],tid:p['교사ID'],n:0,g:0,it:0,lt:0,net:0,r:{}};x.n++;x.g+=+p['지급액']||0;x.it+=+p['소득세']||0;x.lt+=+p['지방세']||0;x.net+=+p['실지급액']||0;x.r[p['세율']]=1});
+  var ks=Object.keys(byP).sort(function(a,b){return byP[a].nm.localeCompare(byP[b].nm,'ko')});
+  var tax='<h3 style="margin:16px 0 6px">소득신고 자료 (통장에 찍힌 지급 · 모든 프로젝트)</h3><div class="row" style="margin:0 0 6px">'+(ys.length?sel('bPayY',ys,yy,'연도'):'')+'<button class="btn small" type="button" id="bPayCopy" '+(ks.length?'':'disabled')+'>표 복사 (엑셀에 붙여넣기)</button><span class="cap">'+ks.length+'명</span></div>'+
+    (ks.length?'<div class="tbl btbl" style="max-height:360px"><table id="bPayTax"><thead><tr><th>이름</th><th>휴대전화</th><th>소속</th><th>소득 구분</th><th class="r">건수</th><th class="r">세전 합</th><th class="r">소득세</th><th class="r">지방세</th><th class="r">실지급 합</th></tr></thead><tbody>'+ks.map(function(k){var x=byP[k],t=x.tid&&T[x.tid];return '<tr><td><b>'+esc(x.nm)+'</b></td><td class="num">'+esc(t?t['휴대전화']||'':'')+'</td><td class="cap">'+esc(t?tAcadTxt(t):'')+'</td><td class="cap">'+esc(Object.keys(x.r).map(function(r){return r==='3.3'?'사업소득':r==='8.8'?'기타소득':'원천징수 없음'}).join(', '))+'</td><td class="r num">'+x.n+'</td><td class="r num">'+won(x.g)+'</td><td class="r num">'+won(x.it)+'</td><td class="r num">'+won(x.lt)+'</td><td class="r num"><b>'+won(x.net)+'</b></td></tr>'}).join('')+'</tbody></table></div>':'<p class="cap">아직 통장에 찍힌 지급이 없어요.</p>');
+  return tiles+top+'<div class="panel">'+add+tbl+extra+tax+'</div>'}
+function bPayGo(op,data,msg,btn){if(btn)btn.disabled=true;return callS('bankPay',op,data).then(function(r){if(btn)btn.disabled=false;if(!r.ok){toast(r.msg);render();return false}bankTake(r);render();if(msg)toast(msg.replace('%n',r.n));return true})}
 function bankLinkBox(){var id=S.bLink;if(!id)return '';var o=(S.bank||[]).filter(function(x){return x['거래ID']===id})[0];if(!o)return '';
   if(!S.pays)return '<div class="note"><span class="spin"></span> 입금 신고 불러오는 중…</div>';
   var L=S.pays.filter(function(x){return x.st==='신고'&&x.aid===o['학원ID']}),sel=S.bLSel||{},sum=0;L.forEach(function(x){if(sel[x.sid+'|'+x.year])sum+=+x.paid||0});var amt=bIn(o);
@@ -907,6 +942,16 @@ document.addEventListener('click',function(e){
   if(d.bok){bankSave([d.bok],{confirm:true},'확정했어요');return}
   if(b.id==='bRecOk'){var rids=bankList().filter(function(o){return o['상태']==='추천'}).map(function(o){return o['거래ID']});if(!confirm('보이는 추천 '+rids.length+'건을 그대로 확정할까요?'))return;b.disabled=true;bankSave(rids,{confirm:true},'%n건 확정했어요');return}
   if(b.id==='bBkGo'){var bk=document.getElementById('bBk').value,bpe=document.getElementById('bBp'),bae=document.getElementById('bBa'),bo2={},sids=Object.keys(S.bSel||{});if(bk)bo2['구분']=bk;if(bpe&&bpe.value)bo2['프로젝트ID']=bpe.value==='*'?'':bpe.value;if(bae&&bae.value)bo2['통장ID']=bae.value;if(!Object.keys(bo2).length){toast('바꿀 것을 골라 주세요');return}b.disabled=true;bankSave(sids,bo2,'%n줄 바꿨어요').then(function(){S.bSel={};render()});return}
+  if(b.id==='bPayNew'){S.bPayAdd=true;S.bPaySel={};render();return}if(b.id==='bPayNo'){S.bPayAdd=false;render();return}
+  if(b.id==='bPayAdd'){var pg=document.getElementById('bpyG').value,pr=document.getElementById('bpyR').value,pc=document.getElementById('bpyC').value,pdt=document.getElementById('bpyD').value,prow=[];
+    Object.keys(S.bPaySel||{}).forEach(function(tid){var t=T[tid];prow.push({'프로젝트ID':S.bPayP||'','교사ID':tid,'이름':t?t['이름']+(t['구분글자']?' '+t['구분글자']:''):tid,'내용':pc,'지급액':pg,'세율':pr,'지급예정일':pdt})});
+    document.getElementById('bpyN').value.split(',').map(function(x){return x.trim()}).filter(Boolean).forEach(function(nm){prow.push({'프로젝트ID':S.bPayP||'','교사ID':'','이름':nm,'내용':pc,'지급액':pg,'세율':pr,'지급예정일':pdt})});
+    if(!prow.length){toast('선생님을 고르거나 이름을 적어 주세요');return}bPayGo('add',prow,'%n명 더했어요',b).then(function(ok){if(ok){S.bPayAdd=false;S.bPaySel={};render()}});return}
+  if(b.id==='bPayAuto'){var us=bPayUsed(),pairs=[];(S.bPays||[]).filter(function(p){return !p['거래ID']&&(!S.bPayP||p['프로젝트ID']===S.bPayP)}).forEach(function(p){var c=bPayCands(p,us).filter(function(x){return x.name});if(c.length){pairs.push({'지급ID':p['지급ID'],'거래ID':c[0].o['거래ID']});us[c[0].o['거래ID']]=1}});
+    if(!pairs.length){toast('이름 · 금액이 같은 출금을 찾지 못했어요');return}bPayGo('link',pairs,'%n명 이었어요',b);return}
+  if(d.pyu){bPayGo('link',[{'지급ID':d.pyu,'거래ID':''}],'풀었어요');return}
+  if(d.pyx){if(!confirm('이 지급 결정을 지울까요?'))return;bPayGo('del',[d.pyx],'지웠어요');return}
+  if(b.id==='bPayCopy'){var tb=document.getElementById('bPayTax');var tsv=[].map.call(tb.querySelectorAll('tr'),function(tr){return [].map.call(tr.children,function(c){return c.textContent.replace(/원$/,'').replace(/,/g,'')}).join('\t')}).join('\n');navigator.clipboard.writeText(tsv).then(function(){toast('복사했어요 · 엑셀에 붙여넣기 하세요')},function(){toast('복사하지 못했어요')});return}
   if(d.bsp){S.bSp=d.bsp;S.bSpA=null;S.bSpL=((S.bSplits||{})[d.bsp]||[]).map(function(x){return {'대상':x['대상'],ID:x['ID'],'이름':x['이름'],'금액':x['금액'],'메모':x['메모']}});S.bSpEach=S.bSpL.length?S.bSpL[0]['금액']:'';render();var pb=document.getElementById('bspEach');if(pb)pb.closest('.panel').scrollIntoView({block:'nearest'});return}
   if(b.id==='bspNo'){S.bSp=null;render();return}
   if(b.id==='bspFill'){var ev=document.getElementById('bspEach').value;S.bSpEach=ev;(S.bSpL||[]).forEach(function(x){x['금액']=ev});render();return}
@@ -968,6 +1013,12 @@ document.addEventListener('compositionend',function(e){if(e.target.id==='q'){S.q
 document.addEventListener('change',function(e){var bt=e.target,bd=bt.dataset||{};
   if(bt.id==='bAcct'){S.bAcct=bt.value;return}
   if(bt.id==='bspEach'){S.bSpEach=bt.value;return}
+  if(bt.id==='bPayP'){S.bPayP=bt.value;S.bPayAdd=false;render();return}if(bt.id==='bPayY'){S.bPayY=bt.value;render();return}
+  if(bt.id==='bpyG'||bt.id==='bpyR'||bt.id==='bpyC'||bt.id==='bpyD'){S[{bpyG:'bPayG',bpyR:'bPayR',bpyC:'bPayC',bpyD:'bPayD'}[bt.id]]=bt.value;if(bt.id==='bpyG'||bt.id==='bpyR')render();return}
+  if(bd.bpys){S.bPaySel=S.bPaySel||{};if(bt.checked)S.bPaySel[bd.bpys]=1;else delete S.bPaySel[bd.bpys];var cn=document.getElementById('bpyCnt');if(cn)cn.textContent=Object.keys(S.bPaySel).length+'명 고름';return}
+  if(bd.pyl){if(bt.value)bPayGo('link',[{'지급ID':bd.pyl,'거래ID':bt.value}],'이었어요');return}
+  if(bd.pyg){bPayGo('set',{'지급ID':bd.pyg,'지급액':bt.value});return}if(bd.pyr){bPayGo('set',{'지급ID':bd.pyr,'세율':bt.value});return}
+  if(bd.pyc){bPayGo('set',{'지급ID':bd.pyc,'내용':bt.value});return}if(bd.pyd){bPayGo('set',{'지급ID':bd.pyd,'지급예정일':bt.value});return}
   if(bt.id==='bspA'){S.bSpA=bt.value;render();return}
   if(bd.bsps){var pp2=bd.bsps.split('|');if(bt.checked)S.bSpL.push({'대상':pp2[0],ID:pp2[1],'이름':bd.nmv,'금액':document.getElementById('bspEach').value||'','메모':''});else S.bSpL=S.bSpL.filter(function(x){return !(x['대상']===pp2[0]&&x.ID===pp2[1])});render();return}
   if(bd.bspm!=null){S.bSpL[+bd.bspm]['금액']=bt.value;render();return}

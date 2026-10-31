@@ -1,4 +1,4 @@
-/* build: 20261031-233034 */
+/* build: 20261031-233343 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -438,7 +438,7 @@ function inputStatus(who) {
   const by = {}; S2.v.forEach(r => { const a = r[sc['학원ID']]; if (!a || (r[sc['상태']] || '재원') !== '재원') return; const o = by[a] = by[a] || { n: 0, sex: 0, tutor: 0, start: 0, pend: 0, edit: '' };
     o.n++; if (!r[sc['성별']]) o.sex++; if (!(cur[r[sc['학생ID']]] || r[sc['담당교사ID']])) o.tutor++; if (!/^\d{4}-\d{2}-\d{2}$/.test(String(r[sc['시작월']] || ''))) o.start++; if (pend[r[sc['학생ID']]]) o.pend++;
     if (String(r[sc['수정자']] || '').indexOf('(원장)') >= 0 && String(r[sc['수정일']] || '') > o.edit) o.edit = String(r[sc['수정일']]); });
-  const list = A.v.filter(r => r[ac['상태']] !== '탈퇴').map(r => { const id = r[ac['학원ID']], o = by[id] || { n: 0, sex: 0, tutor: 0, start: 0, pend: 0, edit: '' }, dd = docs[id] || {}, head = r[ac['원장교사ID']] || '';
+  const list = A.v.filter(r => !r[ac['상태']] || r[ac['상태']] === '운영').map(r => { const id = r[ac['학원ID']], o = by[id] || { n: 0, sex: 0, tutor: 0, start: 0, pend: 0, edit: '' }, dd = docs[id] || {}, head = r[ac['원장교사ID']] || '';
     return { id, name: r[ac['학원명']], kind: r[ac['구분']], head, headName: r[ac['원장명']], headAcc: !!acc[head], acadEdit: String(r[ac['수정자']] || '').indexOf('(원장)') >= 0 ? String(r[ac['수정일']] || '') : '', docs: ['사업자등록증', '교육청인가증', '임대'].filter(k => dd[k]).length, contract: !!r[ac['계약체결일']], tch: tch[id] || 0, stu: o.n, noSex: o.sex, noTutor: o.tutor, noStart: o.start, pend: o.pend, stuEdit: o.edit }; });
   let inbox = null; try { inbox = inboxView_(); } catch (e) { }
   return { list, at: now_(), inbox };

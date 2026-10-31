@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261031-233034 -->
+<!-- build: 20261031-233343 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -186,8 +186,8 @@ function issues(){
   var acad=S.D.acad,tch=S.D.tch,stu=S.D.stu.filter(function(s){return s['상태']==='재원'});
   var tn=dupNames(tch);
   return [
-    ['acad','a_need','확인 필요 학원',acad.filter(function(a){return a['확인']==='확인 필요'}).length,'열 밀림 의심 · 명단에만 있는 학원 · 원장 못 찾음'],
-    ['acad','a_nophone','교실 대표번호 없는 학원',acad.filter(function(a){return a['상태']!=='탈퇴'&&!a['교실대표번호']}).length,'학원 로그인 아이디가 돼요'],
+    ['acad','a_need','확인 필요 학원',acad.filter(function(a){return a['확인']==='확인 필요'&&(!a['상태']||a['상태']==='운영')}).length,'열 밀림 의심 · 명단에만 있는 학원 · 원장 못 찾음'],
+    ['acad','a_nophone','교실 대표번호 없는 학원',acad.filter(function(a){return (!a['상태']||a['상태']==='운영')&&!a['교실대표번호']}).length,'학원 로그인 아이디가 돼요'],
     ['tch','t_need','확인 필요 교사',tch.filter(function(t){return t['확인']==='확인 필요'}).length,'이름 말고 다른 칸이 빈 줄 등'],
     ['tch','t_tag','이름에 구분 글자를 뗀 교사',tch.filter(function(t){return t['구분글자']}).length,'김소연B → 김소연 (B) · 동명이인 확인'],
     ['tch','t_dup','이름이 같은 교사',tch.filter(function(t){return tn[t['이름']]>1}).length,'김소정 · 김다은 · 김경미 등'],
@@ -229,17 +229,19 @@ function q(){return S.q.trim()}
 function acadList(){var qq=q(),f=S.f,is=S.issue;
   return S.D.acad.filter(function(a){
     if(is==='a_need'&&a['확인']!=='확인 필요')return false;
-    if(is==='a_nophone'&&(a['상태']==='탈퇴'||a['교실대표번호']))return false;
+    if(is==='a_nophone'&&a['교실대표번호'])return false;
     if(qq&&!((a['학원명']+' '+a['원장명']+' '+a['주소']+' '+a['교실대표번호']).indexOf(qq)>=0))return false;
-    if(!f.st&&a['상태']&&a['상태']!=='운영')return false; if(f.st&&f.st!=='*'&&a['상태']!==f.st)return false; if(f.ck&&a['확인']!==f.ck)return false; if(f.sd&&a['시도']!==f.sd)return false; if(f.rg&&(f.rg==='-'?a['졸업연주지역']:a['졸업연주지역']!==f.rg))return false; return true})}
+    if(f.st==='off'?(!a['상태']||a['상태']==='운영'):(a['상태']&&a['상태']!=='운영'))return false; if(f.ck&&a['확인']!==f.ck)return false; if(f.sd&&a['시도']!==f.sd)return false; if(f.rg&&(f.rg==='-'?a['졸업연주지역']:a['졸업연주지역']!==f.rg))return false; return true})}
+function acadSeg(){var on=S.D.acad.filter(function(a){return !a['상태']||a['상태']==='운영'}).length,off=S.D.acad.length-on,x=S.f.st==='off';
+  return '<div class="row" role="group" aria-label="학원 보기" style="margin:0 0 10px"><button class="btn'+(x?'':' primary')+'" type="button" data-ast="" aria-pressed="'+!x+'">운영 중 '+on+'곳</button><button class="btn'+(x?' primary':'')+'" type="button" data-ast="off" aria-pressed="'+x+'">휴원 · 탈퇴 '+off+'곳</button>'+(x?'<span class="cap">다시 운영하면 학원을 열어 상태를 「운영」으로 바꾸세요. 그러면 운영 중 목록 · 선생님 화면 · 행사 명단에 다시 나와요.</span>':'')+'</div>'}
 function vAcads(){
   var list=acadList(),per=50,page=list.slice(S.page*per,(S.page+1)*per);
   var tc={},sc={};S.D.tch.forEach(function(t){tAcads(t).forEach(function(id){tc[id]=(tc[id]||0)+1})});S.D.stu.forEach(function(s){if(s['상태']==='재원')sc[s['학원ID']]=(sc[s['학원ID']]||0)+1});
   var sds=[];S.D.acad.forEach(function(a){if(a['시도']&&sds.indexOf(a['시도'])<0)sds.push(a['시도'])});
   return '<div class="sec-h"><div><h2>학원정보</h2><p>학원은 관리자가 만들고, 원장으로 지정된 선생님은 자기 학원 연락처 · 주소 · 교습과목을 고칠 수 있어요(고치면 「확인 필요」).</p></div><button class="btn primary" type="button" data-new="acad">+ 학원 추가</button></div>'+
-  (S.edit&&S.edit.kind==='acad'?acadEditor():'')+issueBar()+
+  (S.edit&&S.edit.kind==='acad'?acadEditor():'')+acadSeg()+issueBar()+
   '<div class="panel"><div class="filters"><input type="search" id="q" value="'+esc(S.q)+'" placeholder="학원명·원장·주소·번호" style="width:min(240px,100%)">'+
-    sel('fst',[['','운영 중만'],['*','상태 전체'],'운영','휴원','탈퇴'],S.f.st,'상태')+sel('fck',[['','확인 전체']].concat(CHECKS),S.f.ck,'확인')+sel('fsd',[['','시·도 전체']].concat(sds.sort()),S.f.sd,'시도')+sel('frg',[['','졸업연주 지역 전체']].concat(REGIONS).concat([['-','미정']]),S.f.rg,'졸업연주 지역')+'<button class="btn small" type="button" id="fillRg">빈 졸업연주 지역을 시·도로 채우기</button></div>'+bulkBar()+
+    sel('fck',[['','확인 전체']].concat(CHECKS),S.f.ck,'확인')+sel('fsd',[['','시·도 전체']].concat(sds.sort()),S.f.sd,'시도')+sel('frg',[['','졸업연주 지역 전체']].concat(REGIONS).concat([['-','미정']]),S.f.rg,'졸업연주 지역')+'<button class="btn small" type="button" id="fillRg">빈 졸업연주 지역을 시·도로 채우기</button></div>'+bulkBar()+
   '<div class="tbl"><table><thead><tr><th class="ck"><input type="checkbox" id="ckAll" aria-label="이 쪽 모두 선택"></th><th>번호</th><th>학원명</th><th>구분</th><th>지역</th><th>졸업연주</th><th>원장</th><th>교실 대표번호</th><th class="r">교사</th><th class="r">학생</th><th>계약</th><th>상태</th><th>확인</th><th>확인 메모</th></tr></thead><tbody>'+
   page.map(function(a){var id=a['학원ID'];return '<tr class="click '+(S.edit&&S.edit.id===id?'on':'')+'" data-edit="acad|'+id+'"><td class="ck"><input type="checkbox" data-ck="'+id+'" '+(S.sel[id]?'checked':'')+' aria-label="선택"></td><td class="num cap">'+id+'</td><td><b>'+esc(a['학원명'])+'</b></td><td>'+esc(a['구분'])+'</td><td>'+esc(a['시도'])+' '+esc(a['시군구'])+'</td><td>'+(a['졸업연주지역']?'<span class="cap">'+esc(a['졸업연주지역'])+'</span>':'<span class="pill due">미정</span>')+'</td><td>'+(a['원장교사ID']?esc(T[a['원장교사ID']]?T[a['원장교사ID']]['이름']:a['원장명'])+(a['공동원장ID']&&T[a['공동원장ID']]?' · '+esc(T[a['공동원장ID']]['이름']):''):(a['원장명']?esc(a['원장명'])+' <span class="pill due">연결 안 됨</span>':'-'))+'</td><td class="num">'+fmt(a['교실대표번호'])+'</td><td class="r num">'+(tc[id]||0)+'</td><td class="r num">'+(sc[id]||0)+'</td><td>'+(a['계약체결일']?'<span class="pill ok num">'+esc(a['계약체결일'])+'</span>':'<span class="pill mute">미체결</span>')+'</td><td>'+(a['상태']==='운영'?'<span class="pill ok">운영</span>':'<span class="pill mute">'+esc(a['상태'])+'</span>')+'</td><td>'+ckPill(a['확인'])+'</td><td class="cap">'+esc(a['확인메모'])+'</td></tr>'}).join('')+
   '</tbody></table></div>'+pager(list.length,per)+'</div>'}
@@ -300,7 +302,7 @@ function tchList(){var qq=q(),f=S.f,is=S.issue,dn=dupNames(S.D.tch);
     if(f.ac&&tAcads(t).indexOf(f.ac)<0)return false; if(f.ins&&t['전공']!==f.ins)return false; if(f.ct&&(f.ct==='-'?t['계약체결']:t['계약체결']!==f.ct))return false; if(f.kd&&(f.kd==='-'?(t['회원구분']&&t['회원구분']!=='확인 전'):t['회원구분']!==f.kd))return false; if(f.pw&&t['회비납부방법']!==f.pw)return false; if(f.rl&&(f.rl==='-'?t['직급']:t['직급']!==f.rl))return false; if(f.cp&&(t['캠프교수']==='예')!==(f.cp==='예'))return false; if(f.fr&&(t['회비구분']==='면제')!==(f.fr==='예'))return false; if(f.ck&&t['확인']!==f.ck)return false;
     if(f.du){var d=duesOf('교사',t['교사ID'],'2026'),paid=d&&+d['부과']>0&&+d['납부']>=+d['부과'];if(f.du==='면제'?t['회비구분']!=='면제':f.du==='납부'?t['회비구분']==='면제'||!paid:t['회비구분']==='면제'||paid)return false}
     return true}).sort(function(x,y){return is==='t_dup'?x['이름'].localeCompare(y['이름'],'ko'):0})}
-function acadOpts(first){return [['',first]].concat(S.D.acad.filter(function(a){return a['상태']!=='탈퇴'}).map(function(a){return [a['학원ID'],a['학원명']]}).sort(function(x,y){return x[1].localeCompare(y[1],'ko')}))}
+function acadOpts(first){var by=function(x,y){return x[1].localeCompare(y[1],'ko')};return [['',first]].concat(S.D.acad.filter(function(a){return !a['상태']||a['상태']==='운영'}).map(function(a){return [a['학원ID'],a['학원명']]}).sort(by)).concat(S.D.acad.filter(function(a){return a['상태']==='휴원'}).map(function(a){return [a['학원ID'],a['학원명']+' (휴원)']}).sort(by))}
 /* ---------- 관계자정보 (10-31): 회원관리 외부인(X0001) — 초빙교수 · 반주자 · 지휘자 · 통역 · 초청강사 · 스태프 ---------- */
 var EXT_ROLES=['초빙교수','반주자','지휘자','통역','초청강사','스태프','기타'];
 function vExt(){var qq=q(),fr=S.f.xr||'',acc=S.D.acc||{};
@@ -666,6 +668,7 @@ document.addEventListener('click',function(e){
   if(d.pg){S.f.pg=d.pg;render();return}
   if(b.id==='progRe'){loadProg();render();return}
   if(d.ibx){b.disabled=true;callS('inboxDone',d.ibx).then(function(r){b.disabled=false;if(!r.ok){toast(r.msg);return}S.prog=r;render();toast('확인했어요')});return}
+  if(b.dataset&&b.dataset.ast!==undefined){S.f.st=b.dataset.ast;S.page=0;S.sel={};S.issue='';render();return}
   if(b.id==='rosterGo'){b.disabled=true;callS('rosterNow').then(function(r){b.disabled=false;if(!r.ok){toast(r.msg);return}S.roster=r;render();toast('행사용 명단을 만들었어요')});return}
   if(b.id==='payRe'){loadPay();render();return}
   if(d.pok||d.pno){var k=+(d.pok||d.pno),x=S.pays[k];if(!x)return;var gv=function(id){var e=document.getElementById(id);return e?e.value.trim():''};

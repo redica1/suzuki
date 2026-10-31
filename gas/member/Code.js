@@ -1,4 +1,4 @@
-/* build: 20261101-014745 */
+/* build: 20261101-015232 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -1928,12 +1928,14 @@ function bankGuess_(row, ctx) {
       : /고속|버스|철도|코레일|발권|택시|주유|하이패스|srt|ktx/.test(n) ? '교통 · 출장' : /인쇄|제작|액자|뱃지/.test(n) ? '인쇄 · 제작' : '';
     return { k, a: '', t: '', why: k ? '낱말' : '' };
   }
-  let a = '', al = 0; ctx.acads.forEach(x => { if (x.core.length >= 2 && x.core.length > al && n.indexOf(x.core) >= 0) { a = x.id; al = x.core.length; } });
-  let t = ''; const ts = ctx.teachers.filter(x => x.n.length >= 2 && n.indexOf(x.n) === 0); if (ts.length === 1) t = ts[0].id;
-  const cls = a && ctx.acadKind[a] === '클래스';
-  let k = /졸업|졸연/.test(n) ? (/티켓/.test(n) ? '졸연티켓' : '졸업연주') : /티켓/.test(n) ? '졸연티켓' : /가족방/.test(n) ? '캠프 가족방' : /캠프|레슨추가/.test(n) ? '캠프 참가비' : /연수/.test(n) ? '교사연수'
-    : /회비|협회비|연회/.test(n) ? (t && !a && inAmt >= 100000 ? '교사회비' : '학생회비') : '';
-  if (!k && t && !a && inAmt >= 200000 && inAmt <= 500000 && inAmt % 10000 === 0) k = '교사회비';
+  let t = '', tl = 0; { const ts = ctx.teachers.filter(x => x.n.length >= 2 && n.indexOf(x.n) === 0); const L = ts.reduce((m, x) => Math.max(m, x.n.length), 0), top = ts.filter(x => x.n.length === L), ids = top.map(x => x.id).filter((x, k, s) => s.indexOf(x) === k); if (ids.length === 1) { t = ids[0]; tl = L; } }
+  let a = '', al = 0; ctx.acads.forEach(x => { const p = n.indexOf(x.core, tl); if (x.core.length >= 2 && x.core.length > al && p >= tl) { a = x.id; al = x.core.length; } });   /* 선생님 이름 안쪽(예: 유정원 ⊃ 정원)은 학원으로 보지 않음 */
+  if (!a && tl) ctx.acads.forEach(x => { if (x.core.length > al && n.indexOf(x.core) === 0 && x.core.length >= tl) { a = x.id; al = x.core.length; } });
+  const cls = a && ctx.acadKind[a] === '클래스', has = re => re.test(n), mon = +String(row['거래일시'] || '').slice(5, 7), tdues = inAmt >= 290000 && inAmt <= 360000 && inAmt % 10000 === 0;
+  let k = has(/티켓/) ? '졸연티켓' : has(/졸업|졸연/) ? '졸업연주' : has(/가족방/) ? '캠프 가족방' : has(/캠프|레슨추가/) ? '캠프 참가비' : has(/연수/) ? '교사연수'
+    : has(/교사회비|교사연회비|교사협회비/) ? '교사회비' : has(/회비|연회|협회비/) ? (has(/학생|어린이|인원|추가|\d+명/) ? '학생회비' : t && (!a || cls) && inAmt >= 200000 && inAmt <= 500000 ? '교사회비' : '학생회비')
+    : has(/참가비/) ? (mon >= 6 && mon <= 8 ? '캠프 참가비' : '졸업연주') : '';
+  if (!k && t && (!a || cls) && tdues) k = '교사회비';
   if (!k && (a || t) && inAmt > 0 && inAmt % 30000 === 0 && inAmt <= 3000000) k = '학생회비';
   if (k === '교사회비' && cls) a = '';
   if (k !== '교사회비' && !a && t && ctx.tAcad[t]) a = ctx.tAcad[t];
@@ -1944,7 +1946,7 @@ function bankCtx_(B) {
   const A = tbl_('학원'), T = tbl_('교사'), ctx = { acads: [], teachers: [], mem: {}, acadKind: {}, acadHead: {}, tAcad: {} };
   A.v.forEach((r, i) => { const id = A.get(i, '학원ID'), nm = String(A.get(i, '학원명') || ''); ctx.acadKind[id] = A.get(i, '구분'); ctx.acadHead[id] = A.get(i, '원장교사ID');
     const core = bankNorm_(nm.replace(/스즈키플루트$|스즈키$|음악학원$|\s*클래스$/, '')); [bankNorm_(nm), core].filter((x, k, s) => x && s.indexOf(x) === k).forEach(c => ctx.acads.push({ id, core: c })); });
-  T.v.forEach((r, i) => { const id = T.get(i, '교사ID'); if (T.get(i, '상태') === '탈퇴') return; ctx.teachers.push({ id, n: bankNorm_(T.get(i, '이름')) }); ctx.tAcad[id] = T.get(i, '학원1'); });
+  T.v.forEach((r, i) => { const id = T.get(i, '교사ID'); if (T.get(i, '상태') === '탈퇴') return; const nm = bankNorm_(T.get(i, '이름')), tg = bankNorm_(T.get(i, '구분글자')); ctx.teachers.push({ id, n: nm }); if (tg) ctx.teachers.push({ id, n: nm + tg }); ctx.tAcad[id] = T.get(i, '학원1'); });
   if (B) B.v.forEach((r, i) => { const st = B.get(i, '상태'); if (st !== '확정' && st !== '연결') return; ctx.mem[bankNorm_(B.get(i, '보낸분받는분'))] = { k: B.get(i, '구분'), a: B.get(i, '학원ID'), t: B.get(i, '교사ID') }; });
   return ctx;
 }
@@ -1989,7 +1991,7 @@ function bankSet(who, ids, o) {
       const ns = st === '연결' ? '연결' : (o.confirm || '구분' in up || '학원ID' in up || '교사ID' in up) ? (k ? '확정' : '미분류') : st;
       B.set(i, Object.assign({}, up, { '상태': ns, '수정일': stamp, '수정자': who.name })); n++; });
     if (n) log_(who.name, '통장', ids.length === 1 ? ids[0] : '-', o.confirm ? '확정' : '수정', n + '줄 ' + Object.keys(up).map(k => k + '=' + up[k]).join(' · '));
-    return Object.assign(bankList(who), { n });
+    return { n, h: B.h, upd: ids.map(id => B.find(id)).filter(i => i >= 0).map(i => B.v[i]) };
   } finally { lock.releaseLock(); }
 }
 /** 회비 확인 잇기. 교사회비: 그 선생님 연회비(거래 연도)에 납부 더하고 확인. 학생회비: 고른 입금 신고를 거래 날짜로 확인 */

@@ -1,4 +1,4 @@
-/* build: 20261031-221902 */
+/* build: 20261031-235802 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -224,6 +224,7 @@ function login(name, phone, consent) {
  * 회원관리 「외부인」(X0001) 계정 = 관계자: 학원 「관계자」로만 접수, 본인 참가 구분 = 역할(초빙교수 · 반주자 …, 참가비는 캠프 설정 참가비표), 가족은 회원 가족 참가비, 연회비 없음.
  * 운영진은 관리자 화면 「접수 · 입금 확인 › 관계자」에서 대신 등록(staffAdd). 초빙교수는 「교수진」 탭에 자동으로 들어감(staffProfs_). */
 const STAFF_ACAD = '관계자';
+const NOACAD = '소속 없음';   /* 학원 소속이 없는 회원 선생님(협회 단체납부 등)의 접수 묶음 (10-31). 본인 접수만 보임 */
 const STAFF_TYPES = ['초빙교수', '반주자', '지휘자', '통역', '초청강사', '스태프', '기타 관계자'];
 const STAFF_FAM = ['회원의 첫번째 보호자', '회원의 그외 악기 안하는 동반가족', '동반가족 중 돌전아기'];
 const isStaffT_ = t => t && t.kind === '외부인';
@@ -457,8 +458,9 @@ function loginT_(t, consent) {
   try { ensureSettings_(); } catch (x) {}
   const open = acadOpen_();
   const own = [...new Set(loadSubs_().filter(x => x.owner === t.name).map(x => x.acad))];
-  const acads = [...new Set(t.acads.concat(own))].filter(a => !open || open.includes(a));
-  if (!acads.length) return { ok: false, msg: '지금은 ' + open.join(', ') + '만 접수할 수 있어요.' };
+  let acads = [...new Set(t.acads.concat(own))].filter(a => !open || open.includes(a));
+  if (!acads.length && !t.acads.length && (!open || open.includes(NOACAD))) acads = [NOACAD];
+  if (!acads.length) return { ok: false, msg: open ? '지금은 ' + open.join(', ') + '만 접수할 수 있어요.' : '소속 학원이 없어요. 협회에 문의해 주세요.' };
   const token = Utilities.getUuid();
   CacheService.getScriptCache().put('tok_' + token, JSON.stringify({ name: t.name, acads }), 21600);
   log_(t.name, '로그인', '');
@@ -526,6 +528,7 @@ function bundle_(acads, owner) {
   const rosters = {};
   acads.forEach(a => {
     if (a === STAFF_ACAD) { rosters[a] = { teachers: [], students: [] }; return; }   /* 관계자: 본인은 화면이 넣음 */
+    if (a === NOACAD) { rosters[a] = { teachers: ts.filter(t => !t.acads.length && t.name === owner).map(t => ({ id: t.id, name: t.name, role: t.role, inst: t.inst, paidDate: t.paidDate, dueAmt: t.dueAmt, extra: [] })), students: [] }; return; }   /* 소속 없음: 본인만 */
     rosters[a] = {
       teachers: ts.filter(t => t.acads.includes(a)).map(t => ({ id: t.id, name: t.name, role: t.role, inst: t.inst, paidDate: t.paidDate, dueAmt: t.dueAmt, extra: t.acads.filter(x => x !== a) })),
       students: st.filter(r => String(r['학원']) === a && r['ID']).map(r => ({
@@ -536,7 +539,7 @@ function bundle_(acads, owner) {
   });
   const all = loadSubs_();
   let camp = null; try { camp = campPublic_(); } catch (x) {}
-  return { rosters, subs: all.filter(sb => acads.includes(sb.acad) && ((sb.acad !== GUEST_ACAD && sb.acad !== STAFF_ACAD) || sb.owner === owner)), teams: teams_(all), bank: bankInfo_(), today: today_(), profs, camp };
+  return { rosters, subs: all.filter(sb => acads.includes(sb.acad) && ((sb.acad !== GUEST_ACAD && sb.acad !== STAFF_ACAD && sb.acad !== NOACAD) || sb.owner === owner)), teams: teams_(all), bank: bankInfo_(), today: today_(), profs, camp };
 }
 
 /* ---------------- 접수 읽고 쓰기 ---------------- */

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261101-014330 -->
+<!-- build: 20261101-014632 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -878,7 +878,8 @@ document.addEventListener('keydown',function(e){if(e.target&&e.target.id==='iPh'
 document.addEventListener('keydown',function(e){if(e.key!=='Enter')return;var m={iNm:'lookup',iPh:'lookup',eEmU:'sendCode',eEmX:'sendCode',cCode:'verify',leU:'doLogin',leX:'doLogin',lp:'doLogin',fe2U:'sendReset',fe2X:'sendReset',rp:'doReset'}[e.target.id];if(m){e.preventDefault();var b=document.getElementById(m);if(b)b.click()}});
 
 (function start(){try{S.sess=sessionStorage.getItem('tm-sess')||''}catch(x){}
-  call('tHello').then(function(h){if(h.ok){S.test=!!h.test;S.acads=h.acads||[]}
-    if(S.sess){S.v='me';render();loadMe()}else render()})})();
+  var go0=function(){call('tHello').then(function(h){if(h.ok){S.test=!!h.test;S.acads=h.acads||[]}
+    if(S.sess){S.v='me';render();loadMe()}else render()})};
+  try{google.script.url.getLocation(function(l){var a=l&&l.parameter&&l.parameter.as;if(a)setSess(a);go0()})}catch(x){go0()}})();
 </script>
 </body></html>

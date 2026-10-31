@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261101-005633 -->
+<!-- build: 20261101-011019 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -226,7 +226,7 @@ function pager(total,per){var pages=Math.max(1,Math.ceil(total/per));if(S.page>=
   return '<div class="pager"><span>'+total+'개'+(pages>1?' 중 '+(S.page*per+1)+'–'+Math.min(total,(S.page+1)*per):'')+'</span>'+(pages>1?'<button class="btn small" type="button" data-pg="-1" '+(S.page===0?'disabled':'')+'>이전</button><button class="btn small" type="button" data-pg="1" '+(S.page>=pages-1?'disabled':'')+'>다음</button>':'')+'</div>'}
 function issueBar(){if(!S.issue)return '';var x=issues().filter(function(i){return i[1]===S.issue})[0];return x?'<div class="note info row" style="justify-content:space-between"><span>「'+esc(x[2])+'」만 보는 중 · '+x[3]+'개</span><button class="btn small" type="button" id="clrIssue">모두 보기</button></div>':''}
 function sel(id,opts,v,label){return '<select id="'+id+'" aria-label="'+esc(label)+'">'+opts.map(function(o){var k=Array.isArray(o)?o[0]:o,l=Array.isArray(o)?o[1]:o;return '<option value="'+esc(k)+'" '+(String(k)===String(v||'')?'selected':'')+'>'+esc(l)+'</option>'}).join('')+'</select>'}
-function bulkBar(kind){var n=Object.keys(S.sel).length;return n?'<div class="row note info"><b>'+n+'개 선택</b>'+(S.tab==='tch'?'<span class="cap">한꺼번에 바꾸기</span>'+sel('bCamp',[['*','캠프교수 그대로'],['예','캠프교수 예'],['아니오','캠프교수 아니오']],'*','캠프교수')+sel('bFree',[['*','회비면제 그대로'],['면제','회비면제 예'],['납부','회비면제 아니오']],'*','회비면제')+'<button class="btn small primary" type="button" id="bApply">선택한 '+n+'명에게 적용</button><span class="cap">· 확인 표시:</span>':'')+'<button class="btn small primary" type="button" data-bulk="확인">확인으로</button><button class="btn small" type="button" data-bulk="확인 필요">확인 필요로</button><button class="btn small ghost" type="button" data-bulk="확인 전">확인 전으로</button><button class="btn small ghost" type="button" id="selClr">선택 풀기</button></div>':''}
+function bulkBar(kind){var n=Object.keys(S.sel).length;return n?'<div class="row note info"><b>'+n+'개 선택</b>'+(S.tab==='tch'?'<span class="cap">한꺼번에 바꾸기</span>'+sel('bCamp',[['*','캠프교수 그대로'],['예','캠프교수 예'],['아니오','캠프교수 아니오']],'*','캠프교수')+sel('bFree',[['*','회비면제 그대로'],['면제','회비면제 예'],['납부','회비면제 아니오']],'*','회비면제')+'<button class="btn small primary" type="button" id="bApply">선택한 '+n+'명에게 적용</button><span class="cap">· 확인 표시:</span>':'')+'<button class="btn small primary" type="button" data-bulk="확인">확인으로</button><button class="btn small" type="button" data-bulk="확인 필요">확인 필요로</button><button class="btn small ghost" type="button" data-bulk="확인 전">확인 전으로</button>'+(S.tab==='stu'?'<button class="btn small" type="button" id="bDelStu" style="color:var(--bad)">선택 삭제</button>':'')+'<button class="btn small ghost" type="button" id="selClr">선택 풀기</button></div>':''}
 function q(){return S.q.trim()}
 
 /* ---------- 학원 ---------- */
@@ -485,7 +485,7 @@ function stuEditor(){var s=S.edit.id==='new'?{'학원ID':S.f.ac||'','상태':'�
     fld('e_성별','성별',s['성별']||'',{sel:[['','선택'],'남','여']})+fld('e_출생연도','출생연도',s['출생연도'],{num:1,max:4,hint:s['출생연도추정']?'나이로 계산한 값':''})+fld('e_전공','전공',s['전공'],{sel:[['','선택']].concat(INSTS)})+fld('e_시작월','시작월',s['시작월'],{hint:'예: 2025-03'})+
     fld('e_담당교사ID','담당교사',s['담당교사ID'],{sel:[['','미지정']].concat(ts)})+fld('e_상태','상태',s['상태'],{sel:['재원','퇴원']})+fld('e_확인','확인',s['확인'],{sel:CHECKS})+
     fld('e_확인메모','확인 메모',s['확인메모'],{wide:1})+fld('e_메모','메모',s['메모'],{wide:1,area:1})+'</div>'+
-    (s['학생ID']?duesBox('학생',s['학생ID'],null,''):'')+'<p class="err" id="edErr"></p></div>'}
+    (s['학생ID']?duesBox('학생',s['학생ID'],null,''):'')+(s['학생ID']?'<div class="row" style="justify-content:flex-end"><span class="cap">그만둔 학생은 상태를 「퇴원」으로 · 잘못 넣은 학생만 삭제</span><button class="btn small" type="button" id="delStu" style="color:var(--bad)">학생 삭제</button></div>':'')+'<p class="err" id="edErr"></p></div>'}
 
 function accPill(id){var a=S.D.acc[id];return a==='사용'?'<span class="pill ok">가입</span>':a==='대기'?'<span class="pill due">확인 대기</span>':'<span class="pill mute">미가입</span>'}
 
@@ -702,6 +702,8 @@ document.addEventListener('click',function(e){
   if(b.id==='closeEd'){S.edit=null;S.payOpen=null;render();return}
   if(d.payv){callS('payView',d.payv).then(function(r){if(!r.ok){toast(r.msg);return}if(!r.pay){toast('정산 정보가 아직 없어요');return}S.payOpen={id:d.payv,pay:r.pay};render()});return}
   if(b.id==='payClose'){S.payOpen=null;render();return}
+  if(b.id==='delStu'||b.id==='bDelStu'){var ids=b.id==='delStu'?[S.edit.id]:Object.keys(S.sel);if(!ids.length)return;var nm1=ids.length===1&&ST[ids[0]]?ST[ids[0]]['이름']+' 학생을':ids.length+'명을';if(!confirm(nm1+' 지울까요? 담당 · 재원 이력도 함께 지워지고 되돌릴 수 없어요.\n(회비를 낸 학생은 지우지 않아요 — 퇴원으로 바꿔 주세요)'))return;b.disabled=true;
+    callS('delStus',ids).then(function(r){b.disabled=false;if(!r.ok){toast(r.msg);return}var g={};r.ids.forEach(function(x){g[x]=1});S.D.stu=S.D.stu.filter(function(x){return !g[x['학생ID']]});S.sel={};if(S.edit&&g[S.edit.id])S.edit=null;index();render();toast(r.n+'명 지웠어요'+(r.keep.length?' · 회비 · 행사 기록이 있어 남긴 학생: '+r.keep.join(', ')+' (퇴원으로 바꿔 주세요)':''))});return}
   if(b.id==='delAcad'){var da=A[S.edit.id];if(!confirm(da['학원명']+' 학원을 지울까요? 되돌릴 수 없어요.'))return;
     callS('delAcad',S.edit.id).then(function(r){if(!r.ok){toast(r.msg);return}S.D.acad=S.D.acad.filter(function(x){return x['학원ID']!==S.edit.id});S.edit=null;index();render();toast(da['학원명']+' 을 지웠어요')});return}
   if(b.id==='saveEd'){saveEd(false);return}

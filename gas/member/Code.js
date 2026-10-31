@@ -1,4 +1,4 @@
-/* build: 20261101-005633 */
+/* build: 20261101-011019 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -105,7 +105,7 @@ function include(n) { return HtmlService.createHtmlOutputFromFile(n).getContent(
 
 function api(name, args) {
   const open = { login, hello, tHello, tEvents, tLookup, tStart, tResend, tVerify, tCreate, tLogin, tForgot, tReset, tMe, tSavePay, tSavePart, tSaveInfo, tSavePhoto, tAcad, tSaveAcad, tDocUp, tDocGet, tSaveStu, tSaveStus, tStuDetail, tStuSave, tStuTutor, tStuTutorDel, tStuState, tStuStateDel, tMyStu, tMyStuDetail, tMyStuPay, tTchSaves, tTchEnd, tTchEvent, tTchAssign, tTchStart, tSaveRrn, tAddWork, tClassCreate, tEndWork, tMainWork, tLogout, bPost, bMine, bReply };
-  const fns = { boot, saveRow, setCheck, logs, importRoster, saveDues, delDues, reqs, reqDo, delAcad, payView, bulkSet, saveWorks, importPastDues, bList, bSet, bComment, photoGet, photoDel, fillRegions, saveRates, docList, docUp, docGet, docDel, payList, payOk, payNo, memView, rosterNow, inputStatus, inboxDone, acctReset, classFromStudents };
+  const fns = { boot, saveRow, setCheck, logs, importRoster, saveDues, delDues, reqs, reqDo, delAcad, payView, bulkSet, saveWorks, importPastDues, bList, bSet, bComment, photoGet, photoDel, fillRegions, saveRates, docList, docUp, docGet, docDel, payList, payOk, payNo, memView, rosterNow, inputStatus, inboxDone, acctReset, classFromStudents, delStus };
   try {
     if (open[name]) return Object.assign({ ok: true }, open[name].apply(null, args || []));
     if (!fns[name]) throw new UserError('알 수 없는 요청이에요.');
@@ -214,6 +214,24 @@ function delAcad(who, id) {
     A.sh.deleteRow(i + 2);
     log_(who.name, '학원', id, '삭제', name);
     return { ok2: true };
+  } finally { lock.releaseLock(); }
+}
+/** 관리자: 잘못 넣은 학생 지우기 (11-01). 회비를 낸 기록이나 행사 참가 이력이 있으면 지우지 않고 「퇴원」을 권함.
+ *  지우면 그 학생의 담당 · 재원 이력 · (납부 없는) 연회비 줄도 함께 지움 */
+function delStus(who, ids) {
+  ids = (ids || []).map(String).filter((x, k, a) => x && a.indexOf(x) === k).slice(0, 500); if (!ids.length) fail('지울 학생을 골라 주세요.');
+  const lock = LockService.getScriptLock(); lock.waitLock(30000);
+  try {
+    const S2 = tbl_('학생'), D = tbl_('연회비'), P = tbl_('참가이력'), paid = {}, part = {};
+    D.v.forEach(r => { if (r[0] === '학생' && +r[4] > 0) paid[r[1]] = 1; });
+    P.v.forEach((r, i) => { if (P.get(i, '대상') === '학생') part[P.get(i, 'ID')] = 1; });
+    const del = [], keep = [], gone = {}, names = [];
+    ids.forEach(id => { const i = S2.find('학생ID', id); if (i < 0) return; if (paid[id] || part[id]) keep.push(S2.get(i, '이름')); else { del.push(i); gone[id] = 1; names.push(S2.get(i, '이름') + '(' + id + ')'); } });
+    del.sort((a, b) => b - a).forEach(i => S2.sh.deleteRow(i + 2));
+    ['담당', '재원이력'].forEach(n => { const R = tbl_(n), c = R.h.indexOf('학생ID'); R.v.map((r, i) => gone[r[c]] ? i : -1).filter(i => i >= 0).sort((a, b) => b - a).forEach(i => R.sh.deleteRow(i + 2)); });
+    { const D2 = tbl_('연회비'); D2.v.map((r, i) => r[0] === '학생' && gone[r[1]] ? i : -1).filter(i => i >= 0).sort((a, b) => b - a).forEach(i => D2.sh.deleteRow(i + 2)); }
+    if (del.length) { dirty_('학생'); log_(who.name, '학생', '-', '삭제', names.join(', ').slice(0, 1000)); }
+    return { n: del.length, ids: Object.keys(gone), keep };
   } finally { lock.releaseLock(); }
 }
 /** 관리자: 교사 여러 명에게 직급 · 캠프교수 · 회비면제 한꺼번에 (10-28) */

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261031-234025 -->
+<!-- build: 20261031-234054 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -78,7 +78,7 @@ input[type=text],input[type=tel],input[type=password],input[type=search],input[t
 .btn.ghost{background:transparent}
 .btn:disabled{opacity:.45;cursor:not-allowed}
 .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-.tbl{overflow:auto;max-height:calc(100vh - 96px);max-height:calc(100dvh - 96px);overscroll-behavior:contain}.tbl thead th{z-index:2;box-shadow:inset 0 -1px 0 var(--line)}
+.tbl{overflow:auto;max-height:calc(100vh - 96px);max-height:calc(100dvh - 96px);overscroll-behavior:contain}.tbl thead th{z-index:2;box-shadow:inset 0 -1px 0 var(--line)}.tbl.cardbox{display:grid;gap:12px;align-content:start;padding-right:2px}
 table{border-collapse:collapse;width:100%;font-size:15.5px}
 th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
 th{font-size:14px;color:var(--muted);font-weight:600;background:var(--sunk);position:sticky;top:0}
@@ -507,7 +507,7 @@ function vReq(){var L=S.reqs;if(!L)return '<div class="panel"><span><span class=
     '<div class="tile warn"><span class="k">이메일 확인</span><span class="v">'+L.filter(function(q){return q['상태']==='대기'&&q['종류']==='이메일 확인'}).length+'</span><span class="s">명단과 다른 이메일</span></div>'+
     '<div class="tile warn"><span class="k">외부인</span><span class="v">'+L.filter(function(q){return q['상태']==='대기'&&q['종류']==='외부인'}).length+'</span><span class="s">초빙교수·반주자 등</span></div>'+
     '<div class="tile"><span class="k">정보 수정</span><span class="v">'+L.filter(function(q){return q['상태']==='대기'&&q['종류']==='정보 수정'}).length+'</span><span class="s">「달라요」 메모</span></div></div>'+
-    (list.length?list.map(reqCard).join(''):'<div class="panel"><p class="cap">요청이 없어요.</p></div>')}
+    (list.length?'<div class="tbl cardbox">'+list.map(reqCard).join('')+'</div>':'<div class="panel"><p class="cap">요청이 없어요.</p></div>')}
 function reqWorks(info){var w=info['_근무'];if(!Array.isArray(w)){try{w=JSON.parse(info['근무JSON']||'null')}catch(x){w=null}}
   if(!Array.isArray(w)||!w.length)return esc(info['소속 학원']||info['근무지']);
   return w.map(function(x,i){return '<div>'+(i===0?'<span class="pill info">주 소속</span> ':'')+'<b>'+esc(x.id?((A[x.id]||{})['학원명']||x.id):x.text+' (목록에 없음)')+'</b> <span class="cap num">'+esc(String(x.start||'').replace('-','.'))+' ~ 근무 중</span></div>'}).join('')}

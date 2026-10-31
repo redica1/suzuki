@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261101-001406 -->
+<!-- build: 20261101-002654 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -57,12 +57,12 @@ main.wrap{padding-top:20px;padding-bottom:80px;display:grid;gap:16px}
 .panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;display:grid;gap:12px;min-width:0}
 .panel h3{font-size:17px}
 .cap{font-size:14.5px;color:var(--faint);margin:0}
-.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(175px,1fr));gap:0;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);margin-bottom:10px}
 @media (max-width:820px){.tiles{grid-template-columns:repeat(2,minmax(0,1fr))}}
-.tile{background:var(--surface);padding:12px 14px;display:grid;gap:2px;min-width:0}
-.tile .k{font-size:14.5px;color:var(--muted)}
-.tile .v{font-family:var(--mono);font-size:23px}
-.tile .s{font-size:14px;color:var(--faint)}
+.tile{background:var(--surface);padding:7px 12px;display:flex;align-items:center;justify-content:space-between;gap:8px;min-width:0;box-shadow:inset -1px 0 0 var(--line),inset 0 -1px 0 var(--line)}
+.tile .k{font-size:14.5px;color:var(--muted);display:flex;align-items:center;gap:4px;min-width:0;white-space:nowrap}
+.tile .v{font-family:var(--mono);font-size:19px;line-height:1.3;white-space:nowrap}
+.tile .s{font-size:14px;color:var(--faint)}.tip{position:relative;display:inline-flex;align-items:center;justify-content:center;flex:none;width:16px;height:16px;border-radius:50%;border:1px solid currentColor;font:700 10.5px/1 Georgia,serif;font-style:italic;color:var(--faint);cursor:help;outline-offset:2px}.tip:hover,.tip:focus{color:var(--accent)}.tip:hover::after,.tip:focus::after{content:attr(data-tip);position:absolute;left:50%;top:calc(100% + 7px);transform:translateX(-50%);background:#16233a;color:#fff;font:500 13px/1.45 var(--body,inherit);font-style:normal;letter-spacing:0;padding:6px 9px;border-radius:7px;width:max-content;max-width:230px;white-space:normal;z-index:60;box-shadow:0 4px 12px rgba(0,0,0,.18)}
 .tile.warn .v{color:var(--rosin)}
 .bar{height:6px;background:var(--sunk);border-radius:99px;overflow:hidden}.bar i{display:block;height:100%;background:var(--accent)}
 .qbody{white-space:pre-wrap;word-break:break-word;margin:6px 0}.cmt{border-left:3px solid var(--line);padding:4px 10px;margin:6px 0}.cmt.adm{border-color:var(--accent);background:var(--sunk);border-radius:0 8px 8px 0}
@@ -591,6 +591,7 @@ var HIST={last:'',busy:false};
 function gh(){try{return window.google&&google.script&&google.script.history}catch(x){return null}}
 function hSync(){var H=gh();if(!H||HIST.busy||!S.sess||!S.D||S.tab===HIST.last)return;var first=!HIST.last;HIST.last=S.tab;try{if(first)H.replace({tab:S.tab},{});else H.push({tab:S.tab},{})}catch(x){}}
 (function(){var H=gh();if(H&&H.setChangeHandler)try{H.setChangeHandler(function(e){var t=e&&e.state&&e.state.tab;if(!t||!S.sess||!S.D)return;HIST.busy=true;HIST.last=t;if(S.hist.length)S.hist.pop();go(t,true);HIST.busy=false})}catch(x){}})();
+function tipify(root){[].forEach.call(root.querySelectorAll('.tile .s'),function(x){var t=x.textContent.trim(),k=x.parentNode.querySelector('.k');x.parentNode.removeChild(x);if(!t||!k)return;var i=document.createElement('span');i.className='tip';i.tabIndex=0;i.setAttribute('role','note');i.setAttribute('aria-label',t);i.setAttribute('data-tip',t);i.textContent='i';k.appendChild(i)})}
 function render(){
   var tabs=document.getElementById('tabs'),app=document.getElementById('app'),who=document.getElementById('who');
   document.getElementById('testband').hidden=!S.test;
@@ -599,7 +600,7 @@ function render(){
   who.innerHTML='<span><b>관리자</b></span><button type="button" id="reload">새로 고침</button><button type="button" id="logout">로그아웃</button>';
   var need=S.D.acad.concat(S.D.tch).filter(function(o){return o['확인']==='확인 필요'}).length;
   tabs.innerHTML=TABS.map(function(t){return '<button role="tab" type="button" data-tab="'+t[0]+'" aria-selected="'+(S.tab===t[0])+'">'+t[1]+(t[0]==='home'&&need?'<span class="cnt">'+need+'</span>':'')+(t[0]==='req'&&S.D.reqN?'<span class="cnt">'+S.D.reqN+'</span>':'')+(t[0]==='pay'&&S.D.payN?'<span class="cnt">'+S.D.payN+'</span>':'')+(t[0]==='ask'&&S.D.bN?'<span class="cnt">'+S.D.bN+'</span>':'')+'</button>'}).join('');
-  app.innerHTML=({home:vHome,acad:vAcads,tch:vTeachers,ext:vExt,stu:vStudents,req:vReq,pay:vPay,prog:vProg,ask:vAskA,log:vLog,set:vSet})[S.tab]();
+  app.innerHTML=({home:vHome,acad:vAcads,tch:vTeachers,ext:vExt,stu:vStudents,req:vReq,pay:vPay,prog:vProg,ask:vAskA,log:vLog,set:vSet})[S.tab]();tipify(app);
   var i=TABS.map(function(t){return t[0]}).indexOf(S.tab);document.getElementById('prevBtn').disabled=i<=0;document.getElementById('nextBtn').disabled=i>=TABS.length-1;
   hSync();
 }

@@ -1,4 +1,4 @@
-/* build: 20261031-214019 */
+/* build: 20261031-214422 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -104,7 +104,7 @@ function doGet(e) {
 function include(n) { return HtmlService.createHtmlOutputFromFile(n).getContent(); }
 
 function api(name, args) {
-  const open = { login, hello, tHello, tLookup, tStart, tResend, tVerify, tCreate, tLogin, tForgot, tReset, tMe, tSavePay, tSavePart, tSaveInfo, tSavePhoto, tAcad, tSaveAcad, tDocUp, tDocGet, tSaveStu, tSaveStus, tStuDetail, tStuSave, tStuTutor, tStuTutorDel, tStuState, tStuStateDel, tMyStu, tMyStuDetail, tMyStuPay, tTchSaves, tTchEnd, tTchEvent, tTchAssign, tTchStart, tSaveRrn, tAddWork, tEndWork, tMainWork, tLogout, bPost, bMine, bReply };
+  const open = { login, hello, tHello, tEvents, tLookup, tStart, tResend, tVerify, tCreate, tLogin, tForgot, tReset, tMe, tSavePay, tSavePart, tSaveInfo, tSavePhoto, tAcad, tSaveAcad, tDocUp, tDocGet, tSaveStu, tSaveStus, tStuDetail, tStuSave, tStuTutor, tStuTutorDel, tStuState, tStuStateDel, tMyStu, tMyStuDetail, tMyStuPay, tTchSaves, tTchEnd, tTchEvent, tTchAssign, tTchStart, tSaveRrn, tAddWork, tEndWork, tMainWork, tLogout, bPost, bMine, bReply };
   const fns = { boot, saveRow, setCheck, logs, importRoster, saveDues, delDues, reqs, reqDo, delAcad, payView, bulkSet, saveWorks, importPastDues, bList, bSet, bComment, photoGet, photoDel, fillRegions, saveRates, docList, docUp, docGet, docDel, payList, payOk, payNo, memView, rosterNow, inputStatus, inboxDone };
   try {
     if (open[name]) return Object.assign({ ok: true }, open[name].apply(null, args || []));
@@ -355,6 +355,22 @@ function rosterBuild_() {
   });
   const s1 = f.getSheetByName('시트1') || f.getSheetByName('Sheet1'); if (s1 && f.getSheets().length > 1) f.deleteSheet(s1);
   return { at: stamp, acad: rows['학원'].length, tch: rows['교사'].length, stu: rows['학생'].length, id: f.getId(), url: f.getUrl() };
+}
+/* ====================== 행사 참여 (10-31): 내가 신청할 수 있는 행사 + 내 참가 기록 ======================
+   who: member = 교사회원 · 연수교사, ext = 외부인(관계자). 설정 「행사 목록」에 같은 모양의 JSON 을 넣으면 그것을 씀. path: 공유 주소 뒤쪽(null = 준비 중) */
+const EVENTS_ = [
+  { id: '27W', name: '2027 스즈키 겨울 음악제 (캠프)', when: '2027. 1. 11.(월) ~ 15.(금)', apply: '접수 2026. 12. 1. ~ 12. 28.', who: ['member', 'ext'], path: 'camp/', note: '회원 선생님은 학원 학생과 함께, 관계자는 본인 · 가족 접수' },
+  { id: '26FT', name: '26가을 스즈키 교사연수', when: '2026. 11. 20.(금) 서울 · 21.(토) 대전', apply: '신청 중', who: ['member'], path: '', note: '교사회원 · 연수교사' },
+  { id: '27GR', name: '2027 대구 졸업연주', when: '2027년 1월', apply: '준비 중', who: ['member'], path: null, note: '회원 학생 졸업연주' }
+];
+function tEvents(sess) {
+  const u = tsess_(sess), T = tbl_('교사'), i = T.find('교사ID', u.tid), ext = i >= 0 && T.get(i, '회원구분') === '외부인';
+  const P = settings_(), test = P['테스트 표시'] === '예', base = 'https://redica1.github.io/suzuki/';
+  let ev = EVENTS_; try { const x = JSON.parse(P['행사 목록'] || 'null'); if (Array.isArray(x) && x.length) ev = x; } catch (e) { }
+  const list = ev.map(e => ({ id: e.id, name: e.name, when: e.when || '', apply: e.apply || '', note: e.note || '', can: (e.who || []).indexOf(ext ? 'ext' : 'member') >= 0,
+    url: e.path === null || e.path === undefined ? '' : base + e.path + (test ? '?test' : ''), as: ext ? '관계자' : '회원' }));
+  const hist = rowsOf_('참가이력').list.filter(r => String(r['ID']) === u.tid).map(r => ({ ev: r['행사'], year: r['년도'], period: r['기간'], role: r['역할'], state: r['상태'] })).reverse();
+  return { list, hist, ext };
 }
 /* ====================== 행사보고 → 참가이력 · 연회비 (10-31) ======================
    캠프 같은 행사 앱은 회원관리 표를 직접 고치지 않고 「행사보고」 탭에 줄만 보냄. 여기서 5분마다(rosterTick) 읽어 옮기고 「처리」를 적음.

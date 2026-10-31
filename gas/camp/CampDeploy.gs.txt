@@ -1,5 +1,5 @@
 /**
- * 캠프 접수 자동 반영 도우미 (2026-10-23 v3 · 글자 깨짐 방지 · 반쯤 바뀐 파일을 올리지 않게 커밋 고정·빌드 번호 확인)  — 이 파일은 깃허브에 보관만 하는 사본. 실제로는 「캠프접수 자동 반영 도우미」 앱스크립트의 Code.gs
+ * 캠프 접수 자동 반영 도우미 (2026-10-31 v4 · 「STG 지금 적용」 화면: 캠프 · 회원관리 체크 · 따로/동시 적용) (v3 2026-10-23 · 글자 깨짐 방지 · 커밋 고정·빌드 번호 확인)  — 이 파일은 깃허브에 보관만 하는 사본. 실제로는 「캠프접수 자동 반영 도우미」 앱스크립트의 Code.gs
  *
  * 코드 원본: 깃허브 redica1/suzuki 의 gas/camp/ 폴더 (Claude 가 고쳐서 올림, 개인정보 없음)
  *
@@ -14,8 +14,16 @@
  *   3) 아래 STG.scriptId · PROD.scriptId 채우기 (각 앱스크립트 › 프로젝트 설정 › 스크립트 ID)
  *   4) deployStgNow 실행 → 권한 허용 → 로그에 「배포 완료」 확인 → setupTrigger 실행
  *
+ * ■ STG 지금 적용 화면 (v4, 10-31) — 버튼으로 캠프 · 회원관리 STG 를 바로 반영
+ *   1) 이 코드를 붙여 넣기 전에 지금 도우미의 STG.scriptId · PROD.scriptId 두 줄을 복사해 두었다가, 붙여 넣은 뒤 다시 채우기
+ *   2) 매니페스트를 아래 MANIFEST 로 바꾸기 ("webapp" 줄이 새로 생김) → 저장 → deployStgNow 한 번 실행해 권한 다시 허용
+ *   3) 배포 › 새 배포 › 유형 「웹 앱」 · 실행 = 나 · 액세스 = 「나만」 → 나온 웹 앱 주소(…/exec)를 Claude 에게
+ *   - 그 주소를 열면 캠프 · 회원관리 줄마다 체크 상자 + 「적용」 버튼, 아래 「선택한 것 동시 적용」. STG 만 바꿈(메인 반영은 버튼 없음)
+ *   - 회원관리 STG 는 이 도우미가 직접 배포함(회원관리 도우미는 그대로 두어도 됨: 5분 뒤 같은 코드면 한 번 더 버전만 생김)
+ *
  * MANIFEST:
  * {"timeZone":"Asia/Seoul","runtimeVersion":"V8","exceptionLogging":"STACKDRIVER",
+ *  "webapp":{"executeAs":"USER_DEPLOYING","access":"MYSELF"},
  *  "oauthScopes":["https://www.googleapis.com/auth/script.projects","https://www.googleapis.com/auth/script.deployments",
  *   "https://www.googleapis.com/auth/drive","https://www.googleapis.com/auth/script.external_request",
  *   "https://www.googleapis.com/auth/script.scriptapp","https://www.googleapis.com/auth/script.send_mail"]}
@@ -31,6 +39,13 @@ const PROD = {
   scriptId: '',                                                                     // ← 2027 겨울캠프접수 › 프로젝트 설정 › 스크립트 ID
   deploymentId: 'AKfycbzrzYgEsPnHVcBIjobN9xB6nGBcZ7nPYMX7hDtx3OoI7WYokszGDLhcO0lHWYz9rWAt7w',
   sheetId: '17lM8Gq23Pe40o9f2oi9wuZoJ15vGvt4aCyULDyjj_mA'                          // 메인 시트 (반영 전에 백업)
+};
+/* 회원관리 STG (STG 지금 적용 화면에서 함께 배포) */
+const MEMBER_SRC = 'https://raw.githubusercontent.com/redica1/suzuki/main/gas/member/';
+const MEMBER_STG = {
+  key: 'stg', name: '회원관리 (테스트 STG)',
+  scriptId: '1_SJ3bX8Zfee9TkpU7fL3cvFE9tGtTTRMcjXG5L9E6WScVhFcHpcRJdkr',
+  deploymentId: 'AKfycbyRLvWsahJeeLRQcKeURHCiGn05cWAgiPkctokAUgbr5D0IrtqKYaKGj6zUsnwmqHiE'
 };
 const RELEASE_AT = '';   // 예약 반영 시각 예: '2026-12-01 02:00' (서울)
 
@@ -51,9 +66,59 @@ function checkStg() {
   try { src = fetchSrc_(); } catch (e) { if (/^MIXED/.test(e.message)) { Logger.log(e.message); return; } throw e; }
   if (src.hash === P_().getProperty('hash_stg')) return;
   deployFiles_(STG, src, '자동 반영');
-  P_().setProperty('hash_stg', src.hash);
+  mark_('hash_stg', src);
 }
-function deployStgNow() { need_(STG); const src = fetchSrc_(); deployFiles_(STG, src, '바로 반영'); P_().setProperty('hash_stg', src.hash); }
+function deployStgNow() { need_(STG); const src = fetchSrc_(); deployFiles_(STG, src, '바로 반영'); mark_('hash_stg', src); }
+function mark_(k, src) { P_().setProperties({ [k]: src.hash, [k + '_at']: now_(), [k + '_build']: src.build || '' }); }
+
+/* ---------- STG 지금 적용 화면 (v4) ---------- */
+const TARGETS_ = { camp: { t: STG, k: 'hash_stg', src: SRC, label: '캠프 접수 · 캠프 관리자' }, member: { t: MEMBER_STG, k: 'hash_stg_member', src: MEMBER_SRC, label: '회원관리 선생님 · 관리자' } };
+function doGet() {
+  return HtmlService.createHtmlOutput(PANEL_HTML_).setTitle('STG 지금 적용').addMetaTag('viewport', 'width=device-width, initial-scale=1');
+}
+function remoteStatus() {
+  const o = {};
+  Object.keys(TARGETS_).forEach(w => { const x = TARGETS_[w], P = P_();
+    let ver = 0, err = ''; try { need_(x.t); ver = currentVersion_(x.t); } catch (e) { err = e.message; }
+    o[w] = { label: x.label, ver, err, at: P.getProperty(x.k + '_at') || '', build: P.getProperty(x.k + '_build') || '' }; });
+  return o;
+}
+/** which = ['camp'] · ['member'] · ['camp','member'] — STG 만 */
+function remoteDeploy(which) {
+  const lock = LockService.getScriptLock(); if (!lock.tryLock(30000)) throw new Error('다른 반영이 진행 중이에요. 잠시 뒤 다시 눌러 주세요.');
+  const out = [];
+  try {
+    [].concat(which || []).filter(w => TARGETS_[w]).forEach(w => { const x = TARGETS_[w];
+      try { need_(x.t); const src = fetchSrc_(x.src); const v = deployFiles_(x.t, src, '지금 적용(버튼)'); mark_(x.k, src); out.push({ w, ok: true, ver: v, build: src.build || '' }); }
+      catch (e) { out.push({ w, ok: false, msg: e.message.replace(/^MIXED /, '') }); } });
+  } finally { lock.releaseLock(); }
+  return { res: out, st: remoteStatus() };
+}
+const PANEL_HTML_ = [
+  '<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>STG 지금 적용</title>',
+  '<style>body{margin:0;background:#f4f8ff;color:#16233a;font:16px/1.7 -apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;letter-spacing:.02em;word-break:keep-all}',
+  'header{background:#4285f4;color:#fff;padding:16px}header b{font-size:20px}header p{margin:2px 0 0;font-size:14px;color:#eef4ff}',
+  'main{max-width:560px;margin:0 auto;padding:20px 16px;display:grid;gap:12px}',
+  '.row{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid #dbe6fa;border-radius:12px;padding:14px 16px}',
+  '.row.camp{border-left:4px solid #0f9d9a}.row.member{border-left:4px solid #4285f4}',
+  '.row input{width:22px;height:22px;flex:none}.row label{flex:1;display:grid;cursor:pointer}.row small{color:#55657f;font-size:13px}',
+  'button{min-height:44px;border:0;border-radius:10px;padding:0 16px;font:inherit;font-weight:700;color:#fff;background:#4285f4;cursor:pointer}',
+  'button.camp{background:#0f9d9a}button:disabled{opacity:.5;cursor:wait}#all{width:100%;background:#16233a}',
+  '.out{background:#fff;border-radius:12px;padding:12px 16px;font-size:14px;white-space:pre-wrap;min-height:24px;color:#334766}.ok{color:#0b7a78}.bad{color:#b4423a}',
+  '</style></head><body><header><b>STG 지금 적용</b><p>깃허브 코드를 테스트(STG) 앱에 바로 반영해요 · 메인은 바뀌지 않아요</p></header><main>',
+  '<div class="row camp"><input type="checkbox" id="c_camp" checked><label for="c_camp"><b>캠프</b><small id="s_camp">불러오는 중…</small></label><button class="camp" type="button" data-one="camp">적용</button></div>',
+  '<div class="row member"><input type="checkbox" id="c_member" checked><label for="c_member"><b>회원관리</b><small id="s_member">불러오는 중…</small></label><button type="button" data-one="member">적용</button></div>',
+  '<button id="all" type="button">선택한 것 동시 적용</button><div class="out" id="out" aria-live="polite"></div></main>',
+  '<script>',
+  'var NM={camp:"캠프",member:"회원관리"};',
+  'function st(o){Object.keys(o).forEach(function(w){var x=o[w];document.getElementById("s_"+w).textContent=x.err?("확인 필요: "+x.err):("STG 버전 "+x.ver+(x.build?" · 빌드 "+x.build:"")+(x.at?" · 마지막 적용 "+x.at:""))})}',
+  'function busy(b){[].forEach.call(document.querySelectorAll("button"),function(x){x.disabled=b})}',
+  'function go(list){if(!list.length){document.getElementById("out").textContent="적용할 것을 체크해 주세요.";return}busy(true);document.getElementById("out").textContent=list.map(function(w){return NM[w]}).join(" · ")+" 적용하는 중… (1분쯤 걸려요)";',
+  'google.script.run.withSuccessHandler(function(r){busy(false);st(r.st);var o=document.getElementById("out");o.innerHTML="";r.res.forEach(function(x){var d=document.createElement("div");d.className=x.ok?"ok":"bad";d.textContent=NM[x.w]+": "+(x.ok?("완료 · 버전 "+x.ver+(x.build?" · 빌드 "+x.build:"")):("실패 · "+x.msg));o.appendChild(d)})})',
+  '.withFailureHandler(function(e){busy(false);document.getElementById("out").textContent="실패: "+(e&&e.message||e)}).remoteDeploy(list)}',
+  'document.addEventListener("click",function(e){var b=e.target.closest("button");if(!b)return;if(b.id==="all")go(["camp","member"].filter(function(w){return document.getElementById("c_"+w).checked}));else if(b.dataset.one)go([b.dataset.one])});',
+  'google.script.run.withSuccessHandler(st).withFailureHandler(function(e){document.getElementById("out").textContent="상태를 못 읽었어요: "+(e&&e.message||e)}).remoteStatus();',
+  '</script></body></html>'].join('\n');
 
 /* ---------- 메인 반영 ---------- */
 function releaseNow() { release(); }
@@ -109,16 +174,17 @@ function need_(t) { if (!t.scriptId || !t.deploymentId) throw new Error(t.name +
 /** 깃허브에서 files.json 에 적힌 파일을 모두 받아 옴.
  *  · 같은 커밋(sha)에서 받음 → 올리는 도중에 섞인 파일을 받지 않음
  *  · 파일마다 적힌 빌드 번호가 다르면 이번에는 건너뛰고 5분 뒤 다시 (MIXED) */
-function srcBase_() {
+function srcBase_(srcUrl) {
+  const SRC0 = srcUrl || SRC;
   try {
     const r = UrlFetchApp.fetch('https://api.github.com/repos/redica1/suzuki/commits/main', { headers: { Accept: 'application/vnd.github.sha' }, muteHttpExceptions: true });
     const sha = r.getContentText().trim();
-    if (r.getResponseCode() === 200 && /^[0-9a-f]{40}$/.test(sha)) return SRC.replace('/main/', '/' + sha + '/');
+    if (r.getResponseCode() === 200 && /^[0-9a-f]{40}$/.test(sha)) return SRC0.replace('/main/', '/' + sha + '/');
   } catch (e) {}
-  return SRC;
+  return SRC0;
 }
-function fetchSrc_() {
-  const base = srcBase_();
+function fetchSrc_(srcUrl) {
+  const base = srcBase_(srcUrl);
   const get = n => { const r = UrlFetchApp.fetch(base + n + '?t=' + Date.now(), { muteHttpExceptions: true });
     if (r.getResponseCode() !== 200) throw new Error('깃허브에서 ' + n + ' 를 못 받았어요 (' + r.getResponseCode() + ')'); return r.getContentText('UTF-8'); };
   const names = JSON.parse(get('files.json'));
@@ -127,7 +193,7 @@ function fetchSrc_() {
   const builds = {}; files.forEach(f => { const m = f.src.slice(0, 3000).match(/build: (\S+)/); if (m) builds[m[1]] = 1; });
   if (Object.keys(builds).length > 1) throw new Error('MIXED 깃허브 파일이 아직 다 바뀌지 않았어요 (빌드 ' + Object.keys(builds).join(', ') + '). 5분 뒤 다시 해요.');
   const hash = Utilities.base64Encode(Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, files.map(f => f.n + '\n' + f.src).join('\n\u0000\n'), Utilities.Charset.UTF_8));
-  return { files, hash };
+  return { files, hash, build: Object.keys(builds)[0] || '' };
 }
 
 function api_(t, method, path, body) {

@@ -1,4 +1,4 @@
-/* build: 20261031-211711 */
+/* build: 20261031-212006 */
   if(tab==='me')return head+seg+`<div class="panel">${T.prof?`<p class="hint" style="margin:0 0 6px">교수 · 레슨실 <b>${esc(T.prof.room||'미정')}</b></p>`:''}
     ${days.map((dl,d)=>{const xs=mine.filter(x=>x.d===d);return xs.length?`<div class="ttday"><div class="ttdl">${esc(dl)}</div>${xs.map(x=>`<div class="ttit"><span class="num">${esc(x.t)}${x.e?'<small>~'+esc(x.e)+'</small>':''}</span><span><span class="ttrole ${x.what==='개인레슨'?'les':''}">${esc(x.what)}</span><b>${esc(x.title)}</b> · ${esc(x.where)}${x.loc?` <small class="hint">${esc(x.loc)}</small>`:''}${x.with?`<br><small class="hint">${x.what==='개인레슨'?'학생: ':'함께: '}${esc(x.with)}</small>`:''}</span></div>`).join('')}</div>`:''}).join('')||'<p class="hint" style="margin:0">아직 배정된 일정이 없어요.</p>'}</div></section>`;
   const st=T.students||[];
@@ -46,7 +46,7 @@ function render(){fillBanks();
   if(S.editNo&&S.quickEdit&&S.step===3&&(S.quickKeys||[]).every(k=>lockedP(k)))next.hidden=true;
   lockCards();
   document.getElementById('roundChip').textContent = `${ROUNDS[CAMP.ri][0]} 접수 중 · ${ROUNDS[CAMP.ri][1]}`;
-  document.getElementById('roundSeg').innerHTML = ''&&ROUNDS.map((r,i)=>`<button type="button" data-round="${i}" aria-pressed="${CAMP.ri===i}" style="padding:2px 9px;font-size:12px">${r[0]}</button>`).join('');
+  document.getElementById('roundSeg').innerHTML = ''&&ROUNDS.map((r,i)=>`<button type="button" data-round="${i}" aria-pressed="${CAMP.ri===i}" style="padding:2px 9px;font-size:14px">${r[0]}</button>`).join('');
 }
 /* 「다음」을 막는 조건: 그 단계에서 보이는 것만 (2단계는 사람이 1명 이상이면 통과, 가족 이름·가족방 인원은 3단계에서) */
 function blocked(){const t=totals();

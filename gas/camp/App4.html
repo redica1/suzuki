@@ -1,4 +1,4 @@
-/* build: 20261031-211711 */
+/* build: 20261031-212006 */
     <div class="song3"><b class="sh">곡 2 <span class="hint">있으면</span></b>
       <label class="f" for="enK2">작곡가<input type="text" id="enK2" data-ens="k2" value="${esc(E.k2||'')}" placeholder=""></label>
       <label class="f" for="enC2">곡명<input type="text" id="enC2" data-ens="c2" value="${esc(E.c2||'')}" placeholder=""></label>
@@ -73,7 +73,7 @@ function quickBar(){const allLocked=(S.quickKeys||[]).every(k=>lockedP(k));
 function editDiffHTML(){const D=editDiff();if(!D)return '';
   if(!D.rows.length&&!D.diff)return `<div class="note info" style="margin:10px 0">아직 고친 내용이 없어요 · 금액 그대로 <b class="num">${won(D.after)}</b>${D.paid&&D.owe?` · 남은 입금 ${won(D.owe)}`:''}</div>`;
   const tag=D.diff>0?`<span class="pill due">고친 내용으로 ${won(D.diff)} 늘어요</span>`:D.diff<0?`<span class="pill new">고친 내용으로 ${won(-D.diff)} 줄어요</span>`:'<span class="pill ok">합계 그대로</span>';
-  return `<div class="panel" style="border:2px solid var(--accent)"><div class="spread"><h3 style="font-size:16px;margin:0">고친 내용에 따른 금액 · ${esc(S.editNo)}</h3>${tag}</div>
+  return `<div class="panel" style="border:2px solid var(--accent)"><div class="spread"><h3 style="font-size:18px;margin:0">고친 내용에 따른 금액 · ${esc(S.editNo)}</h3>${tag}</div>
     <dl class="kv" style="margin-top:8px"><dt>기존 신청 금액</dt><dd class="num">${won(D.before)}</dd><dt>수정 후 금액</dt><dd class="num"><b>${won(D.after)}</b></dd><dt>변동</dt><dd class="num"><b style="color:var(--${D.diff>0?'rosin':'accent'})">${sgn(D.diff)}</b></dd>
       ${D.paid?`<dt>이미 입금 확인</dt><dd class="num">${won(D.paid)}</dd><dt>더 입금할 금액</dt><dd class="num"><b>${won(D.owe)}</b></dd>${D.back?`<dt>돌려받을 금액</dt><dd class="num"><b style="color:var(--accent)">${won(D.back)}</b></dd>`:''}`:''}</dl>
     ${D.rows.length?`<div class="tbl" style="margin-top:8px"><table><thead><tr><th>이름</th><th class="r">기존</th><th class="r">수정 후</th><th class="r">차이</th></tr></thead><tbody>${D.rows.map(r=>`<tr><td><b>${esc(r.name)}</b>${r.a===null?' <span class="pill new">추가</span>':r.b===null?' <span class="pill">빠짐</span>':r.kept?' <span class="pill due">입금돼 있어 남음</span>':''}</td><td class="r num">${r.a===null?'-':won(r.a)}</td><td class="r num">${r.b===null?'-':won(r.b)}</td><td class="r num">${sgn((r.b||0)-(r.a||0))}</td></tr>`).join('')}</tbody></table></div>`:'<p class="hint" style="margin:6px 0 0">금액이 바뀐 사람이 없어요.</p>'}
@@ -85,25 +85,25 @@ function vStep4(){
   <p class="lede">접수하기 전에 신청 내용과 금액을 확인해 주세요. 고칠 곳이 있으면 「수정」을 누르면 돼요.</p>
   ${editDiffHTML()}
 
-  <div class="panel"><div class="spread"><h3 style="font-size:16px">접수 정보</h3>${edit(1,'접수자')}</div>
+  <div class="panel"><div class="spread"><h3 style="font-size:18px">접수 정보</h3>${edit(1,'접수자')}</div>
     <dl class="kv"><dt>학원</dt><dd>${esc(S.acad)}</dd><dt>접수자</dt><dd>${esc(S.who)} · ${esc(S.phone)}</dd><dt>이메일</dt><dd>${esc(S.email||'-')}</dd>
     <dt>차수</dt><dd><span class="pill new">${R[0]} 접수</span> <span class="hint">${R[1]}</span></dd></dl></div>
 
-  <div class="panel"><div class="spread"><h3 style="font-size:16px">참가자별 신청 내용</h3>${edit(3,'신청 내용')}</div>
+  <div class="panel"><div class="spread"><h3 style="font-size:18px">참가자별 신청 내용</h3>${edit(3,'신청 내용')}</div>
     ${(()=>{const inRoom=new Set(t.teams.flatMap(x=>x.members.map(m=>m.key)));const T=[['all',`전체 ${t.n}명`,()=>true],['student',`학생 ${ps.filter(p=>p.kind==='student').length}`,p=>p.kind==='student'],['teacher',`교사 ${ps.filter(p=>p.kind==='teacher').length}`,p=>p.kind==='teacher'],['family',`가족 ${ps.filter(p=>p.kind==='family').length}`,p=>p.kind==='family'],['room',`가족방 ${t.teams.length}개${t.teams.length?` · ${inRoom.size}명`:''}`,p=>inRoom.has(p.key)]];
       const cur=T.find(x=>x[0]===S.atab)||T[0];
       return `<div class="seg atabs" role="tablist">${T.map(([k,l])=>`<button type="button" role="tab" data-atab="${k}" aria-pressed="${cur[0]===k}">${l}</button>`).join('')}</div>${applyTable(ps.filter(cur[2]),cur[0])}`})()}
 </div>
 
   ${t.teams.length||S.ens.on?`<div class="g2c">
-    ${t.teams.length?`<div class="panel"><div class="spread"><h3 style="font-size:16px">가족방</h3>${edit(2,'가족방')}</div>
+    ${t.teams.length?`<div class="panel"><div class="spread"><h3 style="font-size:18px">가족방</h3>${edit(2,'가족방')}</div>
       ${t.teams.map((x,ix)=>`<dl class="kv"><dt>가족방 ${ix+1}</dt><dd>${esc(x.rep.name)} 가족 ${x.n}명</dd><dt>함께 쓰는 사람</dt><dd>${x.members.map(m=>esc(m.name)).join(', ')}</dd></dl>`).join('')}</div>`:''}
-    ${S.ens.on?`<div class="panel"><div class="spread"><h3 style="font-size:16px">앙상블</h3>${edit(4,'앙상블')}</div>
+    ${S.ens.on?`<div class="panel"><div class="spread"><h3 style="font-size:18px">앙상블</h3>${edit(4,'앙상블')}</div>
       <dl class="kv"><dt>팀 이름</dt><dd>${esc(S.ens.group||'-')}</dd><dt>함께하는 학원</dt><dd>${[S.acad+' (대표)',...(S.ens.acads||[])].map(esc).join(', ')}</dd>
       <dt>곡</dt><dd>${[1,2].map(n=>songTxt(S.ens,n)).filter(Boolean).join('<br>')||'-'}</dd><dt>연주시간</dt><dd>${S.ens.tm||S.ens.ts?`${+S.ens.tm||0}분 ${+S.ens.ts||0}초`:'-'}</dd></dl></div>`:''}
   </div>`:''}
 
-  <div class="panel"><h3 style="font-size:16px">금액</h3>
+  <div class="panel"><h3 style="font-size:18px">금액</h3>
     <div class="tbl"><table>
     <thead><tr><th>참가자</th><th>구분</th><th class="r">참가비</th><th class="r">레슨·마스터</th><th class="r">연회비</th><th class="r">합계</th></tr></thead>
     <tbody>${ps.map(p=>{const i=info(p),f=feeOf(p);return `<tr><td>${esc(p.name)}</td><td>${esc(i.type)}</td><td class="r num">${won(f.base)}</td><td class="r num">${f.les+f.mc?won(f.les+f.mc):'-'}</td><td class="r num">${f.dues?won(f.dues):'-'}</td><td class="r num"><b>${won(f.total)}</b></td></tr>`}).join('')}
@@ -112,7 +112,7 @@ function vStep4(){
       <tr><td colspan="5">캠프 참가비 · ${R[0]} 금액</td><td class="r num">${won(t.camp)}</td></tr>
       ${t.room?`<tr><td colspan="5">가족방</td><td class="r num">${won(t.room)}</td></tr>`:''}
       ${t.dues?`<tr><td colspan="5">연회비 (${t.waiting}명)</td><td class="r num">${won(t.dues)}</td></tr>`:''}
-      <tr><td colspan="5">입금하실 금액</td><td class="r num" style="color:var(--accent);font-size:17px">${won(t.all)}</td></tr>
+      <tr><td colspan="5">입금하실 금액</td><td class="r num" style="color:var(--accent);font-size:19px">${won(t.all)}</td></tr>
     </tfoot></table></div>
     <div class="bank"><span class="k">입금 계좌</span><b>국민은행 · 한국스즈키협회</b><span class="num">계좌번호는 캠프 설정에서 입력</span>
       <span class="k" style="margin-top:6px">입금자명</span><b>${esc(S.acad)}</b><span class="hint">학원 이름으로 입금해 주시면 확인이 빨라요. 나눠서 입금해도 괜찮아요.</span></div>
@@ -123,7 +123,7 @@ function vStep4(){
 function vStep5(){
   const t=totals(), ps=people();
   return `<section class="sec"><h2>접수가 완료되었어요</h2>
-  <div class="ticket"><p><span class="pill new" style="font-size:13px">${ROUNDS[CAMP.ri][0]} 접수</span></p><p>접수번호</p><div class="no">${S.no}</div>
+  <div class="ticket"><p><span class="pill new" style="font-size:15px">${ROUNDS[CAMP.ri][0]} 접수</span></p><p>접수번호</p><div class="no">${S.no}</div>
     <p>${esc(S.acad)} · ${t.n}명${t.teams.length?` · 가족방 ${t.teams.length}개`:''} · 입금하실 금액 <b class="num" style="color:var(--ink)">${won(t.all)}</b></p>
     <p class="hint">입금한 뒤 「내 접수」에서 입금 신고를 해 주세요. 접수 확인·취소도 「내 접수」에서 해요. 확인 메일도 보내 드렸어요.</p><button class="btn primary" type="button" id="toMine">내 접수 · 입금 신고</button></div>
   <div class="panel"><b>접수된 사람</b><ul class="roster">${ps.map(p=>`<li><span></span><div class="who"><b>${esc(p.name)}</b><small>${ROUNDS[CAMP.ri][0]} · ${esc(info(p).type)}${p.kind==='student'?` · 담당 ${esc(info(p).teacher)}`:''}</small></div>${p.paid?'<span class="pill lock">입금 대기</span>':'<span class="pill due">회비확인대기</span>'}</li>`).join('')}</ul></div>

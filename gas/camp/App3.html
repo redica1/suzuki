@@ -1,4 +1,4 @@
-/* build: 20261031-211711 */
+/* build: 20261031-212006 */
     ${S.extra.length?`<div class="xhead">명단에 없어 추가한 학생 ${S.extra.length}명 <span class="hint">체크한 학생만 접수돼요 · 연회비 30,000원이 함께 청구돼요 · 「빼기」는 목록에서 지워요</span></div><ul class="roster">${S.extra.map(s=>`<li><input type="checkbox" id="xk_${s.id}" ${s.on!==false?'checked':''} data-xon="${s.id}" aria-label="${esc(s.name)} 선택"><label class="who" for="xk_${s.id}"><b>${esc(s.name)} <span class="kind ks">학생</span></b><small>${age(s.birth)}세 · ${s.inst} · 담당 ${esc(s.teacher)}</small></label><span class="row" style="flex-wrap:nowrap"><span class="pill new">신규 추가</span><button class="btn small ghost" type="button" data-rmx="${s.id}">빼기</button></span></li>`).join('')}</ul>`:''}
     ${S.showNew?`<div class="adder"><b>명단에 없는 학생 추가</b>
       <p class="hint">늦게 들어온 학생은 여기서 추가하고 연회비 30,000원을 캠프비와 함께 입금해 주세요. 운영진이 확인하면 정식 접수돼요.</p>
@@ -47,14 +47,14 @@ function pCard(p){
     ${PROF[p.inst]?`<div class="pair">
       <label class="f" for="p1_${p.key}">선호 교수 1 ${i.lessons?'<span class="req">*</span> <span class="hint">추가레슨 신청하면 꼭 골라요</span>':'<span class="hint">추가레슨 신청 시</span>'}<select id="p1_${p.key}" data-f="p1" data-k="${p.key}" ${i.lessons?'':'disabled'} ${i.lessons&&!i.p1?'class="empty"':''}>${opts(PROF[p.inst],i.p1,'없음')}</select></label>
       <label class="f" for="p2_${p.key}">선호 교수 2 <span class="hint">${!i.lessons?'추가레슨 신청 시':i.p1?'선택':'선호 교수 1을 먼저 골라요'}</span><select id="p2_${p.key}" data-f="p2" data-k="${p.key}" ${i.lessons&&i.p1?'':'disabled'}>${opts(PROF[p.inst].filter(x=>x!==i.p1),i.p2,'없음')}</select></label></div>`:''}
-    ${mcOf(p.inst).length?`<div class="grp f" style="display:grid;gap:6px"><span style="color:var(--muted);font-weight:500;font-size:13.5px">${p.inst} 마스터클래스 <span class="hint">교수마다 단가가 달라요 · 기본 레슨과 함께 신청 불가 · 복수 신청 가능</span></span>
+    ${mcOf(p.inst).length?`<div class="grp f" style="display:grid;gap:6px"><span style="color:var(--muted);font-weight:500;font-size:15.5px">${p.inst} 마스터클래스 <span class="hint">교수마다 단가가 달라요 · 기본 레슨과 함께 신청 불가 · 복수 신청 가능</span></span>
       <div class="checks">${mcOf(p.inst).map(m=>`<label><input type="checkbox" data-mc="${esc(m.n)}" data-k="${p.key}" ${i.mc.includes(m.n)?'checked':''}>${esc(m.n)} <span class="hint">${m.min}분 · ${won(m.fee)}</span></label>`).join('')}</div></div>`:`<p class="hint" style="margin:0">${esc(p.inst||'이 악기')} 마스터클래스는 아직 열린 교수가 없어요.</p>`}`:''}</div>
     `:`
     <label class="f" for="ls_${p.key}">추가 개인레슨<select id="ls_${p.key}" data-f="lessons" data-k="${p.key}">${Array.from({length:CAMP.lessonMax+1},(_,n)=>`<option value="${n}" ${n==i.lessons?'selected':''}>${n?`${n}회 · ${won(n*CAMP.lessonFee)}`:'신청 안 함'}</option>`).join('')}</select></label>
     ${PROF[p.inst]?`<div class="pair">
       <label class="f" for="p1_${p.key}">선호 교수 1 ${i.lessons?'<span class="req">*</span> <span class="hint">추가레슨 신청하면 꼭 골라요</span>':'<span class="hint">추가레슨 신청 시</span>'}<select id="p1_${p.key}" data-f="p1" data-k="${p.key}" ${i.lessons?'':'disabled'} ${i.lessons&&!i.p1?'class="empty"':''}>${opts(PROF[p.inst],i.p1,'없음')}</select></label>
       <label class="f" for="p2_${p.key}">선호 교수 2 <span class="hint">${!i.lessons?'추가레슨 신청 시':i.p1?'선택':'선호 교수 1을 먼저 골라요'}</span><select id="p2_${p.key}" data-f="p2" data-k="${p.key}" ${i.lessons&&i.p1?'':'disabled'}>${opts(PROF[p.inst].filter(x=>x!==i.p1),i.p2,'없음')}</select></label></div>`:''}
-    ${mcOf(p.inst).length?`<div class="grp f" style="display:grid;gap:6px"><span style="color:var(--muted);font-weight:500;font-size:13.5px">${p.inst} 마스터클래스 <span class="hint">교수마다 단가가 달라요 · 기본 레슨과 함께 신청 불가 · 복수 신청 가능</span></span>
+    ${mcOf(p.inst).length?`<div class="grp f" style="display:grid;gap:6px"><span style="color:var(--muted);font-weight:500;font-size:15.5px">${p.inst} 마스터클래스 <span class="hint">교수마다 단가가 달라요 · 기본 레슨과 함께 신청 불가 · 복수 신청 가능</span></span>
       <div class="checks">${mcOf(p.inst).map(m=>`<label><input type="checkbox" data-mc="${esc(m.n)}" data-k="${p.key}" ${i.mc.includes(m.n)?'checked':''}>${esc(m.n)} <span class="hint">${m.min}분 · ${won(m.fee)}</span></label>`).join('')}</div></div>`:`<p class="hint" style="margin:0">${esc(p.inst||'이 악기')} 마스터클래스는 아직 열린 교수가 없어요.</p>`}
     <div class="grp"><span class="grp-h">음악회</span>
     <label class="f" for="cc_${p.key}">참가할 음악회<select id="cc_${p.key}" data-f="concert" data-k="${p.key}">${['없음','오후','트와일라잇','이브닝'].map(x=>`<option value="${x}" ${x===i.concert?'selected':''}>${x==='없음'?'참가 안 함':x}</option>`).join('')}</select></label>
@@ -129,7 +129,7 @@ function vEns(){
   ${lk?`<div class="note warn" style="border-color:var(--rosin)"><b>${esc(S.acad)}</b>은(는) ${lk.rep===S.acad?`이미 앙상블 「<b>${esc(lk.name)}</b>」 팀 <b>대표</b>로 신청돼 있어요 · <b>${esc(lk.by||'다른')} 선생님</b> 신청 (접수번호 ${esc(lk.no)}).<br>한 학원은 한 팀에만 들어가요. 팀 정보(곡·시간·함께하는 학원)는 ${esc(lk.by||'신청한')} 선생님이 「내 접수」에서 고쳐요.`:`이미 앙상블 「<b>${esc(lk.name)}</b>」 팀에 함께하는 학원으로 들어가 있어요 · 대표 학원 <b>${esc(lk.rep)}</b>${byTxt(lk)}.<br>따로 신청하지 않아도 돼요.`}</div>`
    :mine&&S.editNo&&mine.no===S.editNo?`<div class="note info">「<b>${esc(mine.name)}</b>」 팀 정보를 고치는 중이에요. 마지막 단계에서 「수정 내용 저장」을 누르면 바뀌어요.</div>`:''}
   <div class="panel">
-    <div class="f" style="display:grid;gap:6px"><span style="color:var(--muted);font-weight:500;font-size:13.5px">앙상블을 신청하시나요?</span>
+    <div class="f" style="display:grid;gap:6px"><span style="color:var(--muted);font-weight:500;font-size:15.5px">앙상블을 신청하시나요?</span>
       <div class="seg ens3"><button type="button" data-enson="0" aria-pressed="${!E.on&&!E.member}" ${keep?'disabled':''}>신청 안 함</button><button type="button" data-enson="1" aria-pressed="${!!E.on}" ${lk?'disabled':''}>우리가 대표예요</button><button type="button" data-enson="m" aria-pressed="${!!E.member}" ${lk||keep?'disabled':''}>대표가 이미 있어요</button></div>
       <span class="hint">${keep?`<b style="color:var(--rosin)">함께하는 학원(${mates.map(esc).join(', ')})이 있어서 대표 신청을 취소할 수 없어요.</b> 꼭 취소해야 하면 함께하는 학원과 먼저 이야기한 뒤 운영진에게 연락해 주세요.`:lk?'우리 학원은 이미 팀에 들어가 있어서 고를 수 없어요.':E.on?'우리 학원이 팀을 만들고 신청해요. 함께하는 학원은 아래에서 골라요.':E.member?'다른 학원이 대표인 팀에 함께해요. 신청과 곡·시간은 대표 학원이 넣어요.':'앙상블에 나가지 않아요.'}</span></div>
     ${E.member?ensMemberHTML():''}

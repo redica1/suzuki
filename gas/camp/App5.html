@@ -1,4 +1,4 @@
-/* build: 20261031-211711 */
+/* build: 20261031-212006 */
   if(!open.length) return ''; /* 신고한 사람은 아래 사람별 줄에 「입금 확인 중 · 날짜 금액」으로 보여서 여기서는 안 보여 줌 */
   const sel=S.rp||(S.rp=open.map(x=>x.p.id)); const sum=open.filter(x=>sel.includes(x.p.id)).reduce((t,x)=>t+dueOf(x.p),0);
   const nameOf=id=>{for(const sb of MY_SUBS){const p=sb.ppl.find(q=>q.id===id);if(p)return p.name}return ''};
@@ -69,9 +69,9 @@ function vMine(){
       <button class="btn small" type="button" data-cxopen="${sb.no}" ${selCx.length?'':'disabled'}>선택한 ${selCx.length}명 취소</button></span>`:''}</div>
     ${sel.length&&selCx.length<sel.length?`<p class="hint" style="margin:0">${sel.filter(id=>!selCx.includes(id)).map(id=>esc((sb.ppl.find(p=>p.id===id)||{}).name)).join(', ')}은(는) ${unpaidCancelOk()?'입금 신고 확인 중이라':'캠프가 시작돼서'} 지금 취소할 수 없어요.${unpaidCancelOk()?' 그 사람 줄의 「신고 수정 › 신고 취소」로 신고를 거두면 바로 취소할 수 있어요.':''}</p>`:''}
     ${S.cxOpen===sb.no&&selCx.length?cxPanel(sb,selCx):''}</div>`}).join('')}
-  <h3 style="margin:18px 0 6px;font-size:16px">앙상블</h3>
+  <h3 style="margin:18px 0 6px;font-size:18px">앙상블</h3>
   ${MY_SUBS.filter(sb=>sb.form&&sb.form.ens&&sb.form.ens.on&&sb.ppl.some(p=>p.status==='정상')).map(sb=>{const e=sb.form.ens;const songs=[1,2].map(n=>songTxt(e,n)).filter(Boolean);
-    return `<div class="panel enscard"><div class="spread"><div><span class="pill new">앙상블</span> <b style="font-size:17px">${esc(e.group||'(팀 이름 없음)')}</b> <span class="hint">${sb.no} · 대표 ${esc(sb.acad)}</span></div><button class="btn primary" type="button" data-ensedit="${sb.no}">앙상블 수정</button></div>
+    return `<div class="panel enscard"><div class="spread"><div><span class="pill new">앙상블</span> <b style="font-size:19px">${esc(e.group||'(팀 이름 없음)')}</b> <span class="hint">${sb.no} · 대표 ${esc(sb.acad)}</span></div><button class="btn primary" type="button" data-ensedit="${sb.no}">앙상블 수정</button></div>
       <dl class="kv"><dt>함께하는 학원</dt><dd>${esc(sb.acad)} (대표)${(e.acads||[]).length?', '+e.acads.map(esc).join(', '):''}</dd><dt>곡</dt><dd>${songs.join('<br>')||'<span class="hint">아직 없음</span>'}</dd><dt>연주시간</dt><dd>${e.tm||e.ts?`${+e.tm||0}분 ${+e.ts||0}초`:'-'}</dd></dl></div>`}).join('')}
   ${(()=>{const has=MY_SUBS.some(sb=>sb.form&&sb.form.ens&&sb.form.ens.on&&sb.ppl.some(p=>p.status==='정상'));const last=[...MY_SUBS].reverse().find(sb=>sb.form&&sb.ppl.some(p=>p.status==='정상'));
     if(has||!last)return '';const t=teamOf(last.acad);const mb=last.form.ens&&last.form.ens.member;
@@ -79,7 +79,7 @@ function vMine(){
     if(t){const my=MY_SUBS.find(sb=>(t.mem||[]).some(m=>m.no===sb.no));
       return `<div class="panel enscard spread"><div><span class="pill new">앙상블 · 함께하는 학원</span> 「<b>${esc(t.name)}</b>」 팀 (대표 학원 ${esc(t.rep)}${byTxt(t)})에 함께해요.<br><span class="hint">곡·시간 같은 팀 정보는 대표 학원이 넣어요.</span></div>${my?`<button class="btn" type="button" data-ensedit="${my.no}">앙상블 수정</button>`:''}</div>`}
     return mb?`<div class="panel enscard spread"><div><span class="pill new">앙상블 · 함께하는 학원</span> 대표 <b>${esc(last.form.ens.joinRep||'')}</b> 팀에 함께해요 · 대표 학원 신청 전<br><span class="hint">곡·시간 같은 팀 정보는 대표 학원이 넣어요.</span></div><button class="btn" type="button" data-ensedit="${last.no}">앙상블 수정</button></div>`
-      :`<div class="panel enscard spread"><div><span class="pill new">앙상블</span> <b style="font-size:16px">앙상블은 아직 신청하지 않았어요</b><br><span class="hint">여러 학원이 한 팀으로 나가요. 우리 학원이 대표로 신청할 수 있어요.</span></div><button class="btn primary" type="button" data-ensnew="${last.no}">＋ 앙상블 신청하기</button></div>`})()}
+      :`<div class="panel enscard spread"><div><span class="pill new">앙상블</span> <b style="font-size:18px">앙상블은 아직 신청하지 않았어요</b><br><span class="hint">여러 학원이 한 팀으로 나가요. 우리 학원이 대표로 신청할 수 있어요.</span></div><button class="btn primary" type="button" data-ensnew="${last.no}">＋ 앙상블 신청하기</button></div>`})()}
   <details class="panel" ${S.ruleOpen?'open':''} id="ruleBox"><summary><b>취소·환불 규정</b> <span class="hint">오늘(${kday(S.today)}) 취소하면: ${r.rate?`참가비 ${r.rate}% 환불`:'환불 없음'}${r.doc?' · 진단서 필요':''}${r.allow===false?' · 취소 불가':''}</span></summary>
     <ul class="rules">${rulesTxt}</ul><p class="hint">${REFUND.duesRefund?'':'연회비는 환불되지 않아요. '}환불 금액은 입금이 확인된 사람의 참가비·레슨비 기준이에요. 입금 전인 사람은 수수료가 없는 기간(전액 환불 기간)에는 바로 취소되고, 수수료가 생기는 날부터는 입금이 확인된 사람만 취소 요청할 수 있어요.</p>
     </details>
@@ -124,6 +124,6 @@ function vMyTT(){const T=S.tt;
   const tab=S.ttTab||'me';
   const seg=!T.open?'<p class="hint">시간표는 아직 공개 전이에요. 방 정보가 먼저 공개됐어요.</p>':`<div class="seg" role="group" aria-label="보기" style="margin:8px 0"><button type="button" data-tttab="me" aria-pressed="${tab==='me'}">내 일정 ${mine.length}</button><button type="button" data-tttab="stu" aria-pressed="${tab==='stu'}">우리 학생 레슨 ${(T.students||[]).length}명</button><button type="button" data-tttab="room" aria-pressed="${tab==='room'}">우리 방 ${(T.rooms||[]).length}</button></div>`;
   if(tab==='room'){const R=T.rooms||[];return head+seg+`<p class="lede">우리 학원이 쓰는 숙소 방이에요. 방마다 누가 들어갈지는 원장님이 정해 알려 주세요. 방 비밀번호는 비번 수신자에게 문자로 가요.</p>
-    ${R.length?R.map(r=>`<div class="panel ttstu"><div class="spread"><b class="num" style="font-size:18px">${esc(r.no)}</b><span class="hint">${esc(r.bld)} ${esc(r.fl)}${r.type?' · '+esc(r.type):''}</span></div>
+    ${R.length?R.map(r=>`<div class="panel ttstu"><div class="spread"><b class="num" style="font-size:20px">${esc(r.no)}</b><span class="hint">${esc(r.bld)} ${esc(r.fl)}${r.type?' · '+esc(r.type):''}</span></div>
       <div>${esc(r.kind||'')}${r.days&&r.days.length?` <small class="hint">· ${r.days.map(esc).join(', ')}</small>`:''}</div>
       ${(r.occ||[]).map(o=>`<div${o.mine?' style="font-weight:700"':''}>${esc(o.v)} ${o.n}명${o.days&&o.days.length?` <small class="hint">(${o.days.map(esc).join(', ')})</small>`:''}${o.tm?` <small class="hint">${esc(o.tm)}</small>`:''}</div>`).join('')}${r.pw?`<small class="hint">비번 수신자: ${esc(r.pw)}</small>`:''}</div>`).join(''):'<div class="note info">아직 방이 정해지지 않았어요. 정해지면 여기에 보여요.</div>'}</section>`}

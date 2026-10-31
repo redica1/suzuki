@@ -1,4 +1,4 @@
-/* build: 20261031-212006 */
+/* build: 20261031-214019 */
   if(tab==='me')return head+seg+`<div class="panel">${T.prof?`<p class="hint" style="margin:0 0 6px">교수 · 레슨실 <b>${esc(T.prof.room||'미정')}</b></p>`:''}
     ${days.map((dl,d)=>{const xs=mine.filter(x=>x.d===d);return xs.length?`<div class="ttday"><div class="ttdl">${esc(dl)}</div>${xs.map(x=>`<div class="ttit"><span class="num">${esc(x.t)}${x.e?'<small>~'+esc(x.e)+'</small>':''}</span><span><span class="ttrole ${x.what==='개인레슨'?'les':''}">${esc(x.what)}</span><b>${esc(x.title)}</b> · ${esc(x.where)}${x.loc?` <small class="hint">${esc(x.loc)}</small>`:''}${x.with?`<br><small class="hint">${x.what==='개인레슨'?'학생: ':'함께: '}${esc(x.with)}</small>`:''}</span></div>`).join('')}</div>`:''}).join('')||'<p class="hint" style="margin:0">아직 배정된 일정이 없어요.</p>'}</div></section>`;
   const st=T.students||[];
@@ -66,6 +66,7 @@ function missWhat(){const t=totals(),L=[],el=[],Q=x=>{const e=typeof x==='string
     people().forEach(p=>{const i=info(p),m=[];
       if(p.kind==='student'&&!i.teacher&&!isGuest()){m.push('담당 교사');Q('#tc_'+p.key)}
       if(yearBad(p,i.by)){m.push('출생연도');Q('#ag_'+p.key)}
+      if(staffNoRole(p)){m.push('역할(초빙교수 · 반주자 등)');const g=document.querySelector(`[data-settype^="${p.key}|"]`);if(g)Q(g.parentElement)}
       if(!i.gender){m.push('성별');const g=document.querySelector(`[data-gender^="${p.key}|"]`);if(g)Q(g.parentElement)}
       if(p.kind==='student'&&PLAYS.has(i.type)&&!i.prog){m.push('권수');Q('#pg_'+p.key)}
       if(p.kind==='student'&&PLAYS.has(i.type)&&!videoOk(i)){m.push('오디션 영상 주소');Q('#vd_'+p.key)}
@@ -108,19 +109,19 @@ document.addEventListener('click',e=>{
     if(!t){S.verr=`회원 명단에서 ${n} 선생님을 찾지 못했어요.`;render();return}
     if(t.state==='대기'){S.verr='승인 대기 중이에요. 협회가 확인하면 이메일로 알려 드려요.';render();return}
     login({...t,acads:t.acads.includes('마포스즈키')?['마포스즈키',...t.acads.filter(a=>a!=='마포스즈키')]:t.acads});if(t.acads.includes('마포스즈키')){document.querySelector('[data-acad="마포스즈키"]')||0}return}
-  if(d.mode){S.mode=d.mode;S.cons={};S.chk=null;S.verr='';S.auth=d.mode==='guest'?'guest':'login';render();window.scrollTo({top:0});return}
+  if(d.mode){S.mode=d.mode;S.lgAlt=false;S.cons={};S.chk=null;S.verr='';S.auth=d.mode==='guest'?'guest':'login';render();window.scrollTo({top:0});return}
   if(b.id==='toPick'){S.auth='pick';S.chk=null;S.verr='';render();return}
   if(b.id==='reInput'){S.auth=S.mode==='guest'?'guest':'login';S.chk=null;S.verr='';render();return}
   if(d.consopen){S.consOpen=S.consOpen||{};S.consOpen[d.consopen]=!S.consOpen[d.consopen];render();return}
   if(b.id==='consNext'){if(!consReqOk()){const miss=consItems().filter(x=>x.req&&!(S.cons||{})[x.id]).map(x=>x.title);S.verr='필수 항목에 동의해 주세요: '+miss.join(', ');render();return}
     S.verr='';const c=S.chk||{};if(c.kind==='guest')doGuestLogin(c.nm,c.ph);else if(c.pw)doMemberLoginPw(c.em,c.pw);else doMemberLogin(c.nm,c.ph);return}
   if(b.id==='toPhone'||b.id==='toEmail'){S.lgAlt=b.id==='toPhone';S.verr='';render();return}
-  if(b.id==='doLogin'&&LOGIN_PW&&!S.lgAlt){const em=(document.getElementById('lgId').value||'').trim().toLowerCase(),pw=document.getElementById('lgPw').value||'';S.lgId=em;
+  if(b.id==='doLogin'&&LOGIN_PW&&(!S.lgAlt||S.mode==='staff')){const em=(document.getElementById('lgId').value||'').trim().toLowerCase(),pw=document.getElementById('lgPw').value||'';S.lgId=em;
     if(!em||!pw){S.verr='이메일과 비밀번호를 넣어 주세요.';render();return}
     if(typeof TEST_AUTOCONSENT!=='undefined'&&TEST_AUTOCONSENT){doMemberLoginPw(em,pw);return}
     busy(true,'계정을 확인하고 있어요…');google.script.run.withSuccessHandler(r=>{busy(false);if(!r.ok){S.verr=r.msg;render();return}
       S.chk={kind:'member',em,pw,name:r.name,subs:r.subs||[],fresh:r.fresh};S.cons={};S.verr='';S.auth='consent';render();window.scrollTo({top:0})})
-      .withFailureHandler(e=>{busy(false);S.verr='연결이 잠시 안 돼요. 다시 눌러 주세요. ('+((e&&e.message)||e)+')';render()}).authCheckPw(em,pw);return}
+      .withFailureHandler(e=>{busy(false);S.verr='연결이 잠시 안 돼요. 다시 눌러 주세요. ('+((e&&e.message)||e)+')';render()}).authCheckPw(em,pw,S.mode==='staff');return}
   if(b.id==='doGuest'||b.id==='doLogin'){const G=b.id==='doGuest',nm=document.getElementById('lgNm').value.trim(),ph='010'+document.getElementById('lgEm').value.replace(/\D/g,'');S.lgNm=nm;S.lgEm='010-'+document.getElementById('lgEm').value;
     if((G?nm.length<2:!nm)||ph.length<11){S.verr=G?'보호자 이름과 휴대전화를 모두 넣어 주세요.':'이름과 휴대전화를 모두 넣어 주세요.';render();return}
     /* 테스트 페이지(동의 미리 함)는 바로 로그인 */

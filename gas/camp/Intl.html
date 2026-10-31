@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en"><head>
+<!-- build: 20261031-215550 -->
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<base target="_top">
+<title>Suzuki Winter Music Camp · Overseas Registration</title>
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<style>
+/* 해외 단체 영어 접수 (10-31) — 캠프 색(청록) · Pretendard. 화면 글은 영어, 저장 값(악기 · 성별 · 참가 구분)은 한국어 그대로 */
+:root{--bg:#f2fafa;--surface:#fff;--sunk:#e6f4f3;--line:#cdebe9;--ink:#132a2c;--muted:#4f6668;--accent:#0b7a78;--accent-soft:#e3f5f4;--band:#0f9d9a;--band-ink:#fff;--bad:#b4423a;--bad-soft:#f8e4e2;--ok:#2f7a4b;--ok-soft:#e1f1e6;--warn-soft:#fff3d6;
+  --body:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif}
+@media (prefers-color-scheme:dark){:root{--bg:#0c1918;--surface:#132423;--sunk:#182e2d;--line:#24403e;--ink:#e4f2f1;--muted:#9fbcba;--accent:#5fd4cf;--accent-soft:#163634;--band:#0b4f4d;--bad:#ec8a80;--bad-soft:#3d1f1c;--ok:#6cc58c;--ok-soft:#173326;--warn-soft:#3a2e18;color-scheme:dark}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.7 var(--body);letter-spacing:.01em}
+[hidden]{display:none!important}
+header{background:var(--band);color:var(--band-ink)}.wrap{max-width:900px;margin:0 auto;padding:0 16px}
+header .wrap{padding-top:18px;padding-bottom:18px}header small{opacity:.85;font-size:14px}header h1{margin:4px 0 2px;font-size:28px;font-weight:800;line-height:1.25}header p{margin:0;font-size:15px;opacity:.92}
+main{padding:20px 0 60px}.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:16px}
+h2{margin:0 0 6px;font-size:21px;font-weight:800}h3{margin:0 0 6px;font-size:18px}.hint{color:var(--muted);font-size:15px}
+label{display:grid;gap:4px;font-size:15px;font-weight:600}input,select,textarea{font:inherit;font-size:16px;font-weight:400;color:inherit;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:9px 11px;min-height:44px;width:100%}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:44px;padding:0 18px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;font-weight:700;cursor:pointer;text-decoration:none}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}.btn.small{min-height:36px;padding:0 12px;font-size:15px}.btn.ghost{background:transparent}.btn:disabled{opacity:.5;cursor:default}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}.spread{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
+.err{color:var(--bad);font-weight:600}.note{background:var(--warn-soft);border-radius:10px;padding:12px 14px;font-size:15px}
+.pill{display:inline-block;border-radius:999px;padding:1px 10px;font-size:13px;font-weight:700;background:var(--sunk);color:var(--muted)}.pill.ok{background:var(--ok-soft);color:var(--ok)}.pill.due{background:var(--bad-soft);color:var(--bad)}
+table{width:100%;border-collapse:collapse;font-size:15px}th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);vertical-align:top}th{color:var(--muted);font-size:13px;font-weight:700}td.r,th.r{text-align:right}.num{font-variant-numeric:tabular-nums;white-space:nowrap}
+.person{border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px;background:var(--surface)}.person.new{border-color:var(--accent)}
+.sticky{position:sticky;bottom:0;background:var(--surface);border-top:1px solid var(--line);padding:12px 16px;z-index:5}
+.toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:15px;z-index:9}
+.busy{position:fixed;inset:0;background:rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center;z-index:10;color:#fff;font-weight:700}
+</style></head>
+<body>
+<header><div class="wrap"><small>Korea Suzuki Music Association</small><h1 id="ttl">Suzuki Winter Music Camp</h1><p id="when">Overseas group registration</p></div></header>
+<main class="wrap" id="app"></main>
+<div class="toast" id="toast" hidden></div><div class="busy" id="busy" hidden>Saving…</div>
+<script>
+var S={tok:'',D:null,list:[],dirty:false,err:'',rep:{cur:'KRW'}};
+var TYPES=[['해외 학생','Student (plays an instrument)'],['해외 교사','Teacher'],['해외 보호자','Parent / guardian'],['해외 동반가족','Accompanying family (does not play)'],['해외 돌전아기','Infant (under 1 year)']];
+var TL={};TYPES.forEach(function(t){TL[t[0]]=t[1]});
+var INST=[['바이올린','Violin'],['첼로','Cello'],['비올라','Viola'],['플루트','Flute'],['피아노','Piano']];var IL={};INST.forEach(function(t){IL[t[0]]=t[1]});
+var BOOK=[['Pre-Twinkle','Pre-Twinkle'],['1권','Book 1'],['2권','Book 2'],['3권','Book 3'],['4권','Book 4'],['5권','Book 5'],['6권','Book 6'],['7권','Book 7'],['8권','Book 8'],['9권','Book 9'],['10권','Book 10'],['10권 이상','Above Book 10']];
+var BL={};BOOK.forEach(function(t){BL[t[0]]=t[1]});
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+function won(n){return 'KRW '+Math.round(+n||0).toLocaleString('en-US')}
+function opt(L,v,ph){return (ph?'<option value="">'+ph+'</option>':'')+L.map(function(o){return '<option value="'+esc(o[0])+'"'+(o[0]===v?' selected':'')+'>'+esc(o[1])+'</option>'}).join('')}
+function toast(m){var t=document.getElementById('toast');t.textContent=m;t.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(function(){t.hidden=true},2600)}
+function busy(on,m){var b=document.getElementById('busy');b.textContent=m||'Saving…';b.hidden=!on}
+function run(fn,args,ok){busy(true);google.script.run.withSuccessHandler(function(r){busy(false);if(r&&r.ok===false){S.err=r.msg;render();toast(r.msg);return}ok(r)}).withFailureHandler(function(e){busy(false);var m=(e&&e.message)||String(e);S.err=m;render();toast(m)})[fn].apply(null,args)}
+function setD(r){S.D=r;S.list=(r.ppl||[]).map(function(p){return {key:p.key,first:p.first,last:p.last,type:p.type,gender:p.gender,by:p.by,inst:p.inst,prog:p.prog,note:p.note,fee:p.fee,paid:p.paid,pay:p.pay}});S.dirty=false;S.err='';
+  var c=r.camp||{};document.getElementById('ttl').textContent=(c.name?c.name.replace('스즈키 겨울 음악제','Suzuki Winter Music Camp'):'Suzuki Winter Music Camp');
+  document.getElementById('when').textContent=(c.start||'')+' ~ '+(c.end||'')+' · Overseas group registration · '+r.group.name}
+function vLogin(){return '<div class="card" style="max-width:520px"><h2>Group leader sign in</h2>'+
+  '<p class="hint">Sign in with the email address and the access code sent to you by the Korea Suzuki Music Association. One leader registers everyone in the group: students, teachers, parents and family.</p>'+
+  '<div style="display:grid;gap:12px;margin-top:10px"><label>Email<input type="email" id="em" autocomplete="username" inputmode="email"></label>'+
+  '<label>Access code<input type="text" id="cd" placeholder="XXXX-XXXX" autocomplete="one-time-code" style="text-transform:uppercase"></label>'+
+  '<label style="display:flex;gap:10px;align-items:flex-start;font-weight:400"><input type="checkbox" id="ag" style="width:22px;min-height:22px;margin-top:3px"><span>I agree that the association collects and uses the participants’ names, gender, birth year, instrument and level to run the camp (room assignment, lessons, name tags), and shares names and gender with the camp hotel. I confirm that guardians of participants under 14 have agreed. The data is deleted after the camp settlement.</span></label>'+
+  (S.err?'<p class="err">'+esc(S.err)+'</p>':'')+'<button class="btn primary" type="button" id="go">Sign in</button>'+
+  '<p class="hint">No access code? Please email the association to receive one for your group.</p></div></div>'}
+function sum(){var L=S.list,by={},tot=0,paid=0;L.forEach(function(p){by[p.type]=(by[p.type]||0)+1;var f=S.D.fees[p.type]||0;tot+=f;paid+=+p.paid||0});return {by:by,tot:tot,paid:paid}}
+function vPerson(p,i){var plays=p.type==='해외 학생'||p.type==='해외 교사';
+  return '<div class="person'+(p.key?'':' new')+'"><div class="spread"><b>'+(i+1)+'. '+esc((p.first||'')+' '+(p.last||'')).trim()+(p.key?'':' <span class="pill">new</span>')+'</b><div class="row">'+(p.paid>0?'<span class="pill ok">paid '+won(p.paid)+'</span>':'')+'<span class="num">'+won(S.D.fees[p.type]||0)+'</span>'+(p.paid>0?'':'<button class="btn small ghost" type="button" data-rm="'+i+'">Remove</button>')+'</div></div>'+
+  '<div class="grid" style="margin-top:8px">'+
+  '<label>First name *<input data-f="first" data-i="'+i+'" value="'+esc(p.first)+'"></label>'+
+  '<label>Last name *<input data-f="last" data-i="'+i+'" value="'+esc(p.last)+'"></label>'+
+  '<label>Type *<select data-f="type" data-i="'+i+'"'+(p.paid>0?' disabled':'')+'>'+opt(TYPES,p.type,'Choose')+'</select></label>'+
+  '<label>Gender *<select data-f="gender" data-i="'+i+'">'+opt([['남','Male'],['여','Female']],p.gender,'Choose')+'</select></label>'+
+  '<label>Birth year *<input data-f="by" data-i="'+i+'" value="'+esc(p.by)+'" inputmode="numeric" maxlength="4" placeholder="2015"></label>'+
+  (plays?'<label>Instrument *<select data-f="inst" data-i="'+i+'">'+opt(INST,p.inst,'Choose')+'</select></label>':'')+
+  (p.type==='해외 학생'?'<label>Current book *<select data-f="prog" data-i="'+i+'">'+opt(BOOK,p.prog,'Choose')+'</select></label>':'')+
+  '<label>Note<input data-f="note" data-i="'+i+'" value="'+esc(p.note)+'" placeholder="family of …, allergy, etc."></label></div></div>'}
+function vMain(){var D=S.D,s=sum();
+  var fee='<table><thead><tr><th>Participant type</th><th class="r">Fee ('+esc(String(D.round).replace(/(\d+)\s*차/,'round $1'))+')</th><th class="r">People</th></tr></thead><tbody>'+TYPES.map(function(t){return '<tr><td>'+esc(t[1])+'</td><td class="r num">'+won(D.fees[t[0]]||0)+'</td><td class="r num">'+(s.by[t[0]]||0)+'</td></tr>'}).join('')+
+    '<tr><td><b>Total</b></td><td class="r num"><b>'+won(s.tot)+'</b></td><td class="r num"><b>'+S.list.length+'</b></td></tr></tbody></table>';
+  return '<div class="card"><div class="spread"><div><h2>'+esc(D.group.name)+'</h2><span class="hint">'+esc(D.group.country)+(D.group.lead?' · leader '+esc(D.group.lead):'')+' · '+esc(D.group.email)+(D.no?' · registration '+esc(D.no):'')+'</span></div><button class="btn small ghost" type="button" id="out">Sign out</button></div>'+
+    '<p class="hint" style="margin-top:8px">Camp: '+esc(D.camp.start)+' ~ '+esc(D.camp.end)+(D.camp.place&&D.camp.place!=='추후 안내'?' · '+esc(D.camp.place):'')+'. Fees include the camp program, room and meals. No membership fee for overseas participants.</p>'+fee+'</div>'+
+    '<div class="card"><div class="spread"><h2>Participants</h2><div class="row"><button class="btn small" type="button" data-add="해외 학생">+ Student</button><button class="btn small" type="button" data-add="해외 교사">+ Teacher</button><button class="btn small" type="button" data-add="해외 보호자">+ Parent</button><button class="btn small" type="button" data-add="해외 동반가족">+ Family</button><button class="btn small" type="button" data-add="해외 돌전아기">+ Infant</button></div></div>'+
+    '<p class="hint">Enter every person who will come. Names in English as in the passport. You can come back later to add or change people. People whose payment is confirmed cannot be removed here.</p>'+
+    (S.list.length?S.list.map(vPerson).join(''):'<p class="hint">No one yet. Use the buttons above to add people.</p>')+'</div>'+
+    '<div class="card"><h2>Payment</h2><p class="hint">Please send the total for the whole group in one transfer, then report it below. The association confirms each person after the money arrives.</p>'+
+    (D.remit?'<div class="note" style="white-space:pre-wrap">'+esc(D.remit)+'</div>':'<div class="note">Bank details will be sent by the association.</div>')+
+    '<div class="spread" style="margin-top:10px"><b>Total '+won(s.tot)+'</b><span>Confirmed '+won(s.paid)+'</span>'+(s.tot-s.paid>0?'<span class="pill due">Balance '+won(s.tot-s.paid)+'</span>':'<span class="pill ok">Fully paid</span>')+'</div>'+
+    (D.reps.length?'<table style="margin-top:10px"><thead><tr><th>Reported</th><th>Date sent</th><th class="r">Amount</th><th>Sender</th></tr></thead><tbody>'+D.reps.map(function(r){return '<tr><td class="num">'+esc(String(r.at).slice(0,16))+'</td><td class="num">'+esc(r.date)+'</td><td class="r num">'+esc(r.cur)+' '+Number(r.amt).toLocaleString('en-US')+'</td><td>'+esc(r.name)+'</td></tr>'}).join('')+'</tbody></table>':'')+
+    '<h3 style="margin-top:14px">Report a transfer</h3><div class="grid"><label>Date sent<input type="date" id="rd" value="'+esc(S.rep.date||'')+'" max="'+esc(D.today)+'"></label><label>Currency<select id="rc">'+opt([['KRW','KRW'],['USD','USD'],['PHP','PHP'],['JPY','JPY'],['EUR','EUR']],S.rep.cur)+'</select></label>'+
+    '<label>Amount<input id="ra" inputmode="decimal" value="'+esc(S.rep.amt||'')+'"></label><label>Sender name<input id="rn" value="'+esc(S.rep.name||'')+'"></label></div><div class="row" style="margin-top:10px"><button class="btn" type="button" id="rep" '+(D.no?'':'disabled')+'>Report transfer</button>'+(D.no?'':'<span class="hint">Save the participant list first.</span>')+'</div></div>'+
+    '<div class="sticky"><div class="spread wrap" style="padding:0"><span>'+S.list.length+' people · <b>'+won(s.tot)+'</b>'+(S.dirty?' · <span class="err">not saved</span>':'')+'</span><button class="btn primary" type="button" id="save"'+(S.dirty?'':' disabled')+'>Save list</button></div>'+(S.err?'<p class="err" style="margin:6px 0 0">'+esc(S.err)+'</p>':'')+'</div>'}
+function render(){document.getElementById('app').innerHTML=S.D?vMain():vLogin()}
+document.addEventListener('input',function(e){var t=e.target;if(t.dataset&&t.dataset.f!==undefined){var p=S.list[+t.dataset.i];p[t.dataset.f]=t.value;S.dirty=true;var b=document.getElementById('save');if(b)b.disabled=false}});
+document.addEventListener('change',function(e){var t=e.target;if(t.dataset&&t.dataset.f!==undefined&&t.tagName==='SELECT'){var p=S.list[+t.dataset.i];p[t.dataset.f]=t.value;S.dirty=true;render()}});
+document.addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;var d=b.dataset;
+  if(b.id==='go'){var em=document.getElementById('em').value.trim(),cd=document.getElementById('cd').value.trim(),ag=document.getElementById('ag').checked;if(!em||!cd){S.err='Please enter your email and access code.';render();return}if(!ag){S.err='Please agree to the collection and use of personal information.';render();return}
+    run('intlLogin',[em,cd,true],function(r){S.tok=r.token;setD(r);render()});return}
+  if(b.id==='out'){if(S.dirty&&!confirm('You have unsaved changes. Sign out anyway?'))return;S.tok='';S.D=null;S.err='';render();return}
+  if(d.add){S.list.push({key:'',first:'',last:'',type:d.add,gender:'',by:'',inst:'',prog:'',note:'',paid:0});S.dirty=true;render();var L=document.querySelectorAll('[data-f="first"]');if(L.length)L[L.length-1].focus();return}
+  if(d.rm!==undefined){var p=S.list[+d.rm];if(p.key&&!confirm('Remove '+((p.first||'')+' '+(p.last||'')).trim()+'?'))return;S.list.splice(+d.rm,1);S.dirty=true;render();return}
+  if(b.id==='save'){run('intlSave',[S.tok,S.list.map(function(p){return {key:p.key,first:p.first,last:p.last,type:p.type,gender:p.gender,by:p.by,inst:p.inst,prog:p.prog,note:p.note}})],function(r){setD(r);render();toast('Saved · '+r.ppl.length+' people')});return}
+  if(b.id==='rep'){S.rep={date:document.getElementById('rd').value,cur:document.getElementById('rc').value,amt:document.getElementById('ra').value,name:document.getElementById('rn').value};
+    if(!S.rep.date||!S.rep.amt){toast('Please enter the date and amount.');return}
+    run('intlReport',[S.tok,S.rep],function(r){S.rep={cur:S.rep.cur};var keep=S.dirty?S.list:null;setD(r);if(keep){S.list=keep;S.dirty=true}render();toast('Transfer reported. Thank you!')});return}});
+window.addEventListener('beforeunload',function(e){if(S.dirty){e.preventDefault();e.returnValue=''}});
+render();
+</script>
+</body></html>

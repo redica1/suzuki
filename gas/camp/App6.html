@@ -1,4 +1,4 @@
-/* build: 20261031-214019 */
+/* build: 20261031-215550 */
   if(tab==='me')return head+seg+`<div class="panel">${T.prof?`<p class="hint" style="margin:0 0 6px">교수 · 레슨실 <b>${esc(T.prof.room||'미정')}</b></p>`:''}
     ${days.map((dl,d)=>{const xs=mine.filter(x=>x.d===d);return xs.length?`<div class="ttday"><div class="ttdl">${esc(dl)}</div>${xs.map(x=>`<div class="ttit"><span class="num">${esc(x.t)}${x.e?'<small>~'+esc(x.e)+'</small>':''}</span><span><span class="ttrole ${x.what==='개인레슨'?'les':''}">${esc(x.what)}</span><b>${esc(x.title)}</b> · ${esc(x.where)}${x.loc?` <small class="hint">${esc(x.loc)}</small>`:''}${x.with?`<br><small class="hint">${x.what==='개인레슨'?'학생: ':'함께: '}${esc(x.with)}</small>`:''}</span></div>`).join('')}</div>`:''}).join('')||'<p class="hint" style="margin:0">아직 배정된 일정이 없어요.</p>'}</div></section>`;
   const st=T.students||[];

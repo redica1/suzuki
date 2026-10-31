@@ -1,4 +1,4 @@
-/* build: 20261031-214019 */
+/* build: 20261031-215550 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -30,11 +30,13 @@ const FEES = {
   /* 비회원(학부모 직접 접수) — 금액은 「캠프 설정」 참가비표에서 정함 (기본값은 회원 금액과 같게 넣어 둠) */
   '비회원 학생': [560000, 570000, 590000], '비회원 보호자': [510000, 520000, 540000], '비회원 동반가족': [410000, 420000, 440000], '비회원 돌전아기': [310000, 320000, 340000],
   /* 관계자 (10-31) — 금액은 「캠프 설정」 참가비표에서 (기본 0원) */
-  '초빙교수': [0, 0, 0], '반주자': [0, 0, 0], '지휘자': [0, 0, 0], '통역': [0, 0, 0], '초청강사': [0, 0, 0], '스태프': [0, 0, 0], '기타 관계자': [0, 0, 0]
+  '초빙교수': [0, 0, 0], '반주자': [0, 0, 0], '지휘자': [0, 0, 0], '통역': [0, 0, 0], '초청강사': [0, 0, 0], '스태프': [0, 0, 0], '기타 관계자': [0, 0, 0],
+  /* 해외 단체 (10-31, 영어 화면) — 금액은 「캠프 설정」 참가비표에서, 연회비 없음 */
+  '해외 학생': [560000, 570000, 590000], '해외 교사': [560000, 570000, 590000], '해외 보호자': [510000, 520000, 540000], '해외 동반가족': [410000, 420000, 440000], '해외 돌전아기': [310000, 320000, 340000]
 };
 const ROUND_NAMES = ['1차', '2차', '3차'];
 const OPT = { lessonFee: 60000, lessonMax: 5, studentDues: 30000, teacherDues: 300000, roomCap: 4, roomEmptyFee: 130000 };
-const PLAYS = ['교사', '연수생', '소속없는 중급연수생', '학생', '회원의 악기하는 자녀', '비회원 학생'];
+const PLAYS = ['교사', '연수생', '소속없는 중급연수생', '학생', '회원의 악기하는 자녀', '비회원 학생', '해외 학생', '해외 교사'];
 const MASTER = [{ n: '안드레아 부샤츠', fee: 150000 }, { n: '이성주', fee: 150000 }];
 /* 교수진: 「교수진」 시트에서 관리 (처음 한 번만 아래 목록으로 채움) */
 const PROF_SEED = {
@@ -78,6 +80,7 @@ const SETTINGS = [['관리자 아이디', 'admin', '관리자 화면(?page=admin
   ['로그인 방식', '둘 다', '「둘 다」 = 이메일 · 비밀번호 + (회원 가입 전 선생님은) 이름 + 휴대전화 / 「회원관리 계정」 = 이메일 · 비밀번호만 / 「이름+휴대전화」 = 예전 방식'],
   ['회원관리 주소', 'https://redica1.github.io/suzuki/member/', '선생님 가입 · 비밀번호 찾기 안내에 쓰는 회원관리 주소 (STG 는 끝에 ?test)'],
   ['회원 명단 파일', '', '회원관리가 만드는 「행사용 명단」 파일 ID 또는 주소. 넣으면 명단_교사 · 명단_학생을 그 파일로 5분마다 맞춤 (비우면 지금처럼 이 시트의 명단 그대로)'],
+  ['해외 송금 안내', '', '해외 단체 영어 화면에 보이는 송금 안내 (영어로: 은행 · SWIFT · 계좌 · 예금주 · 주소 등)'],
   ['접수 가능 학원', '마포스즈키', '「전체」 또는 학원 이름을 쉼표로 (예: 마포스즈키, 미사스즈키)'],
   ['시간표 공개', '아니오', '「예」면 선생님 화면 「내 시간표」에 교사 일정·개인레슨이 보여요']];
 
@@ -96,10 +99,12 @@ function doGet(e) {
   const admin = e && e.parameter && e.parameter.page === 'admin';
   let page, cname = CAMP_NAME, cj = '';
   try { const c = campPublic_(); cname = c.base.name; cj = JSON.stringify(c); } catch (x) {}
+  const intl = e && e.parameter && e.parameter.page === 'intl';
   if (admin) page = HtmlService.createHtmlOutputFromFile('Admin');
+  else if (intl) page = HtmlService.createHtmlOutputFromFile('Intl');
   else { const t = HtmlService.createTemplateFromFile('Index'); let share = ''; let tl = ''; try { ensureSettings_(); share = setting_('공유주소'); tl = setting_('테스트 로그인'); } catch (x) {} t.shareUrl = share; t.testLogin = tl; t.campJson = cj; try { t.loginPw = { pw: '1', both: '2' }[loginMode_()] || ''; t.memberUrl = setting_('회원관리 주소'); } catch (x) { t.loginPw = ''; t.memberUrl = ''; } /* 테스트 로그인: STG 「설정」에만 (이름/휴대전화) — 로그인 칸을 미리 채움 · campJson: 「캠프설정」 시트 값 (날짜·장소·차수·참가비) */ page = t.evaluate(); }
   return page
-    .setTitle(cname + (admin ? ' 접수 관리' : ' 접수'))
+    .setTitle(intl ? 'Suzuki Winter Music Camp · Overseas Registration' : cname + (admin ? ' 접수 관리' : ' 접수'))
     .addMetaTag('viewport', 'width=device-width, initial-scale=1')
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
@@ -224,6 +229,137 @@ const STAFF_FAM = ['회원의 첫번째 보호자', '회원의 그외 악기 안
 const isStaffT_ = t => t && t.kind === '외부인';
 function staffOk_(t, staff) {
   if (staff && !isStaffT_(t)) throw new Error('관계자(외부인) 계정이 아니에요. 회원 선생님은 처음 화면에서 「회원 선생님」을 골라 주세요.');
+}
+/* ---------------- 해외 단체 (10-31) ----------------
+ * 해외 단체(예: 필리핀) = 대표 한 명이 영어 화면(?page=intl)에서 단체 사람을 모두 접수. 운영진이 관리자 「접수 · 입금 확인 › 해외」에서 단체를 만들고
+ * 접속 코드를 대표 이메일로 보냄 → 대표는 이메일 + 코드로 로그인. 단체 하나 = 접수 하나(학원 「해외 · 단체이름」, sb.intl = true).
+ * 참가 구분 = 해외 학생 · 해외 교사 · 해외 보호자 · 해외 동반가족 · 해외 돌전아기 (캠프 설정 참가비표), 연회비 없음. 송금은 단체가 한꺼번에 → 대표가 송금 신고(intlRep),
+ * 운영진이 받은 금액으로 사람마다 입금 확인(기존 일괄 확인). */
+const INTL_SH = '해외단체', INTL_HEAD = ['단체ID', '단체', '나라', '대표', '이메일', '접속코드', '만든날', '사용', '메모'];
+const INTL_TYPES = ['해외 학생', '해외 교사', '해외 보호자', '해외 동반가족', '해외 돌전아기'];
+const INTL_PLAY = ['해외 학생', '해외 교사'];
+function intlSheet_() { const ss = SpreadsheetApp.getActive(); let sh = ss.getSheetByName(INTL_SH); if (!sh) { sh = ss.insertSheet(INTL_SH); sh.getRange(1, 1, 1, INTL_HEAD.length).setValues([INTL_HEAD]).setFontWeight('bold'); sh.setFrozenRows(1); sh.getRange('A:I').setNumberFormat('@'); } return sh; }
+function intlGroups_() { intlSheet_(); return rows_(INTL_SH).filter(r => r['단체ID']).map(r => ({ id: String(r['단체ID']), name: String(r['단체']), country: String(r['나라'] || ''), lead: String(r['대표'] || ''), email: String(r['이메일'] || '').toLowerCase(), code: String(r['접속코드'] || ''), at: String(r['만든날'] || ''), on: String(r['사용'] || '예') !== '아니오', memo: String(r['메모'] || ''), _row: r._row })); }
+const intlAcad_ = g => '해외 · ' + g.name;
+function intlCode_() { const A = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let c = ''; for (let i = 0; i < 8; i++) c += A[Math.floor(Math.random() * A.length)]; return c.slice(0, 4) + '-' + c.slice(4); }
+/** 관리자: 해외 단체 목록 + 만들기 · 고치기 · 코드 새로 만들기 */
+function intlAdmin(token, op) {
+  const a = adm_(token); need_(a, ['subs']);
+  op = op || {};
+  if (op.act) {
+    const lock = lock_();
+    try {
+      const sh = intlSheet_(), L = intlGroups_();
+      if (op.act === 'add') {
+        const name = String(op.name || '').trim().replace(/\s+/g, ' '), email = String(op.email || '').trim().toLowerCase();
+        if (name.length < 2 || name.length > 40 || /[·]/.test(name)) throw new Error('단체 이름을 2~40자로 넣어 주세요.');
+        if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) throw new Error('대표 이메일을 확인해 주세요.');
+        if (L.some(g => g.name === name)) throw new Error('같은 이름의 단체가 있어요.');
+        const id = 'G' + String(L.reduce((m, g) => Math.max(m, +g.id.slice(1) || 0), 0) + 1).padStart(3, '0');
+        sh.appendRow([id, name, String(op.country || '').trim().slice(0, 30), String(op.lead || '').trim().slice(0, 40), email, intlCode_(), stamp_(), '예', String(op.memo || '').slice(0, 200)]);
+        log_('관리자 ' + a.name, '해외 단체 만들기', id + ' · ' + name);
+      } else {
+        const g = L.find(x => x.id === op.id); if (!g) throw new Error('단체를 찾지 못했어요.');
+        const col = k => INTL_HEAD.indexOf(k) + 1;
+        if (op.act === 'code') sh.getRange(g._row, col('접속코드')).setValue(intlCode_());
+        if (op.act === 'on') sh.getRange(g._row, col('사용')).setValue(op.on ? '예' : '아니오');
+        if (op.act === 'edit') { const em = String(op.email || g.email).trim().toLowerCase(); if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)) throw new Error('대표 이메일을 확인해 주세요.');
+          sh.getRange(g._row, col('나라'), 1, 3).setValues([[String(op.country || '').trim().slice(0, 30), String(op.lead || '').trim().slice(0, 40), em]]); sh.getRange(g._row, col('메모')).setValue(String(op.memo || '').slice(0, 200)); }
+        log_('관리자 ' + a.name, '해외 단체 ' + op.act, g.id + ' · ' + g.name);
+      }
+    } finally { lock.releaseLock(); }
+  }
+  const subs = loadSubs_();
+  return { groups: intlGroups_().map(g => { const sb = subs.find(x => x.intl && x.intlId === g.id); const live = sb ? sb.ppl.filter(p => p.status === '정상') : [];
+    return Object.assign({}, g, { _row: undefined, no: sb ? sb.no : '', n: live.length, bill: live.reduce((t, p) => t + amt_(p), 0), paid: sb ? sb.ppl.reduce((t, p) => t + (+p.paidAmt || 0), 0) : 0, reps: sb ? (sb.intlRep || []) : [] }); }),
+    url: setting_('공유주소') ? String(setting_('공유주소')).replace(/\/$/, '') + '/intl.html' : '' };
+}
+function intlWho_(token) { const v = CacheService.getScriptCache().get('intl_' + token); if (!v) throw new Error('Your session has ended. Please reload the page and sign in again.'); return JSON.parse(v); }
+/** 대표 로그인: 이메일 + 접속 코드 */
+function intlLogin(email, code, agree) {
+  const C = camp_(); if (C.base.intl === false) return { ok: false, msg: 'Overseas registration is closed. Please contact the association.' };
+  email = String(email || '').trim().toLowerCase(); code = String(code || '').trim().toUpperCase().replace(/\s/g, '');
+  const Ca = CacheService.getScriptCache(), k = 'intlf_' + email, n = +(Ca.get(k) || 0);
+  if (n >= 10) return { ok: false, msg: 'Too many attempts. Please try again in 15 minutes.' };
+  const g = intlGroups_().find(x => x.email === email && x.code.replace(/-/g, '') === code.replace(/-/g, ''));
+  if (!g) { Ca.put(k, String(n + 1), 900); Utilities.sleep(500); return { ok: false, msg: 'The email or access code does not match. Please check the code sent by the association.' }; }
+  if (!g.on) return { ok: false, msg: 'This group is not active. Please contact the association.' };
+  if (agree !== true) return { ok: false, msg: 'Please agree to the collection and use of personal information.' };
+  Ca.remove(k);
+  consentLog_('해외 단체', g.lead || g.name, '', { collect: true, third: true, minor: true, refund: true });
+  const token = Utilities.getUuid(); Ca.put('intl_' + token, JSON.stringify({ id: g.id }), 21600);
+  log_('해외 ' + g.name, '로그인', email);
+  return Object.assign({ ok: true, token }, intlData_(g.id));
+}
+function intlData_(gid) {
+  const g = intlGroups_().find(x => x.id === gid); if (!g) throw new Error('Group not found.');
+  const C = camp_(), sb = loadSubs_().find(x => x.intl && x.intlId === gid), ri = sb ? (+((sb.form || {}).ri) || 0) : curRound_(C);
+  const ppl = sb ? sb.ppl.filter(p => p.status !== '취소').map(p => { const k = p.id.slice(sb.no.length + 1), i = (sb.form.info || {})[k] || {};
+    return { key: k, first: i.first || '', last: i.last || '', type: p.type, gender: i.gender || '', by: i.by || '', inst: i.inst || p.inst || '', prog: i.prog || '', note: i.note || '', fee: +p.fee || 0, paid: +p.paidAmt || 0, pay: p.pay }; }) : [];
+  const fees = {}; INTL_TYPES.forEach(t => fees[t] = (C.fees[t] || [])[ri] || 0);
+  return { group: { id: g.id, name: g.name, country: g.country, lead: g.lead, email: g.email }, no: sb ? sb.no : '', ppl, fees, round: C.rounds[ri].n,
+    camp: { name: C.base.name, start: C.base.start, end: C.base.end, place: C.base.place }, remit: setting_('해외 송금 안내'), reps: sb ? (sb.intlRep || []) : [], today: today_() };
+}
+function intlData(token) { const u = intlWho_(token); return Object.assign({ ok: true }, intlData_(u.id)); }
+/** 대표: 명단 저장 (전체를 보냄). 지운 사람은 입금 확인 전이면 「취소」, 확인된 사람은 지울 수 없음 */
+function intlSave(token, list) {
+  const u = intlWho_(token), g = intlGroups_().find(x => x.id === u.id); if (!g || !g.on) throw new Error('This group is not active.');
+  if (!Array.isArray(list)) throw new Error('Nothing to save.'); if (list.length > 150) throw new Error('Up to 150 people per group.');
+  const clean = list.map((x, n) => {
+    const first = String(x.first || '').trim().replace(/\s+/g, ' ').slice(0, 40), last = String(x.last || '').trim().replace(/\s+/g, ' ').slice(0, 40), at = 'Row ' + (n + 1) + ': ';
+    if (!first || !last) throw new Error(at + 'Please enter first name and last name.');
+    if (!INTL_TYPES.includes(x.type)) throw new Error(at + 'Please choose a participant type.');
+    if (!['남', '여'].includes(x.gender)) throw new Error(at + 'Please choose gender.');
+    const by = String(x.by || '').trim(); if (!/^(19|20)\d{2}$/.test(by)) throw new Error(at + 'Please enter birth year (e.g. 2015).');
+    const plays = INTL_PLAY.includes(x.type), inst = String(x.inst || '').trim().slice(0, 20);
+    if (plays && !inst) throw new Error(at + 'Please choose an instrument.');
+    if (x.type === '해외 학생' && !String(x.prog || '').trim()) throw new Error(at + 'Please choose the current book level.');
+    return { key: /^o[a-z0-9]{3,20}$/.test(String(x.key || '')) ? x.key : '', first, last, type: x.type, gender: x.gender, by, inst: plays ? inst : '', prog: x.type === '해외 학생' ? String(x.prog).slice(0, 40) : '', note: String(x.note || '').slice(0, 200) };
+  });
+  const lock = lock_();
+  try {
+    const all = loadSubs_(), C = camp_(); let sb = all.find(x => x.intl && x.intlId === g.id), isNew = false;
+    if (!sb) {
+      if (!clean.length) throw new Error('Please add at least one person.');
+      const n = all.reduce((m, x) => Math.max(m, +String(x.no).split('-')[1] || 0), 0) + 1, ri = curRound_(C);
+      sb = { no: C.base.id + '-' + String(n).padStart(3, '0'), owner: g.lead || g.name, acad: intlAcad_(g), intl: true, intlId: g.id, round: C.rounds[ri].n, date: today_(), createdAt: stamp_(), rev: 0, contact: g.email, ppl: [], form: { picked: {}, extra: [], fam: [], info: {}, room: {}, join: {}, ens: { on: false }, ri } };
+      isNew = true;
+    }
+    const at = stamp_(), seen = {}, batch = Math.max(1, ...sb.ppl.map(p => +p.batch || 1)) + (isNew ? 0 : 1);
+    clean.forEach(x => {
+      let k = x.key && sb.ppl.some(p => p.id === sb.no + '_' + x.key) ? x.key : '';
+      if (!k) { do { k = 'o' + Utilities.getUuid().replace(/-/g, '').slice(0, 8); } while (sb.ppl.some(p => p.id === sb.no + '_' + k)); }
+      seen[k] = 1;
+      const old = (sb.form.info || {})[k] || {}, p0 = sb.ppl.find(p => p.id === sb.no + '_' + k);
+      if (p0 && (+p0.paidAmt || 0) > 0 && p0.type !== x.type) throw new Error(x.first + ' ' + x.last + ': payment is already confirmed, so the type cannot be changed. Please contact the association.');
+      sb.form.info[k] = Object.assign(old, { type: x.type, gender: x.gender, by: x.by, inst: x.inst, prog: x.prog, first: x.first, last: x.last, note: x.note, teacher: '', lessons: 0, mc: [], concert: '없음' });
+      const kind = x.type === '해외 학생' ? '학생' : x.type === '해외 교사' ? '교사' : '가족', name = x.first + ' ' + x.last;
+      if (p0) { Object.assign(p0, { name, inst: x.inst, kind, type: x.type }); if (p0.status === '취소' && !(+p0.paidAmt > 0)) { p0.status = '정상'; p0.addAt = at; } }
+      else sb.ppl.push({ id: sb.no + '_' + k, name, dtag: '', inst: x.inst, kind, type: x.type, status: '정상', pay: '전', paidAmt: 0, batch: isNew ? 1 : batch, addAt: at });
+    });
+    sb.ppl.forEach(p => { const k = p.id.slice(sb.no.length + 1); if (seen[k] || p.status === '취소') return;
+      if ((+p.paidAmt || 0) > 0) throw new Error(p.name + ': payment is already confirmed, so this person cannot be removed here. Please contact the association.');
+      p.status = '취소'; p.cxAt = at; });
+    sb.rev = (+sb.rev || 0) + 1; recalc_(sb);
+    writeSub_(sb, isNew); if (isNew) all.push(sb);
+    log_('해외 ' + g.name, isNew ? '새 접수' : '명단 저장', sb.no + ' · ' + sb.ppl.filter(p => p.status === '정상').length + '명');
+  } finally { lock.releaseLock(); }
+  return Object.assign({ ok: true }, intlData_(g.id));
+}
+/** 대표: 송금 신고 (단체 전체 한 번에) — 운영진이 받은 금액으로 사람마다 입금 확인 */
+function intlReport(token, r) {
+  const u = intlWho_(token), g = intlGroups_().find(x => x.id === u.id);
+  const date = String((r || {}).date || ''), amt = +String((r || {}).amt || '').replace(/[^\d.]/g, '') || 0, cur = ['KRW', 'USD', 'PHP', 'JPY', 'EUR'].includes((r || {}).cur) ? r.cur : 'KRW';
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || date > today_()) throw new Error('Please choose the transfer date.');
+  if (!(amt > 0)) throw new Error('Please enter the amount you sent.');
+  const lock = lock_();
+  try {
+    const all = loadSubs_(), sb = all.find(x => x.intl && x.intlId === g.id); if (!sb) throw new Error('Please save the participant list first.');
+    sb.intlRep = (sb.intlRep || []).concat([{ date, amt, cur, name: String(r.name || '').trim().slice(0, 60), memo: String(r.memo || '').trim().slice(0, 200), at: stamp_() }]).slice(-20);
+    sb.rev = (+sb.rev || 0) + 1; writeSubRow_(sb, false);
+    log_('해외 ' + g.name, '송금 신고', sb.no + ' · ' + date + ' · ' + cur + ' ' + amt);
+  } finally { lock.releaseLock(); }
+  return Object.assign({ ok: true }, intlData_(g.id));
 }
 /** 초빙교수로 접수된 사람을 「교수진」 탭에 자동으로 (없을 때만, 레슨 · 마스터클래스는 「아니오」로 넣고 운영진이 정함) */
 function staffProfs_(sb) {
@@ -503,7 +639,8 @@ function recalc_(sb) {
   const f = sb.form || {}, info = f.info || {}, ri = Math.max(0, Math.min(CC.rounds.length - 1, +f.ri || 0));
   sb.round = CC.rounds[ri].n;
   const guest = sb.acad === GUEST_ACAD;   // 비회원: 연회비 없음 · 비회원 참가비
-  const staff = sb.acad === STAFF_ACAD;   // 관계자: 연회비 없음 · 본인은 역할 참가비 · 가족은 회원 가족 참가비
+  const staff = sb.acad === STAFF_ACAD;
+  const intl = !!sb.intl;   // 해외 단체: 연회비 없음 · 해외 참가비   // 관계자: 연회비 없음 · 본인은 역할 참가비 · 가족은 회원 가족 참가비
   const tPaid = {}; teachers_().forEach(t => tPaid['t_' + t.id] = !!t.paidDate);
   const sPaid = {}; rows_(SH.S).forEach(r => sPaid[String(r['ID'])] = !!dstr_(r['회비 납부일']));
   const viaCamp = duesViaCamp_();   /* 이 캠프에서 받은 연회비는 회원관리에 납부로 남아도 그대로 청구 (10-31) */
@@ -524,13 +661,14 @@ function recalc_(sb) {
     const plays = PLAYS.includes(i.type);
     const les = plays ? Math.max(0, Math.min(OPT.lessonMax, +i.lessons || 0)) : 0;
     const mc = plays ? (i.mc || []).reduce((t, n) => t + ((mcList_().find(m => m.n === n) || {}).fee || 0), 0) : 0;
+    if (intl !== INTL_TYPES.includes(i.type)) throw new Error(p.name + ': ' + (intl ? 'Overseas registration uses overseas types only.' : '해외 참가 구분은 해외 단체 접수에서만 쓸 수 있어요.'));
     if (staff && !(STAFF_TYPES.includes(i.type) || STAFF_FAM.includes(i.type))) throw new Error(p.name + ': 관계자 접수는 역할(초빙교수 · 반주자 …)이나 동반 가족만 넣을 수 있어요.');
     if (!staff && STAFF_TYPES.includes(i.type)) throw new Error(p.name + '의 참가 구분(' + i.type + ')은 관계자 접수에서만 쓸 수 있어요.');
     if (guest !== isGuestType_(i.type)) throw new Error(p.name + '의 참가 구분(' + i.type + ')을 확인해 주세요. ' + (guest ? '비회원 접수는 비회원 참가비로만 접수해요.' : ''));
     if (p.status !== '취소' && ['학생', '회원의 악기하는 자녀', '비회원 학생'].includes(i.type) && !String(i.prog || '').trim()) throw new Error(p.name + '의 권수(현재 진도)를 골라 주세요.');
     if (p.status !== '취소' && plays && i.concert === '이브닝' && !/^https?:\S{6,}$/i.test(String(i.video || '').trim())) throw new Error(p.name + ': 이브닝 음악회는 오디션 영상 주소(https…)를 넣어 주세요.');
     const isT = /^t_|^me_/.test(k), isFam = (f.fam || []).some(x => x.id === k);
-    const paid = viaCamp[p.id] ? false : guest || staff ? true : isFam ? true : isT ? (k.indexOf('me_') === 0 ? true : !!tPaid[k]) : !!sPaid[k];
+    const paid = viaCamp[p.id] ? false : guest || staff || intl ? true : isFam ? true : isT ? (k.indexOf('me_') === 0 ? true : !!tPaid[k]) : !!sPaid[k];
     p.type = i.type; p.fee = FEES[i.type][ri]; p.lesson = les * OPT.lessonFee + mc;
     p.dues = paid ? 0 : (isT ? OPT.teacherDues : OPT.studentDues);
     p.room = roomBy[k] || 0;
@@ -798,9 +936,10 @@ function adm_(token) {
  * 시트 한 줄 = 한 묶음(기본 · 차수 · 참가비 · 옵션 · 환불), 값은 JSON. 시트가 없으면 아래 기본값을 씀 */
 const CAMPCFG = '캠프설정';
 const FEE_TYPES = ['교사', '연수생', '소속없는 중급연수생', '학생', '회원의 악기하는 자녀', '회원의 첫번째 보호자', '회원의 그외 악기 안하는 동반가족', '동반가족 중 돌전아기', '비회원 학생', '비회원 보호자', '비회원 동반가족', '비회원 돌전아기',
-  '초빙교수', '반주자', '지휘자', '통역', '초청강사', '스태프', '기타 관계자'];
+  '초빙교수', '반주자', '지휘자', '통역', '초청강사', '스태프', '기타 관계자',
+  '해외 학생', '해외 교사', '해외 보호자', '해외 동반가족', '해외 돌전아기'];
 const CAMP_DEF = {
-  base: { id: CAMP_ID, name: CAMP_NAME, start: '2027-01-11', end: '2027-01-15', place: '추후 안내', open: '2026-12-01', close: '2026-12-28', cur: 'auto', guest: true, staff: true, member: true },
+  base: { id: CAMP_ID, name: CAMP_NAME, start: '2027-01-11', end: '2027-01-15', place: '추후 안내', open: '2026-12-01', close: '2026-12-28', cur: 'auto', guest: true, staff: true, member: true, intl: true },
   rounds: [{ n: '1차', from: '2026-12-01', to: '2026-12-10' }, { n: '2차', from: '2026-12-11', to: '2026-12-20' }, { n: '3차', from: '2026-12-21', to: '2026-12-28' }],
   fees: FEES,
   opt: { lessonFee: OPT.lessonFee, lessonMax: OPT.lessonMax, mcFee: 150000, studentDues: OPT.studentDues, teacherDues: OPT.teacherDues, roomCap: OPT.roomCap, roomEmptyFee: OPT.roomEmptyFee },
@@ -867,7 +1006,7 @@ function campSave(token, c, rev) {
   { const old = camp_().consent; if (JSON.stringify(old.items) === JSON.stringify(consent.items)) consent.ver = old.ver; }
   const meals = (Array.isArray(c.meals) ? c.meals : []).slice(0, 6).map(m => ({ k: String(m.k || '').trim().slice(0, 10), t: String(m.t || '').trim().slice(0, 120), s: String(m.s || ''), e: String(m.e || ''), on: m.on !== false, first: !!m.first, last: !!m.last }));
   meals.forEach((m, i) => { if (!m.k) throw new Error((i + 1) + '번째 식사 이름을 적어 주세요.'); if (!/^\d{2}:\d{2}$/.test(m.s) || !/^\d{2}:\d{2}$/.test(m.e) || m.e <= m.s) throw new Error(m.k + ' 시간을 07:20 ~ 08:50 꼴로 확인해 주세요.'); if (!m.t) m.t = m.k + ' 식사'; });
-  const nc = { meals, base: { id: String(b.id).trim(), name: String(b.name).trim(), start: b.start, end: b.end, place: String(b.place || '').trim(), open: b.open, close: b.close, cur, guest: b.guest !== false, staff: b.staff !== false, member: b.member !== false }, rounds, fees, opt, refund, consent };
+  const nc = { meals, base: { id: String(b.id).trim(), name: String(b.name).trim(), start: b.start, end: b.end, place: String(b.place || '').trim(), open: b.open, close: b.close, cur, guest: b.guest !== false, staff: b.staff !== false, member: b.member !== false, intl: b.intl !== false }, rounds, fees, opt, refund, consent };
   const lock = lock_();
   try {
     const ss = SpreadsheetApp.getActive(); let sh = ss.getSheetByName(CAMPCFG);

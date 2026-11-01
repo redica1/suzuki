@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261101-125053 -->
+<!-- build: 20261101-125803 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -306,7 +306,7 @@ function stats(){const P=people(),live=P.filter(x=>x.p.status==='정상');
   const bill=live.reduce((t,x)=>t+pAmt(x.p),0),paid=P.reduce((t,x)=>t+(+x.p.paidAmt||0),0);
   return {subs:(S.D?S.D.subs:[]).length,n:live.length,bill,paid,left:Math.max(0,bill-paid),rp:live.filter(x=>x.p.pay==='신고').length,
     cx:(S.D?S.D.cx:[]).filter(c=>c.state==='요청'||c.state==='환불 예정').length,cxW:(S.D?S.D.cx:[]).filter(c=>c.state==='요청').length,cxP:(S.D?S.D.cx:[]).filter(c=>c.state==='환불 예정').length,q:(S.D&&S.D.issues||[]).filter(x=>x.state!=='해결').length,acads:[...new Set(live.map(x=>x.sb.acad))].length,unpaid:live.filter(x=>pAmt(x.p)-(+x.p.paidAmt||0)>0).length,over:live.filter(x=>(+x.p.paidAmt||0)>pAmt(x.p)),overAmt:live.reduce((t,x)=>t+Math.max(0,(+x.p.paidAmt||0)-pAmt(x.p)),0)}}
-function payPill(p){if(p.status!=='정상')return p.status==='취소요청'?'<span class="pill due">취소 요청</span>':`<span class="pill">취소${p.refund?(p.refund.date?' · 환불 '+kday(p.refund.date):' · 환불 예정 '+won(p.refund.amt)):p.cxAt?' · 입금 전 '+kday(String(p.cxAt).slice(0,10)):''}</span>`;
+function payPill(p){if(p.status==='정상'&&!pAmt(p)&&!(+p.paidAmt>0))return '<span class="pill ok">청구 없음</span>';if(p.status!=='정상')return p.status==='취소요청'?'<span class="pill due">취소 요청</span>':`<span class="pill">취소${p.refund?(p.refund.date?' · 환불 '+kday(p.refund.date):' · 환불 예정 '+won(p.refund.amt)):p.cxAt?' · 입금 전 '+kday(String(p.cxAt).slice(0,10)):''}</span>`;
   const d=pAmt(p)-(+p.paidAmt||0);if(p.pay==='신고')return `<span class="pill new">${+p.paidAmt?'차액 신고 · 확인 전':'신고 · 확인 전'}</span>`;
   return !(+p.paidAmt)?'<span class="pill due">입금 전</span>':d>0?`<span class="pill due">차액 ${won(d)}</span>`:d<0?`<span class="pill new">${won(-d)} 더 냄${p.ovReq?' · 돌려받기 요청':''}</span>`:'<span class="pill ok">입금 확인</span>'}
 
@@ -456,10 +456,10 @@ function subBlock(sb,keep,q,subs){const live=sb.ppl.filter(p=>p.status==='정상
         <td><b>${esc(p.name)}</b>${p.dtag?` <small class="faint">${esc(p.dtag)}</small>`:''}</td><td>${esc(p.kind)} · ${esc(p.type)}</td>
         <td><span class="bdot"></span><small>${bn===1?'처음':'추가 '+(bn-1)}</small></td><td class="r num">${won(pAmt(p))}</td><td>${payPill(p)}</td>
         <td>${r?`<small>${esc(r.name)} · ${kday(r.date)} · <b class="num">${won(r.a)}</b>${p.rep&&p.rep.memo?`<br><span class="faint">${esc(p.rep.memo)}</span>`:''}</small>`:'<span class="faint">-</span>'}</td>
-        <td><input type="date" id="d_${p.id}" value="${esc(a.date||'')}" aria-label="${esc(p.name)} 입금일"></td>
-        <td class="r"><input class="num" type="text" inputmode="numeric" id="a_${p.id}" value="${(+defA||0).toLocaleString('ko-KR')}" aria-label="${esc(p.name)} 입금액"></td>
+        ${!pAmt(p)&&!on?`<td colspan="2" class="hint">0원이라 입금 확인이 필요 없어요</td>`:`<td><input type="date" id="d_${p.id}" value="${esc(a.date||'')}" aria-label="${esc(p.name)} 입금일"></td>
+        <td class="r"><input class="num" type="text" inputmode="numeric" id="a_${p.id}" value="${(+defA||0).toLocaleString('ko-KR')}" aria-label="${esc(p.name)} 입금액"></td>`}
         <td><input type="text" id="m_${p.id}" value="${esc(a.memo||'')}" style="width:110px" aria-label="${esc(p.name)} 메모"></td>
-        <td><div class="row" style="flex-wrap:nowrap">${on?`<button class="btn small" type="button" data-ok="${p.id}">고치기</button><button class="btn small ghost" type="button" data-unok="${p.id}">취소</button>`:live?`<button class="btn small primary" type="button" data-ok="${p.id}">확인</button>`:''}</div></td></tr>`}).join('')}
+        <td><div class="row" style="flex-wrap:nowrap">${on?`<button class="btn small" type="button" data-ok="${p.id}">고치기</button><button class="btn small ghost" type="button" data-unok="${p.id}">취소</button>`:live&&pAmt(p)?`<button class="btn small primary" type="button" data-ok="${p.id}">확인</button>`:''}</div></td></tr>`}).join('')}
       </tbody></table></div></details>`}
 /* 통장 잇기 (11-01): 신고를 학원 · 입금자명 · 입금일로 묶어 통장 입금과 맞춤 */
 const bnorm=x=>String(x||'').replace(/[\s()（）\[\]·.,_-]/g,'').toLowerCase();

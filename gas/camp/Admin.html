@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261101-160212 -->
+<!-- build: 20261101-160324 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -274,6 +274,7 @@ tbody td b,tbody td strong{font-weight:400}tr.foot td,tr.foot td b,tr.cgrp td b,
 td .pill,td .tag,td .cap,td small,td .btn.small{font-size:10pt}
 td input:not([type=checkbox]):not([type=radio]),td select{font-size:10pt;padding:1px 4px;height:24px;border-radius:5px}
 td .btn.small{padding:0 6px;line-height:1.5}
+.statv td,.statv td.r,.statv td.num,.statv .apay .r{text-align:center !important}
 table .num,td.num,th.num{font-family:inherit !important;font-variant-numeric:tabular-nums}
 th .trz{position:absolute;right:-3px;top:0;bottom:0;width:7px;cursor:col-resize;z-index:3}th .trz:hover,th .trz.on{background:rgba(26,115,232,.35)}
 </style></head>
@@ -1751,7 +1752,7 @@ function vStat(){Object.keys(POP).forEach(k=>delete POP[k]);const L=statRows(),v
   const head=`<div class="panel"><div class="spread"><div><b>통계</b> <span class="hint">취소한 사람은 빼고 · 지금 들어온 접수 ${(S.D.subs||[]).length}건 · ${L.length}명</span></div><button class="btn small" type="button" id="reload">새로 불러오기</button></div>
     <div class="row" style="gap:6px;margin-top:8px;flex-wrap:wrap">${SVIEW.map(([k,l])=>`<button class="btn small ${v===k?'primary':''}" type="button" data-sv="${k}">${l}</button>`).join('')}</div></div>`;
   if(!L.length)return head+'<div class="panel hint">아직 접수가 없어요.</div>';
-  return head+(({acad:stAcad,type:stType,tch:stTeacher,ptch:stPTch,inst:stInst,badge:stBadge}[v]||stAcad))(L)}
+  return '<div class="statv">'+head+(({acad:stAcad,type:stType,tch:stTeacher,ptch:stPTch,inst:stInst,badge:stBadge}[v]||stAcad))(L)+'</div>'}
 const ST=(h,rows,foot,nl)=>`<div class="panel tbl"><table class="sortable"><thead><tr>${h.map((x,i)=>`<th${i>=(nl||1)?' class="r"':''} data-sc="${i}" title="눌러서 정렬 (한 번 더 누르면 반대로)">${x}<span class="sarr"></span></th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr>${r.map((x,i)=>`<td${i>=(nl||1)?' class="r num"':''}>${x}</td>`).join('')}</tr>`).join('')}${foot?`<tr class="foot">${foot.map((x,i)=>`<td${i>=(nl||1)?' class="r num"':''}><b>${x}</b></td>`).join('')}</tr>`:''}</tbody></table></div>`;
 /* 장학금: 학원별 신청 인원에 따른 금액. 기준은 나중에 정함 → 여기 채우면 학원별 표에 칸이 생김
    예) 2026 여름 시트: 학생 30명 이상 1,200,000 · 20명 이상 800,000 · 10명 이상 400,000 (확정 아님) */

@@ -1,4 +1,4 @@
-/* build: 20261101-225850 */
+/* build: 20261101-230045 */
   if(tab==='me')return head+seg+`<div class="panel">${T.prof?`<p class="hint" style="margin:0 0 6px">교수 · 레슨실 <b>${esc(T.prof.room||'미정')}</b></p>`:''}
     ${days.map((dl,d)=>{const xs=mine.filter(x=>x.d===d);return xs.length?`<div class="ttday"><div class="ttdl">${esc(dl)}</div>${xs.map(x=>`<div class="ttit"><span class="num">${esc(x.t)}${x.e?'<small>~'+esc(x.e)+'</small>':''}</span><span><span class="ttrole ${x.what==='개인레슨'?'les':''}">${esc(x.what)}</span><b>${esc(x.title)}</b> · ${esc(x.where)}${x.loc?` <small class="hint">${esc(x.loc)}</small>`:''}${x.with?`<br><small class="hint">${x.what==='개인레슨'?'학생: ':'함께: '}${esc(x.with)}</small>`:''}</span></div>`).join('')}</div>`:''}).join('')||'<p class="hint" style="margin:0">아직 배정된 일정이 없어요.</p>'}</div></section>`;
   const st=T.students||[];
@@ -151,7 +151,10 @@ document.addEventListener('click',e=>{
     if(!S.consent){S.verr='개인정보 수집·이용에 동의해 주세요.';render();return}
     const t=TEACHER_DB.find(x=>x.phone===S.pending.phone);Object.assign(t,{email:document.getElementById('pfEmail').value.trim(),inst:document.getElementById('pfInst').value,role:document.getElementById('pfRole').value,hasPw:true});
     login(t);toast('비밀번호를 만들었어요. 다음부터 휴대전화와 비밀번호로 로그인해요');return}
-  if(b.id==='hdIn'){S.view='form';S.auth='pick';S.chk=null;S.verr='';S.mode='';go(1);window.scrollTo({top:0});return}
+  if(b.id==='hdIn'){S.view='form';S.auth='pick';S.chk=null;S.verr='';S.mode='';go(1);window.scrollTo({top:0});
+    setTimeout(()=>{document.querySelectorAll('.lgbub').forEach(x=>x.remove());const r=b.getBoundingClientRect(),d=document.createElement('div');d.className='lgbub';d.textContent='접수 자격을 먼저 골라 주세요 ↓';d.style.cssText='position:absolute;z-index:99;top:'+(r.bottom+window.scrollY+10)+'px;right:'+Math.max(8,document.documentElement.clientWidth-r.right)+'px;background:#16232b;color:#fff;font-size:14px;font-weight:700;padding:8px 12px;border-radius:10px;box-shadow:0 6px 18px rgba(0,0,0,.25);white-space:nowrap';const t=document.createElement('span');t.style.cssText='position:absolute;top:-6px;right:18px;width:12px;height:12px;background:#16232b;transform:rotate(45deg)';d.appendChild(t);document.body.appendChild(d);
+      document.querySelectorAll('.pickcard').forEach(c=>{c.style.transition='box-shadow .3s';c.style.boxShadow='0 0 0 3px var(--accent)'});
+      setTimeout(()=>{d.remove();document.querySelectorAll('.pickcard').forEach(c=>c.style.boxShadow='')},2600)},60);return}
   if(b.id==='mailEd'){S.mailEd=true;render();const x=document.getElementById('email');if(x)x.focus();return}
   if(b.id==='hdOut'||b.id==='logout'){MY_SUBS.length=0;resetForm();Object.assign(S,{user:null,chk:null,mode:'',view:'form',step:1,auth:'pick',cons:{},acad:'',verified:false,editNo:null,editOnly:null,verr:''});render();window.scrollTo({top:0});toast('로그아웃했어요');return}
   if(b.id==='nextBtn'&&S.step===2&&selIds().length){toast(`체크만 하고 아직 추가하지 않은 ${selIds().length}명이 있어요. 「신청 명단에 추가」를 눌러 주세요.`);const ab=document.getElementById('addCart');if(ab)ab.scrollIntoView({block:'center'});return}

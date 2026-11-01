@@ -1,4 +1,4 @@
-/* build: 20261101-134141 */
+/* build: 20261101-134235 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -2152,7 +2152,7 @@ function bankImport(who, rows, acct) {
       const id = 'B' + Utilities.base64EncodeWebSafe(Utilities.computeDigest(Utilities.DigestAlgorithm.MD5, base + '#' + seen[sk], Utilities.Charset.UTF_8)).slice(0, 14);
       if (have[id]) { skip++; return; } have[id] = 1;
       const o = { '거래ID': id, '거래일시': at, '보낸분받는분': String(x.who || '').trim().slice(0, 60), '출금': out || '', '입금': inn || '', '잔액': x.bal ? num_(x.bal) : '', '적요': String(x.memo || '').slice(0, 60), '내통장표시': String(x.mine || '').slice(0, 60), '처리점': String(x.branch || '').slice(0, 40), '올린때': stamp, '수정일': stamp, '수정자': who.name };
-      const g = x.k ? { k: bankK_(x.k), a: x.a || '', t: x.t || '' } : bankGuess_(o, ctx); if (g.k && (x.k ? cs.rows.map(c => c['구분']) : okK).indexOf(g.k) < 0) g.k = ''; o['구분'] = g.k; o['통장ID'] = acct; o['학원ID'] = ''; o['교사ID'] = '';   /* 11-01: 학원 · 사람 · 행사는 관리자가 하나씩 직접 고름 (자동 채움 끔) */ o['상태'] = x.st || (g.k ? '추천' : '미분류'); o['메모'] = String(x.note || '').slice(0, 200); o['연결'] = String(x.link || '');
+      const g = x.k ? { k: bankK_(x.k), a: x.a || '', t: x.t || '' } : bankGuess_(o, ctx); if (g.k && (x.k ? cs.rows.map(c => c['구분']) : okK).indexOf(g.k) < 0) g.k = ''; const keepL = x.st === '연결'; o['구분'] = keepL ? g.k : ''; o['통장ID'] = acct; o['학원ID'] = ''; o['교사ID'] = '';   /* 11-01: 학원 · 사람 · 행사는 관리자가 하나씩 직접 고름 (자동 채움 끔) */ o['상태'] = keepL ? '연결' : '미분류';   /* 구분도 관리자가 직접 고름 */ o['메모'] = String(x.note || '').slice(0, 200); o['연결'] = String(x.link || '');
       add.push(o);
     });
     add.sort((p, q) => p['거래일시'].localeCompare(q['거래일시']));
@@ -2162,18 +2162,19 @@ function bankImport(who, rows, acct) {
   } finally { lock.releaseLock(); }
 }
 /** 화면이 통장 탭을 열 때: 캠프가 회원관리와 연동돼 있으면(설정 「캠프 시트」) 캠프 행사를 저절로 연결 (잠금 밖에서만) */
-/** 11-01: 학원 · 사람 · 행사 자동 채움을 끄면서, 그동안 저절로 채워진 값을 한 번 비움.
+/** 11-01: 구분 · 학원 · 사람 · 행사 자동 채움을 끄면서, 그동안 저절로 채워진 값을 한 번 비움.
  *  남기는 것: 회비에 반영된 줄(상태 「연결」)의 학원 · 사람, 캠프 입금 확인으로 이어진 줄(통장상세에 캠프 줄)의 행사 */
 function bankClearAuto_() {
-  if (settings_()['통장 자동칸 비움'] === '11-01') return;
+  if (settings_()['통장 자동칸 비움'] === '11-01b') return;
   const B = bankTbl_(), sh = B.sh, h = B.h, n = sh.getLastRow() - 1;
   if (n > 0) {
-    const all = sh.getRange(2, 1, n, h.length).getValues(), ia = h.indexOf('학원ID'), it = h.indexOf('교사ID'), ip = h.indexOf('프로젝트ID'), is = h.indexOf('상태');
+    const all = sh.getRange(2, 1, n, h.length).getValues(), ik = h.indexOf('구분'), ia = h.indexOf('학원ID'), it = h.indexOf('교사ID'), ip = h.indexOf('프로젝트ID'), is = h.indexOf('상태');
     const camp = {}; try { bankSheet_('통장상세', BANK_SPLIT_HEAD).objs().forEach(o => { if (o['대상'] === '캠프') camp[o['거래ID']] = 1; }); } catch (e) { }
     const A = all.map(r => [r[is] === '연결' ? r[ia] : '', r[is] === '연결' ? r[it] : '']), P = all.map(r => [camp[r[0]] ? r[ip] : '']);
     sh.getRange(2, ia + 1, n, 1).setValues(A.map(x => [x[0]])); sh.getRange(2, it + 1, n, 1).setValues(A.map(x => [x[1]])); sh.getRange(2, ip + 1, n, 1).setValues(P);
+    const keep = r => r[is] === '연결' || camp[r[0]]; sh.getRange(2, ik + 1, n, 1).setValues(all.map(r => [keep(r) ? r[ik] : ''])); sh.getRange(2, is + 1, n, 1).setValues(all.map(r => [keep(r) ? r[is] : '미분류']));
   }
-  setSetting_('통장 자동칸 비움', '11-01');
+  setSetting_('통장 자동칸 비움', '11-01b');
 }
 function bankListTop(who) { bankMigrate_(); try { bankClearAuto_(); } catch (e) { } try { if (settings_()['캠프 시트']) { const P = bankSheet_('프로젝트', BANK_PROJ_HEAD), ci = P.c('캠프ID'); if (!P.v.some(r => r[ci])) bankCamp(who); } } catch (e) { } return bankList(who); }
 function bankList(who) {

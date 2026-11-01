@@ -1,4 +1,4 @@
-/* build: 20261101-115811 */
+/* build: 20261101-120518 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -105,7 +105,7 @@ function include(n) { return HtmlService.createHtmlOutputFromFile(n).getContent(
 
 function api(name, args) {
   const open = { login, hello, tHello, tEvents, tLookup, tStart, tResend, tVerify, tCreate, tLogin, tForgot, tReset, tMe, tSavePay, tSavePart, tSaveInfo, tSavePhoto, tAcad, tSaveAcad, tDocUp, tDocGet, tSaveStu, tSaveStus, tStuDetail, tStuSave, tStuTutor, tStuTutorDel, tStuState, tStuStateDel, tMyStu, tMyStuDetail, tMyStuPay, tTchSaves, tTchEnd, tTchEvent, tTchAssign, tTchStart, tSaveRrn, tAddWork, tClassCreate, tEndWork, tMainWork, tLogout, bPost, bMine, bReply };
-  const fns = { boot, saveRow, setCheck, logs, importRoster, saveDues, delDues, reqs, reqDo, delAcad, payView, bulkSet, saveWorks, importPastDues, bList, bSet, bComment, photoGet, photoDel, fillRegions, saveRates, docList, docUp, docGet, docDel, payList, payOk, payOkMany, payNo, memView, rosterNow, inputStatus, inboxDone, acctReset, classFromStudents, delStus, asTeacher, bankImport, bankList, bankSet, bankDues, bankFromSheet, bankMeta, bankSplitSave, bankPay, bankCamp };
+  const fns = { boot, saveRow, setCheck, logs, importRoster, saveDues, delDues, reqs, reqDo, delAcad, payView, bulkSet, saveWorks, importPastDues, bList, bSet, bComment, photoGet, photoDel, fillRegions, saveRates, docList, docUp, docGet, docDel, payList, payOk, payOkMany, payNo, memView, rosterNow, inputStatus, inboxDone, acctReset, classFromStudents, delStus, asTeacher, bankImport, bankList, bankSet, bankDues, bankFromSheet, bankMeta, bankSplitSave, bankPay, bankCamp, devVirtual };
   try {
     if (open[name]) return Object.assign({ ok: true }, open[name].apply(null, args || []));
     if (!fns[name]) throw new UserError('알 수 없는 요청이에요.');
@@ -2032,6 +2032,35 @@ function bankCamp(who, url) {
     else { pid = P.v[i][0]; const up = {}; if (P.get(i, '이름') !== nm) up['이름'] = nm; if (from && P.get(i, '시작일') !== from) up['시작일'] = from; if (to && P.get(i, '끝일') !== to) up['끝일'] = to; if (Object.keys(up).length) P.set(i, Object.assign(up, { '수정일': now_(), '수정자': '캠프 설정' })); }
   } finally { lock.releaseLock(); }
   return { camp: { id: base.id, name: base.name || '', start: base.start || '', end: base.end || '', payFrom: from, payTo: to, proj: pid, sheet: id }, ppl, projs: bankSheet_('프로젝트', BANK_PROJ_HEAD).objs() };
+}
+/* ====== 가상스즈키 (11-01, STG 연습용) ======
+ * 학원 1 · 선생님 6(원장 · 강사 4 · 중급연수생, 플루트 선생님은 올해 교사 회비 미납) · 학생 60.
+ * 학생 회비: 0~47 확인 · 48~53 원장 신고(48 · 49 = 10-08, 50 = 10-30, 51~53 = 10-25) · 54~59 없음. 캠프 「가상스즈키 연습 접수」가 이 명단을 씀 */
+function devVirtual(who) {
+  if (settings_()['테스트 표시'] !== '예') fail('STG(테스트 표시 = 예)에서만 만들 수 있어요.');
+  const A = tbl_('학원'); if (A.v.some(r => r[A.h.indexOf('학원명')] === '가상스즈키')) fail('가상스즈키가 이미 있어요.');
+  const stamp = now_(), by = who.name, T = tbl_('교사'), S2 = tbl_('학생'), W = tbl_('근무'), D = tbl_('연회비'), y = CUR_Y;
+  const aid = nextId_(A, '학원ID', 'A');
+  const TS = [['한가온', '바이올린', '교사회원'], ['서이든', '바이올린', '교사회원'], ['문하율', '첼로', '교사회원'], ['배시온', '플루트', '교사회원'], ['윤채아', '바이올린', '교사회원'], ['오다인', '바이올린', '중급연수생']];
+  const tids = [];
+  TS.forEach((t, i) => { const id = nextId_(T, '교사ID', 'T'); tids.push(id);
+    T.append({ '교사ID': id, '이름': t[0], '휴대전화': '010-9000-00' + String(i + 1).padStart(2, '0'), '학원1': aid, '직급': i ? '강사' : '원장', '전공': t[1], '회원구분': t[2], '상태': '활동', '확인': '확인', '메모': '가상 연습용', '수정일': stamp, '수정자': by, '성별': i % 3 ? '여' : '남' });
+    const wn = W.v.reduce((m, r) => Math.max(m, +String(r[0]).replace(/\D/g, '') || 0), 0) + 1;
+    W.append({ '근무ID': 'W' + String(wn).padStart(5, '0'), '교사ID': id, '학원ID': aid, '시작': '2024-03', '주근무': '예', '출처': '관리자', '메모': '가상', '수정일': stamp, '수정자': by });
+    if (i !== 3) D.append({ '대상': '교사', 'ID': id, '년도': y, '부과': 300000, '납부': 300000, '납부일': y + '-03-10', '방식': '통장', '확인': '확인', '확인일': stamp, '확인자': by, '메모': '가상', '수정일': stamp, '수정자': by }); });
+  A.append({ '학원ID': aid, '학원명': '가상스즈키', '구분': '학원', '상태': '운영', '원장교사ID': tids[0], '원장명': TS[0][0], '교실대표번호': '010-9000-0000', '교습과목': '바이올린, 첼로, 플루트', '시도': '서울', '확인': '확인', '메모': '가상 연습용 (지워도 됨)', '수정일': stamp, '수정자': by });
+  const SUR = '가나다라마바사아자차', GN = ['온유', '하린', '시우', '서아', '도윤', '이안', '하준', '지유', '로아', '유준', '채이', '주원'];
+  for (let i = 0; i < 60; i++) {
+    const inst = i < 40 ? '바이올린' : i < 52 ? '첼로' : '플루트', tch = inst === '첼로' ? tids[2] : inst === '플루트' ? tids[3] : tids[[0, 1, 4, 5][i % 4]];
+    const id = nextId_(S2, '학생ID', 'S'), nm = SUR[i % 10] + GN[i % 12];
+    S2.append({ '학생ID': id, '학원ID': aid, '이름': nm, '출생연도': String(2012 + i % 9), '전공': inst, '시작월': '2024-03', '상태': '재원', '담당교사ID': tch, '확인': '확인', '메모': '가상 연습용', '수정일': stamp, '수정자': by, '성별': i % 2 ? '남' : '여' });
+    if (i < 48) D.append({ '대상': '학생', 'ID': id, '년도': y, '부과': 30000, '납부': 30000, '납부일': y + '-03-05', '방식': '통장', '확인': '확인', '확인일': stamp, '확인자': by, '메모': '가상', '수정일': stamp, '수정자': by });
+    else if (i < 54) { const d = i < 50 ? y + '-10-08' : i === 50 ? y + '-10-30' : y + '-10-25';
+      D.append({ '대상': '학생', 'ID': id, '년도': y, '부과': 30000, '납부': 30000, '납부일': d, '방식': '통장', '확인': '신고', '신고일': stamp, '신고자': TS[0][0], '메모': '입금 신고(' + TS[0][0] + '): 가상 연습', '수정일': stamp, '수정자': by }); }
+  }
+  let r = {}; try { r = rosterNow(who); } catch (e) { r = { err: e.message }; }
+  log_(by, '학원', aid, '가상스즈키 만듦', '교사 6 · 학생 60');
+  return { aid, t: tids, roster: r };
 }
 function bankMetaAll_() { const A = bankSheet_('통장목록', BANK_ACCT_HEAD), P = bankSheet_('프로젝트', BANK_PROJ_HEAD), c = bankCats_(); const D = bankSheet_('통장상세', BANK_SPLIT_HEAD); return { accts: A.objs(), projs: P.objs(), cats: { in: c.in, out: c.out }, catRows: c.rows, splits: D.objs(), pays: bankSheet_('지급', BANK_PAY_HEAD).objs() }; }
 /** 통장 · 프로젝트 · 구분 등록 · 고치기. kind: acct | proj | cat */

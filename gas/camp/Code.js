@@ -1,4 +1,4 @@
-/* build: 20261031-235802 */
+/* build: 20261101-120530 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -1618,6 +1618,131 @@ function devFakeClear(token) {
     log_(a.name, '가상 접수 지움', fk.join(', '));
   } finally { lock.releaseLock(); }
   return { ok: true, n: k, adm: adminData(token) };
+}
+/** 가상스즈키 연습 접수 30건 (11-01, STG 연습용): 회원관리에서 만든 「가상스즈키」 명단으로 회원 접수 22 · 비회원 5 · 관계자 3.
+ *  입금 신고 · 확인 · 부족 · 과납 · 취소 · 환불 · 이름 다름 · 날짜 다름 · 나눠 입금 · 신고 없는 입금 등을 섞고, 맞춰 볼 통장 내역을 새 구글시트로 만듦 */
+const VACAD = '가상스즈키';
+function devScenario(token) {
+  const a = adm_(token); needSup_(a);
+  const T = rows_(SH.T).filter(r => String(r['소속 학원'] || '').split(',').map(s => s.trim()).includes(VACAD)).sort((x, y) => String(x['ID']).localeCompare(String(y['ID'])));
+  const ST = rows_(SH.S).filter(r => String(r['학원']) === VACAD).sort((x, y) => String(x['ID']).localeCompare(String(y['ID'])));
+  if (T.length < 6 || ST.length < 60) throw new Error('캠프 명단에 가상스즈키가 아직 없어요 (교사 ' + T.length + ' · 학생 ' + ST.length + '). 회원관리 STG 「설정 › 가상스즈키 만들기」 뒤 「회원 명단 › 회원관리에서 지금 가져오기」를 눌러 주세요.');
+  if (loadSubs_().some(sb => sb.vscen)) throw new Error('가상스즈키 연습 접수가 이미 있어요. 「가상 접수 모두 지우기」 뒤 다시 만들어 주세요.');
+  const ok = setting_('접수 가능 학원'); if (ok !== '전체' && ok.split(',').map(s => s.trim()).indexOf(VACAD) < 0) { const sh = SpreadsheetApp.getActive().getSheetByName('설정'), r = rows_('설정').find(x => String(x['항목']) === '접수 가능 학원'); if (r) sh.getRange(r._row, 2).setValues([[ok ? ok + ', ' + VACAD : VACAD]]); }
+  const PROG = { 바이올린: ['1권A 작은별 변주곡 ~ 무궁동', '2권A 요정의 춤 ~', '3권', '4권A ~ 자이츠 5번 3악장', '5권'], 첼로: ['1권', '2권', '3권'], 플루트: ['1권', '2권', '3권'] };
+  const prof = profs_().filter(p => p.on && p.lesson), mcs = mcList_();
+  const at = stamp_(), C = camp_(), ri = curRound_(C), bank = [], made = [], conf = [];
+  const tN = i => String(T[i]['이름']), tid = i => 't_' + String(T[i]['ID']);
+  const lock = lock_();
+  try {
+    const all = loadSubs_(); let n = all.reduce((m, x) => Math.max(m, +String(x.no).split('-')[1] || 0), 0);
+    const mk = (acad, owner, list, extra) => {
+      n++; const no = C.base.id + '-' + String(n).padStart(3, '0'), info = {}, picked = {}, ppl = [], fam = [], room = {};
+      list.forEach((x, j) => {
+        const key = x.key, inst = x.inst || '';
+        info[key] = Object.assign({ type: x.type, gender: x.g || (j % 2 ? '남' : '여'), by: x.by || '', teacher: x.teacher || '', prog: x.prog || '', lessons: x.les || 0, p1: '', p2: '', mc: x.mc || [], concert: '없음', inst }, x.info || {});
+        if (x.les) { const pp = prof.filter(p => p.inst === (inst || '바이올린')); info[key].p1 = pp.length ? pp[0].name : ''; if (!pp.length) info[key].lessons = 0; }
+        if (x.fam) fam.push({ id: key, type: x.type, name: x.name, link: x.fam }); else picked[key] = true;
+        if (x.room) room[key] = true;
+        ppl.push({ id: no + '_' + key, name: x.name, dtag: '', inst, kind: x.fam ? '가족' : (/^t_|^me_/.test(key) ? '교사' : '학생'), type: x.type, status: '정상', pay: '전', paidAmt: 0, batch: 1, addAt: at });
+      });
+      const sb = Object.assign({ no, acad, owner, vscen: true, fake: true, createdAt: at, date: at.slice(0, 10), rev: 1, ppl, form: { ri, picked, info, extra: [], fam, room, join: {}, ens: { on: false } } }, extra || {});
+      recalc_(sb); return sb;
+    };
+    const chg = p => (+p.fee || 0) + (+p.lesson || 0) + (+p.dues || 0) + (+p.room || 0);
+    const rep = (sb, ps, name, date, adj) => { const rows = {}; let sum = 0; ps.forEach((p, j) => { const v = chg(p) + (j === 0 ? (adj || 0) : 0); rows[p.id] = { name, date, a: v }; sum += v; });
+      const r = { id: 'R' + (Date.now() + Math.floor(Math.random() * 1e6)).toString(36), name, date, amt: sum, memo: adj ? (adj < 0 ? '일부만 먼저 보냄 (가상)' : '더 보냄 (가상)') : '', ids: ps.map(p => p.id), rows };
+      ps.forEach(p => { p.pay = '신고'; p.rep = r; }); return sum; };
+    const dep = (date, time, who, amt) => bank.push([date + ' ' + time + ':00', who, '', amt]);
+    const out = (date, time, who, amt) => bank.push([date + ' ' + time + ':00', who, amt, '']);
+    const S = i => { const r = ST[i]; return { key: String(r['ID']), name: String(r['이름']), type: '학생', inst: String(r['악기'] || '바이올린'), by: String(r['출생연도'] || '2015'), teacher: String(r['담당 교사'] || ''), prog: (PROG[String(r['악기'])] || PROG['바이올린'])[i % 3] }; };
+    const Ss = (a0, a1) => { const L = []; for (let i = a0; i <= a1; i++) L.push(S(i)); return L; };
+    const TT = (i, type) => ({ key: tid(i), name: tN(i), type: type || '교사', inst: String(T[i]['악기'] || '바이올린') });
+    const save = (sb, note) => { writeSub_(sb, true); all.push(sb); made.push(sb.no + ' ' + note); return sb; };
+    const live = sb => sb.ppl.filter(p => p.status !== '취소');
+    let sb, s;
+    // 1 원장 + 6명: 신고 → 통장 같음 → 캠프 확인까지 끝
+    sb = mk(VACAD, tN(0), [TT(0)].concat(Ss(0, 5))); s = rep(sb, sb.ppl, VACAD, '2026-10-05'); dep('2026-10-05', '10:12', VACAD, s); save(sb, '신고 · 입금 · 확인 끝'); sb.ppl.forEach(p => conf.push([p.id, '2026-10-05', chg(p)]));
+    // 2 서이든 + 4명: 신고 · 입금 같음 · 확인 전
+    sb = mk(VACAD, tN(1), [TT(1)].concat(Ss(6, 9))); s = rep(sb, sb.ppl, tN(1), '2026-10-06'); dep('2026-10-06', '14:30', tN(1), s); save(sb, '신고 · 입금 같음 · 확인 전');
+    // 3 문하율(첼로) + 3명: 같은 날 학생회비 2명(회원관리 신고 10-08)과 같이 입금
+    sb = mk(VACAD, tN(2), [TT(2)].concat(Ss(10, 12))); s = rep(sb, sb.ppl, tN(2), '2026-10-08'); dep('2026-10-08', '09:41', tN(2), s + 60000); save(sb, '캠프 + 학생회비 2명 섞어 입금');
+    // 4 배시온(플루트, 교사 회비 미납 → 교사 회비 같이 청구) + 2명
+    sb = mk(VACAD, tN(3), [TT(3)].concat(Ss(13, 14))); s = rep(sb, sb.ppl, tN(3), '2026-10-10'); dep('2026-10-10', '11:05', tN(3), s); save(sb, '교사 회비 포함 청구');
+    // 5 윤채아 10명 신청 · 5명 신고 · 6명분 입금
+    sb = mk(VACAD, tN(4), Ss(15, 24)); s = rep(sb, sb.ppl.slice(0, 5), tN(4), '2026-10-12'); dep('2026-10-12', '16:20', tN(4), s + chg(sb.ppl[5])); save(sb, '10명 · 5명 신고 · 6명분 입금');
+    // 6 원장: 학생 2 + 가족(보호자 · 동반가족 · 돌 전 아기) + 가족방, 보호자 이름으로 신고 · 입금
+    const k25 = String(ST[25]['ID']);
+    sb = mk(VACAD, tN(0), Ss(25, 26).map((x, j) => j === 0 ? Object.assign(x, { room: true }) : x).concat([{ key: 'fv1', name: '가부모', type: '회원의 첫번째 보호자', fam: k25 }, { key: 'fv2', name: '가동생', type: '회원의 그외 악기 안하는 동반가족', fam: k25 }, { key: 'fv3', name: '가아기', type: '동반가족 중 돌전아기', fam: k25 }]));
+    s = rep(sb, sb.ppl, '가부모', '2026-10-14'); dep('2026-10-14', '20:03', '가부모', s); save(sb, '가족 · 가족방 · 보호자 이름 입금');
+    // 7 서이든: 개인레슨 3번 + 마스터클래스
+    sb = mk(VACAD, tN(1), [Object.assign(S(27), { les: 3, mc: mcs.length ? [mcs[0].n] : [] })]); s = rep(sb, sb.ppl, tN(1), '2026-10-15'); dep('2026-10-15', '13:15', tN(1), s); save(sb, '레슨 · 마스터클래스');
+    // 8 문하율: 부족 신고(5만 원 덜)
+    sb = mk(VACAD, tN(2), [S(28)]); s = rep(sb, sb.ppl, tN(2), '2026-10-16', -50000); dep('2026-10-16', '10:00', tN(2), s); save(sb, '부족 입금');
+    // 9 오다인(연수생) 본인: 신고 · 입금 · 확인
+    sb = mk(VACAD, tN(5), [TT(5, '연수생')]); s = rep(sb, sb.ppl, tN(5), '2026-10-17'); dep('2026-10-17', '12:40', tN(5), s); save(sb, '연수생 · 확인 끝'); sb.ppl.forEach(p => conf.push([p.id, '2026-10-17', chg(p)]));
+    // 10 윤채아: 과납(2만 원 더)
+    sb = mk(VACAD, tN(4), Ss(29, 30)); s = rep(sb, sb.ppl, tN(4), '2026-10-18', 20000); dep('2026-10-18', '15:55', tN(4), s); save(sb, '과납');
+    // 11 원장: 신고 없이 학원 이름으로 입금 (주인 모르는 입금)
+    sb = mk(VACAD, tN(0), Ss(31, 33)); dep('2026-10-19', '09:20', VACAD, live(sb).reduce((t, p) => t + chg(p), 0)); save(sb, '신고 없이 입금');
+    // 12 서이든: 신고일 10-20, 통장은 10-21
+    sb = mk(VACAD, tN(1), [S(34)]); s = rep(sb, sb.ppl, tN(1), '2026-10-20'); dep('2026-10-21', '08:30', tN(1), s); save(sb, '신고일과 입금일 다름');
+    // 13 문하율: 신고 입금자명 「하율맘」, 통장에는 「김하율」
+    sb = mk(VACAD, tN(2), Ss(35, 36)); s = rep(sb, sb.ppl, '하율맘', '2026-10-21'); dep('2026-10-21', '19:10', '김하율', s); save(sb, '입금자명 다름');
+    // 14 배시온: 캠프에서 확인했는데 통장에 없음
+    sb = mk(VACAD, tN(3), [S(37)]); s = rep(sb, sb.ppl, tN(3), '2026-10-22'); save(sb, '확인됐는데 통장 없음'); sb.ppl.forEach(p => conf.push([p.id, '2026-10-22', chg(p)]));
+    // 15 윤채아: 1명은 입금 전 취소, 1명 신고 · 입금
+    sb = mk(VACAD, tN(4), Ss(38, 39)); sb.ppl[1].status = '취소'; sb.ppl[1].cxAt = at; recalc_(sb); s = rep(sb, [sb.ppl[0]], tN(4), '2026-10-22'); dep('2026-10-22', '17:45', tN(4), s); save(sb, '1명 입금 전 취소');
+    // 16 원장: 입금 · 확인 뒤 취소 요청 (환불 대기)
+    sb = mk(VACAD, tN(0), [S(40)]); s = rep(sb, sb.ppl, VACAD, '2026-10-23'); dep('2026-10-23', '10:50', VACAD, s); sb.ppl[0].status = '취소요청'; sb.ppl[0].cxAt = at; sb.ppl[0].cxWhy = '독감 (가상)'; save(sb, '입금 뒤 취소 요청'); conf.push([sb.ppl[0].id, '2026-10-23', s]);
+    cxRow_(sb, sb.ppl[0], '독감 (가상)', s, '');
+    // 17 서이든: 입금 · 확인 뒤 취소 · 환불 끝 (통장 출금)
+    sb = mk(VACAD, tN(1), [S(41)]); s = rep(sb, sb.ppl, tN(1), '2026-10-24'); dep('2026-10-24', '11:11', tN(1), s); const rf = Math.round(s * 0.9 / 1000) * 1000;
+    sb.ppl[0].status = '취소'; sb.ppl[0].refund = { amt: rf, okAt: '2026-10-27', date: '2026-10-28' }; save(sb, '취소 · 환불 끝'); conf.push([sb.ppl[0].id, '2026-10-24', s]); out('2026-10-28', '14:00', tN(1) + ' 환불', rf);
+    cxRow_(sb, sb.ppl[0], '이사 (가상)', rf, '완료');
+    // 18 문하율: 3명 미입금
+    sb = mk(VACAD, tN(2), Ss(42, 44)); save(sb, '미입금');
+    // 19 윤채아: 신고 한 번, 통장은 두 번에 나눠 입금
+    sb = mk(VACAD, tN(4), Ss(45, 46)); s = rep(sb, sb.ppl, tN(4), '2026-10-26'); dep('2026-10-26', '09:00', tN(4), chg(sb.ppl[0])); dep('2026-10-26', '09:02', tN(4), s - chg(sb.ppl[0])); save(sb, '두 번에 나눠 입금');
+    // 20 원장: 평범 (맞는 것 모두 잇기용)
+    sb = mk(VACAD, tN(0), Ss(47, 48)); s = rep(sb, sb.ppl, VACAD, '2026-10-27'); dep('2026-10-27', '13:33', VACAD, s); save(sb, '평범');
+    // 21 오다인: 회비 없는 학생 3명 (캠프에서 연회비 같이 청구)
+    sb = mk(VACAD, tN(5), Ss(54, 56)); s = rep(sb, sb.ppl, tN(5), '2026-10-28'); dep('2026-10-28', '10:10', tN(5), s); save(sb, '연회비 같이 청구');
+    // 22 서이든: 회비 없는 학생 3명, 신고만 (입금 아직)
+    sb = mk(VACAD, tN(1), Ss(57, 59)); rep(sb, sb.ppl, tN(1), '2026-10-29'); save(sb, '신고만 · 입금 아직');
+    // 비회원(학부모) 5건
+    const G = (nm, ph, list, f) => { const g = mk(GUEST_ACAD, nm + '(' + ph + ')', list, { contact: '010-0000-' + ph }); f && f(g); return g; };
+    const gs = (k, nm, inst) => ({ key: k, name: nm, type: '비회원 학생', inst: inst || '바이올린', by: '2016', prog: PROG['바이올린'][0] });
+    const gp = (k, nm, link) => ({ key: k, name: nm, type: '비회원 보호자', fam: link });
+    sb = G('가보호', '9001', [gs('gv1', '가손님'), gp('gp1', '가보호', 'gv1')]); s = rep(sb, sb.ppl, '가보호', '2026-10-09'); dep('2026-10-09', '21:00', '가보호', s); save(sb, '비회원 · 신고 · 입금');
+    sb = G('나보호', '9002', [gs('gv2', '나손님'), gs('gv3', '나동생', '첼로'), gp('gp2', '나보호', 'gv2')]); dep('2026-10-13', '07:50', '나보호', live(sb).reduce((t, p) => t + chg(p), 0)); save(sb, '비회원 · 신고 없이 입금');
+    sb = G('다보호', '9003', [gs('gv4', '다손님')]); s = rep(sb, sb.ppl, '다보호', '2026-10-16'); dep('2026-10-16', '18:18', '다손님', s); save(sb, '비회원 · 아이 이름으로 입금');
+    sb = G('라보호', '9004', [gs('gv5', '라손님'), gp('gp4', '라보호', 'gv5')]); save(sb, '비회원 · 미입금');
+    sb = G('마보호', '9005', [gs('gv6', '마손님')]); s = rep(sb, sb.ppl, '마보호', '2026-10-25', -100000); dep('2026-10-25', '12:00', '마보호', s); save(sb, '비회원 · 부족 입금');
+    // 관계자 3건 (운영진 대신 등록)
+    const R = (list, memo) => mk(STAFF_ACAD, '운영진', list, { proxy: a.name, memo });
+    sb = R([{ key: 'me_v1', name: '가반주', type: '반주자', inst: '피아노' }], '가상 반주자'); save(sb, '관계자 · 반주자');
+    sb = R([{ key: 'me_v2', name: '가교수', type: '초빙교수', inst: '바이올린' }, { key: 'fsv20', name: '가교수가족', type: STAFF_FAM[0], fam: 'me_v2' }], '가상 초빙교수 + 가족');
+    s = live(sb).reduce((t, p) => t + chg(p), 0); if (s) dep('2026-10-20', '15:00', '가교수', s); save(sb, '관계자 · 초빙교수 + 가족');
+    sb = R([{ key: 'me_v3', name: '가스텝', type: '스태프', inst: '' }], '가상 스태프'); save(sb, '관계자 · 스태프');
+    /* 섞인 거래: 카드 · 공과금 · 학생회비 따로 입금(회원관리 신고 10-30) · 강사료 */
+    dep('2026-10-30', '10:00', VACAD, 30000); out('2026-10-05', '00:10', 'KB카드출금', 532190); out('2026-10-10', '20:59', '건강보험연금', 171570); out('2026-10-31', '17:00', tN(1) + ' 강사료', 290100);
+    conf.forEach(c => setAdminCols_(c[0], [c[1], c[2], '가상 연습']));
+    const subs = loadSubs_(); subs.filter(x => x.vscen).forEach(x => writeSubRow_(x));
+    writeTeams_(subs);
+    log_(a.name, '가상스즈키 연습 접수', made.length + '건');
+  } finally { lock.releaseLock(); }
+  bank.sort((x, y) => String(x[0]).localeCompare(String(y[0])));
+  const ss = SpreadsheetApp.create('[STG] 가상스즈키 연습 통장 ' + Utilities.formatDate(new Date(), 'Asia/Seoul', 'MMdd HHmm'));
+  const sh0 = ss.getSheets()[0], sh = sh0 || ss.insertSheet('가상 통장'); if (sh0) sh.setName('가상 통장');
+  const rows = [['거래일시', '보낸분/받는분', '출금액', '입금액', '잔액', '내통장표시', '적요', '처리점']].concat(bank.map(r => [r[0], r[1], r[2], r[3], '', '', '전자금융', '가상']));
+  sh.getRange(1, 1, rows.length, 8).setNumberFormat('@').setValues(rows.map(r => r.map(x => String(x))));
+  return { ok: true, made, bankUrl: ss.getUrl(), bankN: bank.length, adm: adminData(token) };
+}
+function cxRow_(sb, p, why, amt, st) {
+  ensureHead_(SH.CX, CX_HEAD); const sh = SpreadsheetApp.getActive().getSheetByName(SH.CX);
+  const o = { '요청 일시': stamp_(), '접수번호': sb.no, '학원': sb.acad, '요청 교사': sb.owner, '참가자': p.name, '사유': why, '환불 예정액': amt, '처리': st, '처리일': st ? '2026-10-28' : '', '메모': '가상 연습', '참가자ID': p.id, '신청액': (+p.fee || 0) + (+p.lesson || 0) + (+p.dues || 0) + (+p.room || 0), '입금액': amt, '적용 규정': '', '접수일': sb.date };
+  sh.appendRow(CX_HEAD.map(k => o[k] == null ? '' : o[k]));
 }
 /** 관리자 화면에 필요한 것: 모든 접수 · 운영진 칸 · 환불 요청 · 앙상블 팀 */
 function adminData(token) {

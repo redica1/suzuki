@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261101-115811 -->
+<!-- build: 20261101-120518 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -844,7 +844,7 @@ function pdResult(r){return '<div class="note ok"><b>'+esc(r.year)+'년 교사 �
 function mailBox(){var n=S.D.mailLeft;return '<div class="panel"><h3>메일 보내기</h3>'+(n<0?'<p class="cap">남은 수를 읽지 못했어요. 매니페스트에 script.send_mail 권한이 있는지 확인해 주세요.</p>':
   '<div class="note '+(n<30?'warn':'ok')+'"><b>오늘 더 보낼 수 있는 메일: <span class="num">'+n+'</span>통</b>'+(n<30?' · 얼마 남지 않았어요. 인증 코드 · 승인 안내 메일이 안 갈 수 있어요.':'')+'</div>')+
   '<p class="cap">인증 코드 · 승인 · 반려 · 문의 답 메일을 이 앱을 배포한 구글 계정으로 보내요. 일반 Gmail 은 하루 받는 사람 100명쯤, Google Workspace 는 1,500명쯤까지예요. 한도는 하루가 지나면 다시 채워져요. 「새로 고침」을 누르면 숫자가 바뀌어요.</p></div>'}
-function vSet(){return '<div class="sec-h"><div><h2>설정</h2><p>관리자 아이디·비밀번호·테스트 표시는 시트 「설정」 탭에서 바꿔요.</p></div></div>'+mailBox()+ratesBox()+
+function vSet(){return (S.test?'<div class="panel" style="border-color:var(--accent)"><b>가상스즈키 (STG 연습용)</b><p class="cap">학원 「가상스즈키」 · 선생님 6명 · 학생 60명(회비 확인 48 · 원장 신고 6 · 없음 6)을 만들어요. 캠프 STG 관리자 「설정 › 가상스즈키 연습 접수 30건 + 통장」이 이 명단을 써요.</p><div class="row"><button class="btn primary" type="button" id="devVir">가상스즈키 만들기</button></div></div>':'')+'<div class="sec-h"><div><h2>설정</h2><p>관리자 아이디·비밀번호·테스트 표시는 시트 「설정」 탭에서 바꿔요.</p></div></div>'+mailBox()+ratesBox()+
   '<div class="panel"><h3>원본 명단 불러오기</h3><p class="cap">「[2026]스즈키교사 연회비납부명단」의 학원정보DB · 교사정보DB · 학생정보DB를 가져와요. 주민등록번호 · 계좌 · 집 주소 칸은 읽지 않아요. 이름 끝 A·B, 괄호 표기는 「구분 글자」로, Vn·vc 같은 전공은 바이올린·첼로로 바꾸고, 바꾼 것은 「확인 메모」에 남겨요.</p>'+
   (S.D.empty?'<div><button class="btn primary" type="button" id="imp">원본에서 불러오기</button></div>':S.test?'<div class="note">테스트(STG)라서 지우고 다시 불러올 수 있어요. 지금 STG 에서 고친 내용은 모두 사라져요.</div><div><button class="btn" type="button" id="impRe">지우고 다시 불러오기</button></div>':'<p class="cap">이미 명단이 들어 있어요. 메인은 다시 불러오지 않아요 (고친 내용을 지키기 위해).</p>')+
   '</div><div class="panel"><h3>지난 해 교사 회비 불러오기</h3><p class="cap">그 해 「교사정보DB」에서 이름 · 휴대전화 · 납부 칸만 읽어 지금 교사 번호에 맞춰요(휴대전화 → 이름). 선생님 「내 정보 › 교사 회비」에 년도별로 보여요. 다시 돌리면 그 해 교사 회비 줄을 새로 써요.</p>'+
@@ -1043,6 +1043,7 @@ document.addEventListener('click',function(e){
   if(b.id==='bCampLink'){S.bCampAsk=true;render();return}if(b.id==='bCampNo2'){S.bCampAsk=false;render();return}
   if(b.id==='bCampSet2'){var cu2=document.getElementById('bCampUrl2').value.trim();if(!cu2){toast('주소를 넣어 주세요');return}b.disabled=true;callS('bankCamp',cu2).then(function(r){b.disabled=false;if(!r.ok){toast(r.msg);return}S.bCamp=r;if(r.projs)S.bProjs=r.projs;S.bCampAsk=false;render();toast('캠프와 연결했어요 · 행사 「'+((bPj(r.camp.proj)||{})['이름']||'')+'」')});return}
   if(b.id==='bCampRe2'){b.disabled=true;callS('bankCamp').then(function(r){b.disabled=false;if(!r.ok){toast(r.msg);return}S.bCamp=r;if(r.projs)S.bProjs=r.projs;render();toast('캠프 설정을 다시 읽었어요')});return}
+  if(b.id==='devVir'){if(!confirm('가상스즈키(교사 6 · 학생 60)를 만들까요?'))return;b.disabled=true;callS('devVirtual').then(function(r){b.disabled=false;if(!r.ok){toast(r.msg);return}toast('가상스즈키를 만들었어요 · '+r.aid+' · 행사 명단도 새로 만듦');load()});return}
   if(b.id==='bSelAll'){S.bSel={};bankList().forEach(function(o){S.bSel[o['거래ID']]=1});render();return}if(b.id==='bSelNo'){S.bSel={};render();return}
   if(b.id==='bAcNew'){S.bEA='new';render();return}if(d.bea){S.bEA=d.bea;render();return}if(b.id==='bAcNo'){S.bEA=null;render();return}
   if(b.id==='bAcSave'){var ko={'통장ID':S.bEA==='new'?'':S.bEA};['이름','은행','계좌번호','예금주','메모'].forEach(function(k){ko[k]=document.getElementById('ka_'+k).value});ko['사용']=document.getElementById('ka_안씀').checked?'안씀':'사용';bankMetaGo('acct',ko,'통장을 저장했어요',b).then(function(ok){if(ok){S.bEA=null;render()}});return}

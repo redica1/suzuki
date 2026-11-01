@@ -1,4 +1,4 @@
-/* build: 20261101-214152 */
+/* build: 20261101-215259 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -443,6 +443,12 @@ function staffCancel(token, no) {
   } finally { lock.releaseLock(); }
   return adminData(token);
 }
+/** 회원관리 계정 이메일 (이름 · 휴대전화로 들어와도 접수 확인 메일을 다시 묻지 않게) */
+function acctEmail_(tid) {
+  try { if (!tid || !memberSheetId_()) return ''; const sh = SpreadsheetApp.openById(memberSheetId_()).getSheetByName('계정'); if (!sh) return '';
+    const v = sh.getDataRange().getDisplayValues(), h = v[0], ie = h.indexOf('이메일'), it = h.indexOf('교사ID'), is = h.indexOf('상태');
+    const r = v.slice(1).filter(x => String(x[it]) === String(tid) && x[is] === '사용').pop(); return r ? String(r[ie]).trim().toLowerCase() : ''; } catch (e) { return ''; }
+}
 function loginT_(t, consent) {
   if (t.state === '대기') return { ok: false, msg: '승인 대기 중이에요. 협회가 확인하면 이메일로 알려 드려요.' };
   if (isStaffT_(t) && camp_().base.staff === false) return { ok: false, msg: '지금은 관계자 접수를 받지 않아요. 협회에 연락하면 운영진이 대신 접수해 드려요.' };
@@ -453,7 +459,7 @@ function loginT_(t, consent) {
     const token = Utilities.getUuid(), acads = [STAFF_ACAD];
     CacheService.getScriptCache().put('tok_' + token, JSON.stringify({ name: t.name, acads, staff: true }), 21600);
     log_(t.name, '관계자 로그인', '');
-    return Object.assign({ ok: true, token, today: today_(), teacher: { id: t.id, name: t.name, role: '관계자', inst: t.inst, acads, home: acads, p4: t.p4, staff: true }, myAcct: myAcct_(t.name) }, bundle_(acads, t.name));
+    return Object.assign({ ok: true, token, today: today_(), teacher: { id: t.id, name: t.name, role: '관계자', inst: t.inst, acads, home: acads, p4: t.p4, staff: true, email: acctEmail_(t.id) }, myAcct: myAcct_(t.name) }, bundle_(acads, t.name));
   }
   consentLog_('회원(교사)', t.name, t.p4, consent);
   try { ensureSettings_(); } catch (x) {}
@@ -465,7 +471,7 @@ function loginT_(t, consent) {
   const token = Utilities.getUuid();
   CacheService.getScriptCache().put('tok_' + token, JSON.stringify({ name: t.name, acads }), 21600);
   log_(t.name, '로그인', '');
-  return Object.assign({ ok: true, token, today: today_(), teacher: { id: t.id, name: t.name, role: t.role, inst: t.inst, acads, home: t.acads, p4: t.p4 }, myAcct: myAcct_(t.name) }, bundle_(acads, t.name));
+  return Object.assign({ ok: true, token, today: today_(), teacher: { id: t.id, name: t.name, role: t.role, inst: t.inst, acads, home: t.acads, p4: t.p4, email: acctEmail_(t.id) }, myAcct: myAcct_(t.name) }, bundle_(acads, t.name));
 }
 
 /** 교사(선생님 본인 포함)는 모든 학원을 통틀어 한 번만 — 다른 학원(겸임·내 클래스)에는 학생만 */

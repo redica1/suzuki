@@ -1,4 +1,4 @@
-/* build: 20261101-214152 */
+/* build: 20261101-215259 */
 function vAuthPick(){return `<section class="sec"><h2>접수 시작</h2>
   <p class="lede">어떻게 접수하시나요?</p>
   <div class="pick2">
@@ -152,7 +152,7 @@ function vStep1(){
   </div></section>`;
 }
 /* 접수 확인 메일: 이메일로 로그인했으면 그 주소를 그대로 씀 (「다른 주소로」를 누를 때만 칸이 열림) */
-function mailField(){if(S.lgId&&S.email&&!S.mailEd)return `<p class="hint" style="margin:0">접수 확인 메일은 <b>${esc(S.email)}</b>(로그인 이메일)로 보내요. <button class="btn small ghost" type="button" id="mailEd">다른 주소로</button></p>`;
+function mailField(){if(S.email&&(S.lgId||(S.user&&S.user.email))&&!S.mailEd)return `<p class="hint" style="margin:0">접수 확인 메일은 <b>${esc(S.email)}</b>(회원 계정 이메일)로 보내요. <button class="btn small ghost" type="button" id="mailEd">다른 주소로</button></p>`;
   return `<label class="f" for="email">접수 확인 메일 받을 주소<input type="text" id="email" value="${esc(S.email)}" placeholder="name@naver.com"></label>`}
 /* 이미 낸 접수에 들어 있는 사람 (고치는 중인 접수는 빼고) */
 function bookedOf(x){const T=/^t_/.test(x.id);/* 선생님은 학원을 통틀어 한 번만 */for(const sb of ALL_SUBS){if(sb.no===S.editNo||(!T&&sb.acad!==S.acad))continue;const p=sb.ppl.find(q=>q.id===sb.no+'_'+x.id&&(q.status==='정상'||(T&&q.status==='취소요청')));if(p)return {no:sb.no+(sb.acad!==S.acad?' · '+sb.acad:''),round:sb.round,by:sb.owner,at:p.addAt||sb.date}}return null}

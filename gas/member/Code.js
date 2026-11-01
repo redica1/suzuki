@@ -1,4 +1,4 @@
-/* build: 20261101-131048 */
+/* build: 20261101-131146 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -2022,7 +2022,7 @@ function bankCamp(who, url) {
   if (!base.id) base = { id: '27W', name: ss.getName(), start: '', end: '' };
   let payFrom = ''; rd('설정').forEach(r => { if (String(r['항목']) === '입금 시작일') payFrom = String(r['값'] || ''); });
   const ppl = rd('참가자').map(r => { const o = {}; BANK_CAMP_KEEP.forEach(k => o[k] = r[k] == null ? '' : String(r[k])); return o; });
-  const from = /^\d{4}-\d{2}-\d{2}$/.test(payFrom) ? payFrom : (base.open || ''), to = bankDay_(base.end, 60), nm = (base.id + ' ' + (base.name || '')).trim();
+  const from = /^\d{4}-\d{2}-\d{2}$/.test(payFrom) ? payFrom : (base.open || ''), to = bankDay_(base.end, 60), nm = (base.id + ' ' + (/겨울/.test(base.name || '') ? '겨울캠프' : /여름/.test(base.name || '') ? '여름캠프' : '캠프')).trim();   /* 예: 27W 겨울캠프 */
   const lock = LockService.getScriptLock(); lock.waitLock(30000); let pid;
   try {
     const P = bankSheet_('프로젝트', BANK_PROJ_HEAD), ci = P.c('캠프ID'), i = P.v.findIndex(r => r[ci] === base.id);

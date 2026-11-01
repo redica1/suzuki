@@ -1,4 +1,4 @@
-/* build: 20261101-232041 */
+/* build: 20261101-232110 */
   if(!open.length) return ''; /* 신고한 사람은 아래 사람별 줄에 「입금 확인 중 · 날짜 금액」으로 보여서 여기서는 안 보여 줌 */
   const sel=S.rp||(S.rp=open.map(x=>x.p.id)); const sum=open.filter(x=>sel.includes(x.p.id)).reduce((t,x)=>t+dueOf(x.p),0);
   const nameOf=id=>{for(const sb of MY_SUBS){const p=sb.ppl.find(q=>q.id===id);if(p)return p.name}return ''};
@@ -61,7 +61,7 @@ function vMine(){
   ${MY_SUBS.length?`<div class="panel"><dl class="kv"><dt>접수</dt><dd>${MY_SUBS.length}건 · ${all.length}명<br><span class="compo">${compoTxt(MY_SUBS)}</span></dd><dt>청구 합계</dt><dd class="num">${won(allAmt)}</dd><dt>입금 확인</dt><dd class="num">${won(okAmt)}</dd><dt>남은 금액</dt><dd class="num"><b>${won(Math.max(0,allAmt-okAmt))}</b>${okAmt>allAmt?` <span class="hint">${won(okAmt-allAmt)} 더 냄 · 운영진이 정리해요</span>`:''}</dd></dl></div>`:'<div class="note">아직 낸 접수가 없어요. 「새 접수하기」에서 접수하면 여기에 쌓여요.</div>'}
   ${done}
   ${payReport()}
-  ${(()=>{const last=[...MY_SUBS].reverse().find(sb=>sb.form);return last?`<button class="btn primary bigadd" type="button" data-subedit="${last.no}">＋ 인원 추가<small>${last.no}에 더해요 · ${last.round} 금액</small></button>`:''})()}
+  ${(()=>{const last=[...MY_SUBS].reverse().find(sb=>sb.form);return last?`<button class="btn primary bigadd" type="button" data-subedit="${last.no}">＋ 인원 추가 <small>(${last.round} 금액 적용 중)</small></button>`:''})()}
   ${MY_SUBS.length?mineTabs():''}
   ${(()=>{const R=MY_SUBS.flatMap(sb=>sb.ppl.filter(p=>mineOk(sb,p)).map(p=>({sb,p}))).sort((a,b)=>String(b.p.addAt||b.sb.date).localeCompare(String(a.p.addAt||a.sb.date)));if(!R.length)return '';
     const aj=MY_SUBS.some(sb=>sb.ppl.some(p=>p.adj&&p.status==='정상')),N=MY_SUBS.map(sb=>sb.form&&sb.form.note).filter(Boolean),live=R.filter(x=>x.p.status==='정상'),allOn=live.length&&live.every(x=>(S.cx[x.sb.no]||[]).includes(x.p.id));

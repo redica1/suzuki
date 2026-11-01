@@ -7,7 +7,7 @@
 <meta name="robots" content="noindex">
 <!--
   공유 미리보기(OG) 점검 페이지 (2026-11-02)
-  · https://app.suzukimusickorea.org/og/  — 운영진용. 각 페이지의 og 태그를 읽어 카톡 · 페이스북처럼 보여 줌
+  · https://app.suzukimusickorea.org/og/  — 운영진용. 각 페이지의 og 태그를 읽어 카톡처럼 보여 줌
   · 글자 · 그림을 바꿔 보며 미리 볼 수 있고, 맞으면 「깃허브에서 고치기」로 실제 파일을 고침
 -->
 <style>
@@ -77,9 +77,9 @@
 <body>
 <div class="wrap">
   <h1>공유 미리보기 점검</h1>
-  <p class="lede">페이지를 고르면 지금 올라가 있는 제목 · 설명 · 그림을 읽어 카톡에 보낼 때 모양으로 보여 줘요. 왼쪽 칸을 바꾸면 미리보기가 바로 바뀌고, 「💾 깃허브에 저장」을 눌러야 실제로 바뀌어요.</p>
+  <p class="lede">페이지를 고르면 지금 올라가 있는 제목 · 설명 · 그림을 읽어 카톡에 보낼 때 모양으로 보여 줘요. 왼쪽 칸을 바꾸면 미리보기가 바로 바뀌고, 「깃허브에 저장」을 눌러야 실제로 바뀌어요.</p>
   <div class="tabs" id="tabs"></div>
-  <div class="mode" id="mode" role="tablist"><button type="button" data-m="url" aria-pressed="true">🔗 URL 공유하기</button><button type="button" data-m="kakao" aria-pressed="false">💬 카카오 공유하기</button></div>
+  <div class="mode" id="mode" role="tablist"><button type="button" data-m="url" aria-pressed="true">URL 공유하기</button><button type="button" data-m="kakao" aria-pressed="false">카카오 공유하기</button></div>
   <div class="grid">
     <div class="panel">
       <h2>내용 <small id="src" style="font-weight:500;color:var(--sub)"></small></h2>
@@ -97,7 +97,7 @@
       <div class="row">
         <button class="btn" type="button" id="reset">원래대로</button>
         <button class="btn" type="button" id="cpUrl">공유 주소 복사</button>
-        <button class="btn pri" type="button" id="save">💾 깃허브에 저장</button>
+        <button class="btn pri" type="button" id="save">깃허브에 저장</button>
         <a class="btn" id="edit" target="_blank" rel="noopener">파일 직접 열기 ↗</a>
         <a class="btn m-url" id="kakao" target="_blank" rel="noopener" href="https://developers.kakao.com/tool/debugger/sharing">카카오 캐시 초기화 ↗</a>
       </div>
@@ -135,8 +135,6 @@
       <div class="row" id="kSendRow" hidden><button class="btn pri" type="button" id="kSend">이 내용으로 카카오톡 보내기 (시험)</button></div>
       </div>
       <div class="m-url">
-      <div class="cap">페이스북 · 밴드 · 문자 링크</div>
-      <div class="fb"><div class="img" id="bImg"></div><div class="tx"><div class="u" id="bU"></div><div class="t" id="bT"></div><div class="d" id="bD"></div></div></div>
       <p class="note">카톡은 한 번 읽은 미리보기를 한동안 기억해요. 깃허브에 저장하고 1~2분 뒤 「카카오 캐시 초기화」에 주소를 넣고 초기화하면, 새로 보내는 것부터 바뀌어요. 그림을 바꿀 땐 그림 주소 끝 <b>?v=</b> 숫자를 하나 올리면 확실해요.</p>
       </div>
     </div>
@@ -180,11 +178,10 @@
   function draw() {
     var t = $('fT').value, d = $('fD').value, i = localImg || $('fI').value.replace(BASE, root), host = (orig.u || BASE).replace(/^https?:\/\//, '').split('/')[0];
     $('kT').textContent = t; $('kD').textContent = d; $('kU').textContent = host;
-    $('bT').textContent = t; $('bD').textContent = d; $('bU').textContent = host;
     var bg = i ? 'url("' + i.replace(/"/g, '%22') + '")' : 'none';
-    $('kImg').style.backgroundImage = bg; $('bImg').style.backgroundImage = bg; $('fImg').style.backgroundImage = bg; $('fImg').style.display = i ? '' : 'none';
+    $('kImg').style.backgroundImage = bg;  $('fImg').style.backgroundImage = bg; $('fImg').style.display = i ? '' : 'none';
     $('fT2').textContent = t; $('fD2').textContent = d; $('fB2').textContent = $('fB').value || '자세히 보기';
-    $('kImg').style.display = i ? '' : 'none'; $('bImg').style.display = i ? '' : 'none';
+    $('kImg').style.display = i ? '' : 'none'; 
     $('cT').textContent = t.length + '자'; $('cT').className = 'cnt' + (t.length > 40 ? ' over' : '');
     $('cD').textContent = d.length + '자'; $('cD').className = 'cnt' + (d.length > 80 ? ' over' : '');
     checkImg(i);
@@ -268,7 +265,7 @@
     fetch('https://api.github.com/repos/' + REPO, { headers: { Authorization: 'Bearer ' + v } }).then(function (r) { return r.json().then(function (j) {
       if (!r.ok) { localStorage.removeItem('ghTok'); throw new Error('토큰이 맞지 않아요 (' + r.status + ')'); }
       if (j.permissions && !j.permissions.push) { localStorage.removeItem('ghTok'); throw new Error('읽기만 되는 토큰이에요. Contents: Read and write 로 다시 만들어 주세요'); }
-      $('tok').value = ''; ghStat(); $('gh').open = false; $('saveMsg').innerHTML = '<div class="ok">깃허브에 연결했어요. 이제 「💾 깃허브에 저장」을 누르면 돼요.</div>';
+      $('tok').value = ''; ghStat(); $('gh').open = false; $('saveMsg').innerHTML = '<div class="ok">깃허브에 연결했어요. 이제 「깃허브에 저장」을 누르면 돼요.</div>';
     }); }).catch(function (e) { ghStat(); $('saveMsg').innerHTML = '<div class="warn">' + e.message + '</div>'; });
   });
   $('tokDel').addEventListener('click', function () { try { localStorage.removeItem('ghTok'); } catch (x) {} ghStat(); });

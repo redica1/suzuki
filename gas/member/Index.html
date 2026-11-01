@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261101-105039 -->
+<!-- build: 20261101-105140 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -800,7 +800,7 @@ function acsEnhance(root){(root||document).querySelectorAll('select').forEach(fu
   if(sl.getAttribute('aria-invalid'))inp.setAttribute('aria-invalid',sl.getAttribute('aria-invalid'));
   var ul=document.createElement('ul');ul.hidden=true;ul.setAttribute('role','listbox');sl.parentNode.insertBefore(w,sl);w.appendChild(inp);w.appendChild(ul);w.appendChild(sl);sl.hidden=true;sl.style.display='none';
   var first=sl.options[0]&&sl.options[0].value===''?sl.options[0]:null,hi=0,items=[];
-  inp.value=sl.value?acsLabel(sl):'';inp.placeholder=first&&!/고르기$/.test(first.text)?first.text+' · '+kd+' 찾기':kd+' 찾기';
+  inp.value=sl.value?acsLabel(sl):'';inp.placeholder=sl.closest('.btbl')?'':first&&!/고르기$/.test(first.text)?first.text+' · '+kd+' 찾기':kd+' 찾기';
   function draw(){var q=inp.value.replace(/\s+/g,'');if(q===acsLabel(sl).replace(/\s+/g,''))q='';items=[];for(var i=0;i<sl.options.length;i++){var o=sl.options[i];if(!q||o.text.replace(/\s+/g,'').indexOf(q)>=0||(!o.value&&!q))items.push(o)}
     if(q&&first)items.unshift(first);hi=Math.max(0,Math.min(hi,items.length-1));
     ul.innerHTML=items.length?items.map(function(o,i){return '<li role="option" data-i="'+i+'" class="'+(i===hi?'on ':'')+(o.value===sl.value?'cur':'')+'">'+esc(o.text)+'</li>'}).join(''):'<li class="none">찾는 '+kd+(kd==='사람'?'이':'이')+' 없어요</li>';ul.hidden=false}

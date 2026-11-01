@@ -39,7 +39,7 @@
   /* 카톡 */
   .chat { background:var(--kakao); border-radius:14px; padding:18px 14px; }
   .chat .who { font-size:13px; color:#3b4a5a; margin:0 0 6px 4px; }
-  .kc { width:270px; max-width:100%; background:#fff; border-radius:10px; overflow:hidden; box-shadow:0 1px 2px rgba(0,0,0,.08); }
+  .kc { width:250px; max-width:100%; background:#fff; border-radius:10px; overflow:hidden; box-shadow:0 1px 2px rgba(0,0,0,.08); }
   .kc .img { width:100%; aspect-ratio: 1.91 / 1; background:#f2f2f2 center/cover no-repeat; }
   .kc .tx { padding:10px 12px 11px; }
   .kc .t, .kc .d, .kf .t, .kf .d { white-space:pre-line; }
@@ -86,6 +86,7 @@
       <h2>내용 <small id="src" style="font-weight:500;color:var(--sub)"></small></h2>
       <label for="fT">제목 <small>최적 42자 · 줄바꿈(엔터) 1개마다 1자 줄어요</small><span class="cnt" id="cT"></span></label>
       <textarea id="fT" rows="2"></textarea>
+      <div id="tWarn"></div>
       <label for="fD">설명 <small>최적 46자 · 줄바꿈(엔터) 1개마다 1자 줄어요</small><span class="cnt" id="cD"></span></label>
       <textarea id="fD"></textarea>
       <label for="fI">그림 주소 <small>1200×630 가로형 권장</small></label>
@@ -183,6 +184,10 @@
     $('fT2').textContent = t; $('fD2').textContent = d; $('fB2').textContent = $('fB').value || '자세히 보기'; $('fFoot').textContent = host;
     $('kImg').style.display = i ? '' : 'none'; 
     cnt('cT', t, 42); cnt('cD', d, 46);
+    /* 실제 카톡 URL 카드: 제목이 2줄을 넘으면 「…」로 자르고 설명은 아예 안 보여 줌 (11-02 확인) */
+    $('kD').style.display = ''; var over = $('kT').scrollHeight > $('kT').clientHeight + 2;
+    if (over) $('kD').style.display = 'none';
+    $('tWarn').innerHTML = over ? '<div class="warn">제목이 카톡 카드에서 2줄을 넘어요. 이러면 카톡이 제목을 「…」로 자르고 <b>설명을 아예 안 보여 줘요</b>. 제목을 줄여 주세요.</div>' : '';
     checkImg(i);
     var L = ['<meta property="og:title" content="' + attr(t) + '">', '<meta property="og:description" content="' + attr(d) + '">'];
     if ($('fI').value) L.push('<meta property="og:image" content="' + esc($('fI').value) + '">');

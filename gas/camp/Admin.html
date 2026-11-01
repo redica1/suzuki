@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261101-133949 -->
+<!-- build: 20261101-144014 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -2113,6 +2113,9 @@ document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)r
   if(b.id==='bulkOk'){const dt=val('bulkD'),ids0=Object.keys(S.sel).filter(k=>S.sel[k]);if(!dt&&ids0.some(pid=>!dOf(pid))){toast('입금일이 빈 사람이 있어요. 위 입금일을 고르거나 줄마다 넣어 주세요');document.getElementById('bulkD').focus();return}
     const items=ids0.map(pid=>{const x=people().find(y=>y.p.id===pid);const a=aOf(pid)||(x?Math.max(0,pAmt(x.p)-(+x.p.paidAmt||0)):0);return {pid,date:dt||dOf(pid),amt:a,memo:val('m_'+pid),tx:rpTxOf(pid),repAmt:x?(+(repRow(x.p)||{}).a||0):0}}).filter(it=>it.amt>0);
     if(!items.length){toast('확인할 금액이 없어요');return}
+    {const txs=[...new Set(items.map(i=>i.tx).filter(Boolean))],T=((S.bankTx&&S.bankTx.tx)||[]).find(t=>t.id===txs[0]);
+     if(txs.length===1&&T){let left=T.amt-T.used-items.filter(i=>i.tx).reduce((t,i)=>t+(i.repAmt||i.amt),0);
+       items.forEach(i=>{if(i.tx||i.amt>left)return;i.tx=T.id;left-=i.amt;const el=document.getElementById('d_'+i.pid);if(!dt&&!(el&&el.value))i.date=T.at.slice(0,10)})}}
     call('adminConfirm',[items],r=>{S.sel={};setData(r);S.bankTx=null;toast(items.length+'명 입금 확인'+(dt?' · '+kday(dt):'')+(items.some(x=>x.tx)?' · 통장에 이음':''))});return}
 });
 function rpPicked(){return [...document.querySelectorAll('[data-rpsel]')].filter(x=>x.checked).map(x=>x.dataset.rpsel)}

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261101-105720 -->
+<!-- build: 20261101-105920 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -644,7 +644,7 @@ function bankBulk(list){var n=Object.keys(S.bSel||{}).length,rec=list.filter(fun
   return '<div class="note info" id="bBulk" style="display:grid;gap:6px;margin-bottom:6px"><div class="row" style="justify-content:space-between"><span><b>'+(n?n+'줄 고름':'한꺼번에 바꾸기')+'</b> <span class="cap">'+(n?'':'줄 왼쪽 칸을 고르거나 「보이는 '+list.length+'건 모두 고르기」를 누르세요')+'</span></span><span class="row">'+
     '<button class="btn small" type="button" id="bSelAll">보이는 '+list.length+'건 모두 고르기</button>'+(n===1?'<button class="btn small" type="button" data-bsp="'+esc(Object.keys(S.bSel)[0])+'">고른 줄 사람별로 나누기</button>':'')+(n?'<button class="btn small ghost" type="button" id="bSelNo">고른 것 풀기</button>':'')+(rec?'<button class="btn small" type="button" id="bRecOk">보이는 추천 '+rec+'건 그대로 확정</button>':'')+'</span></div>'+
     '<div class="row"><select id="bBk" aria-label="구분">'+bBulkCats()+'</select>'+sel('bBac',[['','학원 그대로'],['-','학원 비우기']].concat(bAcOpts()),'','학원')+((S.bProjs||[]).length?sel('bBp',[['','행사 그대로'],['*','자동으로 되돌리기']].concat((S.bProjs||[]).map(function(p){return [p['프로젝트ID'],p['이름']]})),'','행사'):'')+((S.bAccts||[]).length?sel('bBa',[['','통장 그대로']].concat(bAcOptsK()),'','통장'):'')+
-    '<button class="btn small primary" type="button" id="bBkGo" '+(n?'':'disabled')+'>고른 '+n+'줄에 적용</button><span style="flex:1"></span><button class="btn small" type="button" id="bDoneGo" '+(n?'':'disabled')+' title="카드대금처럼 신경 안 써도 되는 줄을 회색으로">고른 '+n+'줄 확인 (회색)</button><button class="btn small ghost" type="button" id="bDoneNo" '+(n?'':'disabled')+'>확인 풀기</button></div></div>'}
+    '<button class="btn small primary" type="button" id="bBkGo" '+(n?'':'disabled')+'>고른 '+n+'줄에 적용</button><span style="flex:1"></span><button class="btn small" type="button" id="bDoneGo" '+(n?'':'disabled')+' title="카드대금처럼 신경 안 써도 되는 줄을 회색으로">고른 '+n+'줄 확인 (회색)</button><button class="btn small ghost" type="button" id="bDoneNo" '+(n?'':'disabled')+'>확인 풀기</button><button class="btn small ghost" type="button" id="bMemoClr" '+(n?'':'disabled')+'>메모 비우기</button></div></div>'}
 function bankTable(list){var per=100,pages=Math.max(1,Math.ceil(list.length/per));if((S.bp||0)>=pages)S.bp=pages-1;var page=list.slice((S.bp||0)*per,((S.bp||0)+1)*per),c=S.bcats||{'in':[],out:[]},acO=bAcOpts();
   var pager='<div class="pager"><span>'+list.length+'건'+(pages>1?' 중 '+((S.bp||0)*per+1)+'–'+Math.min(list.length,((S.bp||0)+1)*per):'')+'</span>'+(pages>1?'<button class="btn small" type="button" data-bpg="-1" '+((S.bp||0)===0?'disabled':'')+'>이전</button><button class="btn small" type="button" data-bpg="1" '+((S.bp||0)>=pages-1?'disabled':'')+'>다음</button>':'')+'</div>';
   return '<div class="tbl btbl"><table><thead><tr><th class="ck"><input type="checkbox" id="bAll" aria-label="이 쪽 모두 고르기"></th><th>거래일시</th><th class="bwho">보낸분 · 받는분</th><th class="r vl">입금</th><th class="r vl">출금</th><th class="vl">구분</th><th>학원</th><th>사람</th>'+((S.bProjs||[]).length?'<th>행사</th>':'')+'<th style="width:1%">메모</th><th style="width:1%">상태</th></tr></thead><tbody>'+
@@ -971,6 +971,7 @@ document.addEventListener('click',function(e){
   if(b.id==='bspAdd'){var nn=document.getElementById('bspNm').value.trim();if(!nn)return;S.bSpL.push({'대상':'기타',ID:'','이름':nn,'금액':document.getElementById('bspEach').value||'','메모':''});render();return}
   if(b.id==='bspGo'){b.disabled=true;callS('bankSplitSave',S.bSp,S.bSpL).then(function(r){b.disabled=false;if(!r.ok){toast(r.msg);return}bankTake(r);S.bSp=null;render();toast(r.n?r.n+'명으로 나눠 저장했어요 · 합 '+won(r.sum):'나눈 내용을 지웠어요')});return}
   if(d.bme){S.bMemo=d.bme;render();var mi=document.querySelector('[data-bm="'+d.bme+'"]');if(mi){mi.focus();mi.select()}return}
+  if(b.id==='bMemoClr'){var mids=Object.keys(S.bSel||{}).filter(function(id){var o=(S.bank||[]).filter(function(x){return x['거래ID']===id})[0];return o&&o['메모']});if(!mids.length){toast('고른 줄에 메모가 없어요');return}if(!confirm('고른 줄 가운데 메모가 있는 '+mids.length+'줄의 메모를 지울까요?'))return;b.disabled=true;bankSave(mids,{'메모':''},'%n줄 메모를 지웠어요').then(function(){S.bSel={};render()});return}
   if(b.id==='bDoneGo'||b.id==='bDoneNo'){var dids=Object.keys(S.bSel||{});b.disabled=true;bankSave(dids,{'확인':b.id==='bDoneGo'?1:0},b.id==='bDoneGo'?'%n줄 확인했어요':'%n줄 확인을 풀었어요').then(function(){S.bSel={};render()});return}
   if(d.bacs!=null){S.bf=S.bf||{};S.bf.ac=d.bacs;S.bp=0;S.bSel={};render();return}
   if(b.id==='bSelAll'){S.bSel={};bankList().forEach(function(o){S.bSel[o['거래ID']]=1});render();return}if(b.id==='bSelNo'){S.bSel={};render();return}

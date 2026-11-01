@@ -1,4 +1,4 @@
-/* build: 20261101-105720 */
+/* build: 20261101-105920 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -2145,7 +2145,7 @@ function bankFromSheet(who, url, acct) {
       if (k === '교사회비') { t = findT(an) || findT(g('who')); if (!t) a = ''; } else if (an) { a = findA(an); if (!a) { const tt = findT(an); if (tt && ctx.tAcad[tt]) a = ctx.tAcad[tt]; } }
       const note = [lab && !/^20\d\d\s*(교사|학생)회비$/.test(lab) ? lab : '', an && !a && !t ? '학원명: ' + an : '', cnt && /^\d+$/.test(cnt) ? '학생 ' + cnt + '명' : (cnt && !/^\d+$/.test(cnt) ? cnt : '')].filter(Boolean).join(' · ');
       const done = /입력|적용|완료/.test(proc) && (k === '교사회비' || k === '학생회비');
-      rows.push({ src: sh.getName(), at, who: g('who'), out, in: inn, memo: g('memo'), mine: g('mine'), branch: g('br'), k, a, t, note, st: k ? (done ? '연결' : '확정') : '', link: done ? '예전 통장 시트에서 처리(' + proc + ')' : '' });
+      rows.push({ src: sh.getName(), at, who: g('who'), out, in: inn, memo: g('memo'), mine: g('mine'), branch: g('br'), k, a, t, note: '', st: k ? (done ? '연결' : '확정') : '', link: done ? '예전 통장 시트에서 처리(' + proc + ')' : '' });
       n++;
     });
     per.push(sh.getName() + ' ' + n + '건');

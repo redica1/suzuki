@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261101-213230 -->
+<!-- build: 20261101-214334 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -595,9 +595,9 @@ function bankUpd(r){var L=objs({h:r.h,rows:r.upd||[]}),m={};L.forEach(function(o
 function bIn(o){return +String(o['입금']||'').replace(/[^\d]/g,'')||0}
 function bOut(o){return +String(o['출금']||'').replace(/[^\d]/g,'')||0}
 function bankList(){var f=S.bf||{},q=(f.q||'').replace(/\s+/g,'');
-  return (S.bank||[]).filter(function(o){if(f.m&&String(o['거래일시']).slice(0,f.m.length)!==f.m)return false;if(f.io==='입금'&&!bIn(o))return false;if(f.io==='출금'&&!bOut(o))return false;
+  return (S.bank||[]).filter(function(o){if(f.m&&String(o['거래일시']).slice(0,f.m.length)!==f.m)return false;var dd=String(o['거래일시']).slice(0,10);if(f.d1&&dd<f.d1)return false;if(f.d2&&dd>f.d2)return false;if(f.io==='입금'&&!bIn(o))return false;if(f.io==='출금'&&!bOut(o))return false;
     if(f.k){if(f.k==='-'?o['구분']:o['구분']!==f.k)return false}if(f.st){var cs0=bCampSt(o);if(f.st==='캠프끝'){if(!cs0||cs0.ok!==cs0.n)return false}else if(f.st==='캠프전'){if(!cs0||cs0.ok===cs0.n)return false}else if(o['상태']!==f.st)return false}if(f.dn==='no'&&o['확인'])return false;if(f.dn==='yes'&&!o['확인'])return false;if(f.ac&&(f.ac==='-'?o['통장ID']:o['통장ID']!==f.ac))return false;if(f.pj){var pp=bProj(o);if(f.pj==='-'?pp:(!pp||pp.id!==f.pj))return false}if(f.a&&o['학원ID']!==f.a)return false;if(f.t&&o['교사ID']!==f.t)return false;
-    if(q&&(o['보낸분받는분']+o['적요']+o['내통장표시']+o['메모']+aName(o['학원ID'])+(T[o['교사ID']]?T[o['교사ID']]['이름']:'')).replace(/\s+/g,'').indexOf(q)<0)return false;return true})
+    if(q){var qd=q.replace(/[,원]/g,''),amt=String(bIn(o)||bOut(o)||''),hay=(o['보낸분받는분']+o['적요']+o['내통장표시']+o['메모']+aName(o['학원ID'])+(T[o['교사ID']]?T[o['교사ID']]['이름']:'')+(o['구분']?bCatName(o['구분'])+o['구분']:'')+((S.bSplits||{})[o['거래ID']]||[]).map(function(x){return x['이름']}).join('')).replace(/\s+/g,'');if(hay.indexOf(q)<0&&!(/^\d{3,}$/.test(qd)&&amt.indexOf(qd)>=0))return false}return true})
     .sort(function(x,y){return String(y['거래일시']).localeCompare(String(x['거래일시']))})}
 function bSt(st){return {'추천':'<span class="pill info">추천</span>','미분류':'<span class="pill due">미분류</span>','확정':'<span class="pill mute">확정</span>','연결':'<span class="pill ok" title="회원 회비까지 확인됨">회비✓</span>'}[st]||esc(st)}
 function bOpts(L,v,first){return '<option value="">'+first+'</option>'+L.map(function(x){var k=Array.isArray(x)?x[0]:x,l=Array.isArray(x)?x[1]:x;return '<option value="'+esc(k)+'"'+(String(k)===String(v||'')?' selected':'')+'>'+esc(l)+'</option>'}).join('')}
@@ -651,9 +651,9 @@ function vBank(){
     tileH('추천 · 확정 전',cnt(function(o){return o['상태']==='추천'}),'눌러서 추천만 보기',0,'','')+tileH('미분류',cnt(function(o){return o['상태']==='미분류'}),'',cnt(function(o){return o['상태']==='미분류'})>0)+
     tileH('회비 확인 남음',cnt(function(o){return (o['구분']==='교사회비'||o['구분']==='학생회비')&&o['상태']!=='연결'}),'교사회비 · 학생회비 중 회비 확인 전')+'</div>';
 
-  var filt='<div class="filters">'+sel('bfm',[['','전체 기간']].concat(mOpts),f.m,'기간')+sel('bfio',[['','입금 · 출금'],'입금','출금'],f.io,'입출')+
+  var filt='<div class="filters">'+sel('bfm',[['','전체 기간']].concat(mOpts),f.m,'기간')+'<span class="row" style="gap:4px;flex-wrap:nowrap;align-items:center"><input type="date" id="bfd1" value="'+esc(f.d1||'')+'" aria-label="시작일" style="width:140px"><span class="cap">~</span><input type="date" id="bfd2" value="'+esc(f.d2||'')+'" aria-label="끝일" style="width:140px">'+(f.d1||f.d2?'<button class="btn small ghost" type="button" id="bfdClr" title="기간 풀기">✕</button>':'')+'</span>'+sel('bfio',[['','입금 · 출금'],'입금','출금'],f.io,'입출')+
     sel('bfk',[['','구분 전체'],['-','구분 없음']].concat(cats['in'].concat(cats.out).filter(function(k,i,a){return a.indexOf(k)===i}).map(function(k){var r=bCatRow(k);return [k,r&&r['이름']&&r['이름']!==k?r['대분류']+' · '+r['이름']:k]})),f.k,'구분')+((S.bProjs||[]).length?sel('bfpj',[['','행사 전체'],['-','행사 없음']].concat((S.bProjs||[]).map(function(p){return [p['프로젝트ID'],p['이름']]})),f.pj,'프로젝트'):'')+(sum?'':sel('bfst',[['','상태 전체'],'추천','미분류','확정',['연결','회비 확인'],['캠프끝','캠프 확인 끝'],['캠프전','캠프 확인 남음']],f.st,'상태')+sel('bfdn',[['','확인 · 안 한 것 모두'],['no','확인 안 한 것만'],['yes','확인(회색)만']],f.dn,'확인')+sel('bfa',[['','학원 전체']].concat(bAcOpts()),f.a,'학원')+'<select id="bft" aria-label="사람">'+bOpts(bTchOpts(),f.t,'사람 전체')+'</select>')+
-    '<input type="search" id="bq" value="'+esc(f.q||'')+'" placeholder="이름 · 메모 · 학원" style="width:min(200px,100%)"></div>';
+    '<input type="search" id="bq" value="'+esc(f.q||'')+'" placeholder="찾기: 이름 · 학원 · 구분 · 금액" style="width:min(240px,100%)"></div>';
   if(!all.length)return head+'<div class="panel"><p>아직 거래가 없어요. 위 「은행 엑셀 올리기」로 거래내역 파일을 올려 주세요. KB 인터넷뱅킹 「거래내역 조회 → 엑셀 저장」 파일을 그대로 쓰면 돼요.</p></div>';
   var acT=(S.bAccts||[]).filter(function(x){return x['사용']!=='안씀'}),acCur=(S.bAccts||[]).filter(function(x){return x['통장ID']===f.ac})[0];var acSeg=acT.length?'<div class="row" style="margin:0 0 8px;gap:10px;align-items:center">'+sel('bfac2',[['','모든 통장']].concat(acT.map(function(x){return [x['통장ID'],x['이름']]}),all.some(function(o){return !o['통장ID']})?[['-','통장 안 정함']]:[]),f.ac,'통장')+'<span style="font-size:15px">'+(acCur?'<b>'+esc(acCur['이름'])+'</b> · '+esc([acCur['은행'],acCur['계좌번호']].filter(Boolean).join(' '))+(acCur['예금주']?' · 예금주 '+esc(acCur['예금주']):''):f.ac==='-'?'통장을 아직 정하지 않은 거래':'<span class="cap">등록한 통장 '+acT.length+'개 거래를 모두 보여요</span>')+'</span></div>':'';
   return head+tiles+acSeg+'<div class="panel">'+filt+(sum?bankSum(list,cats):bankSplitBox()+bankLinkBox()+bankBulk(list)+bankTable(list))+'</div>'}
@@ -1056,6 +1056,7 @@ document.addEventListener('click',function(e){
   if(b.id==='bMemoClr'){var mids=Object.keys(S.bSel||{}).filter(function(id){var o=(S.bank||[]).filter(function(x){return x['거래ID']===id})[0];return o&&o['메모']});if(!mids.length){toast('고른 줄에 메모가 없어요');return}if(!confirm('고른 줄 가운데 메모가 있는 '+mids.length+'줄의 메모를 지울까요?'))return;b.disabled=true;bankSave(mids,{'메모':''},'%n줄 메모를 지웠어요').then(function(){S.bSel={};render()});return}
   if(b.id==='bFkGo'){var fk=document.getElementById('bFk').value;if(!fk){toast('구분을 골라 주세요');return}b.disabled=true;bankSave(Object.keys(S.bSel||{}),{'구분':fk},'%n줄 바꿨어요').then(function(){S.bSel={};render();bFloat()});return}
   if(b.id==='bDoneGo'||b.id==='bDoneNo'){var dids=Object.keys(S.bSel||{});b.disabled=true;bankSave(dids,{'확인':b.id==='bDoneGo'?1:0},b.id==='bDoneGo'?'%n줄 확인했어요':'%n줄 확인을 풀었어요').then(function(){S.bSel={};render();bFloat()});return}
+  if(b.id==='bfdClr'){S.bf=S.bf||{};S.bf.d1='';S.bf.d2='';S.bp=0;render();return}
   if(d.bacs!=null){S.bf=S.bf||{};S.bf.ac=d.bacs;S.bp=0;S.bSel={};render();return}
   if(b.id==='bCampSet'){var cu=document.getElementById('bCampUrl').value.trim();if(!cu){toast('주소를 넣어 주세요');return}S.bCamp=null;b.disabled=true;loadCamp(cu);render();return}
   if(b.id==='bCampRe'){S.bCamp=null;loadCamp();render();return}
@@ -1139,7 +1140,7 @@ document.addEventListener('change',function(e){var bt=e.target,bd=bt.dataset||{}
   if(bd.bspn!=null){S.bSpL[+bd.bspn]['메모']=bt.value;return}
   if(bd.kcb!=null||bd.kcm!=null){var kk=bd.kcb||bd.kcm,row=bCatRow(kk)||{};bankMetaGo('cat',{'구분':kk,edit:1,'대분류':bd.kcb?bt.value:row['대분류'],'중분류':bd.kcm?bt.value:row['중분류']},'분류를 바꿨어요');return}
   if(bd.bpj){bankSave([bd.bpj],{'프로젝트ID':bt.value});return}
-  var bfm={bfm:'m',bfio:'io',bfk:'k',bfst:'st',bfa:'a',bq:'q',bfpj:'pj',bfac:'ac',bfac2:'ac',bfdn:'dn',bft:'t'}[bt.id];if(bfm){S.bf=S.bf||{};S.bf[bfm]=bt.value;S.bp=0;S.bSel={};render();return}
+  var bfm={bfm:'m',bfd1:'d1',bfd2:'d2',bfio:'io',bfk:'k',bfst:'st',bfa:'a',bq:'q',bfpj:'pj',bfac:'ac',bfac2:'ac',bfdn:'dn',bft:'t'}[bt.id];if(bfm){S.bf=S.bf||{};S.bf[bfm]=bt.value;S.bp=0;S.bSel={};render();return}
   if(bt.id==='bankFile'){var bfl=bt.files&&bt.files[0];bt.value='';if(bfl)bankUpload(bfl);return}
   if(bd.bk&&bt.value==='__new'){var no=(S.bank||[]).filter(function(x){return x['거래ID']===bd.bk})[0]||{},npj=bProj(no),nbz=npj&&bPj(npj.id)?bPj(npj.id)['사업']:'',nio=bIn(no)?'입금':'출금';
     var nnm=window.prompt(nio+' 항목 이름을 적어 주세요 (예: 후원금, 대관료)','');if(!nnm||!nnm.trim()){render();return}

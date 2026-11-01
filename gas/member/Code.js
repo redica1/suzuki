@@ -1,4 +1,4 @@
-/* build: 20261101-220432 */
+/* build: 20261101-224128 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -408,7 +408,7 @@ const EVENTS_ = [
 ];
 function tEvents(sess) {
   const u = tsess_(sess), T = tbl_('교사'), i = T.find('교사ID', u.tid), ext = i >= 0 && T.get(i, '회원구분') === '외부인';
-  const P = settings_(), test = P['테스트 표시'] === '예', base = 'https://redica1.github.io/suzuki/';
+  const P = settings_(), test = P['테스트 표시'] === '예', base = 'https://app.suzukimusickorea.org/';
   let ev = EVENTS_; try { const x = JSON.parse(P['행사 목록'] || 'null'); if (Array.isArray(x) && x.length) ev = x; } catch (e) { }
   const list = ev.map(e => ({ id: e.id, name: e.name, when: e.when || '', apply: e.apply || '', note: e.note || '', can: (e.who || []).indexOf(ext ? 'ext' : 'member') >= 0,
     url: e.path === null || e.path === undefined ? '' : base + e.path + '?' + [test ? 'test' : '', 'as=' + (ext ? 'staff' : 'member')].filter(Boolean).join('&'), as: ext ? '관계자' : '회원' }));

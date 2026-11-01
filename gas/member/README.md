@@ -4,8 +4,8 @@
 
 | | 메인 | 테스트 (STG) |
 |---|---|---|
-| 선생님 (계정 만들기 · 로그인 · 내 정보) | https://redica1.github.io/suzuki/member/ | https://redica1.github.io/suzuki/member/?test |
-| 관리자 | https://redica1.github.io/suzuki/member/admin.html | https://redica1.github.io/suzuki/member/admin.html?test |
+| 선생님 (계정 만들기 · 로그인 · 내 정보) | https://app.suzukimusickorea.org/member/ | https://app.suzukimusickorea.org/member/?test |
+| 관리자 | https://app.suzukimusickorea.org/member/admin.html | https://app.suzukimusickorea.org/member/admin.html?test |
 | 시트 | 스즈키 회원관리 DB | [STG] 스즈키 회원관리 DB 테스트용 |
 
 - **이 저장소는 공개**예요. 명단은 구글 시트에만 있고 여기에는 화면 코드만 있어요. 주민등록번호 · 계좌 · 집 주소는 시트에도 넣지 않아요(원본에서 읽지 않음).

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261101-131146 -->
+<!-- build: 20261101-134141 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -562,7 +562,7 @@ function bCatRow(k){return (S.bCatRows||[]).filter(function(x){return x['구분'
 /* 프로젝트: 직접 고른 것 > 자동(기간 안 · 그 통장 · 그 구분을 쓰는 프로젝트 중 가장 좁은 것) */
 function bPjK(p){var K=bSplit(p['구분']);if(K.length||!p['사업'])return K;return (S.bCatRows||[]).filter(function(x){return x['대분류']===p['사업']}).map(function(x){return x['구분']})}
 function bIO(x,io){return x['입출']===io||x['입출']==='모두'}
-function bProj(o){if(o['프로젝트ID'])return {id:o['프로젝트ID'],auto:false};var d=String(o['거래일시']).slice(0,10),ac=o['통장ID'],k=o['구분'];
+function bProj(o){if(o['프로젝트ID'])return {id:o['프로젝트ID'],auto:false};return null;var d=String(o['거래일시']).slice(0,10),ac=o['통장ID'],k=o['구분'];
   var c=(S.bProjs||[]).filter(function(p){if(p['사용']==='안씀')return false;if(p['시작일']&&d<p['시작일'])return false;if(p['끝일']&&d>p['끝일'])return false;var A=bSplit(p['통장ID']),K=bPjK(p);if(A.length&&A.indexOf(ac)<0)return false;if(K.length&&k&&K.indexOf(k)<0)return false;return true});
   if(c.length>1){var sc=function(p){var K=bPjK(p),A=bSplit(p['통장ID']),sp=p['시작일']&&p['끝일']?(new Date(p['끝일'])-new Date(p['시작일']))/864e5:1e5;return (k&&K.indexOf(k)>=0?1e7:0)+(A.length?1e6:0)-sp};c.sort(function(a,b){return sc(b)-sc(a)})}
   return c.length?{id:c[0]['프로젝트ID'],auto:true}:null}

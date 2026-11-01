@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261101-112128 -->
+<!-- build: 20261101-114544 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -585,7 +585,7 @@ function bOpts(L,v,first){return '<option value="">'+first+'</option>'+L.map(fun
 function bTchOpts(){if(S.bTO)return S.bTO;S.bTO=S.D.tch.filter(function(t){return t['상태']!=='탈퇴'}).map(function(t){var ex=t['회원구분']==='외부인'||/^X/.test(t['교사ID']);return [t['교사ID'],t['이름']+(t['구분글자']?' '+t['구분글자']:'')+' · '+(ex?'관계자'+(t['하는일']?' '+t['하는일']:''):tAcadTxt(t))]}).sort(function(a,b){return a[1].localeCompare(b[1],'ko')});return S.bTO}
 function bAcOpts(){return acadOpts('').slice(1).concat(S.D.acad.filter(function(a){return a['상태']==='탈퇴'}).map(function(a){return [a['학원ID'],a['학원명']+' (탈퇴)']}))}
 function vBankHead(){var v=S.bv||'list',A=bAcOptsK();
-  var seg='<div class="row" style="margin:0 0 8px">'+[['list','거래 내역'],['sum','합계표'],['pay','지급 (인건비)'],['set','통장 · 행사 · 구분']].map(function(x){return '<button class="btn'+(v===x[0]?' primary':'')+'" type="button" data-bv="'+x[0]+'">'+x[1]+'</button>'}).join('')+'</div>';
+  var seg='<div class="row" style="margin:0 0 8px">'+[['list','거래 내역'],['camp','캠프 입금 맞추기'],['sum','합계표'],['pay','지급 (인건비)'],['set','통장 · 행사 · 구분']].map(function(x){return '<button class="btn'+(v===x[0]?' primary':'')+'" type="button" data-bv="'+x[0]+'">'+x[1]+'</button>'}).join('')+'</div>';
   return '<div class="sec-h"><div><h2>통장</h2><p>은행 거래내역 엑셀(xls · xlsx · csv)을 <b>어느 통장 것인지 골라</b> 올리면 겹치는 거래는 건너뛰고 새 거래만 더해요. 거래마다 구분(소분류)을 정하면 대분류 · 중분류로 묶이고, <b>프로젝트</b>(기간 · 통장 · 쓰는 구분)에 맞으면 자동으로 그 프로젝트에 들어가요. 교사회비 · 학생회비는 「회비 확인」으로 회원 회비까지 이어요.</p></div>'+
     '<div class="row">'+(A.length?sel('bAcct',[['','어느 통장?']].concat(A),S.bAcct,'올릴 통장'):'')+'<label class="btn primary" for="bankFile" style="cursor:pointer">'+(S.bBusy?'<span class="spin"></span> 읽는 중…':'은행 엑셀 올리기')+'</label><input type="file" id="bankFile" accept=".xls,.xlsx,.csv" hidden><button class="btn" type="button" id="bankOld">예전 통장 시트 가져오기</button><button class="btn small ghost" type="button" id="bankRe">새로 고침</button></div></div>'+
     (S.bOld?'<div class="panel" style="border-color:var(--accent)"><b>예전 통장 구글시트 가져오기</b><p class="cap">거래일시 · 보낸분/받는분 · 출금액 · 입금액 · 비고(구분) · 학원명 칸이 있는 시트의 모든 탭을 읽어요. 비고에 적힌 구분과 학원명을 그대로 옮기고, 처리 칸이 「입력 · 적용」인 회비는 이미 반영된 것으로 표시해요. 날짜가 없는 줄은 건너뛰어요. 같은 거래를 두 번 가져와도 한 번만 들어가요.'+(A.length?' <b>위에서 고른 통장</b>으로 들어가요.':'')+'</p><div class="row"><input type="url" id="bankOldUrl" value="'+esc(S.bOldUrl||'')+'" placeholder="구글시트 주소" style="flex:1;min-width:240px"><button class="btn primary" type="button" id="bankOldGo">가져오기</button><button class="btn" type="button" id="bankOldNo">닫기</button></div></div>':'')+seg}
@@ -620,6 +620,7 @@ function vBank(){
   if(!S.bank)return '<div class="panel"><span><span class="spin"></span> 불러오는 중…</span></div>';
   if(S.bv==='set')return vBankHead()+vBankSet();
   if(S.bv==='pay')return vBankHead()+vBankPay();
+  if(S.bv==='camp')return vBankHead()+vBankCamp();
   var all=S.bank,list=bankList(),f=S.bf||{},cats=S.bcats||{'in':[],out:[]},sum=S.bv==='sum';
   var tin=0,tout=0;list.forEach(function(o){tin+=bIn(o);tout+=bOut(o)});
   var cnt=function(fn){return all.filter(fn).length};
@@ -703,6 +704,50 @@ function vBankPay(){var pj=bPayProj(),P=S.bProjs||[],all=(S.bPays||[]),L=all.fil
     (ks.length?'<div class="tbl btbl" style="max-height:360px"><table id="bPayTax"><thead><tr><th>이름</th><th>휴대전화</th><th>소속</th><th>소득 구분</th><th class="r">건수</th><th class="r">세전 합</th><th class="r">소득세</th><th class="r">지방세</th><th class="r">실지급 합</th></tr></thead><tbody>'+ks.map(function(k){var x=byP[k],t=x.tid&&T[x.tid];return '<tr><td><b>'+esc(x.nm)+'</b></td><td class="num">'+esc(t?t['휴대전화']||'':'')+'</td><td class="cap">'+esc(t?tAcadTxt(t):'')+'</td><td class="cap">'+esc(Object.keys(x.r).map(function(r){return r==='3.3'?'사업소득':r==='8.8'?'기타소득':'원천징수 없음'}).join(', '))+'</td><td class="r num">'+x.n+'</td><td class="r num">'+won(x.g)+'</td><td class="r num">'+won(x.it)+'</td><td class="r num">'+won(x.lt)+'</td><td class="r num"><b>'+won(x.net)+'</b></td></tr>'}).join('')+'</tbody></table></div>':'<p class="cap">아직 통장에 찍힌 지급이 없어요.</p>');
   return tiles+top+'<div class="panel">'+add+tbl+extra+tax+'</div>'}
 function bPayGo(op,data,msg,btn){if(btn)btn.disabled=true;return callS('bankPay',op,data).then(function(r){if(btn)btn.disabled=false;if(!r.ok){toast(r.msg);render();return false}bankTake(r);render();if(msg)toast(msg.replace('%n',r.n));return true})}
+/* ---------- 캠프 입금 맞추기 (11-01): 캠프 신고 묶음(학원 · 입금자명 · 입금일) + 같은 날 학생회비 신고 ↔ 통장 입금 ---------- */
+function loadCamp(url){S.bCamp=S.bCamp||{loading:1};var p=[callS('bankCamp',url==null?null:url)];if(!S.pays)p.push(callS('payList'));
+  Promise.all(p).then(function(rs){var r=rs[0];if(rs[1]&&rs[1].ok){S.pays=rs[1].list;S.D.payN=rs[1].payN}if(!r.ok){S.bCamp=null;toast(r.msg);render();return}S.bCamp=r;if(r.projs)S.bProjs=r.projs;render()})}
+function bcN(x){return +String(x||'').replace(/[^\d]/g,'')||0}
+function bCampCalc(){var C=S.bCamp,pj=C.camp.proj,from=C.camp.payFrom||'',to=C.camp.payTo||'9999',sp=S.bSplits||{},linkP={},linkS={},txById={};
+  (S.bank||[]).forEach(function(o){txById[o['거래ID']]=o});
+  Object.keys(sp).forEach(function(tid){sp[tid].forEach(function(x){if(x['대상']==='캠프')linkP[x['ID']]=tid;if(x['대상']==='학생'&&x['구분']==='학생회비')linkS[x['ID']+'|'+String(x['메모']).slice(0,4)]=tid})});
+  var G={},ord=[];C.ppl.forEach(function(p){var a=bcN(p['신고 금액']),d=p['신고 입금일'];if(!a||!d||p['상태']==='취소')return;var k=p['학원']+'|'+bNorm(p['신고 입금자명'])+'|'+d;
+    if(!G[k]){G[k]={acad:p['학원'],name:p['신고 입금자명'],date:d,ppl:[],sum:0,ok:0,dues:[],dsum:0};ord.push(k)}var g=G[k];g.ppl.push(p);g.sum+=a;if(bcN(p['[운영진] 입금확인액']))g.ok++});
+  var usedD={};ord.forEach(function(k){var g=G[k];(S.pays||[]).forEach(function(x){var dk=x.sid+'|'+x.year;if(usedD[dk]||(x.st!=='신고'&&x.st!=='확인')||x.acad!==g.acad||x.date!==g.date)return;if(linkS[dk]&&!g.ppl.some(function(p){return linkP[p['참가자ID']]===linkS[dk]}))return;usedD[dk]=1;g.dues.push(x);g.dsum+=+x.paid||0})});
+  var usedT={};Object.keys(linkP).forEach(function(pid){usedT[linkP[pid]]=1});
+  ord.forEach(function(k){var g=G[k],ids=g.ppl.map(function(p){return p['참가자ID']}),lt=ids.map(function(i){return linkP[i]}).filter(Boolean);
+    g.link=lt.length===ids.length&&lt.every(function(t){return t===lt[0]})?txById[lt[0]]:null;g.part=!g.link&&lt.length>0;
+    if(g.link)return;var nm=bNorm(g.name),ac=bNorm(g.acad.replace(/스즈키$|음악학원$/,''));
+    g.cand=(S.bank||[]).filter(function(o){var v=bIn(o);if(!v||String(o['거래일시']).slice(0,10)!==g.date)return false;return v===g.sum||(g.dsum&&v===g.sum+g.dsum)}).map(function(o){var w=bNorm(o['보낸분받는분']);return {o:o,dues:bIn(o)===g.sum+g.dsum&&g.dsum>0,name:(nm&&w.indexOf(nm)>=0)||(ac&&w.indexOf(ac)>=0),used:!!usedT[o['거래ID']]}}).sort(function(a,b){return (a.used-b.used)||(b.name-a.name)});
+    g.near=g.cand.length?[]:(S.bank||[]).filter(function(o){return bIn(o)&&String(o['거래일시']).slice(0,10)===g.date&&!usedT[o['거래ID']]})});
+  var groups=ord.map(function(k){return G[k]});
+  /* 주인 모르는 입금: 캠프 기간 · 캠프 행사(또는 캠프 구분) 입금 가운데 사람별로 다 나눠지지 않은 것 */
+  var candT={};groups.forEach(function(g){if(!g.link)(g.cand||[]).forEach(function(c){if(!c.used)candT[c.o['거래ID']]=1})});
+  var unknown=(S.bank||[]).filter(function(o){var v=bIn(o),d=String(o['거래일시']).slice(0,10);if(!v||o['확인']||candT[o['거래ID']]||d<from||d>to)return false;var bp=bProj(o);if(!((bp&&bp.id===pj)||/^스즈키캠프/.test(o['구분']||'')))return false;var s2=0;(sp[o['거래ID']]||[]).forEach(function(x){s2+=bcN(x['금액'])});o._rest=v-s2;return o._rest>0});
+  var noBank=C.ppl.filter(function(p){return bcN(p['[운영진] 입금확인액'])&&p['상태']!=='취소'&&!linkP[p['참가자ID']]});
+  return {groups:groups,unknown:unknown,noBank:noBank,linkP:linkP}}
+function vBankCamp(){var C=S.bCamp;if(!C||C.loading){if(!C)loadCamp();return '<div class="panel"><span><span class="spin"></span> 캠프 접수 시트 읽는 중…</span></div>'}
+  if(C.none)return '<div class="panel"><b>캠프 접수 시트 연결</b><p class="cap">캠프 접수 DB 시트(「참가자」 탭이 있는 시트) 주소를 넣으면 캠프 입금 신고 · 확인을 읽어 와 통장과 맞춰 봐요. 캠프 시트는 읽기만 해요.</p><div class="row"><input type="url" id="bCampUrl" placeholder="캠프 접수 DB 시트 주소" style="flex:1;min-width:260px"><button class="btn primary" type="button" id="bCampSet">연결</button></div></div>';
+  var R=bCampCalc(),gs=R.groups,pjn=bPj(C.camp.proj),cnt=function(f){return gs.filter(f).length};
+  var tiles='<div class="tiles">'+tileH('신고 묶음',gs.length,'학원 · 입금자명 · 입금일이 같은 신고')+tileH('통장과 이어짐',cnt(function(g){return g.link}),'')+tileH('바로 이을 수 있음',cnt(function(g){return !g.link&&g.cand&&g.cand.some(function(c){return !c.used})}),'금액 · 날짜가 같은 입금 있음')+tileH('통장에 없음',cnt(function(g){return !g.link&&(!g.cand||!g.cand.length)}),'',cnt(function(g){return !g.link&&(!g.cand||!g.cand.length)})>0)+tileH('주인 모르는 입금',R.unknown.length+'건',won(R.unknown.reduce(function(s,o){return s+o._rest},0)),R.unknown.length>0)+tileH('확인됐는데 통장 없음',R.noBank.length+'명','캠프에서 입금 확인했지만 이어진 통장 입금이 없음',R.noBank.length>0)+'</div>';
+  var top='<div class="row" style="margin:0 0 8px"><span class="cap">캠프 <b>'+esc(C.camp.id+' '+C.camp.name)+'</b> · 통장 행사 「'+esc(pjn?pjn['이름']:'-')+'」 · 입금 기간 '+esc(C.camp.payFrom||'처음')+' ~ '+esc(C.camp.payTo||'계속')+' · 참가자 '+C.ppl.length+'명</span><span style="flex:1"></span><button class="btn small primary" type="button" id="bCampAll">맞는 것 모두 잇기</button><button class="btn small ghost" type="button" id="bCampRe">캠프 다시 읽기</button></div>';
+  var row=function(g,i){var st=g.link?'<span class="pill ok">이어짐</span> <span class="cap">'+esc(String(g.link['거래일시']).slice(5,16)+' '+g.link['보낸분받는분']+' '+won(bIn(g.link)))+'</span>':g.cand.length?'<select data-bcs="'+i+'" style="max-width:260px">'+g.cand.map(function(c){return '<option value="'+esc(c.o['거래ID'])+'">'+esc(String(c.o['거래일시']).slice(11,16)+' '+c.o['보낸분받는분']+' '+won(bIn(c.o))+(c.dues?' (회비 포함)':'')+(c.name?' ✓':'')+(c.used?' · 다른 묶음에 이어짐':''))+'</option>'}).join('')+'</select> <button class="btn small primary" type="button" data-bcl="'+i+'">잇기</button>'
+      :g.near.length?'<span class="pill due">금액 다름</span> <span class="cap">같은 날 입금 '+g.near.length+'건: '+esc(g.near.slice(0,3).map(function(o){return o['보낸분받는분']+' '+won(bIn(o))}).join(', '))+'</span>':'<span class="pill due">통장에 없음</span>';
+    return '<tr><td>'+esc(g.acad)+'</td><td>'+esc(g.name)+'</td><td class="num">'+esc(g.date.slice(2).replace(/-/g,'.'))+'</td><td class="r num" title="'+esc(g.ppl.map(function(p){return p['이름']+' '+won(bcN(p['신고 금액']))}).join('\n'))+'">'+g.ppl.length+'명 · '+won(g.sum)+'</td><td class="r num" title="'+esc(g.dues.map(function(x){return x.name+' '+won(x.paid)}).join('\n'))+'">'+(g.dues.length?g.dues.length+'명 · '+won(g.dsum):'')+'</td><td class="r num">'+won(g.sum+g.dsum)+'</td><td>'+st+'</td><td class="r">'+(g.ok===g.ppl.length?'<span class="pill ok">확인 '+g.ok+'/'+g.ppl.length+'</span>':'<span class="pill info">확인 '+g.ok+'/'+g.ppl.length+'</span>')+'</td></tr>'};
+  var t1='<h3 style="margin:4px 0 6px">신고 묶음 ↔ 통장</h3><p class="cap" style="margin:0 0 6px">원장님이 사람별로 한 입금 신고를 학원 · 입금자명 · 입금일로 묶고, 같은 날 같은 학원의 학생회비 신고도 붙여서 통장 입금 금액과 맞춰 봐요. 「잇기」를 누르면 그 입금이 사람별로 나눠지고(캠프 참가비 · 학생회비 줄 따로) 구분 · 행사가 정해져요. 캠프 쪽 「입금 확인」은 지금처럼 캠프 관리자 화면에서 눌러 주세요.</p>'+
+    (gs.length?'<div class="tbl btbl"><table><thead><tr><th>학원</th><th>입금자명</th><th>입금일</th><th>캠프 신고</th><th>회비 신고</th><th>합계</th><th>통장</th><th>캠프 확인</th></tr></thead><tbody>'+gs.map(row).join('')+'</tbody></table></div>':'<p class="cap">아직 캠프 입금 신고가 없어요.</p>');
+  var cAc={};C.ppl.forEach(function(p){if(p['상태']!=='취소'&&!bcN(p['신고 금액'])&&!bcN(p['[운영진] 입금확인액'])&&!R.linkP[p['참가자ID']])(cAc[p['학원']]=cAc[p['학원']]||[]).push(p)});
+  var t2='<h3 style="margin:16px 0 6px">주인 모르는 입금 '+R.unknown.length+'건</h3><p class="cap" style="margin:0 0 6px">캠프 행사 · 캠프 구분 입금 가운데 사람별로 다 나눠지지 않은 돈이에요. 후보는 그 학원에서 신청했지만 신고 · 확인이 없는 사람이에요. 줄을 골라 「고른 줄 사람별로 나누기」로 주인을 정해 주세요.</p>'+
+    (R.unknown.length?'<div class="tbl btbl"><table><thead><tr><th>입금일</th><th>보낸분</th><th>입금</th><th>남은 돈</th><th>학원</th><th>후보 (신고 없는 신청자)</th></tr></thead><tbody>'+R.unknown.map(function(o){var an=o['학원ID']?aName(o['학원ID']):'',cd=an&&cAc[an]?cAc[an]:[];return '<tr><td class="num">'+esc(String(o['거래일시']).slice(2,16).replace(/-/g,'.'))+'</td><td>'+esc(o['보낸분받는분'])+'</td><td class="r num">'+won(bIn(o))+'</td><td class="r num">'+won(o._rest)+'</td><td>'+esc(an||'-')+'</td><td class="cap" title="'+esc(cd.map(function(p){return p['이름']+' '+won(bcN(p['청구액']))}).join('\n'))+'">'+(cd.length?esc(cd.slice(0,5).map(function(p){return p['이름']+' '+won(bcN(p['청구액']))}).join(', ')+(cd.length>5?' 외 '+(cd.length-5)+'명':'')):'-')+' <button class="btn small" type="button" data-bsp="'+esc(o['거래ID'])+'">나누기</button></td></tr>'}).join('')+'</tbody></table></div>':'<p class="cap">없어요.</p>');
+  var t3=R.noBank.length?'<h3 style="margin:16px 0 6px">캠프에서 확인됐는데 통장과 안 이어진 사람 '+R.noBank.length+'명</h3><div class="tbl btbl" style="max-height:300px"><table><thead><tr><th>접수</th><th>학원</th><th>이름</th><th>확인일</th><th>확인액</th></tr></thead><tbody>'+R.noBank.map(function(p){return '<tr><td class="num">'+esc(p['접수번호'])+'</td><td>'+esc(p['학원'])+'</td><td>'+esc(p['이름'])+'</td><td class="num">'+esc(p['[운영진] 입금확인일'])+'</td><td class="r num">'+won(bcN(p['[운영진] 입금확인액']))+'</td></tr>'}).join('')+'</tbody></table></div>':'';
+  return tiles+top+'<div class="panel">'+bankSplitBox()+t1+t2+t3+'</div>'}
+/* 잇기: 그 입금을 사람별 줄(캠프 · 학생회비)로 나누고 구분 · 행사 정함 */
+function bCampLink(g,tid){var o=(S.bank||[]).filter(function(x){return x['거래ID']===tid})[0];if(!o)return Promise.resolve();var withDues=g.dsum>0&&bIn(o)===g.sum+g.dsum;
+  var ids={},lines=g.ppl.map(function(p){ids['캠프|'+p['참가자ID']]=1;return {'대상':'캠프',ID:p['참가자ID'],'이름':p['이름']+(p['참가 구분']?' ('+p['참가 구분']+')':''),'금액':bcN(p['신고 금액']),'메모':p['접수번호'],'구분':'스즈키캠프 › 참가비'}});
+  if(withDues)g.dues.forEach(function(x){ids['학생|'+x.sid]=1;lines.push({'대상':'학생',ID:x.sid,'이름':x.name,'금액':+x.paid||0,'메모':x.year+' 회비','구분':'학생회비'})});
+  var keep=((S.bSplits||{})[tid]||[]).filter(function(x){return !ids[x['대상']+'|'+x['ID']]}).map(function(x){return {'대상':x['대상'],ID:x['ID'],'이름':x['이름'],'금액':x['금액'],'메모':x['메모'],'구분':x['구분']}});
+  return callS('bankSplitSave',tid,keep.concat(lines)).then(function(r){if(!r.ok){toast(r.msg);return}bankTake(r);return bankSave([tid],{'구분':'스즈키캠프 › 참가비','프로젝트ID':S.bCamp.camp.proj,'학원ID':o['학원ID']||(acadByName(g.acad)||''),confirm:true})})}
+function acadByName(n){var a=S.D.acad.filter(function(x){return x['학원명']===n})[0];return a?a['학원ID']:''}
 function bankLinkBox(){var id=S.bLink;if(!id)return '';var o=(S.bank||[]).filter(function(x){return x['거래ID']===id})[0];if(!o)return '';
   if(!S.pays)return '<div class="note"><span class="spin"></span> 입금 신고 불러오는 중…</div>';
   var L=S.pays.filter(function(x){return x.st==='신고'&&x.aid===o['학원ID']}),sel=S.bLSel||{},sum=0;L.forEach(function(x){if(sel[x.sid+'|'+x.year])sum+=+x.paid||0});var amt=bIn(o);
@@ -715,8 +760,13 @@ function bankSum(list,cats){var by={},ac={},tc={},mo={},col=['학생회비','스
     if(inn&&col.indexOf(k)>=0){var a=o['학원ID']||'-',r=ac[a]=ac[a]||{};r[k]=(r[k]||0)+inn}
     if(inn&&k==='교사회비'){var t=o['교사ID']||'-';var x=tc[t]=tc[t]||{s:0,d:[]};x.s+=inn;x.d.push(String(o['거래일시']).slice(5,10).replace('-','/'))}});
   var add=function(L){var t={n:0,i:0,o:0};L.forEach(function(x){t.n+=x.n;t.i+=x.i;t.o+=x.o});return t},cell=function(t,bold){var st=bold?' style="font-weight:700"':'';return '<td class="r num"'+st+'>'+t.n+'</td><td class="r num"'+st+'>'+(t.i?won(t.i):'')+'</td><td class="r num"'+st+'>'+(t.o?won(t.o):'')+'</td><td class="r num"'+st+'>'+won(t.i-t.o)+'</td>'};
-  var tr={},bord=bBizList().concat(['분류 없음','(구분 없음)']);list.forEach(function(o){var k=o['구분']||'(구분 없음)',r=bCatRow(k)||{},B=r['대분류']||(k==='(구분 없음)'?'(구분 없음)':'분류 없음'),pp=bProj(o),P=pp?pp.id:'-';
-    var b=tr[B]=tr[B]||{},q=b[P]=b[P]||{},x=q[k]=q[k]||{n:0,i:0,o:0};x.n++;x.i+=bIn(o);x.o+=bOut(o)});
+  var tr={},bord=bBizList().concat(['분류 없음','(구분 없음)']);
+  var put=function(o,k,inn,out,n){k=k||'(구분 없음)';var r=bCatRow(k)||{},B=r['대분류']||(k==='(구분 없음)'?'(구분 없음)':'분류 없음'),pp=bProj(o),P=pp?pp.id:'-',pj=pp&&bPj(pp.id);
+    if(pj&&pj['사업']&&r['대분류']&&pj['사업']!==r['대분류']){var q2=bProj({'거래일시':o['거래일시'],'통장ID':o['통장ID'],'구분':k});P=q2?q2.id:'-'}
+    var b=tr[B]=tr[B]||{},q=b[P]=b[P]||{},x=q[k]=q[k]||{n:0,i:0,o:0};x.n+=n;x.i+=inn;x.o+=out};
+  list.forEach(function(o){var L=((S.bSplits||{})[o['거래ID']]||[]).filter(function(x){return x['구분']}),inn=bIn(o),out=bOut(o);if(!L.length){put(o,o['구분'],inn,out,1);return}
+    var by2={},used=0;L.forEach(function(x){var a=+String(x['금액']||'').replace(/[^\d]/g,'')||0;by2[x['구분']]=(by2[x['구분']]||0)+a;used+=a});var ks=Object.keys(by2);
+    ks.forEach(function(k,i){var a=by2[k];put(o,k,inn?a:0,inn?0:a,i===0?1:0)});var rest=(inn||out)-used;if(rest>0)put(o,o['구분'],inn?rest:0,inn?0:rest,0)});
   var vals=function(q){return Object.keys(q).map(function(k){return q[k]})};
   var t1='<h3 style="margin:10px 0 6px">사업 › 행사 › 항목</h3><div class="tbl" style="max-height:none"><table><thead><tr><th>사업 · 행사 · 항목</th><th class="r">건수</th><th class="r">입금</th><th class="r">출금</th><th class="r">남은 돈</th></tr></thead><tbody>'+
     Object.keys(tr).sort(function(x,y){return bord.indexOf(x)-bord.indexOf(y)}).map(function(B){var b=tr[B],allB=[];Object.keys(b).forEach(function(P){allB=allB.concat(vals(b[P]))});
@@ -964,7 +1014,7 @@ document.addEventListener('click',function(e){
   if(d.pyu){bPayGo('link',[{'지급ID':d.pyu,'거래ID':''}],'풀었어요');return}
   if(d.pyx){if(!confirm('이 지급 결정을 지울까요?'))return;bPayGo('del',[d.pyx],'지웠어요');return}
   if(b.id==='bPayCopy'){var tb=document.getElementById('bPayTax');var tsv=[].map.call(tb.querySelectorAll('tr'),function(tr){return [].map.call(tr.children,function(c){return c.textContent.replace(/원$/,'').replace(/,/g,'')}).join('\t')}).join('\n');navigator.clipboard.writeText(tsv).then(function(){toast('복사했어요 · 엑셀에 붙여넣기 하세요')},function(){toast('복사하지 못했어요')});return}
-  if(d.bsp){S.bSp=d.bsp;S.bSpA=null;S.bSpL=((S.bSplits||{})[d.bsp]||[]).map(function(x){return {'대상':x['대상'],ID:x['ID'],'이름':x['이름'],'금액':x['금액'],'메모':x['메모']}});S.bSpEach=S.bSpL.length?S.bSpL[0]['금액']:'';render();var pb=document.getElementById('bspEach');if(pb)pb.closest('.panel').scrollIntoView({block:'nearest'});return}
+  if(d.bsp){S.bSp=d.bsp;S.bSpA=null;S.bSpL=((S.bSplits||{})[d.bsp]||[]).map(function(x){return {'대상':x['대상'],ID:x['ID'],'이름':x['이름'],'금액':x['금액'],'메모':x['메모'],'구분':x['구분']||''}});S.bSpEach=S.bSpL.length?S.bSpL[0]['금액']:'';render();var pb=document.getElementById('bspEach');if(pb)pb.closest('.panel').scrollIntoView({block:'nearest'});return}
   if(b.id==='bspNo'){S.bSp=null;render();return}
   if(b.id==='bspFill'){var ev=document.getElementById('bspEach').value;S.bSpEach=ev;(S.bSpL||[]).forEach(function(x){x['금액']=ev});render();return}
   if(d.bspx!=null){S.bSpL.splice(+d.bspx,1);render();return}
@@ -974,6 +1024,11 @@ document.addEventListener('click',function(e){
   if(b.id==='bMemoClr'){var mids=Object.keys(S.bSel||{}).filter(function(id){var o=(S.bank||[]).filter(function(x){return x['거래ID']===id})[0];return o&&o['메모']});if(!mids.length){toast('고른 줄에 메모가 없어요');return}if(!confirm('고른 줄 가운데 메모가 있는 '+mids.length+'줄의 메모를 지울까요?'))return;b.disabled=true;bankSave(mids,{'메모':''},'%n줄 메모를 지웠어요').then(function(){S.bSel={};render()});return}
   if(b.id==='bDoneGo'||b.id==='bDoneNo'){var dids=Object.keys(S.bSel||{});b.disabled=true;bankSave(dids,{'확인':b.id==='bDoneGo'?1:0},b.id==='bDoneGo'?'%n줄 확인했어요':'%n줄 확인을 풀었어요').then(function(){S.bSel={};render()});return}
   if(d.bacs!=null){S.bf=S.bf||{};S.bf.ac=d.bacs;S.bp=0;S.bSel={};render();return}
+  if(b.id==='bCampSet'){var cu=document.getElementById('bCampUrl').value.trim();if(!cu){toast('주소를 넣어 주세요');return}S.bCamp=null;b.disabled=true;loadCamp(cu);render();return}
+  if(b.id==='bCampRe'){S.bCamp=null;loadCamp();render();return}
+  if(d.bcl!=null){var cg=bCampCalc().groups[+d.bcl],cs=document.querySelector('[data-bcs="'+d.bcl+'"]');if(!cg||!cs)return;b.disabled=true;bCampLink(cg,cs.value).then(function(){toast('이었어요 · '+cg.ppl.length+'명'+(cg.dues.length?' + 회비 '+cg.dues.length+'명':''))});return}
+  if(b.id==='bCampAll'){var cR=bCampCalc(),todo=cR.groups.filter(function(g){var c=(g.cand||[]).filter(function(x){return !x.used});return !g.link&&c.length&&(c.length===1||c[0].name&&!(c[1]&&c[1].name))});if(!todo.length){toast('바로 이을 묶음이 없어요');return}
+    if(!confirm('금액 · 날짜가 맞는 '+todo.length+'묶음을 통장 입금과 이을까요?'))return;b.disabled=true;var ch=Promise.resolve(),n2=0;todo.forEach(function(g){ch=ch.then(function(){var c=g.cand.filter(function(x){return !x.used})[0];return bCampLink(g,c.o['거래ID']).then(function(){n2++})})});ch.then(function(){toast(n2+'묶음을 이었어요')});return}
   if(b.id==='bSelAll'){S.bSel={};bankList().forEach(function(o){S.bSel[o['거래ID']]=1});render();return}if(b.id==='bSelNo'){S.bSel={};render();return}
   if(b.id==='bAcNew'){S.bEA='new';render();return}if(d.bea){S.bEA=d.bea;render();return}if(b.id==='bAcNo'){S.bEA=null;render();return}
   if(b.id==='bAcSave'){var ko={'통장ID':S.bEA==='new'?'':S.bEA};['이름','은행','계좌번호','예금주','메모'].forEach(function(k){ko[k]=document.getElementById('ka_'+k).value});ko['사용']=document.getElementById('ka_안씀').checked?'안씀':'사용';bankMetaGo('acct',ko,'통장을 저장했어요',b).then(function(ok){if(ok){S.bEA=null;render()}});return}

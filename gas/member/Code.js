@@ -1,4 +1,4 @@
-/* build: 20261101-112128 */
+/* build: 20261101-114544 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -105,7 +105,7 @@ function include(n) { return HtmlService.createHtmlOutputFromFile(n).getContent(
 
 function api(name, args) {
   const open = { login, hello, tHello, tEvents, tLookup, tStart, tResend, tVerify, tCreate, tLogin, tForgot, tReset, tMe, tSavePay, tSavePart, tSaveInfo, tSavePhoto, tAcad, tSaveAcad, tDocUp, tDocGet, tSaveStu, tSaveStus, tStuDetail, tStuSave, tStuTutor, tStuTutorDel, tStuState, tStuStateDel, tMyStu, tMyStuDetail, tMyStuPay, tTchSaves, tTchEnd, tTchEvent, tTchAssign, tTchStart, tSaveRrn, tAddWork, tClassCreate, tEndWork, tMainWork, tLogout, bPost, bMine, bReply };
-  const fns = { boot, saveRow, setCheck, logs, importRoster, saveDues, delDues, reqs, reqDo, delAcad, payView, bulkSet, saveWorks, importPastDues, bList, bSet, bComment, photoGet, photoDel, fillRegions, saveRates, docList, docUp, docGet, docDel, payList, payOk, payOkMany, payNo, memView, rosterNow, inputStatus, inboxDone, acctReset, classFromStudents, delStus, asTeacher, bankImport, bankList, bankSet, bankDues, bankFromSheet, bankMeta, bankSplitSave, bankPay };
+  const fns = { boot, saveRow, setCheck, logs, importRoster, saveDues, delDues, reqs, reqDo, delAcad, payView, bulkSet, saveWorks, importPastDues, bList, bSet, bComment, photoGet, photoDel, fillRegions, saveRates, docList, docUp, docGet, docDel, payList, payOk, payOkMany, payNo, memView, rosterNow, inputStatus, inboxDone, acctReset, classFromStudents, delStus, asTeacher, bankImport, bankList, bankSet, bankDues, bankFromSheet, bankMeta, bankSplitSave, bankPay, bankCamp };
   try {
     if (open[name]) return Object.assign({ ok: true }, open[name].apply(null, args || []));
     if (!fns[name]) throw new UserError('알 수 없는 요청이에요.');
@@ -1919,7 +1919,7 @@ function bankSheet_(name, HEAD, seed) {
 function bankTbl_() { return bankSheet_('통장', BANK_HEAD); }
 /* 통장 목록 · 프로젝트 · 구분 (11-01). 프로젝트 = 회비 · 캠프 · 졸업연주 · 교사연수처럼 돈을 따로 셈하는 묶음: 기간 · 통장 · 쓰는 구분을 정함 */
 const BANK_ACCT_HEAD = ['통장ID', '이름', '은행', '계좌번호', '예금주', '메모', '사용', '수정일', '수정자'];
-const BANK_PROJ_HEAD = ['프로젝트ID', '이름', '시작일', '끝일', '통장ID', '구분', '메모', '사용', '수정일', '수정자', '사업'];   /* 사업 = 대분류(스즈키캠프 …). 구분을 따로 안 고르면 그 사업 항목 전부 */
+const BANK_PROJ_HEAD = ['프로젝트ID', '이름', '시작일', '끝일', '통장ID', '구분', '메모', '사용', '수정일', '수정자', '사업', '캠프ID'];   /* 사업 = 대분류(스즈키캠프 …). 구분을 따로 안 고르면 그 사업 항목 전부 */
 const BANK_CAT_HEAD = ['구분', '입출', '대분류', '중분류', '순서', '사용', '이름'];   /* 이름 = 화면에 보이는 소분류 (비면 구분). 예: 구분 「졸업연주 › 대전연주 › 참가비」 · 이름 「참가비」 */   /* 구분 = 소분류 (거래 줄에서 고르는 것) */
 /* 11-01 바꿈: 구분 = 사업(대분류) › 항목. 행사(27W 겨울캠프 등)는 프로젝트 칸. [구분 키, 입출, 사업, 중분류, 보이는 이름] */
 const BANK_SEED = [
@@ -1955,14 +1955,14 @@ function bSplit_(x) { return String(x || '').split(',').filter(Boolean); }
 function bankCats_(C) { C = C || bankCatTbl_(); const L = C.objs().sort((a, b) => (+a['순서'] || 0) - (+b['순서'] || 0)), on = L.filter(o => o['사용'] !== '안씀');
   return { in: on.filter(o => o['입출'] === '입금' || o['입출'] === '모두').map(o => o['구분']), out: on.filter(o => o['입출'] === '출금' || o['입출'] === '모두').map(o => o['구분']), rows: L }; }
 /* 한 입금을 사람별로 나누기 (11-01): 예) 반석애플스즈키 300,000 = 학생 6명 × 50,000 */
-const BANK_SPLIT_HEAD = ['거래ID', '순번', '대상', 'ID', '이름', '금액', '메모', '수정일', '수정자'];
+const BANK_SPLIT_HEAD = ['거래ID', '순번', '대상', 'ID', '이름', '금액', '메모', '수정일', '수정자', '구분'];   /* 대상: 학생 · 교사 · 캠프(참가자ID) · 기타. 구분 = 그 줄만의 구분(캠프비 + 학생회비가 섞인 입금) */
 function bankSplitSave(who, id, lines) {
   lines = (lines || []).slice(0, 300); const lock = LockService.getScriptLock(); lock.waitLock(30000);
   try {
     const B = bankTbl_(), i = B.find(id); if (i < 0) fail('거래를 찾지 못했어요. 새로 고쳐 주세요.');
     const P = bankSheet_('통장상세', BANK_SPLIT_HEAD), stamp = now_(), old = P.v.length;
     const keep = P.v.filter(r => r[0] !== id), add = lines.map((x, n) => { const nm = String(x['이름'] || '').trim().slice(0, 40); if (!nm) fail((n + 1) + '번째 줄 이름이 비었어요.');
-      return BANK_SPLIT_HEAD.map(k => ({ '거래ID': id, '순번': n + 1, '대상': ['학생', '교사', '기타'].indexOf(x['대상']) >= 0 ? x['대상'] : '기타', 'ID': String(x['ID'] || ''), '이름': nm, '금액': num_(x['금액']) || '', '메모': String(x['메모'] || '').slice(0, 100), '수정일': stamp, '수정자': who.name })[k]).map(v => v == null ? '' : String(v)); });
+      return BANK_SPLIT_HEAD.map(k => ({ '구분': String(x['구분'] || '').slice(0, 60), '거래ID': id, '순번': n + 1, '대상': ['학생', '교사', '캠프', '기타'].indexOf(x['대상']) >= 0 ? x['대상'] : '기타', 'ID': String(x['ID'] || ''), '이름': nm, '금액': num_(x['금액']) || '', '메모': String(x['메모'] || '').slice(0, 100), '수정일': stamp, '수정자': who.name })[k]).map(v => v == null ? '' : String(v)); });
     const nv = keep.concat(add).map(r => { r = r.slice(0, P.h.length); while (r.length < P.h.length) r.push(''); return r; });
     if (old) P.sh.getRange(2, 1, old, P.h.length).clearContent();
     if (nv.length) P.sh.getRange(2, 1, nv.length, P.h.length).setNumberFormat('@').setValues(nv);
@@ -2004,6 +2004,34 @@ function bankPay(who, op, data) {
     log_(who.name, '지급', '-', op, n + '줄');
     return Object.assign(bankList(who), { n });
   } finally { lock.releaseLock(); }
+}
+/* ====== 캠프 입금 맞추기 (11-01) ======
+ * 설정 「캠프 시트」(캠프 접수 DB)의 「참가자」 탭을 읽기만 함: 신고 입금자명 · 입금일 · 금액, [운영진] 입금확인. 캠프 「캠프설정」 기본(27W · 이름 · 날짜)으로 통장 행사를 하나 자동으로 만듦 */
+const BANK_CAMP_KEEP = ['참가자ID', '접수번호', '학원', '접수 교사', '이름', '구분', '참가 구분', '참가비', '레슨·MC', '연회비', '가족방비', '청구액', '상태', '입금 상태', '신고 입금자명', '신고 입금일', '신고 금액', '신고 메모', '[운영진] 입금확인일', '[운영진] 입금확인액'];
+function bankDay_(d, n) { const m = String(d || '').match(/^(\d{4})-(\d{2})-(\d{2})/); if (!m) return ''; return new Date(Date.UTC(+m[1], +m[2] - 1, +m[3] + n)).toISOString().slice(0, 10); }
+function bankCamp(who, url) {
+  if (url != null && String(url).trim()) {
+    const m = String(url).match(/\/d\/([a-zA-Z0-9_-]{20,})/), id = m ? m[1] : String(url).trim(); if (!/^[a-zA-Z0-9_-]{20,}$/.test(id)) fail('캠프 접수 시트 주소를 확인해 주세요.');
+    try { SpreadsheetApp.openById(id); } catch (e) { fail('그 시트를 열 수 없어요. 회원관리 앱을 만든 계정에 보기 권한이 있어야 해요.'); }
+    setSetting_('캠프 시트', id); log_(who.name, '설정', '캠프 시트', '연결', id);
+  }
+  const id = settings_()['캠프 시트']; if (!id) return { none: true };
+  let ss; try { ss = SpreadsheetApp.openById(id); } catch (e) { fail('캠프 접수 시트를 열 수 없어요. 회원관리 앱을 만든 계정에 보기 권한이 있어야 해요.'); }
+  const rd = name => { const sh = ss.getSheetByName(name); if (!sh) return []; const v = sh.getDataRange().getDisplayValues(), h = (v.shift() || []).map(String); return v.filter(r => r.some(x => x !== '')).map(r => { const o = {}; h.forEach((k, j) => o[k] = r[j]); return o; }); };
+  let base = {}; rd('캠프설정').forEach(r => { if (String(r['항목']) === '기본') { try { base = JSON.parse(r['값']); } catch (e) {} } });
+  if (!base.id) base = { id: '27W', name: ss.getName(), start: '', end: '' };
+  let payFrom = ''; rd('설정').forEach(r => { if (String(r['항목']) === '입금 시작일') payFrom = String(r['값'] || ''); });
+  const ppl = rd('참가자').map(r => { const o = {}; BANK_CAMP_KEEP.forEach(k => o[k] = r[k] == null ? '' : String(r[k])); return o; });
+  const from = /^\d{4}-\d{2}-\d{2}$/.test(payFrom) ? payFrom : (base.open || ''), to = bankDay_(base.end, 60), nm = (base.id + ' ' + (base.name || '')).trim();
+  const lock = LockService.getScriptLock(); lock.waitLock(30000); let pid;
+  try {
+    const P = bankSheet_('프로젝트', BANK_PROJ_HEAD), ci = P.c('캠프ID'), i = P.v.findIndex(r => r[ci] === base.id);
+    if (i < 0) { const n = P.v.reduce((m, r) => Math.max(m, +String(r[0]).slice(1) || 0), 0) + 1; pid = 'P' + String(n).padStart(2, '0');
+      P.appendMany([{ '프로젝트ID': pid, '이름': nm, '시작일': from, '끝일': to, '사업': '스즈키캠프', '캠프ID': base.id, '사용': '사용', '메모': '캠프 접수 시트와 연결', '수정일': now_(), '수정자': who.name }]);
+      log_(who.name, '프로젝트', pid, '캠프에서 만듦', nm); }
+    else pid = P.v[i][0];
+  } finally { lock.releaseLock(); }
+  return { camp: { id: base.id, name: base.name || '', start: base.start || '', end: base.end || '', payFrom: from, payTo: to, proj: pid, sheet: id }, ppl, projs: bankSheet_('프로젝트', BANK_PROJ_HEAD).objs() };
 }
 function bankMetaAll_() { const A = bankSheet_('통장목록', BANK_ACCT_HEAD), P = bankSheet_('프로젝트', BANK_PROJ_HEAD), c = bankCats_(); const D = bankSheet_('통장상세', BANK_SPLIT_HEAD); return { accts: A.objs(), projs: P.objs(), cats: { in: c.in, out: c.out }, catRows: c.rows, splits: D.objs(), pays: bankSheet_('지급', BANK_PAY_HEAD).objs() }; }
 /** 통장 · 프로젝트 · 구분 등록 · 고치기. kind: acct | proj | cat */

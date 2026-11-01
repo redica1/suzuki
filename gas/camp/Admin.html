@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261101-211408 -->
+<!-- build: 20261101-212007 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -454,6 +454,9 @@ function cfHead(cols,frow){let tw=0;const th=cols.map(([k,l,c])=>{const w=cfw(k)
   document.addEventListener('mouseup',()=>{if(!dr)return;cfw('x');S.cfW[dr.k]=parseFloat(dr.th.style.width);dr.h.classList.remove('on');dr=null;try{localStorage.setItem('campColW',JSON.stringify(S.cfW))}catch(e){}});
   document.addEventListener('dblclick',e=>{const h=e.target.closest&&e.target.closest('.cfr');if(!h)return;cfw('x');delete S.cfW[h.dataset.cfr];try{localStorage.setItem('campColW',JSON.stringify(S.cfW))}catch(x){}render()})})();
 function selSum(k){return Object.keys(S.sel).filter(x=>S.sel[x]).reduce((t,pid)=>{const x=people().find(y=>y.p.id===pid);if(!x)return t;return t+(k==='rep'?(+(repRow(x.p)||{}).a||0):Math.max(0,pAmt(x.p)-(+x.p.paidAmt||0)))},0)}
+function adjRow(p){return `<tr class="adjrow"><td colspan="16" style="text-align:left;background:#fffbea;padding:8px 12px !important"><b>${esc(p.name)} 청구 조정</b> <span class="hint">지금 참가비 ${won(+p.fee||0)} · 레슨·MC ${won(+p.lesson||0)} · 연회비 ${won(+p.dues||0)} · 가족방 ${won(+p.room||0)} — 바꿀 칸만 넣고, 비우면 원래 계산대로</span>
+  <div class="row" style="gap:8px;margin-top:6px;flex-wrap:wrap;align-items:center"><label>참가비 <input type="text" inputmode="numeric" id="adjF" value="${p.adj?(+p.fee||0):''}" placeholder="그대로" style="width:110px"></label><label>가족방비 <input type="text" inputmode="numeric" id="adjR" value="${p.adj?(+p.room||0):''}" placeholder="그대로" style="width:110px"></label><label>메모 <input type="text" id="adjM" value="${esc(p.adj&&p.adj!=='운영진 조정'?p.adj:'')}" placeholder="예: 스태프 가족 무료" style="width:200px"></label>
+  <button class="btn small primary" type="button" data-adjgo="${p.id}">저장</button>${p.adj?`<button class="btn small" type="button" data-adjclr="${p.id}">원래대로</button>`:''}<button class="btn small ghost" type="button" data-adjno="1">닫기</button></div></td></tr>`}
 function flatList(subs,keep,q){const rows=[];subs.forEach(sb=>sb.ppl.forEach(p=>{if(!keep(p))return;if(q&&!(sb.no.includes(q)||sb.acad.includes(q)||sb.owner.includes(q)||p.name.includes(q)))return;rows.push({sb,p,at:String(p.addAt||sb.createdAt||'')})}));
   const rns=[...new Set(rows.map(x=>(repRow(x.p)||{}).name).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'ko')),acs=[...new Set(rows.map(x=>x.sb.acad))].sort((a,b)=>a.localeCompare(b,'ko')),tys=[...new Set(rows.map(x=>x.p.type))].sort((a,b)=>a.localeCompare(b,'ko'));
   const rk=x=>{const r=repRow(x.p)||{};return (r.name?'0'+r.name:'1')+'|'+(r.date||'')+'|'+x.at};
@@ -474,11 +477,11 @@ function flatList(subs,keep,q){const rows=[];subs.forEach(sb=>sb.ppl.forEach(p=>
       const bk=!S.bankTx||S.bankTx.loading?'<span class="faint">…</span>':S.bankTx.none?'':G0?(G0.linked?'<span class="pill ok">이어짐</span>':G0.cand&&G0.cand.length?`<span class="pill ${G0.cand[0].how==='같음'?'ok':'due'}" title="${esc(G0.cand[0].t.at+' '+G0.cand[0].t.who+' '+G0.cand[0].t.amt)} · 묶음 ${G0.ppl.length}명 합 ${G0.sum}">${G0.cand[0].how==='같음'?'✓ ':''}${esc(G0.cand[0].how==='같음'||G0.cand[0].how==='잇기'?(G0.cand[0].how==='잇기'?'잇기 ':'')+(+G0.cand[0].t.at.slice(5,7))+'.'+(+G0.cand[0].t.at.slice(8,10)):G0.cand[0].how)}</span>`:'<span class="pill due">없음</span>'):'';
     const gk=S.fo==='rep'?(r&&r.name?r.name+'|'+r.date:'-'):'',pk=S.fo==='rep'&&ix?((x=>x&&x.name?x.name+'|'+x.date:'-')(repRow(L[ix-1].p))):null,GH=S.fo==='rep'&&gk!==pk?(()=>{const M=L.filter(y=>{const q2=repRow(y.p);return (q2&&q2.name?q2.name+'|'+q2.date:'-')===gk}),sm=M.reduce((t,y)=>t+(+(repRow(y.p)||{}).a||0),0);return `<tr class="cgrp" data-cg="${esc(M.filter(y=>y.p.status==='정상'&&!(+y.p.paidAmt>0)&&pAmt(y.p)).map(y=>y.p.id).join(','))}" title="눌러서 이 묶음 모두 고르기"><td colspan="16">${gk==='-'?'<b>신고 없음</b>':`<b>${esc(r.name)}</b> · ${esc(kday(r.date))} 신고 · ${M.length}명 · 신고 합 <b class="num">${sm.toLocaleString('ko-KR')}</b>`} ${bk}</td></tr>`})():'';
     return GH+`<tr class="${live?'':'off'}" data-prow="${p.id}"><td>${live||on?`<input type="checkbox" data-sel="${p.id}" ${S.sel[p.id]?'checked':''} aria-label="${esc(p.name)} 선택">`:''}</td><td class="num r" title="${sb.no}">${esc(at.slice(2,16).replace(/-/g,'.'))}</td><td>${memTag(sb)} ${esc(sb.acad)}</td><td><small>${esc(sb.owner)}</small></td>
-      <td><b>${esc(p.name)}</b>${p.dtag?` <small class="faint">${esc(p.dtag)}</small>`:''}</td><td title="${esc(p.type)}">${esc(p.type)}</td><td class="r num vl">${pAmt(p).toLocaleString('ko-KR')}</td><td class="vl">${payPill(p)}</td>
+      <td><b>${esc(p.name)}</b>${p.dtag?` <small class="faint">${esc(p.dtag)}</small>`:''}</td><td title="${esc(p.type)}">${esc(p.type)}</td><td class="r num vl"><a href="#" data-adj="${p.id}" title="눌러서 참가비 · 가족방비 조정${p.adj?' · '+esc(p.adj):''}" style="color:inherit;text-decoration:${p.adj?'none':'underline dotted'}">${pAmt(p).toLocaleString('ko-KR')}</a>${p.adj?'<br><span class="pill new" style="font-size:9pt" title="'+esc(p.adj)+'">조정</span>':''}</td><td class="vl">${payPill(p)}</td>
       <td class="r num vl">${r?(+r.a||0).toLocaleString('ko-KR'):''}</td><td class="r" title="${r?esc(r.name+' · '+r.date):''}">${r?esc(r.name)+' <span class="num">'+(+String(r.date).slice(5,7))+'.'+(+String(r.date).slice(8,10))+'</span>':'<span class="faint">-</span>'}</td><td class="c">${bk}</td>
       ${!pAmt(p)&&!on?`<td colspan="2" class="hint">0원 · 확인 필요 없음</td>`:`<td><input type="date" id="d_${p.id}" value="${on?esc(a.date||''):''}" data-dd="${esc(bd||(r&&/^\d{4}-/.test(r.date||'')?r.date.slice(0,10):''))}" aria-label="${esc(p.name)} 입금일"></td><td class="r"><input class="num" type="text" inputmode="numeric" id="a_${p.id}" value="${on?(+p.paidAmt||0).toLocaleString('ko-KR'):''}" data-da="${+defA||0}" aria-label="${esc(p.name)} 입금액"></td>`}
       <td><input type="text" id="m_${p.id}" value="${esc(a.memo||'')}" aria-label="${esc(p.name)} 메모"></td>
-      <td><div class="row" style="flex-wrap:nowrap">${on?`<button class="btn small" type="button" data-ok="${p.id}">고치기</button><button class="btn small ghost" type="button" data-unok="${p.id}">취소</button>`:live&&pAmt(p)?`<button class="btn small primary" type="button" data-ok="${p.id}">확인</button>`:''}</div></td></tr>`}).join('')||'<tr><td colspan="16" class="hint">해당하는 사람이 없어요.</td></tr>'}
+      <td><div class="row" style="flex-wrap:nowrap">${on?`<button class="btn small" type="button" data-ok="${p.id}">고치기</button><button class="btn small ghost" type="button" data-unok="${p.id}">취소</button>`:live&&pAmt(p)?`<button class="btn small primary" type="button" data-ok="${p.id}">확인</button>`:''}</div></td></tr>`+(S.adjOpen===p.id?adjRow(p):'')}).join('')||'<tr><td colspan="16" class="hint">해당하는 사람이 없어요.</td></tr>'}
   </tbody></table></div>`}
 /* 학원 → 차수 → 접수. 학원·차수는 눌러야 펼쳐짐 (찾기·걸러 보기 중이면 맞는 곳은 펼침) */
 function acadGroups(subs,keep,q){const hit=sb=>S.f==='all'||sb.ppl.some(keep);const auto=!!q||S.f!=='all';
@@ -1547,7 +1550,7 @@ const ME=()=>(S.D&&S.D.me)||{sup:true,perms:{}};
 const permOf=k=>{const m=ME();if(m.sup)return '편집';if(k==='camp'||k==='staff'||k==='cons')return '';return (m.perms||{})[k]||''};
 const visTabs=()=>TABS.concat(SUP_TABS).filter(([k])=>permOf(k));
 const RO=()=>permOf(S.tab)==='보기';
-const WRITE_FN=/^(scholSave|adminConfirm|adminRejectReport|adminSaveEns|adminSaveProfs|adminRefund|adminSetIssue|schedSave|lessonSet|adminSetSetting|roomSave|conSave|campSave|staffSave|songEnSave|pvHideSave|roomCfgSave|layoutImport|roomMove|budSave)$/;
+const WRITE_FN=/^(scholSave|adminConfirm|adminAdjust|adminRejectReport|adminSaveEns|adminSaveProfs|adminRefund|adminSetIssue|schedSave|lessonSet|adminSetSetting|roomSave|conSave|campSave|staffSave|songEnSave|pvHideSave|roomCfgSave|layoutImport|roomMove|budSave)$/;
 const roBlock=fn=>WRITE_FN.test(fn)&&permOf(S.tab)!=='편집';
 const RO_MSG='보기만 할 수 있는 메뉴예요. 바꾸려면 총관리자에게 「편집」 권한을 받아 주세요.';
 
@@ -1785,6 +1788,12 @@ function acadPay(){const R={};(S.D.subs||[]).forEach(sb=>sb.ppl.forEach(p=>{cons
   ${row('<b>총계</b>','<b>'+A.reduce((t,x)=>t+x.n,0)+'명</b>',T('bill'),T('paid'),T('rq'),T('dn'),'foot')}</tbody></table></div>
   <div class="panel hint">학원 줄을 누르면 사람별로 펼쳐져요. <b>과납/미납 = 입금액 − 신청 금액 − 환불 완료액</b> (예전 「학원별입금현황」 시트와 같은 셈). 입금액은 운영진이 「입금 확인」한 금액이고, 취소한 사람이 낸 돈도 들어가요. 취소한 사람의 신청 금액은 돌려주지 않는 몫(위약금)만 잡혀서, 환불을 마치면 0이 돼요. + 는 돌려줄 돈(과납 · 환불 전), − 는 아직 덜 들어온 돈이에요.</div>`}
 document.addEventListener('click',e=>{if(e.target.id==='cffClr'){S.cf={};render()}});
+document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-adj],[data-adjgo],[data-adjclr],[data-adjno]');if(!t)return;e.preventDefault();e.stopPropagation();const d=t.dataset;
+  if(d.adj){S.adjOpen=S.adjOpen===d.adj?'':d.adj;render();return}
+  if(d.adjno){S.adjOpen='';render();return}
+  const pid=d.adjgo||d.adjclr,f=d.adjclr?'':val('adjF').trim(),r=d.adjclr?'':val('adjR').trim(),m=d.adjclr?'':val('adjM').trim();
+  if(d.adjgo&&f===''&&r===''){toast('참가비나 가족방비 중 하나는 넣어 주세요');return}
+  call('adminAdjust',[pid,f,r,m],x=>{S.adjOpen='';setData(x);toast(d.adjclr?'원래 계산대로 돌렸어요':'청구를 바꿨어요')})},true);
 document.addEventListener('click',e=>{const h=e.target.closest&&e.target.closest('tr[data-apo]');if(!h)return;S.payOpen=S.payOpen||{};const k=h.dataset.apo;S.payOpen[k]=!S.payOpen[k];render()});
 document.addEventListener('click',e=>{const g=e.target.closest&&e.target.closest('[data-gopay]');if(!g)return;e.preventDefault();S.tab='subs';S.fa=g.dataset.gopay;S.f='all';S.mf='all';render();window.scrollTo(0,0)});
 function acadInst(L,noSch){const A=[...new Set(L.map(x=>x.acad))];const P=L.filter(x=>T_PLAY.includes(x.type));

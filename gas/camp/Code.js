@@ -1,4 +1,4 @@
-/* build: 20261101-211408 */
+/* build: 20261101-212007 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -666,7 +666,7 @@ function writeTeams_(all) {
 /* ---------------- 금액은 서버가 다시 계산 ---------------- */
 /** 화면이 보낸 금액을 믿지 않고 참가 구분·차수·레슨·마스터클래스·연회비·가족방으로 다시 계산 */
 function recalc_(sb) {
-  const CC = camp_(), FEES = CC.fees, OPT = CC.opt;
+  const CC = camp_(), FEES = CC.fees, OPT = CC.opt, ADJ = adjMap_();
   const f = sb.form || {}, info = f.info || {}, ri = Math.max(0, Math.min(CC.rounds.length - 1, +f.ri || 0));
   sb.round = CC.rounds[ri].n;
   const guest = sb.acad === GUEST_ACAD;   // 비회원: 연회비 없음 · 비회원 참가비
@@ -709,8 +709,28 @@ function recalc_(sb) {
     if (intl) { p.usd = +FEES[i.type][ri] || 0; p.fee = Math.round(p.usd * (+OPT.usdRate || 1450)); }   /* 해외: 참가비표 값 = USD, 원화 청구액 = USD × 환율 */ p.lesson = les * OPT.lessonFee + mc;
     p.dues = paid ? 0 : (isT ? OPT.teacherDues : OPT.studentDues);
     p.room = roomBy[k] || 0;
+    const aj = ADJ[p.id]; if (aj) { if (aj.fee !== '') p.fee = +aj.fee; if (aj.room !== '') p.room = +aj.room; p.adj = aj.memo || '운영진 조정'; } else delete p.adj;   /* 운영진 청구 조정 (11-01) */
   });
   return sb;
+}
+/* ---------- 운영진 청구 조정 (11-01): 사람마다 참가비 · 가족방비를 직접 정함 (관계자 가족 무료 등 그때그때) ---------- */
+const ADJ_SH = '청구조정', ADJ_HEAD = ['참가자ID', '참가비', '가족방비', '메모', '수정일', '수정자'];
+function adjMap_() { const m = {}; rows_(ADJ_SH).forEach(r => { const id = String(r['참가자ID'] || ''); if (id) m[id] = { fee: String(r['참가비'] === '' || r['참가비'] == null ? '' : r['참가비']), room: String(r['가족방비'] === '' || r['가족방비'] == null ? '' : r['가족방비']), memo: String(r['메모'] || '') }; }); return m; }
+function adminAdjust(token, pid, fee, room, memo) {
+  const a = adm_(token); need_(a, ['subs']); pid = String(pid || '');
+  const num = v => v === '' || v == null ? '' : Math.max(0, +String(v).replace(/[^\d]/g, '') || 0);
+  const lock = lock_();
+  try {
+    const ss = SpreadsheetApp.getActive(); let sh = ss.getSheetByName(ADJ_SH);
+    if (!sh) { sh = ss.insertSheet(ADJ_SH); sh.getRange(1, 1, 1, ADJ_HEAD.length).setValues([ADJ_HEAD]).setFontWeight('bold'); sh.setFrozenRows(1); }
+    const row = [pid, num(fee), num(room), String(memo || '').slice(0, 100), stamp_(), a.name], clear = row[1] === '' && row[2] === '';
+    const r = rows_(ADJ_SH).find(x => String(x['참가자ID']) === pid);
+    if (r) { if (clear) sh.deleteRow(r._row); else sh.getRange(r._row, 1, 1, ADJ_HEAD.length).setValues([row]); } else if (!clear) sh.appendRow(row);
+    const sb = loadSubs_().find(x => x.ppl.some(p => p.id === pid)); if (!sb) throw new Error('참가자를 찾지 못했어요.');
+    recalc_(sb); writeSub_(sb);
+    log_('관리자 ' + a.name, '청구 조정', pid + (clear ? ' · 원래대로' : ' · 참가비 ' + row[1] + ' · 가족방 ' + row[2] + (row[3] ? ' · ' + row[3] : '')));
+  } finally { lock.releaseLock(); }
+  return adminData(token);
 }
 
 /** 입금 신고 검사: 날짜(오늘까지 · 입금 시작일 이후) · 금액 · 입금자명 */

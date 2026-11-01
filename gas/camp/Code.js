@@ -1,4 +1,4 @@
-/* build: 20261101-191540 */
+/* build: 20261101-200315 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -1634,6 +1634,7 @@ function devFakeClear(token) {
 const VACAD = '가상스즈키';
 function devScenario(token) {
   const a = adm_(token); needSup_(a);
+  if (!String(setting_('테스트 로그인') || '').trim()) throw new Error('연습 접수는 STG(설정 「테스트 로그인」이 있는 곳)에서만 만들 수 있어요.');
   const T = rows_(SH.T).filter(r => String(r['소속 학원'] || '').split(',').map(s => s.trim()).includes(VACAD)).sort((x, y) => String(x['ID']).localeCompare(String(y['ID'])));
   const ST = rows_(SH.S).filter(r => String(r['학원']) === VACAD).sort((x, y) => String(x['ID']).localeCompare(String(y['ID'])));
   if (T.length < 6 || ST.length < 60) throw new Error('캠프 명단에 가상스즈키가 아직 없어요 (교사 ' + T.length + ' · 학생 ' + ST.length + '). 회원관리 STG 「설정 › 가상스즈키 만들기」 뒤 「회원 명단 › 회원관리에서 지금 가져오기」를 눌러 주세요.');

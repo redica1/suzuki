@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261101-154856 -->
+<!-- build: 20261101-155148 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -1745,19 +1745,24 @@ const ST=(h,rows,foot,nl)=>`<div class="panel tbl"><table class="sortable"><thea
 const SCHOLAR=[]; /* [[최소 인원, 금액], …] 큰 인원부터 */
 const scholarOf=n=>{const t=SCHOLAR.find(([m])=>n>=m);return t?t[1]:0};
 function stAcad(L,home){const v=S.sv2||'inst';
-  const sub=`<div class="panel subtabs"><div class="row" style="gap:6px">${[['inst','전공별'],['type','참가자격별'],['pay','입금 현황']].map(([k,l])=>`<button class="btn small ${v===k?'primary':''}" type="button" data-sv2="${k}">${l}</button>`).join('')}<span class="hint" style="margin-left:6px">${v==='inst'?'학생 + 악기하는 교사자녀 · 악기별':v==='pay'?'학원마다 신청 금액 · 입금액 · 미납액 · 과납액. 학원을 누르면 사람별로 펼쳐져요':'참가자격별 인원 · 총계 = 그 학원 참가 인원'}</span></div></div>`;
+  const sub=`<div class="panel subtabs"><div class="row" style="gap:6px">${[['inst','전공별'],['type','참가자격별'],['pay','입금 현황']].map(([k,l])=>`<button class="btn small ${v===k?'primary':''}" type="button" data-sv2="${k}">${l}</button>`).join('')}<span class="hint" style="margin-left:6px">${v==='inst'?'학생 + 악기하는 교사자녀 · 악기별':v==='pay'?'학원마다 신청 금액 · 입금액 · 환불 · 과납/미납 (예전 학원별입금현황 시트 A~F와 같은 셈). 학원을 누르면 사람별로 펼쳐져요':'참가자격별 인원 · 총계 = 그 학원 참가 인원'}</span></div></div>`;
   return sub+(v==='inst'?acadInst(L,home):v==='pay'?acadPay():acadType(L))}
-/* 학원별 돈: 청구(신청 금액) · 입금 · 미납 · 과납만. 학원 줄을 누르면 아래에 사람별로 펼침 (취소한 사람은 뺌) */
-function acadPay(){const R={};(S.D.subs||[]).forEach(sb=>sb.ppl.forEach(p=>{if(p.status!=='정상')return;const b=pAmt(p),d=+p.paidAmt||0;if(!b&&!d)return;const a=sb.acad||'-',x=R[a]=R[a]||{a,L:[],bill:0,paid:0,due:0,ov:0};
-    x.L.push({sb,p,b,d});x.bill+=b;x.paid+=d;x.due+=Math.max(0,b-d);x.ov+=Math.max(0,d-b)}));
-  const A=Object.values(R).sort((p,q)=>q.L.length-p.L.length||p.a.localeCompare(q.a,'ko')),T=k=>A.reduce((t,x)=>t+x[k],0),op=S.payOpen||{};
-  const red=(v,cl)=>v?`<b class="num" style="color:${cl}">${won(v)}</b>`:'<span class="faint">-</span>';
-  const st=(b,d)=>!d?'<span class="pill due">미납</span>':d<b?'<span class="pill due">일부 미납</span>':d>b?'<span class="pill bad">과납</span>':'<span class="pill ok">입금</span>';
-  return `<style>.apay td,.apay th{padding:6px 10px}.apay tr.ah{cursor:pointer}.apay tr.ah:hover td{background:#f3f8f8}.apay tr.ap td{background:#fafcfc;font-size:13px}.apay .r{text-align:right}</style><div class="panel tbl"><table class="apay" style="width:100%"><thead><tr><th>학원</th><th class="r">인원</th><th class="r">신청 금액</th><th class="r">입금액</th><th class="r">미납액</th><th class="r">과납액</th></tr></thead><tbody>
-  ${A.map(x=>{const o=op[x.a];return `<tr class="ah" data-apo="${esc(x.a)}"><td><b>${o?'▾':'▸'} ${esc(x.a)}</b></td><td class="r num">${x.L.length}명</td><td class="r num">${won(x.bill)}</td><td class="r num">${won(x.paid)}</td><td class="r">${red(x.due,'#b26a00')}</td><td class="r">${red(x.ov,'#c0392b')}</td></tr>`+
-    (o?x.L.sort((p,q)=>String(p.sb.no).localeCompare(String(q.sb.no))||(q.b-q.d>0)-(p.b-p.d>0)).map(({sb,p,b,d})=>`<tr class="ap"><td style="padding-left:28px">${esc(p.name)} <span class="faint">· ${esc(p.type||'')} · ${esc(sb.owner||'')} · ${esc(sb.no)}</span></td><td class="r">${st(b,d)}</td><td class="r num">${won(b)}</td><td class="r num">${d?won(d):'<span class="faint">-</span>'}</td><td class="r">${red(Math.max(0,b-d),'#b26a00')}</td><td class="r">${red(Math.max(0,d-b),'#c0392b')}</td></tr>`).join('')+`<tr class="ap"><td colspan="6" style="text-align:right"><a href="#" data-gopay="${esc(x.a)}">이 학원 입금 확인하러 가기 →</a></td></tr>`:'')}).join('')}
-  <tr class="foot"><td><b>총계</b></td><td class="r num"><b>${A.reduce((t,x)=>t+x.L.length,0)}명</b></td><td class="r num"><b>${won(T('bill'))}</b></td><td class="r num"><b>${won(T('paid'))}</b></td><td class="r num"><b>${won(T('due'))}</b></td><td class="r num"><b>${won(T('ov'))}</b></td></tr></tbody></table></div>
-  <div class="panel hint">학원 줄을 누르면 사람별로 펼쳐져요. 신청 금액 = 청구액, 입금액 = 운영진이 「입금 확인」한 금액이에요. 취소한 사람은 빼요(환불은 「취소 · 환불」 탭).</div>`}
+/* 학원별 입금 현황 (예전 시트 「학원별입금현황」 A~F와 같은 셈):
+   신청 금액 = 참가비(취소한 사람은 위약금만) · 입금액 = 확인한 입금(취소한 사람이 낸 돈 포함) · 환불 요청액 · 환불 완료액
+   과납/미납 = 입금액 − 신청 금액 − 환불 완료액 (+ 과납 · 돌려줄 돈 / − 미납). 학원 줄을 누르면 사람별로 펼침 */
+function acadPay(){const R={};(S.D.subs||[]).forEach(sb=>sb.ppl.forEach(p=>{const cx=p.status!=='정상',d=+p.paidAmt||0,rf=p.refund||{},rq=+rf.amt||0,dn=rf.date?rq:0;
+    const ov=(p.ovDone||[]).reduce((t,x)=>t+(+x.amt||0),0),b=cx?(d?Math.max(0,d+ov-rq):0):pAmt(p);if(!b&&!d&&!rq)return;
+    const a=sb.acad||'-',x=R[a]=R[a]||{a,L:[],n:0,bill:0,paid:0,rq:0,dn:0};const paid=d+ov,done=dn+ov;
+    x.L.push({sb,p,cx,b,paid,rq:rq+(p.ovReq?+p.ovReq.amt||0:0)+ov,done});if(!cx)x.n++;x.bill+=b;x.paid+=paid;x.rq+=rq+(p.ovReq?+p.ovReq.amt||0:0)+ov;x.dn+=done}));
+  const A=Object.values(R).sort((p,q)=>q.n-p.n||p.a.localeCompare(q.a,'ko')),T=k=>A.reduce((t,x)=>t+x[k],0),op=S.payOpen||{};
+  const bal=v=>v>0?`<b class="num" style="color:#c0392b">+${won(v)}</b>`:v<0?`<b class="num" style="color:#b26a00">−${won(-v)}</b>`:'<span class="faint">0</span>',m=v=>v?won(v):'<span class="faint">-</span>';
+  const st=y=>y.cx?(y.rq&&y.done<y.rq?'<span class="pill due">취소 · 환불 전</span>':'<span class="pill">취소</span>'):!y.paid?'<span class="pill due">미납</span>':y.paid-y.done<y.b?'<span class="pill due">일부 미납</span>':y.paid-y.done>y.b?'<span class="pill bad">과납</span>':'<span class="pill ok">입금</span>';
+  const row=(lab,cnt,b,pd,rq,dn,cls,attr)=>`<tr class="${cls}"${attr||''}><td>${lab}</td><td class="r">${cnt}</td><td class="r num">${m(b)}</td><td class="r num">${m(pd)}</td><td class="r num">${m(rq)}</td><td class="r num">${m(dn)}</td><td class="r">${bal(pd-b-dn)}</td></tr>`;
+  return `<style>.apay td,.apay th{padding:6px 10px}.apay tr.ah{cursor:pointer}.apay tr.ah:hover td{background:#f3f8f8}.apay tr.ap td{background:#fafcfc;font-size:13px}.apay .r{text-align:right}.apay tr.ap.cx td{color:#8a969c}</style><div class="panel tbl"><table class="apay" style="width:100%"><thead><tr><th>학원</th><th class="r">인원</th><th class="r">신청 금액</th><th class="r">입금액</th><th class="r">환불 요청액</th><th class="r">환불 완료액</th><th class="r">과납(+) / 미납(−)</th></tr></thead><tbody>
+  ${A.map(x=>{const o=op[x.a];return row(`<b>${o?'▾':'▸'} ${esc(x.a)}</b>`,x.n+'명',x.bill,x.paid,x.rq,x.dn,'ah',` data-apo="${esc(x.a)}"`)+
+    (o?x.L.sort((p,q)=>(p.cx-q.cx)||String(p.sb.no).localeCompare(String(q.sb.no))).map(y=>row(`<span style="padding-left:18px">${esc(y.p.name)}</span> <span class="faint">· ${esc(y.p.type||'')} · ${esc(y.sb.owner||'')} · ${esc(y.sb.no)}</span>`,st(y),y.b,y.paid,y.rq,y.done,'ap'+(y.cx?' cx':''))).join('')+`<tr class="ap"><td colspan="7" style="text-align:right"><a href="#" data-gopay="${esc(x.a)}">이 학원 입금 확인하러 가기 →</a></td></tr>`:'')}).join('')}
+  ${row('<b>총계</b>','<b>'+A.reduce((t,x)=>t+x.n,0)+'명</b>',T('bill'),T('paid'),T('rq'),T('dn'),'foot')}</tbody></table></div>
+  <div class="panel hint">학원 줄을 누르면 사람별로 펼쳐져요. <b>과납/미납 = 입금액 − 신청 금액 − 환불 완료액</b> (예전 「학원별입금현황」 시트와 같은 셈). 입금액은 운영진이 「입금 확인」한 금액이고, 취소한 사람이 낸 돈도 들어가요. 취소한 사람의 신청 금액은 돌려주지 않는 몫(위약금)만 잡혀서, 환불을 마치면 0이 돼요. + 는 돌려줄 돈(과납 · 환불 전), − 는 아직 덜 들어온 돈이에요.</div>`}
 document.addEventListener('click',e=>{const h=e.target.closest&&e.target.closest('tr[data-apo]');if(!h)return;S.payOpen=S.payOpen||{};const k=h.dataset.apo;S.payOpen[k]=!S.payOpen[k];render()});
 document.addEventListener('click',e=>{const g=e.target.closest&&e.target.closest('[data-gopay]');if(!g)return;e.preventDefault();S.tab='subs';S.fa=g.dataset.gopay;S.f='all';S.mf='all';render();window.scrollTo(0,0)});
 function acadInst(L,noSch){const A=[...new Set(L.map(x=>x.acad))];const P=L.filter(x=>T_PLAY.includes(x.type));

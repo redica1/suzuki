@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261101-200315 -->
+<!-- build: 20261101-203536 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -921,7 +921,7 @@ function load(){return callS('boot').then(function(r){if(!r.ok){if(S.sess)toast(
   S.test=r.test;S.pdSrc0=r.pdSrc||'';S.D={acad:objs(r['학원']),tch:objs(r['교사']),stu:objs(r['학생']),duesRows:objs(r['연회비']),empty:r.empty,acc:r.acc||{},reqN:r.reqN||0,payF:r.pay||{},bN:r.bN||0,payN:r.payN||0,rates:objs(r.rates||{h:[],rows:[]}),mailLeft:r.mailLeft==null?-1:r.mailLeft,works:objs(r['근무']||{h:[],rows:[]})};index();render()})}
 function loadLogs(){S.logs=null;callS('logs').then(function(r){if(r.ok){S.logs=r;if(S.tab==='log')render()}else toast(r.msg)})}
 function keepFocus(id){var n=document.getElementById(id);if(n){n.focus();var v=n.value;n.value='';n.value=v}}
-function kindOf(){return {acad:'학원',tch:'교사',stu:'학생'}[S.tab]}
+function kindOf(){return {acad:'학원',tch:'교사',stu:'학생',ext:'교사'}[S.tab]||(S.edit&&{acad:'학원',tch:'교사',stu:'학생'}[String(S.edit.kind||'')])}
 function keyOf(k){return {'학원':'학원ID','교사':'교사ID','학생':'학생ID'}[k]}
 function listOf(){return S.tab==='acad'?acadList():S.tab==='tch'?tchList():stuList()}
 function readEd(table){var o={};document.querySelectorAll('[id^="e_"]').forEach(function(el){o[el.id.slice(2)]=el.value.trim()});return o}

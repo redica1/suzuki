@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261101-155148 -->
+<!-- build: 20261101-155527 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -263,6 +263,18 @@ body{line-height:1.65;letter-spacing:.015em;word-break:keep-all;overflow-wrap:an
 h1,h2,h3{font-weight:800;letter-spacing:0}
 .num,input,select,textarea{word-break:normal}
 .login .btn{box-sizing:border-box}
+
+/* 11-01 표 템플릿 (통장 내역과 같게): 값 10pt · 머리 11pt 굵게 가운데 · 촘촘한 줄 · 흰 바탕 · 가는 선 · 숫자 오른쪽 · 칸 너비 끌어서 조절 */
+table{font-size:10pt !important;letter-spacing:-.025em;color:var(--ink)}
+th,td{padding:3px 6px !important;line-height:1.35;border-bottom:1px solid var(--line);vertical-align:middle}
+td{text-align:center;background:var(--surface)}
+th,thead th,th.r{font-size:11pt !important;font-weight:700 !important;color:var(--ink);background:var(--sunk);text-align:center !important;position:sticky;top:var(--tblTop,0px);z-index:4}
+td.r,td.num.r{text-align:right}td.l,td.wrapc{text-align:left}
+tbody td b,tbody td strong{font-weight:400}tr.foot td,tr.foot td b,tr.cgrp td b,tr.ah td b,tr.foot b{font-weight:700}
+td .pill,td .tag,td .cap,td small,td .btn.small{font-size:10pt}
+td input:not([type=checkbox]):not([type=radio]),td select{font-size:10pt;padding:1px 4px;height:24px;border-radius:5px}
+td .btn.small{padding:0 6px;line-height:1.5}
+th .trz{position:absolute;right:-3px;top:0;bottom:0;width:7px;cursor:col-resize;z-index:3}th .trz:hover,th .trz.on{background:rgba(26,115,232,.35)}
 </style></head>
 <body>
 <div class="hdr" id="hdr"><div class="band"><div class="wrap">
@@ -2158,5 +2170,21 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter'&&/^(lpw|lid|lnm|lph)$
   if(t){S.tok=t;let id='';try{id=sessionStorage.getItem('campAdmId')||''}catch(x){}document.getElementById('who').textContent=id?'관리자 '+id:'';call('adminData',[],setData,'불러오고 있어요…')}
   else{/* 테스트(STG): 설정에 「관리자 자동 로그인 = 예」면 바로 들어감 */google.script.run.withSuccessHandler(r=>{if(!r||!r.ok)return;S.tok=r.token;try{sessionStorage.setItem('campAdmTok',r.token);sessionStorage.setItem('campAdmId',r.id)}catch(x){}document.getElementById('who').textContent='관리자 '+r.id+' (테스트 자동 로그인)';setData(r)}).withFailureHandler(()=>{}).adminAuto()}})();
 render();
+</script>
+<script>
+(function(){
+  function key(t,i){var h=[].map.call(t.querySelectorAll('thead th'),function(x){return (x.textContent||'').trim().slice(0,8)}).join('|');return 'tblW:'+i+':'+h.slice(0,120)}
+  function load(k){try{return JSON.parse(localStorage.getItem(k)||'null')}catch(e){return null}}
+  function save(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+  function fix(t,w){var ths=t.querySelectorAll('thead th');var s=0;[].forEach.call(ths,function(th,i){var x=w&&w[i]?w[i]:th.offsetWidth;th.style.width=x+'px';th.style.minWidth=x+'px';th.style.maxWidth=x+'px';s+=x});t.style.tableLayout='fixed';t.style.width=s+'px';[].forEach.call(t.querySelectorAll('tbody td'),function(td){td.style.overflow='hidden';td.style.textOverflow='ellipsis'})}
+  function setup(){var T=document.querySelectorAll('table');[].forEach.call(T,function(t,i){if(t.dataset.trz||t.querySelector('.bcr,.cfr')||!t.querySelector('thead th'))return;t.dataset.trz=1;var k=key(t,i),w=load(k),ths=t.querySelectorAll('thead th');if(w&&w.length===ths.length)fix(t,w);
+    [].forEach.call(ths,function(th,ci){if(getComputedStyle(th).position==='static')th.style.position='relative';var h=document.createElement('span');h.className='trz';h.title='끌어서 칸 너비 조절';th.appendChild(h);
+      h.addEventListener('click',function(e){e.stopPropagation()});
+      h.addEventListener('mousedown',function(e){e.preventDefault();e.stopPropagation();if(t.style.tableLayout!=='fixed')fix(t);var x0=e.clientX,w0=th.offsetWidth,tw=t.offsetWidth;h.classList.add('on');
+        function mv(ev){var nw=Math.max(30,w0+ev.clientX-x0);th.style.width=nw+'px';th.style.minWidth=nw+'px';th.style.maxWidth=nw+'px';t.style.width=(tw+nw-w0)+'px'}
+        function up(){h.classList.remove('on');document.removeEventListener('mousemove',mv);document.removeEventListener('mouseup',up);save(k,[].map.call(t.querySelectorAll('thead th'),function(x){return x.offsetWidth}))}
+        document.addEventListener('mousemove',mv);document.addEventListener('mouseup',up)})})})}
+  var q=0;new MutationObserver(function(){if(q)return;q=1;requestAnimationFrame(function(){q=0;setup()})}).observe(document.body,{childList:true,subtree:true});setup();
+})();
 </script>
 </body></html>

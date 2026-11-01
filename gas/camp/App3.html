@@ -1,4 +1,4 @@
-${''/* build: 20261101-212305 */}
+${''/* build: 20261101-212429 */}
     ${S.extra.length?`<div class="xhead">명단에 없어 추가한 학생 ${S.extra.length}명 <span class="hint">체크한 학생만 접수돼요 · 연회비 30,000원이 함께 청구돼요 · 「빼기」는 목록에서 지워요</span></div><ul class="roster">${S.extra.map(s=>`<li><input type="checkbox" id="xk_${s.id}" ${s.on!==false?'checked':''} data-xon="${s.id}" aria-label="${esc(s.name)} 선택"><label class="who" for="xk_${s.id}"><b>${esc(s.name)} <span class="kind ks">학생</span></b><small>${age(s.birth)}세 · ${s.inst} · 담당 ${esc(s.teacher)}</small></label><span class="row" style="flex-wrap:nowrap"><span class="pill new">신규 추가</span><button class="btn small ghost" type="button" data-rmx="${s.id}">빼기</button></span></li>`).join('')}</ul>`:''}
     ${S.showNew?`<div class="adder"><b>명단에 없는 학생 추가</b>
       <p class="hint">늦게 들어온 학생은 여기서 추가하고 연회비 30,000원을 캠프비와 함께 입금해 주세요. 운영진이 확인하면 정식 접수돼요.</p>
@@ -90,9 +90,7 @@ function vStep3(){
   ${isStaffAcad()?redBox():''}
   </section>`;
 }
-function redBox(){const r=S.red||{};return `<div class="panel" style="border-color:var(--rosin)"><label class="row" style="gap:8px;align-items:center;cursor:pointer"><input type="checkbox" id="redOn" ${r.on?'checked':''}><b>감면 요청</b> <span class="hint">가족 참가비 · 가족방비 면제 등</span></label>
-  ${r.on?`<label class="f" for="redMemo" style="margin-top:8px">요청 내용<input type="text" id="redMemo" value="${esc(r.memo||'')}" maxlength="100" placeholder="예: 아내 · 아이 참가비 면제, 가족방비 면제 요청"></label>`:''}
-  <p class="hint" style="margin:6px 0 0">요청이에요. 운영진이 확인한 뒤 금액이 정해져요. 그 전까지는 원래 금액으로 보여요.</p></div>`}
+function redBox(){return `<div class="panel"><label class="f" for="noteMemo" style="margin:0">운영진에게 남길 말 <span class="opt">선택</span><input type="text" id="noteMemo" value="${esc(S.note||'')}" maxlength="100" placeholder="예: 아내 · 아이 동반, 가족방 사용"></label></div>`}
 const ENS_KEY='sz-ens-27w';
 function ensTeams(){return ENS}
 function ensApply(no){let L=ensTeams().filter(t=>t.no!==no&&t.rep!==S.acad);

@@ -1,4 +1,4 @@
-/* build: 20261101-212305 */
+/* build: 20261101-212429 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -667,7 +667,7 @@ function writeTeams_(all) {
 /** 화면이 보낸 금액을 믿지 않고 참가 구분·차수·레슨·마스터클래스·연회비·가족방으로 다시 계산 */
 function recalc_(sb) {
   const CC = camp_(), FEES = CC.fees, OPT = CC.opt, ADJ = adjMap_();
-  if (sb.form && sb.form.red) { const r0 = sb.form.red; sb.form.red = r0 && r0.on ? { on: true, memo: String(r0.memo || '').slice(0, 100) } : null; }
+  if (sb.form) { delete sb.form.red; if (sb.form.note != null) sb.form.note = String(sb.form.note || '').trim().slice(0, 100) || null; }
   const f = sb.form || {}, info = f.info || {}, ri = Math.max(0, Math.min(CC.rounds.length - 1, +f.ri || 0));
   sb.round = CC.rounds[ri].n;
   const guest = sb.acad === GUEST_ACAD;   // 비회원: 연회비 없음 · 비회원 참가비

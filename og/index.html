@@ -220,7 +220,7 @@
     document.head.appendChild(sc);
     $('kSend').addEventListener('click', function () {
       var u = pageUrl(), img = $('fI').value;
-      Kakao.Share.sendDefault({ objectType: 'feed', content: { title: $('fT').value, description: $('fD').value, imageUrl: img, link: { mobileWebUrl: u, webUrl: u } }, buttons: [{ title: $('fB').value || '자세히 보기', link: { mobileWebUrl: u, webUrl: u } }] });
+      try { if (!/^https:\/\//.test(img)) throw new Error('그림 주소가 https:// 로 시작해야 해요'); Kakao.Share.sendDefault({ objectType: 'feed', content: { title: $('fT').value, description: $('fD').value, imageUrl: img, link: { mobileWebUrl: u, webUrl: u } }, buttons: [{ title: $('fB').value || '자세히 보기', link: { mobileWebUrl: u, webUrl: u } }] }); } catch (x) { $('kStat').innerHTML = '<b style="color:#c0392b">보내기 실패: ' + attr(x.message) + '</b>'; }
     });
   }
   function setMode(m) { document.body.dataset.m = m; [].forEach.call($('mode').children, function (x) { x.setAttribute('aria-pressed', x.dataset.m === m); }); try { localStorage.setItem('ogMode', m); } catch (x) {} }

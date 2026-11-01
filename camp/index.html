@@ -39,6 +39,11 @@
   .msg a.sub { color: #5d6680; font-size: 15px; }
   .spin { width: 26px; height: 26px; border-radius: 50%; border: 3px solid #2c46c9; border-right-color: transparent; animation: s .8s linear infinite; }
   @keyframes s { to { transform: rotate(360deg); } }
+  /* 화면 대신 「현재 파일을 열 수 없습니다」가 뜰 때(구글 계정 여러 개 로그인) 아래에 뜨는 안내 */
+  #help { position: fixed; left: 12px; right: 12px; bottom: 12px; z-index: 5; max-width: 560px; margin: 0 auto; background: #fff8e6; border: 1px solid #f0c36d; border-radius: 14px; padding: 14px 44px 14px 16px; box-shadow: 0 6px 24px rgba(0,0,0,.18); font-size: 15px; line-height: 1.5; color: #4a3b10; }
+  #help b { display: block; font-size: 16px; color: #2b2208; margin-bottom: 4px; }
+  #help a.btn2 { display: inline-block; margin-top: 8px; background: #2c46c9; color: #fff; text-decoration: none; border-radius: 10px; padding: 9px 16px; font-weight: 700; }
+  #help button { position: absolute; top: 8px; right: 8px; border: 0; background: none; font-size: 22px; line-height: 1; color: #8a7a4a; cursor: pointer; padding: 6px; }
 </style>
 </head>
 <body>
@@ -51,6 +56,7 @@
   <a class="btn" id="openOut">브라우저에서 열기</a>
   <a class="sub" id="copyUrl" href="#">버튼이 안 되면: 주소 복사하기</a>
 </div>
+<div id="help" hidden role="alert"><button type="button" id="helpX" aria-label="닫기">×</button><b>화면에 「현재 파일을 열 수 없습니다」가 보이나요?</b>크롬에 구글 계정이 여러 개 로그인되어 있으면 생기는 문제예요. 아래 버튼을 누르면 바로 열려요. 그래도 안 되면 시크릿 창(Ctrl+Shift+N)에서 열어 주세요.<br><a class="btn2" id="helpGo" target="_top">접수 화면 바로 열기</a></div>
 <iframe id="app" title="2027 스즈키 겨울 음악제 접수" allow="clipboard-write; screen-wake-lock" hidden></iframe>
 <script>
 (function () {
@@ -89,6 +95,12 @@
   app.src = APP; app.hidden = false;
   // 10초가 지나도 안 뜨면 앱 주소로 바로 여는 링크 (회사·학교 와이파이가 막는 경우 대비)
   setTimeout(function () { document.getElementById('slow').hidden = false; }, 10000);
+  // 앱이 뜨면 앱 안에서 'suzuki-ready' 를 보내 줌 → 8초 안에 안 오면(드라이브 오류 화면 등) 아래 안내
+  var ready = false;
+  window.addEventListener('message', function (e) { if (e.data === 'suzuki-ready') { ready = true; document.getElementById('help').hidden = true; } });
+  document.getElementById('helpGo').href = APP;
+  document.getElementById('helpX').onclick = function () { document.getElementById('help').hidden = true; };
+  setTimeout(function () { if (!ready) document.getElementById('help').hidden = false; }, 8000);
 })();
 </script>
 </body>

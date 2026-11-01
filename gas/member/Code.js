@@ -1,4 +1,4 @@
-/* build: 20261101-114830 */
+/* build: 20261101-115630 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -2029,7 +2029,7 @@ function bankCamp(who, url) {
     if (i < 0) { const n = P.v.reduce((m, r) => Math.max(m, +String(r[0]).slice(1) || 0), 0) + 1; pid = 'P' + String(n).padStart(2, '0');
       P.appendMany([{ '프로젝트ID': pid, '이름': nm, '시작일': from, '끝일': to, '사업': '스즈키캠프', '캠프ID': base.id, '사용': '사용', '메모': '캠프 접수 시트와 연결', '수정일': now_(), '수정자': who.name }]);
       log_(who.name, '프로젝트', pid, '캠프에서 만듦', nm); }
-    else pid = P.v[i][0];
+    else { pid = P.v[i][0]; const up = {}; if (P.get(i, '이름') !== nm) up['이름'] = nm; if (from && P.get(i, '시작일') !== from) up['시작일'] = from; if (to && P.get(i, '끝일') !== to) up['끝일'] = to; if (Object.keys(up).length) P.set(i, Object.assign(up, { '수정일': now_(), '수정자': '캠프 설정' })); }
   } finally { lock.releaseLock(); }
   return { camp: { id: base.id, name: base.name || '', start: base.start || '', end: base.end || '', payFrom: from, payTo: to, proj: pid, sheet: id }, ppl, projs: bankSheet_('프로젝트', BANK_PROJ_HEAD).objs() };
 }
@@ -2048,6 +2048,7 @@ function bankMeta(who, kind, o) {
         row['통장ID'] = [].concat(o['통장ID'] || []).join(','); row['구분'] = [].concat(o['구분'] || []).join(','); row['사업'] = String(o['사업'] || '').slice(0, 30); }
       if (M.v.some((r, i) => M.get(i, '이름') === nm && M.get(i, key) !== o[key])) fail('같은 이름이 이미 있어요.');
       let i = o[key] ? M.find(o[key]) : -1, id = o[key];
+      if (i >= 0 && !isA && M.get(i, '캠프ID')) { row['이름'] = M.get(i, '이름'); row['시작일'] = M.get(i, '시작일'); row['끝일'] = M.get(i, '끝일'); }   /* 캠프와 연결된 행사: 이름 · 기간은 캠프 설정을 따름 */
       if (i >= 0) M.set(i, row);
       else { const pre = isA ? 'K' : 'P', n = M.v.reduce((m, r) => Math.max(m, +String(r[0]).slice(1) || 0), 0) + 1; id = pre + String(n).padStart(2, '0'); M.appendMany([Object.assign({ [key]: id }, row)]); }
       log_(who.name, isA ? '통장목록' : '프로젝트', id, i >= 0 ? '수정' : '추가', nm);

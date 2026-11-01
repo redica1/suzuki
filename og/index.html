@@ -12,7 +12,7 @@
 -->
 <style>
   :root { --bg:#eef0f4; --card:#fff; --ink:#18203a; --sub:#5d6680; --line:#d9dde7; --pri:#2c46c9; --kakao:#bacee0; }
-  * { box-sizing: border-box; }
+  * { box-sizing: border-box; } [hidden] { display:none !important; }
   body { margin:0; background:var(--bg); color:var(--ink); font:500 15px/1.55 -apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",sans-serif; }
   .wrap { max-width:1080px; margin:0 auto; padding:20px 16px 60px; }
   h1 { font-size:22px; margin:4px 0 4px; }
@@ -53,6 +53,16 @@
   .fb .t { font-weight:700; color:#050505; font-size:16px; margin-top:2px; }
   .fb .d { color:#65676b; font-size:14px; margin-top:2px; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
   .cap { font-size:12px; color:var(--sub); margin:14px 0 6px; font-weight:700; }
+  .kf { width:270px; max-width:100%; background:#fff; border-radius:10px; overflow:hidden; box-shadow:0 1px 2px rgba(0,0,0,.08); }
+  .kf .img { width:100%; aspect-ratio: 1 / 1; background:#f2f2f2 center/cover no-repeat; }
+  .kf .tx { padding:12px 14px 4px; }
+  .kf .t { font-weight:700; font-size:15px; color:#111; line-height:1.35; }
+  .kf .d { font-size:13px; color:#666; margin-top:4px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+  .kf .b { margin:12px 14px 14px; background:#f3f3f3; border-radius:6px; text-align:center; padding:9px; font-size:13.5px; font-weight:700; color:#222; }
+  .kf .foot { border-top:1px solid #eee; padding:8px 14px; font-size:11.5px; color:#999; }
+  .sw { display:flex; gap:6px; margin:10px 0 0; }
+  .sw button { border:1px solid var(--line); background:#fff; border-radius:8px; padding:4px 10px; font:inherit; font-size:12.5px; cursor:pointer; }
+  .sw button[aria-pressed="true"] { background:var(--ink); color:#fff; border-color:var(--ink); }
   pre { background:#16203a; color:#e6ebff; border-radius:10px; padding:12px; font-size:12.5px; overflow:auto; white-space:pre-wrap; word-break:break-all; margin:8px 0 0; }
 </style>
 </head>
@@ -70,11 +80,14 @@
       <textarea id="fD"></textarea>
       <label for="fI">그림 주소 <small>1200×630 가로형 권장</small></label>
       <input type="text" id="fI" placeholder="https://app.suzukimusickorea.org/camp/og.png?v=1">
+      <label for="fB">카카오 공유 버튼 글자 <small>「카카오톡으로 보내기」로 보낼 때만 · 14자 이내</small></label>
+      <input type="text" id="fB" value="접수하러 가기" maxlength="14">
       <label for="fF">내 컴퓨터 그림으로 미리 보기 <small>올리기 전에 모양만 확인</small></label>
       <input type="file" id="fF" accept="image/*">
       <div id="imgInfo"></div>
       <div class="row">
         <button class="btn" type="button" id="reset">원래대로</button>
+        <button class="btn" type="button" id="cpUrl">공유 주소 복사</button>
         <a class="btn pri" id="edit" target="_blank" rel="noopener">깃허브에서 고치기 ↗</a>
         <a class="btn" id="kakao" target="_blank" rel="noopener" href="https://developers.kakao.com/tool/debugger/sharing">카카오 캐시 초기화 ↗</a>
       </div>
@@ -88,6 +101,14 @@
         <p class="who">카카오톡</p>
         <div class="kc"><div class="img" id="kImg"></div><div class="tx"><div class="t" id="kT"></div><div class="d" id="kD"></div><div class="u" id="kU"></div></div></div>
       </div>
+      <div class="cap">카카오톡 공유하기 (「카카오톡으로 보내기」 버튼으로 보낸 메시지)</div>
+      <div class="chat">
+        <p class="who">카카오톡</p>
+        <div class="kf"><div class="img" id="fImg"></div><div class="tx"><div class="t" id="fT2"></div><div class="d" id="fD2"></div></div><div class="b" id="fB2"></div><div class="foot">스즈키 겨울 음악제</div></div>
+        <div class="sw" id="ratio"><button type="button" data-r="1 / 1" aria-pressed="true">정사각 그림</button><button type="button" data-r="1.91 / 1" aria-pressed="false">가로 그림</button></div>
+      </div>
+      <p class="note">링크를 붙여 넣는 것과 달리, 카카오 공유는 <b>버튼 글자</b>를 정할 수 있고 <b>캐시가 없어</b> 고치면 바로 바뀌어요. 다만 카카오 개발자 앱(무료)을 만들어 JavaScript 키를 받아야 실제로 보낼 수 있어요. <span id="kStat"></span></p>
+      <div class="row" id="kSendRow" hidden><button class="btn pri" type="button" id="kSend">이 내용으로 카카오톡 보내기 (시험)</button></div>
       <div class="cap">페이스북 · 밴드 · 문자 링크</div>
       <div class="fb"><div class="img" id="bImg"></div><div class="tx"><div class="u" id="bU"></div><div class="t" id="bT"></div><div class="d" id="bD"></div></div></div>
       <p class="note">카톡은 한 번 읽은 미리보기를 한동안 기억해요. 깃허브에 저장하고 1~2분 뒤 「카카오 캐시 초기화」에 주소를 넣고 초기화하면, 새로 보내는 것부터 바뀌어요. 그림을 바꿀 땐 그림 주소 끝 <b>?v=</b> 숫자를 하나 올리면 확실해요.</p>
@@ -134,7 +155,8 @@
     $('kT').textContent = t; $('kD').textContent = d; $('kU').textContent = host;
     $('bT').textContent = t; $('bD').textContent = d; $('bU').textContent = host;
     var bg = i ? 'url("' + i.replace(/"/g, '%22') + '")' : 'none';
-    $('kImg').style.backgroundImage = bg; $('bImg').style.backgroundImage = bg;
+    $('kImg').style.backgroundImage = bg; $('bImg').style.backgroundImage = bg; $('fImg').style.backgroundImage = bg; $('fImg').style.display = i ? '' : 'none';
+    $('fT2').textContent = t; $('fD2').textContent = d; $('fB2').textContent = $('fB').value || '자세히 보기';
     $('kImg').style.display = i ? '' : 'none'; $('bImg').style.display = i ? '' : 'none';
     $('cT').textContent = t.length + '자'; $('cT').className = 'cnt' + (t.length > 40 ? ' over' : '');
     $('cD').textContent = d.length + '자'; $('cD').className = 'cnt' + (d.length > 80 ? ' over' : '');
@@ -159,10 +181,25 @@
     im.src = src;
   }
   $('tabs').addEventListener('click', function (e) { var b = e.target.closest('button[data-k]'); if (!b) return; load(PAGES.filter(function (p) { return p.k === b.dataset.k; })[0]); });
-  ['fT', 'fD', 'fI'].forEach(function (id) { $(id).addEventListener('input', function () { if (id === 'fI') { localImg = ''; $('fF').value = ''; } draw(); }); });
+  ['fT', 'fD', 'fI', 'fB'].forEach(function (id) { $(id).addEventListener('input', function () { if (id === 'fI') { localImg = ''; $('fF').value = ''; } draw(); }); });
   $('fF').addEventListener('change', function () { var f = this.files && this.files[0]; if (!f) return; var rd = new FileReader(); rd.onload = function () { localImg = rd.result; draw(); }; rd.readAsDataURL(f); });
   $('reset').addEventListener('click', function () { localImg = ''; $('fF').value = ''; fill(orig); });
   $('copy').addEventListener('click', function () { var t = $('snip').textContent; var done = function () { $('copy').textContent = '복사했어요'; setTimeout(function () { $('copy').textContent = '줄 복사'; }, 1500); }; try { navigator.clipboard.writeText(t).then(done); } catch (x) { prompt('복사해 주세요', t); } });
+  $('ratio').addEventListener('click', function (e) { var b = e.target.closest('button[data-r]'); if (!b) return; [].forEach.call(this.children, function (x) { x.setAttribute('aria-pressed', x === b); }); $('fImg').style.aspectRatio = b.dataset.r; });
+  function pageUrl() { return orig.u || (BASE + (cur ? cur.url : '')); }
+  $('cpUrl').addEventListener('click', function () { var u = pageUrl(), btn = this; var done = function () { btn.textContent = '복사했어요 ✓'; setTimeout(function () { btn.textContent = '공유 주소 복사'; }, 1500); }; try { navigator.clipboard.writeText(u).then(done, function () { prompt('이 주소를 복사해 주세요', u); }); } catch (x) { prompt('이 주소를 복사해 주세요', u); } });
+  /* 카카오 공유 (실제로 보내기): 카카오 개발자 앱의 JavaScript 키를 아래에 넣고, 앱 › 플랫폼 › Web 에 https://app.suzukimusickorea.org 등록 */
+  var KAKAO_JS_KEY = '';
+  if (!KAKAO_JS_KEY) $('kStat').textContent = '(아직 키가 없어서 모양만 보여 줘요)';
+  else {
+    var sc = document.createElement('script'); sc.src = 'https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js'; sc.crossOrigin = 'anonymous';
+    sc.onload = function () { try { Kakao.init(KAKAO_JS_KEY); $('kSendRow').hidden = false; } catch (x) { $('kStat').textContent = '(카카오 키 확인 필요: ' + x.message + ')'; } };
+    document.head.appendChild(sc);
+    $('kSend').addEventListener('click', function () {
+      var u = pageUrl(), img = $('fI').value;
+      Kakao.Share.sendDefault({ objectType: 'feed', content: { title: $('fT').value, description: $('fD').value, imageUrl: img, link: { mobileWebUrl: u, webUrl: u } }, buttons: [{ title: $('fB').value || '자세히 보기', link: { mobileWebUrl: u, webUrl: u } }] });
+    });
+  }
   var start = null; try { start = localStorage.getItem('ogTab'); } catch (x) {}
   load(PAGES.filter(function (p) { return p.k === start; })[0] || PAGES[0]);
 })();

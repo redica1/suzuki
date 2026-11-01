@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261101-105320 -->
+<!-- build: 20261101-105522 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -635,7 +635,8 @@ function vBank(){
     sel('bfk',[['','구분 전체'],['-','구분 없음']].concat(cats['in'].concat(cats.out).filter(function(k,i,a){return a.indexOf(k)===i}).map(function(k){var r=bCatRow(k);return [k,r&&r['이름']&&r['이름']!==k?r['대분류']+' · '+r['이름']:k]})),f.k,'구분')+((S.bProjs||[]).length?sel('bfpj',[['','행사 전체'],['-','행사 없음']].concat((S.bProjs||[]).map(function(p){return [p['프로젝트ID'],p['이름']]})),f.pj,'프로젝트'):'')+((S.bAccts||[]).length?sel('bfac',[['','통장 전체'],['-','통장 안 정함']].concat((S.bAccts||[]).map(function(a){return [a['통장ID'],a['이름']]})),f.ac,'통장'):'')+(sum?'':sel('bfst',[['','상태 전체'],'추천','미분류','확정',['연결','회비 확인']],f.st,'상태')+sel('bfdn',[['','확인 · 안 한 것 모두'],['no','확인 안 한 것만'],['yes','확인(회색)만']],f.dn,'확인')+sel('bfa',[['','학원 전체']].concat(bAcOpts()),f.a,'학원'))+
     '<input type="search" id="bq" value="'+esc(f.q||'')+'" placeholder="이름 · 메모 · 학원" style="width:min(200px,100%)"></div>';
   if(!all.length)return head+'<div class="panel"><p>아직 거래가 없어요. 위 「은행 엑셀 올리기」로 거래내역 파일을 올려 주세요. KB 인터넷뱅킹 「거래내역 조회 → 엑셀 저장」 파일을 그대로 쓰면 돼요.</p></div>';
-  return head+tiles+'<div class="panel">'+filt+(sum?bankSum(list,cats):bankSplitBox()+bankLinkBox()+bankBulk(list)+bankTable(list))+'</div>'}
+  var acT=(S.bAccts||[]).filter(function(x){return x['사용']!=='안씀'});var acSeg=acT.length>=2?'<div class="row" style="margin:0 0 8px;gap:6px">'+[['','모든 통장']].concat(acT.map(function(x){return [x['통장ID'],x['이름']]}),all.some(function(o){return !o['통장ID']})?[['-','통장 안 정함']]:[]).map(function(x){var c=all.filter(function(o){return !x[0]||(x[0]==='-'?!o['통장ID']:o['통장ID']===x[0])}).length;return '<button class="btn small'+((f.ac||'')===x[0]?' primary':'')+'" type="button" data-bacs="'+esc(x[0])+'">'+esc(x[1])+' <span class="num">'+c+'</span></button>'}).join('')+'</div>':'';
+  return head+tiles+acSeg+'<div class="panel">'+filt+(sum?bankSum(list,cats):bankSplitBox()+bankLinkBox()+bankBulk(list)+bankTable(list))+'</div>'}
 function bBulkCats(){var R=S.bCatRows||[],h='<option value="">구분 그대로</option>',o=function(x){return '<option value="'+esc(x['구분'])+'">'+esc(x['이름']||x['구분'])+'</option>'};
   ['입금','출금','모두'].forEach(function(io){var g={},ord=[];R.filter(function(x){return x['입출']===io&&x['사용']!=='안씀'}).forEach(function(x){var l=io+' · '+([x['대분류'],x['중분류']].filter(Boolean).join(' › ')||'분류 없음');if(!g[l]){g[l]=[];ord.push(l)}g[l].push(x)});h+=ord.map(function(l){return '<optgroup label="'+esc(l)+'">'+g[l].map(o).join('')+'</optgroup>'}).join('')});return h}
 function bBulkRefresh(){var el=document.getElementById('bBulk');if(!el){render();return}var keep={};['bBk','bBac','bBp','bBa'].forEach(function(k){var x=document.getElementById(k);if(x)keep[k]=x.value});var w=document.createElement('div');w.innerHTML=bankBulk(bankList());el.parentNode.replaceChild(w.firstChild,el);Object.keys(keep).forEach(function(k){var x=document.getElementById(k);if(x){x.value=keep[k]}})}
@@ -971,6 +972,7 @@ document.addEventListener('click',function(e){
   if(b.id==='bspGo'){b.disabled=true;callS('bankSplitSave',S.bSp,S.bSpL).then(function(r){b.disabled=false;if(!r.ok){toast(r.msg);return}bankTake(r);S.bSp=null;render();toast(r.n?r.n+'명으로 나눠 저장했어요 · 합 '+won(r.sum):'나눈 내용을 지웠어요')});return}
   if(d.bme){S.bMemo=d.bme;render();var mi=document.querySelector('[data-bm="'+d.bme+'"]');if(mi){mi.focus();mi.select()}return}
   if(b.id==='bDoneGo'||b.id==='bDoneNo'){var dids=Object.keys(S.bSel||{});b.disabled=true;bankSave(dids,{'확인':b.id==='bDoneGo'?1:0},b.id==='bDoneGo'?'%n줄 확인했어요':'%n줄 확인을 풀었어요').then(function(){S.bSel={};render()});return}
+  if(d.bacs!=null){S.bf=S.bf||{};S.bf.ac=d.bacs;S.bp=0;S.bSel={};render();return}
   if(b.id==='bSelAll'){S.bSel={};bankList().forEach(function(o){S.bSel[o['거래ID']]=1});render();return}if(b.id==='bSelNo'){S.bSel={};render();return}
   if(b.id==='bAcNew'){S.bEA='new';render();return}if(d.bea){S.bEA=d.bea;render();return}if(b.id==='bAcNo'){S.bEA=null;render();return}
   if(b.id==='bAcSave'){var ko={'통장ID':S.bEA==='new'?'':S.bEA};['이름','은행','계좌번호','예금주','메모'].forEach(function(k){ko[k]=document.getElementById('ka_'+k).value});ko['사용']=document.getElementById('ka_안씀').checked?'안씀':'사용';bankMetaGo('acct',ko,'통장을 저장했어요',b).then(function(ok){if(ok){S.bEA=null;render()}});return}

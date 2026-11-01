@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261101-132643 -->
+<!-- build: 20261101-132823 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -447,7 +447,7 @@ function flatList(subs,keep,q){const rows=[];subs.forEach(sb=>sb.ppl.forEach(p=>
   const opt=(id,cur,first,list)=>`<select id="${id}">${[['',first]].concat(list.map(v=>[v,v])).map(([v,l])=>`<option value="${esc(v)}" ${cur===v?'selected':''}>${esc(l)}</option>`).join('')}</select>`;
   return `<div class="panel"><div class="row" style="gap:8px;flex-wrap:wrap;align-items:center">${opt('fAc',S.fa||'','학원 전체',acs)}${opt('fTy',S.ft||'','참가자격 전체',tys)}<select id="fOrd"><option value="old" ${S.fo!=='new'?'selected':''}>접수 시간 · 오래된 순</option><option value="new" ${S.fo==='new'?'selected':''}>접수 시간 · 최근 순</option></select>
     <span class="hint">${L.length}명 · 청구 ${won(bill)} · 입금 ${won(paid)}${bill-paid>0?' · 남음 '+won(bill-paid):''}</span><span style="flex:1"></span><button class="btn small ghost" type="button" data-subview="acad">접수별로 묶어 보기</button></div></div>
-  <div class="panel cfltw">${cfHead([['ck',''],['at','접수 시간'],['ac','학원'],['ow','접수자'],['nm','이름'],['ty','참가자격'],['bill','청구','vl'],['st','상태','vl'],['ra','신고 금액','vl'],['rn','입금자 · 날짜'],['bk','통장'],['d','입금일 *'],['a','입금액'],['m','메모'],['btn','']])}<tbody>
+  <div class="panel cfltw">${cfHead([['ck',''],['at','접수 시간'],['ac','학원'],['ow','접수자'],['nm','이름'],['ty','참가자격'],['bill','청구','vl'],['st','상태','vl'],['ra','신고 금액','vl'],['rn','신고 입금자 · 날짜'],['bk','통장'],['d','입금일 *'],['a','입금액'],['m','메모'],['btn','']])}<tbody>
   ${L.map(({sb,p,at})=>{const r=repRow(p),a=S.D.admin[p.id]||{},on=+p.paidAmt>0,live=p.status==='정상',defA=on?p.paidAmt:(r&&r.a)||Math.max(0,pAmt(p)-(+p.paidAmt||0)),G0=live&&p.pay==='신고'?gOf(p):null,bt=G0&&(G0.linked||(G0.cand&&G0.cand[0]&&G0.cand[0].t)),bd=a.date||(bt?bt.at.slice(0,10):'');
       const bk=!S.bankTx||S.bankTx.loading?'<span class="faint">…</span>':S.bankTx.none?'':G0?(G0.linked?'<span class="pill ok">이어짐</span>':G0.cand&&G0.cand.length?`<span class="pill ${G0.cand[0].how==='같음'?'ok':'due'}" title="${esc(G0.cand[0].t.at+' '+G0.cand[0].t.who+' '+G0.cand[0].t.amt)} · 묶음 ${G0.ppl.length}명 합 ${G0.sum}">${G0.cand[0].how==='같음'?'✓ ':''}${esc(G0.cand[0].how==='같음'?(+G0.cand[0].t.at.slice(5,7))+'.'+(+G0.cand[0].t.at.slice(8,10)):G0.cand[0].how)}</span>`:'<span class="pill due">없음</span>'):'';
     return `<tr class="${live?'':'off'}" data-prow="${p.id}"><td>${live||on?`<input type="checkbox" data-sel="${p.id}" ${S.sel[p.id]?'checked':''} aria-label="${esc(p.name)} 선택">`:''}</td><td class="num r" title="${sb.no}">${esc(at.slice(2,16).replace(/-/g,'.'))}</td><td>${memTag(sb)} ${esc(sb.acad)}</td><td><small>${esc(sb.owner)}</small></td>

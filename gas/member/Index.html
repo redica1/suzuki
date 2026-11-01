@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261101-114544 -->
+<!-- build: 20261101-114646 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -652,7 +652,7 @@ function bankTable(list){var per=100,pages=Math.max(1,Math.ceil(list.length/per)
     page.map(function(o){var id=o['거래ID'],inn=bIn(o),out=bOut(o),k=o['구분'],tch=k==='교사회비',sub=[o['적요'],o['내통장표시']].filter(Boolean).join(' · ');
       var act=o['상태']==='추천'?' <button class="btn small" type="button" data-bok="'+id+'" title="추천대로 확정">✓</button>':(o['상태']==='확정'&&((tch&&o['교사ID'])||(k==='학생회비'&&o['학원ID'])))?' <button class="btn small primary" type="button" data-bdu="'+id+'" title="회원 회비 확인으로 이어 주기">회비</button>':'';
       return '<tr class="'+(o['상태']==='미분류'?'unk':'')+(o['확인']?' bdone':'')+'"><td class="ck"><input type="checkbox" data-bck="'+id+'" '+(S.bSel&&S.bSel[id]?'checked':'')+' aria-label="고르기"></td><td class="num cap bdt" title="'+esc(o['통장ID']?bAcName(o['통장ID']):'통장 안 정함')+'">'+esc(String(o['거래일시']).slice(2,16).replace(/-/g,'.'))+'</td><td class="bwho" title="'+esc(o['보낸분받는분']+(sub?' · '+sub:''))+'"><div class="bwi"><b>'+esc(o['보낸분받는분'])+'</b>'+(sub?' <span class="cap">'+esc(sub)+'</span>':'')+'</div>'+bSpTxt(o)+'</td>'+
-        '<td class="r num vl">'+(inn?won(inn):'')+'</td><td class="r num vl">'+(out?won(out):'')+'</td>'+
+        '<td class="r num vl">'+(inn?(+inn).toLocaleString('ko-KR'):'')+'</td><td class="r num vl">'+(out?(+out).toLocaleString('ko-KR'):'')+'</td>'+
         '<td class="vl"><select data-bk="'+id+'" aria-label="구분">'+bCatOpts(inn,k,bProj(o))+'</select></td>'+
         '<td><select data-ba="'+id+'" aria-label="학원" style="max-width:220px">'+bOpts(acO,o['학원ID'],'학원 고르기')+'</select></td><td><select data-bt="'+id+'" aria-label="사람" style="max-width:220px">'+bOpts(bTchOpts(),o['교사ID'],'사람 고르기')+'</select></td>'+((S.bProjs||[]).length?'<td><select data-bpj="'+id+'" aria-label="프로젝트" style="max-width:124px">'+bPjOpts(o)+'</select></td>':'')+
         '<td>'+(S.bMemo===id?'<input type="text" data-bm="'+id+'" value="'+esc(o['메모'])+'" placeholder="메모" style="min-width:160px" autofocus>':o['메모']?'<span class="bmemo" data-bme="'+id+'" title="'+esc(o['메모'])+'">'+esc(String(o['메모']).length>10?String(o['메모']).slice(0,10)+'…':o['메모'])+'</span>':'<button class="btn small ghost" type="button" data-bme="'+id+'" aria-label="메모 더하기">+</button>')+'</td>'+

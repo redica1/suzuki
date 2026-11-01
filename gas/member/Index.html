@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261101-131030 -->
+<!-- build: 20261101-131048 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -575,7 +575,7 @@ function bCatOpts(inn,v,pj){var io=inn?'입금':'출금',R=(S.bCatRows||[]).filt
 var BIZ_AB={'스즈키캠프':'캠프','졸업연주':'졸연','교사연수':'연수','협회 운영':'운영'};
 function bCatShort(x){var n=x['이름']||x['구분'];return x['구분']!==n&&x['대분류']?(BIZ_AB[x['대분류']]||x['대분류'])+' '+n:n}
 function bBizList(){var L=[];(S.bCatRows||[]).forEach(function(x){var b=x['대분류'];if(b&&L.indexOf(b)<0)L.push(b)});return L}
-function bPjOpts(o){var p=bProj(o),auto=p&&p.auto?bPj(p.id):null;return '<option value="">'+(auto?'자동: '+esc(auto['이름']):'')+'</option>'+(S.bProjs||[]).filter(function(x){return x['사용']!=='안씀'||x['프로젝트ID']===o['프로젝트ID']}).map(function(x){return '<option value="'+esc(x['프로젝트ID'])+'"'+(x['프로젝트ID']===o['프로젝트ID']?' selected':'')+'>'+esc(x['이름'])+'</option>'}).join('')}
+function bPjOpts(o){var p=bProj(o),auto=p&&p.auto?bPj(p.id):null;return '<option value="">'+(auto?esc(auto['이름']):'')+'</option>'+(S.bProjs||[]).filter(function(x){return x['사용']!=='안씀'||x['프로젝트ID']===o['프로젝트ID']}).map(function(x){return '<option value="'+esc(x['프로젝트ID'])+'"'+(x['프로젝트ID']===o['프로젝트ID']?' selected':'')+'>'+esc(x['이름'])+'</option>'}).join('')}
 function bAcOptsK(){return (S.bAccts||[]).filter(function(a){return a['사용']!=='안씀'}).map(function(a){return [a['통장ID'],a['이름']]})}
 function bankUpd(r){var L=objs({h:r.h,rows:r.upd||[]}),m={};L.forEach(function(o){m[o['거래ID']]=o});S.bank=S.bank.map(function(o){return m[o['거래ID']]||o})}
 function bIn(o){return +String(o['입금']||'').replace(/[^\d]/g,'')||0}

@@ -1,4 +1,4 @@
-/* build: 20261101-120659 */
+/* build: 20261101-120751 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -105,7 +105,7 @@ function include(n) { return HtmlService.createHtmlOutputFromFile(n).getContent(
 
 function api(name, args) {
   const open = { login, hello, tHello, tEvents, tLookup, tStart, tResend, tVerify, tCreate, tLogin, tForgot, tReset, tMe, tSavePay, tSavePart, tSaveInfo, tSavePhoto, tAcad, tSaveAcad, tDocUp, tDocGet, tSaveStu, tSaveStus, tStuDetail, tStuSave, tStuTutor, tStuTutorDel, tStuState, tStuStateDel, tMyStu, tMyStuDetail, tMyStuPay, tTchSaves, tTchEnd, tTchEvent, tTchAssign, tTchStart, tSaveRrn, tAddWork, tClassCreate, tEndWork, tMainWork, tLogout, bPost, bMine, bReply };
-  const fns = { boot, saveRow, setCheck, logs, importRoster, saveDues, delDues, reqs, reqDo, delAcad, payView, bulkSet, saveWorks, importPastDues, bList, bSet, bComment, photoGet, photoDel, fillRegions, saveRates, docList, docUp, docGet, docDel, payList, payOk, payOkMany, payNo, memView, rosterNow, inputStatus, inboxDone, acctReset, classFromStudents, delStus, asTeacher, bankImport, bankList, bankSet, bankDues, bankFromSheet, bankMeta, bankSplitSave, bankPay, bankCamp, devVirtual };
+  const fns = { boot, saveRow, setCheck, logs, importRoster, saveDues, delDues, reqs, reqDo, delAcad, payView, bulkSet, saveWorks, importPastDues, bList, bSet, bComment, photoGet, photoDel, fillRegions, saveRates, docList, docUp, docGet, docDel, payList, payOk, payOkMany, payNo, memView, rosterNow, inputStatus, inboxDone, acctReset, classFromStudents, delStus, asTeacher, bankImport, bankList: bankListTop, bankSet, bankDues, bankFromSheet, bankMeta, bankSplitSave, bankPay, bankCamp, devVirtual };
   try {
     if (open[name]) return Object.assign({ ok: true }, open[name].apply(null, args || []));
     if (!fns[name]) throw new UserError('알 수 없는 요청이에요.');
@@ -2160,6 +2160,8 @@ function bankImport(who, rows, acct) {
     return Object.assign(bankList(who), { added: add.length, skip, bad });
   } finally { lock.releaseLock(); }
 }
+/** 화면이 통장 탭을 열 때: 캠프가 회원관리와 연동돼 있으면(설정 「캠프 시트」) 캠프 행사를 저절로 연결 (잠금 밖에서만) */
+function bankListTop(who) { bankMigrate_(); try { if (settings_()['캠프 시트']) { const P = bankSheet_('프로젝트', BANK_PROJ_HEAD), ci = P.c('캠프ID'); if (!P.v.some(r => r[ci])) bankCamp(who); } } catch (e) { } return bankList(who); }
 function bankList(who) {
   bankMigrate_(); const B = bankTbl_();
   return Object.assign({ h: B.h, rows: B.v }, bankMetaAll_());

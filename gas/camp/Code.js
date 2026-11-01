@@ -1,4 +1,4 @@
-/* build: 20261101-120530 */
+/* build: 20261101-120757 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -1500,13 +1500,23 @@ function memberSync_(force) {
   log_('회원관리 연동', '명단 맞춤', '교사 ' + T.length + ' · 학생 ' + S.length + ' · 회원관리 ' + stamp);
   return { ok: true, at: stamp, t: T.length, s: S.length };
 }
-function memberSyncTick() { try { memberSync_(false); } catch (e) { Logger.log('회원관리 연동: ' + e.message); } try { memberReport_(); } catch (e) { Logger.log('회원관리 보고: ' + e.message); } }
+function memberSyncTick() { try { memberSync_(false); } catch (e) { Logger.log('회원관리 연동: ' + e.message); } try { memberReport_(); } catch (e) { Logger.log('회원관리 보고: ' + e.message); } try { campRegister_(); } catch (e) { Logger.log('회원관리 캠프 등록: ' + e.message); } }
+/** 회원관리 설정 「캠프 시트」에 이 캠프 접수 시트를 적어 둠 (11-01) → 회원관리 통장 탭이 캠프 행사(27W)를 저절로 연결. 바뀐 때만 씀 */
+function campRegister_() {
+  const mid = memberSheetId_(); if (!mid) return { skip: true };
+  const sh = SpreadsheetApp.openById(mid).getSheetByName('설정'); if (!sh) return { skip: true };
+  const me = SpreadsheetApp.getActive().getId(), v = sh.getDataRange().getDisplayValues(), i = v.findIndex(r => String(r[0]).trim() === '캠프 시트');
+  if (i >= 0 && String(v[i][1]).trim() === me) return { same: true };
+  if (i >= 0) sh.getRange(i + 1, 2).setValue(me); else sh.appendRow(['캠프 시트', me, '캠프 접수 시트 ID — 캠프가 회원관리와 연동할 때 저절로 적음 (통장 › 캠프 입금 맞추기)']);
+  return { set: me };
+}
 /** 관리자(총관리자): 지금 불러오기 + 5분마다 자동 켜기 */
 function memberSyncNow(token) {
   const a = adm_(token); needSup_(a);
   try { if (!ScriptApp.getProjectTriggers().some(t => t.getHandlerFunction() === 'memberSyncTick')) ScriptApp.newTrigger('memberSyncTick').timeBased().everyMinutes(5).create(); } catch (e) { }
   const r = memberSync_(true); if (r.skip) throw new Error(r.msg);
   try { r.report = memberReport_(); } catch (e) { r.report = { err: e.message }; }
+  try { r.camp = campRegister_(); } catch (e) { r.camp = { err: e.message }; }
   return Object.assign({ ok: true }, r, memberData(token));
 }
 function memberInfo_() { const P = PropertiesService.getScriptProperties(); return { src: !!memberSrcId_(), stamp: P.getProperty('memberStamp') || '', at: P.getProperty('memberSyncAt') || '', rep: !!memberSheetId_(), repAt: P.getProperty('memberRepAt') || '', repN: +(P.getProperty('memberRepN') || 0) }; }

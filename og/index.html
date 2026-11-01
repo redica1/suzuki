@@ -200,7 +200,7 @@
   function pageUrl() { return orig.u || (BASE + (cur ? cur.url : '')); }
   $('cpUrl').addEventListener('click', function () { var u = pageUrl(), btn = this; var done = function () { btn.textContent = '복사했어요 ✓'; setTimeout(function () { btn.textContent = '공유 주소 복사'; }, 1500); }; try { navigator.clipboard.writeText(u).then(done, function () { prompt('이 주소를 복사해 주세요', u); }); } catch (x) { prompt('이 주소를 복사해 주세요', u); } });
   /* 카카오 공유 (실제로 보내기): 카카오 개발자 앱의 JavaScript 키를 아래에 넣고, 앱 › 플랫폼 › Web 에 https://app.suzukimusickorea.org 등록 */
-  var KAKAO_JS_KEY = '';
+  var KAKAO_JS_KEY = '74086e79eb70d3ca11a6136e1a2a58de';
   if (!KAKAO_JS_KEY) $('kStat').textContent = '(아직 키가 없어서 모양만 보여 줘요)';
   else {
     var sc = document.createElement('script'); sc.src = 'https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js'; sc.crossOrigin = 'anonymous';

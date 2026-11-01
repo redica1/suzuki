@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261101-145330 -->
+<!-- build: 20261101-145821 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -444,13 +444,13 @@ function flatList(subs,keep,q){const rows=[];subs.forEach(sb=>sb.ppl.forEach(p=>
   const rns=[...new Set(rows.map(x=>(repRow(x.p)||{}).name).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'ko')),acs=[...new Set(rows.map(x=>x.sb.acad))].sort((a,b)=>a.localeCompare(b,'ko')),tys=[...new Set(rows.map(x=>x.p.type))].sort((a,b)=>a.localeCompare(b,'ko'));
   const rk=x=>{const r=repRow(x.p)||{};return (r.name?'0'+r.name:'1')+'|'+(r.date||'')+'|'+x.at};
   const L=rows.filter(x=>(!S.fa||x.sb.acad===S.fa)&&(!S.ft||x.p.type===S.ft)&&(!S.fr||(repRow(x.p)||{}).name===S.fr)).sort((a,b)=>S.fo==='rep'?rk(a).localeCompare(rk(b),'ko'):S.fo==='new'?b.at.localeCompare(a.at)||b.sb.no.localeCompare(a.sb.no):a.at.localeCompare(b.at)||a.sb.no.localeCompare(b.sb.no));
-  if(!S.bankTx)loadBankTx();S.rpG=rpGroups(L.filter(x=>x.p.status==='정상'&&x.p.pay==='신고'));const gOf=p=>Object.values(S.rpG).find(g=>g.ppl.includes(p));
+  if(!S.bankTx)loadBankTx();S.rpG=rpGroups(L.filter(x=>x.p.status==='정상'&&(x.p.pay==='신고'||pAmt(x.p)>0)));const gOf=p=>Object.values(S.rpG).find(g=>g.ppl.includes(p));
   const live=L.filter(x=>x.p.status==='정상'),bill=live.reduce((t,x)=>t+pAmt(x.p),0),paid=L.reduce((t,x)=>t+(+x.p.paidAmt||0),0);
   const opt=(id,cur,first,list)=>`<select id="${id}">${[['',first]].concat(list.map(v=>[v,v])).map(([v,l])=>`<option value="${esc(v)}" ${cur===v?'selected':''}>${esc(l)}</option>`).join('')}</select>`;
   return `<div class="panel"><div class="row" style="gap:8px;flex-wrap:wrap;align-items:center">${opt('fAc',S.fa||'','학원 전체',acs)}${opt('fTy',S.ft||'','참가자격 전체',tys)}${opt('fRn',S.fr||'','신고 입금자 전체',rns)}<select id="fOrd"><option value="old" ${!S.fo||S.fo==='old'?'selected':''}>접수 시간 · 오래된 순</option><option value="new" ${S.fo==='new'?'selected':''}>접수 시간 · 최근 순</option><option value="rep" ${S.fo==='rep'?'selected':''}>신고 입금자 · 날짜별로 묶기</option></select>
     <span class="hint">${L.length}명 · 청구 ${won(bill)} · 입금 ${won(paid)}${bill-paid>0?' · 남음 '+won(bill-paid):''}</span><span style="flex:1"></span><button class="btn small ghost" type="button" data-subview="acad">접수별로 묶어 보기</button></div></div>
   <div class="panel cfltw">${cfHead([['ck',''],['at','접수 시간'],['ac','학원'],['ow','접수자'],['nm','이름'],['ty','참가자격'],['bill','청구','vl'],['st','상태','vl'],['ra','신고 금액','vl'],['rn','신고 입금자 · 날짜'],['bk','통장'],['d','입금일'],['a','입금액'],['m','메모'],['btn','']])}<tbody>
-  ${L.map(({sb,p,at},ix)=>{const r=repRow(p),a=S.D.admin[p.id]||{},on=+p.paidAmt>0,live=p.status==='정상',defA=on?p.paidAmt:(r&&r.a)||Math.max(0,pAmt(p)-(+p.paidAmt||0)),G0=live&&p.pay==='신고'?gOf(p):null,bt=G0&&(G0.linked||(G0.cand&&G0.cand[0]&&G0.cand[0].t)),bd=a.date||(bt?bt.at.slice(0,10):'');
+  ${L.map(({sb,p,at},ix)=>{const r=repRow(p),a=S.D.admin[p.id]||{},on=+p.paidAmt>0,live=p.status==='정상',defA=on?p.paidAmt:(r&&r.a)||Math.max(0,pAmt(p)-(+p.paidAmt||0)),G0=live?(g=>g&&!g.skip?g:null)(gOf(p)):null,bt=G0&&(G0.linked||(G0.cand&&G0.cand[0]&&G0.cand[0].t)),bd=a.date||(bt?bt.at.slice(0,10):'');
       const bk=!S.bankTx||S.bankTx.loading?'<span class="faint">…</span>':S.bankTx.none?'':G0?(G0.linked?'<span class="pill ok">이어짐</span>':G0.cand&&G0.cand.length?`<span class="pill ${G0.cand[0].how==='같음'?'ok':'due'}" title="${esc(G0.cand[0].t.at+' '+G0.cand[0].t.who+' '+G0.cand[0].t.amt)} · 묶음 ${G0.ppl.length}명 합 ${G0.sum}">${G0.cand[0].how==='같음'?'✓ ':''}${esc(G0.cand[0].how==='같음'?(+G0.cand[0].t.at.slice(5,7))+'.'+(+G0.cand[0].t.at.slice(8,10)):G0.cand[0].how)}</span>`:'<span class="pill due">없음</span>'):'';
     const gk=S.fo==='rep'?(r&&r.name?r.name+'|'+r.date:'-'):'',pk=S.fo==='rep'&&ix?((x=>x&&x.name?x.name+'|'+x.date:'-')(repRow(L[ix-1].p))):null,GH=S.fo==='rep'&&gk!==pk?(()=>{const M=L.filter(y=>{const q2=repRow(y.p);return (q2&&q2.name?q2.name+'|'+q2.date:'-')===gk}),sm=M.reduce((t,y)=>t+(+(repRow(y.p)||{}).a||0),0);return `<tr class="cgrp" data-cg="${esc(M.filter(y=>y.p.status==='정상'&&!(+y.p.paidAmt>0)&&pAmt(y.p)).map(y=>y.p.id).join(','))}" title="눌러서 이 묶음 모두 고르기"><td colspan="16">${gk==='-'?'<b>신고 없음</b>':`<b>${esc(r.name)}</b> · ${esc(kday(r.date))} 신고 · ${M.length}명 · 신고 합 <b class="num">${sm.toLocaleString('ko-KR')}</b>`} ${bk}</td></tr>`})():'';
     return GH+`<tr class="${live?'':'off'}" data-prow="${p.id}"><td>${live||on?`<input type="checkbox" data-sel="${p.id}" ${S.sel[p.id]?'checked':''} aria-label="${esc(p.name)} 선택">`:''}</td><td class="num r" title="${sb.no}">${esc(at.slice(2,16).replace(/-/g,'.'))}</td><td>${memTag(sb)} ${esc(sb.acad)}</td><td><small>${esc(sb.owner)}</small></td>
@@ -494,10 +494,12 @@ function subBlock(sb,keep,q,subs){const live=sb.ppl.filter(p=>p.status==='정상
 const bnorm=x=>String(x||'').replace(/[\s()（）\[\]·.,_-]/g,'').toLowerCase();
 function loadBankTx(){S.bankTx=S.bankTx||{loading:1};google.script.run.withSuccessHandler(r=>{S.bankTx=r&&r.ok?r:{none:1};if(S.tab==='rp'||S.tab==='subs')render()}).withFailureHandler(()=>{S.bankTx={none:1};if(S.tab==='rp'||S.tab==='subs')render()}).adminBank(S.tok)}
 function rpGroups(L){const G={},T=(S.bankTx&&S.bankTx.tx)||[],dd=(a,b)=>Math.abs((new Date(a)-new Date(b))/864e5);
-  L.forEach(({sb,p})=>{const r=repRow(p)||{},k=sb.acad+'|'+bnorm(r.name)+'|'+(r.date||'');(G[k]=G[k]||{k,acad:sb.acad,name:r.name||'',date:r.date||'',ppl:[],sum:0}).ppl.push(p);G[k].sum+=+r.a||0});
+  L.forEach(({sb,p})=>{const r0=p.pay==='신고'?repRow(p):null;if(!r0){const k='S|'+sb.no;(G[k]=G[k]||{k,acad:sb.acad,name:sb.owner||'',date:'',ppl:[],sum:0,nr:1}).ppl.push(p);G[k].sum+=(+p.paidAmt>0?+p.paidAmt:Math.max(0,pAmt(p)-(+p.paidAmt||0)));return}
+    const r=r0||{},k=sb.acad+'|'+bnorm(r.name)+'|'+(r.date||'');(G[k]=G[k]||{k,acad:sb.acad,name:r.name||'',date:r.date||'',ppl:[],sum:0}).ppl.push(p);G[k].sum+=+r.a||0});
   Object.values(G).forEach(g=>{const nm=bnorm(g.name),ac=bnorm(g.acad.replace(/스즈키$|음악학원$/,'')),ids=g.ppl.map(p=>p.id);
     g.linked=T.find(t=>ids.every(id=>t.pids.includes(id)));if(g.linked)return;
     const free=t=>t.amt-t.used>=g.sum,sc=t=>{const w=bnorm(t.who);return (nm&&w.includes(nm))||(ac&&w.includes(ac))};
+    if(g.nr){g.skip=g.ppl.every(p=>+p.paidAmt>0);const ns=[bnorm(g.name.replace(/\(.*?\)/g,''))].concat(g.ppl.map(p=>bnorm(p.name))).filter(x=>x&&x.length>=2&&x!=='운영진');g.cand=g.skip||!g.sum?[]:T.filter(t=>t.amt===g.sum&&t.used===0&&(w=>w.length>=2&&ns.some(n=>w.includes(n)||n.includes(w)))(bnorm(t.who))).map(t=>({t,how:'같음',name:true}));if(!g.cand.length)g.skip=1;g.near=[];return}
     g.cand=T.filter(t=>t.amt===g.sum&&t.used===0&&t.at.slice(0,10)===g.date).map(t=>({t,how:'같음',name:sc(t)}));
     if(!g.cand.length)g.cand=T.filter(t=>t.amt===g.sum&&t.used===0&&dd(t.at.slice(0,10),g.date)<=3).map(t=>({t,how:'날짜 다름',name:sc(t)}));
     if(!g.cand.length)g.cand=T.filter(t=>free(t)&&t.amt>g.sum&&t.at.slice(0,10)===g.date).map(t=>({t,how:'더 큰 입금',name:sc(t)}));

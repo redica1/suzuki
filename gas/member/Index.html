@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261101-121416 -->
+<!-- build: 20261101-122134 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -625,7 +625,7 @@ function vBank(){
   if(S.bv==='camp')return vBankHead()+vBankCamp();
   var all=S.bank,list=bankList(),f=S.bf||{},cats=S.bcats||{'in':[],out:[]},sum=S.bv==='sum';
   var tin=0,tout=0;list.forEach(function(o){tin+=bIn(o);tout+=bOut(o)});
-  var cnt=function(fn){return all.filter(fn).length};
+  var cnt=function(fn){return all.filter(function(o){return !f.ac||(f.ac==='-'?!o['통장ID']:o['통장ID']===f.ac)}).filter(fn).length};
   var months=[];all.forEach(function(o){var m=String(o['거래일시']).slice(0,7);if(m&&months.indexOf(m)<0)months.push(m)});months.sort().reverse();
   var years=[];months.forEach(function(m){var y=m.slice(0,4);if(years.indexOf(y)<0)years.push(y)});
   var mOpts=[];years.forEach(function(y){mOpts.push([y,y+'년 전체']);months.filter(function(m){return m.indexOf(y)===0}).forEach(function(m){mOpts.push([m,'　'+m.replace('-','년 ')+'월'])})});

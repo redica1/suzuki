@@ -1,4 +1,4 @@
-/* build: 20261101-212007 */
+/* build: 20261101-212305 */
     ps.forEach(p=>{p.pay='신고';p.rep=rep;delete S.rpRow[p.id]});S.afterSave=()=>repDone(ps.map(p=>p.id));subSave();S.rp=null;S.rpMemo=undefined;render();toast(`${ps.length}명 입금 신고를 보냈어요 · 운영진이 확인하면 「입금 확인」으로 바뀌어요`);return}
   if(b.id==='rpFill'){const n=document.getElementById('rpAllN').value.trim(),dd=document.getElementById('rpAllD').value;S.rpAllN=n;S.rpAllD=dd;const sel=S.rp||[];
     if(!n&&!dd){toast('적용할 입금자명이나 입금일을 적어 주세요');return}unpaidPpl().filter(x=>sel.includes(x.p.id)).forEach(({p})=>{const v=rpv(p);if(n)v.n=n;if(dd)v.d=dd});render();toast(`선택한 ${sel.length}명에게 적용했어요`);return}
@@ -24,7 +24,7 @@
     sb.ppl.forEach(p=>{if(sel.includes(p.id)){p.status=isPaid(p)?'취소요청':'취소';p.cxReqAt=nowStamp();if(!isPaid(p))p.cxWhy=why}});subSave();
     delete S.cx[sb.no];S.cxOpen='';S.cxReason='';S.cxDone={names,amt,paid};render();window.scrollTo({top:0});toast(paid?'취소 요청을 보냈어요':'취소했어요');return}
   if(b.id==='homeBtn'&&!S.user){S.view='form';S.auth='pick';S.chk=null;S.verr='';go(1);return}
-  if(b.id==='homeBtn'){S.view='form';if(S.step===6)Object.assign(S,{acad:'',verified:false,picked:{},extra:[],fam:[],info:{},room:{},join:{},ens:{on:false},agree:false});go(1);return}
+  if(b.id==='homeBtn'){S.view='form';if(S.step===6)Object.assign(S,{red:null,acad:'',verified:false,picked:{},extra:[],fam:[],info:{},room:{},join:{},ens:{on:false},agree:false});go(1);return}
   if(d.tab){S.tab=d.tab;S.rq='';render();return}
   if(d.ptab){S.ptab=d.ptab;S.rq='';render();return}
   if(b.id==='addCart'){const L=selIds();const at=nowStamp();L.forEach(id=>{S.picked[id]=true;if(!S.cartAt[id])S.cartAt[id]=at});S.sel={};render();toast(`${L.length}명을 신청 명단에 추가했어요`);return}
@@ -92,8 +92,8 @@
   if(b.id==='ensClear'){ensSave([]);render();toast('시험으로 넣은 앙상블 팀을 지웠어요');return}
   if(d.ensrm){if(S.editNo&&joinedOf(S.editNo).includes(d.ensrm)){toast(d.ensrm+'은(는) 직접 함께 신청한 학원이라 뺄 수 없어요',true);return}S.ens.acads=(S.ens.acads||[]).filter(a=>a!==d.ensrm);render();return}
   if(d.ensmem&&b.matches('input')){S.ens.mem=S.ens.mem||{};S.ens.mem[d.ensmem]=b.checked;render();return}
-  if(b.id==='again'){S.picked={};S.extra=[];S.fam=[];S.room={};S.join={};S.info={};S.agree=false;S.ens={on:false};go(2);toast('같은 학원으로 추가 접수를 시작해요');return}
-  if(b.id==='restart'){Object.assign(S,{step:1,verified:false,picked:{},extra:[],fam:[],room:{},join:{},info:{},agree:false,ens:{on:false},verr:''});render();return}
+  if(b.id==='again'){S.red=null;S.picked={};S.extra=[];S.fam=[];S.room={};S.join={};S.info={};S.agree=false;S.ens={on:false};go(2);toast('같은 학원으로 추가 접수를 시작해요');return}
+  if(b.id==='restart'){Object.assign(S,{red:null,step:1,verified:false,picked:{},extra:[],fam:[],room:{},join:{},info:{},agree:false,ens:{on:false},verr:''});render();return}
 });
 document.addEventListener('change',e=>{if(e.target.id==='qWhere'){S.qWhere=e.target.value;return}const el=e.target;
   if(el.dataset&&el.dataset.rp){const a=S.rp||[];S.rp=el.checked?[...new Set([...a,el.dataset.rp])]:a.filter(x=>x!==el.dataset.rp);{const n=document.getElementById('rpMemo');if(n)S.rpMemo=n.value}render();return}
@@ -108,6 +108,8 @@ const consEv=e=>{
   if(e.target.dataset&&e.target.dataset.cons){S.cons=S.cons||{};S.cons[e.target.dataset.cons]=e.target.checked;const a=document.getElementById('consAll');if(a)a.checked=consAll();return}
   return true};
 document.addEventListener('change',consEv);
+document.addEventListener('change',e=>{if(e.target.id==='redOn'){S.red=Object.assign({},S.red||{},{on:e.target.checked});if(!e.target.checked)S.red=null;render()}});
+document.addEventListener('input',e=>{if(e.target.id==='redMemo'){S.red=Object.assign({on:true},S.red||{},{memo:e.target.value})}});
 document.addEventListener('input',e=>{if(e.target.type==='checkbox'&&(e.target.id==='consAll'||(e.target.dataset&&e.target.dataset.cons)))return;
   {const el=e.target;if(/^q(Name|Phone|Acad|Text)$/.test(el.id)){S[el.id]=el.value;return}}
   if(e.target.id==='lgEm'){const el=e.target;let d=el.value.replace(/\D/g,'');/* 습관대로 010부터 쳐도 됨: 0·01 은 잠깐 두고, 010 이 되면 뗌 (010 뒷자리는 0·1로 시작하지 않음) */if(/^01?$/.test(d)){S.lgEm='010-';return}if(d.startsWith('010'))d=d.slice(3);d=d.slice(0,8);const f=d.length>4?d.slice(0,4)+'-'+d.slice(4):d;if(f!==el.value){el.value=f;el.setSelectionRange(f.length,f.length)}S.lgEm='010-'+f;return}

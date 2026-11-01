@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261101-101856 -->
+<!-- build: 20261101-102105 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -581,7 +581,7 @@ function bankList(){var f=S.bf||{},q=(f.q||'').replace(/\s+/g,'');
     .sort(function(x,y){return String(y['거래일시']).localeCompare(String(x['거래일시']))})}
 function bSt(st){return {'추천':'<span class="pill info">추천</span>','미분류':'<span class="pill due">미분류</span>','확정':'<span class="pill mute">확정</span>','연결':'<span class="pill ok">회비 확인</span>'}[st]||esc(st)}
 function bOpts(L,v,first){return '<option value="">'+first+'</option>'+L.map(function(x){var k=Array.isArray(x)?x[0]:x,l=Array.isArray(x)?x[1]:x;return '<option value="'+esc(k)+'"'+(String(k)===String(v||'')?' selected':'')+'>'+esc(l)+'</option>'}).join('')}
-function bTchOpts(){if(S.bTO)return S.bTO;S.bTO=S.D.tch.filter(function(t){return t['상태']!=='탈퇴'&&t['회원구분']!=='외부인'}).map(function(t){return [t['교사ID'],t['이름']+(t['구분글자']?' '+t['구분글자']:'')+' · '+tAcadTxt(t)]}).sort(function(a,b){return a[1].localeCompare(b[1],'ko')});return S.bTO}
+function bTchOpts(){if(S.bTO)return S.bTO;S.bTO=S.D.tch.filter(function(t){return t['상태']!=='탈퇴'}).map(function(t){var ex=t['회원구분']==='외부인'||/^X/.test(t['교사ID']);return [t['교사ID'],t['이름']+(t['구분글자']?' '+t['구분글자']:'')+' · '+(ex?'관계자'+(t['하는일']?' '+t['하는일']:''):tAcadTxt(t))]}).sort(function(a,b){return a[1].localeCompare(b[1],'ko')});return S.bTO}
 function bAcOpts(){return acadOpts('').slice(1).concat(S.D.acad.filter(function(a){return a['상태']==='탈퇴'}).map(function(a){return [a['학원ID'],a['학원명']+' (탈퇴)']}))}
 function vBankHead(){var v=S.bv||'list',A=bAcOptsK();
   var seg='<div class="row" style="margin:0 0 8px">'+[['list','거래 내역'],['sum','합계표'],['pay','지급 (인건비)'],['set','통장 · 행사 · 구분']].map(function(x){return '<button class="btn'+(v===x[0]?' primary':'')+'" type="button" data-bv="'+x[0]+'">'+x[1]+'</button>'}).join('')+'</div>';
@@ -644,13 +644,13 @@ function bankBulk(list){var n=Object.keys(S.bSel||{}).length,rec=list.filter(fun
     '<button class="btn small primary" type="button" id="bBkGo" '+(n?'':'disabled')+'>고른 '+n+'줄에 적용</button></div></div>'}
 function bankTable(list){var per=100,pages=Math.max(1,Math.ceil(list.length/per));if((S.bp||0)>=pages)S.bp=pages-1;var page=list.slice((S.bp||0)*per,((S.bp||0)+1)*per),c=S.bcats||{'in':[],out:[]},acO=bAcOpts();
   var pager='<div class="pager"><span>'+list.length+'건'+(pages>1?' 중 '+((S.bp||0)*per+1)+'–'+Math.min(list.length,((S.bp||0)+1)*per):'')+'</span>'+(pages>1?'<button class="btn small" type="button" data-bpg="-1" '+((S.bp||0)===0?'disabled':'')+'>이전</button><button class="btn small" type="button" data-bpg="1" '+((S.bp||0)>=pages-1?'disabled':'')+'>다음</button>':'')+'</div>';
-  return '<div class="tbl btbl"><table><thead><tr><th class="ck"><input type="checkbox" id="bAll" aria-label="이 쪽 모두 고르기"></th><th>거래일시</th><th>보낸분 · 받는분</th><th class="r">입금</th><th class="r">출금</th><th>구분</th><th>학원 · 선생님</th>'+((S.bProjs||[]).length?'<th>행사</th>':'')+'<th>메모</th><th>상태</th></tr></thead><tbody>'+
+  return '<div class="tbl btbl"><table><thead><tr><th class="ck"><input type="checkbox" id="bAll" aria-label="이 쪽 모두 고르기"></th><th>거래일시</th><th>보낸분 · 받는분</th><th class="r">입금</th><th class="r">출금</th><th>구분</th><th>학원</th><th>사람</th>'+((S.bProjs||[]).length?'<th>행사</th>':'')+'<th>메모</th><th>상태</th></tr></thead><tbody>'+
     page.map(function(o){var id=o['거래ID'],inn=bIn(o),out=bOut(o),k=o['구분'],tch=k==='교사회비',sub=[o['적요'],o['내통장표시']].filter(Boolean).join(' · ');
       var act=o['상태']==='추천'?' <button class="btn small" type="button" data-bok="'+id+'">확정</button>':(o['상태']==='확정'&&((tch&&o['교사ID'])||(k==='학생회비'&&o['학원ID'])))?' <button class="btn small primary" type="button" data-bdu="'+id+'">회비 확인</button>':'';
       return '<tr'+(o['상태']==='미분류'?' class="unk"':'')+'><td class="ck"><input type="checkbox" data-bck="'+id+'" '+(S.bSel&&S.bSel[id]?'checked':'')+' aria-label="고르기"></td><td class="num cap bdt">'+esc(String(o['거래일시']).slice(2,16).replace(/-/g,'.'))+(o['통장ID']?'<div>'+esc(bAcName(o['통장ID']))+'</div>':'')+'</td><td><b>'+esc(o['보낸분받는분'])+'</b>'+(sub?'<div class="cap">'+esc(sub)+'</div>':'')+bSpTxt(o)+'</td>'+
         '<td class="r num">'+(inn?won(inn):'')+'</td><td class="r num">'+(out?won(out):'')+'</td>'+
         '<td><select data-bk="'+id+'" aria-label="구분">'+bCatOpts(inn,k,bProj(o))+'</select>'+(bCatRow(k)&&bCatRow(k)['중분류']?'<div class="cap">'+esc(bCatRow(k)['중분류'])+'</div>':'')+'</td>'+
-        '<td>'+(tch?'<select data-bt="'+id+'" aria-label="선생님" style="max-width:220px">'+bOpts(bTchOpts(),o['교사ID'],'선생님 고르기')+'</select>':inn?'<select data-ba="'+id+'" aria-label="학원" style="max-width:220px">'+bOpts(acO,o['학원ID'],'학원 고르기')+'</select>':'<span class="cap">-</span>')+'</td>'+((S.bProjs||[]).length?'<td><select data-bpj="'+id+'" aria-label="프로젝트" style="max-width:180px">'+bPjOpts(o)+'</select></td>':'')+
+        '<td><select data-ba="'+id+'" aria-label="학원" style="max-width:220px">'+bOpts(acO,o['학원ID'],'학원 고르기')+'</select></td><td><select data-bt="'+id+'" aria-label="사람" style="max-width:220px">'+bOpts(bTchOpts(),o['교사ID'],'사람 고르기')+'</select></td>'+((S.bProjs||[]).length?'<td><select data-bpj="'+id+'" aria-label="프로젝트" style="max-width:180px">'+bPjOpts(o)+'</select></td>':'')+
         '<td>'+(S.bMemo===id?'<input type="text" data-bm="'+id+'" value="'+esc(o['메모'])+'" placeholder="메모" style="min-width:160px" autofocus>':o['메모']?'<span class="bmemo" data-bme="'+id+'" title="'+esc(o['메모'])+'">'+esc(String(o['메모']).length>10?String(o['메모']).slice(0,10)+'…':o['메모'])+'</span>':'<button class="btn small ghost" type="button" data-bme="'+id+'" aria-label="메모 더하기">+</button>')+'</td>'+
         '<td>'+bSt(o['상태'])+act+(o['연결']?'<div class="cap">'+esc(o['연결'])+'</div>':'')+'</td></tr>'}).join('')+'</tbody></table></div>'+pager}
 function bSpTxt(o){var L=(S.bSplits||{})[o['거래ID']]||[],inn=bIn(o)||bOut(o);if(!inn)return '';var sm=0;L.forEach(function(x){sm+=+x['금액']||0});
@@ -791,7 +791,7 @@ function vSet(){return '<div class="sec-h"><div><h2>설정</h2><p>관리자 아�
 
 /* ---------- 그리기 ---------- */
 /* ---------- 학원 고르기: 찾기 기능 (10-28) — 학원 번호(A0000)가 들어 있는 모든 select 에 자동으로 붙음 ---------- */
-function acsKind(el){for(var i=0;i<el.options.length;i++){var v=el.options[i].value;if(/^A\d{4}$/.test(v))return '학원';if(/^T\d{4}$/.test(v))return '선생님'}return ''}
+function acsKind(el){var k='';if(el.getAttribute('aria-label')==='사람')return '사람';for(var i=0;i<el.options.length;i++){var v=el.options[i].value;if(/^A\d{4}$/.test(v))return '학원';if(/^X\d{4}$/.test(v))return '사람';if(/^T\d{4}$/.test(v))k='선생님'}return k}
 function isAcadSel(el){if(el.tagName!=='SELECT'||el.dataset.acsOn)return false;return !!acsKind(el)}
 function acsLabel(sl){var o=sl.options[sl.selectedIndex];return o?o.text:''}
 function acsEnhance(root){(root||document).querySelectorAll('select').forEach(function(sl){if(!isAcadSel(sl))return;sl.dataset.acsOn='1';
@@ -802,7 +802,7 @@ function acsEnhance(root){(root||document).querySelectorAll('select').forEach(fu
   inp.value=sl.value?acsLabel(sl):'';inp.placeholder=first?first.text+' · '+kd+' 찾기':kd+' 찾기';
   function draw(){var q=inp.value.replace(/\s+/g,'');if(q===acsLabel(sl).replace(/\s+/g,''))q='';items=[];for(var i=0;i<sl.options.length;i++){var o=sl.options[i];if(!q||o.text.replace(/\s+/g,'').indexOf(q)>=0||(!o.value&&!q))items.push(o)}
     if(q&&first)items.unshift(first);hi=Math.max(0,Math.min(hi,items.length-1));
-    ul.innerHTML=items.length?items.map(function(o,i){return '<li role="option" data-i="'+i+'" class="'+(i===hi?'on ':'')+(o.value===sl.value?'cur':'')+'">'+esc(o.text)+'</li>'}).join(''):'<li class="none">찾는 '+kd+'이 없어요</li>';ul.hidden=false}
+    ul.innerHTML=items.length?items.map(function(o,i){return '<li role="option" data-i="'+i+'" class="'+(i===hi?'on ':'')+(o.value===sl.value?'cur':'')+'">'+esc(o.text)+'</li>'}).join(''):'<li class="none">찾는 '+kd+(kd==='사람'?'이':'이')+' 없어요</li>';ul.hidden=false}
   function pick(o){if(!o)return;sl.value=o.value;inp.value=o.value?o.text:'';ul.hidden=true;sl.dispatchEvent(new Event('change',{bubbles:true}))}
   inp.addEventListener('focus',function(){hi=0;draw();inp.select()});
   inp.addEventListener('input',function(e){e.stopPropagation();hi=0;draw()});

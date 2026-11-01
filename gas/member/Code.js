@@ -1,4 +1,4 @@
-/* build: 20261101-101856 */
+/* build: 20261101-102105 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -2067,9 +2067,7 @@ function bankGuess0_(row, ctx) {
     : has(/참가비/) ? (mon >= 6 && mon <= 8 ? '캠프 참가비' : '졸업연주') : '';
   if (!k && t && (!a || cls) && tdues) k = '교사회비';
   if (!k && (a || t) && inAmt > 0 && inAmt % 30000 === 0 && inAmt <= 3000000) k = '학생회비';
-  if (k === '교사회비' && cls) a = '';
-  if (k !== '교사회비' && !a && t && ctx.tAcad[t]) a = ctx.tAcad[t];
-  if (k === '교사회비') { if (!t && a && ctx.acadHead[a]) t = ctx.acadHead[a]; a = ''; } else t = cls ? t : '';
+  if (k === '교사회비' && !t && a && ctx.acadHead[a]) t = ctx.acadHead[a];   /* 11-01: 학원 · 사람을 따로 둠 (서로 덮어쓰지 않음) */
   return { k, a, t, why: k ? '이름 · 낱말' : (a ? '이름' : '') };
 }
 function bankCtx_(B) {

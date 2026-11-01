@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261101-114746 -->
+<!-- build: 20261101-114830 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -654,8 +654,8 @@ function bcw(k){if(!S.bColW){S.bColW={};try{S.bColW=JSON.parse(localStorage.getI
   document.addEventListener('mousemove',function(e){if(!dr)return;var w=Math.max(40,Math.round(dr.w+e.clientX-dr.x));dr.th.style.width=w+'px';var t=0;[].forEach.call(dr.tb.querySelectorAll('thead th'),function(x){t+=parseFloat(x.style.width)||x.getBoundingClientRect().width});dr.tb.style.width=t+'px'});
   document.addEventListener('mouseup',function(){if(!dr)return;bcw('x');S.bColW[dr.k]=parseFloat(dr.th.style.width);dr.h.classList.remove('on');dr=null;try{localStorage.setItem('bankColW',JSON.stringify(S.bColW))}catch(e){}});
   document.addEventListener('dblclick',function(e){var h=e.target.closest&&e.target.closest('.bcr');if(!h)return;bcw('x');delete S.bColW[h.dataset.bcr];try{localStorage.setItem('bankColW',JSON.stringify(S.bColW))}catch(x){}render()})})();
-function bankTable(list){var per=100,pages=Math.max(1,Math.ceil(list.length/per));if((S.bp||0)>=pages)S.bp=pages-1;var page=list.slice((S.bp||0)*per,((S.bp||0)+1)*per),c=S.bcats||{'in':[],out:[]},acO=bAcOpts();
-  var pager='<div class="pager"><span>'+list.length+'건'+(pages>1?' 중 '+((S.bp||0)*per+1)+'–'+Math.min(list.length,((S.bp||0)+1)*per):'')+'</span>'+(pages>1?'<button class="btn small" type="button" data-bpg="-1" '+((S.bp||0)===0?'disabled':'')+'>이전</button><button class="btn small" type="button" data-bpg="1" '+((S.bp||0)>=pages-1?'disabled':'')+'>다음</button>':'')+'</div>';
+function bankTable(list){var sig=JSON.stringify(S.bf||{});if(S._bfSig!==sig){S._bfSig=sig;S.bShow=100}var per=S.bShow||100,page=list.slice(0,per),c=S.bcats||{'in':[],out:[]},acO=bAcOpts();
+  var pager='<div class="pager" style="justify-content:center;padding:10px 0"><span>'+list.length+'건 중 '+page.length+'건</span>'+(page.length<list.length?'<button class="btn small" type="button" id="bMore">더 보기 (+'+Math.min(100,list.length-page.length)+')</button><button class="btn small ghost" type="button" id="bMoreAll">모두 보기</button>':'')+'</div>';
   var cols=[['ck','<input type="checkbox" id="bAll" aria-label="이 쪽 모두 고르기">','ck'],['date','거래일시',''],['who','보낸분 · 받는분','bwho'],['in','입금','r vl'],['out','출금','r vl'],['k','구분','vl'],['a','학원',''],['t','사람','']].concat((S.bProjs||[]).length?[['pj','행사','']]:[],[['m','메모',''],['st','상태','']]),tw=0;
   var ths=cols.map(function(c){var w=bcw(c[0]);tw+=w;return '<th class="'+c[2]+'" data-bc="'+c[0]+'" style="width:'+w+'px">'+c[1]+(c[0]==='ck'?'':'<span class="bcr" data-bcr="'+c[0]+'" title="끌어서 칸 넓이 바꾸기 · 두 번 누르면 처음대로"></span>')+'</th>'}).join('');
   return '<div class="tbl btbl"><table style="width:'+tw+'px"><thead><tr>'+ths+'</tr></thead><tbody>'+
@@ -1039,6 +1039,7 @@ document.addEventListener('click',function(e){
   if(d.bcl!=null){var cg=bCampCalc().groups[+d.bcl],cs=document.querySelector('[data-bcs="'+d.bcl+'"]');if(!cg||!cs)return;b.disabled=true;bCampLink(cg,cs.value).then(function(){toast('이었어요 · '+cg.ppl.length+'명'+(cg.dues.length?' + 회비 '+cg.dues.length+'명':''))});return}
   if(b.id==='bCampAll'){var cR=bCampCalc(),todo=cR.groups.filter(function(g){var c=(g.cand||[]).filter(function(x){return !x.used});return !g.link&&c.length&&(c.length===1||c[0].name&&!(c[1]&&c[1].name))});if(!todo.length){toast('바로 이을 묶음이 없어요');return}
     if(!confirm('금액 · 날짜가 맞는 '+todo.length+'묶음을 통장 입금과 이을까요?'))return;b.disabled=true;var ch=Promise.resolve(),n2=0;todo.forEach(function(g){ch=ch.then(function(){var c=g.cand.filter(function(x){return !x.used})[0];return bCampLink(g,c.o['거래ID']).then(function(){n2++})})});ch.then(function(){toast(n2+'묶음을 이었어요')});return}
+  if(b.id==='bMore'){S.bShow=(S.bShow||100)+100;render();return}if(b.id==='bMoreAll'){S.bShow=1e9;render();return}
   if(b.id==='bSelAll'){S.bSel={};bankList().forEach(function(o){S.bSel[o['거래ID']]=1});render();return}if(b.id==='bSelNo'){S.bSel={};render();return}
   if(b.id==='bAcNew'){S.bEA='new';render();return}if(d.bea){S.bEA=d.bea;render();return}if(b.id==='bAcNo'){S.bEA=null;render();return}
   if(b.id==='bAcSave'){var ko={'통장ID':S.bEA==='new'?'':S.bEA};['이름','은행','계좌번호','예금주','메모'].forEach(function(k){ko[k]=document.getElementById('ka_'+k).value});ko['사용']=document.getElementById('ka_안씀').checked?'안씀':'사용';bankMetaGo('acct',ko,'통장을 저장했어요',b).then(function(ok){if(ok){S.bEA=null;render()}});return}
@@ -1091,6 +1092,7 @@ document.addEventListener('input',function(e){var el=e.target;
   if(el.id==='q'){S.q=el.value;S.page=0;clearTimeout(qTimer);qTimer=setTimeout(softList,120);return}
   if(el.id==='e_출생연도'||el.id==='e_우편번호'){el.value=el.value.replace(/\D/g,'')}
   if(el.dataset&&el.dataset.pick){pickOpts(el.dataset.pick,el.value);var hs=document.getElementById(el.dataset.pick);if(hs&&hs.id==='e_원장교사ID'&&document.getElementById('telHead'))headTelFill();return}});
+var bMoreT=0;window.addEventListener('scroll',function(){if(S.tab!=='bank'||Date.now()-bMoreT<600)return;var m=document.getElementById('bMore');if(!m)return;if(window.innerHeight+window.scrollY>=document.documentElement.scrollHeight-400){bMoreT=Date.now();S.bShow=(S.bShow||100)+100;render()}},{passive:true});
 document.addEventListener('focusout',function(e){var t=e.target;if(t&&t.dataset&&t.dataset.bm&&S.bMemo===t.dataset.bm){setTimeout(function(){if(S.bMemo===t.dataset.bm){S.bMemo=null;render()}},150)}});
 document.addEventListener('compositionend',function(e){if(e.target.id==='q'){S.q=e.target.value;S.page=0;clearTimeout(qTimer);qTimer=setTimeout(softList,120)}});
 document.addEventListener('change',function(e){var bt=e.target,bd=bt.dataset||{};

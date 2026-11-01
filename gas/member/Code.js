@@ -1,4 +1,4 @@
-/* build: 20261101-204950 */
+/* build: 20261101-210516 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -104,7 +104,7 @@ function doGet(e) {
 function include(n) { return HtmlService.createHtmlOutputFromFile(n).getContent(); }
 
 function api(name, args) {
-  const open = { login, hello, tHello, tEvents, tLookup, tStart, tResend, tVerify, tCreate, tLogin, tForgot, tReset, tMe, tSavePay, tSavePart, tSaveInfo, tSavePhoto, tAcad, tSaveAcad, tDocUp, tDocGet, tSaveStu, tSaveStus, tStuDetail, tStuSave, tStuTutor, tStuTutorDel, tStuState, tStuStateDel, tMyStu, tMyStuDetail, tMyStuPay, tTchSaves, tTchEnd, tTchEvent, tTchAssign, tTchStart, tSaveRrn, tAddWork, tClassCreate, tEndWork, tMainWork, tLogout, bPost, bMine, bReply };
+  const open = { login, hello, tHello, tEvents, tLookup, tStart, tResend, tVerify, tCreate, tLogin, tForgot, tReset, tPwChange, tMe, tSavePay, tSavePart, tSaveInfo, tSavePhoto, tAcad, tSaveAcad, tDocUp, tDocGet, tSaveStu, tSaveStus, tStuDetail, tStuSave, tStuTutor, tStuTutorDel, tStuState, tStuStateDel, tMyStu, tMyStuDetail, tMyStuPay, tTchSaves, tTchEnd, tTchEvent, tTchAssign, tTchStart, tSaveRrn, tAddWork, tClassCreate, tEndWork, tMainWork, tLogout, bPost, bMine, bReply };
   const fns = { boot, saveRow, setCheck, logs, importRoster, saveDues, delDues, reqs, reqDo, delAcad, payView, bulkSet, saveWorks, importPastDues, bList, bSet, bComment, photoGet, photoDel, fillRegions, saveRates, docList, docUp, docGet, docDel, payList, payOk, payOkMany, payNo, memView, rosterNow, inputStatus, inboxDone, acctReset, classFromStudents, delStus, asTeacher, bankImport, bankList: bankListTop, bankSet, bankDues, bankFromSheet, bankMeta, bankSplitSave, bankPay, bankCamp, devVirtual };
   try {
     if (open[name]) return Object.assign({ ok: true }, open[name].apply(null, args || []));
@@ -893,6 +893,17 @@ function tLogin(email, pw) {
   CacheService.getScriptCache().remove('tl:' + email);
   const A = tbl_('계정'); A.set(a.i, { '마지막로그인': now_() });
   return { sess: newSess_({ email, tid: a.tid }) };
+}
+/** 로그인한 선생님이 비밀번호 바꾸기 (지금 비밀번호 확인) */
+function tPwChange(sess, cur, pw) {
+  const u = tsess_(sess); limit_('pc:' + u.email, 10, 900, '여러 번 틀렸어요. 15분 뒤 다시 해 주세요.');
+  if (String(pw || '').length < 8) fail('새 비밀번호는 8자 이상으로 만들어 주세요.');
+  const all = acctAll_().filter(a => a.email === u.email && a.state === '사용'), a = all.pop();
+  if (!a) fail('계정을 찾지 못했어요.');
+  if (hash_(cur, a.salt) !== a.hash) fail('지금 비밀번호가 맞지 않아요.');
+  const salt = Utilities.getUuid(); tbl_('계정').set(a.i, { '솔트': salt, '비번해시': hash_(pw, salt) });
+  CacheService.getScriptCache().remove('pc:' + u.email); log_(u.email, '계정', a.tid, '비밀번호 바꿈', '');
+  return { done: true };
 }
 function tLogout(sess) { CacheService.getScriptCache().remove('ts:' + sess); return {}; }
 function tForgot(email) {

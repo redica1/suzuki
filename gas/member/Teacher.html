@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261101-204950 -->
+<!-- build: 20261101-210516 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -297,7 +297,9 @@ function vMe(){var m=S.me;if(!m)return '<div class="card"><span><span class="spi
     (m.heads&&m.heads.length?'<div class="lock" style="margin-top:8px"><h3>우리 학원 · 클래스</h3>'+m.heads.map(function(a){return '<div class="spread" style="margin:4px 0"><b>'+esc(a.name)+' <span class="hint">'+(a.kind==='클래스'?'클래스 대표':'원장')+'</span></b><button class="btn small primary" type="button" data-myac="'+esc(a.id)+'">'+(a.kind==='클래스'?'클래스':'학원')+' 관리</button></div>'}).join('')+'</div>':'')+
     (!m.ext&&!(m.heads||[]).some(function(h){return h.kind==='클래스'})?'<div class="lock" style="margin-top:8px"><h3>개인 레슨 · 클래스</h3>'+(S.clsAsk?'<p>「<b>'+esc(m.name)+' 클래스</b>」를 만들까요? 만든 뒤 바로 대표로 학생을 넣을 수 있어요. <span class="hint">학생이 1명 이상 있어야 캠프 · 졸업연주에 클래스 이름으로 나가요.</span></p><div class="two">'+btn('clsGo','만들기')+'<button class="btn" type="button" id="clsNo">취소</button></div>':'<div class="spread"><span class="hint">학원 말고 개인 레슨을 하시면 「'+esc(m.name)+' 클래스」를 만들 수 있어요.</span><button class="btn small" type="button" id="clsAsk">클래스 만들기</button></div>')+'</div>':'')+
     '</div>'+(m.ext?'':workCard(m)+duesCard(m))+eventCard(m)+
-    payCards(m)+rrnBox(m)}
+    payCards(m)+rrnBox(m)+pwCard()}
+function pwCard(){return '<div class="card"><div class="spread"><h3 style="margin:0">비밀번호</h3>'+(S.pwEd?'':'<button class="btn small" type="button" id="pwOpen">비밀번호 바꾸기</button>')+'</div>'+
+  (S.pwEd?'<p class="hint">캠프 접수도 같은 비밀번호로 들어가요.</p><label class="f" for="pc0">지금 비밀번호<input type="password" id="pc0" autocomplete="current-password"></label><label class="f" for="pc1">새 비밀번호 <span class="opt">8자 이상</span><input type="password" id="pc1" autocomplete="new-password"></label><label class="f" for="pc2">새 비밀번호 확인<input type="password" id="pc2" autocomplete="new-password"></label>'+(S.pwMsg?'<p class="err">'+esc(S.pwMsg)+'</p>':'')+'<div class="two"><button class="btn primary" type="button" id="pwGo">바꾸기</button><button class="btn" type="button" id="pwNo">취소</button></div>':'<p class="hint">로그인 · 캠프 접수에 쓰는 비밀번호예요. 잊었으면 로그인 화면의 「비밀번호를 잊었어요」로 바꿀 수 있어요.</p>')+'</div>'}
 function payCards(m){var p=m.pay||{},ed=S.payEd,d=S.pay||{};
   var edBtns=function(){return '<div class="two">'+btn('pedSave','저장')+'<button class="btn" type="button" id="pedNo">취소</button></div>'};
   var head=function(t,k,sub){return '<div class="spread"><h3>'+t+(sub?' <span class="opt">'+sub+'</span>':'')+'</h3>'+(ed===k?'':'<button class="btn small" type="button" data-ped="'+k+'">'+(k==='acct'?(p.acct?'고치기':'넣기'):k==='home'?(p.haddr?'고치기':'넣기'):(p.addr?'고치기':'넣기'))+'</button>')+'</div>'};
@@ -733,6 +735,10 @@ document.addEventListener('click',function(e){if(e.target.id==='sdClose2'){S.stu
   if(b.id==='fpBack'){S.fp=null;S.msg='';render();return}
   if(b.id==='sendReset'){var em2=readEmail('fe2');if(!em2){S.msg='가입한 이메일을 넣어 주세요.';render();return}
     run(function(){return call('tForgot',[em2]).then(function(r){if(!r.ok){S.msg=r.msg;return}S.fp={email:em2,sent:true,code:r.code||''}})});return}
+  if(b.id==='pwOpen'){S.pwEd=true;S.pwMsg='';render();return}
+  if(b.id==='pwNo'){S.pwEd=false;S.pwMsg='';render();return}
+  if(b.id==='pwGo'){var p0=v('pc0'),p1=v('pc1'),p2=v('pc2');if(!p0||!p1){S.pwMsg='비밀번호를 넣어 주세요.';render();return}if(p1.length<8){S.pwMsg='새 비밀번호는 8자 이상이에요.';render();return}if(p1!==p2){S.pwMsg='새 비밀번호 두 칸이 달라요.';render();return}
+    b.disabled=true;call('tPwChange',[S.sess,p0,p1]).then(function(r){b.disabled=false;if(!r.ok){S.pwMsg=r.msg;render();return}S.pwEd=false;S.pwMsg='';render();toast('비밀번호를 바꿨어요. 다음 로그인부터 새 비밀번호로 들어가요.')});return}
   if(b.id==='doReset'){var rc=v('rc').trim(),rp=v('rp');run(function(){return call('tReset',[S.fp.email,rc,rp]).then(function(r){if(!r.ok){S.msg=r.msg;return}S.email=S.fp.email;S.fp=null;toast('비밀번호를 바꿨어요. 새 비밀번호로 로그인해 주세요.')})});return}
   if(b.id==='logout'){call('tLogout',[S.sess]);S.sess='';S.me=null;try{sessionStorage.removeItem('tm-sess')}catch(x){}S.hist=[];go('home',true);return}
   if(d.ped){var pp=(S.me&&S.me.pay)||{},sm=!pp.addr||(pp.addr===pp.haddr&&pp.addr2===pp.haddr2&&pp.zip===pp.hzip);

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261101-214334 -->
+<!-- build: 20261101-215018 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -238,8 +238,11 @@ function vHome(){
     '<p class="cap">원본 연회비 명단에서 불러올 때 이름 끝 A·B 글자와 괄호 표기는 「구분 글자」 칸으로 옮겼어요. 화면과 명찰에는 이름만 쓰여요.</p></div>'}
 
 /* ---------- 공통 목록 ---------- */
-function pager(total,per){var pages=Math.max(1,Math.ceil(total/per));if(S.page>=pages)S.page=pages-1;
-  return '<div class="pager"><span>'+total+'개'+(pages>1?' 중 '+(S.page*per+1)+'–'+Math.min(total,(S.page+1)*per):'')+'</span>'+(pages>1?'<button class="btn small" type="button" data-pg="-1" '+(S.page===0?'disabled':'')+'>이전</button><button class="btn small" type="button" data-pg="1" '+(S.page>=pages-1?'disabled':'')+'>다음</button>':'')+'</div>'}
+function pager(total,per){var pages=Math.max(1,Math.ceil(total/per));if(S.page>=pages)S.page=pages-1;var shown=Math.min(total,(S.page+1)*per);
+  return '<div class="pager"><span>'+total+'개'+(shown<total?' 중 '+shown+'개 보임 · 아래로 내리면 더 불러와요':'')+'</span>'+(shown<total?'<button class="btn small" type="button" data-more="1">더 보기</button><button class="btn small ghost" type="button" data-moreall="1">모두 보기</button>':'')+'</div>'}
+/* 표 아래까지 내리면 다음 50개를 저절로 불러옴 (창 스크롤 · 표 안 스크롤 둘 다) */
+document.addEventListener('scroll',function(e){var m=document.querySelector('#app [data-more]');if(!m||S._moreBusy)return;var t=e.target,near=t===document||t===document.documentElement||t===window?(window.innerHeight+window.scrollY>=document.documentElement.scrollHeight-200):(t.classList&&t.classList.contains('tbl')&&t.scrollTop+t.clientHeight>=t.scrollHeight-120);
+  if(!near)return;S._moreBusy=true;S.page++;render();setTimeout(function(){S._moreBusy=false},150)},true);
 function issueBar(){if(!S.issue)return '';var x=issues().filter(function(i){return i[1]===S.issue})[0];return x?'<div class="note info row" style="justify-content:space-between"><span>「'+esc(x[2])+'」만 보는 중 · '+x[3]+'개</span><button class="btn small" type="button" id="clrIssue">모두 보기</button></div>':''}
 function sel(id,opts,v,label){return '<select id="'+id+'" aria-label="'+esc(label)+'">'+opts.map(function(o){var k=Array.isArray(o)?o[0]:o,l=Array.isArray(o)?o[1]:o;return '<option value="'+esc(k)+'" '+(String(k)===String(v||'')?'selected':'')+'>'+esc(l)+'</option>'}).join('')+'</select>'}
 function bulkBar(kind){var n=Object.keys(S.sel).length;return n?'<div class="row note info"><b>'+n+'개 선택</b>'+(S.tab==='tch'?'<span class="cap">한꺼번에 바꾸기</span>'+sel('bKind',[['*','회원 종류 그대로'],['정식 교사','교사회원'],['중급 연수','연수교사 · 중급'],['초급 연수','연수교사 · 초급'],['확인 전','확인 전'],['비회원','비회원'],['외국인','외국인']],'*','회원 종류')+sel('bCamp',[['*','캠프교수 그대로'],['예','캠프교수 예'],['아니오','캠프교수 아니오']],'*','캠프교수')+sel('bFree',[['*','회비면제 그대로'],['면제','회비면제 예'],['납부','회비면제 아니오']],'*','회비면제')+'<button class="btn small primary" type="button" id="bApply">선택한 '+n+'명에게 적용</button><span class="cap">· 확인 표시:</span>':'')+'<button class="btn small primary" type="button" data-bulk="확인">확인으로</button><button class="btn small" type="button" data-bulk="확인 필요">확인 필요로</button><button class="btn small ghost" type="button" data-bulk="확인 전">확인 전으로</button>'+(S.tab==='stu'?'<button class="btn small" type="button" id="bDelStu" style="color:var(--bad)">선택 삭제</button>':'')+'<button class="btn small ghost" type="button" id="selClr">선택 풀기</button></div>':''}
@@ -269,7 +272,7 @@ function clsFix(){var RE=/스즈키 학원이 아닌 「([^」]+)」/,n=0,names=
 function acadSeg(){var on=S.D.acad.filter(function(a){return !a['상태']||a['상태']==='운영'}).length,off=S.D.acad.length-on,x=S.f.st==='off';
   return '<div class="row" role="group" aria-label="학원 보기" style="margin:0 0 10px"><button class="btn'+(x?'':' primary')+'" type="button" data-ast="" aria-pressed="'+!x+'">운영 중 '+on+'곳</button><button class="btn'+(x?' primary':'')+'" type="button" data-ast="off" aria-pressed="'+x+'">휴원 · 탈퇴 '+off+'곳</button>'+(x?'<span class="cap">다시 운영하면 학원을 열어 상태를 「운영」으로 바꾸세요. 그러면 운영 중 목록 · 선생님 화면 · 행사 명단에 다시 나와요.</span>':'')+'</div>'}
 function vAcads(){
-  var list=acadList(),per=50,page=list.slice(S.page*per,(S.page+1)*per);
+  var list=acadList(),per=50,page=list.slice(0,(S.page+1)*per);
   var tc={},sc={};S.D.tch.forEach(function(t){tAcads(t).forEach(function(id){tc[id]=(tc[id]||0)+1})});S.D.stu.forEach(function(s){if(s['상태']==='재원')sc[s['학원ID']]=(sc[s['학원ID']]||0)+1});
   var sds=[];S.D.acad.forEach(function(a){if(a['시도']&&sds.indexOf(a['시도'])<0)sds.push(a['시도'])});
   return '<div class="sec-h"><div><h2>학원정보</h2><p>학원은 관리자가 만들고, 대표로 지정된 선생님은 자기 학원 연락처 · 주소 · 교습과목을 고칠 수 있어요(고치면 「확인 필요」).</p></div><button class="btn primary" type="button" data-new="acad">+ 학원 추가</button></div>'+
@@ -381,7 +384,7 @@ function kindBox(t){var k=t['회원구분']||'확인 전',g=kGrp(k);var o=functi
   return '<div class="f"><span>구분 <span class="cap">회원 · 비회원 · 외국인 · 관계자 · 명단 자격: '+esc(t['명단자격']||'없음')+(t['명단취득']?' · '+esc(t['명단취득']):'')+'</span></span><div class="row" style="flex-wrap:nowrap"><select id="kGrp" aria-label="구분" style="width:auto;flex:none">'+o(KGRP,g)+'</select><select id="kSub" aria-label="회원 종류" style="flex:1"'+(g==='회원'?'':' disabled hidden')+'>'+o(KSUB,g==='회원'?k:'확인 전')+'</select></div>'+
     '<input type="hidden" id="e_회원구분" value="'+esc(k)+'"><p class="cap" id="kNote"'+(g==='회원'?' hidden':'')+'>회원이 아니면 연회비 면제로 저장돼요. 관계자는 「관계자정보」 탭으로 옮겨 가요.</p></div>'}
 function kindSync(){var g=document.getElementById('kGrp').value,sb=document.getElementById('kSub');sb.disabled=g!=='회원';sb.hidden=g!=='회원';document.getElementById('e_회원구분').value=g==='회원'?sb.value:g;var nt=document.getElementById('kNote');if(nt)nt.hidden=g==='회원';var xf=document.getElementById('extF');if(xf)xf.hidden=g!=='외부인'}
-function vTeachers(){var list=tchList(),per=50,page=list.slice(S.page*per,(S.page+1)*per);
+function vTeachers(){var list=tchList(),per=50,page=list.slice(0,(S.page+1)*per);
   return '<div class="sec-h"><div><h2>교사정보</h2><p>회원 구분(정식 교사 · 중급 연수 · 초급 연수)은 짐작하지 않고 「확인 전」으로 두었어요. 명단 자격은 원본 그대로예요.</p></div><button class="btn primary" type="button" data-new="tch">+ 교사 추가</button></div>'+
   (S.edit&&S.edit.kind==='tch'?tchEditor():'')+tchTiles(list)+issueBar()+
   '<div class="panel"><div class="filters"><input type="search" id="q" value="'+esc(S.q)+'" placeholder="이름·전화·학원" style="width:min(220px,100%)">'+
@@ -484,7 +487,7 @@ function stuList(){var qq=q(),f=S.f,is=S.issue;
     if(f.ac&&s['학원ID']!==f.ac)return false; if(f.ins&&(f.ins==='-'?INSTS.indexOf(s['전공'])>=0:s['전공']!==f.ins))return false; if(f.ck&&s['확인']!==f.ck)return false;
     if(f.du){var d=duesOf('학생',s['학생ID'],'2026'),paid=d&&+d['납부']>0;if(f.du==='납부'?!paid:paid)return false}
     return true})}
-function vStudents(){var list=stuList(),per=50,page=list.slice(S.page*per,(S.page+1)*per);
+function vStudents(){var list=stuList(),per=50,page=list.slice(0,(S.page+1)*per);
   var dn={};list.forEach(function(s){var k=s['학원ID']+'|'+s['이름'];dn[k]=(dn[k]||0)+1});
   return '<div class="sec-h"><div><h2>학생정보</h2><p>지금은 관리자가 정리해요. 나중에 원장님이 우리 학원 학생을 추가·수정해요.</p></div><button class="btn primary" type="button" data-new="stu">+ 학생 추가</button></div>'+
   (S.edit&&S.edit.kind==='stu'?stuEditor():'')+stuTiles(list)+issueBar()+
@@ -910,7 +913,7 @@ function render(){
   who.innerHTML='<span><b>관리자</b></span><button type="button" id="reload">새로 고침</button><button type="button" id="logout">로그아웃</button>';
   var need=S.D.acad.concat(S.D.tch).filter(function(o){return o['확인']==='확인 필요'}).length;
   tabs.innerHTML=TABS.map(function(t){return '<button role="tab" type="button" data-tab="'+t[0]+'" aria-selected="'+(S.tab===t[0])+'">'+t[1]+(t[0]==='home'&&need?'<span class="cnt">'+need+'</span>':'')+(t[0]==='req'&&S.D.reqN?'<span class="cnt">'+S.D.reqN+'</span>':'')+(t[0]==='pay'&&S.D.payN?'<span class="cnt">'+S.D.payN+'</span>':'')+(t[0]==='ask'&&S.D.bN?'<span class="cnt">'+S.D.bN+'</span>':'')+'</button>'}).join('');
-  var keepT=S._rt===S.tab&&S.tab==='bank'?[].map.call(app.querySelectorAll('.tbl'),function(e){return [e.scrollTop,e.scrollLeft]}):[],keepY=window.scrollY;
+  var keepT=S._rt===S.tab&&['bank','acad','tch','stu','ext'].indexOf(S.tab)>=0?[].map.call(app.querySelectorAll('.tbl'),function(e){return [e.scrollTop,e.scrollLeft]}):[],keepY=window.scrollY;
   app.classList.toggle('bankz',S.tab==='bank');app.innerHTML=({home:vHome,acad:vAcads,tch:vTeachers,ext:vExt,stu:vStudents,req:vReq,pay:vPay,bank:vBank,prog:vProg,ask:vAskA,log:vLog,set:vSet})[S.tab]();tipify(app);if(document.getElementById('pq_e_원장교사ID'))headFilter();
   if(keepT.length){[].forEach.call(app.querySelectorAll('.tbl'),function(e,i){if(keepT[i]){e.scrollTop=keepT[i][0];e.scrollLeft=keepT[i][1]}});window.scrollTo(0,keepY)}S._rt=S.tab;gnbH();bFloat();
   var i=TABS.map(function(t){return t[0]}).indexOf(S.tab);document.getElementById('prevBtn').disabled=i<=0;document.getElementById('nextBtn').disabled=i>=TABS.length-1;
@@ -950,7 +953,7 @@ document.addEventListener('submit',function(e){if(e.target.id!=='loginF')return;
     if(!r.ok){document.getElementById('lerr').textContent=r.msg;return}S.sess=r.sess;try{sessionStorage.setItem('mm-sess',r.sess)}catch(x){}document.getElementById('app').innerHTML='<div class="panel"><span><span class="spin"></span> 명단을 불러오는 중…</span></div>';load()})});
 document.addEventListener('click',function(e){
   var ck=e.target.closest('input[data-ck]');if(ck){e.stopPropagation();if(ck.checked)S.sel[ck.dataset.ck]=1;else delete S.sel[ck.dataset.ck];render();return}
-  if(e.target.id==='ckAll'){var per=50,l=listOf().slice(S.page*per,(S.page+1)*per),k=keyOf(kindOf());l.forEach(function(o){if(e.target.checked)S.sel[o[k]]=1;else delete S.sel[o[k]]});render();return}
+  if(e.target.id==='ckAll'){var per=50,l=listOf().slice(0,(S.page+1)*per),k=keyOf(kindOf());l.forEach(function(o){if(e.target.checked)S.sel[o[k]]=1;else delete S.sel[o[k]]});render();return}
   var bs=e.target.closest('tr[data-bsk],tr[data-bsa],tr[data-bspj]');if(bs){S.bf=S.bf||{};if(bs.dataset.bspj!=null)S.bf.pj=bs.dataset.bspj;if(bs.dataset.bsk!=null)S.bf.k=bs.dataset.bsk;if(bs.dataset.bsa!=null){S.bf.a=bs.dataset.bsa==='-'?'':bs.dataset.bsa;S.bf.io='입금'}S.bv='list';S.bp=0;render();return}
   var tg=e.target.closest('.tile[data-go]');if(tg&&!e.target.closest('.tip')){goTile(tg.getAttribute('data-go'));return}
   var b=e.target.closest('button,tr[data-edit]');if(!b)return;var d=b.dataset;
@@ -962,6 +965,8 @@ document.addEventListener('click',function(e){
   if(d.issue){var p=d.issue.split('|');go(p[0]);S.issue=p[1];render();return}
   if(b.id==='clrIssue'){S.issue='';S.page=0;render();return}
   if(d.pg){S.page+=+d.pg;render();window.scrollTo(0,0);return}
+  if(d.more){S.page++;render();return}
+  if(d.moreall){S.page=9999;render();return}
   if(b.id==='wEdit'){S.wEd={tid:S.edit.id,rows:worksOfA(S.edit.id).map(function(w){return {id:w['학원ID'],text:w['학원명'],t:!w['학원ID'],start:w['시작'],end:w['종료'],main:w['주근무']==='예'}})};render();return}
   if(b.id==='wCancel'){S.wEd=null;render();return}
   if(b.id==='wAdd'||b.id==='wAddT'){readWEd();S.wEd.rows.push({id:'',text:'',t:b.id==='wAddT',start:'',end:'',main:!S.wEd.rows.some(function(r){return r.main&&!r.end})});render();return}

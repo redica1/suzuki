@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261101-144014 -->
+<!-- build: 20261101-145330 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -421,8 +421,8 @@ document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest
   if(d.sfcx){const no=d.sfcx;ask('관계자 접수를 취소할까요?',esc(no)+' 접수의 모든 사람을 취소해요. 입금 전 접수만 여기서 취소돼요.',()=>call('staffCancel',[no],r=>{setData(r);toast(no+' 취소했어요')},'취소하고 있어요…'),'취소하기');return}});
 const memTag=sb=>isGuestSb(sb)?'<span class="pill gst">비회원</span>':'<span class="pill mem">회원</span>';
 function vSubs(){
-  const q=S.q.trim();const mf=S.mf||'all';const F=[['all','전체'],['unpaid','입금 전·차액'],['rp','신고 확인 전'],['ok','입금 확인']];
-  const keep=p=>S.f==='all'||(S.f==='unpaid'&&p.status==='정상'&&pAmt(p)-(+p.paidAmt||0)>0)||(S.f==='rp'&&p.status==='정상'&&p.pay==='신고')||(S.f==='ok'&&+p.paidAmt>0);
+  const q=S.q.trim();const mf=S.mf||'all';const F=[['all','전체'],['unpaid','입금 전·차액'],['rp','신고 확인 전'],['ok','입금 확인'],['over','더 냄']];
+  const keep=p=>S.f==='all'||(S.f==='unpaid'&&p.status==='정상'&&pAmt(p)-(+p.paidAmt||0)>0)||(S.f==='rp'&&p.status==='정상'&&p.pay==='신고')||(S.f==='ok'&&+p.paidAmt>0)||(S.f==='over'&&p.status==='정상'&&(+p.paidAmt||0)>pAmt(p));
   const cat=sb=>sb.acad==='비회원'?'guest':sb.acad==='관계자'?'staff':/^해외 · /.test(sb.acad)?'intl':'mem';
   const MF=[['all','전체'],['mem','회원'],['guest','비회원'],['staff','관계자'],['intl','해외']],mfN=k=>S.D.subs.filter(sb=>k==='all'||cat(sb)===k).length;
   const subs=S.D.subs.filter(sb=>mf==='all'||cat(sb)===mf).filter(sb=>!q||sb.no.includes(q)||sb.acad.includes(q)||sb.owner.includes(q)||sb.ppl.some(p=>p.name.includes(q))).slice().sort((a,b)=>String(b.createdAt).localeCompare(String(a.createdAt)));

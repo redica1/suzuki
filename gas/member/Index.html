@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261101-160015 -->
+<!-- build: 20261101-190657 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -583,8 +583,9 @@ function bCatOpts(inn,v,pj){var io=inn?'입금':'출금',R=(S.bCatRows||[]).filt
   var o=function(x){return '<option value="'+esc(x['구분'])+'"'+(x['구분']===v?' selected':'')+'>'+esc(bCatShort(x))+'</option>'},h='<option value=""></option>';
   var grp=function(L){var g={},ord=[];L.forEach(function(x){var l=[x['대분류'],x['중분류']].filter(Boolean).join(' › ')||'분류 없음';if(!g[l]){g[l]=[];ord.push(l)}g[l].push(x)});return ord.map(function(l){return '<optgroup label="'+esc(l)+'">'+g[l].map(o).join('')+'</optgroup>'}).join('')};
   var nw='<option value="__new">+ 새 항목 만들기…</option>';
-  if(K.length){var a=R.filter(function(x){return K.indexOf(x['구분'])>=0}),b=R.filter(function(x){return K.indexOf(x['구분'])<0});return h+nw+'<optgroup label="★ '+esc(p['이름'])+'">'+a.map(o).join('')+'</optgroup>'+grp(b)}
-  return h+nw+grp(R)}
+  var X=io==='출금'?(S.bCatRows||[]).filter(function(x){return bIO(x,'입금')&&!bIO(x,'출금')&&(x['사용']!=='안씀'||x['구분']===v)}):[],xg=X.length?'<optgroup label="입금 항목에서 돌려준 돈 (환불 · 빼기)">'+X.map(o).join('')+'</optgroup>':'';
+  if(K.length){var a=R.filter(function(x){return K.indexOf(x['구분'])>=0}),b=R.filter(function(x){return K.indexOf(x['구분'])<0});return h+nw+'<optgroup label="★ '+esc(p['이름'])+'">'+a.map(o).join('')+'</optgroup>'+grp(b)+xg}
+  return h+nw+grp(R)+xg}
 var BIZ_AB={'스즈키캠프':'캠프','졸업연주':'졸연','교사연수':'연수','협회 운영':'운영'};
 function bCatShort(x){var n=x['이름']||x['구분'];return x['구분']!==n&&x['대분류']?(BIZ_AB[x['대분류']]||x['대분류'])+' '+n:n}
 function bBizList(){var L=[];(S.bCatRows||[]).forEach(function(x){var b=x['대분류'];if(b&&L.indexOf(b)<0)L.push(b)});return L}

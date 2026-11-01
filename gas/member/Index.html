@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261101-155527 -->
+<!-- build: 20261101-160015 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -142,6 +142,7 @@ tbody td b,tbody td strong{font-weight:400}tr.foot td,tr.foot td b,tr.cgrp td b,
 td .pill,td .tag,td .cap,td small,td .btn.small{font-size:10pt}
 td input:not([type=checkbox]):not([type=radio]),td select{font-size:10pt;padding:1px 4px;height:24px;border-radius:5px}
 td .btn.small{padding:0 6px;line-height:1.5}
+table .num,td.num,th.num{font-family:inherit !important;font-variant-numeric:tabular-nums}
 th .trz{position:absolute;right:-3px;top:0;bottom:0;width:7px;cursor:col-resize;z-index:3}th .trz:hover,th .trz.on{background:rgba(26,115,232,.35)}
 </style>
 </head><body>
@@ -1165,16 +1166,17 @@ if(e.target.dataset&&e.target.dataset.pck){S.pSel=S.pSel||{};if(e.target.checked
 </script>
 <script>
 (function(){
-  function key(t,i){var h=[].map.call(t.querySelectorAll('thead th'),function(x){return (x.textContent||'').trim().slice(0,8)}).join('|');return 'tblW:'+i+':'+h.slice(0,120)}
+  function hd(t){var r=t.tHead&&t.tHead.rows[0]||t.rows[0];if(!r)return [];var c=[].slice.call(r.cells);return c.length&&c.every(function(x){return x.tagName==='TH'})?c:[]}
+  function key(t,i){var h=[].map.call(hd(t),function(x){return (x.textContent||'').trim().slice(0,8)}).join('|');return 'tblW:'+i+':'+h.slice(0,120)}
   function load(k){try{return JSON.parse(localStorage.getItem(k)||'null')}catch(e){return null}}
   function save(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
-  function fix(t,w){var ths=t.querySelectorAll('thead th');var s=0;[].forEach.call(ths,function(th,i){var x=w&&w[i]?w[i]:th.offsetWidth;th.style.width=x+'px';th.style.minWidth=x+'px';th.style.maxWidth=x+'px';s+=x});t.style.tableLayout='fixed';t.style.width=s+'px';[].forEach.call(t.querySelectorAll('tbody td'),function(td){td.style.overflow='hidden';td.style.textOverflow='ellipsis'})}
-  function setup(){var T=document.querySelectorAll('table');[].forEach.call(T,function(t,i){if(t.dataset.trz||t.querySelector('.bcr,.cfr')||!t.querySelector('thead th'))return;t.dataset.trz=1;var k=key(t,i),w=load(k),ths=t.querySelectorAll('thead th');if(w&&w.length===ths.length)fix(t,w);
+  function fix(t,w){var ths=hd(t);var s=0;[].forEach.call(ths,function(th,i){var x=w&&w[i]?w[i]:th.offsetWidth;th.style.width=x+'px';th.style.minWidth=x+'px';th.style.maxWidth=x+'px';s+=x});t.style.tableLayout='fixed';t.style.width=s+'px';[].forEach.call(t.querySelectorAll('tbody td'),function(td){td.style.overflow='hidden';td.style.textOverflow='ellipsis'})}
+  function setup(){var T=document.querySelectorAll('table');[].forEach.call(T,function(t,i){var ths=hd(t);if(t.dataset.trz||t.querySelector('.bcr,.cfr')||!ths.length)return;t.dataset.trz=1;var k=key(t,i),w=load(k);if(w&&w.length===ths.length)fix(t,w);
     [].forEach.call(ths,function(th,ci){if(getComputedStyle(th).position==='static')th.style.position='relative';var h=document.createElement('span');h.className='trz';h.title='끌어서 칸 너비 조절';th.appendChild(h);
       h.addEventListener('click',function(e){e.stopPropagation()});
       h.addEventListener('mousedown',function(e){e.preventDefault();e.stopPropagation();if(t.style.tableLayout!=='fixed')fix(t);var x0=e.clientX,w0=th.offsetWidth,tw=t.offsetWidth;h.classList.add('on');
         function mv(ev){var nw=Math.max(30,w0+ev.clientX-x0);th.style.width=nw+'px';th.style.minWidth=nw+'px';th.style.maxWidth=nw+'px';t.style.width=(tw+nw-w0)+'px'}
-        function up(){h.classList.remove('on');document.removeEventListener('mousemove',mv);document.removeEventListener('mouseup',up);save(k,[].map.call(t.querySelectorAll('thead th'),function(x){return x.offsetWidth}))}
+        function up(){h.classList.remove('on');document.removeEventListener('mousemove',mv);document.removeEventListener('mouseup',up);save(k,[].map.call(hd(t),function(x){return x.offsetWidth}))}
         document.addEventListener('mousemove',mv);document.addEventListener('mouseup',up)})})})}
   var q=0;new MutationObserver(function(){if(q)return;q=1;requestAnimationFrame(function(){q=0;setup()})}).observe(document.body,{childList:true,subtree:true});setup();
 })();

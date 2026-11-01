@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261101-123600 -->
+<!-- build: 20261101-125053 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -461,20 +461,41 @@ function subBlock(sb,keep,q,subs){const live=sb.ppl.filter(p=>p.status==='정상
         <td><input type="text" id="m_${p.id}" value="${esc(a.memo||'')}" style="width:110px" aria-label="${esc(p.name)} 메모"></td>
         <td><div class="row" style="flex-wrap:nowrap">${on?`<button class="btn small" type="button" data-ok="${p.id}">고치기</button><button class="btn small ghost" type="button" data-unok="${p.id}">취소</button>`:live?`<button class="btn small primary" type="button" data-ok="${p.id}">확인</button>`:''}</div></td></tr>`}).join('')}
       </tbody></table></div></details>`}
-function vRp(){const L=people().filter(x=>x.p.status==='정상'&&x.p.pay==='신고');
-  return `<div class="panel"><div class="spread"><div><b>입금 신고 ${L.length}명</b> <span class="hint">통장과 입금자명·날짜·금액을 맞춰 보고 <b>통장 입금일을 골라</b> 「확인」. 맞지 않으면 「반려」(사유가 선생님 화면에 보여요).</span></div><button class="btn small" type="button" id="reload">새로 불러오기</button></div></div>
+/* 통장 잇기 (11-01): 신고를 학원 · 입금자명 · 입금일로 묶어 통장 입금과 맞춤 */
+const bnorm=x=>String(x||'').replace(/[\s()（）\[\]·.,_-]/g,'').toLowerCase();
+function loadBankTx(){S.bankTx=S.bankTx||{loading:1};google.script.run.withSuccessHandler(r=>{S.bankTx=r&&r.ok?r:{none:1};if(S.tab==='rp')render()}).withFailureHandler(()=>{S.bankTx={none:1};if(S.tab==='rp')render()}).adminBank(S.tok)}
+function rpGroups(L){const G={},T=(S.bankTx&&S.bankTx.tx)||[],dd=(a,b)=>Math.abs((new Date(a)-new Date(b))/864e5);
+  L.forEach(({sb,p})=>{const r=repRow(p)||{},k=sb.acad+'|'+bnorm(r.name)+'|'+(r.date||'');(G[k]=G[k]||{k,acad:sb.acad,name:r.name||'',date:r.date||'',ppl:[],sum:0}).ppl.push(p);G[k].sum+=+r.a||0});
+  Object.values(G).forEach(g=>{const nm=bnorm(g.name),ac=bnorm(g.acad.replace(/스즈키$|음악학원$/,'')),ids=g.ppl.map(p=>p.id);
+    g.linked=T.find(t=>ids.every(id=>t.pids.includes(id)));if(g.linked)return;
+    const free=t=>t.amt-t.used>=g.sum,sc=t=>{const w=bnorm(t.who);return (nm&&w.includes(nm))||(ac&&w.includes(ac))};
+    g.cand=T.filter(t=>t.amt===g.sum&&t.used===0&&t.at.slice(0,10)===g.date).map(t=>({t,how:'같음',name:sc(t)}));
+    if(!g.cand.length)g.cand=T.filter(t=>t.amt===g.sum&&t.used===0&&dd(t.at.slice(0,10),g.date)<=3).map(t=>({t,how:'날짜 다름',name:sc(t)}));
+    if(!g.cand.length)g.cand=T.filter(t=>free(t)&&t.amt>g.sum&&t.at.slice(0,10)===g.date).map(t=>({t,how:'더 큰 입금',name:sc(t)}));
+    g.cand.sort((a,b)=>b.name-a.name);g.near=g.cand.length?[]:T.filter(t=>t.at.slice(0,10)===g.date&&t.amt-t.used>0)});
+  return G}
+function rpTxOf(pid){const g=Object.values(S.rpG||{}).find(x=>x.ppl.some(p=>p.id===pid));if(!g||g.linked||!g.cand.length)return '';const el=document.querySelector('[data-rptx="'+g.k.replace(/"/g,'')+'"]');return el?el.value:g.cand[0].t.id}
+function rpBankCell(g,first){if(!S.bankTx||S.bankTx.loading)return '<span class="hint">통장 읽는 중…</span>';if(S.bankTx.none)return '<span class="hint">통장 연결 안 됨</span>';
+  if(g.linked)return `<span class="pill ok">통장 이어짐</span><br><small class="faint">${esc(g.linked.at.slice(5))} ${esc(g.linked.who)}</small>`;
+  if(!first)return `<small class="faint">↑ 같은 입금</small>`;
+  if(g.cand.length)return `<span class="pill ${g.cand[0].how==='같음'?'ok':'due'}">통장 ${g.cand[0].how==='같음'?'✓':g.cand[0].how}</span><br><select data-rptx="${esc(g.k.replace(/"/g,''))}" style="max-width:220px;font-size:13px">${g.cand.map(c=>`<option value="${esc(c.t.id)}">${esc(c.t.at.slice(5)+' '+c.t.who+' '+c.t.amt.toLocaleString('ko-KR'))}${c.name?' ✓':''}</option>`).join('')}</select><br><small class="faint">${g.ppl.length}명 합 ${won(g.sum)}</small>`;
+  return `<span class="pill due">통장에 없음</span><br><small class="faint">${g.ppl.length}명 합 ${won(g.sum)}${g.near.length?' · 같은 날 '+g.near.length+'건: '+esc(g.near.slice(0,2).map(t=>t.who+' '+t.amt.toLocaleString('ko-KR')).join(', ')):''}</small>`}
+function vRp(){const L=people().filter(x=>x.p.status==='정상'&&x.p.pay==='신고');if(!S.bankTx)loadBankTx();S.rpG=rpGroups(L);const gOf=p=>Object.values(S.rpG).find(g=>g.ppl.includes(p)),seen={};
+  L.sort((x,y)=>{const a=gOf(x.p),b=gOf(y.p);return (a.date+a.k).localeCompare(b.date+b.k)});
+  return `<div class="panel"><div class="spread"><div><b>입금 신고 ${L.length}명</b> <span class="hint">통장과 입금자명·날짜·금액을 맞춰 보고 <b>통장 입금일을 골라</b> 「확인」. 통장에 맞는 입금이 있으면 날짜가 미리 채워지고, 확인할 때 그 통장 입금에 사람별로 저절로 이어져요. 맞지 않으면 「반려」(사유가 선생님 화면에 보여요).</span></div><span class="row" style="gap:6px"><button class="btn small ghost" type="button" id="rpBankRe">통장 다시 읽기</button><button class="btn small" type="button" id="reload">새로 불러오기</button></span></div></div>
   ${L.length?`<div class="panel row" id="rpBar" style="gap:8px;flex-wrap:wrap;align-items:center">
     <label class="row" style="gap:6px;flex-wrap:nowrap"><input type="checkbox" id="rpAll" ${L.every(x=>S.rpSel[x.p.id])?'checked':''}><b>전체 선택</b></label><span class="hint" id="rpCnt">${L.filter(x=>S.rpSel[x.p.id]).length}명 선택</span>
     <span style="flex:1"></span>
     <button class="btn small" type="button" id="rpSame" title="선택한 사람마다 선생님이 신고한 날짜를 통장 입금일 칸에 넣어요">신고일 넣기</button>
     <span class="hint">또는</span><input type="date" id="rpDay" aria-label="선택한 사람 통장 입금일"><button class="btn small" type="button" id="rpDayGo">날짜 넣기</button>
     <button class="btn small primary" type="button" id="rpOkAll">선택 확인</button><button class="btn small" type="button" id="rpRejAll">선택 반려</button></div>`:''}
-  <div class="panel tbl"><table><thead><tr><th></th><th>접수</th><th>학원</th><th>이름</th><th>입금자명</th><th>신고 입금일</th><th class="r">신고 금액</th><th class="r">청구(남은)</th><th>메모</th><th>통장 입금일 *</th><th class="r">확인 금액</th><th></th></tr></thead><tbody>
-  ${L.map(({sb,p})=>{const r=repRow(p)||{},due=pAmt(p)-(+p.paidAmt||0),g=(+r.a||0)-due;return `<tr><td><input type="checkbox" data-rpsel="${p.id}" ${S.rpSel[p.id]?'checked':''} aria-label="${esc(p.name)} 선택"></td><td class="num">${sb.no}</td><td>${memTag(sb)} ${esc(sb.acad)}<br><small class="faint">${esc(sb.owner)}${sb.contact?' · '+esc(sb.contact):''}</small></td><td><b>${esc(p.name)}</b></td><td>${esc(r.name)}</td><td>${kday(r.date)}</td>
+  <div class="panel tbl"><table><thead><tr><th></th><th>접수</th><th>학원</th><th>이름</th><th>입금자명</th><th>신고 입금일</th><th class="r">신고 금액</th><th class="r">청구(남은)</th><th>메모</th><th>통장</th><th>통장 입금일 *</th><th class="r">확인 금액</th><th></th></tr></thead><tbody>
+  ${L.map(({sb,p})=>{const r=repRow(p)||{},due=pAmt(p)-(+p.paidAmt||0),g=(+r.a||0)-due,G0=gOf(p),first=!seen[G0.k];seen[G0.k]=1;const bd=G0.linked?G0.linked.at.slice(0,10):G0.cand&&G0.cand.length?G0.cand[0].t.at.slice(0,10):'';return `<tr${first?' style="border-top:2px solid var(--line)"':''}><td><input type="checkbox" data-rpsel="${p.id}" ${S.rpSel[p.id]?'checked':''} aria-label="${esc(p.name)} 선택"></td><td class="num">${sb.no}</td><td>${memTag(sb)} ${esc(sb.acad)}<br><small class="faint">${esc(sb.owner)}${sb.contact?' · '+esc(sb.contact):''}</small></td><td><b>${esc(p.name)}</b></td><td>${esc(r.name)}</td><td>${kday(r.date)}</td>
     <td class="r num">${won(r.a)}${+p.paidAmt?`<br><small class="faint">이미 확인 ${won(p.paidAmt)}</small>`:''}</td><td class="r num">${won(due)}${g?`<br><small style="color:var(--${g<0?'bad':'rosin'})">${g>0?'+':''}${won(g)}</small>`:''}</td><td><small>${esc(p.rep&&p.rep.memo||'')}${p.rep&&p.rep.edited?`<br><span class="faint">${esc(p.rep.edited.slice(5,16))} 수정</span>`:''}</small></td>
-    <td><input type="date" id="d_${p.id}" value="" data-rdate="${esc(r.date||'')}" aria-label="${esc(p.name)} 통장 입금일"> <button class="btn small ghost" type="button" data-same="${p.id}|${esc(r.date||'')}" title="신고한 날짜를 넣어요">신고일</button></td>
+    <td>${rpBankCell(G0,first)}</td>
+    <td><input type="date" id="d_${p.id}" value="${esc(bd)}" data-rdate="${esc(r.date||'')}" aria-label="${esc(p.name)} 통장 입금일"> <button class="btn small ghost" type="button" data-same="${p.id}|${esc(r.date||'')}" title="신고한 날짜를 넣어요">신고일</button></td>
     <td class="r"><input class="num" type="text" inputmode="numeric" id="a_${p.id}" value="${((+p.paidAmt||0)+(+r.a||0)).toLocaleString('ko-KR')}" title="이미 확인된 금액 + 이번 신고 금액 (사람별 입금 합계)"></td>
-    <td><div class="row" style="flex-wrap:nowrap"><button class="btn small primary" type="button" data-ok="${p.id}">확인</button><button class="btn small" type="button" data-rej="${p.id}">반려</button></div></td></tr>`}).join('')||'<tr><td colspan="12" class="hint">확인을 기다리는 입금 신고가 없어요.</td></tr>'}
+    <td><div class="row" style="flex-wrap:nowrap"><button class="btn small primary" type="button" data-ok="${p.id}">확인</button><button class="btn small" type="button" data-rej="${p.id}">반려</button></div></td></tr>`}).join('')||'<tr><td colspan="13" class="hint">확인을 기다리는 입금 신고가 없어요.</td></tr>'}
   </tbody></table></div>`}
 /* 환불 규정 (선생님 화면과 같은 값) — 예전 기록에 규정이 없으면 요청 날짜로 계산 */
 const CX_RULES=[{until:'2026-12-10',label:'접수 마감 전',rate:100},{until:'2026-12-28',label:'캠프 14일 전까지',rate:50},{until:'2027-01-10',label:'캠프 전날까지',rate:0}];
@@ -1994,7 +2015,8 @@ const val=id=>((document.getElementById(id)||{}).value||'').trim();
 function confirmOne(pid){const d=val('d_'+pid),a=num('a_'+pid);
   if(!d){toast('입금일을 먼저 선택해 주세요');const el=document.getElementById('d_'+pid);if(el)el.focus();return}
   if(!a){toast('입금액을 넣어 주세요');return}
-  call('adminConfirm',[[{pid,date:d,amt:a,memo:val('m_'+pid)}]],r=>{setData(r);toast('입금 확인 · '+kday(d)+' '+won(a))})}
+  const tx=rpTxOf(pid),P0=people().find(x=>x.p.id===pid),ra=P0?(+(repRow(P0.p)||{}).a||0):0,go=()=>call('adminConfirm',[[{pid,date:d,amt:a,memo:val('m_'+pid),tx,repAmt:ra}]],r=>{setData(r);S.bankTx=null;toast('입금 확인 · '+kday(d)+' '+won(a)+(tx?' · 통장에 이음':''))});
+  if(!tx&&S.bankTx&&S.bankTx.tx&&S.tab==='rp'){ask('통장에 맞는 입금이 아직 없어요','그래도 입금 확인할까요? 통장과는 나중에 회원관리 통장 탭에서 이을 수 있어요.',go,'그래도 확인');return}go()}
 document.addEventListener('click',e=>{const tr=e.target.closest('tr.ensrow');if(tr&&!e.target.closest('button,input,label')){S.ensOpen=S.ensOpen===tr.dataset.ensopen?'':tr.dataset.ensopen;render()}});
 document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const d=b.dataset;
   if(ccClick(b,d)||sfClick(b,d)||scClick(b,d)||BUD.click(b,d))return;
@@ -2039,11 +2061,12 @@ document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)r
   if(d.ok){confirmOne(d.ok);return}
   if(b.id==='rpSame'||b.id==='rpDayGo'){const ids=rpPicked();if(!ids.length){toast('먼저 사람을 선택해 주세요');return}const day=b.id==='rpDayGo'?val('rpDay'):'';if(b.id==='rpDayGo'&&!day){toast('넣을 날짜를 골라 주세요');return}
     ids.forEach(id=>{const el=document.getElementById('d_'+id);if(el)el.value=day||el.dataset.rdate||''});toast(ids.length+'명에게 '+(day?kday(day):'신고일')+'을(를) 넣었어요');return}
+  if(b.id==='rpBankRe'){S.bankTx=null;render();return}
   if(b.id==='rpOkAll'){const ids=rpPicked();if(!ids.length){toast('먼저 사람을 선택해 주세요');return}
     const noD=ids.filter(id=>!val('d_'+id));if(noD.length){toast('통장 입금일이 빈 사람이 '+noD.length+'명 있어요. 「신고일 넣기」나 「날짜 넣기」를 먼저 눌러 주세요');const el=document.getElementById('d_'+noD[0]);if(el)el.focus();return}
     const noA=ids.filter(id=>!num('a_'+id));if(noA.length){toast('확인 금액이 빈 사람이 있어요');return}
-    const items=ids.map(id=>({pid:id,date:val('d_'+id),amt:num('a_'+id),memo:''}));const sum=items.reduce((t,x)=>t+x.amt,0);
-    ask(ids.length+'명 입금 확인할까요?','합계 '+won(sum)+' · 사람마다 고른 통장 입금일로 확인돼요.',()=>call('adminConfirm',[items],r=>{S.rpSel={};setData(r);toast(ids.length+'명 입금 확인했어요')}),'모두 확인');return}
+    const items=ids.map(id=>{const P0=people().find(x=>x.p.id===id);return {pid:id,date:val('d_'+id),amt:num('a_'+id),memo:'',tx:rpTxOf(id),repAmt:P0?(+(repRow(P0.p)||{}).a||0):0}});const sum=items.reduce((t,x)=>t+x.amt,0),noTx=items.filter(x=>!x.tx).length;
+    ask(ids.length+'명 입금 확인할까요?','합계 '+won(sum)+' · 사람마다 고른 통장 입금일로 확인돼요.'+(noTx?' 통장에 맞는 입금이 없는 사람 '+noTx+'명은 확인만 돼요.':' 통장 입금에도 사람별로 이어져요.'),()=>call('adminConfirm',[items],r=>{S.rpSel={};setData(r);S.bankTx=null;toast(ids.length+'명 입금 확인했어요')}),'모두 확인');return}
   if(b.id==='rpRejAll'){const ids=rpPicked();if(!ids.length){toast('먼저 사람을 선택해 주세요');return}
     ask(ids.length+'명 입금 신고를 반려할까요?','선생님 화면에서 다시 「입금 전」이 되고 반려 사유가 보여요.',v=>{if(!v){toast('반려 사유를 적어 주세요');return}call('adminRejectReport',[ids,v],r=>{S.rpSel={};setData(r);toast(ids.length+'명 반려했어요')})},'모두 반려','반려 사유 (예: 통장에 없어요)');return}
   if(d.unok){ask('입금 확인을 취소할까요?','이 사람은 다시 「입금 전」(신고했으면 「신고 · 확인 전」)으로 돌아가요.',()=>call('adminConfirm',[[{pid:d.unok,date:'',amt:0,memo:val('m_'+d.unok)}]],r=>{setData(r);toast('입금 확인을 취소했어요')}),'확인 취소');return}

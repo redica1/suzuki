@@ -1,4 +1,4 @@
-/* build: 20261101-123600 */
+/* build: 20261101-125053 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -1755,6 +1755,44 @@ function cxRow_(sb, p, why, amt, st) {
   sh.appendRow(CX_HEAD.map(k => o[k] == null ? '' : o[k]));
 }
 /** 관리자 화면에 필요한 것: 모든 접수 · 운영진 칸 · 환불 요청 · 앙상블 팀 */
+/* ====== 통장 잇기 (11-01): 회원관리 정산 파일의 「통장」(입금) · 「통장상세」 · 「프로젝트」를 읽고, 입금 확인 때 그 입금을 사람별 줄로 이음 ======
+ * 회원관리 설정 「정산 정보 시트」 → 그 파일. 캠프 시트와 같은 계정이어야 열림. 못 열면 통장 표시 없이 지금처럼 확인만 */
+function bankBook_() {
+  const mid = memberSheetId_(); if (!mid) return null;
+  try { const v = SpreadsheetApp.openById(mid).getSheetByName('설정').getDataRange().getDisplayValues(), r = v.find(x => String(x[0]).trim() === '정산 정보 시트'), id = r ? String(r[1]).trim() : '';
+    return id ? SpreadsheetApp.openById(id) : null; } catch (e) { return null; }
+}
+function bankTab_(ss, name) { const sh = ss.getSheetByName(name); if (!sh) return null; const v = sh.getDataRange().getDisplayValues(), h = (v.shift() || []).map(String); return { sh, h, v: v.filter(r => r.some(x => x !== '')), c: k => h.indexOf(k) }; }
+function bankNum_(x) { return +String(x || '').replace(/[^\d]/g, '') || 0; }
+/** 관리자 입금 신고 화면: 캠프 입금 기간의 통장 입금 (이미 사람별로 이어진 것 포함) */
+function adminBank(token) {
+  adm_(token); const ss = bankBook_(); if (!ss) return { ok: true, none: true };
+  const B = bankTab_(ss, '통장'); if (!B) return { ok: true, none: true };
+  const D = bankTab_(ss, '통장상세'), K = bankTab_(ss, '통장목록'), C = camp_(), from = setting_('입금 시작일') || '2026-10-01';
+  const to = (() => { const m = String(C.base.end || '').match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? new Date(Date.UTC(+m[1], +m[2] - 1, +m[3] + 60)).toISOString().slice(0, 10) : '9999'; })();
+  const lines = {}; if (D) D.v.forEach(r => { const id = r[D.c('거래ID')]; (lines[id] = lines[id] || []).push({ t: r[D.c('대상')], id: r[D.c('ID')], a: bankNum_(r[D.c('금액')]) }); });
+  const an = {}; if (K) K.v.forEach(r => an[r[0]] = r[1]);
+  const tx = []; B.v.forEach(r => { const at = String(r[B.c('거래일시')] || ''), d = at.slice(0, 10), inn = bankNum_(r[B.c('입금')]); if (!inn || d < from || d > to) return;
+    const id = r[B.c('거래ID')], L = lines[id] || []; tx.push({ id, at: at.slice(0, 16), who: String(r[B.c('보낸분받는분')] || ''), amt: inn, k: String(r[B.c('구분')] || ''), ac: an[r[B.c('통장ID')]] || '', used: L.reduce((t, x) => t + x.a, 0), pids: L.filter(x => x.t === '캠프').map(x => x.id) }); });
+  return { ok: true, tx: tx.slice(-2000) };
+}
+/** 입금 확인한 사람들을 그 통장 입금에 사람별 줄로 이음 (확인 취소면 그 사람 줄을 뺌) */
+function bankLinkCamp_(byTx, unlink, who) {
+  const ss = bankBook_(); if (!ss) return { skip: true };
+  const B = bankTab_(ss, '통장'), D = bankTab_(ss, '통장상세'), P = bankTab_(ss, '프로젝트'); if (!B || !D) return { skip: true };
+  const stamp = stamp_(), C = camp_(), pid = P && P.c('캠프ID') >= 0 ? ((P.v.find(r => r[P.c('캠프ID')] === C.base.id) || [])[0] || '') : '';
+  const drop = {}; Object.keys(byTx).forEach(t => byTx[t].forEach(x => drop[t + '|' + x.pid] = 1)); (unlink || []).forEach(p => drop['*|' + p] = 1);
+  const keep = D.v.filter(r => { const t = r[D.c('거래ID')], id = r[D.c('ID')]; return !(r[D.c('대상')] === '캠프' && (drop[t + '|' + id] || drop['*|' + id])); });
+  const mk = o => D.h.map(k => o[k] == null ? '' : String(o[k]));
+  Object.keys(byTx).forEach(t => { let n = keep.filter(r => r[D.c('거래ID')] === t).length;
+    byTx[t].forEach(x => keep.push(mk({ '거래ID': t, '순번': ++n, '대상': '캠프', 'ID': x.pid, '이름': x.name, '금액': x.amt, '메모': x.no, '수정일': stamp, '수정자': who, '구분': '스즈키캠프 › 참가비' }))); });
+  if (D.v.length) D.sh.getRange(2, 1, D.v.length, D.h.length).clearContent();
+  if (keep.length) D.sh.getRange(2, 1, keep.length, D.h.length).setNumberFormat('@').setValues(keep);
+  Object.keys(byTx).forEach(t => { const i = B.v.findIndex(r => r[B.c('거래ID')] === t); if (i < 0) return; const row = B.v[i].slice(), set = (k, v) => { const c = B.c(k); if (c >= 0) row[c] = v; };
+    if (!/^스즈키캠프/.test(row[B.c('구분')] || '')) set('구분', '스즈키캠프 › 참가비'); if (pid) set('프로젝트ID', pid); if (row[B.c('상태')] !== '연결') set('상태', '확정'); set('수정일', stamp); set('수정자', who + ' (캠프 입금 확인)');
+    B.sh.getRange(i + 2, 1, 1, B.h.length).setValues([row]); });
+  return { ok: true };
+}
 function adminData(token) {
   const me = adm_(token);
   const subs = loadSubs_();
@@ -1779,14 +1817,21 @@ function setAdminCols_(pid, vals) {
 }
 /** 입금 확인 (날짜 필수). amt를 비우면 확인 취소 */
 function adminConfirm(token, items) {
-  const a = adm_(token); need_(a, ['subs', 'rp']);
+  const a = adm_(token); need_(a, ['subs', 'rp']); items = items || [];
   const lock = lock_();
   try {
     items.forEach(it => {
       if (it.amt > 0 && !/^\d{4}-\d{2}-\d{2}$/.test(it.date || '')) throw new Error('입금일을 선택해 주세요.');
       setAdminCols_(it.pid, it.amt > 0 ? [it.date, it.amt, it.memo || ''] : ['', '', it.memo || '']);
-      log_('관리자 ' + a.name, it.amt > 0 ? '입금 확인' : '입금 확인 취소', it.pid + (it.amt > 0 ? ' · ' + it.date + ' · ' + it.amt : ''));
+      log_('관리자 ' + a.name, it.amt > 0 ? '입금 확인' : '입금 확인 취소', it.pid + (it.amt > 0 ? ' · ' + it.date + ' · ' + it.amt : '') + (it.tx ? ' · 통장 ' + it.tx : ''));
     });
+    /* 통장 잇기: 고른 통장 입금에 사람별 줄로 (확인 취소면 그 사람 줄을 뺌) */
+    const byTx = {}, un = [];
+    if (items.some(it => it.tx || !(it.amt > 0))) {
+      const nm = {}; loadSubs_().forEach(sb => sb.ppl.forEach(p => nm[p.id] = { name: p.name, no: sb.no }));
+      items.forEach(it => { if (it.amt > 0 && it.tx) (byTx[it.tx] = byTx[it.tx] || []).push({ pid: it.pid, amt: it.repAmt || it.amt, name: (nm[it.pid] || {}).name || it.pid, no: (nm[it.pid] || {}).no || '' }); else if (!(it.amt > 0)) un.push(it.pid); });
+      try { bankLinkCamp_(byTx, un, a.name); } catch (e) { log_('관리자 ' + a.name, '통장 잇기 실패', e.message); }
+    }
     // 접수 탭 합계 다시 쓰기
     const subs = loadSubs_(); const nos = [...new Set(items.map(it => it.pid.split('_')[0]))];
     subs.filter(sb => nos.includes(sb.no)).forEach(sb => writeSubRow_(sb));

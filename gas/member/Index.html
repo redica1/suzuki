@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261101-105550 -->
+<!-- build: 20261101-105720 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -570,7 +570,7 @@ function bCatOpts(inn,v,pj){var io=inn?'입금':'출금',R=(S.bCatRows||[]).filt
   if(K.length){var a=R.filter(function(x){return K.indexOf(x['구분'])>=0}),b=R.filter(function(x){return K.indexOf(x['구분'])<0});return h+nw+'<optgroup label="★ '+esc(p['이름'])+'">'+a.map(o).join('')+'</optgroup>'+grp(b)}
   return h+nw+grp(R)}
 function bBizList(){var L=[];(S.bCatRows||[]).forEach(function(x){var b=x['대분류'];if(b&&L.indexOf(b)<0)L.push(b)});return L}
-function bPjOpts(o){var p=bProj(o),auto=p&&p.auto?bPj(p.id):null;return '<option value="">'+(auto?'자동: '+esc(auto['이름']):'자동 (없음)')+'</option>'+(S.bProjs||[]).filter(function(x){return x['사용']!=='안씀'||x['프로젝트ID']===o['프로젝트ID']}).map(function(x){return '<option value="'+esc(x['프로젝트ID'])+'"'+(x['프로젝트ID']===o['프로젝트ID']?' selected':'')+'>'+esc(x['이름'])+'</option>'}).join('')}
+function bPjOpts(o){var p=bProj(o),auto=p&&p.auto?bPj(p.id):null;return '<option value="">'+(auto?'자동: '+esc(auto['이름']):'')+'</option>'+(S.bProjs||[]).filter(function(x){return x['사용']!=='안씀'||x['프로젝트ID']===o['프로젝트ID']}).map(function(x){return '<option value="'+esc(x['프로젝트ID'])+'"'+(x['프로젝트ID']===o['프로젝트ID']?' selected':'')+'>'+esc(x['이름'])+'</option>'}).join('')}
 function bAcOptsK(){return (S.bAccts||[]).filter(function(a){return a['사용']!=='안씀'}).map(function(a){return [a['통장ID'],a['이름']]})}
 function bankUpd(r){var L=objs({h:r.h,rows:r.upd||[]}),m={};L.forEach(function(o){m[o['거래ID']]=o});S.bank=S.bank.map(function(o){return m[o['거래ID']]||o})}
 function bIn(o){return +String(o['입금']||'').replace(/[^\d]/g,'')||0}

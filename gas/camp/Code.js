@@ -1,4 +1,4 @@
-/* build: 20261101-213230 */
+/* build: 20261101-213933 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -952,7 +952,29 @@ function ensureSettings_() {
   const have = rows_('설정').map(r => String(r['항목']));
   SETTINGS.forEach(r => { if (!have.includes(r[0])) sh.appendRow(r); });
 }
-function bankInfo_() { return { bank: setting_('입금 은행'), acct: setting_('입금 계좌번호'), holder: setting_('예금주'), from: setting_('입금 시작일') || '2026-10-01' }; }
+/** 입금 안내 계좌: 설정 「입금 은행 · 입금 계좌번호 · 예금주」가 있으면 그것, 비어 있으면 회원관리 › 통장 › 설정에 등록한 통장
+ *  (이 캠프 행사에 이은 통장 → 없으면 「사용」 중인 첫 통장). 10분 저장 (11-01) */
+function bankInfo_() {
+  let bank = setting_('입금 은행'), acct = setting_('입금 계좌번호'), holder = setting_('예금주');
+  if (!acct) {
+    const C = CacheService.getScriptCache(); let j = C.get('bankAcct');
+    if (!j) {
+      let o = {};
+      try {
+        const ss = bankBook_(), A = ss && bankTab_(ss, '통장목록'), P = ss && bankTab_(ss, '프로젝트');
+        if (A) {
+          const id = camp_().base.id; let want = '';
+          if (P && P.c('캠프ID') >= 0) { const r = P.v.find(x => x[P.c('캠프ID')] === id); if (r) want = String(r[P.c('통장ID')] || '').split(',')[0].trim(); }
+          const rows = A.v.filter(x => x[A.c('사용')] !== '안씀' && x[A.c('계좌번호')]), r = rows.find(x => x[A.c('통장ID')] === want) || rows[0];
+          if (r) o = { bank: r[A.c('은행')], acct: r[A.c('계좌번호')], holder: r[A.c('예금주')] };
+        }
+      } catch (e) { }
+      j = JSON.stringify(o); C.put('bankAcct', j, 600);
+    }
+    const o = JSON.parse(j); bank = bank || o.bank || ''; acct = o.acct || ''; holder = holder || o.holder || '';
+  }
+  return { bank, acct, holder, from: setting_('입금 시작일') || '2026-10-01' };
+}
 function setting_(k) { const r = rows_('설정').find(x => String(x['항목']) === k); return r ? dstr_(r['값']).trim() : ''; }
 function ensureHead_(name, head) {
   const sh = SpreadsheetApp.getActive().getSheetByName(name);

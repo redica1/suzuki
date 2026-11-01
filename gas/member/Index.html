@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261101-105201 -->
+<!-- build: 20261101-105320 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -638,8 +638,9 @@ function vBank(){
   return head+tiles+'<div class="panel">'+filt+(sum?bankSum(list,cats):bankSplitBox()+bankLinkBox()+bankBulk(list)+bankTable(list))+'</div>'}
 function bBulkCats(){var R=S.bCatRows||[],h='<option value="">구분 그대로</option>',o=function(x){return '<option value="'+esc(x['구분'])+'">'+esc(x['이름']||x['구분'])+'</option>'};
   ['입금','출금','모두'].forEach(function(io){var g={},ord=[];R.filter(function(x){return x['입출']===io&&x['사용']!=='안씀'}).forEach(function(x){var l=io+' · '+([x['대분류'],x['중분류']].filter(Boolean).join(' › ')||'분류 없음');if(!g[l]){g[l]=[];ord.push(l)}g[l].push(x)});h+=ord.map(function(l){return '<optgroup label="'+esc(l)+'">'+g[l].map(o).join('')+'</optgroup>'}).join('')});return h}
+function bBulkRefresh(){var el=document.getElementById('bBulk');if(!el){render();return}var keep={};['bBk','bBac','bBp','bBa'].forEach(function(k){var x=document.getElementById(k);if(x)keep[k]=x.value});var w=document.createElement('div');w.innerHTML=bankBulk(bankList());el.parentNode.replaceChild(w.firstChild,el);Object.keys(keep).forEach(function(k){var x=document.getElementById(k);if(x){x.value=keep[k]}})}
 function bankBulk(list){var n=Object.keys(S.bSel||{}).length,rec=list.filter(function(o){return o['상태']==='추천'}).length;
-  return '<div class="note info" style="display:grid;gap:6px;margin-bottom:6px"><div class="row" style="justify-content:space-between"><span><b>'+(n?n+'줄 고름':'한꺼번에 바꾸기')+'</b> <span class="cap">'+(n?'':'줄 왼쪽 칸을 고르거나 「보이는 '+list.length+'건 모두 고르기」를 누르세요')+'</span></span><span class="row">'+
+  return '<div class="note info" id="bBulk" style="display:grid;gap:6px;margin-bottom:6px"><div class="row" style="justify-content:space-between"><span><b>'+(n?n+'줄 고름':'한꺼번에 바꾸기')+'</b> <span class="cap">'+(n?'':'줄 왼쪽 칸을 고르거나 「보이는 '+list.length+'건 모두 고르기」를 누르세요')+'</span></span><span class="row">'+
     '<button class="btn small" type="button" id="bSelAll">보이는 '+list.length+'건 모두 고르기</button>'+(n===1?'<button class="btn small" type="button" data-bsp="'+esc(Object.keys(S.bSel)[0])+'">고른 줄 사람별로 나누기</button>':'')+(n?'<button class="btn small ghost" type="button" id="bSelNo">고른 것 풀기</button>':'')+(rec?'<button class="btn small" type="button" id="bRecOk">보이는 추천 '+rec+'건 그대로 확정</button>':'')+'</span></div>'+
     '<div class="row"><select id="bBk" aria-label="구분">'+bBulkCats()+'</select>'+sel('bBac',[['','학원 그대로'],['-','학원 비우기']].concat(bAcOpts()),'','학원')+((S.bProjs||[]).length?sel('bBp',[['','행사 그대로'],['*','자동으로 되돌리기']].concat((S.bProjs||[]).map(function(p){return [p['프로젝트ID'],p['이름']]})),'','행사'):'')+((S.bAccts||[]).length?sel('bBa',[['','통장 그대로']].concat(bAcOptsK()),'','통장'):'')+
     '<button class="btn small primary" type="button" id="bBkGo" '+(n?'':'disabled')+'>고른 '+n+'줄에 적용</button><span style="flex:1"></span><button class="btn small" type="button" id="bDoneGo" '+(n?'':'disabled')+' title="카드대금처럼 신경 안 써도 되는 줄을 회색으로">고른 '+n+'줄 확인 (회색)</button><button class="btn small ghost" type="button" id="bDoneNo" '+(n?'':'disabled')+'>확인 풀기</button></div></div>'}
@@ -826,7 +827,9 @@ function render(){
   who.innerHTML='<span><b>관리자</b></span><button type="button" id="reload">새로 고침</button><button type="button" id="logout">로그아웃</button>';
   var need=S.D.acad.concat(S.D.tch).filter(function(o){return o['확인']==='확인 필요'}).length;
   tabs.innerHTML=TABS.map(function(t){return '<button role="tab" type="button" data-tab="'+t[0]+'" aria-selected="'+(S.tab===t[0])+'">'+t[1]+(t[0]==='home'&&need?'<span class="cnt">'+need+'</span>':'')+(t[0]==='req'&&S.D.reqN?'<span class="cnt">'+S.D.reqN+'</span>':'')+(t[0]==='pay'&&S.D.payN?'<span class="cnt">'+S.D.payN+'</span>':'')+(t[0]==='ask'&&S.D.bN?'<span class="cnt">'+S.D.bN+'</span>':'')+'</button>'}).join('');
+  var keepT=S._rt===S.tab&&S.tab==='bank'?[].map.call(app.querySelectorAll('.tbl'),function(e){return [e.scrollTop,e.scrollLeft]}):[],keepY=window.scrollY;
   app.classList.toggle('bankz',S.tab==='bank');app.innerHTML=({home:vHome,acad:vAcads,tch:vTeachers,ext:vExt,stu:vStudents,req:vReq,pay:vPay,bank:vBank,prog:vProg,ask:vAskA,log:vLog,set:vSet})[S.tab]();tipify(app);if(document.getElementById('pq_e_원장교사ID'))headFilter();
+  if(keepT.length){[].forEach.call(app.querySelectorAll('.tbl'),function(e,i){if(keepT[i]){e.scrollTop=keepT[i][0];e.scrollLeft=keepT[i][1]}});window.scrollTo(0,keepY)}S._rt=S.tab;
   var i=TABS.map(function(t){return t[0]}).indexOf(S.tab);document.getElementById('prevBtn').disabled=i<=0;document.getElementById('nextBtn').disabled=i>=TABS.length-1;
   hSync();
 }
@@ -1044,8 +1047,8 @@ document.addEventListener('change',function(e){var bt=e.target,bd=bt.dataset||{}
     var nb=window.prompt('어느 사업의 항목인가요? ('+bBizList().join(' · ')+')',nbz||'협회 운영');if(nb==null){render();return}
     bankMetaGo('cat',{'구분':nnm.trim(),'입출':nio,'대분류':nb.trim(),'중분류':''},'').then(function(ok){if(!ok){render();return}var nr=(S.bCatRows||[]).filter(function(x){return (x['이름']||x['구분'])===nnm.trim()&&x['대분류']===nb.trim()})[0];if(nr)bankSave([bd.bk],{'구분':nr['구분']},'「'+nnm.trim()+'」 항목을 만들고 이 거래에 넣었어요')});return}
   if(bd.bk){bankSave([bd.bk],{'구분':bt.value});return}if(bd.ba){bankSave([bd.ba],{'학원ID':bt.value});return}if(bd.bt){bankSave([bd.bt],{'교사ID':bt.value});return}if(bd.bm){S.bMemo=null;bankSave([bd.bm],{'메모':bt.value});return}
-  if(bd.bck){S.bSel=S.bSel||{};if(bt.checked)S.bSel[bd.bck]=1;else delete S.bSel[bd.bck];render();return}
-  if(bt.id==='bAll'){S.bSel=S.bSel||{};[].forEach.call(document.querySelectorAll('[data-bck]'),function(x){if(bt.checked)S.bSel[x.dataset.bck]=1;else delete S.bSel[x.dataset.bck]});render();return}
+  if(bd.bck){S.bSel=S.bSel||{};if(bt.checked)S.bSel[bd.bck]=1;else delete S.bSel[bd.bck];bBulkRefresh();return}
+  if(bt.id==='bAll'){S.bSel=S.bSel||{};[].forEach.call(document.querySelectorAll('[data-bck]'),function(x){x.checked=bt.checked;if(bt.checked)S.bSel[x.dataset.bck]=1;else delete S.bSel[x.dataset.bck]});bBulkRefresh();return}
   if(bd.blk){S.bLSel=S.bLSel||{};if(bt.checked)S.bLSel[bd.blk]=1;else delete S.bLSel[bd.blk];render();return}
 if(e.target.dataset&&e.target.dataset.pck){S.pSel=S.pSel||{};if(e.target.checked)S.pSel[e.target.dataset.pck]=1;else delete S.pSel[e.target.dataset.pck];var pb=document.getElementById('pOkMany');if(pb)pb.textContent='고른 '+Object.keys(S.pSel).length+'건 입금 확인';return}if(e.target.id==='d_y'&&S.duesCtx){var c=S.duesCtx,y=e.target.value,has=c.H.filter(function(h){return h['년도']===y})[0],du=document.getElementById('d_due');var rf=document.getElementById('d_ref');if(rf){var rr=rateRow(c.kind,y,c.mk);rf.textContent=rr?'참고: 기준 '+won(rr['금액']):'직접 넣어 주세요'}return}
   if(e.target.id==='kGrp'||e.target.id==='kSub'){kindSync();return}

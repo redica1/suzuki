@@ -1,4 +1,4 @@
-/* build: 20261101-212812 */
+/* build: 20261101-213107 */
     ps.forEach(p=>{p.pay='신고';p.rep=rep;delete S.rpRow[p.id]});S.afterSave=()=>repDone(ps.map(p=>p.id));subSave();S.rp=null;S.rpMemo=undefined;render();toast(`${ps.length}명 입금 신고를 보냈어요 · 운영진이 확인하면 「입금 확인」으로 바뀌어요`);return}
   if(b.id==='rpFill'){const n=document.getElementById('rpAllN').value.trim(),dd=document.getElementById('rpAllD').value;S.rpAllN=n;S.rpAllD=dd;const sel=S.rp||[];
     if(!n&&!dd){toast('적용할 입금자명이나 입금일을 적어 주세요');return}unpaidPpl().filter(x=>sel.includes(x.p.id)).forEach(({p})=>{const v=rpv(p);if(n)v.n=n;if(dd)v.d=dd});render();toast(`선택한 ${sel.length}명에게 적용했어요`);return}
@@ -109,6 +109,7 @@ const consEv=e=>{
   return true};
 document.addEventListener('change',consEv);
 document.addEventListener('input',e=>{if(e.target.id==='noteMemo')S.note=e.target.value});
+document.addEventListener('change',e=>{const d=e.target.dataset&&e.target.dataset.dom;if(!d)return;const x=document.getElementById(d+'X');if(x){x.hidden=!!e.target.value;if(!e.target.value)x.focus()}});
 document.addEventListener('input',e=>{if(e.target.type==='checkbox'&&(e.target.id==='consAll'||(e.target.dataset&&e.target.dataset.cons)))return;
   {const el=e.target;if(/^q(Name|Phone|Acad|Text)$/.test(el.id)){S[el.id]=el.value;return}}
   if(e.target.id==='lgEm'){const el=e.target;let d=el.value.replace(/\D/g,'');/* 습관대로 010부터 쳐도 됨: 0·01 은 잠깐 두고, 010 이 되면 뗌 (010 뒷자리는 0·1로 시작하지 않음) */if(/^01?$/.test(d)){S.lgEm='010-';return}if(d.startsWith('010'))d=d.slice(3);d=d.slice(0,8);const f=d.length>4?d.slice(0,4)+'-'+d.slice(4):d;if(f!==el.value){el.value=f;el.setSelectionRange(f.length,f.length)}S.lgEm='010-'+f;return}

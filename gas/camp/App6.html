@@ -1,4 +1,4 @@
-/* build: 20261101-212812 */
+/* build: 20261101-213107 */
   if(tab==='me')return head+seg+`<div class="panel">${T.prof?`<p class="hint" style="margin:0 0 6px">교수 · 레슨실 <b>${esc(T.prof.room||'미정')}</b></p>`:''}
     ${days.map((dl,d)=>{const xs=mine.filter(x=>x.d===d);return xs.length?`<div class="ttday"><div class="ttdl">${esc(dl)}</div>${xs.map(x=>`<div class="ttit"><span class="num">${esc(x.t)}${x.e?'<small>~'+esc(x.e)+'</small>':''}</span><span><span class="ttrole ${x.what==='개인레슨'?'les':''}">${esc(x.what)}</span><b>${esc(x.title)}</b> · ${esc(x.where)}${x.loc?` <small class="hint">${esc(x.loc)}</small>`:''}${x.with?`<br><small class="hint">${x.what==='개인레슨'?'학생: ':'함께: '}${esc(x.with)}</small>`:''}</span></div>`).join('')}</div>`:''}).join('')||'<p class="hint" style="margin:0">아직 배정된 일정이 없어요.</p>'}</div></section>`;
   const st=T.students||[];
@@ -45,6 +45,7 @@ function render(){fillBanks();
   next.disabled = false; next.classList.toggle('dim', blocked());
   if(S.editNo&&S.quickEdit&&S.step===3&&(S.quickKeys||[]).every(k=>lockedP(k)))next.hidden=true;
   lockCards();
+  ['hdMine','hdOut'].forEach(id=>{const x=document.getElementById(id);if(x)x.hidden=!S.user});
   document.getElementById('roundChip').textContent = CAMP.pre?`${+CAMP.pre.slice(5,7)}월 ${+CAMP.pre.slice(8,10)}일 접수 시작 · 지금은 접수 전이에요`:`${ROUNDS[CAMP.ri][0]} 접수 중 · ${ROUNDS[CAMP.ri][1]}`;
   document.getElementById('roundSeg').innerHTML = ''&&ROUNDS.map((r,i)=>`<button type="button" data-round="${i}" aria-pressed="${CAMP.ri===i}" style="padding:2px 9px;font-size:14px">${r[0]}</button>`).join('');
 }
@@ -117,7 +118,7 @@ document.addEventListener('click',e=>{
     S.verr='';const c=S.chk||{};if(c.kind==='guest')doGuestLogin(c.nm,c.ph);else if(c.pw)doMemberLoginPw(c.em,c.pw);else doMemberLogin(c.nm,c.ph);return}
   if(b.id==='tLogin'){const [n,ph]=TEST_LOGIN.split('/');S.mode='member';S.cons={};consItems().forEach(x=>S.cons[x.id]=true);doMemberLogin(n.trim(),String(ph||'').replace(/\D/g,''));return}
   if(b.id==='toPhone'||b.id==='toEmail'){S.lgAlt=b.id==='toPhone';S.verr='';render();return}
-  if(b.id==='doLogin'&&LOGIN_PW&&(!S.lgAlt||S.mode==='staff')){const em=(document.getElementById('lgId').value||'').trim().toLowerCase(),pw=document.getElementById('lgPw').value||'';S.lgId=em;
+  if(b.id==='doLogin'&&LOGIN_PW&&(!S.lgAlt||S.mode==='staff')){const em=emailOf('lgId'),pw=document.getElementById('lgPw').value||'';S.lgId=em;
     if(!em||!pw){S.verr='이메일과 비밀번호를 넣어 주세요.';render();return}
     if(typeof TEST_AUTOCONSENT!=='undefined'&&TEST_AUTOCONSENT){doMemberLoginPw(em,pw);return}
     busy(true,'계정을 확인하고 있어요…');google.script.run.withSuccessHandler(r=>{busy(false);if(!r.ok){S.verr=r.msg;render();return}
@@ -149,7 +150,7 @@ document.addEventListener('click',e=>{
     if(!S.consent){S.verr='개인정보 수집·이용에 동의해 주세요.';render();return}
     const t=TEACHER_DB.find(x=>x.phone===S.pending.phone);Object.assign(t,{email:document.getElementById('pfEmail').value.trim(),inst:document.getElementById('pfInst').value,role:document.getElementById('pfRole').value,hasPw:true});
     login(t);toast('비밀번호를 만들었어요. 다음부터 휴대전화와 비밀번호로 로그인해요');return}
-  if(b.id==='logout'){MY_SUBS.length=0;Object.assign(S,{user:null,auth:'pick',cons:{},acad:'',verified:false,picked:{},extra:[],fam:[],info:{},room:{},verr:''});render();return}
+  if(b.id==='hdOut'||b.id==='logout'){MY_SUBS.length=0;resetForm();Object.assign(S,{user:null,chk:null,mode:'',view:'form',step:1,auth:'pick',cons:{},acad:'',verified:false,editNo:null,editOnly:null,verr:''});render();window.scrollTo({top:0});toast('로그아웃했어요');return}
   if(b.id==='nextBtn'&&S.step===2&&selIds().length){toast(`체크만 하고 아직 추가하지 않은 ${selIds().length}명이 있어요. 「신청 명단에 추가」를 눌러 주세요.`);const ab=document.getElementById('addCart');if(ab)ab.scrollIntoView({block:'center'});return}
   if(b.id==='otherAcad'){S.acOpen=true;S.acQ='';render();const n=document.getElementById('acQ');if(n)n.focus();return}
   if(b.id==='qBtn'){openQ();return}
@@ -178,7 +179,7 @@ document.addEventListener('click',e=>{
       return}
     go(S.step+1);return}
   if(b.id==='backBtn'){go(S.step-1);return}
-  if(b.id==='toMine'||b.id==='toMine2'||b.id==='toMine3'||b.id==='mineBtn'){if(S.editNo){S.editNo=null;S.editOnly=null;if(S.riBack!==undefined){CAMP.ri=S.riBack;S.riBack=undefined}resetForm();S.acad='';S.verified=false;S.step=1}S.view='mine';S.cxDone=null;render();window.scrollTo({top:0});return}
+  if(b.id==='toMine'||b.id==='toMine2'||b.id==='toMine3'||b.id==='mineBtn'||b.id==='hdMine'){if(S.editNo){S.editNo=null;S.editOnly=null;if(S.riBack!==undefined){CAMP.ri=S.riBack;S.riBack=undefined}resetForm();S.acad='';S.verified=false;S.step=1}S.view='mine';S.cxDone=null;render();window.scrollTo({top:0});return}
   if(b.id==='toForm'){S.view='form';if(S.editNo&&S.riBack!==undefined){CAMP.ri=S.riBack;S.riBack=undefined}S.editNo=null;S.editOnly=null;if(S.step===6||S.step>1){resetForm();S.acad='';S.verified=false;S.step=1}render();window.scrollTo({top:0});return}
   if(d.subedit){startEdit(d.subedit,null);return}
   if(b.id==='rpGo'){const open=unpaidPpl();const sel=(S.rp||[]).filter(id=>open.some(x=>x.p.id===id));const er=m=>{document.getElementById('rpErr').textContent=m};

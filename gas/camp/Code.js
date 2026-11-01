@@ -1,4 +1,4 @@
-/* build: 20261101-203046 */
+/* build: 20261101-205720 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -310,6 +310,7 @@ function intlTestLogin() { const t = intlTest_(); if (!t) return { ok: false, ms
 function intlData(token) { const u = intlWho_(token); return Object.assign({ ok: true }, intlData_(u.id)); }
 /** 대표: 명단 저장 (전체를 보냄). 지운 사람은 입금 확인 전이면 「취소」, 확인된 사람은 지울 수 없음 */
 function intlSave(token, list) {
+  { const o = regPre_(); if (o) throw new Error('Registration opens on ' + o + ' (Korea time).'); }
   const u = intlWho_(token), g = intlGroups_().find(x => x.id === u.id); if (!g || !g.on) throw new Error('This group is not active.');
   if (!Array.isArray(list)) throw new Error('Nothing to save.'); if (list.length > 150) throw new Error('Up to 150 people per group.');
   const clean = list.map((x, n) => {
@@ -746,7 +747,7 @@ function takeRefundAcct_(p) {
 /* ---------------- 선생님이 부르는 기능 ---------------- */
 /** 새 접수: 접수번호는 서버가 붙임 (27W-001 …) */
 function submitNew(token, sb) {
-  const u = who_(token);
+  const u = who_(token); regGate_();
   if (!u.acads.includes(sb.acad)) throw new Error('이 학원으로 접수할 수 없어요.');
   const lock = lock_();
   try {
@@ -1016,7 +1017,10 @@ function curRound_(c) {
   return i < 0 ? n - 1 : i;
 }
 /** 선생님 화면에 보내는 설정 (+ 지금 차수) */
-function campPublic_() { const c = camp_(); return Object.assign({}, c, { ri: curRound_(c) }); }
+/** 접수 시작 전이면 시작일(yyyy-mm-dd), 아니면 ''. 시작일 = 캠프 설정 「접수 시작」, 없으면 1차 시작일. STG(설정 「테스트 로그인」 있음)는 언제나 열림 */
+function regPre_(c) { c = c || camp_(); try { if (String(setting_('테스트 로그인') || '').trim()) return ''; } catch (e) { } const o = String(c.base.open || (c.rounds[0] || {}).from || ''); return /^\d{4}-\d{2}-\d{2}$/.test(o) && today_() < o ? o : ''; }
+function regGate_() { const o = regPre_(); if (o) throw new Error('접수는 ' + (+o.slice(5, 7)) + '월 ' + (+o.slice(8, 10)) + '일부터 받아요. 그때 다시 와 주세요.'); }
+function campPublic_() { const c = camp_(); return Object.assign({}, c, { ri: curRound_(c), pre: regPre_(c) }); }
 function campGet(token) { const a = adm_(token); needSup_(a); return { camp: campPublic_(), subs: rows_(SH.SUB).filter(r => r['접수번호']).length }; }
 function campSave(token, c, rev) {
   const a = adm_(token); needSup_(a);

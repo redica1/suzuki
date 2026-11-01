@@ -1,4 +1,4 @@
-/* build: 20261101-095540 */
+/* build: 20261101-100049 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -1919,13 +1919,41 @@ function bankSheet_(name, HEAD, seed) {
 function bankTbl_() { return bankSheet_('통장', BANK_HEAD); }
 /* 통장 목록 · 프로젝트 · 구분 (11-01). 프로젝트 = 회비 · 캠프 · 졸업연주 · 교사연수처럼 돈을 따로 셈하는 묶음: 기간 · 통장 · 쓰는 구분을 정함 */
 const BANK_ACCT_HEAD = ['통장ID', '이름', '은행', '계좌번호', '예금주', '메모', '사용', '수정일', '수정자'];
-const BANK_PROJ_HEAD = ['프로젝트ID', '이름', '시작일', '끝일', '통장ID', '구분', '메모', '사용', '수정일', '수정자'];
+const BANK_PROJ_HEAD = ['프로젝트ID', '이름', '시작일', '끝일', '통장ID', '구분', '메모', '사용', '수정일', '수정자', '사업'];   /* 사업 = 대분류(스즈키캠프 …). 구분을 따로 안 고르면 그 사업 항목 전부 */
 const BANK_CAT_HEAD = ['구분', '입출', '대분류', '중분류', '순서', '사용', '이름'];   /* 이름 = 화면에 보이는 소분류 (비면 구분). 예: 구분 「졸업연주 › 대전연주 › 참가비」 · 이름 「참가비」 */   /* 구분 = 소분류 (거래 줄에서 고르는 것) */
-const BANK_CAT_TREE = { '교사회비': ['수입', '회비'], '학생회비': ['수입', '회비'], '졸업연주': ['수입', '행사 수입'], '졸연티켓': ['수입', '행사 수입'], '캠프 참가비': ['수입', '행사 수입'], '캠프 가족방': ['수입', '행사 수입'], '교사연수': ['수입', '행사 수입'], '기타 입금': ['수입', '기타 수입'],
-  '임대료': ['지출', '운영비'], '통신 · 공과금': ['지출', '운영비'], '카드대금': ['지출', '운영비'], '행사비': ['지출', '행사비'], '인쇄 · 제작': ['지출', '행사비'], '교통 · 출장': ['지출', '행사비'], '인건비 · 강사료': ['지출', '인건비'], '환불': ['지출', '환불'], '내부 이체': ['이체', '통장 사이 이체'], '기타 지출': ['지출', '기타 지출'] };
-function bankCatTbl_() { const t = k => BANK_CAT_TREE[k] || ['', '']; return bankSheet_('통장구분', BANK_CAT_HEAD, BANK_IN.map((k, i) => [k, '입금', t(k)[0], t(k)[1], i + 1, '사용']).concat(BANK_OUT.map((k, i) => [k, '출금', t(k)[0], t(k)[1], 100 + i + 1, '사용']))); }
+/* 11-01 바꿈: 구분 = 사업(대분류) › 항목. 행사(27W 겨울캠프 등)는 프로젝트 칸. [구분 키, 입출, 사업, 중분류, 보이는 이름] */
+const BANK_SEED = [
+  ['교사회비', '입금', '회비', '', '교사회비'], ['학생회비', '입금', '회비', '', '학생회비'],
+  ['스즈키캠프 › 참가비', '입금', '스즈키캠프', '수입', '참가비'], ['스즈키캠프 › 가족방', '입금', '스즈키캠프', '수입', '가족방'], ['스즈키캠프 › 추가레슨', '입금', '스즈키캠프', '수입', '추가레슨 · 마스터클래스'], ['스즈키캠프 › 기타 입금', '입금', '스즈키캠프', '수입', '기타 입금'],
+  ['스즈키캠프 › 교사 수당', '출금', '스즈키캠프', '인건비', '교사 수당'], ['스즈키캠프 › 교수 강사료', '출금', '스즈키캠프', '인건비', '교수 강사료'], ['스즈키캠프 › 스텝 · 연주자', '출금', '스즈키캠프', '인건비', '스텝 · 연주자'],
+  ['스즈키캠프 › 호텔 · 식사', '출금', '스즈키캠프', '호텔', '호텔 · 식사'], ['스즈키캠프 › 버스 · 교통', '출금', '스즈키캠프', '운영', '버스 · 교통'], ['스즈키캠프 › 인쇄', '출금', '스즈키캠프', '운영', '인쇄'], ['스즈키캠프 › 장비 · 대여', '출금', '스즈키캠프', '운영', '장비 · 대여'],
+  ['스즈키캠프 › 장학금', '출금', '스즈키캠프', '운영', '장학금'], ['스즈키캠프 › 환불', '출금', '스즈키캠프', '운영', '환불'], ['스즈키캠프 › 기타', '출금', '스즈키캠프', '운영', '기타 지출'],
+  ['졸업연주 › 참가비', '입금', '졸업연주', '수입', '참가비'], ['졸업연주 › 티켓', '입금', '졸업연주', '수입', '티켓'],
+  ['졸업연주 › 대관료', '출금', '졸업연주', '운영', '대관료'], ['졸업연주 › 반주 · 강사료', '출금', '졸업연주', '인건비', '반주 · 강사료'], ['졸업연주 › 인쇄 · 제작', '출금', '졸업연주', '운영', '인쇄 · 제작'], ['졸업연주 › 환불', '출금', '졸업연주', '운영', '환불'], ['졸업연주 › 기타', '출금', '졸업연주', '운영', '기타 지출'],
+  ['교사연수 › 참가비', '입금', '교사연수', '수입', '참가비'], ['교사연수 › 강사료', '출금', '교사연수', '인건비', '강사료'], ['교사연수 › 대관료', '출금', '교사연수', '운영', '대관료'], ['교사연수 › 환불', '출금', '교사연수', '운영', '환불'], ['교사연수 › 기타', '출금', '교사연수', '운영', '기타 지출'],
+  ['기타 입금', '입금', '협회 운영', '', '기타 입금'], ['임대료', '출금', '협회 운영', '', '임대료'], ['통신 · 공과금', '출금', '협회 운영', '', '통신 · 공과금'], ['카드대금', '출금', '협회 운영', '', '카드대금'], ['교통 · 출장', '출금', '협회 운영', '', '교통 · 출장'],
+  ['인쇄 · 제작', '출금', '협회 운영', '', '인쇄 · 제작'], ['인건비 · 강사료', '출금', '협회 운영', '인건비', '인건비 · 강사료'], ['환불', '출금', '협회 운영', '', '환불 (사업 미정)'], ['행사비', '출금', '협회 운영', '', '행사비 (사업 미정)'], ['기타 지출', '출금', '협회 운영', '', '기타 지출'],
+  ['내부 이체', '모두', '이체', '', '내부 이체']];
+const BANK_REMAP = { '졸업연주': '졸업연주 › 참가비', '졸연티켓': '졸업연주 › 티켓', '캠프 참가비': '스즈키캠프 › 참가비', '캠프 가족방': '스즈키캠프 › 가족방', '교사연수': '교사연수 › 참가비' };
+function bankK_(k) { return BANK_REMAP[k] || k; }
+function bankCatTbl_() { return bankSheet_('통장구분', BANK_CAT_HEAD, BANK_SEED.map((r, i) => [r[0], r[1], r[2], r[3], i + 1, '사용', r[4]])); }
+/** 예전 구분(수입 › 회비 …)을 사업 › 항목으로 한 번 옮김: 기본 구분은 새것으로, 사람이 더한 구분은 그대로. 거래 · 프로젝트의 구분도 새 키로 */
+function bankMigrate_() {
+  const C = bankCatTbl_(); if (C.v.some(r => r[0] === '스즈키캠프 › 참가비')) return;
+  {
+    const seedK = BANK_SEED.map(r => r[0]), oldK = BANK_IN.concat(BANK_OUT), keep = C.objs().filter(o => seedK.indexOf(o['구분']) < 0 && oldK.indexOf(o['구분']) < 0 && !BANK_REMAP[o['구분']]);
+    const hid = {}; C.objs().forEach(o => { if (o['사용'] === '안씀') hid[bankK_(o['구분'])] = 1; });
+    const rows = BANK_SEED.map((r, i) => ({ '구분': r[0], '입출': r[1], '대분류': r[2], '중분류': r[3], '순서': i + 1, '사용': hid[r[0]] ? '안씀' : '사용', '이름': r[4] })).concat(keep.map((o, i) => Object.assign({}, o, { '순서': 200 + i })));
+    const old = C.v.length; if (old) C.sh.getRange(2, 1, old, C.h.length).clearContent();
+    C.sh.getRange(2, 1, rows.length, C.h.length).setNumberFormat('@').setValues(rows.map(o => C.h.map(k => o[k] == null ? '' : String(o[k]))));
+    const B = bankTbl_(), kc = B.c('구분'); let n = 0; B.v.forEach(r => { const nk = bankK_(r[kc]); if (nk !== r[kc]) { r[kc] = nk; n++; } }); if (n) B.flush();
+    const P = bankSheet_('프로젝트', BANK_PROJ_HEAD), pc = P.c('구분'); let m = 0; P.v.forEach(r => { const nk = bSplit_(r[pc]).map(bankK_).join(','); if (nk !== r[pc]) { r[pc] = nk; m++; } }); if (m) P.flush();
+    log_('시스템', '통장구분', '-', '사업 › 항목으로 바꿈', '거래 ' + n + ' · 행사 ' + m);
+  }
+}
+function bSplit_(x) { return String(x || '').split(',').filter(Boolean); }
 function bankCats_(C) { C = C || bankCatTbl_(); const L = C.objs().sort((a, b) => (+a['순서'] || 0) - (+b['순서'] || 0)), on = L.filter(o => o['사용'] !== '안씀');
-  return { in: on.filter(o => o['입출'] === '입금').map(o => o['구분']), out: on.filter(o => o['입출'] === '출금').map(o => o['구분']), rows: L }; }
+  return { in: on.filter(o => o['입출'] === '입금' || o['입출'] === '모두').map(o => o['구분']), out: on.filter(o => o['입출'] === '출금' || o['입출'] === '모두').map(o => o['구분']), rows: L }; }
 /* 한 입금을 사람별로 나누기 (11-01): 예) 반석애플스즈키 300,000 = 학생 6명 × 50,000 */
 const BANK_SPLIT_HEAD = ['거래ID', '순번', '대상', 'ID', '이름', '금액', '메모', '수정일', '수정자'];
 function bankSplitSave(who, id, lines) {
@@ -1989,7 +2017,7 @@ function bankMeta(who, kind, o) {
       if (isA) { row['은행'] = String(o['은행'] || '').trim().slice(0, 20); row['계좌번호'] = String(o['계좌번호'] || '').trim().slice(0, 30); row['예금주'] = String(o['예금주'] || '').trim().slice(0, 20); }
       else { const d = x => { x = String(x || '').trim(); if (x && !/^\d{4}-\d{2}-\d{2}$/.test(x)) fail('날짜는 2026-01-31 처럼 적어 주세요.'); return x; };
         row['시작일'] = d(o['시작일']); row['끝일'] = d(o['끝일']); if (row['시작일'] && row['끝일'] && row['끝일'] < row['시작일']) fail('끝일이 시작일보다 앞이에요.');
-        row['통장ID'] = [].concat(o['통장ID'] || []).join(','); row['구분'] = [].concat(o['구분'] || []).join(','); }
+        row['통장ID'] = [].concat(o['통장ID'] || []).join(','); row['구분'] = [].concat(o['구분'] || []).join(','); row['사업'] = String(o['사업'] || '').slice(0, 30); }
       if (M.v.some((r, i) => M.get(i, '이름') === nm && M.get(i, key) !== o[key])) fail('같은 이름이 이미 있어요.');
       let i = o[key] ? M.find(o[key]) : -1, id = o[key];
       if (i >= 0) M.set(i, row);
@@ -2021,9 +2049,10 @@ function bankAt_(s) {   /* '2026.09.28 18:53:20' · '2026-09-28 18:53' · '2026.
   return m[1] + '-' + p(m[2]) + '-' + p(m[3]) + ' ' + p(m[4]) + ':' + p(m[5]) + ':' + p(m[6]);
 }
 /** 이름 · 낱말 · 금액으로 구분 · 학원 · 선생님 추천. mem = 예전에 같은 보낸분을 어떻게 정했는지 */
-function bankGuess_(row, ctx) {
+function bankGuess_(row, ctx) { const g = bankGuess0_(row, ctx); g.k = bankK_(g.k); return g; }
+function bankGuess0_(row, ctx) {
   const who = String(row['보낸분받는분'] || ''), n = bankNorm_(who + ' ' + (row['적요'] || '') + ' ' + (row['내통장표시'] || '')), inAmt = num_(row['입금']), outAmt = num_(row['출금']);
-  const m = ctx.mem[bankNorm_(who)]; if (m && ((inAmt > 0) === (BANK_IN.indexOf(m.k) >= 0))) return { k: m.k, a: m.a, t: m.t, why: '예전 같은 이름' };
+  const m = ctx.mem[bankNorm_(who)]; if (m && m.k && ((inAmt > 0) === ((ctx.inK || BANK_IN).indexOf(m.k) >= 0))) return { k: m.k, a: m.a, t: m.t, why: '예전 같은 이름' };
   if (outAmt > 0) {
     const k = /카드|체크|비자|kb국민카드/.test(n) ? '카드대금' : /임대|빌딩|관리비/.test(n) ? '임대료' : /환불/.test(n) ? '환불' : /통신|kt|skt|lg유플|전력|가스|수도|공과/.test(n) ? '통신 · 공과금'
       : /고속|버스|철도|코레일|발권|택시|주유|하이패스|srt|ktx/.test(n) ? '교통 · 출장' : /인쇄|제작|액자|뱃지/.test(n) ? '인쇄 · 제작' : '';
@@ -2044,7 +2073,7 @@ function bankGuess_(row, ctx) {
   return { k, a, t, why: k ? '이름 · 낱말' : (a ? '이름' : '') };
 }
 function bankCtx_(B) {
-  const A = tbl_('학원'), T = tbl_('교사'), ctx = { acads: [], teachers: [], mem: {}, acadKind: {}, acadHead: {}, tAcad: {} };
+  const A = tbl_('학원'), T = tbl_('교사'), ctx = { acads: [], teachers: [], mem: {}, acadKind: {}, acadHead: {}, tAcad: {}, inK: bankCats_().in };
   A.v.forEach((r, i) => { const id = A.get(i, '학원ID'), nm = String(A.get(i, '학원명') || ''); ctx.acadKind[id] = A.get(i, '구분'); ctx.acadHead[id] = A.get(i, '원장교사ID');
     const core = bankNorm_(nm.replace(/스즈키플루트$|스즈키$|음악학원$|\s*클래스$/, '')); [bankNorm_(nm), core].filter((x, k, s) => x && s.indexOf(x) === k).forEach(c => ctx.acads.push({ id, core: c })); });
   T.v.forEach((r, i) => { const id = T.get(i, '교사ID'); if (T.get(i, '상태') === '탈퇴') return; const nm = bankNorm_(T.get(i, '이름')), tg = bankNorm_(T.get(i, '구분글자')); ctx.teachers.push({ id, n: nm }); if (tg) ctx.teachers.push({ id, n: nm + tg }); ctx.tAcad[id] = T.get(i, '학원1'); });
@@ -2056,7 +2085,7 @@ function bankImport(who, rows, acct) {
   rows = (rows || []).slice(0, 5000); if (!rows.length) fail('올릴 거래가 없어요.');
   const lock = LockService.getScriptLock(); lock.waitLock(30000);
   try {
-    const B = bankTbl_(), ctx = bankCtx_(B), have = {}, stamp = now_(), add = [], cs = bankCats_(), okK = cs.in.concat(cs.out);
+    bankMigrate_(); const B = bankTbl_(), ctx = bankCtx_(B), have = {}, stamp = now_(), add = [], cs = bankCats_(), okK = cs.in.concat(cs.out);
     acct = String(acct || ''); if (acct && bankSheet_('통장목록', BANK_ACCT_HEAD).find(acct) < 0) fail('그 통장을 찾지 못했어요.');
     B.v.forEach((r, i) => have[B.get(i, '거래ID')] = 1);
     const seen = {}; let skip = 0, bad = 0;
@@ -2066,7 +2095,7 @@ function bankImport(who, rows, acct) {
       const id = 'B' + Utilities.base64EncodeWebSafe(Utilities.computeDigest(Utilities.DigestAlgorithm.MD5, base + '#' + seen[sk], Utilities.Charset.UTF_8)).slice(0, 14);
       if (have[id]) { skip++; return; } have[id] = 1;
       const o = { '거래ID': id, '거래일시': at, '보낸분받는분': String(x.who || '').trim().slice(0, 60), '출금': out || '', '입금': inn || '', '잔액': x.bal ? num_(x.bal) : '', '적요': String(x.memo || '').slice(0, 60), '내통장표시': String(x.mine || '').slice(0, 60), '처리점': String(x.branch || '').slice(0, 40), '올린때': stamp, '수정일': stamp, '수정자': who.name };
-      const g = x.k ? { k: x.k, a: x.a || '', t: x.t || '' } : bankGuess_(o, ctx); if (g.k && (x.k ? cs.rows.map(c => c['구분']) : okK).indexOf(g.k) < 0) g.k = ''; o['구분'] = g.k; o['통장ID'] = acct; o['학원ID'] = g.a; o['교사ID'] = g.t; o['상태'] = x.st || (g.k ? '추천' : '미분류'); o['메모'] = String(x.note || '').slice(0, 200); o['연결'] = String(x.link || '');
+      const g = x.k ? { k: bankK_(x.k), a: x.a || '', t: x.t || '' } : bankGuess_(o, ctx); if (g.k && (x.k ? cs.rows.map(c => c['구분']) : okK).indexOf(g.k) < 0) g.k = ''; o['구분'] = g.k; o['통장ID'] = acct; o['학원ID'] = g.a; o['교사ID'] = g.t; o['상태'] = x.st || (g.k ? '추천' : '미분류'); o['메모'] = String(x.note || '').slice(0, 200); o['연결'] = String(x.link || '');
       add.push(o);
     });
     add.sort((p, q) => p['거래일시'].localeCompare(q['거래일시']));
@@ -2076,7 +2105,7 @@ function bankImport(who, rows, acct) {
   } finally { lock.releaseLock(); }
 }
 function bankList(who) {
-  const B = bankTbl_();
+  bankMigrate_(); const B = bankTbl_();
   return Object.assign({ h: B.h, rows: B.v }, bankMetaAll_());
 }
 /** 예전 통장 구글시트(거래일시 · 보낸분/받는분 · 출금액 · 입금액 · 내통장표시 · 적요 · 처리점 · 비고(구분) · 처리 · 학생수 · 학원명)를 그대로 가져옴 (11-01).
@@ -2084,14 +2113,14 @@ function bankList(who) {
 function bankLabel_(lab, inAmt) {
   const l = String(lab || '').replace(/\s+/g, '');
   if (!l) return '';
-  if (/티켓/.test(l)) return inAmt ? '졸연티켓' : '환불';
+  if (/티켓/.test(l)) return inAmt ? '졸업연주 › 티켓' : '졸업연주 › 환불';
   if (/환불/.test(l)) return inAmt ? '기타 입금' : '환불';
   if (/교사회비|교사연회비/.test(l)) return '교사회비';
   if (/학생회비|연회비/.test(l)) return '학생회비';
-  if (/가족방/.test(l)) return '캠프 가족방';
-  if (/캠프|참가비/.test(l)) return inAmt ? '캠프 참가비' : '행사비';
-  if (/졸업|졸연/.test(l)) return inAmt ? '졸업연주' : '행사비';
-  if (/연수/.test(l)) return inAmt ? '교사연수' : '행사비';
+  if (/가족방/.test(l)) return '스즈키캠프 › 가족방';
+  if (/캠프|참가비/.test(l)) return inAmt ? '스즈키캠프 › 참가비' : '스즈키캠프 › 기타';
+  if (/졸업|졸연/.test(l)) return inAmt ? '졸업연주 › 참가비' : '졸업연주 › 기타';
+  if (/연수/.test(l)) return inAmt ? '교사연수 › 참가비' : '교사연수 › 기타';
   if (/임대/.test(l)) return '임대료';
   if (/인쇄|액자|제작|뱃지/.test(l)) return inAmt ? '기타 입금' : '인쇄 · 제작';
   return inAmt ? '기타 입금' : '기타 지출';

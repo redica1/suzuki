@@ -1,4 +1,4 @@
-/* build: 20261101-215259 */
+/* build: 20261101-215915 */
 function vAuthPick(){return `<section class="sec"><h2>접수 시작</h2>
   <p class="lede">어떻게 접수하시나요?</p>
   <div class="pick2">
@@ -19,6 +19,7 @@ function vStaffLogin(){return `<section class="sec"><h2>관계자 로그인</h2>
   ${LOGIN_PW?`<div class="panel" style="max-width:440px">
     ${emailBox('lgId',S.lgId)}
     <label class="f" for="lgPw">비밀번호<input type="password" id="lgPw" autocomplete="current-password"></label>
+    ${typeof TEST_LOGIN==='string'&&TEST_LOGIN?'<p class="hint" style="margin:0;color:#b26a00">STG(시험) 화면이에요. <b>회원관리 STG</b> 계정 비밀번호로 들어가요. 메인 회원관리 계정과는 따로예요.</p>':''}
     ${S.verr?`<p class="err">${S.verr}</p>`:''}
     <button class="btn primary" type="button" id="doLogin">로그인</button>
     <div class="spread"><button class="btn ghost small" type="button" id="toPick">← 처음으로</button><a class="btn ghost small" href="${esc(MEMBER_URL||SIGNUP_URL)}" target="_blank" rel="noopener" style="text-decoration:none">비밀번호를 잊었어요 ↗</a></div>
@@ -104,6 +105,7 @@ function vStep1(){
   <div class="panel" style="max-width:440px">
     ${emailBox('lgId',S.lgId)}
     <label class="f" for="lgPw">비밀번호<input type="password" id="lgPw" autocomplete="current-password"></label>
+    ${typeof TEST_LOGIN==='string'&&TEST_LOGIN?'<p class="hint" style="margin:0;color:#b26a00">STG(시험) 화면이에요. <b>회원관리 STG</b> 계정 비밀번호로 들어가요. 메인 회원관리 계정과는 따로예요.</p>':''}
     ${S.verr?`<p class="err">${S.verr}</p>`:''}
     <button class="btn primary" type="button" id="doLogin">로그인</button>
     <div class="spread"><button class="btn ghost small" type="button" id="toPick">← 처음으로</button><a class="btn ghost small" href="${esc(MEMBER_URL||SIGNUP_URL)}" target="_blank" rel="noopener" style="text-decoration:none">비밀번호를 잊었어요 ↗</a></div>

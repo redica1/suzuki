@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261101-203613 -->
+<!-- build: 20261101-204950 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -281,7 +281,7 @@ function vAcads(){
   '</tbody></table></div>'+pager(list.length,per)+'</div>'}
 function fld(id,label,v,o){o=o||{};return '<label class="f'+(o.wide?' wide':'')+'" for="'+id+'"><span>'+label+(o.req?' <span class="req">*</span>':'')+(o.hint?' <span class="cap">'+o.hint+'</span>':'')+'</span>'+
   (o.sel?sel(id,o.sel,v,label):o.area?'<textarea id="'+id+'" rows="2">'+esc(v)+'</textarea>':'<input type="'+(o.type||'text')+'" id="'+id+'" value="'+esc(v)+'" '+(o.num?'inputmode="numeric"':'')+' '+(o.max?'maxlength="'+o.max+'"':'')+'>')+'</label>'}
-function edHead(title,o,kind){return '<div class="sec-h"><h3>'+title+'</h3><div class="row"><button class="btn primary small" type="button" id="saveEd">저장</button><button class="btn small" type="button" id="saveOk">저장 · 확인 완료</button><button class="btn small ghost" type="button" id="closeEd">닫기</button></div></div>'+
+function edHead(title,o,kind){return '<div class="sec-h"><h3>'+title+(o&&o['확인']!==undefined&&(o['교사ID']||o['학원ID']||o['학생ID'])?' '+ckPill(o['확인']):'')+'</h3><div class="row"><button class="btn primary small" type="button" id="saveEd">저장</button><button class="btn small" type="button" id="saveOk">저장 · 확인 완료</button><button class="btn small ghost" type="button" id="closeEd">닫기</button></div></div>'+
   (o&&o['확인메모']?'<div class="note">'+esc(o['확인메모'])+'</div>':'')+(o&&o['원본']?'<p class="cap">원본: '+esc(o['원본'])+(o['원래이름']&&o['원래이름']!==o['이름']?' · 원래 이름 「'+esc(o['원래이름'])+'」':'')+' · 마지막 수정 '+esc(o['수정일'])+' '+esc(o['수정자'])+'</p>':'')}
 /* ---------- 학원: 교습과목 · 주소 검색 · 졸업연주 지역 (10-28) ---------- */
 var REGIONS=['서울·경기·강원·제주','대전·광주·충청·전라','대구·부산·울산·경상'];
@@ -378,9 +378,9 @@ function stuTiles(list){var cur=list.filter(function(x){return x['상태']==='�
 var KGRP=[['회원','회원'],['비회원','비회원'],['외국인','외국인'],['외부인','관계자']],KSUB=[['확인 전','확인 전'],['정식 교사','교사회원'],['중급 연수','연수교사 · 중급'],['초급 연수','연수교사 · 초급']];
 function kGrp(k){return k==='비회원'||k==='외국인'||k==='외부인'?k:'회원'}
 function kindBox(t){var k=t['회원구분']||'확인 전',g=kGrp(k);var o=function(L,v){return L.map(function(x){return '<option value="'+x[0]+'" '+(x[0]===v?'selected':'')+'>'+x[1]+'</option>'}).join('')};
-  return '<div class="f"><span>구분 <span class="cap">회원 · 비회원 · 외국인 · 관계자 · 명단 자격: '+esc(t['명단자격']||'없음')+(t['명단취득']?' · '+esc(t['명단취득']):'')+'</span></span><div class="row" style="flex-wrap:nowrap"><select id="kGrp" aria-label="구분" style="width:auto;flex:none">'+o(KGRP,g)+'</select><select id="kSub" aria-label="회원 종류" style="flex:1"'+(g==='회원'?'':' disabled')+'>'+o(KSUB,g==='회원'?k:'확인 전')+'</select></div>'+
+  return '<div class="f"><span>구분 <span class="cap">회원 · 비회원 · 외국인 · 관계자 · 명단 자격: '+esc(t['명단자격']||'없음')+(t['명단취득']?' · '+esc(t['명단취득']):'')+'</span></span><div class="row" style="flex-wrap:nowrap"><select id="kGrp" aria-label="구분" style="width:auto;flex:none">'+o(KGRP,g)+'</select><select id="kSub" aria-label="회원 종류" style="flex:1"'+(g==='회원'?'':' disabled hidden')+'>'+o(KSUB,g==='회원'?k:'확인 전')+'</select></div>'+
     '<input type="hidden" id="e_회원구분" value="'+esc(k)+'"><p class="cap" id="kNote"'+(g==='회원'?' hidden':'')+'>회원이 아니면 연회비 면제로 저장돼요. 관계자는 「관계자정보」 탭으로 옮겨 가요.</p></div>'}
-function kindSync(){var g=document.getElementById('kGrp').value,sb=document.getElementById('kSub');sb.disabled=g!=='회원';document.getElementById('e_회원구분').value=g==='회원'?sb.value:g;var nt=document.getElementById('kNote');if(nt)nt.hidden=g==='회원';var xf=document.getElementById('extF');if(xf)xf.hidden=g!=='외부인'}
+function kindSync(){var g=document.getElementById('kGrp').value,sb=document.getElementById('kSub');sb.disabled=g!=='회원';sb.hidden=g!=='회원';document.getElementById('e_회원구분').value=g==='회원'?sb.value:g;var nt=document.getElementById('kNote');if(nt)nt.hidden=g==='회원';var xf=document.getElementById('extF');if(xf)xf.hidden=g!=='외부인'}
 function vTeachers(){var list=tchList(),per=50,page=list.slice(S.page*per,(S.page+1)*per);
   return '<div class="sec-h"><div><h2>교사정보</h2><p>회원 구분(정식 교사 · 중급 연수 · 초급 연수)은 짐작하지 않고 「확인 전」으로 두었어요. 명단 자격은 원본 그대로예요.</p></div><button class="btn primary" type="button" data-new="tch">+ 교사 추가</button></div>'+
   (S.edit&&S.edit.kind==='tch'?tchEditor():'')+tchTiles(list)+issueBar()+

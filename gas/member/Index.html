@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261101-102554 -->
+<!-- build: 20261101-102654 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -1041,7 +1041,7 @@ document.addEventListener('change',function(e){var bt=e.target,bd=bt.dataset||{}
   if(bd.bk&&bt.value==='__new'){var no=(S.bank||[]).filter(function(x){return x['거래ID']===bd.bk})[0]||{},npj=bProj(no),nbz=npj&&bPj(npj.id)?bPj(npj.id)['사업']:'',nio=bIn(no)?'입금':'출금';
     var nnm=window.prompt(nio+' 항목 이름을 적어 주세요 (예: 후원금, 대관료)','');if(!nnm||!nnm.trim()){render();return}
     var nb=window.prompt('어느 사업의 항목인가요? ('+bBizList().join(' · ')+')',nbz||'협회 운영');if(nb==null){render();return}
-    bankMetaGo('cat',{'구분':nnm.trim(),'입출':nio,'대분류':nb.trim(),'중분류':''},'').then(function(ok){if(!ok)return;var nr=(S.bCatRows||[]).filter(function(x){return (x['이름']||x['구분'])===nnm.trim()&&x['대분류']===nb.trim()})[0];if(nr)bankSave([bd.bk],{'구분':nr['구분']},'「'+nnm.trim()+'」 항목을 만들고 이 거래에 넣었어요')});return}
+    bankMetaGo('cat',{'구분':nnm.trim(),'입출':nio,'대분류':nb.trim(),'중분류':''},'').then(function(ok){if(!ok){render();return}var nr=(S.bCatRows||[]).filter(function(x){return (x['이름']||x['구분'])===nnm.trim()&&x['대분류']===nb.trim()})[0];if(nr)bankSave([bd.bk],{'구분':nr['구분']},'「'+nnm.trim()+'」 항목을 만들고 이 거래에 넣었어요')});return}
   if(bd.bk){bankSave([bd.bk],{'구분':bt.value});return}if(bd.ba){bankSave([bd.ba],{'학원ID':bt.value});return}if(bd.bt){bankSave([bd.bt],{'교사ID':bt.value});return}if(bd.bm){S.bMemo=null;bankSave([bd.bm],{'메모':bt.value});return}
   if(bd.bck){S.bSel=S.bSel||{};if(bt.checked)S.bSel[bd.bck]=1;else delete S.bSel[bd.bck];render();return}
   if(bt.id==='bAll'){S.bSel=S.bSel||{};[].forEach.call(document.querySelectorAll('[data-bck]'),function(x){if(bt.checked)S.bSel[x.dataset.bck]=1;else delete S.bSel[x.dataset.bck]});render();return}

@@ -1,4 +1,4 @@
-/* build: 20261101-102554 */
+/* build: 20261101-102654 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -2035,7 +2035,7 @@ function bankMeta(who, kind, o) {
         if (i >= 0) k = [big, mid, nm].filter(Boolean).join(' › ');   /* 이름이 겹치면(참가비 등) 대분류 › 중분류 › 이름 으로 따로 둠 */
         if (C.v.some(r => r[0] === k)) fail('같은 구분이 이미 있어요.');
         const io = o['입출'] === '출금' ? '출금' : '입금', base = io === '입금' ? 0 : 100, oc = C.c('순서'), mx = C.v.filter((r, j) => C.get(j, '입출') === io).reduce((m, r) => Math.max(m, +r[oc] || 0), base);
-        C.appendMany([{ '구분': k, '이름': nm, '입출': io, '대분류': big || (io === '입금' ? '수입' : '지출'), '중분류': mid, '순서': mx + 1, '사용': '사용' }]); }
+        C.appendMany([{ '구분': k, '이름': nm, '입출': io, '대분류': big || '협회 운영', '중분류': mid, '순서': mx + 1, '사용': '사용' }]); }
       log_(who.name, '통장구분', k, o.toggle ? '사용 바꿈' : '추가', k);
     } else fail('알 수 없는 요청이에요.');
     return bankList(who);

@@ -1,4 +1,4 @@
-/* build: 20261101-213107 */
+/* build: 20261101-213203 */
 /* ---------- 캠프 설정 (관리자 화면에서 입력되는 값) ---------- */
 const ROOM = { cap:4, emptyFee:130000 }; // 가족방: 4인 기준, 빈 자리 1개당 추가 비용
 const CAMP = { id:'27W', ri:0, lessonFee:60000, lessonMax:5, mcFee:150000,
@@ -193,6 +193,7 @@ const isGuest=()=>!!(S.user&&S.user.guest);
 const GUEST_FAM=['비회원 보호자','비회원 동반가족','비회원 돌전아기'];
 /* 관계자 (10-31): 회원관리 「외부인」 계정으로 로그인 → 학원 「관계자」, 본인은 역할(참가비는 캠프 설정 참가비표), 가족은 회원 가족 참가비 */
 const STAFF_ACAD='관계자';
+const isStaffT=u=>!!(u&&u.staff);
 const STAFF_TYPES=['초빙교수','반주자','지휘자','통역','초청강사','스태프','기타 관계자'];
 const isStaffAcad=()=>S.acad===STAFF_ACAD;
 /* 동의 문구: 서버 「캠프 설정 › 동의」 값(페이지에 실려 옴)을 씀 · 없을 때만 아래 기본 */

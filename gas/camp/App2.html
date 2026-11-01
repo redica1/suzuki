@@ -1,4 +1,4 @@
-/* build: 20261101-213107 */
+/* build: 20261101-213203 */
 function vAuthPick(){return `<section class="sec"><h2>접수 시작</h2>
   <p class="lede">어떻게 접수하시나요?</p>
   <div class="pick2">
@@ -89,7 +89,7 @@ function renderSteps(){
     const n=i+1, cls=n===S.step?'on':(n<S.step?'done':''); const can = n<S.step && S.step<6;
     return `<li class="${cls}"><button type="button" ${can?`data-go="${n}"`:'disabled'} aria-current="${n===S.step?'step':'false'}"><span class="bar"></span>${n}. ${t}</button></li>`}).join('');
 }
-function login(t){S.user=t;S.who=t.name;S.phone=t.p4?`010-****-${t.p4}`:String(t.phone||'').replace(/(\d{3})(\d{4})(\d{4})/,'$1-$2-$3');S.email=t.email||'';S.verr='';S.auth='in'; loadMine(); if(MY_SUBS.length)S.view='mine'; render();}
+function login(t){S.user=t;S.who=t.name;S.phone=t.p4?`010-****-${t.p4}`:String(t.phone||'').replace(/(\d{3})(\d{4})(\d{4})/,'$1-$2-$3');S.email=t.email||S.lgId||'';S.mailEd=false;S.verr='';S.auth='in'; loadMine(); if(MY_SUBS.length)S.view='mine'; render();}
 function findT(ph){ph=String(ph).replace(/\D/g,'');return TEACHER_DB.find(t=>t.phone===ph)}
 function classOf(u){return `${u.name} 클래스`}
 function vStep1(){
@@ -128,16 +128,17 @@ function vStep1(){
 
   </div></section>`;
   // 로그인됨: 학원 고르기 (모든 학원 중 직접 선택)
+  if(isStaffT(u)&&S.acad!==STAFF_ACAD){S.acad=STAFF_ACAD;try{ensureRoster(STAFF_ACAD)}catch(e){}}
   const q=S.acQ.trim(); const mineA=u.home||u.acads;
   const all=ACADEMIES.filter(a=>!q||a.name.includes(q)||a.region.includes(q)||(a.head||'').includes(q)).sort((x,y)=>(mineA.includes(y.name)?1:0)-(mineA.includes(x.name)?1:0)||x.name.localeCompare(y.name,'ko'));
-  return `${MY_SUBS.length?`<div class="note info spread" style="margin-bottom:12px"><span><b>내 접수 ${MY_SUBS.length}건</b> · 확인·취소는 여기서</span><button class="btn small primary" type="button" id="toMine">내 접수 보기</button></div>`:''}<section class="sec"><div class="spread"><h2>어느 학원으로 접수할까요?</h2><button class="btn small ghost" type="button" id="logout">로그아웃</button></div>
-  <div class="verified">✓ ${esc(u.name)} 선생님${u.role?` · ${esc(u.role)}`:''} · ${esc(u.inst)}${u.newReg?' · <span class="pill due">신규 등록 · 운영진 확인 대기</span>':''}</div>
+  return `${MY_SUBS.length?`<div class="note info spread" style="margin-bottom:12px"><span><b>내 접수 ${MY_SUBS.length}건</b> · 확인·취소는 여기서</span><button class="btn small primary" type="button" id="toMine">내 접수 보기</button></div>`:''}<section class="sec"><div class="spread"><h2>${isStaffT(u)?'관계자로 접수해요':'어느 소속으로 접수할까요?'}</h2><button class="btn small ghost" type="button" id="logout">로그아웃</button></div>
+  <div class="verified">✓ ${esc(u.name)} ${isStaffT(u)?'님':'선생님'}${[u.role,u.inst].filter(Boolean).map(x=>' · '+esc(x)).join('')}${u.newReg?' · <span class="pill due">신규 등록 · 운영진 확인 대기</span>':''}</div>
   <div class="panel">
-    <div class="f" style="display:grid;gap:8px"><span>어디로 접수하나요?</span>
+    ${isStaffT(u)?'':`<div class="f" style="display:grid;gap:8px"><span>어느 소속으로 접수할까요?</span>
       <div class="row" style="gap:8px;flex-wrap:wrap">${mineA.map(a=>`<button class="btn ${S.acad===a?'primary':''}" type="button" data-acad="${esc(a)}">${esc(a)} <small>(내 소속)</small></button>`).join('')}
         <button class="btn ${S.acad&&!mineA.includes(S.acad)&&S.acad!==classOf(u)?'primary':''}" type="button" id="otherAcad">다른 학원 학생 접수 <small>(겸임 · 소속 그대로)</small></button>
         <button class="btn ${S.acad===classOf(u)?'primary':''}" type="button" data-acad="${esc(classOf(u))}">${esc(classOf(u))} <small>(학원 없이)</small></button></div></div>
-    <label class="f" for="acQ">학원 찾기 <span class="hint">다른 학원 학생도 접수할 수 있어요 · 선생님 소속은 그대로예요</span>
+    <label class="f" for="acQ">소속 찾기 <span class="hint">다른 학원 학생도 접수할 수 있어요 · 선생님 소속은 그대로예요</span>
       <div class="ac combo">
         <input type="search" id="acQ" role="combobox" aria-expanded="${S.acOpen}" aria-controls="acList" value="${esc(S.acOpen?S.acQ:S.acad)}" placeholder="학원을 선택하거나 검색하세요" autocomplete="off">
         <span class="caret" aria-hidden="true">▾</span>
@@ -145,11 +146,14 @@ function vStep1(){
           <li><button type="button" role="option" data-acad="${esc(classOf(u))}"><span><b>직접 입력</b> · ${esc(classOf(u))}</span><small>학원 소속 없이</small></button></li>
           ${all.map(a=>`<li><button type="button" role="option" data-acad="${esc(a.name)}" aria-selected="${S.acad===a.name}"><span>${esc(a.name)}${mineA.includes(a.name)?' <span class="pill ok">내 소속</span>':''}</span><small>${esc(a.region)}${a.head?` · ${esc(a.head)}`:''}</small></button></li>`).join('')||'<li class="hint" style="padding:8px">찾는 학원이 없어요. 맨 위 「직접 입력」을 선택해 주세요.</li>'}
         </ul>`:''}
-      </div></label>
+      </div></label>`}
     ${S.acad&&!mineA.includes(S.acad)&&S.acad!==classOf(u)?`<div class="note info">「${esc(S.acad)}」은(는) 명단상 소속이 아니지만 <b>이 학원 학생을 접수할 수 있어요</b> (겸임). 소속은 그대로 「${esc(mineA.join(', ')||'-')}」예요.</div>`:''}
-    <label class="f" for="email">접수 확인 메일 받을 주소<input type="text" id="email" value="${esc(S.email)}" placeholder="name@naver.com"></label>
+    ${mailField()}
   </div></section>`;
 }
+/* 접수 확인 메일: 이메일로 로그인했으면 그 주소를 그대로 씀 (「다른 주소로」를 누를 때만 칸이 열림) */
+function mailField(){if(S.lgId&&S.email&&!S.mailEd)return `<p class="hint" style="margin:0">접수 확인 메일은 <b>${esc(S.email)}</b>(로그인 이메일)로 보내요. <button class="btn small ghost" type="button" id="mailEd">다른 주소로</button></p>`;
+  return `<label class="f" for="email">접수 확인 메일 받을 주소<input type="text" id="email" value="${esc(S.email)}" placeholder="name@naver.com"></label>`}
 /* 이미 낸 접수에 들어 있는 사람 (고치는 중인 접수는 빼고) */
 function bookedOf(x){const T=/^t_/.test(x.id);/* 선생님은 학원을 통틀어 한 번만 */for(const sb of ALL_SUBS){if(sb.no===S.editNo||(!T&&sb.acad!==S.acad))continue;const p=sb.ppl.find(q=>q.id===sb.no+'_'+x.id&&(q.status==='정상'||(T&&q.status==='취소요청')));if(p)return {no:sb.no+(sb.acad!==S.acad?' · '+sb.acad:''),round:sb.round,by:sb.owner,at:p.addAt||sb.date}}return null}
 /* 고치는 중일 때 신청 명단 칩에 붙는 표시: 기존(들어온 차례·시각) / 새로 추가 */

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261101-215018 -->
+<!-- build: 20261101-220432 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -552,7 +552,7 @@ function vMyAcad(){var M=S.myac;if(!M||!M.data)return '<div class="card"><span><
 function vMine(){return myAskCard()+'<button class="btn block" type="button" id="toMe">내 정보로</button>'}
 function headInfo(){var hs=(S.sess&&S.me&&S.me.heads)||[];return {hs:hs,acad:hs.some(function(h){return h.kind!=='클래스'}),cls:hs.some(function(h){return h.kind==='클래스'})}}
 function curKind(){var hs=headInfo().hs,id=S.myac&&S.myac.id,h=hs.filter(function(x){return x.id===id})[0]||hs[0];return h&&h.kind==='클래스'?'클래스':'학원'}
-function gnbNav(){var H=headInfo(),nav=document.getElementById('mnav'),t=document.getElementById('gnbTitle');if(t)t.textContent=H.acad?'원장님 회원':'선생님 회원';if(!nav)return;var tm=!H.hs.length&&S.sess&&S.me&&!S.me.ext;nav.hidden=!H.hs.length&&!tm;if(tm){var c2=S.v==='mystu'?'mystu':S.v==='me'?'me':'';nav.firstChild.innerHTML=[['mystu','내 학생'],['me','내 정보']].map(function(x){return '<button type="button" data-mtab="'+x[0]+'" aria-current="'+(c2===x[0]?'page':'false')+'">'+x[1]+'</button>'}).join('');return}if(!H.hs.length)return;
+function gnbNav(){var H=headInfo(),nav=document.getElementById('mnav'),t=document.getElementById('gnbTitle');if(t)t.textContent=S.sess&&S.me&&S.me.name?S.me.name+' 님':H.acad?'원장님 회원':'선생님 회원';if(!nav)return;var tm=!H.hs.length&&S.sess&&S.me&&!S.me.ext;nav.hidden=!H.hs.length&&!tm;if(tm){var c2=S.v==='mystu'?'mystu':S.v==='me'?'me':'';nav.firstChild.innerHTML=[['mystu','내 학생'],['me','내 정보']].map(function(x){return '<button type="button" data-mtab="'+x[0]+'" aria-current="'+(c2===x[0]?'page':'false')+'">'+x[1]+'</button>'}).join('');return}if(!H.hs.length)return;
   var k=curKind(),cur=S.v==='myacad'?(S.acTab||'acad'):S.v==='me'?'me':'';
   nav.firstChild.innerHTML=[['acad',k+' 관리'],['tch','교사 관리'],['stu','학생 관리'],['me','내 정보']].map(function(x){return '<button type="button" data-mtab="'+x[0]+'" aria-current="'+(cur===x[0]?'page':'false')+'">'+x[1]+'</button>'}).join('')}
 function gnbAsk(){gnbNav();{var gi=document.getElementById('gnbIn');if(gi)gi.hidden=!!S.sess||S.v==='login'}['gnbMe','gnbOut'].forEach(function(id){var x=document.getElementById(id);if(x){x.hidden=!S.sess;if(id==='gnbMe')x.setAttribute('aria-current',S.v==='me'?'page':'false')}});var e=document.getElementById('gnbEv');if(e){e.hidden=!S.sess;e.setAttribute('aria-current',S.v==='events'?'page':'false')}var b=document.getElementById('gnbAsk');if(!b)return;b.hidden=!S.sess;b.setAttribute('aria-current',S.v==='mine'?'page':'false');

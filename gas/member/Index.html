@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261101-134235 -->
+<!-- build: 20261101-140938 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -646,7 +646,7 @@ function vBank(){
 function bBulkCats(){var R=S.bCatRows||[],h='<option value="">구분 그대로</option>',o=function(x){return '<option value="'+esc(x['구분'])+'">'+esc(x['이름']||x['구분'])+'</option>'};
   ['입금','출금','모두'].forEach(function(io){var g={},ord=[];R.filter(function(x){return x['입출']===io&&x['사용']!=='안씀'}).forEach(function(x){var l=io+' · '+([x['대분류'],x['중분류']].filter(Boolean).join(' › ')||'분류 없음');if(!g[l]){g[l]=[];ord.push(l)}g[l].push(x)});h+=ord.map(function(l){return '<optgroup label="'+esc(l)+'">'+g[l].map(o).join('')+'</optgroup>'}).join('')});return h}
 function bFloat(){var n=Object.keys(S.bSel||{}).length,el=document.getElementById('bFloat');if(!n||S.tab!=='bank'){if(el)el.remove();return}if(!el){el=document.createElement('div');el.id='bFloat';el.className='bfloat';document.body.appendChild(el)}
-  el.innerHTML='<b>'+n+'줄 고름</b><button class="btn small primary" type="button" id="bDoneGo">확인 (회색)</button><button class="btn small" type="button" id="bDoneNo">확인 풀기</button><select id="bFk" aria-label="구분">'+bBulkCats().replace('구분 그대로','구분 바꾸기')+'</select><button class="btn small" type="button" id="bFkGo">적용</button><button class="btn small ghost" type="button" id="bSelNo">고르기 풀기</button>'}
+  el.innerHTML='<b>'+n+'줄 고름</b>'+(n===1?'<button class="btn small primary" type="button" data-bsp="'+esc(Object.keys(S.bSel)[0])+'">사람별로 나누기</button>':'')+'<button class="btn small primary" type="button" id="bDoneGo">확인 (회색)</button><button class="btn small" type="button" id="bDoneNo">확인 풀기</button><select id="bFk" aria-label="구분">'+bBulkCats().replace('구분 그대로','구분 바꾸기')+'</select><button class="btn small" type="button" id="bFkGo">적용</button><button class="btn small ghost" type="button" id="bSelNo">고르기 풀기</button>'}
 function bBulkRefresh(){bFloat();var el=document.getElementById('bBulk');if(!el){render();return}var keep={};['bBk','bBac','bBp','bBa'].forEach(function(k){var x=document.getElementById(k);if(x)keep[k]=x.value});var w=document.createElement('div');w.innerHTML=bankBulk(bankList());el.parentNode.replaceChild(w.firstChild,el);Object.keys(keep).forEach(function(k){var x=document.getElementById(k);if(x){x.value=keep[k]}})}
 function bankBulk(list){var n=Object.keys(S.bSel||{}).length,rec=list.filter(function(o){return o['상태']==='추천'}).length;
   return '<div class="note info" id="bBulk" style="display:grid;gap:6px;margin-bottom:6px"><div class="row" style="justify-content:space-between"><span><b>'+(n?n+'줄 고름':'한꺼번에 바꾸기')+'</b> <span class="cap">'+(n?'':'줄 왼쪽 칸을 고르거나 「보이는 '+list.length+'건 모두 고르기」를 누르세요')+'</span></span><span class="row">'+
@@ -673,7 +673,7 @@ function bankTable(list){var sig=JSON.stringify(S.bf||{});if(S._bfSig!==sig){S._
         '<td>'+(S.bMemo===id?'<input type="text" data-bm="'+id+'" value="'+esc(o['메모'])+'" placeholder="메모" style="width:100%" autofocus>':o['메모']?'<span class="bmemo" data-bme="'+id+'" title="'+esc(o['메모'])+'">'+esc(String(o['메모']).length>10?String(o['메모']).slice(0,10)+'…':o['메모'])+'</span>':'<button class="btn small ghost" type="button" data-bme="'+id+'" aria-label="메모 더하기">+</button>')+'</td>'+
         '<td'+(o['연결']?' title="'+esc(o['연결'])+'"':'')+'>'+(bCampSt(o)?bCampPill(bCampSt(o)):bSt(o['상태'])+act)+'</td></tr>'}).join('')+'</tbody></table></div>'+pager}
 function bSpTxt(o){var L=(S.bSplits||{})[o['거래ID']]||[],inn=bIn(o)||bOut(o);if(!inn)return '';var sm=0;L.forEach(function(x){sm+=+x['금액']||0});
-  return L.length?'<div class="cap"><button class="btn small ghost" type="button" data-bsp="'+esc(o['거래ID'])+'" style="padding:0 5px">'+L.length+'명</button> '+esc(L.slice(0,4).map(function(x){return x['이름']}).join(', ')+(L.length>4?' 외 '+(L.length-4):''))+(sm!==inn?' <span style="color:var(--rosin)">(합 '+won(sm)+')</span>':'')+'</div>':''}
+  return L.length?'<div class="cap"><button class="btn small ghost" type="button" data-bsp="'+esc(o['거래ID'])+'" style="padding:0 5px">'+L.length+'명</button> '+esc(L.slice(0,4).map(function(x){return x['이름']}).join(', ')+(L.length>4?' 외 '+(L.length-4):''))+(sm!==inn?' <span style="color:var(--rosin)">(남은 '+won(inn-sm)+')</span>':'')+'</div>':''}
 /* 한 입금을 사람별로: 학원 재원 학생 · 선생님을 체크하면 1인 금액으로 줄이 생김 */
 function bankSplitBox(){var id=S.bSp;if(!id)return '';var o=(S.bank||[]).filter(function(x){return x['거래ID']===id})[0];if(!o)return '';
   var L=S.bSpL||[],amt=bIn(o)||bOut(o),sm=0,ac=S.bSpA!=null?S.bSpA:(o['학원ID']||''),on={};L.forEach(function(x){sm+=+x['금액']||0;if(x.ID)on[x['대상']+'|'+x.ID]=1});

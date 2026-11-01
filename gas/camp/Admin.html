@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261101-213933 -->
+<!-- build: 20261101-214152 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -1550,7 +1550,7 @@ const ME=()=>(S.D&&S.D.me)||{sup:true,perms:{}};
 const permOf=k=>{const m=ME();if(m.sup)return '편집';if(k==='camp'||k==='staff'||k==='cons')return '';return (m.perms||{})[k]||''};
 const visTabs=()=>TABS.concat(SUP_TABS).filter(([k])=>permOf(k));
 const RO=()=>permOf(S.tab)==='보기';
-const WRITE_FN=/^(scholSave|adminConfirm|adminAdjust|adminRejectReport|adminSaveEns|adminSaveProfs|adminRefund|adminSetIssue|schedSave|lessonSet|adminSetSetting|roomSave|conSave|campSave|staffSave|songEnSave|pvHideSave|roomCfgSave|layoutImport|roomMove|budSave)$/;
+const WRITE_FN=/^(scholSave|adminConfirm|adminAdjust|adminSetBankAcct|adminRejectReport|adminSaveEns|adminSaveProfs|adminRefund|adminSetIssue|schedSave|lessonSet|adminSetSetting|roomSave|conSave|campSave|staffSave|songEnSave|pvHideSave|roomCfgSave|layoutImport|roomMove|budSave)$/;
 const roBlock=fn=>WRITE_FN.test(fn)&&permOf(S.tab)!=='편집';
 const RO_MSG='보기만 할 수 있는 메뉴예요. 바꾸려면 총관리자에게 「편집」 권한을 받아 주세요.';
 
@@ -1564,12 +1564,17 @@ const dw=d=>{if(!/^\d{4}-\d{2}-\d{2}$/.test(d||''))return '';const [y,m,dd]=d.sp
 const ccPill=()=>ccDirty()?'<span class="pill due">저장 안 한 변경 있음</span><button class="btn small ghost" type="button" data-ccreset="1">되돌리기</button>':'';
 function ccGet(path){return path.split('.').reduce((o,k)=>o==null?o:o[k],S.cc)}
 function ccSet(path,v){const ks=path.split('.'),last=ks.pop();const o=ks.reduce((o,k)=>o[k],S.cc);o[last]=v}
+function bkPanel(){if(!S.bkA){if(!S.bkAL){S.bkAL=1;setTimeout(()=>call('campBankAccts',[],r=>{S.bkA=r;S.bkAL=0;render()}),0)}return '<div class="panel hint">입금 안내 통장 불러오는 중…</div>'}
+  const A=S.bkA,c=A.cur||{},sel=A.list.find(x=>x.acct===c.acct);
+  return `<div class="panel"><b>입금 안내 통장</b> <span class="hint">선생님 · 보호자 접수 화면과 접수 확인 메일에 보이는 계좌예요. 회원관리 › 통장 › 설정에 등록한 통장에서 골라요.</span>
+  <div class="row" style="gap:8px;margin-top:8px;flex-wrap:wrap;align-items:center"><select id="bkSel" style="min-width:320px">${A.list.length?'':'<option value="">회원관리에 등록한 통장이 없어요</option>'}${A.list.map(x=>`<option value="${esc(x.id)}" ${sel&&sel.id===x.id?'selected':''}>${esc(x.name)} · ${esc(x.bank)} ${esc(x.acct)} · ${esc(x.holder)}</option>`).join('')}</select><button class="btn small primary" type="button" id="bkSave" ${A.list.length?'':'disabled'}>이 통장으로 안내</button></div>
+  <p class="hint" style="margin:6px 0 0">지금 안내: ${c.acct?`<b>${esc(c.bank)} ${esc(c.acct)} · ${esc(c.holder)}</b>${c.auto?' (따로 고르지 않아 회원관리 첫 통장을 씀)':''}`:'<b style="color:#c0392b">없음 — 꼭 골라 주세요</b>'}</p></div>`}
 function vCamp(){if(!S.cc)S.cc=ccCopy();const c=S.cc;if(!c.base)return '<div class="panel hint">캠프 설정을 불러오지 못했어요. 「새로 불러오기」를 눌러 주세요.</div>';
   const b=c.base,R=c.rounds,o=c.opt,rf=c.refund;
   const inp=(p,type,extra)=>{const v=ccGet(p);return type==='check'?`<input type="checkbox" data-cc="${p}" ${v?'checked':''}>`:`<input type="${type==='num'?'text':type}" ${type==='num'?'inputmode="numeric" class="num"':''} data-cc="${p}" data-cct="${type}" value="${esc(type==='num'?(+v||0).toLocaleString('ko-KR'):v==null?'':v)}" ${extra||''}>`};
   const days=b.start&&b.end?Math.round((Date.parse(b.end)-Date.parse(b.start))/864e5):0;
   const curOpts=[['auto','자동 (오늘 날짜로)'],...R.map((r,i)=>[String(i),r.n+' 로 고정'])];
-  return `<div class="cc">
+  return `<div class="cc">${bkPanel()}
   <div class="panel"><div class="spread"><div><b>캠프 설정</b> <span class="hint">총관리자만 보여요 · 저장하면 선생님 접수 화면(날짜·장소·차수·참가비·환불 규정)이 바로 바뀌어요 · 시트 「캠프설정」 탭</span></div>
     <div class="row" style="gap:6px"><span id="ccDirty" class="row" style="gap:6px">${ccPill()}</span><button class="btn small primary" type="button" data-ccsave="1">저장</button></div></div></div>
   <div class="panel"><h3>기본</h3><div class="ccg">
@@ -1788,6 +1793,7 @@ function acadPay(){const R={};(S.D.subs||[]).forEach(sb=>sb.ppl.forEach(p=>{cons
   ${row('<b>총계</b>','<b>'+A.reduce((t,x)=>t+x.n,0)+'명</b>',T('bill'),T('paid'),T('rq'),T('dn'),'foot')}</tbody></table></div>
   <div class="panel hint">학원 줄을 누르면 사람별로 펼쳐져요. <b>과납/미납 = 입금액 − 신청 금액 − 환불 완료액</b> (예전 「학원별입금현황」 시트와 같은 셈). 입금액은 운영진이 「입금 확인」한 금액이고, 취소한 사람이 낸 돈도 들어가요. 취소한 사람의 신청 금액은 돌려주지 않는 몫(위약금)만 잡혀서, 환불을 마치면 0이 돼요. + 는 돌려줄 돈(과납 · 환불 전), − 는 아직 덜 들어온 돈이에요.</div>`}
 document.addEventListener('click',e=>{if(e.target.id==='cffClr'){S.cf={};render()}});
+document.addEventListener('click',e=>{if(e.target.id!=='bkSave')return;const id=val('bkSel');if(!id)return;call('adminSetBankAcct',[id],r=>{S.bkA=r;render();toast('입금 안내 통장을 바꿨어요')})});
 document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-adj],[data-adjgo],[data-adjclr],[data-adjno]');if(!t)return;e.preventDefault();e.stopPropagation();const d=t.dataset;
   if(d.adj){S.adjOpen=S.adjOpen===d.adj?'':d.adj;render();return}
   if(d.adjno){S.adjOpen='';render();return}

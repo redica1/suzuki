@@ -1,4 +1,4 @@
-/* build: 20261101-213933 */
+/* build: 20261101-214152 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -2285,6 +2285,20 @@ function adminSetSetting(token, key, val) {
   if (r) sh.getRange(r._row, 2).setValues([[String(val)]]); else sh.appendRow([key, String(val), '']);
   log_('관리자 ' + a.name, '설정 바꿈', key + ' = ' + val);
   return { ok: true, val: setting_(key) };
+}
+/** 캠프 설정 › 입금 안내 통장: 회원관리 › 통장에 등록한 통장 목록 + 지금 쓰는 계좌 (11-01) */
+function campBankAccts(token) {
+  adm_(token); const list = [];
+  try { const ss = bankBook_(), A = ss && bankTab_(ss, '통장목록'); if (A) A.v.filter(r => r[A.c('사용')] !== '안씀' && r[A.c('계좌번호')]).forEach(r => list.push({ id: r[A.c('통장ID')], name: r[A.c('이름')], bank: r[A.c('은행')], acct: r[A.c('계좌번호')], holder: r[A.c('예금주')] })); } catch (e) { }
+  const b = bankInfo_(); return { list, cur: { bank: b.bank, acct: b.acct, holder: b.holder, auto: !setting_('입금 계좌번호') } };
+}
+function adminSetBankAcct(token, id) {
+  const a = adm_(token); needSup_(a);
+  const x = campBankAccts(token).list.find(y => y.id === id); if (!x) throw new Error('통장을 찾지 못했어요. 회원관리 › 통장 › 설정을 확인해 주세요.');
+  ensureSettings_(); const sh = SpreadsheetApp.getActive().getSheetByName('설정');
+  [['입금 은행', x.bank], ['입금 계좌번호', x.acct], ['예금주', x.holder]].forEach(([k, v]) => { const r = rows_('설정').find(q => String(q['항목']) === k); if (r) sh.getRange(r._row, 2).setNumberFormat('@').setValue(String(v)); else sh.appendRow([k, String(v), '']); });
+  CacheService.getScriptCache().remove('bankAcct'); log_('관리자 ' + a.name, '입금 안내 통장', x.name + ' · ' + x.bank + ' ' + x.acct);
+  return campBankAccts(token);
 }
 function adminGetSetting(token, key) { adm_(token); return { val: setting_(key) }; }
 

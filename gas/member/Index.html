@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261101-102450 -->
+<!-- build: 20261101-102554 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -566,8 +566,9 @@ function bProj(o){if(o['프로젝트ID'])return {id:o['프로젝트ID'],auto:fal
 function bCatOpts(inn,v,pj){var io=inn?'입금':'출금',R=(S.bCatRows||[]).filter(function(x){return bIO(x,io)&&(x['사용']!=='안씀'||x['구분']===v)}),p=pj&&bPj(pj.id),K=p?bPjK(p):[];
   var o=function(x){return '<option value="'+esc(x['구분'])+'"'+(x['구분']===v?' selected':'')+'>'+esc(x['이름']||x['구분'])+'</option>'},h='<option value="">구분 없음</option>';
   var grp=function(L){var g={},ord=[];L.forEach(function(x){var l=[x['대분류'],x['중분류']].filter(Boolean).join(' › ')||'분류 없음';if(!g[l]){g[l]=[];ord.push(l)}g[l].push(x)});return ord.map(function(l){return '<optgroup label="'+esc(l)+'">'+g[l].map(o).join('')+'</optgroup>'}).join('')};
-  if(K.length){var a=R.filter(function(x){return K.indexOf(x['구분'])>=0}),b=R.filter(function(x){return K.indexOf(x['구분'])<0});return h+'<optgroup label="★ '+esc(p['이름'])+'">'+a.map(o).join('')+'</optgroup>'+grp(b)}
-  return h+grp(R)}
+  var nw='<option value="__new">+ 새 항목 만들기…</option>';
+  if(K.length){var a=R.filter(function(x){return K.indexOf(x['구분'])>=0}),b=R.filter(function(x){return K.indexOf(x['구분'])<0});return h+nw+'<optgroup label="★ '+esc(p['이름'])+'">'+a.map(o).join('')+'</optgroup>'+grp(b)}
+  return h+nw+grp(R)}
 function bBizList(){var L=[];(S.bCatRows||[]).forEach(function(x){var b=x['대분류'];if(b&&L.indexOf(b)<0)L.push(b)});return L}
 function bPjOpts(o){var p=bProj(o),auto=p&&p.auto?bPj(p.id):null;return '<option value="">'+(auto?'자동: '+esc(auto['이름']):'자동 (없음)')+'</option>'+(S.bProjs||[]).filter(function(x){return x['사용']!=='안씀'||x['프로젝트ID']===o['프로젝트ID']}).map(function(x){return '<option value="'+esc(x['프로젝트ID'])+'"'+(x['프로젝트ID']===o['프로젝트ID']?' selected':'')+'>'+esc(x['이름'])+'</option>'}).join('')}
 function bAcOptsK(){return (S.bAccts||[]).filter(function(a){return a['사용']!=='안씀'}).map(function(a){return [a['통장ID'],a['이름']]})}
@@ -1037,6 +1038,10 @@ document.addEventListener('change',function(e){var bt=e.target,bd=bt.dataset||{}
   if(bd.bpj){bankSave([bd.bpj],{'프로젝트ID':bt.value});return}
   var bfm={bfm:'m',bfio:'io',bfk:'k',bfst:'st',bfa:'a',bq:'q',bfpj:'pj',bfac:'ac'}[bt.id];if(bfm){S.bf=S.bf||{};S.bf[bfm]=bt.value;S.bp=0;S.bSel={};render();return}
   if(bt.id==='bankFile'){var bfl=bt.files&&bt.files[0];bt.value='';if(bfl)bankUpload(bfl);return}
+  if(bd.bk&&bt.value==='__new'){var no=(S.bank||[]).filter(function(x){return x['거래ID']===bd.bk})[0]||{},npj=bProj(no),nbz=npj&&bPj(npj.id)?bPj(npj.id)['사업']:'',nio=bIn(no)?'입금':'출금';
+    var nnm=window.prompt(nio+' 항목 이름을 적어 주세요 (예: 후원금, 대관료)','');if(!nnm||!nnm.trim()){render();return}
+    var nb=window.prompt('어느 사업의 항목인가요? ('+bBizList().join(' · ')+')',nbz||'협회 운영');if(nb==null){render();return}
+    bankMetaGo('cat',{'구분':nnm.trim(),'입출':nio,'대분류':nb.trim(),'중분류':''},'').then(function(ok){if(!ok)return;var nr=(S.bCatRows||[]).filter(function(x){return (x['이름']||x['구분'])===nnm.trim()&&x['대분류']===nb.trim()})[0];if(nr)bankSave([bd.bk],{'구분':nr['구분']},'「'+nnm.trim()+'」 항목을 만들고 이 거래에 넣었어요')});return}
   if(bd.bk){bankSave([bd.bk],{'구분':bt.value});return}if(bd.ba){bankSave([bd.ba],{'학원ID':bt.value});return}if(bd.bt){bankSave([bd.bt],{'교사ID':bt.value});return}if(bd.bm){S.bMemo=null;bankSave([bd.bm],{'메모':bt.value});return}
   if(bd.bck){S.bSel=S.bSel||{};if(bt.checked)S.bSel[bd.bck]=1;else delete S.bSel[bd.bck];render();return}
   if(bt.id==='bAll'){S.bSel=S.bSel||{};[].forEach.call(document.querySelectorAll('[data-bck]'),function(x){if(bt.checked)S.bSel[x.dataset.bck]=1;else delete S.bSel[x.dataset.bck]});render();return}

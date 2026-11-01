@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261101-120815 -->
+<!-- build: 20261101-121416 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -588,7 +588,7 @@ function bTchOpts(){if(S.bTO)return S.bTO;S.bTO=S.D.tch.filter(function(t){retur
 function bAcOpts(){return acadOpts('').slice(1).concat(S.D.acad.filter(function(a){return a['상태']==='탈퇴'}).map(function(a){return [a['학원ID'],a['학원명']+' (탈퇴)']}))}
 function vBankHead(){var v=S.bv||'list',A=bAcOptsK();
   var seg='<div class="row" style="margin:0 0 8px">'+[['list','거래 내역'],['camp','캠프 입금 맞추기'],['sum','합계표'],['pay','지급 (인건비)'],['set','통장 · 행사 · 구분']].map(function(x){return '<button class="btn'+(v===x[0]?' primary':'')+'" type="button" data-bv="'+x[0]+'">'+x[1]+'</button>'}).join('')+'</div>';
-  return '<div class="sec-h"><div><h2>통장</h2><p>은행 거래내역 엑셀(xls · xlsx · csv)을 <b>어느 통장 것인지 골라</b> 올리면 겹치는 거래는 건너뛰고 새 거래만 더해요. 거래마다 구분(소분류)을 정하면 대분류 · 중분류로 묶이고, <b>프로젝트</b>(기간 · 통장 · 쓰는 구분)에 맞으면 자동으로 그 프로젝트에 들어가요. 교사회비 · 학생회비는 「회비 확인」으로 회원 회비까지 이어요.</p></div>'+
+  return '<div class="sec-h"><div><h2>통장</h2><p>은행 거래내역 엑셀(xls · xlsx · csv)을 <b>어느 통장 것인지 골라</b> 올리면 겹치는 거래는 건너뛰고 새 거래만 더해요. 거래마다 <b>구분</b>(사업 › 항목)을 정하면 기간 · 통장에 맞는 <b>행사</b>로 저절로 묶여요. 캠프 입금은 「캠프 입금 맞추기」에서 신고와 맞추고, 교사회비 · 학생회비는 「회비」 버튼으로 회원 회비까지 이어요.</p></div>'+
     '<div class="row">'+(A.length?sel('bAcct',[['','어느 통장?']].concat(A),S.bAcct,'올릴 통장'):'')+'<label class="btn primary" for="bankFile" style="cursor:pointer">'+(S.bBusy?'<span class="spin"></span> 읽는 중…':'은행 엑셀 올리기')+'</label><input type="file" id="bankFile" accept=".xls,.xlsx,.csv" hidden><button class="btn" type="button" id="bankOld">예전 통장 시트 가져오기</button><button class="btn small ghost" type="button" id="bankRe">새로 고침</button></div></div>'+
     (S.bOld?'<div class="panel" style="border-color:var(--accent)"><b>예전 통장 구글시트 가져오기</b><p class="cap">거래일시 · 보낸분/받는분 · 출금액 · 입금액 · 비고(구분) · 학원명 칸이 있는 시트의 모든 탭을 읽어요. 비고에 적힌 구분과 학원명을 그대로 옮기고, 처리 칸이 「입력 · 적용」인 회비는 이미 반영된 것으로 표시해요. 날짜가 없는 줄은 건너뛰어요. 같은 거래를 두 번 가져와도 한 번만 들어가요.'+(A.length?' <b>위에서 고른 통장</b>으로 들어가요.':'')+'</p><div class="row"><input type="url" id="bankOldUrl" value="'+esc(S.bOldUrl||'')+'" placeholder="구글시트 주소" style="flex:1;min-width:240px"><button class="btn primary" type="button" id="bankOldGo">가져오기</button><button class="btn" type="button" id="bankOldNo">닫기</button></div></div>':'')+seg}
 function vBankSet(){var A=S.bAccts||[],P=S.bProjs||[],R=S.bCatRows||[],all=S.bank||[],cntA={},noA=[],pt={},kc={};

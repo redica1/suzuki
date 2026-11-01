@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261101-120757 -->
+<!-- build: 20261101-123600 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -903,7 +903,7 @@ document.addEventListener('click',ev=>{if(S.tab!=='act'||!D)return;const b=ev.ta
     if(bad.length){toast('시간을 「17:30-19:20 | 글」 꼴로 적어 주세요: '+bad[0]);return}D.meals=M;logIt('안내 글 · 식사 줄 고침');refresh();toast('저장했어요');return}
   if(b.id==='a_mealCamp'){const CM=((S.D&&S.D.camp)||{}).meals||[],n=D.days.length;if(!CM.length){toast('캠프 설정에 식사 시간이 없어요');return}
     const keep=D.meals.filter(m=>!m.k&&!/아침|점심|저녁|breakfast|lunch|dinner/i.test(m.t||'')),L=[];
-    for(let d=0;d<n;d++)CM.forEach(m=>{if(m.on===false)return;if(n>1&&d===0&&!m.first)return;if(n>1&&d===n-1&&!m.last)return;L.push({d,s:m.s,e:m.e,t:m.t,k:m.k})});
+    for(let d=0;d<n;d++)CM.forEach(m=>{if(!mealOn(m,d,n))return;L.push({d,s:m.s,e:m.e,t:m.t,k:m.k})});
     D.meals=keep.concat(L).sort((x,y)=>x.d-y.d||x.s.localeCompare(y.s));logIt('캠프 설정 식사 시간을 모든 날짜에 다시 넣음');refresh();toast(n+'일에 식사 시간을 넣었어요');return}
   if(b.id==='a_bdSave'){const B={Vn:{},Vc:{},Fl:{}};document.querySelectorAll('.a_bd').forEach(el=>{const k=el.dataset.k,t=el.dataset.t;B[k][t]=B[k][t]||['',''];B[k][t][+el.dataset.l]=el.value.trim()});
     Object.keys(B).forEach(k=>Object.keys(B[k]).forEach(t=>{if(!B[k][t][0]&&!B[k][t][1])delete B[k][t]}));D.bookDesc=B;logIt('권 설명 고침');refresh();toast('권 설명을 저장했어요');return}
@@ -1523,10 +1523,11 @@ function vCamp(){if(!S.cc)S.cc=ccCopy();const c=S.cc;if(!c.base)return '<div cla
     <label class="row" style="gap:6px;margin-top:6px">${inp('refund.duesRefund','check')} 연회비도 환불</label>
     <p class="hint">위에서부터 처음 맞는 규정을 써요 (취소 요청한 날 기준). 「취소 받기」를 끄면 캠프 시작 뒤에는 입금한 사람이 취소를 요청할 수 없어요.</p></div>
   <div class="panel"><div class="spread"><h3>식사 시간 <span class="hint">교사 일정 모든 날짜의 식사 줄 · 프로그램북에도 그대로</span></h3><button class="btn small" type="button" data-ccm="add" ${(c.meals||[]).length>=6?'disabled':''}>＋ 식사 추가</button></div>
-    <table class="pft cct"><thead><tr><th>식사</th><th>시작</th><th>끝</th><th>표에 나오는 글</th><th class="c">첫날</th><th class="c">마지막 날</th><th class="c">사용</th><th></th></tr></thead><tbody>
-    ${(c.meals||[]).map((m,i)=>`<tr class="${m.on===false?'off':''}"><td>${inp('meals.'+i+'.k','text','maxlength="10" style="width:70px"')}</td><td>${inp('meals.'+i+'.s','time')}</td><td>${inp('meals.'+i+'.e','time')}</td><td>${inp('meals.'+i+'.t','text','maxlength="120" style="min-width:220px" placeholder="예: Lunch 점심 식사 · 식사 장소: 밀타임"')}</td><td class="c">${inp('meals.'+i+'.first','check')}</td><td class="c">${inp('meals.'+i+'.last','check')}</td><td class="c">${inp('meals.'+i+'.on','check')}</td><td><button class="btn small ghost" type="button" data-ccm="del|${i}">빼기</button></td></tr>`).join('')||'<tr><td colspan="8" class="hint">식사 시간이 없어요.</td></tr>'}</tbody></table>
+    <table class="pft cct"><thead><tr><th>식사</th><th>시작</th><th>끝</th><th>표에 나오는 글</th><th class="c">사용</th><th></th></tr></thead><tbody>
+    ${(c.meals||[]).map((m,i)=>`<tr class="${m.on===false?'off':''}"><td>${inp('meals.'+i+'.k','text','maxlength="10" style="width:70px"')}</td><td>${inp('meals.'+i+'.s','time')}</td><td>${inp('meals.'+i+'.e','time')}</td><td>${inp('meals.'+i+'.t','text','maxlength="120" style="min-width:220px" placeholder="예: Lunch 점심 식사 · 식사 장소: 밀타임"')}</td><td class="c">${inp('meals.'+i+'.on','check')}</td><td><button class="btn small ghost" type="button" data-ccm="del|${i}">빼기</button></td></tr>`).join('')||'<tr><td colspan="6" class="hint">식사 시간이 없어요.</td></tr>'}</tbody></table>
+    ${mealGrid(c)}
     <label class="row" style="gap:6px;margin-top:6px"><input type="checkbox" id="ccMealsApply"> 바꾼 게 없어도 저장할 때 교사 일정에 다시 넣기</label>
-    <p class="hint">저장하면 교사 일정의 모든 날짜에 식사 줄이 다시 들어가요 (첫날 · 마지막 날은 체크한 식사만). 예전 아침 · 점심 · 저녁 줄은 바뀌고, 그 밖에 따로 넣은 줄(간식 등)은 그대로예요. 날짜를 새로 늘렸으면 「교사 일정 › 날짜 · 장소」의 「캠프 설정 식사 시간 다시 넣기」를 눌러 주세요.</p></div>
+    <p class="hint">위 표에서 식사 이름 · 시간을 정하고, 아래 날짜별 표에서 <b>먹는 날만 체크</b>한 뒤 맨 아래 「저장」을 한 번 누르면 돼요. 저장하면 교사 일정의 날짜마다 체크한 식사 줄이 다시 들어가요. 예전 아침 · 점심 · 저녁 줄은 바뀌고, 그 밖에 따로 넣은 줄(간식 등)은 그대로예요. 날짜를 새로 늘렸으면 「교사 일정 › 날짜 · 장소」의 「캠프 설정 식사 시간 다시 넣기」를 눌러 주세요.</p></div>
   <div class="panel hint">개인정보 동의 문구는 「설정 › 동의서」에서 입력·수정해요.</div>
   ${S.vsBank?`<div class="panel" style="border-color:var(--accent)"><b>가상스즈키 연습 통장 시트</b><p class="hint">회원관리 STG › 통장 › 「예전 통장 시트 가져오기」에 이 주소를 넣어 가져오세요.</p><input type="url" readonly value="${S.vsBank}" style="width:100%" onclick="this.select()"></div>`:''}<div class="panel"><h3>테스트용 가상 접수 <span class="hint">STG 시험용 · 「가상○○스즈키」 학원 · 이름은 무작위(실제 회원 아님) · 입금 전</span></h3>
     <div class="row" style="gap:8px;flex-wrap:wrap"><label class="row" style="gap:4px">교사 <input type="number" id="fkT" value="30" min="0" max="200" style="width:70px">명</label><label class="row" style="gap:4px">학생 <input type="number" id="fkS" value="100" min="0" max="600" style="width:70px">명</label>
@@ -1538,11 +1539,19 @@ document.addEventListener('input',e=>{const t=e.target;if(!t.dataset||!t.dataset
   const p=document.getElementById('ccDirty');if(p)p.innerHTML=ccPill()});
 document.addEventListener('change',e=>{const t=e.target;if(!t.dataset||!t.dataset.cc||!S.cc)return;if(t.tagName==='SELECT'){ccSet(t.dataset.cc,t.value);render();return}
   if(t.dataset.cct==='num'){t.value=(+(t.value.replace(/[^\d]/g,'')||0)).toLocaleString('ko-KR');return}if(t.type==='checkbox'||t.type==='date')render()});
+function mealDays(c){const s=(c.base||{}).start,e=(c.base||{}).end,L=[];if(!/^\d{4}-\d{2}-\d{2}$/.test(s||'')||!/^\d{4}-\d{2}-\d{2}$/.test(e||''))return L;const W='일월화수목금토';for(let t=new Date(s+'T00:00:00');t<=new Date(e+'T00:00:00')&&L.length<31;t.setDate(t.getDate()+1))L.push((t.getMonth()+1)+'/'+t.getDate()+'('+W[t.getDay()]+')');return L}
+function mealOn(m,d,n){if(m.on===false)return false;if(Array.isArray(m.days))return m.days.includes(d);if(n>1&&d===0)return !!m.first;if(n>1&&d===n-1)return !!m.last;return true}
+function mealGrid(c){const D=mealDays(c),M=c.meals||[];if(!D.length||!M.length)return '<p class="hint">캠프 날짜(시작 · 끝)와 식사를 넣으면 날짜별로 체크하는 표가 나와요.</p>';
+  return `<h4 style="margin:12px 0 6px">날짜별 식사 <span class="hint">먹는 끼니만 체크</span></h4><table class="pft cct" style="width:auto"><thead><tr><th>날짜</th>${M.map((m,i)=>`<th class="c">${esc(m.k||'식사'+(i+1))}<br><button class="btn small ghost" type="button" data-mall="${i}" style="padding:0 6px">모두</button></th>`).join('')}<th class="c">하루 모두</th></tr></thead><tbody>${D.map((dl,d)=>`<tr><th>${d+1}일째 · ${dl}</th>${M.map((m,i)=>`<td class="c"><input type="checkbox" data-mday="${i}|${d}" ${mealOn(m,d,D.length)?'checked':''} ${m.on===false?'disabled':''}></td>`).join('')}<td class="c"><button class="btn small ghost" type="button" data-mrow="${d}" style="padding:0 6px">모두</button></td></tr>`).join('')}</tbody></table>`}
+function mealFix(c,i){const m=c.meals[i],n=mealDays(c).length;if(!Array.isArray(m.days)){m.days=[];for(let d=0;d<n;d++)if(mealOn(Object.assign({},m,{on:true}),d,n))m.days.push(d)}return m}
+document.addEventListener('change',e=>{const t=e.target;if(!t.dataset||!t.dataset.mday||!S.cc)return;const [i,d]=t.dataset.mday.split('|').map(Number);const m=mealFix(S.cc,i);m.days=m.days.filter(x=>x!==d);if(t.checked)m.days.push(d);m.days.sort((a,b)=>a-b)});
 function ccClick(b,d){if(S.tab!=='camp'&&S.tab!=='cons')return false;const c=S.cc;
   if(d.ccreset){S.cc=null;render();return true}
   if(d.ccr){const [op,i]=d.ccr.split('|');if(op==='add'){const L=c.rounds[c.rounds.length-1]||{};c.rounds.push({n:(c.rounds.length+1)+'차',from:L.to||'',to:L.to||''});Object.keys(c.fees).forEach(t=>c.fees[t].push(c.fees[t][c.fees[t].length-1]||0))}
     else{c.rounds.splice(+i,1);Object.keys(c.fees).forEach(t=>c.fees[t].splice(+i,1));if(c.base.cur!=='auto'&&+c.base.cur>=c.rounds.length)c.base.cur='auto'}render();return true}
   if(d.ccf){const [op,i]=d.ccf.split('|');if(op==='add'){const L=c.refund.rules[c.refund.rules.length-1];c.refund.rules.push({until:L?L.until:'',label:'',rate:0,doc:false})}else c.refund.rules.splice(+i,1);render();return true}
+  if(d.mall!=null){const i=+d.mall,n=mealDays(c).length,m=mealFix(c,i);m.days=m.days.length===n?[]:Array.from({length:n},(_,k)=>k);render();return true}
+  if(d.mrow!=null){const dd=+d.mrow,on=(c.meals||[]).every((m,i)=>m.on===false||mealFix(c,i).days.includes(dd));(c.meals||[]).forEach((m,i)=>{if(m.on===false)return;mealFix(c,i);m.days=m.days.filter(x=>x!==dd);if(!on)m.days.push(dd);m.days.sort((a,b)=>a-b)});render();return true}
   if(d.ccm){const [op,i]=d.ccm.split('|');c.meals=c.meals||[];if(op==='add')c.meals.push({k:'',t:'',s:'15:00',e:'15:30',on:true,first:true,last:true});else c.meals.splice(+i,1);render();return true}
   if(b.id==='fkMake'){const t=+document.getElementById('fkT').value||0,sN=+document.getElementById('fkS').value||0;ask('가상 접수를 만들까요?',`교사 ${t}명 · 학생 ${sN}명을 「가상○○스즈키」 학원들로 접수해요 (학원마다 교사 3명). 나중에 「가상 접수 모두 지우기」로 한 번에 지울 수 있어요.`,()=>call('devFakeSubs',[t,sN],r=>{setData(r.adm);toast('가상 접수 '+r.made.length+'건을 만들었어요 · '+r.made.join(', '))},'가상 접수를 만들고 있어요…'),'만들기');return true}
   if(b.id==='vsMake'){ask('가상스즈키 연습 접수를 만들까요?','회원관리에서 만든 「가상스즈키」 명단으로 접수 30건(입금 신고 · 확인 · 부족 · 과납 · 취소 · 환불 · 이름/날짜 다름 등)을 만들고, 맞춰 볼 통장 내역을 새 구글시트로 만들어요. 「가상 접수 모두 지우기」로 지울 수 있어요.',()=>call('devScenario',[],r=>{setData(r.adm);S.vsBank=r.bankUrl;render();toast('연습 접수 '+r.made.length+'건 · 통장 '+r.bankN+'줄을 만들었어요')},'연습 접수를 만들고 있어요… (1~2분)'),'만들기');return true}

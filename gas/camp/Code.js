@@ -1,4 +1,4 @@
-/* build: 20261101-224128 */
+/* build: 20261101-224757 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -2659,3 +2659,72 @@ function budSave(token, plan, rev) {
   } finally { lock.releaseLock(); }
   return budData(token);
 }
+
+/* ---------- 공유 미리보기(OG) 11-01: 깃허브 공유 페이지(app.suzukimusickorea.org)의 og 태그 · 이미지를 관리자 화면에서 고침 ----------
+ * 토큰: 스크립트 속성 GITHUB_TOKEN (관리자 화면 「깃허브 토큰 등록」, redica1/suzuki 「Contents: Read and write」만 준 fine-grained 토큰)
+ * 매니페스트에 https://www.googleapis.com/auth/script.external_request 가 있어야 함 */
+const OG_PAGES = { camp: 'camp/index.html', intl: 'camp/intl.html' };
+const OG_REPO = 'redica1/suzuki', OG_BASE = 'https://app.suzukimusickorea.org/';
+function ogTok_() { return PropertiesService.getScriptProperties().getProperty('GITHUB_TOKEN') || ''; }
+function ogGh_(method, path, body) {
+  const tok = ogTok_(); if (!tok) throw new Error('깃허브 토큰이 아직 없어요. 아래 「깃허브 토큰 등록」을 먼저 해 주세요.');
+  const o = { method, headers: { Authorization: 'Bearer ' + tok, Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28' }, muteHttpExceptions: true };
+  if (body) { o.contentType = 'application/json'; o.payload = JSON.stringify(body); }
+  const r = UrlFetchApp.fetch('https://api.github.com/repos/' + OG_REPO + (path ? '/contents/' + path : ''), o), c = r.getResponseCode();
+  if (c === 404 && method === 'get') return null;
+  if (c >= 300) throw new Error('깃허브가 거절했어요 (' + c + '). 토큰 권한(Contents 쓰기)을 확인해 주세요. ' + r.getContentText().slice(0, 160));
+  return JSON.parse(r.getContentText());
+}
+const ogEsc_ = s => String(s || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+const ogDec_ = s => String(s || '').replace(/&quot;/g, '"').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&#39;/g, "'").replace(/&amp;/g, '&');
+function ogMeta_(html, attr, key) { const m = html.match(new RegExp('<meta ' + attr + '="' + key.replace(/[.:]/g, '\\$&') + '" content="([^"]*)"[^>]*>')); return m ? ogDec_(m[1]) : ''; }
+function ogSet_(html, attr, key, val, after) {
+  const re = new RegExp('<meta ' + attr + '="' + key.replace(/[.:]/g, '\\$&') + '" content="[^"]*"[^>]*>'), tag = '<meta ' + attr + '="' + key + '" content="' + ogEsc_(val) + '">';
+  if (re.test(html)) return html.replace(re, tag);
+  const a = after && html.match(new RegExp('<meta [^>]*' + after.replace(/[.:]/g, '\\$&') + '[^>]*>'));
+  return a ? html.replace(a[0], a[0] + '\n' + tag) : html.replace('</head>', tag + '\n</head>');
+}
+function ogPage_(key) { const p = OG_PAGES[key]; if (!p) throw new Error('고칠 수 없는 페이지예요.'); return p; }
+function ogGet(token, key) {
+  const a = adm_(token); if (typeof needSup_ === 'function') needSup_(a);
+  const path = ogPage_(key), has = !!ogTok_();
+  let html = '';
+  try { if (has) { const f = ogGh_('get', path); html = f ? Utilities.newBlob(Utilities.base64Decode(f.content.replace(/\n/g, ''))).getDataAsString('UTF-8') : ''; }
+        else html = UrlFetchApp.fetch('https://raw.githubusercontent.com/' + OG_REPO + '/main/' + path + '?t=' + Date.now(), { muteHttpExceptions: true }).getContentText('UTF-8'); }
+  catch (e) { return { ok: true, hasToken: has, err: e.message, url: OG_BASE + path.replace(/index\.html$/, '') }; }
+  return { ok: true, hasToken: has, url: OG_BASE + path.replace(/index\.html$/, ''), title: ogMeta_(html, 'property', 'og:title'), desc: ogMeta_(html, 'property', 'og:description'), image: ogMeta_(html, 'property', 'og:image') };
+}
+function ogToken(token, tok) {
+  const a = adm_(token); if (typeof needSup_ === 'function') needSup_(a);
+  tok = String(tok || '').trim(); if (!/^(github_pat_|ghp_)[A-Za-z0-9_]{20,}$/.test(tok)) throw new Error('깃허브 토큰 모양이 아니에요 (github_pat_… 로 시작).');
+  const r = UrlFetchApp.fetch('https://api.github.com/repos/' + OG_REPO, { headers: { Authorization: 'Bearer ' + tok, Accept: 'application/vnd.github+json' }, muteHttpExceptions: true });
+  if (r.getResponseCode() !== 200) throw new Error('이 토큰으로 ' + OG_REPO + ' 저장소를 열 수 없어요 (' + r.getResponseCode() + ').');
+  const j = JSON.parse(r.getContentText()); if (j.permissions && j.permissions.push === false) throw new Error('이 토큰은 쓰기 권한이 없어요. 「Contents: Read and write」로 다시 만들어 주세요.');
+  PropertiesService.getScriptProperties().setProperty('GITHUB_TOKEN', tok);
+  return { ok: true };
+}
+function ogSave(token, key, d) {
+  const a = adm_(token); if (typeof needSup_ === 'function') needSup_(a); d = d || {};
+  const path = ogPage_(key), dir = path.replace(/[^/]*$/, ''), title = String(d.title || '').trim().slice(0, 90), desc = String(d.desc || '').trim().slice(0, 200);
+  if (!title) throw new Error('제목을 넣어 주세요.');
+  const lock = LockService.getScriptLock(); lock.waitLock(30000);
+  try {
+    let img = '';
+    if (d.img) {
+      const m = String(d.img).match(/^data:image\/(png|jpeg);base64,(.+)$/); if (!m) throw new Error('이미지는 PNG · JPG 만 돼요.');
+      if (m[2].length > 2800000) throw new Error('이미지가 너무 커요 (2MB 까지).');
+      const ip = dir + 'og-' + key + '.' + (m[1] === 'png' ? 'png' : 'jpg'), old = ogGh_('get', ip);
+      ogGh_('put', ip, { message: 'OG 이미지 바꿈 · ' + key + ' (관리자 ' + a.name + ')', content: m[2], sha: old ? old.sha : undefined });
+      img = OG_BASE + ip + '?v=' + Date.now().toString(36);
+    }
+    const f = ogGh_('get', path); if (!f) throw new Error('페이지 파일을 찾지 못했어요: ' + path);
+    let html = Utilities.newBlob(Utilities.base64Decode(f.content.replace(/\n/g, ''))).getDataAsString('UTF-8');
+    html = ogSet_(html, 'property', 'og:title', title, 'og:type');
+    html = ogSet_(html, 'property', 'og:description', desc, 'og:title');
+    html = ogSet_(html, 'name', 'description', desc, 'viewport');
+    if (img) { html = ogSet_(html, 'property', 'og:image', img, 'og:url'); html = ogSet_(html, 'name', 'twitter:card', 'summary_large_image', 'og:image'); }
+    ogGh_('put', path, { message: 'OG 바꿈 · ' + key + ' (관리자 ' + a.name + ')', content: Utilities.base64Encode(html, Utilities.Charset.UTF_8), sha: f.sha });
+  } finally { lock.releaseLock(); }
+  return ogGet(token, key);
+}
+

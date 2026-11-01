@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261101-224128 -->
+<!-- build: 20261101-224757 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -1550,7 +1550,7 @@ const ME=()=>(S.D&&S.D.me)||{sup:true,perms:{}};
 const permOf=k=>{const m=ME();if(m.sup)return '편집';if(k==='camp'||k==='staff'||k==='cons')return '';return (m.perms||{})[k]||''};
 const visTabs=()=>TABS.concat(SUP_TABS).filter(([k])=>permOf(k));
 const RO=()=>permOf(S.tab)==='보기';
-const WRITE_FN=/^(scholSave|adminConfirm|adminAdjust|adminSetBankAcct|adminRejectReport|adminSaveEns|adminSaveProfs|adminRefund|adminSetIssue|schedSave|lessonSet|adminSetSetting|roomSave|conSave|campSave|staffSave|songEnSave|pvHideSave|roomCfgSave|layoutImport|roomMove|budSave)$/;
+const WRITE_FN=/^(scholSave|adminConfirm|adminAdjust|adminSetBankAcct|ogSave|ogToken|adminRejectReport|adminSaveEns|adminSaveProfs|adminRefund|adminSetIssue|schedSave|lessonSet|adminSetSetting|roomSave|conSave|campSave|staffSave|songEnSave|pvHideSave|roomCfgSave|layoutImport|roomMove|budSave)$/;
 const roBlock=fn=>WRITE_FN.test(fn)&&permOf(S.tab)!=='편집';
 const RO_MSG='보기만 할 수 있는 메뉴예요. 바꾸려면 총관리자에게 「편집」 권한을 받아 주세요.';
 
@@ -1564,6 +1564,37 @@ const dw=d=>{if(!/^\d{4}-\d{2}-\d{2}$/.test(d||''))return '';const [y,m,dd]=d.sp
 const ccPill=()=>ccDirty()?'<span class="pill due">저장 안 한 변경 있음</span><button class="btn small ghost" type="button" data-ccreset="1">되돌리기</button>':'';
 function ccGet(path){return path.split('.').reduce((o,k)=>o==null?o:o[k],S.cc)}
 function ccSet(path,v){const ks=path.split('.'),last=ks.pop();const o=ks.reduce((o,k)=>o[k],S.cc);o[last]=v}
+const OG_KEYS=[['camp','캠프 접수 (/camp/)'],['intl','해외 접수 (/camp/intl.html)']];
+/* 공유 미리보기(OG) 입력 (11-01): 제목 · 설명 · 이미지 → 깃허브 공유 페이지에 바로 반영 */
+function ogPanel(){const P=OG_KEYS,k=S.ogK||P[0][0],O=(S.og||{})[k];
+  if(!O){if(!S.ogL){S.ogL=1;setTimeout(()=>call('ogGet',[k],r=>{S.ogL=0;S.og=S.og||{};S.og[k]=r;S.ogD={title:r.title||'',desc:r.desc||'',img:'',prev:r.image||''};render()}),0)}return '<div class="panel hint">공유 미리보기 불러오는 중…</div>'}
+  const D=S.ogD||{},img=D.img||D.prev,dom=String(O.url||'').replace(/^https?:[\/]{2}/,'').split('/')[0];
+  return `<div class="panel"><div class="spread"><div><b>공유 미리보기 (OG)</b> <span class="hint">카카오톡 · 문자에 주소를 보낼 때 나오는 제목 · 설명 · 그림이에요. 반영하면 공유 페이지(깃허브)에 바로 써요. STG · 메인이 같은 페이지를 써요.</span></div>
+    <select id="ogK">${P.map(([v,l])=>`<option value="${v}" ${v===k?'selected':''}>${l}</option>`).join('')}</select></div>
+  ${O.err?`<p class="err">${esc(O.err)}</p>`:''}
+  <div class="ogwrap" style="display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:16px;margin-top:10px;align-items:start">
+    <div style="display:grid;gap:8px">
+      <label>제목 <span class="hint">(30자 안쪽이 잘 보여요)</span><input type="text" id="ogT" value="${esc(D.title||'')}" maxlength="90" style="width:100%"></label>
+      <label>설명 <span class="hint">(두 줄 · 60자 안쪽)</span><textarea id="ogDs" rows="3" maxlength="200" style="width:100%">${esc(D.desc||'')}</textarea></label>
+      <label>그림 <span class="hint">PNG · JPG · 1200×630 권장 · 2MB 까지</span><input type="file" id="ogF" accept="image/png,image/jpeg"></label>
+      <div class="row" style="gap:8px">${O.hasToken?`<button class="btn primary" type="button" id="ogGo">공유 페이지에 반영</button>`:''}<button class="btn small ghost" type="button" id="ogRe">다시 불러오기</button></div>
+      <p class="hint" style="margin:0">반영 뒤 카카오톡은 예전 미리보기를 한동안 기억해요. 바로 바꾸려면 <a href="https:\/\/developers.kakao.com\/tool\/debugger\/sharing" target="_blank" rel="noopener">카카오 공유 디버거</a>에 ${esc(O.url||'')} 를 넣고 「캐시 초기화」를 눌러 주세요.</p>
+      ${O.hasToken?'<p class="hint" style="margin:0">깃허브 토큰 등록됨 · <a href="#" id="ogTokNew">토큰 바꾸기</a></p>':''}
+      ${!O.hasToken||S.ogTokEd?`<div class="note info" style="display:grid;gap:6px"><b>깃허브 토큰 등록 (한 번만)</b><span class="hint">github.com › Settings › Developer settings › Fine-grained tokens › Generate new token → Repository access: <b>redica1/suzuki</b> 만 → Permissions › Contents: <b>Read and write</b> → 만든 토큰(github_pat_…)을 붙여 넣어요. 토큰은 서버에만 저장되고 화면에 다시 안 보여요.</span><div class="row" style="gap:6px"><input type="password" id="ogTok" placeholder="github_pat_…" style="flex:1;min-width:220px"><button class="btn small primary" type="button" id="ogTokGo">등록</button></div></div>`:''}
+    </div>
+    <div style="border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#fff">
+      <div style="aspect-ratio:1200/630;background:#eef2f4 center/cover no-repeat;${img?`background-image:url('${esc(img)}')`:''}">${img?'':'<div class="hint" style="padding:60px 0;text-align:center">그림 없음</div>'}</div>
+      <div style="padding:10px 12px"><b style="display:block;font-size:14px;color:#111">${esc(D.title||'(제목)')}</b><span style="font-size:12.5px;color:#555;display:block;margin-top:2px">${esc(D.desc||'')}</span><span style="font-size:11.5px;color:#999;display:block;margin-top:6px">${esc(dom)}</span></div>
+    </div></div></div>`}
+document.addEventListener('input',e=>{const t=e.target;if(t.id==='ogT'){S.ogD=Object.assign(S.ogD||{},{title:t.value})}if(t.id==='ogDs'){S.ogD=Object.assign(S.ogD||{},{desc:t.value})}});
+document.addEventListener('change',e=>{const t=e.target;if(t.id==='ogK'){S.ogK=t.value;S.og=null;S.ogD=null;render();return}
+  if(t.id==='ogF'){const f=t.files&&t.files[0];if(!f)return;if(f.size>2*1024*1024){toast('그림이 너무 커요 (2MB 까지)');t.value='';return}const r=new FileReader();r.onload=()=>{S.ogD=Object.assign(S.ogD||{},{img:r.result});render()};r.readAsDataURL(f)}});
+document.addEventListener('click',e=>{const t=e.target;if(!t||!t.id)return;
+  if(t.id==='ogRe'){S.og=null;S.ogD=null;render();return}
+  if(t.id==='ogTokNew'){e.preventDefault();S.ogTokEd=true;render();return}
+  if(t.id==='ogTokGo'){const v=(document.getElementById('ogTok')||{}).value||'';call('ogToken',[v],()=>{S.ogTokEd=false;S.og=null;render();toast('깃허브 토큰을 등록했어요')});return}
+  if(t.id==='ogGo'){const D=S.ogD||{},k=S.ogK||OG_KEYS[0][0];call('ogSave',[k,{title:D.title,desc:D.desc,img:D.img||''}],r=>{S.og=S.og||{};S.og[k]=r;S.ogD={title:r.title||'',desc:r.desc||'',img:'',prev:r.image||''};render();toast('공유 페이지에 반영했어요. 1~2분 뒤 새 미리보기가 나와요')});return}});
+
 function bkPanel(){if(!S.bkA){if(!S.bkAL){S.bkAL=1;setTimeout(()=>call('campBankAccts',[],r=>{S.bkA=r;S.bkAL=0;render()}),0)}return '<div class="panel hint">입금 안내 통장 불러오는 중…</div>'}
   const A=S.bkA,c=A.cur||{},sel=A.list.find(x=>x.acct===c.acct);
   return `<div class="panel"><b>입금 안내 통장</b> <span class="hint">선생님 · 보호자 접수 화면과 접수 확인 메일에 보이는 계좌예요. 회원관리 › 통장 › 설정에 등록한 통장에서 골라요.</span>
@@ -1574,7 +1605,7 @@ function vCamp(){if(!S.cc)S.cc=ccCopy();const c=S.cc;if(!c.base)return '<div cla
   const inp=(p,type,extra)=>{const v=ccGet(p);return type==='check'?`<input type="checkbox" data-cc="${p}" ${v?'checked':''}>`:`<input type="${type==='num'?'text':type}" ${type==='num'?'inputmode="numeric" class="num"':''} data-cc="${p}" data-cct="${type}" value="${esc(type==='num'?(+v||0).toLocaleString('ko-KR'):v==null?'':v)}" ${extra||''}>`};
   const days=b.start&&b.end?Math.round((Date.parse(b.end)-Date.parse(b.start))/864e5):0;
   const curOpts=[['auto','자동 (오늘 날짜로)'],...R.map((r,i)=>[String(i),r.n+' 로 고정'])];
-  return `<div class="cc">${bkPanel()}
+  return `<div class="cc">${bkPanel()}${ogPanel()}
   <div class="panel"><div class="spread"><div><b>캠프 설정</b> <span class="hint">총관리자만 보여요 · 저장하면 선생님 접수 화면(날짜·장소·차수·참가비·환불 규정)이 바로 바뀌어요 · 시트 「캠프설정」 탭</span></div>
     <div class="row" style="gap:6px"><span id="ccDirty" class="row" style="gap:6px">${ccPill()}</span><button class="btn small primary" type="button" data-ccsave="1">저장</button></div></div></div>
   <div class="panel"><h3>기본</h3><div class="ccg">

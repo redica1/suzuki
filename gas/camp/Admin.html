@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261101-133058 -->
+<!-- build: 20261101-133329 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -91,7 +91,7 @@ tr.off td{opacity:.5}
 .busy{position:fixed;left:50%;top:12px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:7px 15px;border-radius:999px;font-size:15.5px;z-index:90}
 .askbg{position:fixed;inset:0;background:rgba(20,16,10,.45);display:grid;place-items:center;z-index:95;padding:16px}
 .askbox{background:var(--surface);border:1px solid var(--line);border-radius:12px;max-width:400px;width:100%;padding:18px;display:grid;gap:10px}
-.bulk{position:sticky;top:var(--hdrH,0px);z-index:5;background:var(--accent-soft);border:1px solid var(--accent);border-radius:var(--r);padding:8px 12px;margin-bottom:10px}
+.bulk{position:fixed;left:50%;transform:translateX(-50%);bottom:16px;z-index:30;width:max-content;max-width:calc(100vw - 24px);flex-wrap:wrap;gap:8px 14px;background:linear-gradient(var(--accent-soft),var(--accent-soft)),#fff;border:1px solid var(--accent);border-radius:12px;padding:8px 14px;box-shadow:0 8px 24px rgba(0,0,0,.18)}body:has(.bulk){padding-bottom:90px}
 @media (max-width:640px){input.num{width:90px}input[type=date]{width:128px}}
 .panel.acad>summary{cursor:pointer;list-style:none}.panel.acad>summary::-webkit-details-marker{display:none}.panel.acad>summary::before,.rnd>summary::before{content:'▸';margin-right:6px;color:var(--faint)}.panel.acad[open]>summary::before,.rnd[open]>summary::before{content:'▾'}
 .rnd{border-top:1px solid var(--line);padding:8px 0 4px;margin-top:8px}.rnd>summary{cursor:pointer;list-style:none;padding:4px 2px}.rnd>summary::-webkit-details-marker{display:none}.rnd .panel.sub{margin:8px 0 0 10px}
@@ -428,8 +428,8 @@ function vSubs(){
   const subs=S.D.subs.filter(sb=>mf==='all'||cat(sb)===mf).filter(sb=>!q||sb.no.includes(q)||sb.acad.includes(q)||sb.owner.includes(q)||sb.ppl.some(p=>p.name.includes(q))).slice().sort((a,b)=>String(b.createdAt).localeCompare(String(a.createdAt)));
   const selN=Object.keys(S.sel).filter(k=>S.sel[k]).length;
   return `<div class="panel"><div class="spread"><div class="row"><div class="mfs" role="group" aria-label="회원 구분">${MF.map(([k,l])=>`<button type="button" data-mf="${k}" aria-pressed="${mf===k}">${l} ${mfN(k)}</button>`).join('')}</div><input type="search" id="q" placeholder="접수번호 · 학원 · 교사 · 보호자 · 이름" value="${esc(S.q)}" style="width:240px">${F.map(([k,l])=>`<button class="btn small ${S.f===k?'primary':''}" type="button" data-f="${k}">${l}</button>`).join('')}</div><button class="btn small" type="button" id="reload">새로 불러오기</button></div>
-    <p class="hint" style="margin:6px 0 0">${S.subView==='acad'?'<button class="btn small ghost" type="button" data-subview="flat">한 줄씩 보기로</button> ':''}사람마다 <b>입금일(필수)</b>과 금액을 넣고 「확인」. 확인을 취소하려면 「취소」. 여러 명은 체크 → 위 막대에서 같은 입금일로 한꺼번에 확인.</p></div>
-  ${selN?`<div class="bulk spread"><b>${selN}명 선택 <span class="num" style="font-weight:400">· 신고 ${won(selSum('rep'))} · 남은 청구 ${won(selSum('due'))}</span></b><div class="row"><span class="hint">입금일</span><input type="date" id="bulkD" value="${S.bulkD||''}"><span class="hint">비우면 줄마다 넣은 입금일(통장 날짜) · 금액은 사람마다 넣은 값</span><button class="btn small primary" type="button" id="bulkOk">선택한 ${selN}명 입금 확인</button><button class="btn small ghost" type="button" id="bulkClr">선택 해제</button></div></div>`:''}
+    <p class="hint" style="margin:6px 0 0">${S.subView==='acad'?'<button class="btn small ghost" type="button" data-subview="flat">한 줄씩 보기로</button> ':''}사람마다 <b>입금일(필수)</b>과 금액을 넣고 「확인」. 확인을 취소하려면 「취소」. 여러 명은 체크 → 아래 막대에서 같은 입금일로 한꺼번에 확인.</p></div>
+  ${selN?`<div class="bulk spread"><b>${selN}명 선택 <span style="font-weight:400;font-variant-numeric:tabular-nums">· 신고 ${won(selSum('rep'))} · 남은 청구 ${won(selSum('due'))}</span></b><div class="row"><span class="hint">입금일</span><input type="date" id="bulkD" value="${S.bulkD||''}"><span class="hint">비우면 줄마다 넣은 입금일(통장 날짜) · 금액은 사람마다 넣은 값</span><button class="btn small primary" type="button" id="bulkOk">선택한 ${selN}명 입금 확인</button><button class="btn small ghost" type="button" id="bulkClr">선택 해제</button></div></div>`:''}
   ${mf==='staff'?vStaffAdd():''}${mf==='intl'?vIntlAdm():''}${S.subView==='acad'?acadGroups(subs,keep,q):flatList(subs,keep,q)}`}
 /* 한 줄 = 한 사람 (11-01): 접수 시간순 · 학원 · 참가자격으로 걸러 봄 (통장 표처럼) */
 const CFW={bk:96,ck:30,at:118,ac:150,ow:70,nm:80,ty:110,bill:80,st:110,ra:80,rn:140,d:136,a:96,m:96,btn:110};

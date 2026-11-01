@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261101-141720 -->
+<!-- build: 20261101-141749 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -672,8 +672,9 @@ function bankTable(list){var sig=JSON.stringify(S.bf||{});if(S._bfSig!==sig){S._
         '<td><select data-ba="'+id+'" aria-label="학원">'+bOpts(acO,o['학원ID'],'학원 고르기')+'</select></td><td><select data-bt="'+id+'" aria-label="사람">'+bOpts(bTchOpts(),o['교사ID'],'사람 고르기')+'</select></td>'+((S.bProjs||[]).length?'<td><select data-bpj="'+id+'" aria-label="프로젝트">'+bPjOpts(o)+'</select></td>':'')+
         '<td>'+(S.bMemo===id?'<input type="text" data-bm="'+id+'" value="'+esc(o['메모'])+'" placeholder="메모" style="width:100%" autofocus>':o['메모']?'<span class="bmemo" data-bme="'+id+'" title="'+esc(o['메모'])+'">'+esc(String(o['메모']).length>10?String(o['메모']).slice(0,10)+'…':o['메모'])+'</span>':'<button class="btn small ghost" type="button" data-bme="'+id+'" aria-label="메모 더하기">+</button>')+'</td>'+
         '<td'+(o['연결']?' title="'+esc(o['연결'])+'"':'')+'>'+(bCampSt(o)?bCampPill(bCampSt(o)):bSt(o['상태'])+act)+'</td></tr>'}).join('')+'</tbody></table></div>'+pager}
-function bSpTxt(o){var L=(S.bSplits||{})[o['거래ID']]||[],inn=bIn(o)||bOut(o);if(!inn)return '';var sm=0;L.forEach(function(x){sm+=+x['금액']||0});
-  return L.length?'<div class="cap"><button class="btn small ghost" type="button" data-bsp="'+esc(o['거래ID'])+'" style="padding:0 5px">'+L.length+'명</button> '+esc(L.slice(0,4).map(function(x){return x['이름']}).join(', ')+(L.length>4?' 외 '+(L.length-4):''))+(sm!==inn?' <span style="color:var(--rosin)">(남은 '+won(inn-sm)+')</span>':'')+'</div>':''}
+function bSpTxt(o){var L=(S.bSplits||{})[o['거래ID']]||[],inn=bIn(o)||bOut(o);if(!inn||!L.length)return '';var sm=0;L.forEach(function(x){sm+=+x['금액']||0});
+  var nm=L.map(function(x){return x['이름']+' '+won(+x['금액']||0)+(x['구분']?' · '+bCatName(x['구분']):'')}).join('\n');
+  return '<div class="cap" title="'+esc(nm)+'">'+(sm!==inn?'<b style="color:#c0392b;font-weight:700">'+(sm<inn?'남은 '+won(inn-sm):'넘침 '+won(sm-inn))+'</b> ':'')+'<button class="btn small ghost" type="button" data-bsp="'+esc(o['거래ID'])+'" style="padding:0 5px">'+L.length+'명 나눔</button></div>'}
 /* 한 입금을 사람별로: 학원 재원 학생 · 선생님을 체크하면 1인 금액으로 줄이 생김 */
 function bankSplitBox(){var id=S.bSp;if(!id)return '';var o=(S.bank||[]).filter(function(x){return x['거래ID']===id})[0];if(!o)return '';
   var L=S.bSpL||[],amt=bIn(o)||bOut(o),sm=0,ac=S.bSpA!=null?S.bSpA:(o['학원ID']||''),on={};L.forEach(function(x){sm+=+x['금액']||0;if(x.ID)on[x['대상']+'|'+x.ID]=1});

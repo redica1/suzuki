@@ -1,4 +1,4 @@
-/* build: 20261101-212429 */
+/* build: 20261101-212812 */
     ps.forEach(p=>{p.pay='신고';p.rep=rep;delete S.rpRow[p.id]});S.afterSave=()=>repDone(ps.map(p=>p.id));subSave();S.rp=null;S.rpMemo=undefined;render();toast(`${ps.length}명 입금 신고를 보냈어요 · 운영진이 확인하면 「입금 확인」으로 바뀌어요`);return}
   if(b.id==='rpFill'){const n=document.getElementById('rpAllN').value.trim(),dd=document.getElementById('rpAllD').value;S.rpAllN=n;S.rpAllD=dd;const sel=S.rp||[];
     if(!n&&!dd){toast('적용할 입금자명이나 입금일을 적어 주세요');return}unpaidPpl().filter(x=>sel.includes(x.p.id)).forEach(({p})=>{const v=rpv(p);if(n)v.n=n;if(dd)v.d=dd});render();toast(`선택한 ${sel.length}명에게 적용했어요`);return}
@@ -164,6 +164,8 @@ try{if(typeof TEST_LOGIN==='string'&&TEST_LOGIN){const [n,ph]=TEST_LOGIN.split('
 if(typeof TEST_AUTOCONSENT!=='undefined'&&TEST_AUTOCONSENT){S.mode='member';S.cons={};CONSENT.items.forEach(x=>S.cons[x.id]=true);S.auth='login'}else if(S.auth==='login')S.auth='pick';
 /* 캠프 설정(날짜·장소·차수·참가비)은 서버가 페이지에 넣어 보냄 */
 try{if(typeof CAMP_CFG==='object'&&CAMP_CFG)applyCamp(CAMP_CFG)}catch(e){}
+/* 회원관리 「행사 참여」에서 ?as=staff|member 로 오면 그 로그인 화면부터 */
+try{google.script.url.getLocation(l=>{const a=(l&&l.parameter&&l.parameter.as)||'';if(['staff','member','guest'].includes(a)&&!S.user&&!S.chk){S.mode=a;S.lgAlt=false;S.cons={};S.chk=null;S.verr='';S.auth=a==='guest'?'guest':'login';render()}})}catch(e){}
 /* 처음 화면: 로그인부터 */
 render();
 

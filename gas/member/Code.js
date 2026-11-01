@@ -1,4 +1,4 @@
-/* build: 20261101-210516 */
+/* build: 20261101-212812 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -411,7 +411,7 @@ function tEvents(sess) {
   const P = settings_(), test = P['테스트 표시'] === '예', base = 'https://redica1.github.io/suzuki/';
   let ev = EVENTS_; try { const x = JSON.parse(P['행사 목록'] || 'null'); if (Array.isArray(x) && x.length) ev = x; } catch (e) { }
   const list = ev.map(e => ({ id: e.id, name: e.name, when: e.when || '', apply: e.apply || '', note: e.note || '', can: (e.who || []).indexOf(ext ? 'ext' : 'member') >= 0,
-    url: e.path === null || e.path === undefined ? '' : base + e.path + (test ? '?test' : ''), as: ext ? '관계자' : '회원' }));
+    url: e.path === null || e.path === undefined ? '' : base + e.path + '?' + [test ? 'test' : '', 'as=' + (ext ? 'staff' : 'member')].filter(Boolean).join('&'), as: ext ? '관계자' : '회원' }));
   const hist = rowsOf_('참가이력').list.filter(r => String(r['ID']) === u.tid).map(r => ({ ev: r['행사'], year: r['년도'], period: r['기간'], role: r['역할'], state: r['상태'] })).reverse();
   return { list, hist, ext };
 }

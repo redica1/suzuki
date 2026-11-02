@@ -1,4 +1,4 @@
-${''/* build: 20261103-000616 */}
+${''/* build: 20261103-000637 */}
     <div class="song3"><b class="sh">곡 2 <span class="hint">있으면</span></b>
       <label class="f" for="enK2">작곡가<input type="text" id="enK2" data-ens="k2" value="${esc(E.k2||'')}" placeholder=""></label>
       <label class="f" for="enC2">곡명<input type="text" id="enC2" data-ens="c2" value="${esc(E.c2||'')}" placeholder=""></label>
@@ -31,8 +31,7 @@ function applyTable(ps,tab){
   return `<div class="tbl"><table class="atbl"><thead><tr><th>이름</th>${COLS.map(([,l])=>`<th>${l}</th>`).join('')}</tr></thead><tbody>
   ${D.map(d=>`<tr class="${d.fam?'famr':''}"><td>${d.fam?'<span class="cap">└ </span>':''}<b>${esc(d.p.name)}</b>${d.p.dtag?` <small class="dtag">${esc(d.p.dtag)}</small>`:''}<br><small class="hint">${d.i.by?d.i.by+'년':''}${d.i.gender?(d.i.by?' · ':'')+(d.i.gender==='남'?'남':'여'):''}</small></td>
     ${COLS.map(([k])=>`<td>${d[k]?(k==='note'?`<span class="pill due">${esc(d[k])}</span>`:esc(d[k])):ALWAYS.has(k)&&(k==='room'||PLAYS.has(d.i.type))?'<span class="nil">신청 없음</span>':'<span class="nil">–</span>'}</td>`).join('')}</tr>`).join('')}
-  </tbody></table></div>
-  <p class="hint" style="margin:6px 0 0">신청한 것만 채워져요. 추가 레슨 · 마스터클래스 · 가족방은 안 했으면 「신청 없음」, 나머지 항목은 아무도 안 했으면 표에서 빠져요.</p>`}
+  </tbody></table></div>`}
 function detailRows(p){
   const i=info(p), rows=[];
   rows.push(['구분',i.type]); rows.push(['출생연도 · 성별',`${i.by?i.by+'년생':'-'} · ${i.gender==='남'?'남성':i.gender==='여'?'여성':'-'}`]);

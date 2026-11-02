@@ -1,4 +1,4 @@
-/* build: 20261102-235501 */
+/* build: 20261102-235702 */
   if(!open.length) return ''; /* 신고한 사람은 아래 사람별 줄에 「입금 확인 중 · 날짜 금액」으로 보여서 여기서는 안 보여 줌 */
   const sel=S.rp||(S.rp=open.map(x=>x.p.id)); const sum=open.filter(x=>sel.includes(x.p.id)).reduce((t,x)=>t+dueOf(x.p),0);
   const nameOf=id=>{for(const sb of MY_SUBS){const p=sb.ppl.find(q=>q.id===id);if(p)return p.name}return ''};
@@ -72,6 +72,7 @@ function vMine(){
     ${nSel?`<div class="spread" style="margin-top:6px;border-top:1px dashed var(--line);padding-top:6px"><span class="hint">${nSel}명 선택</span><span class="row"><button class="btn small primary" type="button" id="selEditAll">선택한 ${nSel}명 정보 수정</button><button class="btn small" type="button" id="cxOpenAll" ${SEL.reduce((t,x)=>t+x.selCx.length,0)?'':'disabled'}>선택한 ${SEL.reduce((t,x)=>t+x.selCx.length,0)}명 취소</button></span></div>`:''}
     ${SEL.map(({sb,sel,selCx})=>`    ${sel.length&&selCx.length<sel.length?`<p class="hint" style="margin:0">${sel.filter(id=>!selCx.includes(id)).map(id=>esc((sb.ppl.find(p=>p.id===id)||{}).name)).join(', ')}은(는) ${unpaidCancelOk()?'입금 신고 확인 중이라':'캠프가 시작돼서'} 지금 취소할 수 없어요.${unpaidCancelOk()?' 그 사람 줄의 「신고 수정 › 신고 취소」로 신고를 거두면 바로 취소할 수 있어요.':''}</p>`:''}
     ${(S.cxOpen===sb.no||S.cxOpen==='*')&&selCx.length?cxPanel(sb,selCx):''}`).join('')}</div>`})()}
+  ${famRoomsHTML(MY_SUBS)}
   <h3 style="margin:18px 0 6px;font-size:18px">앙상블</h3>
   ${MY_SUBS.filter(sb=>sb.form&&sb.form.ens&&sb.form.ens.on&&sb.ppl.some(p=>p.status==='정상')).map(sb=>{const e=sb.form.ens;const songs=[1,2].map(n=>songTxt(e,n)).filter(Boolean);
     return `<div class="panel enscard"><div class="spread"><div><span class="pill new">앙상블</span> <b style="font-size:19px">${esc(e.group||'(팀 이름 없음)')}</b> <span class="hint">${sb.no} · 대표 ${esc(sb.acad)}</span></div><button class="btn primary" type="button" data-ensedit="${sb.no}">앙상블 수정</button></div>

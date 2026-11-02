@@ -1,4 +1,4 @@
-/* build: 20261102-230554 */
+/* build: 20261102-230648 */
 function vAuthPick(){return `<section class="sec"><h2>접수 시작</h2>
   <p class="lede">어떻게 접수하시나요?</p>
   <div class="pick2">
@@ -152,8 +152,7 @@ function vStep1(){
         <input type="search" id="acQ" role="combobox" aria-expanded="${S.acOpen}" aria-controls="acList" value="${esc(S.acOpen?S.acQ:S.acad)}" placeholder="학원을 선택하거나 검색하세요" autocomplete="off">
         <span class="caret" aria-hidden="true">▾</span>
         ${S.acOpen?`<ul id="acList" role="listbox">
-          <li><button type="button" role="option" data-clsacad="${esc(classOf(u))}"><span><b>직접 입력</b> · ${esc(classOf(u))}</span><small>학원 소속 없이</small></button></li>
-          ${all.map(a=>`<li><button type="button" role="option" data-acad="${esc(a.name)}" aria-selected="${S.acad===a.name}"><span>${esc(a.name)}${mineA.includes(a.name)?' <span class="pill ok">내 소속</span>':''}</span><small>${esc(a.region)}${a.head?` · ${esc(a.head)}`:''}</small></button></li>`).join('')||'<li class="hint" style="padding:8px">찾는 학원이 없어요. 맨 위 「직접 입력」을 선택해 주세요.</li>'}
+          ${all.map(a=>`<li><button type="button" role="option" data-acad="${esc(a.name)}" aria-selected="${S.acad===a.name}"><span>${esc(a.name)}${mineA.includes(a.name)?' <span class="pill ok">내 소속</span>':''}</span><small>${esc(a.region)}${a.head?` · ${esc(a.head)}`:''}</small></button></li>`).join('')||'<li class="hint" style="padding:8px">찾는 학원이 없어요. 학원 없이 가르치는 학생이면 위 「학원 없이 개인 클래스로 접수하기」를 체크해 주세요.</li>'}
         </ul>`:''}
       </div></label>`:''}`}
     ${S.acad&&!mineA.includes(S.acad)&&S.acad!==classOf(u)?`<div class="note info">「${esc(S.acad)}」은(는) 명단상 소속이 아니지만 <b>이 학원 학생을 접수할 수 있어요</b> (겸임). 소속은 그대로 「${esc(mineA.join(', ')||'-')}」예요.</div>`:''}

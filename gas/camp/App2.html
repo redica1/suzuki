@@ -1,4 +1,4 @@
-/* build: 20261102-231041 */
+/* build: 20261102-231153 */
 function vAuthPick(){return `<section class="sec"><h2>접수 시작</h2>
   <p class="lede">어떻게 접수하시나요?</p>
   <div class="pick2">
@@ -230,7 +230,7 @@ function addBtn(){const n=selIds().length;
   return `<button class="btn primary addcart" type="button" id="addCart" ${n?'':'disabled'}>${n?`선택한 ${n}명 신청 명단에 추가`:`${isStaffAcad()?'본인을':S.ptab==='교사'?'선생님을':'학생을'} 체크하고 신청 명단에 추가해요`}</button>`}
 function cartPanel(){
   const r=roster();const ts=r.teachers.filter(x=>S.picked[x.id]);const ss=r.students.filter(x=>S.picked[x.id]);
-  if(!ts.length&&!ss.length) return `<div class="panel cart"><h3>신청 명단</h3><p class="hint" style="margin:0">아직 비어 있어요. 위 탭에서 체크하고 「신청 명단에 추가」를 눌러 주세요. 다른 탭으로 옮겨 가며 계속 추가할 수 있어요.</p></div>`;
+  if(!ts.length&&!ss.length) return `<div class="panel cart"><h3>신청 명단</h3><p class="hint" style="margin:0">아직 비어 있어요. 아래 탭에서 체크하고 「신청 명단에 추가」를 눌러 주세요. 다른 탭으로 옮겨 가며 계속 추가할 수 있어요.</p></div>`;
   /* 사람마다 접수 일시: 이미 접수된 사람 = 그 접수 시각, 이번에 담은 사람 = 담은 시각 (아직 접수 전) */
   const sb=S.editNo?ALL_SUBS.find(x=>x.no===S.editNo):null;
   const rows=[...ts.map(x=>({x,k:isStaffAcad()?'관계자':'교사'})),...ss.map(x=>({x,k:x.inst||'기타'}))].map(o=>{const p=sb&&sb.ppl.find(q=>q.id===sb.no+'_'+o.x.id&&q.status!=='취소');
@@ -244,13 +244,11 @@ function cartPanel(){
       <td class="r"><button class="btn small ghost" type="button" data-uncart="${o.x.id}" aria-label="${esc(o.x.name)} 빼기">빼기</button></td></tr>`).join('')}
     </tbody></table></div></div>`;
 }
-/* 고른 사람이 위로: 체크한 사람 → 명단에 담은 사람 → 고를 수 있는 사람 → 이미 접수한 사람 */
-const rk=x=>S.picked[x.id]?1:S.sel[x.id]?0:(x.booked||bookedOf(x))?3:2;
 function rosterList(){
   const r=roster(), me=S.user?S.user.name:'', q=(S.rq||'').trim();
   const T=S.ptab==='교사';
   const all=(T?r.teachers.map(x=>({x,k:'t'})):r.students.filter(x=>x.inst===S.ptab&&(!S.mine||x.teacher===me)).map(x=>({x,k:'s'})))
-    .filter(o=>!q||o.x.name.includes(q)).sort((a,b)=>rk(a.x)-rk(b.x)||a.x.name.localeCompare(b.x.name,'ko'));
+    .filter(o=>!q||o.x.name.includes(q)).sort((a,b)=>a.x.name.localeCompare(b.x.name,'ko'));
   if(all.length) return `${q?`<p class="hint">「${esc(q)}」 ${all.length}명</p>`:''}<div class="mtblw"><table class="mtbl rtbl"><thead><tr><th></th><th>이름</th>${T?'<th>직급</th><th>악기</th>':'<th>나이</th><th>악기</th><th class="rtd">담당</th>'}<th class="rtd">접수</th><th>회비</th></tr></thead><tbody>${all.map(o=>rosterRow(o.x,o.k)).join('')}</tbody></table></div>`;
   if(q) return `<p class="hint">${esc(S.ptab)} 탭에 「${esc(q)}」(이)라는 사람이 없어요. 다른 탭도 확인해 보세요.${T?'':' 학생이면 아래 「명단에 없는 학생 추가」를 눌러 주세요.'}</p>`;
   return `<p class="hint">${T?'이 학원 교사가 명단에 없어요.':`${esc(S.ptab)} 학생이 명단에 없어요.`}</p>`}
@@ -262,6 +260,7 @@ function vStep2(){
   const studentsForLink = people().filter(p=>p.kind==='student');
   return `<section class="sec"><h2>${esc(S.acad)} 참가자 선택</h2>
   <p class="lede">${isStaffAcad()?'본인을 체크하고 「신청 명단에 추가」를 눌러요. 함께 오는 가족은 다음 단계에서 넣어요.':'탭에서 교사·학생을 체크하고 「신청 명단에 추가」를 눌러요. 탭을 옮겨 가며 여러 번 추가할 수 있어요. 가족은 다음 단계에서 넣어요.'}</p>
+  ${cartPanel()}
   <div class="panel">
     <div class="itabs" role="tablist" aria-label="교사·악기">${ptabList().map(o=>`<button type="button" role="tab" data-ptab="${o.t}" aria-pressed="${S.ptab===o.t}">${o.t==='교사'&&isStaffAcad()?'관계자':o.t}<small>${o.k?o.k+'/':''}${o.n}</small></button>`).join('')}</div>
     ${isStaffAcad()?'':'<p class="hint" style="margin:0">가나다순 · 탭 숫자는 「추가한 수/전체」</p>'}

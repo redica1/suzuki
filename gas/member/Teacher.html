@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261102-001321 -->
+<!-- build: 20261102-133035 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -177,13 +177,13 @@ function fmtPh(p){p=String(p||'').replace(/\D/g,'');return p.length===11?p.repla
 function ph010(v){var x=String(v||'').replace(/\D/g,'');x=x.indexOf('010')===0?x.slice(3):x.replace(/^0?1?0?/,'');x=x.slice(0,8);return '010-'+(x.length>4?x.slice(0,4)+'-'+x.slice(4):x)}
 function toast(m){var e=document.getElementById('toast');e.textContent=m;e.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(function(){e.hidden=true},2800)}
 var DOMAINS=['naver.com','gmail.com','daum.net','hanmail.net','kakao.com','nate.com','icloud.com','hotmail.com'];
-function emailBox(id,label,val,req){val=String(val||'');var at=val.indexOf('@'),u=at>=0?val.slice(0,at):val,d=at>=0?val.slice(at+1):'naver.com',known=DOMAINS.indexOf(d)>=0;
+function emailBox(id,label,val,req){val=String(val||'');var at=val.indexOf('@'),u=at>=0?val.slice(0,at):val,d=at>=0?val.slice(at+1):'',known=DOMAINS.indexOf(d)>=0;
   return '<div class="f"><span>'+label+(req?' <span class="req">*</span>':'')+'</span><div class="row" style="flex-wrap:nowrap;gap:6px">'+
     '<input type="text" id="'+id+'U" value="'+esc(u)+'" placeholder="아이디" autocomplete="username" autocapitalize="off" spellcheck="false" aria-label="이메일 아이디" style="flex:1 1 45%">'+
     '<span style="flex:none;color:var(--muted)">@</span>'+
-    '<select id="'+id+'D" data-dom="'+id+'" aria-label="이메일 주소" style="flex:1 1 55%">'+DOMAINS.map(function(x){return '<option '+(x===d&&known?'selected':'')+'>'+x+'</option>'}).join('')+'<option value="" '+(!known?'selected':'')+'>직접 입력</option></select></div>'+
-    '<input type="text" id="'+id+'X" value="'+esc(known?'':d)+'" placeholder="예: school.ac.kr" autocapitalize="off" spellcheck="false" aria-label="이메일 주소 직접 입력" '+(known?'hidden':'')+'></div>'}
-function readEmail(id){var u=(document.getElementById(id+'U')||{}).value||'',dd=document.getElementById(id+'D'),d=dd&&dd.value?dd.value:((document.getElementById(id+'X')||{}).value||'');
+    '<select id="'+id+'D" data-dom="'+id+'" aria-label="이메일 주소" style="flex:1 1 55%"><option value="-" '+(!d?'selected':'')+'>선택하기</option>'+DOMAINS.map(function(x){return '<option '+(x===d&&known?'selected':'')+'>'+x+'</option>'}).join('')+'<option value="" '+(d&&!known?'selected':'')+'>직접 입력</option></select></div>'+
+    '<input type="text" id="'+id+'X" value="'+esc(known?'':d)+'" placeholder="예: school.ac.kr" autocapitalize="off" spellcheck="false" aria-label="이메일 주소 직접 입력" '+(known||!d?'hidden':'')+'></div>'}
+function readEmail(id){var u=(document.getElementById(id+'U')||{}).value||'',dd=document.getElementById(id+'D'),dv=dd?dd.value:'',d=dv==='-'?'':(dv||((document.getElementById(id+'X')||{}).value||''));
   u=u.trim().replace(/@.*$/,'');d=d.trim().replace(/^@/,'');return u&&d?(u+'@'+d).toLowerCase():u.toLowerCase()}
 function fe(k){return S.err[k]?'<p class="fe">'+esc(S.err[k])+'</p>':''}
 function bad(k){return S.err[k]?'class="bad" aria-invalid="true"':''}
@@ -730,11 +730,11 @@ document.addEventListener('click',function(e){if(e.target.id==='sdClose2'){S.stu
     S.err=er2;if(Object.keys(er2).length){render();var f=document.querySelector('.fe');if(f)f.scrollIntoView({block:'center'});return}
     var info=ext?{sex:j.sex,extRole:j.extRole,extRoleText:j.extRoleText,org:j.org,inst:j.inst}:{sex:j.sex,type:j.type,course:j.course,kind:j.type==='교사회원'?'정식 교사':j.course==='중급'?'중급 연수':'초급 연수',works:j.noWork?[]:j.works,noWork:j.noWork,role:j.role,inst:j.inst,certs:Object.keys(j.certs).map(function(n){return {n:n,y:j.certs[n]}})};
     run(function(){return call('tCreate',[S.token,{pw:pw,agree:true,mode:ext?'ext':'',info:info,pay:payOut(j.pay),rrn:j.pay.rrn||'',rrnAgree:!!j.pay.rrnAg}]).then(function(r){if(!r.ok){S.msg=r.msg;return}S.state=r.state;if(r.sess){setSess(r.sess);call('tMe',[r.sess]).then(function(x){if(x.ok)S.me=x.me})}S.hist=[];S.v='done';S.pw1='';S.pw2='';S.j.pay.rrn='';S.j.pay.rrnAg=false;window.scrollTo(0,0)})});return}
-  if(b.id==='doLogin'){var em=readEmail('le'),lp=v('lp');S.email=em;
+  if(b.id==='doLogin'){var em=readEmail('le'),lp=v('lp');S.email=em;if(em&&em.indexOf('@')<0){S.msg='이메일 @ 뒤 주소를 골라 주세요.';render();return}
     run(function(){return call('tLogin',[em,lp]).then(function(r){if(!r.ok){S.msg=r.msg;return}setSess(r.sess);S.hist=[];S.v='me';S.me=null;loadMe()})});return}
   if(b.id==='forgot'){S.fp={email:readEmail('le'),sent:false};S.msg='';render();return}
   if(b.id==='fpBack'){S.fp=null;S.msg='';render();return}
-  if(b.id==='sendReset'){var em2=readEmail('fe2');if(!em2){S.msg='가입한 이메일을 넣어 주세요.';render();return}
+  if(b.id==='sendReset'){var em2=readEmail('fe2');if(!em2){S.msg='가입한 이메일을 넣어 주세요.';render();return}if(em2.indexOf('@')<0){S.msg='이메일 @ 뒤 주소를 골라 주세요.';render();return}
     run(function(){return call('tForgot',[em2]).then(function(r){if(!r.ok){S.msg=r.msg;return}S.fp={email:em2,sent:true,code:r.code||''}})});return}
   if(b.id==='pwOpen'){S.pwEd=true;S.pwMsg='';render();return}
   if(b.id==='pwNo'){S.pwEd=false;S.pwMsg='';render();return}
@@ -875,7 +875,7 @@ document.addEventListener('change',function(e){if(e.target.dataset&&e.target.dat
     fileB64(f2).then(function(b64){return call('tDocUp',[S.sess,S.myac.id,kind,f2.name,mime,b64])}).then(function(r){S.docBusy=null;if(!r.ok){toast(r.msg);render();return}S.myac.data=r;render();toast(kind+'를 올렸어요')},function(er){S.docBusy=null;render();toast(String(er))});return}
   if(e.target.id==='phIn'){var f=e.target.files&&e.target.files[0];if(!f)return;if(String(f.type).indexOf('image/')!==0){toast('사진 파일을 골라 주세요');return}
   S.phBusy=true;render();shrinkPhoto(f).then(function(u){return call('tSavePhoto',[S.sess,u])}).then(function(r){S.phBusy=false;if(!r.ok){toast(r.msg);render();return}S.me=r.me;render();toast('사진을 넣었어요')},function(er){S.phBusy=false;render();toast(String(er))});return}
-  if(e.target.id==='pSame'){readPayIn();var pd=curPay();if(pd&&pd.same){pd.zip=pd.hzip;pd.addr=pd.haddr;pd.addr2=pd.haddr2;delete S.err.a_m}render();return}if(e.target.id==='noWork'){readConfirm();S.acadTyping=false;if(S.j.noWork)delete S.err.acad;render();return}var dm=e.target.dataset&&e.target.dataset.dom;if(dm){var x=document.getElementById(dm+'X');x.hidden=!!e.target.value;if(!e.target.value)x.focus();return}
+  if(e.target.id==='pSame'){readPayIn();var pd=curPay();if(pd&&pd.same){pd.zip=pd.hzip;pd.addr=pd.haddr;pd.addr2=pd.haddr2;delete S.err.a_m}render();return}if(e.target.id==='noWork'){readConfirm();S.acadTyping=false;if(S.j.noWork)delete S.err.acad;render();return}var dm=e.target.dataset&&e.target.dataset.dom;if(dm){var x=document.getElementById(dm+'X');x.hidden=e.target.value!=='';if(!e.target.value)x.focus();return}
   var n=e.target.dataset&&e.target.dataset.cert;if(!n)return;readConfirm();if(e.target.checked)S.j.certs[n]='';else delete S.j.certs[n];delete S.err['cy_'+n];render()});
 /* 휴대전화 칸: 앞의 010- 은 고르거나 지울 수 없게, 커서는 항상 010- 뒤로 (10-28) */
 function phClamp(el){if(!el||el.id!=='iPh'||el.disabled)return;var n=el.value.length,a=el.selectionStart,b=el.selectionEnd;

@@ -1,4 +1,4 @@
-/* build: 20261102-231421 */
+/* build: 20261102-233816 */
 function vAuthPick(){return `<section class="sec"><h2>접수 시작</h2>
   <p class="lede">어떻게 접수하시나요?</p>
   <div class="pick2">
@@ -8,6 +8,7 @@ function vAuthPick(){return `<section class="sec"><h2>접수 시작</h2>
     ${INTL_OPEN?`<a class="pickcard" href="${esc(intlUrl())}" target="_blank" rel="noopener" style="text-decoration:none;color:inherit" lang="en"><b>Overseas participants <small style="font-weight:500">· 해외 참가</small></b><span>For groups from other countries. Registration is in English and fees are in USD. Your group leader signs in with the access code from the association. ↗</span></a>`:''}
   </div>
   ${typeof TEST_LOGIN==='string'&&TEST_LOGIN?`<button class="btn ghost" type="button" id="tLogin" style="border-style:dashed;margin-top:10px">STG 시험: ${esc(TEST_LOGIN.split('/')[0])} 선생님으로 바로 로그인</button>`:''}
+  ${S.verr&&!S.user?`<p class="err" style="margin-top:8px">${esc(S.verr)}</p>`:''}
   ${GUEST_OPEN?'<p class="hint">회원 학원에 다니는 학생은 담당 선생님이 한꺼번에 접수해요. 잘 모르겠으면 다니는 학원 선생님께 먼저 여쭤 주세요.</p>':''}</section>`}
 /* 이메일 칸: 회원관리 로그인과 같은 모양 (아이디 @ 주소 고르기 · 직접 입력) */
 const DOMAINS=['naver.com','gmail.com','daum.net','hanmail.net','kakao.com','nate.com','icloud.com','hotmail.com'];

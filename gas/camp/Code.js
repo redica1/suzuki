@@ -1,4 +1,4 @@
-/* build: 20261102-231421 */
+/* build: 20261102-233816 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -212,9 +212,12 @@ function loginPw(email, pw, consent, staff) {
   return loginT_(t, consent);
 }
 function login(name, phone, consent) {
-  if (pwMode_()) return { ok: false, msg: '이메일 · 비밀번호로 로그인해 주세요. 화면을 새로 고쳐 주세요.' };
   const ph = String(phone || '').replace(/\D/g, '');
   const nm = bare_(name);
+  /* STG 시험 버튼(설정 「테스트 로그인」 = 이름/휴대전화)은 비밀번호 방식이어도 들어감 (11-02) */
+  let tl = ''; try { tl = String(setting_('테스트 로그인') || ''); } catch (e) {}
+  const isTest = !!tl && bare_(tl.split('/')[0]) === nm && String(tl.split('/')[1] || '').replace(/\D/g, '') === ph;
+  if (pwMode_() && !isTest) return { ok: false, msg: '이메일 · 비밀번호로 로그인해 주세요. 화면을 새로 고쳐 주세요.' };
   if (!nm || ph.length < 10) return { ok: false, msg: '이름과 휴대전화를 모두 넣어 주세요.' };
   const t = teachers_().find(x => bare_(x.name) === nm && x.p4 && ph.endsWith(x.p4));
   if (!t) return { ok: false, msg: '회원 명단의 이름·휴대전화와 맞지 않아요.' };

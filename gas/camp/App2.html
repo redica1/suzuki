@@ -1,4 +1,4 @@
-/* build: 20261102-222822 */
+/* build: 20261102-223529 */
 function vAuthPick(){return `<section class="sec"><h2>접수 시작</h2>
   <p class="lede">어떻게 접수하시나요?</p>
   <div class="pick2">
@@ -146,7 +146,7 @@ function vStep1(){
       <div class="row" style="gap:8px;flex-wrap:wrap">${mineA.map(a=>`<button class="btn ${S.acad===a?'primary':''}" type="button" data-acad="${esc(a)}">${esc(a)} <small>(내 소속)</small></button>`).join('')}
         <button class="btn ${S.acad&&!mineA.includes(S.acad)&&S.acad!==classOf(u)?'primary':''}" type="button" id="otherAcad">다른 학원 학생 접수 <small>(겸임 · 소속 그대로)</small></button>
         <button class="btn ${S.acad===classOf(u)?'primary':''}" type="button" data-acad="${esc(classOf(u))}">${esc(classOf(u))} <small>(학원 없이)</small></button></div></div>
-    <label class="f" for="acQ">소속 찾기 <span class="hint">다른 학원 학생도 접수할 수 있어요 · 선생님 소속은 그대로예요</span>
+    ${S.acOpen||(S.acad&&!mineA.includes(S.acad)&&S.acad!==classOf(u))?`<label class="f" for="acQ">어느 학원 학생인가요? <span class="hint">선생님 소속은 그대로예요</span>
       <div class="ac combo">
         <input type="search" id="acQ" role="combobox" aria-expanded="${S.acOpen}" aria-controls="acList" value="${esc(S.acOpen?S.acQ:S.acad)}" placeholder="학원을 선택하거나 검색하세요" autocomplete="off">
         <span class="caret" aria-hidden="true">▾</span>
@@ -154,7 +154,7 @@ function vStep1(){
           <li><button type="button" role="option" data-acad="${esc(classOf(u))}"><span><b>직접 입력</b> · ${esc(classOf(u))}</span><small>학원 소속 없이</small></button></li>
           ${all.map(a=>`<li><button type="button" role="option" data-acad="${esc(a.name)}" aria-selected="${S.acad===a.name}"><span>${esc(a.name)}${mineA.includes(a.name)?' <span class="pill ok">내 소속</span>':''}</span><small>${esc(a.region)}${a.head?` · ${esc(a.head)}`:''}</small></button></li>`).join('')||'<li class="hint" style="padding:8px">찾는 학원이 없어요. 맨 위 「직접 입력」을 선택해 주세요.</li>'}
         </ul>`:''}
-      </div></label>`}
+      </div></label>`:''}`}
     ${S.acad&&!mineA.includes(S.acad)&&S.acad!==classOf(u)?`<div class="note info">「${esc(S.acad)}」은(는) 명단상 소속이 아니지만 <b>이 학원 학생을 접수할 수 있어요</b> (겸임). 소속은 그대로 「${esc(mineA.join(', ')||'-')}」예요.</div>`:''}
     ${mailField()}
   </div></section>`;

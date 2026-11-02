@@ -1,4 +1,4 @@
-/* build: 20261102-222440 */
+/* build: 20261102-222738 */
   if(!open.length) return ''; /* 신고한 사람은 아래 사람별 줄에 「입금 확인 중 · 날짜 금액」으로 보여서 여기서는 안 보여 줌 */
   const sel=S.rp||(S.rp=open.map(x=>x.p.id)); const sum=open.filter(x=>sel.includes(x.p.id)).reduce((t,x)=>t+dueOf(x.p),0);
   const nameOf=id=>{for(const sb of MY_SUBS){const p=sb.ppl.find(q=>q.id===id);if(p)return p.name}return ''};
@@ -32,7 +32,7 @@ function vAcad(){const A=acadSubs();const live=A.flatMap(sb=>sb.ppl.filter(p=>p.
   return `<section class="sec"><div class="spread"><h2>접수 내역</h2><button class="btn small ghost" type="button" id="toForm">← 새 접수하기</button></div>${scopeSeg()}
   <p class="lede">${esc((S.user.acads||[]).join(', '))}에 들어온 접수 전부예요. 다른 선생님이 낸 접수는 <b>보기만</b> 돼요. 고칠 곳은 접수한 선생님께 알려 주세요.</p>
   <div class="panel"><dl class="kv"><dt>접수</dt><dd>${A.length}건 · ${live.length}명<br><span class="compo">${compoTxt(A)}</span></dd><dt>청구 합계</dt><dd class="num">${won(bill)}</dd><dt>입금 확인</dt><dd class="num">${won(paid)}</dd><dt>남은 금액</dt><dd class="num">${won(Math.max(0,bill-paid))}</dd></dl></div>
-  <div class="panel tbl"><table><thead><tr><th>접수 교사</th><th class="r">접수</th><th class="r">인원</th><th class="r">청구</th><th class="r">입금 확인</th><th class="r">남은 금액</th><th>신고 대기</th></tr></thead><tbody>${Object.entries(by).map(([k,o])=>`<tr><td><b>${esc(k)}</b>${k===S.user.name?' <span class="pill new">나</span>':''}</td><td class="r num">${o.n}건</td><td class="r num">${o.ppl}명</td><td class="r num">${won(o.bill)}</td><td class="r num">${won(o.paid)}</td><td class="r num">${won(Math.max(0,o.bill-o.paid))}</td><td>${o.rp?o.rp+'명':'-'}</td></tr>`).join('')}</tbody></table></div>
+  <div class="panel"><div class="mtblw"><table class="mtbl"><thead><tr><th>접수 교사</th><th class="r">접수</th><th class="r">인원</th><th class="r">청구</th><th class="r">입금 확인</th><th class="r">남은 금액</th><th>신고 대기</th></tr></thead><tbody>${Object.entries(by).map(([k,o])=>`<tr><td><b>${esc(k)}</b>${k===S.user.name?' <span class="pill new">나</span>':''}</td><td class="r num">${o.n}건</td><td class="r num">${o.ppl}명</td><td class="r num">${won(o.bill)}</td><td class="r num">${won(o.paid)}</td><td class="r num">${won(Math.max(0,o.bill-o.paid))}</td><td>${o.rp?o.rp+'명':'-'}</td></tr>`).join('')}</tbody></table></div></div>
   ${A.length?mineTabs(A):''}
   ${A.map(sb=>{const mine=sb.owner===S.user.name;const G=sb.ppl.filter(p=>mineOk(sb,p));
     return `<div class="panel sub-card ${mine?'':'ro'}"><div class="spread"><div><b class="num">${sb.no}</b> <span class="hint">${sb.round} · ${kday(sb.date)} 접수 · ${esc(sb.acad)} · <b>${sb.acad===STAFF_ACAD?'접수자':'접수 교사'} ${esc(sb.owner)}</b>${mine?' (나)':''}</span><div class="compo">${compoTxt([sb])}</div></div><div>${subTag(sb)}</div></div>

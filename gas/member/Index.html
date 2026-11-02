@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261102-221257 -->
+<!-- build: 20261102-223302 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -516,21 +516,23 @@ function accPill(id){var a=S.D.acc[id];return a==='사용'?'<span class="pill ok
 
 /* ---------- 승인 대기 ---------- */
 /* ---------- 문의 · 요청 (10-28) ---------- */
-function loadAsk(){S.asks=null;callS('bList').then(function(r){if(r.ok){setAsks(r.list)}if(S.tab==='ask')render()})}
+function loadAsk(){S.asks=null;callS('bList').then(function(r){if(r.ok){setAsks(r.list);if(r.warn)toast(r.warn)}if(S.tab==='ask')render()})}
 function setAsks(L){S.asks=L;S.D.bN=L.filter(function(q){return q['상태']==='접수'}).length}
 function vAskA(){var L=S.asks;if(!L)return '<div class="panel"><span><span class="spin"></span> 불러오는 중…</span></div>';
+  var src=S.askSrc||'';L=L.filter(function(q){return !src||(src==='c'?q.camp:!q.camp)});
   var st=S.askSt||'열림',cnt=function(x){return L.filter(function(q){return x==='전체'||(x==='열림'?q['상태']!=='완료':q['상태']===x)}).length};
   var list=L.filter(function(q){return st==='전체'||(st==='열림'?q['상태']!=='완료':q['상태']===st)});
   var pill=function(s){return '<span class="pill '+(s==='완료'?'ok':s==='처리중'?'info':'bad')+'">'+esc(s)+'</span>'};
-  return '<div class="sec-h"><div><h2>문의 · 요청</h2><p>선생님 화면 「문의 · 요청 남기기」로 들어온 글이에요. 로그인한 회원은 답을 화면과 이메일로 받고, 비로그인은 남긴 휴대전화로 연락해요.</p></div>'+
-    '<div class="row">'+['열림','접수','처리중','완료','전체'].map(function(x){return '<button class="btn small '+(st===x?'primary':'')+'" type="button" data-ast="'+x+'">'+(x==='열림'?'처리 전 · 중':x)+' '+cnt(x)+'</button>'}).join('')+'<button class="btn small ghost" type="button" id="askRe">새로 고침</button></div></div>'+
+  return '<div class="sec-h"><div><h2>문의 · 요청</h2><p>회원관리 「문의 · 요청 남기기」와 캠프 접수 「오류·건의」로 들어온 글을 함께 봐요. 회원 글은 답을 화면과 이메일로, 캠프 글은 캠프 화면 「내가 올린 글」로 받아요.</p></div>'+
+    '<div class="row">'+[['','모두'],['m','회원관리'],['c','캠프']].map(function(x){var n=S.asks.filter(function(q){return !x[0]||(x[0]==='c'?q.camp:!q.camp)}).length;return '<button class="btn small '+(src===x[0]?'primary':'ghost')+'" type="button" data-asrc="'+x[0]+'">'+x[1]+' '+n+'</button>'}).join('')+'<span class="cap" style="margin:0 4px">|</span>'+['열림','접수','처리중','완료','전체'].map(function(x){return '<button class="btn small '+(st===x?'primary':'')+'" type="button" data-ast="'+x+'">'+(x==='열림'?'처리 전 · 중':x)+' '+cnt(x)+'</button>'}).join('')+'<button class="btn small ghost" type="button" id="askRe">새로 고침</button></div></div>'+
     (list.length?list.map(function(q){var id=q['문의ID'],t=q['교사ID']&&T[q['교사ID']];
       return '<div class="panel"><div class="sec-h"><h3>'+pill(q['상태'])+' <span class="cap">'+esc(q['분류'])+'</span> '+esc(q['제목'])+'</h3><span class="cap num">'+esc(q['작성일'])+'</span></div>'+
+        (q.camp?'<dl class="kv"><dt>보낸 사람</dt><dd><b>'+esc(q['이름'])+'</b> <span class="pill info">캠프</span>'+(q.acad?' <span class="cap">'+esc(q.acad)+'</span>':'')+'</dd><dt>휴대전화</dt><dd class="num">'+(q.p4?'뒤 4자리 '+esc(q.p4):'-')+'</dd>'+(q.pic?'<dt>사진</dt><dd><a href="'+esc(q.pic)+'" target="_blank" rel="noopener">사진 보기 ↗</a></dd>':'')+'</dl>':
         '<dl class="kv"><dt>보낸 사람</dt><dd><b>'+esc(q['이름'])+'</b> '+(q['교사ID']?'<span class="pill info">회원 '+esc(q['교사ID'])+'</span>'+(t?' <button class="btn small ghost" type="button" data-opent="'+esc(q['교사ID'])+'">교사 열기</button>':''):'<span class="pill mute">비로그인</span>')+'</dd>'+
-        '<dt>휴대전화</dt><dd class="num">'+(fmt(q['휴대전화'])||'-')+'</dd>'+(q['이메일']?'<dt>이메일</dt><dd>'+esc(q['이메일'])+'</dd>':'')+'</dl>'+
+        '<dt>휴대전화</dt><dd class="num">'+(fmt(q['휴대전화'])||'-')+'</dd>'+(q['이메일']?'<dt>이메일</dt><dd>'+esc(q['이메일'])+'</dd>':'')+'</dl>')+
         '<div class="qbody">'+esc(q['내용'])+'</div>'+
         q.comments.map(function(c){return '<div class="cmt'+(c['쓴사람']==='관리자'?' adm':'')+'"><b>'+esc(c['쓴사람']==='관리자'?'협회 · '+c['이름']:c['이름'])+'</b> <span class="cap num">'+esc(c['작성일'])+'</span><div class="qbody">'+esc(c['내용'])+'</div></div>'}).join('')+
-        '<div class="row" style="align-items:flex-start;margin-top:6px"><textarea id="cm_'+esc(id)+'" rows="2" placeholder="댓글 (회원에게는 화면 · 이메일로 보여요)" style="flex:1;min-width:220px"></textarea><button class="btn small primary" type="button" data-bcm="'+esc(id)+'">댓글</button></div>'+
+        '<div class="row" style="align-items:flex-start;margin-top:6px"><textarea id="cm_'+esc(id)+'" rows="2" placeholder="'+(q.camp?'답 (캠프 화면 「내가 올린 글」에 보여요 · 새로 쓰면 앞 답을 바꿔요)':'댓글 (회원에게는 화면 · 이메일로 보여요)')+'" style="flex:1;min-width:220px"></textarea><button class="btn small primary" type="button" data-bcm="'+esc(id)+'">'+(q.camp?'답 저장':'댓글')+'</button></div>'+
         '<div class="row" style="margin-top:6px"><span class="cap">상태</span>'+['접수','처리중','완료'].map(function(x){return '<button class="btn small '+(q['상태']===x?'primary':'')+'" type="button" data-bst="'+esc(id)+'|'+x+'">'+x+'</button>'}).join('')+(q['처리자']?'<span class="cap">'+esc(q['처리자'])+(q['처리일']?' · 완료 '+esc(q['처리일']):'')+'</span>':'')+'</div></div>'}).join(''):'<div class="panel"><p class="cap">문의가 없어요.</p></div>')}
 function loadProg(){S.prog=null;callS('inputStatus').then(function(r){if(r.ok){S.prog=r;if(S.tab==='prog')render()}else toast(r.msg)})}
 function vInbox(X){if(!X)return '';var n=X.need.length;
@@ -1140,6 +1142,7 @@ document.addEventListener('click',function(e){
     if(rp[2]&&!confirm('이 신청을 명단의 그 선생님 계정으로 연결할까요?'))return;if(S.busy)return;S.busy=true;
     callS('reqDo',rp[0],rp[1],memo,rp[2]).then(function(r){S.busy=false;if(!r.ok){toast(r.msg);return}S.reqs=objs(r);S.D.reqN=S.reqs.filter(function(q){return q['상태']==='대기'}).length;toast(rp[1]+' · 메일을 보냈어요');load()});return}
   if(d.ast){S.askSt=d.ast;render();return}
+  if(d.asrc!=null&&b.hasAttribute('data-asrc')){S.askSrc=d.asrc;render();return}
   if(b.id==='askRe'){loadAsk();render();return}
   if(d.bst){var p2=d.bst.split('|');if(S.busy)return;S.busy=true;callS('bSet',p2[0],p2[1]).then(function(r){S.busy=false;if(!r.ok){toast(r.msg);return}setAsks(r.list);render();toast(p2[1]+'(으)로 바꿨어요')});return}
   if(d.bcm){var ta=document.getElementById('cm_'+d.bcm),tx=ta?ta.value.trim():'';if(!tx){toast('댓글을 넣어 주세요');return}if(S.busy)return;S.busy=true;b.disabled=true;

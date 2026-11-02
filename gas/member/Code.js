@@ -1,4 +1,4 @@
-/* build: 20261102-221257 */
+/* build: 20261102-223302 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -1766,9 +1766,30 @@ function payNo(who, sid, year, why) {
   } finally { lock.releaseLock(); }
   return payList(who);
 }
-function bList(who) { const all = bObjs_(); return { list: all }; }
+/* 캠프 「오류·건의」(캠프 접수 DB 「문의」 탭)도 이 게시판에서 함께 봄 (11-02). 문의ID = 「C:번호」.
+   캠프 상태 미해결 · 해결 중 · 해결 ↔ 여기 접수 · 처리중 · 완료. 캠프는 답이 한 칸이라 댓글을 달면 답을 바꿔 씀(캠프 화면 「내가 올린 글」에 보임). */
+const CQ_ST = { '미해결': '접수', '해결 중': '처리중', '해결': '완료' }, CQ_BACK = { '접수': '미해결', '처리중': '해결 중', '완료': '해결' };
+function campQSheet_() { const id = settings_()['캠프 시트']; if (!id) return null; const sh = SpreadsheetApp.openById(id).getSheetByName('문의'); return sh || null; }
+function campQs_() {
+  const sh = campQSheet_(); if (!sh || sh.getLastRow() < 2) return [];
+  const v = sh.getDataRange().getDisplayValues(), h = v.shift().map(String), g = (r, k) => { const j = h.indexOf(k); return j >= 0 ? String(r[j] || '') : ''; };
+  return v.filter(r => g(r, '번호')).map(r => { const st = CQ_ST[g(r, '상태') || '미해결'] || '접수', rep = g(r, '답변'), where = g(r, '화면'), txt = g(r, '내용');
+    return { '문의ID': 'C:' + g(r, '번호'), camp: 1, '작성일': g(r, '일시'), '교사ID': '', '이름': g(r, '이름'), '휴대전화': '', p4: g(r, '연락처 뒤4자리'), acad: g(r, '학원'), pic: g(r, '사진'),
+      '분류': '캠프 · ' + (where || '기타'), '제목': txt.split('\n')[0].slice(0, 60), '내용': txt, '상태': st, '처리일': g(r, '처리일'), '처리자': g(r, '처리자'),
+      comments: rep ? [{ '쓴사람': '관리자', '이름': g(r, '처리자'), '작성일': g(r, '처리일'), '내용': rep }] : [] }; }); }
+function campQSet_(who, qid, state, reply) {
+  const no = String(qid).slice(2), sh = campQSheet_(); if (!sh) fail('캠프 접수 시트가 연결돼 있지 않아요 (설정 「캠프 시트」).');
+  const v = sh.getDataRange().getValues(), h = v[0].map(String), ni = h.indexOf('번호'), r = v.findIndex((x, i) => i > 0 && String(x[ni]) === no); if (r < 1) fail('그 캠프 글을 찾지 못했어요.');
+  const set = (k, val) => { const j = h.indexOf(k); if (j >= 0) sh.getRange(r + 1, j + 1).setValue(val); };
+  if (state) set('상태', CQ_BACK[state]); if (reply != null) set('답변', reply);
+  set('처리자', who.name); set('처리일', (CQ_BACK[state] || String(v[r][h.indexOf('상태')])) === '미해결' ? '' : Utilities.formatDate(new Date(), 'Asia/Seoul', 'yyyy-MM-dd'));
+  log_(who.name, '문의', qid, state ? '상태' : '캠프 답', state || String(reply).slice(0, 60));
+}
+function bList(who) { let all = bObjs_(), warn = ''; try { all = all.concat(campQs_()); } catch (e) { warn = '캠프 글을 읽지 못했어요: ' + e.message; }
+  all.sort((a, b) => String(b['작성일']).localeCompare(String(a['작성일']))); return { list: all, warn }; }
 function bSet(who, qid, state) {
   if (B_STATES.indexOf(state) < 0) fail('상태를 골라 주세요.');
+  if (/^C:/.test(qid)) { const lk = LockService.getScriptLock(); lk.waitLock(20000); try { campQSet_(who, qid, state, null); } finally { lk.releaseLock(); } return bList(who); }
   const Q = tbl_('문의'), i = Q.find('문의ID', qid); if (i < 0) fail('그 문의를 찾지 못했어요.');
   Q.set(i, { '상태': state, '처리일': state === '완료' ? now_() : Q.get(i, '처리일'), '처리자': who.name, '수정일': now_() });
   log_(who.name, '문의', qid, '상태', state);
@@ -1776,6 +1797,7 @@ function bSet(who, qid, state) {
 }
 function bComment(who, qid, text) {
   text = bText_(text, 1000); if (!text) fail('댓글을 넣어 주세요.');
+  if (/^C:/.test(qid)) { const lk = LockService.getScriptLock(); lk.waitLock(20000); try { const cur = (campQs_().find(x => x['문의ID'] === qid) || {})['상태']; campQSet_(who, qid, cur === '접수' ? '처리중' : '', text); } finally { lk.releaseLock(); } return bList(who); }
   const Q = tbl_('문의'), i = Q.find('문의ID', qid); if (i < 0) fail('그 문의를 찾지 못했어요.');
   bAddComment_(qid, '관리자', who.name, text);
   if (Q.get(i, '상태') === '접수') Q.set(i, { '상태': '처리중', '처리자': who.name, '수정일': now_() });

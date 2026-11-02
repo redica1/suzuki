@@ -1,4 +1,4 @@
-${''/* build: 20261103-000125 */}
+${''/* build: 20261103-000616 */}
     <div class="song3"><b class="sh">곡 2 <span class="hint">있으면</span></b>
       <label class="f" for="enK2">작곡가<input type="text" id="enK2" data-ens="k2" value="${esc(E.k2||'')}" placeholder=""></label>
       <label class="f" for="enC2">곡명<input type="text" id="enC2" data-ens="c2" value="${esc(E.c2||'')}" placeholder=""></label>
@@ -85,9 +85,9 @@ function vStep4(){
   <p class="lede">접수하기 전에 신청 내용과 금액을 확인해 주세요. 고칠 곳이 있으면 「수정」을 누르면 돼요.</p>
   ${editDiffHTML()}
 
-  <div class="panel"><div class="spread"><h3 style="font-size:18px">접수 정보</h3>${edit(1,'접수자')}</div>
+  ${isGuest()?`<div class="panel"><div class="spread"><h3 style="font-size:18px">접수 정보</h3>${edit(1,'접수자')}</div>
     <dl class="kv"><dt>학원</dt><dd>${esc(S.acad)}</dd><dt>접수자</dt><dd>${esc(S.who)} · ${esc(S.phone)}</dd><dt>이메일</dt><dd>${esc(S.email||'-')}</dd>
-    <dt>차수</dt><dd><span class="pill new">${R[0]} 접수</span> <span class="hint">${R[1]}</span></dd></dl></div>
+    <dt>차수</dt><dd><span class="pill new">${R[0]} 접수</span> <span class="hint">${R[1]}</span></dd></dl></div>`:`<p class="hint" style="margin:0 0 8px"><b style="color:var(--ink)">${esc(S.acad)}</b> · <span class="pill new">${R[0]} 접수</span> ${R[1]}</p>`}
 
   <div class="panel"><div class="spread"><h3 style="font-size:18px">참가자별 신청 내용</h3>${edit(3,'신청 내용')}</div>
     ${(()=>{const inRoom=new Set(t.teams.flatMap(x=>x.members.map(m=>m.key)));const T=[['all',`전체 ${t.n}명`,()=>true],['student',`학생 ${ps.filter(p=>p.kind==='student').length}`,p=>p.kind==='student'],['teacher',`교사 ${ps.filter(p=>p.kind==='teacher').length}`,p=>p.kind==='teacher'],['family',`가족 ${ps.filter(p=>p.kind==='family').length}`,p=>p.kind==='family'],['room',`가족방 ${t.teams.length}개${t.teams.length?` · ${inRoom.size}명`:''}`,p=>inRoom.has(p.key)]];

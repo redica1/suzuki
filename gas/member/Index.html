@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261102-133151 -->
+<!-- build: 20261102-221257 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -352,18 +352,18 @@ function acadOpts(first){var by=function(x,y){return x[1].localeCompare(y[1],'ko
 var EXT_ROLES=['초빙교수','반주자','지휘자','통역','초청강사','스태프','기타'];
 function extRole(t){var r=String(t['하는일']||'');if(!r){var m=String(t['확인메모']||'').match(/외부인 · ([^·(]+)/);r=m?m[1].trim():''}return r}
 function extTiles(all){var acc=S.D.acc||{},cnt={};all.forEach(function(t){var r=extRole(t).replace(/^기타.*/,'기타')||'미정';cnt[r]=(cnt[r]||0)+1});var a=all.filter(function(t){return acc[t['교사ID']]==='사용'}).length;
-  return '<div class="tiles">'+tileH('관계자',all.length,'외부인 회원',0,'','ext|')+tileH('계정 있음',a,pct(a,all.length))+tileH('강사료 대상',all.filter(function(t){return t['강사료대상']==='예'}).length)+EXT_ROLES.concat(['미정']).filter(function(r){return cnt[r]}).map(function(r){return tileH(r,cnt[r],'',0,'',r==='미정'?'ext|':'ext|xr='+r)}).join('')+'</div>'}
+  return '<div class="tiles">'+tileH('관계자',all.length,'관계자 회원',0,'','ext|')+tileH('계정 있음',a,pct(a,all.length))+tileH('강사료 대상',all.filter(function(t){return t['강사료대상']==='예'}).length)+EXT_ROLES.concat(['미정']).filter(function(r){return cnt[r]}).map(function(r){return tileH(r,cnt[r],'',0,'',r==='미정'?'ext|':'ext|xr='+r)}).join('')+'</div>'}
 function vExt(){var qq=q(),fr=S.f.xr||'',acc=S.D.acc||{};
   var all=S.D.tch.filter(function(t){return t['회원구분']==='외부인'});
   var roleOf=function(t){var r=String(t['하는일']||'');if(!r){var m=String(t['확인메모']||'').match(/외부인 · ([^·(]+)/);r=m?m[1].trim():''}return r};
   var L=all.filter(function(t){if(fr&&roleOf(t).indexOf(fr)!==0)return false;if(qq&&(t['이름']+' '+(t['영문이름']||'')+' '+t['휴대전화']+' '+(t['이메일']||'')+' '+(t['소속기관']||'')).indexOf(qq)<0)return false;return true});
   var cnt={};all.forEach(function(t){var r=roleOf(t).replace(/^기타.*/,'기타')||'미정';cnt[r]=(cnt[r]||0)+1});
-  return '<div class="sec-h"><div><h2>관계자정보</h2><p>외부인으로 가입한 관계자(번호 X0001)예요. 연회비 면제 · 강사료 대상 · 학원 소속 없음. 캠프는 「관계자」로 접수해요. 줄을 누르면 고칠 수 있어요.</p></div></div>'+
+  return '<div class="sec-h"><div><h2>관계자정보</h2><p>관계자로 가입한 사람(번호 X0001)예요. 연회비 면제 · 강사료 대상 · 학원 소속 없음. 캠프는 「관계자」로 접수해요. 줄을 누르면 고칠 수 있어요.</p></div></div>'+
   (S.edit&&S.edit.kind==='tch'&&T[S.edit.id]&&T[S.edit.id]['회원구분']==='외부인'?tchEditor():'')+
-  '<div class="tiles"><div class="tile"><span class="k">관계자</span><span class="v">'+all.length+'</span><span class="s">외부인 회원'+(L.length!==all.length?' · 지금 목록 '+L.length+'명':'')+'</span></div>'+tileH('계정 있음',all.filter(function(t){return acc[t['교사ID']]==='사용'}).length,pct(all.filter(function(t){return acc[t['교사ID']]==='사용'}).length,all.length))+tileH('강사료 대상',all.filter(function(t){return t['강사료대상']==='예'}).length)+EXT_ROLES.concat(['미정']).filter(function(r){return cnt[r]}).map(function(r){return '<div class="tile"><span class="k">'+esc(r)+'</span><span class="v">'+cnt[r]+'</span></div>'}).join('')+'</div>'+
+  '<div class="tiles"><div class="tile"><span class="k">관계자</span><span class="v">'+all.length+'</span><span class="s">관계자 회원'+(L.length!==all.length?' · 지금 목록 '+L.length+'명':'')+'</span></div>'+tileH('계정 있음',all.filter(function(t){return acc[t['교사ID']]==='사용'}).length,pct(all.filter(function(t){return acc[t['교사ID']]==='사용'}).length,all.length))+tileH('강사료 대상',all.filter(function(t){return t['강사료대상']==='예'}).length)+EXT_ROLES.concat(['미정']).filter(function(r){return cnt[r]}).map(function(r){return '<div class="tile"><span class="k">'+esc(r)+'</span><span class="v">'+cnt[r]+'</span></div>'}).join('')+'</div>'+
   '<div class="panel"><div class="filters"><input type="search" id="q" value="'+esc(S.q)+'" placeholder="이름 · 전화 · 이메일 · 소속" style="width:min(240px,100%)">'+sel('fxr',[['','하는 일 전체']].concat(EXT_ROLES),fr,'하는 일')+'</div>'+
   '<div class="tbl"><table><thead><tr><th>번호</th><th>이름</th><th>영문 이름</th><th>하는 일</th><th>소속(기관)</th><th>악기</th><th>성별</th><th>휴대전화</th><th>이메일</th><th>계정</th><th>강사료</th><th>상태</th><th>확인</th></tr></thead><tbody>'+
-  (L.length?L.map(function(t){var id=t['교사ID'];return '<tr class="click '+(S.edit&&S.edit.id===id?'on':'')+'" data-edit="tch|'+id+'"><td class="num cap">'+id+'</td><td><b>'+nm(t)+'</b></td><td>'+esc(t['영문이름']||'-')+'</td><td>'+esc(roleOf(t)||'-')+'</td><td>'+esc(t['소속기관']||'-')+'</td><td>'+esc(t['전공']||'-')+'</td><td>'+esc(t['성별']||'-')+'</td><td class="num">'+esc(fmt(t['휴대전화'])||'-')+'</td><td>'+esc(t['이메일']||'-')+'</td><td>'+(acc[id]?'<span class="pill ok">가입</span>':'<span class="cap">-</span>')+'</td><td>'+(t['강사료대상']==='예'?'<span class="pill info">대상</span>':'<span class="cap">-</span>')+'</td><td>'+esc(t['상태']||'-')+'</td><td>'+esc(t['확인']||'')+'</td></tr>'}).join(''):'<tr><td colspan="13" class="cap">관계자가 없어요. 외부인 가입 신청은 「승인 대기」에서 승인해요.</td></tr>')+
+  (L.length?L.map(function(t){var id=t['교사ID'];return '<tr class="click '+(S.edit&&S.edit.id===id?'on':'')+'" data-edit="tch|'+id+'"><td class="num cap">'+id+'</td><td><b>'+nm(t)+'</b></td><td>'+esc(t['영문이름']||'-')+'</td><td>'+esc(roleOf(t)||'-')+'</td><td>'+esc(t['소속기관']||'-')+'</td><td>'+esc(t['전공']||'-')+'</td><td>'+esc(t['성별']||'-')+'</td><td class="num">'+esc(fmt(t['휴대전화'])||'-')+'</td><td>'+esc(t['이메일']||'-')+'</td><td>'+(acc[id]?'<span class="pill ok">가입</span>':'<span class="cap">-</span>')+'</td><td>'+(t['강사료대상']==='예'?'<span class="pill info">대상</span>':'<span class="cap">-</span>')+'</td><td>'+esc(t['상태']||'-')+'</td><td>'+esc(t['확인']||'')+'</td></tr>'}).join(''):'<tr><td colspan="13" class="cap">관계자가 없어요. 관계자 가입 신청은 「승인 대기」에서 승인해요.</td></tr>')+
   '</tbody></table></div></div>'}
 function tileH(k,v,sub,w,cls,go){return '<div class="tile'+(w?' warn':'')+(cls?' '+cls:'')+'"'+(go?' data-go="'+go+'" role="link" tabindex="0"':'')+'><span class="k">'+k+'</span><span class="v">'+(typeof v==='string'?v:(+v).toLocaleString())+'</span>'+(sub?'<span class="s">'+sub+'</span>':'')+'</div>'}
 function pct(a,b){return b?Math.round(a*100/b)+'%':''}

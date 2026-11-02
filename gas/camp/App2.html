@@ -1,10 +1,10 @@
-/* build: 20261102-221216 */
+/* build: 20261102-221257 */
 function vAuthPick(){return `<section class="sec"><h2>접수 시작</h2>
   <p class="lede">어떻게 접수하시나요?</p>
   <div class="pick2">
     ${MEMBER_OPEN?`<button type="button" class="pickcard" data-mode="member"><b>회원 선생님</b><span>협회 회원 선생님이 학원 학생들을 접수해요. 회원 이메일 · 비밀번호로 로그인해요.</span></button>`:''}
     ${GUEST_OPEN?`<button type="button" class="pickcard" data-mode="guest"><b>비회원 (학부모)</b><span>회원 학원에 다니지 않는 아이를 보호자가 직접 접수해요. 보호자 이름과 휴대전화만 있으면 돼요.</span></button>`:''}
-    ${STAFF_OPEN?`<button type="button" class="pickcard" data-mode="staff"><b>관계자</b><span>초빙교수 · 반주자 · 지휘자 · 통역 · 초청강사 · 스태프. 협회 회원관리에 「외부인」으로 가입한 이메일 · 비밀번호로 로그인해요.</span></button>`:''}
+    ${STAFF_OPEN?`<button type="button" class="pickcard" data-mode="staff"><b>관계자</b><span>초빙교수 · 반주자 · 지휘자 · 통역 · 초청강사 · 스태프. 협회 회원관리에 「관계자」로 가입한 이메일 · 비밀번호로 로그인해요.</span></button>`:''}
     ${INTL_OPEN?`<a class="pickcard" href="${esc(intlUrl())}" target="_blank" rel="noopener" style="text-decoration:none;color:inherit" lang="en"><b>Overseas participants <small style="font-weight:500">· 해외 참가</small></b><span>For groups from other countries. Registration is in English and fees are in USD. Your group leader signs in with the access code from the association. ↗</span></a>`:''}
   </div>
   ${typeof TEST_LOGIN==='string'&&TEST_LOGIN?`<button class="btn ghost" type="button" id="tLogin" style="border-style:dashed;margin-top:10px">STG 시험: ${esc(TEST_LOGIN.split('/')[0])} 선생님으로 바로 로그인</button>`:''}
@@ -21,7 +21,7 @@ function svId(k,d){var s=svGet(k);return s&&s.id?s.id:(d||'')}
 function svPw(k){var s=svGet(k);return s&&s.pw?s.pw:''}
 function emailOf(id){const g=k=>((document.getElementById(id+k)||{}).value||'').trim(),u=g('U'),dv=g('D'),d=dv==='-'?'':(dv||g('X'));if(u.includes('@'))return u.toLowerCase();return u&&d?(u+'@'+d.replace(/^@/,'')).toLowerCase():''}
 function vStaffLogin(){return `<section class="sec"><h2>관계자 로그인</h2>
-  <p class="lede">초빙교수 · 반주자 · 지휘자 · 통역 · 초청강사 · 스태프는 협회 회원관리에 <b>「외부인」</b>으로 가입한 이메일 · 비밀번호로 들어가요. 동반 가족도 함께 접수할 수 있어요.</p>
+  <p class="lede">초빙교수 · 반주자 · 지휘자 · 통역 · 초청강사 · 스태프는 협회 회원관리에 <b>「관계자」</b>로 가입한 이메일 · 비밀번호로 들어가요. 동반 가족도 함께 접수할 수 있어요.</p>
   ${LOGIN_PW?`<div class="panel" style="max-width:440px">
     ${emailBox('lgId',S.lgId||svId('c'))}
     <label class="f" for="lgPw">비밀번호<input type="password" id="lgPw" autocomplete="current-password" value="${esc(svPw('c'))}"></label>${svBox('c')}
@@ -30,8 +30,8 @@ function vStaffLogin(){return `<section class="sec"><h2>관계자 로그인</h2>
     <button class="btn primary" type="button" id="doLogin">로그인</button>
     <div class="spread"><button class="btn ghost small" type="button" id="toPick">← 처음으로</button><a class="btn ghost small" href="${esc(MEMBER_URL||SIGNUP_URL)}" target="_blank" rel="noopener" style="text-decoration:none">비밀번호를 잊었어요 ↗</a></div>
     <div class="note info" style="display:grid;gap:8px"><b>아직 가입하지 않으셨나요?</b>
-      <span class="hint">회원관리 첫 화면에서 이름 · 휴대전화로 확인한 뒤 회원 종류 「외부인」을 골라 가입해요. 협회가 확인하면 이메일로 알려 드리고, 그 뒤 여기에 들어올 수 있어요. 급하면 협회에 연락하면 운영진이 대신 접수해 드려요.</span>
-      <a class="btn primary" href="${esc(MEMBER_URL||SIGNUP_URL)}" target="_blank" rel="noopener" style="justify-self:start;text-decoration:none">외부인으로 가입하기 ↗</a></div>
+      <span class="hint">회원관리 첫 화면에서 이름 · 휴대전화로 확인한 뒤 회원 종류 「관계자」를 골라 가입해요. 협회가 확인하면 이메일로 알려 드리고, 그 뒤 여기에 들어올 수 있어요. 급하면 협회에 연락하면 운영진이 대신 접수해 드려요.</span>
+      <a class="btn primary" href="${esc(MEMBER_URL||SIGNUP_URL)}" target="_blank" rel="noopener" style="justify-self:start;text-decoration:none">관계자로 가입하기 ↗</a></div>
   </div>`:`<div class="note">지금은 관계자 온라인 접수를 받지 않아요. 협회에 연락하면 운영진이 대신 접수해 드려요.</div><button class="btn ghost small" type="button" id="toPick">← 처음으로</button>`}</section>`}
 function vConsent(){if(!S.chk){S.auth='pick';return vAuthPick()}const L=consItems();
   return `<section class="sec"><h2>개인정보 동의</h2>

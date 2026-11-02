@@ -1,4 +1,4 @@
-/* build: 20261102-134300 */
+/* build: 20261102-134746 */
     ps.forEach(p=>{p.pay='신고';p.rep=rep;delete S.rpRow[p.id]});S.afterSave=()=>repDone(ps.map(p=>p.id));subSave();S.rp=null;S.rpMemo=undefined;render();toast(`${ps.length}명 입금 신고를 보냈어요 · 운영진이 확인하면 「입금 확인」으로 바뀌어요`);return}
   if(b.id==='rpFill'){const n=document.getElementById('rpAllN').value.trim(),dd=document.getElementById('rpAllD').value;S.rpAllN=n;S.rpAllD=dd;const sel=S.rp||[];
     if(!n&&!dd){toast('적용할 입금자명이나 입금일을 적어 주세요');return}unpaidPpl().filter(x=>sel.includes(x.p.id)).forEach(({p})=>{const v=rpv(p);if(n)v.n=n;if(dd)v.d=dd});render();toast(`선택한 ${sel.length}명에게 적용했어요`);return}
@@ -49,7 +49,7 @@
   if(b.id==='addNew'){
     const gv=id=>{const e=document.getElementById(id);return e?e.value:''};
     const n=gv('nN').trim(), y=+gv('nB'), ins=gv('nI'), sy=gv('nSy'), sm=gv('nSm'), st=sy&&sm?`${sy}.${sm}`:'', tc=gv('nT').trim(), G=isGuest();
-    if(!n||!(y>1990&&y<=2026)||(!tc&&!G)){document.getElementById('nErr').textContent=G?'아이 이름과 출생연도(4자리)를 넣어 주세요.':'이름, 출생연도(4자리), 담당 교사를 넣어 주세요.';return}
+    if(!n||!(y>1990&&y<=2026)||(!G&&(!tc||!ins||!st))){document.getElementById('nErr').textContent=G?'아이 이름과 출생연도(4자리)를 넣어 주세요.':'이름, 출생연도(4자리), 전공, 시작 연월(연도·월), 담당 교사를 모두 넣어 주세요.';return}
     if(G&&S.extra.some(x=>x.name===n&&+x.birth===y)){document.getElementById('nErr').textContent='이미 넣은 아이예요.';return}
     {const xid='x'+Date.now();S.cartAt[xid]=nowStamp();S.extra.push({id:xid,name:n,birth:y,inst:ins,start:st||'-',teacher:tc})}S.showNew=false;render();toast(G?`${n}을(를) 넣었어요`:`${n} 학생을 추가했어요 · 연회비 3만 원 추가`);return}
   if(d.rmx){delete S.room[d.rmx];delete S.join[d.rmx];S.extra=S.extra.filter(x=>x.id!==d.rmx);S.fam=S.fam.filter(f=>f.link!==d.rmx);delete S.info[d.rmx];render();return}

@@ -1,4 +1,4 @@
-${''/* build: 20261102-134300 */}
+${''/* build: 20261102-134746 */}
     <div class="song3"><b class="sh">곡 2 <span class="hint">있으면</span></b>
       <label class="f" for="enK2">작곡가<input type="text" id="enK2" data-ens="k2" value="${esc(E.k2||'')}" placeholder=""></label>
       <label class="f" for="enC2">곡명<input type="text" id="enC2" data-ens="c2" value="${esc(E.c2||'')}" placeholder=""></label>
@@ -123,8 +123,9 @@ function vStep4(){
 function vStep5(){
   const t=totals(), ps=people();
   return `<section class="sec"><h2>접수가 완료되었어요</h2>
-  <div class="ticket"><p><span class="pill new" style="font-size:15px">${ROUNDS[CAMP.ri][0]} 접수</span></p><p>접수번호</p><div class="no">${S.no}</div>
-    <p>${esc(S.acad)} · ${t.n}명${t.teams.length?` · 가족방 ${t.teams.length}개`:''} · 입금하실 금액 <b class="num" style="color:var(--ink)">${won(t.all)}</b></p>
+  <div class="ticket"><p><span class="pill new" style="font-size:15px">${ROUNDS[CAMP.ri][0]} 접수</span></p><div class="acadbig">${esc(S.acad)}</div>
+    <div class="totbig">총 ${t.n}명${(()=>{const c=k=>ps.filter(p=>p.kind===k).length,L=[[isStaffAcad()?'관계자':'교사',c('teacher')],['학생',c('student')],['가족',c('family')]].filter(x=>x[1]);return L.length>1?` <small>(${L.map(x=>x[0]+' '+x[1]).join(' · ')})</small>`:''})()}${t.teams.length?` · 가족방 ${t.teams.length}개`:''}</div>
+    <p>입금하실 금액 <b class="num amtbig">${won(t.all)}</b></p>
     <p class="hint">입금한 뒤 「내 접수」에서 입금 신고를 해 주세요. 접수 확인·취소도 「내 접수」에서 해요. 확인 메일도 보내 드렸어요.</p><button class="btn primary" type="button" id="toMine">내 접수 · 입금 신고</button></div>
   <div class="panel"><b>접수된 사람</b><ul class="roster">${ps.map(p=>`<li><span></span><div class="who"><b>${esc(p.name)}</b><small>${ROUNDS[CAMP.ri][0]} · ${esc(info(p).type)}${p.kind==='student'?` · 담당 ${esc(info(p).teacher)}`:''}</small></div>${p.paid?'<span class="pill lock">입금 대기</span>':'<span class="pill due">회비확인대기</span>'}</li>`).join('')}</ul></div>
   <div class="row"><button class="btn primary" type="button" id="again">추가 접수하기</button><button class="btn" type="button" id="restart">처음부터 다시 보기</button></div>

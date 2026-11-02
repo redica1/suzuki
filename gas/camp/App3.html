@@ -1,12 +1,12 @@
-${''/* build: 20261102-134300 */}
+${''/* build: 20261102-134746 */}
     ${S.extra.length?`<div class="xhead">명단에 없어 추가한 학생 ${S.extra.length}명 <span class="hint">체크한 학생만 접수돼요 · 연회비 30,000원이 함께 청구돼요 · 「빼기」는 목록에서 지워요</span></div><ul class="roster">${S.extra.map(s=>`<li><input type="checkbox" id="xk_${s.id}" ${s.on!==false?'checked':''} data-xon="${s.id}" aria-label="${esc(s.name)} 선택"><label class="who" for="xk_${s.id}"><b>${esc(s.name)} <span class="kind ks">학생</span></b><small>${age(s.birth)}세 · ${s.inst} · 담당 ${esc(s.teacher)}</small></label><span class="row" style="flex-wrap:nowrap"><span class="pill new">신규 추가</span><button class="btn small ghost" type="button" data-rmx="${s.id}">빼기</button></span></li>`).join('')}</ul>`:''}
     ${S.showNew?`<div class="adder"><b>명단에 없는 학생 추가</b>
       <p class="hint">늦게 들어온 학생은 여기서 추가하고 연회비 30,000원을 캠프비와 함께 입금해 주세요. 운영진이 확인하면 정식 접수돼요.</p>
       <div class="grid2"><label class="f" for="nN"><span>학생 이름<span class="req">*</span></span><input type="text" id="nN"></label>
       <label class="f" for="nB"><span>출생연도<span class="ex">(ex 2020)</span><span class="req">*</span></span><input type="text" id="nB" inputmode="numeric" maxlength="4"></label>
-      <label class="f" for="nI">전공<select id="nI"><option>바이올린</option><option>첼로</option><option>비올라</option><option>플루트</option></select></label>
-      <div class="f"><span>시작 연월</span><div class="pair"><select id="nSy" aria-label="시작 년도"><option value="">년도</option>${Array.from({length:12},(_,i)=>2026-i).map(y=>`<option>${y}</option>`).join('')}</select><select id="nSm" aria-label="시작 월"><option value="">월</option>${Array.from({length:12},(_,i)=>`<option value="${String(i+1).padStart(2,'0')}">${i+1}월</option>`).join('')}</select></div></div>
-      <label class="f" for="nT"><span>담당 교사<span class="req">*</span></span><select id="nT">${opts(teachersFor('바이올린'),'','선택')}</select></label></div>
+      <label class="f" for="nI"><span>전공<span class="req">*</span></span><select id="nI"><option value="">선택</option><option>바이올린</option><option>첼로</option><option>비올라</option><option>플루트</option></select></label>
+      <div class="f"><span>시작 연월<span class="req">*</span></span><div class="pair"><select id="nSy" aria-label="시작 연도"><option value="">연도</option>${Array.from({length:12},(_,i)=>2026-i).map(y=>`<option>${y}</option>`).join('')}</select><select id="nSm" aria-label="시작 월"><option value="">월</option>${Array.from({length:12},(_,i)=>`<option value="${String(i+1).padStart(2,'0')}">${i+1}월</option>`).join('')}</select></div></div>
+      <label class="f" for="nT"><span>담당 교사<span class="req">*</span></span><select id="nT">${opts(teachersFor(''),'','선택')}</select></label></div>
       <div class="row"><button class="btn primary small" type="button" id="addNew">학생 추가</button><button class="btn small ghost" type="button" id="cancelNew">닫기</button><span class="err" id="nErr"></span></div></div>`
     :`<button class="btn ghost" type="button" id="openNew">+ 명단에 없는 학생 추가</button>`}`:''}
   </div>

@@ -1,4 +1,4 @@
-/* build: 20261103-000824 */
+/* build: 20261103-000916 */
   if(!open.length) return ''; /* 신고한 사람은 아래 사람별 줄에 「입금 확인 중 · 날짜 금액」으로 보여서 여기서는 안 보여 줌 */
   const sel=S.rp||(S.rp=open.map(x=>x.p.id)); const sum=open.filter(x=>sel.includes(x.p.id)).reduce((t,x)=>t+dueOf(x.p),0);
   const nameOf=id=>{for(const sb of MY_SUBS){const p=sb.ppl.find(q=>q.id===id);if(p)return p.name}return ''};
@@ -28,11 +28,11 @@ const acadSubs=()=>ALL_SUBS.filter(sb=>S.user&&(S.user.acads||[]).includes(sb.ac
 function scopeSeg(){const A=acadSubs();return `<div class="seg atabs" role="tablist" style="margin:6px 0 10px"><button type="button" role="tab" data-mscope="mine" aria-pressed="${S.mscope!=='acad'}">내가 낸 접수 ${MY_SUBS.length}건</button><button type="button" role="tab" data-mscope="acad" aria-pressed="${S.mscope==='acad'}">우리 학원 전체 ${A.length}건</button></div>`}
 function vAcad(){const A=acadSubs();const live=A.flatMap(sb=>sb.ppl.filter(p=>p.status==='정상'));
   const bill=live.reduce((t,p)=>t+pAmt(p),0),paid=live.reduce((t,p)=>t+(p.paidAmt||0),0);
-  const by={};A.forEach(sb=>{const o=by[sb.owner]||(by[sb.owner]={n:0,ppl:0,bill:0,paid:0,rp:0});o.n++;sb.ppl.filter(p=>p.status==='정상').forEach(p=>{o.ppl++;o.bill+=pAmt(p);o.paid+=p.paidAmt||0;if(p.pay==='신고')o.rp++})});
+  const by={};A.forEach(sb=>{const o=by[sb.owner]||(by[sb.owner]={n:0,ppl:0,bill:0,paid:0,rp:0,cat:{}});o.n++;sb.ppl.filter(p=>p.status==='정상').forEach(p=>{o.ppl++;{const c=catOf(sb,p);o.cat[c]=(o.cat[c]||0)+1}o.bill+=pAmt(p);o.paid+=p.paidAmt||0;if(p.pay==='신고')o.rp++})});
   return `<section class="sec"><div class="spread"><h2>접수 내역</h2></div>${scopeSeg()}
   <p class="lede">${esc((S.user.acads||[]).join(', '))}에 들어온 접수 전부예요. 다른 선생님이 낸 접수는 <b>보기만</b> 돼요. 고칠 곳은 접수한 선생님께 알려 주세요.</p>
   <div class="panel"><dl class="kv"><dt>접수</dt><dd>${A.length}건 · ${live.length}명<br><span class="compo">${compoTxt(A)}</span></dd><dt>청구 합계</dt><dd class="num">${won(bill)}</dd><dt>입금 확인</dt><dd class="num">${won(paid)}</dd><dt>남은 금액</dt><dd class="num">${won(Math.max(0,bill-paid))}</dd></dl></div>
-  <div class="panel"><div class="mtblw"><table class="mtbl"><thead><tr><th>접수 교사</th><th class="r">접수</th><th class="r">인원</th><th class="r">청구</th><th class="r">입금 확인</th><th class="r">남은 금액</th><th>신고 대기</th></tr></thead><tbody>${Object.entries(by).map(([k,o])=>`<tr><td><b>${esc(k)}</b>${k===S.user.name?' <span class="pill new">나</span>':''}</td><td class="r num">${o.n}건</td><td class="r num">${o.ppl}명</td><td class="r num">${won(o.bill)}</td><td class="r num">${won(o.paid)}</td><td class="r num">${won(Math.max(0,o.bill-o.paid))}</td><td>${o.rp?o.rp+'명':'-'}</td></tr>`).join('')}</tbody></table></div></div>
+  <div class="panel"><div class="mtblw"><table class="mtbl"><thead><tr><th>접수 교사</th><th class="r">접수</th><th class="r">인원</th><th>구성</th><th class="r">청구</th><th class="r">입금 확인</th><th class="r">남은 금액</th><th>신고 대기</th></tr></thead><tbody>${Object.entries(by).map(([k,o])=>`<tr><td><b>${esc(k)}</b>${k===S.user.name?' <span class="pill new">나</span>':''}</td><td class="r num">${o.n}건</td><td class="r num">${o.ppl}명</td><td style="white-space:normal;text-align:left">${Object.entries(o.cat).sort((a,b)=>(a[0]==='교사'?-1:b[0]==='교사'?1:a[0]==='가족'?1:b[0]==='가족'?-1:b[1]-a[1])).map(([k,n])=>`<span class="cchip2">${esc(k)} ${n}</span>`).join(' ')}</td><td class="r num">${won(o.bill)}</td><td class="r num">${won(o.paid)}</td><td class="r num">${won(Math.max(0,o.bill-o.paid))}</td><td>${o.rp?o.rp+'명':'-'}</td></tr>`).join('')}</tbody></table></div></div>
   ${A.length?mineTabs(A):''}
   ${(()=>{const R=A.flatMap(sb=>sb.ppl.filter(p=>mineOk(sb,p)).map(p=>({sb,p}))).sort((a,b)=>String(b.p.addAt||b.sb.date).localeCompare(String(a.p.addAt||a.sb.date)));
     if(!R.length)return A.length?`<p class="hint">「${esc(S.mtab)}」에 해당하는 사람이 없어요.</p>`:'<p class="hint">아직 접수가 없어요.</p>';

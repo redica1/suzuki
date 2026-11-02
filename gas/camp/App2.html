@@ -1,4 +1,4 @@
-/* build: 20261102-222412 */
+/* build: 20261102-222440 */
 function vAuthPick(){return `<section class="sec"><h2>접수 시작</h2>
   <p class="lede">어떻게 접수하시나요?</p>
   <div class="pick2">
@@ -36,7 +36,7 @@ function vStaffLogin(){return `<section class="sec"><h2>관계자 로그인</h2>
 function vConsent(){if(!S.chk){S.auth='pick';return vAuthPick()}const L=consItems();
   return `<section class="sec"><h2>개인정보 동의</h2>
   ${(()=>{const c=S.chk;if(!c)return '';const G=c.kind==='guest';const who=!G&&S.mode==='staff'?`${esc(c.name)} 님 · 관계자 계정 확인`:G?`${esc(c.name)} 보호자 · 비회원`:`${esc(c.name)} 선생님 · 회원 명단 확인`;
-    return `<div class="verified" style="max-width:640px">✓ ${who}</div>${c.subs&&c.subs.length?`<div class="note info" style="max-width:640px"><b>이미 신청한 분이에요</b> · 접수 ${c.subs.length}건 (${c.subs.map(esc).join(', ')}) · 동의하면 「내 접수」로 가서 확인·수정·입금 신고를 할 수 있어요.</div>`:`<p class="hint" style="max-width:640px">${G?'처음 신청하시는 분이에요.':'아직 접수한 내역이 없어요.'} 동의하면 접수를 시작해요.</p>`}`})()}
+    return `<div class="verified" style="max-width:640px">✓ ${who}</div>${c.subs&&c.subs.length?`<div class="note info" style="max-width:640px"><b>이미 신청한 분이에요</b> · 접수 ${c.subs.length}건 · 동의하면 「내 접수」로 가서 확인·수정·입금 신고를 할 수 있어요.</div>`:`<p class="hint" style="max-width:640px">${G?'처음 신청하시는 분이에요.':'아직 접수한 내역이 없어요.'} 동의하면 접수를 시작해요.</p>`}`})()}
   <p class="lede">아래 내용을 읽고 동의해 주세요. 제목을 누르면 전체 내용이 펼쳐져요.</p>
   <div class="panel cons" style="max-width:640px">
     <label class="consall"><input type="checkbox" id="consAll" ${consAll()?'checked':''}><b>전체 동의</b> <span class="hint">(선택 항목 포함)</span></label>

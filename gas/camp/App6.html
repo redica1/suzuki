@@ -1,4 +1,4 @@
-/* build: 20261103-001105 */
+/* build: 20261103-002108 */
   if(tab==='me')return head+seg+`<div class="panel">${T.prof?`<p class="hint" style="margin:0 0 6px">교수 · 레슨실 <b>${esc(T.prof.room||'미정')}</b></p>`:''}
     ${days.map((dl,d)=>{const xs=mine.filter(x=>x.d===d);return xs.length?`<div class="ttday"><div class="ttdl">${esc(dl)}</div>${xs.map(x=>`<div class="ttit"><span class="num">${esc(x.t)}${x.e?'<small>~'+esc(x.e)+'</small>':''}</span><span><span class="ttrole ${x.what==='개인레슨'?'les':''}">${esc(x.what)}</span><b>${esc(x.title)}</b> · ${esc(x.where)}${x.loc?` <small class="hint">${esc(x.loc)}</small>`:''}${x.with?`<br><small class="hint">${x.what==='개인레슨'?'학생: ':'함께: '}${esc(x.with)}</small>`:''}</span></div>`).join('')}</div>`:''}).join('')||'<p class="hint" style="margin:0">아직 배정된 일정이 없어요.</p>'}</div></section>`;
   const st=T.students||[];
@@ -36,7 +36,7 @@ function render(){fillBanks();hdSync();
   if(S.view==='mine'){document.getElementById('app').innerHTML=vMine();document.getElementById('backBtn').hidden=true;document.getElementById('nextBtn').hidden=true;document.getElementById('dockLabel').textContent='내 접수';document.getElementById('dockTotal').textContent=`${MY_SUBS.length}건`;return}
   renderSteps();
   const app=document.getElementById('app');
-  app.innerHTML = (S.editNo&&S.step<6?`<div class="note info spread" style="margin-bottom:12px"><span>${S.quickEdit?`<b>${(S.quickKeys||[]).map(k=>{const p=people().find(x=>x.key===k);return p?esc(p.name):''}).filter(Boolean).join(', ')}</b> 신청 내용 (${S.editNo}) · 보면서 고칠 수 있어요. 고쳤으면 아래 「수정 내용 저장」을 눌러요.`:`<b>${S.editNo} 접수를 고치는 중</b> · 인원을 추가하거나 정보를 바꾼 뒤 마지막 단계에서 「수정 내용 저장」을 눌러요. 입금된 사람은 금액이 바뀌면 차액만 입금하면 돼요.`}</span><button class="btn small" type="button" id="toMine">← 목록으로 돌아가기</button></div>`:'')+[vStep1,vStep2,vStep3,vEns,vStep4,vStep5][S.step-1]()+(S.editNo&&S.quickEdit&&S.step===3?quickBar():'')+(S.editNo&&S.step<6&&!(S.quickEdit&&S.step===3)?`<div class="row" style="justify-content:center;margin:18px 0 6px"><button class="btn" type="button" id="toMine2">← 저장하지 않고 목록으로 돌아가기</button></div>`:'');
+  app.innerHTML = (S.editNo&&S.step<6?`<div class="note info spread" style="margin-bottom:12px"><span>${S.quickEdit?`<b>${(S.quickKeys||[]).map(k=>{const p=people().find(x=>x.key===k);return p?esc(p.name):''}).filter(Boolean).join(', ')}</b> 신청 내용 · 보면서 고칠 수 있어요. 고쳤으면 아래 「수정 내용 저장」을 눌러요.`:`<b>${esc((MY_SUBS.find(x=>x.no===S.editNo)||{}).round||'')} ${sdFmt((MY_SUBS.find(x=>x.no===S.editNo)||{}).date||'')} 접수를 고치는 중</b> · 인원을 추가하거나 정보를 바꾼 뒤 마지막 단계에서 「수정 내용 저장」을 눌러요. 입금된 사람은 금액이 바뀌면 차액만 입금하면 돼요.`}</span><button class="btn small" type="button" id="toMine">← 목록으로 돌아가기</button></div>`:'')+[vStep1,vStep2,vStep3,vEns,vStep4,vStep5][S.step-1]()+(S.editNo&&S.quickEdit&&S.step===3?quickBar():'')+(S.editNo&&S.step<6&&!(S.quickEdit&&S.step===3)?`<div class="row" style="justify-content:center;margin:18px 0 6px"><button class="btn" type="button" id="toMine2">← 저장하지 않고 목록으로 돌아가기</button></div>`:'');
   const t=totals(), next=document.getElementById('nextBtn'), back=document.getElementById('backBtn');
   document.getElementById('dockLabel').textContent = S.step===1?'접수 준비':`선택 ${t.n}명${t.teams.length?` · 가족방 ${t.teams.length}`:''}${t.waiting?` · 회비확인대기 ${t.waiting}명`:''}`;
   document.getElementById('dockTotal').textContent = won(t.all);
@@ -93,7 +93,7 @@ function startEdit(no,only){const sb=MY_SUBS.find(x=>x.no===no);const f=JSON.par
   S.riBack=CAMP.ri;if(f.ri!==undefined)CAMP.ri=f.ri;S.editNo=sb.no;S.editOnly=only;S.cx={};S.cxOpen='';S.view='form';
   try{S.editBaseAmt={};makeSub(sb.no).ppl.forEach(p=>S.editBaseAmt[p.id]=pAmt(p))}catch(e){S.editBaseAmt=null}
   if(only==='ens'){S.editOnly=null;S.ensEdit=true;if(S.quietEdit){S.step=4}else{S.ensSaved='';go(4);toast(`앙상블 「${S.ens.group||''}」을(를) 고쳐요 · 다 고친 뒤 「앙상블 저장」`)}}
-  else if(only){S.quickEdit=true;S.quickKeys=only;if(S.quietEdit){S.step=3}else{S.qSaved='';go(3);toast(only.length===1?'신청 내용을 보고 고칠 수 있어요 · 고치면 「저장」':`${only.length}명 정보를 고쳐요 · 다 고친 뒤 「저장」`)}}else{go(2);toast(`${sb.no}에 인원을 추가해요 · 추가한 뒤 「다음」으로 정보를 넣어요`)}}
+  else if(only){S.quickEdit=true;S.quickKeys=only;if(S.quietEdit){S.step=3}else{S.qSaved='';go(3);toast(only.length===1?'신청 내용을 보고 고칠 수 있어요 · 고치면 「저장」':`${only.length}명 정보를 고쳐요 · 다 고친 뒤 「저장」`)}}else{go(2);toast(`접수에 인원을 추가해요 · 추가한 뒤 「다음」으로 정보를 넣어요`)}}
 function resetForm(){Object.assign(S,{note:'',ensEdit:false,quickEdit:false,cartAt:{},picked:{},extra:[],fam:[],info:{},room:{},join:{},ens:{on:false},agree:false,sel:{}})}
 
 /* ---------- 동작 ---------- */
@@ -176,7 +176,7 @@ document.addEventListener('click',e=>{
         if(wasQuick){S.quietEdit=true;startEdit(no,wasQuick);S.quietEdit=false;S.qSaved=nowStamp();render();toast('저장했어요 · 계속 고칠 수 있어요');return}
         if(wasEns){S.quietEdit=true;startEdit(no,'ens');S.quietEdit=false;S.ensSaved=nowStamp();render();toast('앙상블을 저장했어요 · 계속 고칠 수 있어요');return}
         render();window.scrollTo({top:0});
-        toast(kept.length?`${no} 접수를 고쳤어요${added?` · ${added}명 추가`:''} · 입금된 ${kept.join(', ')}은(는) 빠지지 않았어요. 빼려면 아래에서 취소해 주세요`:`${no} 접수를 고쳤어요${added?` · ${added}명 추가 (추가 ${nb-1})`:''}`);return}
+        toast(kept.length?`접수를 고쳤어요${added?` · ${added}명 추가`:''} · 입금된 ${kept.join(', ')}은(는) 빠지지 않았어요. 빼려면 아래에서 취소해 주세요`:`접수를 고쳤어요${added?` · ${added}명 추가 (추가 ${nb-1})`:''}`);return}
       {const sb=makeSub('TMP');sb.email=S.email||'';sb.reqId=S.reqId||(S.reqId='Q'+Date.now().toString(36)+Math.random().toString(36).slice(2,7));next.disabled=true;
         api('submitNew',[sb],r=>{S.no=r.no;S.reqId='';applyBundle(r);S.cartAt={};S.rp=null;go(6);if(r.again)toast('이미 접수된 내용이에요 · '+r.no,true)},()=>{render()},'접수하고 있어요…')}
       return}

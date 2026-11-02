@@ -1,4 +1,4 @@
-${''/* build: 20261103-001105 */}
+${''/* build: 20261103-002108 */}
     ${S.extra.length?`<div class="xhead">명단에 없어 추가한 학생 ${S.extra.length}명 <span class="hint">체크한 학생만 접수돼요 · 연회비 30,000원이 함께 청구돼요 · 「빼기」는 목록에서 지워요</span></div><ul class="roster">${S.extra.map(s=>`<li><input type="checkbox" id="xk_${s.id}" ${s.on!==false?'checked':''} data-xon="${s.id}" aria-label="${esc(s.name)} 선택"><label class="who" for="xk_${s.id}"><b>${esc(s.name)} <span class="kind ks">학생</span></b><small>${age(s.birth)}세 · ${s.inst} · 담당 ${esc(s.teacher)}</small></label><span class="row" style="flex-wrap:nowrap"><span class="pill new">신규 추가</span><button class="btn small ghost" type="button" data-rmx="${s.id}">빼기</button></span></li>`).join('')}</ul>`:''}
     ${S.showNew?`<div class="adder"><b>명단에 없는 학생 추가</b>
       <p class="hint">늦게 들어온 학생은 여기서 추가하고 연회비 30,000원을 캠프비와 함께 입금해 주세요. 운영진이 확인하면 정식 접수돼요.</p>
@@ -75,7 +75,7 @@ function pCard(p){
 function vStep3(){
   const ps=people();
   return `<section class="sec"><h2>${S.editNo&&S.quickEdit?'신청 내용':'참가 정보 입력'}</h2>
-  ${S.editNo&&!S.quickEdit?`<div class="note info">${S.editNo} 고치는 중 · <b>색이 칠해진 「새로 추가」 카드</b>가 이번에 정보를 넣을 사람이에요. 회색 카드는 이미 접수된 사람이라 필요할 때만 고치면 돼요.</div>`:''}
+  ${S.editNo&&!S.quickEdit?`<div class="note info">접수 고치는 중 · <b>색이 칠해진 「새로 추가」 카드</b>가 이번에 정보를 넣을 사람이에요. 회색 카드는 이미 접수된 사람이라 필요할 때만 고치면 돼요.</div>`:''}
   <p class="lede">${isGuest()?'아이마다 성별과 권수(현재 진도)를 넣고, 레슨·음악회를 골라 주세요. 함께 오는 보호자·가족은 각 아이 카드 아래 「가족 추가」에서 넣어요.':'이름·악기·담당 교사와 학생 출생연도는 명단에서 가져왔어요. 모든 참가자의 출생연도와 성별을 확인하고, 진도·레슨·음악회를 선택해 주세요.'}</p>
   ${missingVideo().length?`<div class="note">이브닝 음악회 오디션 영상 주소를 넣어 주세요 (https로 시작): ${missingVideo().map(p=>esc(p.name)).join(', ')}</div>`:''}
   ${missingProg().length?`<div class="note">권수(현재 진도)를 선택해 주세요: ${missingProg().map(p=>esc(p.name)).join(', ')}</div>`:''}

@@ -1,4 +1,4 @@
-/* build: 20261102-225551 */
+/* build: 20261102-225713 */
 function vAuthPick(){return `<section class="sec"><h2>접수 시작</h2>
   <p class="lede">어떻게 접수하시나요?</p>
   <div class="pick2">
@@ -170,7 +170,7 @@ const nextBatch=()=>{const sb=ALL_SUBS.find(x=>x.no===S.editNo);return sb?Math.m
 const btCls=n=>'bt'+(((n||1)-1)%6+1);
 function editBatch(id){if(!S.editNo)return null;const sb=ALL_SUBS.find(x=>x.no===S.editNo);const p=sb&&sb.ppl.find(q=>q.id===sb.no+'_'+id&&q.status!=='취소');return p?(p.batch||1):0}
 function editTag(id){if(!S.editNo)return '';const sb=ALL_SUBS.find(x=>x.no===S.editNo);const p=sb&&sb.ppl.find(q=>q.id===sb.no+'_'+id&&q.status!=='취소');
-  return p?` <small class="ctag">${(p.batch||1)===1?'처음 접수':'추가 '+((p.batch||1)-1)} · ${stampTxt(p.addAt)||kday(sb.date)}</small>`:` <small class="ctag new">새로 추가 (추가 ${nextBatch()-1})</small>`}
+  return p?` <small class="ctag">${esc(ymdShort(p.addAt||sb.date))} 접수${(p.batch||1)>1?' · 추가 '+((p.batch||1)-1):''}</small>`:` <small class="ctag new">새로 추가 (추가 ${nextBatch()-1})</small>`}
 /* 26.11.01 12:33 처럼 짧게 */
 const ymdShort=x=>{if(!x)return '';const [d,t]=String(x).split(' ');const p=d.split('-');return p.length<3?String(x):`${p[0].slice(2)}.${p[1].padStart(2,'0')}.${p[2].padStart(2,'0')}${t?' '+t.slice(0,5):''}`};
 function rosterRow(x,kind){
@@ -239,9 +239,9 @@ function cartPanel(){
   const nNew=rows.filter(o=>!o.old).length;
   return `<div class="panel cart"><h3>신청 명단 <span class="hint">${isStaffAcad()?'관계자 '+ts.length+'명':'교사 '+ts.length+'명 · 학생 '+ss.length+'명'}${S.editNo&&nNew?` · 새로 추가 ${nNew}명`:''}</span></h3>
     <p class="hint" style="margin:0">가장 최근에 추가하거나 접수한 사람이 위에 있어요. 참가 구분, 함께 오는 가족, 형제, 가족방은 「다음」을 눌러 참가 정보에서 넣어요.</p>
-    <div class="tbl"><table class="ctbl"><thead><tr><th class="num">#</th><th>이름</th><th>구분</th><th>접수 일시</th><th></th></tr></thead><tbody>
-    ${rows.map((o,i)=>`<tr class="${S.editNo?'bt '+btCls(o.bn):''}"><td class="num cap">${i+1}</td><td><b>${esc(o.x.name)}</b>${dtag(o.x)}</td><td>${esc(o.k)}</td>
-      <td>${o.old?`<span class="bdot"></span><span class="num">${stampTxt(o.at)}</span> <small class="hint">${o.bn===1?'처음 접수':'추가 '+(o.bn-1)}</small>`:`${S.editNo?'<span class="bdot"></span>':''}<span class="num">${S.cartAt[o.x.id]?stampTxt(S.cartAt[o.x.id]):''}</span> <small class="ctagn">${S.editNo?`새로 추가 (추가 ${o.bn-1})`:'추가 · 아직 접수 전'}</small>`}</td>
+    <div class="mtblw"><table class="mtbl ctbl" style="min-width:0"><thead><tr><th>구분</th><th>이름</th><th>악기</th><th>접수 일시</th><th></th></tr></thead><tbody>
+    ${rows.map((o,i)=>`<tr class="${S.editNo?'bt '+btCls(o.bn):''}"><td><span class="kind ${o.k==='교사'||o.k==='관계자'?'kt':'ks'}">${o.k==='교사'||o.k==='관계자'?o.k:'학생'}</span></td><td style="text-align:left"><b>${esc(o.x.name)}</b>${dtag(o.x)}</td><td>${esc(o.x.inst||'-')}</td>
+      <td class="num">${o.old?`${S.editNo?'<span class="bdot"></span>':''}${esc(ymdShort(o.at))} 접수${o.bn>1?` <small class="hint">추가 ${o.bn-1}</small>`:''}`:`${S.editNo?'<span class="bdot"></span>':''}${S.cartAt[o.x.id]?esc(ymdShort(S.cartAt[o.x.id]))+' ':''}<small class="ctagn">${S.editNo?`새로 추가 (추가 ${o.bn-1})`:'담음 · 아직 접수 전'}</small>`}</td>
       <td class="r"><button class="btn small ghost" type="button" data-uncart="${o.x.id}" aria-label="${esc(o.x.name)} 빼기">빼기</button></td></tr>`).join('')}
     </tbody></table></div></div>`;
 }

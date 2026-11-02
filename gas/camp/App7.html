@@ -1,4 +1,4 @@
-/* build: 20261103-002421 */
+/* build: 20261103-002619 */
     ps.forEach(p=>{p.pay='신고';p.rep=rep;delete S.rpRow[p.id]});S.afterSave=()=>repDone(ps.map(p=>p.id));subSave();S.rp=null;S.rpMemo=undefined;render();toast(`${ps.length}명 입금 신고를 보냈어요 · 운영진이 확인하면 「입금 확인」으로 바뀌어요`);return}
   if(b.id==='rpFill'){const n=document.getElementById('rpAllN').value.trim(),dd=document.getElementById('rpAllD').value;S.rpAllN=n;S.rpAllD=dd;const sel=S.rp||[];
     if(!n&&!dd){toast('적용할 입금자명이나 입금일을 적어 주세요');return}unpaidPpl().filter(x=>sel.includes(x.p.id)).forEach(({p})=>{const v=rpv(p);if(n)v.n=n;if(dd)v.d=dd});render();toast(`선택한 ${sel.length}명에게 적용했어요`);return}
@@ -87,6 +87,7 @@
       MY_SUBS.forEach(x=>x.ppl.forEach(q=>{if(q.rep&&q.rep.id===r.id)q.rep=r}));p.pay='전';delete p.rep;S.prp='';subSave();render();toast(`${p.name} 입금 신고를 취소했어요`)});return}
   if(d.atab){S.atab=d.atab;render();return}
   if(d.mtab){S.mtab=d.mtab;render();return}
+  if(d.mview){S.mview=d.mview;render();return}
   if(d.mscope){S.mscope=d.mscope;render();window.scrollTo({top:0});return}
   if(d.ensjoin){S.ens.joinNo=S.ens.joinNo===d.ensjoin?'':d.ensjoin;render();return}
   if(d.ensadd){const a=d.ensadd,t=teamOf(a),tn=(S.ens.group||'').trim();

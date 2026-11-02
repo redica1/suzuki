@@ -1,4 +1,4 @@
-/* build: 20261103-002421 */
+/* build: 20261103-002619 */
   if(!open.length) return ''; /* 신고한 사람은 아래 사람별 줄에 「입금 확인 중 · 날짜 금액」으로 보여서 여기서는 안 보여 줌 */
   const sel=S.rp||(S.rp=open.map(x=>x.p.id)); const sum=open.filter(x=>sel.includes(x.p.id)).reduce((t,x)=>t+dueOf(x.p),0);
   const nameOf=id=>{for(const sb of MY_SUBS){const p=sb.ppl.find(q=>q.id===id);if(p)return p.name}return ''};
@@ -34,14 +34,26 @@ function vAcad(){const A=acadSubs();const live=A.flatMap(sb=>sb.ppl.filter(p=>p.
   <div class="panel"><dl class="kv"><dt>접수</dt><dd>${A.length}건 · ${live.length}명<br><span class="compo">${compoTxt(A)}</span></dd><dt>청구 합계</dt><dd class="num">${won(bill)}</dd><dt>입금 확인</dt><dd class="num">${won(paid)}</dd><dt>남은 금액</dt><dd class="num">${won(Math.max(0,bill-paid))}</dd></dl></div>
   <div class="panel"><div class="mtblw"><table class="mtbl"><thead><tr><th>접수 교사</th><th class="r">접수</th><th class="r">인원</th><th>구성</th><th class="r">청구</th><th class="r">입금 확인</th><th class="r">남은 금액</th><th>신고 대기</th></tr></thead><tbody>${Object.entries(by).map(([k,o])=>`<tr><td><b>${esc(k)}</b>${k===S.user.name?' <span class="pill new">나</span>':''}</td><td class="r num">${o.n}건</td><td class="r num">${o.ppl}명</td><td style="white-space:normal;text-align:left">${Object.entries(o.cat).sort((a,b)=>(a[0]==='교사'?-1:b[0]==='교사'?1:a[0]==='가족'?1:b[0]==='가족'?-1:b[1]-a[1])).map(([k,n])=>`<span class="cchip2">${esc(k)} ${n}</span>`).join(' ')}</td><td class="r num">${won(o.bill)}</td><td class="r num">${won(o.paid)}</td><td class="r num">${won(Math.max(0,o.bill-o.paid))}</td><td>${o.rp?o.rp+'명':'-'}</td></tr>`).join('')}</tbody></table></div></div>
   <h3 style="margin:18px 0 6px;font-size:18px">교사 · 학생</h3>
-  ${A.length?mineTabs(A,true):''}
+  ${A.length?mineTabs(A,true)+mvSeg():''}
   ${(()=>{const RM=roomMark(A);const R=A.flatMap(sb=>sb.ppl.filter(p=>p.kind!=='가족'&&mineOk(sb,p)).map(p=>({sb,p}))).sort((a,b)=>String(b.p.addAt||b.sb.date).localeCompare(String(a.p.addAt||a.sb.date)));
+    if((S.mview||'pay')!=='pay'&&R.length)return infoTable(R,RM,true,false);
     if(!R.length)return A.length?`<p class="hint">「${esc(S.mtab)}」에 해당하는 사람이 없어요.</p>`:'<p class="hint">아직 접수가 없어요.</p>';
     return `<div class="panel"><div class="mtblw"><table class="mtbl"><thead><tr><th>접수 시간</th><th>이름</th><th>악기</th><th>접수 교사</th><th class="r">청구</th><th>상태</th></tr></thead><tbody>${R.map(({sb,p})=>{const mine=sb.owner===S.user.name;return `<tr class="${p.status!=='정상'?'locked':''}"><td class="num">${esc(tsFmt(p.addAt||sb.date))}</td><td>${kBadge(p.kind==='교사'?(sb.acad===STAFF_ACAD?'관계자':'교사'):p.kind==='가족'?(TSHORT[p.type]||'가족'):'학생')} <b>${esc(p.name)}</b>${p.dtag?` <small class="dtag">${esc(p.dtag)}</small>`:''}${roomChip(RM,p)}</td><td>${p.kind==='가족'?'<span class="hint">-</span>':esc(instOfP(sb,p)||'-')}</td><td>${esc(sb.owner)}${mine?' <span class="pill new">나</span>':''}</td><td class="r num" title="${esc(p.type)} ${won(p.fee)}${p.lesson?` + 레슨 ${won(p.lesson)}`:''}${p.dues?` + 연회비 ${won(p.dues)}`:''}${p.room?` + 가족방 ${won(p.room)}`:''}">${won(pAmt(p))}${p.dues||p.room||p.lesson?`<br><small class="hint">${[p.lesson?'레슨':'',p.dues?'연회비':'',p.room?'가족방':''].filter(Boolean).join(' · ')} 포함</small>`:''}</td><td>${stTag(p.status,p)}${payTagT(p)}</td></tr>`}).join('')}</tbody></table></div>
     <p class="hint" style="margin:8px 0 0">다른 선생님이 낸 접수는 보기만 돼요. 내가 낸 접수는 「내가 낸 접수」 탭에서 고쳐요.</p></div>`})()}
   ${famListHTML(A)}
   ${famRoomsHTML(A)}
   </section>`}
+/* 접수 표 보기 바꾸기: 접수 · 입금 / 레슨 · 마스터클래스 / 음악회 / 참가 정보 (같은 사람 명단, 칸만 바뀜) */
+const MVIEWS=[['pay','접수 · 입금'],['les','레슨 · 마스터클래스'],['con','음악회'],['info','참가 정보']];
+function mvSeg(){const v=S.mview||'pay';return `<div class="row" role="group" aria-label="보기" style="gap:6px;margin:0 0 8px;flex-wrap:wrap"><span class="hint">보기</span>${MVIEWS.map(([k,l])=>`<button class="btn small ${v===k?'primary':'ghost'}" type="button" data-mview="${k}" aria-pressed="${v===k}">${l}</button>`).join('')}</div>`}
+function pInfo(sb,p){const k=p.id.slice(sb.no.length+1);return ((sb.form||{}).info||{})[k]||{}}
+function infoTable(R,RM,showOwner,canEdit){const v=S.mview,NO='<span class="nil">신청 없음</span>',DASH='<span class="hint">-</span>';
+  const H={les:['선호 교수','추가 레슨','마스터클래스','레슨비'],con:['음악회','곡','오디션 영상'],info:['구분','출생연도','성별','권수 (진도)','담당 교사']}[v]||[];
+  const cells=(sb,p)=>{const i=pInfo(sb,p),fam=p.kind==='가족';
+    if(v==='les')return fam?H.map(()=>`<td>${DASH}</td>`).join(''):`<td>${[i.p1,i.p2].filter(Boolean).map(esc).join(', ')||DASH}</td><td>${i.lessons?esc(i.lessons)+'회':NO}</td><td style="white-space:normal">${(i.mc||[]).length?i.mc.map(esc).join(', '):NO}</td><td class="r num">${p.lesson?won(p.lesson):DASH}</td>`;
+    if(v==='con'){if(fam||p.kind==='교사')return H.map(()=>`<td>${DASH}</td>`).join('');const on=i.concert&&i.concert!=='없음';return `<td>${on?esc(i.concert):NO}</td><td style="white-space:normal">${on?(i.other?esc(`${i.oc||''} ${i.ot||''}`.trim()||'곡명 미입력'):esc(i.song||'곡 미선택')):DASH}</td><td>${on&&i.concert==='이브닝'?(i.video?'<span class="pill ok">있음</span>':'<span class="pill due">아직</span>'):DASH}</td>`}
+    return `<td>${esc(TSHORT[p.type]||p.type||'-')}</td><td class="num">${i.by?esc(i.by):DASH}</td><td>${i.gender?esc(i.gender):DASH}</td><td>${p.kind==='학생'&&i.prog?esc(i.prog):DASH}</td><td>${p.kind==='학생'&&i.teacher?esc(i.teacher):DASH}</td>`};
+  return `<div class="panel"><div class="mtblw"><table class="mtbl"><thead><tr><th>이름</th><th>악기</th>${showOwner?'<th>접수 교사</th>':''}${H.map(h=>`<th>${h}</th>`).join('')}${canEdit?'<th></th>':''}</tr></thead><tbody>${R.map(({sb,p})=>`<tr class="${p.status!=='정상'?'locked':''}"><td>${kBadge(p.kind==='교사'?(sb.acad===STAFF_ACAD?'관계자':'교사'):p.kind==='가족'?(TSHORT[p.type]||'가족'):'학생')} <b>${esc(p.name)}</b>${roomChip(RM,p)}</td><td>${p.kind==='가족'?DASH:esc(instOfP(sb,p)||'-')}</td>${showOwner?`<td>${esc(sb.owner)}${sb.owner===S.user.name?' <span class="pill new">나</span>':''}</td>`:''}${cells(sb,p)}${canEdit?`<td>${p.status==='정상'&&sb.form?`<button class="btn small" type="button" data-pedit="${sb.no}|${p.id}">보기</button>`:''}</td>`:''}</tr>`).join('')}</tbody></table></div></div>`}
 /* 우리 학원 전체: 가족 접수 (누구와 함께 오는지 · 가족방) */
 function famListHTML(subs){const R=[];subs.forEach(sb=>{const f=sb.form||{},fam=f.fam||[],room=f.room||{},join=f.join||{};const P=k=>sb.ppl.find(q=>q.id===sb.no+'_'+k);
     const repOf=k=>room[k]?k:join[k]&&room[join[k]]?join[k]:'';
@@ -71,8 +83,9 @@ function vMine(){
   ${done}
   ${payReport()}
   ${(()=>{const last=[...MY_SUBS].reverse().find(sb=>sb.form);return last?`<button class="btn primary bigadd" type="button" data-subedit="${last.no}">＋ 인원 추가 <small>(${last.round} 금액 적용 중)</small></button>`:''})()}
-  ${MY_SUBS.length?mineTabs():''}
-  ${(()=>{const RM=roomMark(MY_SUBS);const R=MY_SUBS.flatMap(sb=>sb.ppl.filter(p=>mineOk(sb,p)).map(p=>({sb,p}))).sort((a,b)=>String(b.p.addAt||b.sb.date).localeCompare(String(a.p.addAt||a.sb.date)));if(!R.length)return '';
+  ${MY_SUBS.length?mineTabs()+mvSeg():''}
+  ${(()=>{const RM=roomMark(MY_SUBS);const R=MY_SUBS.flatMap(sb=>sb.ppl.filter(p=>mineOk(sb,p)).map(p=>({sb,p}))).sort((a,b)=>String(b.p.addAt||b.sb.date).localeCompare(String(a.p.addAt||a.sb.date)));
+    if((S.mview||'pay')!=='pay')return R.length?infoTable(R,RM,false,true):'';if(!R.length)return '';
     const aj=MY_SUBS.some(sb=>sb.ppl.some(p=>p.adj&&p.status==='정상')),N=MY_SUBS.map(sb=>sb.form&&sb.form.note).filter(Boolean),live=R.filter(x=>x.p.status==='정상'),allOn=live.length&&live.every(x=>(S.cx[x.sb.no]||[]).includes(x.p.id));
     const SEL=MY_SUBS.map(sb=>{const sel=S.cx[sb.no]||[];return {sb,sel,selCx:sel.filter(id=>{const p=sb.ppl.find(q=>q.id===id);return p&&canCxP(p)})}}).filter(x=>x.sel.length),nSel=SEL.reduce((t,x)=>t+x.sel.length,0);
     return `<div class="panel">${aj?'<div class="note ok" style="margin:0 0 8px"><b>운영진이 금액을 정한 사람이 있어요.</b> 지금 보이는 금액으로 입금해 주세요.</div>':''}${N.length?`<p class="hint" style="margin:0 0 6px">운영진에게 남긴 말: ${N.map(esc).join(' · ')}</p>`:''}

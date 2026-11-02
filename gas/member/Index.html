@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261102-133035 -->
+<!-- build: 20261102-133151 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -194,10 +194,16 @@ function needTip(o){return o['확인']==='확인 필요'?' <span class="tip need
 function dupNames(list){var c={};list.forEach(function(o){var k=o['이름'];c[k]=(c[k]||0)+1});return c}
 
 /* ---------- 로그인 ---------- */
+/* 비밀번호 저장하기: 이 기기 브라우저에만 저장 (공용 PC는 체크하지 않기) */
+function svGet(k){try{return JSON.parse(localStorage.getItem('svLogin_'+k)||'null')}catch(e){return null}}
+function svSet(k,id,pw){var c=document.getElementById('svPw_'+k);if(!c)return;try{if(c.checked)localStorage.setItem('svLogin_'+k,JSON.stringify({id:id,pw:pw}));else localStorage.removeItem('svLogin_'+k)}catch(e){}}
+function svBox(k){return '<label class="svpw" style="display:flex;align-items:center;gap:6px;font-size:14px;margin:2px 0 10px;cursor:pointer;font-weight:500"><input type="checkbox" id="svPw_'+k+'" '+(svGet(k)?'checked':'')+' style="width:18px;height:18px;margin:0;flex:none"> 비밀번호 저장하기 <span style="color:var(--muted);font-size:12.5px;font-weight:400">이 기기에만 · 공용 PC는 체크하지 마세요</span></label>'}
+function svId(k,d){var s=svGet(k);return s&&s.id?s.id:(d||'')}
+function svPw(k){var s=svGet(k);return s&&s.pw?s.pw:''}
 function vLogin(){return '<div class="login"><form class="panel" id="loginF"><h2 style="font-family:var(--display);font-size:23px">관리자 로그인</h2>'+
   '<p class="cap" style="font-size:15.5px;color:var(--muted)">아이디·비밀번호는 회원관리 DB 시트 「설정」 탭에 있어요.</p>'+
-  '<label class="f" for="lid">아이디<input type="text" id="lid" value="admin" autocomplete="username"></label>'+
-  '<label class="f" for="lpw">비밀번호<input type="password" id="lpw" autocomplete="current-password"></label>'+
+  '<label class="f" for="lid">아이디<input type="text" id="lid" value="'+esc(svId('a','admin'))+'" autocomplete="username"></label>'+
+  '<label class="f" for="lpw">비밀번호<input type="password" id="lpw" autocomplete="current-password" value="'+esc(svPw('a'))+'"></label>'+svBox('a')+
   '<p class="err" id="lerr"></p><button class="btn primary" type="submit" id="lgo">들어가기</button></form></div>'}
 
 /* ---------- 한눈에 ---------- */
@@ -980,7 +986,7 @@ function saveEd(ok){var table=kindOf(),k=keyOf(table),id=S.edit.id,o=readEd(tabl
     var i=src.findIndex(function(x){return x[k]===row[k]});if(i<0)src.unshift(row);else src[i]=row;index();
     S.edit=ok?null:{kind:S.tab,id:row[k]};render();toast(r.same?'바뀐 것이 없어요':(ok?'저장하고 확인으로 표시했어요':'저장했어요'))})}
 
-document.addEventListener('submit',function(e){if(e.target.id!=='loginF')return;e.preventDefault();var b=document.getElementById('lgo');b.disabled=true;b.textContent='확인 중…';
+document.addEventListener('submit',function(e){if(e.target.id!=='loginF')return;e.preventDefault();var b=document.getElementById('lgo');b.disabled=true;b.textContent='확인 중…';svSet('a',document.getElementById('lid').value,document.getElementById('lpw').value);
   call('login',[document.getElementById('lid').value,document.getElementById('lpw').value,false]).then(function(r){b.disabled=false;b.textContent='들어가기';
     if(!r.ok){document.getElementById('lerr').textContent=r.msg;return}S.sess=r.sess;try{sessionStorage.setItem('mm-sess',r.sess)}catch(x){}document.getElementById('app').innerHTML='<div class="panel"><span><span class="spin"></span> 명단을 불러오는 중…</span></div>';load()})});
 document.addEventListener('click',function(e){

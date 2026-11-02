@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261102-133039 -->
+<!-- build: 20261102-133151 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -357,11 +357,17 @@ function sortTbl(t,c,d){const tb=t.tBodies[0];if(!tb)return;const foot=[...tb.ro
 function reSort(){const M=S.statSort||{};document.querySelectorAll('#app table.sortable').forEach(t=>{const m=M[sigOf(t)];if(m)sortTbl(t,m.c,m.d)})}
 document.addEventListener('click',e=>{const th=e.target.closest&&e.target.closest('table.sortable th[data-sc]');if(!th)return;const t=th.closest('table'),c=+th.dataset.sc,k=sigOf(t);
   S.statSort=S.statSort||{};const cur=S.statSort[k];const d=cur&&cur.c===c?(cur.d==='desc'?'asc':'desc'):(c===0?'asc':'desc');S.statSort[k]={c,d};sortTbl(t,c,d)});
+/* 비밀번호 저장하기: 이 기기 브라우저에만 저장 (공용 PC는 체크하지 않기) */
+function svGet(k){try{return JSON.parse(localStorage.getItem('svLogin_'+k)||'null')}catch(e){return null}}
+function svSet(k,id,pw){var c=document.getElementById('svPw_'+k);if(!c)return;try{if(c.checked)localStorage.setItem('svLogin_'+k,JSON.stringify({id:id,pw:pw}));else localStorage.removeItem('svLogin_'+k)}catch(e){}}
+function svBox(k){return '<label class="svpw" style="display:flex;align-items:center;gap:6px;font-size:14px;margin:2px 0 10px;cursor:pointer;font-weight:500"><input type="checkbox" id="svPw_'+k+'" '+(svGet(k)?'checked':'')+' style="width:18px;height:18px;margin:0;flex:none"> 비밀번호 저장하기 <span style="color:var(--muted);font-size:12.5px;font-weight:400">이 기기에만 · 공용 PC는 체크하지 마세요</span></label>'}
+function svId(k,d){var s=svGet(k);return s&&s.id?s.id:(d||'')}
+function svPw(k){var s=svGet(k);return s&&s.pw?s.pw:''}
 function vLogin(){const m=S.lmode||'sup';return `<div class="panel login"><h2 style="font-family:var(--display);font-size:21px;margin:0 0 10px">관리자 로그인</h2>
   <div class="row lmode" role="tablist" style="gap:6px;margin-bottom:10px"><button class="btn small ${m==='sup'?'primary':''}" type="button" data-lmode="sup" aria-pressed="${m==='sup'}">총관리자</button><button class="btn small ${m==='stf'?'primary':''}" type="button" data-lmode="stf" aria-pressed="${m==='stf'}">담당 선생님</button></div>
-  ${m==='sup'?`<label>아이디<input type="text" id="lid" autocomplete="username" value="admin"></label>
-  <label>비밀번호<input type="password" id="lpw" autocomplete="current-password"></label>`:!S.lalt?`<label>이메일<input type="email" id="lem" autocomplete="username" inputmode="email" placeholder="회원관리 선생님 회원 이메일"></label>
-  <label>비밀번호<input type="password" id="lpw2" autocomplete="current-password"></label>
+  ${m==='sup'?`<label>아이디<input type="text" id="lid" autocomplete="username" value="${esc(svId('ca','admin'))}"></label>
+  <label>비밀번호<input type="password" id="lpw" autocomplete="current-password" value="${esc(svPw('ca'))}"></label>${svBox('ca')}`:!S.lalt?`<label>이메일<input type="email" id="lem" autocomplete="username" inputmode="email" placeholder="회원관리 선생님 회원 이메일" value="${esc(svId('cs'))}"></label>
+  <label>비밀번호<input type="password" id="lpw2" autocomplete="current-password" value="${esc(svPw('cs'))}"></label>${svBox('cs')}
   <button class="btn ghost small" type="button" id="lalt">회원 가입 전이에요 · 이름과 휴대전화로</button>`:`<label>이름<input type="text" id="lnm" autocomplete="name" placeholder="회원 명단의 이름"></label>
   <label>휴대전화<input type="tel" id="lph" inputmode="tel" autocomplete="tel" placeholder="010-0000-0000"></label>
   <button class="btn ghost small" type="button" id="lalt">← 이메일 · 비밀번호로</button>`}
@@ -2168,9 +2174,9 @@ document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)r
     const go=()=>call('adminSaveEns',[d.enssave,p],r=>{setData(r);toast('앙상블 「'+p.group+'」 팀을 고쳤어요')});
     if(other.length)ask('다른 팀에도 들어 있는 학원이 있어요','<b>'+other.map(esc).join(', ')+'</b>은(는) 다른 팀에도 있어요. 그래도 저장할까요?',go,'그래도 저장');else go();return}
   if(b.id==='lalt'){S.lalt=!S.lalt;render();return}
-  if(b.id==='doLogin'&&S.lmode==='stf'){const nm=S.lalt?val('lnm'):val('lem'),ph=S.lalt?val('lph'):document.getElementById('lpw2').value;busy(true,'확인하고 있어요…');
+  if(b.id==='doLogin'&&S.lmode==='stf'){const nm=S.lalt?val('lnm'):val('lem'),ph=S.lalt?val('lph'):document.getElementById('lpw2').value;if(!S.lalt)svSet('cs',nm,ph);busy(true,'확인하고 있어요…');
     google.script.run.withSuccessHandler(r=>{busy(false);if(!r.ok){document.getElementById('lerr').textContent=r.msg;return}S.tok=r.token;try{sessionStorage.setItem('campAdmTok',r.token);sessionStorage.removeItem('campAdmId')}catch(x){}setData(r)}).withFailureHandler(x=>{busy(false);document.getElementById('lerr').textContent=(x&&x.message)||String(x)}).staffLogin(nm,ph);return}
-  if(b.id==='doLogin'){const id=val('lid'),pw=document.getElementById('lpw').value;busy(true,'확인하고 있어요…');
+  if(b.id==='doLogin'){const id=val('lid'),pw=document.getElementById('lpw').value;svSet('ca',id,pw);busy(true,'확인하고 있어요…');
     google.script.run.withSuccessHandler(r=>{busy(false);if(!r.ok){document.getElementById('lerr').textContent=r.msg;return}S.tok=r.token;try{sessionStorage.setItem('campAdmTok',r.token);sessionStorage.setItem('campAdmId',id)}catch(x){}document.getElementById('who').textContent='관리자 '+id;setData(r)}).withFailureHandler(x=>{busy(false);document.getElementById('lerr').textContent=(x&&x.message)||String(x)}).adminLogin(id,pw);return}
   if(d.g){const g=GROUPS.find(x=>x[0]===d.g),vis=visTabs().map(x=>x[0]),L=(S.lastSub||{})[d.g];goTab(L&&vis.includes(L)?L:g[2].find(k=>vis.includes(k)));return}
   if(d.tab){goTab(d.tab);return}

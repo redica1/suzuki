@@ -1,4 +1,4 @@
-/* build: 20261102-233816 */
+/* build: 20261102-234608 */
   if(!open.length) return ''; /* 신고한 사람은 아래 사람별 줄에 「입금 확인 중 · 날짜 금액」으로 보여서 여기서는 안 보여 줌 */
   const sel=S.rp||(S.rp=open.map(x=>x.p.id)); const sum=open.filter(x=>sel.includes(x.p.id)).reduce((t,x)=>t+dueOf(x.p),0);
   const nameOf=id=>{for(const sb of MY_SUBS){const p=sb.ppl.find(q=>q.id===id);if(p)return p.name}return ''};
@@ -130,5 +130,3 @@ function vMyTT(){const T=S.tt;
     ${R.length?R.map(r=>`<div class="panel ttstu"><div class="spread"><b class="num" style="font-size:20px">${esc(r.no)}</b><span class="hint">${esc(r.bld)} ${esc(r.fl)}${r.type?' · '+esc(r.type):''}</span></div>
       <div>${esc(r.kind||'')}${r.days&&r.days.length?` <small class="hint">· ${r.days.map(esc).join(', ')}</small>`:''}</div>
       ${(r.occ||[]).map(o=>`<div${o.mine?' style="font-weight:700"':''}>${esc(o.v)} ${o.n}명${o.days&&o.days.length?` <small class="hint">(${o.days.map(esc).join(', ')})</small>`:''}${o.tm?` <small class="hint">${esc(o.tm)}</small>`:''}</div>`).join('')}${r.pw?`<small class="hint">비번 수신자: ${esc(r.pw)}</small>`:''}</div>`).join(''):'<div class="note info">아직 방이 정해지지 않았어요. 정해지면 여기에 보여요.</div>'}</section>`}
-/* 구분 표시: 교사 · 관계자 · 학생 · 보호자 · 동반가족 · 돌전아기 · 가족 색 따로 */
-function kBadge(k){const c={'교사':'kt','관계자':'kr','학생':'ks','보호자':'kp','동반가족':'kf','돌전아기':'kb','가족':'kf'}[k]||'ks';return `<span class="kind ${c}">${esc(k)}</span>`}

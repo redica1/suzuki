@@ -1,4 +1,4 @@
-/* build: 20261102-231238 */
+/* build: 20261102-231421 */
 function vAuthPick(){return `<section class="sec"><h2>접수 시작</h2>
   <p class="lede">어떻게 접수하시나요?</p>
   <div class="pick2">
@@ -178,7 +178,7 @@ function rosterRow(x,kind){
   const btxt = booked&&!on?(bk?`접수 ${esc(ymdShort(bk.at))}${bk.by!==(S.user||{}).name?' '+esc(bk.by)+' 교사':''}`:`접수 ${esc(x.bookedRound||'')}${x.bookedBy?' '+esc(x.bookedBy)+' 교사':''}`):'';
   const nm=`<label for="pk_${x.id}">${kBadge(kind==='t'?(isStaffAcad()?'관계자':'교사'):'학생')} <b>${esc(x.name)}</b>${dtag(x)}</label>${btxt?`<small class="rtm"><br>${btxt}</small>`:''}`;
   const cells=kind==='t'?`<td>${esc(x.role||'-')}</td><td>${esc(x.inst||'-')}</td>`:`<td class="num">${x.birth?age(x.birth)+'세':'<span style="color:var(--rosin)">출생연도 없음</span>'}</td><td>${esc(x.inst||'-')}</td><td class="rtd">${x.teacher?esc(x.teacher):'<span style="color:var(--rosin)">미지정</span>'}</td>`;
-  return `<tr class="${booked?'locked':''}${on?' incart':''}"><td><input type="checkbox" id="pk_${x.id}" data-pick="${x.id}" ${on||sel?'checked':''} ${booked||on?'disabled':''} aria-label="${esc(x.name)} 선택"></td><td>${nm}</td>${cells}<td class="num rtd" style="text-align:left">${btxt?`<small>${btxt}</small>`:'<span class="hint">-</span>'}</td><td>${pill}</td></tr>`;
+  return `<tr class="${booked?'locked':''}${on?' incart':''}"><td><input type="checkbox" id="pk_${x.id}" data-pick="${x.id}" ${on||sel?'checked':''} ${booked||on?'disabled':''} aria-label="${esc(x.name)} 선택"></td><td>${nm}</td>${cells}<td class="num rtd" style="text-align:left">${btxt?`<small>${btxt}</small>`:'<span class="hint">-</span>'}</td><td>${pill}</td><td class="r">${!booked&&!on?`<button class="btn small" type="button" data-add1="${x.id}" aria-label="${esc(x.name)} 신청 명단에 추가">추가</button>`:''}</td></tr>`;
 }
 function typeSeg(key,owner){
   const opts=isGuest()?[['비회원 학생','비회원 참가 아이']]:owner==='teacher'&&isStaffAcad()?STAFF_TYPES.map(t=>[t,t]):owner==='teacher'?TEACHER_TYPES.map(t=>[t,t]):[['학생','학생'],['회원의 악기하는 자녀','악기하는 교사자녀']];
@@ -244,12 +244,16 @@ function cartPanel(){
       <td class="r"><button class="btn small ghost" type="button" data-uncart="${o.x.id}" aria-label="${esc(o.x.name)} 빼기">빼기</button></td></tr>`).join('')}
     </tbody></table></div></div>`;
 }
+/* 지금 탭 · 찾기에 보이는 사람 (전체 선택에도 씀) */
+function rosterView(){const r=roster(), me=S.user?S.user.name:'', q=(S.rq||'').trim(), T=S.ptab==='교사';
+  return (T?r.teachers.map(x=>({x,k:'t'})):r.students.filter(x=>x.inst===S.ptab&&(!S.mine||x.teacher===me)).map(x=>({x,k:'s'}))).filter(o=>!q||o.x.name.includes(q))}
+const pickable=x=>!S.picked[x.id]&&!(x.booked||bookedOf(x));
 function rosterList(){
   const r=roster(), me=S.user?S.user.name:'', q=(S.rq||'').trim();
   const T=S.ptab==='교사';
   const all=(T?r.teachers.map(x=>({x,k:'t'})):r.students.filter(x=>x.inst===S.ptab&&(!S.mine||x.teacher===me)).map(x=>({x,k:'s'})))
     .filter(o=>!q||o.x.name.includes(q)).sort((a,b)=>(S.editNo?0:(!!(a.x.booked||bookedOf(a.x))-!!(b.x.booked||bookedOf(b.x))))||a.x.name.localeCompare(b.x.name,'ko'));   /* 새로 접수할 때는 아직 접수 안 한 사람이 위, 이미 접수한 사람은 아래 (각각 가나다순) */
-  if(all.length) return `${q?`<p class="hint">「${esc(q)}」 ${all.length}명</p>`:''}<div class="mtblw"><table class="mtbl rtbl"><thead><tr><th></th><th>이름</th>${T?'<th>직급</th><th>악기</th>':'<th>나이</th><th>악기</th><th class="rtd">담당</th>'}<th class="rtd">접수</th><th>회비</th></tr></thead><tbody>${all.map(o=>rosterRow(o.x,o.k)).join('')}</tbody></table></div>`;
+  if(all.length) return `${q?`<p class="hint">「${esc(q)}」 ${all.length}명</p>`:''}<div class="mtblw"><table class="mtbl rtbl"><thead><tr><th>${(()=>{const P=all.filter(o=>pickable(o.x));return P.length?`<input type="checkbox" data-pick="__all" aria-label="전체 선택" title="전체 선택" ${P.every(o=>S.sel[o.x.id])?'checked':''}>`:''})()}</th><th>이름</th>${T?'<th>직급</th><th>악기</th>':'<th>나이</th><th>악기</th><th class="rtd">담당</th>'}<th class="rtd">접수</th><th>회비</th><th class="r"><button class="btn small primary" type="button" id="addSel" ${selIds().length?'':'disabled'}>선택 추가</button></th></tr></thead><tbody>${all.map(o=>rosterRow(o.x,o.k)).join('')}</tbody></table></div>`;
   if(q) return `<p class="hint">${esc(S.ptab)} 탭에 「${esc(q)}」(이)라는 사람이 없어요. 다른 탭도 확인해 보세요.${T?'':' 학생이면 아래 「명단에 없는 학생 추가」를 눌러 주세요.'}</p>`;
   return `<p class="hint">${T?'이 학원 교사가 명단에 없어요.':`${esc(S.ptab)} 학생이 명단에 없어요.`}</p>`}
 function vStep2(){

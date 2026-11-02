@@ -1,8 +1,11 @@
-/* build: 20261103-002850 */
-  if(!open.length) return ''; /* 신고한 사람은 아래 사람별 줄에 「입금 확인 중 · 날짜 금액」으로 보여서 여기서는 안 보여 줌 */
+/* build: 20261103-003450 */
+  if(!open.length) return '';
+  /* 평소엔 한 줄로 접어 둠: 「입금 신고하기」를 누르면 펼침 (11-03) */
+  if(!S.rpOpen){const due=open.reduce((t,x)=>t+dueOf(x.p),0);return `<div class="panel rp" style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><span><b>입금 필요 ${open.length}명</b> · <b class="num">${won(due)}</b> <span class="hint">입금한 뒤 알려 주세요</span></span><button class="btn primary" type="button" data-rpopen="1">입금 신고하기</button></div>`}
+  /* 신고한 사람은 아래 사람별 줄에 「입금 확인 중 · 날짜 금액」으로 보여서 여기서는 안 보여 줌 */
   const sel=S.rp||(S.rp=open.map(x=>x.p.id)); const sum=open.filter(x=>sel.includes(x.p.id)).reduce((t,x)=>t+dueOf(x.p),0);
   const nameOf=id=>{for(const sb of MY_SUBS){const p=sb.ppl.find(q=>q.id===id);if(p)return p.name}return ''};
-  return `<div class="panel rp"><div class="spread"><h3 style="margin:0">입금 신고</h3><span class="hint">입금한 사람을 체크하고 알려 주시면 운영진이 통장과 맞춰 보고 확인해요</span></div>
+  return `<div class="panel rp"><div class="spread"><h3 style="margin:0">입금 신고</h3><span class="row" style="gap:8px"><span class="hint">입금한 사람을 체크하고 알려 주시면 운영진이 통장과 맞춰 보고 확인해요</span><button class="btn small ghost" type="button" data-rpopen="0">접기</button></span></div>
     ${open.length?`${bankHTML()}
     <div class="row"><button class="btn small" type="button" data-rpall="1">모두 선택</button><button class="btn small ghost" type="button" data-rpall="0">모두 해제</button><span class="hint">${sel.length}명 선택</span></div>
     <div class="rphead rpbulk"><span></span><span></span><div class="rpf"><input type="text" id="rpAllN" placeholder="입금자명" aria-label="한 번에 넣을 입금자명" value="${esc(S.rpAllN||'')}"><input type="date" id="rpAllD" aria-label="한 번에 넣을 입금일" value="${S.rpAllD||''}" max="${S.today}"><button class="btn small" type="button" id="rpFill">적용</button></div></div>

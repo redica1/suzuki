@@ -1,4 +1,4 @@
-/* build: 20261102-225847 */
+/* build: 20261102-230415 */
   if(!open.length) return ''; /* 신고한 사람은 아래 사람별 줄에 「입금 확인 중 · 날짜 금액」으로 보여서 여기서는 안 보여 줌 */
   const sel=S.rp||(S.rp=open.map(x=>x.p.id)); const sum=open.filter(x=>sel.includes(x.p.id)).reduce((t,x)=>t+dueOf(x.p),0);
   const nameOf=id=>{for(const sb of MY_SUBS){const p=sb.ppl.find(q=>q.id===id);if(p)return p.name}return ''};
@@ -49,7 +49,7 @@ const TSHORT={'회원의 첫번째 보호자':'보호자','회원의 그외 악�
 const sdFmt=x=>{const m=String(x||'').match(/^(\d{4})-(\d{2})-(\d{2})/);return m?`${m[1].slice(2)}.${+m[2]}.${+m[3]}`:String(x||'')};
 /* 표 안 상태: 날짜를 아랫줄에 26.10.5 꼴로 */
 function payTagT(p){let h=payTag(p);if(p.rep&&p.rep.ok)h=h.replace('입금 확인 '+kday(p.rep.ok),'입금 확인<br><small>'+sdFmt(p.rep.ok)+'</small>');
-  if(p.pay==='신고'){const r=p.rep&&(p.rep.rows&&p.rep.rows[p.id]||{date:p.rep.date})||{};if(r.date)h=h.replace('입금 확인 중 · '+kday(r.date),'입금 확인 중<br><small>'+sdFmt(r.date)+'</small>')}return h}
+  return h}
 function vMine(){
   const r=refundRule(S.today);
   const rulesTxt=REFUND.rules.map(x=>`<li><b>${kday(x.until)}까지</b> · ${x.label} — ${x.rate?`참가비 ${x.rate}% 환불`:'<b>환불 없음</b>'}${x.doc?' · <b>진단서 필요</b>':''}</li>`).join('')+`<li><b>그 이후</b> · ${REFUND.after.label} — ${REFUND.after.allow?'':'취소 불가'}</li>`;

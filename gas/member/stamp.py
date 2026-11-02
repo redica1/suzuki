@@ -6,6 +6,7 @@ bad = []
 for n in json.loads((here / 'files.json').read_text()):
     p = here / n; s = p.read_text(encoding='utf-8')
     s = re.sub(r'build: \S+', 'build: ' + bid, s, count=1)
+    s = re.sub(r'빌드표시 \d{8}-\d{6}', '빌드표시 ' + bid, s)   # 화면 맨 아래 빌드 표시
     if any(ord(c) > 0xFFFF for c in s): bad.append(n + ': 이모지 같은 4바이트 글자')
     if n.endswith('.html'):
         for js in re.findall(r'<script>(.*?)</script>', s, re.S):

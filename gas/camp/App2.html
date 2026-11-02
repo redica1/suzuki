@@ -1,4 +1,4 @@
-/* build: 20261102-223529 */
+/* build: 20261102-223848 */
 function vAuthPick(){return `<section class="sec"><h2>접수 시작</h2>
   <p class="lede">어떻게 접수하시나요?</p>
   <div class="pick2">
@@ -145,13 +145,14 @@ function vStep1(){
     ${isStaffT(u)?'':`<div class="f" style="display:grid;gap:8px"><span>어느 소속으로 접수할까요?</span>
       <div class="row" style="gap:8px;flex-wrap:wrap">${mineA.map(a=>`<button class="btn ${S.acad===a?'primary':''}" type="button" data-acad="${esc(a)}">${esc(a)} <small>(내 소속)</small></button>`).join('')}
         <button class="btn ${S.acad&&!mineA.includes(S.acad)&&S.acad!==classOf(u)?'primary':''}" type="button" id="otherAcad">다른 학원 학생 접수 <small>(겸임 · 소속 그대로)</small></button>
-        <button class="btn ${S.acad===classOf(u)?'primary':''}" type="button" data-acad="${esc(classOf(u))}">${esc(classOf(u))} <small>(학원 없이)</small></button></div></div>
+        ${S.clsOn||S.acad===classOf(u)?`<button class="btn ${S.acad===classOf(u)?'primary':''}" type="button" data-clsacad="${esc(classOf(u))}">${esc(classOf(u))} <small>(학원 없이)</small></button>`:''}</div>
+      <label class="clschk" for="clsOn" style="display:flex;align-items:center;gap:6px;font-size:14.5px;color:var(--muted);cursor:pointer"><input type="checkbox" id="clsOn" ${S.clsOn||S.acad===classOf(u)?'checked':''} style="width:18px;height:18px;margin:0;flex:none"> 학원 없이 개인 클래스로 접수하기</label></div>
     ${S.acOpen||(S.acad&&!mineA.includes(S.acad)&&S.acad!==classOf(u))?`<label class="f" for="acQ">어느 학원 학생인가요? <span class="hint">선생님 소속은 그대로예요</span>
       <div class="ac combo">
         <input type="search" id="acQ" role="combobox" aria-expanded="${S.acOpen}" aria-controls="acList" value="${esc(S.acOpen?S.acQ:S.acad)}" placeholder="학원을 선택하거나 검색하세요" autocomplete="off">
         <span class="caret" aria-hidden="true">▾</span>
         ${S.acOpen?`<ul id="acList" role="listbox">
-          <li><button type="button" role="option" data-acad="${esc(classOf(u))}"><span><b>직접 입력</b> · ${esc(classOf(u))}</span><small>학원 소속 없이</small></button></li>
+          <li><button type="button" role="option" data-clsacad="${esc(classOf(u))}"><span><b>직접 입력</b> · ${esc(classOf(u))}</span><small>학원 소속 없이</small></button></li>
           ${all.map(a=>`<li><button type="button" role="option" data-acad="${esc(a.name)}" aria-selected="${S.acad===a.name}"><span>${esc(a.name)}${mineA.includes(a.name)?' <span class="pill ok">내 소속</span>':''}</span><small>${esc(a.region)}${a.head?` · ${esc(a.head)}`:''}</small></button></li>`).join('')||'<li class="hint" style="padding:8px">찾는 학원이 없어요. 맨 위 「직접 입력」을 선택해 주세요.</li>'}
         </ul>`:''}
       </div></label>`:''}`}

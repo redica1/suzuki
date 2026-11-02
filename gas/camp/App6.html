@@ -1,4 +1,4 @@
-/* build: 20261102-223529 */
+/* build: 20261102-223848 */
   if(tab==='me')return head+seg+`<div class="panel">${T.prof?`<p class="hint" style="margin:0 0 6px">교수 · 레슨실 <b>${esc(T.prof.room||'미정')}</b></p>`:''}
     ${days.map((dl,d)=>{const xs=mine.filter(x=>x.d===d);return xs.length?`<div class="ttday"><div class="ttdl">${esc(dl)}</div>${xs.map(x=>`<div class="ttit"><span class="num">${esc(x.t)}${x.e?'<small>~'+esc(x.e)+'</small>':''}</span><span><span class="ttrole ${x.what==='개인레슨'?'les':''}">${esc(x.what)}</span><b>${esc(x.title)}</b> · ${esc(x.where)}${x.loc?` <small class="hint">${esc(x.loc)}</small>`:''}${x.with?`<br><small class="hint">${x.what==='개인레슨'?'학생: ':'함께: '}${esc(x.with)}</small>`:''}</span></div>`).join('')}</div>`:''}).join('')||'<p class="hint" style="margin:0">아직 배정된 일정이 없어요.</p>'}</div></section>`;
   const st=T.students||[];
@@ -102,11 +102,8 @@ document.addEventListener('click',e=>{
   const d=b.dataset;
   if(d.go){go(+d.go);return}
   if(d.round!==undefined){CAMP.ri=+d.round;render();toast(`${ROUNDS[CAMP.ri][0]} 금액으로 계산해요`);return}
-  if(d.acad){const a=d.acad;const go=()=>{S.acad=a;S.rq='';S.sel={};S.ptab='교사';S.acQ='';S.acOpen=false;S.picked={};S.extra=[];S.fam=[];S.info={};S.room={};
-    ensureRoster(a);S.verified=true;render()};
-    /* 내 소속이 아닌 학원(겸임): 서버에서 그 학원 명단을 받아 옴 — 소속은 그대로 */
-    if(S.token&&S.user&&!(S.user.acads||[]).includes(a)){api('addAcad',[a],r=>{const keep=S.user;loadFromServer(r);S.user=keep;S.user.acads=r.acads;go();toast(a+' 명단을 열었어요 · 소속은 그대로예요',true)},null,'명단을 불러오고 있어요…');return}
-    go();return}
+  if(d.clsacad){const a=d.clsacad;askBox(`${esc(a)}로 접수할까요?`,'학원 학생이 아니라 <b>학원 없이 개인 레슨하는 학생</b>만 이 클래스로 접수해요. 학원 학생은 학원 버튼으로 접수해 주세요.','네, 클래스로 접수',()=>pickAcad(a));return}
+  if(d.acad){pickAcad(d.acad);return}
   if(d.quick){const n=d.quick;const t=TEACHER_DB.find(x=>x.demo&&x.name===n)||TEACHER_DB.find(x=>bare(x.name)===n&&x.acads.includes('마포스즈키'))||TEACHER_DB.find(x=>bare(x.name)===n);
     if(!t){S.verr=`회원 명단에서 ${n} 선생님을 찾지 못했어요.`;render();return}
     if(t.state==='대기'){S.verr='승인 대기 중이에요. 협회가 확인하면 이메일로 알려 드려요.';render();return}

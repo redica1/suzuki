@@ -11,7 +11,7 @@
 .mtblw{overflow-x:auto}.mtbl thead th{position:sticky;top:0;z-index:3}
 @media (min-width:760px){.mtblw{overflow:visible}}
 </style></head><body>
-<!-- build: 20261102-222115 -->
+<!-- build: 20261102-222412 -->
 <base target="_top">
 <script>/* 화면이 하얗게 될 때 원인을 화면에 보여 주는 진단 — STG(설정 「테스트 로그인」이 있을 때)만 보임, 메인에서는 조용히 (10-31) */
 window.addEventListener('error',function(e){try{if(!(typeof TEST_LOGIN==='string'&&TEST_LOGIN))return;var n=e.lineno||0,c=(e.colno||1)-1,out=[];
@@ -75,6 +75,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 .band h1{font-family:var(--display);font-size:28px;font-weight:700;letter-spacing:-.01em}
 .meta{display:flex;flex-wrap:wrap;gap:6px 16px;color:var(--band-muted);font-size:15.5px}
 .meta strong{color:var(--band-ink);font-weight:600}
+.hdtools{display:flex;justify-content:flex-end;gap:6px;flex-wrap:wrap;margin:-10px 0 -4px}.hdtools .qbtn{margin:0;font-size:13.5px;padding:3px 11px}.hdtools .qbtn[hidden]{display:none}
 .qbtn.hdu{margin-left:6px}.qbtn{margin-left:auto;border:1px solid var(--band-ink);background:transparent;color:var(--band-ink);border-radius:999px;padding:3px 12px;font:inherit;font-size:15px;font-weight:700;cursor:pointer}
 .compo{font-size:15.5px;margin-top:2px}
 .sub-card.ro{background:var(--bg)}
@@ -388,16 +389,18 @@ h1,h2,h3,.band h1,.sec>h2,.card h2{font-weight:800;letter-spacing:0}
 
 <div class="band">
   <div class="wrap">
+    <div class="hdtools">
+      <button class="qbtn" id="qBtn" type="button">오류·건의</button>
+      <button class="qbtn hdu" id="hdMine" type="button" hidden>내 접수</button>
+      <button class="qbtn hdu" id="hdOut" type="button" hidden>로그아웃</button>
+      <button class="qbtn hdu" id="hdIn" type="button">로그인</button>
+    </div>
     <div class="proto"><span id="protoTxt" style="display:contents"><b>시험 접수</b> 테스트용 화면이에요. 접수 내용은 협회 접수 DB(테스트 시트)에 저장돼요.</span><span id="roundSeg" hidden></span></div><script>if(!TEST_LOGIN){var _pt=document.getElementById('protoTxt');if(_pt)_pt.remove()}</script>
     <h1 id="campTitle">2027 스즈키 겨울 음악제 접수</h1>
     <div class="meta">
       <span id="campWhen"><strong>2027. 1. 11.(월) ~ 1. 15.(금)</strong> 4박 5일</span>
       <span>장소 <strong id="campPlace">추후 안내</strong></span>
       <span class="round" id="roundChip"></span>
-      <button class="qbtn" id="qBtn" type="button">오류·건의</button>
-      <button class="qbtn hdu" id="hdMine" type="button" hidden>내 접수</button>
-      <button class="qbtn hdu" id="hdOut" type="button" hidden>로그아웃</button>
-      <button class="qbtn hdu" id="hdIn" type="button">로그인</button>
     </div>
   </div>
 </div>

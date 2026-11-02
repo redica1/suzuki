@@ -1,4 +1,4 @@
-/* build: 20261102-230648 */
+/* build: 20261102-231041 */
 function vAuthPick(){return `<section class="sec"><h2>접수 시작</h2>
   <p class="lede">어떻게 접수하시나요?</p>
   <div class="pick2">
@@ -174,11 +174,11 @@ function editTag(id){if(!S.editNo)return '';const sb=ALL_SUBS.find(x=>x.no===S.e
 const ymdShort=x=>{if(!x)return '';const [d,t]=String(x).split(' ');const p=d.split('-');return p.length<3?String(x):`${p[0].slice(2)}.${p[1].padStart(2,'0')}.${p[2].padStart(2,'0')}${t?' '+t.slice(0,5):''}`};
 function rosterRow(x,kind){
   const bk=bookedOf(x), booked=x.booked||bk, on=!!S.picked[x.id], sel=!!S.sel[x.id];
-  const pill = on?`<span class="pill new">명단에 추가됨</span>`: isStaffAcad()?'<span class="pill ok">관계자 · 연회비 없음</span>':x.paid?(/^\d{4}-\d{2}-\d{2}/.test(String(x.paidDate||''))?`<span class="pill ok">회비납부 ${esc(String(x.paidDate).slice(2,10).replace(/-/g,'.'))}</span>`:/확인/.test(String(x.paidDate||''))?`<span class="pill info" title="원장님이 회원관리에 회비 입금 신고 · 협회 확인 대기 (캠프에서는 연회비를 받지 않아요)">입금신고${(String(x.paidDate).match(/\d{4}-\d{2}-\d{2}/)||[])[0]?'<br><small>'+String(x.paidDate).match(/\d{4}-\d{2}-\d{2}/)[0].slice(2).replace(/-/g,'.')+'</small>':''}</span>`:x.paidDate?`<span class="pill ok">회비 ${esc(x.paidDate)}</span>`:'<span class="pill ok">회비납부</span>'):booked?'<span class="pill info">연회비 함께 청구</span>':`<span class="pill due">회비 미납</span>`;
-  const btxt = booked&&!on?(bk?`${esc(ymdShort(bk.at))} 접수${bk.by!==(S.user||{}).name?' · '+esc(bk.by)+' 선생님':''}`:`${esc(x.bookedRound||'')} 접수${x.bookedBy?' · '+esc(x.bookedBy)+' 선생님':''}`):'';
+  const pd=String(x.paidDate||''), pill = on?`<span class="pill new">명단에 추가됨</span>`: isStaffAcad()?'<span class="pill ok">관계자 · 연회비 없음</span>':(x.paid&&/^\d{4}-\d{2}-\d{2}/.test(pd))?`<span class="pill ok">회비납부<br><small>${esc(pd.slice(2,10).replace(/-/g,'.'))}</small></span>`:(x.paid&&/확인/.test(pd))?'<span class="pill due" title="원장님이 회원관리에 회비 입금 신고 · 협회 확인 전">회비 미납</span>':(x.paid&&pd)?`<span class="pill ok">회비 ${esc(pd)}</span>`:x.paid?'<span class="pill ok">회비납부</span>':booked?'<span class="pill info">연회비 함께 청구</span>':`<span class="pill due">회비 미납</span>`;
+  const btxt = booked&&!on?(bk?`접수 ${esc(ymdShort(bk.at))}${bk.by!==(S.user||{}).name?' '+esc(bk.by)+' 교사':''}`:`접수 ${esc(x.bookedRound||'')}${x.bookedBy?' '+esc(x.bookedBy)+' 교사':''}`):'';
   const nm=`<label for="pk_${x.id}">${kBadge(kind==='t'?(isStaffAcad()?'관계자':'교사'):'학생')} <b>${esc(x.name)}</b>${dtag(x)}</label>${btxt?`<small class="rtm"><br>${btxt}</small>`:''}`;
   const cells=kind==='t'?`<td>${esc(x.role||'-')}</td><td>${esc(x.inst||'-')}</td>`:`<td class="num">${x.birth?age(x.birth)+'세':'<span style="color:var(--rosin)">출생연도 없음</span>'}</td><td>${esc(x.inst||'-')}</td><td class="rtd">${x.teacher?esc(x.teacher):'<span style="color:var(--rosin)">미지정</span>'}</td>`;
-  return `<tr class="${booked?'locked':''}${on?' incart':''}"><td><input type="checkbox" id="pk_${x.id}" data-pick="${x.id}" ${on||sel?'checked':''} ${booked||on?'disabled':''} aria-label="${esc(x.name)} 선택"></td><td>${nm}</td>${cells}<td class="num rtd">${btxt?`<small>${btxt}</small>`:'<span class="hint">-</span>'}</td><td>${pill}</td></tr>`;
+  return `<tr class="${booked?'locked':''}${on?' incart':''}"><td><input type="checkbox" id="pk_${x.id}" data-pick="${x.id}" ${on||sel?'checked':''} ${booked||on?'disabled':''} aria-label="${esc(x.name)} 선택"></td><td>${nm}</td>${cells}<td class="num rtd" style="text-align:left">${btxt?`<small>${btxt}</small>`:'<span class="hint">-</span>'}</td><td>${pill}</td></tr>`;
 }
 function typeSeg(key,owner){
   const opts=isGuest()?[['비회원 학생','비회원 참가 아이']]:owner==='teacher'&&isStaffAcad()?STAFF_TYPES.map(t=>[t,t]):owner==='teacher'?TEACHER_TYPES.map(t=>[t,t]):[['학생','학생'],['회원의 악기하는 자녀','악기하는 교사자녀']];
@@ -265,7 +265,7 @@ function vStep2(){
   <div class="panel">
     <div class="itabs" role="tablist" aria-label="교사·악기">${ptabList().map(o=>`<button type="button" role="tab" data-ptab="${o.t}" aria-pressed="${S.ptab===o.t}">${o.t==='교사'&&isStaffAcad()?'관계자':o.t}<small>${o.k?o.k+'/':''}${o.n}</small></button>`).join('')}</div>
     ${isStaffAcad()?'':'<p class="hint" style="margin:0">가나다순 · 탭 숫자는 「추가한 수/전체」</p>'}
-    <div class="spread"><div class="legend" ${isStaffAcad()?'hidden':''}><span><span class="pill ok">회비 납부</span> 바로 접수</span><span><span class="pill due">회비 미납</span> 연회비 함께 입금</span><span><small class="btime" style="margin:0">26.11.01 접수</small> 이름 옆 = 이미 접수한 사람</span></div>
+    <div class="spread"><div class="legend" ${isStaffAcad()?'hidden':''}><span><span class="pill ok">회비 납부</span> 바로 접수</span><span><span class="pill due">회비 미납</span> 연회비 함께 입금</span><span>흐린 줄 = 이미 접수한 사람</span></div>
       <div class="row" ${S.ptab==='교사'?'hidden':''}><label class="mine" for="mine"><input type="checkbox" id="mine" ${S.mine?'checked':''}>내 학생만 보기 (담당 ${esc(me)})</label></div></div>
     <input type="search" id="rq" value="${esc(S.rq||'')}" placeholder="이름으로 찾기 (학생·교사)" autocomplete="off" aria-label="이름으로 찾기">
     <div id="rosterList">${rosterList()}</div>

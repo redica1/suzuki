@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261103-195519 -->
+<!-- build: 20261103-195925 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -1566,7 +1566,7 @@ const ME=()=>(S.D&&S.D.me)||{sup:true,perms:{}};
 const permOf=k=>{const m=ME();if(m.sup)return '편집';if(k==='camp'||k==='staff'||k==='cons')return '';return (m.perms||{})[k]||''};
 const visTabs=()=>TABS.concat(SUP_TABS).filter(([k])=>permOf(k));
 const RO=()=>permOf(S.tab)==='보기';
-const WRITE_FN=/^(adminNoticeSave|scholSave|adminConfirm|adminAdjust|adminSetBankAcct|ogSave|ogToken|adminRejectReport|adminSaveEns|adminSaveProfs|adminRefund|adminSetIssue|schedSave|lessonSet|adminSetSetting|roomSave|conSave|campSave|staffSave|songEnSave|pvHideSave|roomCfgSave|layoutImport|roomMove|budSave)$/;
+const WRITE_FN=/^(devSummer|adminNoticeSave|scholSave|adminConfirm|adminAdjust|adminSetBankAcct|ogSave|ogToken|adminRejectReport|adminSaveEns|adminSaveProfs|adminRefund|adminSetIssue|schedSave|lessonSet|adminSetSetting|roomSave|conSave|campSave|staffSave|songEnSave|pvHideSave|roomCfgSave|layoutImport|roomMove|budSave)$/;
 const roBlock=fn=>WRITE_FN.test(fn)&&permOf(S.tab)!=='편집';
 const RO_MSG='보기만 할 수 있는 메뉴예요. 바꾸려면 총관리자에게 「편집」 권한을 받아 주세요.';
 
@@ -1659,7 +1659,7 @@ function vCamp(){if(!S.cc)S.cc=ccCopy();const c=S.cc;if(!c.base)return '<div cla
   <div class="panel hint">개인정보 동의 문구는 「설정 › 동의서」에서 입력·수정해요.</div>
   ${S.vsBank?`<div class="panel" style="border-color:var(--accent)"><b>가상스즈키 연습 통장 시트</b><p class="hint">회원관리 STG › 통장 › 「예전 통장 시트 가져오기」에 이 주소를 넣어 가져오세요.</p><input type="url" readonly value="${S.vsBank}" style="width:100%" onclick="this.select()"></div>`:''}<div class="panel"><h3>테스트용 가상 접수 <span class="hint">STG 시험용 · 「가상○○스즈키」 학원 · 이름은 무작위(실제 회원 아님) · 입금 전</span></h3>
     <div class="row" style="gap:8px;flex-wrap:wrap"><label class="row" style="gap:4px">교사 <input type="number" id="fkT" value="30" min="0" max="200" style="width:70px">명</label><label class="row" style="gap:4px">학생 <input type="number" id="fkS" value="100" min="0" max="600" style="width:70px">명</label>
-      <button class="btn small" type="button" id="fkMake">가상 접수 만들기</button><button class="btn small primary" type="button" id="vsMake" title="회원관리에서 만든 가상스즈키 명단으로 회원 22 · 비회원 5 · 관계자 3 접수 + 연습용 통장 시트">가상스즈키 연습 접수 30건 + 통장</button><button class="btn small ghost" type="button" id="fkClear">가상 접수 모두 지우기 (${(S.D.subs||[]).filter(x=>x.fake).length}건)</button></div></div>
+      <button class="btn small" type="button" id="fkMake">가상 접수 만들기</button><button class="btn small primary" type="button" id="smMake" title="2026 여름캠프 입금확인 자료의 학원 수 · 인원 · 비율대로 가상 학원 68곳 · 약 530명">여름캠프 규모 가상 접수</button><button class="btn small primary" type="button" id="vsMake" title="회원관리에서 만든 가상스즈키 명단으로 회원 22 · 비회원 5 · 관계자 3 접수 + 연습용 통장 시트">가상스즈키 연습 접수 30건 + 통장</button><button class="btn small ghost" type="button" id="fkClear">가상 접수 모두 지우기 (${(S.D.subs||[]).filter(x=>x.fake).length}건)</button></div></div>
   <div class="panel hint"><b>새 캠프(다음 학기)를 열 때</b><br>1) 지금 접수 DB 시트를 통째로 「사본 만들기」 → 지난 캠프 보관용으로 이름을 바꿔 둬요.<br>2) 이 시트에서 「접수」·「참가자」·「입금신고」·「환불요청」·「앙상블팀」·「교사일정」·「개인레슨」·「방배정」·「음악회순서」·「비회원」·「동의기록」 탭의 내용(2행부터)을 지워요.<br>3) 여기 「캠프 설정」에서 캠프 코드(예: 27S)·이름·날짜·장소·차수·참가비·환불 규정을 새로 넣고 저장해요.<br>4) 「교사 일정 › 날짜 · 장소」에서 날짜를 맞추고, 「교수진」·「담당자」를 확인해요. 접수 화면 주소는 그대로예요.</div>
   </div>`}
 document.addEventListener('input',e=>{const t=e.target;if(!t.dataset||!t.dataset.cc||!S.cc)return;const ty=t.dataset.cct;
@@ -1682,6 +1682,7 @@ function ccClick(b,d){if(S.tab!=='camp'&&S.tab!=='cons')return false;const c=S.c
   if(d.mrow!=null){const dd=+d.mrow,on=(c.meals||[]).every((m,i)=>m.on===false||mealFix(c,i).days.includes(dd));(c.meals||[]).forEach((m,i)=>{if(m.on===false)return;mealFix(c,i);m.days=m.days.filter(x=>x!==dd);if(!on)m.days.push(dd);m.days.sort((a,b)=>a-b)});render();return true}
   if(d.ccm){const [op,i]=d.ccm.split('|');c.meals=c.meals||[];if(op==='add')c.meals.push({k:'',t:'',s:'15:00',e:'15:30',on:true,first:true,last:true});else c.meals.splice(+i,1);render();return true}
   if(b.id==='fkMake'){const t=+document.getElementById('fkT').value||0,sN=+document.getElementById('fkS').value||0;ask('가상 접수를 만들까요?',`교사 ${t}명 · 학생 ${sN}명을 「가상○○스즈키」 학원들로 접수해요 (학원마다 교사 3명). 나중에 「가상 접수 모두 지우기」로 한 번에 지울 수 있어요.`,()=>call('devFakeSubs',[t,sN],r=>{setData(r.adm);toast('가상 접수 '+r.made.length+'건을 만들었어요 · '+r.made.join(', '))},'가상 접수를 만들고 있어요…'),'만들기');return true}
+  if(b.id==='smMake'){ask('여름캠프 규모로 가상 접수를 만들까요?','2026 여름캠프 자료의 학원 수 · 학원별 인원 · 비율대로 가상 학원 68곳 · 약 530명(교사 · 학생 · 가족, 악기 · 진도 · 음악회 · 레슨 · 마스터클래스 · 가족방 · 차수 · 입금 확인/신고/전 · 취소)을 만들어요. 이름은 무작위예요. 「가상 접수 모두 지우기」로 지울 수 있어요. 2~4분 걸려요.',()=>call('devSummer',[],r=>{setData(r.adm);toast('가상 접수 '+r.made.length+'건 · '+r.n+'명을 만들었어요')},'여름캠프 규모 가상 접수를 만들고 있어요… (2~4분)'),'만들기');return true}
   if(b.id==='vsMake'){ask('가상스즈키 연습 접수를 만들까요?','회원관리에서 만든 「가상스즈키」 명단으로 접수 30건(입금 신고 · 확인 · 부족 · 과납 · 취소 · 환불 · 이름/날짜 다름 등)을 만들고, 맞춰 볼 통장 내역을 새 구글시트로 만들어요. 「가상 접수 모두 지우기」로 지울 수 있어요.',()=>call('devScenario',[],r=>{setData(r.adm);S.vsBank=r.bankUrl;render();toast('연습 접수 '+r.made.length+'건 · 통장 '+r.bankN+'줄을 만들었어요')},'연습 접수를 만들고 있어요… (1~2분)'),'만들기');return true}
   if(b.id==='fkClear'){ask('가상 접수를 모두 지울까요?','가상 표시가 있는 접수와 그 참가자 줄만 지워요. 진짜 접수는 그대로예요. 방 · 레슨 · 일정에 넣은 가상 인원은 따로 빼 주세요.',()=>call('devFakeClear',[],r=>{setData(r.adm);toast('가상 접수 줄 '+r.n+'개를 지웠어요')},'지우고 있어요…'),'지우기');return true}
   if(d.ccsave){const old=S.D.camp||{},idCh=old.base&&old.base.id!==c.base.id;const ap=document.getElementById('ccMealsApply');c.mealsApply=!!(ap&&ap.checked);
@@ -2266,6 +2267,6 @@ render();
   var q=0;new MutationObserver(function(){if(q)return;q=1;requestAnimationFrame(function(){q=0;setup();[].forEach.call(document.querySelectorAll('table.cflt'),function(t){var r=t.tHead&&t.tHead.rows[0];if(r)t.style.setProperty('--cfh1',r.offsetHeight+'px')})})}).observe(document.body,{childList:true,subtree:true});setup();
 })();
 </script>
-<div id="bldMark" hidden>빌드표시 20261103-195519 </div>
+<div id="bldMark" hidden>빌드표시 20261103-195925 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();</script>
 </body></html>

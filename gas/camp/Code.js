@@ -1,4 +1,4 @@
-/* build: 20261103-195519 */
+/* build: 20261103-195925 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -1687,6 +1687,75 @@ function devFakeClear(token) {
     log_(a.name, '가상 접수 지움', fk.join(', '));
   } finally { lock.releaseLock(); }
   return { ok: true, n: k, adm: adminData(token) };
+}
+/** 여름캠프 규모 가상 접수 (11-03, STG 시험용): 2026 여름캠프 입금확인 자료의 학원 수 · 학원별 인원 · 비율을 따라
+ *  가상 학원 68곳 · 약 530명(교사 23% · 학생 59% · 가족 18%)을 만듦. 악기 · 진도 · 음악회 · 레슨 · 마스터클래스 · 가족방 · 차수 · 입금(확인 · 신고 · 전) · 취소를 섞음.
+ *  모두 가상 표시(sb.fake · sb.summer) → 「가상 접수 모두 지우기」로 지움. 이름은 무작위(실제 회원 아님) */
+function devSummer(token) {
+  const a = adm_(token); needSup_(a);
+  if (!String(setting_('테스트 로그인') || '').trim()) throw new Error('여름캠프 규모 가상 접수는 STG(설정 「테스트 로그인」이 있는 곳)에서만 만들 수 있어요.');
+  if (loadSubs_().some(sb => sb.summer)) throw new Error('여름캠프 규모 가상 접수가 이미 있어요. 「가상 접수 모두 지우기」 뒤 다시 만들어 주세요.');
+  const SIZES = [54, 42, 30, 25, 22, 22, 18, 18, 13, 13, 13, 13, 12, 12, 12, 11, 9, 9, 9, 9, 9, 8, 8, 8, 7, 7, 7, 6, 6, 6, 6, 6, 5, 5, 5, 4, 4, 4, 4, 4, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1];
+  const NA = ['하늘', '바다', '숲', '별', '달', '구름', '나무', '강', '산', '들', '해', '빛', '꽃', '봄', '솔', '샘', '물', '돌', '길', '섬', '노을', '바람', '이슬', '여름'];
+  let seed = 20260704; const rnd = () => (seed = (seed * 48271) % 2147483647) / 2147483647, pick = L => L[Math.floor(rnd() * L.length)];
+  const SUR = '김이박최정강조윤장임한오서신권황안송류전홍고문양손배'.split(''), G = '가나다라마바사아자서민지수현준윤하은도예시유채소연태주우진건희아린결온솔별빛봄'.split('');
+  const used = {}; const nm = () => { for (let i = 0; i < 800; i++) { const n = pick(SUR) + pick(G) + pick(G); if (!used[n]) { used[n] = 1; return n; } } return '가상' + Math.floor(rnd() * 1e6); };
+  const PROG = { 바이올린: ['Pre-Twinkle', '1권A 작은별 변주곡 ~ 무궁동', '1권B 알레그레토 ~', '2권A 요정의 춤 ~', '2권B 미뇽의 가보트 ~', '3권', '4권A ~ 자이츠 5번 3악장', '4권B 비발디 협주곡 가단조 ~', '4권A ~ 자이츠 5번 3악장', '5권', '6권', '7권', '8권 전체', '10권 이상'], 첼로: ['1권', '2권', '3권', '4권', '5권', '6권'], 플루트: ['1권', '2권', '3권', '4권'] };
+  const instOf = () => { const r = rnd(); return r < .8 ? '바이올린' : r < .95 ? '첼로' : '플루트'; };
+  const prof = profs_().filter(p => p.on && p.lesson), mcs = mcList_(), C = camp_(), nR = (C.rounds || []).length || 1;
+  const days = ['2026-10-0', '2026-10-1', '2026-10-2'], dt = () => { const d = 1 + Math.floor(rnd() * 31); return d <= 31 ? '2026-10-' + String(d).padStart(2, '0') : '2026-11-01'; };
+  const chg = p => (+p.fee || 0) + (+p.lesson || 0) + (+p.dues || 0) + (+p.room || 0);
+  const lock = lock_(); const made = [], conf = {}; let nPeople = 0;
+  try {
+    const all = loadSubs_(); let n = all.reduce((m, x) => Math.max(m, +String(x.no).split('-')[1] || 0), 0);
+    SIZES.forEach((N, ai) => {
+      const acad = '가상' + NA[ai % NA.length] + (ai >= NA.length ? String(Math.floor(ai / NA.length) + 1) : '') + '스즈키';
+      const tN = Math.max(1, Math.round(N * .23)), fN = N >= 4 ? Math.round(N * .18) : 0, sN = Math.max(0, N - tN - fN);
+      const T = []; for (let k = 0; k < tN; k++) T.push({ name: nm(), inst: k === 0 ? '바이올린' : instOf(), type: rnd() < .17 ? '연수생' : '교사' });
+      /* 교사마다 한 접수: 그 교사 + 맡은 학생 + 그 학생 가족 */
+      const groups = T.map(t => ({ t, st: [] })); for (let k = 0; k < sN; k++) groups[k % groups.length].st.push(k);
+      let famLeft = fN;
+      groups.forEach((g, gi) => {
+        n++; const no = C.base.id + '-' + String(n).padStart(3, '0'), date = dt(), at = date + ' ' + String(9 + Math.floor(rnd() * 12)).padStart(2, '0') + ':' + String(Math.floor(rnd() * 60)).padStart(2, '0') + ':00';
+        const info = {}, picked = {}, ppl = [], fam = [], room = {};
+        const tk = 't_sm' + n; picked[tk] = true; info[tk] = { type: g.t.type, gender: rnd() < .85 ? '여' : '남', concert: '없음', inst: g.t.inst };
+        ppl.push({ id: no + '_' + tk, name: g.t.name, kind: '교사', type: g.t.type, inst: g.t.inst, status: '정상', addAt: at, batch: 1 });
+        g.st.forEach((k, j) => {
+          const key = 'sm' + n + '_' + j, inst = rnd() < .7 ? g.t.inst : instOf(), pp = prof.filter(p => p.inst === inst).map(p => p.name);
+          const les = pp.length && rnd() < .1 ? 1 + Math.floor(rnd() * 3) : 0, cr = rnd(), con = cr < .6 ? '오후' : cr < .64 ? '이브닝' : cr < .68 ? '트와일라잇' : '없음';
+          picked[key] = true; info[key] = { type: '학생', gender: rnd() < .55 ? '여' : '남', by: String(2012 + Math.floor(rnd() * 10)), teacher: g.t.name, prog: pick(PROG[inst] || PROG['바이올린']), lessons: les, p1: les ? pick(pp) : '', p2: les && rnd() < .4 ? pick(pp) : '', mc: inst === '바이올린' && mcs.length && rnd() < .04 ? [pick(mcs).n] : [], concert: con, inst };
+          const sname = nm(); ppl.push({ id: no + '_' + key, name: sname, kind: '학생', type: '학생', inst, status: '정상', addAt: at, batch: 1 });
+          /* 가족: 학생 하나에 보호자(+동반가족 · 아기), 절반은 가족방 */
+          if (famLeft > 0 && rnd() < .5) { const sur = sname[0], list = [['회원의 첫번째 보호자', sur + pick(G) + pick(G)]];
+            if (famLeft > 1 && rnd() < .35) list.push(['회원의 그외 악기 안하는 동반가족', sur + pick(G) + pick(G)]);
+            if (famLeft > 2 && rnd() < .05) list.push(['동반가족 중 돌전아기', sur + pick(G) + pick(G)]);
+            list.forEach(([type, fname], fi) => { const fk = 'fs' + n + '_' + j + '_' + fi; fam.push({ id: fk, type, name: fname, link: key }); info[fk] = { type, gender: fi === 0 ? '여' : pick(['여', '남']) };
+              ppl.push({ id: no + '_' + fk, name: fname, kind: '가족', type, inst: '', status: '정상', addAt: at, batch: 1 }); famLeft--; });
+            if (rnd() < .5) room[key] = true; }
+        });
+        const ri = rnd() < .87 ? 0 : rnd() < .75 ? Math.min(1, nR - 1) : Math.min(2, nR - 1);
+        const sb = { no, acad, owner: g.t.name, fake: true, summer: true, createdAt: at, date, email: '', rev: 1, ppl, form: { ri, picked, info, extra: [], fam, room, join: {}, ens: { on: false } } };
+        sb.ppl.forEach(p => { p.pay = '전'; p.paidAmt = 0; });
+        recalc_(sb); sb.ppl.forEach(p => { if (p.kind !== '가족') p.dues = 0; });   /* 가상 회원은 연회비 없음 */
+        /* 취소 4% (입금 전) */
+        sb.ppl.forEach(p => { if (p.kind === '학생' && rnd() < .04) { p.status = '취소'; p.cxAt = at; } });
+        recalc_(sb); sb.ppl.forEach(p => { if (p.kind !== '가족') p.dues = 0; });
+        const live = sb.ppl.filter(p => p.status === '정상'), pr = rnd(), who = rnd() < .5 ? g.t.name : acad, rdate = date;
+        if (pr < .8 && live.length) { const rows = {}; let sum = 0; live.forEach(p => { rows[p.id] = { name: who, date: rdate, a: chg(p) }; sum += chg(p); });
+          const r = { id: 'R' + (Date.now() + Math.floor(rnd() * 1e6)).toString(36) + n, name: who, date: rdate, amt: sum, memo: '', ids: live.map(p => p.id), rows }; live.forEach(p => { p.pay = '신고'; p.rep = r; });
+          if (pr < .65) live.forEach(p => conf[p.id] = [rdate, chg(p), '가상 (여름 규모)']); }
+        writeSub_(sb, true); made.push(no); nPeople += sb.ppl.length;
+      });
+    });
+    /* 입금 확인은 한 번에 씀 */
+    const sh = SpreadsheetApp.getActive().getSheetByName(SH.P), R = rows_(SH.P), c0 = P_HEAD.indexOf(ADMIN_COLS[0]) + 1, ci = P_HEAD.indexOf('입금 상태') + 1;
+    if (R.length) { const last = R[R.length - 1]._row, A = sh.getRange(2, c0, last - 1, 3).getValues(), B = ci > 0 ? sh.getRange(2, ci, last - 1, 1).getValues() : null;
+      R.forEach(r => { const v = conf[String(r['참가자ID'])]; if (!v) return; A[r._row - 2] = v; if (B) B[r._row - 2] = ['확인']; });
+      sh.getRange(2, c0, last - 1, 3).setValues(A); if (B) sh.getRange(2, ci, last - 1, 1).setValues(B); }
+    const subs = loadSubs_(); subs.filter(x => x.summer).forEach(x => writeSubRow_(x));
+    log_(a.name, '여름캠프 규모 가상 접수', made.length + '건 · ' + nPeople + '명');
+  } finally { lock.releaseLock(); }
+  return { ok: true, made, n: nPeople, adm: adminData(token) };
 }
 /** 가상스즈키 연습 접수 30건 (11-01, STG 연습용): 회원관리에서 만든 「가상스즈키」 명단으로 회원 접수 22 · 비회원 5 · 관계자 3.
  *  입금 신고 · 확인 · 부족 · 과납 · 취소 · 환불 · 이름 다름 · 날짜 다름 · 나눠 입금 · 신고 없는 입금 등을 섞고, 맞춰 볼 통장 내역을 새 구글시트로 만듦 */

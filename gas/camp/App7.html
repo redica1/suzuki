@@ -1,4 +1,4 @@
-/* build: 20261103-181536 */
+/* build: 20261103-182013 */
     ps.forEach(p=>{p.pay='신고';p.rep=rep;delete S.rpRow[p.id]});S.afterSave=()=>repDone(ps.map(p=>p.id));subSave();S.rp=null;S.rpOpen=false;S.rpMemo=undefined;render();toast(`${ps.length}명 입금 신고를 보냈어요 · 운영진이 확인하면 「입금 확인」으로 바뀌어요`);return}
   if(b.id==='rpFill'){const n=document.getElementById('rpAllN').value.trim(),dd=document.getElementById('rpAllD').value;S.rpAllN=n;S.rpAllD=dd;const sel=S.rp||[];
     if(!n&&!dd){toast('적용할 입금자명이나 입금일을 적어 주세요');return}unpaidPpl().filter(x=>sel.includes(x.p.id)).forEach(({p})=>{const v=rpv(p);if(n)v.n=n;if(dd)v.d=dd});render();toast(`선택한 ${sel.length}명에게 적용했어요`);return}
@@ -210,7 +210,7 @@ document.addEventListener('click',e=>{if(e.target.closest&&e.target.closest('.co
 function ttAllHTML(){const B=S.ttBoard;
   if(!B){if(!S.ttBoardLoading){S.ttBoardLoading=true;api('ttBoard',[],r=>{S.ttBoardLoading=false;S.ttBoard=r||{open:false};if(S.view==='tt')render()},()=>{S.ttBoardLoading=false;S.ttBoard={open:false,msg:'불러오지 못했어요'};render()},'전체 일정을 불러오고 있어요…')}return '<div class="panel">전체 일정을 불러오고 있어요…</div>'}
   if(!B.open)return `<div class="note info">${esc(B.msg||'아직 시간표가 공개되지 않았어요.')}</div>`;
-  const days=B.days||[],D=Math.min(S.ttDay||0,Math.max(0,days.length-1)),bv=S.ttBv||'grid',L=(B.items||[]).filter(x=>x.d===D);
+  const days=B.days||[],D=Math.min(S.ttDay||0,Math.max(0,days.length-1)),bv='grid',L=(B.items||[]).filter(x=>x.d===D);
   const tm=x=>esc(x.s)+(x.e&&x.e!==x.s?` <small class="hint">~ ${esc(x.e)}</small>`:'');
   const ppl=x=>{const P=(S.ttEv||{})[x.id];if(!P)return '<span class="hint">불러오는 중…</span>';if(P.ok===false)return `<span class="hint">${esc(P.msg||'볼 수 없어요')}</span>`;
     return (P.staff&&P.staff.length?`<div><b>선생님</b> ${P.staff.map(y=>esc(y.name)+(y.role?` <small class="hint">${esc(y.role)}</small>`:'')).join(', ')}</div>`:'')+
@@ -225,7 +225,7 @@ function ttAllHTML(){const B=S.ttBoard;
   else body=`<div class="panel"><div class="mtblw"><table class="mtbl nosort">${th(true)}<tbody>${L.map(x=>row(x,true)).join('')}</tbody></table></div></div>`;
   return `<p class="lede">캠프 전체 일정이에요. 일정을 누르면 와야 할 선생님과 학생이 보여요. <b>내 일정</b>은 진한 색, 우리 학원 학생은 굵게 보여요.</p>
   <div class="seg" role="group" aria-label="날짜" style="margin:6px 0">${days.map((d,i)=>`<button type="button" data-ttday="${i}" aria-pressed="${i===D}">${esc(d)}</button>`).join('')}</div>
-  <div class="seg" role="group" aria-label="보기" style="margin:6px 0 10px"><button type="button" data-ttbv="grid" aria-pressed="${bv==='grid'}">프로그램표</button><button type="button" data-ttbv="time" aria-pressed="${bv==='time'}">시간순</button><button type="button" data-ttbv="hall" aria-pressed="${bv==='hall'}">홀 · 교실별</button></div>${body}`}
+  <p class="hint" style="margin:4px 0 8px">표가 넓으면 옆으로 밀어서 보세요.</p>${body}`}
 document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-ttday],[data-ttbv],[data-ttev]');if(!t||S.view!=='tt')return;
   if(t.dataset.ttday!==undefined){S.ttDay=+t.dataset.ttday;S.ttOpen=null;render();return}
   if(t.dataset.ttbv){S.ttBv=t.dataset.ttbv;render();return}
@@ -261,11 +261,11 @@ function ttGrid(L,B,D,ppl){const mm=t=>{const q=String(t||'').split(':');return 
   const used=rooms.filter(r=>it.some(x=>(x.room||'장소 미정')===r));
   const ci={};used.forEach((r,i)=>ci[r]=i+2);
   const hh=m=>String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0');
-  let h=`<div class="ttgw"><div class="ttg" style="grid-template-columns:54px repeat(${used.length},minmax(118px,1fr));grid-template-rows:40px repeat(${R},12px)">`;
+  let h=`<div class="ttgw"><div class="ttg" style="grid-template-columns:54px repeat(${used.length},132px);grid-template-rows:40px repeat(${R},12px)">`;
   h+=`<div class="ttgh" style="grid-column:1;grid-row:1">시간</div>`+used.map(r=>`<div class="ttgh" style="grid-column:${ci[r]};grid-row:1"><b>${esc(r)}</b>${loc[r]?`<small>${esc(loc[r])}</small>`:''}</div>`).join('');
   for(let m=lo;m<hi;m+=30){const row=(m-lo)/10+2;h+=`<div class="ttgt${m%60?' half':''}" style="grid-column:1;grid-row:${row}/span 3">${hh(m)}</div>`;used.forEach(r=>h+=`<div class="ttgc${m%60?' half':''}" style="grid-column:${ci[r]};grid-row:${row}/span 3"></div>`)}
   h+=it.map(x=>{const r0=Math.floor((x._s-lo)/10)+2,r1=Math.max(r0+1,Math.ceil((x._e-lo)/10)+2);const on=S.ttOpen===x.id;
-    return `<button type="button" class="ttge${x.mine?' mine':''}${on?' tsel':''} k-${x.kind==='개인레슨'?'les':/그룹레슨|마스터|레슨|연수/.test(x.kind+x.title)?'grp':'con'}" data-ttev="${esc(x.id)}" style="grid-column:${ci[x.room||'장소 미정']};grid-row:${r0}/${r1}"><b>${esc(x.title)}</b><small>${esc(x.s)}${x.e&&x.e!==x.s?'~'+esc(x.e):''}${x.kind==='개인레슨'?' · 학생 '+x.n+'명':''}</small>${x.mine?`<span class="ttme">내 일정${x.role?' · '+esc(x.role):''}</span>`:''}</button>`}).join('');
+    return `<button type="button" title="${esc(x.title)} · ${esc(x.s)}" class="ttge${x.mine?' tmine':''}${on?' tsel':''} k-${x.kind==='개인레슨'?'les':/그룹레슨|마스터|레슨|연수/.test(x.kind+x.title)?'grp':'con'}" data-ttev="${esc(x.id)}" style="grid-column:${ci[x.room||'장소 미정']};grid-row:${r0}/${r1}"><b>${esc(x.title)}</b><small>${esc(x.s)}${x.e&&x.e!==x.s?'~'+esc(x.e):''}${x.kind==='개인레슨'?' · 학생 '+x.n+'명':''}</small>${x.mine?`<span class="ttme">내 일정${x.role?' · '+esc(x.role):''}</span>`:''}</button>`}).join('');
   h+='</div></div>';
   const sel=it.find(x=>x.id===S.ttOpen);
   if(sel)h+=`<div class="panel" style="margin-top:10px"><div class="spread"><b>${esc(sel.title)}</b><span class="hint">${esc(sel.s)}${sel.e&&sel.e!==sel.s?' ~ '+esc(sel.e):''} · ${esc(sel.room||'장소 미정')}</span></div><div style="margin-top:6px">${ppl(sel)}</div></div>`;

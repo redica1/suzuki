@@ -1,4 +1,4 @@
-/* build: 20261103-192922 */
+/* build: 20261103-193236 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -2451,7 +2451,7 @@ function myTimetable(token) {
 /** 관리자: 설정 한 줄 바꾸기 (시간표 공개 등 허용된 항목만) */
 function adminSetSetting(token, key, val) {
   const a = adm_(token); need_(a, 'tt');
-  if (!['시간표 공개'].includes(key)) throw new Error('바꿀 수 없는 설정이에요.');
+  if (!['시간표 공개', '공지', '운영실', '운영실 연락처', '의무실', '의무실 연락처', '식당', '주차', '와이파이'].includes(key)) throw new Error('바꿀 수 없는 설정이에요.');
   ensureSettings_(); const sh = SpreadsheetApp.getActive().getSheetByName('설정');
   const r = rows_('설정').find(x => String(x['항목']) === key);
   if (r) sh.getRange(r._row, 2).setValues([[String(val)]]); else sh.appendRow([key, String(val), '']);

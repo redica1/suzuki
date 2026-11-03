@@ -1,4 +1,4 @@
-/* build: 20261103-191407 */
+/* build: 20261103-192034 */
   if(S.ttDay==null){const td=ttToday(days);S.ttDay=td!=null?td:(mine.length?Math.min(...mine.map(x=>x.d)):0)}
   if(tab==='me')return head+seg+(T.prof?`<p class="hint" style="margin:0 0 6px">교수 · 레슨실 <b>${esc(T.prof.room||'미정')}</b></p>`:'')+ttMineGrid(T,days,mine)+'</section>';
   const AC=S.user.acads||[];if(S.ttAcad&&!AC.includes(S.ttAcad))S.ttAcad='';
@@ -25,9 +25,11 @@ function fillAcct_(){const m=S.myAcct;if(!m||!m.acct)return;ACCT_SETS.forEach(([
 try{new MutationObserver(fillAcct).observe(document.documentElement,{childList:true,subtree:true})}catch(e){}
 function fillBanks(){const d=document.getElementById('bankList');if(d&&!d.children.length)d.innerHTML=BANKS.map(b=>`<option value="${b}">`).join('')}
 /* 머리 버튼: 로그인 전 「로그인」 · 뒤 「내 접수 · 로그아웃」 (모든 화면에서) */
-function hdSync(){['hdMine','hdOut'].forEach(id=>{const x=document.getElementById(id);if(x)x.hidden=!S.user});const x=document.getElementById('hdIn');if(x)x.hidden=!!S.user;const m=document.getElementById('hdMine');if(m)m.hidden=!S.user||S.view==='mine';const t=document.getElementById('hdTT');if(t)t.hidden=!S.user||S.user.guest||S.view==='tt'}
+function hdSync(){['hdMine','hdOut'].forEach(id=>{const x=document.getElementById(id);if(x)x.hidden=!S.user});const x=document.getElementById('hdIn');if(x)x.hidden=!!S.user;const m=document.getElementById('hdMine');if(m)m.hidden=!S.user||S.view==='mine';const t=document.getElementById('hdTT');if(t)t.hidden=!S.user||S.user.guest||S.view==='tt';const l=document.getElementById('hdLost');if(l)l.hidden=!S.user||S.view==='lost'}
 function render(){fillBanks();hdSync();
   {const st=document.getElementById('steps');if(st)st.hidden=S.view==='mine'||S.view==='q'||!!(S.editNo&&S.quickEdit)}
+  if(S.view==='lost'){document.getElementById('app').innerHTML=`<section class="sec"><div class="spread"><h2>분실물</h2><button class="btn small ghost" type="button" id="lostBack">← 돌아가기</button></div><div id="lostBox"></div></section>`;['backBtn','nextBtn','mineBtn'].forEach(id=>{const e=document.getElementById(id);if(e)e.hidden=true});document.getElementById('dockLabel').textContent='분실물';document.getElementById('dockTotal').textContent='';const st=document.getElementById('steps');if(st)st.hidden=true;
+    LOST.mount(document.getElementById('lostBox'),(req,ok,fail)=>api('lostApiT',[req],ok,fail,req.op==='list'||req.op==='photo'?'불러오고 있어요…':'저장하고 있어요…'));return}
   if(S.view==='tt'){document.getElementById('app').innerHTML=vMyTT();['backBtn','nextBtn','mineBtn'].forEach(id=>{const e=document.getElementById(id);if(e)e.hidden=true});document.getElementById('dockLabel').textContent='내 시간표';document.getElementById('dockTotal').textContent='';const st=document.getElementById('steps');if(st)st.hidden=true;return}
   if(S.view==='q'){document.getElementById('app').innerHTML=vQ();['backBtn','nextBtn','mineBtn'].forEach(id=>{const e=document.getElementById(id);if(e)e.hidden=true});document.getElementById('dockLabel').textContent='오류·건의';document.getElementById('dockTotal').textContent='';return}
   {const mb=document.getElementById('mineBtn');if(mb){mb.hidden=!(S.user&&MY_SUBS.length&&S.view!=='mine');mb.textContent=`내 접수 ${MY_SUBS.length}건`}}
@@ -157,6 +159,8 @@ document.addEventListener('click',e=>{
   if(b.id==='qBtn'){openQ();return}
   if(b.id==='qSend'){sendQ();return}
   if(b.id==='ttBtn'||b.id==='hdTT'){openTT();return}
+  if(b.id==='hdLost'){if(S.view!=='lost')S.lostBack={view:S.view,step:S.step};S.view='lost';render();window.scrollTo({top:0});return}
+  if(b.id==='lostBack'){const k=S.lostBack||{view:'mine'};S.view=k.view==='lost'?'mine':k.view;if(k.step)S.step=k.step;render();window.scrollTo({top:0});return}
   if(b.id==='ttBack'){const v=S.ttBack||{view:'mine'};S.view=v.view==='tt'?'mine':v.view;render();window.scrollTo({top:0});return}
   if(b.dataset&&b.dataset.tttab){S.ttTab=b.dataset.tttab;render();return}
   if(b.id==='qBack'){const v=S.qBack||{view:'form'};S.view=v.view==='q'?'form':v.view;render();window.scrollTo({top:0});return}

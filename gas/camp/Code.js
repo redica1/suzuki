@@ -1,4 +1,4 @@
-/* build: 20261103-195925 */
+/* build: 20261103-200036 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -2355,6 +2355,15 @@ function findGate_() {
   if (!inPeriod) return { ok: true, open: false, name, msg: '일정 찾기는 캠프 기간에만 열려요' + (st ? ' (' + st + ' ~ ' + en + ')' : '') + '.' };
   if (setting_('시간표 공개') !== '예') return { ok: true, open: false, name, msg: '아직 시간표가 정해지지 않았어요. 조금 뒤에 다시 찾아 주세요.' };
   return { ok: true, open: true, name };
+}
+/** 캠프 페이지 회원 로그인 (11-03): 회원관리 이메일 · 비밀번호 → 이름 · 번호 뒤 4자리로 같은 열쇠 */
+function findLoginPw(email, pw, agree) {
+  const G0 = findGate_(); if (!G0.open) return G0;
+  if (agree !== true) return { ok: false, msg: '확인 체크를 해 주세요.' };
+  let t; try { t = acctCheck_(email, pw); } catch (e) { return { ok: false, msg: e.message }; }
+  const tok = Utilities.getUuid(); CacheService.getScriptCache().put('fk_' + tok, t.name + '|' + (t.p4 || '0000') + '|T', 21600);
+  log_(t.name + ' (회원)', '캠프 페이지 들어감', '');
+  return Object.assign(G0, { tok, who: t.name, teacher: true });
 }
 /* 일정 찾기 들어가기 (11-03): 이름 · 휴대전화 · 확인 체크 → 「기록」에 남기고 6시간 쓰는 열쇠를 줌 */
 function findAccess(name, phone, agree) {

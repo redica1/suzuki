@@ -1,4 +1,4 @@
-<!doctype html><!-- build: 20261103-195925 --><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<!doctype html><!-- build: 20261103-200036 --><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
 <style>
 :root{--ink:#18232b;--muted:#5b6b73;--faint:#93a1a8;--line:#d5e6e6;--bg:#f2f8f8;--surface:#fff;--accent:#0f8a86;--soft:#e3f3f2}
@@ -37,6 +37,7 @@ body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 -apple-system
 .ntc{background:#fff4d6;border:1px solid #f0d58a;border-radius:12px;padding:10px 14px;margin:0 0 12px;font-size:15px;white-space:pre-line}
 .ntc b{color:#9a6a00}
 [hidden]{display:none!important}
+.seg2{display:flex;border:1px solid var(--line);border-radius:12px;overflow:hidden;margin:0 0 10px}.seg2 button{all:unset;flex:1;text-align:center;padding:9px 0;font-weight:700;font-size:15px;color:var(--muted);cursor:pointer}.seg2 button[aria-pressed=true]{background:var(--accent);color:#fff}
 .tiles{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:0 0 12px}.tiles button,.tile2{all:unset;box-sizing:border-box;cursor:pointer;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px 14px;display:flex;flex-direction:column;gap:3px;min-height:84px}.tiles button b,.tile2 b{font-size:18px;color:var(--ink)}.tiles button small,.tile2 small{font-size:13px;color:var(--muted)}.tiles button:active,.tile2:active{background:var(--soft)}.tile2{grid-column:1/-1;background:var(--soft);border-color:var(--accent);text-decoration:none}
 .sechd{position:sticky;top:0;z-index:30;background:var(--bg);display:flex;align-items:center;gap:10px;padding:8px 0;margin:0 0 8px;border-bottom:1px solid var(--line)}.sechd button{all:unset;cursor:pointer;font-weight:700;color:var(--accent);padding:4px 8px 4px 0}.sechd b{font-size:18px}
 .tabs{position:sticky;top:0;z-index:30;background:var(--bg);overflow-x:auto;flex-wrap:nowrap;scrollbar-width:none}
@@ -67,9 +68,13 @@ textarea{width:100%;font:inherit;font-size:16px;padding:10px 12px;border:1.5px s
 <div class="wrap">
   <div id="ntc"></div>
   <div id="pIn" class="card" hidden><h2 style="font-size:19px">들어가기</h2><p class="hint" style="margin:4px 0 10px">캠프 참가자(보호자 포함)만 봐요. 넣은 이름과 번호는 누가 봤는지 기록에만 남아요.</p>
-    <div class="search" style="margin:0 0 8px"><input id="inN" type="text" placeholder="내 이름" autocomplete="name" aria-label="내 이름"></div>
+    <div class="seg2" role="tablist"><button type="button" data-inm="ph" aria-pressed="true">이름 · 휴대전화</button><button type="button" data-inm="pw" aria-pressed="false">회원 로그인</button></div>
+    <div id="mPh"><div class="search" style="margin:0 0 8px"><input id="inN" type="text" placeholder="내 이름" autocomplete="name" aria-label="내 이름"></div>
     <div class="search" style="margin:0 0 8px"><input id="inP" type="tel" inputmode="numeric" placeholder="내 휴대전화 (010…)" autocomplete="tel" aria-label="내 휴대전화"></div>
-    <div id="svWrap"></div>
+    <div id="svWrap"></div></div>
+    <div id="mPw" hidden><div class="search" style="margin:0 0 8px"><input id="inE" type="email" placeholder="회원관리 이메일" autocomplete="username" aria-label="이메일"></div>
+    <div class="search" style="margin:0 0 8px"><input id="inW" type="password" placeholder="비밀번호" autocomplete="current-password" aria-label="비밀번호"></div>
+    <div id="svWrap2"></div><p class="hint" style="margin:-4px 0 8px">선생님 · 회원은 회원관리에서 만든 이메일 · 비밀번호로 들어가요.</p></div>
     <label style="display:flex;gap:8px;align-items:flex-start;font-size:14.5px;margin:4px 0 12px;cursor:pointer"><input id="inA" type="checkbox" style="width:20px;height:20px;margin:2px 0 0;flex:none"><span>캠프 참가자(보호자 포함)이며, 여기서 본 이름 · 일정 · 교실은 아이 찾기와 일정 확인에만 쓰고 다른 곳에 옮기거나 퍼뜨리지 않을게요.</span></label>
     <button type="button" id="inGo" class="btn1" style="width:100%;font-size:17px;padding:12px">들어가기</button><p class="err" id="inErr" style="margin:8px 0 0"></p></div>
   <div id="pMain" hidden>
@@ -106,17 +111,20 @@ function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return
 var TOK='';try{TOK=sessionStorage.getItem('findTok')||''}catch(e){}
 var $=function(id){return document.getElementById(id)};
 var TAB='home',HOME=null,BD=null,DAY=null,SEL=null,EV={},KIDS=null;
-function needIn(){TOK='';try{sessionStorage.removeItem('findTok')}catch(e){}$('pIn').hidden=false;$('pMain').hidden=true;$('svWrap').innerHTML=svBox('find','이름 · 번호 기억하기');$('inN').value=svId('find');$('inP').value=svPw('find')}
+var INM='ph';try{INM=localStorage.getItem('findMode')||'ph'}catch(e){}
+function inMode(m){INM=m;document.querySelectorAll('[data-inm]').forEach(function(x){x.setAttribute('aria-pressed',String(x.getAttribute('data-inm')===m))});$('mPh').hidden=m!=='ph';$('mPw').hidden=m!=='pw'}
+function needIn(){TOK='';try{sessionStorage.removeItem('findTok')}catch(e){}$('pIn').hidden=false;$('pMain').hidden=true;$('svWrap').innerHTML=svBox('find','이름 · 번호 기억하기');$('svWrap2').innerHTML=svBox('findpw','이메일 · 비밀번호 저장하기');$('inN').value=svId('find');$('inP').value=svPw('find');$('inE').value=svId('findpw');$('inW').value=svPw('findpw');inMode(INM)}
 function run(fn,arg,ok,box){var g=google.script.run.withSuccessHandler(function(r){if(r&&r.needIn){needIn();return}ok(r)}).withFailureHandler(function(){if(box)box.innerHTML='<p class="err">연결이 잠시 안 돼요. 다시 눌러 주세요.</p>'});if(fn==='campBoard'||fn==='campHome'||fn==='findMyIssues')g[fn](TOK);else g[fn](arg,TOK)}
 function gate(r,box){if(r.name)$('title').textContent=r.name;if(!r.ok){box.innerHTML='<p class="err">'+esc(r.msg||'볼 수 없어요')+'</p>';return false}if(r.open===false){box.innerHTML='<p class="hint">'+esc(r.msg)+'</p>';return false}return true}
-function enter(auto){var e=$('inErr');e.textContent='';var n=$('inN').value,p=$('inP').value;
+function enter(auto){var e=$('inErr');e.textContent='';var pwm=INM==='pw',n=pwm?$('inE').value:$('inN').value,p=pwm?$('inW').value:$('inP').value,key=pwm?'findpw':'find';
   google.script.run.withSuccessHandler(function(r){if(r.name)$('title').textContent=r.name;if(!r.ok||!r.open){e.textContent=r.msg||'들어갈 수 없어요';return}
-    if(!auto)svSet('find',n,p);TOK=r.tok;try{sessionStorage.setItem('findTok',TOK)}catch(x){}$('pIn').hidden=true;$('pMain').hidden=false;start()})
-  .withFailureHandler(function(){e.textContent='연결이 잠시 안 돼요. 다시 눌러 주세요.'}).findAccess(n,p,auto?true:$('inA').checked)}
+    if(!auto)svSet(key,n,p);try{localStorage.setItem('findMode',INM)}catch(x){}TOK=r.tok;try{sessionStorage.setItem('findTok',TOK)}catch(x){}$('pIn').hidden=true;$('pMain').hidden=false;start()})
+  .withFailureHandler(function(){e.textContent='연결이 잠시 안 돼요. 다시 눌러 주세요.'})[pwm?'findLoginPw':'findAccess'](n,p,auto?true:$('inA').checked)}
 $('inGo').addEventListener('click',function(){enter(false)});
-$('outBtn').addEventListener('click',function(){if(!confirm('나갈까요? 「기억하기」를 했다면 이 기기에서 지워져요.'))return;try{localStorage.removeItem('svLogin_find')}catch(e){}needIn()});
+document.querySelectorAll('[data-inm]').forEach(function(b){b.addEventListener('click',function(){inMode(b.getAttribute('data-inm'))})});
+$('outBtn').addEventListener('click',function(){if(!confirm('나갈까요? 「기억하기」 · 「저장하기」를 했다면 이 기기에서 지워져요.'))return;try{localStorage.removeItem('svLogin_find');localStorage.removeItem('svLogin_findpw')}catch(e){}needIn()});
 /* 들어가기: 들어온 적 있으면 바로, 기억해 둔 이름 · 번호가 있으면 자동으로 */
-if(TOK){$('pMain').hidden=false;start()}else{needIn();if(svGet('find')){$('inA').checked=true;enter(true)}}
+if(TOK){$('pMain').hidden=false;start()}else{needIn();if(svGet(INM==='pw'?'findpw':'find')){$('inA').checked=true;enter(true)}}
 function start(){run('campHome',null,function(r){if(!r.ok)return;HOME=r;if(r.name)$('title').textContent=r.name;var nn=(r.notices||[]).length;$('ntcN').textContent=nn?'새 소식 '+nn+'개':'운영진 안내';if(TAB==='ntc')notices();if(r.teacherUrl){$('tLink').href=r.teacherUrl;$('tLink').hidden=false}$('ntc').innerHTML=r.notice?'<div class="ntc"><b>알림</b> '+esc(r.notice)+'</div>':'';if(TAB==='con'||TAB==='info')show(TAB)});show(TAB)}
 var TITLES={ntc:'공지사항',kid:'우리 아이',board:'수업표',name:'사람 찾기',room:'방 찾기',con:'음악회',info:'식사 · 장소',lost:'분실물',ask:'문의'};
 function show(t){TAB=t;$('home').hidden=t!=='home';$('secHead').hidden=t==='home';$('secT').textContent=TITLES[t]||'';document.querySelectorAll('[data-p]').forEach(function(x){x.hidden=x.getAttribute('data-p')!==t});window.scrollTo(0,0);
@@ -209,5 +217,5 @@ document.addEventListener('click',function(e){var t=e.target.closest('[data-tab]
   if(t.hasAttribute('data-ev')){var id=t.getAttribute('data-ev');SEL=id;board();if(!EV[id])run('campEventPeople',id,function(r){EV[id]=r||{ok:false};if(SEL===id)board()},null)}});
 document.addEventListener('keydown',function(e){if(e.key==='Escape'&&SEL){SEL=null;board()}});
 </script>
-<div id="bldMark" hidden>빌드표시 20261103-195925 </div>
+<div id="bldMark" hidden>빌드표시 20261103-200036 </div>
 </body></html>

@@ -1,4 +1,4 @@
-/* build: 20261103-193616 */
+/* build: 20261103-193936 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -2342,8 +2342,11 @@ function campHome(tok) {
   const concerts = Array.isArray(c.concerts) ? c.concerts : evs.filter(e => e.type === '오후음악회' || (linked.includes(e.title) && (!e.stage || e.stage === '본공연'))).map(e => ({ id: 'c' + e.id, name: evName_(e), d: e.d, cs: e.s, room: e.room }));
   const inf = {}; loadSubs_().forEach(sb => sb.ppl.forEach(p => { const k = p.id.slice(sb.no.length + 1), i = (sb.form && sb.form.info && sb.form.info[k]) || {}; inf[p.id] = { name: p.name, acad: sb.acad, inst: p.inst || i.inst || '', song: i.other ? String((i.oc || '') + ' ' + (i.ot || '')).trim() : String(i.song || ''), x: p.status === '취소' }; }));
   const order = c.conorder || {};
+  /* 공지사항: 시트 「공지사항」(날짜 · 제목 · 내용 · 맨 위) — 운영진이 줄을 더하면 바로 보임, 최근 것 먼저 */
+  let notices = []; try { const ss = SpreadsheetApp.getActive(); if (!ss.getSheetByName('공지사항')) ss.insertSheet('공지사항').appendRow(['날짜', '제목', '내용', '맨 위']);
+    notices = rows_('공지사항').filter(r => String(r['제목'] || r['내용'] || '').trim()).map(r => ({ at: r['날짜'] instanceof Date ? Utilities.formatDate(r['날짜'], TZ, 'M/d HH:mm') : String(r['날짜'] || ''), title: String(r['제목'] || ''), body: String(r['내용'] || ''), top: /^(예|y|o|1|true)$/i.test(String(r['맨 위'] || '').trim()) })).reverse(); } catch (x) {}
   const share = setting_('공유주소') || 'https:\/\/app.suzukimusickorea.org/camp/';
-  return Object.assign(G0, { ok: true, days, notice: setting_('공지'), teacherUrl: share + (setting_('테스트 로그인') ? (share.indexOf('?') < 0 ? '?test' : '&test') : ''), meals: (c.meals || []).map(m => ({ d: m.d, day: String(days[m.d] || ''), s: m.s, e: m.e, t: m.t, k: m.k })),
+  return Object.assign(G0, { ok: true, days, notices, notice: setting_('공지'), teacherUrl: share + (setting_('테스트 로그인') ? (share.indexOf('?') < 0 ? '?test' : '&test') : ''), meals: (c.meals || []).map(m => ({ d: m.d, day: String(days[m.d] || ''), s: m.s, e: m.e, t: m.t, k: m.k })),
     places: Object.keys(places).map(n => ({ name: n, loc: places[n] })), info,
     concerts: concerts.map(x => ({ name: x.name, d: x.d, day: String(days[x.d] || ''), cs: x.cs, room: x.room, list: (order[x.id] || []).map(pid => inf[pid]).filter(v => v && !v.x).map((v, i) => ({ n: i + 1, name: v.name, acad: v.acad, inst: v.inst, song: v.song })) })).filter(x => x.list.length) });
 }

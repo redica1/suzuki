@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261103-221954 -->
+<!-- build: 20261103-222112 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -440,7 +440,7 @@ document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest
   if(b.id==='sfGo'){const F=sfRead();if(!F.name.trim()){toast('이름을 넣어 주세요');return}if(!F.role){toast('역할을 골라 주세요');return}if(!F.gender){toast('성별을 골라 주세요');return}
     call('staffAdd',[{name:F.name,role:F.role,gender:F.gender,inst:F.inst,phone:F.phone,memo:F.memo,fam:F.fam}],r=>{S.sf={fam:[]};setData(r);toast(F.name+' 관계자로 등록했어요')},'등록하고 있어요…');return}
   if(d.sfcx){const no=d.sfcx;ask('관계자 접수를 취소할까요?',esc(no)+' 접수의 모든 사람을 취소해요. 입금 전 접수만 여기서 취소돼요.',()=>call('staffCancel',[no],r=>{setData(r);toast(no+' 취소했어요')},'취소하고 있어요…'),'취소하기');return}});
-const memTag=sb=>isGuestSb(sb)?'<span class="pill gst">비회원</span>':sb.acad==='관계자'?'<span class="pill info">관계자</span>':sb.intl?'<span class="pill info">해외</span>':'<span class="pill mem">회원</span>';
+const memTag=sb=>isGuestSb(sb)?'<span class="pill gst">비회원</span>':sb.acad==='관계자'?'<span class="pill info">관계자</span>':sb.intl?'<span class="pill info">해외</span>':'';
 function vSubs(){
   const q=S.q.trim();const mf=S.mf||'all';const F=[['all','전체'],['unpaid','입금 전·차액'],['rp','신고 확인 전'],['ok','입금 확인'],['over','더 냄']];
   const keep=p=>S.f==='all'||(S.f==='unpaid'&&p.status==='정상'&&pAmt(p)-(+p.paidAmt||0)>0)||(S.f==='rp'&&p.status==='정상'&&p.pay==='신고')||(S.f==='ok'&&+p.paidAmt>0)||(S.f==='over'&&p.status==='정상'&&(+p.paidAmt||0)>pAmt(p));
@@ -499,7 +499,7 @@ function acadGroups(subs,keep,q){const hit=sb=>S.f==='all'||sb.ppl.some(keep);co
   if(!keys.length)return '<div class="panel hint">해당하는 접수가 없어요.</div>';
   return keys.map(ac=>{const L=A[ac];const oa=S.openA[ac]!==undefined?S.openA[ac]:auto;
     const R={};L.forEach(sb=>(R[sb.round||'-']=R[sb.round||'-']||[]).push(sb));
-    return `<details class="panel acad" data-acad="${esc(ac)}" ${oa?'open':''}><summary class="spread"><div>${ac==='비회원'?'<span class="pill gst">비회원</span> <b style="font-size:18px">학부모 직접 접수</b>':`<span class="pill mem">회원</span> <b style="font-size:18px">${esc(ac)}</b>`} <span class="hint">${ac==='비회원'?'보호자':'교사'} ${[...new Set(L.map(sb=>sb.owner))].map(esc).join(', ')}</span></div><div class="row">${sum(L)}</div></summary>
+    return `<details class="panel acad" data-acad="${esc(ac)}" ${oa?'open':''}><summary class="spread"><div>${ac==='비회원'?'<span class="pill gst">비회원</span> <b style="font-size:18px">학부모 직접 접수</b>':`<b style="font-size:18px">${esc(ac)}</b>`} <span class="hint">${ac==='비회원'?'보호자':'교사'} ${[...new Set(L.map(sb=>sb.owner))].map(esc).join(', ')}</span></div><div class="row">${sum(L)}</div></summary>
       ${oa?Object.keys(R).sort().map(rd=>{const k=ac+'|'+rd,or=S.openR[k]!==undefined?S.openR[k]:auto;
         return `<details class="rnd" data-rnd="${esc(k)}" ${or?'open':''}><summary class="spread"><b>${esc(rd)}</b><div class="row">${sum(R[rd])}</div></summary>${or?R[rd].map(sb=>subBlock(sb,keep,q,subs)).join(''):''}</details>`}).join(''):''}
     </details>`}).join('')}
@@ -2284,6 +2284,6 @@ render();
   var q=0;new MutationObserver(function(){if(q)return;q=1;requestAnimationFrame(function(){q=0;setup();[].forEach.call(document.querySelectorAll('table.cflt'),function(t){var r=t.tHead&&t.tHead.rows[0];if(r)t.style.setProperty('--cfh1',r.offsetHeight+'px')})})}).observe(document.body,{childList:true,subtree:true});setup();
 })();
 </script>
-<div id="bldMark" hidden>빌드표시 20261103-221954 </div>
+<div id="bldMark" hidden>빌드표시 20261103-222112 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();</script>
 </body></html>

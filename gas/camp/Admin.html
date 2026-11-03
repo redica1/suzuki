@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261103-221851 -->
+<!-- build: 20261103-221918 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -1163,8 +1163,8 @@ function view(){
       ${ls.length?`<div class="tbl"><table><thead><tr><th>날짜</th><th>시간</th><th>교수</th><th>레슨실</th></tr></thead><tbody>${ls.map(x=>`<tr><td>${esc(days[x.d]||'')}</td><td class="num">${x.t}</td><td>${esc(x.pr)}</td><td>${esc((P.find(p=>p.name===x.pr)||{}).room||'')}</td></tr>`).join('')}</tbody></table></div>`:'<p class="cap" style="margin:0">아직 배정된 레슨이 없어요.</p>'}</div>`}).join('')}</div>`:'<p class="cap">찾는 학생이 없어요.</p>'):'<div class="note info">학생 이름을 넣으면 그 학생의 레슨 시간표가 나와요.</div>'}</div>`}
   const R=reqS.map(s=>({s,n:lessonsOf(s.id).length})).filter(x=>!A.needOnly||x.n<x.s.req).sort((a,b)=>(b.s.req-b.n)-(a.s.req-a.n)||a.s.acad.localeCompare(b.s.acad,'ko'));
   return `<div class="act">${head}<div class="row"><span class="pill info">신청한 학생 ${reqS.length}명</span><label class="row" style="gap:4px"><input type="checkbox" id="l_needOnly" ${A.needOnly?'checked':''}> 덜 배정된 학생만 보기 (${reqS.filter(s=>lessonsOf(s.id).length<s.req).length})</label></div>
-    <div class="panel tbl"><table><thead><tr><th>학생</th><th>학원</th><th>악기</th><th>진도</th><th>희망 교수</th><th class="r">신청</th><th class="r">배정</th><th>배정된 시간</th></tr></thead><tbody>
-    ${R.map(({s,n})=>`<tr><td><b>${esc(lesName(s.name))}</b></td><td>${s.acad==='비회원'?'':esc(s.acad)}</td><td>${esc(s.inst)}</td><td>${esc(s.prog||'-')}</td><td>${esc([s.p1,s.p2].filter(Boolean).join(' · ')||'-')}</td><td class="r num">${s.req}</td><td class="r num">${n<s.req?`<span class="pill due">${n}</span>`:n>s.req?`<span class="pill bad" title="신청보다 많아요 · 칸을 비워 주세요">${n}</span>`:n}</td><td class="cap">${lessonsOf(s.id).map(x=>esc((days[x.d]||'').replace(/\(.\)/,''))+' '+x.t+' '+esc(x.pr)).join(' / ')}</td></tr>`).join('')||'<tr><td colspan="9" class="hint">해당하는 학생이 없어요.</td></tr>'}</tbody></table></div></div>`}
+    <div class="panel tbl"><table><thead><tr><th style="text-align:left">학생</th><th style="text-align:center">학원</th><th style="text-align:center">악기</th><th style="text-align:left">진도</th><th style="text-align:center">희망 교수</th><th style="text-align:center">신청</th><th style="text-align:center">배정</th><th style="text-align:left">배정된 시간</th></tr></thead><tbody>
+    ${R.map(({s,n})=>`<tr><td style="text-align:left"><b>${esc(lesName(s.name))}</b></td><td style="text-align:center">${s.acad==='비회원'?'':esc(s.acad)}</td><td style="text-align:center">${esc(s.inst)}</td><td style="text-align:left">${esc(s.prog||'-')}</td><td style="text-align:center">${esc([s.p1,s.p2].filter(Boolean).join(' · ')||'-')}</td><td class="num" style="text-align:center">${s.req}</td><td class="num" style="text-align:center">${n<s.req?`<span class="pill due">${n}</span>`:n>s.req?`<span class="pill bad" title="신청보다 많아요 · 칸을 비워 주세요">${n}</span>`:n}</td><td class="cap" style="text-align:left">${lessonsOf(s.id).map(x=>esc((days[x.d]||'').replace(/\(.\)/,''))+' '+x.t+' '+esc(x.pr)).join(' / ')}</td></tr>`).join('')||'<tr><td colspan="9" class="hint">해당하는 학생이 없어요.</td></tr>'}</tbody></table></div></div>`}
 function setCell(pid){const {d,t,pr}=A.sel;const before=L.rows.slice();L.rows=L.rows.filter(x=>!(x.d===d&&x.t===t&&x.pr===pr));if(pid)L.rows.push({d,t,pr,pid});A.sel=null;render();
   run('lessonSet',[{d,t,pr,pid:pid||''}],r=>{L.rows=r.rows;render()},m=>{L.rows=before;render();toast('저장하지 못했어요 · '+m)})}
 document.addEventListener('click',ev=>{if(S.tab!=='tt')return;const b=ev.target.closest('button');if(!b)return;const d=b.dataset;
@@ -2283,6 +2283,6 @@ render();
   var q=0;new MutationObserver(function(){if(q)return;q=1;requestAnimationFrame(function(){q=0;setup();[].forEach.call(document.querySelectorAll('table.cflt'),function(t){var r=t.tHead&&t.tHead.rows[0];if(r)t.style.setProperty('--cfh1',r.offsetHeight+'px')})})}).observe(document.body,{childList:true,subtree:true});setup();
 })();
 </script>
-<div id="bldMark" hidden>빌드표시 20261103-221851 </div>
+<div id="bldMark" hidden>빌드표시 20261103-221918 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();</script>
 </body></html>

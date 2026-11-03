@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261103-221538 -->
+<!-- build: 20261103-221851 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -1154,7 +1154,7 @@ function view(){
   if(A.mode==='stu'){const q=A.stu.trim();const hits=q?all.filter(s=>s.name===q||s.name.includes(q)||s.acad.includes(q)||enName(s.name).toLowerCase().includes(q.toLowerCase())).slice(0,20):[];
     const lst=reqS.slice().sort((a,b)=>a.acad.localeCompare(b.acad,'ko')||a.name.localeCompare(b.name,'ko'));
     if(!q)return `<div class="act">${head}<div class="row"><input type="search" id="l_stu" value="" placeholder="학생 이름 · 학원 · 영문 이름" style="width:min(300px,100%)"><span class="hint">추가레슨 신청한 학생 ${lst.length}명 · 이름을 누르면 그 학생 시간표</span></div>
-      <div class="panel tbl"><table><thead><tr><th>학생</th><th>학원</th><th>악기</th><th>진도</th><th>희망 교수</th><th class="r">신청</th><th class="r">배정</th></tr></thead><tbody>${lst.map(s=>{const n=lessonsOf(s.id).length;return `<tr><td><button type="button" class="evlink" data-lstu="${esc(s.id)}">${esc(lesName(s.name))}</button></td><td>${s.acad==='비회원'?'':esc(s.acad)}</td><td>${esc(s.inst)}</td><td>${esc(s.prog||'-')}</td><td>${esc([s.p1,s.p2].filter(Boolean).join(' · ')||'-')}</td><td class="r num">${s.req}</td><td class="r num">${n<s.req?`<span class="pill due">${n}</span>`:n}</td></tr>`}).join('')||'<tr><td colspan="8" class="hint">추가레슨을 신청한 학생이 없어요.</td></tr>'}</tbody></table></div></div>`;
+      <div class="panel tbl"><table><thead><tr><th style="text-align:left">학생</th><th style="text-align:center">학원</th><th style="text-align:center">악기</th><th style="text-align:left">진도</th><th style="text-align:center">희망 교수</th><th style="text-align:center">신청</th><th style="text-align:center">배정</th></tr></thead><tbody>${lst.map(s=>{const n=lessonsOf(s.id).length;return `<tr><td><button type="button" class="evlink" data-lstu="${esc(s.id)}">${esc(lesName(s.name))}</button></td><td style="text-align:center">${s.acad==='비회원'?'':esc(s.acad)}</td><td style="text-align:center">${esc(s.inst)}</td><td style="text-align:left">${esc(s.prog||'-')}</td><td style="text-align:center">${esc([s.p1,s.p2].filter(Boolean).join(' · ')||'-')}</td><td class="num" style="text-align:center">${s.req}</td><td class="num" style="text-align:center">${n<s.req?`<span class="pill due">${n}</span>`:n}</td></tr>`}).join('')||'<tr><td colspan="8" class="hint">추가레슨을 신청한 학생이 없어요.</td></tr>'}</tbody></table></div></div>`;
     const one=A.stuId&&SB[A.stuId]&&SB[A.stuId].name===q?[SB[A.stuId]]:hits;
     return `<div class="act">${head}<div class="row"><input type="search" id="l_stu" value="${esc(A.stu)}" placeholder="학생 이름 · 학원 · 영문 이름" style="width:min(300px,100%)"><button class="btn small" type="button" id="l_stuAll">신청 학생 목록</button></div>
     ${q?(one.length?`<div class="g2">${one.map(s=>{const ls=lessonsOf(s.id).slice().sort((a,b)=>a.d-b.d||mins(a.t)-mins(b.t));
@@ -2283,6 +2283,6 @@ render();
   var q=0;new MutationObserver(function(){if(q)return;q=1;requestAnimationFrame(function(){q=0;setup();[].forEach.call(document.querySelectorAll('table.cflt'),function(t){var r=t.tHead&&t.tHead.rows[0];if(r)t.style.setProperty('--cfh1',r.offsetHeight+'px')})})}).observe(document.body,{childList:true,subtree:true});setup();
 })();
 </script>
-<div id="bldMark" hidden>빌드표시 20261103-221538 </div>
+<div id="bldMark" hidden>빌드표시 20261103-221851 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();</script>
 </body></html>

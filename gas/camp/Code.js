@@ -1,4 +1,4 @@
-/* build: 20261103-192034 */
+/* build: 20261103-192922 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -2307,8 +2307,51 @@ function acadRooms_(acad) {
 function findStudents_() { const all = [];
   loadSubs_().forEach(sb => sb.ppl.forEach(p => { if (p.status === '취소') return; const k = p.id.slice(sb.no.length + 1), i = (sb.form && sb.form.info && sb.form.info[k]) || {};
     const type = p.type || i.type || ''; if (!['학생', '회원의 악기하는 자녀', '비회원 학생', '해외 학생'].includes(type)) return;
-    all.push({ id: p.id, name: p.name, acad: sb.acad, inst: p.inst || i.inst || '', teacher: i.teacher || '', prog: i.prog || '', concert: i.concert && i.concert !== '없음' ? i.concert : '' }); }));
+    all.push({ id: p.id, name: p.name, acad: sb.acad, owner: String(sb.owner || ''), by: String(i.by || ''), mc: Array.isArray(i.mc) ? i.mc : [], inst: p.inst || i.inst || '', teacher: i.teacher || '', prog: i.prog || '', concert: i.concert && i.concert !== '없음' ? i.concert : '' }); }));
   return all; }
+/* 학생 한 명의 캠프 일정 카드 (일정 찾기 · 우리 아이 공통): 그룹레슨 · 개인레슨 · 마스터클래스 · 음악회 · 학원 방 */
+function kidCtx_() { const c = actCfg_(), days = c.days || [], P = profs_(), evs = actEvents_(); const pn = id => ((c.people || []).find(p => p.id === id) || { n: String(id).replace(/^[CP]:/, '') }).n;
+  return { days, dl: d => String(days[d] || ''), groupsOf: grpMatch_(), L: lessons_(), roomOf: n => (P.find(p => p.name === n) || {}).room || '',
+    mcs: evs.filter(e => e.title === '마스터클래스').map(e => ({ id: e.id, who: [e.sub].concat(e.ppl.map(p => pn(p.n))).filter(Boolean), d: e.d, s: e.s, e: e.e, room: e.room })) }; }
+function kidCard_(x, K) {
+  const G = {}; K.groupsOf(x.inst, x.prog).forEach(g => { const kk = g.sub + '|' + g.room + '|' + g.s + '|' + g.e; (G[kk] = G[kk] || { id: g.id, sub: g.sub, room: g.room, s: g.s, e: g.e, d: [] }).d.push(g.d); });
+  const nz = v => String(v || '').replace(/\s+/g, '');
+  const mc = (x.mc || []).map(m => ({ pr: m, at: K.mcs.filter(e => e.who.some(w => nz(w).includes(nz(m)) || nz(m).includes(nz(w)))).map(e => ({ id: e.id, d: e.d, day: K.dl(e.d), t: e.s, e: e.e, room: e.room })) }));
+  return { name: x.name, acad: x.acad, inst: x.inst, teacher: x.teacher, by: x.by, prog: x.prog, concert: x.concert, rooms: acadRooms_(x.acad),
+    grp: Object.values(G).map(g => ({ id: g.id, sub: g.sub, room: g.room, time: g.s + (g.e ? '~' + g.e : ''), days: g.d.sort((a, b) => a - b).map(K.dl), d: g.d.slice().sort((a, b) => a - b), s: g.s, e: g.e })),
+    les: K.L.filter(l => l.pid === x.id).sort((a, b) => a.d - b.d || String(a.t).localeCompare(String(b.t))).map(l => ({ d: l.d, day: K.dl(l.d), t: l.t, pr: l.pr, room: K.roomOf(l.pr) })), mc };
+}
+function findWho_(tok) { const v = String(findTok_(tok)).split('|'); return { nm: v[0] || '', p4: v[1] || '' }; }
+/** 우리 아이: 보호자가 넣은 [{name, by(출생연도)}] + 비회원 보호자로 접수한 아이(이름 · 번호 뒤 4자리가 같으면 자동) */
+function findMyKids(list, tok) {
+  const G0 = findGate_(); if (!G0.open) return G0; let me; try { me = findWho_(tok); } catch (e) { return { ok: false, needIn: true, msg: '처음 화면에서 이름 · 휴대전화를 넣어 주세요.' }; }
+  const nz = v => String(v || '').replace(/\s+/g, ''), all = findStudents_(), K = kidCtx_(), out = [], seen = {}, miss = [];
+  const push = (x, how) => { if (seen[x.id]) return; seen[x.id] = 1; out.push(Object.assign(kidCard_(x, K), { how })); };
+  all.filter(x => x.acad === GUEST_ACAD && nz(x.owner) === nz(me.nm) + '(' + me.p4 + ')').forEach(x => push(x, 'auto'));
+  (Array.isArray(list) ? list : []).slice(0, 8).forEach(q => { const n = nz(q && q.name), by = String((q && q.by) || '').replace(/\D/g, '');
+    const H = all.filter(x => nz(x.name) === n && (!by || String(x.by).replace(/\D/g, '') === by)); if (!H.length) miss.push({ name: q.name, by }); H.forEach(x => push(x, 'add')); });
+  return Object.assign(G0, { ok: true, kids: out, miss });
+}
+/** 캠프 페이지 첫 화면 정보: 공지 · 식사 · 장소 · 연락처 · 음악회 순서 */
+function campHome(tok) {
+  const G0 = findGate_(); if (!G0.open) return G0; try { findTok_(tok); } catch (e) { return { ok: false, needIn: true, msg: '처음 화면에서 이름 · 휴대전화를 넣어 주세요.' }; }
+  const c = actCfg_(), days = c.days || [];
+  const places = {}; Object.keys(c.rooms || {}).forEach(d => (c.rooms[d] || []).forEach(r => { if (r[0] && !places[r[0]]) places[r[0]] = r[1] || ''; }));
+  const info = ['운영실', '운영실 연락처', '의무실', '의무실 연락처', '식당', '주차', '와이파이'].map(k => ({ k, v: setting_(k) })).filter(x => x.v);
+  const evs = actEvents_(), linked = (Array.isArray(c.kinds) ? c.kinds : ACT_KINDS).filter(k => k.link).map(k => k.n);
+  const concerts = Array.isArray(c.concerts) ? c.concerts : evs.filter(e => e.type === '오후음악회' || (linked.includes(e.title) && (!e.stage || e.stage === '본공연'))).map(e => ({ id: 'c' + e.id, name: evName_(e), d: e.d, cs: e.s, room: e.room }));
+  const inf = {}; loadSubs_().forEach(sb => sb.ppl.forEach(p => { const k = p.id.slice(sb.no.length + 1), i = (sb.form && sb.form.info && sb.form.info[k]) || {}; inf[p.id] = { name: p.name, acad: sb.acad, inst: p.inst || i.inst || '', song: i.other ? String((i.oc || '') + ' ' + (i.ot || '')).trim() : String(i.song || ''), x: p.status === '취소' }; }));
+  const order = c.conorder || {};
+  return Object.assign(G0, { ok: true, days, notice: setting_('공지'), meals: (c.meals || []).map(m => ({ d: m.d, day: String(days[m.d] || ''), s: m.s, e: m.e, t: m.t, k: m.k })),
+    places: Object.keys(places).map(n => ({ name: n, loc: places[n] })), info,
+    concerts: concerts.map(x => ({ name: x.name, d: x.d, day: String(days[x.d] || ''), cs: x.cs, room: x.room, list: (order[x.id] || []).map(pid => inf[pid]).filter(v => v && !v.x).map((v, i) => ({ n: i + 1, name: v.name, acad: v.acad, inst: v.inst, song: v.song })) })).filter(x => x.list.length) });
+}
+/** 캠프 페이지 요청 · 문의: 일정 찾기 이름 · 번호로 글쓰기 / 내 글 보기 */
+function findIssue(d, tok) { let me; try { me = findWho_(tok); } catch (e) { return { ok: false, needIn: true, msg: '처음 화면에서 이름 · 휴대전화를 넣어 주세요.' }; }
+  d = d || {}; const r = submitIssue('', { name: me.nm, phone: me.p4, text: d.text, where: '캠프 페이지' + (d.where ? ' · ' + String(d.where).slice(0, 20) : ''), file: d.file, acad: d.acad || '' });
+  return Object.assign({ ok: true }, r || {}, { mine: findMyIssues_(me) }); }
+function findMyIssues_(me) { return issues_().filter(x => x.name === me.nm && x.p4 === me.p4).reverse().map(x => ({ no: x.no, at: x.at, where: x.where, text: x.text, state: x.state, reply: x.reply })); }
+function findMyIssues(tok) { let me; try { me = findWho_(tok); } catch (e) { return { ok: false, needIn: true }; } return { ok: true, mine: findMyIssues_(me) }; }
 /** 이름으로 찾기: 학생이면 그 아이 일정, 교사 · 교수면 그 사람 스케줄 (누가 누군지 서로 알게, 11-03) */
 function findKid(q, tok) {
   const G0 = findGate_(); if (!G0.open) return G0; const name = G0.name; try { findTok_(tok); } catch (e) { return { ok: false, needIn: true, msg: '처음 화면에서 이름 · 휴대전화를 넣어 주세요.' }; }
@@ -2319,11 +2362,7 @@ function findKid(q, tok) {
   const pick = arr => { let h = arr.filter(x => nm(x.name) === nq); if (!h.length) h = arr.filter(x => nm(x.name).includes(nq)); return h; };
   const dl = d => String(days[d] || '');
   const all = findStudents_(), hits = pick(all);
-  const kids = hits.slice(0, 20).map(x => {
-    const G = {}; groupsOf(x.inst, x.prog).forEach(g => { const kk = g.sub + '|' + g.room + '|' + g.s + '|' + g.e; (G[kk] = G[kk] || { id: g.id, sub: g.sub, room: g.room, s: g.s, e: g.e, d: [] }).d.push(g.d); });
-    return { name: x.name, acad: x.acad, inst: x.inst, teacher: x.teacher, concert: x.concert, rooms: acadRooms_(x.acad),
-      grp: Object.values(G).map(g => ({ id: g.id, sub: g.sub, room: g.room, time: g.s + (g.e ? '~' + g.e : ''), days: g.d.sort((a, b) => a - b).map(dl) })),
-      les: L.filter(l => l.pid === x.id).sort((a, b) => a.d - b.d || String(a.t).localeCompare(String(b.t))).map(l => ({ day: dl(l.d), t: l.t, pr: l.pr, room: roomOf(l.pr) })) }; });
+  const K = kidCtx_(), kids = hits.slice(0, 20).map(x => kidCard_(x, K));
   /* 교사 · 교수 */
   const ppl = (c.people || []).map(p => ({ id: p.id, name: p.n, acad: p.acad || p.a || '', inst: p.inst || p.i || '' }));
   const sById = {}; all.forEach(s => sById[s.id] = s);

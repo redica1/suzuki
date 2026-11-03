@@ -1,4 +1,4 @@
-/* build: 20261103-192034 */
+/* build: 20261103-192922 */
 function vAuthPick(){return `<section class="sec"><h2>접수 시작</h2>
   <p class="lede">어떻게 접수하시나요?</p>
   <div class="pick2">
@@ -14,12 +14,6 @@ function vAuthPick(){return `<section class="sec"><h2>접수 시작</h2>
 const DOMAINS=['naver.com','gmail.com','daum.net','hanmail.net','kakao.com','nate.com','icloud.com','hotmail.com'];
 function emailBox(id,val){val=String(val||'');const at=val.indexOf('@'),u=at>=0?val.slice(0,at):val,d=at>=0?val.slice(at+1):'',known=DOMAINS.includes(d);
   return `<div class="f"><span>이메일</span><div class="row" style="flex-wrap:nowrap;gap:6px"><input type="text" id="${id}U" value="${esc(u)}" placeholder="아이디" autocomplete="username" autocapitalize="off" spellcheck="false" aria-label="이메일 아이디" style="flex:1 1 45%;min-width:0"><span style="flex:none;color:var(--muted)">@</span><select id="${id}D" data-dom="${id}" aria-label="이메일 주소" style="flex:1 1 55%;min-width:0"><option value="-" ${d?'':'selected'}>선택하기</option>${DOMAINS.map(x=>`<option ${x===d&&known?'selected':''}>${x}</option>`).join('')}<option value="" ${d&&!known?'selected':''}>직접 입력</option></select></div><input type="text" id="${id}X" value="${esc(known?'':d)}" placeholder="예: school.ac.kr" autocapitalize="off" spellcheck="false" aria-label="이메일 주소 직접 입력" ${known||!d?'hidden':''} style="margin-top:6px"></div>`}
-/* 비밀번호 저장하기: 이 기기 브라우저에만 저장 (공용 PC는 체크하지 않기) */
-function svGet(k){try{return JSON.parse(localStorage.getItem('svLogin_'+k)||'null')}catch(e){return null}}
-function svSet(k,id,pw){var c=document.getElementById('svPw_'+k);if(!c)return;try{if(c.checked)localStorage.setItem('svLogin_'+k,JSON.stringify({id:id,pw:pw}));else localStorage.removeItem('svLogin_'+k)}catch(e){}}
-function svBox(k){return '<label class="svpw" style="display:flex;align-items:center;gap:6px;font-size:14px;margin:2px 0 10px;cursor:pointer;font-weight:500"><input type="checkbox" id="svPw_'+k+'" '+(svGet(k)?'checked':'')+' style="width:18px;height:18px;margin:0;flex:none"> 비밀번호 저장하기 <span style="color:var(--muted);font-size:12.5px;font-weight:400">이 기기에만 · 공용 PC는 체크하지 마세요</span></label>'}
-function svId(k,d){var s=svGet(k);return s&&s.id?s.id:(d||'')}
-function svPw(k){var s=svGet(k);return s&&s.pw?s.pw:''}
 function emailOf(id){const g=k=>((document.getElementById(id+k)||{}).value||'').trim(),u=g('U'),dv=g('D'),d=dv==='-'?'':(dv||g('X'));if(u.includes('@'))return u.toLowerCase();return u&&d?(u+'@'+d.replace(/^@/,'')).toLowerCase():''}
 function vStaffLogin(){return `<section class="sec"><h2>관계자 로그인</h2>
   <p class="lede">초빙교수 · 반주자 · 지휘자 · 통역 · 초청강사 · 스태프는 협회 회원관리에 <b>「관계자」</b>로 가입한 이메일 · 비밀번호로 들어가요. 동반 가족도 함께 접수할 수 있어요.</p>

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261103-191150 -->
+<!-- build: 20261103-192922 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -197,12 +197,6 @@ function needTip(o){return o['확인']==='확인 필요'?' <span class="tip need
 function dupNames(list){var c={};list.forEach(function(o){var k=o['이름'];c[k]=(c[k]||0)+1});return c}
 
 /* ---------- 로그인 ---------- */
-/* 비밀번호 저장하기: 이 기기 브라우저에만 저장 (공용 PC는 체크하지 않기) */
-function svGet(k){try{return JSON.parse(localStorage.getItem('svLogin_'+k)||'null')}catch(e){return null}}
-function svSet(k,id,pw){var c=document.getElementById('svPw_'+k);if(!c)return;try{if(c.checked)localStorage.setItem('svLogin_'+k,JSON.stringify({id:id,pw:pw}));else localStorage.removeItem('svLogin_'+k)}catch(e){}}
-function svBox(k){return '<label class="svpw" style="display:flex;align-items:center;gap:6px;font-size:14px;margin:2px 0 10px;cursor:pointer;font-weight:500"><input type="checkbox" id="svPw_'+k+'" '+(svGet(k)?'checked':'')+' style="width:18px;height:18px;margin:0;flex:none"> 비밀번호 저장하기 <span style="color:var(--muted);font-size:12.5px;font-weight:400">이 기기에만 · 공용 PC는 체크하지 마세요</span></label>'}
-function svId(k,d){var s=svGet(k);return s&&s.id?s.id:(d||'')}
-function svPw(k){var s=svGet(k);return s&&s.pw?s.pw:''}
 function vLogin(){return '<div class="login"><form class="panel" id="loginF"><h2 style="font-family:var(--display);font-size:23px">관리자 로그인</h2>'+
   '<p class="cap" style="font-size:15.5px;color:var(--muted)">아이디·비밀번호는 회원관리 DB 시트 「설정」 탭에 있어요.</p>'+
   '<label class="f" for="lid">아이디<input type="text" id="lid" value="'+esc(svId('a','admin'))+'" autocomplete="username"></label>'+
@@ -1235,6 +1229,6 @@ if(e.target.dataset&&e.target.dataset.pck){S.pSel=S.pSel||{};if(e.target.checked
 })();
 </script>
 <script>try{window.top.postMessage('suzuki-ready','*')}catch(e){}</script>
-<div id="bldMark" hidden>빌드표시 20261103-191150 </div>
+<div id="bldMark" hidden>빌드표시 20261103-192922 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();</script>
 </body></html>

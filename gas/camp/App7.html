@@ -1,4 +1,4 @@
-/* build: 20261103-192034 */
+/* build: 20261103-192922 */
     ps.forEach(p=>{p.pay='신고';p.rep=rep;delete S.rpRow[p.id]});S.afterSave=()=>repDone(ps.map(p=>p.id));subSave();S.rp=null;S.rpOpen=false;S.rpMemo=undefined;render();toast(`${ps.length}명 입금 신고를 보냈어요 · 운영진이 확인하면 「입금 확인」으로 바뀌어요`);return}
   if(b.id==='rpFill'){const n=document.getElementById('rpAllN').value.trim(),dd=document.getElementById('rpAllD').value;S.rpAllN=n;S.rpAllD=dd;const sel=S.rp||[];
     if(!n&&!dd){toast('적용할 입금자명이나 입금일을 적어 주세요');return}unpaidPpl().filter(x=>sel.includes(x.p.id)).forEach(({p})=>{const v=rpv(p);if(n)v.n=n;if(dd)v.d=dd});render();toast(`선택한 ${sel.length}명에게 적용했어요`);return}
@@ -218,29 +218,9 @@ document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest
   if(!S.ttEv[id])api('ttEventPeople',[id],r=>{S.ttEv[id]=r||{ok:false};render()},()=>{S.ttEv[id]={ok:false,msg:'불러오지 못했어요'};render()},'');render();ttDetShow()});
 /* 우리 학원 전체: 선생님 줄을 누르면 그 선생님 접수만 */
 document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-aowner]');if(!t||e.target.closest('th'))return;const k=t.dataset.aowner;S.aOwner=S.aOwner===k?null:k;S.mtab='전체';render();if(S.aOwner){const x=document.querySelector('.note.info [data-aowner]');if(x)x.closest('.note').scrollIntoView({behavior:'smooth',block:'start'})}});
-/* 프로그램표 (장소 × 시간, 10분 = 한 칸, 보기만) — 전체 일정 · 내 일정 · 우리 학생 레슨이 같이 씀
- * o = {rooms:[[이름, 위치]], attr:'data-ttev'|'data-ttsel', sel:고른 id, detail:x=>HTML, hint} */
-function ttGrid(L,o){const mm=t=>{const q=String(t||'').split(':');return (+q[0]||0)*60+(+q[1]||0)};
-  const it=L.map(x=>{const s=mm(x.s);let e=mm(x.e);if(e<=s)e=s+30;return Object.assign({},x,{_s:s,_e:e})});
-  const lo=Math.floor(Math.min(...it.map(x=>x._s))/60)*60,hi=Math.ceil(Math.max(...it.map(x=>x._e))/60)*60,R=(hi-lo)/10;
-  const cfg=o.rooms||[],loc={};cfg.forEach(r=>loc[r[0]]=r[1]||'');it.forEach(x=>{if(x.loc&&!loc[x.room])loc[x.room]=x.loc});
-  const rooms=cfg.map(r=>r[0]);it.forEach(x=>{const r=x.room||'장소 미정';if(!rooms.includes(r))rooms.push(r)});
-  const used=rooms.filter(r=>it.some(x=>(x.room||'장소 미정')===r));
-  const ci={};used.forEach((r,i)=>ci[r]=i+2);
-  /* 같은 장소에서 시간이 겹치면 칸을 나눠 나란히 */
-  used.forEach(r=>{const X=it.filter(x=>(x.room||'장소 미정')===r).sort((a,b)=>a._s-b._s);let grp=[],end=-1;const flush=()=>{const lanes=[];grp.forEach(x=>{let k=lanes.findIndex(e=>e<=x._s);if(k<0){k=lanes.length;lanes.push(0)}lanes[k]=x._e;x._k=k});grp.forEach(x=>x._n=lanes.length);grp=[]};
-    X.forEach(x=>{if(x._s>=end)flush();grp.push(x);end=Math.max(end,x._e)});flush()});
-  const hh=m=>String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0');
-  let h=`<div class="ttgw"><div class="ttg" data-r="${R}" style="grid-template-columns:54px ${used.map(r=>UI.gridW(r)+'px').join(' ')};grid-template-rows:40px repeat(${R},${UI.gridH()}px)">`;
-  h+=`<div class="ttgh ttgk" style="grid-column:1;grid-row:1">시간</div>`+used.map(r=>`<div class="ttgh" data-col="${esc(r)}" style="grid-column:${ci[r]};grid-row:1"><b>${esc(r)}</b>${loc[r]?`<small>${esc(loc[r])}</small>`:''}</div>`).join('');
-  for(let m=lo;m<hi;m+=30){const row=(m-lo)/10+2;h+=`<div class="ttgt${m%60?' half':''}" style="grid-column:1;grid-row:${row}/span 3">${hh(m)}</div>`;used.forEach(r=>h+=`<div class="ttgc${m%60?' half':''}" style="grid-column:${ci[r]};grid-row:${row}/span 3"></div>`)}
-  h+=it.map(x=>{const r0=Math.floor((x._s-lo)/10)+2,r1=Math.max(r0+1,Math.ceil((x._e-lo)/10)+2);const on=o.sel===x.id;
-    return `<button type="button" title="${esc(x.title)} · ${esc(x.s)}" class="ttge${x.mine?' tmine':''}${on?' tsel':''} k-${x.kind==='개인레슨'?'les':/그룹레슨|마스터|레슨|연수/.test(x.kind+x.title)?'grp':'con'}" ${o.attr||'data-ttev'}="${esc(x.id)}" style="grid-column:${ci[x.room||'장소 미정']};grid-row:${r0}/${r1}${x._n>1?`;width:calc(${100/x._n}% - 4px);margin-left:calc(${100*x._k/x._n}% + 2px);margin-right:0;justify-self:start`:''}">${x.tag?`<span class="ttme">${esc(x.tag)}</span>`:''}<b>${esc(x.title)}</b><small>${esc(x.s)}${x.e&&x.e!==x.s?'~'+esc(x.e):''}</small>${x.mine?`<span class="ttme">내 일정${x.role?' · '+esc(x.role):''}</span>`:''}</button>`}).join('');
-  h+='</div></div>';
-  return h}
-/* 고른 칸의 사람 (표 위, 날짜 칩 위에) */
-function ttDet(L,o){const sel=L.find(x=>x.id===o.sel);
-  return sel?`<div class="ttpop" data-ttclose="1"><div class="panel ttdet" role="dialog" aria-modal="true"><div class="spread" style="align-items:flex-start;gap:8px"><div><b style="font-size:17px">${esc(sel.title)}</b><div class="hint">${esc(sel.s)}${sel.e&&sel.e!==sel.s?' ~ '+esc(sel.e):''} · ${esc(sel.room||'장소 미정')}</div></div><button type="button" class="btn small ghost" data-ttclose="1" aria-label="닫기">닫기</button></div><div style="margin-top:10px;line-height:1.7">${o.detail(sel)}</div></div></div>`:''}
+/* 프로그램표 · 고른 칸 팝업은 공통 라이브러리(UiLib)의 UI.grid · UI.gridDet */
+function ttGrid(L,o){return UI.grid(L,o)}
+function ttDet(L,o){return UI.gridDet(L,o)}
 /* 날짜 칩 (시간표 탭 공통): 숫자 = 그날 칸 수 */
 function ttDays(days,D,cnt){return `<div class="seg ttdays" role="group" aria-label="날짜" style="margin:6px 0 10px">${days.map((dl,d)=>`<button type="button" data-ttday="${d}" aria-pressed="${d===D}">${esc(dl)}${cnt?' '+cnt(d):''}</button>`).join('')}</div>`}
 /* 내 일정 · 우리 학생 레슨을 프로그램표로 */

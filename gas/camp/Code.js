@@ -1,4 +1,4 @@
-/* build: 20261103-181431 */
+/* build: 20261103-181536 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -2403,7 +2403,7 @@ function myTimetable(token) {
     const mineSub = s.sb.owner === u.name, myPupil = nm(s.i.teacher) === nm(u.name) && u.acads.includes(s.sb.acad), sameAcad = u.acads.includes(s.sb.acad);
     if (!mineSub && !myPupil && !sameAcad) return;
     const inst = s.p.inst || s.i.inst || '';
-    stu.push({ name: s.p.name, acad: s.sb.acad, inst, teacher: s.i.teacher || '', req: +s.i.lessons || 0, mine: mineSub || myPupil, prog: s.i.prog || '', grp: groupsOf(inst, s.i.prog), lessons: L.filter(x => x.pid === id).map(x => ({ d: x.d, t: x.t, pr: x.pr, room: roomOf(x.pr) })) }); });
+    stu.push({ name: s.p.name, acad: s.sb.acad, inst, teacher: s.i.teacher || '', req: +s.i.lessons || 0, mine: mineSub || myPupil, prog: s.i.prog || '', mc: Array.isArray(s.i.mc) ? s.i.mc : (s.i.mc ? [String(s.i.mc)] : []), grp: groupsOf(inst, s.i.prog), lessons: L.filter(x => x.pid === id).map(x => ({ d: x.d, t: x.t, pr: x.pr, room: roomOf(x.pr) })) }); });
   stu.sort((a, b) => a.acad.localeCompare(b.acad) || a.name.localeCompare(b.name));
   /* 마스터클래스 일정 (11-03): 교사 일정 종류 「마스터클래스」, 교수 = 그 일정 사람 · 세부 이름 */
   const mcs = actEvents_().filter(e => e.title === '마스터클래스').map(e => ({ who: [e.sub].concat(e.ppl.map(p => pn(p.n))).filter(Boolean), d: e.d, s: e.s, e: e.e, room: e.room }));

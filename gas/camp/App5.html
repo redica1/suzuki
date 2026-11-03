@@ -1,4 +1,4 @@
-/* build: 20261103-181431 */
+/* build: 20261103-181536 */
   if(!open.length) return MY_SUBS.length?`<div class="panel rp">${bankHTML()}<span class="hint">지금 입금할 금액이 없어요.</span></div>`:'';
   /* 평소엔 한 줄로 접어 둠: 「입금 신고하기」를 누르면 펼침 (11-03) */
   if(!S.rpOpen){const due=open.reduce((t,x)=>t+dueOf(x.p),0);return `<div class="panel rp">${bankHTML()}<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><span><b>입금 필요 ${open.length}명</b> · <b class="num">${won(due)}</b> <span class="hint">입금한 뒤 알려 주세요</span></span><button class="btn primary" type="button" data-rpopen="1">입금 신고하기</button></div></div>`}
@@ -182,7 +182,7 @@ function vMyTT(){const T=S.tt;
   if(!T.open)S.ttTab='room';
   const days=T.days||[],mine=(T.mine||[]).slice().sort((a,b)=>a.d-b.d||tmin(a.t)-tmin(b.t));
   const tab=S.ttTab||'me';
-  const seg=!T.open?'<p class="hint">시간표는 아직 공개 전이에요. 방 정보가 먼저 공개됐어요.</p>':`<div class="seg" role="group" aria-label="보기" style="margin:8px 0"><button type="button" data-tttab="all" aria-pressed="${tab==='all'}">전체 일정</button><button type="button" data-tttab="me" aria-pressed="${tab==='me'}">내 일정 ${mine.length}</button><button type="button" data-tttab="stu" aria-pressed="${tab==='stu'}">우리 학생 레슨 ${(T.students||[]).length}명</button><button type="button" data-tttab="room" aria-pressed="${tab==='room'}">우리 방 ${(T.rooms||[]).length}</button></div>`;
+  const seg=!T.open?'<p class="hint">시간표는 아직 공개 전이에요. 방 정보가 먼저 공개됐어요.</p>':`<div class="seg" role="group" aria-label="보기" style="margin:8px 0"><button type="button" data-tttab="all" aria-pressed="${tab==='all'}">전체 일정</button><button type="button" data-tttab="me" aria-pressed="${tab==='me'}">내 일정 ${mine.length}</button><button type="button" data-tttab="stu" aria-pressed="${tab==='stu'}">우리 학생 레슨 ${ttStu(T).length}명</button><button type="button" data-tttab="room" aria-pressed="${tab==='room'}">우리 방 ${(T.rooms||[]).length}</button></div>`;
   if(tab==='all')return head+seg+ttAllHTML()+'</section>';
   if(tab==='room'){const R=T.rooms||[];return head+seg+`<p class="lede">우리 학원이 쓰는 숙소 방이에요. 방마다 누가 들어갈지는 원장님이 정해 알려 주세요. 방 비밀번호는 비번 수신자에게 문자로 가요.</p>
     ${R.length?R.map(r=>`<div class="panel ttstu"><div class="spread"><b class="num" style="font-size:20px">${esc(r.no)}</b><span class="hint">${esc(r.bld)} ${esc(r.fl)}${r.type?' · '+esc(r.type):''}</span></div>

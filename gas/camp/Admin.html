@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261103-215810 -->
+<!-- build: 20261103-220531 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -1350,9 +1350,9 @@ function vPlan(){const F=floors();if(A.lyF>=F.length)A.lyF=0;const Fl=F[A.lyF];
       const bs=[...String(bd||'0000')].map(n=>n==='0'?'none':`${n==='3'?3:n==='2'?2:1}px solid #333`);let text=t,bgc=bg,cls='',attr='';
       const rno=roomAt[r+','+c],lno=labelAt[r+','+c];
       if(rno){const q=byNo[rno];if(q&&q.pub)text=t+' *';if(!Fl.rooms[rno][2]){cls='lyroom'+(A.sel===rno?' on':'');attr=` data-rroom="${rno}" title="${rno} 방 편집"`}}
-      if(lno){const q=byNo[lno];if(q&&used(q)){text=[q.occ.map(o=>oLab(o)+(o.n?' '+o.n:'')).join('\n'),q.kind,`${peak(q)}/${q.cap}`,q.days&&q.days.length&&q.days.length<allDays().length?q.days.map(dayLab).join(','):''].filter(Boolean).join('\n');bgc=roomColor(q)}else if(!Fl.builtin&&t){}else{text='';bgc=Fl.builtin?'':bg}cls+=' lylab'+(A.sel===lno?' on':'');attr+=` data-rroom="${lno}" title="${lno} 방 배정 넣기 · 고치기"`}
+      let rich='';if(lno){const q=byNo[lno];if(q&&used(q)){rich=[q.kind?`<b>${esc(q.kind)}</b>`:'',q.occ.map(o=>esc(oLab(o)+(o.n?' '+o.n:''))).join('<br>'),`${peak(q)}/${q.cap}`,q.days&&q.days.length&&q.days.length<allDays().length?esc(q.days.map(dayLab).join(',')):''].filter(Boolean).join('<br>');text='';bgc=roomColor(q)}else if(!Fl.builtin&&t){}else{text='';bgc=Fl.builtin?'':bg}cls+=' lylab'+(A.sel===lno?' on':'');attr+=` data-rroom="${lno}" title="${lno} 방 배정 넣기 · 고치기"`}
       const style=`${bgc?`background:${bgc};`:''}${fg&&!/^#0{6}$/.test(fg)?`color:${fg};`:''}${b?'font-weight:700;':''}font-size:${Math.round((+fs||10)*1.1)}px;border-top:${bs[0]};border-right:${bs[1]};border-bottom:${bs[2]};border-left:${bs[3]};text-align:${ha==='C'?'center':ha==='R'?'right':'left'};vertical-align:${va==='T'?'top':va==='B'?'bottom':'middle'}`;
-      row+=`<td${rs>1?` rowspan="${rs}"`:''}${cs>1?` colspan="${cs}"`:''} class="${cls}"${attr} style="${style}">${esc(text).replace(/\n/g,'<br>')}</td>`}
+      row+=`<td${rs>1?` rowspan="${rs}"`:''}${cs>1?` colspan="${cs}"`:''} class="${cls}"${attr} style="${style}">${rich||esc(text).replace(/\n/g,'<br>')}</td>`}
     html+=`<tr style="height:${Fl.rh[r]}px">${row}</tr>`}
   const tabs=R.layoutTabs||[],res=A.lyRes;
   return `${legendBox(F)}<div class="row"><div class="seg" role="group" aria-label="층">${F.map((f,k)=>`<button type="button" data-rlyf="${k}" aria-pressed="${A.lyF===k}">${esc(f.name)}${f.builtin?'':' ·'}</button>`).join('')}</div></div>
@@ -2273,6 +2273,6 @@ render();
   var q=0;new MutationObserver(function(){if(q)return;q=1;requestAnimationFrame(function(){q=0;setup();[].forEach.call(document.querySelectorAll('table.cflt'),function(t){var r=t.tHead&&t.tHead.rows[0];if(r)t.style.setProperty('--cfh1',r.offsetHeight+'px')})})}).observe(document.body,{childList:true,subtree:true});setup();
 })();
 </script>
-<div id="bldMark" hidden>빌드표시 20261103-215810 </div>
+<div id="bldMark" hidden>빌드표시 20261103-220531 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();</script>
 </body></html>

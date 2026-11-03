@@ -1,4 +1,4 @@
-/* build: 20261103-191150 */
+/* build: 20261103-191236 */
     ps.forEach(p=>{p.pay='신고';p.rep=rep;delete S.rpRow[p.id]});S.afterSave=()=>repDone(ps.map(p=>p.id));subSave();S.rp=null;S.rpOpen=false;S.rpMemo=undefined;render();toast(`${ps.length}명 입금 신고를 보냈어요 · 운영진이 확인하면 「입금 확인」으로 바뀌어요`);return}
   if(b.id==='rpFill'){const n=document.getElementById('rpAllN').value.trim(),dd=document.getElementById('rpAllD').value;S.rpAllN=n;S.rpAllD=dd;const sel=S.rp||[];
     if(!n&&!dd){toast('적용할 입금자명이나 입금일을 적어 주세요');return}unpaidPpl().filter(x=>sel.includes(x.p.id)).forEach(({p})=>{const v=rpv(p);if(n)v.n=n;if(dd)v.d=dd});render();toast(`선택한 ${sel.length}명에게 적용했어요`);return}
@@ -208,7 +208,7 @@ function ttAllHTML(){const B=S.ttBoard;
     body=`<div class="seg atabs" role="tablist" style="margin:0 0 10px;flex-wrap:wrap">${keys.map(h=>`<button type="button" role="tab" data-tthall="${esc(h)}" aria-pressed="${h===k}">${esc(h)} ${H[h].length}</button>`).join('')}</div><div class="panel"><div class="mtblw"><table class="mtbl nosort">${th(les)}<tbody>${H[k].map(x=>row(x,les)).join('')}</tbody></table></div></div>`}
   else body=`<div class="panel"><div class="mtblw"><table class="mtbl nosort">${th(true)}<tbody>${L.map(x=>row(x,true)).join('')}</tbody></table></div></div>`;
   return `${bv==='grid'&&L.length?ttDet(L,{sel:S.ttOpen,detail:ppl}):''}
-  <div class="seg" role="group" aria-label="날짜" style="margin:6px 0">${days.map((d,i)=>`<button type="button" data-ttday="${i}" aria-pressed="${i===D}">${esc(d)}</button>`).join('')}</div>
+  <div class="seg ttdays" role="group" aria-label="날짜" style="margin:6px 0">${days.map((d,i)=>`<button type="button" data-ttday="${i}" aria-pressed="${i===D}">${esc(d)}</button>`).join('')}</div>
   ${body}`}
 document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-ttday],[data-ttbv],[data-ttev],[data-tthall]');if(!t||S.view!=='tt')return;
   if(t.dataset.tthall!==undefined){S.ttHall=t.dataset.tthall;S.ttOpen=null;render();return}
@@ -242,7 +242,7 @@ function ttGrid(L,o){const mm=t=>{const q=String(t||'').split(':');return (+q[0]
 function ttDet(L,o){const sel=L.find(x=>x.id===o.sel);
   return sel?`<div class="ttpop" data-ttclose="1"><div class="panel ttdet" role="dialog" aria-modal="true"><div class="spread" style="align-items:flex-start;gap:8px"><div><b style="font-size:17px">${esc(sel.title)}</b><div class="hint">${esc(sel.s)}${sel.e&&sel.e!==sel.s?' ~ '+esc(sel.e):''} · ${esc(sel.room||'장소 미정')}</div></div><button type="button" class="btn small ghost" data-ttclose="1" aria-label="닫기">닫기</button></div><div style="margin-top:10px;line-height:1.7">${o.detail(sel)}</div></div></div>`:`<p class="hint" style="margin:4px 0 8px">${o.hint||'일정 칸을 누르면 와야 할 선생님과 학생이 보여요. 내 일정은 진한 색이에요.'}</p>`}
 /* 날짜 칩 (시간표 탭 공통): 숫자 = 그날 칸 수 */
-function ttDays(days,D,cnt){return `<div class="seg" role="group" aria-label="날짜" style="margin:6px 0 10px">${days.map((dl,d)=>`<button type="button" data-ttday="${d}" aria-pressed="${d===D}">${esc(dl)}${cnt?' '+cnt(d):''}</button>`).join('')}</div>`}
+function ttDays(days,D,cnt){return `<div class="seg ttdays" role="group" aria-label="날짜" style="margin:6px 0 10px">${days.map((dl,d)=>`<button type="button" data-ttday="${d}" aria-pressed="${d===D}">${esc(dl)}${cnt?' '+cnt(d):''}</button>`).join('')}</div>`}
 /* 내 일정 · 우리 학생 레슨을 프로그램표로 */
 function ttMineGrid(T,days,mine){const D=Math.min(S.ttDay||0,Math.max(0,days.length-1));
   const L=mine.map((x,i)=>Object.assign({},x,{_i:i})).filter(x=>x.d===D).map(x=>({id:'m'+x._i,s:x.t,e:x.e||'',room:x.where||'장소 미정',loc:x.loc||'',title:x.title,kind:x.what==='개인레슨'?'개인레슨':x.title,tag:x.what,w:x.with||'',wl:x.what==='개인레슨'?'학생':'함께'}));

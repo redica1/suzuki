@@ -1,4 +1,4 @@
-/* build: 20261103-182029 */
+/* build: 20261103-182130 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -2356,7 +2356,7 @@ function campEventPeople(id, tok) {
   return campEventPeople_(id);
 }
 function campEventPeople_(id) {
-  const c = actCfg_(), ppl = c.people || [], pn = x => (ppl.find(p => p.id === x) || { n: String(x).replace(/^[CP]:/, '') }).n;
+  const c = actCfg_(), ppl = (() => { try { return actPeople_(c.people); } catch (x) { return c.people || []; } })(), pn = x => (ppl.find(p => p.id === x) || { n: String(x).replace(/^[CP]:/, '') }).n;
   const all = findStudents_();
   if (/^L\|/.test(String(id))) { const [, pr, d] = String(id).split('|'); const sById = {}; all.forEach(s => sById[s.id] = s);
     return { ok: true, open: true, staff: [{ name: pr, role: '교수' }], students: lessons_().filter(l => l.pr === pr && String(l.d) === d).sort((a, b) => String(a.t).localeCompare(String(b.t))).map(l => { const s = sById[l.pid] || {}; return { name: s.name || '', acad: s.acad || '', note: l.t }; }) }; }

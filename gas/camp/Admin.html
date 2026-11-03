@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261103-225401 -->
+<!-- build: 20261103-225534 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -691,7 +691,7 @@ let D=null,CHG=0,REV=0,DIRTY=false,SAVING=false,TIMER=null,LOADING=false,PEND=[]
 const A={tab:'grid',day:0,sel:null,swap:null,q:'',pq:'',filter:'zero',who:'',unav:{},req:{},log:[],target:{min:2,max:6},newSel:null,trainee:false};
 function run(fn,args,ok,fail){if(roBlock(fn)){fail&&fail(RO_MSG);return}google.script.run.withSuccessHandler(ok).withFailureHandler(e=>{const m=(e&&e.message)||String(e);fail&&fail(m)})[fn](S.tok,...args)}
 function load(){LOADING=true;ERR='';run('schedData',[],r=>{LOADING=false;applyData(r);render()},m=>{LOADING=false;ERR=m;render()})}
-function applyData(r){TGC=r.tgCnt||{};D={days:r.days||[],rooms:r.rooms||{},meals:r.meals||[],rows:r.rows||{},events:r.events||[],people:r.people||[],lessons:r.lessons||[]};normAct(r);
+function applyData(r){D={days:r.days||[],rooms:r.rooms||{},meals:r.meals||[],rows:r.rows||{},events:r.events||[],people:r.people||[],lessons:r.lessons||[]};normAct(r);
   A.unav=r.unav||{};A.req=r.req||{};A.target=r.target||{min:2,max:6};A.log=r.log||[];REV=r.rev||0;DIRTY=false;PEND=[];
   if(A.day>=D.days.length)A.day=0;ST=stats()}
 function payload(){return {rev:REV,kinds:D.kinds,stages:D.stages,roleSets:D.roleSets,tgSongs:D.tgSongs,en:D.en,bookDesc:D.bookDesc,dayNotes:D.dayNotes,roleShort:D.roleShort,days:D.days,rooms:D.rooms,meals:D.meals,rows:D.rows||{},events:D.events,people:D.people,unav:A.unav,req:A.req,target:A.target,log:PEND.slice()}}
@@ -749,11 +749,10 @@ function chip(e,p,i){const k=e.id+'|'+p.n;if(gone(p.n))return `<button type="but
 function chipsByRole(e){if(!e.ppl.length)return '';const G=[];e.ppl.forEach((p,i)=>{let g=G.find(x=>x.r===p.r);if(!g)G.push(g={r:p.r,L:[]});g.L.push({p,i})});
   return `<div class="rgls">${G.map(g=>`<div class="rgl"><span class="rl r-${esc(g.r)}">${esc(g.r)}</span> ${g.L.map(({p,i})=>{const k=e.id+'|'+p.n,go=gone(p.n),bad=ST.clash.has(k)?'겹침':ST.off.has(k)?'못 오는 날':'',sw=A.swap&&A.swap.eid===e.id&&A.swap.i===i;
     return `<button type="button" class="pnm ${go?'gone':''} ${bad?'bad':''} ${sw?'swapping':''}" data-achip="${e.id}|${i}" title="${esc(LB(p.n))} · ${esc(p.r)}${go?' · '+goneTxt(p.n):''}${bad?' · '+bad:''}${TAG(p.n)?' · '+esc(TAG(p.n)):''}">${esc(short(NAME(p.n)))}${go?`(${goneTxt(p.n)})`:''}</button>`}).join('<span class="cm">, </span>')}</div>`).join('')}</div>`}
-let TGC={};
 const capOf=(d,room)=>+(((D.rooms[d]||[]).find(r=>r[0]===room)||[])[2])||0;
 const noPpl=e=>!e.ppl.length&&e.title!=='마스터클래스';
-function cellEv(e){const tt=tgTxt(e.tg),cap=capOf(e.d,e.room),n=TGC[e.id]||0,over=cap&&n>cap;const first=[...(tt?[`<span class="tgline">${esc(tt)}</span>`]:[]),...e.desc.slice(0,tt?1:2).map(esc)].join('<br>');
-  return `<div class="ev ${TCLS_C[e.cat]||''} ${e.cat==='공연'&&e.stage&&e.stage!=='본공연'?'stg2':''} ${A.sel===e.id?'on':''}" data-aev="${e.id}" style="${noPpl(e)?'border-style:dashed;opacity:.85':''}"><div class="evh"><b>${evLabel(e)}</b><span class="num tm">${e.s}~${e.e}</span></div>${first?`<small>${first}</small>`:''}${n?`<small class="${over?'':'faint'}" style="${over?'color:#c0392b;font-weight:700':''}">${over?'⚠ ':''}대상 학생 ${n}명${cap?' / 수용 '+cap+'명':''}</small>`:''}${noPpl(e)?'<small class="faint">교사 미정</small>':chipsByRole(e)}</div>`}
+function cellEv(e){const tt=tgTxt(e.tg);const first=[...(tt?[`<span class="tgline">${esc(tt)}</span>`]:[]),...e.desc.slice(0,tt?1:2).map(esc)].join('<br>');
+  return `<div class="ev ${TCLS_C[e.cat]||''} ${e.cat==='공연'&&e.stage&&e.stage!=='본공연'?'stg2':''} ${A.sel===e.id?'on':''}" data-aev="${e.id}" style="${noPpl(e)?'border-style:dashed;opacity:.85':''}"><div class="evh"><b>${evLabel(e)}</b><span class="num tm">${e.s}~${e.e}</span></div>${first?`<small>${first}</small>`:''}${noPpl(e)?'<small class="faint">교사 미정</small>':chipsByRole(e)}</div>`}
 function vGrid(){
   const d=A.day, rooms=D.rooms[d]||[], evs=D.events.filter(e=>e.d===d), meals=D.meals.filter(m=>m.d===d);
   const extra=((D.rows||{})[d]||[]);
@@ -763,7 +762,7 @@ function vGrid(){
   return `<div class="sec-h"><div><h2>프로그램표</h2><p>장소 × 시간. 칸을 누르면 고치고, 빈 칸을 누르면 새 일정을 넣어요. 사람 칩의 「바꾸기」로 두 사람을 맞바꿔요.</p></div>
     <div class="row"><button class="btn small primary" type="button" data-atab="prev" title="프로그램북 모양으로 날짜별 미리보기 → 확인하고 구글 시트로 보내기">미리보기 · 시트 보내기</button><button class="btn small" type="button" id="a_reload">새로 불러오기</button></div></div>
   <div class="row"><div class="seg" role="group" aria-label="날짜">${D.days.map((x,i)=>`<button type="button" data-aday="${i}" aria-pressed="${d===i}">${x}</button>`).join('')}</div>
-    <span class="pill info">일정 ${evs.length} · 레슨 ${nLes}</span>${(()=>{const np=evs.filter(noPpl).length,all=D.events.filter(noPpl).length,ov=evs.filter(e=>capOf(e.d,e.room)&&(TGC[e.id]||0)>capOf(e.d,e.room)).length;return (np?`<span class="pill due" title="사람을 아직 안 넣은 일정 (아웃라인) · 모든 날짜 ${all}개">교사 미정 ${np}</span>`:all?`<span class="pill mute">다른 날 교사 미정 ${all}</span>`:'')+(ov?`<span class="pill bad">수용 인원 넘음 ${ov}</span>`:'')})()}<span class="pill mute">이날 나오는 사람 ${nP}명</span>${bad.length?`<span class="pill bad">겹침·못 오는 날 ${new Set(bad).size}명</span>`:'<span class="pill ok">사람 겹침 없음</span>'}${(()=>{const rc=roomClash(d),oth=D.days.reduce((t,_,i)=>t+(i===d?0:roomClash(i).length),0);return (rc.length?`<span class="pill bad" title="${esc(rc.map(clashTxt).join('\n'))}">장소 겹침 ${rc.length}건</span>`:'<span class="pill ok">장소 겹침 없음</span>')+(oth?`<span class="pill due" title="다른 날짜에도 같은 장소 · 같은 시간 일정이 있어요">다른 날 장소 겹침 ${oth}건</span>`:'')})()}</div>
+    <span class="pill info">일정 ${evs.length} · 레슨 ${nLes}</span>${(()=>{const np=evs.filter(noPpl).length,all=D.events.filter(noPpl).length;return (np?`<span class="pill due" title="사람을 아직 안 넣은 일정 (아웃라인) · 모든 날짜 ${all}개">교사 미정 ${np}</span>`:all?`<span class="pill mute">다른 날 교사 미정 ${all}</span>`:'')})()}<span class="pill mute">이날 나오는 사람 ${nP}명</span>${bad.length?`<span class="pill bad">겹침·못 오는 날 ${new Set(bad).size}명</span>`:'<span class="pill ok">사람 겹침 없음</span>'}${(()=>{const rc=roomClash(d),oth=D.days.reduce((t,_,i)=>t+(i===d?0:roomClash(i).length),0);return (rc.length?`<span class="pill bad" title="${esc(rc.map(clashTxt).join('\n'))}">장소 겹침 ${rc.length}건</span>`:'<span class="pill ok">장소 겹침 없음</span>')+(oth?`<span class="pill due" title="다른 날짜에도 같은 장소 · 같은 시간 일정이 있어요">다른 날 장소 겹침 ${oth}건</span>`:'')})()}</div>
   ${roomClash(d).length?`<div class="note warn" style="margin:6px 0"><b>같은 장소에 시간이 겹쳐요</b><br>${roomClash(d).map(x=>esc(clashTxt(x))).join('<br>')}</div>`:''}
   ${A.swap?`<div class="note"><b>바꾸기</b> · ${esc(LB(evById(A.swap.eid).ppl[A.swap.i].n))} 선생님과 바꿀 사람 칩을 아무 날짜에서나 누르세요. <button class="btn small" type="button" id="a_swapX">취소</button></div>`:''}
   ${editor()}
@@ -2403,6 +2402,6 @@ render();
   var q=0;new MutationObserver(function(){if(q)return;q=1;requestAnimationFrame(function(){q=0;setup();[].forEach.call(document.querySelectorAll('table.cflt'),function(t){var r=t.tHead&&t.tHead.rows[0];if(r)t.style.setProperty('--cfh1',r.offsetHeight+'px')})})}).observe(document.body,{childList:true,subtree:true});setup();
 })();
 </script>
-<div id="bldMark" hidden>빌드표시 20261103-225401 </div>
+<div id="bldMark" hidden>빌드표시 20261103-225534 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();</script>
 </body></html>

@@ -1,4 +1,4 @@
-/* build: 20261103-225117 */
+/* build: 20261103-225401 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -2255,7 +2255,8 @@ function schedData(token) {
   adm_(token);
   const c = actCfg_();
   const log = rows_(SH.ACTLOG).slice(-300).reverse().map(r => ({ at: String(r['일시'] instanceof Date ? Utilities.formatDate(r['일시'], TZ, 'M/d HH:mm') : r['일시']).replace(/^\d{4}-0?(\d+)-0?(\d+)/, '$1/$2'), t: (r['관리자'] ? r['관리자'] + ' · ' : '') + String(r['내용'] || '') }));
-  return { days: c.days || [], rooms: c.rooms || {}, meals: Array.isArray(c.meals) ? c.meals : mealGen_(camp_().meals, (c.days || []).length), rows: c.rows || {}, people: actPeople_(c.people), unav: c.unav || {}, req: c.req || {}, target: c.target || { min: 2, max: 6 }, kinds: Array.isArray(c.kinds) && c.kinds.length ? c.kinds : ACT_KINDS, stages: Array.isArray(c.stages) && c.stages.length ? c.stages : ACT_STAGES, roleSets: c.roleSets && typeof c.roleSets === 'object' ? orchMerge_(c.roleSets, c.orchParts) : ACT_ROLESETS, tgSongs: c.tgSongs && typeof c.tgSongs === 'object' ? c.tgSongs : null, en: c.en || ACT_EN, bookDesc: c.bookDesc || ACT_BOOKDESC, dayNotes: c.dayNotes || [], roleShort: c.roleShort || {}, rev: +c.rev || 0, events: actEvents_(), log, lessons: (() => { try { return lessons_().map(x => ({ d: x.d, t: x.t, pr: x.pr })); } catch (e) { return []; } })() };
+  const tgCnt = (() => { try { const g = grpMatch_(), o = {}; findStudents_().forEach(x => g(x.inst, x.prog).forEach(e => { o[e.id] = (o[e.id] || 0) + 1; })); return o; } catch (x) { return {}; } })();   /* 그룹레슨 대상 학생 수 (방 수용 인원 경고용, 11-03) */
+  return { tgCnt, days: c.days || [], rooms: c.rooms || {}, meals: Array.isArray(c.meals) ? c.meals : mealGen_(camp_().meals, (c.days || []).length), rows: c.rows || {}, people: actPeople_(c.people), unav: c.unav || {}, req: c.req || {}, target: c.target || { min: 2, max: 6 }, kinds: Array.isArray(c.kinds) && c.kinds.length ? c.kinds : ACT_KINDS, stages: Array.isArray(c.stages) && c.stages.length ? c.stages : ACT_STAGES, roleSets: c.roleSets && typeof c.roleSets === 'object' ? orchMerge_(c.roleSets, c.orchParts) : ACT_ROLESETS, tgSongs: c.tgSongs && typeof c.tgSongs === 'object' ? c.tgSongs : null, en: c.en || ACT_EN, bookDesc: c.bookDesc || ACT_BOOKDESC, dayNotes: c.dayNotes || [], roleShort: c.roleShort || {}, rev: +c.rev || 0, events: actEvents_(), log, lessons: (() => { try { return lessons_().map(x => ({ d: x.d, t: x.t, pr: x.pr })); } catch (e) { return []; } })() };
 }
 function schedSave(token, b) {
   const a = adm_(token); need_(a, 'act');

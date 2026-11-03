@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261103-225117 -->
+<!-- build: 20261103-225401 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -691,7 +691,7 @@ let D=null,CHG=0,REV=0,DIRTY=false,SAVING=false,TIMER=null,LOADING=false,PEND=[]
 const A={tab:'grid',day:0,sel:null,swap:null,q:'',pq:'',filter:'zero',who:'',unav:{},req:{},log:[],target:{min:2,max:6},newSel:null,trainee:false};
 function run(fn,args,ok,fail){if(roBlock(fn)){fail&&fail(RO_MSG);return}google.script.run.withSuccessHandler(ok).withFailureHandler(e=>{const m=(e&&e.message)||String(e);fail&&fail(m)})[fn](S.tok,...args)}
 function load(){LOADING=true;ERR='';run('schedData',[],r=>{LOADING=false;applyData(r);render()},m=>{LOADING=false;ERR=m;render()})}
-function applyData(r){D={days:r.days||[],rooms:r.rooms||{},meals:r.meals||[],rows:r.rows||{},events:r.events||[],people:r.people||[],lessons:r.lessons||[]};normAct(r);
+function applyData(r){TGC=r.tgCnt||{};D={days:r.days||[],rooms:r.rooms||{},meals:r.meals||[],rows:r.rows||{},events:r.events||[],people:r.people||[],lessons:r.lessons||[]};normAct(r);
   A.unav=r.unav||{};A.req=r.req||{};A.target=r.target||{min:2,max:6};A.log=r.log||[];REV=r.rev||0;DIRTY=false;PEND=[];
   if(A.day>=D.days.length)A.day=0;ST=stats()}
 function payload(){return {rev:REV,kinds:D.kinds,stages:D.stages,roleSets:D.roleSets,tgSongs:D.tgSongs,en:D.en,bookDesc:D.bookDesc,dayNotes:D.dayNotes,roleShort:D.roleShort,days:D.days,rooms:D.rooms,meals:D.meals,rows:D.rows||{},events:D.events,people:D.people,unav:A.unav,req:A.req,target:A.target,log:PEND.slice()}}
@@ -749,8 +749,11 @@ function chip(e,p,i){const k=e.id+'|'+p.n;if(gone(p.n))return `<button type="but
 function chipsByRole(e){if(!e.ppl.length)return '';const G=[];e.ppl.forEach((p,i)=>{let g=G.find(x=>x.r===p.r);if(!g)G.push(g={r:p.r,L:[]});g.L.push({p,i})});
   return `<div class="rgls">${G.map(g=>`<div class="rgl"><span class="rl r-${esc(g.r)}">${esc(g.r)}</span> ${g.L.map(({p,i})=>{const k=e.id+'|'+p.n,go=gone(p.n),bad=ST.clash.has(k)?'겹침':ST.off.has(k)?'못 오는 날':'',sw=A.swap&&A.swap.eid===e.id&&A.swap.i===i;
     return `<button type="button" class="pnm ${go?'gone':''} ${bad?'bad':''} ${sw?'swapping':''}" data-achip="${e.id}|${i}" title="${esc(LB(p.n))} · ${esc(p.r)}${go?' · '+goneTxt(p.n):''}${bad?' · '+bad:''}${TAG(p.n)?' · '+esc(TAG(p.n)):''}">${esc(short(NAME(p.n)))}${go?`(${goneTxt(p.n)})`:''}</button>`}).join('<span class="cm">, </span>')}</div>`).join('')}</div>`}
-function cellEv(e){const tt=tgTxt(e.tg);const first=[...(tt?[`<span class="tgline">${esc(tt)}</span>`]:[]),...e.desc.slice(0,tt?1:2).map(esc)].join('<br>');
-  return `<div class="ev ${TCLS_C[e.cat]||''} ${e.cat==='공연'&&e.stage&&e.stage!=='본공연'?'stg2':''} ${A.sel===e.id?'on':''}" data-aev="${e.id}"><div class="evh"><b>${evLabel(e)}</b><span class="num tm">${e.s}~${e.e}</span></div>${first?`<small>${first}</small>`:''}${chipsByRole(e)}</div>`}
+let TGC={};
+const capOf=(d,room)=>+(((D.rooms[d]||[]).find(r=>r[0]===room)||[])[2])||0;
+const noPpl=e=>!e.ppl.length&&e.title!=='마스터클래스';
+function cellEv(e){const tt=tgTxt(e.tg),cap=capOf(e.d,e.room),n=TGC[e.id]||0,over=cap&&n>cap;const first=[...(tt?[`<span class="tgline">${esc(tt)}</span>`]:[]),...e.desc.slice(0,tt?1:2).map(esc)].join('<br>');
+  return `<div class="ev ${TCLS_C[e.cat]||''} ${e.cat==='공연'&&e.stage&&e.stage!=='본공연'?'stg2':''} ${A.sel===e.id?'on':''}" data-aev="${e.id}" style="${noPpl(e)?'border-style:dashed;opacity:.85':''}"><div class="evh"><b>${evLabel(e)}</b><span class="num tm">${e.s}~${e.e}</span></div>${first?`<small>${first}</small>`:''}${n?`<small class="${over?'':'faint'}" style="${over?'color:#c0392b;font-weight:700':''}">${over?'⚠ ':''}대상 학생 ${n}명${cap?' / 수용 '+cap+'명':''}</small>`:''}${noPpl(e)?'<small class="faint">교사 미정</small>':chipsByRole(e)}</div>`}
 function vGrid(){
   const d=A.day, rooms=D.rooms[d]||[], evs=D.events.filter(e=>e.d===d), meals=D.meals.filter(m=>m.d===d);
   const extra=((D.rows||{})[d]||[]);
@@ -760,12 +763,12 @@ function vGrid(){
   return `<div class="sec-h"><div><h2>프로그램표</h2><p>장소 × 시간. 칸을 누르면 고치고, 빈 칸을 누르면 새 일정을 넣어요. 사람 칩의 「바꾸기」로 두 사람을 맞바꿔요.</p></div>
     <div class="row"><button class="btn small primary" type="button" data-atab="prev" title="프로그램북 모양으로 날짜별 미리보기 → 확인하고 구글 시트로 보내기">미리보기 · 시트 보내기</button><button class="btn small" type="button" id="a_reload">새로 불러오기</button></div></div>
   <div class="row"><div class="seg" role="group" aria-label="날짜">${D.days.map((x,i)=>`<button type="button" data-aday="${i}" aria-pressed="${d===i}">${x}</button>`).join('')}</div>
-    <span class="pill info">일정 ${evs.length} · 레슨 ${nLes}</span><span class="pill mute">이날 나오는 사람 ${nP}명</span>${bad.length?`<span class="pill bad">겹침·못 오는 날 ${new Set(bad).size}명</span>`:'<span class="pill ok">사람 겹침 없음</span>'}${(()=>{const rc=roomClash(d),oth=D.days.reduce((t,_,i)=>t+(i===d?0:roomClash(i).length),0);return (rc.length?`<span class="pill bad" title="${esc(rc.map(clashTxt).join('\n'))}">장소 겹침 ${rc.length}건</span>`:'<span class="pill ok">장소 겹침 없음</span>')+(oth?`<span class="pill due" title="다른 날짜에도 같은 장소 · 같은 시간 일정이 있어요">다른 날 장소 겹침 ${oth}건</span>`:'')})()}</div>
+    <span class="pill info">일정 ${evs.length} · 레슨 ${nLes}</span>${(()=>{const np=evs.filter(noPpl).length,all=D.events.filter(noPpl).length,ov=evs.filter(e=>capOf(e.d,e.room)&&(TGC[e.id]||0)>capOf(e.d,e.room)).length;return (np?`<span class="pill due" title="사람을 아직 안 넣은 일정 (아웃라인) · 모든 날짜 ${all}개">교사 미정 ${np}</span>`:all?`<span class="pill mute">다른 날 교사 미정 ${all}</span>`:'')+(ov?`<span class="pill bad">수용 인원 넘음 ${ov}</span>`:'')})()}<span class="pill mute">이날 나오는 사람 ${nP}명</span>${bad.length?`<span class="pill bad">겹침·못 오는 날 ${new Set(bad).size}명</span>`:'<span class="pill ok">사람 겹침 없음</span>'}${(()=>{const rc=roomClash(d),oth=D.days.reduce((t,_,i)=>t+(i===d?0:roomClash(i).length),0);return (rc.length?`<span class="pill bad" title="${esc(rc.map(clashTxt).join('\n'))}">장소 겹침 ${rc.length}건</span>`:'<span class="pill ok">장소 겹침 없음</span>')+(oth?`<span class="pill due" title="다른 날짜에도 같은 장소 · 같은 시간 일정이 있어요">다른 날 장소 겹침 ${oth}건</span>`:'')})()}</div>
   ${roomClash(d).length?`<div class="note warn" style="margin:6px 0"><b>같은 장소에 시간이 겹쳐요</b><br>${roomClash(d).map(x=>esc(clashTxt(x))).join('<br>')}</div>`:''}
   ${A.swap?`<div class="note"><b>바꾸기</b> · ${esc(LB(evById(A.swap.eid).ppl[A.swap.i].n))} 선생님과 바꿀 사람 칩을 아무 날짜에서나 누르세요. <button class="btn small" type="button" id="a_swapX">취소</button></div>`:''}
   ${editor()}
   <div class="row"><span class="cap" style="margin:0">시간 줄 추가</span>${hmIn('a_rowT',A.rowT||'09:00','추가할 시간')}<button class="btn small" type="button" id="a_rowAdd">+ 이 시간 줄 넣기</button><span class="cap" style="margin:0">줄을 넣으면 그 시간에 장소마다 빈 칸(+)이 생겨요</span></div>
-  <div class="tt pgrid"><table><thead><tr><th class="tcol">시간</th>${rooms.map(([r,l])=>`<th>${esc(r)}<small>${esc(l)}</small></th>`).join('')}</tr></thead><tbody>
+  <div class="tt pgrid"><table><thead><tr><th class="tcol">시간</th>${rooms.map(([r,l])=>`<th>${esc(r)}<small>${esc(l)}${capOf(d,r)?' · '+capOf(d,r)+'명':''}</small></th>`).join('')}</tr></thead><tbody>
   ${starts.map(t=>{const ml=meals.filter(m=>m.s===t).map(m=>`<tr class="meal"><th class="tcol num">${t}</th><td colspan="${rooms.length}">${esc(m.t)} <span class="cap" style="margin:0">${m.s}~${m.e}</span></td></tr>`).join('');
     if(!evs.some(e=>e.s===t)&&!extra.includes(t)) return ml;
     return ml+`<tr><th class="tcol num">${t}${extra.includes(t)&&!evs.some(e=>e.s===t)?`<br><button type="button" class="btn small ghost" data-arowdel="${t}" aria-label="${t} 줄 빼기" style="padding:0 6px;font-size:13px">줄 빼기</button>`:''}</th>${rooms.map(([r])=>{const xs=evs.filter(e=>e.room===r&&e.s===t);
@@ -978,10 +981,10 @@ document.addEventListener('change',e=>{if(S.tab!=='act'||!D)return;const el=e.ta
 document.addEventListener('keydown',e=>{if(S.tab!=='act'||!D)return;if(e.key==='Escape'&&(A.swap||A.sel)){A.swap=null;A.sel=null;render()}});
 
 /* ---------- 날짜 · 장소 ---------- */
-function vSet(){return `<div class="sec-h"><div><h2>날짜 · 장소</h2><p>캠프 날짜 이름과 날마다 쓰는 장소(교실)를 정해요. 장소는 한 줄에 「장소 | 위치」.</p></div></div>
+function vSet(){return `<div class="sec-h"><div><h2>날짜 · 장소</h2><p>캠프 날짜 이름과 날마다 쓰는 장소(교실)를 정해요. 장소는 한 줄에 「장소 | 위치 | 수용 인원」 (예: Grand Hall | Stay Tower 1F | 600). 수용 인원은 몰라도 비워 두면 돼요.</p></div></div>
   <div class="panel"><div class="row" style="gap:12px;align-items:flex-start">${D.days.map((x,i)=>`<label class="f" style="width:150px">${i+1}일째<input type="text" class="a_dayin" data-i="${i}" value="${esc(x)}"></label>`).join('')}
     <div class="row" style="gap:6px;align-self:end"><button class="btn small" type="button" id="a_dayAdd">＋ 날짜 추가</button>${D.days.length?`<button class="btn small ghost" type="button" id="a_dayDel">마지막 날짜 빼기</button>`:''}</div></div></div>
-  <div class="g2">${D.days.map((x,i)=>`<div class="panel"><b>${esc(x)} 장소</b><textarea class="a_roomin" data-i="${i}" rows="${Math.max(4,(D.rooms[i]||[]).length+1)}" style="width:100%;font:inherit;padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)">${esc((D.rooms[i]||[]).map(r=>r[0]+(r[1]?' | '+r[1]:'')).join('\n'))}</textarea></div>`).join('')}</div>
+  <div class="g2">${D.days.map((x,i)=>`<div class="panel"><b>${esc(x)} 장소</b><textarea class="a_roomin" data-i="${i}" rows="${Math.max(4,(D.rooms[i]||[]).length+1)}" style="width:100%;font:inherit;padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)">${esc((D.rooms[i]||[]).map(r=>r[0]+(r[1]||r[2]?' | '+(r[1]||''):'')+(r[2]?' | '+r[2]:'')).join('\n'))}</textarea></div>`).join('')}</div>
   <div class="row"><button class="btn small primary" type="button" id="a_setSave">날짜·장소 저장</button><span class="cap" style="margin:0">일정이 있는 장소를 빼면 그 일정은 표에서 안 보이니 먼저 옮겨 주세요.</span></div>
   <div class="sec-h"><div><h2>행사 구분 · 종류 · 단계 · 역할</h2><p>구분은 공연 · 레슨 · 업무 세 가지예요. 종류 · 공연 단계 · 역할 목록은 여기서 추가 · 이름 변경 · 순서 · 빼기를 해요. 이름을 바꾸면 그 이름을 쓰던 일정 · 사람도 같이 바뀌어요.</p></div></div>
   <div class="g3 lstg">${CATS.map(c=>`<div class="panel lstcol"><b class="lsth">${c}</b>
@@ -1039,7 +1042,7 @@ document.addEventListener('click',ev=>{if(S.tab!=='act'||!D)return;const b=ev.ta
   if(b.id==='a_dayAdd'){D.days.push((D.days.length+1)+'일째');D.rooms[D.days.length-1]=JSON.parse(JSON.stringify(D.rooms[D.days.length-2]||[]));logIt('날짜 추가: '+D.days[D.days.length-1]);refresh();return}
   if(b.id==='a_dayDel'){const i=D.days.length-1;if(D.events.some(e=>e.d===i)){toast('그날 일정이 있어요. 일정을 먼저 지워 주세요');return}D.days.pop();delete D.rooms[i];logIt('날짜 빼기');refresh();return}
   if(b.id==='a_setSave'){document.querySelectorAll('.a_dayin').forEach(el=>{const v=el.value.trim();if(v)D.days[+el.dataset.i]=v});
-    document.querySelectorAll('.a_roomin').forEach(el=>{D.rooms[+el.dataset.i]=el.value.split('\n').map(x=>x.split('|').map(y=>y.trim())).filter(x=>x[0]).map(x=>[x[0],x[1]||''])});
+    document.querySelectorAll('.a_roomin').forEach(el=>{D.rooms[+el.dataset.i]=el.value.split('\n').map(x=>x.split('|').map(y=>y.trim())).filter(x=>x[0]).map(x=>{const c=+String(x[2]||'').replace(/[^\d]/g,'');return c?[x[0],x[1]||'',c]:[x[0],x[1]||'']})});
     logIt('날짜·장소 고침');refresh();toast('날짜·장소를 저장했어요');return}});
 /* 미리보기: 서버가 시트에 쓸 그대로(progPreview)를 날짜별 표로 → 확인 후 「구글 시트로 보내기」 */
 function pvLoad(){if(A.pvLoading)return;A.pvLoading=true;flush(()=>run('progPreview',[],r=>{A.pvLoading=false;A.pv=r;if(A.pvT==null||A.pvT>=r.days.length&&!['t','o'].includes(A.pvT))A.pvT=0;render()},m=>{A.pvLoading=false;A.pvErr=m;render()}))}
@@ -2400,6 +2403,6 @@ render();
   var q=0;new MutationObserver(function(){if(q)return;q=1;requestAnimationFrame(function(){q=0;setup();[].forEach.call(document.querySelectorAll('table.cflt'),function(t){var r=t.tHead&&t.tHead.rows[0];if(r)t.style.setProperty('--cfh1',r.offsetHeight+'px')})})}).observe(document.body,{childList:true,subtree:true});setup();
 })();
 </script>
-<div id="bldMark" hidden>빌드표시 20261103-225117 </div>
+<div id="bldMark" hidden>빌드표시 20261103-225401 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();</script>
 </body></html>

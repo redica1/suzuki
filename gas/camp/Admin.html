@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261103-220806 -->
+<!-- build: 20261103-220945 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -1226,7 +1226,7 @@ function tile(r){const n=peak(r),part=r.days&&r.days.length&&r.days.length<allDa
   <span class="rno num">${esc(r.no)}${r.pub?' <small class="pill ok" style="padding:0 4px">공개</small>':''}</span><span class="rty">${esc(rType(r.no)||r.type||'타입 -')} · 정원 ${r.cap}</span>
   ${used(r)?`<b>${esc(oLab(r.occ[0]))}${r.occ.length>1?` <small>+ ${r.occ.slice(1).map(x=>esc(oLab(x))).join(', ')}</small>`:''}</b><span class="rk">${esc(r.kind||'방종류 -')} · ${n}/${r.cap}${n>r.cap?' 넘침':''}${part?' · '+r.days.map(dayLab).join(','):''}</span>${r.pw?`<span class="rpw">비번 ${esc(r.pw)}</span>`:''}`:'<span class="rk">빈 방</span>'}</button>`}
 /* ---------- 방 편집 (A.ed = 고치는 중인 복사본) ---------- */
-function openEd(no){const r=R.rooms.find(x=>x.no===no);A.sel=no;A.ed=r?JSON.parse(JSON.stringify({no:r.no,kind:(r.occ||[]).some(o=>o.k==='fam')?'가족방':r.kind==='가족방'?'':r.kind,cap:r.cap,pw:r.pw,memo:r.memo,pub:!!r.pub,days:r.days||[],occ:r.occ||[],type:r.type,color:r.color||'',size:r.size||'',beds:r.beds===''||r.beds==null?'':r.beds,feat:r.feat||''})):null}
+function openEd(no){const r=R.rooms.find(x=>x.no===no);A.sel=no;A.ed=r?JSON.parse(JSON.stringify({no:r.no,kind:(r.occ||[]).some(o=>o.k==='fam')?'가족방':r.kind==='가족방'||!(r.occ||[]).length?'':r.kind,cap:r.cap,pw:r.pw,memo:r.memo,pub:!!r.pub,days:r.days||[],occ:r.occ||[],type:r.type,color:r.color||'',size:r.size||'',beds:r.beds===''||r.beds==null?'':r.beds,feat:r.feat||''})):null}
 function famList(){return famRooms()}
 /* 방 편집 순서: ① 방 정보(평수 · 침대 · 정원 · 타입) ② 사용 날짜 ③ 방종류 ④ 메인(학원 · 이름 · 사람 · 가족) + 숙박 인원 ⑤ 보조 학원 · 사람 · 가족 + 숙박 인원 ⑥ 비번 수신자 · 메모 · 공개 · 색 */
 function occRow(e,o,i,rd,M,AL,inOcc,main){
@@ -1256,7 +1256,7 @@ function editor(){const e=A.ed,r=R.rooms.find(x=>x.no===A.sel);if(!e||!r)return 
       <label>정원 <input type="number" id="r_cap" min="1" max="30" value="${e.cap}" style="width:56px"> 명</label>
       <label>방 메모 <input type="text" id="r_feat" value="${esc(e.feat||'')}" maxlength="40" placeholder="예: 온돌 · 거실 · 이불 2채 추가" style="width:200px"></label></div>
     <div class="row" style="gap:8px;flex-wrap:wrap"><b>사용 날짜</b>${D.map(d=>`<label class="row" style="gap:3px"><input type="checkbox" data-rday="${d}" ${rd.includes(d)?'checked':''}>${esc(dayLab(d))}</label>`).join('')}<span class="cap" style="margin:0">체크를 풀면 그날은 사용 안 함</span></div>
-    <div class="row" style="gap:10px;flex-wrap:wrap">${hasFam?`<span class="row" style="gap:6px"><b>방종류</b><span class="pill info">가족방</span><span class="cap" style="margin:0">가족을 넣으면 자동</span><input type="hidden" id="r_kind" value="가족방"></span>`:`<label class="row" style="gap:6px"><b>방종류</b><select id="r_kind">${['',...R.kinds.filter(k=>k!=='가족방')].map(k=>`<option value="${esc(k)}" ${k===e.kind?'selected':''}>${k||'선택'}</option>`).join('')}</select></label>`}
+    <div class="row" style="gap:10px;flex-wrap:wrap">${hasFam?`<span class="row" style="gap:6px"><b>방종류</b><span class="pill info">가족방</span><span class="cap" style="margin:0">가족을 넣으면 자동</span><input type="hidden" id="r_kind" value="가족방"></span>`:`<label class="row" style="gap:6px"><b>방종류 <span style="color:#d33">*</span></b><select id="r_kind" required>${['',...R.kinds.filter(k=>k!=='가족방')].map(k=>`<option value="${esc(k)}" ${k===e.kind?'selected':''}>${k||'선택'}</option>`).join('')}</select></label>`}
       <span class="pill ${tot>e.cap?'bad':tot?'info':'mute'}">숙박 ${tot} / 정원 ${e.cap}명</span>${rd.length>1&&loads.some(x=>x.n!==tot)?loads.map(x=>`<span class="pill ${x.n>e.cap?'bad':'mute'}">${esc(dayLab(x.d))} ${x.n}</span>`).join(''):''}</div>
     <div class="occs">${e.occ.length?e.occ.map((o,i)=>occRow(e,o,i,rd,M,AL,inOcc,i===0)).join(''):'<p class="hint" style="margin:0">아직 아무도 없어요. 아래에서 메인을 골라 주세요 — 학원, 관리자가 정한 이름(본부방 등), 사람 이름, 가족방 신청 가족 중 하나.</p>'}</div>
     ${hasFam?`<p class="hint" style="margin:0">가족방이에요. 가족방에는 학원 · 사람 · 이름을 같이 넣을 수 없어요 (다른 가족을 더 넣는 것만 돼요). 학원 방으로 쓰려면 가족을 먼저 빼 주세요.</p><div class="g2 roomadd">${addSel('r_addF','＋ 가족방 신청 가족 더 넣기 ('+fams.length+')',famOpts,'r_addFam','넣기')}</div>`:`
@@ -1405,7 +1405,7 @@ function view(){
     ${[...new Set(L.map(r=>r.fl))].map(f=>`<div class="floor"><span class="flab">${esc(A.bld)} ${esc(f)} · ${L.filter(r=>r.fl===f&&used(r)).length}/${L.filter(r=>r.fl===f).length}</span><div class="rgrid">${L.filter(r=>r.fl===f).map(tile).join('')}</div></div>`).join('')}</div>`}
 function save(clear){const e=A.ed;if(!e)return;edRead();
   const x=clear?{no:e.no,occ:[],cap:e.cap,memo:e.memo,size:e.size,beds:e.beds,feat:e.feat}:{no:e.no,kind:e.kind,cap:e.cap,pw:e.pw,memo:e.memo,pub:e.pub,days:e.days,occ:e.occ,color:e.color,size:e.size,beds:e.beds,feat:e.feat};
-  if(!clear&&e.occ.length&&!e.kind){toast('방종류를 골라 주세요');return}
+  if(!clear&&!e.kind){toast('방종류를 골라 주세요 (필수)');const k=document.getElementById('r_kind');if(k){k.focus();k.style.outline='2px solid #d33'}return}
   if(!clear){const rd=e.days.length?e.days:allDays();const bad=rd.find(d=>e.occ.filter(o=>(o.days.length?o.days:rd).includes(d)).reduce((t,o)=>t+(+o.n||0),0)>e.cap);if(bad!=null){toast(dayLab(bad)+' 인원이 정원보다 많아요 · 정원을 고치거나 인원 · 날짜를 줄여 주세요');return}}
   run('roomSave',[x],d=>{R=d;A.sel='';A.ed=null;render();toast(clear?e.no+' 방을 비웠어요':e.no+' 방을 저장했어요')},m=>toast('저장하지 못했어요 · '+m))}
 document.addEventListener('click',ev=>{if(S.tab!=='room')return;const b=ev.target.closest('button,td[data-rroom]');if(!b)return;const d=b.dataset;
@@ -2278,6 +2278,6 @@ render();
   var q=0;new MutationObserver(function(){if(q)return;q=1;requestAnimationFrame(function(){q=0;setup();[].forEach.call(document.querySelectorAll('table.cflt'),function(t){var r=t.tHead&&t.tHead.rows[0];if(r)t.style.setProperty('--cfh1',r.offsetHeight+'px')})})}).observe(document.body,{childList:true,subtree:true});setup();
 })();
 </script>
-<div id="bldMark" hidden>빌드표시 20261103-220806 </div>
+<div id="bldMark" hidden>빌드표시 20261103-220945 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();</script>
 </body></html>

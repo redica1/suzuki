@@ -1,4 +1,4 @@
-/* build: 20261103-225534 */
+/* build: 20261103-230445 */
     ps.forEach(p=>{p.pay='신고';p.rep=rep;delete S.rpRow[p.id]});S.afterSave=()=>repDone(ps.map(p=>p.id));subSave();S.rp=null;S.rpOpen=false;S.rpMemo=undefined;render();toast(`${ps.length}명 입금 신고를 보냈어요 · 운영진이 확인하면 「입금 확인」으로 바뀌어요`);return}
   if(b.id==='rpFill'){const n=document.getElementById('rpAllN').value.trim(),dd=document.getElementById('rpAllD').value;S.rpAllN=n;S.rpAllD=dd;const sel=S.rp||[];
     if(!n&&!dd){toast('적용할 입금자명이나 입금일을 적어 주세요');return}unpaidPpl().filter(x=>sel.includes(x.p.id)).forEach(({p})=>{const v=rpv(p);if(n)v.n=n;if(dd)v.d=dd});render();toast(`선택한 ${sel.length}명에게 적용했어요`);return}
@@ -223,6 +223,21 @@ function ttGrid(L,o){return UI.grid(L,o)}
 function ttDet(L,o){return UI.gridDet(L,o)}
 /* 날짜 칩 (시간표 탭 공통): 숫자 = 그날 칸 수 */
 function ttDays(days,D,cnt){return `<div class="seg ttdays" role="group" aria-label="날짜" style="margin:6px 0 10px">${days.map((dl,d)=>`<button type="button" data-ttday="${d}" aria-pressed="${d===D}">${esc(dl)}${cnt?' '+cnt(d):''}</button>`).join('')}</div>`}
+/* 내 일정 (11-03): 시간순 목록 — 날짜 칩(오늘 기본) 또는 「모든 날 보기」 · 카드 = 시간 · 장소(위치) / 일정 · 내 역할 / 대상 · 함께 · 오늘은 지금 · 다음 일정 진하게 */
+function ttMineList(T,days,mine){const all=!!S.ttAll,D=Math.min(S.ttDay||0,Math.max(0,days.length-1)),td=ttToday(days),now=new Date(),nm=now.getHours()*60+now.getMinutes();
+  const cnt={};mine.forEach(x=>{cnt[x.what||'일정']=(cnt[x.what||'일정']||0)+1});
+  const nextI=td==null?-1:mine.findIndex(x=>x.d===td&&tmin(x.e||x.t)>=nm);
+  const card=(x,i)=>{const live=i===nextI,on=live&&tmin(x.t)<=nm;return `<div class="panel" style="margin:0 0 8px;padding:10px 12px;${live?'border:2px solid var(--brand,#0e8a86)':''}">
+    <div class="spread" style="align-items:baseline"><b class="num" style="font-size:17px">${esc(x.t)}${x.e?'~'+esc(x.e):''}</b>${live?`<span class="pill ${on?'new':'info'}">${on?'지금':'다음'}</span>`:''}</div>
+    <div style="margin-top:2px"><b>${esc(x.where||'장소 미정')}</b>${x.loc?` <small class="hint">${esc(x.loc)}</small>`:''}</div>
+    <div style="margin-top:4px">${esc(x.title)} <span class="pill mute">${esc(x.what||'')}</span></div>
+    ${x.tg?`<div class="hint" style="margin-top:2px">대상 ${esc(x.tg)}</div>`:''}${x.with?`<div class="hint" style="margin-top:2px">${x.what==='개인레슨'?'학생':'함께'} · ${esc(x.with)}</div>`:''}</div>`};
+  const L=mine.map((x,i)=>({x,i}));
+  const day=d=>{const R=L.filter(o=>o.x.d===d);return R.length?R.map(o=>card(o.x,o.i)).join(''):'<div class="panel"><p class="hint" style="margin:0">이 날은 내 일정이 없어요.</p></div>'};
+  return `<div class="row" style="gap:6px;flex-wrap:wrap;margin:4px 0 6px">${Object.entries(cnt).map(([k,n])=>`<span class="pill info">${esc(k)} ${n}</span>`).join('')}<span style="flex:1"></span><button class="btn small ${all?'primary':''}" type="button" data-ttall="1">${all?'날짜별로 보기':'모든 날 보기'}</button></div>`+
+    (all?days.map((dl,d)=>L.some(o=>o.x.d===d)?`<h3 style="margin:14px 0 6px;font-size:16px">${esc(dl)}${d===td?' <span class="pill new">오늘</span>':''}</h3>`+day(d):'').join('')||'<div class="panel"><p class="hint" style="margin:0">아직 내 일정이 없어요.</p></div>'
+      :ttDays(days,D,d=>mine.filter(x=>x.d===d).length)+day(D))}
+document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-ttall]');if(!t||S.view!=='tt')return;S.ttAll=!S.ttAll;render()});
 /* 내 일정 · 우리 학생 레슨을 프로그램표로 */
 function ttMineGrid(T,days,mine){const D=Math.min(S.ttDay||0,Math.max(0,days.length-1));
   const L=mine.map((x,i)=>Object.assign({},x,{_i:i})).filter(x=>x.d===D).map(x=>({id:'m'+x._i,s:x.t,e:x.e||'',room:x.where||'장소 미정',loc:x.loc||'',title:x.title,kind:x.what==='개인레슨'?'개인레슨':x.title,tag:x.what,w:x.with||'',wl:x.what==='개인레슨'?'학생':'함께'}));

@@ -1,4 +1,4 @@
-/* build: 20261103-225534 */
+/* build: 20261103-230445 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -2524,7 +2524,7 @@ function myTimetable(token) {
   const roomLoc = (d, r) => (((c.rooms || {})[d] || []).find(x => x[0] === r) || [])[1] || '';
   const mine = [];
   actEvents_().forEach(e => { const me = e.ppl.find(p => meIds.includes(p.n)); if (!me) return;
-    mine.push({ d: e.d, t: e.s, e: e.e, what: me.r, title: evName_(e), where: e.room, loc: roomLoc(e.d, e.room), with: e.ppl.filter(p => !meIds.includes(p.n)).map(p => pn(p.n) + '(' + p.r + ')').join(', ') }); });
+    mine.push({ d: e.d, t: e.s, e: e.e, what: me.r, title: evName_(e), where: e.room, loc: roomLoc(e.d, e.room), tg: Object.keys(e.tg || {}).map(k => { const x = tgTok_((e.tg[k] || {}).b).txt; return x ? k + ' ' + x : ''; }).filter(Boolean).join(' · '), with: e.ppl.filter(p => !meIds.includes(p.n)).map(p => pn(p.n) + '(' + p.r + ')').join(', ') }); });
   const prof = profs_().find(p => p.on && p.lesson && nm(p.name) === nm(u.name));
   const subs = loadSubs_(); const byPid = {};
   subs.forEach(sb => sb.ppl.forEach(p => { if (p.status !== '취소') { const k = p.id.slice(sb.no.length + 1); byPid[p.id] = { p, sb, i: (sb.form && sb.form.info && sb.form.info[k]) || {} }; } }));

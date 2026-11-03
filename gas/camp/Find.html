@@ -1,4 +1,4 @@
-<!doctype html><!-- build: 20261103-224448 --><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<!doctype html><!-- build: 20261103-225117 --><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
 <style>
 :root{--ink:#18232b;--muted:#5b6b73;--faint:#93a1a8;--line:#d5e6e6;--bg:#f2f8f8;--surface:#fff;--accent:#0f8a86;--soft:#e3f3f2}
@@ -63,6 +63,7 @@ textarea{width:100%;font:inherit;font-size:16px;padding:10px 12px;border:1.5px s
 .st{display:inline-block;font-size:12px;font-weight:700;padding:1px 8px;border-radius:999px;background:var(--soft);color:var(--accent)}
 .st.wait{background:#fff4d6;color:#9a6a00}
 .reply{background:var(--soft);border-radius:10px;padding:8px 10px;margin-top:6px;font-size:14.5px}
+.menus{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}.menu{border:1px solid var(--line);border-radius:12px;padding:10px 12px}.menu .mh{display:flex;justify-content:space-between;gap:8px;align-items:baseline;margin-bottom:4px}.menu .mh b{font-size:16px}.menu .mh .t{color:var(--muted);font-size:13px}.menu ul{margin:0;padding-left:18px;line-height:1.7}
 </style></head><body>
 <div class="band"><h1 id="title">캠프 페이지</h1><p>공지 · 학생 시간표 · 수업표 · 교사 · 방 찾기 · 음악회 · 식사 · 분실물 · 문의</p></div>
 <div class="wrap">
@@ -78,7 +79,7 @@ textarea{width:100%;font:inherit;font-size:16px;padding:10px 12px;border:1.5px s
     <label style="display:flex;gap:8px;align-items:flex-start;font-size:14.5px;margin:4px 0 12px;cursor:pointer"><input id="inA" type="checkbox" style="width:20px;height:20px;margin:2px 0 0;flex:none"><span>캠프 참가자(보호자 포함)이며, 여기서 본 이름 · 일정 · 교실은 아이 찾기와 일정 확인에만 쓰고 다른 곳에 옮기거나 퍼뜨리지 않을게요.</span></label>
     <button type="button" id="inGo" class="btn1" style="width:100%;font-size:17px;padding:12px">들어가기</button><p class="err" id="inErr" style="margin:8px 0 0"></p></div>
   <div id="pMain" hidden>
-  <div id="home" class="tiles"><button type="button" data-tab="ntc"><b>공지사항</b><small id="ntcN">운영진 안내</small></button><button type="button" data-tab="kid"><b>학생 시간표 찾기</b><small>우리 아이 시간표 · 방</small></button><button type="button" data-tab="board"><b>수업표</b><small>전체 프로그램</small></button><button type="button" data-tab="name"><b>교사 · 교수 찾기</b><small>선생님 · 교수님 일정</small></button><button type="button" data-tab="room"><b>방 찾기</b><small>학원 · 아이 이름으로</small></button><button type="button" data-tab="con"><b>음악회</b><small>순서 · 곡</small></button><button type="button" data-tab="info"><b>식사 · 장소</b><small>시간 · 위치 · 연락처</small></button><button type="button" data-tab="lost"><b>분실물</b><small>올리기 · 찾기</small></button><button type="button" data-tab="ask"><b>문의</b><small>운영진에게</small></button><a id="tLink" class="tile2" href="#" target="_top" hidden><b>선생님 화면</b><small>접수 · 수정 · 입금 · 우리 학원 (로그인)</small></a></div>
+  <div id="home" class="tiles"><button type="button" data-tab="ntc"><b>공지사항</b><small id="ntcN">운영진 안내</small></button><button type="button" data-tab="kid"><b>학생 시간표 찾기</b><small>우리 아이 시간표 · 방</small></button><button type="button" data-tab="board"><b>수업표</b><small>전체 프로그램</small></button><button type="button" data-tab="name"><b>교사 · 교수 찾기</b><small>선생님 · 교수님 일정</small></button><button type="button" data-tab="room"><b>방 찾기</b><small>학원 · 아이 이름으로</small></button><button type="button" data-tab="con"><b>음악회</b><small>순서 · 곡</small></button><button type="button" data-tab="info"><b>식단 · 장소</b><small>식단표 · 식사 시간 · 위치 · 연락처</small></button><button type="button" data-tab="lost"><b>분실물</b><small>올리기 · 찾기</small></button><button type="button" data-tab="ask"><b>문의</b><small>운영진에게</small></button><a id="tLink" class="tile2" href="#" target="_top" hidden><b>선생님 화면</b><small>접수 · 수정 · 입금 · 우리 학원 (로그인)</small></a></div>
   <div id="secHead" class="sechd" hidden><button type="button" data-tab="home">← 메뉴</button><b id="secT"></b></div>
   <div data-p="ntc" hidden><div id="nout"></div></div>
   <div data-p="kid" hidden><div id="kout"></div></div>
@@ -125,7 +126,7 @@ $('outBtn').addEventListener('click',function(){if(!confirm('나갈까요? 「�
 /* 들어가기: 들어온 적 있으면 바로, 기억해 둔 이름 · 번호가 있으면 자동으로 */
 if(TOK){$('pMain').hidden=false;start()}else{needIn();if(svGet(INM==='pw'?'findpw':'find')){$('inA').checked=true;enter(true)}}
 function start(){run('campHome',null,function(r){if(!r.ok)return;HOME=r;if(r.name)$('title').textContent=r.name;var nn=(r.notices||[]).length;$('ntcN').textContent=nn?'새 소식 '+nn+'개':'운영진 안내';if(TAB==='ntc')notices();if(r.teacherUrl){$('tLink').href=r.teacherUrl;$('tLink').hidden=false}$('ntc').innerHTML=r.notice?'<div class="ntc"><b>알림</b> '+esc(r.notice)+'</div>':'';if(TAB==='con'||TAB==='info')show(TAB)});show(TAB)}
-var TITLES={ntc:'공지사항',kid:'학생 시간표 찾기',board:'수업표',name:'교사 · 교수 찾기',room:'방 찾기',con:'음악회',info:'식사 · 장소',lost:'분실물',ask:'문의'};
+var TITLES={ntc:'공지사항',kid:'학생 시간표 찾기',board:'수업표',name:'교사 · 교수 찾기',room:'방 찾기',con:'음악회',info:'식단 · 장소',lost:'분실물',ask:'문의'};
 function show(t){TAB=t;$('home').hidden=t!=='home';$('secHead').hidden=t==='home';$('secT').textContent=TITLES[t]||'';document.querySelectorAll('[data-p]').forEach(function(x){x.hidden=x.getAttribute('data-p')!==t});window.scrollTo(0,0);
   if(t==='ntc')notices();if(t==='kid')kids();if(t==='board')board();if(t==='con')concerts();if(t==='info')info();if(t==='ask')ask();
   if(t==='lost')LOST.mount($('lout'),function(req,ok,fail){google.script.run.withSuccessHandler(function(r){if(r&&r.needIn){needIn();return}ok(r)}).withFailureHandler(fail).lostApiF(req,TOK)})}
@@ -191,7 +192,7 @@ $('fr').addEventListener('submit',function(e){e.preventDefault();var q=$('qr').v
     box.innerHTML=h||'<p class="hint">찾지 못했어요. 학원 이름이나 아이 이름을 다시 넣어 주세요.</p>'},box)});
 
 /* ---------- 음악회 · 식사 · 장소 ---------- */
-var CDAY=null;
+var CDAY=null,MDAY=null;
 function concerts(){var box=$('cout');if(!HOME){box.innerHTML='<p class="hint">불러오는 중…</p>';return}var C=HOME.concerts||[];
   if(!C.length){box.innerHTML='<p class="none">아직 음악회 순서가 정해지지 않았어요.</p>';return}
   var ds=[];C.forEach(function(c){if(ds.indexOf(c.d)<0)ds.push(c.d)});ds.sort(function(a,b){return a-b});if(CDAY===null||ds.indexOf(CDAY)<0){var t=today(HOME.days);CDAY=ds.indexOf(t)>=0?t:ds[0]}
@@ -199,7 +200,10 @@ function concerts(){var box=$('cout');if(!HOME){box.innerHTML='<p class="hint">�
     C.filter(function(c){return c.d===CDAY}).map(function(c){return '<div class="card"><h2 style="font-size:18px">'+esc(c.name)+'</h2><div class="who">'+esc(c.cs||'')+' · '+esc(c.room||'')+'</div><table class="ktbl"><thead><tr><th>순서</th><th>이름</th><th>곡</th></tr></thead><tbody>'+c.list.map(function(x){return '<tr><td class="t">'+x.n+'</td><td><b>'+esc(x.name)+'</b><br><small style="color:var(--muted)">'+esc(x.acad)+(x.inst?' · '+esc(x.inst):'')+'</small></td><td>'+esc(x.song||'')+'</td></tr>'}).join('')+'</tbody></table></div>'}).join('')}
 function info(){var box=$('iout');if(!HOME){box.innerHTML='<p class="hint">불러오는 중…</p>';return}var h='';
   if((HOME.info||[]).length)h+='<div class="card"><h2 style="font-size:18px">연락처 · 안내</h2><div class="list">'+HOME.info.map(function(x){return '<div class="row"><b>'+esc(x.k)+'</b><span>'+(/^[\d\-\s]{9,}$/.test(x.v)?'<a href="tel:'+esc(x.v.replace(/\D/g,''))+'">'+esc(x.v)+'</a>':esc(x.v))+'</span></div>'}).join('')+'</div></div>';
-  var M=HOME.meals||[];if(M.length){var by={};M.forEach(function(m){(by[m.d]=by[m.d]||[]).push(m)});h+='<div class="card"><h2 style="font-size:18px">식사 시간</h2><table class="ktbl"><tbody>'+Object.keys(by).sort(function(a,b){return a-b}).map(function(d){return '<tr><th colspan="2" style="padding-top:10px;color:var(--ink)">'+esc(HOME.days[d]||'')+'</th></tr>'+by[d].map(function(m){return '<tr><td class="t">'+esc(m.s)+'~'+esc(m.e)+'</td><td>'+esc(m.t||m.k)+'</td></tr>'}).join('')}).join('')+'</tbody></table></div>'}
+  var M=HOME.meals||[],MN=HOME.menu||[];if(M.length||MN.length){var dd=[];M.concat(MN).forEach(function(m){if(dd.indexOf(m.d)<0)dd.push(m.d)});dd.sort(function(a,b){return a-b});if(MDAY===null||dd.indexOf(MDAY)<0){var t0=today(HOME.days);MDAY=dd.indexOf(t0)>=0?t0:dd[0]}
+    var ml=M.filter(function(m){return m.d===MDAY}).map(function(m){return {k:m.k||m.t,s:m.s,e:m.e}});MN.filter(function(x){return x.d===MDAY}).forEach(function(x){if(!ml.some(function(m){return m.k===x.k}))ml.push({k:x.k,s:'',e:''})});
+    h+='<div class="card"><h2 style="font-size:18px">식사 · 식단표</h2><div class="seg ttdays day" style="margin:0 0 10px">'+dd.map(function(d){return '<button type="button" data-mday="'+d+'" aria-pressed="'+(d===MDAY)+'">'+esc(HOME.days[d]||'')+'</button>'}).join('')+'</div>'+
+      '<div class="menus">'+ml.map(function(m){var x=MN.filter(function(y){return y.d===MDAY&&y.k===m.k})[0];return '<div class="menu"><div class="mh"><b>'+esc(m.k)+'</b>'+(m.s?'<span class="t">'+esc(m.s)+(m.e?'~'+esc(m.e):'')+'</span>':'')+'</div>'+(x&&x.items.length?'<ul>'+x.items.map(function(it){return '<li>'+esc(it)+'</li>'}).join('')+'</ul>':'<p class="none" style="margin:4px 0">메뉴가 아직 없어요</p>')+(x&&x.memo?'<small style="color:var(--muted)">'+esc(x.memo)+'</small>':'')+'</div>'}).join('')+'</div></div>'}
   var P=HOME.places||[];if(P.length)h+='<div class="card"><h2 style="font-size:18px">장소 안내</h2><div class="list">'+P.map(function(p){return '<div class="row"><b>'+esc(p.name)+'</b><small>'+esc(p.loc||'')+'</small></div>'}).join('')+'</div></div>';
   box.innerHTML=h||'<p class="none">아직 안내가 없어요.</p>'}
 
@@ -210,15 +214,16 @@ function ask(){var box=$('aout');box.innerHTML='<div class="card"><h2 style="fon
   run('findMyIssues',null,function(r){mine(r.mine||[])},$('aMine'))}
 function mine(L){$('aMine').innerHTML=L.length?'<div class="card"><h2 style="font-size:18px">내 글</h2>'+L.map(function(x){return '<div style="padding:8px 0;border-bottom:1px solid var(--line)"><small class="hint">'+esc(x.at)+'</small> <span class="st'+(x.state==='해결'||x.state==='완료'?'':' wait')+'">'+esc(x.state)+'</span><div style="white-space:pre-line;margin-top:4px">'+esc(x.text)+'</div>'+(x.reply?'<div class="reply"><b>답변</b> '+esc(x.reply)+'</div>':'')+'</div>'}).join('')+'</div>':''}
 
-document.addEventListener('click',function(e){var t=e.target.closest('[data-tab],[data-ev],[data-day],[data-cday],[data-kdel],[data-ttclose]');if(!t)return;
+document.addEventListener('click',function(e){var t=e.target.closest('[data-tab],[data-ev],[data-day],[data-cday],[data-mday],[data-kdel],[data-ttclose]');if(!t)return;
   if(t.hasAttribute('data-tab')){show(t.getAttribute('data-tab'));return}
   if(t.hasAttribute('data-day')){DAY=+t.getAttribute('data-day');SEL=null;board();return}
   if(t.hasAttribute('data-cday')){CDAY=+t.getAttribute('data-cday');concerts();return}
+  if(t.hasAttribute('data-mday')){MDAY=+t.getAttribute('data-mday');info();return}
   if(t.hasAttribute('data-kdel')){var kn=t.getAttribute('data-kdel'),ka=t.getAttribute('data-kacad');var same=KIDS&&KIDS.kids?KIDS.kids.filter(function(x){return x.how==='add'&&x.name===kn}).length:0;
     if(ka&&same>1){var H=kidHide();H.push(kn+'|'+ka);try{localStorage.setItem('campKidsHide',JSON.stringify(H))}catch(e){}}else setKids(myKids().filter(function(x){return x.name!==kn}));kids();return}
   if(t.hasAttribute('data-ttclose')){if(t.classList.contains('ttpop')&&e.target!==t)return;SEL=null;board();return}
   if(t.hasAttribute('data-ev')){var id=t.getAttribute('data-ev');SEL=id;board();if(!EV[id])run('campEventPeople',id,function(r){EV[id]=r||{ok:false};if(SEL===id)board()},null)}});
 document.addEventListener('keydown',function(e){if(e.key==='Escape'&&SEL){SEL=null;board()}});
 </script>
-<div id="bldMark" hidden>빌드표시 20261103-224448 </div>
+<div id="bldMark" hidden>빌드표시 20261103-225117 </div>
 </body></html>

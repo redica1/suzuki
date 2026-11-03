@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261103-224448 -->
+<!-- build: 20261103-225117 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -606,10 +606,22 @@ function ensDetail(t,sb,e){const joined=(t.mem||[]);const live=sb?sb.ppl.filter(
     <div class="row" style="justify-content:flex-end;gap:8px"><button class="btn small ghost" type="button" data-ensopen="${esc(t.no)}">닫기</button><button class="btn small primary" type="button" data-enssave="${esc(t.no)}">고친 내용 저장</button></div></div>`}
 
 /* 공지사항: 캠프 페이지 「공지사항」에 보임 + 맨 위 띠 한 줄(설정 「공지」) */
+/* 식단표 (11-03): 날짜 칩 → 그날 식사마다 메뉴(한 줄에 하나) · 메모(원산지 등) → 「식단표 저장」 → 캠프 페이지 「식사 · 장소」 */
+function menuInit(N){if(S.mnE)return;S.mnE={};(N.menu||[]).forEach(m=>{S.mnE[m.d+'|'+m.k]={items:m.items.join('\n'),memo:m.memo||''}})}
+function menuMeals(N,d){const L=(N.meals||[]).filter(m=>m.d===d).map(m=>({k:m.k,s:m.s,e:m.e}));const base=L.length?L:['아침','점심','저녁'].map(k=>({k,s:'',e:''}));Object.keys(S.mnE||{}).forEach(key=>{const [dd,k]=key.split('|');if(+dd===d&&!base.some(x=>x.k===k))base.push({k,s:'',e:''})});return base}
+function menuPanel(N){menuInit(N);const days=N.days||[];if(!days.length)return '<div class="panel"><h3 style="margin:0 0 6px">식단표</h3><p class="hint" style="margin:0">캠프 날짜가 아직 없어요. 「교사 일정 › 날짜 · 장소」에서 날짜를 먼저 넣어 주세요.</p></div>';
+  if(S.mnD==null||S.mnD>=days.length)S.mnD=0;const d=S.mnD,M=menuMeals(N,d),filled=i=>menuMeals(N,i).filter(m=>{const x=S.mnE[i+'|'+m.k];return x&&(x.items.trim()||x.memo.trim())}).length;
+  return `<div class="panel"><div class="spread"><h3 style="margin:0">식단표</h3><span class="row" style="gap:6px">${S.mnDirty?'<span class="pill due">저장 안 함</span>':''}<button class="btn small primary" type="button" id="mnSave">식단표 저장</button></span></div>
+    <p class="hint" style="margin:4px 0 8px">캠프 페이지 「식사 · 장소」에 날짜별로 보여요. 메뉴는 <b>한 줄에 하나</b>씩, 메모에는 원산지 등을 적어요. 비운 끼니는 안 보여요.</p>
+    <div class="row" style="gap:6px;flex-wrap:wrap;margin-bottom:8px">${days.map((x,i)=>`<button class="btn small ${i===d?'primary':''}" type="button" data-mnd="${i}">${esc(x)} <small>${filled(i)?filled(i)+'끼':''}</small></button>`).join('')}</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px">${M.map(m=>{const key=d+'|'+m.k,x=S.mnE[key]||{items:'',memo:''};return `<div style="border:1px solid var(--line);border-radius:10px;padding:8px;display:grid;gap:6px"><b>${esc(m.k)} <small class="faint">${m.s?esc(m.s)+'~'+esc(m.e):''}</small></b>
+      <textarea data-mni="${esc(key)}" rows="9" placeholder="흰밥&#10;배추김치&#10;미역국&#10;…">${esc(x.items)}</textarea><input type="text" data-mnm="${esc(key)}" value="${esc(x.memo)}" maxlength="300" placeholder="메모 (예: 돼지고기 국내산)"></div>`}).join('')}</div>
+    <div class="row" style="gap:6px;margin-top:8px"><button class="btn small ghost" type="button" data-mncopy="${d}" ${d>0?'':'disabled'}>앞날 식단 그대로 가져오기</button></div></div>`}
 function vNtc(){if(!S.ntc){if(!S.ntcLoading){S.ntcLoading=true;call('adminNotices',[],r=>{S.ntcLoading=false;S.ntc=r;render()},'공지를 불러오고 있어요…')}return '<div class="panel hint">불러오는 중…</div>'}
   const N=S.ntc,E=S.ntcEdit?N.list.find(x=>x.row===S.ntcEdit):null;
   return `<div class="panel"><h3 style="margin:0 0 6px">맨 위 띠 (한 줄)</h3><p class="hint" style="margin:0 0 8px">캠프 페이지 첫 화면 맨 위에 노랗게 떠요. 비우면 안 보여요. 지금 꼭 봐야 할 것만 짧게.</p>
     <div class="row" style="gap:8px"><input type="text" id="ntBan" style="flex:1" maxlength="120" value="${esc(N.banner||'')}" placeholder="예) 오늘 저녁 음악회는 Grand Hall에서 열려요"><button class="btn small primary" type="button" id="ntBanSave">저장</button></div></div>
+  ${menuPanel(N)}
   <div class="panel" style="display:grid;gap:8px"><h3 style="margin:0">${E?'공지 고치기':'새 공지'}</h3>
     <input type="text" id="ntT" maxlength="80" placeholder="제목" value="${esc(E?E.title:'')}"><textarea id="ntB" rows="5" placeholder="내용 (줄바꿈 그대로 보여요)">${esc(E?E.body:'')}</textarea>
     <label class="row" style="gap:6px;align-items:center"><input type="checkbox" id="ntTop" ${E&&E.top?'checked':''}> 중요 (맨 위에 노란 카드로)</label>
@@ -944,6 +956,7 @@ document.addEventListener('click',ev=>{if(S.tab!=='act'||!D)return;
   if(b.id==='a_reload'){if(DIRTY){flush(()=>load());return}load();return}
   if(b.id==='a_export'){const go=()=>{b.disabled=true;b.textContent='보내는 중…';run('exportProgram',[],r=>{A.exportUrl=r.url;render();toast('구글 시트로 보냈어요 · '+r.tabs.length+'탭');try{window.open(r.url,'_blank','noopener')}catch(x){}},m=>{b.disabled=false;b.textContent='구글 시트로 보내기';toast('보내지 못했어요 · '+m)})};if(DIRTY||SAVING)flush(go);else go();return}
 });
+document.addEventListener('input',e=>{const el=e.target;if(!el.dataset||(el.dataset.mni===undefined&&el.dataset.mnm===undefined))return;const k=el.dataset.mni!==undefined?el.dataset.mni:el.dataset.mnm,x=S.mnE[k]=S.mnE[k]||{items:'',memo:''};if(el.dataset.mni!==undefined)x.items=el.value;else x.memo=el.value;if(!S.mnDirty){S.mnDirty=true;const sv=document.getElementById('mnSave');if(sv)sv.insertAdjacentHTML('beforebegin','<span class="pill due">저장 안 함</span>')}});
 document.addEventListener('input',e=>{if(S.tab!=='act'||!D)return;const el=e.target;
   if(el.id==='a_pq'){A.pq=el.value;const ed=evById(A.sel);readEditor(ed);render();keepFocus('a_pq');return}
   if(el.id==='a_names'){A.names=el.value;return}
@@ -1586,7 +1599,7 @@ const ME=()=>(S.D&&S.D.me)||{sup:true,perms:{}};
 const permOf=k=>{const m=ME();if(m.sup)return '편집';if(k==='camp'||k==='staff'||k==='cons')return '';return (m.perms||{})[k]||''};
 const visTabs=()=>TABS.concat(SUP_TABS).filter(([k])=>permOf(k));
 const RO=()=>permOf(S.tab)==='보기';
-const WRITE_FN=/^(devSummer|adminNoticeSave|scholSave|adminConfirm|adminAdjust|adminSetBankAcct|ogSave|ogToken|adminRejectReport|adminSaveEns|adminSaveProfs|adminRefund|adminSetIssue|schedSave|lessonSet|adminSetSetting|roomSave|conSave|campSave|staffSave|songEnSave|pvHideSave|roomCfgSave|layoutImport|roomMove|budSave)$/;
+const WRITE_FN=/^(devSummer|adminNoticeSave|adminMenuSave|scholSave|adminConfirm|adminAdjust|adminSetBankAcct|ogSave|ogToken|adminRejectReport|adminSaveEns|adminSaveProfs|adminRefund|adminSetIssue|schedSave|lessonSet|adminSetSetting|roomSave|conSave|campSave|staffSave|songEnSave|pvHideSave|roomCfgSave|layoutImport|roomMove|budSave)$/;
 const roBlock=fn=>WRITE_FN.test(fn)&&permOf(S.tab)!=='편집';
 const RO_MSG='보기만 할 수 있는 메뉴예요. 바꾸려면 총관리자에게 「편집」 권한을 받아 주세요.';
 
@@ -2287,6 +2300,9 @@ document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)r
   if(d.coni!==undefined){S.coni=d.coni;render();return}
   if(b.id==='ntBanSave'){call('adminSetSetting',['공지',document.getElementById('ntBan').value.trim()],r=>{S.ntc.banner=r.val;render();toast('맨 위 띠를 저장했어요')});return}
   if(b.id==='ntCancel'){S.ntcEdit=null;render();return}
+  if(b.dataset.mnd!==undefined){S.mnD=+b.dataset.mnd;render();return}
+  if(b.dataset.mncopy!==undefined){const d=+b.dataset.mncopy,N=S.ntc;menuMeals(N,d-1).forEach(m=>{const f=S.mnE[(d-1)+'|'+m.k];if(f&&(f.items||f.memo))S.mnE[d+'|'+m.k]={items:f.items,memo:f.memo}});S.mnDirty=true;render();toast('앞날 식단을 가져왔어요 · 고친 뒤 「식단표 저장」');return}
+  if(b.id==='mnSave'){const L=Object.keys(S.mnE||{}).map(k=>{const i=k.indexOf('|');return {d:+k.slice(0,i),k:k.slice(i+1),items:S.mnE[k].items,memo:S.mnE[k].memo}});call('adminMenuSave',[L],r=>{S.ntc=Object.assign(S.ntc,{menu:r.menu,meals:r.meals,days:r.days});S.mnE=null;S.mnDirty=false;render();toast('식단표를 저장했어요 · 캠프 페이지에 바로 보여요')},'저장하고 있어요…');return}
   if(b.id==='ntSave'){const t=document.getElementById('ntT').value,bd=document.getElementById('ntB').value,top=document.getElementById('ntTop').checked;call('adminNoticeSave',[{row:S.ntcEdit||0,title:t,body:bd,top}],r=>{S.ntc=r;S.ntcEdit=null;render();toast('저장했어요 · 캠프 페이지에 바로 보여요')});return}
   if(b.id==='conCopy'){const t=S.conTSV||'';const done=()=>toast('표를 복사했어요 · 구글 시트 칸에 붙여넣기 하세요');
     if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(t).then(done,()=>{const x=document.createElement('textarea');x.value=t;document.body.appendChild(x);x.select();try{document.execCommand('copy');done()}catch(e){toast('복사하지 못했어요')}x.remove()});
@@ -2384,6 +2400,6 @@ render();
   var q=0;new MutationObserver(function(){if(q)return;q=1;requestAnimationFrame(function(){q=0;setup();[].forEach.call(document.querySelectorAll('table.cflt'),function(t){var r=t.tHead&&t.tHead.rows[0];if(r)t.style.setProperty('--cfh1',r.offsetHeight+'px')})})}).observe(document.body,{childList:true,subtree:true});setup();
 })();
 </script>
-<div id="bldMark" hidden>빌드표시 20261103-224448 </div>
+<div id="bldMark" hidden>빌드표시 20261103-225117 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();</script>
 </body></html>

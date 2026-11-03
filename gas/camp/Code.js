@@ -1,4 +1,4 @@
-/* build: 20261103-224448 */
+/* build: 20261103-225117 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -2437,7 +2437,7 @@ function campHome(tok) {
   let notices = []; try { ntcSheet_();
     notices = rows_('공지사항').filter(r => String(r['제목'] || r['내용'] || '').trim()).map(r => ({ at: r['날짜'] instanceof Date ? Utilities.formatDate(r['날짜'], TZ, 'M/d HH:mm') : String(r['날짜'] || ''), title: String(r['제목'] || ''), body: String(r['내용'] || ''), top: /^(예|y|o|1|true)$/i.test(String(r['맨 위'] || '').trim()) })).reverse(); } catch (x) {}
   const share = setting_('공유주소') || 'https:\/\/app.suzukimusickorea.org/camp/';
-  return Object.assign(G0, { ok: true, days, notices, notice: setting_('공지'), teacherUrl: share + (setting_('테스트 로그인') ? (share.indexOf('?') < 0 ? '?test' : '&test') : ''), meals: (c.meals || []).map(m => ({ d: m.d, day: String(days[m.d] || ''), s: m.s, e: m.e, t: m.t, k: m.k })),
+  return Object.assign(G0, { ok: true, days, notices, notice: setting_('공지'), teacherUrl: share + (setting_('테스트 로그인') ? (share.indexOf('?') < 0 ? '?test' : '&test') : ''), meals: (c.meals || []).map(m => ({ d: m.d, day: String(days[m.d] || ''), s: m.s, e: m.e, t: m.t, k: m.k })), menu: (() => { try { return menuRows_(); } catch (x) { return []; } })(),
     places: Object.keys(places).map(n => ({ name: n, loc: places[n] })), info,
     concerts: concerts.map(x => ({ name: x.name, d: x.d, day: String(days[x.d] || ''), cs: x.cs, room: x.room, list: (order[x.id] || []).map(pid => inf[pid]).filter(v => v && !v.x).map((v, i) => ({ n: i + 1, name: v.name, acad: v.acad, inst: v.inst, song: v.song })) })).filter(x => x.list.length) });
 }
@@ -3089,7 +3089,20 @@ function lost_(me, req) {
 function ntcSheet_() { const ss = SpreadsheetApp.getActive(); let sh = ss.getSheetByName('공지사항'); if (!sh) { sh = ss.insertSheet('공지사항'); sh.appendRow(['날짜', '제목', '내용', '맨 위', '쓴 사람']); } return sh; }
 function adminNotices(token) { const a = adm_(token); if (!a.sup && !['ntc', 'tt'].some(t => a.perms[t] === '편집' || a.perms[t] === '보기')) throw new Error('공지사항 권한이 있어야 볼 수 있어요.'); ntcSheet_();
   const L = rows_('공지사항').filter(r => String(r['제목'] || r['내용'] || '').trim()).map(r => ({ row: r._row, at: r['날짜'] instanceof Date ? Utilities.formatDate(r['날짜'], TZ, 'yyyy-MM-dd HH:mm') : String(r['날짜'] || ''), title: String(r['제목'] || ''), body: String(r['내용'] || ''), top: /^(예|y|o|1|true)$/i.test(String(r['맨 위'] || '').trim()), by: String(r['쓴 사람'] || '') })).reverse();
-  return { ok: true, list: L, banner: setting_('공지') }; }
+  return Object.assign({ ok: true, list: L, banner: setting_('공지') }, menuCtx_()); }
+/* 식단표 (11-03): 시트 「식단표」 날짜번호 · 식사 · 메뉴(한 줄에 하나) · 메모(원산지 등) — 관리자 「공지사항」 탭에서 넣고, 캠프 페이지 「식사 · 장소」에 날짜별로 보임 */
+const MENU_SH = '식단표';
+function menuRows_() { const ss = SpreadsheetApp.getActive(); if (!ss.getSheetByName(MENU_SH)) return [];
+  return rows_(MENU_SH).filter(r => String(r['식사'] || '').trim()).map(r => ({ d: +r['날짜번호'] || 0, k: String(r['식사']).trim(), items: String(r['메뉴'] || '').split('\n').map(x => x.trim()).filter(Boolean), memo: String(r['메모'] || '') })); }
+function menuCtx_() { const c = actCfg_(), days = c.days || [];
+  const meals = (Array.isArray(c.meals) ? c.meals : mealGen_(camp_().meals, days.length)).map(m => ({ d: m.d, k: String(m.k || m.t || ''), s: m.s, e: m.e })).filter(m => m.k);
+  return { days, meals, menu: menuRows_() }; }
+function adminMenuSave(token, list) { const a = adm_(token); need_(a, ['ntc', 'tt']);
+  const L = (list || []).slice(0, 200).map(x => [Math.max(0, Math.round(+x.d || 0)), String(x.k || '').trim().slice(0, 20), (Array.isArray(x.items) ? x.items : String(x.items || '').split('\n')).map(v => String(v).trim().slice(0, 60)).filter(Boolean).slice(0, 40).join('\n'), String(x.memo || '').trim().slice(0, 300)]).filter(r => r[1] && (r[2] || r[3]));
+  const lock = lock_(); try { const ss = SpreadsheetApp.getActive(); let sh = ss.getSheetByName(MENU_SH); if (!sh) sh = ss.insertSheet(MENU_SH);
+    sh.clearContents(); const head = ['날짜번호', '식사', '메뉴', '메모']; sh.getRange(1, 1, L.length + 1, 4).setValues([head].concat(L)); sh.setFrozenRows(1); sh.getRange(1, 1, 1, 4).setFontWeight('bold');
+    log_('관리자 ' + a.name, '식단표 저장', L.length + '끼'); } finally { lock.releaseLock(); }
+  return Object.assign({ ok: true }, menuCtx_()); }
 function adminNoticeSave(token, d) { const a = adm_(token); need_(a, ['ntc', 'tt']); d = d || {};
   const lock = lock_(); try { const sh = ntcSheet_();
     if (d.del && d.row) { sh.deleteRow(+d.row); log_('관리자 ' + a.name, '공지 지움', String(d.title || '')); }

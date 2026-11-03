@@ -1,4 +1,4 @@
-/* build: 20261103-161851 */
+/* build: 20261103-162238 */
 /* ---------- 캠프 설정 (관리자 화면에서 입력되는 값) ---------- */
 const ROOM = { cap:4, emptyFee:130000 }; // 가족방: 4인 기준, 빈 자리 1개당 추가 비용
 const CAMP = { id:'27W', ri:0, lessonFee:60000, lessonMax:5, mcFee:150000,
@@ -55,8 +55,10 @@ function roomsOf(subs){const R=[];(subs||[]).forEach(sb=>{const f=sb.form||{},ro
     Object.keys(room).filter(k=>room[k]).forEach(k=>{const rep=P(k);if(!rep||rep.status==='취소')return;const heads=[k,...Object.keys(join).filter(j=>join[j]===k)];
       const keys=[...heads,...fam.filter(x=>heads.includes(x.link)).map(x=>x.id)];const mem=keys.map(P).filter(x=>x&&x.status!=='취소').map(p=>({sb,p}));
       R.push({rep,mem,fee:mem.reduce((t,x)=>t+(+x.p.room||0),0)})})});return R}
-const roomMark=subs=>{const m={};roomsOf(subs).forEach((r,i)=>r.mem.forEach(x=>m[x.p.id]=i+1));return m};
-const roomChip=(M,p)=>M[p.id]?` <span class="cchip2" title="가족방 ${M[p.id]}">가족방 ${M[p.id]}</span>`:'';
+const roomMark=subs=>{const m={};roomsOf(subs).forEach(r=>r.mem.forEach(x=>m[x.p.id]={rep:r.rep.name,isRep:x.p.id===r.rep.id,n:r.mem.length}));return m};
+const roomChip=()=>'';
+/* 가족방 칸: 대표는 「대표 · 4명」, 함께 쓰는 사람은 「바하린 방」 */
+const roomCell=(M,p)=>{const o=M[p.id];return `<td>${o?(o.isRep?`<span class="cchip2">대표 · ${o.n}명</span>`:`<span class="hint">${esc(o.rep)} 방</span>`):'<span class="hint">-</span>'}</td>`};
 /* 가족방 아래 표: 위 접수 표와 같은 칸으로, 방마다 묶어서 */
 function famRoomsHTML(subs,noHead){const R=roomsOf(subs);const nc=Math.max(ROOM.cap-1,...R.map(r=>r.mem.length-1));
   return (noHead?'':`<h3 style="margin:18px 0 6px;font-size:18px">가족방</h3>`)+(R.length?`<div class="panel"><div class="mtblw"><table class="mtbl"><thead><tr><th>#</th><th>대표</th>${Array.from({length:nc},(_,k)=>`<th>가족 ${k+1}</th>`).join('')}<th>인원</th><th class="r">가족방 추가 금액</th></tr></thead><tbody>${R.map((r,i)=>{const others=r.mem.filter(x=>x.p.id!==r.rep.id);return `<tr><td class="num">${i+1}</td><td><b>${esc(r.rep.name)}</b> <span class="cchip2">대표</span></td>${Array.from({length:nc},(_,k)=>`<td>${others[k]?esc(others[k].p.name):'<span class="hint">-</span>'}</td>`).join('')}<td class="num">${r.mem.length}명</td><td class="r num"><b>${won(r.fee)}</b></td></tr>`}).join('')}</tbody></table></div><p class="hint" style="margin:8px 0 0">한 방에 ${ROOM.cap}명이 안 차면 빈 자리마다 ${won(ROOM.emptyFee)}이 대표에게 붙어요 (${ROOM.cap}명이면 0원). 방 번호는 운영진이 정한 뒤 알려 드려요. 같은 층 · 옆방 같은 요청은 「오류·건의」에서 「가족방 요청」으로 남겨 주세요.</p></div>`:`<div class="panel"><p class="hint" style="margin:0">신청한 가족방이 없어요. 가족방은 접수하거나 고칠 때 참가 정보에서 신청해요.</p></div>`)}

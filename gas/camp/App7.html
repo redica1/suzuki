@@ -1,4 +1,4 @@
-/* build: 20261103-191236 */
+/* build: 20261103-191407 */
     ps.forEach(p=>{p.pay='신고';p.rep=rep;delete S.rpRow[p.id]});S.afterSave=()=>repDone(ps.map(p=>p.id));subSave();S.rp=null;S.rpOpen=false;S.rpMemo=undefined;render();toast(`${ps.length}명 입금 신고를 보냈어요 · 운영진이 확인하면 「입금 확인」으로 바뀌어요`);return}
   if(b.id==='rpFill'){const n=document.getElementById('rpAllN').value.trim(),dd=document.getElementById('rpAllD').value;S.rpAllN=n;S.rpAllD=dd;const sel=S.rp||[];
     if(!n&&!dd){toast('적용할 입금자명이나 입금일을 적어 주세요');return}unpaidPpl().filter(x=>sel.includes(x.p.id)).forEach(({p})=>{const v=rpv(p);if(n)v.n=n;if(dd)v.d=dd});render();toast(`선택한 ${sel.length}명에게 적용했어요`);return}
@@ -240,7 +240,7 @@ function ttGrid(L,o){const mm=t=>{const q=String(t||'').split(':');return (+q[0]
   return h}
 /* 고른 칸의 사람 (표 위, 날짜 칩 위에) */
 function ttDet(L,o){const sel=L.find(x=>x.id===o.sel);
-  return sel?`<div class="ttpop" data-ttclose="1"><div class="panel ttdet" role="dialog" aria-modal="true"><div class="spread" style="align-items:flex-start;gap:8px"><div><b style="font-size:17px">${esc(sel.title)}</b><div class="hint">${esc(sel.s)}${sel.e&&sel.e!==sel.s?' ~ '+esc(sel.e):''} · ${esc(sel.room||'장소 미정')}</div></div><button type="button" class="btn small ghost" data-ttclose="1" aria-label="닫기">닫기</button></div><div style="margin-top:10px;line-height:1.7">${o.detail(sel)}</div></div></div>`:`<p class="hint" style="margin:4px 0 8px">${o.hint||'일정 칸을 누르면 와야 할 선생님과 학생이 보여요. 내 일정은 진한 색이에요.'}</p>`}
+  return sel?`<div class="ttpop" data-ttclose="1"><div class="panel ttdet" role="dialog" aria-modal="true"><div class="spread" style="align-items:flex-start;gap:8px"><div><b style="font-size:17px">${esc(sel.title)}</b><div class="hint">${esc(sel.s)}${sel.e&&sel.e!==sel.s?' ~ '+esc(sel.e):''} · ${esc(sel.room||'장소 미정')}</div></div><button type="button" class="btn small ghost" data-ttclose="1" aria-label="닫기">닫기</button></div><div style="margin-top:10px;line-height:1.7">${o.detail(sel)}</div></div></div>`:''}
 /* 날짜 칩 (시간표 탭 공통): 숫자 = 그날 칸 수 */
 function ttDays(days,D,cnt){return `<div class="seg ttdays" role="group" aria-label="날짜" style="margin:6px 0 10px">${days.map((dl,d)=>`<button type="button" data-ttday="${d}" aria-pressed="${d===D}">${esc(dl)}${cnt?' '+cnt(d):''}</button>`).join('')}</div>`}
 /* 내 일정 · 우리 학생 레슨을 프로그램표로 */

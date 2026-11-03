@@ -1,4 +1,4 @@
-/* build: 20261103-232544 */
+/* build: 20261103-232707 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -543,6 +543,16 @@ function who_(token) {
 }
 
 /** 화면에 필요한 것: 학원 명단, 그 학원 접수 전부(다른 선생님 것 포함 — 중복 접수 막기용), 앙상블 팀 */
+/** 취소 요청 중인 사람에게 요청한 환불 예정액(p.cxAmt)을 붙임 — 「취소 · 환불」 시트의 처리 전 줄, 여러 명이면 입금액 비율로 나눔 (11-03) */
+function cxAmt_(subs) {
+  const W = []; subs.forEach(sb => sb.ppl.forEach(p => { if (p.status === '취소요청') W.push({ sb, p }); })); if (!W.length) return;
+  const R = rows_(SH.CX).filter(r => String(r['사유']) !== '차액 환불' && !['환불 완료', '반려', '취소 확정'].includes(String(r['처리'] || '')));
+  W.forEach(({ sb, p }) => { const r = R.filter(x => String(x['접수번호']) === sb.no && String(x['참가자ID'] || '').split(',').includes(p.id)).pop(); if (!r) return;
+    const ids = String(r['참가자ID'] || '').split(',').filter(Boolean), tot = +String(r['환불 예정액'] || 0).replace(/[^\d]/g, '') || 0;
+    if (ids.length <= 1) { p.cxAmt = tot; return; }
+    const paid = id => +((sb.ppl.find(q => q.id === id) || {}).paidAmt) || 0, all = ids.reduce((t, id) => t + paid(id), 0);
+    p.cxAmt = all ? Math.round(tot * paid(p.id) / all) : Math.round(tot / ids.length); });
+}
 function bundle_(acads, owner) {
   const profs = (() => { try { return profPublic_(); } catch (x) { return null; } })();
   const ts = teachers_();
@@ -561,6 +571,7 @@ function bundle_(acads, owner) {
   });
   const all = loadSubs_();
   let camp = null; try { camp = campPublic_(); } catch (x) {}
+  try { cxAmt_(all.filter(sb => acads.includes(sb.acad))); } catch (x) {}
   return { rosters, subs: all.filter(sb => acads.includes(sb.acad) && ((sb.acad !== GUEST_ACAD && sb.acad !== STAFF_ACAD && sb.acad !== NOACAD) || sb.owner === owner)), teams: teams_(all), bank: bankInfo_(), today: today_(), profs, camp, myPay: (() => { try { const me = ts.filter(t => t.name === owner); return myPay_(me.length === 1 ? me[0].id : '', owner); } catch (x) { return null; } })() };
 }
 

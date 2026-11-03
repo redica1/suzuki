@@ -1,4 +1,4 @@
-/* build: 20261103-172249 */
+/* build: 20261103-172356 */
   if(!open.length) return MY_SUBS.length?`<div class="panel rp">${bankHTML()}<span class="hint">지금 입금할 금액이 없어요.</span></div>`:'';
   /* 평소엔 한 줄로 접어 둠: 「입금 신고하기」를 누르면 펼침 (11-03) */
   if(!S.rpOpen){const due=open.reduce((t,x)=>t+dueOf(x.p),0);return `<div class="panel rp">${bankHTML()}<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><span><b>입금 필요 ${open.length}명</b> · <b class="num">${won(due)}</b> <span class="hint">입금한 뒤 알려 주세요</span></span><button class="btn primary" type="button" data-rpopen="1">입금 신고하기</button></div></div>`}
@@ -96,7 +96,8 @@ function infoTable(R,RM,showOwner,canEdit){const mv=S.mview||'pay',v=mv==='les'?
 function compoTxt(subs){let T=0,R=0,F=0,Sn=0;const I={};subs.forEach(sb=>sb.ppl.filter(p=>p.status==='정상').forEach(p=>{
     if(p.kind==='교사'){if(sb.acad===STAFF_ACAD)R++;else T++}else if(p.kind==='가족')F++;else{Sn++;const ins=instOfP(sb,p)||'악기 미정';I[ins]=(I[ins]||0)+1}}));
   const ins=Object.entries(I).sort((a,b)=>b[1]-a[1]).map(([k,n])=>`${esc(k)} ${n}`).join(' · ');
-  return [T?`<b>교사 ${T}명</b>`:'',R?`<b>관계자 ${R}명</b>`:'',Sn?`<b>학생 ${Sn}명</b>${ins?` <span class="hint">(${ins})</span>`:''}`:'',F?`<b>가족 ${F}명</b>`:''].filter(Boolean).join(' · ')}
+  const nR=roomsOf(subs).length;
+  return [T?`<b>교사 ${T}명</b>`:'',R?`<b>관계자 ${R}명</b>`:'',Sn?`<b>학생 ${Sn}명</b>${ins?` <span style="color:var(--ink);font-weight:400">(${ins})</span>`:''}`:'',nR?`<b>가족방 ${nR}개</b>`:''].filter(Boolean).join('<br>')}
 const tsFmt=x=>{const m=String(x||'').match(/^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}:\d{2}))?/);return m?`${m[1]}.${+m[2]}.${+m[3]}${m[4]?' '+m[4]:''}`:String(x||'')};
 const TSHORT={'회원의 첫번째 보호자':'보호자','회원의 그외 악기 안하는 동반가족':'동반가족','동반가족 중 돌전아기':'돌전아기'};
 const sdFmt=x=>{const m=String(x||'').match(/^(\d{4})-(\d{2})-(\d{2})/);return m?`${m[1].slice(2)}.${+m[2]}.${+m[3]}`:String(x||'')};

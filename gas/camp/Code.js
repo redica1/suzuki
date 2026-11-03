@@ -478,6 +478,15 @@ function loginT_(t, consent) {
   return Object.assign({ ok: true, token, today: today_(), teacher: { id: t.id, name: t.name, role: t.role, inst: t.inst, acads, home: t.acads, p4: t.p4, email: acctEmail_(t.id) }, myAcct: myAcct_(t.name) }, bundle_(acads, t.name));
 }
 
+/** 학생도 같은 학원 다른 접수에 살아 있으면(정상 · 취소 요청 중) 다시 못 넣음 — 새 접수 · 고칠 때 새로 넣는 사람 (11-03: 취소 요청 중인 학생이 다른 접수에 또 들어가던 것) */
+function stuDup_(all, sb, onlyIds) {
+  const key = id => id.slice(id.indexOf('_') + 1), taken = {};
+  all.filter(x => x.acad === sb.acad && x.no !== sb.no).forEach(x => x.ppl.forEach(p => { if (p.kind === '가족') return; if (p.status === '정상' || p.status === '취소요청') taken[key(p.id)] = { no: x.no, cx: p.status === '취소요청' }; }));
+  const dup = sb.ppl.filter(p => p.kind !== '가족' && p.status === '정상' && (!onlyIds || onlyIds.includes(p.id)) && taken[key(p.id)]);
+  if (!dup.length) return;
+  const t = taken[key(dup[0].id)];
+  throw new Error(dup.map(p => p.name).join(', ') + '은(는) 이미 ' + t.no + '에 접수돼 있어요' + (t.cx ? ' (취소 요청 중). 다시 오려면 그 접수에서 「취소 요청 거두기」를 해 주세요.' : '. 「내 접수」에서 확인해 주세요.'));
+}
 /** 교사(선생님 본인 포함)는 모든 학원을 통틀어 한 번만 — 다른 학원(겸임·내 클래스)에는 학생만 */
 function teacherDup_(all, sb, onlyIds) {
   const tk = (no, id) => { const k = id.slice(no.length + 1); return /^t_/.test(k) ? k : ''; };
@@ -786,11 +795,7 @@ function submitNew(token, sb) {
     // 응답이 늦어 다시 보냈거나 자동 재시도한 같은 요청이면 → 이미 만든 접수를 그대로 돌려줌
     if (sb.reqId) { const done = all.find(x => x.reqId === sb.reqId); if (done) { lock.releaseLock(); return Object.assign({ ok: true, no: done.no, again: true }, bundle_(u.acads, u.name)); } }
     // 같은 학원 다른 접수에 이미 있는 사람은 다시 못 넣음
-    const key = id => id.slice(id.indexOf('_') + 1);
-    const taken = {};
-    all.filter(x => x.acad === sb.acad).forEach(x => x.ppl.filter(p => p.status === '정상').forEach(p => taken[key(p.id)] = x.no));
-    const dup = sb.ppl.filter(p => p.kind !== '가족' && taken[key(p.id)]);
-    if (dup.length) throw new Error(`${dup.map(p => p.name).join(', ')}은(는) 이미 ${taken[key(dup[0].id)]}에 접수돼 있어요. 「내 접수」에서 확인해 주세요.`);
+    stuDup_(all, sb, null);
     const n = all.reduce((m, x) => Math.max(m, +String(x.no).split('-')[1] || 0), 0) + 1;
     const no = camp_().base.id + '-' + String(n).padStart(3, '0');
     const tmp = sb.no;
@@ -823,6 +828,7 @@ function saveSubs(token, subs) {
       sb.acad = cur.acad; sb.owner = cur.owner; if (cur.contact) sb.contact = cur.contact; else delete sb.contact; sb.createdAt = cur.createdAt; sb.no = cur.no; sb.reqId = cur.reqId; sb.rev = (+cur.rev || 0) + 1;
       recalc_(sb);
       teacherDup_(all, sb, sb.ppl.filter(p => !cur.ppl.some(c => c.id === p.id)).map(p => p.id));
+      stuDup_(all, sb, sb.ppl.filter(p => !cur.ppl.some(c => c.id === p.id)).map(p => p.id));
       if (JSON.stringify((sb.form || {}).ens || {}) !== JSON.stringify((cur.form || {}).ens || {})) checkEns_(sb, all);
       guardRepTeam_(cur.no, all, !!(sb.form && sb.form.ens && sb.form.ens.on), sb.ppl.filter(p => p.status === '정상').length);
       // 새로 낸 신고에는 그때까지 확인된 금액(base)을 적어 둠 → 차액 신고를 운영진 확인 전까지 지킴

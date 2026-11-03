@@ -158,7 +158,7 @@ function vStep1(){
 function mailField(){if(S.email&&(S.lgId||(S.user&&S.user.email)))return `<p class="hint" style="margin:0">접수 확인 메일은 <b>${esc(S.email)}</b>(회원 계정 이메일)로 보내요.</p>`;
   return ''}   /* 회원 계정 이메일이 없으면(이름 · 휴대전화로 들어온 경우) 묻지 않음: 접수 확인은 「내 접수」에서 (11-02) */
 /* 이미 낸 접수에 들어 있는 사람 (고치는 중인 접수는 빼고) */
-function bookedOf(x){const T=/^t_/.test(x.id);/* 선생님은 학원을 통틀어 한 번만 */for(const sb of ALL_SUBS){if(sb.no===S.editNo||(!T&&sb.acad!==S.acad))continue;const p=sb.ppl.find(q=>q.id===sb.no+'_'+x.id&&(q.status==='정상'||(T&&q.status==='취소요청')));if(p)return {no:sb.no+(sb.acad!==S.acad?' · '+sb.acad:''),round:sb.round,by:sb.owner,at:p.addAt||sb.date}}return null}
+function bookedOf(x){const T=/^t_/.test(x.id);/* 선생님은 학원을 통틀어 한 번만 */for(const sb of ALL_SUBS){if(sb.no===S.editNo||(!T&&sb.acad!==S.acad))continue;const p=sb.ppl.find(q=>q.id===sb.no+'_'+x.id&&(q.status==='정상'||q.status==='취소요청')));if(p)return {no:sb.no+(sb.acad!==S.acad?' · '+sb.acad:''),round:sb.round,by:sb.owner,at:p.addAt||sb.date,cx:p.status==='취소요청'}}return null}
 /* 고치는 중일 때 신청 명단 칩에 붙는 표시: 기존(들어온 차례·시각) / 새로 추가 */
 const nextBatch=()=>{const sb=ALL_SUBS.find(x=>x.no===S.editNo);return sb?Math.max(1,...sb.ppl.map(q=>q.batch||1))+1:1};
 const btCls=n=>'bt'+(((n||1)-1)%6+1);
@@ -170,7 +170,7 @@ const ymdShort=x=>{if(!x)return '';const [d,t]=String(x).split(' ');const p=d.sp
 function rosterRow(x,kind){
   const bk=bookedOf(x), booked=x.booked||bk, on=!!S.picked[x.id], sel=!!S.sel[x.id];
   const pd=String(x.paidDate||''), pill = on?`<span class="pill new">명단에 추가됨</span>`: isStaffAcad()?'<span class="pill ok">관계자 · 연회비 없음</span>':(x.paid&&/^\d{4}-\d{2}-\d{2}/.test(pd))?`<span class="pill ok">회비납부<br><small>${esc(pd.slice(2,10).replace(/-/g,'.'))}</small></span>`:(x.paid&&/확인/.test(pd))?'<span class="pill due" title="원장님이 회원관리에 회비 입금 신고 · 협회 확인 전">회비 미납</span>':(x.paid&&pd)?`<span class="pill ok">회비 ${esc(pd)}</span>`:x.paid?'<span class="pill ok">회비납부</span>':booked?'<span class="pill info">연회비 함께 청구</span>':`<span class="pill due">회비 미납</span>`;
-  const btxt = booked&&!on?(bk?`접수 ${esc(ymdShort(bk.at))}${bk.by!==(S.user||{}).name?' '+esc(bk.by)+' 교사':''}`:`접수 ${esc(x.bookedRound||'')}${x.bookedBy?' '+esc(x.bookedBy)+' 교사':''}`):'';
+  const btxt = booked&&!on?(bk?`${bk.cx?'<b style="color:var(--rosin,#b45309)">취소 요청 중</b> ':''}접수 ${esc(ymdShort(bk.at))}${bk.by!==(S.user||{}).name?' '+esc(bk.by)+' 교사':''}`:`접수 ${esc(x.bookedRound||'')}${x.bookedBy?' '+esc(x.bookedBy)+' 교사':''}`):'';
   const nm=`<label for="pk_${x.id}">${kBadge(kind==='t'?(isStaffAcad()?'관계자':'교사'):'학생')} <b>${esc(x.name)}</b>${dtag(x)}</label>${btxt?`<small class="rtm"><br>${btxt}</small>`:''}`;
   const cells=kind==='t'?`<td>${esc(x.role||'-')}</td><td>${esc(x.inst||'-')}</td>`:`<td class="num">${x.birth?age(x.birth)+'세':'<span style="color:var(--rosin)">출생연도 없음</span>'}</td><td>${esc(x.inst||'-')}</td><td class="rtd">${x.teacher?esc(x.teacher):'<span style="color:var(--rosin)">미지정</span>'}</td>`;
   return `<tr class="${booked?'locked':''}${on?' incart':''}"><td><input type="checkbox" id="pk_${x.id}" data-pick="${x.id}" ${on||sel?'checked':''} ${booked||on?'disabled':''} aria-label="${esc(x.name)} 선택"></td><td>${nm}</td>${cells}<td class="num rtd" style="text-align:left">${btxt?`<small>${btxt}</small>`:'<span class="hint">-</span>'}</td><td>${pill}</td><td class="r">${!booked&&!on?`<button class="btn small" type="button" data-add1="${x.id}" aria-label="${esc(x.name)} 신청 명단에 추가">추가</button>`:''}</td></tr>`;

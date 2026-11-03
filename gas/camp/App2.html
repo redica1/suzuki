@@ -1,4 +1,4 @@
-/* build: 20261103-171725 */
+/* build: 20261103-171857 */
 function vAuthPick(){return `<section class="sec"><h2>접수 시작</h2>
   <p class="lede">어떻게 접수하시나요?</p>
   <div class="pick2">
@@ -225,7 +225,7 @@ function famBlock(key,name,owner){
 const PTABS=['교사','바이올린','첼로','비올라','플루트'];
 const selIds=()=>Object.keys(S.sel).filter(k=>S.sel[k]&&!S.picked[k]);
 function ptabList(){const r=roster(),me=S.user?S.user.name:'';
-  return PTABS.map(t=>{const L=t==='교사'?r.teachers:r.students.filter(x=>x.inst===t);const k=L.filter(x=>S.picked[x.id]).length;
+  return PTABS.map(t=>{const L=t==='교사'?r.teachers:r.students.filter(x=>x.inst===t);const k=L.filter(x=>!S.picked[x.id]&&!(x.booked||bookedOf(x))).length;   /* 접수 가능 = 아직 접수 · 담기 전 */
     return {t,n:L.length,k}}).filter(x=>x.t==='교사'||(!isStaffAcad()&&(x.t==='바이올린'||x.t==='첼로'||x.n)))}
 function addBtn(){const n=selIds().length;
   return `<button class="btn primary addcart" type="button" id="addCart" ${n?'':'disabled'}>${n?`선택한 ${n}명 신청 명단에 추가`:`${isStaffAcad()?'본인을':S.ptab==='교사'?'선생님을':'학생을'} 체크하고 신청 명단에 추가해요`}</button>`}
@@ -255,7 +255,7 @@ function rosterList(){
   const r=roster(), me=S.user?S.user.name:'', q=(S.rq||'').trim();
   const T=S.ptab==='교사';
   const all=(T?r.teachers.map(x=>({x,k:'t'})):r.students.filter(x=>x.inst===S.ptab&&(!S.mine||x.teacher===me)).map(x=>({x,k:'s'})))
-    .filter(o=>!q||o.x.name.includes(q)).sort((a,b)=>(S.editNo?0:(!!(a.x.booked||bookedOf(a.x))-!!(b.x.booked||bookedOf(b.x))))||a.x.name.localeCompare(b.x.name,'ko'));   /* 새로 접수할 때는 아직 접수 안 한 사람이 위, 이미 접수한 사람은 아래 (각각 가나다순) */
+    .filter(o=>!q||o.x.name.includes(q)).sort((a,b)=>((!!(a.x.booked||bookedOf(a.x))-!!(b.x.booked||bookedOf(b.x))))||a.x.name.localeCompare(b.x.name,'ko'));   /* 새로 접수할 때는 아직 접수 안 한 사람이 위, 이미 접수한 사람은 아래 (각각 가나다순) */
   if(all.length) return `${q?`<p class="hint">「${esc(q)}」 ${all.length}명</p>`:''}<div class="mtblw"><table class="mtbl rtbl"><thead><tr><th>${(()=>{const P=all.filter(o=>pickable(o.x));return P.length?`<input type="checkbox" data-pick="__all" aria-label="전체 선택" title="전체 선택" ${P.every(o=>S.sel[o.x.id])?'checked':''}>`:''})()}</th><th>이름</th>${T?'<th>직급</th><th>악기</th>':'<th>나이</th><th>악기</th><th class="rtd">담당</th>'}<th class="rtd">접수</th><th>회비</th><th class="r"><button class="btn small primary" type="button" id="addSel" ${selIds().length?'':'disabled'}>선택 추가</button></th></tr></thead><tbody>${all.map(o=>rosterRow(o.x,o.k)).join('')}</tbody></table></div>`;
   if(q) return `<p class="hint">${esc(S.ptab)} 탭에 「${esc(q)}」(이)라는 사람이 없어요. 다른 탭도 확인해 보세요.${T?'':' 학생이면 아래 「명단에 없는 학생 추가」를 눌러 주세요.'}</p>`;
   return `<p class="hint">${T?'이 학원 교사가 명단에 없어요.':`${esc(S.ptab)} 학생이 명단에 없어요.`}</p>`}
@@ -269,8 +269,8 @@ function vStep2(){
   <p class="lede">${isStaffAcad()?'본인을 체크하고 「신청 명단에 추가」를 눌러요. 함께 오는 가족은 다음 단계에서 넣어요.':'탭에서 교사·학생을 체크하고 「신청 명단에 추가」를 눌러요. 탭을 옮겨 가며 여러 번 추가할 수 있어요. 가족은 다음 단계에서 넣어요.'}</p>
   ${cartPanel()}
   <div class="panel">
-    <div class="itabs" role="tablist" aria-label="교사·악기">${ptabList().map(o=>`<button type="button" role="tab" data-ptab="${o.t}" aria-pressed="${S.ptab===o.t}">${o.t==='교사'&&isStaffAcad()?'관계자':o.t}<small>${o.k?o.k+'/':''}${o.n}</small></button>`).join('')}</div>
-    ${isStaffAcad()?'':'<p class="hint" style="margin:0">접수 안 한 사람 먼저 · 가나다순 · 탭 숫자는 「추가한 수/전체」</p>'}
+    <div class="itabs" role="tablist" aria-label="교사·악기">${ptabList().map(o=>`<button type="button" role="tab" data-ptab="${o.t}" aria-pressed="${S.ptab===o.t}">${o.t==='교사'&&isStaffAcad()?'관계자':o.t}<small>${o.k}/${o.n}</small></button>`).join('')}</div>
+    ${isStaffAcad()?'':'<p class="hint" style="margin:0">접수 가능한 사람 먼저 · 가나다순 · 탭 숫자는 「접수 가능/전체」</p>'}
     <div class="spread"><div class="legend" ${isStaffAcad()?'hidden':''}><span><span class="pill ok">회비 납부</span> 바로 접수</span><span><span class="pill due">회비 미납</span> 연회비 함께 입금</span><span>흐린 줄 = 이미 접수한 사람</span></div>
       <div class="row" ${S.ptab==='교사'?'hidden':''}><label class="mine" for="mine"><input type="checkbox" id="mine" ${S.mine?'checked':''}>내 학생만 보기 (담당 ${esc(me)})</label></div></div>
     <input type="search" id="rq" value="${esc(S.rq||'')}" placeholder="이름으로 찾기 (학생·교사)" autocomplete="off" aria-label="이름으로 찾기">

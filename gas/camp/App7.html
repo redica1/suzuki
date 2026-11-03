@@ -1,4 +1,4 @@
-/* build: 20261103-185651 */
+/* build: 20261103-190342 */
     ps.forEach(p=>{p.pay='신고';p.rep=rep;delete S.rpRow[p.id]});S.afterSave=()=>repDone(ps.map(p=>p.id));subSave();S.rp=null;S.rpOpen=false;S.rpMemo=undefined;render();toast(`${ps.length}명 입금 신고를 보냈어요 · 운영진이 확인하면 「입금 확인」으로 바뀌어요`);return}
   if(b.id==='rpFill'){const n=document.getElementById('rpAllN').value.trim(),dd=document.getElementById('rpAllD').value;S.rpAllN=n;S.rpAllD=dd;const sel=S.rp||[];
     if(!n&&!dd){toast('적용할 입금자명이나 입금일을 적어 주세요');return}unpaidPpl().filter(x=>sel.includes(x.p.id)).forEach(({p})=>{const v=rpv(p);if(n)v.n=n;if(dd)v.d=dd});render();toast(`선택한 ${sel.length}명에게 적용했어요`);return}
@@ -187,25 +187,6 @@ function pickAcad(a){const go=()=>{S.acad=a;S.rq='';S.sel={};S.ptab='교사';S.a
     go()}
 document.addEventListener('change',e=>{if(e.target.id!=='clsOn')return;S.clsOn=e.target.checked;if(!S.clsOn&&S.user&&S.acad===classOf(S.user))S.acad='';render()});
 
-/* 표 칸 너비 늘리고 줄이기 (11-03): 모든 .mtbl 머리줄 칸 오른쪽 끝을 끌어서. 두 번 누르면 원래대로. 이 브라우저에 표마다 기억 */
-const COLW_KEY='campColW2';
-function colwAll(){try{return JSON.parse(localStorage.getItem(COLW_KEY)||'{}')||{}}catch(e){return {}}}
-function colwSave(o){try{localStorage.setItem(COLW_KEY,JSON.stringify(o))}catch(e){}}
-const tblKey=t=>[...t.querySelectorAll('thead th')].map(th=>th.textContent.trim()).join('|');
-function colwApply(){document.querySelectorAll('table.mtbl').forEach(t=>{const ths=[...t.querySelectorAll('thead tr:first-child th')];if(!ths.length)return;
-  ths.forEach((th,i)=>{if(!th.querySelector('.colrz')){const h=document.createElement('span');h.className='colrz';h.dataset.ci=i;h.setAttribute('aria-hidden','true');th.appendChild(h)}});
-  const W=colwAll()[tblKey(t)];if(W&&W.length===ths.length){t.classList.add('colfix');t.style.width=W.reduce((a,b)=>a+b,0)+'px';ths.forEach((th,i)=>{th.style.width=W[i]+'px'})}})}
-new MutationObserver(()=>{clearTimeout(colwApply.t);colwApply.t=setTimeout(colwApply,30)}).observe(document.getElementById('app')||document.body,{childList:true,subtree:true});
-document.addEventListener('pointerdown',e=>{const h=e.target.closest&&e.target.closest('.colrz');if(!h)return;e.preventDefault();e.stopPropagation();
-  const t=h.closest('table'),ths=[...t.querySelectorAll('thead tr:first-child th')],i=+h.dataset.ci,W=ths.map(th=>th.getBoundingClientRect().width);
-  t.classList.add('colfix');ths.forEach((th,k)=>th.style.width=W[k]+'px');t.style.width=W.reduce((a,b)=>a+b,0)+'px';
-  const x0=e.clientX,w0=W[i];h.classList.add('on');
-  const mv=ev=>{W[i]=Math.max(36,w0+ev.clientX-x0);ths[i].style.width=W[i]+'px';t.style.width=W.reduce((a,b)=>a+b,0)+'px'};
-  const up=()=>{document.removeEventListener('pointermove',mv);document.removeEventListener('pointerup',up);h.classList.remove('on');const o=colwAll();o[tblKey(t)]=W.map(Math.round);colwSave(o)};
-  document.addEventListener('pointermove',mv);document.addEventListener('pointerup',up)},true);
-document.addEventListener('dblclick',e=>{const h=e.target.closest&&e.target.closest('.colrz');if(!h)return;const t=h.closest('table'),o=colwAll();delete o[tblKey(t)];colwSave(o);
-  t.classList.remove('colfix');t.style.width='';t.querySelectorAll('thead th').forEach(th=>th.style.width='')});
-document.addEventListener('click',e=>{if(e.target.closest&&e.target.closest('.colrz'))e.stopPropagation()},true);
 /* 시간표 → 전체 일정 (홀별 · 시간별, 일정을 누르면 와야 할 사람) */
 function ttAllHTML(){const B=S.ttBoard;
   if(!B){if(!S.ttBoardLoading){S.ttBoardLoading=true;api('ttBoard',[],r=>{S.ttBoardLoading=false;S.ttBoard=r||{open:false};if(S.view==='tt')render()},()=>{S.ttBoardLoading=false;S.ttBoard={open:false,msg:'불러오지 못했어요'};render()},'전체 일정을 불러오고 있어요…')}return '<div class="panel">전체 일정을 불러오고 있어요…</div>'}
@@ -235,25 +216,6 @@ document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest
   if(t.dataset.ttbv){S.ttBv=t.dataset.ttbv;render();return}
   const id=t.dataset.ttev;if(S.ttOpen===id){S.ttOpen=null;render();return}S.ttOpen=id;S.ttEv=S.ttEv||{};
   if(!S.ttEv[id])api('ttEventPeople',[id],r=>{S.ttEv[id]=r||{ok:false};render()},()=>{S.ttEv[id]={ok:false,msg:'불러오지 못했어요'};render()},'');render();ttDetShow()});
-/* 모든 표: 칸 제목을 누르면 오름/내림차순, 표 위 「표에서 찾기」 (다시 그려도 그대로) */
-const TBLS={};
-const tkey=(t,i)=>i+'|'+[...t.querySelectorAll('thead th')].map(th=>th.dataset.lb||th.textContent.trim()).join('/');
-const sval=x=>{const v=String(x||'').replace(/\s+/g,' ').trim();if(/^-?[\d,]+(\.\d+)?\s*(원|명|건|회|%)?(\s|$)/.test(v)&&!/^\d{4}\.\d/.test(v))return {n:+v.match(/^-?[\d,]+(\.\d+)?/)[0].replace(/,/g,'')};
-  if(/^\d{2,4}[.\-]\d/.test(v))return {s:v.replace(/\d+/g,d=>d.padStart(4,'0'))};return {s:v}};
-function tblApply(t,st){const tb=t.tBodies[0];if(!tb)return;const rows=[...tb.rows];
-  if(st.s&&st.s.i!=null&&!t.querySelector('tbody td[colspan]')){const i=st.s.i,d=st.s.d;rows.sort((a,b)=>{const x=sval(a.cells[i]&&a.cells[i].textContent),y=sval(b.cells[i]&&b.cells[i].textContent);
-    const r=(x.n!=null&&y.n!=null)?x.n-y.n:(x.n!=null?-1:y.n!=null?1:String(x.s).localeCompare(String(y.s),'ko',{numeric:true}));return d*r});rows.forEach(r=>tb.appendChild(r))}
-  const q=String(st.q||'').replace(/\s+/g,'').toLowerCase();let n=0;rows.forEach(r=>{const ok=!q||r.textContent.replace(/\s+/g,'').toLowerCase().includes(q);r.style.display=ok?'':'none';if(ok)n++});
-  const c=t.closest('.mtblw')&&t.closest('.mtblw').previousElementSibling;if(c&&c.classList.contains('tfind')){const m=c.querySelector('.tfn');if(m)m.textContent=q?n+'건':''}
-  t.querySelectorAll('thead th').forEach((th,j)=>{const a=th.querySelector('.sarr');if(a)a.textContent=st.s&&st.s.i===j?(st.s.d>0?' ▲':' ▼'):''})}
-function tblEnhance(){document.querySelectorAll('table.mtbl:not(.nosort):not([data-enh])').forEach((t,_)=>{t.dataset.enh='1';
-  const all=[...document.querySelectorAll('table.mtbl:not(.nosort)')],k=tkey(t,all.indexOf(t)),st=TBLS[k]||(TBLS[k]={q:'',s:null});
-  t.querySelectorAll('thead th').forEach((th,j)=>{if(th.querySelector('input')||!th.textContent.trim())return;th.dataset.lb=th.dataset.lb||th.textContent.trim();th.classList.add('sortable');th.insertAdjacentHTML('beforeend','<span class="sarr"></span>');
-    th.addEventListener('click',e=>{if(e.target.closest('.colrz'))return;st.s=st.s&&st.s.i===j?(st.s.d>0?{i:j,d:-1}:null):{i:j,d:1};tblApply(t,st)})});
-  const w=t.closest('.mtblw')||t;if((t.tBodies[0]||{rows:[]}).rows.length>=3){const f=document.createElement('div');f.className='tfind';f.innerHTML='<input type="search" placeholder="표에서 찾기 (이름 · 학원 · 악기 …)" aria-label="표에서 찾기"><span class="tfn hint"></span>';
-    const inp=f.querySelector('input');inp.value=st.q||'';inp.addEventListener('input',()=>{st.q=inp.value;tblApply(t,st)});w.parentNode.insertBefore(f,w)}
-  if(st.q||st.s)tblApply(t,st)})}
-new MutationObserver(()=>{clearTimeout(tblEnhance.t);tblEnhance.t=setTimeout(tblEnhance,40)}).observe(document.getElementById('app')||document.body,{childList:true,subtree:true});
 /* 우리 학원 전체: 선생님 줄을 누르면 그 선생님 접수만 */
 document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-aowner]');if(!t||e.target.closest('th'))return;const k=t.dataset.aowner;S.aOwner=S.aOwner===k?null:k;S.mtab='전체';render();if(S.aOwner){const x=document.querySelector('.note.info [data-aowner]');if(x)x.closest('.note').scrollIntoView({behavior:'smooth',block:'start'})}});
 /* 프로그램표 (장소 × 시간, 10분 = 한 칸, 보기만) — 전체 일정 · 내 일정 · 우리 학생 레슨이 같이 씀
@@ -268,10 +230,9 @@ function ttGrid(L,o){const mm=t=>{const q=String(t||'').split(':');return (+q[0]
   /* 같은 장소에서 시간이 겹치면 칸을 나눠 나란히 */
   used.forEach(r=>{const X=it.filter(x=>(x.room||'장소 미정')===r).sort((a,b)=>a._s-b._s);let grp=[],end=-1;const flush=()=>{const lanes=[];grp.forEach(x=>{let k=lanes.findIndex(e=>e<=x._s);if(k<0){k=lanes.length;lanes.push(0)}lanes[k]=x._e;x._k=k});grp.forEach(x=>x._n=lanes.length);grp=[]};
     X.forEach(x=>{if(x._s>=end)flush();grp.push(x);end=Math.max(end,x._e)});flush()});
-  const Z=ttZoom();
   const hh=m=>String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0');
-  let h=`<div class="ttzoom"><span class="hint">칸 너비</span><button type="button" class="btn small ghost" data-ttz="w-">−</button><button type="button" class="btn small ghost" data-ttz="w+">+</button><span class="hint">칸 높이</span><button type="button" class="btn small ghost" data-ttz="h-">−</button><button type="button" class="btn small ghost" data-ttz="h+">+</button><button type="button" class="btn small ghost" data-ttz="0">원래대로</button></div><div class="ttgw"><div class="ttg" style="grid-template-columns:54px repeat(${used.length},${Z.w}px);grid-template-rows:40px repeat(${R},${Z.h}px)">`;
-  h+=`<div class="ttgh ttgk" style="grid-column:1;grid-row:1">시간</div>`+used.map(r=>`<div class="ttgh" style="grid-column:${ci[r]};grid-row:1"><b>${esc(r)}</b>${loc[r]?`<small>${esc(loc[r])}</small>`:''}</div>`).join('');
+  let h=`<div class="ttgw"><div class="ttg" data-r="${R}" style="grid-template-columns:54px ${used.map(r=>UI.gridW(r)+'px').join(' ')};grid-template-rows:40px repeat(${R},${UI.gridH()}px)">`;
+  h+=`<div class="ttgh ttgk" style="grid-column:1;grid-row:1">시간</div>`+used.map(r=>`<div class="ttgh" data-col="${esc(r)}" style="grid-column:${ci[r]};grid-row:1"><b>${esc(r)}</b>${loc[r]?`<small>${esc(loc[r])}</small>`:''}</div>`).join('');
   for(let m=lo;m<hi;m+=30){const row=(m-lo)/10+2;h+=`<div class="ttgt${m%60?' half':''}" style="grid-column:1;grid-row:${row}/span 3">${hh(m)}</div>`;used.forEach(r=>h+=`<div class="ttgc${m%60?' half':''}" style="grid-column:${ci[r]};grid-row:${row}/span 3"></div>`)}
   h+=it.map(x=>{const r0=Math.floor((x._s-lo)/10)+2,r1=Math.max(r0+1,Math.ceil((x._e-lo)/10)+2);const on=o.sel===x.id;
     return `<button type="button" title="${esc(x.title)} · ${esc(x.s)}" class="ttge${x.mine?' tmine':''}${on?' tsel':''} k-${x.kind==='개인레슨'?'les':/그룹레슨|마스터|레슨|연수/.test(x.kind+x.title)?'grp':'con'}" ${o.attr||'data-ttev'}="${esc(x.id)}" style="grid-column:${ci[x.room||'장소 미정']};grid-row:${r0}/${r1}${x._n>1?`;width:calc(${100/x._n}% - 4px);margin-left:calc(${100*x._k/x._n}% + 2px);margin-right:0;justify-self:start`:''}">${x.tag?`<span class="ttme">${esc(x.tag)}</span>`:''}<b>${esc(x.title)}</b><small>${esc(x.s)}${x.e&&x.e!==x.s?'~'+esc(x.e):''}</small>${x.mine?`<span class="ttme">내 일정${x.role?' · '+esc(x.role):''}</span>`:''}</button>`}).join('');
@@ -293,9 +254,5 @@ function ttStuGrid(T,days,st){const D=Math.min(S.ttDay||0,Math.max(0,days.length
   const oo={attr:'data-ttsel',sel:S.ttSel,detail:x=>x.who.map(w=>`<div><b>${esc(w.name)}</b> <small class="hint">${esc(w.acad)} · ${esc(w.inst)}${w.teacher?' · 담당 '+esc(w.teacher):''}</small></div>`).join(''),hint:'칸을 누르면 여기에 학생이 보여요. 학부모님께 알려 주세요.'};return (L.length?ttDet(L,oo):'')+ttDays(days,D,d=>A.filter(x=>x.d===d).length)+(L.length?ttGrid(L,{attr:'data-ttsel',sel:S.ttSel,detail:x=>x.who.map(w=>`<div><b>${esc(w.name)}</b> <small class="hint">${esc(w.acad)} · ${esc(w.inst)}${w.teacher?' · 담당 '+esc(w.teacher):''}</small></div>`).join(''),hint:'칸을 누르면 학생이 보여요. 학부모님께 알려 주세요.'}):'<div class="panel"><p class="hint" style="margin:0">이 날은 우리 학생 개인레슨 · 마스터클래스가 없어요.</p></div>')}
 document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-ttsel]');if(!t||S.view!=='tt')return;const id=t.dataset.ttsel;S.ttSel=S.ttSel===id?null:id;render();ttDetShow()});
 function ttDetShow(){const d=document.querySelector('.ttdet');if(d){const r=d.getBoundingClientRect();if(r.top<0||r.bottom>innerHeight)d.scrollIntoView({behavior:'smooth',block:'nearest'})}}
-/* 프로그램표 칸 너비 · 높이 (− + , 이 기기에 기억) */
-function ttZoom(){if(!S.ttZ){let z=null;try{z=JSON.parse(localStorage.getItem('campTTZ')||'null')}catch(e){}S.ttZ=z&&z.w&&z.h?z:{w:132,h:12}}return S.ttZ}
-document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-ttz]');if(!t)return;const z=ttZoom(),k=t.dataset.ttz;
-  if(k==='0'){z.w=132;z.h=12}else if(k[0]==='w')z.w=Math.max(80,Math.min(300,z.w+(k[1]==='+'?24:-24)));else z.h=Math.max(6,Math.min(36,z.h+(k[1]==='+'?3:-3)));
-  try{localStorage.setItem('campTTZ',JSON.stringify(z))}catch(e){}render()});
+
 document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-ttacad]');if(!t||S.view!=='tt')return;S.ttAcad=t.dataset.ttacad||'';S.ttSel=null;render()});

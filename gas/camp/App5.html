@@ -1,4 +1,4 @@
-/* build: 20261103-232707 */
+/* build: 20261103-232950 */
   if(!open.length) return MY_SUBS.length?`<div class="panel rp">${bankHTML()}<span class="hint">지금 입금할 금액이 없어요.</span></div>`:'';
   /* 평소엔 한 줄로 접어 둠: 「입금 신고하기」를 누르면 펼침 (11-03) */
   if(!S.rpOpen){const due=open.reduce((t,x)=>t+dueOf(x.p),0);return `<div class="panel rp">${bankHTML()}<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><span><b>입금 필요 ${open.length}명</b> · <b class="num">${won(due)}</b> <span class="hint">입금한 뒤 알려 주세요</span></span><button class="btn primary" type="button" data-rpopen="1">입금 신고하기</button></div></div>`}
@@ -57,7 +57,7 @@ function vAcad(){const A=acadSubs(),AF=()=>S.aOwner?A.filter(sb=>sb.owner===S.aO
 /* 입금 현황 (11-03 · 26 여름 학원별 입금 시트처럼): 차수별 묶음 · 이름(구분 · 악기 · 추가레슨 · 마스터클래스) / 청구 / 입금 / 환불(요청 / 완료) / 과납 · 미납 · 차수 소계 · 총계 · 엑셀로 받기
    청구 = 참가 중이면 참가비 + 레슨 · MC + 연회비 + 가족방, 취소면 남긴 돈(입금 − 환불) · 입금 = 확인된 입금(차액 환불로 돌려준 돈 포함) · 과납 · 미납 = 입금 − 청구 − 환불 */
 function payRow(sb,p){const i=pInfo(sb,p),ovD=(p.ovDone||[]).reduce((t,x)=>t+(+x.amt||0),0),paid=(+p.paidAmt||0)+ovD,cx=p.status==='취소',rf=p.refund||null;
-  const rq=(rf&&!rf.date?+rf.amt||0:0)+(p.ovReq?+p.ovReq.amt||0:0)+(p.status==='취소요청'?+p.cxAmt||0:0),dn=(rf&&rf.date?+rf.amt||0:0)+ovD,bill=cx?Math.max(0,paid-(rf?+rf.amt||0:0)):pAmt(p);
+  const rq=(rf&&!rf.date?+rf.amt||0:0)+(p.ovReq?+p.ovReq.amt||0:0)+(p.status==='취소요청'?+p.cxAmt||0:0),dn=(rf&&rf.date?+rf.amt||0:0)+ovD,wq=p.status==='취소요청'&&p.cxAmt!=null,bill=cx?Math.max(0,paid-(rf?+rf.amt||0:0)):wq?Math.max(0,paid-(+p.cxAmt||0)):pAmt(p);
   return {sb,p,i,paid,rq,dn,bill,cx,wait:p.status==='취소요청',bal:paid-bill-rq-dn}}
 function payTbl(R){const W=v=>(+v||0).toLocaleString('ko-KR'),Rows=R.map(({sb,p})=>payRow(sb,p)),rds=[...new Set(Rows.map(x=>x.sb.round||''))].sort((a,b)=>a.localeCompare(b,'ko',{numeric:true}));
   const sum=(L,k)=>L.reduce((t,x)=>t+x[k],0),bal=v=>v<0?`<b style="color:#c0392b">${W(v)}</b>`:v>0?`<b style="color:#15803d">+${W(v)}</b>`:'<span class="hint">0</span>';
@@ -65,7 +65,7 @@ function payTbl(R){const W=v=>(+v||0).toLocaleString('ko-KR'),Rows=R.map(({sb,p}
   const rfc=x=>x.wait?(x.p.cxAmt!=null?`${W(x.rq)} / -`:'요청 금액 확인 중')+sm('<span style="color:#b45309;font-weight:700">취소 요청</span> · 운영진 확인 중'):x.rq||x.dn?`${x.rq?W(x.rq):'-'} / ${x.dn?W(x.dn):'-'}`:'<span class="hint">-</span>';
   const who=x=>{const k=x.p.kind==='교사'?(x.sb.acad===STAFF_ACAD?'관계자':'교사'):x.p.kind==='가족'?(TSHORT[x.p.type]||'가족'):'학생',ins=x.p.kind==='가족'?'':instOfP(x.sb,x.p),les=+x.i.lessons||0,mc=(x.i.mc||[]).filter(Boolean),info=[ins,les?'추가레슨 '+les+'회':'',mc.length?'MC '+mc.join(', '):'',x.sb.owner!==S.user.name?'접수 '+x.sb.owner:''].filter(Boolean);
     return `${kBadge(k)} <b>${esc(x.p.name)}</b>${x.p.dtag?` <small class="dtag">${esc(x.p.dtag)}</small>`:''}${x.cx?' <span class="pill bad">취소</span>':''}${info.length?sm(info.map(esc).join(' · ')):''}`};
-  const det=x=>x.cx?(x.bill?sm('취소 수수료'):''):sm([['참가',x.p.fee],['레슨',x.p.lesson],['연회비',x.p.dues],['가족방',x.p.room]].filter(y=>+y[1]).map(y=>y[0]+' '+W(y[1])).join(' + '));
+  const det=x=>x.cx||(x.wait&&x.p.cxAmt!=null)?(x.bill?sm('취소 수수료'+(x.wait?' (요청대로)':'')):''):sm([['참가',x.p.fee],['레슨',x.p.lesson],['연회비',x.p.dues],['가족방',x.p.room]].filter(y=>+y[1]).map(y=>y[0]+' '+W(y[1])).join('<br>'));
   const C=' style="text-align:center"',Rt=' class="num" style="text-align:center"';
   const row=x=>`<tr class="${x.cx?'locked':''}"><td${C}>${esc(x.sb.round||'')}</td><td style="text-align:left">${who(x)}</td><td${Rt}>${W(x.bill)}${det(x)}</td><td${Rt}>${W(x.paid)}${x.p.pay==='신고'?sm('입금 신고<br>확인 중'):''}</td><td${Rt}>${rfc(x)}</td><td${Rt}>${bal(x.bal)}</td></tr>`;
   const tot=(L,lab,bg)=>`<tr style="background:${bg}"><td colspan="2" style="text-align:left"><b>${lab} · ${L.length}명</b></td><td${Rt}><b>${W(sum(L,'bill'))}</b></td><td${Rt}><b>${W(sum(L,'paid'))}</b></td><td${Rt}><b>${W(sum(L,'rq'))} / ${W(sum(L,'dn'))}</b></td><td${Rt}>${bal(sum(L,'bal'))}</td></tr>`;
@@ -77,7 +77,7 @@ function payTbl(R){const W=v=>(+v||0).toLocaleString('ko-KR'),Rows=R.map(({sb,p}
     <div class="mtblw"><table class="mtbl paytbl"><thead><tr><th${C}>차수</th><th style="text-align:left">이름</th><th${C}>청구</th><th${C}>입금</th><th${C}>환불 요청 / 완료</th><th${C}>과납 · 미납</th></tr></thead><tbody>
     ${Rows.slice().sort((a,b)=>String(a.sb.round||'').localeCompare(String(b.sb.round||''),'ko',{numeric:true})).map(row).join('')}</tbody>
     <tfoot>${rds.length>1?rds.map(rd=>tot(Rows.filter(x=>(x.sb.round||'')===rd),esc(rd||'차수 없음')+' 소계','#f3faf9')).join(''):''}${tot(Rows,'총계','#d3ecea')}</tfoot></table></div>
-    <p class="hint" style="margin:8px 0 0">칸 제목을 누르면 정렬, 칸 경계를 끌면 너비가 바뀌어요. 과납 · 미납 = 입금 − 청구 − 환불(요청 + 완료). 빨강 = 덜 냄, 초록 = 더 냄. 취소한 사람의 청구는 환불하고 남은 돈(취소 수수료)이에요.</p></div>`}
+    <p class="hint" style="margin:8px 0 0">칸 제목을 누르면 정렬, 칸 경계를 끌면 너비가 바뀌어요. 과납 · 미납 = 입금 − 청구 − 환불(요청 + 완료). 빨강 = 덜 냄, 초록 = 더 냄. 취소했거나 취소 요청한 사람의 청구는 환불하고 남는 돈(취소 수수료)이에요.</p></div>`}
 /* 접수 표 보기 바꾸기: 접수 · 입금 / 레슨 · 마스터클래스 / 음악회 / 참가 정보 (같은 사람 명단, 칸만 바뀜) */
 const MVIEWS=[['pay','접수'],['les','레슨'],['con','음악회'],['info','학생 진도']];
 const MSUBS={pay:[['pay','입금 현황'],['room','가족방 현황']],les:[['grp','그룹레슨'],['les','개인레슨'],['mc','마스터클래스']],con:[['오후','오후 음악회'],['트와일라잇','트와일라잇 음악회'],['이브닝','이브닝 음악회']]};

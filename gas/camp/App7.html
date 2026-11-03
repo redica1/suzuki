@@ -1,4 +1,4 @@
-/* build: 20261103-182531 */
+/* build: 20261103-183849 */
     ps.forEach(p=>{p.pay='신고';p.rep=rep;delete S.rpRow[p.id]});S.afterSave=()=>repDone(ps.map(p=>p.id));subSave();S.rp=null;S.rpOpen=false;S.rpMemo=undefined;render();toast(`${ps.length}명 입금 신고를 보냈어요 · 운영진이 확인하면 「입금 확인」으로 바뀌어요`);return}
   if(b.id==='rpFill'){const n=document.getElementById('rpAllN').value.trim(),dd=document.getElementById('rpAllD').value;S.rpAllN=n;S.rpAllD=dd;const sel=S.rp||[];
     if(!n&&!dd){toast('적용할 입금자명이나 입금일을 적어 주세요');return}unpaidPpl().filter(x=>sel.includes(x.p.id)).forEach(({p})=>{const v=rpv(p);if(n)v.n=n;if(dd)v.d=dd});render();toast(`선택한 ${sel.length}명에게 적용했어요`);return}
@@ -210,7 +210,7 @@ document.addEventListener('click',e=>{if(e.target.closest&&e.target.closest('.co
 function ttAllHTML(){const B=S.ttBoard;
   if(!B){if(!S.ttBoardLoading){S.ttBoardLoading=true;api('ttBoard',[],r=>{S.ttBoardLoading=false;S.ttBoard=r||{open:false};if(S.view==='tt')render()},()=>{S.ttBoardLoading=false;S.ttBoard={open:false,msg:'불러오지 못했어요'};render()},'전체 일정을 불러오고 있어요…')}return '<div class="panel">전체 일정을 불러오고 있어요…</div>'}
   if(!B.open)return `<div class="note info">${esc(B.msg||'아직 시간표가 공개되지 않았어요.')}</div>`;
-  const days=B.days||[];if(S.ttDay==null){const td=ttToday(days);S.ttDay=td!=null?td:0}const D=Math.min(S.ttDay||0,Math.max(0,days.length-1)),bv=S.ttBv||'grid',L=(B.items||[]).filter(x=>x.d===D);
+  const days=B.days||[];if(S.ttDay==null){const td=ttToday(days);S.ttDay=td!=null?td:0}const D=Math.min(S.ttDay||0,Math.max(0,days.length-1)),bv='grid',L=(B.items||[]).filter(x=>x.d===D);
   const tm=x=>esc(x.s)+(x.e&&x.e!==x.s?` <small class="hint">~ ${esc(x.e)}</small>`:'');
   const ppl=x=>{const P=(S.ttEv||{})[x.id];if(!P)return '<span class="hint">불러오는 중…</span>';if(P.ok===false)return `<span class="hint">${esc(P.msg||'볼 수 없어요')}</span>`;
     return (P.staff&&P.staff.length?`<div><b>선생님</b> ${P.staff.map(y=>esc(y.name)+(y.role?` <small class="hint">${esc(y.role)}</small>`:'')).join(', ')}</div>`:'')+
@@ -228,7 +228,7 @@ function ttAllHTML(){const B=S.ttBoard;
   else body=`<div class="panel"><div class="mtblw"><table class="mtbl nosort">${th(true)}<tbody>${L.map(x=>row(x,true)).join('')}</tbody></table></div></div>`;
   return `<p class="lede">캠프 전체 일정이에요. 일정을 누르면 와야 할 선생님과 학생이 보여요. <b>내 일정</b>은 진한 색, 우리 학원 학생은 굵게 보여요.</p>
   <div class="seg" role="group" aria-label="날짜" style="margin:6px 0">${days.map((d,i)=>`<button type="button" data-ttday="${i}" aria-pressed="${i===D}">${esc(d)}</button>`).join('')}</div>
-  <div class="seg" role="group" aria-label="보기" style="margin:6px 0 10px"><button type="button" data-ttbv="grid" aria-pressed="${bv==='grid'}">프로그램표</button><button type="button" data-ttbv="time" aria-pressed="${bv==='time'}">시간순</button><button type="button" data-ttbv="hall" aria-pressed="${bv==='hall'}">홀별</button></div>${body}`}
+  ${body}`}
 document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-ttday],[data-ttbv],[data-ttev],[data-tthall]');if(!t||S.view!=='tt')return;
   if(t.dataset.tthall!==undefined){S.ttHall=t.dataset.tthall;S.ttOpen=null;render();return}
   if(t.dataset.ttday!==undefined){S.ttDay=+t.dataset.ttday;S.ttOpen=null;render();return}

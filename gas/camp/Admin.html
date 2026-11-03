@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261103-221528 -->
+<!-- build: 20261103-221538 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -712,7 +712,7 @@ function logIt(t){A.log.unshift({at:new Date().toLocaleString('ko-KR',{month:'nu
 function stats(){
   const st={};const get=n=>st[n]||(st[n]={n,days:D.days.map(()=>0),roles:{},cats:{},total:0,items:[]});
   D.events.forEach(e=>e.ppl.forEach(p=>{if(gone(p.n))return;const x=get(p.n);x.days[e.d]=(x.days[e.d]||0)+1;x.roles[p.r]=(x.roles[p.r]||0)+1;x.cats[e.cat]=(x.cats[e.cat]||0)+1;x.total++;x.items.push({e,r:p.r})}));
-  const clash=new Set(); // `${eid}|${name}`
+  const clash=new Set(); /* eid|name */
   Object.values(st).forEach(x=>{for(let i=0;i<x.items.length;i++)for(let j=i+1;j<x.items.length;j++){const a=x.items[i].e,b=x.items[j].e;
     if(a.d===b.d&&mins(a.s)<mins(b.e)&&mins(b.s)<mins(a.e)){clash.add(a.id+'|'+x.n);clash.add(b.id+'|'+x.n);x.clash=(x.clash||0)+1}}});
   const off=new Set(); Object.values(st).forEach(x=>x.items.forEach(({e})=>{if((A.unav[x.n]||[]).includes(e.d)){off.add(e.id+'|'+x.n);x.off=(x.off||0)+1}}));
@@ -2283,6 +2283,6 @@ render();
   var q=0;new MutationObserver(function(){if(q)return;q=1;requestAnimationFrame(function(){q=0;setup();[].forEach.call(document.querySelectorAll('table.cflt'),function(t){var r=t.tHead&&t.tHead.rows[0];if(r)t.style.setProperty('--cfh1',r.offsetHeight+'px')})})}).observe(document.body,{childList:true,subtree:true});setup();
 })();
 </script>
-<div id="bldMark" hidden>빌드표시 20261103-221528 </div>
+<div id="bldMark" hidden>빌드표시 20261103-221538 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();</script>
 </body></html>

@@ -1,4 +1,4 @@
-/* build: 20261103-200628 */
+/* build: 20261103-202144 */
 function vAuthPick(){return `<section class="sec"><h2>접수 시작</h2>
   <p class="lede">어떻게 접수하시나요?</p>
   <div class="pick2">
@@ -158,7 +158,7 @@ function vStep1(){
 function mailField(){if(S.email&&(S.lgId||(S.user&&S.user.email)))return `<p class="hint" style="margin:0">접수 확인 메일은 <b>${esc(S.email)}</b>(회원 계정 이메일)로 보내요.</p>`;
   return ''}   /* 회원 계정 이메일이 없으면(이름 · 휴대전화로 들어온 경우) 묻지 않음: 접수 확인은 「내 접수」에서 (11-02) */
 /* 이미 낸 접수에 들어 있는 사람 (고치는 중인 접수는 빼고) */
-function bookedOf(x){const T=/^t_/.test(x.id);/* 선생님은 학원을 통틀어 한 번만 */for(const sb of ALL_SUBS){if(sb.no===S.editNo||(!T&&sb.acad!==S.acad))continue;const p=sb.ppl.find(q=>q.id===sb.no+'_'+x.id&&(q.status==='정상'||q.status==='취소요청')));if(p)return {no:sb.no+(sb.acad!==S.acad?' · '+sb.acad:''),round:sb.round,by:sb.owner,at:p.addAt||sb.date,cx:p.status==='취소요청'}}return null}
+function bookedOf(x){const T=/^t_/.test(x.id);/* 선생님은 학원을 통틀어 한 번만 */for(const sb of ALL_SUBS){if(sb.no===S.editNo||(!T&&sb.acad!==S.acad))continue;const p=sb.ppl.find(q=>q.id===sb.no+'_'+x.id&&(q.status==='정상'||q.status==='취소요청'));if(p)return {no:sb.no+(sb.acad!==S.acad?' · '+sb.acad:''),round:sb.round,by:sb.owner,at:p.addAt||sb.date,cx:p.status==='취소요청'}}return null}
 /* 고치는 중일 때 신청 명단 칩에 붙는 표시: 기존(들어온 차례·시각) / 새로 추가 */
 const nextBatch=()=>{const sb=ALL_SUBS.find(x=>x.no===S.editNo);return sb?Math.max(1,...sb.ppl.map(q=>q.batch||1))+1:1};
 const btCls=n=>'bt'+(((n||1)-1)%6+1);

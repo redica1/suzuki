@@ -1,4 +1,4 @@
-/* build: 20261103-171509 */
+/* build: 20261103-171725 */
 function vAuthPick(){return `<section class="sec"><h2>접수 시작</h2>
   <p class="lede">어떻게 접수하시나요?</p>
   <div class="pick2">
@@ -240,8 +240,6 @@ function cartPanel(){
   /* 고치는 중: 이미 접수된 사람은 접어 두고(「보기」), 이번에 새로 담은 사람만 보여 줌 (11-03) */
   const shown=S.editNo&&!S.cartOld?rows.filter(o=>!o.old):rows;
   return `<div class="panel cart"><h3>신청 명단 <span class="hint">${S.editNo?`새로 추가 ${nNew}명`:isStaffAcad()?'관계자 '+ts.length+'명':'교사 '+ts.length+'명 · 학생 '+ss.length+'명'}</span></h3>
-    <p class="hint" style="margin:0">${S.editNo?'이번에 새로 넣을 사람이에요. 참가 구분, 함께 오는 가족, 형제, 가족방은 「다음」을 눌러 참가 정보에서 넣어요.':'가장 최근에 추가한 사람이 위에 있어요. 참가 구분, 함께 오는 가족, 형제, 가족방은 「다음」을 눌러 참가 정보에서 넣어요.'}</p>
-    ${S.editNo&&nOld?`<div class="spread" style="margin:2px 0"><span class="hint">이미 접수된 사람 ${nOld}명${S.cartOld?'':' (접어 둠)'}</span><button class="btn small ghost" type="button" data-cartold="1">${S.cartOld?'접기':'보기'}</button></div>`:''}
     ${!shown.length?`<p class="hint" style="margin:0">아직 새로 넣은 사람이 없어요. 아래 탭에서 체크하고 「추가」를 눌러 주세요.</p>`:''}
     <div class="mtblw" ${shown.length?'':'hidden'}><table class="mtbl ctbl" style="min-width:0"><thead><tr><th>구분</th><th>이름</th><th>악기</th><th>접수 일시</th><th></th></tr></thead><tbody>
     ${shown.map((o,i)=>`<tr class="${S.editNo?'bt '+btCls(o.bn):''}"><td>${kBadge(o.k==='교사'||o.k==='관계자'?o.k:'학생')}</td><td><b>${esc(o.x.name)}</b>${dtag(o.x)}</td><td>${esc(o.x.inst||'-')}</td>

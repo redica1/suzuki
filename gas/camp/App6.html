@@ -1,4 +1,4 @@
-/* build: 20261103-223903 */
+/* build: 20261103-224448 */
   if(S.ttDay==null){const td=ttToday(days);S.ttDay=td!=null?td:(mine.length?Math.min(...mine.map(x=>x.d)):0)}
   if(tab==='me')return head+seg+(T.prof?`<p class="hint" style="margin:0 0 6px">교수 · 레슨실 <b>${esc(T.prof.room||'미정')}</b></p>`:'')+ttMineGrid(T,days,mine)+'</section>';
   const AC=S.user.acads||[];if(S.ttAcad&&!AC.includes(S.ttAcad))S.ttAcad='';
@@ -166,6 +166,7 @@ document.addEventListener('click',e=>{
   if(b.id==='ttBtn'||b.id==='hdTT'){openTT();return}
   if(b.id==='hdPay'){if(S.view!=='pay'&&S.view!=='lost')S.lostBack={view:S.view,step:S.step};S.view='pay';render();window.scrollTo({top:0});return}
   if(b.id==='hdLost'){if(S.view!=='lost')S.lostBack={view:S.view,step:S.step};S.view='lost';render();window.scrollTo({top:0});return}
+  if(b.id==='payXls'){if(S.payXls)S.payXls();return}
   if(b.id==='lostBack'){const k=S.lostBack||{view:'mine'};S.view=k.view==='lost'||k.view==='pay'?'mine':k.view;if(k.step)S.step=k.step;render();window.scrollTo({top:0});return}
   if(b.id==='ttBack'){const v=S.ttBack||{view:'mine'};S.view=v.view==='tt'?'mine':v.view;render();window.scrollTo({top:0});return}
   if(b.dataset&&b.dataset.tttab){S.ttTab=b.dataset.tttab;render();return}

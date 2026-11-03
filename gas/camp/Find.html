@@ -1,4 +1,4 @@
-<!doctype html><!-- build: 20261103-161423 --><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<!doctype html><!-- build: 20261103-161645 --><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
 <style>
 :root{--ink:#18232b;--muted:#5b6b73;--faint:#93a1a8;--line:#d5e6e6;--bg:#f2f8f8;--surface:#fff;--accent:#0f8a86;--soft:#e3f3f2}
@@ -7,7 +7,10 @@ body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 -apple-system
 .band{background:var(--accent);color:#fff;padding:22px 16px 18px}
 .band h1{margin:0;font-size:22px;font-weight:800;line-height:1.3}
 .band p{margin:6px 0 0;opacity:.9;font-size:15px}
-.wrap{max-width:640px;margin:0 auto;padding:16px}
+.wrap{max-width:680px;margin:0 auto;padding:16px}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin:0 0 12px}
+.tabs button{all:unset;cursor:pointer;padding:10px 14px;font-weight:700;color:var(--muted);border-bottom:3px solid transparent}
+.tabs button[aria-pressed=true]{color:var(--ink);border-color:var(--accent)}
 .search{display:flex;gap:8px;margin:4px 0 12px}
 .search input{flex:1;min-width:0;font:inherit;font-size:18px;padding:12px 14px;border:1.5px solid var(--line);border-radius:12px;background:var(--surface)}
 .search button{font:inherit;font-weight:800;font-size:17px;padding:0 18px;border:0;border-radius:12px;background:var(--accent);color:#fff;cursor:pointer}
@@ -15,38 +18,68 @@ body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 -apple-system
 .card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;margin:0 0 12px}
 .card h2{margin:0;font-size:21px}
 .who{color:var(--muted);font-size:14.5px;margin:2px 0 10px}
+.tag{display:inline-block;font-size:12.5px;font-weight:700;padding:1px 8px;border-radius:999px;background:var(--soft);color:var(--accent);margin-left:6px;vertical-align:2px}
 .sec{margin:12px 0 0}
 .sec h3{margin:0 0 6px;font-size:15px;color:var(--accent)}
 .it{display:flex;gap:10px;padding:8px 10px;border-radius:10px;background:var(--soft);margin:0 0 6px}
+.it.go{cursor:pointer}
+.it.go:hover{outline:2px solid var(--accent)}
 .it .t{font-weight:800;min-width:96px;font-variant-numeric:tabular-nums}
 .it small{display:block;color:var(--muted);font-size:13.5px}
+.ppl{background:#fff;border:1px dashed var(--line);border-radius:10px;padding:8px 10px;margin:-2px 0 8px;font-size:14.5px}
+.ppl b{color:var(--accent)}
+.day{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 10px}
+.day button{font:inherit;font-size:14.5px;padding:6px 12px;border-radius:999px;border:1px solid var(--line);background:#fff;cursor:pointer}
+.day button[aria-pressed=true]{background:var(--accent);color:#fff;border-color:var(--accent)}
 .none{color:var(--faint);font-size:14.5px}
 .err{color:#c0392b;font-weight:700}
 .sos{background:#fff7e8;border:1px solid #f0d9a8;border-radius:12px;padding:12px 14px;font-size:14.5px;margin:12px 0 0}
 </style></head><body>
-<div class="band"><h1 id="title">캠프 일정 찾기</h1><p>학생 이름을 넣으면 그 아이가 지금 어디로 가야 하는지 보여요. 길을 잃은 아이를 만나면 이름을 물어 찾아 주세요.</p></div>
+<div class="band"><h1 id="title">캠프 일정 찾기</h1><p>학생 · 선생님 · 교수님 이름으로 일정을 찾거나, 시간표에서 교실 · 시간을 눌러 누가 오는지 볼 수 있어요.</p></div>
 <div class="wrap">
-  <form class="search" id="f"><input id="q" type="search" placeholder="학생 이름" autocomplete="off" aria-label="학생 이름"><button type="submit">찾기</button></form>
-  <div id="out"><p class="hint">이름 전체를 넣으면 가장 정확해요. 같은 이름이 여럿이면 학원 · 악기를 보고 골라 주세요.</p></div>
-  <div class="sos"><b>도움이 필요하면</b> 가까운 운영진(명찰 · 조끼)이나 안내 데스크로 아이와 함께 와 주세요. 담당 선생님 이름이 보이면 그 선생님을 찾아도 돼요.</div>
+  <div class="tabs" role="tablist"><button type="button" data-tab="name" aria-pressed="true">이름으로 찾기</button><button type="button" data-tab="board" aria-pressed="false">시간표 (교실 · 시간)</button></div>
+  <div id="pName">
+    <form class="search" id="f"><input id="q" type="search" placeholder="학생 · 선생님 · 교수님 이름" autocomplete="off" aria-label="이름"><button type="submit">찾기</button></form>
+    <div id="out"><p class="hint">이름 전체를 넣으면 가장 정확해요. 같은 이름이 여럿이면 학원 · 악기를 보고 골라 주세요. 일정을 누르면 그 시간에 와야 할 사람이 보여요.</p></div>
+  </div>
+  <div id="pBoard" hidden><div id="bout"><p class="hint">불러오는 중…</p></div></div>
+  <div class="sos"><b>길을 잃은 아이를 만나면</b> 이름을 물어 여기서 찾아 주세요. 도움이 필요하면 가까운 운영진(명찰 · 조끼)이나 안내 데스크로 아이와 함께 와 주세요.</div>
 </div>
 <script>
 function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
-var out=document.getElementById('out');
+function run(fn,arg,ok,box){google.script.run.withSuccessHandler(ok).withFailureHandler(function(){if(box)box.innerHTML='<p class="err">연결이 잠시 안 돼요. 다시 눌러 주세요.</p>'})[fn](arg)}
+var out=document.getElementById('out'),bout=document.getElementById('bout'),BD=null,DAY=0;
+function gate(r,box){if(r.name)document.getElementById('title').textContent=r.name+' · 일정 찾기';if(!r.ok){box.innerHTML='<p class="err">'+esc(r.msg)+'</p>';return false}if(!r.open){box.innerHTML='<p class="hint">'+esc(r.msg)+'</p>';return false}return true}
+function item(id,t,main,sub){return '<div class="it'+(id?' go':'')+'"'+(id?' data-ev="'+esc(id)+'" role="button" tabindex="0"':'')+'><span class="t">'+t+'</span><span>'+main+(sub?'<small>'+sub+'</small>':'')+'</span></div><div class="ppl" data-for="'+esc(id||'')+'" hidden></div>'}
 function show(r){
-  if(r.name)document.getElementById('title').textContent=r.name+' · 일정 찾기';
-  if(!r.ok){out.innerHTML='<p class="err">'+esc(r.msg)+'</p>';return}
-  if(!r.open){out.innerHTML='<p class="hint">'+esc(r.msg)+'</p>';return}
-  if(!r.kids.length){out.innerHTML='<p class="hint">그 이름의 학생을 찾지 못했어요. 띄어쓰기 없이 이름만 넣어 보세요.</p>';return}
-  out.innerHTML=(r.kids.length>1?'<p class="hint">'+r.kids.length+'명이 나왔어요'+(r.more?' (앞 20명만)':'')+'. 학원 · 악기로 맞는 아이를 찾아 주세요.</p>':'')+r.kids.map(function(k){
-    var g=k.grp.length?k.grp.map(function(x){return '<div class="it"><span class="t">'+esc(x.time)+'</span><span><b>'+esc(x.sub||'그룹레슨')+'</b> · '+esc(x.room||'장소 미정')+'<small>'+esc(x.days.join(', '))+'</small></span></div>'}).join(''):'<p class="none">아직 정해지지 않았어요</p>';
-    var l=k.les.length?k.les.map(function(x){return '<div class="it"><span class="t">'+esc(x.day)+'<br>'+esc(x.t)+'</span><span><b>'+esc(x.pr)+'</b> 교수 · '+esc(x.room||'레슨실 미정')+'</span></div>'}).join(''):'';
-    return '<div class="card"><h2>'+esc(k.name)+'</h2><div class="who">'+esc(k.acad)+(k.inst?' · '+esc(k.inst):'')+(k.teacher?' · 담당 '+esc(k.teacher)+' 선생님':'')+'</div>'+
-      '<div class="sec"><h3>그룹레슨</h3>'+g+'</div>'+(l?'<div class="sec"><h3>개인레슨</h3>'+l+'</div>':'')+(k.concert?'<div class="sec"><h3>음악회</h3><div class="it"><span><b>'+esc(k.concert)+' 음악회</b></span></div></div>':'')+'</div>'}).join('');
-}
-document.getElementById('f').addEventListener('submit',function(e){e.preventDefault();var q=document.getElementById('q').value.trim();if(!q)return;
-  out.innerHTML='<p class="hint">찾고 있어요…</p>';
-  google.script.run.withSuccessHandler(show).withFailureHandler(function(x){out.innerHTML='<p class="err">연결이 잠시 안 돼요. 다시 눌러 주세요.</p>'}).findKid(q)});
+  if(!gate(r,out))return;
+  var K=r.kids||[],T=r.staff||[];
+  if(!K.length&&!T.length){out.innerHTML='<p class="hint">그 이름을 찾지 못했어요. 띄어쓰기 없이 이름만 넣어 보세요.</p>';return}
+  var h=(K.length+T.length>1?'<p class="hint">'+(K.length+T.length)+'명이 나왔어요. 학원 · 악기로 맞는 사람을 찾아 주세요.</p>':'');
+  h+=K.map(function(k){
+    var g=k.grp.length?k.grp.map(function(x){return item(x.id,esc(x.time),'<b>'+esc(x.sub||'그룹레슨')+'</b> · '+esc(x.room||'장소 미정'),esc(x.days.join(', ')))}).join(''):'<p class="none">아직 정해지지 않았어요</p>';
+    var l=k.les.map(function(x){return item('',esc(x.day)+'<br>'+esc(x.t),'<b>'+esc(x.pr)+'</b> 교수 · '+esc(x.room||'레슨실 미정'),'')}).join('');
+    return '<div class="card"><h2>'+esc(k.name)+'<span class="tag">학생</span></h2><div class="who">'+esc(k.acad)+(k.inst?' · '+esc(k.inst):'')+(k.teacher?' · 담당 '+esc(k.teacher)+' 선생님':'')+'</div>'+
+      '<div class="sec"><h3>그룹레슨</h3>'+g+'</div>'+(l?'<div class="sec"><h3>개인레슨</h3>'+l+'</div>':'')+(k.concert?'<div class="sec"><h3>음악회</h3>'+item('','',' <b>'+esc(k.concert)+' 음악회</b>','')+'</div>':'')+'</div>'}).join('');
+  h+=T.map(function(p){var by={};p.items.forEach(function(x){(by[x.day]=by[x.day]||[]).push(x)});
+    var body=Object.keys(by).length?Object.keys(by).map(function(d){return '<div class="sec"><h3>'+esc(d)+'</h3>'+by[d].map(function(x){return item(x.id,esc(x.t)+(x.e?'<small>~'+esc(x.e)+'</small>':''),'<b>'+esc(x.title)+'</b> · '+esc(x.room||'장소 미정'),esc(x.role))}).join('')+'</div>'}).join(''):'<p class="none">아직 맡은 일정이 없어요</p>';
+    return '<div class="card"><h2>'+esc(p.name)+'<span class="tag">'+(p.prof?'교수':'선생님')+'</span></h2><div class="who">'+[p.acad,p.inst].filter(Boolean).map(esc).join(' · ')+'</div>'+body+'</div>'}).join('');
+  out.innerHTML=h}
+function people(el){var id=el.getAttribute('data-ev'),box=el.nextElementSibling;if(!box)return;if(!box.hidden){box.hidden=true;return}box.hidden=false;box.innerHTML='<span class="hint">불러오는 중…</span>';
+  run('campEventPeople',id,function(r){if(!r.ok||!r.open){box.innerHTML='<span class="err">'+esc(r.msg||'볼 수 없어요')+'</span>';return}
+    box.innerHTML=(r.staff.length?'<div><b>선생님</b> '+r.staff.map(function(x){return esc(x.name)+(x.role?' ('+esc(x.role)+')':'')}).join(', ')+'</div>':'')+
+      (r.students.length?'<div style="margin-top:4px"><b>학생 '+r.students.length+'명</b> '+r.students.map(function(x){return esc(x.name)+' <span class="hint">'+esc(x.acad)+(x.note?' · '+esc(x.note):'')+'</span>'}).join(', ')+'</div>':'')+
+      (!r.staff.length&&!r.students.length?'<span class="hint">정해진 사람이 아직 없어요</span>':'')},box)}
+function board(){if(!BD){run('campBoard',null,function(r){if(!gate(r,bout))return;BD=r;board()},bout);return}
+  var L=BD.items.filter(function(x){return x.d===DAY});
+  bout.innerHTML='<div class="day">'+BD.days.map(function(d,i){return '<button type="button" data-day="'+i+'" aria-pressed="'+(i===DAY)+'">'+esc(d)+'</button>'}).join('')+'</div>'+
+    (L.length?L.map(function(x){return item(x.id,esc(x.s)+(x.e&&x.e!==x.s?'<small>~'+esc(x.e)+'</small>':''),'<b>'+esc(x.title)+'</b>',esc(x.room||'장소 미정')+(x.kind==='개인레슨'?' · '+x.n+'명':''))}).join(''):'<p class="none">이 날은 일정이 없어요</p>')}
+document.getElementById('f').addEventListener('submit',function(e){e.preventDefault();var q=document.getElementById('q').value.trim();if(!q)return;out.innerHTML='<p class="hint">찾고 있어요…</p>';run('findKid',q,show,out)});
+document.addEventListener('click',function(e){var t=e.target.closest('[data-tab],[data-ev],[data-day]');if(!t)return;
+  if(t.hasAttribute('data-tab')){var b=t.getAttribute('data-tab');document.querySelectorAll('[data-tab]').forEach(function(x){x.setAttribute('aria-pressed',String(x===t))});document.getElementById('pName').hidden=b!=='name';document.getElementById('pBoard').hidden=b!=='board';if(b==='board')board();return}
+  if(t.hasAttribute('data-day')){DAY=+t.getAttribute('data-day');board();return}
+  people(t)});
+document.addEventListener('keydown',function(e){if(e.key==='Enter'&&e.target.hasAttribute&&e.target.hasAttribute('data-ev'))people(e.target)});
 </script>
-<div id="bldMark" hidden>빌드표시 20261103-161423 </div>
+<div id="bldMark" hidden>빌드표시 20261103-161645 </div>
 </body></html>

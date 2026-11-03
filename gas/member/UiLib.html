@@ -1,4 +1,4 @@
-/* build: 20261103-223458 */
+/* build: 20261103-231636 */
 /* 공통 화면 라이브러리 — 원본은 gas/common/UiLib.html 하나. 고칠 때는 원본만 고치고 python3 -I gas/common/sync.py 로 각 앱 폴더에 복사
  * 캠프 · 회원관리 화면이 같이 씀. 페이지에서 먼저 var UI_KEY='camp' 처럼 저장 이름 앞글자를 정함
  * 4) 프로그램표 UI.grid · 칸 팝업 UI.gridDet  5) 이름 · 비밀번호 기억하기 svBox · svSet · svId · svPw
@@ -93,7 +93,7 @@ UI.grid=function(L,o){const mm=t=>{const q=String(t||'').split(':');return (+q[0
   return h};
 /* 고른 칸의 사람 (표 위, 날짜 칩 위에) */
 UI.gridDet=function(L,o){const sel=L.find(x=>x.id===o.sel);
-  return sel?`<div class="ttpop" data-ttclose="1"><div class="panel ttdet" role="dialog" aria-modal="true"><div class="spread" style="align-items:flex-start;gap:8px"><div><b>${uesc(sel.room||'장소 미정')}</b><div class="hint">${uesc(sel.s)}${sel.e&&sel.e!==sel.s?' ~ '+uesc(sel.e):''}</div><div>${uesc(sel.title)}</div></div><button type="button" class="btn small ghost" data-ttclose="1" aria-label="닫기">닫기</button></div><div style="margin-top:8px">${o.detail(sel)}</div></div></div>`:''};
+  return sel?`<div class="ttpop" data-ttclose="1"><div class="panel ttdet" role="dialog" aria-modal="true"><div class="spread" style="align-items:flex-start;gap:8px"><div><div><b>${uesc(sel.room||'장소 미정')}</b> <span class="hint num" style="margin-left:6px">${uesc(sel.s)}${sel.e&&sel.e!==sel.s?' ~ '+uesc(sel.e):''}</span></div><div>${uesc(sel.title)}</div></div><button type="button" class="btn small ghost" data-ttclose="1" aria-label="닫기">닫기</button></div><div style="margin-top:8px">${o.detail(sel)}</div></div></div>`:''};
 
 /* 이름 · 아이디 · 비밀번호 기억하기 (이 기기 브라우저에만, 공용 PC는 체크하지 않기)
  * svBox(k, 글) 로 체크 상자를 그리고, 들어갈 때 svSet(k, 아이디, 비밀번호) — 체크돼 있으면 저장, 아니면 지움. svId(k) · svPw(k) 로 채움 */

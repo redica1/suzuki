@@ -1,4 +1,4 @@
-/* build: 20261103-162602 */
+/* build: 20261103-162733 */
     ps.forEach(p=>{p.pay='신고';p.rep=rep;delete S.rpRow[p.id]});S.afterSave=()=>repDone(ps.map(p=>p.id));subSave();S.rp=null;S.rpOpen=false;S.rpMemo=undefined;render();toast(`${ps.length}명 입금 신고를 보냈어요 · 운영진이 확인하면 「입금 확인」으로 바뀌어요`);return}
   if(b.id==='rpFill'){const n=document.getElementById('rpAllN').value.trim(),dd=document.getElementById('rpAllD').value;S.rpAllN=n;S.rpAllD=dd;const sel=S.rp||[];
     if(!n&&!dd){toast('적용할 입금자명이나 입금일을 적어 주세요');return}unpaidPpl().filter(x=>sel.includes(x.p.id)).forEach(({p})=>{const v=rpv(p);if(n)v.n=n;if(dd)v.d=dd});render();toast(`선택한 ${sel.length}명에게 적용했어요`);return}
@@ -186,3 +186,23 @@ function pickAcad(a){const go=()=>{S.acad=a;S.rq='';S.sel={};S.ptab='교사';S.a
     if(S.token&&S.user&&!(S.user.acads||[]).includes(a)){api('addAcad',[a],r=>{const keep=S.user;loadFromServer(r);S.user=keep;S.user.acads=r.acads;go();toast(a+' 명단을 열었어요 · 소속은 그대로예요',true)},null,'명단을 불러오고 있어요…');return}
     go()}
 document.addEventListener('change',e=>{if(e.target.id!=='clsOn')return;S.clsOn=e.target.checked;if(!S.clsOn&&S.user&&S.acad===classOf(S.user))S.acad='';render()});
+
+/* 표 칸 너비 늘리고 줄이기 (11-03): 모든 .mtbl 머리줄 칸 오른쪽 끝을 끌어서. 두 번 누르면 원래대로. 이 브라우저에 표마다 기억 */
+const COLW_KEY='campColW2';
+function colwAll(){try{return JSON.parse(localStorage.getItem(COLW_KEY)||'{}')||{}}catch(e){return {}}}
+function colwSave(o){try{localStorage.setItem(COLW_KEY,JSON.stringify(o))}catch(e){}}
+const tblKey=t=>[...t.querySelectorAll('thead th')].map(th=>th.textContent.trim()).join('|');
+function colwApply(){document.querySelectorAll('table.mtbl').forEach(t=>{const ths=[...t.querySelectorAll('thead tr:first-child th')];if(!ths.length)return;
+  ths.forEach((th,i)=>{if(!th.querySelector('.colrz')){const h=document.createElement('span');h.className='colrz';h.dataset.ci=i;h.setAttribute('aria-hidden','true');th.appendChild(h)}});
+  const W=colwAll()[tblKey(t)];if(W&&W.length===ths.length){t.classList.add('colfix');t.style.width=W.reduce((a,b)=>a+b,0)+'px';ths.forEach((th,i)=>{th.style.width=W[i]+'px'})}})}
+new MutationObserver(()=>{clearTimeout(colwApply.t);colwApply.t=setTimeout(colwApply,30)}).observe(document.getElementById('app')||document.body,{childList:true,subtree:true});
+document.addEventListener('pointerdown',e=>{const h=e.target.closest&&e.target.closest('.colrz');if(!h)return;e.preventDefault();e.stopPropagation();
+  const t=h.closest('table'),ths=[...t.querySelectorAll('thead tr:first-child th')],i=+h.dataset.ci,W=ths.map(th=>th.getBoundingClientRect().width);
+  t.classList.add('colfix');ths.forEach((th,k)=>th.style.width=W[k]+'px');t.style.width=W.reduce((a,b)=>a+b,0)+'px';
+  const x0=e.clientX,w0=W[i];h.classList.add('on');
+  const mv=ev=>{W[i]=Math.max(36,w0+ev.clientX-x0);ths[i].style.width=W[i]+'px';t.style.width=W.reduce((a,b)=>a+b,0)+'px'};
+  const up=()=>{document.removeEventListener('pointermove',mv);document.removeEventListener('pointerup',up);h.classList.remove('on');const o=colwAll();o[tblKey(t)]=W.map(Math.round);colwSave(o)};
+  document.addEventListener('pointermove',mv);document.addEventListener('pointerup',up)},true);
+document.addEventListener('dblclick',e=>{const h=e.target.closest&&e.target.closest('.colrz');if(!h)return;const t=h.closest('table'),o=colwAll();delete o[tblKey(t)];colwSave(o);
+  t.classList.remove('colfix');t.style.width='';t.querySelectorAll('thead th').forEach(th=>th.style.width='')});
+document.addEventListener('click',e=>{if(e.target.closest&&e.target.closest('.colrz'))e.stopPropagation()},true);

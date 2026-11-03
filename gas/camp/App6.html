@@ -1,4 +1,4 @@
-/* build: 20261103-172420 */
+/* build: 20261103-172630 */
   if(tab==='me')return head+seg+`<div class="panel">${T.prof?`<p class="hint" style="margin:0 0 6px">교수 · 레슨실 <b>${esc(T.prof.room||'미정')}</b></p>`:''}
     ${days.map((dl,d)=>{const xs=mine.filter(x=>x.d===d);return xs.length?`<div class="ttday"><div class="ttdl">${esc(dl)}</div>${xs.map(x=>`<div class="ttit"><span class="num">${esc(x.t)}${x.e?'<small>~'+esc(x.e)+'</small>':''}</span><span><span class="ttrole ${x.what==='개인레슨'?'les':''}">${esc(x.what)}</span><b>${esc(x.title)}</b> · ${esc(x.where)}${x.loc?` <small class="hint">${esc(x.loc)}</small>`:''}${x.with?`<br><small class="hint">${x.what==='개인레슨'?'학생: ':'함께: '}${esc(x.with)}</small>`:''}</span></div>`).join('')}</div>`:''}).join('')||'<p class="hint" style="margin:0">아직 배정된 일정이 없어요.</p>'}</div></section>`;
   const st=(T.students||[]).filter(x=>x.mine!==false);
@@ -27,7 +27,7 @@ function fillAcct_(){const m=S.myAcct;if(!m||!m.acct)return;ACCT_SETS.forEach(([
 try{new MutationObserver(fillAcct).observe(document.documentElement,{childList:true,subtree:true})}catch(e){}
 function fillBanks(){const d=document.getElementById('bankList');if(d&&!d.children.length)d.innerHTML=BANKS.map(b=>`<option value="${b}">`).join('')}
 /* 머리 버튼: 로그인 전 「로그인」 · 뒤 「내 접수 · 로그아웃」 (모든 화면에서) */
-function hdSync(){['hdMine','hdOut'].forEach(id=>{const x=document.getElementById(id);if(x)x.hidden=!S.user});const x=document.getElementById('hdIn');if(x)x.hidden=!!S.user;const m=document.getElementById('hdMine');if(m)m.hidden=!S.user||S.view==='mine'}
+function hdSync(){['hdMine','hdOut'].forEach(id=>{const x=document.getElementById(id);if(x)x.hidden=!S.user});const x=document.getElementById('hdIn');if(x)x.hidden=!!S.user;const m=document.getElementById('hdMine');if(m)m.hidden=!S.user||S.view==='mine';const t=document.getElementById('hdTT');if(t)t.hidden=!S.user||S.user.guest||S.view==='tt'}
 function render(){fillBanks();hdSync();
   {const st=document.getElementById('steps');if(st)st.hidden=S.view==='mine'||S.view==='q'||!!(S.editNo&&S.quickEdit)}
   if(S.view==='tt'){document.getElementById('app').innerHTML=vMyTT();['backBtn','nextBtn','mineBtn'].forEach(id=>{const e=document.getElementById(id);if(e)e.hidden=true});document.getElementById('dockLabel').textContent='내 시간표';document.getElementById('dockTotal').textContent='';const st=document.getElementById('steps');if(st)st.hidden=true;return}
@@ -158,7 +158,7 @@ document.addEventListener('click',e=>{
   if(b.id==='otherAcad'){S.acOpen=true;S.acQ='';render();const n=document.getElementById('acQ');if(n)n.focus();return}
   if(b.id==='qBtn'){openQ();return}
   if(b.id==='qSend'){sendQ();return}
-  if(b.id==='ttBtn'){openTT();return}
+  if(b.id==='ttBtn'||b.id==='hdTT'){openTT();return}
   if(b.id==='ttBack'){const v=S.ttBack||{view:'mine'};S.view=v.view==='tt'?'mine':v.view;render();window.scrollTo({top:0});return}
   if(b.dataset&&b.dataset.tttab){S.ttTab=b.dataset.tttab;render();return}
   if(b.id==='qBack'){const v=S.qBack||{view:'form'};S.view=v.view==='q'?'form':v.view;render();window.scrollTo({top:0});return}

@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261103-193936 -->
+<!-- build: 20261103-194205 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -326,10 +326,10 @@ function payPill(p){if(p.status==='정상'&&!pAmt(p)&&!(+p.paidAmt>0))return '<s
 
 /* ---------- 화면 ---------- */
 /* GNB: 1단(묶음) › 2단(메뉴). 권한은 2단 메뉴마다 · 아래 메뉴가 다 「없음」이면 묶음도 숨김 */
-const GROUPS=[['dash','대시보드',['home']],['ops','운영관리',['subs','rp','cx','schol','q']],['sch','스케줄관리',['act','tt','ens','con']],['room','방배정',['room']],['stat','통계',['stat']],['fin','예산 · 결산',['bplan','bset']],['cfg','설정',['camp','mem','cons','prof','staff']]];
+const GROUPS=[['dash','대시보드',['home']],['ops','운영관리',['subs','rp','cx','schol','q','ntc']],['sch','스케줄관리',['act','tt','ens','con']],['room','방배정',['room']],['stat','통계',['stat']],['fin','예산 · 결산',['bplan','bset']],['cfg','설정',['camp','mem','cons','prof','staff']]];
 const SUBL={mem:'회원 명단',home:'대시보드',subs:'접수 · 입금 확인',rp:'입금 신고',cx:'취소 · 환불',q:'오류 · 건의',act:'교사 일정',tt:'개인레슨',ens:'앙상블',con:'오후음악회',room:'방배정',stat:'통계',schol:'장학금',cons:'동의서',camp:'캠프 설정',prof:'교수진',staff:'담당자',bplan:'예산 계획',bset:'결산'};
 const groupOf=t=>(GROUPS.find(g=>g[2].includes(t))||GROUPS[0]);
-const TABS=[['home','한눈에'],['subs','접수 · 입금 확인'],['rp','입금 신고'],['cx','취소 · 환불'],['ens','앙상블'],['prof','교수진'],['act','교사 일정'],['tt','개인레슨'],['room','방 배정'],['con','오후음악회'],['stat','통계'],['q','오류·건의'],['schol','장학금'],['mem','회원 명단'],['bplan','예산 계획'],['bset','결산']];
+const TABS=[['home','한눈에'],['subs','접수 · 입금 확인'],['rp','입금 신고'],['cx','취소 · 환불'],['ens','앙상블'],['prof','교수진'],['act','교사 일정'],['tt','개인레슨'],['room','방 배정'],['con','오후음악회'],['stat','통계'],['q','오류·건의'],['ntc','공지사항'],['schol','장학금'],['mem','회원 명단'],['bplan','예산 계획'],['bset','결산']];
 function render(){
   const app=document.getElementById('app'),tabs=document.getElementById('tabs');
   if(!S.D){tabs.innerHTML='';document.getElementById('tabs2').innerHTML='';app.innerHTML=vLogin();return}
@@ -345,7 +345,7 @@ function render(){
   /* 지금 묶음에 2단이 없으면 빈칸으로 → 줄이 안 보임 */
   document.getElementById('tabs2').classList.toggle('none',!document.querySelector('#tabs2 .grp:not([hidden])'));hdrH();
   const ro=RO();app.classList.toggle('ro',ro);
-  app.innerHTML=(ro?`<div class="robar">보기만 할 수 있는 메뉴예요 · 바꿔도 저장되지 않아요 (총관리자에게 「편집」 권한을 받으면 저장돼요)</div>`:'')+{home:vHome,subs:vSubs,rp:vRp,cx:vCx,ens:vEns,prof:vProf,act:()=>ACT.view(),tt:()=>LES.view(),room:()=>ROOM.view(),con:vCon,stat:vStat,q:vQ,camp:vCamp,staff:vStaff,cons:vCons,schol:vSchol,mem:vMem,bplan:()=>BUD.view('plan'),bset:()=>BUD.view('set')}[S.tab]();
+  app.innerHTML=(ro?`<div class="robar">보기만 할 수 있는 메뉴예요 · 바꿔도 저장되지 않아요 (총관리자에게 「편집」 권한을 받으면 저장돼요)</div>`:'')+{home:vHome,subs:vSubs,rp:vRp,cx:vCx,ens:vEns,prof:vProf,act:()=>ACT.view(),tt:()=>LES.view(),room:()=>ROOM.view(),con:vCon,stat:vStat,q:vQ,ntc:vNtc,camp:vCamp,staff:vStaff,cons:vCons,schol:vSchol,mem:vMem,bplan:()=>BUD.view('plan'),bset:()=>BUD.view('set')}[S.tab]();
   if(S.tab==='stat'||S.tab==='home')reSort();
 }
 /* 통계 표 정렬: 같은 보기·같은 표면 다시 그려도 유지 */
@@ -601,6 +601,16 @@ function ensDetail(t,sb,e){const joined=(t.mem||[]);const live=sb?sb.ppl.filter(
       <label class="fl" style="flex:1;min-width:200px"><span>운영진 메모 <small class="faint">선생님 화면에는 안 보여요</small></span>${inp('adminMemo','예: 무대 순서 3번, 반주자 배정 김OO','100%')}</label></div>
     <div class="row" style="justify-content:flex-end;gap:8px"><button class="btn small ghost" type="button" data-ensopen="${esc(t.no)}">닫기</button><button class="btn small primary" type="button" data-enssave="${esc(t.no)}">고친 내용 저장</button></div></div>`}
 
+/* 공지사항: 캠프 페이지 「공지사항」에 보임 + 맨 위 띠 한 줄(설정 「공지」) */
+function vNtc(){if(!S.ntc){if(!S.ntcLoading){S.ntcLoading=true;call('adminNotices',[],r=>{S.ntcLoading=false;S.ntc=r;render()},'공지를 불러오고 있어요…')}return '<div class="panel hint">불러오는 중…</div>'}
+  const N=S.ntc,E=S.ntcEdit?N.list.find(x=>x.row===S.ntcEdit):null;
+  return `<div class="panel"><h3 style="margin:0 0 6px">맨 위 띠 (한 줄)</h3><p class="hint" style="margin:0 0 8px">캠프 페이지 첫 화면 맨 위에 노랗게 떠요. 비우면 안 보여요. 지금 꼭 봐야 할 것만 짧게.</p>
+    <div class="row" style="gap:8px"><input type="text" id="ntBan" style="flex:1" maxlength="120" value="${esc(N.banner||'')}" placeholder="예) 오늘 저녁 음악회는 Grand Hall에서 열려요"><button class="btn small primary" type="button" id="ntBanSave">저장</button></div></div>
+  <div class="panel" style="display:grid;gap:8px"><h3 style="margin:0">${E?'공지 고치기':'새 공지'}</h3>
+    <input type="text" id="ntT" maxlength="80" placeholder="제목" value="${esc(E?E.title:'')}"><textarea id="ntB" rows="5" placeholder="내용 (줄바꿈 그대로 보여요)">${esc(E?E.body:'')}</textarea>
+    <label class="row" style="gap:6px;align-items:center"><input type="checkbox" id="ntTop" ${E&&E.top?'checked':''}> 중요 (맨 위에 노란 카드로)</label>
+    <div class="row" style="gap:8px"><button class="btn primary" type="button" id="ntSave">${E?'고친 것 저장':'올리기'}</button>${E?'<button class="btn" type="button" id="ntCancel">그만 고치기</button>':''}</div></div>
+  <div class="panel"><h3 style="margin:0 0 6px">올린 공지 ${N.list.length}개</h3>${N.list.length?N.list.map(x=>`<div style="padding:10px 0;border-top:1px solid var(--line)"><div class="spread"><span>${x.top?'<span class="pill due">중요</span> ':''}<b>${esc(x.title||'(제목 없음)')}</b> <small class="faint">${esc(String(x.at).slice(0,16))}${x.by?' · '+esc(x.by):''}</small></span><span class="row" style="gap:6px"><button class="btn small" type="button" data-ntedit="${x.row}">고치기</button><button class="btn small" type="button" data-ntdel="${x.row}">지우기</button></span></div>${x.body?`<div style="white-space:pre-wrap;margin-top:4px">${esc(x.body)}</div>`:''}</div>`).join(''):'<p class="hint">아직 공지가 없어요.</p>'}</div>`}
 function vQ(){const L=(S.D.issues||[]).slice().reverse(),f=S.qf||'open';const F=[['open','안 끝난 것'],['all','전체'],['미해결','미해결'],['해결 중','해결 중'],['해결','해결']];
   const show=L.filter(x=>f==='all'||(f==='open'?x.state!=='해결':x.state===f));
   const pill=st=>st==='해결'?'<span class="pill ok">해결</span>':st==='해결 중'?'<span class="pill new">해결 중</span>':'<span class="pill due">미해결</span>';
@@ -1556,7 +1566,7 @@ const ME=()=>(S.D&&S.D.me)||{sup:true,perms:{}};
 const permOf=k=>{const m=ME();if(m.sup)return '편집';if(k==='camp'||k==='staff'||k==='cons')return '';return (m.perms||{})[k]||''};
 const visTabs=()=>TABS.concat(SUP_TABS).filter(([k])=>permOf(k));
 const RO=()=>permOf(S.tab)==='보기';
-const WRITE_FN=/^(scholSave|adminConfirm|adminAdjust|adminSetBankAcct|ogSave|ogToken|adminRejectReport|adminSaveEns|adminSaveProfs|adminRefund|adminSetIssue|schedSave|lessonSet|adminSetSetting|roomSave|conSave|campSave|staffSave|songEnSave|pvHideSave|roomCfgSave|layoutImport|roomMove|budSave)$/;
+const WRITE_FN=/^(adminNoticeSave|scholSave|adminConfirm|adminAdjust|adminSetBankAcct|ogSave|ogToken|adminRejectReport|adminSaveEns|adminSaveProfs|adminRefund|adminSetIssue|schedSave|lessonSet|adminSetSetting|roomSave|conSave|campSave|staffSave|songEnSave|pvHideSave|roomCfgSave|layoutImport|roomMove|budSave)$/;
 const roBlock=fn=>WRITE_FN.test(fn)&&permOf(S.tab)!=='편집';
 const RO_MSG='보기만 할 수 있는 메뉴예요. 바꾸려면 총관리자에게 「편집」 권한을 받아 주세요.';
 
@@ -2157,6 +2167,9 @@ document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)r
   if(d.consv){S.consv=d.consv;render();return}
   if(d.conf){S.conf=d.conf;render();return}
   if(d.coni!==undefined){S.coni=d.coni;render();return}
+  if(b.id==='ntBanSave'){call('adminSetSetting',['공지',document.getElementById('ntBan').value.trim()],r=>{S.ntc.banner=r.val;render();toast('맨 위 띠를 저장했어요')});return}
+  if(b.id==='ntCancel'){S.ntcEdit=null;render();return}
+  if(b.id==='ntSave'){const t=document.getElementById('ntT').value,bd=document.getElementById('ntB').value,top=document.getElementById('ntTop').checked;call('adminNoticeSave',[{row:S.ntcEdit||0,title:t,body:bd,top}],r=>{S.ntc=r;S.ntcEdit=null;render();toast('저장했어요 · 캠프 페이지에 바로 보여요')});return}
   if(b.id==='conCopy'){const t=S.conTSV||'';const done=()=>toast('표를 복사했어요 · 구글 시트 칸에 붙여넣기 하세요');
     if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(t).then(done,()=>{const x=document.createElement('textarea');x.value=t;document.body.appendChild(x);x.select();try{document.execCommand('copy');done()}catch(e){toast('복사하지 못했어요')}x.remove()});
     else{const x=document.createElement('textarea');x.value=t;document.body.appendChild(x);x.select();try{document.execCommand('copy');done()}catch(e){toast('복사하지 못했어요')}x.remove()}return}
@@ -2164,6 +2177,8 @@ document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)r
   if(d.sv2){S.sv2=d.sv2;render();return}
   if(d.sv3){S.sv3=d.sv3;render();return}
   if(d.cxf){S.cxf=d.cxf;render();return}
+  if(d.ntedit){S.ntcEdit=+d.ntedit;render();window.scrollTo({top:0});return}
+  if(d.ntdel){const x=(S.ntc.list||[]).find(y=>y.row===+d.ntdel);if(!confirm('「'+((x&&x.title)||'공지')+'」를 지울까요?'))return;call('adminNoticeSave',[{row:+d.ntdel,del:true,title:x&&x.title}],r=>{S.ntc=r;S.ntcEdit=null;render();toast('지웠어요')});return}
   if(d.qsave){const row=+d.qsave;call('adminSetIssue',[row,val('qs_'+row),(document.getElementById('qr_'+row)||{}).value||''],r=>{setData(r);toast('저장했어요')});return}
   if(d.ensopen){S.ensOpen=S.ensOpen===d.ensopen?'':d.ensopen;render();return}
   if(d.enssave){const g=k=>val('ee_'+k),c=k=>!!(document.getElementById('ee_'+k)||{}).checked;
@@ -2251,6 +2266,6 @@ render();
   var q=0;new MutationObserver(function(){if(q)return;q=1;requestAnimationFrame(function(){q=0;setup();[].forEach.call(document.querySelectorAll('table.cflt'),function(t){var r=t.tHead&&t.tHead.rows[0];if(r)t.style.setProperty('--cfh1',r.offsetHeight+'px')})})}).observe(document.body,{childList:true,subtree:true});setup();
 })();
 </script>
-<div id="bldMark" hidden>빌드표시 20261103-193936 </div>
+<div id="bldMark" hidden>빌드표시 20261103-194205 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();</script>
 </body></html>

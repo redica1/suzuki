@@ -1,4 +1,4 @@
-/* build: 20261103-193936 */
+/* build: 20261103-194205 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -1465,7 +1465,7 @@ function exportProgram(token) {
  * 담당자 = 교사 회원 중에서 골라 메뉴마다 편집 / 보기 / 없음 → 관리자 화면에 이름 + 휴대전화로 로그인 */
 const STAFF = '담당자';
 const STAFF_HEAD = ['교사ID', '이름', '학원', '권한', '사용', '메모', '바꾼 날'];
-const ADMIN_TABS = [['home', '한눈에'], ['subs', '접수 · 입금 확인'], ['rp', '입금 신고'], ['cx', '취소 · 환불'], ['ens', '앙상블'], ['prof', '교수진'], ['act', '교사 일정'], ['tt', '개인레슨'], ['room', '방 배정'], ['con', '오후음악회'], ['stat', '통계'], ['q', '오류·건의'], ['schol', '장학금'], ['mem', '회원 명단'], ['bplan', '예산 계획'], ['bset', '결산']];
+const ADMIN_TABS = [['home', '한눈에'], ['subs', '접수 · 입금 확인'], ['rp', '입금 신고'], ['cx', '취소 · 환불'], ['ens', '앙상블'], ['prof', '교수진'], ['act', '교사 일정'], ['tt', '개인레슨'], ['room', '방 배정'], ['con', '오후음악회'], ['stat', '통계'], ['q', '오류·건의'], ['ntc', '공지사항'], ['schol', '장학금'], ['mem', '회원 명단'], ['bplan', '예산 계획'], ['bset', '결산']];
 function staff_() {
   return rows_(STAFF).filter(r => r['교사ID']).map(r => { let p = {}; try { p = JSON.parse(String(r['권한'] || '{}')); } catch (x) {}
     return { tid: String(r['교사ID']), name: String(r['이름']), acad: String(r['학원'] || ''), perms: p, on: String(r['사용'] || '예') !== '아니오', memo: String(r['메모'] || '') }; });
@@ -2343,7 +2343,7 @@ function campHome(tok) {
   const inf = {}; loadSubs_().forEach(sb => sb.ppl.forEach(p => { const k = p.id.slice(sb.no.length + 1), i = (sb.form && sb.form.info && sb.form.info[k]) || {}; inf[p.id] = { name: p.name, acad: sb.acad, inst: p.inst || i.inst || '', song: i.other ? String((i.oc || '') + ' ' + (i.ot || '')).trim() : String(i.song || ''), x: p.status === '취소' }; }));
   const order = c.conorder || {};
   /* 공지사항: 시트 「공지사항」(날짜 · 제목 · 내용 · 맨 위) — 운영진이 줄을 더하면 바로 보임, 최근 것 먼저 */
-  let notices = []; try { const ss = SpreadsheetApp.getActive(); if (!ss.getSheetByName('공지사항')) ss.insertSheet('공지사항').appendRow(['날짜', '제목', '내용', '맨 위']);
+  let notices = []; try { ntcSheet_();
     notices = rows_('공지사항').filter(r => String(r['제목'] || r['내용'] || '').trim()).map(r => ({ at: r['날짜'] instanceof Date ? Utilities.formatDate(r['날짜'], TZ, 'M/d HH:mm') : String(r['날짜'] || ''), title: String(r['제목'] || ''), body: String(r['내용'] || ''), top: /^(예|y|o|1|true)$/i.test(String(r['맨 위'] || '').trim()) })).reverse(); } catch (x) {}
   const share = setting_('공유주소') || 'https:\/\/app.suzukimusickorea.org/camp/';
   return Object.assign(G0, { ok: true, days, notices, notice: setting_('공지'), teacherUrl: share + (setting_('테스트 로그인') ? (share.indexOf('?') < 0 ? '?test' : '&test') : ''), meals: (c.meals || []).map(m => ({ d: m.d, day: String(days[m.d] || ''), s: m.s, e: m.e, t: m.t, k: m.k })),
@@ -2454,7 +2454,7 @@ function myTimetable(token) {
 }
 /** 관리자: 설정 한 줄 바꾸기 (시간표 공개 등 허용된 항목만) */
 function adminSetSetting(token, key, val) {
-  const a = adm_(token); need_(a, 'tt');
+  const a = adm_(token); need_(a, key === '시간표 공개' ? 'tt' : ['ntc', 'tt']);
   if (!['시간표 공개', '공지', '운영실', '운영실 연락처', '의무실', '의무실 연락처', '식당', '주차', '와이파이'].includes(key)) throw new Error('바꿀 수 없는 설정이에요.');
   ensureSettings_(); const sh = SpreadsheetApp.getActive().getSheetByName('설정');
   const r = rows_('설정').find(x => String(x['항목']) === key);
@@ -2944,3 +2944,19 @@ function lost_(me, req) {
   } finally { lock.releaseLock(); }
   return lost_(me, { op: 'list' });
 }
+
+/* ================= 공지사항 (11-03): 캠프 페이지 「공지사항」 · 관리자 「공지사항」 탭 =================
+ * 시트 「공지사항」: 날짜 · 제목 · 내용 · 맨 위(예) · 쓴 사람. 맨 위 띠 한 줄은 설정 「공지」 */
+function ntcSheet_() { const ss = SpreadsheetApp.getActive(); let sh = ss.getSheetByName('공지사항'); if (!sh) { sh = ss.insertSheet('공지사항'); sh.appendRow(['날짜', '제목', '내용', '맨 위', '쓴 사람']); } return sh; }
+function adminNotices(token) { const a = adm_(token); if (!a.sup && !['ntc', 'tt'].some(t => a.perms[t] === '편집' || a.perms[t] === '보기')) throw new Error('공지사항 권한이 있어야 볼 수 있어요.'); ntcSheet_();
+  const L = rows_('공지사항').filter(r => String(r['제목'] || r['내용'] || '').trim()).map(r => ({ row: r._row, at: r['날짜'] instanceof Date ? Utilities.formatDate(r['날짜'], TZ, 'yyyy-MM-dd HH:mm') : String(r['날짜'] || ''), title: String(r['제목'] || ''), body: String(r['내용'] || ''), top: /^(예|y|o|1|true)$/i.test(String(r['맨 위'] || '').trim()), by: String(r['쓴 사람'] || '') })).reverse();
+  return { ok: true, list: L, banner: setting_('공지') }; }
+function adminNoticeSave(token, d) { const a = adm_(token); need_(a, ['ntc', 'tt']); d = d || {};
+  const lock = lock_(); try { const sh = ntcSheet_();
+    if (d.del && d.row) { sh.deleteRow(+d.row); log_('관리자 ' + a.name, '공지 지움', String(d.title || '')); }
+    else { const title = String(d.title || '').trim().slice(0, 80), body = String(d.body || '').trim().slice(0, 2000); if (!title && !body) throw new Error('제목이나 내용을 넣어 주세요.');
+      if (d.row) sh.getRange(+d.row, 2, 1, 4).setValues([[title, body, d.top ? '예' : '', a.name]]); else sh.appendRow([stamp_(), title, body, d.top ? '예' : '', a.name]);
+      log_('관리자 ' + a.name, d.row ? '공지 고침' : '공지 올림', title); }
+  } finally { lock.releaseLock(); }
+  return adminNotices(token); }
+

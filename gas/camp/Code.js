@@ -1,4 +1,4 @@
-/* build: 20261103-161645 */
+/* build: 20261103-161851 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -2285,6 +2285,24 @@ function findGate_() {
   if (setting_('시간표 공개') !== '예') return { ok: true, open: false, name, msg: '아직 시간표가 정해지지 않았어요. 조금 뒤에 다시 찾아 주세요.' };
   return { ok: true, open: true, name };
 }
+/* 일정 찾기 들어가기 (11-03): 이름 · 휴대전화 · 확인 체크 → 「기록」에 남기고 6시간 쓰는 열쇠를 줌 */
+function findAccess(name, phone, agree) {
+  const G0 = findGate_(); if (!G0.open) return G0;
+  const nm = String(name || '').trim().slice(0, 20), ph = String(phone || '').replace(/\D/g, '');
+  if (!nm || ph.length < 10) return { ok: false, msg: '이름과 휴대전화를 넣어 주세요.' };
+  if (agree !== true) return { ok: false, msg: '확인 체크를 해 주세요.' };
+  const C = CacheService.getScriptCache(), lk = 'fa_' + ph; const n = +(C.get(lk) || 0); if (n > 30) return { ok: false, msg: '잠시 뒤 다시 해 주세요.' }; C.put(lk, String(n + 1), 3600);
+  const tok = Utilities.getUuid(); C.put('fk_' + tok, nm + '|' + ph.slice(-4), 21600);
+  log_(nm + ' (' + ph.slice(-4) + ')', '일정 찾기 들어감', '');
+  return Object.assign(G0, { tok });
+}
+function findTok_(tok) { const v = tok && CacheService.getScriptCache().get('fk_' + tok); if (!v) throw new Error('NEEDIN'); return v; }
+/* 학원 방 (일정 찾기용): 공개된 방만, 비밀번호 · 다른 사람 이름은 빼고 */
+function acadRooms_(acad) {
+  try { const cfg = roomCfg_(), live = roomPubNow_(cfg); let days = []; try { days = actCfg_().days || []; } catch (x) {}
+    return rooms_().filter(r => (live || r.pub) && r.occ.some(o => (o.k === 'acad' || o.k === 'fam') && (o.a || o.v) === acad)).map(r => ({ no: r.no, bld: r.bld, fl: r.fl, type: r.type,
+      days: (r.days.length ? r.days : days.map((_, i) => i)).map(d => days[d] || (d + 1) + '일') })); } catch (x) { return []; }
+}
 /* 학생 명단 (일정 찾기용): 이름 · 학원 · 악기 · 담당 · 진도 · 음악회 */
 function findStudents_() { const all = [];
   loadSubs_().forEach(sb => sb.ppl.forEach(p => { if (p.status === '취소') return; const k = p.id.slice(sb.no.length + 1), i = (sb.form && sb.form.info && sb.form.info[k]) || {};
@@ -2292,8 +2310,8 @@ function findStudents_() { const all = [];
     all.push({ id: p.id, name: p.name, acad: sb.acad, inst: p.inst || i.inst || '', teacher: i.teacher || '', prog: i.prog || '', concert: i.concert && i.concert !== '없음' ? i.concert : '' }); }));
   return all; }
 /** 이름으로 찾기: 학생이면 그 아이 일정, 교사 · 교수면 그 사람 스케줄 (누가 누군지 서로 알게, 11-03) */
-function findKid(q) {
-  const G0 = findGate_(); if (!G0.open) return G0; const name = G0.name;
+function findKid(q, tok) {
+  const G0 = findGate_(); if (!G0.open) return G0; const name = G0.name; try { findTok_(tok); } catch (e) { return { ok: false, needIn: true, msg: '처음 화면에서 이름 · 휴대전화를 넣어 주세요.' }; }
   const nq = String(q || '').replace(/\s+/g, ''); if (nq.length < 2) return { ok: false, msg: '이름을 두 글자 이상 넣어 주세요.' };
   const c = actCfg_(), days = c.days || [], groupsOf = grpMatch_(), L = lessons_(), P = profs_();
   const roomOf = n => (P.find(p => p.name === n) || {}).room || '';
@@ -2303,7 +2321,7 @@ function findKid(q) {
   const all = findStudents_(), hits = pick(all);
   const kids = hits.slice(0, 20).map(x => {
     const G = {}; groupsOf(x.inst, x.prog).forEach(g => { const kk = g.sub + '|' + g.room + '|' + g.s + '|' + g.e; (G[kk] = G[kk] || { id: g.id, sub: g.sub, room: g.room, s: g.s, e: g.e, d: [] }).d.push(g.d); });
-    return { name: x.name, acad: x.acad, inst: x.inst, teacher: x.teacher, concert: x.concert,
+    return { name: x.name, acad: x.acad, inst: x.inst, teacher: x.teacher, concert: x.concert, rooms: acadRooms_(x.acad),
       grp: Object.values(G).map(g => ({ id: g.id, sub: g.sub, room: g.room, time: g.s + (g.e ? '~' + g.e : ''), days: g.d.sort((a, b) => a - b).map(dl) })),
       les: L.filter(l => l.pid === x.id).sort((a, b) => a.d - b.d || String(a.t).localeCompare(String(b.t))).map(l => ({ day: dl(l.d), t: l.t, pr: l.pr, room: roomOf(l.pr) })) }; });
   /* 교사 · 교수 */
@@ -2315,11 +2333,14 @@ function findKid(q) {
     L.filter(l => nm(l.pr) === nm(p.name)).forEach(l => { const s = sById[l.pid]; it.push({ id: 'L|' + l.pr + '|' + l.d, d: l.d, t: l.t, e: '', room: roomOf(l.pr), title: '개인레슨', role: s ? s.name + ' (' + s.acad + ')' : '' }); });
     it.sort((a, b) => a.d - b.d || String(a.t).localeCompare(String(b.t)));
     return { name: p.name, acad: p.acad, inst: p.inst, prof: P.some(x => nm(x.name) === nm(p.name)), items: it.map(x => Object.assign(x, { day: dl(x.d) })) }; });
-  return { ok: true, open: true, name, more: hits.length > 20, kids, staff };
+  /* 학원 이름으로 찾으면 그 학원 방 */
+  const acNames = [...new Set(all.map(s => s.acad))]; let ah = acNames.filter(a => nm(a) === nq); if (!ah.length) ah = acNames.filter(a => nm(a).includes(nq));
+  const acads = ah.slice(0, 5).map(a => ({ acad: a, n: all.filter(s => s.acad === a).length, rooms: acadRooms_(a) }));
+  return { ok: true, open: true, name, more: hits.length > 20, kids, staff, acads };
 }
 /** 시간표 (교실 · 시간): 날마다 일정 목록. 개인레슨은 교수마다 그날 한 줄로 묶음 */
-function campBoard() {
-  const G0 = findGate_(); if (!G0.open) return G0;
+function campBoard(tok) {
+  const G0 = findGate_(); if (!G0.open) return G0; try { findTok_(tok); } catch (e) { return { ok: false, needIn: true, msg: '처음 화면에서 이름 · 휴대전화를 넣어 주세요.' }; }
   const c = actCfg_(), days = c.days || [], L = lessons_(), P = profs_();
   const roomOf = n => (P.find(p => p.name === n) || {}).room || '';
   const items = actEvents_().map(e => ({ id: e.id, d: e.d, s: e.s, e: e.e, room: e.room, title: evName_(e), kind: e.title, n: e.ppl.length }));
@@ -2327,8 +2348,8 @@ function campBoard() {
   return Object.assign(G0, { days, items: items.concat(Object.values(LB)).sort((a, b) => a.d - b.d || String(a.s).localeCompare(String(b.s)) || String(a.room).localeCompare(String(b.room))) });
 }
 /** 일정 하나를 누르면: 와야 할 사람 (교사 · 역할, 그룹레슨이면 권수가 맞는 학생, 개인레슨이면 시간별 학생) */
-function campEventPeople(id) {
-  const G0 = findGate_(); if (!G0.open) return G0;
+function campEventPeople(id, tok) {
+  const G0 = findGate_(); if (!G0.open) return G0; try { findTok_(tok); } catch (e) { return { ok: false, needIn: true, msg: '처음 화면에서 이름 · 휴대전화를 넣어 주세요.' }; }
   const c = actCfg_(), ppl = c.people || [], pn = x => (ppl.find(p => p.id === x) || { n: String(x).replace(/^[CP]:/, '') }).n;
   const all = findStudents_();
   if (/^L\|/.test(String(id))) { const [, pr, d] = String(id).split('|'); const sById = {}; all.forEach(s => sById[s.id] = s);
@@ -2336,6 +2357,8 @@ function campEventPeople(id) {
   const e = actEvents_().find(x => x.id === String(id)); if (!e) return { ok: false, msg: '그 일정을 찾지 못했어요. 새로 고쳐 주세요.' };
   const staff = e.ppl.map(x => ({ name: pn(x.n), role: x.r || '' }));
   let students = [];
+  const ck = /afternoon|오후/i.test(e.title) ? '오후' : /twilight|트와일라잇/i.test(e.title) ? '트와일라잇' : /evening|이브닝/i.test(e.title) ? '이브닝' : '';
+  if (ck && (!e.stage || e.stage === '본공연')) students = all.filter(s => s.concert === ck).map(s => ({ name: s.name, acad: s.acad, note: s.inst })).sort((a, b) => a.acad.localeCompare(b.acad) || a.name.localeCompare(b.name));
   if (e.title === '그룹레슨') { const groupsOf = grpMatch_(); students = all.filter(s => groupsOf(s.inst, s.prog).some(g => g.id === e.id)).map(s => ({ name: s.name, acad: s.acad, note: s.inst })).sort((a, b) => a.acad.localeCompare(b.acad) || a.name.localeCompare(b.name)); }
   return { ok: true, open: true, staff, students };
 }

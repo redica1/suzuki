@@ -1,4 +1,4 @@
-/* build: 20261103-172920 */
+/* build: 20261103-180638 */
     ps.forEach(p=>{p.pay='신고';p.rep=rep;delete S.rpRow[p.id]});S.afterSave=()=>repDone(ps.map(p=>p.id));subSave();S.rp=null;S.rpOpen=false;S.rpMemo=undefined;render();toast(`${ps.length}명 입금 신고를 보냈어요 · 운영진이 확인하면 「입금 확인」으로 바뀌어요`);return}
   if(b.id==='rpFill'){const n=document.getElementById('rpAllN').value.trim(),dd=document.getElementById('rpAllD').value;S.rpAllN=n;S.rpAllD=dd;const sel=S.rp||[];
     if(!n&&!dd){toast('적용할 입금자명이나 입금일을 적어 주세요');return}unpaidPpl().filter(x=>sel.includes(x.p.id)).forEach(({p})=>{const v=rpv(p);if(n)v.n=n;if(dd)v.d=dd});render();toast(`선택한 ${sel.length}명에게 적용했어요`);return}
@@ -220,8 +220,8 @@ function ttAllHTML(){const B=S.ttBoard;
   const th=showRoom=>`<thead><tr><th>시간</th><th>일정</th>${showRoom?'<th>장소</th>':''}<th class="r"></th><th></th></tr></thead>`;
   let body;
   if(!L.length)body='<p class="hint">이 날은 일정이 없어요.</p>';
-  else if(bv==='hall'){const H={};L.forEach(x=>{const k=x.room||'장소 미정';(H[k]=H[k]||[]).push(x)});body=Object.keys(H).sort((a,b)=>a.localeCompare(b,'ko')).map(k=>`<h3 style="margin:14px 0 6px;font-size:17px">${esc(k)}</h3><div class="panel"><div class="mtblw"><table class="mtbl">${th(false)}<tbody>${H[k].map(x=>row(x,false)).join('')}</tbody></table></div></div>`).join('')}
-  else body=`<div class="panel"><div class="mtblw"><table class="mtbl">${th(true)}<tbody>${L.map(x=>row(x,true)).join('')}</tbody></table></div></div>`;
+  else if(bv==='hall'){const H={};L.forEach(x=>{const k=x.room||'장소 미정';(H[k]=H[k]||[]).push(x)});body=Object.keys(H).sort((a,b)=>a.localeCompare(b,'ko')).map(k=>`<h3 style="margin:14px 0 6px;font-size:17px">${esc(k)}</h3><div class="panel"><div class="mtblw"><table class="mtbl nosort">${th(false)}<tbody>${H[k].map(x=>row(x,false)).join('')}</tbody></table></div></div>`).join('')}
+  else body=`<div class="panel"><div class="mtblw"><table class="mtbl nosort">${th(true)}<tbody>${L.map(x=>row(x,true)).join('')}</tbody></table></div></div>`;
   return `<p class="lede">캠프 전체 일정이에요. 일정을 누르면 와야 할 선생님과 학생이 보여요. 우리 학원 학생은 굵게 보여요.</p>
   <div class="seg" role="group" aria-label="날짜" style="margin:6px 0">${days.map((d,i)=>`<button type="button" data-ttday="${i}" aria-pressed="${i===D}">${esc(d)}</button>`).join('')}</div>
   <div class="seg" role="group" aria-label="보기" style="margin:6px 0 10px"><button type="button" data-ttbv="time" aria-pressed="${bv!=='hall'}">시간순</button><button type="button" data-ttbv="hall" aria-pressed="${bv==='hall'}">홀 · 교실별</button></div>${body}`}
@@ -230,3 +230,22 @@ document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest
   if(t.dataset.ttbv){S.ttBv=t.dataset.ttbv;render();return}
   const id=t.dataset.ttev;if(S.ttOpen===id){S.ttOpen=null;render();return}S.ttOpen=id;S.ttEv=S.ttEv||{};
   if(!S.ttEv[id])api('ttEventPeople',[id],r=>{S.ttEv[id]=r||{ok:false};render()},()=>{S.ttEv[id]={ok:false,msg:'불러오지 못했어요'};render()},'');render()});
+/* 모든 표: 칸 제목을 누르면 오름/내림차순, 표 위 「표에서 찾기」 (다시 그려도 그대로) */
+const TBLS={};
+const tkey=(t,i)=>i+'|'+[...t.querySelectorAll('thead th')].map(th=>th.dataset.lb||th.textContent.trim()).join('/');
+const sval=x=>{const v=String(x||'').replace(/\s+/g,' ').trim();if(/^-?[\d,]+(\.\d+)?\s*(원|명|건|회|%)?(\s|$)/.test(v)&&!/^\d{4}\.\d/.test(v))return {n:+v.match(/^-?[\d,]+(\.\d+)?/)[0].replace(/,/g,'')};
+  if(/^\d{2,4}[.\-]\d/.test(v))return {s:v.replace(/\d+/g,d=>d.padStart(4,'0'))};return {s:v}};
+function tblApply(t,st){const tb=t.tBodies[0];if(!tb)return;const rows=[...tb.rows];
+  if(st.s&&st.s.i!=null&&!t.querySelector('tbody td[colspan]')){const i=st.s.i,d=st.s.d;rows.sort((a,b)=>{const x=sval(a.cells[i]&&a.cells[i].textContent),y=sval(b.cells[i]&&b.cells[i].textContent);
+    const r=(x.n!=null&&y.n!=null)?x.n-y.n:(x.n!=null?-1:y.n!=null?1:String(x.s).localeCompare(String(y.s),'ko',{numeric:true}));return d*r});rows.forEach(r=>tb.appendChild(r))}
+  const q=String(st.q||'').replace(/\s+/g,'').toLowerCase();let n=0;rows.forEach(r=>{const ok=!q||r.textContent.replace(/\s+/g,'').toLowerCase().includes(q);r.style.display=ok?'':'none';if(ok)n++});
+  const c=t.closest('.mtblw')&&t.closest('.mtblw').previousElementSibling;if(c&&c.classList.contains('tfind')){const m=c.querySelector('.tfn');if(m)m.textContent=q?n+'건':''}
+  t.querySelectorAll('thead th').forEach((th,j)=>{const a=th.querySelector('.sarr');if(a)a.textContent=st.s&&st.s.i===j?(st.s.d>0?' ▲':' ▼'):''})}
+function tblEnhance(){document.querySelectorAll('table.mtbl:not(.nosort):not([data-enh])').forEach((t,_)=>{t.dataset.enh='1';
+  const all=[...document.querySelectorAll('table.mtbl:not(.nosort)')],k=tkey(t,all.indexOf(t)),st=TBLS[k]||(TBLS[k]={q:'',s:null});
+  t.querySelectorAll('thead th').forEach((th,j)=>{if(th.querySelector('input')||!th.textContent.trim())return;th.dataset.lb=th.dataset.lb||th.textContent.trim();th.classList.add('sortable');th.insertAdjacentHTML('beforeend','<span class="sarr"></span>');
+    th.addEventListener('click',e=>{if(e.target.closest('.colrz'))return;st.s=st.s&&st.s.i===j?(st.s.d>0?{i:j,d:-1}:null):{i:j,d:1};tblApply(t,st)})});
+  const w=t.closest('.mtblw')||t;if((t.tBodies[0]||{rows:[]}).rows.length>=3){const f=document.createElement('div');f.className='tfind';f.innerHTML='<input type="search" placeholder="표에서 찾기 (이름 · 학원 · 악기 …)" aria-label="표에서 찾기"><span class="tfn hint"></span>';
+    const inp=f.querySelector('input');inp.value=st.q||'';inp.addEventListener('input',()=>{st.q=inp.value;tblApply(t,st)});w.parentNode.insertBefore(f,w)}
+  if(st.q||st.s)tblApply(t,st)})}
+new MutationObserver(()=>{clearTimeout(tblEnhance.t);tblEnhance.t=setTimeout(tblEnhance,40)}).observe(document.getElementById('app')||document.body,{childList:true,subtree:true});

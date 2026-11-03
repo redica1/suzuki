@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261103-215810 -->
+<!-- build: 20261103-223458 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -626,13 +626,14 @@ function vPay(){var m=S.me||{},p=m.pay||{};
   return '<div class="card"><h2>정산 정보 고치기</h2>'+
     '<label class="f" for="pEng">영문 이름 <span class="opt">선택 · 명찰·프로그램북 · 예: Kim Suzuki</span><input type="text" id="pEng" value="'+esc(d.eng)+'" autocomplete="off"></label>'+fe('eng')+
     payFields(d,true,p)+msgBox()+btn('savePay','저장')+'<button class="btn block" type="button" id="toMe">취소</button></div>'}
+function incBox(p){return '<label class="agree" for="incProf" style="margin-top:10px"><input type="checkbox" id="incProf" '+(p.inc==='기타소득'?'checked':'')+'><div><b>저는 교수예요</b> (대학 등에 소속) · 강사료를 <b>기타소득 8.8%</b>로 신고해요. 체크하지 않으면 <b>사업소득 3.3%</b>예요.</div></label>'}
 function rrnBox(m){var p=m.pay||{};
-  if(p.rrn&&!S.rrnEdit)return '<div class="lock"><h3>강사료 정보</h3><dl class="kv"><dt>주민등록번호</dt><dd class="num">'+esc(p.rrn)+'</dd><dt>넣은 날</dt><dd class="num">'+esc(p.rrnAt)+'</dd></dl><button class="btn small" type="button" id="rrnEdit">다시 넣기</button><p class="hint">암호화해서 보관하고, 협회 관리자만 볼 수 있어요.</p></div>';
+  if(p.rrn&&!S.rrnEdit)return '<div class="lock"><h3>강사료 정보</h3><dl class="kv"><dt>주민등록번호</dt><dd class="num">'+esc(p.rrn)+'</dd><dt>넣은 날</dt><dd class="num">'+esc(p.rrnAt)+'</dd></dl><button class="btn small" type="button" id="rrnEdit">다시 넣기</button><p class="hint">암호화해서 보관하고, 협회 관리자만 볼 수 있어요.</p>'+incBox(p)+'</div>';
   return '<div class="lock"><h3>강사료 정보 <span class="opt">'+(m.payee?'협회에서 강사료를 받는 선생님':'선택 · 강사료를 받으실 분만')+'</span></h3>'+
     '<p class="hint" style="color:var(--muted)">강사료를 드릴 때 세금(원천징수)을 신고하려면 주민등록번호가 필요해요. 소득세법에 따라 받고, 이 목적에만 써요.</p>'+
     '<label class="f" for="rrnIn">주민등록번호 <span class="req">*</span><input type="password" id="rrnIn" inputmode="numeric" maxlength="14" autocomplete="off" placeholder="900101-2345678"></label>'+
     '<label class="agree" for="rrnAg"><input type="checkbox" id="rrnAg"><div><b>[필수] 고유식별정보(주민등록번호) 처리 안내 확인</b>'+rrnNotice()+'</div></label>'+
-    msgBox()+btn('rrnSave','주민등록번호 저장')+(S.rrnEdit?'<button class="btn ghost small" type="button" id="rrnCancel">취소</button>':'')+'</div>'}
+    msgBox()+btn('rrnSave','주민등록번호 저장')+(S.rrnEdit?'<button class="btn ghost small" type="button" id="rrnCancel">취소</button>':'')+incBox(p)+'</div>'}
 
 /* ---------- 그리기 ---------- */
 /* 브라우저 뒤로가기 (10-28): 화면이 바뀔 때마다 기록을 남기고, 뒤로가기를 누르면 앱 안의 앞 화면으로 */
@@ -854,7 +855,7 @@ document.addEventListener('click',function(e){if(e.target.id==='sdClose2'){S.stu
 function stuField(el){var p=el.dataset.sf.split('|'),r=S.stuRows&&S.stuRows[+p[0]];if(!r)return;var v=el.value;if(p[1]==='name')v=v.slice(0,20);if(String(r[p[1]]||'')===v)return;r[p[1]]=v;if(!r.dirty){r.dirty=true;var tr=el.closest('tr');if(tr)tr.classList.add('dirty')}
   var n=S.stuRows.filter(function(x){return x.dirty}).length,h=document.getElementById('stuDirty');if(h)h.textContent='바뀐 줄 '+n+'개 · 저장해야 반영돼요';if(p[1]==='name'&&v.trim()){delete S.err['sn'+p[0]];el.removeAttribute('aria-invalid')}}
 document.addEventListener('input',function(e){if(e.target.dataset&&e.target.dataset.sf){stuField(e.target);return}});
-document.addEventListener('change',function(e){if(e.target.dataset&&e.target.dataset.asg){S.asgSel=S.asgSel||{};S.asgSel[e.target.dataset.asg]=e.target.checked;return}if(e.target.id==='asgAll'){S.asgAll=e.target.checked;render();return}if(e.target.id==='myAll'){S.myAll=e.target.checked;render();return}
+document.addEventListener('change',function(e){if(e.target.id==='incProf'){var on=e.target.checked;e.target.disabled=true;call('tSaveInc',[S.sess,on]).then(function(r){if(!r.ok){toast(r.msg);render();return}S.me=r.me;render();toast(on?'교수(기타소득 8.8%)로 저장했어요':'사업소득 3.3%로 저장했어요')});return}if(e.target.dataset&&e.target.dataset.asg){S.asgSel=S.asgSel||{};S.asgSel[e.target.dataset.asg]=e.target.checked;return}if(e.target.id==='asgAll'){S.asgAll=e.target.checked;render();return}if(e.target.id==='myAll'){S.myAll=e.target.checked;render();return}
   if(e.target.dataset&&e.target.dataset.tc){var pc=e.target.dataset.tc.split('|'),xc=S.tchRows&&S.tchRows[+pc[0]];if(xc){if(e.target.checked){if(!(pc[1] in xc.certs))xc.certs[pc[1]]=''}else delete xc.certs[pc[1]];var sm=document.querySelector('[data-csum="'+pc[0]+'"]');if(sm)sm.textContent=certTxt(xc);if(!xc.dirty){xc.dirty=true;var trc=e.target.closest('tr');if(trc)trc.classList.add('dirty');tchDirtyN()}}return}
   if(e.target.dataset&&e.target.dataset.tf){tchField(e.target);if(e.target.dataset.tf.split('|')[1]==='state'){render();var q5=document.querySelector('[data-tf="'+e.target.dataset.tf.split('|')[0]+'|stateAt"]');if(q5)q5.focus()}return}if(e.target.dataset&&e.target.dataset.sf){stuField(e.target);var fk=e.target.dataset.sf.split('|')[1];if(fk==='inst'||fk==='tid'){render();return}if(e.target.dataset.sf.split('|')[1]==='state'){var tr=e.target.closest('tr');if(tr&&!tr.querySelector('[data-sf$="|stateAt"]')&&e.target.value!=='재원'){render();var d2=document.querySelector('[data-sf="'+e.target.dataset.sf.split('|')[0]+'|stateAt"]');if(d2)d2.focus();return}if(tr){tr.classList.toggle('past',e.target.value==='퇴원');var di=tr.querySelector('[data-sf$="|stateAt"]');if(di){di.disabled=e.target.value==='재원';if(e.target.value==='재원'){di.value='';stuField(di)}else di.focus()}}}return}if(e.target.id==='stuAll'){S.stuAll=e.target.checked;render();return}if(e.target.id==='stuAllV'){S.stuAllV=e.target.checked;render();return}if(e.target.dataset&&e.target.dataset.tpast){S['tchPast'+e.target.dataset.tpast]=e.target.checked;render();return}});
 document.addEventListener('input',function(e){var el=e.target;
@@ -896,6 +897,6 @@ document.addEventListener('keydown',function(e){if(e.key!=='Enter')return;var m=
   try{google.script.url.getLocation(function(l){var a=l&&l.parameter&&l.parameter.as;if(a)setSess(a);go0()})}catch(x){go0()}})();
 </script>
 <script>try{window.top.postMessage('suzuki-ready','*')}catch(e){}</script>
-<div id="bldMark" hidden>빌드표시 20261103-215810 </div>
+<div id="bldMark" hidden>빌드표시 20261103-223458 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();</script>
 </body></html>

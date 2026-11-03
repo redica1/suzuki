@@ -1,4 +1,4 @@
-/* build: 20261103-222834 */
+/* build: 20261103-223458 */
   if(S.ttDay==null){const td=ttToday(days);S.ttDay=td!=null?td:(mine.length?Math.min(...mine.map(x=>x.d)):0)}
   if(tab==='me')return head+seg+(T.prof?`<p class="hint" style="margin:0 0 6px">교수 · 레슨실 <b>${esc(T.prof.room||'미정')}</b></p>`:'')+ttMineGrid(T,days,mine)+'</section>';
   const AC=S.user.acads||[];if(S.ttAcad&&!AC.includes(S.ttAcad))S.ttAcad='';
@@ -25,9 +25,14 @@ function fillAcct_(){const m=S.myAcct;if(!m||!m.acct)return;ACCT_SETS.forEach(([
 try{new MutationObserver(fillAcct).observe(document.documentElement,{childList:true,subtree:true})}catch(e){}
 function fillBanks(){const d=document.getElementById('bankList');if(d&&!d.children.length)d.innerHTML=BANKS.map(b=>`<option value="${b}">`).join('')}
 /* 머리 버튼: 로그인 전 「로그인」 · 뒤 「내 접수 · 로그아웃」 (모든 화면에서) */
-function hdSync(){['hdMine','hdOut'].forEach(id=>{const x=document.getElementById(id);if(x)x.hidden=!S.user});const x=document.getElementById('hdIn');if(x)x.hidden=!!S.user;const m=document.getElementById('hdMine');if(m)m.hidden=!S.user||S.view==='mine';const t=document.getElementById('hdTT');if(t)t.hidden=!S.user||S.user.guest||S.view==='tt';const l=document.getElementById('hdLost');if(l)l.hidden=!S.user||S.view==='lost'}
+function hdSync(){['hdMine','hdOut'].forEach(id=>{const x=document.getElementById(id);if(x)x.hidden=!S.user});const x=document.getElementById('hdIn');if(x)x.hidden=!!S.user;const m=document.getElementById('hdMine');if(m)m.hidden=!S.user||S.view==='mine';const t=document.getElementById('hdTT');if(t)t.hidden=!S.user||S.user.guest||S.view==='tt';const l=document.getElementById('hdLost');if(l)l.hidden=!S.user||S.view==='lost';const py=document.getElementById('hdPay');if(py)py.hidden=!S.user||!S.myPay||S.view==='pay'}
 function render(){fillBanks();hdSync();
   {const st=document.getElementById('steps');if(st)st.hidden=S.view==='mine'||S.view==='q'||!!(S.editNo&&S.quickEdit)}
+  if(S.view==='pay'){const L=S.myPay||[],tx=x=>{const g=+x.g||0,f=v=>Math.floor(v/10)*10,it=x.rate==='3.3'?f(g*0.03):x.rate==='8.8'?f(g*0.4*0.2):0,lt=f(it*0.1);return {it,lt,net:g-it-lt}},W=v=>(+v||0).toLocaleString('ko-KR')+'원';
+    document.getElementById('app').innerHTML=`<section class="sec"><div class="spread"><h2>내 수당</h2><button class="btn small ghost" type="button" id="lostBack">← 돌아가기</button></div>
+      <p class="hint">캠프에서 받으실 금액이에요. 세금은 ${'3.3% = 사업소득, 8.8% = 기타소득(교수)'}이고, 회원관리 「내 정보」에 넣은 계좌로 보내 드려요.</p>
+      <div class="tbl"><table><thead><tr><th>내용</th><th style="text-align:center">지급액</th><th style="text-align:center">세금</th><th style="text-align:center">받으실 금액</th></tr></thead><tbody>${L.map(x=>{const t=tx(x);return `<tr><td>${esc(x.what)}${x.memo?`<br><small class="hint">${esc(x.memo)}</small>`:''}</td><td class="num" style="text-align:right">${W(x.g)}</td><td class="num" style="text-align:right">${W(t.it+t.lt)} <small class="hint">${x.rate==='0'?'없음':esc(x.rate)+'%'}</small></td><td class="num" style="text-align:right"><b>${W(t.net)}</b></td></tr>`}).join('')}</tbody></table></div></section>`;
+    ['backBtn','nextBtn','mineBtn'].forEach(id=>{const e=document.getElementById(id);if(e)e.hidden=true});document.getElementById('dockLabel').textContent='내 수당';document.getElementById('dockTotal').textContent='';const st=document.getElementById('steps');if(st)st.hidden=true;return}
   if(S.view==='lost'){document.getElementById('app').innerHTML=`<section class="sec"><div class="spread"><h2>분실물</h2><button class="btn small ghost" type="button" id="lostBack">← 돌아가기</button></div><div id="lostBox"></div></section>`;['backBtn','nextBtn','mineBtn'].forEach(id=>{const e=document.getElementById(id);if(e)e.hidden=true});document.getElementById('dockLabel').textContent='분실물';document.getElementById('dockTotal').textContent='';const st=document.getElementById('steps');if(st)st.hidden=true;
     LOST.mount(document.getElementById('lostBox'),(req,ok,fail)=>api('lostApiT',[req],ok,fail,req.op==='list'||req.op==='photo'?'불러오고 있어요…':'저장하고 있어요…'));return}
   if(S.view==='tt'){document.getElementById('app').innerHTML=vMyTT();['backBtn','nextBtn','mineBtn'].forEach(id=>{const e=document.getElementById(id);if(e)e.hidden=true});document.getElementById('dockLabel').textContent='내 시간표';document.getElementById('dockTotal').textContent='';const st=document.getElementById('steps');if(st)st.hidden=true;return}
@@ -159,8 +164,9 @@ document.addEventListener('click',e=>{
   if(b.id==='qBtn'){openQ();return}
   if(b.id==='qSend'){sendQ();return}
   if(b.id==='ttBtn'||b.id==='hdTT'){openTT();return}
+  if(b.id==='hdPay'){if(S.view!=='pay'&&S.view!=='lost')S.lostBack={view:S.view,step:S.step};S.view='pay';render();window.scrollTo({top:0});return}
   if(b.id==='hdLost'){if(S.view!=='lost')S.lostBack={view:S.view,step:S.step};S.view='lost';render();window.scrollTo({top:0});return}
-  if(b.id==='lostBack'){const k=S.lostBack||{view:'mine'};S.view=k.view==='lost'?'mine':k.view;if(k.step)S.step=k.step;render();window.scrollTo({top:0});return}
+  if(b.id==='lostBack'){const k=S.lostBack||{view:'mine'};S.view=k.view==='lost'||k.view==='pay'?'mine':k.view;if(k.step)S.step=k.step;render();window.scrollTo({top:0});return}
   if(b.id==='ttBack'){const v=S.ttBack||{view:'mine'};S.view=v.view==='tt'?'mine':v.view;render();window.scrollTo({top:0});return}
   if(b.dataset&&b.dataset.tttab){S.ttTab=b.dataset.tttab;render();return}
   if(b.id==='qBack'){const v=S.qBack||{view:'form'};S.view=v.view==='q'?'form':v.view;render();window.scrollTo({top:0});return}

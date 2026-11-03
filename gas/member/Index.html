@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261103-215810 -->
+<!-- build: 20261103-223458 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -725,7 +725,7 @@ function vBankPay(){var pj=bPayProj(),P=S.bProjs||[],all=(S.bPays||[]),L=all.fil
   var sum=function(A,k){return A.reduce(function(s,p){return s+(+p[k]||0)},0)},done=L.filter(function(p){return p['거래ID']&&tx[p['거래ID']]}),wait=L.filter(function(p){return !(p['거래ID']&&tx[p['거래ID']])});
   var labor=(S.bank||[]).filter(function(o){if(!bOut(o)||used[o['거래ID']])return false;var r=bCatRow(o['구분'])||{};if(!(o['구분']==='인건비 · 강사료'||r['중분류']==='인건비'||/인건비|강사료|수당/.test(o['구분']||'')))return false;if(!pj)return true;var bp=bProj(o);return bp&&bp.id===pj});
   var tiles='<div class="tiles">'+tileH('지급 결정',L.length+'명',won(sum(L,'실지급액'))+' 실지급 · 세전 '+won(sum(L,'지급액')))+tileH('통장에 찍힘',done.length+'명',won(sum(done,'실지급액')))+tileH('아직 안 찍힘',wait.length+'명',won(sum(wait,'실지급액')),wait.length>0)+tileH('결정에 없는 인건비 출금',labor.length+'건',won(labor.reduce(function(s,o){return s+bOut(o)},0)),labor.length>0)+'</div>';
-  var top='<div class="row" style="margin:0 0 8px">'+sel('bPayP',[['','모든 프로젝트']].concat(P.map(function(p){return [p['프로젝트ID'],p['이름']+(p['사용']==='안씀'?' (마감)':'')]})),pj,'프로젝트')+'<button class="btn primary" type="button" id="bPayNew">+ 지급 결정 더하기</button><button class="btn" type="button" id="bPayAuto">이름 · 금액 같은 출금 자동 연결</button><span class="cap">세전 지급액을 적으면 원천세(3.3% · 8.8%)를 빼고 실지급액을 계산해요. 실지급액과 같은 출금을 통장에서 찾아 이어요.</span></div>';
+  var top='<div class="row" style="margin:0 0 8px">'+sel('bPayP',[['','모든 프로젝트']].concat(P.map(function(p){return [p['프로젝트ID'],p['이름']+(p['사용']==='안씀'?' (마감)':'')]})),pj,'프로젝트')+'<button class="btn primary" type="button" id="bPayNew">+ 지급 결정 더하기</button><button class="btn" type="button" id="bPayAuto">이름 · 금액 같은 출금 자동 연결</button><button class="btn" type="button" id="bPayCamp" title="캠프 관리자 › 결산에서 「회원관리로 보내기」 한 정산을 지급 결정으로">캠프 정산 불러오기</button><button class="btn" type="button" data-bpl="transfer">이체 리스트</button><button class="btn" type="button" data-bpl="tax">세금신고 리스트</button><span class="cap">세전 지급액을 적으면 원천세(3.3% · 8.8%)를 빼고 실지급액을 계산해요. 실지급액과 같은 출금을 통장에서 찾아 이어요.</span></div>';
   var add='';if(S.bPayAdd){var on=S.bPaySel||{},T2=S.D.tch.filter(function(t){return t['상태']!=='탈퇴'}).sort(function(a,b){return String(a['이름']).localeCompare(b['이름'],'ko')}),ta=bTax(S.bPayG,S.bPayR||'3.3');
     add='<div class="panel" style="border-color:var(--accent);margin-bottom:8px"><b>지급 결정 더하기 · '+esc(pj&&bPj(pj)?bPj(pj)['이름']:'프로젝트 없음')+'</b><div class="row" style="margin:6px 0"><input type="text" id="bpyC" value="'+esc(S.bPayC||'')+'" placeholder="내용 (예: 2027 겨울캠프 교사 수당)" style="width:240px"><span class="cap">세전</span><input type="number" id="bpyG" value="'+esc(S.bPayG||'')+'" step="1000" style="width:120px">'+sel('bpyR',[['3.3','3.3% 사업소득'],['8.8','8.8% 기타소득'],['0','원천징수 없음']],S.bPayR||'3.3','세율')+'<span class="cap">예정일</span><input type="date" id="bpyD" value="'+esc(S.bPayD||'')+'" style="width:150px"><span class="cap">1명 실지급 <b class="num">'+won(ta.net)+'</b> (원천세 '+won(ta.t)+')</span></div>'+
       '<div class="row" style="margin:0 0 4px"><input type="search" id="bspQ" placeholder="이름 찾기" style="width:160px"><span class="cap" id="bpyCnt">'+Object.keys(on).length+'명 고름</span></div><div class="bspg">'+T2.map(function(t){var nm=t['이름']+(t['구분글자']?' '+t['구분글자']:'');return '<label data-nm="'+esc(nm)+'"><input type="checkbox" data-bpys="'+esc(t['교사ID'])+'" '+(on[t['교사ID']]?'checked':'')+'> '+esc(nm)+' <span class="cap">'+esc(tAcadTxt(t))+'</span></label>'}).join('')+'</div>'+
@@ -742,7 +742,14 @@ function vBankPay(){var pj=bPayProj(),P=S.bProjs||[],all=(S.bPays||[]),L=all.fil
   var ks=Object.keys(byP).sort(function(a,b){return byP[a].nm.localeCompare(byP[b].nm,'ko')});
   var tax='<h3 style="margin:16px 0 6px">소득신고 자료 (통장에 찍힌 지급 · 모든 프로젝트)</h3><div class="row" style="margin:0 0 6px">'+(ys.length?sel('bPayY',ys,yy,'연도'):'')+'<button class="btn small" type="button" id="bPayCopy" '+(ks.length?'':'disabled')+'>표 복사 (엑셀에 붙여넣기)</button><span class="cap">'+ks.length+'명</span></div>'+
     (ks.length?'<div class="tbl btbl" style="max-height:360px"><table id="bPayTax"><thead><tr><th>이름</th><th>휴대전화</th><th>소속</th><th>소득 구분</th><th class="r">건수</th><th class="r">세전 합</th><th class="r">소득세</th><th class="r">지방세</th><th class="r">실지급 합</th></tr></thead><tbody>'+ks.map(function(k){var x=byP[k],t=x.tid&&T[x.tid];return '<tr><td><b>'+esc(x.nm)+'</b></td><td class="num">'+esc(t?t['휴대전화']||'':'')+'</td><td class="cap">'+esc(t?tAcadTxt(t):'')+'</td><td class="cap">'+esc(Object.keys(x.r).map(function(r){return r==='3.3'?'사업소득':r==='8.8'?'기타소득':'원천징수 없음'}).join(', '))+'</td><td class="r num">'+x.n+'</td><td class="r num">'+won(x.g)+'</td><td class="r num">'+won(x.it)+'</td><td class="r num">'+won(x.lt)+'</td><td class="r num"><b>'+won(x.net)+'</b></td></tr>'}).join('')+'</tbody></table></div>':'<p class="cap">아직 통장에 찍힌 지급이 없어요.</p>');
-  return tiles+top+'<div class="panel">'+add+tbl+extra+tax+'</div>'}
+  return tiles+top+bPayListBox()+'<div class="panel">'+add+tbl+extra+tax+'</div>'}
+/* 이체 리스트 · 세금신고 리스트 (11-03): 계좌 · 주민번호를 서버에서 풀어 옴 (열 때마다 기록) · 없는 사람은 아래 따로 */
+function bPayListBox(){var X=S.bPL;if(!X)return '';var t=X.kind==='tax',L=X.list||[],sum=function(k){return L.reduce(function(s,x){return s+(+x[k]||0)},0)};
+  var head=t?['이름','주민등록번호','소득 구분','내용','지급액','소득세','지방세','실지급액']:['이름','은행','계좌번호','예금주','이체 금액','내용'];
+  var row=function(x){return t?[x.name,x.rrn,x.inc,x.what,x.g,x.it,x.lt,x.net]:[x.name,x.bank,x.acct,x.holder,x.net,x.what]};
+  return '<div class="panel" style="border-color:var(--accent);margin-bottom:8px"><div class="row" style="justify-content:space-between"><b>'+(t?'세금신고 리스트 · 주민번호 있는 사람':'이체 리스트 · 계좌 있는 사람 · 아직 통장에 안 찍힌 지급')+' '+L.length+'명 · '+won(sum(t?'g':'net'))+'</b><span class="row"><button class="btn small" type="button" id="bPLcopy" '+(L.length?'':'disabled')+'>표 복사 (엑셀 · 은행 대량이체에 붙여넣기)</button><button class="btn small ghost" type="button" id="bPLno">닫기</button></span></div>'+
+    '<div class="tbl btbl" style="max-height:340px;margin-top:6px"><table id="bPLtbl"><thead><tr>'+head.map(function(h){return '<th>'+h+'</th>'}).join('')+'</tr></thead><tbody>'+L.map(function(x){return '<tr>'+row(x).map(function(v){return '<td'+(typeof v==='number'?' class="r num"':'')+'>'+(typeof v==='number'?v.toLocaleString('ko-KR'):esc(v||''))+'</td>'}).join('')+'</tr>'}).join('')+'</tbody></table></div>'+
+    ((X.miss||[]).length?'<p class="cap" style="margin:8px 0 4px"><b>지금은 안 되는 사람 '+X.miss.length+'명</b> · '+(t?'주민번호':'계좌')+'를 회원 「내 정보」에 넣으면 들어와요</p><div class="row" style="flex-wrap:wrap;gap:4px">'+X.miss.map(function(x){return '<span class="pill due">'+esc(x.name)+' · '+esc(x.why)+' · '+won(t?x.g:x.net)+'</span>'}).join('')+'</div>':'')+'</div>'}
 function bPayGo(op,data,msg,btn){if(btn)btn.disabled=true;return callS('bankPay',op,data).then(function(r){if(btn)btn.disabled=false;if(!r.ok){toast(r.msg);render();return false}bankTake(r);render();if(msg)toast(msg.replace('%n',r.n));return true})}
 /* ---------- 캠프 입금 맞추기 (11-01): 캠프 신고 묶음(학원 · 입금자명 · 입금일) + 같은 날 학생회비 신고 ↔ 통장 입금 ---------- */
 function loadCamp(url){S.bCamp=S.bCamp||{loading:1};var p=[callS('bankCamp',url==null?null:url)];if(!S.pays)p.push(callS('payList'));
@@ -1087,6 +1094,10 @@ document.addEventListener('click',function(e){
     if(!pairs.length){toast('이름 · 금액이 같은 출금을 찾지 못했어요');return}bPayGo('link',pairs,'%n명 이었어요',b);return}
   if(d.pyu){bPayGo('link',[{'지급ID':d.pyu,'거래ID':''}],'풀었어요');return}
   if(d.pyx){if(!confirm('이 지급 결정을 지울까요?'))return;bPayGo('del',[d.pyx],'지웠어요');return}
+  if(b.id==='bPayCamp'){b.disabled=true;callS('bankCampPay').then(function(r){b.disabled=false;if(!r.ok){toast(r.msg);return}bankTake(r);S.bPayP=r.proj;render();toast('캠프 정산 '+r.n+'명을 지급 결정에 넣었어요'+(r.kept?' · 이미 통장과 이어진 '+r.kept+'명은 그대로':''))});return}
+  if(b.dataset.bpl){var kd=b.dataset.bpl;b.disabled=true;callS('bankPayList',S.bPayP||'',kd).then(function(r){b.disabled=false;if(!r.ok){toast(r.msg);return}S.bPL=r;render()});return}
+  if(b.id==='bPLno'){S.bPL=null;render();return}
+  if(b.id==='bPLcopy'){var tb2=document.getElementById('bPLtbl');var tsv2=[].map.call(tb2.querySelectorAll('tr'),function(tr){return [].map.call(tr.children,function(c){return c.classList.contains('num')?c.textContent.replace(/,/g,''):c.textContent}).join('\t')}).join('\n');navigator.clipboard.writeText(tsv2).then(function(){toast('복사했어요 · 엑셀에 붙여넣기 하세요')},function(){toast('복사하지 못했어요')});return}
   if(b.id==='bPayCopy'){var tb=document.getElementById('bPayTax');var tsv=[].map.call(tb.querySelectorAll('tr'),function(tr){return [].map.call(tr.children,function(c){return c.textContent.replace(/원$/,'').replace(/,/g,'')}).join('\t')}).join('\n');navigator.clipboard.writeText(tsv).then(function(){toast('복사했어요 · 엑셀에 붙여넣기 하세요')},function(){toast('복사하지 못했어요')});return}
   if(d.bsp){S.bSp=d.bsp;S.bSpA=null;S.bSpL=((S.bSplits||{})[d.bsp]||[]).map(function(x){return {'대상':x['대상'],ID:x['ID'],'이름':x['이름'],'금액':x['금액'],'메모':x['메모'],'구분':x['구분']||''}});S.bSpEach=S.bSpL.length?S.bSpL[0]['금액']:'';render();var pb=document.getElementById('bspEach');if(pb)pb.closest('.panel').scrollIntoView({block:'nearest'});return}
   if(b.id==='bspNo'){S.bSp=null;render();return}
@@ -1229,6 +1240,6 @@ if(e.target.dataset&&e.target.dataset.pck){S.pSel=S.pSel||{};if(e.target.checked
 })();
 </script>
 <script>try{window.top.postMessage('suzuki-ready','*')}catch(e){}</script>
-<div id="bldMark" hidden>빌드표시 20261103-215810 </div>
+<div id="bldMark" hidden>빌드표시 20261103-223458 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();</script>
 </body></html>

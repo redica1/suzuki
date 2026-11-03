@@ -1,4 +1,4 @@
-/* build: 20261103-215810 */
+/* build: 20261103-223458 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -70,7 +70,7 @@ const HEAD = {
   '행사보고': ['보고ID', '보낸때', '보낸곳', '종류', '대상', 'ID', '이름', '값', '처리', '처리일', '처리메모'],   // 행사 앱(캠프 등)이 보내는 줄 (10-31): 5분마다 참가이력 · 연회비로 옮김
   '계정': ['이메일', '교사ID', '비번해시', '솔트', '상태', '경로', '만든날', '처리일', '마지막로그인', '메모'],
   '요청': ['요청ID', '종류', '교사ID', '이름', '휴대전화', '이메일', '내용', '상태', '신청일', '처리일', '처리자', '메모'],
-  '정산': ['교사ID', '은행', '계좌번호', '예금주', '우편번호', '주소', '상세주소', '수정일', '이메일', '집우편번호', '집주소', '집상세주소', '주민번호암호', '주민번호표시', '주민번호동의일'],   // 우편번호·주소·상세주소 = 우편물 받을 주소
+  '정산': ['교사ID', '은행', '계좌번호', '예금주', '우편번호', '주소', '상세주소', '수정일', '이메일', '집우편번호', '집주소', '집상세주소', '주민번호암호', '주민번호표시', '주민번호동의일', '소득구분'],   // 우편번호·주소·상세주소 = 우편물 받을 주소
 };
 const KEY = { '학원': '학원ID', '교사': '교사ID', '학생': '학생ID' };
 /* 화면에서 고칠 수 있는 칸 (나머지는 서버가 정함) */
@@ -104,8 +104,8 @@ function doGet(e) {
 function include(n) { return HtmlService.createTemplateFromFile(n).getRawContent(); }   // 공통 라이브러리(UiLib)처럼 자바스크립트 파일을 그대로 붙임
 
 function api(name, args) {
-  const open = { login, hello, tHello, tEvents, tLookup, tStart, tResend, tVerify, tCreate, tLogin, tForgot, tReset, tPwChange, tMe, tSavePay, tSavePart, tSaveInfo, tSavePhoto, tAcad, tSaveAcad, tDocUp, tDocGet, tSaveStu, tSaveStus, tStuDetail, tStuSave, tStuTutor, tStuTutorDel, tStuState, tStuStateDel, tMyStu, tMyStuDetail, tMyStuPay, tTchSaves, tTchEnd, tTchEvent, tTchAssign, tTchStart, tSaveRrn, tAddWork, tClassCreate, tEndWork, tMainWork, tLogout, bPost, bMine, bReply };
-  const fns = { ogGet, ogSave, ogToken, boot, saveRow, setCheck, logs, importRoster, saveDues, delDues, reqs, reqDo, delAcad, payView, bulkSet, saveWorks, importPastDues, bList, bSet, bComment, photoGet, photoDel, fillRegions, saveRates, docList, docUp, docGet, docDel, payList, payOk, payOkMany, payNo, memView, rosterNow, inputStatus, inboxDone, acctReset, classFromStudents, delStus, asTeacher, bankImport, bankList: bankListTop, bankSet, bankDues, bankFromSheet, bankMeta, bankSplitSave, bankPay, bankCamp, devVirtual };
+  const open = { login, hello, tHello, tEvents, tLookup, tStart, tResend, tVerify, tCreate, tLogin, tForgot, tReset, tPwChange, tMe, tSavePay, tSavePart, tSaveInfo, tSavePhoto, tAcad, tSaveAcad, tDocUp, tDocGet, tSaveStu, tSaveStus, tStuDetail, tStuSave, tStuTutor, tStuTutorDel, tStuState, tStuStateDel, tMyStu, tMyStuDetail, tMyStuPay, tTchSaves, tTchEnd, tTchEvent, tTchAssign, tTchStart, tSaveRrn, tSaveInc, tAddWork, tClassCreate, tEndWork, tMainWork, tLogout, bPost, bMine, bReply };
+  const fns = { ogGet, ogSave, ogToken, boot, saveRow, setCheck, logs, importRoster, saveDues, delDues, reqs, reqDo, delAcad, payView, bulkSet, saveWorks, importPastDues, bList, bSet, bComment, photoGet, photoDel, fillRegions, saveRates, docList, docUp, docGet, docDel, payList, payOk, payOkMany, payNo, memView, rosterNow, inputStatus, inboxDone, acctReset, classFromStudents, delStus, asTeacher, bankImport, bankList: bankListTop, bankSet, bankDues, bankFromSheet, bankMeta, bankSplitSave, bankPay, bankCamp, bankCampPay, bankPayList, devVirtual };
   try {
     if (open[name]) return Object.assign({ ok: true }, open[name].apply(null, args || []));
     if (!fns[name]) throw new UserError('알 수 없는 요청이에요.');
@@ -338,7 +338,7 @@ function setup() {
    별도 파일에 학원 · 교사 · 학생 · 갱신 탭을 통째로 새로 씀. 주민번호 · 계좌 · 주소 · 학생 연락처 없음. */
 const ROSTER_HEAD = {
   '학원': ['학원ID', '학원명', '구분', '상태', '원장교사ID', '원장명', '시도', '시군구', '졸업연주지역', '교습과목'],
-  '교사': ['교사ID', '이름', '구분글자', '성별', '휴대전화', '회원구분', '직급', '전공', '자격', '캠프교수', '회비구분', '학원1', '학원2', '학원3', '상태', '올해회비', '올해납부일', '올해부과'],
+  '교사': ['교사ID', '이름', '구분글자', '성별', '휴대전화', '회원구분', '직급', '전공', '자격', '캠프교수', '회비구분', '학원1', '학원2', '학원3', '상태', '올해회비', '올해납부일', '올해부과', '계좌', '주민번호', '소득구분'],
   '학생': ['학생ID', '학원ID', '학원명', '이름', '구분글자', '성별', '출생연도', '전공', '상태', '상태일', '담당교사ID', '담당교사명', '재원시작', '자격시작', '자격끝', '자격상태', '회비확인대기', '올해납부일', '회비신고일'],
   '갱신': ['만든 때', '학원', '교사', '학생', '메모']
 };
@@ -379,8 +379,9 @@ function rosterBuild_() {
   const rows = {};
   const stuN = {}; S2.v.forEach(r => { if ((r[sc['상태']] || '재원') === '재원') stuN[r[sc['학원ID']]] = (stuN[r[sc['학원ID']]] || 0) + 1; });
   rows['학원'] = A.v.filter(r => r[ac['구분']] !== '클래스' || stuN[r[ac['학원ID']]]).map(r => ROSTER_HEAD['학원'].map(k => k === '교습과목' || k in ac ? String(r[ac[k]] || '') : ''));
-  rows['교사'] = T.v.filter(r => r[tc['상태']] !== '탈퇴').map(r => { const id = r[tc['교사ID']], d = tdu[id] || [], free = r[tc['회비구분']] === '면제';
-    const o = { '교사ID': id, '이름': r[tc['이름']], '구분글자': r[tc['구분글자']], '성별': r[tc['성별']], '휴대전화': r[tc['휴대전화']], '회원구분': r[tc['회원구분']], '직급': r[tc['직급']], '전공': r[tc['전공']], '자격': r[tc['본인자격']] || r[tc['명단자격']], '캠프교수': r[tc['캠프교수']], '회비구분': r[tc['회비구분']], '학원1': r[tc['학원1']], '학원2': r[tc['학원2']], '학원3': r[tc['학원3']], '상태': r[tc['상태']],
+  const pf = {}; try { const P = payTbl_(), c = col_(P); P.v.forEach(r => { pf[r[0]] = { a: r[c['계좌번호']] ? '있음' : '', r: r[c['주민번호암호']] ? '있음' : '', i: c['소득구분'] != null ? r[c['소득구분']] || '' : '' }; }); } catch (e) {}   /* 값은 넣지 않고 있음 · 없음만 (11-03) */
+  rows['교사'] = T.v.filter(r => r[tc['상태']] !== '탈퇴').map(r => { const id = r[tc['교사ID']], d = tdu[id] || [], free = r[tc['회비구분']] === '면제', pp = pf[id] || {};
+    const o = { '계좌': pp.a || '', '주민번호': pp.r || '', '소득구분': pp.i || '', '교사ID': id, '이름': r[tc['이름']], '구분글자': r[tc['구분글자']], '성별': r[tc['성별']], '휴대전화': r[tc['휴대전화']], '회원구분': r[tc['회원구분']], '직급': r[tc['직급']], '전공': r[tc['전공']], '자격': r[tc['본인자격']] || r[tc['명단자격']], '캠프교수': r[tc['캠프교수']], '회비구분': r[tc['회비구분']], '학원1': r[tc['학원1']], '학원2': r[tc['학원2']], '학원3': r[tc['학원3']], '상태': r[tc['상태']],
       '올해회비': free ? '면제' : (+d[4] > 0 && (+d[4] >= +d[3] || !+d[3]) ? '납부' : +d[4] > 0 ? '일부' : '미납'), '올해납부일': d[5] || '', '올해부과': d[3] || '' };
     return ROSTER_HEAD['교사'].map(k => String(o[k] == null ? '' : o[k])); });
   rows['학생'] = S2.v.filter(r => r[sc['학원ID']]).map(r => { const id = r[sc['학생ID']], d = sdu[id] || [], tid = cur[id] || r[sc['담당교사ID']] || '';
@@ -939,7 +940,7 @@ function tMe(sess) {
   if (!events.length && settings_()['테스트 표시'] === '예') events = [{ sample: true, name: '2026 여름 스즈키 음악캠프', year: '2026', period: '2026.07.27 ~ 07.31', role: '교사', state: '참가' }];   // STG 예시 (더미)
   return { me: { tid: u.tid, works, dues, events, duesWay: g('회비납부방법'), duesFree: g('회비구분') === '면제', ext: g('회원구분') === '외부인', sex: g('성별'), name: g('이름'), phone: g('휴대전화'), email: u.email, acads: [g('학원1'), g('학원2'), g('학원3')].filter(Boolean).map(id => an[id] || id), role: g('직급'), inst: g('전공'), kind: g('회원구분'), certs: g('본인자격') || g('명단자격'), eng: g('영문이름'), photo: photoOf_(u.tid), heads,
     payee: g('강사료대상') === '예',
-    pay: p ? { bank: p['은행'], acct: maskAcct_(p['계좌번호']), holder: p['예금주'], zip: p['우편번호'], addr: p['주소'], addr2: p['상세주소'], hzip: p['집우편번호'], haddr: p['집주소'], haddr2: p['집상세주소'], rrn: p['주민번호표시'] || '', rrnAt: p['주민번호동의일'] || '' } : null, reqs } };
+    pay: p ? { bank: p['은행'], acct: maskAcct_(p['계좌번호']), holder: p['예금주'], zip: p['우편번호'], addr: p['주소'], addr2: p['상세주소'], hzip: p['집우편번호'], haddr: p['집주소'], haddr2: p['집상세주소'], rrn: p['주민번호표시'] || '', rrnAt: p['주민번호동의일'] || '', inc: p['소득구분'] || '' } : null, reqs } };
 }
 /** 계좌 · 집 주소 · 우편물 주소 검사. need=true 면 모두 필수 (가입 때, 10-28 결정) */
 function cleanPay_(d, need, hasAcct) {
@@ -1592,6 +1593,14 @@ function rrnRow_(rrn, agree) {
   const plain = m[1] + m[2] + m[3] + '-' + m[4] + m[5];
   return { '주민번호암호': enc_(plain), '주민번호표시': plain.slice(0, 8) + '******', '주민번호동의일': now_() };
 }
+/** 내 정보: 강사료 소득 구분 스스로 신고 (11-03) — 교수 = 기타소득 8.8%, 아니면 사업소득 3.3% */
+function tSaveInc(sess, prof) {
+  const u = tsess_(sess); const lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try { const P = payTbl_(), j = P.find('교사ID', u.tid), row = { '소득구분': prof ? '기타소득' : '', '수정일': now_() };
+    if (j < 0) P.append(Object.assign({ '교사ID': u.tid, '이메일': u.email }, row)); else P.set(j, row);
+    log_(u.email, '정산', u.tid, '소득 구분', prof ? '교수 (기타소득 8.8%)' : '사업소득 3.3%'); } finally { lock.releaseLock(); }
+  return tMe(sess);
+}
 function tSaveRrn(sess, rrn, agree) {
   const u = tsess_(sess);
   const T = tbl_('교사'), i = T.find('교사ID', u.tid); if (i < 0) fail('명단에서 선생님을 찾지 못했어요.');
@@ -2037,6 +2046,39 @@ function bankPay(who, op, data) {
     log_(who.name, '지급', '-', op, n + '줄');
     return Object.assign(bankList(who), { n });
   } finally { lock.releaseLock(); }
+}
+/* ====== 캠프 정산 → 지급 결정 (11-03) ======
+ * 캠프 접수 시트 「정산」 탭(캠프 관리자 › 결산 › 교사 활동비 · 교수 레슨비 › 「회원관리로 보내기」)을 읽어 그 캠프 프로젝트의 지급 결정으로 넣음.
+ * 같은 프로젝트에서 전에 불러온 줄(메모 「캠프 정산」, 아직 통장과 안 이어진 것)은 지우고 새로 넣음. 이미 통장과 이어진 사람 · 내용은 건드리지 않음 */
+function bankCampPay(who) {
+  const id = settings_()['캠프 시트']; if (!id) fail('회원관리 설정 「캠프 시트」가 비어 있어요. 통장 › 캠프 입금 맞추기에서 먼저 연결해 주세요.');
+  const c = bankCamp(who).camp, pid = c.proj; let ss; try { ss = SpreadsheetApp.openById(id); } catch (e) { fail('캠프 접수 시트를 열 수 없어요.'); }
+  const sh = ss.getSheetByName('정산'); if (!sh || sh.getLastRow() < 2) fail('캠프 시트에 「정산」 탭이 없어요. 캠프 관리자 › 결산 › 교사 활동비 · 교수 레슨비에서 「회원관리로 보내기」를 먼저 눌러 주세요.');
+  const v = sh.getDataRange().getDisplayValues(), h = v.shift().map(String), ix = k => h.indexOf(k);
+  const rows = v.filter(r => r[ix('이름')] && num_(r[ix('지급액')]) > 0).map(r => ({ '프로젝트ID': pid, '교사ID': r[ix('교사ID')] || '', '이름': r[ix('이름')], '내용': r[ix('내용')] || c.id + ' 캠프 강사료', '지급액': num_(r[ix('지급액')]), '세율': ['3.3', '8.8', '0'].indexOf(String(r[ix('세율')])) >= 0 ? String(r[ix('세율')]) : '3.3', '지급예정일': '', '메모': '캠프 정산 ' + (r[ix('메모')] || '') }));
+  const P = bankSheet_('지급', BANK_PAY_HEAD), L = P.objs().filter(x => x['프로젝트ID'] === pid);
+  const linked = L.filter(x => x['거래ID']), key = x => (x['교사ID'] || '@' + x['이름']) + '|' + x['내용'];
+  const done = {}; linked.forEach(x => done[key(x)] = 1);
+  const del = L.filter(x => !x['거래ID'] && /^캠프 정산/.test(x['메모'] || '')).map(x => x['지급ID']);
+  const add = rows.filter(x => !done[key(x)]);
+  if (del.length) bankPay(who, 'del', del);
+  const r = add.length ? bankPay(who, 'add', add) : bankList(who);
+  log_(who.name, '지급', pid, '캠프 정산 불러오기', '지움 ' + del.length + ' · 넣음 ' + add.length + ' · 이미 지급 ' + (rows.length - add.length));
+  return Object.assign(r, { n: add.length, kept: rows.length - add.length, proj: pid });
+}
+/** 지급 결정 → 이체 리스트(계좌 있는 사람, 아직 통장에 안 찍힌 것) · 세금신고 리스트(주민번호 있는 사람). 계좌 · 주민번호를 풀어서 보여 주므로 열 때마다 기록 */
+function bankPayList(who, pj, kind) {
+  const P = bankSheet_('지급', BANK_PAY_HEAD), L = P.objs().filter(x => (!pj || x['프로젝트ID'] === pj) && (kind === 'tax' || !x['거래ID']));
+  const Q = payTbl_(), c = col_(Q), pay = {}; Q.v.forEach(r => pay[r[0]] = r);
+  const T = tbl_('교사'), tn = {}; T.v.forEach(r => tn[r[T.h.indexOf('교사ID')]] = r);
+  const ok = [], miss = [];
+  L.forEach(x => { const r = x['교사ID'] && pay[x['교사ID']], base = { id: x['지급ID'], name: x['이름'], tid: x['교사ID'], what: x['내용'], g: +x['지급액'] || 0, rate: x['세율'], it: +x['소득세'] || 0, lt: +x['지방세'] || 0, net: +x['실지급액'] || 0 };
+    if (kind === 'tax') { const e = r && r[c['주민번호암호']]; if (!e) { miss.push(Object.assign(base, { why: x['교사ID'] ? '주민번호 없음' : '회원 명단 밖' })); return; }
+      let rrn = ''; try { rrn = dec_(e); } catch (er) { rrn = '(풀 수 없음)'; } ok.push(Object.assign(base, { rrn, inc: x['세율'] === '8.8' ? '기타소득' : x['세율'] === '3.3' ? '사업소득' : '원천징수 없음' })); }
+    else { const a = r && r[c['계좌번호']]; if (!a) { miss.push(Object.assign(base, { why: x['교사ID'] ? '계좌 없음' : '회원 명단 밖' })); return; }
+      ok.push(Object.assign(base, { bank: r[c['은행']], acct: a, holder: r[c['예금주']] })); } });
+  log_(who.name, '정산', pj || '-', kind === 'tax' ? '세금신고 리스트 열람' : '이체 리스트 열람', ok.length + '명 (값은 기록하지 않음)');
+  return { list: ok, miss, kind };
 }
 /* ====== 캠프 입금 맞추기 (11-01) ======
  * 설정 「캠프 시트」(캠프 접수 DB)의 「참가자」 탭을 읽기만 함: 신고 입금자명 · 입금일 · 금액, [운영진] 입금확인. 캠프 「캠프설정」 기본(27W · 이름 · 날짜)으로 통장 행사를 하나 자동으로 만듦 */

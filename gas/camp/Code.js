@@ -1,4 +1,4 @@
-/* build: 20261103-222834 */
+/* build: 20261103-223458 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -80,6 +80,7 @@ const SETTINGS = [['관리자 아이디', 'admin', '관리자 화면(?page=admin
   ['로그인 방식', '둘 다', '「둘 다」 = 이메일 · 비밀번호 + (회원 가입 전 선생님은) 이름 + 휴대전화 / 「회원관리 계정」 = 이메일 · 비밀번호만 / 「이름+휴대전화」 = 예전 방식'],
   ['회원관리 주소', 'https://app.suzukimusickorea.org/member/', '선생님 가입 · 비밀번호 찾기 안내에 쓰는 회원관리 주소 (STG 는 끝에 ?test)'],
   ['회원 명단 파일', '', '회원관리가 만드는 「행사용 명단」 파일 ID 또는 주소. 넣으면 명단_교사 · 명단_학생을 그 파일로 5분마다 맞춤 (비우면 지금처럼 이 시트의 명단 그대로)'],
+  ['수당 공개', '아니오', '「예」면 선생님 화면에 「내 수당」(결산에서 회원관리로 보낸 정산)이 보여요. 정산을 마치기 전까지는 「아니오」'],
   ['해외 송금 안내', '', '해외 단체 영어 화면에 보이는 송금 안내 (영어로: 은행 · SWIFT · 계좌 · 예금주 · 주소 등)'],
   ['접수 가능 학원', '마포스즈키', '「전체」 또는 학원 이름을 쉼표로 (예: 마포스즈키, 미사스즈키)'],
   ['시간표 공개', '아니오', '「예」면 선생님 화면 「내 시간표」에 교사 일정·개인레슨이 보여요']];
@@ -175,7 +176,8 @@ function teachers_() {
   return rows_(SH.T).filter(r => r['ID']).map(r => ({
     id: String(r['ID']), name: String(r['이름']), role: String(r['직급'] || '강사'), inst: String(r['악기'] || ''),
     p4: String(r['휴대전화 뒤 4자리'] || '').replace(/\D/g, ''), acads: String(r['소속 학원'] || '').split(',').map(s => s.trim()).filter(Boolean),
-    paidDate: dstr_(r['회비 납부일']), dueAmt: +r['연회비'] || 0, state: String(r['상태'] || '승인'), kind: String(r['회원구분'] || '')
+    paidDate: dstr_(r['회비 납부일']), dueAmt: +r['연회비'] || 0, state: String(r['상태'] || '승인'), kind: String(r['회원구분'] || ''),
+    acct: String(r['계좌'] || '') === '있음', rrn: String(r['주민번호'] || '') === '있음', inc: String(r['소득구분'] || '')
   }));
 }
 
@@ -559,7 +561,7 @@ function bundle_(acads, owner) {
   });
   const all = loadSubs_();
   let camp = null; try { camp = campPublic_(); } catch (x) {}
-  return { rosters, subs: all.filter(sb => acads.includes(sb.acad) && ((sb.acad !== GUEST_ACAD && sb.acad !== STAFF_ACAD && sb.acad !== NOACAD) || sb.owner === owner)), teams: teams_(all), bank: bankInfo_(), today: today_(), profs, camp };
+  return { rosters, subs: all.filter(sb => acads.includes(sb.acad) && ((sb.acad !== GUEST_ACAD && sb.acad !== STAFF_ACAD && sb.acad !== NOACAD) || sb.owner === owner)), teams: teams_(all), bank: bankInfo_(), today: today_(), profs, camp, myPay: (() => { try { const me = ts.filter(t => t.name === owner); return myPay_(me.length === 1 ? me[0].id : '', owner); } catch (x) { return null; } })() };
 }
 
 /* ---------------- 접수 읽고 쓰기 ---------------- */
@@ -1544,7 +1546,7 @@ function memberSync_(force) {
   const an = {}; get('학원').forEach(a => an[a['학원ID']] = a['학원명']);
   const T = get('교사').filter(t => t['교사ID'] && t['상태'] !== '탈퇴').map(t => {
     const paid = t['올해회비'] === '면제' ? '면제' : t['올해회비'] === '납부' ? (t['올해납부일'] || '납부') : '';
-    return [t['교사ID'], t['이름'], t['회원구분'] === '외부인' || /^X/.test(String(t['교사ID'])) ? '관계자' : (t['직급'] || '강사'), t['전공'] || '', String(t['휴대전화'] || '').replace(/\D/g, '').slice(-4), ['학원1', '학원2', '학원3'].map(k => an[t[k]] || '').filter(Boolean).join(', '), paid, +t['올해부과'] || 0, '승인', t['회원구분'] || ''];
+    return [t['교사ID'], t['이름'], t['회원구분'] === '외부인' || /^X/.test(String(t['교사ID'])) ? '관계자' : (t['직급'] || '강사'), t['전공'] || '', String(t['휴대전화'] || '').replace(/\D/g, '').slice(-4), ['학원1', '학원2', '학원3'].map(k => an[t[k]] || '').filter(Boolean).join(', '), paid, +t['올해부과'] || 0, '승인', t['회원구분'] || '', t['계좌'] || '', t['주민번호'] || '', t['소득구분'] || ''];
   });
   const S = get('학생').filter(s => s['학생ID'] && s['학원명'] && s['상태'] !== '퇴원').map(s => {
     const ok = s['자격상태'] === '유효' || s['자격상태'] === '시작 전', wait = !ok && s['회비확인대기'] === '예';   /* 확인 대기 = 회원처럼 접수 (10-31) */
@@ -1558,7 +1560,7 @@ function memberSync_(force) {
   };
   const lock = lock_();
   try {
-    put(SH.T, ['ID', '이름', '직급', '악기', '휴대전화 뒤 4자리', '소속 학원', '회비 납부일', '연회비', '상태', '회원구분'], T);
+    put(SH.T, ['ID', '이름', '직급', '악기', '휴대전화 뒤 4자리', '소속 학원', '회비 납부일', '연회비', '상태', '회원구분', '계좌', '주민번호', '소득구분'], T);
     put(SH.S, ['ID', '고유번호', '이름', '구분 표시', '학원', '악기', '출생연도', '담당 교사', '회비 납부일'], S);
   } finally { lock.releaseLock(); }
   P.setProperty('memberStamp', stamp); P.setProperty('memberSyncAt', stamp_());
@@ -2900,7 +2902,32 @@ function payData_() {
   const les = {}; try { lessons_().forEach(x => { les[x.pr] = (les[x.pr] || 0) + 1; }); } catch (x) {}
   const mc = {}; try { loadSubs_().forEach(sb => sb.ppl.forEach(p => { if (p.status === '취소') return; const i = (sb.form && sb.form.info && sb.form.info[p.id.slice(sb.no.length + 1)]) || {}; (i.mc || []).forEach(m => { mc[m] = (mc[m] || 0) + 1; }); })); } catch (x) {}
   const profs = profs_().filter(p => p.on || les[p.name] || mc[p.name]).map(p => ({ n: p.name, inst: p.inst, org: p.org, fee: p.fee, lesson: p.lesson, mc: p.mc }));
-  return { ppl: ppl.map(p => ({ id: p.id, n: p.n, kind: p.kind, acad: p.acad || '', inst: p.inst || '', cx: !!p.cx, out: !!p.out })), cnt, reh, roles: Object.keys(roles).sort(), les, mc, profs };
+  const TS = teachers_(), byId = {}, byNm = {}; TS.forEach(t => { byId[t.id] = t; const k = t.name.replace(/\s/g, ''); (byNm[k] = byNm[k] || []).push(t); });
+  const mem = (tid, n) => { const t = (tid && byId[tid]) || ((byNm[String(n).replace(/\s/g, '')] || []).length === 1 ? byNm[String(n).replace(/\s/g, '')][0] : null); return t ? { tid: t.id, acct: t.acct, rrn: t.rrn, inc: t.inc } : { tid: '', acct: false, rrn: false, inc: '' }; };
+  return { ppl: ppl.map(p => Object.assign({ id: p.id, n: p.n, kind: p.kind, acad: p.acad || '', inst: p.inst || '', cx: !!p.cx, out: !!p.out }, mem(p.tid, p.n))), cnt, reh, roles: Object.keys(roles).sort(), les, mc,
+    profs: profs.map(p => Object.assign(p, mem('', p.n))), sent: (() => { const sh = SpreadsheetApp.getActive().getSheetByName('정산'); return sh ? String(sh.getRange(1, 8).getNote() || '') : ''; })() };
+}
+/** 결산 › 「회원관리로 보내기」: 사람별 지급액 · 세율을 이 시트 「정산」 탭에 통째로 씀 → 회원관리 통장 › 지급 › 「캠프 정산 불러오기」 (계좌 · 주민번호는 회원관리에만) */
+function paySend(token, rows) {
+  const a = adm_(token); need_(a, ['bset']);
+  const L = (rows || []).slice(0, 800).map(r => [String(r.tid || '').slice(0, 20), String(r.n || '').slice(0, 40), String(r.what || '').slice(0, 60), Math.max(0, Math.round(+r.g || 0)), ['3.3', '8.8', '0'].includes(String(r.rate)) ? String(r.rate) : '3.3', String(r.memo || '').slice(0, 200)]).filter(r => r[1] && r[3] > 0);
+  const lock = lock_();
+  try {
+    const ss = SpreadsheetApp.getActive(); let sh = ss.getSheetByName('정산'); if (!sh) sh = ss.insertSheet('정산');
+    sh.clearContents(); const head = ['교사ID', '이름', '내용', '지급액', '세율', '메모'];
+    sh.getRange(1, 1, L.length + 1, head.length).setNumberFormat('@').setValues([head].concat(L.map(r => r.map(String)))); sh.setFrozenRows(1); sh.getRange(1, 1, 1, head.length).setFontWeight('bold');
+    const at = stamp_(); sh.getRange(1, 8).setValue('보낸 때').setNote(at + ' · ' + a.name + ' · ' + L.length + '명');
+    log_('관리자 ' + a.name, '정산 보내기', L.length + '명 · ' + L.reduce((t, r) => t + r[3], 0) + '원');
+    return { n: L.length, at: at + ' · ' + a.name + ' · ' + L.length + '명' };
+  } finally { lock.releaseLock(); }
+}
+/** 선생님 화면 「내 수당」 (숨김 · 설정 「수당 공개」 = 예일 때만): 「정산」 탭에서 내 줄 */
+function myPay_(tid, name) {
+  if (setting_('수당 공개') !== '예') return null;
+  const sh = SpreadsheetApp.getActive().getSheetByName('정산'); if (!sh || sh.getLastRow() < 2) return null;
+  const v = sh.getRange(2, 1, sh.getLastRow() - 1, 6).getDisplayValues();
+  const L = v.filter(r => (tid && r[0] === tid) || (!r[0] && r[1] === name)).map(r => ({ what: r[2], g: +r[3] || 0, rate: r[4], memo: r[5] }));
+  return L.length ? L : null;
 }
 function budSave(token, plan, rev) {
   const a = adm_(token); need_(a, ['bplan', 'bset']);

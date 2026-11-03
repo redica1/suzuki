@@ -1,5 +1,5 @@
-/* build: 20261103-182336 */
-  if(tab==='me'){if(S.ttDay==null){const f=mine.length?Math.min(...mine.map(x=>x.d)):0;S.ttDay=f}const Dm=Math.min(S.ttDay||0,Math.max(0,days.length-1)),xs=mine.filter(x=>x.d===Dm);
+/* build: 20261103-182501 */
+  if(tab==='me'){if(S.ttDay==null){const td=ttToday(days);S.ttDay=td!=null?td:(mine.length?Math.min(...mine.map(x=>x.d)):0)}const Dm=Math.min(S.ttDay||0,Math.max(0,days.length-1)),xs=mine.filter(x=>x.d===Dm);
     return head+seg+`${T.prof?`<p class="hint" style="margin:0 0 6px">교수 · 레슨실 <b>${esc(T.prof.room||'미정')}</b></p>`:''}<div class="seg" role="group" aria-label="날짜" style="margin:6px 0 10px">${days.map((dl,d)=>`<button type="button" data-ttday="${d}" aria-pressed="${d===Dm}">${esc(dl)} ${mine.filter(x=>x.d===d).length}</button>`).join('')}</div>
     <div class="panel">${xs.length?`<div class="mtblw"><table class="mtbl"><thead><tr><th>시간</th><th>역할</th><th>일정</th><th>장소</th><th>함께</th></tr></thead><tbody>${xs.map(x=>`<tr><td class="num">${esc(x.t)}${x.e?` <small class="hint">~ ${esc(x.e)}</small>`:''}</td><td><span class="ttrole ${x.what==='개인레슨'?'les':''}">${esc(x.what)}</span></td><td style="text-align:left"><b>${esc(x.title)}</b></td><td>${esc(x.where)}${x.loc?`<br><small class="hint">${esc(x.loc)}</small>`:''}</td><td style="text-align:left;white-space:normal"><small>${x.what==='개인레슨'&&x.with?'학생: ':''}${esc(x.with||'')}</small></td></tr>`).join('')}</tbody></table></div>`:'<p class="hint" style="margin:0">이 날은 내 일정이 없어요.</p>'}</div></section>`}
 
@@ -8,7 +8,7 @@
     ${st.length?st.map(x=>`<div class="panel ttstu"><div class="spread"><b>${esc(x.name)}</b><span class="hint">${esc(x.acad)} · ${esc(x.inst)}${x.teacher?' · 담당 '+esc(x.teacher):''}${x.req?' · 추가레슨 '+x.req+'회':''}</span></div>
       ${x.lessons.length?x.lessons.slice().sort((a,b)=>a.d-b.d||tmin(a.t)-tmin(b.t)).map(l=>`<div class="ttit"><span class="num">${esc((days[l.d]||'').replace(/\(.\)/,''))} ${esc(l.t)}</span><span><span class="ttrole les">개인레슨</span><b>${esc(l.pr)}</b> 교수님${l.room?' · '+esc(l.room):''}</span></div>`).join(''):''}
       ${(x.mc||[]).map(n=>{const M=mcOf(n);return M.length?M.map(m=>`<div class="ttit"><span class="num">${esc((days[m.d]||'').replace(/\(.\)/,''))} ${esc(m.s)}${m.e?'<small>~'+esc(m.e)+'</small>':''}</span><span><span class="ttrole">마스터클래스</span><b>${esc(n)}</b> 교수님 · ${esc(m.room||'장소 미정')}</span></div>`).join(''):`<div class="ttit"><span class="num">-</span><span><span class="ttrole">마스터클래스</span><b>${esc(n)}</b> 교수님 <small class="hint">시간 미정</small></span></div>`}).join('')}</div>`).join(''):'<p class="hint">개인레슨이나 마스터클래스가 있는 학생이 없어요.</p>'}</section>`}
-function openTT(){if(S.view!=='tt')S.ttBack={view:S.view,step:S.step};S.view='tt';S.tt=null;S.ttBoard=null;S.ttEv={};S.ttOpen=null;render();window.scrollTo({top:0});
+function openTT(){if(S.view!=='tt')S.ttBack={view:S.view,step:S.step};S.view='tt';S.tt=null;S.ttBoard=null;S.ttDay=null;S.ttEv={};S.ttOpen=null;render();window.scrollTo({top:0});
   api('myTimetable',[],r=>{S.tt=r;if(S.view==='tt')render()},()=>{S.tt={open:false};render()},'시간표를 불러오고 있어요…')}
 function openQ(){if(S.view!=='q')S.qBack={view:S.view,step:S.step};S.qWhere='';S.view='q';render();window.scrollTo({top:0});
   if(S.user&&S.token)api('myIssues',[],r=>{S.qMine=r.mine||[];if(S.view==='q')render()},null,'불러오고 있어요…')}

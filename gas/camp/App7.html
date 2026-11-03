@@ -1,4 +1,4 @@
-/* build: 20261103-172630 */
+/* build: 20261103-172920 */
     ps.forEach(p=>{p.pay='신고';p.rep=rep;delete S.rpRow[p.id]});S.afterSave=()=>repDone(ps.map(p=>p.id));subSave();S.rp=null;S.rpOpen=false;S.rpMemo=undefined;render();toast(`${ps.length}명 입금 신고를 보냈어요 · 운영진이 확인하면 「입금 확인」으로 바뀌어요`);return}
   if(b.id==='rpFill'){const n=document.getElementById('rpAllN').value.trim(),dd=document.getElementById('rpAllD').value;S.rpAllN=n;S.rpAllD=dd;const sel=S.rp||[];
     if(!n&&!dd){toast('적용할 입금자명이나 입금일을 적어 주세요');return}unpaidPpl().filter(x=>sel.includes(x.p.id)).forEach(({p})=>{const v=rpv(p);if(n)v.n=n;if(dd)v.d=dd});render();toast(`선택한 ${sel.length}명에게 적용했어요`);return}
@@ -206,3 +206,27 @@ document.addEventListener('pointerdown',e=>{const h=e.target.closest&&e.target.c
 document.addEventListener('dblclick',e=>{const h=e.target.closest&&e.target.closest('.colrz');if(!h)return;const t=h.closest('table'),o=colwAll();delete o[tblKey(t)];colwSave(o);
   t.classList.remove('colfix');t.style.width='';t.querySelectorAll('thead th').forEach(th=>th.style.width='')});
 document.addEventListener('click',e=>{if(e.target.closest&&e.target.closest('.colrz'))e.stopPropagation()},true);
+/* 시간표 → 전체 일정 (홀별 · 시간별, 일정을 누르면 와야 할 사람) */
+function ttAllHTML(){const B=S.ttBoard;
+  if(!B){if(!S.ttBoardLoading){S.ttBoardLoading=true;api('ttBoard',[],r=>{S.ttBoardLoading=false;S.ttBoard=r||{open:false};if(S.view==='tt')render()},()=>{S.ttBoardLoading=false;S.ttBoard={open:false,msg:'불러오지 못했어요'};render()},'전체 일정을 불러오고 있어요…')}return '<div class="panel">전체 일정을 불러오고 있어요…</div>'}
+  if(!B.open)return `<div class="note info">${esc(B.msg||'아직 시간표가 공개되지 않았어요.')}</div>`;
+  const days=B.days||[],D=Math.min(S.ttDay||0,Math.max(0,days.length-1)),bv=S.ttBv||'time',L=(B.items||[]).filter(x=>x.d===D);
+  const tm=x=>esc(x.s)+(x.e&&x.e!==x.s?` <small class="hint">~ ${esc(x.e)}</small>`:'');
+  const ppl=x=>{const P=(S.ttEv||{})[x.id];if(!P)return '<span class="hint">불러오는 중…</span>';if(P.ok===false)return `<span class="hint">${esc(P.msg||'볼 수 없어요')}</span>`;
+    return (P.staff&&P.staff.length?`<div><b>선생님</b> ${P.staff.map(y=>esc(y.name)+(y.role?` <small class="hint">${esc(y.role)}</small>`:'')).join(', ')}</div>`:'')+
+      (P.students&&P.students.length?`<div style="margin-top:4px"><b>학생 ${P.students.length}명</b> ${P.students.map(y=>{const me=(S.user.acads||[]).includes(y.acad);return `<span${me?' style="font-weight:700"':''}>${esc(y.name)}</span> <small class="hint">${esc(y.acad)}${y.note?' · '+esc(y.note):''}</small>`}).join(', ')}</div>`:'')+
+      (!(P.staff||[]).length&&!(P.students||[]).length?'<span class="hint">정해진 사람이 아직 없어요</span>':'')};
+  const row=(x,showRoom)=>{const open=S.ttOpen===x.id;return `<tr data-ttev="${esc(x.id)}" style="cursor:pointer"><td class="num">${tm(x)}</td><td style="text-align:left"><b>${esc(x.title)}</b></td>${showRoom?`<td>${esc(x.room||'장소 미정')}</td>`:''}<td class="r num">${x.kind==='개인레슨'?'학생 '+x.n+'명':''}</td><td>${open?'▲':'▼'}</td></tr>${open?`<tr><td colspan="${showRoom?5:4}" style="text-align:left;white-space:normal;background:var(--soft,#f4f9f9)">${ppl(x)}</td></tr>`:''}`};
+  const th=showRoom=>`<thead><tr><th>시간</th><th>일정</th>${showRoom?'<th>장소</th>':''}<th class="r"></th><th></th></tr></thead>`;
+  let body;
+  if(!L.length)body='<p class="hint">이 날은 일정이 없어요.</p>';
+  else if(bv==='hall'){const H={};L.forEach(x=>{const k=x.room||'장소 미정';(H[k]=H[k]||[]).push(x)});body=Object.keys(H).sort((a,b)=>a.localeCompare(b,'ko')).map(k=>`<h3 style="margin:14px 0 6px;font-size:17px">${esc(k)}</h3><div class="panel"><div class="mtblw"><table class="mtbl">${th(false)}<tbody>${H[k].map(x=>row(x,false)).join('')}</tbody></table></div></div>`).join('')}
+  else body=`<div class="panel"><div class="mtblw"><table class="mtbl">${th(true)}<tbody>${L.map(x=>row(x,true)).join('')}</tbody></table></div></div>`;
+  return `<p class="lede">캠프 전체 일정이에요. 일정을 누르면 와야 할 선생님과 학생이 보여요. 우리 학원 학생은 굵게 보여요.</p>
+  <div class="seg" role="group" aria-label="날짜" style="margin:6px 0">${days.map((d,i)=>`<button type="button" data-ttday="${i}" aria-pressed="${i===D}">${esc(d)}</button>`).join('')}</div>
+  <div class="seg" role="group" aria-label="보기" style="margin:6px 0 10px"><button type="button" data-ttbv="time" aria-pressed="${bv!=='hall'}">시간순</button><button type="button" data-ttbv="hall" aria-pressed="${bv==='hall'}">홀 · 교실별</button></div>${body}`}
+document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-ttday],[data-ttbv],[data-ttev]');if(!t||S.view!=='tt')return;
+  if(t.dataset.ttday!==undefined){S.ttDay=+t.dataset.ttday;S.ttOpen=null;render();return}
+  if(t.dataset.ttbv){S.ttBv=t.dataset.ttbv;render();return}
+  const id=t.dataset.ttev;if(S.ttOpen===id){S.ttOpen=null;render();return}S.ttOpen=id;S.ttEv=S.ttEv||{};
+  if(!S.ttEv[id])api('ttEventPeople',[id],r=>{S.ttEv[id]=r||{ok:false};render()},()=>{S.ttEv[id]={ok:false,msg:'불러오지 못했어요'};render()},'');render()});

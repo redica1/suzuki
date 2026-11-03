@@ -1,4 +1,4 @@
-/* build: 20261103-172630 */
+/* build: 20261103-172920 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -2341,6 +2341,9 @@ function findKid(q, tok) {
 /** 시간표 (교실 · 시간): 날마다 일정 목록. 개인레슨은 교수마다 그날 한 줄로 묶음 */
 function campBoard(tok) {
   const G0 = findGate_(); if (!G0.open) return G0; try { findTok_(tok); } catch (e) { return { ok: false, needIn: true, msg: '처음 화면에서 이름 · 휴대전화를 넣어 주세요.' }; }
+  return campBoard_(G0);
+}
+function campBoard_(G0) {
   const c = actCfg_(), days = c.days || [], L = lessons_(), P = profs_();
   const roomOf = n => (P.find(p => p.name === n) || {}).room || '';
   const items = actEvents_().map(e => ({ id: e.id, d: e.d, s: e.s, e: e.e, room: e.room, title: evName_(e), kind: e.title, n: e.ppl.length }));
@@ -2350,6 +2353,9 @@ function campBoard(tok) {
 /** 일정 하나를 누르면: 와야 할 사람 (교사 · 역할, 그룹레슨이면 권수가 맞는 학생, 개인레슨이면 시간별 학생) */
 function campEventPeople(id, tok) {
   const G0 = findGate_(); if (!G0.open) return G0; try { findTok_(tok); } catch (e) { return { ok: false, needIn: true, msg: '처음 화면에서 이름 · 휴대전화를 넣어 주세요.' }; }
+  return campEventPeople_(id);
+}
+function campEventPeople_(id) {
   const c = actCfg_(), ppl = c.people || [], pn = x => (ppl.find(p => p.id === x) || { n: String(x).replace(/^[CP]:/, '') }).n;
   const all = findStudents_();
   if (/^L\|/.test(String(id))) { const [, pr, d] = String(id).split('|'); const sById = {}; all.forEach(s => sById[s.id] = s);
@@ -2362,6 +2368,9 @@ function campEventPeople(id, tok) {
   if (e.title === '그룹레슨') { const groupsOf = grpMatch_(); students = all.filter(s => groupsOf(s.inst, s.prog).some(g => g.id === e.id)).map(s => ({ name: s.name, acad: s.acad, note: s.inst })).sort((a, b) => a.acad.localeCompare(b.acad) || a.name.localeCompare(b.name)); }
   return { ok: true, open: true, staff, students };
 }
+/** 교사 화면 「시간표 → 전체 일정」: 로그인한 교사, 「시간표 공개」=예일 때 */
+function ttBoard(token) { who_(token); if (setting_('시간표 공개') !== '예') return { ok: true, open: false, msg: '아직 시간표가 공개되지 않았어요.' }; return campBoard_({ ok: true, open: true }); }
+function ttEventPeople(token, id) { who_(token); if (setting_('시간표 공개') !== '예') return { ok: false, msg: '아직 시간표가 공개되지 않았어요.' }; return campEventPeople_(id); }
 function myTimetable(token) {
   const u = who_(token);
   if (setting_('시간표 공개') !== '예') return { open: false, rooms: myRooms_(u) };

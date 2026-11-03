@@ -1,4 +1,4 @@
-/* build: 20261103-223531 */
+/* build: 20261103-223638 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -1225,7 +1225,8 @@ function guestLogin(name, phone, consent) {
  * 기준 = 「설정」 탭 「장학금 기준」 (JSON [[최소 인원, 금액], …]) · 학원별 지급 = 「장학금」 시트 */
 const SCHOL_SH = '장학금';
 const SCHOL_HEAD = ['학원', '학생 수(저장 때)', '기준 금액', '조정 금액', '상태', '지급일', '메모', '바꾼 날'];
-function scholTiers_() { try { const v = JSON.parse(setting_('장학금 기준') || '[]'); return Array.isArray(v) ? v.filter(x => +x[0] > 0).map(x => [+x[0], +x[1] || 0]).sort((a, b) => b[0] - a[0]) : []; } catch (x) { return []; } }
+const SCHOL_DEF = '[[30,1200000],[20,800000],[10,400000]]';   /* 26 여름 「추가 지급사항」: 30명↑ 120만 · 20명↑ 80만 · 10명↑ 40만 */
+function scholTiers_() { try { const v = JSON.parse(setting_('장학금 기준') || SCHOL_DEF); return Array.isArray(v) ? v.filter(x => +x[0] > 0).map(x => [+x[0], +x[1] || 0]).sort((a, b) => b[0] - a[0]) : []; } catch (x) { return []; } }
 function scholRows_() { return rows_(SCHOL_SH).filter(r => r['학원']).map(r => ({ acad: String(r['학원']), n: +r['학생 수(저장 때)'] || 0, base: +r['기준 금액'] || 0, amt: r['조정 금액'] === '' ? '' : +r['조정 금액'], state: String(r['상태'] || '예정'), date: dstr_(r['지급일']), memo: String(r['메모'] || '') })); }
 function scholData(token) { adm_(token); return { tiers: scholTiers_(), rows: scholRows_() }; }
 function scholSave(token, b) {
@@ -2866,7 +2867,7 @@ function budSeed_() {
       L({ cat: 'equip', name: '피아노 대여 · 조율', unit: 1650000, memo: '그랜드1 · 업라이트2' }),
       L({ cat: 'ad', name: '잡지 광고', unit: 1000000 }),
       L({ cat: 'bus', name: '버스비 지원', unit: 3700000 }),
-      L({ cat: 'schol', name: '장학금', unit: 5900000, auto: 'schol', memo: '학생 20명↑ 80만 · 10명↑ 40만 + 첼로 지원' }),
+      L({ cat: 'schol', name: '장학금', unit: 5900000, auto: 'schol', memo: '학생 30명↑ 120만 · 20명↑ 80만 · 10명↑ 40만 + 첼로 지원' }),
       L({ cat: 'etc', name: '호텔 기타 (음료 · 추가 침구 등)', unit: 2000000 }),
       L({ cat: 'etc', name: '잡비', unit: 1500000 })]
   };

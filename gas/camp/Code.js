@@ -1,4 +1,4 @@
-/* build: 20261103-200401 */
+/* build: 20261103-200628 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -2985,8 +2985,8 @@ function ogSave(token, key, d) {
  * 누구나 올림: 로그인한 선생님 또는 「일정 찾기」에 이름 · 휴대전화로 들어온 사람.
  * 「제 거예요」는 각자 알아서(운영진 확인 없음). 주인이 누르면 「주인 찾음」, 누른 사람이나 올린 사람이 되돌릴 수 있음.
  * 사진: 화면에서 줄여서 보냄 → 큰 사진은 드라이브 「캠프 분실물 사진 (캠프ID)」(비공개), 작은 사진은 시트 칸에 글자로. 화면에는 서버를 거쳐서만 보임 */
-const LOST = '분실물', LOST_HEAD = ['번호', '등록일시', '등록자', '등록자 구분', '찾은 곳', '설명', '사진ID', '작은사진', '상태', '주인', '주인 구분', '찾은일시', '본인키', '주인키'];
-function lostSheet_() { const ss = SpreadsheetApp.getActive(); let sh = ss.getSheetByName(LOST); if (!sh) { sh = ss.insertSheet(LOST); sh.appendRow(LOST_HEAD); } return sh; }
+const LOST = '분실물', LOST_HEAD = ['번호', '등록일시', '등록자', '등록자 구분', '찾은 곳', '설명', '사진ID', '작은사진', '상태', '주인', '주인 구분', '찾은일시', '본인키', '주인키', '보관 장소'];
+function lostSheet_() { const ss = SpreadsheetApp.getActive(); let sh = ss.getSheetByName(LOST); if (!sh) { sh = ss.insertSheet(LOST); sh.appendRow(LOST_HEAD); } else { const h = sh.getRange(1, 1, 1, Math.max(1, sh.getLastColumn())).getValues()[0]; if (h.indexOf('보관 장소') < 0) sh.getRange(1, h.filter(String).length + 1).setValue('보관 장소'); } return sh; }
 function lostFolder_() { const n = '캠프 분실물 사진 ' + camp_().base.id, it = DriveApp.getFoldersByName(n); return it.hasNext() ? it.next() : DriveApp.createFolder(n); }
 function lostApiT(token, req) { const u = who_(token); return lost_({ key: 'T:' + u.name, name: u.name, kind: '선생님' }, req || {}); }
 function lostApiF(req, tok) { const G0 = findGate_(); if (!G0.open) return G0; let v; try { v = findTok_(tok); } catch (e) { return { ok: false, needIn: true, msg: '처음 화면에서 이름 · 휴대전화를 넣어 주세요.' }; }
@@ -2997,7 +2997,7 @@ function lost_(me, req) {
   const mask = n => { n = String(n || ''); return n.length <= 1 ? n : n.length === 2 ? n[0] + '*' : n[0] + '*'.repeat(n.length - 2) + n.slice(-1); };
   const ts = v => v instanceof Date ? Utilities.formatDate(v, TZ, 'M/d HH:mm') : String(v || '').replace(/^\d{4}-0?(\d+)-0?(\d+)\s+(\d+:\d+).*$/, '$1/$2 $3');
   const out = r => ({ id: String(r['번호']), at: ts(r['등록일시']), by: mask(r['등록자']), byKind: String(r['등록자 구분'] || ''), where: String(r['찾은 곳'] || ''), desc: String(r['설명'] || ''), th: String(r['작은사진'] || ''), pic: !!String(r['사진ID'] || ''),
-    st: String(r['상태'] || '보관 중'), owner: mask(r['주인']), ownAt: ts(r['찾은일시']), mine: String(r['본인키']) === me.key, myClaim: String(r['주인키']) === me.key });
+    keep: String(r['보관 장소'] || ''), st: String(r['상태'] || '보관 중'), owner: mask(r['주인']), ownAt: ts(r['찾은일시']), mine: String(r['본인키']) === me.key, myClaim: String(r['주인키']) === me.key });
   if (op === 'list') { lostSheet_(); return { ok: true, me: me.name, items: rows().filter(r => String(r['상태']) !== '삭제').map(out).reverse() }; }
   if (op === 'photo') { const r = rows().find(x => String(x['번호']) === String(a.id)); if (!r || !r['사진ID']) return { ok: false, msg: '사진이 없어요.' };
     try { const b = DriveApp.getFileById(String(r['사진ID'])).getBlob(); return { ok: true, img: 'data:' + b.getContentType() + ';base64,' + Utilities.base64Encode(b.getBytes()) }; } catch (e) { return { ok: false, msg: '사진을 불러오지 못했어요.' }; } }
@@ -3013,13 +3013,14 @@ function lost_(me, req) {
       let pid = ''; if (a.img) { const m = String(a.img).match(/^data:(image\/\w+);base64,(.+)$/); if (!m) return { ok: false, msg: '사진 파일만 올릴 수 있어요.' };
         pid = lostFolder_().createFile(Utilities.newBlob(Utilities.base64Decode(m[2]), m[1], Utilities.formatDate(new Date(), TZ, 'MMdd-HHmmss') + '.jpg')).getId(); }
       const n = rows().reduce((m, r) => Math.max(m, +String(r['번호']).replace(/\D/g, '') || 0), 0) + 1;
-      sh.appendRow(['L' + String(n).padStart(3, '0'), stamp_(), me.name, me.kind, where, desc, pid, th, '보관 중', '', '', '', me.key, '']);
+      sh.appendRow(['L' + String(n).padStart(3, '0'), stamp_(), me.name, me.kind, where, desc, pid, th, '보관 중', '', '', '', me.key, '', String(a.keep || '').trim().slice(0, 40)]);
       C.put(rk, '1', 20); log_(me.name, '분실물 올림', where + ' ' + desc.slice(0, 30));
     } else {
       const r = rows().find(x => String(x['번호']) === String(a.id)); if (!r) return { ok: false, msg: '그 분실물을 찾지 못했어요. 새로 고쳐 주세요.' };
       const H = LOST_HEAD, set = (k, v) => sh.getRange(r._row, H.indexOf(k) + 1).setValue(v);
       if (op === 'claim') { if (String(r['상태']) !== '보관 중') return { ok: false, msg: '이미 주인이 찾아갔어요.' }; set('상태', '주인 찾음'); set('주인', me.name); set('주인 구분', me.kind); set('찾은일시', stamp_()); set('주인키', me.key); log_(me.name, '분실물 제 거예요', r['번호']); }
       else if (op === 'undo') { if (String(r['주인키']) !== me.key && String(r['본인키']) !== me.key) return { ok: false, msg: '찾은 사람이나 올린 사람만 되돌릴 수 있어요.' }; set('상태', '보관 중'); set('주인', ''); set('주인 구분', ''); set('찾은일시', ''); set('주인키', ''); log_(me.name, '분실물 되돌림', r['번호']); }
+      else if (op === 'keep') { if (String(r['본인키']) !== me.key) return { ok: false, msg: '올린 사람만 바꿀 수 있어요.' }; set('보관 장소', String(a.keep || '').trim().slice(0, 40)); }
       else if (op === 'del') { if (String(r['본인키']) !== me.key) return { ok: false, msg: '올린 사람만 지울 수 있어요.' }; set('상태', '삭제'); log_(me.name, '분실물 지움', r['번호']); }
       else return { ok: false, msg: '알 수 없는 요청이에요.' };
     }

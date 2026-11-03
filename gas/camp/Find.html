@@ -1,4 +1,4 @@
-<!doctype html><!-- build: 20261103-200036 --><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<!doctype html><!-- build: 20261103-200144 --><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
 <style>
 :root{--ink:#18232b;--muted:#5b6b73;--faint:#93a1a8;--line:#d5e6e6;--bg:#f2f8f8;--surface:#fff;--accent:#0f8a86;--soft:#e3f3f2}
@@ -139,11 +139,12 @@ function notices(){var box=$('nout');if(!HOME){box.innerHTML='<p class="hint">�
 /* ---------- 우리 아이 ---------- */
 function myKids(){try{return JSON.parse(localStorage.getItem('campKids')||'[]')}catch(e){return []}}
 function setKids(L){try{localStorage.setItem('campKids',JSON.stringify(L))}catch(e){}}
-function kids(){var box=$('kout');var form='<form class="addk" id="kAdd"><input id="kN" placeholder="아이 이름" aria-label="아이 이름"><input id="kB" class="by" inputmode="numeric" maxlength="4" placeholder="출생연도" aria-label="출생연도"><button type="submit">아이 추가</button></form>';
+function kids(){var box=$('kout');var form='<form class="addk" id="kAdd"><input id="kN" placeholder="아이 이름" aria-label="아이 이름"><button type="submit">아이 추가</button></form>';
   if(KIDS===null){box.innerHTML=form+'<p class="hint">불러오는 중…</p>';bindAdd();run('findMyKids',myKids(),function(r){if(!gate(r,box))return;KIDS=r;kids()},box);return}
-  var K=KIDS.kids||[],h=form;
-  if(KIDS.miss&&KIDS.miss.length)h+='<p class="err">'+KIDS.miss.map(function(m){return esc(m.name)+(m.by?' ('+esc(m.by)+')':'')}).join(', ')+' — 캠프 접수 명단에서 찾지 못했어요. 이름과 출생연도를 확인해 주세요.</p>';
-  if(!K.length)h+='<p class="hint">아이 이름과 출생연도를 넣으면 이 기기에 기억해 두고 아이 시간표를 보여 드려요. 비회원으로 직접 접수했다면 자동으로 나와요.</p>';
+  var HID=kidHide(),K=(KIDS.kids||[]).filter(function(k){return HID.indexOf(k.name+'|'+k.acad)<0}),h=form;
+  if(KIDS.miss&&KIDS.miss.length)h+=KIDS.miss.map(function(m){return '<p class="err">'+esc(m.name)+' — 캠프 접수 명단에서 찾지 못했어요. <button type="button" class="btnx" data-kdel="'+esc(m.name)+'">빼기</button></p>'}).join('');
+  if(K.length>1)h+='<p class="hint">같은 이름이 여럿이면 학원을 보고 우리 아이가 아닌 카드는 「빼기」 하세요.</p>';
+  if(!K.length)h+='<p class="hint">아이 이름을 넣으면 이 기기에 기억해 두고 아이 시간표를 보여 드려요. 비회원으로 직접 접수했다면 자동으로 나와요.</p>';
   h+=K.map(function(k){var R=[];
     (k.grp||[]).forEach(function(g){(g.d||[]).forEach(function(d){R.push({d:d,t:g.s,e:g.e,k:'그룹레슨',c:'',w:g.sub||'그룹레슨',r:g.room})})});
     (k.les||[]).forEach(function(l){R.push({d:l.d,t:l.t,e:'',k:'개인레슨',c:'les',w:l.pr+' 교수',r:l.room||'레슨실'})});
@@ -151,13 +152,15 @@ function kids(){var box=$('kout');var form='<form class="addk" id="kAdd"><input 
     var days=(HOME&&HOME.days)||[],by={};R.forEach(function(x){(by[x.d]=by[x.d]||[]).push(x)});
     var tbl=Object.keys(by).sort(function(a,b){return a-b}).map(function(d){return '<tr><th colspan="3" style="padding-top:10px;color:var(--ink);font-size:14px">'+esc(days[d]||'')+'</th></tr>'+by[d].sort(function(a,b){return String(a.t).localeCompare(String(b.t))}).map(function(x){return '<tr><td class="t">'+esc(x.t)+(x.e?'<br><small style="color:var(--muted);font-weight:400">~'+esc(x.e)+'</small>':'')+'</td><td><span class="k '+x.c+'">'+esc(x.k)+'</span><b>'+esc(x.w)+'</b></td><td>'+esc(x.r||'장소 미정')+'</td></tr>'}).join('')}).join('');
     var rm=(k.rooms||[]).map(function(x){return esc(x.no)+' <small style="color:var(--muted)">'+esc([x.bld,x.fl].filter(Boolean).join(' '))+'</small>'}).join(', ');
-    return '<div class="kid"><div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start"><div><h2>'+esc(k.name)+'</h2><div class="who">'+esc(k.acad)+(k.inst?' · '+esc(k.inst):'')+(k.teacher?' · 담당 '+esc(k.teacher)+' 선생님':'')+'</div></div>'+(k.how==='add'?'<button type="button" class="btnx" data-kdel="'+esc(k.name)+'|'+esc(k.by)+'">빼기</button>':'')+'</div>'+
+    return '<div class="kid"><div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start"><div><h2>'+esc(k.name)+'</h2><div class="who">'+esc(k.acad)+(k.inst?' · '+esc(k.inst):'')+(k.teacher?' · 담당 '+esc(k.teacher)+' 선생님':'')+'</div></div>'+(k.how==='add'?'<button type="button" class="btnx" data-kdel="'+esc(k.name)+'" data-kacad="'+esc(k.acad)+'">빼기</button>':'')+'</div>'+
       (k.concert?'<p style="margin:4px 0"><span class="st">'+esc(k.concert)+' 음악회 출연</span> <small class="hint">순서는 「음악회」 탭</small></p>':'')+
       '<p style="margin:4px 0"><b>방</b> '+(rm||'<span class="none">아직 공개되지 않았어요</span>')+'</p>'+
       (tbl?'<table class="ktbl"><thead><tr><th>시간</th><th>수업</th><th>장소</th></tr></thead><tbody>'+tbl+'</tbody></table>':'<p class="none">아직 정해진 수업이 없어요</p>')+'</div>'}).join('');
   box.innerHTML=h;bindAdd()}
-function bindAdd(){var f=$('kAdd');if(!f)return;f.addEventListener('submit',function(e){e.preventDefault();var n=$('kN').value.trim(),b=$('kB').value.replace(/\D/g,'');if(n.length<2){alert('아이 이름을 넣어 주세요.');return}if(b&&b.length!==4){alert('출생연도는 4자리로 넣어 주세요 (예: 2016).');return}
-  var L=myKids().filter(function(x){return !(x.name===n&&x.by===b)});L.push({name:n,by:b});setKids(L);KIDS=null;kids()})}
+function bindAdd(){var f=$('kAdd');if(!f)return;f.addEventListener('submit',function(e){e.preventDefault();var n=$('kN').value.trim();if(n.length<2){alert('아이 이름을 넣어 주세요.');return}
+  var L=myKids().filter(function(x){return x.name!==n});L.push({name:n});setKids(L);KIDS=null;kids()})}
+/* 빼기: 같은 이름이 여럿일 때는 그 학원 카드만 숨김 */
+function kidHide(){try{return JSON.parse(localStorage.getItem('campKidsHide')||'[]')}catch(e){return []}}
 
 /* ---------- 수업표 (프로그램표, 개인레슨 빼고) ---------- */
 function board(){var box=$('bout');if(!BD){run('campBoard',null,function(r){if(!gate(r,box))return;BD=r;board()},box);return}
@@ -212,10 +215,11 @@ document.addEventListener('click',function(e){var t=e.target.closest('[data-tab]
   if(t.hasAttribute('data-tab')){show(t.getAttribute('data-tab'));return}
   if(t.hasAttribute('data-day')){DAY=+t.getAttribute('data-day');SEL=null;board();return}
   if(t.hasAttribute('data-cday')){CDAY=+t.getAttribute('data-cday');concerts();return}
-  if(t.hasAttribute('data-kdel')){var v=t.getAttribute('data-kdel').split('|');setKids(myKids().filter(function(x){return !(x.name===v[0]&&String(x.by)===v[1])}));KIDS=null;kids();return}
+  if(t.hasAttribute('data-kdel')){var kn=t.getAttribute('data-kdel'),ka=t.getAttribute('data-kacad');var same=KIDS&&KIDS.kids?KIDS.kids.filter(function(x){return x.how==='add'&&x.name===kn}).length:0;
+    if(ka&&same>1){var H=kidHide();H.push(kn+'|'+ka);try{localStorage.setItem('campKidsHide',JSON.stringify(H))}catch(e){}}else setKids(myKids().filter(function(x){return x.name!==kn}));kids();return}
   if(t.hasAttribute('data-ttclose')){if(t.classList.contains('ttpop')&&e.target!==t)return;SEL=null;board();return}
   if(t.hasAttribute('data-ev')){var id=t.getAttribute('data-ev');SEL=id;board();if(!EV[id])run('campEventPeople',id,function(r){EV[id]=r||{ok:false};if(SEL===id)board()},null)}});
 document.addEventListener('keydown',function(e){if(e.key==='Escape'&&SEL){SEL=null;board()}});
 </script>
-<div id="bldMark" hidden>빌드표시 20261103-200036 </div>
+<div id="bldMark" hidden>빌드표시 20261103-200144 </div>
 </body></html>

@@ -1,4 +1,4 @@
-/* build: 20261103-200036 */
+/* build: 20261103-200144 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -2406,10 +2406,11 @@ function findWho_(tok) { const v = String(findTok_(tok)).split('|'); return { nm
 function findMyKids(list, tok) {
   const G0 = findGate_(); if (!G0.open) return G0; let me; try { me = findWho_(tok); } catch (e) { return { ok: false, needIn: true, msg: '처음 화면에서 이름 · 휴대전화를 넣어 주세요.' }; }
   const nz = v => String(v || '').replace(/\s+/g, ''), all = findStudents_(), K = kidCtx_(), out = [], seen = {}, miss = [];
-  const push = (x, how) => { if (seen[x.id]) return; seen[x.id] = 1; out.push(Object.assign(kidCard_(x, K), { how })); };
+  const push = (x, how) => { if (seen[x.id]) return; seen[x.id] = 1; out.push(Object.assign(kidCard_(x, K), { how, q: x.q })); };
   all.filter(x => x.acad === GUEST_ACAD && nz(x.owner) === nz(me.nm) + '(' + me.p4 + ')').forEach(x => push(x, 'auto'));
-  (Array.isArray(list) ? list : []).slice(0, 8).forEach(q => { const n = nz(q && q.name), by = String((q && q.by) || '').replace(/\D/g, '');
-    const H = all.filter(x => nz(x.name) === n && (!by || String(x.by).replace(/\D/g, '') === by)); if (!H.length) miss.push({ name: q.name, by }); H.forEach(x => push(x, 'add')); });
+  (Array.isArray(list) ? list : []).slice(0, 8).forEach(q => { const n = nz(q && q.name); if (n.length < 2) return;
+    let H = all.filter(x => nz(x.name) === n); if (!H.length) H = all.filter(x => nz(x.name).includes(n)).slice(0, 5);   /* 이름만 (출생연도 안 받음, 11-03) */
+    if (!H.length) miss.push({ name: q.name }); H.forEach(x => push(Object.assign({}, x), 'add')); });
   return Object.assign(G0, { ok: true, kids: out, miss });
 }
 /** 캠프 페이지 첫 화면 정보: 공지 · 식사 · 장소 · 연락처 · 음악회 순서 */

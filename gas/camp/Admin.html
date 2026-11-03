@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261103-220730 -->
+<!-- build: 20261103-220806 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -1391,9 +1391,9 @@ function view(){
   if(A.v==='freq')return vFreq(head);
   if(A.v==='plan')return `<div class="act">${head}${vPlan()}</div>`;
   if(A.v==='acad'){const L=AL.slice().sort((x,y)=>(got(x.a)-x.n)-(got(y.a)-y.n)||x.a.localeCompare(y.a,'ko'));
-    return `<div class="act">${head}<div class="panel tbl"><table><thead><tr><th>학원</th><th class="r">신청(참가)</th><th class="r">교사</th><th class="r">학생</th><th class="r">가족</th><th class="r">방 배정 인원</th><th class="r">차이</th><th>방</th></tr></thead><tbody>
-    ${L.map(x=>{const g=got(x.a),rs=R.rooms.filter(r=>(r.occ||[]).some(o=>(o.a||o.v)===x.a&&o.k!=='grp'));return `<tr><td><b>${esc(x.a)}</b></td><td class="r num">${x.n}</td><td class="r num">${x.t||''}</td><td class="r num">${x.s||''}</td><td class="r num">${x.f||''}</td><td class="r num">${g}</td><td class="r num">${g<x.n?`<span class="pill due">-${x.n-g}</span>`:g>x.n?`<span class="pill info">+${g-x.n}</span>`:'<span class="pill ok">0</span>'}</td>
-      <td style="white-space:normal">${rs.map(r=>{const n=(r.occ||[]).filter(o=>(o.a||o.v)===x.a&&o.k!=='grp').reduce((t,o)=>t+(+o.n||0),0);return `<button class="btn small" type="button" data-rgo="${esc(r.no)}">${esc(r.no)} ${esc(r.kind||'')} ${n}명${r.occ[0]&&(r.occ[0].a||r.occ[0].v)!==x.a?' (함께)':''}</button>`}).join(' ')||'<span class="hint">아직 없음</span>'}</td></tr>`}).join('')||'<tr><td colspan="8" class="hint">접수된 학원이 없어요.</td></tr>'}</tbody></table></div>
+    return `<div class="act">${head}<div class="panel tbl"><table><thead><tr><th style="text-align:left">학원</th><th style="text-align:center">신청(참가)</th><th style="text-align:center">교사</th><th style="text-align:center">학생</th><th style="text-align:center">가족</th><th style="text-align:center">방 배정 인원</th><th style="text-align:center">차이</th><th style="text-align:left">방</th></tr></thead><tbody>
+    ${L.map(x=>{const g=got(x.a),rs=R.rooms.filter(r=>(r.occ||[]).some(o=>(o.a||o.v)===x.a&&o.k!=='grp'));return `<tr><td style="text-align:left"><b>${esc(x.a)}</b></td><td class="num" style="text-align:center">${x.n}</td><td class="num" style="text-align:center">${x.t||''}</td><td class="num" style="text-align:center">${x.s||''}</td><td class="num" style="text-align:center">${x.f||''}</td><td class="num" style="text-align:center">${g}</td><td class="num" style="text-align:center">${g<x.n?`<span class="pill due">-${x.n-g}</span>`:g>x.n?`<span class="pill info">+${g-x.n}</span>`:'<span class="pill ok">0</span>'}</td>
+      <td style="white-space:normal;text-align:left">${rs.map(r=>{const n=(r.occ||[]).filter(o=>(o.a||o.v)===x.a&&o.k!=='grp').reduce((t,o)=>t+(+o.n||0),0);return `<button class="btn small" type="button" data-rgo="${esc(r.no)}">${esc(r.no)} ${esc(r.kind||'')} ${n}명${r.occ[0]&&(r.occ[0].a||r.occ[0].v)!==x.a?' (함께)':''}</button>`}).join(' ')||'<span class="hint">아직 없음</span>'}</td></tr>`}).join('')||'<tr><td colspan="8" class="hint">접수된 학원이 없어요.</td></tr>'}</tbody></table></div>
     <p class="hint">신청 = 그 학원에 접수한 사람(취소 뺌). 방 배정 인원 = 방마다 그 학원으로 넣은 인원 + 그 학원 사람 · 가족을 넣은 인원.</p></div>`}
   const blds=[...new Set(R.rooms.map(r=>r.bld))];if(!blds.includes(A.bld))A.bld=blds[0];
   const fls=[...new Set(R.rooms.filter(r=>r.bld===A.bld).map(r=>r.fl))];
@@ -2278,6 +2278,6 @@ render();
   var q=0;new MutationObserver(function(){if(q)return;q=1;requestAnimationFrame(function(){q=0;setup();[].forEach.call(document.querySelectorAll('table.cflt'),function(t){var r=t.tHead&&t.tHead.rows[0];if(r)t.style.setProperty('--cfh1',r.offsetHeight+'px')})})}).observe(document.body,{childList:true,subtree:true});setup();
 })();
 </script>
-<div id="bldMark" hidden>빌드표시 20261103-220730 </div>
+<div id="bldMark" hidden>빌드표시 20261103-220806 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();</script>
 </body></html>

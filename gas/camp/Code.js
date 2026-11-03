@@ -1,4 +1,4 @@
-/* build: 20261103-223458 */
+/* build: 20261103-223531 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -2945,11 +2945,12 @@ function budSave(token, plan, rev) {
   const lines = (p.lines || []).slice(0, 200).map(x => ({ id: uid(x.id, 'l'), cat: BUD_CATS.includes(x.cat) ? x.cat : 'etc', name: s(x.name, 80), unit: n(x.unit), qty: n(x.qty === '' || x.qty == null ? 1 : x.qty), times: n(x.times === '' || x.times == null ? 1 : x.times),
     cur: BUD_CUR.includes(x.cur) ? x.cur : 'KRW', scale: x.scale === 'person' ? 'person' : 'fixed', guar: opt(x.guar), auto: ['schol', 'teach', 'meal', 'room', 'plesson'].includes(x.auto) ? x.auto : '',
     conf: opt(x.conf), paid: opt(x.paid), date: okD(x.date), how: BUD_HOW.includes(x.how) ? x.how : '', memo: s(x.memo, 300) })).filter(x => x.name);
-  const py = p.pay || {}, pr = {}, per = {};
-  Object.keys(py.rates || {}).slice(0, 200).forEach(k => { const v = opt(py.rates[k]); if (v !== '') pr[s(k, 60)] = Math.max(0, v); });
-  Object.keys(py.per || {}).slice(0, 800).forEach(k => { const x = py.per[k] || {}, o = { les: opt(x.les), mc: opt(x.mc), adj: opt(x.adj), why: s(x.why, 120), tax: [0, 3.3, 8.8].includes(+x.tax) ? +x.tax : 3.3, noLes: !!x.noLes, note: s(x.note, 120) };
-    if (o.les !== '' || o.mc !== '' || o.adj !== '' || o.why || o.tax !== 3.3 || o.noLes || o.note) per[s(k, 80)] = o; });
-  const pay = { rates: pr, reh: !!py.reh, train: py.train === 'all' ? 'all' : 'assist', lesRate: Math.max(0, n(py.lesRate == null ? 50000 : py.lesRate)), mcRate: Math.max(0, n(py.mcRate)), mcFee: !!py.mcFee, free: Math.max(0, n(py.free == null ? 150000 : py.free)), per };
+  const py = p.pay || {}, per = {}, sn = v => { const x = opt(v); return x === '' ? '' : x; };
+  const items = (Array.isArray(py.items) ? py.items : []).slice(0, 30).map(x => ({ id: s(x.id, 16) || 'i' + Utilities.getUuid().slice(0, 5), name: s(x.name, 20) || '항목', rate: Math.max(0, n(x.rate)), rule: ['count', 'once', 'max'].includes(x.rule) ? x.rule : 'count',
+    n: Math.max(1, Math.min(20, Math.round(+x.n || 1))), train: !!x.train, roles: (Array.isArray(x.roles) ? x.roles : []).slice(0, 60).map(k => s(k, 60)).filter(Boolean) }));
+  Object.keys(py.per || {}).slice(0, 800).forEach(k => { const x = py.per[k] || {}, o = { adj: sn(x.adj), fin: sn(x.fin), les: sn(x.les), mc: sn(x.mc), why: s(x.why, 120), inc: ['3.3', '8.8', '0'].includes(String(x.inc)) ? String(x.inc) : '', noLes: !!x.noLes };
+    if (o.adj !== '' || o.fin !== '' || o.les !== '' || o.mc !== '' || o.why || o.inc || o.noLes) per[s(k, 80)] = o; });
+  const pay = { items, reh: !!py.reh, lesRate: Math.max(0, n(py.lesRate == null ? 50000 : py.lesRate)), mcRate: Math.max(0, n(py.mcRate)), mcFee: !!py.mcFee, free: Math.max(0, n(py.free == null ? 150000 : py.free)), what: s(py.what, 40), per };
   const json = JSON.stringify({ base, mix, inc, lines, pay });
   const lock = lock_();
   try {

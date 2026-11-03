@@ -1,4 +1,4 @@
-/* build: 20261103-194205 */
+/* build: 20261103-195519 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -956,7 +956,7 @@ function setupAdmin_() {
     sh.setFrozenRows(1); }
   return sh;
 }
-function ensureSettings_() {
+function ensureSettings_() { SET_MEMO = null;
   const sh = setupAdmin_();
   sh.getRange('B:B').setNumberFormat('@');   // 값 칸은 글자 그대로 (날짜·계좌번호가 바뀌지 않게)
   const have = rows_('설정').map(r => String(r['항목']));
@@ -985,7 +985,9 @@ function bankInfo_() {
   }
   return { bank, acct, holder, from: setting_('입금 시작일') || '2026-10-01' };
 }
-function setting_(k) { const r = rows_('설정').find(x => String(x['항목']) === k); return r ? dstr_(r['값']).trim() : ''; }
+/* 설정 한 줄 읽기 — 한 번의 요청 안에서는 시트를 한 번만 읽음 (캠프 페이지가 느리던 것, 11-03). 설정을 쓰기 전 ensureSettings_ 가 지움 */
+let SET_MEMO = null;
+function setting_(k) { if (!SET_MEMO) { SET_MEMO = {}; rows_('설정').forEach(x => { const n = String(x['항목']); if (!(n in SET_MEMO)) SET_MEMO[n] = dstr_(x['값']).trim(); }); } return SET_MEMO[k] || ''; }
 function ensureHead_(name, head) {
   const sh = SpreadsheetApp.getActive().getSheetByName(name);
   const cur = sh.getRange(1, 1, 1, Math.max(1, sh.getLastColumn())).getValues()[0].map(String);
@@ -2340,7 +2342,8 @@ function campHome(tok) {
   const info = ['운영실', '운영실 연락처', '의무실', '의무실 연락처', '식당', '주차', '와이파이'].map(k => ({ k, v: setting_(k) })).filter(x => x.v);
   const evs = actEvents_(), linked = (Array.isArray(c.kinds) ? c.kinds : ACT_KINDS).filter(k => k.link).map(k => k.n);
   const concerts = Array.isArray(c.concerts) ? c.concerts : evs.filter(e => e.type === '오후음악회' || (linked.includes(e.title) && (!e.stage || e.stage === '본공연'))).map(e => ({ id: 'c' + e.id, name: evName_(e), d: e.d, cs: e.s, room: e.room }));
-  const inf = {}; loadSubs_().forEach(sb => sb.ppl.forEach(p => { const k = p.id.slice(sb.no.length + 1), i = (sb.form && sb.form.info && sb.form.info[k]) || {}; inf[p.id] = { name: p.name, acad: sb.acad, inst: p.inst || i.inst || '', song: i.other ? String((i.oc || '') + ' ' + (i.ot || '')).trim() : String(i.song || ''), x: p.status === '취소' }; }));
+  const order0 = c.conorder || {}, needInf = concerts.some(x => (order0[x.id] || []).length);
+  const inf = {}; if (needInf) loadSubs_().forEach(sb => sb.ppl.forEach(p => { const k = p.id.slice(sb.no.length + 1), i = (sb.form && sb.form.info && sb.form.info[k]) || {}; inf[p.id] = { name: p.name, acad: sb.acad, inst: p.inst || i.inst || '', song: i.other ? String((i.oc || '') + ' ' + (i.ot || '')).trim() : String(i.song || ''), x: p.status === '취소' }; }));
   const order = c.conorder || {};
   /* 공지사항: 시트 「공지사항」(날짜 · 제목 · 내용 · 맨 위) — 운영진이 줄을 더하면 바로 보임, 최근 것 먼저 */
   let notices = []; try { ntcSheet_();
@@ -2459,7 +2462,7 @@ function adminSetSetting(token, key, val) {
   ensureSettings_(); const sh = SpreadsheetApp.getActive().getSheetByName('설정');
   const r = rows_('설정').find(x => String(x['항목']) === key);
   if (r) sh.getRange(r._row, 2).setValues([[String(val)]]); else sh.appendRow([key, String(val), '']);
-  log_('관리자 ' + a.name, '설정 바꿈', key + ' = ' + val);
+  log_('관리자 ' + a.name, '설정 바꿈', key + ' = ' + val); SET_MEMO = null;
   return { ok: true, val: setting_(key) };
 }
 /** 캠프 설정 › 입금 안내 통장: 회원관리 › 통장에 등록한 통장 목록 + 지금 쓰는 계좌 (11-01) */

@@ -1,7 +1,7 @@
-/* build: 20261103-155902 */
+/* build: 20261103-160414 */
   if(tab==='me')return head+seg+`<div class="panel">${T.prof?`<p class="hint" style="margin:0 0 6px">교수 · 레슨실 <b>${esc(T.prof.room||'미정')}</b></p>`:''}
     ${days.map((dl,d)=>{const xs=mine.filter(x=>x.d===d);return xs.length?`<div class="ttday"><div class="ttdl">${esc(dl)}</div>${xs.map(x=>`<div class="ttit"><span class="num">${esc(x.t)}${x.e?'<small>~'+esc(x.e)+'</small>':''}</span><span><span class="ttrole ${x.what==='개인레슨'?'les':''}">${esc(x.what)}</span><b>${esc(x.title)}</b> · ${esc(x.where)}${x.loc?` <small class="hint">${esc(x.loc)}</small>`:''}${x.with?`<br><small class="hint">${x.what==='개인레슨'?'학생: ':'함께: '}${esc(x.with)}</small>`:''}</span></div>`).join('')}</div>`:''}).join('')||'<p class="hint" style="margin:0">아직 배정된 일정이 없어요.</p>'}</div></section>`;
-  const st=T.students||[];
+  const st=(T.students||[]).filter(x=>x.mine!==false);
   return head+seg+`<p class="lede">내가 접수했거나 내가 담당 교사인 학생의 개인레슨 시간이에요. 학부모님께 알려 주세요.</p>
     ${st.length?st.map(x=>`<div class="panel ttstu"><div class="spread"><b>${esc(x.name)}</b><span class="hint">${esc(x.acad)} · ${esc(x.inst)}${x.teacher?' · 담당 '+esc(x.teacher):''}${x.req?' · 추가레슨 '+x.req+'회':''}</span></div>
       ${x.lessons.length?x.lessons.slice().sort((a,b)=>a.d-b.d||tmin(a.t)-tmin(b.t)).map(l=>`<div class="ttit"><span class="num">${esc((days[l.d]||'').replace(/\(.\)/,''))} ${esc(l.t)}</span><span><b>${esc(l.pr)}</b> 교수님${l.room?' · '+esc(l.room):''}</span></div>`).join(''):'<p class="hint" style="margin:4px 0 0">개인레슨 없음</p>'}</div>`).join(''):'<p class="hint">학생이 없어요.</p>'}</section>`}

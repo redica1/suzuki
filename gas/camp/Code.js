@@ -1,4 +1,4 @@
-/* build: 20261103-155902 */
+/* build: 20261103-160414 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -2277,11 +2277,22 @@ function myTimetable(token) {
   const L = lessons_(); const roomOf = n => (profs_().find(p => p.name === n) || {}).room || '';
   if (prof) L.filter(x => x.pr === prof.name).forEach(x => { const s = byPid[x.pid]; if (!s) return; mine.push({ d: x.d, t: x.t, e: '', what: '개인레슨', title: '개인레슨', where: prof.room || '레슨실', loc: '', with: s ? s.p.name + ' (' + s.sb.acad + ')' : '' }); });
   const stu = [];
+  /* 그룹레슨 (11-03): 교사 일정의 「그룹레슨」 반 대상 권수(예: Vn 4B · 7+)와 학생 진도를 맞춰 자동으로 찾음 */
+  const GL = actEvents_().filter(e => e.title === '그룹레슨');
+  const INS = { '바이올린': 'Vn', '첼로': 'Vc', '플루트': 'Fl' };
+  const ordOf = (bk, pt) => (bk === 'Pre' ? 0 : +bk * 2 - 1) + (pt === 'B' ? 1 : 0);
+  const stuBk = prog => { const g = String(prog || ''); if (/^pre/i.test(g)) return { bk: 'Pre', pt: '' }; const m = g.match(/(\d+)\s*권\s*([AB])?/); return m ? { bk: String(Math.min(10, +m[1])), pt: m[2] || '' } : null; };
+  const hit = (tok, sbk) => { const m = String(tok).match(/^(Pre|\d+)([AB]*)(\+?)$/); if (!m) return false;
+    if (m[3]) return ordOf(sbk.bk, sbk.pt || 'A') >= ordOf(m[1], m[2] === 'B' ? 'B' : 'A') || (m[1] === sbk.bk && !m[2]);
+    return m[1] === sbk.bk && (!m[2] || !sbk.pt || m[2].includes(sbk.pt)); };
+  const groupsOf = (inst, prog) => { const k = INS[inst], sbk = stuBk(prog); if (!k || !sbk) return [];
+    return GL.filter(e => ((e.tg || {})[k] && ((e.tg[k].b) || []).some(t => hit(t, sbk)))).map(e => ({ d: e.d, s: e.s, e: e.e, room: e.room, sub: e.sub || '' })); };
   Object.keys(byPid).forEach(id => { const s = byPid[id]; const type = s.p.type || s.i.type || '';
     if (!['학생', '회원의 악기하는 자녀', '비회원 학생'].includes(type)) return;
-    const mineSub = s.sb.owner === u.name, myPupil = nm(s.i.teacher) === nm(u.name) && u.acads.includes(s.sb.acad);
-    if (!mineSub && !myPupil) return;
-    stu.push({ name: s.p.name, acad: s.sb.acad, inst: s.p.inst || s.i.inst || '', teacher: s.i.teacher || '', req: +s.i.lessons || 0, lessons: L.filter(x => x.pid === id).map(x => ({ d: x.d, t: x.t, pr: x.pr, room: roomOf(x.pr) })) }); });
+    const mineSub = s.sb.owner === u.name, myPupil = nm(s.i.teacher) === nm(u.name) && u.acads.includes(s.sb.acad), sameAcad = u.acads.includes(s.sb.acad);
+    if (!mineSub && !myPupil && !sameAcad) return;
+    const inst = s.p.inst || s.i.inst || '';
+    stu.push({ name: s.p.name, acad: s.sb.acad, inst, teacher: s.i.teacher || '', req: +s.i.lessons || 0, mine: mineSub || myPupil, prog: s.i.prog || '', grp: groupsOf(inst, s.i.prog), lessons: L.filter(x => x.pid === id).map(x => ({ d: x.d, t: x.t, pr: x.pr, room: roomOf(x.pr) })) }); });
   stu.sort((a, b) => a.acad.localeCompare(b.acad) || a.name.localeCompare(b.name));
   return { open: true, days, mine, prof: prof ? { name: prof.name, room: prof.room } : null, students: stu, rooms: myRooms_(u) };
 }

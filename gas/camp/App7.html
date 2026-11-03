@@ -1,4 +1,4 @@
-/* build: 20261103-185445 */
+/* build: 20261103-185551 */
     ps.forEach(p=>{p.pay='신고';p.rep=rep;delete S.rpRow[p.id]});S.afterSave=()=>repDone(ps.map(p=>p.id));subSave();S.rp=null;S.rpOpen=false;S.rpMemo=undefined;render();toast(`${ps.length}명 입금 신고를 보냈어요 · 운영진이 확인하면 「입금 확인」으로 바뀌어요`);return}
   if(b.id==='rpFill'){const n=document.getElementById('rpAllN').value.trim(),dd=document.getElementById('rpAllD').value;S.rpAllN=n;S.rpAllD=dd;const sel=S.rp||[];
     if(!n&&!dd){toast('적용할 입금자명이나 입금일을 적어 주세요');return}unpaidPpl().filter(x=>sel.includes(x.p.id)).forEach(({p})=>{const v=rpv(p);if(n)v.n=n;if(dd)v.d=dd});render();toast(`선택한 ${sel.length}명에게 적용했어요`);return}
@@ -226,7 +226,7 @@ function ttAllHTML(){const B=S.ttBoard;
     const k=keys.includes(S.ttHall)?S.ttHall:keys[0];const les=k==='개인레슨';
     body=`<div class="seg atabs" role="tablist" style="margin:0 0 10px;flex-wrap:wrap">${keys.map(h=>`<button type="button" role="tab" data-tthall="${esc(h)}" aria-pressed="${h===k}">${esc(h)} ${H[h].length}</button>`).join('')}</div><div class="panel"><div class="mtblw"><table class="mtbl nosort">${th(les)}<tbody>${H[k].map(x=>row(x,les)).join('')}</tbody></table></div></div>`}
   else body=`<div class="panel"><div class="mtblw"><table class="mtbl nosort">${th(true)}<tbody>${L.map(x=>row(x,true)).join('')}</tbody></table></div></div>`;
-  return `<p class="lede">캠프 전체 일정이에요. 일정을 누르면 와야 할 선생님과 학생이 보여요. <b>내 일정</b>은 진한 색, 우리 학원 학생은 굵게 보여요.</p>
+  return `${bv==='grid'&&L.length?ttDet(L,{sel:S.ttOpen,detail:ppl}):''}
   <div class="seg" role="group" aria-label="날짜" style="margin:6px 0">${days.map((d,i)=>`<button type="button" data-ttday="${i}" aria-pressed="${i===D}">${esc(d)}</button>`).join('')}</div>
   ${body}`}
 document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-ttday],[data-ttbv],[data-ttev],[data-tthall]');if(!t||S.view!=='tt')return;
@@ -234,7 +234,7 @@ document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest
   if(t.dataset.ttday!==undefined){S.ttDay=+t.dataset.ttday;S.ttOpen=null;S.ttSel=null;render();return}
   if(t.dataset.ttbv){S.ttBv=t.dataset.ttbv;render();return}
   const id=t.dataset.ttev;if(S.ttOpen===id){S.ttOpen=null;render();return}S.ttOpen=id;S.ttEv=S.ttEv||{};
-  if(!S.ttEv[id])api('ttEventPeople',[id],r=>{S.ttEv[id]=r||{ok:false};render()},()=>{S.ttEv[id]={ok:false,msg:'불러오지 못했어요'};render()},'');render()});
+  if(!S.ttEv[id])api('ttEventPeople',[id],r=>{S.ttEv[id]=r||{ok:false};render()},()=>{S.ttEv[id]={ok:false,msg:'불러오지 못했어요'};render()},'');render();ttDetShow()});
 /* 모든 표: 칸 제목을 누르면 오름/내림차순, 표 위 「표에서 찾기」 (다시 그려도 그대로) */
 const TBLS={};
 const tkey=(t,i)=>i+'|'+[...t.querySelectorAll('thead th')].map(th=>th.dataset.lb||th.textContent.trim()).join('/');
@@ -276,22 +276,23 @@ function ttGrid(L,o){const mm=t=>{const q=String(t||'').split(':');return (+q[0]
   h+=it.map(x=>{const r0=Math.floor((x._s-lo)/10)+2,r1=Math.max(r0+1,Math.ceil((x._e-lo)/10)+2);const on=o.sel===x.id;
     return `<button type="button" title="${esc(x.title)} · ${esc(x.s)}" class="ttge${x.mine?' tmine':''}${on?' tsel':''} k-${x.kind==='개인레슨'?'les':/그룹레슨|마스터|레슨|연수/.test(x.kind+x.title)?'grp':'con'}" ${o.attr||'data-ttev'}="${esc(x.id)}" style="grid-column:${ci[x.room||'장소 미정']};grid-row:${r0}/${r1}${x._n>1?`;width:calc(${100/x._n}% - 4px);margin-left:calc(${100*x._k/x._n}% + 2px);margin-right:0;justify-self:start`:''}">${x.tag?`<span class="ttme">${esc(x.tag)}</span>`:''}<b>${esc(x.title)}</b><small>${esc(x.s)}${x.e&&x.e!==x.s?'~'+esc(x.e):''}</small>${x.mine?`<span class="ttme">내 일정${x.role?' · '+esc(x.role):''}</span>`:''}</button>`}).join('');
   h+='</div></div>';
-  const sel=it.find(x=>x.id===o.sel);
-  if(sel)h+=`<div class="panel" style="margin-top:10px"><div class="spread"><b>${esc(sel.title)}</b><span class="hint">${esc(sel.s)}${sel.e&&sel.e!==sel.s?' ~ '+esc(sel.e):''} · ${esc(sel.room||'장소 미정')}</span></div><div style="margin-top:6px">${o.detail(sel)}</div></div>`;
-  else h+=`<p class="hint" style="margin-top:8px">${o.hint||'일정 칸을 누르면 여기에 와야 할 사람이 보여요.'}</p>`;
   return h}
+/* 고른 칸의 사람 (표 위, 날짜 칩 위에) */
+function ttDet(L,o){const sel=L.find(x=>x.id===o.sel);
+  return sel?`<div class="panel ttdet"><div class="spread"><b>${esc(sel.title)}</b><span class="hint">${esc(sel.s)}${sel.e&&sel.e!==sel.s?' ~ '+esc(sel.e):''} · ${esc(sel.room||'장소 미정')}</span></div><div style="margin-top:6px">${o.detail(sel)}</div></div>`:`<p class="hint ttdet">${o.hint||'일정 칸을 누르면 여기에 와야 할 선생님과 학생이 보여요. 내 일정은 진한 색이에요.'}</p>`}
 /* 날짜 칩 (시간표 탭 공통): 숫자 = 그날 칸 수 */
 function ttDays(days,D,cnt){return `<div class="seg" role="group" aria-label="날짜" style="margin:6px 0 10px">${days.map((dl,d)=>`<button type="button" data-ttday="${d}" aria-pressed="${d===D}">${esc(dl)}${cnt?' '+cnt(d):''}</button>`).join('')}</div>`}
 /* 내 일정 · 우리 학생 레슨을 프로그램표로 */
 function ttMineGrid(T,days,mine){const D=Math.min(S.ttDay||0,Math.max(0,days.length-1));
   const L=mine.map((x,i)=>Object.assign({},x,{_i:i})).filter(x=>x.d===D).map(x=>({id:'m'+x._i,s:x.t,e:x.e||'',room:x.where||'장소 미정',loc:x.loc||'',title:x.title,kind:x.what==='개인레슨'?'개인레슨':x.title,tag:x.what,w:x.with||'',wl:x.what==='개인레슨'?'학생':'함께'}));
-  return ttDays(days,D,d=>mine.filter(x=>x.d===d).length)+(L.length?ttGrid(L,{attr:'data-ttsel',sel:S.ttSel,detail:x=>x.w?`<b>${x.wl}</b> ${esc(x.w)}`:'<span class="hint">함께하는 사람 정보가 없어요</span>',hint:'칸을 누르면 함께하는 사람이 보여요.'}):'<div class="panel"><p class="hint" style="margin:0">이 날은 내 일정이 없어요.</p></div>')}
+  const oo={attr:'data-ttsel',sel:S.ttSel,detail:x=>x.w?`<b>${x.wl}</b> ${esc(x.w)}`:'<span class="hint">함께하는 사람 정보가 없어요</span>',hint:'칸을 누르면 여기에 함께하는 사람이 보여요.'};return (L.length?ttDet(L,oo):'')+ttDays(days,D,d=>mine.filter(x=>x.d===d).length)+(L.length?ttGrid(L,{attr:'data-ttsel',sel:S.ttSel,detail:x=>x.w?`<b>${x.wl}</b> ${esc(x.w)}`:'<span class="hint">함께하는 사람 정보가 없어요</span>',hint:'칸을 누르면 함께하는 사람이 보여요.'}):'<div class="panel"><p class="hint" style="margin:0">이 날은 내 일정이 없어요.</p></div>')}
 function ttStuGrid(T,days,st){const D=Math.min(S.ttDay||0,Math.max(0,days.length-1)),A=[];
   st.forEach(x=>{(x.lessons||[]).forEach(l=>A.push({d:l.d,id:'l|'+x.name+'|'+l.d+'|'+l.t,s:l.t,e:'',room:l.room||'레슨실',title:x.name+' · '+l.pr,kind:'개인레슨',tag:'개인레슨',who:[x]}));
     (x.mc||[]).forEach(n=>(T.mcs||[]).filter(m=>(m.who||[]).includes(n)).forEach(m=>{const id='c|'+n+'|'+m.d+'|'+m.s;const ex=A.find(y=>y.id===id);if(ex){ex.who.push(x);ex.title='마스터클래스 · '+n+' ('+ex.who.length+'명)';return}A.push({d:m.d,id,s:m.s,e:m.e,room:m.room||'장소 미정',title:'마스터클래스 · '+n,kind:'마스터클래스',tag:'마스터클래스',who:[x]})}))});
   const L=A.filter(x=>x.d===D);
-  return ttDays(days,D,d=>A.filter(x=>x.d===d).length)+(L.length?ttGrid(L,{attr:'data-ttsel',sel:S.ttSel,detail:x=>x.who.map(w=>`<div><b>${esc(w.name)}</b> <small class="hint">${esc(w.acad)} · ${esc(w.inst)}${w.teacher?' · 담당 '+esc(w.teacher):''}</small></div>`).join(''),hint:'칸을 누르면 학생이 보여요. 학부모님께 알려 주세요.'}):'<div class="panel"><p class="hint" style="margin:0">이 날은 우리 학생 개인레슨 · 마스터클래스가 없어요.</p></div>')}
-document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-ttsel]');if(!t||S.view!=='tt')return;const id=t.dataset.ttsel;S.ttSel=S.ttSel===id?null:id;render()});
+  const oo={attr:'data-ttsel',sel:S.ttSel,detail:x=>x.who.map(w=>`<div><b>${esc(w.name)}</b> <small class="hint">${esc(w.acad)} · ${esc(w.inst)}${w.teacher?' · 담당 '+esc(w.teacher):''}</small></div>`).join(''),hint:'칸을 누르면 여기에 학생이 보여요. 학부모님께 알려 주세요.'};return (L.length?ttDet(L,oo):'')+ttDays(days,D,d=>A.filter(x=>x.d===d).length)+(L.length?ttGrid(L,{attr:'data-ttsel',sel:S.ttSel,detail:x=>x.who.map(w=>`<div><b>${esc(w.name)}</b> <small class="hint">${esc(w.acad)} · ${esc(w.inst)}${w.teacher?' · 담당 '+esc(w.teacher):''}</small></div>`).join(''),hint:'칸을 누르면 학생이 보여요. 학부모님께 알려 주세요.'}):'<div class="panel"><p class="hint" style="margin:0">이 날은 우리 학생 개인레슨 · 마스터클래스가 없어요.</p></div>')}
+document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-ttsel]');if(!t||S.view!=='tt')return;const id=t.dataset.ttsel;S.ttSel=S.ttSel===id?null:id;render();ttDetShow()});
+function ttDetShow(){const d=document.querySelector('.ttdet');if(d){const r=d.getBoundingClientRect();if(r.top<0||r.bottom>innerHeight)d.scrollIntoView({behavior:'smooth',block:'nearest'})}}
 /* 프로그램표 칸 너비 · 높이 (− + , 이 기기에 기억) */
 function ttZoom(){if(!S.ttZ){let z=null;try{z=JSON.parse(localStorage.getItem('campTTZ')||'null')}catch(e){}S.ttZ=z&&z.w&&z.h?z:{w:132,h:12}}return S.ttZ}
 document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-ttz]');if(!t)return;const z=ttZoom(),k=t.dataset.ttz;

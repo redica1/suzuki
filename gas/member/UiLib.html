@@ -1,4 +1,4 @@
-/* build: 20261103-231636 */
+/* build: 20261103-232544 */
 /* 공통 화면 라이브러리 — 원본은 gas/common/UiLib.html 하나. 고칠 때는 원본만 고치고 python3 -I gas/common/sync.py 로 각 앱 폴더에 복사
  * 캠프 · 회원관리 화면이 같이 씀. 페이지에서 먼저 var UI_KEY='camp' 처럼 저장 이름 앞글자를 정함
  * 4) 프로그램표 UI.grid · 칸 팝업 UI.gridDet  5) 이름 · 비밀번호 기억하기 svBox · svSet · svId · svPw
@@ -29,7 +29,7 @@ document.addEventListener('click',e=>{if(e.target.closest&&e.target.closest('.co
 /* 모든 표: 칸 제목을 누르면 오름/내림차순, 표 위 「표에서 찾기」 (다시 그려도 그대로) */
 const TBLS={};
 const tkey=(t,i)=>i+'|'+[...t.querySelectorAll('thead th')].map(th=>th.dataset.lb||th.textContent.trim()).join('/');
-const sval=x=>{const v=String(x||'').replace(/\s+/g,' ').trim();if(/^-?[\d,]+(\.\d+)?\s*(원|명|건|회|%)?(\s|$)/.test(v)&&!/^\d{4}\.\d/.test(v))return {n:+v.match(/^-?[\d,]+(\.\d+)?/)[0].replace(/,/g,'')};
+const sval=x=>{const v=String(x||'').replace(/\s+/g,' ').trim(),m=v.match(/^[+\-]?[\d,]*\d(\.\d+)?/);if(m&&!/^[\/.:\-]/.test(v.slice(m[0].length))&&!/^\d{4}\.\d/.test(v))return {n:+m[0].replace(/[,+]/g,'')};   /* 숫자 뒤에 작은 글씨(참가 550,000 등)가 붙어도 앞 숫자로 정렬 */
   if(/^\d{2,4}[.\-]\d/.test(v))return {s:v.replace(/\d+/g,d=>d.padStart(4,'0'))};return {s:v}};
 function tblApply(t,st){const tb=t.tBodies[0];if(!tb)return;const rows=[...tb.rows];
   if(st.s&&st.s.i!=null&&!t.querySelector('tbody td[colspan]')){const i=st.s.i,d=st.s.d;rows.sort((a,b)=>{const x=sval(a.cells[i]&&a.cells[i].textContent),y=sval(b.cells[i]&&b.cells[i].textContent);

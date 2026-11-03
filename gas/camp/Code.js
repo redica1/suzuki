@@ -1,4 +1,4 @@
-/* build: 20261103-222112 */
+/* build: 20261103-222834 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -2884,7 +2884,23 @@ function budData(token) {
   let lessons = 0; try { lessons = lessons_().length; } catch (x) {}
   let rooms = 0; try { rooms = rooms_().filter(x => (x.occ || []).length).length; } catch (x) {}
   const c = camp_();
-  return { plan: r.plan || budSeed_(), rev: r.rev, seeded: !r.plan, err: r.err || '', auto: { schol, scholN, lessons, rooms }, fees: c.fees, rounds: c.rounds.map(x => x.n), camp: c.base };
+  let pay = null; try { pay = payData_(); } catch (x) { pay = { err: x.message }; }
+  return { plan: r.plan || budSeed_(), rev: r.rev, seeded: !r.plan, err: r.err || '', auto: { schol, scholN, lessons, rooms }, fees: c.fees, rounds: c.rounds.map(x => x.n), camp: c.base, pay };
+}
+/** 결산 › 교사 · 교수 정산: 교사 일정 역할 횟수 · 개인레슨 칸 수 · 마스터클래스 신청 학생 수 (단가 · 세금은 화면 + 예산결산 plan.pay) */
+function payData_() {
+  const c = actCfg_(), ppl = actPeople_(c.people), evs = actEvents_();
+  const cnt = {}, reh = {}, roles = {};
+  evs.forEach(e => {
+    if (e.title === '마스터클래스') return;   // 마스터클래스는 교수 레슨비(신청 학생 수)로
+    const cat = ACT_CATS.includes(e.type) ? e.type : (e.type === '리허설' ? '공연' : '레슨');
+    const main = cat !== '공연' || !e.stage || e.stage === '본공연';
+    e.ppl.forEach(z => { if (!z || !z.n) return; const k = cat + '|' + (z.r || '수업'); roles[k] = 1; const T = main ? cnt : reh; (T[z.n] = T[z.n] || {})[k] = ((T[z.n] || {})[k] || 0) + 1; });
+  });
+  const les = {}; try { lessons_().forEach(x => { les[x.pr] = (les[x.pr] || 0) + 1; }); } catch (x) {}
+  const mc = {}; try { loadSubs_().forEach(sb => sb.ppl.forEach(p => { if (p.status === '취소') return; const i = (sb.form && sb.form.info && sb.form.info[p.id.slice(sb.no.length + 1)]) || {}; (i.mc || []).forEach(m => { mc[m] = (mc[m] || 0) + 1; }); })); } catch (x) {}
+  const profs = profs_().filter(p => p.on || les[p.name] || mc[p.name]).map(p => ({ n: p.name, inst: p.inst, org: p.org, fee: p.fee, lesson: p.lesson, mc: p.mc }));
+  return { ppl: ppl.map(p => ({ id: p.id, n: p.n, kind: p.kind, acad: p.acad || '', inst: p.inst || '', cx: !!p.cx, out: !!p.out })), cnt, reh, roles: Object.keys(roles).sort(), les, mc, profs };
 }
 function budSave(token, plan, rev) {
   const a = adm_(token); need_(a, ['bplan', 'bset']);
@@ -2900,9 +2916,14 @@ function budSave(token, plan, rev) {
   const ids = {}; const uid = (x, pre) => { let id = s(x, 20) || pre + Utilities.getUuid().slice(0, 6); while (ids[id]) id = pre + Utilities.getUuid().slice(0, 6); ids[id] = 1; return id; };
   const inc = (p.inc || []).slice(0, 60).map(x => ({ id: uid(x.id, 'i'), name: s(x.name, 60), amt: n(x.amt), cur: BUD_CUR.includes(x.cur) ? x.cur : 'KRW', scale: x.scale === 'person' ? 'person' : 'fixed', sys: !!x.sys, act: opt(x.act), memo: s(x.memo, 300) })).filter(x => x.name);
   const lines = (p.lines || []).slice(0, 200).map(x => ({ id: uid(x.id, 'l'), cat: BUD_CATS.includes(x.cat) ? x.cat : 'etc', name: s(x.name, 80), unit: n(x.unit), qty: n(x.qty === '' || x.qty == null ? 1 : x.qty), times: n(x.times === '' || x.times == null ? 1 : x.times),
-    cur: BUD_CUR.includes(x.cur) ? x.cur : 'KRW', scale: x.scale === 'person' ? 'person' : 'fixed', guar: opt(x.guar), auto: ['schol', 'teach', 'meal', 'room'].includes(x.auto) ? x.auto : '',
+    cur: BUD_CUR.includes(x.cur) ? x.cur : 'KRW', scale: x.scale === 'person' ? 'person' : 'fixed', guar: opt(x.guar), auto: ['schol', 'teach', 'meal', 'room', 'plesson'].includes(x.auto) ? x.auto : '',
     conf: opt(x.conf), paid: opt(x.paid), date: okD(x.date), how: BUD_HOW.includes(x.how) ? x.how : '', memo: s(x.memo, 300) })).filter(x => x.name);
-  const json = JSON.stringify({ base, mix, inc, lines });
+  const py = p.pay || {}, pr = {}, per = {};
+  Object.keys(py.rates || {}).slice(0, 200).forEach(k => { const v = opt(py.rates[k]); if (v !== '') pr[s(k, 60)] = Math.max(0, v); });
+  Object.keys(py.per || {}).slice(0, 800).forEach(k => { const x = py.per[k] || {}, o = { les: opt(x.les), mc: opt(x.mc), adj: opt(x.adj), why: s(x.why, 120), tax: [0, 3.3, 8.8].includes(+x.tax) ? +x.tax : 3.3, noLes: !!x.noLes, note: s(x.note, 120) };
+    if (o.les !== '' || o.mc !== '' || o.adj !== '' || o.why || o.tax !== 3.3 || o.noLes || o.note) per[s(k, 80)] = o; });
+  const pay = { rates: pr, reh: !!py.reh, train: py.train === 'all' ? 'all' : 'assist', lesRate: Math.max(0, n(py.lesRate == null ? 50000 : py.lesRate)), mcRate: Math.max(0, n(py.mcRate)), mcFee: !!py.mcFee, free: Math.max(0, n(py.free == null ? 150000 : py.free)), per };
+  const json = JSON.stringify({ base, mix, inc, lines, pay });
   const lock = lock_();
   try {
     const ss = SpreadsheetApp.getActive(); let sh = ss.getSheetByName(BUD_SH);

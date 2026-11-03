@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261103-222112 -->
+<!-- build: 20261103-222834 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -1986,7 +1986,9 @@ const pn=v=>{const s=String(v==null?'':v).replace(/[^\d.\-]/g,'');return s===''|
 const fmt=v=>v===''||v==null?'':(+v).toLocaleString('ko-KR',{maximumFractionDigits:2});
 const W=v=>won(Math.round(+v||0));
 const sg=v=>{v=Math.round(+v||0);return `<span class="${v<0?'bneg':v>0?'bpos':''}">${v>0?'+':''}${v.toLocaleString('ko-KR')}원</span>`};
-function load(){B.L=true;B.err='';google.script.run.withSuccessHandler(r=>{B.L=false;B.D=r;B.P=cp(r.plan);render()}).withFailureHandler(e=>{B.L=false;B.err=(e&&e.message)||String(e);render()}).budData(S.tok)}
+const PAY0=()=>({rates:{'레슨|수업':50000,'레슨|보조':50000,'공연|지휘':500000,'공연|사회':50000,'공연|진행':50000},reh:false,train:'assist',lesRate:50000,mcRate:0,mcFee:false,free:150000,per:{}});
+const norm=r=>{if(r&&r.plan&&!r.plan.pay)r.plan.pay=PAY0();if(r&&r.plan&&!r.plan.pay.per)r.plan.pay.per={};return r};
+function load(){B.L=true;B.err='';google.script.run.withSuccessHandler(r=>{B.L=false;B.D=norm(r);B.P=cp(r.plan);render()}).withFailureHandler(e=>{B.L=false;B.err=(e&&e.message)||String(e);render()}).budData(S.tok)}
 function enter(){if(!dirty()){B.D=null;B.P=null}}
 
 /* ---------- 계산 ---------- */
@@ -2088,7 +2090,9 @@ function setPlan(){const b=B.P.base;
     <tr><td></td><td><button class="btn small ghost" type="button" data-bcpadd="1">＋ 나누는 곳</button></td><td></td></tr></tbody></table></div>`}
 
 /* ---------- 결산 ---------- */
-function vSet(){const st=stats(),L=B.P.lines,cx=(S.D.cx||[]).filter(c=>c.state==='환불 완료').reduce((t,c)=>t+(+c.amt||0),0);
+function vSet(){const T=[['sum','결산 표'],['pay','교사 활동비 · 교수 레슨비']];
+  return `<nav class="tabs2" style="margin-bottom:14px">${T.map(([k,l])=>`<button type="button" data-bss="${k}" aria-selected="${(B.ss||'sum')===k}">${l}</button>`).join('')}</nav>`+(B.ss==='pay'?vPay():vSum())}
+function vSum(){const st=stats(),L=B.P.lines,cx=(S.D.cx||[]).filter(c=>c.state==='환불 완료').reduce((t,c)=>t+(+c.amt||0),0);
   const ext=B.P.inc.filter(i=>!i.sys),extAct=ext.reduce((t,i)=>t+(+i.act||0),0),extPlan=ext.reduce((t,i)=>t+incAmt(i),0);
   const plan=calc(nb(),true),now=L.reduce((t,l)=>t+nowAmt(l),0),paid=L.reduce((t,l)=>t+(+l.paid||0),0),conf=L.reduce((t,l)=>t+(l.conf!==''&&l.conf!=null?+l.conf:0),0);
   const revNow=st.paid+extAct,revFull=st.bill+extAct,A=B.D.auto||{},lt=liveN(),tc=liveTeach();
@@ -2121,6 +2125,67 @@ function vSet(){const st=stats(),L=B.P.lines,cx=(S.D.cx||[]).filter(c=>c.state==
     <tr class="foot"><td><b>지출 합계</b></td><td class="r num">${W(plan.cost)}</td><td class="r num">${W(conf)}</td><td class="r num">${W(paid)}</td><td colspan="2"></td><td class="r num"><b>${W(now)}</b></td><td class="r num">${sg(now-plan.cost)}</td><td colspan="3"><span class="hint">26 겨울 ${W(REF_COST)}</span></td></tr></tbody></table>
     <p class="hint">예산 금액은 「예산 계획」에서 바꿔요 (단가 · 수량 · 횟수). 여기서 줄을 더하면 예산 0원 줄로 생겨요.</p></div>`}
 
+/* ---------- 결산 › 교사 활동비 · 교수 레슨비 ----------
+   교사 = 교사 일정(프로그램표) 역할 횟수 × 역할별 단가 · 연수생은 보조만(설정) · 리허설 · 무대 세팅은 셀지 설정
+   교수 = 개인레슨 칸 수 × 1회 단가 + 마스터클래스 신청 학생 수 × 1명당 (+ 교사 일정 역할이 있으면 활동비)
+   세금 = (조정 금액이 있으면 조정, 아니면 합계)가 기준 이하면 0, 넘으면 세율(3.3 · 8.8 · 0%) · 10원 단위 반올림 */
+const rk=k=>k.replace('|',' · ');
+function payRows(){const Y=B.P.pay,D=B.D.pay||{},per=id=>Y.per[id]||{};
+  const rate=k=>+((Y.rates||{})[k])||0;
+  const cntOf=id=>{const o=Object.assign({},(D.cnt||{})[id]||{});if(Y.reh)Object.entries((D.reh||{})[id]||{}).forEach(([k,v])=>o[k]=(o[k]||0)+v);return o};
+  const tax=(id,base)=>{const r=per(id).tax==null?3.3:+per(id).tax;return base<=(+Y.free||0)?0:Math.round(base*r/100/10)*10};
+  const fin=(o)=>{const q=per(o.id);o.adj=q.adj===''||q.adj==null?'':+q.adj;o.base=o.adj===''?o.gross:o.adj;o.rate=q.tax==null?3.3:+q.tax;o.tax=tax(o.id,o.base);o.net=o.base-o.tax;o.why=q.why||'';return o};
+  const PN=new Set((D.profs||[]).map(p=>p.n));
+  const T=(D.ppl||[]).filter(p=>p.kind!=='교수'&&!PN.has(p.n)).map(p=>{const c=cntOf(p.id),tr=p.kind==='연수생'&&Y.train!=='all';
+    const items=Object.entries(c).map(([k,n])=>({k,n,r:tr&&!/\|보조$/.test(k)?0:rate(k)}));const gross=items.reduce((t,x)=>t+x.n*x.r,0);
+    return fin({id:p.id,n:p.n,kind:p.kind,acad:p.acad,cx:p.cx||p.out,items,gross,tot:items.reduce((t,x)=>t+x.n,0)})}).filter(r=>r.tot||r.adj!=='');
+  const pid=n=>{const x=(D.ppl||[]).find(p=>p.n===n&&(p.kind==='교수'||PN.has(p.n)));return x?x.id:'P:'+n};
+  const P=(D.profs||[]).map(p=>{const id=pid(p.n),q=per(id),c=cntOf(id),items=Object.entries(c).map(([k,n])=>({k,n,r:rate(k)}));
+    const ln=(D.les||{})[p.n]||0,lr=q.les===''||q.les==null?+Y.lesRate||0:+q.les,mn=(D.mc||{})[p.n]||0,mr=q.mc===''||q.mc==null?(Y.mcFee?+p.fee||0:+Y.mcRate||0):+q.mc;
+    const lp=q.noLes?0:ln*lr,mp=q.noLes?0:mn*mr,ap=items.reduce((t,x)=>t+x.n*x.r,0);
+    return fin({id,n:p.n,org:p.org,inst:p.inst,fee:p.fee,ln,lr,lp,mn,mr,mp,items,ap,noLes:!!q.noLes,gross:lp+mp+ap,note:q.note||''})}).filter(r=>r.ln||r.mn||r.items.length||r.adj!=='');
+  return {T,P}}
+function vPay(){const Y=B.P.pay,D=B.D.pay||{};if(D.err)return `<div class="panel"><span class="err">정산 자료를 읽지 못했어요 · ${esc(D.err)}</span></div>`;
+  const {T,P}=payRows(),q=(B.pq||'').trim(),f=r=>!q||r.n.includes(q)||(r.acad||r.org||'').includes(q);
+  const sum=(L,k)=>L.reduce((t,r)=>t+(+r[k]||0),0);
+  const roles=(D.roles||[]).slice();Object.keys(Y.rates||{}).forEach(k=>{if(!roles.includes(k))roles.push(k)});
+  const tot=k=>Object.values(D.cnt||{}).reduce((t,o)=>t+(o[k]||0),0),totR=k=>Object.values(D.reh||{}).reduce((t,o)=>t+(o[k]||0),0);
+  const teachL=B.P.lines.find(l=>l.auto==='teach'),profL=B.P.lines.find(l=>l.auto==='plesson');
+  const chips=it=>it.filter(x=>x.n).map(x=>`<span class="pill ${x.r?'info':'mute'}" title="${esc(rk(x.k))} ${x.n}회 × ${W(x.r)}">${esc(x.k.split('|')[1])} ${x.n}</span>`).join(' ');
+  const taxSel=r=>`<select data-bpp="${esc(r.id)}|tax" aria-label="${esc(r.n)} 세율">${[3.3,8.8,0].map(v=>`<option value="${v}" ${r.rate===v?'selected':''}>${v}%</option>`).join('')}</select>`;
+  const tail=r=>`<td class="r">${nIn(`data-bpp="${esc(r.id)}|adj"`,r.adj,96,'조정 없음')}</td><td><input type="text" data-bpp="${esc(r.id)}|why" value="${esc(r.why)}" maxlength="120" placeholder="조정 사유" style="width:130px"></td><td style="text-align:center">${taxSel(r)}</td><td class="r num">${W(r.tax)}</td><td class="r num"><b>${W(r.net)}</b></td>`;
+  const TL=T.filter(f).sort((a,b)=>b.base-a.base||a.n.localeCompare(b.n,'ko')),PL=P.filter(f).sort((a,b)=>b.base-a.base||a.n.localeCompare(b.n,'ko'));
+  return bar('교사 활동비 · 교수 레슨비','교사 일정 · 개인레슨 · 마스터클래스 신청에서 횟수를 자동으로 세요 · 단가 · 조정 · 세율을 바꾸고 「저장」')+
+  `<div class="tiles">${tile('교사 활동비 (세전)',W(sum(T,'base')),`${T.length}명 · 세금 ${W(sum(T,'tax'))} · 실지급 ${W(sum(T,'net'))}`)}
+    ${tile('교수 레슨비 (세전)',W(sum(P,'base')),`${P.length}명 · 세금 ${W(sum(P,'tax'))} · 실지급 ${W(sum(P,'net'))}`)}
+    ${tile('합계 (세전)',W(sum(T,'base')+sum(P,'base')),`세금 ${W(sum(T,'tax')+sum(P,'tax'))} · 실지급 ${W(sum(T,'net')+sum(P,'net'))}`)}</div>
+  <div class="g2">
+  <div class="panel tbl"><b>역할별 단가 (교사 일정)</b> <span class="hint">비우면 0원 · 「마스터클래스」 일정은 교수 레슨비로 따로 셈</span>
+    <table class="pft" style="margin-top:8px"><thead><tr><th style="text-align:left">구분 · 역할</th><th style="text-align:center">횟수</th><th style="text-align:center">1회 단가</th><th style="text-align:center">금액</th></tr></thead><tbody>
+    ${roles.map(k=>{const n=tot(k)+(Y.reh?totR(k):0),r=+((Y.rates||{})[k])||0;return `<tr><td>${esc(rk(k))}${!Y.reh&&totR(k)?` <small class="faint">리허설 등 ${totR(k)}회 뺌</small>`:''}</td><td class="num" style="text-align:center">${n}</td><td style="text-align:center">${nIn(`data-bpr="${esc(k)}"`,(Y.rates||{})[k],96,'0')}</td><td class="r num">${W(n*r)}</td></tr>`}).join('')||'<tr><td colspan="4" class="hint">교사 일정에 사람이 들어간 칸이 아직 없어요.</td></tr>'}
+    </tbody></table></div>
+  <div class="panel"><b>정산 기준</b>
+    <div style="display:grid;gap:8px;margin-top:8px">
+      <label class="row" style="gap:6px"><input type="checkbox" data-bpy="reh" ${Y.reh?'checked':''}> 공연 리허설 · 무대 세팅도 횟수에 넣기</label>
+      <label class="row" style="gap:6px">연수생 <select data-bpy="train"><option value="assist" ${Y.train!=='all'?'selected':''}>보조 역할만 지급</option><option value="all" ${Y.train==='all'?'selected':''}>모든 역할 지급</option></select></label>
+      <label class="row" style="gap:6px">개인레슨 1회 단가 ${nIn('data-bpy="lesRate"',Y.lesRate,96)} 원 <span class="hint">교수마다 아래 표에서 바꿀 수 있어요</span></label>
+      <label class="row" style="gap:6px">마스터클래스 학생 1명당 ${nIn('data-bpy="mcRate"',Y.mcRate,96,'0')} 원 <label class="row" style="gap:4px"><input type="checkbox" data-bpy="mcFee" ${Y.mcFee?'checked':''}> 교수진에 적힌 마스터클래스 금액 그대로</label></label>
+      <label class="row" style="gap:6px">세금 없는 금액 ${nIn('data-bpy="free"',Y.free,96)} 원 이하 <span class="hint">넘으면 사람마다 고른 세율 (기본 3.3%) · 10원 단위 반올림</span></label>
+    </div></div></div>
+  <div class="row" style="margin:10px 0"><input type="search" id="b_pq" value="${esc(B.pq||'')}" placeholder="이름 · 학원으로 찾기" style="width:min(240px,100%)"></div>
+  <div class="panel tbl"><div class="spread"><b>교수 레슨비 ${PL.length}명</b><span class="row" style="gap:6px"><span class="hint">합계 ${W(sum(P,'base'))}</span><button class="btn small" type="button" data-bpaytol="plesson|${sum(P,'base')}">「교수 인건비」에 넣기</button></span></div>
+    <table class="pft" style="margin-top:8px"><thead><tr><th style="text-align:left">교수</th><th style="text-align:center">개인레슨</th><th style="text-align:center">1회 단가</th><th style="text-align:center">마스터클래스</th><th style="text-align:center">1명당</th><th style="text-align:left">교사 일정 역할</th><th style="text-align:center">레슨비 제외</th><th style="text-align:center">합계</th><th style="text-align:center">조정 금액</th><th style="text-align:left">사유</th><th style="text-align:center">세율</th><th style="text-align:center">세금</th><th style="text-align:center">실지급</th></tr></thead><tbody>
+    ${PL.map(r=>`<tr><td><b>${esc(r.n)}</b><br><small class="faint">${esc([r.org,r.inst].filter(Boolean).join(' · '))}</small></td><td class="num" style="text-align:center">${r.ln}</td><td style="text-align:center">${nIn(`data-bpp="${esc(r.id)}|les"`,(Y.per[r.id]||{}).les,86,fmt(Y.lesRate))}</td>
+      <td class="num" style="text-align:center">${r.mn}</td><td style="text-align:center">${nIn(`data-bpp="${esc(r.id)}|mc"`,(Y.per[r.id]||{}).mc,86,fmt(Y.mcFee?r.fee:Y.mcRate))}</td><td>${chips(r.items)||'<span class="faint">-</span>'}</td>
+      <td style="text-align:center"><input type="checkbox" data-bpp="${esc(r.id)}|noLes" ${r.noLes?'checked':''} title="해외 교수 등 레슨비를 따로 주는 분"></td><td class="r num">${W(r.gross)}</td>${tail(r)}</tr>`).join('')||'<tr><td colspan="13" class="hint">개인레슨 · 마스터클래스가 있는 교수가 없어요.</td></tr>'}
+    <tr class="foot"><td><b>합계</b></td><td class="num" style="text-align:center">${sum(P,'ln')}</td><td></td><td class="num" style="text-align:center">${sum(P,'mn')}</td><td colspan="3"></td><td class="r num">${W(sum(P,'gross'))}</td><td class="r num">${W(sum(P,'base'))}</td><td colspan="2"></td><td class="r num">${W(sum(P,'tax'))}</td><td class="r num"><b>${W(sum(P,'net'))}</b></td></tr></tbody></table>
+    ${profL?`<p class="hint">「${esc(profL.name)}」 줄 확정 ${W(profL.conf)}</p>`:''}</div>
+  <div class="panel tbl"><div class="spread"><b>교사 활동비 ${TL.length}명</b><span class="row" style="gap:6px"><span class="hint">합계 ${W(sum(T,'base'))}</span>${teachL?`<button class="btn small" type="button" data-bpaytol="teach|${sum(T,'base')}">「${esc(teachL.name)}」 확정에 넣기</button>`:''}</span></div>
+    <table class="pft" style="margin-top:8px"><thead><tr><th style="text-align:left">이름</th><th style="text-align:left">학원</th><th style="text-align:left">역할 횟수</th><th style="text-align:center">횟수</th><th style="text-align:center">활동비</th><th style="text-align:center">조정 금액</th><th style="text-align:left">사유</th><th style="text-align:center">세율</th><th style="text-align:center">세금</th><th style="text-align:center">실지급</th></tr></thead><tbody>
+    ${TL.map(r=>`<tr><td><b>${esc(r.n)}</b>${r.kind!=='교사'?` <span class="pill mute">${esc(r.kind)}</span>`:''}${r.cx?' <span class="pill bad">취소</span>':''}</td><td>${esc(r.acad)}</td><td>${chips(r.items)}</td><td class="num" style="text-align:center">${r.tot}</td><td class="r num">${W(r.gross)}</td>${tail(r)}</tr>`).join('')||'<tr><td colspan="10" class="hint">교사 일정에 들어간 교사가 없어요.</td></tr>'}
+    <tr class="foot"><td colspan="3"><b>합계</b></td><td class="num" style="text-align:center">${sum(T,'tot')}</td><td class="r num">${W(sum(T,'gross'))}</td><td class="r num">${W(sum(T,'base'))}</td><td colspan="2"></td><td class="r num">${W(sum(T,'tax'))}</td><td class="r num"><b>${W(sum(T,'net'))}</b></td></tr></tbody></table></div>
+  <p class="hint">계좌 · 주민번호는 여기 두지 않아요. 바꾼 단가 · 조정 · 세율은 맨 위 「저장」을 눌러야 남아요.</p>`}
+
 /* ---------- 입력 · 버튼 ---------- */
 const lineOf=id=>B.P.lines.find(l=>l.id===id),incOf=id=>B.P.inc.find(i=>i.id===id);
 const NUMF=/^(unit|qty|times|guar|conf|paid|amt|act)$/;
@@ -2131,20 +2196,27 @@ function onInput(el){const d=el.dataset;if(!B.P)return false;
   else if(d.bm){const v=pn(el.value);if(v===''||!+v)delete B.P.mix[d.bm];else B.P.mix[d.bm]=Math.max(0,Math.round(v))}
   else if(d.bb){const b=B.P.base;if(d.bb==='hotelFix')b.hotelFix=el.checked;else if(d.bb.indexOf('.')>0){const [x,y]=d.bb.split('.');b[x][y]=pn(el.value)===''?0:pn(el.value)}else b[d.bb]=pn(el.value)===''?0:Math.round(pn(el.value))}
   else if(d.brm!==undefined){const R=(B.P.base.rmix||[]).slice();while(R.length<=+d.brm)R.push(0);const v=pn(el.value);R[+d.brm]=v===''?0:Math.max(0,v);B.P.base.rmix=R}
+  else if(d.bpr!==undefined){const Y=B.P.pay;const v=pn(el.value);if(v==='')delete Y.rates[d.bpr];else Y.rates[d.bpr]=Math.max(0,v)}
+  else if(d.bpy){const Y=B.P.pay;if(el.type==='checkbox')Y[d.bpy]=el.checked;else if(d.bpy==='train')Y.train=el.value;else{const v=pn(el.value);Y[d.bpy]=v===''?0:Math.max(0,v)}}
+  else if(d.bpp){const i=d.bpp.lastIndexOf('|'),id=d.bpp.slice(0,i),k=d.bpp.slice(i+1),Y=B.P.pay,o=Y.per[id]=Y.per[id]||{};if(k==='noLes')o.noLes=el.checked;else if(k==='tax')o.tax=+el.value;else if(k==='why'||k==='note')o[k]=el.value;else o[k]=pn(el.value);
+    if(!o.noLes&&(o.tax==null||o.tax===3.3)&&!o.why&&!o.note&&(o.les===''||o.les==null)&&(o.mc===''||o.mc==null)&&(o.adj===''||o.adj==null))delete Y.per[id]}
   else if(d.bcp){const [i,j]=d.bcp.split('|'),p=B.P.base.cut.parts[+i];if(p)p[+j]=+j?(pn(el.value)===''?0:pn(el.value)):el.value}
   else return false;
   const p=document.getElementById('bDirty');if(p)p.innerHTML=pill();return true}
-const KEYS=['bl','bi','bm','bb','bcp','brm'];
+const KEYS=['bl','bi','bm','bb','bcp','brm','bpr','bpy','bpp'];
 function rerender(){setTimeout(()=>{const a=document.activeElement,k=a&&a.dataset&&KEYS.find(x=>a.dataset[x]!==undefined);const v=k?a.dataset[k]:'';render();
   if(k){const el=document.querySelector(`[data-${k}="${CSS.escape(v)}"]`);if(el){el.focus();try{if(el.select&&el.type==='text')el.select()}catch(x){}}}},0)}
-document.addEventListener('input',e=>{if(S.tab!=='bplan'&&S.tab!=='bset')return;const el=e.target;if(!el.dataset||!KEYS.some(x=>el.dataset[x]!==undefined))return;onInput(el);if(el.type==='checkbox'||el.tagName==='SELECT'||el.type==='date')rerender()});
+document.addEventListener('input',e=>{if(S.tab!=='bplan'&&S.tab!=='bset')return;const el=e.target;if(el.id==='b_pq'){B.pq=el.value;const p=el.selectionStart;render();const n=document.getElementById('b_pq');if(n){n.focus();try{n.setSelectionRange(p,p)}catch(x){}}return}if(!el.dataset||!KEYS.some(x=>el.dataset[x]!==undefined))return;onInput(el);if(el.type==='checkbox'||el.tagName==='SELECT'||el.type==='date')rerender()});
 document.addEventListener('change',e=>{if(S.tab!=='bplan'&&S.tab!=='bset')return;const el=e.target;if(!el.dataset||!KEYS.some(x=>el.dataset[x]!==undefined))return;onInput(el);rerender()});
 let seq=0;const nid=p=>{let id;do{id=p+Date.now().toString(36).slice(-4)+(++seq)}while(lineOf(id)||incOf(id));return id};
 function click(b,d){if(S.tab!=='bplan'&&S.tab!=='bset')return false;
   if(d.bsub){B.sub=d.bsub;render();return true}
+  if(d.bss){B.ss=d.bss;render();return true}
+  if(d.bpaytol){const [k,v]=d.bpaytol.split('|');let l=B.P.lines.find(x=>x.auto===k);if(!l&&k==='plesson'){l={id:nid('l'),cat:'prof',name:'교수 개인레슨 · 마스터클래스 (정산)',unit:0,qty:1,times:1,cur:'KRW',scale:'fixed',guar:'',auto:'plesson',conf:'',paid:'',date:'',how:'',memo:'결산 › 교사 활동비 · 교수 레슨비에서 넣음'};B.P.lines.push(l)}
+    if(l){l.conf=+v;render();toast(`「${l.name}」 확정에 ${(+v).toLocaleString('ko-KR')}원을 넣었어요 · 저장을 눌러 주세요`)}return true}
   if(d.breload){const go=()=>{B.D=null;B.P=null;B.err='';render()};if(dirty())ask('새로 불러올까요?','저장하지 않은 변경은 사라져요.',go,'새로 불러오기');else go();return true}
   if(d.breset){B.P=cp(B.D.plan);render();return true}
-  if(d.bsave){call('budSave',[B.P,B.D.rev],r=>{B.D=r;B.P=cp(r.plan);render();toast('예산 · 결산을 저장했어요')},'저장하고 있어요…');return true}
+  if(d.bsave){call('budSave',[B.P,B.D.rev],r=>{B.D=norm(r);B.P=cp(r.plan);render();toast('예산 · 결산을 저장했어요')},'저장하고 있어요…');return true}
   if(d.badd){B.P.lines.push({id:nid('l'),cat:d.badd,name:'새 항목',unit:0,qty:1,times:1,cur:'KRW',scale:'fixed',guar:'',auto:'',conf:'',paid:'',date:'',how:'',memo:''});render();
     const ins=document.querySelectorAll('[data-bl$="|name"]');const el=[...ins].find(x=>x.value==='새 항목');if(el){el.focus();el.select()}return true}
   if(d.bdel){const l=lineOf(d.bdel);const go=()=>{B.P.lines=B.P.lines.filter(x=>x.id!==d.bdel);render()};if(l&&(+l.unit||l.conf!==''||l.paid!==''))ask('이 줄을 뺄까요?',`<b>${esc(l.name)}</b> · 저장을 눌러야 시트에 반영돼요.`,go,'빼기');else go();return true}
@@ -2284,6 +2356,6 @@ render();
   var q=0;new MutationObserver(function(){if(q)return;q=1;requestAnimationFrame(function(){q=0;setup();[].forEach.call(document.querySelectorAll('table.cflt'),function(t){var r=t.tHead&&t.tHead.rows[0];if(r)t.style.setProperty('--cfh1',r.offsetHeight+'px')})})}).observe(document.body,{childList:true,subtree:true});setup();
 })();
 </script>
-<div id="bldMark" hidden>빌드표시 20261103-222112 </div>
+<div id="bldMark" hidden>빌드표시 20261103-222834 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();</script>
 </body></html>

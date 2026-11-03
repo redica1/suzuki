@@ -1,4 +1,4 @@
-<!doctype html><!-- build: 20261103-231846 --><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<!doctype html><!-- build: 20261103-232347 --><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
 <style>
 :root{--ink:#18232b;--muted:#5b6b73;--faint:#93a1a8;--line:#d5e6e6;--bg:#f2f8f8;--surface:#fff;--accent:#0f8a86;--soft:#e3f3f2}
@@ -139,7 +139,7 @@ function notices(){var box=$('nout');if(!HOME){box.innerHTML='<p class="hint">�
 /* ---------- 우리 아이 ---------- */
 function myKids(){try{return JSON.parse(localStorage.getItem('campKids')||'[]')}catch(e){return []}}
 function setKids(L){try{localStorage.setItem('campKids',JSON.stringify(L))}catch(e){}}
-function kids(){var box=$('kout');var form='<form class="addk" id="kAdd"><input id="kN" placeholder="아이 이름" aria-label="아이 이름"><button type="submit">아이 추가</button></form>';
+function kids(){var box=$('kout');var form='<form class="addk" id="kAdd"><input id="kN" aria-label="학생 이름"><button type="submit">찾기</button></form>';
   if(KIDS===null){box.innerHTML=form+'<p class="hint">불러오는 중…</p>';bindAdd();run('findMyKids',myKids(),function(r){if(!gate(r,box))return;KIDS=r;kids()},box);return}
   var HID=kidHide(),K=(KIDS.kids||[]).filter(function(k){return HID.indexOf(k.name+'|'+k.acad)<0}),h=form;
   if(KIDS.miss&&KIDS.miss.length)h+=KIDS.miss.map(function(m){return '<p class="err">'+esc(m.name)+' — 캠프 접수 명단에서 찾지 못했어요. <button type="button" class="btnx" data-kdel="'+esc(m.name)+'">빼기</button></p>'}).join('');
@@ -225,5 +225,5 @@ document.addEventListener('click',function(e){var t=e.target.closest('[data-tab]
   if(t.hasAttribute('data-ev')){var id=t.getAttribute('data-ev');SEL=id;board();if(!EV[id])run('campEventPeople',id,function(r){EV[id]=r||{ok:false};if(SEL===id)board()},null)}});
 document.addEventListener('keydown',function(e){if(e.key==='Escape'&&SEL){SEL=null;board()}});
 </script>
-<div id="bldMark" hidden>빌드표시 20261103-231846 </div>
+<div id="bldMark" hidden>빌드표시 20261103-232347 </div>
 </body></html>

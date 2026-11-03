@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261103-220612 -->
+<!-- build: 20261103-220730 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -1371,11 +1371,16 @@ function colorBox(){const C=(R.cfg&&R.cfg.colors)||{mode:'kind',kind:{},main:{}}
     <div class="row" style="flex-wrap:wrap;margin-top:6px;${mode==='kind'?'':'display:none'}" id="rc_kind">${R.kinds.map(k=>pick('kind',k,(C.kind||{})[k]||KCOL[k]||'#eeeeee')).join('')}</div>
     <div class="row" style="flex-wrap:wrap;margin-top:6px;${mode==='main'?'':'display:none'}" id="rc_main">${M.map((k,i)=>pick('main',k,(C.main||{})[k]||PAL[i%PAL.length])).join('')||'<span class="hint">아직 배정한 방이 없어요</span>'}</div></div>`}
 function pubPanel(){const c=R.cfg||{},np=R.rooms.filter(r=>r.pub&&used(r)).length,nu=R.rooms.filter(used).length;
-  return `<details class="panel" ${A.cfgOpen?'open':''}><summary><b>방 공개 · 색</b> <span class="hint">${c.pubAll?(c.live?'<span class="pill ok">일괄 공개 중</span>':`<span class="pill due">${esc(c.pubAt)} 공개 예정</span>`):'<span class="pill mute">일괄 공개 꺼짐</span>'} · 방마다 공개 ${np}/${nu}</span></summary>
-    <div class="row" style="gap:10px;flex-wrap:wrap;margin-top:8px"><label class="row" style="gap:4px"><input type="checkbox" id="rc_all" ${c.pubAll?'checked':''}> 배정한 방 일괄 공개</label>
-      <label class="row" style="gap:4px">공개 시각<input type="datetime-local" id="rc_at" value="${esc(String(c.pubAt||'').replace(' ','T'))}"></label><span class="cap" style="margin:0">비우면 저장하자마자 공개 · 선생님 화면 「내 시간표 › 우리 방」에 보여요</span></div>
+  const left=(()=>{if(!c.pubAll||c.live||!c.pubAt)return '';const t=new Date(String(c.pubAt).replace(' ','T')+':00+09:00')-Date.now();if(!(t>0))return '';const d=Math.floor(t/864e5),h=Math.floor(t%864e5/36e5),m=Math.floor(t%36e5/6e4);return ` · ${d?d+'일 ':''}${h?h+'시간 ':''}${!d?m+'분 ':''}남음`})();
+  const st=c.pubAll?(c.live?'<span class="pill ok">공개 중 · 선생님 · 캠프 페이지에 보여요</span>':`<span class="pill due">${esc(c.pubAt)} 공개 예정${left}</span>`):'<span class="pill mute">비공개 (일괄 공개 꺼짐)</span>';
+  return `<div class="panel"><div class="spread" style="flex-wrap:wrap;gap:8px"><div><b>사용자에게 방 공개</b> ${st} <span class="hint">· 방마다 따로 공개 ${np}/${nu}</span></div></div>
+    <div class="row" style="gap:10px;flex-wrap:wrap;margin-top:8px;align-items:center"><label class="row" style="gap:4px"><input type="checkbox" id="rc_all" ${c.pubAll?'checked':''}> 배정한 방을 모두 공개</label>
+      <label class="row" style="gap:4px">공개 시각 <input type="datetime-local" id="rc_at" value="${esc(String(c.pubAt||'').replace(' ','T'))}"></label>
+      <button class="btn small primary" type="button" id="rc_pubSave">공개 시각 저장</button></div>
+    <p class="cap" style="margin:6px 0 0">방 배정은 언제든 저장하세요. <b>공개 시각 전에는</b> 선생님 화면(시간표 › 우리 방) · 캠프 페이지(방 찾기 · 학생 시간표)에 <b>보이지 않고</b>, 그 시각이 되면 자동으로 보여요. 시각을 비우면 저장하자마자 공개돼요.</p></div>
+  <details class="panel" ${A.cfgOpen?'open':''}><summary><b>방 색</b> <span class="hint">도면 · 목록에서 방 칸 색</span></summary>
     ${colorBox()}
-    <div class="row" style="gap:6px;margin-top:8px"><button class="btn small primary" type="button" id="rc_save">공개 · 색 저장</button><button class="btn small" type="button" id="rc_pubSel" ${A.ed?'':'disabled'}>지금 고른 방만 공개 ↔ 숨김</button></div></details>`}
+    <div class="row" style="gap:6px;margin-top:8px"><button class="btn small primary" type="button" id="rc_save">색 저장</button><button class="btn small" type="button" id="rc_pubSel" ${A.ed?'':'disabled'}>지금 고른 방만 공개 ↔ 숨김</button></div></details>`}
 function view(){
   if(!R){if(!LOADING&&!ERR)load();return `<div class="panel">${ERR?`<span class="err">방 배정을 불러오지 못했어요 · ${esc(ERR)}</span> <button class="btn small" type="button" id="r_retry">다시</button>`:'방 배정을 불러오고 있어요…'}</div>`}
   if(A.v==='prof')A.v='list';
@@ -1437,7 +1442,7 @@ document.addEventListener('click',ev=>{if(S.tab!=='room')return;const b=ev.targe
   if(d.rmv){const to=(document.querySelector(`[data-rmvto="${d.rmv}"]`)||{}).value;if(!to){toast('옮길 방을 골라 주세요');return}
     run('roomMove',[d.rmv,to],r=>{R=r;(A.lyRes||[]).forEach(x=>x.missing.forEach(m=>{if(m.no===d.rmv)m.used=false}));render();toast(d.rmv+' 배정을 '+to+'(으)로 옮겼어요')},m=>toast('옮기지 못했어요 · '+m));return}
   if(b.id==='rc_pubSel'){if(!A.ed)return;edRead();A.ed.pub=!A.ed.pub;save(false);return}
-  if(b.id==='rc_save'){const all=document.getElementById('rc_all').checked,at=(document.getElementById('rc_at').value||'').replace('T',' '),names=(R.cfg||{}).names||[];A.cfgOpen=true;
+  if(b.id==='rc_save'||b.id==='rc_pubSave'){const all=document.getElementById('rc_all').checked,at=(document.getElementById('rc_at').value||'').replace('T',' '),names=(R.cfg||{}).names||[];A.cfgOpen=true;
     const colors={mode:(document.querySelector('[name=rc_mode]:checked')||{}).value||'kind',kind:{},main:{}};document.querySelectorAll('.rc_col').forEach(x=>{colors[x.dataset.t][x.dataset.k]=x.value});
     run('roomCfgSave',[{pubAll:all,pubAt:at,names,colors}],r=>{R=r;render();toast(all?(at?at+'에 방이 공개돼요':'방을 일괄 공개했어요'):'일괄 공개를 껐어요 (방마다 공개한 방은 보여요)')},m=>toast('저장하지 못했어요 · '+m));return}});
 return {view};
@@ -2273,6 +2278,6 @@ render();
   var q=0;new MutationObserver(function(){if(q)return;q=1;requestAnimationFrame(function(){q=0;setup();[].forEach.call(document.querySelectorAll('table.cflt'),function(t){var r=t.tHead&&t.tHead.rows[0];if(r)t.style.setProperty('--cfh1',r.offsetHeight+'px')})})}).observe(document.body,{childList:true,subtree:true});setup();
 })();
 </script>
-<div id="bldMark" hidden>빌드표시 20261103-220612 </div>
+<div id="bldMark" hidden>빌드표시 20261103-220730 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();</script>
 </body></html>

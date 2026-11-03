@@ -1,4 +1,4 @@
-/* build: 20261103-180728 */
+/* build: 20261103-181431 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -2369,7 +2369,15 @@ function campEventPeople_(id) {
   return { ok: true, open: true, staff, students };
 }
 /** 교사 화면 「시간표 → 전체 일정」: 로그인한 교사, 「시간표 공개」=예일 때 */
-function ttBoard(token) { who_(token); if (setting_('시간표 공개') !== '예') return { ok: true, open: false, msg: '아직 시간표가 공개되지 않았어요.' }; return campBoard_({ ok: true, open: true }); }
+function ttBoard(token) { const u = who_(token); if (setting_('시간표 공개') !== '예') return { ok: true, open: false, msg: '아직 시간표가 공개되지 않았어요.' };
+  const B = campBoard_({ ok: true, open: true });
+  try { const c = actCfg_(), ppl = actPeople_(c.people), T = teachers_().find(t => t.name === u.name && t.acads.some(a => u.acads.includes(a)));
+    const nm = s => String(s || '').replace(/\s+/g, '').toLowerCase();
+    const me = {}; ppl.filter(p => (T && p.tid === T.id) || (!p.tid && nm(p.n) === nm(u.name))).forEach(p => me[p.id] = 1);
+    const E = {}; actEvents_().forEach(e => E[e.id] = e);
+    B.items.forEach(x => { const e = E[x.id]; if (e) { const r = e.ppl.find(p => me[p.n]); if (r) { x.mine = 1; x.role = r.r || ''; } } else if (/^L\|/.test(x.id) && nm(x.id.split('|')[1]) === nm(u.name)) x.mine = 1; });
+    B.rooms = c.rooms || {}; } catch (x) {}
+  return B; }
 function ttEventPeople(token, id) { who_(token); if (setting_('시간표 공개') !== '예') return { ok: false, msg: '아직 시간표가 공개되지 않았어요.' }; return campEventPeople_(id); }
 function myTimetable(token) {
   const u = who_(token);

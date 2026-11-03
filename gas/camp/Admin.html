@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261103-230445 -->
+<!-- build: 20261103-230527 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -1232,7 +1232,7 @@ const load1=(r,d)=>(r.occ||[]).filter(o=>oDays(r,o).includes(d)).reduce((t,o)=>t
 const peak=r=>Math.max(0,...rDays(r).map(d=>load1(r,d)));
 const used=r=>(r.occ||[]).length>0;
 function acads(){const m={};(S.D.subs||[]).forEach(sb=>sb.ppl.forEach(p=>{if(p.status==='취소')return;const k=p.id.slice(sb.no.length+1),i=(sb.form&&sb.form.info&&sb.form.info[k])||{};const x=m[sb.acad]=m[sb.acad]||{a:sb.acad,n:0,t:0,s:0,f:0,names:[]};
-  x.n++;const ty=p.type||i.type||'';if(['교사','연수생','소속없는 중급연수생'].includes(ty)){x.t++;x.names.push(p.name)}else if(['학생','회원의 악기하는 자녀','비회원 학생'].includes(ty))x.s++;else{x.f++;x.names.push(p.name)}}));return m}
+  x.n++;const ty=p.type||i.type||'',kd=p.kind||(['교사','연수생','소속없는 중급연수생'].includes(ty)?'교사':/학생|자녀/.test(ty)?'학생':'가족');/* 11-03: 관계자 본인(초빙교수 · 반주자 등)은 교사 칸, 해외 학생은 학생 칸 */if(kd==='교사'){x.t++;x.names.push(p.name)}else if(kd==='가족'){x.f++;x.names.push(p.name)}else x.s++}));return m}
 /* 학원별로 방에 넣은 인원 = 모든 방의 배정 중 그 학원으로 세는 묶음(학원 · 개인 · 가족방)의 인원 합 */
 function got(a){return R.rooms.reduce((t,r)=>t+(r.occ||[]).filter(o=>(o.a||o.v)===a&&o.k!=='grp').reduce((s,o)=>s+(+o.n||0),0),0)}
 function people(){const L=[];(S.D.subs||[]).forEach(sb=>sb.ppl.forEach(p=>{if(p.status==='취소')return;const k=p.id.slice(sb.no.length+1),i=(sb.form&&sb.form.info&&sb.form.info[k])||{};const ty=p.type||i.type||'';
@@ -2402,6 +2402,6 @@ render();
   var q=0;new MutationObserver(function(){if(q)return;q=1;requestAnimationFrame(function(){q=0;setup();[].forEach.call(document.querySelectorAll('table.cflt'),function(t){var r=t.tHead&&t.tHead.rows[0];if(r)t.style.setProperty('--cfh1',r.offsetHeight+'px')})})}).observe(document.body,{childList:true,subtree:true});setup();
 })();
 </script>
-<div id="bldMark" hidden>빌드표시 20261103-230445 </div>
+<div id="bldMark" hidden>빌드표시 20261103-230527 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();</script>
 </body></html>

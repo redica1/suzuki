@@ -1,0 +1,68 @@
+/* build: 20261103-190509 */
+/* 공통 화면 라이브러리 — 원본은 gas/common/UiLib.html 하나. 고칠 때는 원본만 고치고 python3 -I gas/common/sync.py 로 각 앱 폴더에 복사
+ * 캠프 · 회원관리 화면이 같이 씀. 페이지에서 먼저 var UI_KEY='camp' 처럼 저장 이름 앞글자를 정함
+ * 1) 표(UI_TABLES, 기본 .mtbl) 칸 너비 끌기  2) 표 칸 제목 눌러 정렬 · 표에서 찾기 (.nosort 는 빼기)  3) 프로그램표(.ttg) 칸 너비 · 높이 끌기
+ * 화면 스크립트 안에서는 슬래시 두 개를 쓰지 말 것 (구글이 주석으로 보고 지움) */
+/* 어떤 표에 붙일지: 페이지에서 var UI_TABLES='table.stt,table.stu' 처럼 (기본 table.mtbl). 스타일은 여기서 넣음 */
+const UI_SEL=window.UI_TABLES||'table.mtbl';
+(function(){const c=document.createElement('style');c.textContent='.uix th .colrz{position:absolute;top:0;right:-3px;width:7px;height:100%;cursor:col-resize;z-index:4;touch-action:none}.uix th .colrz:hover,.uix th .colrz.on{background:#0e8a86;opacity:.35}table.uix.colfix{table-layout:fixed;min-width:0}table.uix.colfix td,table.uix.colfix th{overflow:hidden;text-overflow:ellipsis}.uix th.sortable{cursor:pointer;user-select:none}.uix th.sortable:hover{text-decoration:underline}.sarr{font-size:11px;opacity:.6}.tfind{display:flex;align-items:center;gap:8px;margin:0 0 8px}.tfind input{flex:1;max-width:320px;font:inherit;font-size:14.5px;padding:6px 10px;border:1px solid #cfdede;border-radius:8px;background:#fff;color:inherit}.tfn{font-size:13px;opacity:.7}';document.head.appendChild(c)})();
+/* 표 칸 너비 늘리고 줄이기 (11-03): 모든 표 머리줄 칸 오른쪽 끝을 끌어서. 두 번 누르면 원래대로. 이 브라우저에 표마다 기억 */
+const COLW_KEY=(window.UI_KEY||'ui')+'ColW2';
+function colwAll(){try{return JSON.parse(localStorage.getItem(COLW_KEY)||'{}')||{}}catch(e){return {}}}
+function colwSave(o){try{localStorage.setItem(COLW_KEY,JSON.stringify(o))}catch(e){}}
+const tblKey=t=>[...t.querySelectorAll('thead th')].map(th=>th.dataset.lb||th.textContent.replace(/[▲▼]/g,'').trim()).join('|');
+function colwApply(){document.querySelectorAll(UI_SEL).forEach(t=>{const ths=[...t.querySelectorAll('thead tr:first-child th')];if(!ths.length)return;t.classList.add('uix');
+  ths.forEach((th,i)=>{if(!th.querySelector('.colrz')){if(getComputedStyle(th).position==='static')th.style.position='relative';const h=document.createElement('span');h.className='colrz';h.dataset.ci=i;h.setAttribute('aria-hidden','true');th.appendChild(h)}});
+  const W=colwAll()[tblKey(t)];if(W&&W.length===ths.length){t.classList.add('colfix');t.style.width=W.reduce((a,b)=>a+b,0)+'px';ths.forEach((th,i)=>{th.style.width=W[i]+'px'})}})}
+new MutationObserver(()=>{clearTimeout(colwApply.t);colwApply.t=setTimeout(colwApply,30)}).observe(document.body,{childList:true,subtree:true});
+document.addEventListener('pointerdown',e=>{const h=e.target.closest&&e.target.closest('.colrz');if(!h)return;e.preventDefault();e.stopPropagation();
+  const t=h.closest('table'),ths=[...t.querySelectorAll('thead tr:first-child th')],i=+h.dataset.ci,W=ths.map(th=>th.getBoundingClientRect().width);
+  t.classList.add('colfix');ths.forEach((th,k)=>th.style.width=W[k]+'px');t.style.width=W.reduce((a,b)=>a+b,0)+'px';
+  const x0=e.clientX,w0=W[i];h.classList.add('on');
+  const mv=ev=>{W[i]=Math.max(36,w0+ev.clientX-x0);ths[i].style.width=W[i]+'px';t.style.width=W.reduce((a,b)=>a+b,0)+'px'};
+  const up=()=>{document.removeEventListener('pointermove',mv);document.removeEventListener('pointerup',up);h.classList.remove('on');const o=colwAll();o[tblKey(t)]=W.map(Math.round);colwSave(o)};
+  document.addEventListener('pointermove',mv);document.addEventListener('pointerup',up)},true);
+document.addEventListener('dblclick',e=>{const h=e.target.closest&&e.target.closest('.colrz');if(!h)return;const t=h.closest('table'),o=colwAll();delete o[tblKey(t)];colwSave(o);
+  t.classList.remove('colfix');t.style.width='';t.querySelectorAll('thead th').forEach(th=>th.style.width='')});
+document.addEventListener('click',e=>{if(e.target.closest&&e.target.closest('.colrz'))e.stopPropagation()},true);
+/* 모든 표: 칸 제목을 누르면 오름/내림차순, 표 위 「표에서 찾기」 (다시 그려도 그대로) */
+const TBLS={};
+const tkey=(t,i)=>i+'|'+[...t.querySelectorAll('thead th')].map(th=>th.dataset.lb||th.textContent.trim()).join('/');
+const sval=x=>{const v=String(x||'').replace(/\s+/g,' ').trim();if(/^-?[\d,]+(\.\d+)?\s*(원|명|건|회|%)?(\s|$)/.test(v)&&!/^\d{4}\.\d/.test(v))return {n:+v.match(/^-?[\d,]+(\.\d+)?/)[0].replace(/,/g,'')};
+  if(/^\d{2,4}[.\-]\d/.test(v))return {s:v.replace(/\d+/g,d=>d.padStart(4,'0'))};return {s:v}};
+function tblApply(t,st){const tb=t.tBodies[0];if(!tb)return;const rows=[...tb.rows];
+  if(st.s&&st.s.i!=null&&!t.querySelector('tbody td[colspan]')){const i=st.s.i,d=st.s.d;rows.sort((a,b)=>{const x=sval(a.cells[i]&&a.cells[i].textContent),y=sval(b.cells[i]&&b.cells[i].textContent);
+    const r=(x.n!=null&&y.n!=null)?x.n-y.n:(x.n!=null?-1:y.n!=null?1:String(x.s).localeCompare(String(y.s),'ko',{numeric:true}));return d*r});rows.forEach(r=>tb.appendChild(r))}
+  const q=String(st.q||'').replace(/\s+/g,'').toLowerCase();let n=0;rows.forEach(r=>{const ok=!q||r.textContent.replace(/\s+/g,'').toLowerCase().includes(q);r.style.display=ok?'':'none';if(ok)n++});
+  const c=(t.closest('.mtblw')||t).previousElementSibling;if(c&&c.classList.contains('tfind')){const m=c.querySelector('.tfn');if(m)m.textContent=q?n+'건':''}
+  t.querySelectorAll('thead th').forEach((th,j)=>{const a=th.querySelector('.sarr');if(a)a.textContent=st.s&&st.s.i===j?(st.s.d>0?' ▲':' ▼'):''})}
+function tblEnhance(){document.querySelectorAll(UI_SEL.split(',').map(x=>x.trim()+':not(.nosort):not([data-enh])').join(',')).forEach((t,_)=>{t.dataset.enh='1';
+  const all=[...document.querySelectorAll(UI_SEL.split(',').map(x=>x.trim()+':not(.nosort)').join(','))],k=tkey(t,all.indexOf(t)),st=TBLS[k]||(TBLS[k]={q:'',s:null});
+  t.querySelectorAll('thead th').forEach((th,j)=>{if(th.querySelector('input')||!th.textContent.trim())return;th.dataset.lb=th.dataset.lb||th.textContent.trim();th.classList.add('sortable');th.insertAdjacentHTML('beforeend','<span class="sarr"></span>');
+    th.addEventListener('click',e=>{if(e.target.closest('.colrz'))return;st.s=st.s&&st.s.i===j?(st.s.d>0?{i:j,d:-1}:null):{i:j,d:1};tblApply(t,st)})});
+  const w=t.closest('.mtblw')||t;if((t.tBodies[0]||{rows:[]}).rows.length>=3){const f=document.createElement('div');f.className='tfind';f.innerHTML='<input type="search" placeholder="표에서 찾기 (이름 · 학원 · 악기 …)" aria-label="표에서 찾기"><span class="tfn hint"></span>';
+    const inp=f.querySelector('input');inp.value=st.q||'';inp.addEventListener('input',()=>{st.q=inp.value;tblApply(t,st)});w.parentNode.insertBefore(f,w)}
+  if(st.q||st.s)tblApply(t,st)})}
+new MutationObserver(()=>{clearTimeout(tblEnhance.t);tblEnhance.t=setTimeout(tblEnhance,40)}).observe(document.body,{childList:true,subtree:true});
+/* 프로그램표(.ttg) 칸 너비 · 높이: 엑셀처럼 장소 칸 오른쪽 끝 · 시간 칸 아래 끝을 끌어서. 두 번 누르면 원래대로. 이 브라우저에 기억
+ * 만드는 쪽: <div class="ttg" data-r="줄 수"> 안에 <div class="ttgh" data-col="장소 이름"> 머리 칸, <div class="ttgt"> 시간 칸(30분 = 3줄)
+ * 너비 · 높이는 UI.gridW(이름) · UI.gridH() 로 읽어서 grid-template 을 만들면 됨 */
+const GRID_KEY=(window.UI_KEY||'ui')+'Grid';
+const UI=window.UI||(window.UI={});
+UI.gridGet=()=>{try{return JSON.parse(localStorage.getItem(GRID_KEY)||'{}')||{}}catch(e){return {}}};
+UI.gridSet=o=>{try{localStorage.setItem(GRID_KEY,JSON.stringify(o))}catch(e){}};
+UI.gridW=(n,d)=>{const w=(UI.gridGet().w||{})[n];return w||d||132};
+UI.gridH=d=>UI.gridGet().h||d||12;
+function gridTpl(g){const hs=[...g.querySelectorAll('.ttgh[data-col]')];g.style.gridTemplateColumns='54px '+hs.map(h=>UI.gridW(h.dataset.col)+'px').join(' ');g.style.gridTemplateRows='40px repeat('+(+g.dataset.r||1)+','+UI.gridH()+'px)'}
+function gridHandles(){document.querySelectorAll('.ttg:not([data-rz])').forEach(g=>{g.dataset.rz='1';
+  g.querySelectorAll('.ttgh[data-col]').forEach(h=>{const x=document.createElement('span');x.className='gcol';x.setAttribute('aria-hidden','true');h.appendChild(x)});
+  g.querySelectorAll('.ttgt').forEach(t=>{const x=document.createElement('span');x.className='rowrz';x.setAttribute('aria-hidden','true');t.appendChild(x)})})}
+new MutationObserver(()=>{clearTimeout(gridHandles.t);gridHandles.t=setTimeout(gridHandles,30)}).observe(document.body,{childList:true,subtree:true});
+document.addEventListener('pointerdown',e=>{const h=e.target.closest&&e.target.closest('.gcol,.rowrz');if(!h)return;e.preventDefault();e.stopPropagation();
+  const g=h.closest('.ttg'),col=h.classList.contains('gcol'),name=col?h.closest('.ttgh').dataset.col:'',o=UI.gridGet();o.w=o.w||{};
+  const p0=col?e.clientX:e.clientY,v0=col?UI.gridW(name):UI.gridH();h.classList.add('on');
+  const mv=ev=>{const d=(col?ev.clientX:ev.clientY)-p0;if(col)o.w[name]=Math.max(60,Math.min(480,Math.round(v0+d)));else o.h=Math.max(5,Math.min(48,Math.round(v0+d/3)));UI.gridSet(o);document.querySelectorAll('.ttg').forEach(gridTpl)};
+  const up=()=>{document.removeEventListener('pointermove',mv);document.removeEventListener('pointerup',up);h.classList.remove('on')};
+  document.addEventListener('pointermove',mv);document.addEventListener('pointerup',up)},true);
+document.addEventListener('dblclick',e=>{const h=e.target.closest&&e.target.closest('.gcol,.rowrz');if(!h)return;const o=UI.gridGet();if(h.classList.contains('rowrz'))delete o.h;else if(o.w)delete o.w[h.closest('.ttgh').dataset.col];UI.gridSet(o);document.querySelectorAll('.ttg').forEach(gridTpl)});
+document.addEventListener('click',e=>{if(e.target.closest&&e.target.closest('.rowrz,.gcol'))e.stopPropagation()},true);

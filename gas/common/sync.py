@@ -3,7 +3,7 @@ import pathlib, re
 here = pathlib.Path(__file__).resolve().parent
 src = (here / 'UiLib.html').read_text(encoding='utf-8')
 if '//' in re.sub(r'/\*.*?\*/', '', src, flags=re.S): raise SystemExit('UiLib.html 안에 // 가 있어요 (구글이 지움)')
-for app in ['camp']:   # 회원관리(member)는 연결한 뒤 추가
+for app in ['camp', 'member']:
     d = here.parent / app / 'UiLib.html'
     old = d.read_text(encoding='utf-8') if d.exists() else ''
     m = re.search(r'build: \S+', old)

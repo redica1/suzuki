@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261103-162239 -->
+<!-- build: 20261103-190509 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -157,6 +157,9 @@ h1,h2,h3,.band h1,.sec>h2,.card h2{font-weight:800;letter-spacing:0}
 <main class="wrap" id="app"><div class="card"><span><span class="spin"></span> 여는 중이에요…</span></div></main>
 <div class="homebar"><div class="wrap"><button class="btn ghost" type="button" id="homeBtn">&#8962; 처음</button><button class="btn ghost" type="button" id="backBtn">이전</button></div></div>
 <div class="toast" id="toast" hidden></div>
+<script>var UI_KEY='member';var UI_TABLES='table.stt,table.stu:not(.tedit),table.wtab';
+<?!= include('UiLib') ?>
+</script>
 <script>
 var INSTS=['바이올린','첼로','비올라','플루트','피아노'];
 var T_INSTS=INSTS.concat(['지휘','기타']);
@@ -899,6 +902,6 @@ document.addEventListener('keydown',function(e){if(e.key!=='Enter')return;var m=
   try{google.script.url.getLocation(function(l){var a=l&&l.parameter&&l.parameter.as;if(a)setSess(a);go0()})}catch(x){go0()}})();
 </script>
 <script>try{window.top.postMessage('suzuki-ready','*')}catch(e){}</script>
-<div id="bldMark" hidden>빌드표시 20261103-162239 </div>
+<div id="bldMark" hidden>빌드표시 20261103-190509 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();</script>
 </body></html>

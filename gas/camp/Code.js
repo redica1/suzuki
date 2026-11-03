@@ -1,4 +1,4 @@
-/* build: 20261103-171130 */
+/* build: 20261103-171317 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -2388,7 +2388,9 @@ function myTimetable(token) {
     const inst = s.p.inst || s.i.inst || '';
     stu.push({ name: s.p.name, acad: s.sb.acad, inst, teacher: s.i.teacher || '', req: +s.i.lessons || 0, mine: mineSub || myPupil, prog: s.i.prog || '', grp: groupsOf(inst, s.i.prog), lessons: L.filter(x => x.pid === id).map(x => ({ d: x.d, t: x.t, pr: x.pr, room: roomOf(x.pr) })) }); });
   stu.sort((a, b) => a.acad.localeCompare(b.acad) || a.name.localeCompare(b.name));
-  return { open: true, days, mine, prof: prof ? { name: prof.name, room: prof.room } : null, students: stu, rooms: myRooms_(u) };
+  /* 마스터클래스 일정 (11-03): 교사 일정 종류 「마스터클래스」, 교수 = 그 일정 사람 · 세부 이름 */
+  const mcs = actEvents_().filter(e => e.title === '마스터클래스').map(e => ({ who: [e.sub].concat(e.ppl.map(p => pn(p.n))).filter(Boolean), d: e.d, s: e.s, e: e.e, room: e.room }));
+  return { open: true, days, mine, prof: prof ? { name: prof.name, room: prof.room } : null, students: stu, rooms: myRooms_(u), mcs };
 }
 /** 관리자: 설정 한 줄 바꾸기 (시간표 공개 등 허용된 항목만) */
 function adminSetSetting(token, key, val) {

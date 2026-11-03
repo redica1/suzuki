@@ -1,4 +1,4 @@
-/* build: 20261103-182130 */
+/* build: 20261103-182226 */
     ps.forEach(p=>{p.pay='신고';p.rep=rep;delete S.rpRow[p.id]});S.afterSave=()=>repDone(ps.map(p=>p.id));subSave();S.rp=null;S.rpOpen=false;S.rpMemo=undefined;render();toast(`${ps.length}명 입금 신고를 보냈어요 · 운영진이 확인하면 「입금 확인」으로 바뀌어요`);return}
   if(b.id==='rpFill'){const n=document.getElementById('rpAllN').value.trim(),dd=document.getElementById('rpAllD').value;S.rpAllN=n;S.rpAllD=dd;const sel=S.rp||[];
     if(!n&&!dd){toast('적용할 입금자명이나 입금일을 적어 주세요');return}unpaidPpl().filter(x=>sel.includes(x.p.id)).forEach(({p})=>{const v=rpv(p);if(n)v.n=n;if(dd)v.d=dd});render();toast(`선택한 ${sel.length}명에게 적용했어요`);return}
@@ -221,12 +221,16 @@ function ttAllHTML(){const B=S.ttBoard;
   let body;
   if(!L.length)body='<p class="hint">이 날은 일정이 없어요.</p>';
   else if(bv==='grid')body=ttGrid(L,B,D,ppl);
-  else if(bv==='hall'){const H={};L.forEach(x=>{const k=x.room||'장소 미정';(H[k]=H[k]||[]).push(x)});body=Object.keys(H).sort((a,b)=>a.localeCompare(b,'ko')).map(k=>`<h3 style="margin:14px 0 6px;font-size:17px">${esc(k)}</h3><div class="panel"><div class="mtblw"><table class="mtbl nosort">${th(false)}<tbody>${H[k].map(x=>row(x,false)).join('')}</tbody></table></div></div>`).join('')}
+  else if(bv==='hall'){const H={};L.forEach(x=>{const k=x.kind==='개인레슨'?'개인레슨':(x.room||'장소 미정');(H[k]=H[k]||[]).push(x)});
+    const cfg=((B.rooms||{})[D]||[]).map(r=>r[0]),keys=Object.keys(H).sort((a,b)=>(a==='개인레슨')-(b==='개인레슨')||((cfg.indexOf(a)+1||99)-(cfg.indexOf(b)+1||99))||a.localeCompare(b,'ko'));
+    const k=keys.includes(S.ttHall)?S.ttHall:keys[0];const les=k==='개인레슨';
+    body=`<div class="seg atabs" role="tablist" style="margin:0 0 10px;flex-wrap:wrap">${keys.map(h=>`<button type="button" role="tab" data-tthall="${esc(h)}" aria-pressed="${h===k}">${esc(h)} ${H[h].length}</button>`).join('')}</div><div class="panel"><div class="mtblw"><table class="mtbl nosort">${th(les)}<tbody>${H[k].map(x=>row(x,les)).join('')}</tbody></table></div></div>`}
   else body=`<div class="panel"><div class="mtblw"><table class="mtbl nosort">${th(true)}<tbody>${L.map(x=>row(x,true)).join('')}</tbody></table></div></div>`;
   return `<p class="lede">캠프 전체 일정이에요. 일정을 누르면 와야 할 선생님과 학생이 보여요. <b>내 일정</b>은 진한 색, 우리 학원 학생은 굵게 보여요.</p>
   <div class="seg" role="group" aria-label="날짜" style="margin:6px 0">${days.map((d,i)=>`<button type="button" data-ttday="${i}" aria-pressed="${i===D}">${esc(d)}</button>`).join('')}</div>
-  <div class="seg" role="group" aria-label="보기" style="margin:6px 0 10px"><button type="button" data-ttbv="grid" aria-pressed="${bv==='grid'}">프로그램표</button><button type="button" data-ttbv="time" aria-pressed="${bv==='time'}">시간순</button><button type="button" data-ttbv="hall" aria-pressed="${bv==='hall'}">홀 · 교실별</button></div>${body}`}
-document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-ttday],[data-ttbv],[data-ttev]');if(!t||S.view!=='tt')return;
+  <div class="seg" role="group" aria-label="보기" style="margin:6px 0 10px"><button type="button" data-ttbv="grid" aria-pressed="${bv==='grid'}">프로그램표</button><button type="button" data-ttbv="time" aria-pressed="${bv==='time'}">시간순</button><button type="button" data-ttbv="hall" aria-pressed="${bv==='hall'}">홀별</button></div>${body}`}
+document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('[data-ttday],[data-ttbv],[data-ttev],[data-tthall]');if(!t||S.view!=='tt')return;
+  if(t.dataset.tthall!==undefined){S.ttHall=t.dataset.tthall;S.ttOpen=null;render();return}
   if(t.dataset.ttday!==undefined){S.ttDay=+t.dataset.ttday;S.ttOpen=null;render();return}
   if(t.dataset.ttbv){S.ttBv=t.dataset.ttbv;render();return}
   const id=t.dataset.ttev;if(S.ttOpen===id){S.ttOpen=null;render();return}S.ttOpen=id;S.ttEv=S.ttEv||{};

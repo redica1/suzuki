@@ -1,4 +1,4 @@
-/* build: 20261103-231345 */
+/* build: 20261103-231453 */
   if(!open.length) return MY_SUBS.length?`<div class="panel rp">${bankHTML()}<span class="hint">지금 입금할 금액이 없어요.</span></div>`:'';
   /* 평소엔 한 줄로 접어 둠: 「입금 신고하기」를 누르면 펼침 (11-03) */
   if(!S.rpOpen){const due=open.reduce((t,x)=>t+dueOf(x.p),0);return `<div class="panel rp">${bankHTML()}<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><span><b>입금 필요 ${open.length}명</b> · <b class="num">${won(due)}</b> <span class="hint">입금한 뒤 알려 주세요</span></span><button class="btn primary" type="button" data-rpopen="1">입금 신고하기</button></div></div>`}
@@ -96,7 +96,7 @@ function infoTable(R,RM,showOwner,canEdit){const mv=S.mview||'pay',v=mv==='les'?
   const grpOf=(sb,p)=>{const st=(T.students||[]).find(x=>x.name===p.name&&x.acad===sb.acad);const G=st?st.grp||[]:[];
     if(!T.open||!G.length)return '<span class="nil">배정 전</span>';
     const M={};G.forEach(g=>{const k=g.sub+'|'+g.room+'|'+g.s+'|'+g.e;(M[k]=M[k]||{g,d:[]}).d.push(g.d)});
-    return Object.values(M).map(({g,d})=>`<div style="line-height:1.3;margin:2px 0"><b>${esc(g.sub||'그룹레슨')}</b><br><small>${esc(g.room||'장소 미정')}</small><br><small>${d.sort((a,b)=>a-b).map(x=>esc((days[x]||'').replace(/\(.\)/,''))).join(', ')} ${esc(g.s)}${g.e?'~'+esc(g.e):''}</small></div>`).join('')};
+    return Object.values(M).map(({g,d})=>`<div style="line-height:1.35;margin:3px 0;text-align:left"><b>${esc(g.sub||'그룹레슨')}</b>${d.sort((a,b)=>a-b).map(x=>`<br><small class="num">${esc(days[x]||'')} · ${esc(g.s)}${g.e?'~'+esc(g.e):''} · ${esc(g.room||'장소 미정')}</small>`).join('')}</div>`).join('')};
   const asg=(sb,p)=>{const st=(T.students||[]).find(x=>x.name===p.name&&x.acad===sb.acad);const L=st?st.lessons||[]:[];
     if(!T.open||!L.length)return '<span class="nil">배정 전</span>';
     return L.slice().sort((a,b)=>a.d-b.d||tmin(a.t)-tmin(b.t)).map(l=>`<div style="line-height:1.3;margin:2px 0"><b>${esc(l.pr)}</b> 교수<br><small>${esc(l.room||'방 미정')}</small><br><small>${esc((days[l.d]||'').replace(/\(.\)/,''))} ${esc(l.t)}</small></div>`).join('')};

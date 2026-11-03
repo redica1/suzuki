@@ -1,7 +1,8 @@
-/* build: 20261103-185551 */
+/* build: 20261103-185651 */
   if(S.ttDay==null){const td=ttToday(days);S.ttDay=td!=null?td:(mine.length?Math.min(...mine.map(x=>x.d)):0)}
   if(tab==='me')return head+seg+(T.prof?`<p class="hint" style="margin:0 0 6px">교수 · 레슨실 <b>${esc(T.prof.room||'미정')}</b></p>`:'')+ttMineGrid(T,days,mine)+'</section>';
-  return head+seg+`<p class="lede">내가 접수했거나 내가 담당 교사인 학생 중 <b>개인레슨 · 마스터클래스</b>가 있는 학생이에요.</p>`+ttStuGrid(T,days,ttStu(T))+'</section>'}
+  const AC=S.user.acads||[];if(S.ttAcad&&!AC.includes(S.ttAcad))S.ttAcad='';
+  return head+seg+`<p class="lede">${esc(AC.join(' · '))} 학생 중 <b>개인레슨 · 마스터클래스</b>가 있는 학생이에요. 누가 접수했든 모두 보여요.</p>${AC.length>1?`<div class="seg" role="group" aria-label="학원" style="margin:6px 0"><button type="button" data-ttacad="" aria-pressed="${!S.ttAcad}">전체</button>${AC.map(a=>`<button type="button" data-ttacad="${esc(a)}" aria-pressed="${S.ttAcad===a}">${esc(a)}</button>`).join('')}</div>`:''}`+ttStuGrid(T,days,ttStu(T))+'</section>'}
 function openTT(){if(S.view!=='tt')S.ttBack={view:S.view,step:S.step};S.view='tt';S.tt=null;S.ttBoard=null;S.ttDay=null;S.ttEv={};S.ttOpen=null;render();window.scrollTo({top:0});
   api('myTimetable',[],r=>{S.tt=r;if(S.view==='tt')render()},()=>{S.tt={open:false};render()},'시간표를 불러오고 있어요…')}
 function openQ(){if(S.view!=='q')S.qBack={view:S.view,step:S.step};S.qWhere='';S.view='q';render();window.scrollTo({top:0});

@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261103-223638 -->
+<!-- build: 20261103-223903 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -1988,7 +1988,7 @@ const fmt=v=>v===''||v==null?'':(+v).toLocaleString('ko-KR',{maximumFractionDigi
 const W=v=>won(Math.round(+v||0));
 const sg=v=>{v=Math.round(+v||0);return `<span class="${v<0?'bneg':v>0?'bpos':''}">${v>0?'+':''}${v.toLocaleString('ko-KR')}원</span>`};
 const ORCH_R=['공연|악장','공연|Vln 1','공연|Vln 2','공연|Vla','공연|Vc','공연|D.B','공연|연주'];
-const PAY0=()=>({items:[{id:'g',name:'그룹레슨',rate:50000,rule:'count',n:1,train:false,roles:['레슨|수업','레슨|통역']},{id:'o',name:'Orch',rate:0,rule:'count',n:1,train:false,roles:ORCH_R.slice()},{id:'a',name:'보조교사',rate:50000,rule:'once',n:2,train:true,roles:['레슨|보조','공연|보조','공연|보조교사']},{id:'c',name:'지휘',rate:500000,rule:'once',n:1,train:false,roles:['공연|지휘']},{id:'m',name:'사회진행',rate:50000,rule:'count',n:1,train:false,roles:['공연|사회','공연|진행']}],reh:false,lesRate:50000,mcRate:0,mcFee:false,free:150000,what:'',per:{}});
+const PAY0=()=>({items:[{id:'g',name:'그룹레슨',rate:50000,rule:'count',n:1,train:false,roles:['레슨|수업','레슨|통역']},{id:'o',name:'Orch',rate:0,rule:'count',n:1,train:false,roles:ORCH_R.slice()},{id:'a',name:'보조교사',rate:50000,rule:'once',n:2,train:true,roles:['레슨|보조','공연|보조','공연|보조교사']},{id:'c',name:'지휘',rate:500000,rule:'once',n:1,train:false,roles:['공연|지휘']},{id:'m',name:'사회진행',rate:50000,rule:'count',n:1,train:false,roles:['공연|사회','공연|진행']}],reh:false,lesRate:50000,mcRate:0,mcFee:false,free:50000,what:'',per:{}});
 const norm=r=>{if(r&&r.plan&&(!r.plan.pay||!Array.isArray(r.plan.pay.items)))r.plan.pay=Object.assign(PAY0(),r.plan.pay&&r.plan.pay.per?{per:{}}:{});if(r&&r.plan&&!r.plan.pay.per)r.plan.pay.per={};return r};
 function load(){B.L=true;B.err='';google.script.run.withSuccessHandler(r=>{B.L=false;B.D=norm(r);B.P=cp(r.plan);render()}).withFailureHandler(e=>{B.L=false;B.err=(e&&e.message)||String(e);render()}).budData(S.tok)}
 function enter(){if(!dirty()){B.D=null;B.P=null}}
@@ -2382,6 +2382,6 @@ render();
   var q=0;new MutationObserver(function(){if(q)return;q=1;requestAnimationFrame(function(){q=0;setup();[].forEach.call(document.querySelectorAll('table.cflt'),function(t){var r=t.tHead&&t.tHead.rows[0];if(r)t.style.setProperty('--cfh1',r.offsetHeight+'px')})})}).observe(document.body,{childList:true,subtree:true});setup();
 })();
 </script>
-<div id="bldMark" hidden>빌드표시 20261103-223638 </div>
+<div id="bldMark" hidden>빌드표시 20261103-223903 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();</script>
 </body></html>

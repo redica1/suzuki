@@ -1,4 +1,4 @@
-/* build: 20261103-223638 */
+/* build: 20261103-223903 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -2951,7 +2951,7 @@ function budSave(token, plan, rev) {
     n: Math.max(1, Math.min(20, Math.round(+x.n || 1))), train: !!x.train, roles: (Array.isArray(x.roles) ? x.roles : []).slice(0, 60).map(k => s(k, 60)).filter(Boolean) }));
   Object.keys(py.per || {}).slice(0, 800).forEach(k => { const x = py.per[k] || {}, o = { adj: sn(x.adj), fin: sn(x.fin), les: sn(x.les), mc: sn(x.mc), why: s(x.why, 120), inc: ['3.3', '8.8', '0'].includes(String(x.inc)) ? String(x.inc) : '', noLes: !!x.noLes };
     if (o.adj !== '' || o.fin !== '' || o.les !== '' || o.mc !== '' || o.why || o.inc || o.noLes) per[s(k, 80)] = o; });
-  const pay = { items, reh: !!py.reh, lesRate: Math.max(0, n(py.lesRate == null ? 50000 : py.lesRate)), mcRate: Math.max(0, n(py.mcRate)), mcFee: !!py.mcFee, free: Math.max(0, n(py.free == null ? 150000 : py.free)), what: s(py.what, 40), per };
+  const pay = { items, reh: !!py.reh, lesRate: Math.max(0, n(py.lesRate == null ? 50000 : py.lesRate)), mcRate: Math.max(0, n(py.mcRate)), mcFee: !!py.mcFee, free: Math.max(0, n(py.free == null ? 50000 : py.free)), what: s(py.what, 40), per };
   const json = JSON.stringify({ base, mix, inc, lines, pay });
   const lock = lock_();
   try {

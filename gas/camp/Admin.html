@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261103-215755 -->
+<!-- build: 20261103-215810 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -327,9 +327,9 @@ function payPill(p){if(p.status==='정상'&&!pAmt(p)&&!(+p.paidAmt>0))return '<s
 /* ---------- 화면 ---------- */
 /* GNB: 1단(묶음) › 2단(메뉴). 권한은 2단 메뉴마다 · 아래 메뉴가 다 「없음」이면 묶음도 숨김 */
 const GROUPS=[['dash','대시보드',['home']],['ops','운영관리',['subs','rp','cx','schol','q','ntc']],['sch','스케줄관리',['act','tt','ens','con']],['room','방배정',['room']],['stat','통계',['stat']],['fin','예산 · 결산',['bplan','bset']],['cfg','설정',['camp','mem','cons','prof','staff']]];
-const SUBL={mem:'회원 명단',home:'대시보드',subs:'접수 · 입금 확인',rp:'입금 신고',cx:'취소 · 환불',q:'오류 · 건의',act:'교사 일정',tt:'개인레슨',ens:'앙상블',con:'오후음악회',room:'방배정',stat:'통계',schol:'장학금',cons:'동의서',camp:'캠프 설정',prof:'교수진',staff:'담당자',bplan:'예산 계획',bset:'결산'};
+const SUBL={mem:'회원 명단',home:'대시보드',subs:'접수 · 입금 확인',rp:'입금 신고',cx:'취소 · 환불',q:'게시판',act:'교사 일정',tt:'개인레슨',ens:'앙상블',con:'오후음악회',room:'방배정',stat:'통계',schol:'장학금',cons:'동의서',camp:'캠프 설정',prof:'교수진',staff:'담당자',bplan:'예산 계획',bset:'결산'};
 const groupOf=t=>(GROUPS.find(g=>g[2].includes(t))||GROUPS[0]);
-const TABS=[['home','한눈에'],['subs','접수 · 입금 확인'],['rp','입금 신고'],['cx','취소 · 환불'],['ens','앙상블'],['prof','교수진'],['act','교사 일정'],['tt','개인레슨'],['room','방 배정'],['con','오후음악회'],['stat','통계'],['q','오류·건의'],['ntc','공지사항'],['schol','장학금'],['mem','회원 명단'],['bplan','예산 계획'],['bset','결산']];
+const TABS=[['home','한눈에'],['subs','접수 · 입금 확인'],['rp','입금 신고'],['cx','취소 · 환불'],['ens','앙상블'],['prof','교수진'],['act','교사 일정'],['tt','개인레슨'],['room','방 배정'],['con','오후음악회'],['stat','통계'],['q','게시판'],['ntc','공지사항'],['schol','장학금'],['mem','회원 명단'],['bplan','예산 계획'],['bset','결산']];
 function render(){
   const app=document.getElementById('app'),tabs=document.getElementById('tabs');
   if(!S.D){tabs.innerHTML='';document.getElementById('tabs2').innerHTML='';app.innerHTML=vLogin();return}
@@ -615,7 +615,7 @@ function vQ(){const L=(S.D.issues||[]).slice().reverse(),f=S.qf||'open';const F=
   const show=L.filter(x=>f==='all'||(f==='open'?x.state!=='해결':x.state===f));
   const pill=st=>st==='해결'?'<span class="pill ok">해결</span>':st==='해결 중'?'<span class="pill new">해결 중</span>':'<span class="pill due">미해결</span>';
   return `<div class="panel"><div class="spread"><div class="row" style="gap:6px">${F.map(([k,l])=>`<button class="btn small ${f===k?'primary':''}" type="button" data-qf="${k}">${l}</button>`).join('')}</div><button class="btn small" type="button" id="reload">새로 불러오기</button></div>
-    <span class="hint">선생님이 접수 화면 위 「오류·건의」로 올린 글이에요. 상태를 바꾸고 답을 적어 「저장」하면 선생님 화면(내가 올린 글)에 보여요. 시트 「문의」 탭에도 남아요.</span></div>
+    <span class="hint">선생님이 접수 화면 위 「게시판」로 올린 글이에요. 상태를 바꾸고 답을 적어 「저장」하면 선생님 화면(내가 올린 글)에 보여요. 시트 「문의」 탭에도 남아요.</span></div>
   ${show.map(x=>`<div class="panel" style="display:grid;gap:8px"><div class="spread"><span><b class="num">${esc(x.no)}</b> · ${esc(String(x.at).slice(5,16))} · <b>${esc(x.name)}</b>${x.p4?` <small class="faint">(…${esc(x.p4)})</small>`:''} · ${esc(x.acad)} · <span class="faint">${esc(x.where)}</span></span>${pill(x.state)}</div>
     <div style="white-space:pre-wrap">${esc(x.text)}</div>${x.pic?`<a href="${esc(x.pic)}" target="_blank" rel="noopener">사진 보기</a>`:''}<small class="faint">${esc(x.env)}</small>
     <div class="row" style="gap:8px;align-items:flex-start;flex-wrap:wrap"><select id="qs_${x.row}">${['미해결','해결 중','해결'].map(o=>`<option ${o===x.state?'selected':''}>${o}</option>`).join('')}</select>
@@ -1308,7 +1308,7 @@ function vFreq(head){const all=(S.D.issues||[]).filter(x=>ROOM_REQ.includes(x.wh
   const L=all.filter(x=>f==='all'||(f==='open'?x.state!=='해결':x.state===f));const pill=st=>st==='해결'?'<span class="pill ok">처리 완료</span>':st==='해결 중'?'<span class="pill new">처리 중</span>':'<span class="pill due">미처리</span>';
   const fams=famRooms();
   return `<div class="act">${head}<div class="panel"><div class="spread"><div class="row" style="gap:6px">${[['open','안 끝난 것 '+all.filter(x=>x.state!=='해결').length],['해결 중','처리 중 '+all.filter(x=>x.state==='해결 중').length],['all','전체 '+all.length],['해결','처리 완료']].map(([k,l])=>`<button class="btn small ${f===k?'primary':''}" type="button" data-rqf="${k}">${l}</button>`).join('')}</div></div>
-    <span class="hint">선생님 · 보호자가 「오류·건의」에서 분류를 「방 요청」이나 「가족방 요청」으로 골라 올린 글이에요. 처리 상태와 답을 저장하면 올린 분 화면에 보여요 (오류·건의 메뉴에도 같이 보여요).</span></div>
+    <span class="hint">선생님 · 보호자가 「게시판」에서 분류를 「방 요청」이나 「가족방 요청」으로 골라 올린 글이에요. 처리 상태와 답을 저장하면 올린 분 화면에 보여요 (게시판 메뉴에도 같이 보여요).</span></div>
   ${L.map(x=>{const fm=fams.filter(y=>y.sb.owner===x.name);return `<div class="panel" style="display:grid;gap:8px"><div class="spread"><span><b class="num">${esc(x.no)}</b> · <span class="pill mute">${esc(x.where)}</span> · ${esc(String(x.at).slice(5,16))} · <b>${esc(x.name)}</b>${x.p4?` <small class="faint">(…${esc(x.p4)})</small>`:''} · ${esc(x.acad)}</span>${pill(x.state)}</div>
     <div style="white-space:pre-wrap">${esc(x.text)}</div>${x.pic?`<a href="${esc(x.pic)}" target="_blank" rel="noopener">사진 보기</a>`:''}
     ${fm.length?`<div class="hint">이분의 가족방: ${fm.map(y=>`${esc(y.rep.name)} 가족 ${y.n}명 · ${y.rs.length?y.rs.map(r=>esc(r.no)).join(', '):'방 미정'}`).join(' / ')}</div>`:''}
@@ -2273,6 +2273,6 @@ render();
   var q=0;new MutationObserver(function(){if(q)return;q=1;requestAnimationFrame(function(){q=0;setup();[].forEach.call(document.querySelectorAll('table.cflt'),function(t){var r=t.tHead&&t.tHead.rows[0];if(r)t.style.setProperty('--cfh1',r.offsetHeight+'px')})})}).observe(document.body,{childList:true,subtree:true});setup();
 })();
 </script>
-<div id="bldMark" hidden>빌드표시 20261103-215755 </div>
+<div id="bldMark" hidden>빌드표시 20261103-215810 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();</script>
 </body></html>

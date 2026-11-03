@@ -1,4 +1,4 @@
-/* build: 20261103-215456 */
+/* build: 20261103-215810 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -1766,7 +1766,7 @@ function payNo(who, sid, year, why) {
   } finally { lock.releaseLock(); }
   return payList(who);
 }
-/* 캠프 「오류·건의」(캠프 접수 DB 「문의」 탭)도 이 게시판에서 함께 봄 (11-02). 문의ID = 「C:번호」.
+/* 캠프 「게시판」(캠프 접수 DB 「문의」 탭)도 이 게시판에서 함께 봄 (11-02). 문의ID = 「C:번호」.
    캠프 상태 미해결 · 해결 중 · 해결 ↔ 여기 접수 · 처리중 · 완료. 캠프는 답이 한 칸이라 댓글을 달면 답을 바꿔 씀(캠프 화면 「내가 올린 글」에 보임). */
 const CQ_ST = { '미해결': '접수', '해결 중': '처리중', '해결': '완료' }, CQ_BACK = { '접수': '미해결', '처리중': '해결 중', '완료': '해결' };
 function campQSheet_() { const id = settings_()['캠프 시트']; if (!id) return null; const sh = SpreadsheetApp.openById(id).getSheetByName('문의'); return sh || null; }

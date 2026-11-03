@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261103-215456 -->
+<!-- build: 20261103-215810 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -520,7 +520,7 @@ function vAskA(){var L=S.asks;if(!L)return '<div class="panel"><span><span class
   var st=S.askSt||'열림',cnt=function(x){return L.filter(function(q){return x==='전체'||(x==='열림'?q['상태']!=='완료':q['상태']===x)}).length};
   var list=L.filter(function(q){return st==='전체'||(st==='열림'?q['상태']!=='완료':q['상태']===st)});
   var pill=function(s){return '<span class="pill '+(s==='완료'?'ok':s==='처리중'?'info':'bad')+'">'+esc(s)+'</span>'};
-  return '<div class="sec-h"><div><h2>문의 · 요청</h2><p>회원관리 「문의 · 요청 남기기」와 캠프 접수 「오류·건의」로 들어온 글을 함께 봐요. 회원 글은 답을 화면과 이메일로, 캠프 글은 캠프 화면 「내가 올린 글」로 받아요.</p></div>'+
+  return '<div class="sec-h"><div><h2>문의 · 요청</h2><p>회원관리 「문의 · 요청 남기기」와 캠프 접수 「게시판」로 들어온 글을 함께 봐요. 회원 글은 답을 화면과 이메일로, 캠프 글은 캠프 화면 「내가 올린 글」로 받아요.</p></div>'+
     '<div class="row">'+[['','모두'],['m','회원관리'],['c','캠프']].map(function(x){var n=S.asks.filter(function(q){return !x[0]||(x[0]==='c'?q.camp:!q.camp)}).length;return '<button class="btn small '+(src===x[0]?'primary':'ghost')+'" type="button" data-asrc="'+x[0]+'">'+x[1]+' '+n+'</button>'}).join('')+'<span class="cap" style="margin:0 4px">|</span>'+['열림','접수','처리중','완료','전체'].map(function(x){return '<button class="btn small '+(st===x?'primary':'')+'" type="button" data-ast="'+x+'">'+(x==='열림'?'처리 전 · 중':x)+' '+cnt(x)+'</button>'}).join('')+'<button class="btn small ghost" type="button" id="askRe">새로 고침</button></div></div>'+
     (list.length?list.map(function(q){var id=q['문의ID'],t=q['교사ID']&&T[q['교사ID']];
       return '<div class="panel"><div class="sec-h"><h3>'+pill(q['상태'])+' <span class="cap">'+esc(q['분류'])+'</span> '+esc(q['제목'])+'</h3><span class="cap num">'+esc(q['작성일'])+'</span></div>'+
@@ -1229,6 +1229,6 @@ if(e.target.dataset&&e.target.dataset.pck){S.pSel=S.pSel||{};if(e.target.checked
 })();
 </script>
 <script>try{window.top.postMessage('suzuki-ready','*')}catch(e){}</script>
-<div id="bldMark" hidden>빌드표시 20261103-215456 </div>
+<div id="bldMark" hidden>빌드표시 20261103-215810 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();</script>
 </body></html>

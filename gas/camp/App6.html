@@ -1,4 +1,4 @@
-/* build: 20261103-215755 */
+/* build: 20261103-215810 */
   if(S.ttDay==null){const td=ttToday(days);S.ttDay=td!=null?td:(mine.length?Math.min(...mine.map(x=>x.d)):0)}
   if(tab==='me')return head+seg+(T.prof?`<p class="hint" style="margin:0 0 6px">교수 · 레슨실 <b>${esc(T.prof.room||'미정')}</b></p>`:'')+ttMineGrid(T,days,mine)+'</section>';
   const AC=S.user.acads||[];if(S.ttAcad&&!AC.includes(S.ttAcad))S.ttAcad='';
@@ -31,7 +31,7 @@ function render(){fillBanks();hdSync();
   if(S.view==='lost'){document.getElementById('app').innerHTML=`<section class="sec"><div class="spread"><h2>분실물</h2><button class="btn small ghost" type="button" id="lostBack">← 돌아가기</button></div><div id="lostBox"></div></section>`;['backBtn','nextBtn','mineBtn'].forEach(id=>{const e=document.getElementById(id);if(e)e.hidden=true});document.getElementById('dockLabel').textContent='분실물';document.getElementById('dockTotal').textContent='';const st=document.getElementById('steps');if(st)st.hidden=true;
     LOST.mount(document.getElementById('lostBox'),(req,ok,fail)=>api('lostApiT',[req],ok,fail,req.op==='list'||req.op==='photo'?'불러오고 있어요…':'저장하고 있어요…'));return}
   if(S.view==='tt'){document.getElementById('app').innerHTML=vMyTT();['backBtn','nextBtn','mineBtn'].forEach(id=>{const e=document.getElementById(id);if(e)e.hidden=true});document.getElementById('dockLabel').textContent='내 시간표';document.getElementById('dockTotal').textContent='';const st=document.getElementById('steps');if(st)st.hidden=true;return}
-  if(S.view==='q'){document.getElementById('app').innerHTML=vQ();['backBtn','nextBtn','mineBtn'].forEach(id=>{const e=document.getElementById(id);if(e)e.hidden=true});document.getElementById('dockLabel').textContent='오류·건의';document.getElementById('dockTotal').textContent='';return}
+  if(S.view==='q'){document.getElementById('app').innerHTML=vQ();['backBtn','nextBtn','mineBtn'].forEach(id=>{const e=document.getElementById(id);if(e)e.hidden=true});document.getElementById('dockLabel').textContent='게시판';document.getElementById('dockTotal').textContent='';return}
   {const mb=document.getElementById('mineBtn');if(mb){mb.hidden=!(S.user&&MY_SUBS.length&&S.view!=='mine');mb.textContent=`내 접수 ${MY_SUBS.length}건`}}
   if(S.view==='mine'){document.getElementById('app').innerHTML=vMine();document.getElementById('backBtn').hidden=true;document.getElementById('nextBtn').hidden=true;document.getElementById('dockLabel').textContent='내 접수';document.getElementById('dockTotal').textContent=`${MY_SUBS.length}건`;return}
   renderSteps();

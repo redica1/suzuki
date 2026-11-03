@@ -1,4 +1,4 @@
-/* build: 20261103-161029 */
+/* build: 20261103-161423 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -100,6 +100,7 @@ function doGet(e) {
   let page, cname = CAMP_NAME, cj = '';
   try { const c = campPublic_(); cname = c.base.name; cj = JSON.stringify(c); } catch (x) {}
   const intl = e && e.parameter && e.parameter.page === 'intl';
+  if (e && e.parameter && e.parameter.page === 'find') return HtmlService.createHtmlOutputFromFile('Find').setTitle(cname + ' · 일정 찾기').addMetaTag('viewport', 'width=device-width, initial-scale=1').setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
   if (admin) page = HtmlService.createHtmlOutputFromFile('Admin');
   else if (intl) page = HtmlService.createHtmlOutputFromFile('Intl');
   else { const t = HtmlService.createTemplateFromFile('Index'); let share = ''; let tl = ''; try { ensureSettings_(); share = setting_('공유주소'); tl = setting_('테스트 로그인'); } catch (x) {} t.shareUrl = share; t.testLogin = tl; t.campJson = cj; try { t.loginPw = { pw: '1', both: '2' }[loginMode_()] || ''; t.memberUrl = setting_('회원관리 주소'); } catch (x) { t.loginPw = ''; t.memberUrl = ''; } /* 테스트 로그인: STG 「설정」에만 (이름/휴대전화) — 로그인 칸을 미리 채움 · campJson: 「캠프설정」 시트 값 (날짜·장소·차수·참가비) */ page = t.evaluate(); }
@@ -2259,6 +2260,45 @@ function lessonSet(token, op) {
 
 /* ================= 선생님 「내 시간표」 =================
  * 설정 「시간표 공개」 = 예 일 때만: 내 일정(교사 일정) + (교수면) 내 개인레슨 + 우리 학생 레슨 */
+/* 그룹레슨 (11-03): 교사 일정의 「그룹레슨」 반 대상 권수(예: Vn 4B · 7+)와 학생 진도를 맞춰 자동으로 찾음. groupsOf(악기, 진도) → [{d, s, e, room, sub}] */
+function grpMatch_() {
+const GL = actEvents_().filter(e => e.title === '그룹레슨');
+const INS = { '바이올린': 'Vn', '첼로': 'Vc', '플루트': 'Fl' };
+const ordOf = (bk, pt) => (bk === 'Pre' ? 0 : +bk * 2 - 1) + (pt === 'B' ? 1 : 0);
+const stuBk = prog => { const g = String(prog || ''); if (/^pre/i.test(g)) return { bk: 'Pre', pt: '' }; const m = g.match(/(\d+)\s*권\s*([AB])?/); return m ? { bk: String(Math.min(10, +m[1])), pt: m[2] || '' } : null; };
+const hit = (tok, sbk) => { const m = String(tok).match(/^(Pre|\d+)([AB]*)(\+?)$/); if (!m) return false;
+  if (m[3]) return ordOf(sbk.bk, sbk.pt || 'A') >= ordOf(m[1], m[2] === 'B' ? 'B' : 'A') || (m[1] === sbk.bk && !m[2]);
+  return m[1] === sbk.bk && (!m[2] || !sbk.pt || m[2].includes(sbk.pt)); };
+const groupsOf = (inst, prog) => { const k = INS[inst], sbk = stuBk(prog); if (!k || !sbk) return [];
+  return GL.filter(e => ((e.tg || {})[k] && ((e.tg[k].b) || []).some(t => hit(t, sbk)))).map(e => ({ d: e.d, s: e.s, e: e.e, room: e.room, sub: e.sub || '' })); };
+  return groupsOf;
+}
+/* ---------------- 캠프 일정 찾기 (11-03): 로그인 없이 학생 이름으로 그 아이 일정 (길 잃은 아이를 누구나 찾아 줄 수 있게) ----------------
+ * 열리는 때: 설정 「시간표 공개」 = 예 이고, 캠프 시작 하루 전 ~ 끝나는 날. 설정 「일정 찾기」 = 예 이면 늘 열림(시험용), 아니오면 닫힘.
+ * 보이는 것: 이름 · 학원 · 악기 · 담당 교사 · 그룹레슨 · 개인레슨 · 음악회 종류. 연락처 · 금액 · 출생연도는 안 보임. */
+function findKid(q) {
+  const C = camp_(), name = String(C.base.name || CAMP_NAME), force = setting_('일정 찾기');
+  const today = today_(), st = String(C.base.start || ''), en = String(C.base.end || '');
+  const d0 = /^\d{4}-\d{2}-\d{2}$/.test(st) ? Utilities.formatDate(new Date(new Date(st + 'T00:00:00+09:00').getTime() - 86400000), TZ, 'yyyy-MM-dd') : '';
+  const inPeriod = force === '예' || (force !== '아니오' && d0 && today >= d0 && (!en || today <= en));
+  if (!inPeriod) return { ok: true, open: false, name, msg: '일정 찾기는 캠프 기간에만 열려요' + (st ? ' (' + st + ' ~ ' + en + ')' : '') + '.' };
+  if (setting_('시간표 공개') !== '예') return { ok: true, open: false, name, msg: '아직 시간표가 정해지지 않았어요. 조금 뒤에 다시 찾아 주세요.' };
+  const nq = String(q || '').replace(/\s+/g, ''); if (nq.length < 2) return { ok: false, msg: '이름을 두 글자 이상 넣어 주세요.' };
+  const c = actCfg_(), days = c.days || [], groupsOf = grpMatch_(), L = lessons_();
+  const roomOf = n => (profs_().find(p => p.name === n) || {}).room || '';
+  const all = [];
+  loadSubs_().forEach(sb => sb.ppl.forEach(p => { if (p.status === '취소') return; const k = p.id.slice(sb.no.length + 1), i = (sb.form && sb.form.info && sb.form.info[k]) || {};
+    const type = p.type || i.type || ''; if (!['학생', '회원의 악기하는 자녀', '비회원 학생', '해외 학생'].includes(type)) return;
+    all.push({ id: p.id, name: p.name, acad: sb.acad, inst: p.inst || i.inst || '', teacher: i.teacher || '', prog: i.prog || '', concert: i.concert && i.concert !== '없음' ? i.concert : '' }); }));
+  const nm = s => String(s || '').replace(/\s+/g, '');
+  let hits = all.filter(x => nm(x.name) === nq); if (!hits.length) hits = all.filter(x => nm(x.name).includes(nq));
+  const dl = d => String(days[d] || '');
+  return { ok: true, open: true, name, more: hits.length > 20, kids: hits.slice(0, 20).map(x => {
+    const G = {}; groupsOf(x.inst, x.prog).forEach(g => { const kk = g.sub + '|' + g.room + '|' + g.s + '|' + g.e; (G[kk] = G[kk] || { sub: g.sub, room: g.room, s: g.s, e: g.e, d: [] }).d.push(g.d); });
+    return { name: x.name, acad: x.acad, inst: x.inst, teacher: x.teacher, concert: x.concert,
+      grp: Object.values(G).map(g => ({ sub: g.sub, room: g.room, time: g.s + (g.e ? '~' + g.e : ''), days: g.d.sort((a, b) => a - b).map(dl) })),
+      les: L.filter(l => l.pid === x.id).sort((a, b) => a.d - b.d || String(a.t).localeCompare(String(b.t))).map(l => ({ day: dl(l.d), t: l.t, pr: l.pr, room: roomOf(l.pr) })) }; }) };
+}
 function myTimetable(token) {
   const u = who_(token);
   if (setting_('시간표 공개') !== '예') return { open: false, rooms: myRooms_(u) };
@@ -2277,16 +2317,7 @@ function myTimetable(token) {
   const L = lessons_(); const roomOf = n => (profs_().find(p => p.name === n) || {}).room || '';
   if (prof) L.filter(x => x.pr === prof.name).forEach(x => { const s = byPid[x.pid]; if (!s) return; mine.push({ d: x.d, t: x.t, e: '', what: '개인레슨', title: '개인레슨', where: prof.room || '레슨실', loc: '', with: s ? s.p.name + ' (' + s.sb.acad + ')' : '' }); });
   const stu = [];
-  /* 그룹레슨 (11-03): 교사 일정의 「그룹레슨」 반 대상 권수(예: Vn 4B · 7+)와 학생 진도를 맞춰 자동으로 찾음 */
-  const GL = actEvents_().filter(e => e.title === '그룹레슨');
-  const INS = { '바이올린': 'Vn', '첼로': 'Vc', '플루트': 'Fl' };
-  const ordOf = (bk, pt) => (bk === 'Pre' ? 0 : +bk * 2 - 1) + (pt === 'B' ? 1 : 0);
-  const stuBk = prog => { const g = String(prog || ''); if (/^pre/i.test(g)) return { bk: 'Pre', pt: '' }; const m = g.match(/(\d+)\s*권\s*([AB])?/); return m ? { bk: String(Math.min(10, +m[1])), pt: m[2] || '' } : null; };
-  const hit = (tok, sbk) => { const m = String(tok).match(/^(Pre|\d+)([AB]*)(\+?)$/); if (!m) return false;
-    if (m[3]) return ordOf(sbk.bk, sbk.pt || 'A') >= ordOf(m[1], m[2] === 'B' ? 'B' : 'A') || (m[1] === sbk.bk && !m[2]);
-    return m[1] === sbk.bk && (!m[2] || !sbk.pt || m[2].includes(sbk.pt)); };
-  const groupsOf = (inst, prog) => { const k = INS[inst], sbk = stuBk(prog); if (!k || !sbk) return [];
-    return GL.filter(e => ((e.tg || {})[k] && ((e.tg[k].b) || []).some(t => hit(t, sbk)))).map(e => ({ d: e.d, s: e.s, e: e.e, room: e.room, sub: e.sub || '' })); };
+  const groupsOf = grpMatch_();
   Object.keys(byPid).forEach(id => { const s = byPid[id]; const type = s.p.type || s.i.type || '';
     if (!['학생', '회원의 악기하는 자녀', '비회원 학생'].includes(type)) return;
     const mineSub = s.sb.owner === u.name, myPupil = nm(s.i.teacher) === nm(u.name) && u.acads.includes(s.sb.acad), sameAcad = u.acads.includes(s.sb.acad);

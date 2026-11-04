@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>식권 스캐너 · 스즈키 캠프</title>
+<!--
+  식권 스캐너 (2026-11-04) — 식당 입구 휴대폰(크롬) + 바코드건
+  · https://app.suzukimusickorea.org/camp/meal.html       → 메인 앱 ?page=meal
+  · https://app.suzukimusickorea.org/camp/meal.html?test  → STG
+  바코드건 입력이 끼어든 틀(iframe) 때문에 놓치지 않도록, 틀에 넣지 않고 앱 주소로 바로 넘어감 (여름에 쓰던 그대로)
+-->
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<style>
+  html, body { margin: 0; height: 100%; background: #eef0f4; }
+  body { display: flex; align-items: center; justify-content: center; text-align: center; font: 600 17px/1.55 -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif; color: #5d6680; padding: 24px; box-sizing: border-box; }
+  a { color: #2c46c9; }
+</style>
+</head>
+<body>
+<p>식권 스캐너를 여는 중이에요…<br><small>안 넘어가면 <a id="go">여기를 눌러 주세요</a></small></p>
+<script>
+(function () {
+  var PROD = 'https://script.google.com/macros/s/AKfycbzrzYgEsPnHVcBIjobN9xB6nGBcZ7nPYMX7hDtx3OoI7WYokszGDLhcO0lHWYz9rWAt7w/exec';   // 메인 (실제)
+  var STG  = 'https://script.google.com/macros/s/AKfycby2WK6m-LkmOgUM3V2P_yA0f2kobvlfJw7qmNE36Tzxg6xvj6dQPKJuVFmT68zP7_55/exec';   // 테스트 (STG)
+  var APP = (/[?&]test\b/i.test(location.search) ? STG : PROD) + '?page=meal';
+  document.getElementById('go').href = APP;
+  location.replace(APP);
+})();
+</script>
+</body>
+</html>

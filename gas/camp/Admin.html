@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261104-190303 -->
+<!-- build: 20261104-192741 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -330,10 +330,10 @@ function payPill(p){if(p.status==='정상'&&!pAmt(p)&&!(+p.paidAmt>0))return '<s
 
 /* ---------- 화면 ---------- */
 /* GNB: 1단(묶음) › 2단(메뉴). 권한은 2단 메뉴마다 · 아래 메뉴가 다 「없음」이면 묶음도 숨김 */
-const GROUPS=[['dash','대시보드',['home']],['ops','운영관리',['subs','rp','cx','schol','q','ntc']],['sch','스케줄관리',['act','tt','ens','con','aud']],['room','방배정',['room']],['stat','통계',['stat']],['fin','예산 · 결산',['bplan','bset']],['cfg','설정',['doc','camp','mem','cons','prof','staff']]];
-const SUBL={aud:'음원 심사',doc:'공문',mem:'회원 명단',home:'대시보드',subs:'접수 · 입금 확인',rp:'입금 신고',cx:'취소 · 환불',q:'게시판',act:'교사 일정',tt:'개인레슨',ens:'앙상블',con:'오후음악회',room:'방배정',stat:'통계',schol:'장학금',cons:'동의서',camp:'캠프 설정',prof:'교수진',staff:'담당자',bplan:'예산 계획',bset:'결산'};
+const GROUPS=[['dash','대시보드',['home']],['ops','운영관리',['subs','rp','cx','schol','q','ntc','meal']],['sch','스케줄관리',['act','tt','ens','con','aud']],['room','방배정',['room']],['stat','통계',['stat']],['fin','예산 · 결산',['bplan','bset']],['cfg','설정',['doc','camp','mem','cons','prof','staff']]];
+const SUBL={aud:'음원 심사',doc:'공문',mem:'회원 명단',home:'대시보드',subs:'접수 · 입금 확인',rp:'입금 신고',cx:'취소 · 환불',q:'게시판',act:'교사 일정',tt:'개인레슨',ens:'앙상블',con:'오후음악회',meal:'식권',ntc:'공지사항',room:'방배정',stat:'통계',schol:'장학금',cons:'동의서',camp:'캠프 설정',prof:'교수진',staff:'담당자',bplan:'예산 계획',bset:'결산'};
 const groupOf=t=>(GROUPS.find(g=>g[2].includes(t))||GROUPS[0]);
-const TABS=[['home','한눈에'],['subs','접수 · 입금 확인'],['rp','입금 신고'],['cx','취소 · 환불'],['ens','앙상블'],['aud','음원 심사'],['prof','교수진'],['act','교사 일정'],['tt','개인레슨'],['room','방 배정'],['con','오후음악회'],['stat','통계'],['q','게시판'],['ntc','공지사항'],['schol','장학금'],['mem','회원 명단'],['bplan','예산 계획'],['bset','결산']];
+const TABS=[['home','한눈에'],['subs','접수 · 입금 확인'],['rp','입금 신고'],['cx','취소 · 환불'],['ens','앙상블'],['aud','음원 심사'],['prof','교수진'],['act','교사 일정'],['tt','개인레슨'],['room','방 배정'],['con','오후음악회'],['meal','식권'],['stat','통계'],['q','게시판'],['ntc','공지사항'],['schol','장학금'],['mem','회원 명단'],['bplan','예산 계획'],['bset','결산']];
 function render(){
   const app=document.getElementById('app'),tabs=document.getElementById('tabs');
   if(!S.D){tabs.innerHTML='';document.getElementById('tabs2').innerHTML='';app.innerHTML=vLogin();return}
@@ -349,7 +349,7 @@ function render(){
   /* 지금 묶음에 2단이 없으면 빈칸으로 → 줄이 안 보임 */
   document.getElementById('tabs2').classList.toggle('none',!document.querySelector('#tabs2 .grp:not([hidden])'));hdrH();
   const ro=RO();app.classList.toggle('ro',ro);
-  app.innerHTML=(ro?`<div class="robar">보기만 할 수 있는 메뉴예요 · 바꿔도 저장되지 않아요 (총관리자에게 「편집」 권한을 받으면 저장돼요)</div>`:'')+{home:vHome,subs:vSubs,rp:vRp,cx:vCx,ens:vEns,prof:vProf,act:()=>ACT.view(),tt:()=>LES.view(),room:()=>ROOM.view(),con:vCon,stat:vStat,q:vQ,ntc:vNtc,camp:vCamp,doc:vDoc,aud:vAud,staff:vStaff,cons:vCons,schol:vSchol,mem:vMem,bplan:()=>BUD.view('plan'),bset:()=>BUD.view('set')}[S.tab]();
+  app.innerHTML=(ro?`<div class="robar">보기만 할 수 있는 메뉴예요 · 바꿔도 저장되지 않아요 (총관리자에게 「편집」 권한을 받으면 저장돼요)</div>`:'')+{home:vHome,subs:vSubs,rp:vRp,cx:vCx,ens:vEns,prof:vProf,act:()=>ACT.view(),tt:()=>LES.view(),room:()=>ROOM.view(),con:vCon,meal:()=>vMeal(),stat:vStat,q:vQ,ntc:vNtc,camp:vCamp,doc:vDoc,aud:vAud,staff:vStaff,cons:vCons,schol:vSchol,mem:vMem,bplan:()=>BUD.view('plan'),bset:()=>BUD.view('set')}[S.tab]();
   if(S.tab==='stat'||S.tab==='home')reSort();
 }
 /* 통계 표 정렬: 같은 보기·같은 표면 다시 그려도 유지 */
@@ -1601,7 +1601,7 @@ const ME=()=>(S.D&&S.D.me)||{sup:true,perms:{}};
 const permOf=k=>{const m=ME();if(m.sup)return '편집';if(k==='camp'||k==='staff'||k==='cons'||k==='doc')return '';return (m.perms||{})[k]||''};
 const visTabs=()=>TABS.concat(SUP_TABS).filter(([k])=>permOf(k));
 const RO=()=>permOf(S.tab)==='보기';
-const WRITE_FN=/^(devAud|devAudClear|audSet|audPub|devSummer|adminNoticeSave|adminMenuSave|scholSave|adminConfirm|adminAdjust|adminSetBankAcct|ogSave|ogToken|adminRejectReport|adminSaveEns|adminSaveProfs|adminRefund|adminSetIssue|schedSave|lessonSet|adminSetSetting|roomSave|conSave|campSave|staffSave|songEnSave|pvHideSave|roomCfgSave|layoutImport|roomMove|budSave)$/;
+const WRITE_FN=/^(devAud|devAudClear|audSet|audPub|devSummer|adminNoticeSave|adminMenuSave|scholSave|adminConfirm|adminAdjust|adminSetBankAcct|ogSave|ogToken|adminRejectReport|adminSaveEns|adminSaveProfs|adminRefund|adminSetIssue|schedSave|lessonSet|adminSetSetting|roomSave|conSave|campSave|staffSave|songEnSave|pvHideSave|roomCfgSave|layoutImport|roomMove|budSave|mealIssue|mealDel)$/;
 const roBlock=fn=>WRITE_FN.test(fn)&&permOf(S.tab)!=='편집';
 const RO_MSG='보기만 할 수 있는 메뉴예요. 바꾸려면 총관리자에게 「편집」 권한을 받아 주세요.';
 
@@ -2755,6 +2755,263 @@ document.addEventListener('click',e=>{if(S.tab!=='con'||(S.consv||'list')!=='boo
 document.addEventListener('change',e=>{if(S.tab!=='con'||e.target.id!=='bkSel')return;S.bkSel=e.target.value;render()});
 document.addEventListener('input',e=>{const t=e.target;if(S.tab!=='con'||!t.dataset||t.dataset.bken==null)return;S.bkEn=S.bkEn||{};S.bkEn[t.dataset.bken]=t.value;document.querySelectorAll('[data-bken]').forEach(x=>{if(x!==t&&x.dataset.bken===t.dataset.bken)x.value=t.value});const sv=document.getElementById('bkEnSave');if(sv){const n=Object.keys(S.bkEn).length;sv.disabled=!n;sv.textContent='영어 곡명 저장'+(n?' ('+n+')':'')}});
 </script>
-<div id="bldMark" hidden>빌드표시 20261104-190303 </div>
+<style>
+/* ---------- 식권 QR (11-04): 2026 여름 따로 쓰던 식권 QR 을 캠프에 합침 ---------- */
+.mlt td,.mlt th{vertical-align:middle}.mlt input[type=text]{width:120px}.mlt input[type=time]{width:124px}.mlt input[type=number]{width:72px;text-align:right}.mlt select{width:auto}
+.mlt tr.off td{opacity:.55}.mlt .k1{color:#b45309}.mlt .k2{color:#047857}.mlt .k3{color:#4f46e5}.mlt .k4{color:#334155}
+.mlprev{display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap}.mlprev .mt{box-shadow:0 2px 10px rgba(0,0,0,.15);zoom:1.35}
+.mt{width:50mm;height:74.5mm;box-sizing:border-box;position:relative;background:#fff;color:#1e293b;font-family:"Pretendard Variable",Pretendard,"Malgun Gothic",sans-serif;text-align:center;overflow:hidden;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.mt .in{position:absolute;inset:1.7mm;border:.17mm solid #cbd5e1}
+.mt .lb{position:absolute;left:2.5mm;right:2.5mm;top:4.3mm;font-weight:800;font-size:10.5pt;line-height:1.2;white-space:nowrap;overflow:hidden;letter-spacing:-.02em}
+.mt .bd{position:absolute;left:50%;top:10.15mm;width:15.2mm;height:4.75mm;margin-left:-7.6mm;color:#fff;font-weight:800;font-size:8.2pt;line-height:4.75mm}
+.mt .qr{position:absolute;left:50%;top:16.65mm;width:27.1mm;height:27.1mm;margin-left:-13.55mm}.mt .qr svg{width:100%;height:100%;display:block}
+.mt .vt{position:absolute;left:0;right:0;top:44.5mm;font-weight:800;font-size:6.7pt;color:#ef4444}
+.mt .tm{position:absolute;left:0;right:0;font-weight:600;font-size:6.2pt;color:#334155;font-variant-numeric:tabular-nums}
+.mt .hr{position:absolute;left:17%;right:17%;top:56.3mm;border-top:.17mm solid #e2e8f0}
+.mt .og{position:absolute;left:0;right:0;top:58.4mm;font-weight:800;font-size:8.6pt;letter-spacing:-.01em}
+.mt .no{position:absolute;left:0;right:0;top:63.1mm;font-size:5.3pt;color:#94a3b8;font-variant-numeric:tabular-nums}
+@media screen{#mealPrintRoot{display:none}}
+@page meal{size:A4;margin:0}
+@media print{
+  body.mprint>*:not(#mealPrintRoot){display:none !important}
+  body.mprint #mealPrintRoot{display:block !important}
+  #mealPrintRoot .mpg{page:meal;width:210mm;height:296mm;box-sizing:border-box;padding:36.7mm 5mm 0;display:grid;grid-template-columns:repeat(4,50mm);grid-auto-rows:74.5mm;break-after:page;overflow:hidden}
+  #mealPrintRoot .mpg:last-child{break-after:auto}
+  #mealPrintRoot .mt{outline:.2mm dashed #c8c8c8;outline-offset:-.1mm}
+  html:has(body.mprint),body.mprint{background:#fff !important;margin:0 !important;padding:0 !important}
+}
+</style>
+<script>
+/* QR 만들기 (qrcodejs 코어 · MIT, Kazuhiko Arase / davidshimjs) — 식권 QR 에 씀 · QRSVG(글자) → 정사각 SVG (모듈 1칸 = 1, 여백 2칸) */
+var QRSVG=(function(){
+function QR8bitByte(data) {
+this.mode = QRMode.MODE_8BIT_BYTE;
+this.data = data;
+this.parsedData = [];
+for (var i = 0, l = this.data.length; i < l; i++) {
+var byteArray = [];
+var code = this.data.charCodeAt(i);
+if (code > 0x10000) {
+byteArray[0] = 0xF0 | ((code & 0x1C0000) >>> 18);
+byteArray[1] = 0x80 | ((code & 0x3F000) >>> 12);
+byteArray[2] = 0x80 | ((code & 0xFC0) >>> 6);
+byteArray[3] = 0x80 | (code & 0x3F);
+} else if (code > 0x800) {
+byteArray[0] = 0xE0 | ((code & 0xF000) >>> 12);
+byteArray[1] = 0x80 | ((code & 0xFC0) >>> 6);
+byteArray[2] = 0x80 | (code & 0x3F);
+} else if (code > 0x80) {
+byteArray[0] = 0xC0 | ((code & 0x7C0) >>> 6);
+byteArray[1] = 0x80 | (code & 0x3F);
+} else {
+byteArray[0] = code;
+}
+this.parsedData.push(byteArray);
+}
+this.parsedData = Array.prototype.concat.apply([], this.parsedData);
+if (this.parsedData.length != this.data.length) {
+this.parsedData.unshift(191);
+this.parsedData.unshift(187);
+this.parsedData.unshift(239);
+}
+}
+QR8bitByte.prototype = {
+getLength: function (buffer) {
+return this.parsedData.length;
+},
+write: function (buffer) {
+for (var i = 0, l = this.parsedData.length; i < l; i++) {
+buffer.put(this.parsedData[i], 8);
+}
+}
+};
+function QRCodeModel(typeNumber, errorCorrectLevel) {
+this.typeNumber = typeNumber;
+this.errorCorrectLevel = errorCorrectLevel;
+this.modules = null;
+this.moduleCount = 0;
+this.dataCache = null;
+this.dataList = [];
+}
+QRCodeModel.prototype={addData:function(data){var newData=new QR8bitByte(data);this.dataList.push(newData);this.dataCache=null;},isDark:function(row,col){if(row<0||this.moduleCount<=row||col<0||this.moduleCount<=col){throw new Error(row+","+col);}
+return this.modules[row][col];},getModuleCount:function(){return this.moduleCount;},make:function(){this.makeImpl(false,this.getBestMaskPattern());},makeImpl:function(test,maskPattern){this.moduleCount=this.typeNumber*4+17;this.modules=new Array(this.moduleCount);for(var row=0;row<this.moduleCount;row++){this.modules[row]=new Array(this.moduleCount);for(var col=0;col<this.moduleCount;col++){this.modules[row][col]=null;}}
+this.setupPositionProbePattern(0,0);this.setupPositionProbePattern(this.moduleCount-7,0);this.setupPositionProbePattern(0,this.moduleCount-7);this.setupPositionAdjustPattern();this.setupTimingPattern();this.setupTypeInfo(test,maskPattern);if(this.typeNumber>=7){this.setupTypeNumber(test);}
+if(this.dataCache==null){this.dataCache=QRCodeModel.createData(this.typeNumber,this.errorCorrectLevel,this.dataList);}
+this.mapData(this.dataCache,maskPattern);},setupPositionProbePattern:function(row,col){for(var r=-1;r<=7;r++){if(row+r<=-1||this.moduleCount<=row+r)continue;for(var c=-1;c<=7;c++){if(col+c<=-1||this.moduleCount<=col+c)continue;if((0<=r&&r<=6&&(c==0||c==6))||(0<=c&&c<=6&&(r==0||r==6))||(2<=r&&r<=4&&2<=c&&c<=4)){this.modules[row+r][col+c]=true;}else{this.modules[row+r][col+c]=false;}}}},getBestMaskPattern:function(){var minLostPoint=0;var pattern=0;for(var i=0;i<8;i++){this.makeImpl(true,i);var lostPoint=QRUtil.getLostPoint(this);if(i==0||minLostPoint>lostPoint){minLostPoint=lostPoint;pattern=i;}}
+return pattern;},createMovieClip:function(target_mc,instance_name,depth){var qr_mc=target_mc.createEmptyMovieClip(instance_name,depth);var cs=1;this.make();for(var row=0;row<this.modules.length;row++){var y=row*cs;for(var col=0;col<this.modules[row].length;col++){var x=col*cs;var dark=this.modules[row][col];if(dark){qr_mc.beginFill(0,100);qr_mc.moveTo(x,y);qr_mc.lineTo(x+cs,y);qr_mc.lineTo(x+cs,y+cs);qr_mc.lineTo(x,y+cs);qr_mc.endFill();}}}
+return qr_mc;},setupTimingPattern:function(){for(var r=8;r<this.moduleCount-8;r++){if(this.modules[r][6]!=null){continue;}
+this.modules[r][6]=(r%2==0);}
+for(var c=8;c<this.moduleCount-8;c++){if(this.modules[6][c]!=null){continue;}
+this.modules[6][c]=(c%2==0);}},setupPositionAdjustPattern:function(){var pos=QRUtil.getPatternPosition(this.typeNumber);for(var i=0;i<pos.length;i++){for(var j=0;j<pos.length;j++){var row=pos[i];var col=pos[j];if(this.modules[row][col]!=null){continue;}
+for(var r=-2;r<=2;r++){for(var c=-2;c<=2;c++){if(r==-2||r==2||c==-2||c==2||(r==0&&c==0)){this.modules[row+r][col+c]=true;}else{this.modules[row+r][col+c]=false;}}}}}},setupTypeNumber:function(test){var bits=QRUtil.getBCHTypeNumber(this.typeNumber);for(var i=0;i<18;i++){var mod=(!test&&((bits>>i)&1)==1);this.modules[Math.floor(i/3)][i%3+this.moduleCount-8-3]=mod;}
+for(var i=0;i<18;i++){var mod=(!test&&((bits>>i)&1)==1);this.modules[i%3+this.moduleCount-8-3][Math.floor(i/3)]=mod;}},setupTypeInfo:function(test,maskPattern){var data=(this.errorCorrectLevel<<3)|maskPattern;var bits=QRUtil.getBCHTypeInfo(data);for(var i=0;i<15;i++){var mod=(!test&&((bits>>i)&1)==1);if(i<6){this.modules[i][8]=mod;}else if(i<8){this.modules[i+1][8]=mod;}else{this.modules[this.moduleCount-15+i][8]=mod;}}
+for(var i=0;i<15;i++){var mod=(!test&&((bits>>i)&1)==1);if(i<8){this.modules[8][this.moduleCount-i-1]=mod;}else if(i<9){this.modules[8][15-i-1+1]=mod;}else{this.modules[8][15-i-1]=mod;}}
+this.modules[this.moduleCount-8][8]=(!test);},mapData:function(data,maskPattern){var inc=-1;var row=this.moduleCount-1;var bitIndex=7;var byteIndex=0;for(var col=this.moduleCount-1;col>0;col-=2){if(col==6)col--;while(true){for(var c=0;c<2;c++){if(this.modules[row][col-c]==null){var dark=false;if(byteIndex<data.length){dark=(((data[byteIndex]>>>bitIndex)&1)==1);}
+var mask=QRUtil.getMask(maskPattern,row,col-c);if(mask){dark=!dark;}
+this.modules[row][col-c]=dark;bitIndex--;if(bitIndex==-1){byteIndex++;bitIndex=7;}}}
+row+=inc;if(row<0||this.moduleCount<=row){row-=inc;inc=-inc;break;}}}}};QRCodeModel.PAD0=0xEC;QRCodeModel.PAD1=0x11;QRCodeModel.createData=function(typeNumber,errorCorrectLevel,dataList){var rsBlocks=QRRSBlock.getRSBlocks(typeNumber,errorCorrectLevel);var buffer=new QRBitBuffer();for(var i=0;i<dataList.length;i++){var data=dataList[i];buffer.put(data.mode,4);buffer.put(data.getLength(),QRUtil.getLengthInBits(data.mode,typeNumber));data.write(buffer);}
+var totalDataCount=0;for(var i=0;i<rsBlocks.length;i++){totalDataCount+=rsBlocks[i].dataCount;}
+if(buffer.getLengthInBits()>totalDataCount*8){throw new Error("code length overflow. ("
++buffer.getLengthInBits()
++">"
++totalDataCount*8
++")");}
+if(buffer.getLengthInBits()+4<=totalDataCount*8){buffer.put(0,4);}
+while(buffer.getLengthInBits()%8!=0){buffer.putBit(false);}
+while(true){if(buffer.getLengthInBits()>=totalDataCount*8){break;}
+buffer.put(QRCodeModel.PAD0,8);if(buffer.getLengthInBits()>=totalDataCount*8){break;}
+buffer.put(QRCodeModel.PAD1,8);}
+return QRCodeModel.createBytes(buffer,rsBlocks);};QRCodeModel.createBytes=function(buffer,rsBlocks){var offset=0;var maxDcCount=0;var maxEcCount=0;var dcdata=new Array(rsBlocks.length);var ecdata=new Array(rsBlocks.length);for(var r=0;r<rsBlocks.length;r++){var dcCount=rsBlocks[r].dataCount;var ecCount=rsBlocks[r].totalCount-dcCount;maxDcCount=Math.max(maxDcCount,dcCount);maxEcCount=Math.max(maxEcCount,ecCount);dcdata[r]=new Array(dcCount);for(var i=0;i<dcdata[r].length;i++){dcdata[r][i]=0xff&buffer.buffer[i+offset];}
+offset+=dcCount;var rsPoly=QRUtil.getErrorCorrectPolynomial(ecCount);var rawPoly=new QRPolynomial(dcdata[r],rsPoly.getLength()-1);var modPoly=rawPoly.mod(rsPoly);ecdata[r]=new Array(rsPoly.getLength()-1);for(var i=0;i<ecdata[r].length;i++){var modIndex=i+modPoly.getLength()-ecdata[r].length;ecdata[r][i]=(modIndex>=0)?modPoly.get(modIndex):0;}}
+var totalCodeCount=0;for(var i=0;i<rsBlocks.length;i++){totalCodeCount+=rsBlocks[i].totalCount;}
+var data=new Array(totalCodeCount);var index=0;for(var i=0;i<maxDcCount;i++){for(var r=0;r<rsBlocks.length;r++){if(i<dcdata[r].length){data[index++]=dcdata[r][i];}}}
+for(var i=0;i<maxEcCount;i++){for(var r=0;r<rsBlocks.length;r++){if(i<ecdata[r].length){data[index++]=ecdata[r][i];}}}
+return data;};var QRMode={MODE_NUMBER:1<<0,MODE_ALPHA_NUM:1<<1,MODE_8BIT_BYTE:1<<2,MODE_KANJI:1<<3};var QRErrorCorrectLevel={L:1,M:0,Q:3,H:2};var QRMaskPattern={PATTERN000:0,PATTERN001:1,PATTERN010:2,PATTERN011:3,PATTERN100:4,PATTERN101:5,PATTERN110:6,PATTERN111:7};var QRUtil={PATTERN_POSITION_TABLE:[[],[6,18],[6,22],[6,26],[6,30],[6,34],[6,22,38],[6,24,42],[6,26,46],[6,28,50],[6,30,54],[6,32,58],[6,34,62],[6,26,46,66],[6,26,48,70],[6,26,50,74],[6,30,54,78],[6,30,56,82],[6,30,58,86],[6,34,62,90],[6,28,50,72,94],[6,26,50,74,98],[6,30,54,78,102],[6,28,54,80,106],[6,32,58,84,110],[6,30,58,86,114],[6,34,62,90,118],[6,26,50,74,98,122],[6,30,54,78,102,126],[6,26,52,78,104,130],[6,30,56,82,108,134],[6,34,60,86,112,138],[6,30,58,86,114,142],[6,34,62,90,118,146],[6,30,54,78,102,126,150],[6,24,50,76,102,128,154],[6,28,54,80,106,132,158],[6,32,58,84,110,136,162],[6,26,54,82,110,138,166],[6,30,58,86,114,142,170]],G15:(1<<10)|(1<<8)|(1<<5)|(1<<4)|(1<<2)|(1<<1)|(1<<0),G18:(1<<12)|(1<<11)|(1<<10)|(1<<9)|(1<<8)|(1<<5)|(1<<2)|(1<<0),G15_MASK:(1<<14)|(1<<12)|(1<<10)|(1<<4)|(1<<1),getBCHTypeInfo:function(data){var d=data<<10;while(QRUtil.getBCHDigit(d)-QRUtil.getBCHDigit(QRUtil.G15)>=0){d^=(QRUtil.G15<<(QRUtil.getBCHDigit(d)-QRUtil.getBCHDigit(QRUtil.G15)));}
+return((data<<10)|d)^QRUtil.G15_MASK;},getBCHTypeNumber:function(data){var d=data<<12;while(QRUtil.getBCHDigit(d)-QRUtil.getBCHDigit(QRUtil.G18)>=0){d^=(QRUtil.G18<<(QRUtil.getBCHDigit(d)-QRUtil.getBCHDigit(QRUtil.G18)));}
+return(data<<12)|d;},getBCHDigit:function(data){var digit=0;while(data!=0){digit++;data>>>=1;}
+return digit;},getPatternPosition:function(typeNumber){return QRUtil.PATTERN_POSITION_TABLE[typeNumber-1];},getMask:function(maskPattern,i,j){switch(maskPattern){case QRMaskPattern.PATTERN000:return(i+j)%2==0;case QRMaskPattern.PATTERN001:return i%2==0;case QRMaskPattern.PATTERN010:return j%3==0;case QRMaskPattern.PATTERN011:return(i+j)%3==0;case QRMaskPattern.PATTERN100:return(Math.floor(i/2)+Math.floor(j/3))%2==0;case QRMaskPattern.PATTERN101:return(i*j)%2+(i*j)%3==0;case QRMaskPattern.PATTERN110:return((i*j)%2+(i*j)%3)%2==0;case QRMaskPattern.PATTERN111:return((i*j)%3+(i+j)%2)%2==0;default:throw new Error("bad maskPattern:"+maskPattern);}},getErrorCorrectPolynomial:function(errorCorrectLength){var a=new QRPolynomial([1],0);for(var i=0;i<errorCorrectLength;i++){a=a.multiply(new QRPolynomial([1,QRMath.gexp(i)],0));}
+return a;},getLengthInBits:function(mode,type){if(1<=type&&type<10){switch(mode){case QRMode.MODE_NUMBER:return 10;case QRMode.MODE_ALPHA_NUM:return 9;case QRMode.MODE_8BIT_BYTE:return 8;case QRMode.MODE_KANJI:return 8;default:throw new Error("mode:"+mode);}}else if(type<27){switch(mode){case QRMode.MODE_NUMBER:return 12;case QRMode.MODE_ALPHA_NUM:return 11;case QRMode.MODE_8BIT_BYTE:return 16;case QRMode.MODE_KANJI:return 10;default:throw new Error("mode:"+mode);}}else if(type<41){switch(mode){case QRMode.MODE_NUMBER:return 14;case QRMode.MODE_ALPHA_NUM:return 13;case QRMode.MODE_8BIT_BYTE:return 16;case QRMode.MODE_KANJI:return 12;default:throw new Error("mode:"+mode);}}else{throw new Error("type:"+type);}},getLostPoint:function(qrCode){var moduleCount=qrCode.getModuleCount();var lostPoint=0;for(var row=0;row<moduleCount;row++){for(var col=0;col<moduleCount;col++){var sameCount=0;var dark=qrCode.isDark(row,col);for(var r=-1;r<=1;r++){if(row+r<0||moduleCount<=row+r){continue;}
+for(var c=-1;c<=1;c++){if(col+c<0||moduleCount<=col+c){continue;}
+if(r==0&&c==0){continue;}
+if(dark==qrCode.isDark(row+r,col+c)){sameCount++;}}}
+if(sameCount>5){lostPoint+=(3+sameCount-5);}}}
+for(var row=0;row<moduleCount-1;row++){for(var col=0;col<moduleCount-1;col++){var count=0;if(qrCode.isDark(row,col))count++;if(qrCode.isDark(row+1,col))count++;if(qrCode.isDark(row,col+1))count++;if(qrCode.isDark(row+1,col+1))count++;if(count==0||count==4){lostPoint+=3;}}}
+for(var row=0;row<moduleCount;row++){for(var col=0;col<moduleCount-6;col++){if(qrCode.isDark(row,col)&&!qrCode.isDark(row,col+1)&&qrCode.isDark(row,col+2)&&qrCode.isDark(row,col+3)&&qrCode.isDark(row,col+4)&&!qrCode.isDark(row,col+5)&&qrCode.isDark(row,col+6)){lostPoint+=40;}}}
+for(var col=0;col<moduleCount;col++){for(var row=0;row<moduleCount-6;row++){if(qrCode.isDark(row,col)&&!qrCode.isDark(row+1,col)&&qrCode.isDark(row+2,col)&&qrCode.isDark(row+3,col)&&qrCode.isDark(row+4,col)&&!qrCode.isDark(row+5,col)&&qrCode.isDark(row+6,col)){lostPoint+=40;}}}
+var darkCount=0;for(var col=0;col<moduleCount;col++){for(var row=0;row<moduleCount;row++){if(qrCode.isDark(row,col)){darkCount++;}}}
+var ratio=Math.abs(100*darkCount/moduleCount/moduleCount-50)/5;lostPoint+=ratio*10;return lostPoint;}};var QRMath={glog:function(n){if(n<1){throw new Error("glog("+n+")");}
+return QRMath.LOG_TABLE[n];},gexp:function(n){while(n<0){n+=255;}
+while(n>=256){n-=255;}
+return QRMath.EXP_TABLE[n];},EXP_TABLE:new Array(256),LOG_TABLE:new Array(256)};for(var i=0;i<8;i++){QRMath.EXP_TABLE[i]=1<<i;}
+for(var i=8;i<256;i++){QRMath.EXP_TABLE[i]=QRMath.EXP_TABLE[i-4]^QRMath.EXP_TABLE[i-5]^QRMath.EXP_TABLE[i-6]^QRMath.EXP_TABLE[i-8];}
+for(var i=0;i<255;i++){QRMath.LOG_TABLE[QRMath.EXP_TABLE[i]]=i;}
+function QRPolynomial(num,shift){if(num.length==undefined){throw new Error(num.length+"/"+shift);}
+var offset=0;while(offset<num.length&&num[offset]==0){offset++;}
+this.num=new Array(num.length-offset+shift);for(var i=0;i<num.length-offset;i++){this.num[i]=num[i+offset];}}
+QRPolynomial.prototype={get:function(index){return this.num[index];},getLength:function(){return this.num.length;},multiply:function(e){var num=new Array(this.getLength()+e.getLength()-1);for(var i=0;i<this.getLength();i++){for(var j=0;j<e.getLength();j++){num[i+j]^=QRMath.gexp(QRMath.glog(this.get(i))+QRMath.glog(e.get(j)));}}
+return new QRPolynomial(num,0);},mod:function(e){if(this.getLength()-e.getLength()<0){return this;}
+var ratio=QRMath.glog(this.get(0))-QRMath.glog(e.get(0));var num=new Array(this.getLength());for(var i=0;i<this.getLength();i++){num[i]=this.get(i);}
+for(var i=0;i<e.getLength();i++){num[i]^=QRMath.gexp(QRMath.glog(e.get(i))+ratio);}
+return new QRPolynomial(num,0).mod(e);}};function QRRSBlock(totalCount,dataCount){this.totalCount=totalCount;this.dataCount=dataCount;}
+QRRSBlock.RS_BLOCK_TABLE=[[1,26,19],[1,26,16],[1,26,13],[1,26,9],[1,44,34],[1,44,28],[1,44,22],[1,44,16],[1,70,55],[1,70,44],[2,35,17],[2,35,13],[1,100,80],[2,50,32],[2,50,24],[4,25,9],[1,134,108],[2,67,43],[2,33,15,2,34,16],[2,33,11,2,34,12],[2,86,68],[4,43,27],[4,43,19],[4,43,15],[2,98,78],[4,49,31],[2,32,14,4,33,15],[4,39,13,1,40,14],[2,121,97],[2,60,38,2,61,39],[4,40,18,2,41,19],[4,40,14,2,41,15],[2,146,116],[3,58,36,2,59,37],[4,36,16,4,37,17],[4,36,12,4,37,13],[2,86,68,2,87,69],[4,69,43,1,70,44],[6,43,19,2,44,20],[6,43,15,2,44,16],[4,101,81],[1,80,50,4,81,51],[4,50,22,4,51,23],[3,36,12,8,37,13],[2,116,92,2,117,93],[6,58,36,2,59,37],[4,46,20,6,47,21],[7,42,14,4,43,15],[4,133,107],[8,59,37,1,60,38],[8,44,20,4,45,21],[12,33,11,4,34,12],[3,145,115,1,146,116],[4,64,40,5,65,41],[11,36,16,5,37,17],[11,36,12,5,37,13],[5,109,87,1,110,88],[5,65,41,5,66,42],[5,54,24,7,55,25],[11,36,12],[5,122,98,1,123,99],[7,73,45,3,74,46],[15,43,19,2,44,20],[3,45,15,13,46,16],[1,135,107,5,136,108],[10,74,46,1,75,47],[1,50,22,15,51,23],[2,42,14,17,43,15],[5,150,120,1,151,121],[9,69,43,4,70,44],[17,50,22,1,51,23],[2,42,14,19,43,15],[3,141,113,4,142,114],[3,70,44,11,71,45],[17,47,21,4,48,22],[9,39,13,16,40,14],[3,135,107,5,136,108],[3,67,41,13,68,42],[15,54,24,5,55,25],[15,43,15,10,44,16],[4,144,116,4,145,117],[17,68,42],[17,50,22,6,51,23],[19,46,16,6,47,17],[2,139,111,7,140,112],[17,74,46],[7,54,24,16,55,25],[34,37,13],[4,151,121,5,152,122],[4,75,47,14,76,48],[11,54,24,14,55,25],[16,45,15,14,46,16],[6,147,117,4,148,118],[6,73,45,14,74,46],[11,54,24,16,55,25],[30,46,16,2,47,17],[8,132,106,4,133,107],[8,75,47,13,76,48],[7,54,24,22,55,25],[22,45,15,13,46,16],[10,142,114,2,143,115],[19,74,46,4,75,47],[28,50,22,6,51,23],[33,46,16,4,47,17],[8,152,122,4,153,123],[22,73,45,3,74,46],[8,53,23,26,54,24],[12,45,15,28,46,16],[3,147,117,10,148,118],[3,73,45,23,74,46],[4,54,24,31,55,25],[11,45,15,31,46,16],[7,146,116,7,147,117],[21,73,45,7,74,46],[1,53,23,37,54,24],[19,45,15,26,46,16],[5,145,115,10,146,116],[19,75,47,10,76,48],[15,54,24,25,55,25],[23,45,15,25,46,16],[13,145,115,3,146,116],[2,74,46,29,75,47],[42,54,24,1,55,25],[23,45,15,28,46,16],[17,145,115],[10,74,46,23,75,47],[10,54,24,35,55,25],[19,45,15,35,46,16],[17,145,115,1,146,116],[14,74,46,21,75,47],[29,54,24,19,55,25],[11,45,15,46,46,16],[13,145,115,6,146,116],[14,74,46,23,75,47],[44,54,24,7,55,25],[59,46,16,1,47,17],[12,151,121,7,152,122],[12,75,47,26,76,48],[39,54,24,14,55,25],[22,45,15,41,46,16],[6,151,121,14,152,122],[6,75,47,34,76,48],[46,54,24,10,55,25],[2,45,15,64,46,16],[17,152,122,4,153,123],[29,74,46,14,75,47],[49,54,24,10,55,25],[24,45,15,46,46,16],[4,152,122,18,153,123],[13,74,46,32,75,47],[48,54,24,14,55,25],[42,45,15,32,46,16],[20,147,117,4,148,118],[40,75,47,7,76,48],[43,54,24,22,55,25],[10,45,15,67,46,16],[19,148,118,6,149,119],[18,75,47,31,76,48],[34,54,24,34,55,25],[20,45,15,61,46,16]];QRRSBlock.getRSBlocks=function(typeNumber,errorCorrectLevel){var rsBlock=QRRSBlock.getRsBlockTable(typeNumber,errorCorrectLevel);if(rsBlock==undefined){throw new Error("bad rs block @ typeNumber:"+typeNumber+"/errorCorrectLevel:"+errorCorrectLevel);}
+var length=rsBlock.length/3;var list=[];for(var i=0;i<length;i++){var count=rsBlock[i*3+0];var totalCount=rsBlock[i*3+1];var dataCount=rsBlock[i*3+2];for(var j=0;j<count;j++){list.push(new QRRSBlock(totalCount,dataCount));}}
+return list;};QRRSBlock.getRsBlockTable=function(typeNumber,errorCorrectLevel){switch(errorCorrectLevel){case QRErrorCorrectLevel.L:return QRRSBlock.RS_BLOCK_TABLE[(typeNumber-1)*4+0];case QRErrorCorrectLevel.M:return QRRSBlock.RS_BLOCK_TABLE[(typeNumber-1)*4+1];case QRErrorCorrectLevel.Q:return QRRSBlock.RS_BLOCK_TABLE[(typeNumber-1)*4+2];case QRErrorCorrectLevel.H:return QRRSBlock.RS_BLOCK_TABLE[(typeNumber-1)*4+3];default:return undefined;}};function QRBitBuffer(){this.buffer=[];this.length=0;}
+QRBitBuffer.prototype={get:function(index){var bufIndex=Math.floor(index/8);return((this.buffer[bufIndex]>>>(7-index%8))&1)==1;},put:function(num,length){for(var i=0;i<length;i++){this.putBit(((num>>>(length-i-1))&1)==1);}},getLengthInBits:function(){return this.length;},putBit:function(bit){var bufIndex=Math.floor(this.length/8);if(this.buffer.length<=bufIndex){this.buffer.push(0);}
+if(bit){this.buffer[bufIndex]|=(0x80>>>(this.length%8));}
+this.length++;}};var QRCodeLimitLength=[[17,14,11,7],[32,26,20,14],[53,42,32,24],[78,62,46,34],[106,84,60,44],[134,106,74,58],[154,122,86,64],[192,152,108,84],[230,180,130,98],[271,213,151,119],[321,251,177,137],[367,287,203,155],[425,331,241,177],[458,362,258,194],[520,412,292,220],[586,450,322,250],[644,504,364,280],[718,560,394,310],[792,624,442,338],[858,666,482,382],[929,711,509,403],[1003,779,565,439],[1091,857,611,461],[1171,911,661,511],[1273,997,715,535],[1367,1059,751,593],[1465,1125,805,625],[1528,1190,868,658],[1628,1264,908,698],[1732,1370,982,742],[1840,1452,1030,790],[1952,1538,1112,842],[2068,1628,1168,898],[2188,1722,1228,958],[2303,1809,1283,983],[2431,1911,1351,1051],[2563,1989,1423,1093],[2699,2099,1499,1139],[2809,2213,1579,1219],[2953,2331,1663,1273]];
+function _getTypeNumber(sText, nCorrectLevel) {
+var nType = 1;
+var length = _getUTF8Length(sText);
+for (var i = 0, len = QRCodeLimitLength.length; i <= len; i++) {
+var nLimit = 0;
+switch (nCorrectLevel) {
+case QRErrorCorrectLevel.L :
+nLimit = QRCodeLimitLength[i][0];
+break;
+case QRErrorCorrectLevel.M :
+nLimit = QRCodeLimitLength[i][1];
+break;
+case QRErrorCorrectLevel.Q :
+nLimit = QRCodeLimitLength[i][2];
+break;
+case QRErrorCorrectLevel.H :
+nLimit = QRCodeLimitLength[i][3];
+break;
+}
+if (length <= nLimit) {
+break;
+} else {
+nType++;
+}
+}
+if (nType > QRCodeLimitLength.length) {
+throw new Error("Too long data");
+}
+return nType;
+}
+function _getUTF8Length(sText) {
+var replacedText = encodeURI(sText).toString().replace(/\%[0-9a-fA-F]{2}/g, 'a');
+return replacedText.length + (replacedText.length != sText ? 3 : 0);
+}
+return function(text,lv){var L=QRErrorCorrectLevel[lv||"M"];var q=new QRCodeModel(_getTypeNumber(text,L),L);q.addData(text);q.make();var n=q.getModuleCount(),m=2,d="";for(var r=0;r<n;r++)for(var c=0;c<n;c++)if(q.isDark(r,c))d+="M"+(c+m)+" "+(r+m)+"h1v1h-1z";return '<svg xmlns="http:\/\/www.w3.org\/2000\/svg" viewBox="0 0 '+(n+2*m)+" "+(n+2*m)+'" shape-rendering="crispEdges"><rect width="100%" height="100%" fill="#fff"\/><path fill="#000" d="'+d+'"\/><\/svg>'};})();
+
+/* ---------- 식권 QR (11-04) ----------
+ * 식사 목록 = 캠프 설정 「식사 시간」 × 교사 일정 날짜 → 줄마다 라벨 · 구분 · 이용 시간 · 매수 → 「식권 만들기」(서버가 고유번호를 만들어 「식권발급」 시트에 씀)
+ * 만든 묶음은 언제든 같은 번호로 다시 인쇄(A4 4 × 3 = 12장, 50 × 74.5mm, 재단선) · 스캐너 ?page=meal 이 「식권제출」 시트에 씀 */
+const ML_K={'1':'아침','2':'점심','3':'저녁','4':'공연'},ML_C={'1':'#f59e0b','2':'#10b981','3':'#6366f1','4':'#334155'};
+const mlKind=k=>{k=String(k||'');return /아침|조식|break/i.test(k)?'1':/점심|중식|lunch/i.test(k)?'2':/공연|음악회|콘서트|concert/i.test(k)?'4':'3'};
+const mlMD=d=>{const p=String(d||'').split('-');return p.length===3?(+p[1])+'월 '+(+p[2])+'일':''};
+function mlLoad(){S.MLL=1;call('mealAdmin',[],r=>{S.ML=r;S.MLL=0;if(S.tab==='meal')render()},'식권을 불러오고 있어요…')}
+function mlBase(){const L=statRows().length,P=(S.D.profs||[]).filter(p=>p.on).length;return {L,P,n:L+P}}
+/* 화면에서 고치는 줄: 자동 줄(날짜 × 식사) + 직접 더한 줄(공연 입장권 등) */
+function mlRows(){const M=S.ML,F=S.mlf||(S.mlf={rows:{},extra:[]});const done=new Set((M.batches||[]).map(b=>b.label));
+  const auto=(M.meals||[]).map(m=>{const key=m.d+'|'+m.k,kind=mlKind(m.k),r=F.rows[key]||(F.rows[key]={key,on:null,kind,label:mlMD(m.date)+' '+ML_K[kind],sd:m.date,st:m.s||'07:00',ed:m.date,et:m.e||'09:00',n:null});r.day=m.day;return r});
+  return auto.concat(F.extra).map(r=>{if(r.on==null)r.on=!done.has(r.label);r.done=done.has(r.label);return r})}
+function mlTicket(x,no){const k=String(x.kind).length===1?x.kind:mlKind(x.kind),lb=String(x.label||''),fs=lb.length>11?Math.max(6.5,10.5*11/lb.length):10.5;
+  const s=String(x.s||'').split(' '),e=String(x.e||'').split(' ');
+  return `<div class="mt"><div class="in"></div><div class="lb" style="font-size:${fs.toFixed(1)}pt">${esc(lb)}</div><div class="bd" style="background:${ML_C[k]||'#3b82f6'}">${ML_K[k]||''}</div>
+    <div class="qr">${QRSVG(no)}</div><div class="vt">[ 식권 이용 가능 시간 ]</div><div class="tm" style="top:48.3mm">시작: ${esc(s.join(' '))}</div><div class="tm" style="top:51.7mm">마감: ${esc(e.join(' '))}</div>
+    <div class="hr"></div><div class="og">한국스즈키음악협회</div><div class="no">NO. ${esc(no)}</div></div>`}
+function vMeal(){const M=S.ML;if(!M){if(!S.MLL)setTimeout(mlLoad,0);return '<div class="panel hint">식권을 불러오고 있어요…</div>'}
+  const B=mlBase(),R=mlRows(),F=S.mlf,ro=RO(),nOf=r=>r.n==null?(F.base||B.n):+r.n||0,on=R.filter(r=>r.on),tot=on.reduce((t,r)=>t+nOf(r),0),sel=S.mlSel||(S.mlSel={});
+  const nSel=Object.keys(sel).filter(k=>sel[k]).length,selN=(M.batches||[]).filter(b=>sel[b.id]).reduce((t,b)=>t+b.n,0);
+  const pv=on[0]||R[0];
+  const tr=(r,i)=>`<tr class="${r.on?'':'off'}"><td><input type="checkbox" data-mlon="${i}" ${r.on?'checked':''} aria-label="만들기 선택"></td>
+    <td>${r.key?esc(r.day||r.sd.slice(5)):`<input type="date" data-mlf="${i}|sd" value="${esc(r.sd)}" style="width:140px">`}</td>
+    <td><select data-mlf="${i}|kind" class="k${r.kind}">${Object.keys(ML_K).map(k=>`<option value="${k}" ${r.kind===k?'selected':''}>${ML_K[k]}</option>`).join('')}</select></td>
+    <td><input type="text" data-mlf="${i}|label" value="${esc(r.label)}" maxlength="30"></td>
+    <td><input type="time" data-mlf="${i}|st" value="${esc(r.st)}"> ~ ${r.key?'':`<input type="date" data-mlf="${i}|ed" value="${esc(r.ed)}" style="width:140px"> `}<input type="time" data-mlf="${i}|et" value="${esc(r.et)}"></td>
+    <td class="r"><input type="number" min="1" max="1500" data-mlf="${i}|n" value="${nOf(r)}"></td>
+    <td>${r.done?'<span class="pill ok">만듦</span>':''}${r.key?'':` <button class="btn small ghost" type="button" data-mlrm="${i}">빼기</button>`}</td></tr>`;
+  return `<div class="panel"><div class="spread"><div><b>식권 만들기</b> <span class="hint">캠프 설정 「식사 시간」 × 교사 일정 날짜 · 이용 시간은 식권에 보이기만 해요(스캔할 때 검사 안 함)</span></div>
+      <div class="row" style="gap:6px;flex-wrap:wrap"><label class="hint" style="display:flex;gap:6px;align-items:center">기본 매수 <input type="number" id="mlBaseN" min="1" max="1500" value="${F.base||B.n}" style="width:80px;text-align:right"></label><button class="btn small" type="button" id="mlBaseAll">모든 줄에 넣기</button></div></div>
+    <p class="hint" style="margin:6px 0 10px">지금 참가 인원 <b>${B.L}명</b>(취소 빼고 · 통계와 같은 기준) + 교수진 <b>${B.P}명</b> = <b>${B.n}장</b>이 기본이에요. 스태프 · 여분을 생각해 고쳐 주세요.</p>
+    <div class="tbl"><table class="mlt"><thead><tr><th></th><th>날짜</th><th>구분</th><th>라벨 (식권 맨 위)</th><th>이용 가능 시간</th><th class="r">매수</th><th></th></tr></thead><tbody>${R.map(tr).join('')||'<tr><td colspan="7" class="hint">식사 목록이 없어요. 캠프 설정 「식사 시간」과 교사 일정 「날짜 · 장소」를 확인해 주세요.</td></tr>'}</tbody></table></div>
+    <div class="spread" style="margin-top:10px"><button class="btn small ghost" type="button" id="mlAdd">＋ 줄 더하기 (공연 입장권 등)</button>
+      <button class="btn primary" type="button" id="mlMake" ${on.length&&!ro?'':'disabled'}>고른 ${on.length}줄 식권 만들기 · ${tot.toLocaleString()}장</button></div>
+    ${pv?`<div class="mlprev" style="margin-top:14px"><div>${mlTicket({kind:pv.kind,label:pv.label,s:pv.sd+' '+pv.st,e:pv.ed+' '+pv.et},pv.kind+'-'+String(pv.sd).slice(2).replace(/-/g,'')+'-123456')}</div><p class="hint" style="max-width:300px">미리보기 (크게) · 실제 인쇄는 가로 50mm × 세로 74.5mm, A4 한 장에 12장이에요. QR 에는 고유번호만 들어가요(라벨은 그림에만 · 바코드건 인식이 쉬움).</p></div>`:''}</div>
+  <div class="panel"><div class="spread"><div><b>만든 식권</b> <span class="hint">발급 ${M.total.iss.toLocaleString()}장 · 제출 ${M.total.sub.toLocaleString()}장 · 스캔 ${M.total.scans.toLocaleString()}번</span></div>
+      <div class="row" style="gap:6px"><button class="btn small" type="button" id="mlRe">새로 불러오기</button><a class="btn small" href="${esc(M.sheet)}" target="_blank" rel="noopener">시트 열기</a><button class="btn small primary" type="button" id="mlPrint" ${nSel?'':'disabled'}>고른 ${nSel}묶음 인쇄 · ${selN.toLocaleString()}장</button></div></div>
+    ${(M.batches||[]).length?`<div class="tbl" style="margin-top:8px"><table class="mlt"><thead><tr><th><input type="checkbox" id="mlSelAll" aria-label="모두 고르기" ${M.batches.every(b=>sel[b.id])?'checked':''}></th><th>라벨</th><th>구분</th><th>이용 가능 시간</th><th class="r">발급</th><th class="r">제출</th><th class="r">중복 스캔</th><th>만든 날 · 사람</th><th></th></tr></thead><tbody>
+      ${M.batches.map(b=>`<tr><td><input type="checkbox" data-mlsel="${esc(b.id)}" ${sel[b.id]?'checked':''}></td><td><b>${esc(b.label)}</b></td><td class="k${mlKind(b.kind)}">${esc(b.kind)}</td><td>${esc(b.s)} ~ ${esc(String(b.e).slice(String(b.s).slice(0,10)===String(b.e).slice(0,10)?11:0))}</td>
+        <td class="r">${b.n.toLocaleString()}</td><td class="r">${b.sub.toLocaleString()} <span class="hint">${b.n?Math.round(b.sub*100/b.n):0}%</span></td><td class="r">${b.dup?`<span class="pill due">${b.dup}</span>`:'0'}</td><td class="hint">${esc(String(b.at).slice(5,16))} · ${esc(b.by)}</td>
+        <td><button class="btn small" type="button" data-mlp="${esc(b.id)}">인쇄</button>${b.sub||ro?'':` <button class="btn small ghost" type="button" data-mldel="${esc(b.id)}">지우기</button>`}</td></tr>`).join('')}</tbody></table></div>`:'<p class="hint">아직 만든 식권이 없어요.</p>'}
+    <p class="hint" style="margin:8px 0 0">인쇄 창에서 <b>A4 · 배율 100%(실제 크기)</b>로 찍어 주세요(「용지에 맞춤」 끄기). 같은 묶음은 몇 번을 인쇄해도 같은 번호예요. 「중복 스캔」 = 같은 번호를 두 번 이상 낸 횟수(시트 「식권제출」에서 확인). 지우기는 한 장도 제출되지 않은 묶음만 돼요.</p></div>
+  <div class="panel"><b>스캐너</b> <span class="hint">식당 입구 휴대폰(크롬) + 바코드건 MQ160W · 스캔하면 바로 「제출 완료」, 다음 사람을 바로 스캔</span>
+    <div class="row" style="gap:8px;margin-top:8px;flex-wrap:wrap"><code style="font-size:14px">${esc(M.url.pretty)}</code><button class="btn small" type="button" data-mlcopy="${esc(M.url.pretty)}">주소 복사</button><a class="btn small primary" href="${esc(M.url.exec||M.url.pretty)}" target="_blank" rel="noopener">스캐너 열기</a></div>
+    <p class="hint" style="margin:6px 0 0">발급 기록에 없는 번호만 「등록되지 않은 QR」, 나머지는 판정 없이 「제출 완료」(여름과 같음). 여러 대를 쓰면 스캐너 화면 아래 「자리 이름」을 넣어 두세요. 처음 한 번 화면을 눌러야 소리가 나요.</p>
+    ${(M.recent||[]).length?`<div class="tbl" style="margin-top:8px"><table><thead><tr><th>최근 스캔</th><th>구분 · 라벨</th><th>고유번호</th><th>자리</th></tr></thead><tbody>${M.recent.slice(0,12).map(x=>`<tr><td class="hint">${esc(String(x.at).slice(5))}</td><td>${esc(x.kind)} · ${esc(x.label)}</td><td>${esc(x.no)}</td><td class="hint">${esc(x.dev)}</td></tr>`).join('')}</tbody></table></div>`:''}</div>`}
+function mlPrint(ids){if(!ids.length)return;call('mealTickets',[ids],r=>{const L=r.list||[];if(!L.length){toast('인쇄할 식권이 없어요');return}
+  const T=[];L.forEach(b=>b.nos.forEach(no=>T.push(mlTicket(b,no))));const pages=[];for(let i=0;i<T.length;i+=12)pages.push(`<div class="mpg">${T.slice(i,i+12).join('')}</div>`);
+  let root=document.getElementById('mealPrintRoot');if(!root){root=document.createElement('div');root.id='mealPrintRoot';document.body.appendChild(root)}root.innerHTML=pages.join('');
+  document.body.classList.add('mprint');const t0=document.title;document.title='식권_'+(L.length===1?L[0].label:L[0].label+' 외 '+(L.length-1))+'_'+T.length+'장'+dStamp();
+  const fr=(document.fonts&&document.fonts.ready)||Promise.resolve();fr.then(()=>{try{window.print()}finally{setTimeout(()=>{document.title=t0},500)}})},'식권 '+ids.length+'묶음을 준비하고 있어요…')}
+window.addEventListener('afterprint',()=>{document.body.classList.remove('mprint')});
+window.addEventListener('beforeprint',()=>{if(S.tab!=='meal')document.body.classList.remove('mprint')});
+document.addEventListener('click',e=>{if(S.tab!=='meal')return;const b=e.target.closest&&e.target.closest('button,input[type=checkbox]');if(!b)return;const d=b.dataset,F=S.mlf||(S.mlf={rows:{},extra:[]});
+  if(b.id==='mlRe'){S.ML=null;render();return}
+  if(d.mlon!=null){const R=mlRows();R[+d.mlon].on=b.checked;render();return}
+  if(d.mlsel!=null){S.mlSel[d.mlsel]=b.checked;render();return}
+  if(b.id==='mlSelAll'){(S.ML.batches||[]).forEach(x=>S.mlSel[x.id]=b.checked);render();return}
+  if(b.id==='mlBaseAll'){const v=+document.getElementById('mlBaseN').value||0;if(v<1){toast('기본 매수를 넣어 주세요');return}F.base=v;mlRows().forEach(r=>r.n=v);render();return}
+  if(b.id==='mlAdd'){const s=(S.ML.meals||[])[0]||{date:S.ML.start};F.extra.push({on:true,kind:'4',label:mlMD(s.date)+' 공연',sd:s.date,st:'19:00',ed:s.date,et:'21:00',n:null});render();return}
+  if(d.mlrm!=null){const R=mlRows(),r=R[+d.mlrm];F.extra=F.extra.filter(x=>x!==r);render();return}
+  if(d.mlcopy){try{navigator.clipboard.writeText(d.mlcopy).then(()=>toast('스캐너 주소를 복사했어요'),()=>prompt('주소',d.mlcopy))}catch(x){prompt('주소',d.mlcopy)}return}
+  if(d.mlp){mlPrint([d.mlp]);return}
+  if(b.id==='mlPrint'){mlPrint((S.ML.batches||[]).filter(x=>S.mlSel[x.id]).map(x=>x.id));return}
+  if(d.mldel){const x=(S.ML.batches||[]).find(y=>y.id===d.mldel);ask('이 묶음을 지울까요?',`${esc(x?x.label:'')} · ${x?x.n:0}장 — 인쇄해서 나눠 준 식권이면 지우지 마세요(스캔하면 「등록되지 않은 QR」이 돼요).`,()=>call('mealDel',[d.mldel],r=>{S.ML=r;delete S.mlSel[d.mldel];render();toast('지웠어요')},'지우고 있어요…'),'지우기');return}
+  if(b.id==='mlMake'){const B=mlBase(),on=mlRows().filter(r=>r.on);
+    const list=on.map(r=>({label:r.label.trim(),kind:r.kind,sdate:r.sd,stime:r.st,edate:r.ed,etime:r.et,n:r.n==null?(F.base||B.n):+r.n}));
+    const bad=list.find(x=>!x.label||!x.sdate||!x.edate||!x.stime||!x.etime||!(x.n>=1));if(bad){toast((bad.label||'라벨 없는 줄')+': 라벨 · 시간 · 매수를 확인해 주세요');return}
+    const dupL=[...new Set(list.filter((x,i)=>(S.ML.batches||[]).some(y=>y.label===x.label)||list.findIndex(y=>y.label===x.label)!==i).map(x=>x.label))];
+    const tot=list.reduce((t,x)=>t+x.n,0);
+    ask(`식권 ${tot.toLocaleString()}장을 만들까요?`,list.map(x=>`${esc(x.label)} · ${x.n}장`).join('<br>')+(dupL.length?`<br><br><b style="color:var(--bad,#c0392b)">이미 만들었거나 겹치는 라벨이 있어요: ${esc(dupL.join(', '))}</b> — 다시 인쇄만 하려면 아래 「만든 식권」에서 「인쇄」를 누르세요.`:''),
+      ()=>call('mealIssue',[list],r=>{S.ML=r;S.mlSel={};(r.made||[]).forEach(id=>S.mlSel[id]=true);mlRows().forEach(x=>x.on=null);render();toast(`${list.length}묶음 ${tot.toLocaleString()}장을 만들었어요 · 「인쇄」를 눌러 주세요`)},'고유번호를 만들고 있어요…'),'만들기');return}},true);
+document.addEventListener('input',e=>{const t=e.target;if(S.tab!=='meal'||!t.dataset||t.dataset.mlf==null||t.tagName==='SELECT')return;const [i,k]=t.dataset.mlf.split('|'),r=mlRows()[+i];if(!r)return;
+  r[k]=k==='n'?(t.value===''?null:Math.max(0,Math.round(+t.value||0))):t.value;if(k==='sd'&&!r.key)r.ed=r.ed<t.value?t.value:r.ed;
+  if(k==='kind'||k==='sd')render();else{const btn=document.getElementById('mlMake');if(btn){const B=mlBase(),on=mlRows().filter(x=>x.on),tot=on.reduce((s,x)=>s+(x.n==null?(S.mlf.base||B.n):+x.n||0),0);btn.textContent=`고른 ${on.length}줄 식권 만들기 · ${tot.toLocaleString()}장`}}});
+document.addEventListener('change',e=>{const t=e.target;if(S.tab!=='meal')return;if(t.dataset&&t.dataset.mlf&&t.tagName==='SELECT'){const [i,k]=t.dataset.mlf.split('|'),r=mlRows()[+i];if(r){const old=ML_K[r.kind];r.kind=t.value;if(r.label.endsWith(old))r.label=r.label.slice(0,-old.length)+ML_K[t.value];render()}}});
+</script>
+<div id="bldMark" hidden>빌드표시 20261104-192741 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();</script>
 </body></html>

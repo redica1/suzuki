@@ -1,4 +1,4 @@
-/* build: 20261104-190303 */
+/* build: 20261104-192741 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -101,6 +101,7 @@ function doGet(e) {
   let page, cname = CAMP_NAME, cj = '';
   try { const c = campPublic_(); cname = c.base.name; cj = JSON.stringify(c); } catch (x) {}
   const intl = e && e.parameter && e.parameter.page === 'intl';
+  if (e && e.parameter && e.parameter.page === 'meal') return HtmlService.createHtmlOutputFromFile('Meal').setTitle(cname + ' · 식권 스캐너').addMetaTag('viewport', 'width=device-width, initial-scale=1, user-scalable=no').setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);   // 식권 스캐너 (11-04)
   if (e && e.parameter && e.parameter.page === 'find') return HtmlService.createTemplateFromFile('Find').evaluate().setTitle(cname + ' · 일정 찾기').addMetaTag('viewport', 'width=device-width, initial-scale=1').setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
   if (admin) page = HtmlService.createHtmlOutputFromFile('Admin');
   else if (intl) page = HtmlService.createHtmlOutputFromFile('Intl');
@@ -1530,7 +1531,7 @@ function exportProgram(token) {
  * 담당자 = 교사 회원 중에서 골라 메뉴마다 편집 / 보기 / 없음 → 관리자 화면에 이름 + 휴대전화로 로그인 */
 const STAFF = '담당자';
 const STAFF_HEAD = ['교사ID', '이름', '학원', '권한', '사용', '메모', '바꾼 날'];
-const ADMIN_TABS = [['home', '한눈에'], ['subs', '접수 · 입금 확인'], ['rp', '입금 신고'], ['cx', '취소 · 환불'], ['ens', '앙상블'], ['aud', '음원 심사'], ['prof', '교수진'], ['act', '교사 일정'], ['tt', '개인레슨'], ['room', '방 배정'], ['con', '오후음악회'], ['stat', '통계'], ['q', '게시판'], ['ntc', '공지사항'], ['schol', '장학금'], ['mem', '회원 명단'], ['bplan', '예산 계획'], ['bset', '결산']];
+const ADMIN_TABS = [['home', '한눈에'], ['subs', '접수 · 입금 확인'], ['rp', '입금 신고'], ['cx', '취소 · 환불'], ['ens', '앙상블'], ['aud', '음원 심사'], ['prof', '교수진'], ['act', '교사 일정'], ['tt', '개인레슨'], ['room', '방 배정'], ['con', '오후음악회'], ['meal', '식권'], ['stat', '통계'], ['q', '게시판'], ['ntc', '공지사항'], ['schol', '장학금'], ['mem', '회원 명단'], ['bplan', '예산 계획'], ['bset', '결산']];
 function staff_() {
   return rows_(STAFF).filter(r => r['교사ID']).map(r => { let p = {}; try { p = JSON.parse(String(r['권한'] || '{}')); } catch (x) {}
     return { tid: String(r['교사ID']), name: String(r['이름']), acad: String(r['학원'] || ''), perms: p, on: String(r['사용'] || '예') !== '아니오', memo: String(r['메모'] || '') }; });
@@ -3299,3 +3300,114 @@ function adminNoticeSave(token, d) { const a = adm_(token); need_(a, ['ntc', 'tt
   } finally { lock.releaseLock(); }
   return adminNotices(token); }
 
+
+/* ================= 식권 QR (11-04): 2026 여름에 따로 쓰던 「식권 QR」 앱스크립트를 캠프에 합침 =================
+ * 그대로 둔 것 (여름 HANDOFF): 수거 방식 · 유효시간 검사 없음(표시만) · 스캔하면 판정 없이 「제출 완료」, 발급 기록에 없는 번호만 「등록되지 않은 QR」
+ *   · 고유번호 {식사코드 1~4}-{이용 시작일 YYMMDD}-{6자리} · 식사구분 아침 1 / 점심 2 / 저녁 3 / 공연 4 · 티켓 50mm × 74.5mm, A4 에 4 × 3 = 12장
+ * 바뀐 것: 번호를 서버가 한 번에 만들어 시트에 씀(예전엔 한 장마다 따로 보냄) · QR 에는 고유번호만(라벨은 그림에만 · 인식이 쉬움)
+ *   · 식사 목록 = 캠프 설정 「식사 시간」 × 교사 일정 날짜 · 스캐너 = ?page=meal (새로 고치지 않고 바로 다음 스캔)
+ * 시트 「식권발급」 고유번호 · 식사구분 · 라벨 · 발급일시 · 이용시작 · 이용마감 · 묶음 · 발급자 / 「식권제출」 고유번호 · 식사구분 · 라벨 · 제출시각 · 묶음 · 스캐너 */
+const MEAL_ISS = '식권발급', MEAL_SUB = '식권제출';
+const MEAL_ISS_HEAD = ['고유번호', '식사구분', '라벨', '발급일시', '이용시작', '이용마감', '묶음', '발급자'];
+const MEAL_SUB_HEAD = ['고유번호', '식사구분', '라벨', '제출시각', '묶음', '스캐너'];
+const MEAL_KINDS = { '1': '아침', '2': '점심', '3': '저녁', '4': '공연' };
+const MEAL_RX_NO = /([1-4]-\d{6}-\d{6})/;
+function mealSh_(name, head) { const ss = SpreadsheetApp.getActive(); let sh = ss.getSheetByName(name);
+  if (!sh) { sh = ss.insertSheet(name); sh.getRange(1, 1, 1, head.length).setValues([head]).setFontWeight('bold'); sh.setFrozenRows(1); sh.getRange('A:A').setNumberFormat('@'); }
+  return sh; }
+function mealVals_(name, head) { const sh = mealSh_(name, head), n = sh.getLastRow(); return n < 2 ? [] : sh.getRange(2, 1, n - 1, head.length).getDisplayValues(); }
+function mealPerm_(a, edit) { if (a.sup) return; const p = a.perms.meal; if (edit ? p !== '편집' : !['보기', '편집'].includes(p)) throw new Error(edit ? '식권 「편집」 권한이 있어야 해요.' : '식권 권한이 있어야 볼 수 있어요.'); }
+function mealAddDays_(ymd, n) { const [y, m, d] = String(ymd).split('-').map(Number); const t = new Date(Date.UTC(y, m - 1, d + n)); return t.toISOString().slice(0, 10); }
+function mealScanUrl_() { let stg = false; try { stg = !!setting_('테스트 로그인'); } catch (x) {}
+  let exec = ''; try { exec = ScriptApp.getService().getUrl(); } catch (x) {}
+  return { pretty: 'https://app.suzukimusickorea.org/camp/meal.html' + (stg ? '?test' : ''), exec: exec ? exec + '?page=meal' : '' }; }
+
+/** 관리자 「식권」 탭: 식사 목록(날짜 × 식사) · 만든 묶음(발급 · 제출 · 중복) · 최근 스캔 */
+function mealAdmin(token) {
+  const a = adm_(token); mealPerm_(a, false);
+  const C = camp_(), start = C.base.start, ctx = menuCtx_();
+  const meals = ctx.meals.map(m => ({ d: m.d, date: mealAddDays_(start, m.d), day: String(ctx.days[m.d] || ''), k: m.k, s: hm_(m.s), e: hm_(m.e) }));
+  const iss = mealVals_(MEAL_ISS, MEAL_ISS_HEAD), sub = mealVals_(MEAL_SUB, MEAL_SUB_HEAD);
+  const B = {}, of = {};
+  iss.forEach(r => { const id = r[6] || '(묶음 없음)'; of[r[0]] = id;
+    const b = B[id] || (B[id] = { id, kind: r[1], label: r[2], at: r[3], s: r[4], e: r[5], by: r[7], n: 0, sub: 0, dup: 0, last: '' }); b.n++; });
+  const seen = {};
+  sub.forEach(r => { const id = r[4] || of[r[0]]; const b = B[id]; if (!b) return; if (seen[r[0]]) b.dup++; else { seen[r[0]] = 1; b.sub++; } if (r[3] > b.last) b.last = r[3]; });
+  const batches = Object.keys(B).map(k => B[k]).sort((x, y) => String(x.s).localeCompare(String(y.s)) || x.label.localeCompare(y.label));
+  const recent = sub.slice(-30).reverse().map(r => ({ no: r[0], kind: r[1], label: r[2], at: r[3], dev: r[5], dup: 0 }));
+  return { ok: true, camp: C.base.name, start, days: ctx.days, meals, batches, recent, total: { iss: iss.length, sub: Object.keys(seen).length, scans: sub.length },
+    url: mealScanUrl_(), sheet: SpreadsheetApp.getActive().getUrl() };
+}
+
+/** 식권 만들기: list = [{label, kind(1~4), sdate, stime, edate, etime, n}] → 묶음마다 고유번호 n개 (서버가 겹치지 않게 만듦) */
+function mealIssue(token, list) {
+  const a = adm_(token); mealPerm_(a, true);
+  const L = (Array.isArray(list) ? list : []).slice(0, 40).map(x => {
+    const kind = String(x.kind || ''), label = String(x.label || '').trim().slice(0, 30), n = Math.round(+x.n || 0);
+    const ok = v => /^\d{4}-\d{2}-\d{2}$/.test(v), okT = v => /^\d{2}:\d{2}$/.test(v);
+    if (!MEAL_KINDS[kind]) throw new Error('식사 구분이 맞지 않아요.');
+    if (!label) throw new Error('라벨을 넣어 주세요.');
+    if (!ok(x.sdate) || !ok(x.edate) || !okT(x.stime) || !okT(x.etime)) throw new Error(label + ': 이용 날짜 · 시간을 확인해 주세요.');
+    if (x.sdate + x.stime >= x.edate + x.etime) throw new Error(label + ': 마감이 시작보다 나중이어야 해요.');
+    if (n < 1 || n > 1500) throw new Error(label + ': 매수는 1 ~ 1,500장이에요.');
+    return { kind, label, s: x.sdate + ' ' + x.stime, e: x.edate + ' ' + x.etime, sdate: x.sdate, n };
+  });
+  if (!L.length) throw new Error('만들 식권을 골라 주세요.');
+  const tot = L.reduce((t, x) => t + x.n, 0); if (tot > 8000) throw new Error('한 번에 8,000장까지 만들 수 있어요. 나눠서 만들어 주세요.');
+  const lock = lock_(); const made = [];
+  try {
+    const sh = mealSh_(MEAL_ISS, MEAL_ISS_HEAD), have = {}; mealVals_(MEAL_ISS, MEAL_ISS_HEAD).forEach(r => have[r[0]] = 1);
+    const now = stamp_(), base = 'M' + Utilities.formatDate(new Date(), TZ, 'yyMMddHHmmss'), rows = [];
+    L.forEach((x, i) => { const id = base + '-' + (i + 1), dp = x.sdate.slice(2).replace(/-/g, '');
+      for (let k = 0; k < x.n; k++) { let no, t = 0; do { no = x.kind + '-' + dp + '-' + (100000 + Math.floor(Math.random() * 900000)); } while (have[no] && ++t < 50); if (have[no]) throw new Error('고유번호를 만들지 못했어요. 다시 해 주세요.'); have[no] = 1;
+        rows.push([no, MEAL_KINDS[x.kind], x.label, "'" + now, "'" + x.s, "'" + x.e, id, a.name]); }
+      made.push(id); });
+    sh.getRange(sh.getLastRow() + 1, 1, rows.length, MEAL_ISS_HEAD.length).setValues(rows);
+    log_('관리자 ' + a.name, '식권 만듦', L.map(x => x.label + ' ' + x.n + '장').join(', '));
+  } finally { lock.releaseLock(); }
+  return Object.assign(mealAdmin(token), { made });
+}
+
+/** 인쇄용: 묶음 id 들의 고유번호 목록 */
+function mealTickets(token, ids) {
+  const a = adm_(token); mealPerm_(a, false); const want = {}; [].concat(ids || []).forEach(i => want[i] = 1);
+  const B = {}; mealVals_(MEAL_ISS, MEAL_ISS_HEAD).forEach(r => { if (!want[r[6]]) return; const b = B[r[6]] || (B[r[6]] = { id: r[6], kind: r[1], label: r[2], s: r[4], e: r[5], nos: [] }); b.nos.push(r[0]); });
+  return { ok: true, camp: camp_().base.name, list: [].concat(ids || []).map(i => B[i]).filter(Boolean) };
+}
+
+/** 묶음 지우기: 아직 한 장도 제출되지 않은 묶음만 (잘못 만들었을 때) */
+function mealDel(token, id) {
+  const a = adm_(token); mealPerm_(a, true);
+  const lock = lock_();
+  try {
+    const sh = mealSh_(MEAL_ISS, MEAL_ISS_HEAD), v = mealVals_(MEAL_ISS, MEAL_ISS_HEAD), mine = {};
+    v.forEach(r => { if (r[6] === id) mine[r[0]] = 1; });
+    if (!Object.keys(mine).length) throw new Error('그 묶음을 찾지 못했어요.');
+    if (mealVals_(MEAL_SUB, MEAL_SUB_HEAD).some(r => mine[r[0]])) throw new Error('이미 제출된 식권이 있어서 지울 수 없어요.');
+    const keep = v.filter(r => r[6] !== id), n = v.length - keep.length;
+    sh.getRange(2, 1, v.length, MEAL_ISS_HEAD.length).clearContent();
+    if (keep.length) sh.getRange(2, 1, keep.length, MEAL_ISS_HEAD.length).setValues(keep.map(r => r.map((c, j) => (j >= 3 && j <= 5) ? "'" + c : c)));
+    log_('관리자 ' + a.name, '식권 묶음 지움', id + ' · ' + n + '장');
+  } finally { lock.releaseLock(); }
+  return mealAdmin(token);
+}
+
+/** 스캐너 화면 처음: 캠프 이름 */
+function mealHello() { let name = CAMP_NAME; try { name = camp_().base.name; } catch (x) {} return { ok: true, camp: name }; }
+
+/** 스캔 (로그인 없음 · 스캐너 화면 ?page=meal): 판정 없이 제출 기록. 발급 기록에 없으면 found:false */
+function mealScan(raw, dev) {
+  const m = String(raw || '').match(MEAL_RX_NO); if (!m) return { ok: true, found: false, no: String(raw || '').slice(0, 40), at: stamp_(), bad: true };
+  const no = m[1], iss = mealSh_(MEAL_ISS, MEAL_ISS_HEAD);
+  const cell = iss.getRange('A:A').createTextFinder(no).matchEntireCell(true).findNext();
+  const at = stamp_();
+  if (!cell || cell.getRow() < 2) return { ok: true, found: false, no, at };
+  const r = iss.getRange(cell.getRow(), 1, 1, MEAL_ISS_HEAD.length).getDisplayValues()[0];
+  const lock = lock_(); let before = 0;
+  try {
+    const sub = mealSh_(MEAL_SUB, MEAL_SUB_HEAD);
+    before = sub.getRange('A:A').createTextFinder(no).matchEntireCell(true).findAll().length;
+    sub.appendRow([no, r[1], r[2], "'" + at, r[6], String(dev || '').slice(0, 30)]);
+  } finally { lock.releaseLock(); }
+  return { ok: true, found: true, no, kind: r[1], label: r[2], at, before };
+}

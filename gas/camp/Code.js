@@ -1,4 +1,4 @@
-/* build: 20261104-164927 */
+/* build: 20261104-165010 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -1061,7 +1061,7 @@ const CAMP_DEF = {
     { k: '점심', t: 'Lunch 점심 식사', s: '11:30', e: '13:20', on: true, first: false, last: true },
     { k: '저녁', t: 'Dinner 저녁 식사', s: '17:30', e: '19:20', on: true, first: true, last: false }],
   /* 공문 (11-04): 캠프 안내 공문 = 캠프의 시작. 글 속 {기간}·{장소}·[[참가비표]] 같은 표시는 위 캠프 설정 값으로 채워져서, 공문과 접수 화면 금액·날짜가 어긋나지 않음 */
-  doc: { no: '', date: '', to: '', ref: '', title: '{캠프이름} 안내', num: '1.', t1: '14시', t2: '12시', sign: true, rnote: ['(*입금 확인 후 신청 등록 완료)', '', ''],
+  doc: { no: '', date: '', to: '', ref: '', title: '{캠프이름} 안내', num: '1.', t1: '14시', t2: '12시', sign: true, mg: { t: 13, b: 15, l: 16, r: 16 }, rnote: ['(*입금 확인 후 신청 등록 완료)', '', ''],
     intro: '(사)한국스즈키음악협회 {캠프이름}가 다음과 같이 열리오니 많은 참여 바랍니다.',
     sec: [
       { id: 'when', t: '기간', on: true, body: '{기간}' },
@@ -1116,7 +1116,7 @@ function docClean_(d, nr) {
   d = d || {}; const t = (v, n) => String(v == null ? '' : v).replace(/\r/g, '').slice(0, n), D = CAMP_DEF.doc;
   const sec = (Array.isArray(d.sec) ? d.sec : D.sec).slice(0, 30).map((x, i) => ({ id: t(x.id, 20).replace(/[^\w-]/g, '') || ('x' + i), t: t(x.t, 40).trim(), on: x.on !== false, body: t(x.body, 8000) }));
   const o = { no: t(d.no, 40).trim(), date: /^\d{4}-\d{2}-\d{2}$/.test(d.date || '') ? d.date : '', to: t(d.to, 120).trim(), ref: t(d.ref, 120).trim(), title: t(d.title, 120).trim(), num: d.num === '1)' ? '1)' : '1.',
-    t1: t(d.t1, 20).trim(), t2: t(d.t2, 20).trim(), sign: d.sign !== false, intro: t(d.intro, 3000), rnote: Array.from({ length: nr }, (_, i) => t((d.rnote || [])[i], 80)), sec };
+    t1: t(d.t1, 20).trim(), t2: t(d.t2, 20).trim(), sign: d.sign !== false, mg: (() => { const m = d.mg || {}, o = {}; [['t', 13], ['b', 15], ['l', 16], ['r', 16]].forEach(([k, v]) => { const x = +m[k]; o[k] = m[k] !== '' && m[k] != null && isFinite(x) ? Math.max(0, Math.min(40, Math.round(x * 10) / 10)) : v; }); return o; })(), intro: t(d.intro, 3000), rnote: Array.from({ length: nr }, (_, i) => t((d.rnote || [])[i], 80)), sec };
   if (JSON.stringify(o).length > 45000) throw new Error('공문 글이 너무 길어요. 항목 글을 조금 줄여 주세요.');
   return o;
 }

@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261104-164927 -->
+<!-- build: 20261104-165010 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -2447,7 +2447,7 @@ render();
   html,body{background:#fff !important;margin:0 !important;padding:0 !important}
   #docPrintRoot{display:block !important}
   #docPrintRoot .dp{min-height:0;box-shadow:none;zoom:1;width:auto;padding:0}
-  #docPrintRoot table.pw{width:100%;border-collapse:collapse;border:0;margin:0}#docPrintRoot table.pw>*>tr>td{border:0 !important;padding:0 !important;background:none !important;text-align:left !important;vertical-align:top !important;white-space:normal !important;font-size:inherit !important}#docPrintRoot table.pw>thead td{height:13mm}#docPrintRoot table.pw>tfoot td{height:15mm}#docPrintRoot .dp{padding:0 16mm !important}
+  #docPrintRoot table.pw{width:100%;border-collapse:collapse;border:0;margin:0}#docPrintRoot table.pw>*>tr>td{border:0 !important;padding:0 !important;background:none !important;text-align:left !important;vertical-align:top !important;white-space:normal !important;font-size:inherit !important}
 }
 </style>
 <script>
@@ -2489,12 +2489,13 @@ function dFmt(txt,c,V){return String(txt||'').split('\n').map(line=>{
   let h=esc(line).replace(/\{[^{}\s]{1,8}\}/g,m=>V[m]!=null?esc(V[m]):m);
   h=h.replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/!!(.+?)!!/g,'<span class="red">$1</span>');
   return '<p class="ln">'+h+'</p>'}).join('')}
+const DOC_MG={t:13,b:15,l:16,r:16};function dMg(c){const m=(c.doc||{}).mg||{},o={};Object.keys(DOC_MG).forEach(k=>{const v=+m[k];o[k]=isFinite(v)&&m[k]!==''&&m[k]!=null?Math.max(0,Math.min(40,v)):DOC_MG[k]});return o}
 function docHtml(c){const d=c.doc||{},V=dVals(c),fill=t=>esc(String(t||'').replace(/\{[^{}\s]{1,8}\}/g,m=>V[m]!=null?V[m]:m));let n=0;
   const meta=[['문서번호',d.no],['시행일',d.date?dMd(d.date,1):''],['수신',d.to],['참조',d.ref]].filter(x=>x[1]);
   const secs=(d.sec||[]).filter(s=>s.on!==false).map(s=>{n++;const num=d.num==='1)'?n+')':n+'.',body=String(s.body||''),one=!body.includes('\n')&&!body.includes('[[');
     return one?`<div class="sc"><p class="ln"><span class="sh">${num} ${esc(s.t)}:</span> ${dFmt(body,c,V).replace(/^<p class="ln">|<\/p>$/g,'')}</p></div>`
       :`<div class="sc"><div class="sh">${num} ${esc(s.t)}</div>${dFmt(body,c,V)}</div>`}).join('');
-  return `<div class="dp"><div class="lg"><img src="${DOC_LOGO}" alt="SUZUKI MUSIC KOREA"></div>
+  const M=dMg(c);return `<div class="dp" style="padding:${M.t}mm ${M.r}mm ${M.b}mm ${M.l}mm"><div class="lg"><img src="${DOC_LOGO}" alt="SUZUKI MUSIC KOREA"></div>
     ${meta.length?`<div class="meta">${meta.map(([k,v])=>`<div><b>${k}</b><span>${esc(v)}</span></div>`).join('')}</div>`:''}
     <h1>${fill(d.title||((c.base||{}).name+' 안내'))}</h1>${d.intro?`<div class="intro">${dFmt(d.intro,c,V)}</div>`:''}${secs}
     ${d.sign!==false?`<div class="ft-end"><div class="www">www.suzukimusickorea.org</div><div class="ko">(사)한국스즈키음악협회</div><div class="en">KOREA SUZUKI ASSOCIATION</div></div>`:''}</div>`}
@@ -2520,7 +2521,8 @@ function vDoc(){if(!S.cc)S.cc=ccCopy();const c=S.cc;if(!c.base)return '<div clas
     <label class="w2">수신${inp('doc.to','text','maxlength="120" placeholder="예: 회원 학원 원장 · 교사"')}</label><label class="w2">참조${inp('doc.ref','text','maxlength="120"')}</label>
     <label class="w2">제목${inp('doc.title','text','maxlength="120" placeholder="{캠프이름} 안내"')}</label>
     <label>항목 번호<select data-cc="doc.num"><option value="1." ${d.num!=='1)'?'selected':''}>1. 2. 3.</option><option value="1)" ${d.num==='1)'?'selected':''}>1) 2) 3)</option></select></label>
-    <label>끝 협회 이름<span class="row" style="gap:6px;flex-wrap:nowrap">${inp('doc.sign','check')} 넣기</span></label></div>
+    <label>끝 협회 이름<span class="row" style="gap:6px;flex-wrap:nowrap">${inp('doc.sign','check')} 넣기</span></label>
+    <label class="w2">여백 <span class="hint">mm · 0~40 · 미리보기와 인쇄에 같이</span><span class="row" style="gap:10px;flex-wrap:wrap">${[['t','위'],['b','아래'],['l','왼쪽'],['r','오른쪽']].map(([k,l])=>`<span class="row" style="gap:4px;flex-wrap:nowrap"><small>${l}</small><input type="number" min="0" max="40" step="1" data-dmg="${k}" value="${dMg(c)[k]}" style="width:64px"></span>`).join('')}<button class="btn small ghost" type="button" data-dmgreset="1">기본값</button></span></label></div>
     <label style="display:block;margin-top:8px">머리말 ${ta('doc.intro','dintro',3)}</label></div>
   <div class="panel"><h3>캠프 기본 <span class="hint">= 캠프 설정</span></h3><div class="ccg">
     <label class="w2">캠프 이름${inp('base.name','text','maxlength="60"')}</label>
@@ -2553,18 +2555,20 @@ function vDoc(){if(!S.cc)S.cc=ccCopy();const c=S.cc;if(!c.base)return '<div clas
 const dWarnHtml=W=>W.length?`<div class="dwarn">${W.map(x=>'· '+x).join('<br>')}</div>`:'';
 let dPT=0;function dPrev(){clearTimeout(dPT);dPT=setTimeout(()=>{const p=document.getElementById('docPrev');if(p&&S.cc&&S.cc.doc)p.innerHTML=docHtml(S.cc);const w=document.getElementById('dWarnBox');if(w&&S.cc&&S.cc.doc)w.innerHTML=dWarnHtml(dWarn(S.cc));const gi=document.getElementById('dGuest');if(gi&&document.activeElement!==gi){const ga=dGuestAdd(S.cc);gi.value=ga==null?'':ga.toLocaleString('ko-KR')}const pl=document.getElementById('ccDirty');if(pl)pl.innerHTML=ccPill()},120)}
 function dSetFee(k,i,v){const c=S.cc,ga=dGuestAdd(c);DOC_FG[k][1].forEach(t=>{c.fees[t]=c.fees[t]||[];c.fees[t][i]=v});if(ga!=null)DOC_GUEST.forEach(([g,m])=>{if(DOC_FG[k][1].includes(m)){c.fees[g]=c.fees[g]||[];c.fees[g][i]=v+ga}})}
-function dPrint(){if(!S.cc||!S.cc.doc)return;let r=document.getElementById('docPrintRoot');if(!r){r=document.createElement('div');r.id='docPrintRoot';document.body.appendChild(r)}r.innerHTML='<table class="pw"><thead><tr><td></td></tr></thead><tfoot><tr><td></td></tr></tfoot><tbody><tr><td>'+docHtml(S.cc)+'</td></tr></tbody></table>';
+function dPrint(){if(!S.cc||!S.cc.doc)return;let r=document.getElementById('docPrintRoot');if(!r){r=document.createElement('div');r.id='docPrintRoot';document.body.appendChild(r)}const M=dMg(S.cc);r.innerHTML='<table class="pw"><thead><tr><td style="height:'+M.t+'mm"></td></tr></thead><tfoot><tr><td style="height:'+M.b+'mm"></td></tr></tfoot><tbody><tr><td>'+docHtml(S.cc)+'</td></tr></tbody></table>';const dp=r.querySelector('.dp');if(dp)dp.style.padding='0 '+M.r+'mm 0 '+M.l+'mm';
   const t0=document.title,ti=(S.cc.doc.title||'{캠프이름} 안내').replace(/\{캠프이름\}/g,(S.cc.base||{}).name||'');document.title=ti.replace(/[\\\/:*?"<>|]/g,' ');
   const im=r.querySelector('img');const go=()=>{try{window.print()}finally{setTimeout(()=>{document.title=t0},500)}};const fr=(document.fonts&&document.fonts.ready)||Promise.resolve();fr.then(()=>{if(im&&!im.complete)im.onload=go;else go()});
   if(ccDirty())toast('저장하지 않은 내용도 인쇄돼요 · 캠프에 반영하려면 「저장」을 눌러 주세요')}
 document.addEventListener('input',e=>{if(S.tab!=='doc'||!S.cc)return;const t=e.target;
   if(t.dataset&&t.dataset.dfee){const [k,i]=t.dataset.dfee.split('|').map(Number);dSetFee(k,i,+(t.value.replace(/[^\d]/g,'')||0))}
+  else if(t.dataset&&t.dataset.dmg){S.cc.doc.mg=Object.assign({},dMg(S.cc),S.cc.doc.mg||{});S.cc.doc.mg[t.dataset.dmg]=t.value===''?DOC_MG[t.dataset.dmg]:Math.max(0,Math.min(40,+t.value||0))}
   else if(t.id==='dGuest'){const v=t.value.replace(/[^\d]/g,'');if(v!==''){const a=+v;(S.cc.rounds||[]).forEach((_,i)=>DOC_GUEST.forEach(([g,m])=>{S.cc.fees[g]=S.cc.fees[g]||[];S.cc.fees[g][i]=dFee(S.cc,m,i)+a}))}}
   dPrev()});
 document.addEventListener('change',e=>{if(S.tab!=='doc'||!S.cc)return;const t=e.target;if(t.dataset&&t.dataset.dfee||t.id==='dGuest'){if(t.value.trim()!=='')t.value=(+(t.value.replace(/[^\d]/g,'')||0)).toLocaleString('ko-KR')}dPrev()});
 document.addEventListener('focusin',e=>{const t=e.target;if(S.tab==='doc'&&t&&t.tagName==='TEXTAREA'&&t.dataset.cc)S.dFocus=t.id});
 document.addEventListener('click',e=>{if(S.tab!=='doc')return;const b=e.target.closest&&e.target.closest('button');if(!b)return;const d=b.dataset,c=S.cc;
   if(b.id==='dPrint'||b.id==='dPrint2'){dPrint();return}
+  if(d.dmgreset&&c&&c.doc){c.doc.mg=Object.assign({},DOC_MG);render();return}
   if(d.dtok){const ta=document.getElementById(S.dFocus||'');if(!ta){toast('먼저 넣을 글 칸을 눌러 주세요');return}const tok=d.dtok,line=tok.startsWith('[[');const s=ta.selectionStart,en=ta.selectionEnd,v=ta.value;
     const ins=line?(s>0&&v[s-1]!=='\n'?'\n':'')+tok+'\n':tok;ta.focus();ta.setRangeText(ins,s,en,'end');ta.dispatchEvent(new Event('input',{bubbles:true}));return}
   if(d.dsec&&c&&c.doc){const [op,i]=d.dsec.split('|'),k=+i,L=c.doc.sec;
@@ -2574,6 +2578,6 @@ document.addEventListener('click',e=>{if(S.tab!=='doc')return;const b=e.target.c
     render()}},true);
 </script>
 
-<div id="bldMark" hidden>빌드표시 20261104-164927 </div>
+<div id="bldMark" hidden>빌드표시 20261104-165010 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();</script>
 </body></html>

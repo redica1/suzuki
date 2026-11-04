@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261104-210819 -->
+<!-- build: 20261104-210910 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -3012,6 +3012,6 @@ document.addEventListener('input',e=>{const t=e.target;if(S.tab!=='meal'||!t.dat
   if(k==='kind'||k==='sd')render();else{const btn=document.getElementById('mlMake');if(btn){const B=mlBase(),on=mlRows().filter(x=>x.on),tot=on.reduce((s,x)=>s+(x.n==null?(S.mlf.base||B.n):+x.n||0),0);btn.textContent=`고른 ${on.length}줄 식권 만들기 · ${tot.toLocaleString()}장`}}});
 document.addEventListener('change',e=>{const t=e.target;if(S.tab!=='meal')return;if(t.dataset&&t.dataset.mlf&&t.tagName==='SELECT'){const [i,k]=t.dataset.mlf.split('|'),r=mlRows()[+i];if(r){const old=ML_K[r.kind];r.kind=t.value;if(r.label.endsWith(old))r.label=r.label.slice(0,-old.length)+ML_K[t.value];render()}}});
 </script>
-<div id="bldMark" hidden>빌드표시 20261104-210819 </div>
+<div id="bldMark" hidden>빌드표시 20261104-210910 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();</script>
 </body></html>

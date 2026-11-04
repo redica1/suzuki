@@ -1,4 +1,4 @@
-${''/* build: 20261104-210819 */}
+${''/* build: 20261104-210910 */}
     ${S.extra.length?`<div class="xhead">명단에 없어 추가한 학생 ${S.extra.length}명 <span class="hint">체크한 학생만 접수돼요 · 연회비 30,000원이 함께 청구돼요 · 「빼기」는 목록에서 지워요</span></div><ul class="roster">${S.extra.map(s=>`<li><input type="checkbox" id="xk_${s.id}" ${s.on!==false?'checked':''} data-xon="${s.id}" aria-label="${esc(s.name)} 선택"><label class="who" for="xk_${s.id}"><b>${esc(s.name)} <span class="kind ks">학생</span></b><small>${age(s.birth)}세 · ${s.inst} · 담당 ${esc(s.teacher)}</small></label><span class="row" style="flex-wrap:nowrap"><span class="pill new">신규 추가</span><button class="btn small ghost" type="button" data-rmx="${s.id}">빼기</button></span></li>`).join('')}</ul>`:''}
     ${S.showNew?`<div class="adder"><b>명단에 없는 학생 추가</b>
       <p class="hint">늦게 들어온 학생은 여기서 추가하고 연회비 30,000원을 캠프비와 함께 입금해 주세요. 운영진이 확인하면 정식 접수돼요.</p>
@@ -69,7 +69,7 @@ function pCard(p){
 
 `):`<p class="hint">${p.kind==='family'?`${esc(people().find(x=>x.key===p.link)?.name||'')}의 가족으로 접수돼요. 레슨·음악회 질문은 없어요.`:'이 구분은 레슨·음악회 신청이 없어요.'}</p>`}
     ${p.kind!=='family'?`<div class="famadd">${(()=>{const fs=people().filter(x=>x.kind==='family'&&x.link===p.key);return fs.length?`<div class="famnest"><div class="grp-h">${esc(p.name)}의 가족 ${fs.length}명</div>${fs.map(pCard).join('')}</div>`:''})()}${(S.editNo&&S.quickEdit&&lockedP(p.key)?'':famChips(p.key,p.kind==='teacher'?'teacher':'student',p.name))}${roomRow(p.key,p.name)}</div>`:''}
-    <div class="fee-line"><span>${ROUNDS[CAMP.ri][0]} ${esc(i.type==='회원의 악기하는 자녀'?'악기하는 교사자녀':i.type)} ${won(f.base)}${f.les?` + 레슨 ${won(f.les)}`:''}${f.mc?` + 마스터클래스 ${won(f.mc)}`:''}${f.dues?` + 연회비 ${won(f.dues)}`:''}${(()=>{const tm=teams().find(x=>x.rep.key===p.key);return tm?` + 가족방(${tm.n}명) ${won(tm.fee)}`:''})()}</span><b class="num">${won(f.total+((teams().find(x=>x.rep.key===p.key)||{}).fee||0))}</b></div>
+    <div class="fee-line"><span>${ROUNDS[pRi(p.key)][0]} ${esc(i.type==='회원의 악기하는 자녀'?'악기하는 교사자녀':i.type)} ${won(f.base)}${f.les?` + 레슨 ${won(f.les)}`:''}${f.mc?` + 마스터클래스 ${won(f.mc)}`:''}${f.dues?` + 연회비 ${won(f.dues)}`:''}${(()=>{const tm=teams().find(x=>x.rep.key===p.key);return tm?` + 가족방(${tm.n}명) ${won(tm.fee)}`:''})()}</span><b class="num">${won(f.total+((teams().find(x=>x.rep.key===p.key)||{}).fee||0))}</b></div>
    </div></article>`;
 }
 function vStep3(){

@@ -1,4 +1,4 @@
-/* build: 20261104-210819 */
+/* build: 20261104-210910 */
 /* ---------- 캠프 설정 (관리자 화면에서 입력되는 값) ---------- */
 const ROOM = { cap:4, emptyFee:130000 }; // 가족방: 4인 기준, 빈 자리 1개당 추가 비용
 const CAMP = { id:'27W', ri:0, lessonFee:60000, lessonMax:5, mcFee:150000,
@@ -198,9 +198,12 @@ function people(){ // 선택된 사람들 (명단 + 신고 학생 + 가족)
   return res;
 }
 function info(p){ if(!S.info[p.key]) S.info[p.key]={by:p.birth?String(p.birth):'',gender:'',teacher:p.teacher||'',type:p.defType,prog:'',pref:false,p1:'',p2:'',lessons:0,mc:[],concert:'없음',song:'',other:false,oc:'',ot:''}; return S.info[p.key] }
+/* 사람별 차수 (11-04 · 입금해야 그 차수): 새 사람 = 지금 차수 · 고치는 접수의 사람 = 입금(또는 신고)했으면 그 차수, 아니면 지금 차수 — 서버 recalc_ 와 같은 규칙 */
+function pRi(key){const cur=S.editNo&&S.riBack!==undefined?S.riBack:CAMP.ri;if(!S.editNo)return cur;const sb=(typeof MY_SUBS!=='undefined'?MY_SUBS:[]).find(x=>x.no===S.editNo),p=sb&&sb.ppl.find(q=>q.id===sb.no+'_'+key);if(!p)return cur;
+  const r=p.rnd!=null?+p.rnd:CAMP.ri;return (+p.paidAmt||0)>0||p.pay==='신고'?r:Math.max(r,cur)}
 function feeOf(p){
   const i=info(p); const plays=PLAYS.has(i.type);
-  const base=(FEES[i.type]||[])[CAMP.ri]||0, les=plays?i.lessons*CAMP.lessonFee:0, mc=plays?mcFeeOf(i.mc):0;
+  const base=(FEES[i.type]||[])[pRi(p.key)]||0, les=plays?i.lessons*CAMP.lessonFee:0, mc=plays?mcFeeOf(i.mc):0;
   const dues=p.paid?0:(p.kind==='teacher'?CAMP.teacherDues:CAMP.studentDues);
   return {base,les,mc,dues,total:base+les+mc+dues};
 }

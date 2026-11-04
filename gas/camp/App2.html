@@ -1,4 +1,4 @@
-/* build: 20261104-210819 */
+/* build: 20261104-210910 */
 function vAuthPick(){return `<section class="sec"><h2>접수 시작</h2>
   <p class="lede">어떻게 접수하시나요?</p>
   <div class="pick2">
@@ -178,7 +178,7 @@ function rosterRow(x,kind){
 function typeSeg(key,owner){
   const opts=isGuest()?[['비회원 학생','비회원 참가 아이']]:owner==='teacher'&&isStaffAcad()?STAFF_TYPES.map(t=>[t,t]):owner==='teacher'?TEACHER_TYPES.map(t=>[t,t]):[['학생','학생'],['회원의 악기하는 자녀','악기하는 교사자녀']];
   const cur=(S.info[key]&&S.info[key].type)||(owner==='teacher'&&isStaffAcad()?'':opts[0][0]);
-  return `<div class="typeseg" role="group" aria-label="참가 구분">${opts.map(([v,l])=>`<button type="button" data-settype="${key}|${v}" aria-pressed="${cur===v}">${l}<span class="num">${won((FEES[v]||[])[CAMP.ri]||0)}</span></button>`).join('')}</div>`;
+  return `<div class="typeseg" role="group" aria-label="참가 구분">${opts.map(([v,l])=>`<button type="button" data-settype="${key}|${v}" aria-pressed="${cur===v}">${l}<span class="num">${won((FEES[v]||[])[pRi(key)]||0)}</span></button>`).join('')}</div>`;
 }
 function headOf(key){return S.join[key]||key}
 function sibsOf(key){return Object.keys(S.join).filter(j=>S.join[j]===key)}
@@ -210,7 +210,7 @@ function famBlock(key,name,owner){
   const fs=S.fam.filter(f=>f.link===key);
   return `<li class="fam"><span></span><div class="famlist">
     ${typeSeg(key,owner)}
-    ${fs.map(f=>`<div class="famitem"><div class="famtop"><label for="fn_${f.id}"><b>${FAM_SHORT[f.type]}</b> 이름</label><span class="num">${won((FEES[f.type]||[])[CAMP.ri]||0)}</span><button class="btn small ghost" type="button" data-rmf="${f.id}" aria-label="${esc(f.name||FAM_SHORT[f.type])} 빼기">빼기</button></div>
+    ${fs.map(f=>`<div class="famitem"><div class="famtop"><label for="fn_${f.id}"><b>${FAM_SHORT[f.type]}</b> 이름</label><span class="num">${won((FEES[f.type]||[])[pRi(f.id)]||0)}</span><button class="btn small ghost" type="button" data-rmf="${f.id}" aria-label="${esc(f.name||FAM_SHORT[f.type])} 빼기">빼기</button></div>
       <input type="text" id="fn_${f.id}" data-famname="${f.id}" value="${esc(f.name)}" placeholder="이름을 입력하세요" autocomplete="off" ${f.name?'':'class="empty"'}></div>`).join('')}
     ${famChips(key,owner,name)}
     ${roomRow(key,name)}

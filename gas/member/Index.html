@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261104-175804 -->
+<!-- build: 20261104-184533 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -1248,7 +1248,7 @@ var PRT_KINDS=['캠프','졸업연주','교사연수','기타'];
 function loadPrt(){S.prtL=1;callS('printEvents').then(function(r){S.prtL=0;if(!r.ok){toast(r.msg);return}var P=S.prt=S.prt||{};P.evs=r.evs||[];
   if(!P.ev||!P.evs.some(function(e){return e.id===P.ev})){var open=P.evs.filter(function(e){return e.state!=='끝'});P.ev=(open[open.length-1]||P.evs[P.evs.length-1]||{}).id||''}
   if(P.ev)prtLoadEv(P.ev);else if(S.tab==='prt')render()})}
-function prtLoadEv(ev){var P=S.prt;P.req=null;P.ev=ev;if(S.tab==='prt')render();callS('printData',ev).then(function(r){if(!r.ok){toast(r.msg);return}if(P.ev===r.ev){P.req=r.req||{};if(S.tab==='prt')render()}})}
+function prtLoadEv(ev){var P=S.prt;P.req=null;P.ev=ev;if(S.tab==='prt')render();callS('printData',ev).then(function(r){if(!r.ok){toast(r.msg);return}if(P.ev===r.ev){P.req=r.req||{};P.addr=r.addr||{};if(S.tab==='prt')render()}})}
 function prtPeople(){var heads={};S.D.acad.forEach(function(a){if(a['원장교사ID'])heads[a['원장교사ID']]=1});
   return S.D.tch.filter(function(t){return t['상태']!=='탈퇴'&&t['교사ID']}).map(function(t){return {t:t,id:t['교사ID'],head:!!heads[t['교사ID']]}})}
 function prtQ(){return (S.prt.q||'').replace(/\s/g,'')}
@@ -1269,8 +1269,8 @@ function vPrint(){var P=S.prt;if(!P||!P.evs)return '<div class="panel"><span><sp
     (P.newOpen?prtEvForm(P.newOpen==='edit'?ev:null):'')+'</div>';
   if(!ev)return head+bar;
   if(!P.req)return head+bar+'<div class="panel"><span><span class="spin"></span> 장수를 불러오는 중…</span></div>';
-  var R=P.req,all=prtPeople(),pf=S.D.payF||{},sumD=0,sumP=0,nP=0,noAddr=0;
-  all.forEach(function(x){var r=R[x.id];if(r&&(r.d||r.p)){nP++;sumD+=r.d;sumP+=r.p;if(!(pf[x.id]&&pf[x.id].m))noAddr++}});
+  var R=P.req,all=prtPeople(),AD=P.addr||{},sumD=0,sumP=0,nP=0,noAddr=0;
+  all.forEach(function(x){var r=R[x.id];if(r&&(r.d||r.p)){nP++;sumD+=r.d;sumP+=r.p;if(!(AD[x.id]&&AD[x.id].a1))noAddr++}});
   var L=prtVisible(),f=P.f||{},chk=P.sel||{},nSel=Object.keys(chk).filter(function(k){return chk[k]}).length;
   var sum='<div class="row" style="gap:10px;flex-wrap:wrap;margin:0 0 12px">'+[['보낼 사람',nP+'명'],['공문',sumD+'장'],['포스터',sumP+'장'],['우편물 주소 없음',noAddr+'명',noAddr]].map(function(c){return '<div class="panel" style="margin:0;padding:10px 16px;min-width:130px"><div class="cap">'+c[0]+'</div><b style="font-size:20px'+(c[2]?';color:#c0392b':'')+'">'+c[1]+'</b></div>'}).join('')+'</div>';
   var flt='<div class="panel"><div class="row" style="gap:8px;flex-wrap:wrap;align-items:center">'+
@@ -1282,9 +1282,9 @@ function vPrint(){var P=S.prt;if(!P||!P.evs)return '<div class="panel"><span><sp
     '<div class="row" style="gap:6px;flex-wrap:wrap;align-items:center;margin-top:8px;padding-top:8px;border-top:1px solid var(--line)"><b style="font-size:13px">체크한 '+nSel+'명에게</b> 공문 <input type="number" id="prtBD" min="0" max="999" style="width:64px"> 장 · 포스터 <input type="number" id="prtBP" min="0" max="999" style="width:64px"> 장 <button class="btn small primary" type="button" id="prtBulk" '+(nSel?'':'disabled')+'>넣기</button><button class="btn small ghost" type="button" id="prtBulk0" '+(nSel?'':'disabled')+'>0장으로</button><button class="btn small ghost" type="button" id="prtAll">보이는 '+L.length+'명 모두 체크</button>'+(nSel?'<button class="btn small ghost" type="button" id="prtNone">체크 풀기</button>':'')+'<span class="cap" id="prtSaving" style="margin-left:auto">'+(P.saving?'저장 중…':'')+'</span></div></div>';
   var shown=L.slice(0,400);
   var tbl='<div class="panel tbl"><table class="stt prt"><thead><tr><th style="width:28px"><span class="cap">✓</span></th><th>이름</th><th>학원</th><th>직급 · 구분</th><th>휴대전화</th><th>우편물 주소</th><th>공문</th><th>포스터</th><th>메모</th></tr></thead><tbody>'+
-    shown.map(function(x){var t=x.t,r=R[x.id]||{d:0,p:0,m:''},has=pf[x.id]&&pf[x.id].m,on=r.d||r.p;
+    shown.map(function(x){var t=x.t,r=R[x.id]||{d:0,p:0,m:''},ad=AD[x.id],on=r.d||r.p;
       return '<tr class="'+(on?'':'mutedrow')+'"><td><input type="checkbox" data-prtsel="'+esc(x.id)+'" '+(chk[x.id]?'checked':'')+' aria-label="'+esc(t['이름'])+' 고르기"></td><td><b>'+nm(t)+'</b>'+(x.head?' <span class="pill info">원장</span>':'')+'</td><td>'+acadShort(t)+'</td><td><span class="cap">'+esc(t['직급']||'')+'</span> '+(t['회원구분']==='외부인'?'<span class="pill mute">관계자</span>':kindPill(t['회원구분']))+'</td><td class="num">'+esc(fmt(t['휴대전화']))+'</td>'+
-        '<td>'+(has?'<span class="pill ok">있음</span>':'<span class="pill bad">없음</span>')+'</td>'+
+        '<td class="padr">'+(ad&&ad.a1?'<span class="num cap">'+esc(ad.zip||'')+'</span> '+esc(ad.a1)+(ad.a2?'<br><span class="cap">'+esc(ad.a2)+'</span>':''):'<span class="pill bad">없음</span>')+'</td>'+
         '<td><input type="number" min="0" max="999" class="num" data-prt="'+esc(x.id)+'|d" value="'+(r.d||'')+'" placeholder="0" style="width:64px"></td>'+
         '<td><input type="number" min="0" max="999" class="num" data-prt="'+esc(x.id)+'|p" value="'+(r.p||'')+'" placeholder="0" style="width:64px"></td>'+
         '<td><input type="text" maxlength="100" data-prt="'+esc(x.id)+'|m" value="'+esc(r.m||'')+'" style="min-width:140px" placeholder="(엑셀에 안 나감)"></td></tr>'}).join('')+
@@ -1340,8 +1340,8 @@ document.addEventListener('change',function(e){if(S.tab!=='prt'||!S.prt)return;v
 document.addEventListener('input',function(e){if(S.tab!=='prt'||!S.prt||e.target.id!=='prtQ')return;S.prt.q=e.target.value;clearTimeout(S.prt.qt);S.prt.qt=setTimeout(function(){var pos=e.target.selectionStart;render();var q=document.getElementById('prtQ');if(q){q.focus();try{q.setSelectionRange(pos,pos)}catch(x){}}},300)});
 document.addEventListener('keydown',function(e){var t=e.target;if(S.tab!=='prt'||!t.dataset||!t.dataset.prt||e.key!=='Enter')return;e.preventDefault();var L=[].slice.call(document.querySelectorAll('[data-prt$="|'+t.dataset.prt.split('|')[1]+'"]')),i=L.indexOf(t);t.blur();if(L[i+1])L[i+1].focus()});
 </script>
-<style>table.prt th,table.prt td{text-align:left !important}table.prt th:first-child,table.prt td:first-child{text-align:center !important}table.prt th:nth-child(7),table.prt td:nth-child(7),table.prt th:nth-child(8),table.prt td:nth-child(8){text-align:center !important}table.prt td:nth-child(7) input,table.prt td:nth-child(8) input{text-align:center}table.prt tr.mutedrow td{color:var(--faint)}table.prt tr.mutedrow td b{color:var(--muted)}table.prt td{vertical-align:middle}</style>
+<style>table.prt th,table.prt td{text-align:left !important}table.prt th:first-child,table.prt td:first-child{text-align:center !important}table.prt th:nth-child(7),table.prt td:nth-child(7),table.prt th:nth-child(8),table.prt td:nth-child(8){text-align:center !important}table.prt td:nth-child(7) input,table.prt td:nth-child(8) input{text-align:center}table.prt tr.mutedrow td{color:var(--faint)}table.prt tr.mutedrow td b{color:var(--muted)}table.prt td{vertical-align:middle}table.prt td.padr{white-space:normal;min-width:220px;max-width:340px;line-height:1.4}</style>
 
-<div id="bldMark" hidden>빌드표시 20261104-175804 </div>
+<div id="bldMark" hidden>빌드표시 20261104-184533 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();</script>
 </body></html>

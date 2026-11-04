@@ -1,4 +1,4 @@
-/* build: 20261104-175804 */
+/* build: 20261104-184533 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -1953,7 +1953,9 @@ function printEvSave(who, d) {
   const id = nextId_(E, '행사ID', 'E'); E.append({ '행사ID': id, '이름': name, '종류': kind, '상태': '진행', '메모': String(d.memo || '').slice(0, 200), '만든날': now_().slice(0, 10), '수정일': now_(), '수정자': who.name });
   log_(who.name, '인쇄행사', id, '추가', name); return { evs: prtEvs_(), id };
 }
-function printData(who, ev) { if (!prtEvs_().some(e => e.id === ev)) fail('행사를 찾지 못했어요.'); return { ev, req: prtReqs_(ev) }; }
+/** 화면용: 장수 + 우편물 받을 주소(관리자 화면에 바로 보임, 사용자 요청 11-04) — 불러올 때마다 기록 */
+function prtAddr_() { const P = payTbl_(), pc = col_(P), o = {}; P.v.forEach(r => { const z = r[pc['우편번호']] || '', a1 = r[pc['주소']] || '', a2 = r[pc['상세주소']] || ''; if (z || a1 || a2) o[r[pc['교사ID']]] = { zip: z, a1, a2 }; }); return o; }
+function printData(who, ev) { const e = prtEvs_().find(x => x.id === ev); if (!e) fail('행사를 찾지 못했어요.'); let addr = {}; try { addr = prtAddr_(); log_(who.name, '인쇄요청', ev, '주소 보기', e.name); } catch (x) { } return { ev, req: prtReqs_(ev), addr }; }
 /** list = [{tid, d(공문), p(포스터), m(메모)}] · 0장 0장 · 메모 없음이면 줄을 지움 */
 function printSet(who, ev, list) {
   if (!prtEvs_().some(e => e.id === ev)) fail('행사를 찾지 못했어요.');

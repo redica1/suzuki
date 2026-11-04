@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261104-185735 -->
+<!-- build: 20261104-185900 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -2427,22 +2427,22 @@ render();
 .dprev.stale{outline:3px solid #f0c36d}
 .dwarn{background:#fff6e5;border:1px solid #f0c36d;color:#6b4a00;border-radius:8px;padding:6px 10px;font-size:13px;margin-top:8px}
 /* 인쇄 양식 (A4) — 미리보기와 인쇄가 같은 모양 */
-.dp{width:210mm;min-height:297mm;box-sizing:border-box;padding:14mm 17mm 16mm;background:#fff;color:#111;font-family:"Pretendard Variable",Pretendard,"Malgun Gothic","Apple SD Gothic Neo",sans-serif;font-size:12.5pt;line-height:1.6;letter-spacing:-.01em;word-break:keep-all}
-.dp .lg{text-align:center}.dp .lg img{width:58mm;height:auto}
-.dp .meta{font-size:12pt;margin:6mm 0 2mm;border-bottom:1px solid #444;padding-bottom:2mm}.dp .meta div{display:flex;gap:4mm}.dp .meta b{min-width:18mm;font-weight:700}
-.dp h1{font-size:18pt;text-align:center;margin:5mm 0 5mm;font-weight:800;letter-spacing:-.02em}
-.dp .intro{margin:0 0 4mm;white-space:pre-wrap}
-.dp .sc{margin:0 0 3.2mm;break-inside:auto}
+.dp{width:210mm;min-height:297mm;box-sizing:border-box;padding:14mm 17mm 16mm;background:#fff;color:#111;font-family:"Pretendard Variable",Pretendard,"Malgun Gothic","Apple SD Gothic Neo",sans-serif;font-size:12.5pt;line-height:1.48;letter-spacing:-.01em;word-break:keep-all}
+.dp .lg{text-align:center}.dp .lg img{width:46mm;height:auto}
+.dp .meta{font-size:12pt;margin:4mm 0 2mm;border-bottom:1px solid #444;padding-bottom:2mm}.dp .meta div{display:flex;gap:4mm}.dp .meta b{min-width:18mm;font-weight:700}
+.dp h1{font-size:18pt;text-align:center;margin:3mm 0 3.5mm;font-weight:800;letter-spacing:-.02em}
+.dp .intro{margin:0 0 3mm;white-space:pre-wrap}
+.dp .sc{margin:0 0 2.2mm;break-inside:auto}
 .dp .sh{font-weight:800}
 .dp .ln{white-space:pre-wrap;margin:0}
-.dp .ln.gap{height:2.2mm}
+.dp .ln.gap{height:1.4mm}
 .dp .red{color:#d0021b}
-.dp .rh{font-weight:700;margin:2.4mm 0 1mm}
+.dp .rh{font-weight:700;margin:1.6mm 0 .7mm}
 .dp *{font-family:inherit}.dp table.ft{width:100%;border-collapse:collapse;margin:0 0 1mm;break-inside:avoid;font-size:12pt}
-.dp table.ft th,.dp table.ft td{border:1px solid #333;padding:1.2mm 2mm;text-align:center;vertical-align:middle}
+.dp table.ft th,.dp table.ft td{border:1px solid #333;padding:.7mm 2mm;text-align:center;vertical-align:middle}
 .dp table.ft th{background:#eaf1f9;font-weight:700;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-.dp table.ft td.f3{font-size:11.5pt;line-height:1.45}
-.dp .ft-end{margin-top:9mm;text-align:center}
+.dp table.ft td.f3{font-size:11.5pt;line-height:1.32}
+.dp .ft-end{margin-top:6mm;text-align:center}
 .dp .ft-end .www{font-weight:700;font-size:13pt}
 .dp .ft-end .ko{font-size:21pt;letter-spacing:.45em;margin-top:1mm;font-weight:500}
 .dp .ft-end .en{font-size:12pt;letter-spacing:.42em;color:#222}
@@ -2753,6 +2753,6 @@ document.addEventListener('click',e=>{if(S.tab!=='con'||(S.consv||'list')!=='boo
 document.addEventListener('change',e=>{if(S.tab!=='con'||e.target.id!=='bkSel')return;S.bkSel=e.target.value;render()});
 document.addEventListener('input',e=>{const t=e.target;if(S.tab!=='con'||!t.dataset||t.dataset.bken==null)return;S.bkEn=S.bkEn||{};S.bkEn[t.dataset.bken]=t.value;document.querySelectorAll('[data-bken]').forEach(x=>{if(x!==t&&x.dataset.bken===t.dataset.bken)x.value=t.value});const sv=document.getElementById('bkEnSave');if(sv){const n=Object.keys(S.bkEn).length;sv.disabled=!n;sv.textContent='영어 곡명 저장'+(n?' ('+n+')':'')}});
 </script>
-<div id="bldMark" hidden>빌드표시 20261104-185735 </div>
+<div id="bldMark" hidden>빌드표시 20261104-185900 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();</script>
 </body></html>

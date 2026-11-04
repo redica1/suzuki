@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261104-182944 -->
+<!-- build: 20261104-183641 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -2687,6 +2687,6 @@ document.addEventListener('change',e=>{if(S.tab!=='aud')return;const t=e.target;
   if(t.dataset&&t.dataset.audmemo){const i=t.dataset.audmemo.lastIndexOf('|'),id=t.dataset.audmemo.slice(0,i),st=t.dataset.audmemo.slice(i+1);call('audSet',[id,st==='제출 안 함'?'심사 전':st,t.value],r=>{S.AU=r;toast('메모를 저장했어요')},'')}});
 document.addEventListener('input',e=>{if(S.tab!=='aud'||e.target.id!=='audQ')return;S.audF=Object.assign(S.audF||{},{q:e.target.value});clearTimeout(S.audQT);S.audQT=setTimeout(()=>{const pos=e.target.selectionStart;render();const q=document.getElementById('audQ');if(q){q.focus();try{q.setSelectionRange(pos,pos)}catch(x){}}},350)});
 </script>
-<div id="bldMark" hidden>빌드표시 20261104-182944 </div>
+<div id="bldMark" hidden>빌드표시 20261104-183641 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();</script>
 </body></html>

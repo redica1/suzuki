@@ -1,4 +1,4 @@
-/* build: 20261104-182944 */
+/* build: 20261104-183641 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -1010,7 +1010,8 @@ function bankInfo_() {
 let SET_MEMO = null;
 function setting_(k) { if (!SET_MEMO) { SET_MEMO = {}; rows_('설정').forEach(x => { const n = String(x['항목']); if (!(n in SET_MEMO)) SET_MEMO[n] = dstr_(x['값']).trim(); }); } return SET_MEMO[k] || ''; }
 function ensureHead_(name, head) {
-  const sh = SpreadsheetApp.getActive().getSheetByName(name);
+  const ss = SpreadsheetApp.getActive(); let sh = ss.getSheetByName(name);
+  if (!sh) { sh = ss.insertSheet(name); sh.getRange(1, 1, 1, head.length).setValues([head]).setFontWeight('bold'); sh.setFrozenRows(1); sh.getRange(1, 1, Math.max(sh.getMaxRows(), 2), head.length).setNumberFormat('@'); return; }   /* 없는 탭은 머리글과 함께 만듦 (11-04: 「음원」) */
   const cur = sh.getRange(1, 1, 1, Math.max(1, sh.getLastColumn())).getValues()[0].map(String);
   head.forEach(h => { if (!cur.includes(h)) { cur.push(h); sh.getRange(1, cur.length).setValues([[h]]); } });
 }

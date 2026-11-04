@@ -1,4 +1,4 @@
-/* build: 20261104-192741 */
+/* build: 20261104-210716 */
 /* ---------- 캠프 설정 (관리자 화면에서 입력되는 값) ---------- */
 const ROOM = { cap:4, emptyFee:130000 }; // 가족방: 4인 기준, 빈 자리 1개당 추가 비용
 const CAMP = { id:'27W', ri:0, lessonFee:60000, lessonMax:5, mcFee:150000,
@@ -86,7 +86,7 @@ function applyCamp(c){if(!c||!c.base||!Array.isArray(c.rounds)||!c.rounds.length
   const keepRi=S&&S.editNo&&S.riBack!==undefined;
   CAMP.id=b.id;['lessonFee','lessonMax','mcFee','studentDues','teacherDues'].forEach(k=>{if(o[k]!==undefined)CAMP[k]=+o[k]});
   if(o.roomCap)ROOM.cap=+o.roomCap;if(o.roomEmptyFee!==undefined)ROOM.emptyFee=+o.roomEmptyFee;
-  ROUNDS.length=0;c.rounds.forEach(r=>ROUNDS.push([r.n,`${kday(r.from)} ~ ${kday(r.to)}`]));
+  ROUNDS.length=0;c.rounds.forEach(r=>ROUNDS.push([r.n,`${kday(r.from)} ~ ${kday(r.to)}`,r.to]));
   if(c.fees)Object.keys(c.fees).forEach(t=>FEES[t]=c.fees[t]);
   if(c.refund&&Array.isArray(c.refund.rules)){REFUND.rules=c.refund.rules;if(c.refund.after)REFUND.after=c.refund.after;REFUND.duesRefund=!!c.refund.duesRefund}
   const ri=Math.max(0,Math.min(ROUNDS.length-1,+c.ri||0));if(keepRi)S.riBack=ri;else CAMP.ri=ri;

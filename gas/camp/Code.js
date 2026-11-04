@@ -1,4 +1,4 @@
-/* build: 20261104-192741 */
+/* build: 20261104-210716 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -647,7 +647,7 @@ function writePeople_(sb) {
     const key = p.id.slice(sb.no.length + 1), i = info[key] || {};
     const r = p.rep && p.rep.rows && p.rep.rows[p.id] || (p.rep && p.rep.ids ? { name: p.rep.name, date: p.rep.date, a: p.rep.amt } : {});
     const vals = {
-      '참가자ID': p.id, '접수번호': sb.no, '차수': sb.round, '학원': sb.acad, '접수 교사': sb.owner, '들어온 차례': (p.batch || 1) === 1 ? '처음 접수' : '추가 ' + ((p.batch || 1) - 1),
+      '참가자ID': p.id, '접수번호': sb.no, '차수': p.rndN || sb.round, '학원': sb.acad, '접수 교사': sb.owner, '들어온 차례': (p.batch || 1) === 1 ? '처음 접수' : '추가 ' + ((p.batch || 1) - 1),
       '추가 일시': p.addAt || '', '이름': p.name, '구분': p.kind, '참가 구분': p.type, '악기': p.inst || i.inst || '', '담당 교사': i.teacher || '', '출생연도': i.by || '', '성별': i.gender || '',
       '현재 진도': i.prog || '', '선호 교수1': i.p1 || '', '선호 교수2': i.p2 || '', '추가 레슨': i.lessons || '', '마스터클래스': (i.mc || []).join(', '),
       '음악회': i.concert && i.concert !== '없음' ? i.concert : '', '음악회 곡': i.other ? (String(i.oc || '') + ' ' + String(i.ot || '')).trim() : (i.song || ''),
@@ -701,17 +701,24 @@ function writeTeams_(all) {
 /* ---------------- 금액은 서버가 다시 계산 ---------------- */
 /** 화면이 보낸 금액을 믿지 않고 참가 구분·차수·레슨·마스터클래스·연회비·가족방으로 다시 계산 */
 function recalc_(sb) {
-  const CC = camp_(), FEES = CC.fees, OPT = CC.opt, ADJ = adjMap_();
+  const M = RC_MEMO || {}, CC = camp_(), FEES = CC.fees, OPT = CC.opt, ADJ = M.adj || adjMap_();
   if (sb.form) { delete sb.form.red; if (sb.form.note != null) sb.form.note = String(sb.form.note || '').trim().slice(0, 100) || null; }
   const f = sb.form || {}, info = f.info || {}, ri = Math.max(0, Math.min(CC.rounds.length - 1, +f.ri || 0));
   sb.round = CC.rounds[ri].n;
   const guest = sb.acad === GUEST_ACAD;   // 비회원: 연회비 없음 · 비회원 참가비
   const staff = sb.acad === STAFF_ACAD;
   const intl = !!sb.intl;   // 해외 단체: 연회비 없음 · 해외 참가비   // 관계자: 연회비 없음 · 본인은 역할 참가비 · 가족은 회원 가족 참가비
-  const tPaid = {}; teachers_().forEach(t => tPaid['t_' + t.id] = !!t.paidDate);
-  const sPaid = {}; rows_(SH.S).forEach(r => sPaid[String(r['ID'])] = !!dstr_(r['회비 납부일']));
-  const viaCamp = duesViaCamp_();   /* 이 캠프에서 받은 연회비는 회원관리에 납부로 남아도 그대로 청구 (10-31) */
+  const tPaid = {}; (M.t || teachers_()).forEach(t => tPaid['t_' + t.id] = !!t.paidDate);
+  const sPaid = {}; (M.s || rows_(SH.S)).forEach(r => sPaid[String(r['ID'])] = !!dstr_(r['회비 납부일']));
+  const viaCamp = M.via || duesViaCamp_();   /* 이 캠프에서 받은 연회비는 회원관리에 납부로 남아도 그대로 청구 (10-31) */
   const key = p => p.id.slice(sb.no.length + 1);
+  /* 사람별 차수 (11-04): 입금해야 그 차수 — 차수 = 늦은 쪽(접수에 들어온 날의 차수, 입금일의 차수). 입금 확인 = 운영진이 확인한 실제 입금일 · 조금이라도 내면 그 차수.
+     아직 확인 전이면 입금 신고한 날짜(운영진 확인 중, 반려되면 풀림) · 신고도 없으면 오늘 차수 → 마감이 지나면 다음 차수 금액 (매일 새로 셈: repriceTick_) */
+  const RD = CC.rounds, rix = d => { const v = String(d || '').slice(0, 10); if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) return -1; const j = RD.findIndex(r => v <= String(r.to || '9999')); return j < 0 ? RD.length - 1 : j; };
+  const AM = M.am || adminMap_(), tdR = curRound_(CC);
+  const rOf = p => { const add = rix(p.addAt) >= 0 ? rix(p.addAt) : ri, a = AM[p.id];
+    const pay = a && a.amt > 0 ? (rix(a.date) >= 0 ? rix(a.date) : add) : (p.pay === '신고' && p.rep && rix(p.rep.date) >= 0 ? rix(p.rep.date) : tdR);
+    return Math.max(add, pay); };
   const live = sb.ppl.filter(p => p.status !== '취소');
   const liveKeys = live.map(key);
   // 가족방: 대표 + 같은 방 형제 + 그 가족
@@ -741,13 +748,25 @@ function recalc_(sb) {
     if (p.status !== '취소' && plays && String(i.video || '').trim() && !/^https?:\S{6,}$/i.test(String(i.video || '').trim())) throw new Error(p.name + ': 음원 주소는 https 로 시작하게 넣어 주세요. (나중에 「내 접수」에서 넣어도 돼요)');
     const isT = /^t_|^me_/.test(k), isFam = (f.fam || []).some(x => x.id === k);
     const paid = viaCamp[p.id] ? false : guest || staff || intl ? true : isFam ? true : isT ? (k.indexOf('me_') === 0 ? true : !!tPaid[k]) : !!sPaid[k];
-    p.type = i.type; p.fee = FEES[i.type][ri];
-    if (intl) { p.usd = +FEES[i.type][ri] || 0; p.fee = Math.round(p.usd * (+OPT.usdRate || 1450)); }   /* 해외: 참가비표 값 = USD, 원화 청구액 = USD × 환율 */ p.lesson = les * OPT.lessonFee + mc;
+    const pr = p.status === '취소' ? (p.rnd != null ? +p.rnd : ri) : rOf(p); p.rnd = pr; p.rndN = RD[pr].n;
+    p.type = i.type; p.fee = FEES[i.type][pr];
+    if (intl) { p.usd = +FEES[i.type][pr] || 0; p.fee = Math.round(p.usd * (+OPT.usdRate || 1450)); }   /* 해외: 참가비표 값 = USD, 원화 청구액 = USD × 환율 */ p.lesson = les * OPT.lessonFee + mc;
     p.dues = paid ? 0 : (isT ? OPT.teacherDues : OPT.studentDues);
     p.room = roomBy[k] || 0;
     const aj = ADJ[p.id]; if (aj) { if (aj.fee !== '') p.fee = +aj.fee; if (aj.room !== '') p.room = +aj.room; p.adj = aj.memo || '운영진 조정'; } else delete p.adj;   /* 운영진 청구 조정 (11-01) */
   });
   return sb;
+}
+/** 하루 한 번(5분 트리거 안에서 날짜가 바뀐 첫 번째): 모든 접수 금액을 다시 셈 → 입금 안 한 사람은 차수 마감이 지나면 다음 차수 금액 (11-04) */
+let RC_MEMO = null;
+function repriceTick_(force) {
+  const P = PropertiesService.getScriptProperties(), d = today_(); if (!force && P.getProperty('repriceDay') === d) return { skip: true };
+  const lock = lock_(); let n = 0, more = false;
+  try { RC_MEMO = { adj: adjMap_(), t: teachers_(), s: rows_(SH.S), via: duesViaCamp_(), am: adminMap_() };
+    loadSubs_().forEach(sb => { if (more || !sb.form || !sb.ppl.some(p => p.status !== '취소')) return; const sig = () => JSON.stringify(sb.ppl.map(p => [p.fee, p.lesson, p.dues, p.room, p.rnd])), before = sig();
+      try { recalc_(sb); } catch (e) { return; } if (sig() !== before) { if (n >= 40) { more = true; return; } writeSub_(sb); n++; } });   /* 한 번에 40건까지 · 남으면 다음 5분 트리거에서 이어서 */
+    if (!more) P.setProperty('repriceDay', d); if (n) log_('자동', '차수 금액 다시 셈', n + '건' + (more ? ' (이어서 함)' : '')); } finally { RC_MEMO = null; lock.releaseLock(); }
+  return { n, more };
 }
 /* ---------- 운영진 청구 조정 (11-01): 사람마다 참가비 · 가족방비를 직접 정함 (관계자 가족 무료 등 그때그때) ---------- */
 const ADJ_SH = '청구조정', ADJ_HEAD = ['참가자ID', '참가비', '가족방비', '메모', '수정일', '수정자'];
@@ -1623,7 +1642,7 @@ function memberSync_(force) {
   log_('회원관리 연동', '명단 맞춤', '교사 ' + T.length + ' · 학생 ' + S.length + ' · 회원관리 ' + stamp);
   return { ok: true, at: stamp, t: T.length, s: S.length };
 }
-function memberSyncTick() { try { memberSync_(false); } catch (e) { Logger.log('회원관리 연동: ' + e.message); } try { memberReport_(); } catch (e) { Logger.log('회원관리 보고: ' + e.message); } try { campRegister_(); } catch (e) { Logger.log('회원관리 캠프 등록: ' + e.message); } }
+function memberSyncTick() { try { repriceTick_(); } catch (e) { Logger.log('차수 다시 셈: ' + e.message); } try { memberSync_(false); } catch (e) { Logger.log('회원관리 연동: ' + e.message); } try { memberReport_(); } catch (e) { Logger.log('회원관리 보고: ' + e.message); } try { campRegister_(); } catch (e) { Logger.log('회원관리 캠프 등록: ' + e.message); } }
 /** 회원관리 설정 「캠프 시트」에 이 캠프 접수 시트를 적어 둠 (11-01) → 회원관리 통장 탭이 캠프 행사(27W)를 저절로 연결. 바뀐 때만 씀 */
 function campRegister_() {
   const mid = memberSheetId_(); if (!mid) return { skip: true };
@@ -2027,7 +2046,7 @@ function adminConfirm(token, items) {
     }
     // 접수 탭 합계 다시 쓰기
     const subs = loadSubs_(); const nos = [...new Set(items.map(it => it.pid.split('_')[0]))];
-    subs.filter(sb => nos.includes(sb.no)).forEach(sb => writeSubRow_(sb));
+    subs.filter(sb => nos.includes(sb.no)).forEach(sb => { try { recalc_(sb); writeSub_(sb); } catch (e) { writeSubRow_(sb); } });   /* 입금일로 차수가 정해지므로 금액 다시 셈 (11-04) */
   } finally { lock.releaseLock(); }
   return adminData(token);
 }
@@ -2051,7 +2070,7 @@ function adminRejectReport(token, pid, reason) {
       SpreadsheetApp.getActive().getSheetByName(SH.RP).appendRow([stamp_(), p.rejected.slice(-1)[0].id, sb.no, sb.acad, '관리자 ' + a.name, p.name, row.name || '', row.date || '', row.a || '', reason || '', '반려']);
       log_('관리자 ' + a.name, '입금 신고 반려', id + ' · ' + (reason || ''));
     });
-    touched.forEach(sb => writeSub_(sb, false));
+    touched.forEach(sb => { try { recalc_(sb); } catch (e) { } writeSub_(sb, false); });   /* 반려 = 그 날짜 차수가 풀림 → 지금 차수 금액 (11-04) */
   } finally { lock.releaseLock(); }
   return adminData(token);
 }

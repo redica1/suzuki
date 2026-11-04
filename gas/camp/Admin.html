@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261104-182239 -->
+<!-- build: 20261104-182819 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -1601,7 +1601,7 @@ const ME=()=>(S.D&&S.D.me)||{sup:true,perms:{}};
 const permOf=k=>{const m=ME();if(m.sup)return '편집';if(k==='camp'||k==='staff'||k==='cons'||k==='doc')return '';return (m.perms||{})[k]||''};
 const visTabs=()=>TABS.concat(SUP_TABS).filter(([k])=>permOf(k));
 const RO=()=>permOf(S.tab)==='보기';
-const WRITE_FN=/^(audSet|audPub|devSummer|adminNoticeSave|adminMenuSave|scholSave|adminConfirm|adminAdjust|adminSetBankAcct|ogSave|ogToken|adminRejectReport|adminSaveEns|adminSaveProfs|adminRefund|adminSetIssue|schedSave|lessonSet|adminSetSetting|roomSave|conSave|campSave|staffSave|songEnSave|pvHideSave|roomCfgSave|layoutImport|roomMove|budSave)$/;
+const WRITE_FN=/^(devAud|devAudClear|audSet|audPub|devSummer|adminNoticeSave|adminMenuSave|scholSave|adminConfirm|adminAdjust|adminSetBankAcct|ogSave|ogToken|adminRejectReport|adminSaveEns|adminSaveProfs|adminRefund|adminSetIssue|schedSave|lessonSet|adminSetSetting|roomSave|conSave|campSave|staffSave|songEnSave|pvHideSave|roomCfgSave|layoutImport|roomMove|budSave)$/;
 const roBlock=fn=>WRITE_FN.test(fn)&&permOf(S.tab)!=='편집';
 const RO_MSG='보기만 할 수 있는 메뉴예요. 바꾸려면 총관리자에게 「편집」 권한을 받아 주세요.';
 
@@ -2668,11 +2668,15 @@ function vAud(){if(!S.AU){if(!S.AUL)setTimeout(audLoad,0);return '<div class="pa
     <td class="num"><small>${x.first?'접수 때':esc(tsFmtA(x.at))}</small></td>
     <td style="white-space:nowrap">${x.none?'':`${btn(x,'승인','primary')} ${btn(x,'비승인','primary')} ${btn(x,'보류','primary')}${x.rv?`<br><small class="hint">${esc(x.rv)} · ${esc(kday(x.rd))}</small>`:''}`}</td>
     <td>${x.none?'':`<input type="text" data-audmemo="${esc(x.id)}|${esc(audSt(x))}" value="${esc(x.memo||'')}" maxlength="200" placeholder="메모 (신청자에게 안 보임)" style="min-width:160px" ${ro?'disabled':''}>`}</td></tr>`).join('')||'<tr><td colspan="9" class="hint">해당하는 음원이 없어요.</td></tr>'}
-  </tbody></table></div>`}
+  </tbody></table></div>
+  <div class="panel"><b>테스트용 가상 음원</b> <span class="hint">STG에서만 · 가상 접수 학생 몇 명에게 음악회를 정하고 음원 주소를 상태별(접수 때 · 심사 전 · 승인 · 보류 · 비승인 · 제출 안 함)로 넣어요</span>
+    <div class="row" style="gap:8px;margin-top:8px"><button class="btn small primary" type="button" id="audFake">가상 음원 8명 만들기</button><button class="btn small ghost" type="button" id="audFakeX">가상 음원 지우기</button></div></div>`}
 const tsFmtA=x=>{const m=String(x||'').match(/^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}:\d{2}))?/);return m?`${+m[2]}/${+m[3]}${m[4]?' '+m[4]:''}`:''};
 document.addEventListener('click',e=>{if(S.tab!=='aud')return;const a=e.target.closest&&e.target.closest('a[data-audopen]');if(a){(S.audSeen=S.audSeen||{})[a.dataset.audopen]=1;const tr=a.closest('tr');if(tr)tr.classList.add('off');return}
   const b=e.target.closest&&e.target.closest('button');if(!b)return;const d=b.dataset;
   if(b.id==='audRe'){S.AU=null;render();return}
+  if(b.id==='audFake'){call('devAud',[8],r=>{S.AU=r;S.audF={con:'',st:'',q:''};render();toast('가상 음원을 넣었어요 · '+(r.made||[]).join(', '))},'가상 음원을 만들고 있어요…');return}
+  if(b.id==='audFakeX'){ask('가상 음원을 지울까요?','「(가상)」으로 넣은 음원 줄만 지워요. 학생에게 정한 음악회는 그대로예요.',()=>call('devAudClear',[],r=>{S.AU=r;render();toast('가상 음원 '+r.n+'줄을 지웠어요')},'지우고 있어요…'),'지우기');return}
   if(d.audfl){const [k,st]=d.audfl.split('|');S.audF=Object.assign(S.audF||{},{con:k,st});render();return}
   if(d.audst){const i=d.audst.lastIndexOf('|'),id=d.audst.slice(0,i),st=d.audst.slice(i+1),x=S.AU.rows.find(r=>r.id===id),nst=x&&audSt(x)===st?'심사 전':st;
     call('audSet',[id,nst,null],r=>{S.AU=r;render();toast(nst==='심사 전'?'심사를 되돌렸어요':nst+'으로 정했어요')},'저장하고 있어요…');return}
@@ -2683,6 +2687,6 @@ document.addEventListener('change',e=>{if(S.tab!=='aud')return;const t=e.target;
   if(t.dataset&&t.dataset.audmemo){const i=t.dataset.audmemo.lastIndexOf('|'),id=t.dataset.audmemo.slice(0,i),st=t.dataset.audmemo.slice(i+1);call('audSet',[id,st==='제출 안 함'?'심사 전':st,t.value],r=>{S.AU=r;toast('메모를 저장했어요')},'')}});
 document.addEventListener('input',e=>{if(S.tab!=='aud'||e.target.id!=='audQ')return;S.audF=Object.assign(S.audF||{},{q:e.target.value});clearTimeout(S.audQT);S.audQT=setTimeout(()=>{const pos=e.target.selectionStart;render();const q=document.getElementById('audQ');if(q){q.focus();try{q.setSelectionRange(pos,pos)}catch(x){}}},350)});
 </script>
-<div id="bldMark" hidden>빌드표시 20261104-182239 </div>
+<div id="bldMark" hidden>빌드표시 20261104-182819 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();</script>
 </body></html>

@@ -1,4 +1,4 @@
-/* build: 20261104-182239 */
+/* build: 20261104-182819 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -2917,6 +2917,44 @@ function audSet(token, id, st, memo) {
     log_('관리자 ' + (a.name || ''), '음원 심사', r.pid + ' · ' + r.con + ' · ' + st);
   } finally { lock.releaseLock(); }
   return audList(token);
+}
+/** 가상 음원 (11-04, STG 시험용): 가상 접수 학생 몇 명에게 음악회(음원 받는 곳)를 정하고 음원 주소를 상태별로 넣음. 지우기는 「(가상)」 줄만 */
+function devAud(token, n) {
+  const a = adm_(token); needSup_(a);
+  if (!String(setting_('테스트 로그인') || '').trim()) throw new Error('테스트(STG)에서만 쓸 수 있어요.');
+  const C = audCfg_(), cons = AUD_CON.filter(k => C[k].on); if (!cons.length) throw new Error('먼저 「캠프 설정 › 음악회 음원 제출」에서 음원 받기를 켜 주세요.');
+  n = Math.max(3, Math.min(20, +n || 8));
+  const SONGS = [['A. Vivaldi', 'Violin Concerto in A minor, RV 356 1st mvt'], ['J. S. Bach', 'Concerto for Two Violins in D minor, BWV 1043 1st mvt'], ['F. Seitz', 'Pupil\'s Concerto No. 2, Op. 13 1st mvt'], ['G. Fauré', 'Élégie, Op. 24'], ['C. Saint-Saëns', 'The Swan'], ['J. Haydn', 'Cello Concerto in C major 1st mvt']];
+  const lock = lock_(); const made = [];
+  try {
+    const all = loadSubs_(), pool = [];
+    all.filter(sb => sb.fake || sb.vscen).concat(all.filter(sb => !sb.fake && !sb.vscen)).forEach(sb => sb.ppl.forEach(p => { if (p.status !== '정상' || p.kind === '교사' || p.kind === '가족') return; pool.push({ sb, p }); }));
+    if (!pool.length) throw new Error('학생이 들어 있는 접수가 없어요. 「캠프 설정 › 테스트용 가상 접수」를 먼저 만들어 주세요.');
+    const pick = pool.slice(0, n), touched = {};
+    ensureHead_(AUD, AUD_HEAD); const sh = SpreadsheetApp.getActive().getSheetByName(AUD), rows = [];
+    let seq = 0; const id = () => 'U' + Utilities.formatDate(new Date(), TZ, 'yyMMddHHmmss') + String(++seq).padStart(2, '0');
+    const url = () => 'https:' + '//www.youtube.com/watch?v=GAsang' + Math.random().toString(36).slice(2, 7);
+    pick.forEach(({ sb, p }, j) => {
+      const k = p.id.slice(sb.no.length + 1), info = (sb.form = sb.form || {}).info = sb.form.info || {}, i = info[k] = info[k] || {};
+      i.concert = cons[j % cons.length]; if (!String(i.song || '').trim() && !String(i.ot || '').trim()) { const s2 = SONGS[j % SONGS.length]; i.other = true; i.oc = s2[0]; i.ot = s2[1]; }
+      if (j === 0) i.video = url();   /* 접수 때 넣은 주소 */
+      touched[sb.no] = sb;
+      const plan = [[], ['보류', '심사 전'], ['승인'], ['비승인'], ['심사 전'], ['심사 전', '심사 전'], ['승인'], []][j % 8];
+      plan.forEach((st, q) => rows.push([id(), Utilities.formatDate(new Date(Date.now() - (n - j) * 3600e3 - q * 600e3), TZ, 'yyyy-MM-dd HH:mm:ss'), sb.no, p.id, p.name, sb.acad, i.concert, url(), sb.owner + ' (가상)', st, st === '심사 전' ? '' : a.name || '총관리자', st === '심사 전' ? '' : today_(), '가상']));
+      made.push(p.name + '(' + i.concert + ')');
+    });
+    Object.keys(touched).forEach(no => writeSub_(touched[no], false));
+    if (rows.length) sh.getRange(sh.getLastRow() + 1, 1, rows.length, AUD_HEAD.length).setNumberFormat('@').setValues(rows);
+    log_(a.name, '가상 음원', made.join(', '));
+  } finally { lock.releaseLock(); }
+  return Object.assign({ made }, audList(token));
+}
+function devAudClear(token) {
+  const a = adm_(token); needSup_(a);
+  const lock = lock_(); let k = 0;
+  try { const sh = SpreadsheetApp.getActive().getSheetByName(AUD); if (sh) audRows_().filter(r => / \(가상\)$/.test(r.by)).map(r => r._row).sort((x, y) => y - x).forEach(r => { sh.deleteRow(r); k++; }); log_(a.name, '가상 음원 지움', k + '줄'); }
+  finally { lock.releaseLock(); }
+  return Object.assign({ n: k }, audList(token));
 }
 function audPub(token, con, on) {
   const a = adm_(token); need_(a, 'aud');

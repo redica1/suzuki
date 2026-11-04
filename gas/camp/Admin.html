@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261104-163616 -->
+<!-- build: 20261104-164434 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -2402,8 +2402,9 @@ render();
   var q=0;new MutationObserver(function(){if(q)return;q=1;requestAnimationFrame(function(){q=0;setup();[].forEach.call(document.querySelectorAll('table.cflt'),function(t){var r=t.tHead&&t.tHead.rows[0];if(r)t.style.setProperty('--cfh1',r.offsetHeight+'px')})})}).observe(document.body,{childList:true,subtree:true});setup();
 })();
 </script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <style>
-/* ---------- 공문 (설정 › 공문) ---------- */
+/* ---------- 공문 (설정 › 공문) · 공문 글꼴 = 프리텐다드 (11-04) ---------- */
 .dg{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,728px);gap:16px;align-items:start}
 @media (max-width:1250px){.dg{grid-template-columns:1fr}}
 .dg textarea{width:100%;font:inherit;font-size:13.5px;line-height:1.55;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);resize:vertical}
@@ -2420,7 +2421,7 @@ render();
 .dprev .dp{zoom:.86;box-shadow:0 2px 12px rgba(0,0,0,.18);margin:0 auto}
 .dwarn{background:#fff6e5;border:1px solid #f0c36d;color:#6b4a00;border-radius:8px;padding:6px 10px;font-size:13px;margin-top:8px}
 /* 인쇄 양식 (A4) — 미리보기와 인쇄가 같은 모양 */
-.dp{width:210mm;min-height:297mm;box-sizing:border-box;padding:14mm 17mm 16mm;background:#fff;color:#111;font-family:"Malgun Gothic","맑은 고딕","IBM Plex Sans KR","Apple SD Gothic Neo",sans-serif;font-size:10.5pt;line-height:1.6;letter-spacing:-.01em;word-break:keep-all}
+.dp{width:210mm;min-height:297mm;box-sizing:border-box;padding:14mm 17mm 16mm;background:#fff;color:#111;font-family:"Pretendard Variable",Pretendard,"Malgun Gothic","Apple SD Gothic Neo",sans-serif;font-size:10.5pt;line-height:1.6;letter-spacing:-.01em;word-break:keep-all}
 .dp .lg{text-align:center}.dp .lg img{width:58mm;height:auto}
 .dp .meta{font-size:10pt;margin:6mm 0 2mm;border-bottom:1px solid #444;padding-bottom:2mm}.dp .meta div{display:flex;gap:4mm}.dp .meta b{min-width:18mm;font-weight:700}
 .dp h1{font-size:16pt;text-align:center;margin:5mm 0 5mm;font-weight:800;letter-spacing:-.02em}
@@ -2431,7 +2432,7 @@ render();
 .dp .ln.gap{height:2.2mm}
 .dp .red{color:#d0021b}
 .dp .rh{font-weight:700;margin:2.4mm 0 1mm}
-.dp table.ft{width:100%;border-collapse:collapse;margin:0 0 1mm;break-inside:avoid;font-size:10pt}
+.dp *{font-family:inherit}.dp table.ft{width:100%;border-collapse:collapse;margin:0 0 1mm;break-inside:avoid;font-size:10pt}
 .dp table.ft th,.dp table.ft td{border:1px solid #333;padding:1.2mm 2mm;text-align:center;vertical-align:middle}
 .dp table.ft th{background:#dfe9f5;font-weight:700}
 .dp table.ft td.f3{font-size:9.5pt;line-height:1.45}
@@ -2553,7 +2554,7 @@ let dPT=0;function dPrev(){clearTimeout(dPT);dPT=setTimeout(()=>{const p=documen
 function dSetFee(k,i,v){const c=S.cc,ga=dGuestAdd(c);DOC_FG[k][1].forEach(t=>{c.fees[t]=c.fees[t]||[];c.fees[t][i]=v});if(ga!=null)DOC_GUEST.forEach(([g,m])=>{if(DOC_FG[k][1].includes(m)){c.fees[g]=c.fees[g]||[];c.fees[g][i]=v+ga}})}
 function dPrint(){if(!S.cc||!S.cc.doc)return;let r=document.getElementById('docPrintRoot');if(!r){r=document.createElement('div');r.id='docPrintRoot';document.body.appendChild(r)}r.innerHTML=docHtml(S.cc);
   const t0=document.title,ti=(S.cc.doc.title||'{캠프이름} 안내').replace(/\{캠프이름\}/g,(S.cc.base||{}).name||'');document.title=ti.replace(/[\\\/:*?"<>|]/g,' ');
-  const im=r.querySelector('img');const go=()=>{try{window.print()}finally{setTimeout(()=>{document.title=t0},500)}};if(im&&!im.complete)im.onload=go;else go();
+  const im=r.querySelector('img');const go=()=>{try{window.print()}finally{setTimeout(()=>{document.title=t0},500)}};const fr=(document.fonts&&document.fonts.ready)||Promise.resolve();fr.then(()=>{if(im&&!im.complete)im.onload=go;else go()});
   if(ccDirty())toast('저장하지 않은 내용도 인쇄돼요 · 캠프에 반영하려면 「저장」을 눌러 주세요')}
 document.addEventListener('input',e=>{if(S.tab!=='doc'||!S.cc)return;const t=e.target;
   if(t.dataset&&t.dataset.dfee){const [k,i]=t.dataset.dfee.split('|').map(Number);dSetFee(k,i,+(t.value.replace(/[^\d]/g,'')||0))}
@@ -2572,6 +2573,6 @@ document.addEventListener('click',e=>{if(S.tab!=='doc')return;const b=e.target.c
     render()}},true);
 </script>
 
-<div id="bldMark" hidden>빌드표시 20261104-163616 </div>
+<div id="bldMark" hidden>빌드표시 20261104-164434 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();</script>
 </body></html>

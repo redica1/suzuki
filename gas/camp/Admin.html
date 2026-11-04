@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261104-171106 -->
+<!-- build: 20261104-171800 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -330,10 +330,10 @@ function payPill(p){if(p.status==='정상'&&!pAmt(p)&&!(+p.paidAmt>0))return '<s
 
 /* ---------- 화면 ---------- */
 /* GNB: 1단(묶음) › 2단(메뉴). 권한은 2단 메뉴마다 · 아래 메뉴가 다 「없음」이면 묶음도 숨김 */
-const GROUPS=[['dash','대시보드',['home']],['ops','운영관리',['subs','rp','cx','schol','q','ntc']],['sch','스케줄관리',['act','tt','ens','con']],['room','방배정',['room']],['stat','통계',['stat']],['fin','예산 · 결산',['bplan','bset']],['cfg','설정',['doc','camp','mem','cons','prof','staff']]];
-const SUBL={doc:'공문',mem:'회원 명단',home:'대시보드',subs:'접수 · 입금 확인',rp:'입금 신고',cx:'취소 · 환불',q:'게시판',act:'교사 일정',tt:'개인레슨',ens:'앙상블',con:'오후음악회',room:'방배정',stat:'통계',schol:'장학금',cons:'동의서',camp:'캠프 설정',prof:'교수진',staff:'담당자',bplan:'예산 계획',bset:'결산'};
+const GROUPS=[['dash','대시보드',['home']],['ops','운영관리',['subs','rp','cx','schol','q','ntc']],['sch','스케줄관리',['act','tt','ens','con','aud']],['room','방배정',['room']],['stat','통계',['stat']],['fin','예산 · 결산',['bplan','bset']],['cfg','설정',['doc','camp','mem','cons','prof','staff']]];
+const SUBL={aud:'음원 심사',doc:'공문',mem:'회원 명단',home:'대시보드',subs:'접수 · 입금 확인',rp:'입금 신고',cx:'취소 · 환불',q:'게시판',act:'교사 일정',tt:'개인레슨',ens:'앙상블',con:'오후음악회',room:'방배정',stat:'통계',schol:'장학금',cons:'동의서',camp:'캠프 설정',prof:'교수진',staff:'담당자',bplan:'예산 계획',bset:'결산'};
 const groupOf=t=>(GROUPS.find(g=>g[2].includes(t))||GROUPS[0]);
-const TABS=[['home','한눈에'],['subs','접수 · 입금 확인'],['rp','입금 신고'],['cx','취소 · 환불'],['ens','앙상블'],['prof','교수진'],['act','교사 일정'],['tt','개인레슨'],['room','방 배정'],['con','오후음악회'],['stat','통계'],['q','게시판'],['ntc','공지사항'],['schol','장학금'],['mem','회원 명단'],['bplan','예산 계획'],['bset','결산']];
+const TABS=[['home','한눈에'],['subs','접수 · 입금 확인'],['rp','입금 신고'],['cx','취소 · 환불'],['ens','앙상블'],['aud','음원 심사'],['prof','교수진'],['act','교사 일정'],['tt','개인레슨'],['room','방 배정'],['con','오후음악회'],['stat','통계'],['q','게시판'],['ntc','공지사항'],['schol','장학금'],['mem','회원 명단'],['bplan','예산 계획'],['bset','결산']];
 function render(){
   const app=document.getElementById('app'),tabs=document.getElementById('tabs');
   if(!S.D){tabs.innerHTML='';document.getElementById('tabs2').innerHTML='';app.innerHTML=vLogin();return}
@@ -349,7 +349,7 @@ function render(){
   /* 지금 묶음에 2단이 없으면 빈칸으로 → 줄이 안 보임 */
   document.getElementById('tabs2').classList.toggle('none',!document.querySelector('#tabs2 .grp:not([hidden])'));hdrH();
   const ro=RO();app.classList.toggle('ro',ro);
-  app.innerHTML=(ro?`<div class="robar">보기만 할 수 있는 메뉴예요 · 바꿔도 저장되지 않아요 (총관리자에게 「편집」 권한을 받으면 저장돼요)</div>`:'')+{home:vHome,subs:vSubs,rp:vRp,cx:vCx,ens:vEns,prof:vProf,act:()=>ACT.view(),tt:()=>LES.view(),room:()=>ROOM.view(),con:vCon,stat:vStat,q:vQ,ntc:vNtc,camp:vCamp,doc:vDoc,staff:vStaff,cons:vCons,schol:vSchol,mem:vMem,bplan:()=>BUD.view('plan'),bset:()=>BUD.view('set')}[S.tab]();
+  app.innerHTML=(ro?`<div class="robar">보기만 할 수 있는 메뉴예요 · 바꿔도 저장되지 않아요 (총관리자에게 「편집」 권한을 받으면 저장돼요)</div>`:'')+{home:vHome,subs:vSubs,rp:vRp,cx:vCx,ens:vEns,prof:vProf,act:()=>ACT.view(),tt:()=>LES.view(),room:()=>ROOM.view(),con:vCon,stat:vStat,q:vQ,ntc:vNtc,camp:vCamp,doc:vDoc,aud:vAud,staff:vStaff,cons:vCons,schol:vSchol,mem:vMem,bplan:()=>BUD.view('plan'),bset:()=>BUD.view('set')}[S.tab]();
   if(S.tab==='stat'||S.tab==='home')reSort();
 }
 /* 통계 표 정렬: 같은 보기·같은 표면 다시 그려도 유지 */
@@ -1601,7 +1601,7 @@ const ME=()=>(S.D&&S.D.me)||{sup:true,perms:{}};
 const permOf=k=>{const m=ME();if(m.sup)return '편집';if(k==='camp'||k==='staff'||k==='cons'||k==='doc')return '';return (m.perms||{})[k]||''};
 const visTabs=()=>TABS.concat(SUP_TABS).filter(([k])=>permOf(k));
 const RO=()=>permOf(S.tab)==='보기';
-const WRITE_FN=/^(devSummer|adminNoticeSave|adminMenuSave|scholSave|adminConfirm|adminAdjust|adminSetBankAcct|ogSave|ogToken|adminRejectReport|adminSaveEns|adminSaveProfs|adminRefund|adminSetIssue|schedSave|lessonSet|adminSetSetting|roomSave|conSave|campSave|staffSave|songEnSave|pvHideSave|roomCfgSave|layoutImport|roomMove|budSave)$/;
+const WRITE_FN=/^(audSet|audPub|devSummer|adminNoticeSave|adminMenuSave|scholSave|adminConfirm|adminAdjust|adminSetBankAcct|ogSave|ogToken|adminRejectReport|adminSaveEns|adminSaveProfs|adminRefund|adminSetIssue|schedSave|lessonSet|adminSetSetting|roomSave|conSave|campSave|staffSave|songEnSave|pvHideSave|roomCfgSave|layoutImport|roomMove|budSave)$/;
 const roBlock=fn=>WRITE_FN.test(fn)&&permOf(S.tab)!=='편집';
 const RO_MSG='보기만 할 수 있는 메뉴예요. 바꾸려면 총관리자에게 「편집」 권한을 받아 주세요.';
 
@@ -1679,6 +1679,9 @@ function vCamp(){if(!S.cc)S.cc=ccCopy();const c=S.cc;if(!c.base)return '<div cla
     <table class="pft cct"><thead><tr><th>참가자격</th>${R.map(r=>`<th class="r">${esc(r.n)}</th>`).join('')}</tr></thead><tbody>${FEE_TYPES.map(t=>`<tr class="${/^(비회원|해외) /.test(t)||STAFF_TYPES.includes(t)?'gfee':''}"><td>${esc(t)}${/^해외 /.test(t)?' <b class="hint">USD</b>':''}</td>${R.map((_,i)=>`<td>${inp('fees.'+t+'.'+i,'num','style="width:110px"')}</td>`).join('')}</tr>`).join('')}</tbody></table><p class="hint">「해외 …」 줄은 <b>USD</b>로 넣어요. 영어 접수 화면에 USD로 보이고, 원화 청구액은 아래 「해외 참가비 환율」로 계산해요.</p></div>
   <div class="panel"><h3>추가 금액 · 가족방</h3><div class="ccg">${OPT_F.map(([k,l,u])=>`<label>${l}<span class="row" style="gap:4px;flex-wrap:nowrap">${inp('opt.'+k,'num','style="width:120px"')}<small class="faint">${u}</small></span></label>`).join('')}</div>
     <p class="hint">마스터클래스 금액은 교수마다 「교수진」 탭에서 정해요.</p></div>
+  ${c.aud?`<div class="panel"><h3>음악회 음원 제출 <span class="hint">켠 음악회만 신청서 · 「내 접수」에 음원 칸이 나와요 · 마감일을 비우면 캠프 시작 전날까지</span></h3>
+    <table class="pft cct" style="width:auto"><thead><tr><th>음악회</th><th class="c">음원 받기</th><th>마감일</th></tr></thead><tbody>${['오후','트와일라잇','이브닝'].map(k=>`<tr class="${(c.aud[k]||{}).on?'':'off'}"><td><b>${k}</b></td><td class="c">${inp('aud.'+k+'.on','check')}</td><td>${inp('aud.'+k+'.due','date')}</td></tr>`).join('')}</tbody></table>
+    <p class="hint">심사 · 결과 공개는 「스케줄관리 › 음원 심사」에서 해요.</p></div>`:''}
   <div class="panel"><div class="spread"><h3>취소 · 환불 규정</h3><button class="btn small" type="button" data-ccf="add">＋ 규정 추가</button></div>
     <table class="pft cct"><thead><tr><th>이 날까지</th><th>이름</th><th class="r">환불 %</th><th>진단서 필요</th><th></th></tr></thead><tbody>
     ${rf.rules.map((r,i)=>`<tr><td>${inp('refund.rules.'+i+'.until','date')}</td><td>${inp('refund.rules.'+i+'.label','text','maxlength="30"')}</td><td>${inp('refund.rules.'+i+'.rate','num','style="width:64px"')}</td><td class="c">${inp('refund.rules.'+i+'.doc','check')}</td><td><button class="btn small ghost" type="button" data-ccf="del|${i}">빼기</button></td></tr>`).join('')}
@@ -2587,6 +2590,52 @@ document.addEventListener('click',e=>{if(S.tab!=='doc')return;const b=e.target.c
     render()}},true);
 </script>
 
-<div id="bldMark" hidden>빌드표시 20261104-171106 </div>
+<script>
+/* ---------- 음원 심사 (스케줄관리 › 음원 심사, 11-04) ----------
+ * 신청자가 「내 접수」에서 넣은 음원 주소를 눌러 듣고 승인 · 비승인 · 보류. 결과는 음악회마다 「결과 공개」를 켜야 신청자에게 보임. */
+const AUD_CONS=['이브닝','트와일라잇','오후'];
+const audSt=x=>x.none?'제출 안 함':(x.st||'심사 전');
+function audLoad(){S.AUL=1;call('audList',[],r=>{S.AU=r;S.AUL=0;if(S.tab==='aud')render()},'음원 목록을 불러오고 있어요…')}
+function vAud(){if(!S.AU){if(!S.AUL)setTimeout(audLoad,0);return '<div class="panel hint">음원 목록을 불러오는 중…</div>'}
+  const A=S.AU,C=A.cfg||{},on=AUD_CONS.filter(k=>(C[k]||{}).on),F=S.audF||{con:'',st:'심사 전',q:''};S.audF=F;
+  if(!on.length)return '<div class="panel hint">음원을 받는 음악회가 없어요. 「설정 › 캠프 설정 › 음악회 음원 제출」에서 켜 주세요.</div>';
+  const cnt=(k,st)=>A.rows.filter(x=>x.con===k&&audSt(x)===st).length,people=k=>new Set(A.rows.filter(x=>x.con===k).map(x=>x.pid)).size;
+  const cards=on.map(k=>{const c=C[k];return `<div class="panel" style="flex:1;min-width:260px;margin:0"><div class="spread"><b style="font-size:16px">${k} 음악회</b>
+      <button class="btn small ${c.pub?'primary':''}" type="button" data-audpub="${k}|${c.pub?0:1}">${c.pub?'결과 공개 중 · 숨기기':'결과 공개하기'}</button></div>
+      <div class="hint" style="margin:4px 0">마감 ${c.end?esc(kday(c.end)):'없음'}${c.due?'':' (캠프 시작 전날)'} · 신청 ${people(k)}명</div>
+      <div class="row" style="gap:6px;flex-wrap:wrap">${['심사 전','승인','비승인','보류','제출 안 함'].map(st=>`<button class="btn small ${F.con===k&&F.st===st?'primary':'ghost'}" type="button" data-audfl="${k}|${st}">${st} ${cnt(k,st)}</button>`).join('')}</div></div>`}).join('');
+  const q=F.q.trim(),R=A.rows.filter(x=>(!F.con||x.con===F.con)&&(!F.st||audSt(x)===F.st)&&(!q||[x.name,x.acad,x.owner,x.song].some(v=>String(v||'').includes(q))))
+    .sort((a,b)=>AUD_CONS.indexOf(a.con)-AUD_CONS.indexOf(b.con)||String(a.acad).localeCompare(String(b.acad),'ko')||String(a.name).localeCompare(String(b.name),'ko')||String(a.at).localeCompare(String(b.at)));
+  const seen=S.audSeen||(S.audSeen={}),ro=RO();
+  const btn=(x,st,cls)=>`<button class="btn small ${audSt(x)===st?cls:'ghost'}" type="button" data-audst="${esc(x.id)}|${st}" ${ro?'disabled':''}>${st}</button>`;
+  return `<div class="row" style="gap:12px;flex-wrap:wrap;align-items:stretch;margin-bottom:12px">${cards}</div>
+  <div class="panel"><div class="row" style="gap:8px;flex-wrap:wrap;align-items:center">
+    <select id="audCon"><option value="">모든 음악회</option>${on.map(k=>`<option ${F.con===k?'selected':''}>${k}</option>`).join('')}</select>
+    <select id="audStF"><option value="">모든 상태</option>${['심사 전','승인','비승인','보류','제출 안 함'].map(st=>`<option ${F.st===st?'selected':''}>${st}</option>`).join('')}</select>
+    <input type="search" id="audQ" placeholder="이름 · 학원 · 곡 찾기" value="${esc(F.q)}" style="min-width:200px">
+    <span class="hint">${R.length}건</span><button class="btn small ghost" type="button" id="audRe" style="margin-left:auto">새로 불러오기</button></div>
+    <p class="hint" style="margin:6px 0 0">주소를 누르면 새 창에서 열려요(들은 줄은 옅게 표시). 결과는 위 「결과 공개하기」를 누르기 전까지 신청자에게 「심사 중」으로만 보여요.</p></div>
+  <div class="panel tbl"><table class="pft"><thead><tr><th>음악회</th><th>학원</th><th>이름</th><th>악기 · 진도</th><th>곡</th><th>음원</th><th>제출</th><th>심사</th><th>메모</th></tr></thead><tbody>
+  ${R.map(x=>`<tr class="${seen[x.id]?'off':''}"><td>${esc(x.con)}</td><td>${esc(x.acad)}<br><small class="hint">${esc(x.owner||'')}</small></td><td><b>${esc(x.name)}</b></td><td>${esc(x.inst||'-')}<br><small class="hint">${esc(x.prog||'')}</small></td><td style="white-space:normal;max-width:220px">${esc(x.song||'-')}</td>
+    <td style="max-width:240px;word-break:break-all">${x.none?'<span class="hint">제출 안 함</span>':`<a href="${esc(x.url)}" target="_blank" rel="noopener" data-audopen="${esc(x.id)}">${esc(x.url.replace(/^https?:[\/]{2}(www\.)?/,'').slice(0,40))}${x.url.length>46?'…':''}</a>`}</td>
+    <td class="num"><small>${x.first?'접수 때':esc(tsFmtA(x.at))}</small></td>
+    <td style="white-space:nowrap">${x.none?'':`${btn(x,'승인','primary')} ${btn(x,'비승인','primary')} ${btn(x,'보류','primary')}${x.rv?`<br><small class="hint">${esc(x.rv)} · ${esc(kday(x.rd))}</small>`:''}`}</td>
+    <td>${x.none?'':`<input type="text" data-audmemo="${esc(x.id)}|${esc(audSt(x))}" value="${esc(x.memo||'')}" maxlength="200" placeholder="메모 (신청자에게 안 보임)" style="min-width:160px" ${ro?'disabled':''}>`}</td></tr>`).join('')||'<tr><td colspan="9" class="hint">해당하는 음원이 없어요.</td></tr>'}
+  </tbody></table></div>`}
+const tsFmtA=x=>{const m=String(x||'').match(/^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}:\d{2}))?/);return m?`${+m[2]}/${+m[3]}${m[4]?' '+m[4]:''}`:''};
+document.addEventListener('click',e=>{if(S.tab!=='aud')return;const a=e.target.closest&&e.target.closest('a[data-audopen]');if(a){(S.audSeen=S.audSeen||{})[a.dataset.audopen]=1;const tr=a.closest('tr');if(tr)tr.classList.add('off');return}
+  const b=e.target.closest&&e.target.closest('button');if(!b)return;const d=b.dataset;
+  if(b.id==='audRe'){S.AU=null;render();return}
+  if(d.audfl){const [k,st]=d.audfl.split('|');S.audF=Object.assign(S.audF||{},{con:k,st});render();return}
+  if(d.audst){const i=d.audst.lastIndexOf('|'),id=d.audst.slice(0,i),st=d.audst.slice(i+1),x=S.AU.rows.find(r=>r.id===id),nst=x&&audSt(x)===st?'심사 전':st;
+    call('audSet',[id,nst,null],r=>{S.AU=r;render();toast(nst==='심사 전'?'심사를 되돌렸어요':nst+'으로 정했어요')},'저장하고 있어요…');return}
+  if(d.audpub){const [k,v]=d.audpub.split('|');const go=()=>call('audPub',[k,v==='1'],r=>{S.AU=r;render();toast(v==='1'?k+' 음악회 결과를 신청자에게 공개했어요':k+' 음악회 결과를 다시 숨겼어요')},'저장하고 있어요…');
+    if(v==='1'){const n=S.AU.rows.filter(x=>x.con===k&&audSt(x)==='심사 전').length;ask(k+' 음악회 결과를 공개할까요?',`신청자 「내 접수」에 승인 · 비승인 · 보류가 바로 보여요.${n?` <b>아직 심사 전인 음원이 ${n}개</b> 있어요 (그건 「심사 전」으로 보여요).`:''}`,go,'공개')}else go();return}},true);
+document.addEventListener('change',e=>{if(S.tab!=='aud')return;const t=e.target;
+  if(t.id==='audCon'||t.id==='audStF'){S.audF=Object.assign(S.audF||{},t.id==='audCon'?{con:t.value}:{st:t.value});render();return}
+  if(t.dataset&&t.dataset.audmemo){const i=t.dataset.audmemo.lastIndexOf('|'),id=t.dataset.audmemo.slice(0,i),st=t.dataset.audmemo.slice(i+1);call('audSet',[id,st==='제출 안 함'?'심사 전':st,t.value],r=>{S.AU=r;toast('메모를 저장했어요')},'')}});
+document.addEventListener('input',e=>{if(S.tab!=='aud'||e.target.id!=='audQ')return;S.audF=Object.assign(S.audF||{},{q:e.target.value});clearTimeout(S.audQT);S.audQT=setTimeout(()=>{const pos=e.target.selectionStart;render();const q=document.getElementById('audQ');if(q){q.focus();try{q.setSelectionRange(pos,pos)}catch(x){}}},350)});
+</script>
+<div id="bldMark" hidden>빌드표시 20261104-171800 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();</script>
 </body></html>

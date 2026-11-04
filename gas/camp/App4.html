@@ -1,4 +1,4 @@
-${''/* build: 20261104-171106 */}
+${''/* build: 20261104-171800 */}
     <div class="song3"><b class="sh">곡 2 <span class="hint">있으면</span></b>
       <label class="f" for="enK2">작곡가<input type="text" id="enK2" data-ens="k2" value="${esc(E.k2||'')}" placeholder=""></label>
       <label class="f" for="enC2">곡명<input type="text" id="enC2" data-ens="c2" value="${esc(E.c2||'')}" placeholder=""></label>
@@ -23,7 +23,7 @@ function applyTable(ps,tab){
       pref:pl?[i.p1,i.p2].filter(Boolean).join(', '):'',
       les:pl&&i.lessons?`${i.lessons}회`:'',
       mc:pl&&i.mc&&i.mc.length?i.mc.join(', '):'',
-      con:pl&&p.kind!=='teacher'&&i.concert&&i.concert!=='없음'?`${i.concert}${(i.other?`${i.oc} ${i.ot}`.trim():i.song)?' · '+(i.other?`${i.oc} ${i.ot}`.trim():i.song):''}${i.concert==='이브닝'?' · 오디션 영상 '+(i.video?'제출':'없음'):''}`:'',
+      con:pl&&p.kind!=='teacher'&&i.concert&&i.concert!=='없음'?`${i.concert}${(i.other?`${i.oc} ${i.ot}`.trim():i.song)?' · '+(i.other?`${i.oc} ${i.ot}`.trim():i.song):''}${audOn(i.concert)?' · 음원 '+(i.video?'제출':'없음'):''}`:'',
       room:(()=>{const tm=teams().find(x=>x.members.some(m=>m.key===p.key));return tm?`${tm.rep.name} 가족방 · ${tm.n}명`:''})(),
       note:[!p.paid?(p.isNew?'신규 · 회비확인대기':'회비확인대기'):'',p.isNew&&p.paid?'신규':''].filter(Boolean).join(' · ')}});
   const ALWAYS=new Set(['les','mc','room']);
@@ -44,7 +44,7 @@ function detailRows(p){
     rows.push(['추가 개인레슨',i.lessons?`${i.lessons}회`:'신청 안 함']);
     if(mcOf(p.inst).length) rows.push(['마스터클래스',i.mc.length?i.mc.join(', '):'신청 안 함']);
     if(p.kind!=='teacher') rows.push(['음악회',i.concert==='없음'?'참가 안 함':`${i.concert} · ${i.other?`${i.oc} ${i.ot}`.trim()||'곡명 미입력':(i.song||'곡 미선택')}`]);
-    if(i.concert==='이브닝') rows.push(['오디션 영상',i.video||'-']);
+    if(audOn(i.concert)) rows.push(['음원 주소',i.video||'나중에 「내 접수」에서']);
   }
   if(!p.paid) rows.push(['연회비',p.isNew?'신규 추가 · 회비확인대기':'미납 · 회비확인대기']);
   return rows;

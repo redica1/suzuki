@@ -1,4 +1,4 @@
-/* build: 20261104-171106 */
+/* build: 20261104-171800 */
   if(S.ttDay==null){const td=ttToday(days);S.ttDay=td!=null?td:(mine.length?Math.min(...mine.map(x=>x.d)):0)}
   if(tab==='me')return head+seg+(T.prof?`<p class="hint" style="margin:0 0 6px">교수 · 레슨실 <b>${esc(T.prof.room||'미정')}</b></p>`:'')+ttMineList(T,days,mine)+'</section>';
   const AC=S.user.acads||[];if(S.ttAcad&&!AC.includes(S.ttAcad))S.ttAcad='';
@@ -76,7 +76,7 @@ function missWhat(){const t=totals(),L=[],el=[],Q=x=>{const e=typeof x==='string
       if(staffNoRole(p)){m.push('역할(초빙교수 · 반주자 등)');const g=document.querySelector(`[data-settype^="${p.key}|"]`);if(g)Q(g.parentElement)}
       if(!i.gender){m.push('성별');const g=document.querySelector(`[data-gender^="${p.key}|"]`);if(g)Q(g.parentElement)}
       if(p.kind==='student'&&PLAYS.has(i.type)&&!i.prog){m.push('권수');Q('#pg_'+p.key)}
-      if(p.kind==='student'&&PLAYS.has(i.type)&&!videoOk(i)){m.push('오디션 영상 주소');Q('#vd_'+p.key)}
+      if(p.kind==='student'&&PLAYS.has(i.type)&&!videoOk(i)){m.push('음원 주소 (https로 시작)');Q('#vd_'+p.key)}
       if(missingPref().some(x=>x.key===p.key)){m.push('선호 교수 1');Q('#p1_'+p.key)}
       if(m.length)L.push(`${p.name}: ${m.join('·')}`)});
     S.fam.filter(f=>!f.name.trim()).forEach(f=>{L.push(`${FAM_SHORT[f.type]||'가족'} 이름`);Q('#fn_'+f.id)});

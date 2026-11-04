@@ -1,4 +1,4 @@
-/* build: 20261104-171106 */
+/* build: 20261104-171800 */
   if(!open.length) return MY_SUBS.length?`<div class="panel rp">${bankHTML()}<span class="hint">지금 입금할 금액이 없어요.</span></div>`:'';
   /* 평소엔 한 줄로 접어 둠: 「입금 신고하기」를 누르면 펼침 (11-03) */
   if(!S.rpOpen){const due=open.reduce((t,x)=>t+dueOf(x.p),0);return `<div class="panel rp">${bankHTML()}<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><span><b>입금 필요 ${open.length}명</b> · <b class="num">${won(due)}</b> <span class="hint">입금한 뒤 알려 주세요</span></span><button class="btn primary" type="button" data-rpopen="1">입금 신고하기</button></div></div>`}
@@ -100,7 +100,7 @@ function infoTable(R,RM,showOwner,canEdit){const mv=S.mview||'pay',v=mv==='les'?
   const asg=(sb,p)=>{const st=(T.students||[]).find(x=>x.name===p.name&&x.acad===sb.acad);const L=st?st.lessons||[]:[];
     if(!T.open||!L.length)return '<span class="nil">배정 전</span>';
     return L.slice().sort((a,b)=>a.d-b.d||tmin(a.t)-tmin(b.t)).map(l=>`<div style="line-height:1.3;margin:2px 0"><b>${esc(l.pr)}</b> 교수<br><small>${esc(l.room||'방 미정')}</small><br><small>${esc((days[l.d]||'').replace(/\(.\)/,''))} ${esc(l.t)}</small></div>`).join('')};
-  const H={grp:['권수 (진도)','담당 교사','그룹레슨'],les:['교수','방 번호'],mc:['마스터클래스','방 번호'],con:['음악회','곡',...(curSub()==='이브닝'?['오디션 영상']:[])],info:['구분','출생연도','성별','권수 (진도)','담당 교사']}[v]||[];
+  const H={grp:['권수 (진도)','담당 교사','그룹레슨'],les:['교수','방 번호'],mc:['마스터클래스','방 번호'],con:['음악회','곡',...(audOn(curSub())?['음원']:[])],info:['구분','출생연도','성별','권수 (진도)','담당 교사']}[v]||[];
   /* 개인레슨 · 마스터클래스: 배정된 날짜 · 시간 · 교수 · 방 (배정 전이면 w 비움) */
   const dl=d=>(days[d]||'').replace(/\(.\)/,'');
   const slots=(sb,p)=>{const i=pInfo(sb,p);if(v==='les'){const st=(T.students||[]).find(x=>x.name===p.name&&x.acad===sb.acad);return (st&&T.open?st.lessons||[]:[]).slice().sort((a,b)=>a.d-b.d||tmin(a.t)-tmin(b.t)).map(l=>({w:dl(l.d)+' '+l.t,pr:l.pr,room:l.room||'미정'}))}
@@ -110,7 +110,7 @@ function infoTable(R,RM,showOwner,canEdit){const mv=S.mview||'pay',v=mv==='les'?
     if(v==='grp')return `<td style="text-align:left">${i.prog?esc(i.prog):DASH}</td><td>${i.teacher?esc(i.teacher):DASH}</td><td style="white-space:normal">${grpOf(sb,p)}</td>`;
     if(v==='les'||v==='mc'){const Z=slots(sb,p);if(v==='les'&&!Z.length)return `<td colspan="2"><small class="hint">${esc(i.lessons)}회 신청</small></td>`;
       const col=f=>`<td style="white-space:normal">${Z.map(z=>`<div style="margin:2px 0">${f(z)}</div>`).join('')}</td>`;return col(z=>`<b>${esc(z.pr)}</b>`)+col(z=>z.room?esc(z.room):'<span class="hint">-</span>')}
-    if(v==='con')return `<td><b>${esc(i.concert||'')}</b></td><td style="white-space:normal">${i.other?esc(`${i.oc||''} ${i.ot||''}`.trim()||'곡명 미입력'):esc(i.song||'곡 미선택')}</td>${curSub()==='이브닝'?`<td>${i.video?'<span class="pill ok">있음</span>':'<span class="pill due">아직</span>'}</td>`:''}`;
+    if(v==='con')return `<td><b>${esc(i.concert||'')}</b></td><td style="white-space:normal">${i.other?esc(`${i.oc||''} ${i.ot||''}`.trim()||'곡명 미입력'):esc(i.song||'곡 미선택')}</td>${audOn(curSub())?`<td style="white-space:normal;text-align:left;min-width:220px">${audCell(sb,p,canEdit)}</td>`:''}`;
     return `<td>${esc(TSHORT[p.type]||p.type||'-')}</td><td class="num">${i.by?esc(i.by):DASH}</td><td>${i.gender?esc(i.gender):DASH}</td><td style="text-align:left">${i.prog?esc(i.prog):DASH}</td><td>${i.teacher?esc(i.teacher):DASH}</td>`};
   /* 그룹레슨 반별: 반(교실 · 시간)마다 우리 학생 이름 — 선생님이 데려갈 아이 */
   const byCls=v!=='grp'||!T.open?'':(()=>{const M={},none=[];R.forEach(({sb,p})=>{const st=(T.students||[]).find(x=>x.name===p.name&&x.acad===sb.acad);const G=st?st.grp||[]:[];if(!G.length){none.push(p.name);return}
@@ -131,6 +131,20 @@ const sdFmt=x=>{const m=String(x||'').match(/^(\d{4})-(\d{2})-(\d{2})/);return m
 /* 표 안 상태: 날짜를 아랫줄에 26.10.5 꼴로 */
 function payTagT(p){let h=payTag(p);if(p.rep&&p.rep.ok)h=h.replace('입금 확인 '+kday(p.rep.ok),'입금 확인<br><small>'+sdFmt(p.rep.ok)+'</small>');
   return h}
+/* 음원 칸 (11-04): 넣은 주소 · 상태(결과 공개 전엔 「심사 중」) · 「＋ 음원 추가」(내 접수, 마감 전) — 추가만, 고치기 · 지우기 없음 */
+const AUD_PILL={'승인':'ok','비승인':'due','보류':'new','심사 중':'','심사 전':''};
+function audCell(sb,p,canEdit){const A=S.aud||{},L=((A.list||{})[p.id])||[],con=pInfo(sb,p).concert,C=((A.cfg||{})[con])||{},open=!C.end||String(S.today||A.today||'')<=C.end;
+  const items=L.map(x=>`<div class="audi"><a href="${esc(x.url)}" target="_blank" rel="noopener" title="${esc(x.url)}">${esc(x.url.replace(/^https?:[\/]{2}(www\.)?/,'').slice(0,34))}${x.url.length>40?'…':''}</a> <span class="pill ${AUD_PILL[x.st]||''}">${esc(x.st==='보류'?'보류 (다시 보는 중)':x.st)}</span>${x.at?` <small class="hint">${esc(tsFmt(x.at))}</small>`:x.first?' <small class="hint">접수 때</small>':''}</div>`).join('');
+  if(!canEdit)return items||'<span class="nil">아직 없음</span>';
+  const add=!open?`<small class="hint">음원 마감(${esc(kday(C.end))})이 지났어요</small>`:S.audOpen===p.id?`<div class="row" style="gap:4px;flex-wrap:nowrap;margin-top:4px"><input type="url" id="audIn" placeholder="https:\/\/youtu.be/…" style="min-width:180px;flex:1" autocomplete="off"><button class="btn small primary" type="button" data-audgo="${esc(p.id)}">넣기</button><button class="btn small ghost" type="button" data-audx="1">취소</button></div><small class="hint">넣은 주소는 고치거나 지울 수 없어요. 바꾸려면 새 주소를 더 넣어 주세요.</small>`
+    :`<button class="btn small" type="button" data-audadd="${esc(p.id)}">＋ 음원 추가</button>${C.end?` <small class="hint">${esc(kday(C.end))}까지</small>`:''}`;
+  return (items||'<span class="nil">아직 없음</span>')+`<div style="margin-top:4px">${add}</div>`}
+document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('button');if(!b)return;const d=b.dataset;
+  if(d.audadd){S.audOpen=d.audadd;render();setTimeout(()=>{const i=document.getElementById('audIn');if(i)i.focus()},30);return}
+  if(d.audx){S.audOpen=null;render();return}
+  if(d.audgo){const v=((document.getElementById('audIn')||{}).value||'').trim();if(!/^https?:[\/]{2}\S{4,}$/i.test(v)){toast('주소를 https:\/\/ 로 시작하게 넣어 주세요',true);return}
+    api('audAdd',[d.audgo,v],r=>{const A=S.aud||(S.aud={cfg:{},list:{}});if(r.aud){A.cfg=r.aud.cfg||A.cfg;Object.assign(A.list||(A.list={}),r.aud.list)}S.audOpen=null;render();toast('음원을 넣었어요 · 운영진이 듣고 심사해요')},null,'넣고 있어요…')}});
+document.addEventListener('keydown',e=>{if(e.target&&e.target.id==='audIn'&&e.key==='Enter'){e.preventDefault();const b=document.querySelector('[data-audgo]');if(b)b.click()}});
 function vMine(){
   const r=refundRule(S.today);
   const rulesTxt=REFUND.rules.map(x=>`<li><b>${kday(x.until)}까지</b> · ${x.label} — ${x.rate?`참가비 ${x.rate}% 환불`:'<b>환불 없음</b>'}${x.doc?' · <b>진단서 필요</b>':''}</li>`).join('')+`<li><b>그 이후</b> · ${REFUND.after.label} — ${REFUND.after.allow?'':'취소 불가'}</li>`;

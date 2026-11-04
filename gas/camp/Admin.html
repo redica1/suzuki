@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261104-164434 -->
+<!-- build: 20261104-164927 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -2442,11 +2442,12 @@ render();
 .dp .ft-end .en{font-size:10pt;letter-spacing:.42em;color:#222}
 @media screen{#docPrintRoot{display:none}}
 @media print{
-  @page{size:A4;margin:13mm 16mm 15mm}
+  @page{size:A4;margin:0}
   body>*:not(#docPrintRoot){display:none !important}
   html,body{background:#fff !important;margin:0 !important;padding:0 !important}
   #docPrintRoot{display:block !important}
   #docPrintRoot .dp{min-height:0;box-shadow:none;zoom:1;width:auto;padding:0}
+  #docPrintRoot table.pw{width:100%;border-collapse:collapse;border:0;margin:0}#docPrintRoot table.pw>*>tr>td{border:0 !important;padding:0 !important;background:none !important;text-align:left !important;vertical-align:top !important;white-space:normal !important;font-size:inherit !important}#docPrintRoot table.pw>thead td{height:13mm}#docPrintRoot table.pw>tfoot td{height:15mm}#docPrintRoot .dp{padding:0 16mm !important}
 }
 </style>
 <script>
@@ -2552,7 +2553,7 @@ function vDoc(){if(!S.cc)S.cc=ccCopy();const c=S.cc;if(!c.base)return '<div clas
 const dWarnHtml=W=>W.length?`<div class="dwarn">${W.map(x=>'· '+x).join('<br>')}</div>`:'';
 let dPT=0;function dPrev(){clearTimeout(dPT);dPT=setTimeout(()=>{const p=document.getElementById('docPrev');if(p&&S.cc&&S.cc.doc)p.innerHTML=docHtml(S.cc);const w=document.getElementById('dWarnBox');if(w&&S.cc&&S.cc.doc)w.innerHTML=dWarnHtml(dWarn(S.cc));const gi=document.getElementById('dGuest');if(gi&&document.activeElement!==gi){const ga=dGuestAdd(S.cc);gi.value=ga==null?'':ga.toLocaleString('ko-KR')}const pl=document.getElementById('ccDirty');if(pl)pl.innerHTML=ccPill()},120)}
 function dSetFee(k,i,v){const c=S.cc,ga=dGuestAdd(c);DOC_FG[k][1].forEach(t=>{c.fees[t]=c.fees[t]||[];c.fees[t][i]=v});if(ga!=null)DOC_GUEST.forEach(([g,m])=>{if(DOC_FG[k][1].includes(m)){c.fees[g]=c.fees[g]||[];c.fees[g][i]=v+ga}})}
-function dPrint(){if(!S.cc||!S.cc.doc)return;let r=document.getElementById('docPrintRoot');if(!r){r=document.createElement('div');r.id='docPrintRoot';document.body.appendChild(r)}r.innerHTML=docHtml(S.cc);
+function dPrint(){if(!S.cc||!S.cc.doc)return;let r=document.getElementById('docPrintRoot');if(!r){r=document.createElement('div');r.id='docPrintRoot';document.body.appendChild(r)}r.innerHTML='<table class="pw"><thead><tr><td></td></tr></thead><tfoot><tr><td></td></tr></tfoot><tbody><tr><td>'+docHtml(S.cc)+'</td></tr></tbody></table>';
   const t0=document.title,ti=(S.cc.doc.title||'{캠프이름} 안내').replace(/\{캠프이름\}/g,(S.cc.base||{}).name||'');document.title=ti.replace(/[\\\/:*?"<>|]/g,' ');
   const im=r.querySelector('img');const go=()=>{try{window.print()}finally{setTimeout(()=>{document.title=t0},500)}};const fr=(document.fonts&&document.fonts.ready)||Promise.resolve();fr.then(()=>{if(im&&!im.complete)im.onload=go;else go()});
   if(ccDirty())toast('저장하지 않은 내용도 인쇄돼요 · 캠프에 반영하려면 「저장」을 눌러 주세요')}
@@ -2573,6 +2574,6 @@ document.addEventListener('click',e=>{if(S.tab!=='doc')return;const b=e.target.c
     render()}},true);
 </script>
 
-<div id="bldMark" hidden>빌드표시 20261104-164434 </div>
+<div id="bldMark" hidden>빌드표시 20261104-164927 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();</script>
 </body></html>

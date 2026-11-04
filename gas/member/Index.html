@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261103-232544 -->
+<!-- build: 20261104-174935 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -164,7 +164,7 @@ th .trz{position:absolute;right:-3px;top:0;bottom:0;width:7px;cursor:col-resize;
 var INSTS=['바이올린','첼로','비올라','플루트','피아노'];
 var T_INSTS=INSTS.concat(['지휘','기타']);
 var CHECKS=['확인 전','확인 필요','확인'];
-var TABS=[['home','메인'],['acad','학원정보'],['tch','교사정보'],['stu','학생정보'],['ext','관계자정보'],['req','승인 대기'],['pay','입금 신고'],['bank','통장'],['prog','입력 현황'],['ask','문의'],['log','바뀐 기록'],['set','설정']];
+var TABS=[['home','메인'],['acad','학원정보'],['tch','교사정보'],['stu','학생정보'],['ext','관계자정보'],['req','승인 대기'],['pay','입금 신고'],['bank','통장'],['prog','입력 현황'],['ask','문의'],['prt','인쇄 요청'],['log','바뀐 기록'],['set','설정']];
 var S={sess:'',tab:'home',q:'',f:{},page:0,edit:null,sel:{},issue:'',D:null,test:false,busy:false,hist:[]};
 var A={},T={},ST={};
 
@@ -958,12 +958,12 @@ function render(){
   var need=S.D.acad.concat(S.D.tch).filter(function(o){return o['확인']==='확인 필요'}).length;
   tabs.innerHTML=TABS.map(function(t){return '<button role="tab" type="button" data-tab="'+t[0]+'" aria-selected="'+(S.tab===t[0])+'">'+t[1]+(t[0]==='home'&&need?'<span class="cnt">'+need+'</span>':'')+(t[0]==='req'&&S.D.reqN?'<span class="cnt">'+S.D.reqN+'</span>':'')+(t[0]==='pay'&&S.D.payN?'<span class="cnt">'+S.D.payN+'</span>':'')+(t[0]==='ask'&&S.D.bN?'<span class="cnt">'+S.D.bN+'</span>':'')+'</button>'}).join('');
   var keepT=S._rt===S.tab&&['bank','acad','tch','stu','ext'].indexOf(S.tab)>=0?[].map.call(app.querySelectorAll('.tbl'),function(e){return [e.scrollTop,e.scrollLeft]}):[],keepY=window.scrollY;
-  app.classList.toggle('bankz',S.tab==='bank');app.innerHTML=({home:vHome,acad:vAcads,tch:vTeachers,ext:vExt,stu:vStudents,req:vReq,pay:vPay,bank:vBank,prog:vProg,ask:vAskA,log:vLog,set:vSet})[S.tab]();tipify(app);if(document.getElementById('pq_e_원장교사ID'))headFilter();
+  app.classList.toggle('bankz',S.tab==='bank');app.innerHTML=({home:vHome,acad:vAcads,tch:vTeachers,ext:vExt,stu:vStudents,req:vReq,pay:vPay,bank:vBank,prog:vProg,prt:vPrint,ask:vAskA,log:vLog,set:vSet})[S.tab]();tipify(app);if(document.getElementById('pq_e_원장교사ID'))headFilter();
   if(keepT.length){[].forEach.call(app.querySelectorAll('.tbl'),function(e,i){if(keepT[i]){e.scrollTop=keepT[i][0];e.scrollLeft=keepT[i][1]}});window.scrollTo(0,keepY)}S._rt=S.tab;gnbH();bFloat();
   var i=TABS.map(function(t){return t[0]}).indexOf(S.tab);document.getElementById('prevBtn').disabled=i<=0;document.getElementById('nextBtn').disabled=i>=TABS.length-1;
   hSync();
 }
-function go(tab,fromBack){if(tab!==S.tab&&!fromBack)S.hist.push(S.tab);S.tab=tab;S.q='';S.f={};S.page=0;S.edit=null;S.sel={};S.issue='';S.dEdit=null;S.edAcad=null;if(tab==='log')loadLogs();if(tab==='req')loadReqs();if(tab==='ask')loadAsk();if(tab==='pay')loadPay();if(tab==='bank'&&!S.bank)loadBank();if(tab==='prog')loadProg();render();window.scrollTo(0,0)}
+function go(tab,fromBack){if(tab!==S.tab&&!fromBack)S.hist.push(S.tab);S.tab=tab;S.q='';S.f={};S.page=0;S.edit=null;S.sel={};S.issue='';S.dEdit=null;S.edAcad=null;if(tab==='log')loadLogs();if(tab==='req')loadReqs();if(tab==='ask')loadAsk();if(tab==='pay')loadPay();if(tab==='bank'&&!S.bank)loadBank();if(tab==='prog')loadProg();if(tab==='prt'&&!S.prt)loadPrt();render();window.scrollTo(0,0)}
 function load(){return callS('boot').then(function(r){if(!r.ok){if(S.sess)toast(r.msg);return}
   S.test=r.test;S.pdSrc0=r.pdSrc||'';S.D={acad:objs(r['학원']),tch:objs(r['교사']),stu:objs(r['학생']),duesRows:objs(r['연회비']),empty:r.empty,acc:r.acc||{},reqN:r.reqN||0,payF:r.pay||{},bN:r.bN||0,payN:r.payN||0,rates:objs(r.rates||{h:[],rows:[]}),mailLeft:r.mailLeft==null?-1:r.mailLeft,works:objs(r['근무']||{h:[],rows:[]})};index();render()})}
 function loadLogs(){S.logs=null;callS('logs').then(function(r){if(r.ok){S.logs=r;if(S.tab==='log')render()}else toast(r.msg)})}
@@ -1240,6 +1240,108 @@ if(e.target.dataset&&e.target.dataset.pck){S.pSel=S.pSel||{};if(e.target.checked
 })();
 </script>
 <script>try{window.top.postMessage('suzuki-ready','*')}catch(e){}</script>
-<div id="bldMark" hidden>빌드표시 20261103-232544 </div>
+<script>
+/* ---------- 인쇄 요청 (11-04) ----------
+ * 행사마다 선생님별 공문 · 포스터 장수를 넣고, 엑셀(이름 · 전화번호 · 우편번호 · 도로명주소 · 상세주소 · 공문 · 포스터)로 받음.
+ * 장수는 칸에서 나오면 바로 저장. 주소는 엑셀 받을 때만 정산 정보 파일에서 읽고 기록이 남음. */
+var PRT_KINDS=['캠프','졸업연주','교사연수','기타'];
+function loadPrt(){S.prtL=1;callS('printEvents').then(function(r){S.prtL=0;if(!r.ok){toast(r.msg);return}var P=S.prt=S.prt||{};P.evs=r.evs||[];
+  if(!P.ev||!P.evs.some(function(e){return e.id===P.ev})){var open=P.evs.filter(function(e){return e.state!=='끝'});P.ev=(open[open.length-1]||P.evs[P.evs.length-1]||{}).id||''}
+  if(P.ev)prtLoadEv(P.ev);else if(S.tab==='prt')render()})}
+function prtLoadEv(ev){var P=S.prt;P.req=null;P.ev=ev;if(S.tab==='prt')render();callS('printData',ev).then(function(r){if(!r.ok){toast(r.msg);return}if(P.ev===r.ev){P.req=r.req||{};if(S.tab==='prt')render()}})}
+function prtPeople(){var heads={};S.D.acad.forEach(function(a){if(a['원장교사ID'])heads[a['원장교사ID']]=1});
+  return S.D.tch.filter(function(t){return t['상태']!=='탈퇴'&&t['교사ID']}).map(function(t){return {t:t,id:t['교사ID'],head:!!heads[t['교사ID']]}})}
+function prtQ(){return (S.prt.q||'').replace(/\s/g,'')}
+function prtVisible(){var P=S.prt,f=P.f||{},q=prtQ(),R=P.req||{};
+  return prtPeople().filter(function(x){var t=x.t,r=R[x.id];
+    if(f.kd==='교사'&&t['회원구분']==='외부인')return false;if(f.kd==='외부인'&&t['회원구분']!=='외부인')return false;
+    if(f.head&&!x.head)return false;if(f.has&&!(r&&(r.d||r.p)))return false;
+    if(q&&String(t['이름']+tAcadTxt(t)+t['휴대전화']).replace(/\s/g,'').indexOf(q)<0)return false;return true})
+    .sort(function(a,b){var ra=R[a.id],rb=R[b.id],ha=ra&&(ra.d||ra.p)?0:1,hb=rb&&(rb.d||rb.p)?0:1;if(f.has||!(S.prt.sortHas))return String(tAcadTxt(a.t)).localeCompare(tAcadTxt(b.t),'ko')||String(a.t['이름']).localeCompare(b.t['이름'],'ko');return ha-hb})}
+function vPrint(){var P=S.prt;if(!P||!P.evs)return '<div class="panel"><span><span class="spin"></span> 불러오는 중…</span></div>';
+  var evs=P.evs,ev=evs.filter(function(e){return e.id===P.ev})[0];
+  var head='<div class="sec-h"><div><h2>인쇄 요청</h2><p>행사마다 선생님별로 <b>공문 · 포스터 장수</b>를 넣어요. 칸에서 나오면 바로 저장돼요. 「엑셀 받기」를 누르면 이름 · 전화번호 · 우편번호 · 도로명주소 · 상세주소 · 공문 · 포스터로 내려받아요(주소는 선생님이 넣은 <b>우편물 받을 주소</b>).</p></div></div>';
+  var bar='<div class="panel"><div class="row" style="gap:8px;flex-wrap:wrap;align-items:center">'+
+    (evs.length?'<select id="prtEv" aria-label="행사">'+evs.slice().reverse().map(function(e){return '<option value="'+esc(e.id)+'" '+(e.id===P.ev?'selected':'')+'>'+esc(e.name)+' · '+esc(e.kind)+(e.state==='끝'?' (끝)':'')+'</option>'}).join('')+'</select>':'<span class="cap">아직 행사가 없어요</span>')+
+    '<button class="btn" type="button" id="prtNew">＋ 새 행사</button>'+(ev?'<button class="btn ghost small" type="button" id="prtEdit">행사 고치기</button>':'')+
+    (ev&&evs.length>1?'<span class="row" style="gap:4px;flex-wrap:nowrap"><select id="prtFrom" aria-label="가져올 행사"><option value="">다른 행사 장수 가져오기…</option>'+evs.filter(function(e){return e.id!==P.ev}).reverse().map(function(e){return '<option value="'+esc(e.id)+'">'+esc(e.name)+'</option>'}).join('')+'</select><button class="btn small" type="button" id="prtCopy">가져오기</button></span>':'')+
+    (ev?'<button class="btn primary" type="button" id="prtXls" style="margin-left:auto">엑셀 받기</button>':'')+'</div>'+
+    (P.newOpen?prtEvForm(P.newOpen==='edit'?ev:null):'')+'</div>';
+  if(!ev)return head+bar;
+  if(!P.req)return head+bar+'<div class="panel"><span><span class="spin"></span> 장수를 불러오는 중…</span></div>';
+  var R=P.req,all=prtPeople(),pf=S.D.payF||{},sumD=0,sumP=0,nP=0,noAddr=0;
+  all.forEach(function(x){var r=R[x.id];if(r&&(r.d||r.p)){nP++;sumD+=r.d;sumP+=r.p;if(!(pf[x.id]&&pf[x.id].m))noAddr++}});
+  var L=prtVisible(),f=P.f||{},chk=P.sel||{},nSel=Object.keys(chk).filter(function(k){return chk[k]}).length;
+  var sum='<div class="row" style="gap:10px;flex-wrap:wrap;margin:0 0 12px">'+[['보낼 사람',nP+'명'],['공문',sumD+'장'],['포스터',sumP+'장'],['우편물 주소 없음',noAddr+'명',noAddr]].map(function(c){return '<div class="panel" style="margin:0;padding:10px 16px;min-width:130px"><div class="cap">'+c[0]+'</div><b style="font-size:20px'+(c[2]?';color:#c0392b':'')+'">'+c[1]+'</b></div>'}).join('')+'</div>';
+  var flt='<div class="panel"><div class="row" style="gap:8px;flex-wrap:wrap;align-items:center">'+
+    '<input type="search" id="prtQ" placeholder="이름 · 학원 · 전화 찾기" value="'+esc(P.q||'')+'" style="min-width:200px">'+
+    sel('prtKd',[['','모든 사람'],['교사','교사 · 연수교사'],['외부인','관계자(외부인)']],f.kd||'','구분')+
+    '<label class="row" style="gap:4px"><input type="checkbox" id="prtHead" '+(f.head?'checked':'')+'> 원장만</label>'+
+    '<label class="row" style="gap:4px"><input type="checkbox" id="prtHas" '+(f.has?'checked':'')+'> 장수 넣은 사람만</label>'+
+    '<span class="cap">'+L.length+'명</span></div>'+
+    '<div class="row" style="gap:6px;flex-wrap:wrap;align-items:center;margin-top:8px;padding-top:8px;border-top:1px solid var(--line)"><b style="font-size:13px">체크한 '+nSel+'명에게</b> 공문 <input type="number" id="prtBD" min="0" max="999" style="width:64px"> 장 · 포스터 <input type="number" id="prtBP" min="0" max="999" style="width:64px"> 장 <button class="btn small primary" type="button" id="prtBulk" '+(nSel?'':'disabled')+'>넣기</button><button class="btn small ghost" type="button" id="prtBulk0" '+(nSel?'':'disabled')+'>0장으로</button><button class="btn small ghost" type="button" id="prtAll">보이는 '+L.length+'명 모두 체크</button>'+(nSel?'<button class="btn small ghost" type="button" id="prtNone">체크 풀기</button>':'')+'<span class="cap" id="prtSaving" style="margin-left:auto">'+(P.saving?'저장 중…':'')+'</span></div></div>';
+  var shown=L.slice(0,400);
+  var tbl='<div class="panel tbl"><table class="stt prt"><thead><tr><th style="width:28px"><span class="cap">✓</span></th><th>이름</th><th>학원</th><th>직급 · 구분</th><th>휴대전화</th><th>우편물 주소</th><th>공문</th><th>포스터</th><th>메모</th></tr></thead><tbody>'+
+    shown.map(function(x){var t=x.t,r=R[x.id]||{d:0,p:0,m:''},has=pf[x.id]&&pf[x.id].m,on=r.d||r.p;
+      return '<tr class="'+(on?'':'mutedrow')+'"><td><input type="checkbox" data-prtsel="'+esc(x.id)+'" '+(chk[x.id]?'checked':'')+' aria-label="'+esc(t['이름'])+' 고르기"></td><td><b>'+nm(t)+'</b>'+(x.head?' <span class="pill info">원장</span>':'')+'</td><td>'+acadShort(t)+'</td><td><span class="cap">'+esc(t['직급']||'')+'</span> '+(t['회원구분']==='외부인'?'<span class="pill mute">관계자</span>':kindPill(t['회원구분']))+'</td><td class="num">'+esc(fmt(t['휴대전화']))+'</td>'+
+        '<td>'+(has?'<span class="pill ok">있음</span>':'<span class="pill bad">없음</span>')+'</td>'+
+        '<td><input type="number" min="0" max="999" class="num" data-prt="'+esc(x.id)+'|d" value="'+(r.d||'')+'" placeholder="0" style="width:64px"></td>'+
+        '<td><input type="number" min="0" max="999" class="num" data-prt="'+esc(x.id)+'|p" value="'+(r.p||'')+'" placeholder="0" style="width:64px"></td>'+
+        '<td><input type="text" maxlength="100" data-prt="'+esc(x.id)+'|m" value="'+esc(r.m||'')+'" style="min-width:140px" placeholder="(엑셀에 안 나감)"></td></tr>'}).join('')+
+    (L.length>shown.length?'<tr><td colspan="9" class="cap">'+(L.length-shown.length)+'명 더 있어요 · 찾기로 좁혀 주세요</td></tr>':'')+
+    (!L.length?'<tr><td colspan="9" class="cap">해당하는 사람이 없어요.</td></tr>':'')+'</tbody></table></div>';
+  return head+bar+sum+flt+tbl+'<p class="cap">우편물 주소가 「없음」인 선생님은 엑셀에 주소 칸이 비어 나와요. 선생님이 회원 화면 「내 정보 › 우편물 받을 주소」를 채우거나, 교사정보 › 정산 정보에서 넣어 주세요.</p>'}
+function prtEvForm(e){e=e||{};return '<div class="row" style="gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px;padding-top:10px;border-top:1px solid var(--line)"><b>'+(e.id?'행사 고치기':'새 행사')+'</b>'+
+  '<input type="text" id="prtNm" maxlength="60" placeholder="예: 2027 겨울 음악제" value="'+esc(e.name||'')+'" style="min-width:240px">'+sel('prtKind',PRT_KINDS,e.kind||'캠프','종류')+
+  (e.id?sel('prtState',[['진행','진행 중'],['끝','끝남']],e.state||'진행','상태'):'')+
+  '<button class="btn small primary" type="button" id="prtEvGo">'+(e.id?'저장':'만들기')+'</button><button class="btn small ghost" type="button" id="prtEvX">취소</button></div>'}
+/* 저장: 바뀐 사람을 모아 0.5초 뒤 한 번에 */
+function prtQueue(id){var P=S.prt;P.pend=P.pend||{};P.pend[id]=1;clearTimeout(P.tmr);P.tmr=setTimeout(prtFlush,500)}
+function prtFlush(){var P=S.prt,ids=Object.keys(P.pend||{});if(!ids.length||P.saving)return;P.pend={};P.saving=1;var sv=document.getElementById('prtSaving');if(sv)sv.textContent='저장 중…';
+  var ev=P.ev,list=ids.map(function(id){var r=P.req[id]||{d:0,p:0,m:''};return {tid:id,d:r.d,p:r.p,m:r.m}});
+  callS('printSet',ev,list).then(function(r){P.saving=0;var sv=document.getElementById('prtSaving');if(!r.ok){toast('저장하지 못했어요 · '+r.msg);if(sv)sv.textContent='저장 못 함';return}
+    if(P.ev===ev){Object.keys(P.pend||{}).forEach(function(id){if(r.req)r.req[id]=P.req[id]});P.req=Object.assign(r.req||{},P.req&&Object.keys(P.pend||{}).length?{}:{})}
+    if(sv)sv.textContent='저장했어요 '+new Date().toTimeString().slice(0,5);if(Object.keys(P.pend||{}).length)prtFlush();prtSumRefresh()})}
+function prtSumRefresh(){if(S.tab!=='prt')return;var a=document.activeElement;if(a&&a.dataset&&a.dataset.prt)return;var y=window.scrollY;render();window.scrollTo(0,y)}
+function prtXls(){var P=S.prt;if(P.saving||Object.keys(P.pend||{}).length){toast('저장이 끝난 뒤 다시 눌러 주세요');prtFlush();return}
+  Promise.all([xlsxLib(),callS('printExport',P.ev)]).then(function(a){var X=a[0],r=a[1];if(!r.ok){toast(r.msg);return}if(!r.rows.length){toast('공문 · 포스터 장수를 넣은 사람이 없어요');return}
+    var H=['이름','전화번호','우편번호','도로명주소','상세주소','공문','포스터'],sd=0,sp=0;
+    var rows=r.rows.sort(function(x,y){return String(x.a1).localeCompare(String(y.a1),'ko')||String(x.name).localeCompare(String(y.name),'ko')}).map(function(x){sd+=x.d;sp+=x.p;return [x.name,fmt(x.phone),String(x.zip||''),x.a1,x.a2,x.d,x.p]});
+    var aoa=[H].concat(rows).concat([['합계 '+rows.length+'명','','','','',sd,sp]]);
+    var ws=X.utils.aoa_to_sheet(aoa);rows.forEach(function(_,i){['B','C'].forEach(function(c){var k=c+(i+2);if(ws[k]){ws[k].t='s';ws[k].z='@'}})});
+    ws['!cols']=[{wch:10},{wch:15},{wch:8},{wch:42},{wch:28},{wch:6},{wch:6}];
+    var wb=X.utils.book_new();X.utils.book_append_sheet(wb,ws,'인쇄요청');
+    var buf=X.write(wb,{bookType:'xlsx',type:'array'}),d=new Date(),ymd=d.getFullYear()+('0'+(d.getMonth()+1)).slice(-2)+('0'+d.getDate()).slice(-2);
+    var url=URL.createObjectURL(new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'})),el=document.createElement('a');
+    el.href=url;el.download='인쇄요청_'+String(r.ev.name).replace(/[\\\/:*?"<>|]/g,' ')+'_'+ymd+'.xlsx';document.body.appendChild(el);el.click();setTimeout(function(){el.remove();URL.revokeObjectURL(url)},60000);
+    var miss=r.rows.filter(function(x){return !x.a1}).length;toast('엑셀을 받았어요 · '+rows.length+'명'+(miss?' · 주소 없는 '+miss+'명은 주소 칸이 비어 있어요':''))}).catch(function(e){toast((e&&e.message)||'엑셀을 만들지 못했어요')})}
+document.addEventListener('click',function(e){if(S.tab!=='prt'||!S.prt)return;var b=e.target.closest&&e.target.closest('button');if(!b)return;var P=S.prt;
+  if(b.id==='prtNew'){P.newOpen='new';render();setTimeout(function(){var i=document.getElementById('prtNm');if(i)i.focus()},30);return}
+  if(b.id==='prtEdit'){P.newOpen='edit';render();return}
+  if(b.id==='prtEvX'){P.newOpen=null;render();return}
+  if(b.id==='prtEvGo'){var nm2=(document.getElementById('prtNm')||{}).value||'',kd=(document.getElementById('prtKind')||{}).value,stt=(document.getElementById('prtState')||{}).value,ed=P.newOpen==='edit'?P.ev:'';
+    callS('printEvSave',{id:ed,name:nm2,kind:kd,state:stt}).then(function(r){if(!r.ok){toast(r.msg);return}P.evs=r.evs;P.newOpen=null;toast(ed?'행사를 고쳤어요':'행사를 만들었어요');if(!ed){P.sel={};prtLoadEv(r.id)}else render()});return}
+  if(b.id==='prtCopy'){var from=(document.getElementById('prtFrom')||{}).value;if(!from){toast('가져올 행사를 골라 주세요');return}var fe=P.evs.filter(function(x){return x.id===from})[0]||{};
+    if(!confirm('「'+fe.name+'」의 공문 · 포스터 장수를 이 행사로 가져올까요? 같은 사람은 덮어써요.'))return;callS('printCopy',P.ev,from).then(function(r){if(!r.ok){toast(r.msg);return}P.req=r.req;render();toast('장수를 가져왔어요')});return}
+  if(b.id==='prtXls'){prtXls();return}
+  if(b.id==='prtAll'){P.sel=P.sel||{};prtVisible().forEach(function(x){P.sel[x.id]=true});render();return}
+  if(b.id==='prtNone'){P.sel={};render();return}
+  if(b.id==='prtBulk'||b.id==='prtBulk0'){var z=b.id==='prtBulk0',dv=(document.getElementById('prtBD')||{}).value,pv=(document.getElementById('prtBP')||{}).value;
+    if(!z&&dv===''&&pv===''){toast('공문이나 포스터 장수를 넣어 주세요');return}
+    var ids=Object.keys(P.sel||{}).filter(function(k){return P.sel[k]});ids.forEach(function(id){var r=P.req[id]=P.req[id]||{d:0,p:0,m:''};if(z){r.d=0;r.p=0}else{if(dv!=='')r.d=Math.max(0,Math.min(999,+dv||0));if(pv!=='')r.p=Math.max(0,Math.min(999,+pv||0))}P.pend=P.pend||{};P.pend[id]=1});
+    render();prtFlush();toast(ids.length+'명에게 넣었어요');return}},true);
+document.addEventListener('change',function(e){if(S.tab!=='prt'||!S.prt)return;var t=e.target,P=S.prt;
+  if(t.id==='prtEv'){P.sel={};P.newOpen=null;prtLoadEv(t.value);return}
+  if(t.id==='prtKd'||t.id==='prtHead'||t.id==='prtHas'){P.f=P.f||{};if(t.id==='prtKd')P.f.kd=t.value;else P.f[t.id==='prtHead'?'head':'has']=t.checked;render();return}
+  if(t.dataset&&t.dataset.prtsel){P.sel=P.sel||{};P.sel[t.dataset.prtsel]=t.checked;render();return}
+  if(t.dataset&&t.dataset.prt){var k=t.dataset.prt.split('|'),id=k[0],f=k[1],r=P.req[id]=P.req[id]||{d:0,p:0,m:''};
+    if(f==='m')r.m=String(t.value||'').slice(0,100);else{r[f]=Math.max(0,Math.min(999,Math.round(+t.value||0)));t.value=r[f]||''}
+    var tr=t.closest('tr');if(tr)tr.classList.toggle('mutedrow',!(r.d||r.p));prtQueue(id)}},true);
+document.addEventListener('input',function(e){if(S.tab!=='prt'||!S.prt||e.target.id!=='prtQ')return;S.prt.q=e.target.value;clearTimeout(S.prt.qt);S.prt.qt=setTimeout(function(){var pos=e.target.selectionStart;render();var q=document.getElementById('prtQ');if(q){q.focus();try{q.setSelectionRange(pos,pos)}catch(x){}}},300)});
+document.addEventListener('keydown',function(e){var t=e.target;if(S.tab!=='prt'||!t.dataset||!t.dataset.prt||e.key!=='Enter')return;e.preventDefault();var L=[].slice.call(document.querySelectorAll('[data-prt$="|'+t.dataset.prt.split('|')[1]+'"]')),i=L.indexOf(t);t.blur();if(L[i+1])L[i+1].focus()});
+</script>
+<style>table.prt tr.mutedrow td{color:var(--faint)}table.prt tr.mutedrow td b{color:var(--muted)}table.prt td{vertical-align:middle}</style>
+
+<div id="bldMark" hidden>빌드표시 20261104-174935 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();</script>
 </body></html>

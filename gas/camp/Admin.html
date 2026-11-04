@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261104-173341 -->
+<!-- build: 20261104-174935 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -2448,9 +2448,9 @@ render();
 @media screen{#docPrintRoot{display:none}}
 @media print{
   @page{size:A4;margin:0}
-  body>*:not(#docPrintRoot){display:none !important}
-  html,body{background:#fff !important;margin:0 !important;padding:0 !important}
-  #docPrintRoot{display:block !important}
+  body.dprint>*:not(#docPrintRoot){display:none !important}
+  body.dprint,html:has(body.dprint){background:#fff !important;margin:0 !important;padding:0 !important}
+  body.dprint #docPrintRoot{display:block !important}
   #docPrintRoot .dp{min-height:0;box-shadow:none;zoom:1;width:auto;padding:0}
   #docPrintRoot table.pw{width:100%;border-collapse:collapse;border:0;margin:0}#docPrintRoot table.pw>*>tr>td{border:0 !important;padding:0 !important;background:none !important;text-align:left !important;vertical-align:top !important;white-space:normal !important;font-size:inherit !important}
 }
@@ -2592,7 +2592,11 @@ let dPT=0;const dPend=()=>!!(S.cc&&S.dView&&JSON.stringify(S.cc)!==JSON.stringif
 function dPrev(){clearTimeout(dPT);dPT=setTimeout(()=>{const pd=dPend(),pt=document.getElementById('dPendTxt'),pv=document.getElementById('docPrev');if(pt)pt.textContent=pd?'미리보기에 적용 안 한 내용이 있어요':'';if(pv)pv.classList.toggle('stale',pd);const pl=document.getElementById('ccDirty');if(pl)pl.innerHTML=ccPill()},80)}
 function dApply(){if(!S.cc||!S.cc.doc)return;S.dView=JSON.parse(JSON.stringify(S.cc));const p=document.getElementById('docPrev');if(p){p.innerHTML=docHtml(S.dView);p.classList.remove('stale')}const pt=document.getElementById('dPendTxt');if(pt)pt.textContent='';const w=document.getElementById('dWarnBox');if(w)w.innerHTML=dWarnHtml(dWarn(S.dView));const gi=document.getElementById('dGuest');if(gi&&document.activeElement!==gi){const ga=dGuestAdd(S.cc);gi.value=ga==null?'':ga.toLocaleString('ko-KR')}const pl=document.getElementById('ccDirty');if(pl)pl.innerHTML=ccPill()}
 function dSetFee(k,i,v){const c=S.cc,ga=dGuestAdd(c);DOC_FG[k][1].forEach(t=>{c.fees[t]=c.fees[t]||[];c.fees[t][i]=v});if(ga!=null)DOC_GUEST.forEach(([g,m])=>{if(DOC_FG[k][1].includes(m)){c.fees[g]=c.fees[g]||[];c.fees[g][i]=v+ga}})}
-function dPrint(){if(!S.cc||!S.cc.doc)return;dApply();let r=document.getElementById('docPrintRoot');if(!r){r=document.createElement('div');r.id='docPrintRoot';document.body.appendChild(r)}const M=dMg(S.cc);r.innerHTML='<table class="pw"><thead><tr><td style="height:'+M.t+'mm"></td></tr></thead><tfoot><tr><td style="height:'+M.b+'mm"></td></tr></tfoot><tbody><tr><td>'+docHtml(S.cc)+'</td></tr></tbody></table>';const dp=r.querySelector('.dp');if(dp)dp.style.padding='0 '+M.r+'mm 0 '+M.l+'mm';
+/* 브라우저 인쇄(Ctrl+P · 메뉴)로 찍어도 지금 값으로: 인쇄 직전에 인쇄용 공문을 다시 만듦. 공문 화면이 아니면 인쇄용 공문을 비움 (11-04) */
+window.addEventListener('beforeprint',()=>{const r=document.getElementById('docPrintRoot');if(S.tab==='doc'&&S.cc&&S.cc.doc){if(!S.dPrinting)dBuildPrint();document.body.classList.add('dprint')}else{document.body.classList.remove('dprint');if(r)r.remove()}});
+window.addEventListener('afterprint',()=>{S.dPrinting=0;document.body.classList.remove('dprint')});
+function dBuildPrint(){dApply();let r=document.getElementById('docPrintRoot');if(!r){r=document.createElement('div');r.id='docPrintRoot';document.body.appendChild(r)}const M=dMg(S.cc);r.innerHTML='<table class="pw"><thead><tr><td style="height:'+M.t+'mm"></td></tr></thead><tfoot><tr><td style="height:'+M.b+'mm"></td></tr></tfoot><tbody><tr><td>'+docHtml(S.cc)+'</td></tr></tbody></table>';const dp=r.querySelector('.dp');if(dp)dp.style.padding='0 '+M.r+'mm 0 '+M.l+'mm';return r}
+function dPrint(){if(!S.cc||!S.cc.doc)return;S.dPrinting=1;dBuildPrint();document.body.classList.add('dprint');let r=document.getElementById('docPrintRoot');
   const t0=document.title,ti=(S.cc.doc.title||'{캠프이름} 안내').replace(/\{캠프이름\}/g,(S.cc.base||{}).name||'');document.title=ti.replace(/[\\\/:*?"<>|]/g,' ');
   const im=r.querySelector('img');const go=()=>{try{window.print()}finally{setTimeout(()=>{document.title=t0},500)}};const fr=(document.fonts&&document.fonts.ready)||Promise.resolve();fr.then(()=>{if(im&&!im.complete)im.onload=go;else go()});
   if(ccDirty())toast('저장하지 않은 내용도 인쇄돼요 · 캠프에 반영하려면 「저장」을 눌러 주세요')}
@@ -2664,6 +2668,6 @@ document.addEventListener('change',e=>{if(S.tab!=='aud')return;const t=e.target;
   if(t.dataset&&t.dataset.audmemo){const i=t.dataset.audmemo.lastIndexOf('|'),id=t.dataset.audmemo.slice(0,i),st=t.dataset.audmemo.slice(i+1);call('audSet',[id,st==='제출 안 함'?'심사 전':st,t.value],r=>{S.AU=r;toast('메모를 저장했어요')},'')}});
 document.addEventListener('input',e=>{if(S.tab!=='aud'||e.target.id!=='audQ')return;S.audF=Object.assign(S.audF||{},{q:e.target.value});clearTimeout(S.audQT);S.audQT=setTimeout(()=>{const pos=e.target.selectionStart;render();const q=document.getElementById('audQ');if(q){q.focus();try{q.setSelectionRange(pos,pos)}catch(x){}}},350)});
 </script>
-<div id="bldMark" hidden>빌드표시 20261104-173341 </div>
+<div id="bldMark" hidden>빌드표시 20261104-174935 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();</script>
 </body></html>

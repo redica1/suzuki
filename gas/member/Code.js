@@ -1,4 +1,4 @@
-/* build: 20261103-232544 */
+/* build: 20261104-174935 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -55,6 +55,8 @@ const HEAD = {
   '교사': ['교사ID', '이름', '구분글자', '원래이름', '휴대전화', '이메일', '학원1', '학원2', '학원3', '직급', '전공', '회원구분', '명단자격', '명단취득', '회비구분', '캠프교수', '내부외부', '상태', '확인', '확인메모', '메모', '원본', '수정일', '수정자', '영문이름', '본인자격', '회비납부방법', '강사료대상', '계약체결', '계약일', '성별', '하는일', '소속기관', '계약문서ID'],   // 하는일 · 소속기관 = 외부인(관계자) 정보 (10-31)
   '학생': ['학생ID', '학원ID', '이름', '구분글자', '원래이름', '출생연도', '출생연도추정', '전공', '시작월', '상태', '담당교사ID', '확인', '확인메모', '메모', '원본', '수정일', '수정자', '상태일', '성별'],
   '연회비': ['대상', 'ID', '년도', '부과', '납부', '납부일', '방식', '메모', '수정일', '수정자', '자격시작', '확인', '신고일', '신고자', '확인일', '확인자'],
+  '인쇄행사': ['행사ID', '이름', '종류', '상태', '메모', '만든날', '수정일', '수정자'],
+  '인쇄요청': ['행사ID', '교사ID', '공문', '포스터', '메모', '수정일', '수정자'],
   '설정': ['항목', '값', '설명'],
   '기록': ['일시', '누가', '표', 'ID', '동작', '내용'],
   '참가이력': ['이력ID', '대상', 'ID', '행사', '년도', '기간', '역할', '상태', '메모', '수정일', '수정자'],   // 행사 참여 기록 (10-28): 캠프·졸업연주 등이 끝나면 여기에 모음
@@ -105,7 +107,7 @@ function include(n) { return HtmlService.createTemplateFromFile(n).getRawContent
 
 function api(name, args) {
   const open = { login, hello, tHello, tEvents, tLookup, tStart, tResend, tVerify, tCreate, tLogin, tForgot, tReset, tPwChange, tMe, tSavePay, tSavePart, tSaveInfo, tSavePhoto, tAcad, tSaveAcad, tDocUp, tDocGet, tSaveStu, tSaveStus, tStuDetail, tStuSave, tStuTutor, tStuTutorDel, tStuState, tStuStateDel, tMyStu, tMyStuDetail, tMyStuPay, tTchSaves, tTchEnd, tTchEvent, tTchAssign, tTchStart, tSaveRrn, tSaveInc, tAddWork, tClassCreate, tEndWork, tMainWork, tLogout, bPost, bMine, bReply };
-  const fns = { ogGet, ogSave, ogToken, boot, saveRow, setCheck, logs, importRoster, saveDues, delDues, reqs, reqDo, delAcad, payView, bulkSet, saveWorks, importPastDues, bList, bSet, bComment, photoGet, photoDel, fillRegions, saveRates, docList, docUp, docGet, docDel, payList, payOk, payOkMany, payNo, memView, rosterNow, inputStatus, inboxDone, acctReset, classFromStudents, delStus, asTeacher, bankImport, bankList: bankListTop, bankSet, bankDues, bankFromSheet, bankMeta, bankSplitSave, bankPay, bankCamp, bankCampPay, bankPayList, devVirtual };
+  const fns = { printEvents, printEvSave, printData, printSet, printCopy, printExport, ogGet, ogSave, ogToken, boot, saveRow, setCheck, logs, importRoster, saveDues, delDues, reqs, reqDo, delAcad, payView, bulkSet, saveWorks, importPastDues, bList, bSet, bComment, photoGet, photoDel, fillRegions, saveRates, docList, docUp, docGet, docDel, payList, payOk, payOkMany, payNo, memView, rosterNow, inputStatus, inboxDone, acctReset, classFromStudents, delStus, asTeacher, bankImport, bankList: bankListTop, bankSet, bankDues, bankFromSheet, bankMeta, bankSplitSave, bankPay, bankCamp, bankCampPay, bankPayList, devVirtual };
   try {
     if (open[name]) return Object.assign({ ok: true }, open[name].apply(null, args || []));
     if (!fns[name]) throw new UserError('알 수 없는 요청이에요.');
@@ -1937,6 +1939,57 @@ function cput_(k, v, sec) { CacheService.getScriptCache().put(k, JSON.stringify(
 function cget_(k) { const v = CacheService.getScriptCache().get(k); return v ? JSON.parse(v) : null; }
 function col_(T) { const o = {}; T.h.forEach((k, i) => o[k] = i); return o; }
 function acadNames_() { const o = {}; tbl_('학원').v.forEach(r => o[r[0]] = r[1]); return o; }
+/* ====================== 인쇄 요청 (11-04) ======================
+ * 행사(캠프 · 졸업연주 …)마다 선생님별로 공문 · 포스터 장수를 넣고, 우편물 받을 주소와 함께 엑셀로 받음.
+ * 「인쇄행사」 한 줄 = 한 행사, 「인쇄요청」 한 줄 = 행사 × 선생님(장수가 0이면 줄을 지움). 주소는 관리자 전용 「정산 정보」 파일에서 엑셀 받을 때만 읽음. */
+const PRT_KINDS = ['캠프', '졸업연주', '교사연수', '기타'];
+function prtEvs_() { const E = tbl_('인쇄행사'), c = col_(E); return E.v.map(r => ({ id: r[c['행사ID']], name: r[c['이름']], kind: r[c['종류']], state: r[c['상태']] || '진행', memo: r[c['메모']], made: r[c['만든날']] })).filter(e => e.id); }
+function prtReqs_(ev) { const R = tbl_('인쇄요청'), c = col_(R), o = {}; R.v.forEach(r => { if (r[c['행사ID']] === ev) o[r[c['교사ID']]] = { d: +r[c['공문']] || 0, p: +r[c['포스터']] || 0, m: r[c['메모']] || '' }; }); return o; }
+function printEvents(who) { return { evs: prtEvs_() }; }
+function printEvSave(who, d) {
+  const name = String(d.name || '').trim().slice(0, 60); if (!name) fail('행사 이름을 넣어 주세요.');
+  const kind = PRT_KINDS.includes(d.kind) ? d.kind : '기타', E = tbl_('인쇄행사');
+  if (d.id) { const i = E.find('행사ID', d.id); if (i < 0) fail('행사를 찾지 못했어요.'); E.set(i, { '이름': name, '종류': kind, '상태': d.state === '끝' ? '끝' : '진행', '메모': String(d.memo || '').slice(0, 200), '수정일': now_(), '수정자': who.name }); log_(who.name, '인쇄행사', d.id, '수정', name); return { evs: prtEvs_(), id: d.id }; }
+  const id = nextId_(E, '행사ID', 'E'); E.append({ '행사ID': id, '이름': name, '종류': kind, '상태': '진행', '메모': String(d.memo || '').slice(0, 200), '만든날': now_().slice(0, 10), '수정일': now_(), '수정자': who.name });
+  log_(who.name, '인쇄행사', id, '추가', name); return { evs: prtEvs_(), id };
+}
+function printData(who, ev) { if (!prtEvs_().some(e => e.id === ev)) fail('행사를 찾지 못했어요.'); return { ev, req: prtReqs_(ev) }; }
+/** list = [{tid, d(공문), p(포스터), m(메모)}] · 0장 0장 · 메모 없음이면 줄을 지움 */
+function printSet(who, ev, list) {
+  if (!prtEvs_().some(e => e.id === ev)) fail('행사를 찾지 못했어요.');
+  const lock = LockService.getScriptLock(); if (!lock.tryLock(20000)) fail('다른 저장이 진행 중이에요. 잠시 뒤 다시 해 주세요.');
+  try {
+    const R = tbl_('인쇄요청'), c = col_(R), T = tbl_('교사'), ok = {}; T.v.forEach(r => ok[r[0]] = 1);
+    const del = [];
+    (list || []).slice(0, 2000).forEach(x => {
+      const tid = String(x.tid || ''); if (!ok[tid]) return;
+      const d = Math.max(0, Math.min(999, Math.round(+x.d || 0))), p = Math.max(0, Math.min(999, Math.round(+x.p || 0))), m = String(x.m || '').trim().slice(0, 100);
+      const i = R.v.findIndex(r => r[c['행사ID']] === ev && r[c['교사ID']] === tid);
+      if (!d && !p && !m) { if (i >= 0) del.push(i); return; }
+      const o = { '행사ID': ev, '교사ID': tid, '공문': d, '포스터': p, '메모': m, '수정일': now_(), '수정자': who.name };
+      if (i >= 0) R.set(i, o); else R.append(o);
+    });
+    del.sort((a, b) => b - a).forEach(i => { R.sh.deleteRow(i + 2); R.v.splice(i, 1); });
+    log_(who.name, '인쇄요청', ev, '장수', (list || []).length + '명');
+  } finally { lock.releaseLock(); }
+  return { ev, req: prtReqs_(ev) };
+}
+/** 다른 행사의 장수를 이 행사로 (덮어쓰기 · 이 행사에만 있는 사람은 그대로) */
+function printCopy(who, ev, from) {
+  if (ev === from) fail('다른 행사를 골라 주세요.');
+  const src = prtReqs_(from); return printSet(who, ev, Object.keys(src).map(tid => ({ tid, d: src[tid].d, p: src[tid].p, m: src[tid].m })));
+}
+/** 엑셀용: 장수가 있는 사람 + 우편물 받을 주소(정산 정보 파일). 받을 때마다 기록 */
+function printExport(who, ev) {
+  const e = prtEvs_().find(x => x.id === ev); if (!e) fail('행사를 찾지 못했어요.');
+  const req = prtReqs_(ev), T = tbl_('교사'), tc = col_(T), P = payTbl_(), pc = col_(P), addr = {};
+  P.v.forEach(r => addr[r[pc['교사ID']]] = { zip: r[pc['우편번호']] || '', a1: r[pc['주소']] || '', a2: r[pc['상세주소']] || '' });
+  const rows = [];
+  T.v.forEach(r => { const tid = r[tc['교사ID']], q = req[tid]; if (!q || (!q.d && !q.p)) return; const A = addr[tid] || {};
+    rows.push({ tid, name: r[tc['이름']], phone: r[tc['휴대전화']], zip: A.zip || '', a1: A.a1 || '', a2: A.a2 || '', d: q.d, p: q.p, m: q.m }); });
+  log_(who.name, '인쇄요청', ev, '엑셀 받음 (주소 포함)', rows.length + '명');
+  return { ev: e, rows };
+}
 /* ====================== 통장 (11-01) ======================
  * 협회 통장 거래내역을 관리자 전용 「정산 정보」 파일의 「통장」 탭에 모음. 은행 엑셀을 화면에서 읽어 줄로 보냄(겹치는 줄은 건너뜀).
  * 줄마다 구분(입금 · 지출) · 학원 · 선생님 · 메모를 정하고, 교사회비 · 학생회비는 회원관리 연회비 「확인」까지 이어 줌. */

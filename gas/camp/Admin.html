@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261104-210944 -->
+<!-- build: 20261104-211246 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -1949,10 +1949,10 @@ function modal(title,html){const bg=document.createElement('div');bg.className='
   bg.addEventListener('click',e=>{if(e.target===bg||e.target.closest('[data-x]'))close()});const f=bg.querySelector('[data-x]');if(f)f.focus();return bg}
 function popShow(k){const P=POP[k];if(!P)return;const bg=document.createElement('div');bg.className='askbg';
   const L=P.list.slice().sort((a,b)=>a.acad.localeCompare(b.acad,'ko')||String(a.p.name).localeCompare(b.p.name,'ko'));
-  const tsv=[['이름','학원','구분','악기','권수(진도)','담당 교사','접수번호'],...L.map(x=>[x.p.name,x.acad,x.type,x.inst,x.prog,x.i.teacher||'',x.sb.no])].map(r=>r.map(v=>String(v==null?'':v).replace(/[\t\n]/g,' ')).join('\t')).join('\n');
+  const tsv=[['이름','학원','구분','악기','권수(진도)','담당 교사'],...L.map(x=>[x.p.name,x.acad,x.type,x.inst,x.prog,x.i.teacher||''])].map(r=>r.map(v=>String(v==null?'':v).replace(/[\t\n]/g,' ')).join('\t')).join('\n');
   bg.innerHTML=`<div class="askbox popbox" role="dialog" aria-modal="true" aria-label="${esc(P.label)}"><div class="spread"><b style="font-size:18px">${esc(P.label)} · ${L.length}명</b><div class="row" style="gap:6px"><button class="btn small" type="button" data-popcopy>표 복사</button><button class="btn small ghost" type="button" data-x>닫기</button></div></div>
-    <div class="tbl" style="max-height:60vh;overflow:auto"><table><thead><tr><th>#</th><th>이름</th><th>학원</th><th>구분</th><th>악기</th><th>권수 (진도)</th><th>담당 교사</th><th>접수</th></tr></thead><tbody>
-    ${L.map((x,n)=>`<tr><td class="num">${n+1}</td><td><b>${esc(x.p.name)}</b>${x.p.status==='취소요청'?' <small class="faint">(취소 요청)</small>':''}</td><td>${esc(x.acad)}</td><td><small>${esc(x.type==='회원의 악기하는 자녀'?'악기하는 교사자녀':x.type)}</small></td><td>${esc(x.inst||'')}</td><td>${esc(x.prog||'-')}</td><td>${esc(x.i.teacher||'')}</td><td class="num"><small>${esc(x.sb.no)}</small></td></tr>`).join('')}</tbody></table></div></div>`;
+    <div class="tbl" style="max-height:60vh;overflow:auto"><table><thead><tr><th>#</th><th>이름</th><th>학원</th><th>구분</th><th>악기</th><th>권수 (진도)</th><th>담당 교사</th></tr></thead><tbody>
+    ${L.map((x,n)=>`<tr><td class="num">${n+1}</td><td><b>${esc(x.p.name)}</b>${x.p.status==='취소요청'?' <small class="faint">(취소 요청)</small>':''}</td><td>${esc(x.acad)}</td><td><small>${esc(x.type==='회원의 악기하는 자녀'?'악기하는 교사자녀':x.type)}</small></td><td>${esc(x.inst||'')}</td><td>${esc(x.prog||'-')}</td><td>${esc(x.i.teacher||'')}</td></tr>`).join('')}</tbody></table></div></div>`;
   document.body.appendChild(bg);const close=()=>{bg.remove();document.removeEventListener('keydown',esc_)};const esc_=e=>{if(e.key==='Escape')close()};document.addEventListener('keydown',esc_);
   bg.addEventListener('click',e=>{if(e.target===bg||e.target.closest('[data-x]'))close();else if(e.target.closest('[data-popcopy]')){try{navigator.clipboard.writeText(tsv).then(()=>toast('복사했어요 · 시트에 붙여넣기'),()=>toast('복사하지 못했어요'))}catch(x){toast('복사하지 못했어요')}}});
   const f=bg.querySelector('[data-x]');if(f)f.focus()}
@@ -3012,6 +3012,6 @@ document.addEventListener('input',e=>{const t=e.target;if(S.tab!=='meal'||!t.dat
   if(k==='kind'||k==='sd')render();else{const btn=document.getElementById('mlMake');if(btn){const B=mlBase(),on=mlRows().filter(x=>x.on),tot=on.reduce((s,x)=>s+(x.n==null?(S.mlf.base||B.n):+x.n||0),0);btn.textContent=`고른 ${on.length}줄 식권 만들기 · ${tot.toLocaleString()}장`}}});
 document.addEventListener('change',e=>{const t=e.target;if(S.tab!=='meal')return;if(t.dataset&&t.dataset.mlf&&t.tagName==='SELECT'){const [i,k]=t.dataset.mlf.split('|'),r=mlRows()[+i];if(r){const old=ML_K[r.kind];r.kind=t.value;if(r.label.endsWith(old))r.label=r.label.slice(0,-old.length)+ML_K[t.value];render()}}});
 </script>
-<div id="bldMark" hidden>빌드표시 20261104-210944 </div>
+<div id="bldMark" hidden>빌드표시 20261104-211246 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();</script>
 </body></html>

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261104-184533 -->
+<!-- build: 20261104-190138 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -1311,7 +1311,7 @@ function prtXls(){var P=S.prt;if(P.saving||Object.keys(P.pend||{}).length){toast
     var ws=X.utils.aoa_to_sheet(aoa);rows.forEach(function(_,i){['B','C'].forEach(function(c){var k=c+(i+2);if(ws[k]){ws[k].t='s';ws[k].z='@'}})});
     ws['!cols']=[{wch:10},{wch:15},{wch:8},{wch:42},{wch:28},{wch:6},{wch:6}];
     var wb=X.utils.book_new();X.utils.book_append_sheet(wb,ws,'인쇄요청');
-    var buf=X.write(wb,{bookType:'xlsx',type:'array'}),d=new Date(),ymd=d.getFullYear()+('0'+(d.getMonth()+1)).slice(-2)+('0'+d.getDate()).slice(-2);
+    var buf=X.write(wb,{bookType:'xlsx',type:'array'}),d=new Date(),z2=function(n){return ('0'+n).slice(-2)},ymd=d.getFullYear()+z2(d.getMonth()+1)+z2(d.getDate())+'_'+z2(d.getHours())+z2(d.getMinutes());
     var url=URL.createObjectURL(new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'})),el=document.createElement('a');
     el.href=url;el.download='인쇄요청_'+String(r.ev.name).replace(/[\\\/:*?"<>|]/g,' ')+'_'+ymd+'.xlsx';document.body.appendChild(el);el.click();setTimeout(function(){el.remove();URL.revokeObjectURL(url)},60000);
     var miss=r.rows.filter(function(x){return !x.a1}).length;toast('엑셀을 받았어요 · '+rows.length+'명'+(miss?' · 주소 없는 '+miss+'명은 주소 칸이 비어 있어요':''))}).catch(function(e){toast((e&&e.message)||'엑셀을 만들지 못했어요')})}
@@ -1342,6 +1342,6 @@ document.addEventListener('keydown',function(e){var t=e.target;if(S.tab!=='prt'|
 </script>
 <style>table.prt th,table.prt td{text-align:left !important}table.prt th:first-child,table.prt td:first-child{text-align:center !important}table.prt th:nth-child(7),table.prt td:nth-child(7),table.prt th:nth-child(8),table.prt td:nth-child(8){text-align:center !important}table.prt td:nth-child(7) input,table.prt td:nth-child(8) input{text-align:center}table.prt tr.mutedrow td{color:var(--faint)}table.prt tr.mutedrow td b{color:var(--muted)}table.prt td{vertical-align:middle}table.prt td.padr{white-space:normal;min-width:220px;max-width:340px;line-height:1.4}</style>
 
-<div id="bldMark" hidden>빌드표시 20261104-184533 </div>
+<div id="bldMark" hidden>빌드표시 20261104-190138 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();</script>
 </body></html>

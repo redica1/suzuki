@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261104-185954 -->
+<!-- build: 20261104-190138 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -2599,6 +2599,8 @@ window.addEventListener('afterprint',()=>{S.dPrinting=0;document.body.classList.
 function dBuildPrint(){dApply();let r=document.getElementById('docPrintRoot');if(!r){r=document.createElement('div');r.id='docPrintRoot';document.body.appendChild(r)}const M=dMg(S.cc);r.innerHTML='<table class="pw"><thead><tr><td style="height:'+M.t+'mm"></td></tr></thead><tfoot><tr><td style="height:'+M.b+'mm"></td></tr></tfoot><tbody><tr><td>'+docHtml(S.cc)+'</td></tr></tbody></table>';const dp=r.querySelector('.dp');if(dp)dp.style.padding='0 '+M.r+'mm 0 '+M.l+'mm';return r}
 /* 새 창으로 보기 (11-04): 지금 공문을 A4 실제 크기로 새 탭에 띄움(같은 탭을 다시 씀). 그 창에서 바로 인쇄 · PDF 저장 */
 function dZoom(){if(S.dZoom==null){let v=0;try{v=+localStorage.getItem('campDocZoom')}catch(x){}S.dZoom=v>=.4&&v<=1.6?v:.86}return S.dZoom}
+/* 받는 파일 이름 끝에 날짜 · 시각 (같은 이름이 겹치지 않게, 11-04) */
+function dStamp(){const d=new Date(),z=n=>String(n).padStart(2,'0');return '_'+d.getFullYear()+z(d.getMonth()+1)+z(d.getDate())+'_'+z(d.getHours())+z(d.getMinutes())}
 function dOpenWin(){if(!S.cc||!S.cc.doc)return;dApply();
   const css=[...document.querySelectorAll('style')].map(x=>x.textContent).filter(t=>t.indexOf('.dp{')>=0).join('\n'),M=dMg(S.cc);
   const ti=String((S.cc.doc.title||'{캠프이름} 안내').replace(/\{캠프이름\}/g,(S.cc.base||{}).name||'')).replace(/[<>&"]/g,' ');
@@ -2607,7 +2609,7 @@ function dOpenWin(){if(!S.cc||!S.cc.doc)return;dApply();
   const extra='@media screen{html,body{margin:0;background:#dfe4e6}#docPrintRoot{display:block !important;width:210mm;margin:14px auto 40px;background:#fff;box-shadow:0 2px 16px rgba(0,0,0,.22)}#docPrintRoot .dp{zoom:1;box-shadow:none;min-height:0;width:auto;padding-top:0 !important;padding-bottom:0 !important}'+
     '.tb{position:sticky;top:0;z-index:5;display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap;padding:10px 16px;background:#1f5c63;color:#fff;font:14px "Pretendard Variable",sans-serif}.tb button{font:inherit;font-weight:700;padding:6px 14px;border:0;border-radius:8px;background:#fff;color:#1f5c63;cursor:pointer}.tb span{opacity:.85;font-size:12.5px}.zm{display:inline-flex;gap:2px;background:rgba(255,255,255,.15);border-radius:9px;padding:2px}.zm button{min-width:34px;padding:4px 8px}#zv{min-width:56px}}@media print{#docPrintRoot{zoom:1 !important}}'+
     '#docPrintRoot table.pw{width:100%;border-collapse:collapse}#docPrintRoot table.pw>*>tr>td{border:0;padding:0;text-align:left;vertical-align:top}';
-  const html='<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+ti+'</title><link rel="stylesheet" href="'+font+'"><style>'+css+'\n'+extra+'</style></head><body class="dprint">'+
+  const html='<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+ti+dStamp()+'</title><link rel="stylesheet" href="'+font+'"><style>'+css+'\n'+extra+'</style></head><body class="dprint">'+
     '<div class="tb"><b>'+ti+'</b><span class="zm"><button type="button" onclick="Z(-1)" aria-label="작게">−</button><button type="button" id="zv" onclick="Z(0)" title="100%로">100%</button><button type="button" onclick="Z(1)" aria-label="크게">＋</button><button type="button" onclick="Z(2)">폭 맞춤</button></span><button type="button" onclick="print()">인쇄 · PDF 저장</button><span>공문 화면에서 고친 뒤 「새 창으로 보기」를 다시 누르면 이 창이 새로 바뀌어요</span></div>'+
     '<div id="docPrintRoot">'+body+'</div><scr'+'ipt>(function(){var d=document.querySelector(".dp");if(d)d.style.padding="0 '+M.r+'mm 0 '+M.l+'mm"})();'+
     'var z=1;try{z=+localStorage.getItem("gmZoom")||1}catch(e){}function A(){var r=document.getElementById("docPrintRoot");r.style.zoom=z;document.getElementById("zv").textContent=Math.round(z*100)+"%";try{localStorage.setItem("gmZoom",z)}catch(e){}}'+
@@ -2616,7 +2618,7 @@ function dOpenWin(){if(!S.cc||!S.cc.doc)return;dApply();
   const url=URL.createObjectURL(new Blob([html],{type:'text/html;charset=utf-8'})),a=document.createElement('a');a.href=url;a.target='suzukiGongmun';document.body.appendChild(a);a.click();
   setTimeout(()=>{a.remove();URL.revokeObjectURL(url)},120000);if(ccDirty())toast('새 창에 띄웠어요 · 아직 저장하지 않은 내용이에요')}
 function dPrint(){if(!S.cc||!S.cc.doc)return;S.dPrinting=1;dBuildPrint();document.body.classList.add('dprint');let r=document.getElementById('docPrintRoot');
-  const t0=document.title,ti=(S.cc.doc.title||'{캠프이름} 안내').replace(/\{캠프이름\}/g,(S.cc.base||{}).name||'');document.title=ti.replace(/[\\\/:*?"<>|]/g,' ');
+  const t0=document.title,ti=(S.cc.doc.title||'{캠프이름} 안내').replace(/\{캠프이름\}/g,(S.cc.base||{}).name||'');document.title=ti.replace(/[\\\/:*?"<>|]/g,' ')+dStamp();
   const im=r.querySelector('img');const go=()=>{try{window.print()}finally{setTimeout(()=>{document.title=t0},500)}};const fr=(document.fonts&&document.fonts.ready)||Promise.resolve();fr.then(()=>{if(im&&!im.complete)im.onload=go;else go()});
   if(ccDirty())toast('저장하지 않은 내용도 인쇄돼요 · 캠프에 반영하려면 「저장」을 눌러 주세요')}
 document.addEventListener('input',e=>{if(S.tab!=='doc'||!S.cc)return;const t=e.target;
@@ -2740,7 +2742,7 @@ function vConBook(){if(!S.BK){if(!S.BKL)setTimeout(bkLoad,0);return '<div class=
 function bkPrint(){const B=(S.BK&&S.BK.books)||[],sel=S.bkSel||'all',show=B.filter(b=>sel==='all'||b.id===sel);if(!show.length){toast('인쇄할 공연이 없어요');return}
   let r=document.getElementById('bookPrintRoot');if(!r){r=document.createElement('div');r.id='bookPrintRoot';document.body.appendChild(r)}
   r.innerHTML=show.map(b=>`<table class="bpw"><thead><tr><td class="rh">${esc(b.name)}</td></tr></thead><tfoot><tr><td class="rf"></td></tr></tfoot><tbody><tr><td>${bkPage(b,false)}</td></tr></tbody></table>`).join('');
-  document.body.classList.add('bprint');const t0=document.title;document.title=(show.length===1?show[0].name:show[0].camp+' 프로그램')+' (B5)';
+  document.body.classList.add('bprint');const t0=document.title;document.title=(show.length===1?show[0].name:show[0].camp+' 프로그램')+' (B5)'+dStamp();
   const fr=(document.fonts&&document.fonts.ready)||Promise.resolve();fr.then(()=>{try{window.print()}finally{setTimeout(()=>{document.title=t0},500)}})}
 window.addEventListener('afterprint',()=>{document.body.classList.remove('bprint')});
 window.addEventListener('beforeprint',()=>{if(!(S.tab==='con'&&(S.consv||'list')==='book'))document.body.classList.remove('bprint')});
@@ -2753,6 +2755,6 @@ document.addEventListener('click',e=>{if(S.tab!=='con'||(S.consv||'list')!=='boo
 document.addEventListener('change',e=>{if(S.tab!=='con'||e.target.id!=='bkSel')return;S.bkSel=e.target.value;render()});
 document.addEventListener('input',e=>{const t=e.target;if(S.tab!=='con'||!t.dataset||t.dataset.bken==null)return;S.bkEn=S.bkEn||{};S.bkEn[t.dataset.bken]=t.value;document.querySelectorAll('[data-bken]').forEach(x=>{if(x!==t&&x.dataset.bken===t.dataset.bken)x.value=t.value});const sv=document.getElementById('bkEnSave');if(sv){const n=Object.keys(S.bkEn).length;sv.disabled=!n;sv.textContent='영어 곡명 저장'+(n?' ('+n+')':'')}});
 </script>
-<div id="bldMark" hidden>빌드표시 20261104-185954 </div>
+<div id="bldMark" hidden>빌드표시 20261104-190138 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();</script>
 </body></html>

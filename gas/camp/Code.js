@@ -1,4 +1,4 @@
-/* build: 20261104-182015 */
+/* build: 20261104-182239 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -1148,8 +1148,9 @@ function campSave(token, c, rev) {
   { const old = camp_().consent; if (JSON.stringify(old.items) === JSON.stringify(consent.items)) consent.ver = old.ver; }
   const meals = (Array.isArray(c.meals) ? c.meals : []).slice(0, 6).map(m => ({ k: String(m.k || '').trim().slice(0, 10), t: String(m.t || '').trim().slice(0, 120), s: String(m.s || ''), e: String(m.e || ''), on: m.on !== false, first: !!m.first, last: !!m.last, days: Array.isArray(m.days) ? m.days.map(Number).filter((x, j, a) => x >= 0 && x < 40 && a.indexOf(x) === j).sort((x, y) => x - y) : undefined }));
   meals.forEach((m, i) => { if (!m.k) throw new Error((i + 1) + '번째 식사 이름을 적어 주세요.'); if (!/^\d{2}:\d{2}$/.test(m.s) || !/^\d{2}:\d{2}$/.test(m.e) || m.e <= m.s) throw new Error(m.k + ' 시간을 07:20 ~ 08:50 꼴로 확인해 주세요.'); if (!m.t) m.t = m.k + ' 식사'; });
-  const doc = docClean_(c.doc, rounds.length);
-  const aud = {}; AUD_CON.forEach(k => { const x = ((c.aud || {})[k]) || {}; aud[k] = { on: !!x.on, due: /^\d{4}-\d{2}-\d{2}$/.test(x.due || '') ? x.due : '' }; });
+  /* 화면이 그 값을 모르면(옛 화면에서 저장) 지금 값을 그대로 둠 — 공문 · 음원 설정이 꺼지거나 기본값으로 덮이지 않게 (11-04) */
+  const prev = camp_(), doc = c.doc ? docClean_(c.doc, rounds.length) : Object.assign({}, prev.doc, { rnote: (prev.doc.rnote || []).slice(0, rounds.length), inc: (prev.doc.inc || []).slice(0, rounds.length) });
+  const aud = {}; AUD_CON.forEach(k => { const x = c.aud ? ((c.aud[k]) || {}) : ((prev.aud || {})[k] || {}); aud[k] = { on: !!x.on, due: /^\d{4}-\d{2}-\d{2}$/.test(x.due || '') ? x.due : '' }; });
   const nc = { meals, base: { id: String(b.id).trim(), name: String(b.name).trim(), start: b.start, end: b.end, place: String(b.place || '').trim(), open: b.open, close: b.close, cur, guest: b.guest !== false, staff: b.staff !== false, member: b.member !== false, intl: b.intl !== false }, rounds, fees, opt, refund, consent, doc, aud };
   const lock = lock_();
   try {

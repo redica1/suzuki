@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261104-171800 -->
+<!-- build: 20261104-172408 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -1682,12 +1682,11 @@ function vCamp(){if(!S.cc)S.cc=ccCopy();const c=S.cc;if(!c.base)return '<div cla
   ${c.aud?`<div class="panel"><h3>음악회 음원 제출 <span class="hint">켠 음악회만 신청서 · 「내 접수」에 음원 칸이 나와요 · 마감일을 비우면 캠프 시작 전날까지</span></h3>
     <table class="pft cct" style="width:auto"><thead><tr><th>음악회</th><th class="c">음원 받기</th><th>마감일</th></tr></thead><tbody>${['오후','트와일라잇','이브닝'].map(k=>`<tr class="${(c.aud[k]||{}).on?'':'off'}"><td><b>${k}</b></td><td class="c">${inp('aud.'+k+'.on','check')}</td><td>${inp('aud.'+k+'.due','date')}</td></tr>`).join('')}</tbody></table>
     <p class="hint">심사 · 결과 공개는 「스케줄관리 › 음원 심사」에서 해요.</p></div>`:''}
-  <div class="panel"><div class="spread"><h3>취소 · 환불 규정</h3><button class="btn small" type="button" data-ccf="add">＋ 규정 추가</button></div>
-    <table class="pft cct"><thead><tr><th>이 날까지</th><th>이름</th><th class="r">환불 %</th><th>진단서 필요</th><th></th></tr></thead><tbody>
-    ${rf.rules.map((r,i)=>`<tr><td>${inp('refund.rules.'+i+'.until','date')}</td><td>${inp('refund.rules.'+i+'.label','text','maxlength="30"')}</td><td>${inp('refund.rules.'+i+'.rate','num','style="width:64px"')}</td><td class="c">${inp('refund.rules.'+i+'.doc','check')}</td><td><button class="btn small ghost" type="button" data-ccf="del|${i}">빼기</button></td></tr>`).join('')}
-    <tr class="off"><td><small class="faint">그 뒤</small></td><td>${inp('refund.after.label','text','maxlength="30"')}</td><td>${inp('refund.after.rate','num','style="width:64px"')}</td><td class="c">${inp('refund.after.doc','check')}</td><td><label class="row" style="gap:4px;flex-wrap:nowrap"><small>취소 받기</small>${inp('refund.after.allow','check')}</label></td></tr></tbody></table>
-    <label class="row" style="gap:6px;margin-top:6px">${inp('refund.duesRefund','check')} 연회비도 환불</label>
-    <p class="hint">위에서부터 처음 맞는 규정을 써요 (취소 요청한 날 기준). 「취소 받기」를 끄면 캠프 시작 뒤에는 입금한 사람이 취소를 요청할 수 없어요.</p></div>
+  <div class="panel"><div class="spread"><h3>취소 · 환불 규정 <span class="hint">공문처럼 「이 날부터 취소 수수료 n%」</span></h3><span class="row" style="gap:6px"><button class="btn small" type="button" data-dbd="def">시작일 기준 기본값</button><button class="btn small" type="button" data-dbd="add">＋ 구간 추가</button></span></div>
+    ${dBandsHtml(c,true)}
+    <div class="row" style="gap:16px;margin-top:6px;flex-wrap:wrap"><label class="row" style="gap:6px">${inp('refund.after.allow','check')} 캠프 시작 뒤에도 취소 요청 받기</label><label class="row" style="gap:6px">${inp('refund.duesRefund','check')} 연회비도 환불</label></div>
+    <p class="hint">공문 문장: <b>${esc(dRefund(c))}</b></p>
+    <p class="hint" style="margin:0">취소 요청한 날이 든 구간의 수수료를 빼고 환불해요. 「진단서」를 켠 구간은 진단서를 내야 취소할 수 있어요. 기본값 = 시작 10일 전부터 10% · 6일 전부터 20% · 2일 전부터 환불 불가.</p></div>
   <div class="panel"><div class="spread"><h3>식사 시간 <span class="hint">교사 일정 모든 날짜의 식사 줄 · 프로그램북에도 그대로</span></h3><button class="btn small" type="button" data-ccm="add" ${(c.meals||[]).length>=6?'disabled':''}>＋ 식사 추가</button></div>
     <table class="pft cct"><thead><tr><th>식사</th><th>시작</th><th>끝</th><th>표에 나오는 글</th><th class="c">사용</th><th></th></tr></thead><tbody>
     ${(c.meals||[]).map((m,i)=>`<tr class="${m.on===false?'off':''}"><td>${inp('meals.'+i+'.k','text','maxlength="10" style="width:70px"')}</td><td>${inp('meals.'+i+'.s','time')}</td><td>${inp('meals.'+i+'.e','time')}</td><td>${inp('meals.'+i+'.t','text','maxlength="120" style="min-width:220px" placeholder="예: Lunch 점심 식사 · 식사 장소: 밀타임"')}</td><td class="c">${inp('meals.'+i+'.on','check')}</td><td><button class="btn small ghost" type="button" data-ccm="del|${i}">빼기</button></td></tr>`).join('')||'<tr><td colspan="6" class="hint">식사 시간이 없어요.</td></tr>'}</tbody></table>
@@ -2511,6 +2510,27 @@ function dWarn(c){const R=c.rounds||[],W=[];DOC_FG.forEach(([l,ts])=>{const bad=
   const b=c.base||{};if(b.close&&R.length&&R[R.length-1].to&&R[R.length-1].to!==b.close)W.push(`마지막 차수 끝(${esc(dMd(R[R.length-1].to))})과 접수 마감(${esc(dMd(b.close))})이 달라요. 공문의 「신청 불가」 날짜는 접수 마감 기준이에요.`);
   if(!(S.bkA&&S.bkA.cur&&S.bkA.cur.acct))W.push('입금 안내 통장이 정해지지 않았어요 (「캠프 설정」 맨 위).');
   return W}
+/* 환불 규정 ↔ 공문 구간 (11-04): 시스템은 「이 날까지 환불 n%」, 공문은 「이 날부터 수수료 n%」 → 화면은 공문 말투로 넣고 저장은 시스템 꼴로 바꿈 */
+function dBands(c){const rf=c.refund||{},R=(rf.rules||[]).slice(),B=[];if(!R.length)return [{from:'',fee:100-(+(rf.after||{}).rate||0)}];
+  B.push({from:'',fee:100-(+R[0].rate||0)});R.forEach((r,i)=>B.push({from:dAdd(r.until,1),fee:100-(+(i+1<R.length?R[i+1].rate:(rf.after||{}).rate)||0)}));return B}
+function dSetBands(c,B){const rf=c.refund||(c.refund={}),old=rf.rules||[],lab=f=>f<=0?'수수료 없음':f>=100?'환불 불가':'수수료 '+f+'%';
+  rf.rules=B.slice(0,-1).map((b,i)=>({until:dAdd(B[i+1].from,-1),label:lab(b.fee),rate:100-b.fee,doc:!!(old[i]&&old[i].doc)}));
+  const L=B[B.length-1];rf.after=Object.assign({},rf.after||{},{label:lab(L.fee),rate:100-L.fee});if(rf.after.allow==null)rf.after.allow=false}
+function dBandsHtml(c,flags){const B=dBands(c),st=(c.base||{}).start,bad=B.some((b,i)=>i&&(!dYmd(b.from)||(i>1&&b.from<=B[i-1].from)));
+  const before=f=>{const a=dYmd(f),s0=dYmd(st);if(!a||!s0)return '';const n=Math.round((Date.UTC(s0[0],s0[1]-1,s0[2])-Date.UTC(a[0],a[1]-1,a[2]))/864e5);return n>0?'캠프 '+n+'일 전':n===0?'캠프 첫날':'캠프 '+(-n)+'일째'};
+  return `<table class="pft cct"><thead><tr><th>이 날부터</th><th></th><th class="r">취소 수수료 %</th>${flags?'<th class="c">진단서</th>':''}<th></th></tr></thead><tbody>${B.map((b,i)=>`<tr><td>${i?`<input type="date" data-dbf="${i}" value="${esc(b.from)}">`:'<small class="faint">신청한 때부터</small>'}</td><td style="white-space:nowrap"><small class="hint">${i?esc(before(b.from)):''}</small></td><td><input type="text" inputmode="numeric" class="num" data-dbp="${i}" value="${b.fee}" style="width:64px"></td>${flags?`<td class="c"><input type="checkbox" data-dbdoc="${i}" ${dBandDoc(c,i,B.length)?'checked':''}></td>`:''}<td>${i?`<button class="btn small ghost" type="button" data-dbd="del|${i}">빼기</button>`:''}</td></tr>`).join('')}</tbody></table>
+    ${bad?'<div class="dwarn">날짜를 위에서 아래로 늦어지는 순서로 넣어 주세요. (순서가 맞아야 저장돼요)</div>':''}`}
+const dBandDoc=(c,i,n)=>{const rf=c.refund||{};return i<n-1?!!((rf.rules||[])[i]||{}).doc:!!(rf.after||{}).doc};
+function dBandsRead(){const B=[{from:'',fee:0}];document.querySelectorAll('[data-dbp]').forEach(el=>{const i=+el.dataset.dbp;B[i]=B[i]||{from:'',fee:0};B[i].fee=Math.max(0,Math.min(100,+(el.value.replace(/[^\d]/g,'')||0)))});
+  document.querySelectorAll('[data-dbf]').forEach(el=>{const i=+el.dataset.dbf;B[i]=B[i]||{from:'',fee:0};B[i].from=el.value});return B}
+document.addEventListener('input',e=>{if((S.tab!=='doc'&&S.tab!=='camp')||!S.cc)return;const t=e.target;if(!(t.dataset&&(t.dataset.dbp!=null||t.dataset.dbf!=null)))return;
+  const B=dBandsRead();if(B.every((b,i)=>!i||dYmd(b.from))&&B.every((b,i)=>i<2||b.from>B[i-1].from))dSetBands(S.cc,B);if(S.tab==='doc')dPrev();else{const pl=document.getElementById('ccDirty');if(pl)pl.innerHTML=ccPill()}});
+document.addEventListener('change',e=>{if((S.tab!=='doc'&&S.tab!=='camp')||!S.cc)return;const t=e.target;if(t.dataset&&t.dataset.dbdoc!=null){const i=+t.dataset.dbdoc,rf=S.cc.refund,n=dBands(S.cc).length;if(i<n-1)rf.rules[i].doc=t.checked;else rf.after.doc=t.checked;const pl=document.getElementById('ccDirty');if(pl)pl.innerHTML=ccPill();return}if(t.dataset&&(t.dataset.dbp!=null||t.dataset.dbf!=null))render()});
+document.addEventListener('click',e=>{if((S.tab!=='doc'&&S.tab!=='camp')||!S.cc)return;const b=e.target.closest&&e.target.closest('button');if(!b||!b.dataset.dbd)return;const op=b.dataset.dbd,c=S.cc;let B=dBands(c);
+  if(op==='def'){const st=(c.base||{}).start;if(!dYmd(st)){toast('캠프 시작일을 먼저 넣어 주세요');return}B=[{from:'',fee:0},{from:dAdd(st,-10),fee:10},{from:dAdd(st,-6),fee:20},{from:dAdd(st,-2),fee:100}]}
+  else if(op==='add'){const L=B[B.length-1];B.push({from:L.from?dAdd(L.from,1):dAdd((c.base||{}).start||'',-1),fee:Math.min(100,(L.fee||0)+10)})}
+  else if(op.indexOf('del|')===0){B.splice(+op.slice(4),1)}
+  dSetBands(c,B);render()},true);
 function vDoc(){if(!S.cc)S.cc=ccCopy();const c=S.cc;if(!c.base)return '<div class="panel hint">캠프 설정을 불러오지 못했어요. 「새로 불러오기」를 눌러 주세요.</div>';
   if(!c.doc)return '<div class="panel hint">서버가 아직 공문을 모르는 옛 버전이에요. 새 버전이 올라간 뒤 새로 고쳐 주세요.</div>';
   if(!S.bkA&&!S.bkAL){S.bkAL=1;setTimeout(()=>call('campBankAccts',[],r=>{S.bkA=r;S.bkAL=0;if(S.tab==='doc')render()}),0)}
@@ -2546,11 +2566,10 @@ function vDoc(){if(!S.cc)S.cc=ccCopy();const c=S.cc;if(!c.base)return '<div clas
     <label>추가 레슨 1회<span class="row" style="gap:4px;flex-wrap:nowrap">${inp('opt.lessonFee','num','style="width:110px"')}<small class="faint">원</small></span></label>
     <label>가족방 정원<span class="row" style="gap:4px;flex-wrap:nowrap">${inp('opt.roomCap','num','style="width:70px"')}<small class="faint">명</small></span></label>
     <label>가족방 빈 자리 1개<span class="row" style="gap:4px;flex-wrap:nowrap">${inp('opt.roomEmptyFee','num','style="width:110px"')}<small class="faint">원</small></span></label></div></div>
-  <div class="panel"><div class="spread"><h3>취소 · 환불 규정 <span class="hint">= 캠프 설정 · 공문에는 「○월 ○일부터 취소 수수료 n%」로 나가요</span></h3><button class="btn small" type="button" data-ccf="add">＋ 규정 추가</button></div>
-    <table class="pft cct"><thead><tr><th>이 날까지</th><th>이름</th><th class="r">환불 %</th><th></th></tr></thead><tbody>
-    ${rf.rules.map((r,i)=>`<tr><td>${inp('refund.rules.'+i+'.until','date')}</td><td>${inp('refund.rules.'+i+'.label','text','maxlength="30" placeholder="예: 7월 30일까지"')}</td><td>${inp('refund.rules.'+i+'.rate','num','style="width:64px"')}</td><td><button class="btn small ghost" type="button" data-ccf="del|${i}">빼기</button></td></tr>`).join('')}
-    <tr class="off"><td><small class="faint">그 뒤</small></td><td>${inp('refund.after.label','text','maxlength="30"')}</td><td>${inp('refund.after.rate','num','style="width:64px"')}</td><td></td></tr></tbody></table>
-    <p class="hint">지금 공문 문장: <b>${esc(dRefund(c))}</b></p></div>
+  <div class="panel"><div class="spread"><h3>취소 · 환불 규정 <span class="hint">= 캠프 설정 · 공문처럼 「이 날부터 취소 수수료 n%」로 넣어요</span></h3><span class="row" style="gap:6px"><button class="btn small" type="button" data-dbd="def">시작일 기준 기본값</button><button class="btn small" type="button" data-dbd="add">＋ 구간 추가</button></span></div>
+    ${dBandsHtml(c)}
+    <p class="hint">공문 문장: <b>${esc(dRefund(c))}</b></p>
+    <p class="hint" style="margin:0">기본값 = 시작 10일 전부터 10% · 6일 전부터 20% · 2일 전부터 환불 불가 (2026 여름 · 겨울 공문과 같음). 수수료 100% = 환불 불가.</p></div>
   <div class="panel"><div class="spread"><h3>본문 항목</h3><button class="btn small" type="button" data-dsec="add">＋ 항목 추가</button></div>
     <p class="hint" style="margin:4px 0 0">글 칸을 누른 뒤 아래 표시를 누르면 그 자리에 들어가요. 공문에는 캠프 설정 값으로 바뀌어 나와요. <b>**굵게**</b> · <span style="color:#d0021b">!!빨강!!</span> · 빈 줄 = 띄우기.</p>
     <div class="dtok">${DOC_TOKS.map(([t,l])=>`<button type="button" data-dtok="${esc(t)}" title="${esc(l)}">${esc(t)}</button>`).join('')}</div>
@@ -2636,6 +2655,6 @@ document.addEventListener('change',e=>{if(S.tab!=='aud')return;const t=e.target;
   if(t.dataset&&t.dataset.audmemo){const i=t.dataset.audmemo.lastIndexOf('|'),id=t.dataset.audmemo.slice(0,i),st=t.dataset.audmemo.slice(i+1);call('audSet',[id,st==='제출 안 함'?'심사 전':st,t.value],r=>{S.AU=r;toast('메모를 저장했어요')},'')}});
 document.addEventListener('input',e=>{if(S.tab!=='aud'||e.target.id!=='audQ')return;S.audF=Object.assign(S.audF||{},{q:e.target.value});clearTimeout(S.audQT);S.audQT=setTimeout(()=>{const pos=e.target.selectionStart;render();const q=document.getElementById('audQ');if(q){q.focus();try{q.setSelectionRange(pos,pos)}catch(x){}}},350)});
 </script>
-<div id="bldMark" hidden>빌드표시 20261104-171800 </div>
+<div id="bldMark" hidden>빌드표시 20261104-172408 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();</script>
 </body></html>

@@ -1,4 +1,4 @@
-/* build: 20261103-232950 */
+/* build: 20261104-160858 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -1060,6 +1060,21 @@ const CAMP_DEF = {
   meals: [{ k: '아침', t: 'Breakfast 아침 식사', s: '07:20', e: '08:50', on: true, first: false, last: true },
     { k: '점심', t: 'Lunch 점심 식사', s: '11:30', e: '13:20', on: true, first: false, last: true },
     { k: '저녁', t: 'Dinner 저녁 식사', s: '17:30', e: '19:20', on: true, first: true, last: false }],
+  /* 공문 (11-04): 캠프 안내 공문 = 캠프의 시작. 글 속 {기간}·{장소}·[[참가비표]] 같은 표시는 위 캠프 설정 값으로 채워져서, 공문과 접수 화면 금액·날짜가 어긋나지 않음 */
+  doc: { no: '', date: '', to: '', ref: '', title: '{캠프이름} 안내', num: '1.', t1: '14시', t2: '12시', sign: true, rnote: ['(*입금 확인 후 신청 등록 완료)', '', ''],
+    intro: '(사)한국스즈키음악협회 {캠프이름}가 다음과 같이 열리오니 많은 참여 바랍니다.',
+    sec: [
+      { id: 'when', t: '기간', on: true, body: '{기간}' },
+      { id: 'place', t: '장소', on: true, body: '{장소}' },
+      { id: 'prof', t: '초청교수', on: true, body: '황경익 회장 외 다수 국내외 유명 교수진' },
+      { id: 'class', t: '수업내용', on: true, body: '그룹레슨, 오케스트라, 각종 음악회, 교사연수, 교수레슨 30분 1회 (추가 가능)\n*추가 레슨 신청은 30분당 {추가레슨} (교수님에 따라 다를 수 있음)' },
+      { id: 'fee', t: '참가비', on: true, body: '참가비에는 기본 숙박, 식사, 수업료, 음악회 참가비가 포함되어 있습니다. (이브닝 연주비 · 각종 추가 비용 제외)\n스즈키 회비를 낸 회원만 스즈키 회원가로 캠프에 참여하실 수 있습니다.\n*회원의 가족 혹은 지인인 비회원: 등록금액 +{비회원추가}, 그 밖에 외부인은 참가 불가합니다.\n[[참가비표]]' },
+      { id: 'room', t: '가족방', on: true, body: '가족방은 최대 {가족방정원}인까지 함께 사용할 수 있으며 {가족방요금} 추가 비용이 발생합니다. (전 일정 기준)\n*캠프비를 내지 않은 가족은 수업이나 음악회에 참여하실 수 없습니다.\n*비숙박 당일 방문자 · 보호자는 본부에서 식권(1인 12,000원) · 음악회 입장권(1인 20,000원)을 구입한 뒤 입장해 주세요. (1인당 2장 이상의 연속된 식사 식권 구입은 불가합니다)\n*한 클래스 신청자에 성별이 섞여 같은 방을 쓰기 어려우면, 미리 다른 학원과 인원을 모아 같은 성별끼리 신청하시거나 본부에서 남학생은 남학생 방으로 배정할 수 있습니다. (보통 1객실 2방)' },
+      { id: 'apply', t: '신청서 작성 및 제출', on: true, body: '신청 링크로만 신청서를 제출할 수 있습니다. {접수시작}에 협회 단톡방 · 홈페이지에 게시합니다.\n신청 주소: {신청주소}\n\n**[입금계좌 안내]**\n음악제 참가비 · 스즈키 회비 입금: {계좌}' },
+      { id: 'concert', t: '음악회 신청', on: true, body: '**a. 이브닝 콘서트**\n오디션 음원은 !!12월 1일 도착분!!까지 심사됩니다. 이브닝 콘서트는 오케스트라 협연으로 구성됩니다.\n(*오케스트라 협연에 합격하면 1/n로 나누어 추가 비용이 발생하니 참고하시어 신청 바랍니다. 대략 50만원 내외)\n음원 제출 날짜를 지키지 않은 신청자는 심사 대상에서 제외됩니다.\n해당 인원이 많을 경우, 1년 이내 협연한 이력이 있으면 우선순위에서 밀릴 수 있습니다.\n- 접수 방법: 캠프 신청서에 이브닝을 신청하고 유튜브 링크를 함께 제출\n!!*졸업연주에 교사와 학생이 참가하지 않았을 경우, 주요 연주에는 선발되지 않습니다.!!\n\n**b. 오후음악회, 앙상블**\n*오후음악회 곡명을 신청서에 쓰지 않으시면 참가 의사가 없는 것으로 간주합니다.\n10권 이하는 오후음악회 리스트에 있는 스즈키 곡만 연주할 수 있습니다. 1~4권은 리허설 없이 연주가 진행될 수 있으므로 느리지 않게 CD 템포에 맞춰 오세요. 스즈키 책 외 반주 악보는 본인이 가져옵니다.\n*앙상블\n1. 신청팀은 곡명을 원어로 정확히 써 주세요.\n2. 단일팀인지 연합팀인지 확실하게 쓰시고, 연합일 경우 함께하는 교실 명단을 적어 주세요.\n3. 8명 이하 단일팀은 앙상블 콘서트에 나갈 수 없고 오후음악회로 배정됩니다.\n4. 앙상블 콘서트는 대중음악만 연주하는 것을 지양해 주세요. 클래식을 하나라도 포함하는 것을 추천합니다. !!앰프 반주는 사용할 수 없습니다.!!' },
+      { id: 'refund', t: '취소 및 환불 규정', on: true, body: '{환불규정}\n(*원활한 진행을 위하여 증액 · 환불 규정이 엄격하게 적용되오니 협조 부탁드립니다)\n- 단순 질병 취소일 경우 취소 수수료는 같습니다.\n- Covid-19 등 전염병, 팔/손 골절일 경우 수수료를 줄여 드립니다. (단, 진단서 제출 필수)' },
+      { id: 'ask', t: '문의', on: true, body: '카카오톡 또는 메일로 문의 바랍니다.\n(카카오톡: suzukimusickorea / suzukimusickorea1995@gmail.com)' }
+    ] },
   consent: { ver: '2026-10-24', items: [
     { id: 'collect', title: '개인정보 수집·이용 동의', req: true, on: true, body: '수집 항목\n- 접수하는 분: 이름, 휴대전화, 이메일\n- 참가자: 이름, 성별, 출생연도, 악기·현재 진도, 담당 선생님, 레슨·음악회·가족방 신청 내용\n- 입금·환불: 입금자명, 입금일, 금액, 환불 받을 계좌(은행·계좌번호·예금주)\n\n이용 목적\n캠프 접수 확인, 반·레슨·숙소 배정, 일정 안내와 연락, 참가비 입금 확인과 환불\n\n보유 기간\n캠프가 끝나고 1년 동안 보관한 뒤 지워요. 회계 기록은 관련 법령이 정한 기간만큼 보관해요.\n\n동의하지 않을 수 있지만, 동의하지 않으면 캠프 접수를 할 수 없어요.' },
     { id: 'third', title: '개인정보 제3자 제공 동의', req: true, on: true, body: '제공받는 곳: 캠프 숙소(리조트)\n제공 항목: 참가자 이름, 성별, 학원(소속)\n제공 목적: 객실 배정과 투숙 관리\n보유 기간: 캠프가 끝나면 숙소의 방침에 따라 지워요.\n\n동의하지 않을 수 있지만, 동의하지 않으면 숙소 배정이 필요한 캠프 접수를 할 수 없어요.' },
@@ -1068,7 +1083,7 @@ const CAMP_DEF = {
     { id: 'photo', title: '사진·영상 촬영과 홍보 활용 동의 (선택)', req: false, on: true, body: '캠프 중 찍은 사진·영상(참가자 모습 포함)을 협회 홈페이지, SNS, 소식지 같은 홍보에 쓸 수 있어요.\n보유 기간: 게시물을 내려 달라고 요청할 때까지\n\n동의하지 않아도 접수할 수 있어요. 동의하지 않으면 홍보물에 쓰지 않아요.' }
   ] },
 };
-const CAMP_KEYS = [['base', '기본'], ['rounds', '차수'], ['fees', '참가비'], ['opt', '옵션'], ['refund', '환불'], ['consent', '동의'], ['meals', '식사']];
+const CAMP_KEYS = [['base', '기본'], ['rounds', '차수'], ['fees', '참가비'], ['opt', '옵션'], ['refund', '환불'], ['consent', '동의'], ['meals', '식사'], ['doc', '공문']];
 let CAMP_CACHE = null;
 function camp_() {
   if (CAMP_CACHE) return CAMP_CACHE;
@@ -1096,6 +1111,15 @@ function regPre_(c) { c = c || camp_(); try { if (String(setting_('테스트 로
 function regGate_() { const o = regPre_(); if (o) throw new Error('접수는 ' + (+o.slice(5, 7)) + '월 ' + (+o.slice(8, 10)) + '일부터 받아요. 그때 다시 와 주세요.'); }
 function campPublic_() { const c = camp_(); return Object.assign({}, c, { ri: curRound_(c), pre: regPre_(c) }); }
 function campGet(token) { const a = adm_(token); needSup_(a); return { camp: campPublic_(), subs: rows_(SH.SUB).filter(r => r['접수번호']).length }; }
+/** 공문 값 정리 (캠프 설정 저장 때) — 글자 수를 자르고, 한 칸(5만 자) 안에 들어가는지 확인 */
+function docClean_(d, nr) {
+  d = d || {}; const t = (v, n) => String(v == null ? '' : v).replace(/\r/g, '').slice(0, n), D = CAMP_DEF.doc;
+  const sec = (Array.isArray(d.sec) ? d.sec : D.sec).slice(0, 30).map((x, i) => ({ id: t(x.id, 20).replace(/[^\w-]/g, '') || ('x' + i), t: t(x.t, 40).trim(), on: x.on !== false, body: t(x.body, 8000) }));
+  const o = { no: t(d.no, 40).trim(), date: /^\d{4}-\d{2}-\d{2}$/.test(d.date || '') ? d.date : '', to: t(d.to, 120).trim(), ref: t(d.ref, 120).trim(), title: t(d.title, 120).trim(), num: d.num === '1)' ? '1)' : '1.',
+    t1: t(d.t1, 20).trim(), t2: t(d.t2, 20).trim(), sign: d.sign !== false, intro: t(d.intro, 3000), rnote: Array.from({ length: nr }, (_, i) => t((d.rnote || [])[i], 80)), sec };
+  if (JSON.stringify(o).length > 45000) throw new Error('공문 글이 너무 길어요. 항목 글을 조금 줄여 주세요.');
+  return o;
+}
 function campSave(token, c, rev) {
   const a = adm_(token); needSup_(a);
   const ok = /^\d{4}-\d{2}-\d{2}$/, num = v => Math.max(0, Math.round(+v || 0));
@@ -1120,14 +1144,15 @@ function campSave(token, c, rev) {
   { const old = camp_().consent; if (JSON.stringify(old.items) === JSON.stringify(consent.items)) consent.ver = old.ver; }
   const meals = (Array.isArray(c.meals) ? c.meals : []).slice(0, 6).map(m => ({ k: String(m.k || '').trim().slice(0, 10), t: String(m.t || '').trim().slice(0, 120), s: String(m.s || ''), e: String(m.e || ''), on: m.on !== false, first: !!m.first, last: !!m.last, days: Array.isArray(m.days) ? m.days.map(Number).filter((x, j, a) => x >= 0 && x < 40 && a.indexOf(x) === j).sort((x, y) => x - y) : undefined }));
   meals.forEach((m, i) => { if (!m.k) throw new Error((i + 1) + '번째 식사 이름을 적어 주세요.'); if (!/^\d{2}:\d{2}$/.test(m.s) || !/^\d{2}:\d{2}$/.test(m.e) || m.e <= m.s) throw new Error(m.k + ' 시간을 07:20 ~ 08:50 꼴로 확인해 주세요.'); if (!m.t) m.t = m.k + ' 식사'; });
-  const nc = { meals, base: { id: String(b.id).trim(), name: String(b.name).trim(), start: b.start, end: b.end, place: String(b.place || '').trim(), open: b.open, close: b.close, cur, guest: b.guest !== false, staff: b.staff !== false, member: b.member !== false, intl: b.intl !== false }, rounds, fees, opt, refund, consent };
+  const doc = docClean_(c.doc, rounds.length);
+  const nc = { meals, base: { id: String(b.id).trim(), name: String(b.name).trim(), start: b.start, end: b.end, place: String(b.place || '').trim(), open: b.open, close: b.close, cur, guest: b.guest !== false, staff: b.staff !== false, member: b.member !== false, intl: b.intl !== false }, rounds, fees, opt, refund, consent, doc };
   const lock = lock_();
   try {
     const ss = SpreadsheetApp.getActive(); let sh = ss.getSheetByName(CAMPCFG);
     if (!sh) { sh = ss.insertSheet(CAMPCFG); sh.getRange(1, 1, 1, 3).setValues([['항목', '값', '설명']]).setFontWeight('bold'); sh.setFrozenRows(1); sh.getRange('B:B').setNumberFormat('@'); }
     CAMP_CACHE = null; const old = camp_();
     if ((+rev || 0) !== (old.rev || 0)) throw new Error('다른 분이 먼저 캠프 설정을 바꿨어요. 새로 고친 뒤 다시 해 주세요.');
-    const desc = { base: '캠프 코드 · 이름 · 날짜 · 장소 · 접수 기간 · 비회원 접수', rounds: '차수 이름과 기간', fees: '참가자격 × 차수 참가비', opt: '추가 레슨 · 마스터클래스 · 회비 · 가족방', refund: '취소·환불 규정', meals: '식사 시간 (교사 일정 모든 날짜의 식사 줄)', consent: '개인정보 동의 문구 (바꾸면 버전 날짜가 바뀜)' };
+    const desc = { base: '캠프 코드 · 이름 · 날짜 · 장소 · 접수 기간 · 비회원 접수', rounds: '차수 이름과 기간', fees: '참가자격 × 차수 참가비', opt: '추가 레슨 · 마스터클래스 · 회비 · 가족방', refund: '취소·환불 규정', meals: '식사 시간 (교사 일정 모든 날짜의 식사 줄)', doc: '캠프 안내 공문 (문서 정보 · 머리말 · 항목별 글)', consent: '개인정보 동의 문구 (바꾸면 버전 날짜가 바뀜)' };
     const vals = CAMP_KEYS.map(k => [k[1], JSON.stringify(nc[k[0]]), desc[k[0]]]).concat([['rev', String((old.rev || 0) + 1), '바꾼 횟수 (건드리지 마세요)']]);
     sh.getRange(2, 1, Math.max(sh.getLastRow(), vals.length + 1), 3).clearContent();
     sh.getRange(2, 1, vals.length, 3).setValues(vals);

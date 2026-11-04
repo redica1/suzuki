@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261103-232950 -->
+<!-- build: 20261104-160858 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -306,7 +306,7 @@ function call(fn,args,ok,msg,tries){if(roBlock(fn)){toast(RO_MSG);return}tries=t
   if(/BUSY|lock|timed out|timeout|network|네트워크|시간 초과/i.test(m)&&tries<4){busy(true,'접속이 많아 다시 보내고 있어요… ('+(tries+1)+'/4)');setTimeout(()=>call(fn,args,ok,msg,tries+1),1500*(tries+1));return}
   busy(false);if(/로그인이 끝났/.test(m)){try{sessionStorage.removeItem('campAdmTok')}catch(x){}S.tok='';S.D=null;render();toast('로그인 시간이 끝났어요. 다시 로그인해 주세요.');return}
   toast('안 됐어요 · '+(/BUSY/.test(m)?'지금 접속이 많아요. 잠시 뒤 다시 해 주세요.':m))})[fn](S.tok,...args)}
-function goTab(t){if(!t)return;if(t==='staff'&&S.tab!=='staff'){S.SF=null;S.sf=null}if((t==='camp'||t==='cons')&&S.tab!==t&&!ccDirty())S.cc=null;if(t==='cons'){S.consR=null;S.consL=0}if(t==='schol'&&S.tab!=='schol'&&!scDirty()){S.SC=null;S.sc=null}if(S.tab==='act'&&t!=='act')ACT.flush();if(S.tab==='con'&&t!=='con')CORD.flush();if((t==='bplan'||t==='bset')&&S.tab!=='bplan'&&S.tab!=='bset')BUD.enter();S.tab=t;render()}
+function goTab(t){if(!t)return;if(t==='staff'&&S.tab!=='staff'){S.SF=null;S.sf=null}if((t==='camp'||t==='cons'||t==='doc')&&S.tab!==t&&!ccDirty())S.cc=null;if(t==='cons'){S.consR=null;S.consL=0}if(t==='schol'&&S.tab!=='schol'&&!scDirty()){S.SC=null;S.sc=null}if(S.tab==='act'&&t!=='act')ACT.flush();if(S.tab==='con'&&t!=='con')CORD.flush();if((t==='bplan'||t==='bset')&&S.tab!=='bplan'&&S.tab!=='bset')BUD.enter();S.tab=t;render()}
 /* 한글 입력: 글자를 조합하는 동안에는 다시 그리지 않음 (다시 그리면 「ㅎㅏㄴ」처럼 깨짐) → 조합이 끝나면 한 번 */
 document.addEventListener('input',e=>{if(e.isComposing&&e.target.matches&&e.target.matches('input[type=search],input[type=text]'))e.stopImmediatePropagation()},true);
 document.addEventListener('compositionend',e=>{const t=e.target;if(t.matches&&t.matches('input[type=search],input[type=text]'))setTimeout(()=>{if(document.body.contains(t))t.dispatchEvent(new Event('input',{bubbles:true}))},0)},true);
@@ -330,8 +330,8 @@ function payPill(p){if(p.status==='정상'&&!pAmt(p)&&!(+p.paidAmt>0))return '<s
 
 /* ---------- 화면 ---------- */
 /* GNB: 1단(묶음) › 2단(메뉴). 권한은 2단 메뉴마다 · 아래 메뉴가 다 「없음」이면 묶음도 숨김 */
-const GROUPS=[['dash','대시보드',['home']],['ops','운영관리',['subs','rp','cx','schol','q','ntc']],['sch','스케줄관리',['act','tt','ens','con']],['room','방배정',['room']],['stat','통계',['stat']],['fin','예산 · 결산',['bplan','bset']],['cfg','설정',['camp','mem','cons','prof','staff']]];
-const SUBL={mem:'회원 명단',home:'대시보드',subs:'접수 · 입금 확인',rp:'입금 신고',cx:'취소 · 환불',q:'게시판',act:'교사 일정',tt:'개인레슨',ens:'앙상블',con:'오후음악회',room:'방배정',stat:'통계',schol:'장학금',cons:'동의서',camp:'캠프 설정',prof:'교수진',staff:'담당자',bplan:'예산 계획',bset:'결산'};
+const GROUPS=[['dash','대시보드',['home']],['ops','운영관리',['subs','rp','cx','schol','q','ntc']],['sch','스케줄관리',['act','tt','ens','con']],['room','방배정',['room']],['stat','통계',['stat']],['fin','예산 · 결산',['bplan','bset']],['cfg','설정',['doc','camp','mem','cons','prof','staff']]];
+const SUBL={doc:'공문',mem:'회원 명단',home:'대시보드',subs:'접수 · 입금 확인',rp:'입금 신고',cx:'취소 · 환불',q:'게시판',act:'교사 일정',tt:'개인레슨',ens:'앙상블',con:'오후음악회',room:'방배정',stat:'통계',schol:'장학금',cons:'동의서',camp:'캠프 설정',prof:'교수진',staff:'담당자',bplan:'예산 계획',bset:'결산'};
 const groupOf=t=>(GROUPS.find(g=>g[2].includes(t))||GROUPS[0]);
 const TABS=[['home','한눈에'],['subs','접수 · 입금 확인'],['rp','입금 신고'],['cx','취소 · 환불'],['ens','앙상블'],['prof','교수진'],['act','교사 일정'],['tt','개인레슨'],['room','방 배정'],['con','오후음악회'],['stat','통계'],['q','게시판'],['ntc','공지사항'],['schol','장학금'],['mem','회원 명단'],['bplan','예산 계획'],['bset','결산']];
 function render(){
@@ -349,7 +349,7 @@ function render(){
   /* 지금 묶음에 2단이 없으면 빈칸으로 → 줄이 안 보임 */
   document.getElementById('tabs2').classList.toggle('none',!document.querySelector('#tabs2 .grp:not([hidden])'));hdrH();
   const ro=RO();app.classList.toggle('ro',ro);
-  app.innerHTML=(ro?`<div class="robar">보기만 할 수 있는 메뉴예요 · 바꿔도 저장되지 않아요 (총관리자에게 「편집」 권한을 받으면 저장돼요)</div>`:'')+{home:vHome,subs:vSubs,rp:vRp,cx:vCx,ens:vEns,prof:vProf,act:()=>ACT.view(),tt:()=>LES.view(),room:()=>ROOM.view(),con:vCon,stat:vStat,q:vQ,ntc:vNtc,camp:vCamp,staff:vStaff,cons:vCons,schol:vSchol,mem:vMem,bplan:()=>BUD.view('plan'),bset:()=>BUD.view('set')}[S.tab]();
+  app.innerHTML=(ro?`<div class="robar">보기만 할 수 있는 메뉴예요 · 바꿔도 저장되지 않아요 (총관리자에게 「편집」 권한을 받으면 저장돼요)</div>`:'')+{home:vHome,subs:vSubs,rp:vRp,cx:vCx,ens:vEns,prof:vProf,act:()=>ACT.view(),tt:()=>LES.view(),room:()=>ROOM.view(),con:vCon,stat:vStat,q:vQ,ntc:vNtc,camp:vCamp,doc:vDoc,staff:vStaff,cons:vCons,schol:vSchol,mem:vMem,bplan:()=>BUD.view('plan'),bset:()=>BUD.view('set')}[S.tab]();
   if(S.tab==='stat'||S.tab==='home')reSort();
 }
 /* 통계 표 정렬: 같은 보기·같은 표면 다시 그려도 유지 */
@@ -1596,9 +1596,9 @@ document.addEventListener('input',e=>{const t=e.target;if(!t.dataset||!t.dataset
   if(t.type==='checkbox'||t.tagName==='SELECT')render()});
 document.addEventListener('change',e=>{const t=e.target;if(t.dataset&&t.dataset.pf&&t.tagName==='SELECT'&&S.pf){const [i,k]=t.dataset.pf.split('|');S.pf[+i][k]=t.value;render()}});
 /* ---------- 권한: 총관리자(아이디·비밀번호) = 전부 · 담당자(교사 회원) = 메뉴마다 편집 / 보기 / 없음 ---------- */
-const SUP_TABS=[['camp','캠프 설정'],['cons','동의서'],['staff','담당자']];
+const SUP_TABS=[['doc','공문'],['camp','캠프 설정'],['cons','동의서'],['staff','담당자']];
 const ME=()=>(S.D&&S.D.me)||{sup:true,perms:{}};
-const permOf=k=>{const m=ME();if(m.sup)return '편집';if(k==='camp'||k==='staff'||k==='cons')return '';return (m.perms||{})[k]||''};
+const permOf=k=>{const m=ME();if(m.sup)return '편집';if(k==='camp'||k==='staff'||k==='cons'||k==='doc')return '';return (m.perms||{})[k]||''};
 const visTabs=()=>TABS.concat(SUP_TABS).filter(([k])=>permOf(k));
 const RO=()=>permOf(S.tab)==='보기';
 const WRITE_FN=/^(devSummer|adminNoticeSave|adminMenuSave|scholSave|adminConfirm|adminAdjust|adminSetBankAcct|ogSave|ogToken|adminRejectReport|adminSaveEns|adminSaveProfs|adminRefund|adminSetIssue|schedSave|lessonSet|adminSetSetting|roomSave|conSave|campSave|staffSave|songEnSave|pvHideSave|roomCfgSave|layoutImport|roomMove|budSave)$/;
@@ -1708,7 +1708,7 @@ function mealGrid(c){const D=mealDays(c),M=c.meals||[];if(!D.length||!M.length)r
   return `<h4 style="margin:12px 0 6px">날짜별 식사 <span class="hint">먹는 끼니만 체크</span></h4><table class="pft cct" style="width:auto"><thead><tr><th>날짜</th>${M.map((m,i)=>`<th class="c">${esc(m.k||'식사'+(i+1))}<br><button class="btn small ghost" type="button" data-mall="${i}" style="padding:0 6px">모두</button></th>`).join('')}<th class="c">하루 모두</th></tr></thead><tbody>${D.map((dl,d)=>`<tr><th>${d+1}일째 · ${dl}</th>${M.map((m,i)=>`<td class="c"><input type="checkbox" data-mday="${i}|${d}" ${mealOn(m,d,D.length)?'checked':''} ${m.on===false?'disabled':''}></td>`).join('')}<td class="c"><button class="btn small ghost" type="button" data-mrow="${d}" style="padding:0 6px">모두</button></td></tr>`).join('')}</tbody></table>`}
 function mealFix(c,i){const m=c.meals[i],n=mealDays(c).length;if(!Array.isArray(m.days)){m.days=[];for(let d=0;d<n;d++)if(mealOn(Object.assign({},m,{on:true}),d,n))m.days.push(d)}return m}
 document.addEventListener('change',e=>{const t=e.target;if(!t.dataset||!t.dataset.mday||!S.cc)return;const [i,d]=t.dataset.mday.split('|').map(Number);const m=mealFix(S.cc,i);m.days=m.days.filter(x=>x!==d);if(t.checked)m.days.push(d);m.days.sort((a,b)=>a-b)});
-function ccClick(b,d){if(S.tab!=='camp'&&S.tab!=='cons')return false;const c=S.cc;
+function ccClick(b,d){if(S.tab!=='camp'&&S.tab!=='cons'&&S.tab!=='doc')return false;const c=S.cc;
   if(d.ccreset){S.cc=null;render();return true}
   if(d.ccr){const [op,i]=d.ccr.split('|');if(op==='add'){const L=c.rounds[c.rounds.length-1]||{};c.rounds.push({n:(c.rounds.length+1)+'차',from:L.to||'',to:L.to||''});Object.keys(c.fees).forEach(t=>c.fees[t].push(c.fees[t][c.fees[t].length-1]||0))}
     else{c.rounds.splice(+i,1);Object.keys(c.fees).forEach(t=>c.fees[t].splice(+i,1));if(c.base.cur!=='auto'&&+c.base.cur>=c.rounds.length)c.base.cur='auto'}render();return true}
@@ -2402,6 +2402,176 @@ render();
   var q=0;new MutationObserver(function(){if(q)return;q=1;requestAnimationFrame(function(){q=0;setup();[].forEach.call(document.querySelectorAll('table.cflt'),function(t){var r=t.tHead&&t.tHead.rows[0];if(r)t.style.setProperty('--cfh1',r.offsetHeight+'px')})})}).observe(document.body,{childList:true,subtree:true});setup();
 })();
 </script>
-<div id="bldMark" hidden>빌드표시 20261103-232950 </div>
+<style>
+/* ---------- 공문 (설정 › 공문) ---------- */
+.dg{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,560px);gap:16px;align-items:start}
+@media (max-width:1100px){.dg{grid-template-columns:1fr}}
+.dg textarea{width:100%;font:inherit;font-size:13.5px;line-height:1.55;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);resize:vertical}
+.dsec{border:1px solid var(--line);border-radius:10px;padding:10px;margin-top:10px;background:var(--surface)}
+.dsec.off{opacity:.55}
+.dsec .dh{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:6px}
+.dsec .dh input[type=text]{flex:1;min-width:140px;font-weight:700}
+.dtok{display:flex;flex-wrap:wrap;gap:4px;margin:6px 0}
+.dtok button{font:12px var(--mono);padding:2px 7px;border:1px solid var(--line);border-radius:6px;background:var(--sunk);color:var(--ink);cursor:pointer}
+.dtok button:hover{border-color:var(--accent)}
+.dfeet input{width:96px}
+.dprevw{position:sticky;top:calc(var(--hdrH,0px) + 10px)}
+.dprev{background:#e6eaec;border-radius:10px;padding:12px;max-height:calc(100vh - var(--hdrH,0px) - 90px);overflow:auto}
+.dprev .dp{zoom:.66;box-shadow:0 2px 12px rgba(0,0,0,.18);margin:0 auto}
+.dwarn{background:#fff6e5;border:1px solid #f0c36d;color:#6b4a00;border-radius:8px;padding:6px 10px;font-size:13px;margin-top:8px}
+/* 인쇄 양식 (A4) — 미리보기와 인쇄가 같은 모양 */
+.dp{width:210mm;min-height:297mm;box-sizing:border-box;padding:14mm 17mm 16mm;background:#fff;color:#111;font-family:"Malgun Gothic","맑은 고딕","IBM Plex Sans KR","Apple SD Gothic Neo",sans-serif;font-size:10.5pt;line-height:1.6;letter-spacing:-.01em;word-break:keep-all}
+.dp .lg{text-align:center}.dp .lg img{width:58mm;height:auto}
+.dp .meta{font-size:10pt;margin:6mm 0 2mm;border-bottom:1px solid #444;padding-bottom:2mm}.dp .meta div{display:flex;gap:4mm}.dp .meta b{min-width:18mm;font-weight:700}
+.dp h1{font-size:16pt;text-align:center;margin:5mm 0 5mm;font-weight:800;letter-spacing:-.02em}
+.dp .intro{margin:0 0 4mm;white-space:pre-wrap}
+.dp .sc{margin:0 0 3.2mm;break-inside:auto}
+.dp .sh{font-weight:800}
+.dp .ln{white-space:pre-wrap;margin:0}
+.dp .ln.gap{height:2.2mm}
+.dp .red{color:#d0021b}
+.dp .rh{font-weight:700;margin:2.4mm 0 1mm}
+.dp table.ft{width:100%;border-collapse:collapse;margin:0 0 1mm;break-inside:avoid;font-size:10pt}
+.dp table.ft th,.dp table.ft td{border:1px solid #333;padding:1.2mm 2mm;text-align:center;vertical-align:middle}
+.dp table.ft th{background:#dfe9f5;font-weight:700}
+.dp table.ft td.f3{font-size:9.5pt;line-height:1.45}
+.dp .ft-end{margin-top:9mm;text-align:center}
+.dp .ft-end .www{font-weight:700;font-size:11pt}
+.dp .ft-end .ko{font-size:19pt;letter-spacing:.45em;margin-top:1mm;font-weight:500}
+.dp .ft-end .en{font-size:10pt;letter-spacing:.42em;color:#222}
+@media screen{#docPrintRoot{display:none}}
+@media print{
+  @page{size:A4;margin:13mm 16mm 15mm}
+  body>*:not(#docPrintRoot){display:none !important}
+  html,body{background:#fff !important;margin:0 !important;padding:0 !important}
+  #docPrintRoot{display:block !important}
+  #docPrintRoot .dp{min-height:0;box-shadow:none;zoom:1;width:auto;padding:0}
+}
+</style>
+<script>
+/* ---------- 공문 (설정 › 공문, 총관리자) ----------
+ * 공문 작성 = 캠프 만들기 (11-04). 공문의 날짜 · 장소 · 차수 · 참가비 · 가족방 · 환불 규정은 「캠프 설정」과 같은 값이라
+ * 여기서 고치면 캠프 설정도 같이 바뀌고, 「저장」 한 번에 둘 다 저장돼요. 글 속 {표시}는 그 값으로 채워져요. */
+const DOC_LOGO='data:image/jpeg;base64,\/9j\/2wBDABALDA4MChAODQ4SERATGCgaGBYWGDEjJR0oOjM9PDkzODdASFxOQERXRTc4UG1RV19iZ2hnPk1xeXBkeFxlZ2P\/2wBDARESEhgVGC8aGi9jQjhCY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2P\/wAARCABnAdgDASIAAhEBAxEB\/8QAGwABAAIDAQEAAAAAAAAAAAAAAAQFAQMGAgf\/xABCEAACAgIAAwIKBgcHBQEAAAAAAQIDBBEFEjEhUQYTIjJBYXGRsdEUFVRzksEWMzQ1UnLhI1VigZOhsnSCwvDxJP\/EABkBAQADAQEAAAAAAAAAAAAAAAABAgMEBf\/EACURAAICAgIBBQADAQAAAAAAAAABAhEDEiExBBMyQVFhFCIzcf\/aAAwDAQACEQMRAD8A+gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA8ykoxcpNJLtbfoK27jlEJarhKzXp6IrKSj2Q5JdloCn+vo\/Z5fi\/oeZ8e3B8lGpehuXQp60Psr6kfsujBiPmr2Gu+11crS3stOahHZ9GiV9G0yRllxb7YtHnO4hRg0K21t83mxXWRSGfHkTcWTq+iUZOdn4ULlfJivm9HNPs+BeYsnPEplJ7coRbf+RpGal0JQcezcYPNtkKq5Tm1GMVttlTPwgrUmoUSku9vREpxj2y0Mc5+1FyCk\/SGP2aX4v6D9IY\/Zpfi\/oU9fH9l\/42X6LoEXh+as6mVig4JS5e17PWfdLHxJ2w6xa7O\/tRqmmrRlo9tfkkgqFx2HZzUSXfqRMs4jjVYLzJz1Ul3du+7XeSWlinHtEsHLz8Mqk3yYc2vRuaX5F1wbLnncMqybElKxyel6PKegJYpQVyROBhtJbfQ5rL8M8Wm+VdFE74xeufm5U\/YSot9GLko9nTA5P9N6vsM\/8AUXyH6b1fYZ\/6i+Rb05fRX1I\/Z1hqyrXRi22xjzOuDko9+l0KrgfH1xi6yuONKpVx5nJy3\/l0LTKm68W2cfOjBte4pJOPZa01aOf4Dx3MzuIui9QlCUXLcY65NfkdMUNHFcahuVeDCucvOcNLf+xb4mVXl1c9bfc0+qKRnGXCZni4VN2bwAXNjABGvunVPS0016TLLljijtLolJvhEkGqnIjb2dGeczMpwqHbfLS9CXVvuRMMkJx2i+Bq7okA5eXhDl5GRCvHhXUpSUVtbfadNBSjBKUuaXpetExmpdEyg49mTJFzMl4zrko8ye9o0w4pW5JTg4rv3sh5Ip02SscmrSLAETNz6cOqM5tycvNivSVtnhBuDVePqXobl0EssI8NloYZzVpF6DzDthH2Ho0MgCm4j4SYWDY6o819sexqHRPubIH6ZV\/Ypf6n9AarDOStI6cycu\/DKGuzClv7z+hc8FzJ8Q4fHJsSi5yl2L0JPSQIlinBXJErIsdOPZYltxi3ogcMz7sm+VdumtbTS6G\/i+RPE4XffXrnrjzLfTsZzlHhlj19OHcjfnck18jSMbTpHNOVSXJ2AIvDs+jiWKsjGk3BvTTWnF9zJRmap2DBoysynEju2Xa+kV2tle+PQ32US165FJZIx7ZVyS7LgFN9fR+zy\/F\/QkYHEXm5MoqHJGMd9d7eyFki3SYU4vhFiADQsAAAAAAUvH8iScMeL1Frml6+74FKWvhFxDGwpxj9HhdkzW\/K6RXeyg+vLPseH+CXzOXJicpXZxZZxUqbJR6hCVk4wgtyb0kQ\/ryz7Hh\/gl8zbR4Q5NU14nExIyfZ2Vvb\/wByqwc8szWSF9ncJaikR83zY+0kLelvr6SPmebH2lvM\/wAJHp4\/ciGU\/hDJuzHTfYq38WXJS+EH67H+7fxZ4\/h+5\/8ADr+UVJ3uF+xUfdx+BwR32InHEpT6quKfuPY8ftmef4IfHpa4dJb6yS9pzJ2OTRRbHmyIKUY9vldEVN0sPeqcSvXfJfkU8iFu2zbxsusdUikNlFFmRaq6oOUn\/sWW6fstH4X8yRVmypjy1VUwj3KOjCMY3yzplmlX9UWWFjLExYUp7a7W+9mri\/7tt\/y+KJGPKc6Yzs5dyW9JEfi6b4bbr1fFHpRquDzItvIr+zmjXxVv6kitvX0jp\/2s2Griv7lh\/wBR\/wCLJR6mT4KE7\/wY\/cGN\/wB3\/JnAHf8AgwmuAY2\/8X\/Jg5\/L9i\/6SeMS5OD5sublaonp+vlZ8uPqXFKI34U1OELIxXM4z3p69jOc8Th\/3di\/hfzOjF0eLm7OQPVdc7rI11Qc5yelGK22dd4rD\/u7F\/A\/mTuHZeLiS1HCpq32OVUdP+pq5NLhGSSb5Zv8GuEPhWC\/G6+kXalP\/D3L\/wB7yyzf2G\/7uXwNsJxsgpwacX2po1ZvbhX\/AHcvgcc23bZ2JUqRyRc+Dz8q9eqP5lMXHg959\/sj+ZwYfejnx+4vAAd51AhZn6yPsJpCzP1kfYcXn\/4s0x+40Rk4yTXVFL4SZEreIeK35NUVpetrfyLk5\/jv72u9kf8AijzvDk9ZI6Ev7EfC\/bsf7yPxO8ODwv27H+8j8TvD1vH6Znn7RX8X8yv2sqy04v5lftZVnNn97OjB7EauKN8+OvR4lfFkEm8U8+j7lfFkIzn7jrw+w7aHmR9iKrwlzp4PC5OptWWvki16O9+4tYeZH2ELi0cR4yll0xuUX5EX3nqo8eHvR85B0z+i77OH4qX8r+Y1jfYMX8L+ZB61y+jmT6D4OUWY\/BaIWxcZvcuV9Vt7RTV2UUzU68DFUl0fI+z\/AHOlwbp5GJC2xJSlvsXTqEcnlOTirXBF8If3Fmfds+Zn03wgTlwLMSW\/7Ns+ZHVh6PIz9o7LwDb8RmLfZzR7P8mdVOShCUn0its5XwD\/AFOZ\/ND4M6bK5vot3JFSlyPSa7G9GOT3M1x+w5bIunkXztn1k\/d6jURfryz7Hifgl8x9eWfY8P8ABL5nA8Lb7OJ5YfZKLjwfrl422zXk65d97Od+vLPseH+CXzOn4BxWviNEoKqNNlWtwj013ovjxayts1xThKXDLcAHSdgAAAAMAHC+FFsLeMzcJqSjFReu3T7ioPp\/i4fwR9w8XD+CPuK0cU\/FcpN2fMUnJ6SbfcjpPB7gNvj4ZeZBwhB7hCXVvvfcdWoRj0il7EZCRbH4qi7bsHi6vxlbj6fQbAJRUouLOtOirlFxepLTKXwg\/XUfd\/mzrJQjPzopke3h2JfOM7aYzcVpbbPOxeC8c20+DdZV8nK8I4bPOyYtxaog9zl3+o7MxCEa4qMIqMV0SWkj0d+OCgjOc3N2VvFrGowrT7H2srDpGk+qTMcse5e4yyYN5XZrjz6RqjnTNdcrJKMI7bOh5Y9y9xlJLotFV4v6Xfk\/h5qh4uqEP4YpC6tXVSrl0ktM9g61wct82cnk41mLc67F7H6GiJxX9yw\/6j\/xZ2llVdseWyEZruaItvCsG6pV2UKUFLnS29b1rvIo7P5VpbI4Hh+BfxDJjRRFtvzpeiK72fRsaiGLjV0V+ZXFRQox6cavxdFUK4d0Vo2kmObM8j\/DXdDxtNle9c0WtnMW1Tpm4WRcZLvOrMNJ9UjSE9TkyY9zkgdZyx\/hXuHLH+Fe409b8MvQ\/Sr4Hc2rKW9peUvV3lq0mtPowkl0SRkxk9nZvGOqo5XPwp4dzTTdbfky7yd4Pedf7I\/mXU4RnFxnFSi+qa2aqMWjHlKVNag5ddHMsOs9kUWOpWjeADc1BCzP1i9hNMaMPIw+tDS6LRlq7K2MHOSSXaU3hFhW15jyeVuqxLykujS1p+46vQ69TDD4axRau7NPVd2cFhft2P8Aex+J3phQgukY+49HVjhoVyT3I+ZR9IocV5y7Y+0pJRlCTjJNNehnRHiymu39ZBS9qKZcO\/K7L4s2nD6OY4p59H3K+LPXCsGeVkRnKOqYPbbXX1F\/Ph+LOUZTpjJxWlvt7CRGKjFRikkuiRReP\/a5Gr8qoaxRkqOPzi4VQ35W29FwY5U+qXuOo5sc9JKRxwOw5I\/wr3Dlj\/CvcRR2fzPw5vC4dblTTcXCv0ya17jpIQjXBQitRitJGQScuXK8j5PNtcLqp1WLmhOLjJd6Z8z4xwq\/hWXKqxN1t7rs12SXz9R9PNd1NWRW67q4WQfWM4povCerOacN0cv4B\/qcz+aHwZ1ZGwuHYmB4z6JSqvGNOWm+3RKIk9nZaC1VHGce4BdRkTyMSt2UTe3GK7YP2dxQNaemtH1Ew4Qk9uMW\/WjOjlyeIpO06Pl50Pgb+8L\/ALr80dd4uH8EfceFjVRyPHxhGNnLytpdV\/6iUqGPxdJKVm4AEnYAAAAAAAAAAAAAAAAAAAAAYMgr+IZltN9dFPJGU+3mn0RKVukVnNQVsnmSNiPJ8r6T4t9OVw9J4+k2fWf0fyeTk36xRG6pN\/JMBDxMmy7KyK5a5a3qOjxnXZePz2QdKpj05t7J1d0Q8iUdicZI+FbbdixsuSUpdul3EfGzLbMLIuko81blrS7OxDVk+ouP0ng0YV0r8WFs9c0l26IP1pYqrdxi7fGclcUn2hRb4Kyyxik38lqZNdPjPExd2vGa7ddCNwzKsy6JTsUU1LXYvUiK4svsrS+yaDBozrpY+JO2OuaOtb9oSt0S2oq2SAVlHEpSwLrpqKsg9a17jdwzLsyqpu1JSjLXYtEuDXJnHNGTSXyTQQ8fKstzb6ZKPLX011MYWVZfk5Nc1HVctLXtY1ZKyJ0TQVt2bkSzZY2NGtOK7XP0k2p2+ITuSVmu1LoHFoRyKTaXwbTBD4ZlTyseU7EtqWuz2I1PNyci+deHCHLB6cpjR3Q9WNJ\/ZZA1Y7udS+kKKs9PL0NhUunasyCBdnOjOlXPl8VGHN07TZgW331O25RipPyEl6Czi0rKLJFy1RLBXSy8i\/JsqxI16q7HKe+1m7Ay3kwnGyKjZW9SSDi0rCyRbolGSsuyst59uPQq9QSflb7l8yRw\/KeXj88opST09dA4tKxHLGUtSUCtWVmXZV1dHitVvXlJljDm5I8+ubXbrvIaomE1Lo9ArI8Rk+JeJaSpcnFPXbv\/AOlmHFrsQmp3QABBcAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFfxGeE5qvKTUtbUkmWB5lGMlqSTXrRMXTspOOyoq+DKSsuUHJ4681yXpM5Fkcbi6tt2q3DSei0SSWktISipLUkmvWW35sz9JqCin0VvCn4zJyrop8k5eS2uvU0cRya7c6NNsuWmt7l2N7ZcpJLSMOKb20vcSpq7DxPTWzxRbXfUp1PcOi7NFNTkwx8TKx7dxsk5aWu9aL3Wuhhxi2m4ptenRCkkWnjcqpkfh0XDAqjJNPXRlPGqaVuVX2zpt216joRpdyJU6bKzw7JK+jVj3xyKI2w6NdO4hcCX\/wCSf87+CLJJLotBJLoit8NF9Hab+AQuMPXD5rva+JOMEJ07LTjtFoopY8\/psKUv7O3klLs9CX\/0l8J7LsuK9FnzLIF3ktUYwwKMtkyp8csHid8rk1CxbUkjZwiMpWZGQ4tRsluO162\/zLJpPqgQ5WiY4qld8FPxOeHK2xSU43x6SS6vRN4e7XgRd2+bT87rol6T6pAOVqiY4qk5WVvA\/wBkn\/O\/gjRiXfVltlORGSi3uMkupchpPqhvy7+SPSaSp8o10XQyKlZXvlfebTAKGyuuSmzsf6TxOda87xe17SZwzJ8dR4ua1bV5MkTdLe9doSS6Iu52qMo4tZuSfZU490cDLyY5G4qb5ovTe12\/M28IhKU8jIaajbLcdrXf8ywlFS85J+0yHK0RHFTXPCKPLolfxPKjBtSUE1r09i7CfwmdcsKKriouPZJesm6W967Qkl0Wg52qEMOs3IoWsV52T9KckubydbLe7JjDDlkRfZy7jv09xu5Y9y9xnS1rXYJSuiYY3C+eznnj5NeFC\/yOVSVifbzbev6F\/VNW1QsXSSTPWlrXoHQSnsMeL03wzIAKGwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB\/\/2Q==';
+const DOC_URL='https:'+'\/\/app.suzukimusickorea.org/camp/';
+const DOC_FG=[['교사 · 학생',['학생','교사','연수생','소속없는 중급연수생']],['첫 보호자 · 교사 자녀',['회원의 첫번째 보호자','회원의 악기하는 자녀']],['악기 안 하는 가족',['회원의 그외 악기 안하는 동반가족']],['돌 전 아기',['동반가족 중 돌전아기']]];
+const DOC_GUEST=[['비회원 학생','학생'],['비회원 보호자','회원의 첫번째 보호자'],['비회원 동반가족','회원의 그외 악기 안하는 동반가족'],['비회원 돌전아기','동반가족 중 돌전아기']];
+const DOC_TOKS=[['{기간}','시작 ~ 끝 (요일 · 시각)'],['{장소}','캠프 장소'],['{캠프이름}','캠프 이름'],['{년도}','캠프 년도'],['{접수시작}','접수 시작일'],['{접수마감}','접수 마감일'],['{신청불가일}','마감 다음 날'],['{추가레슨}','추가 레슨 1회 금액'],['{비회원추가}','비회원 추가 금액'],['{가족방정원}','가족방 정원'],['{가족방요금}','인원별 가족방 추가금'],['{계좌}','입금 안내 통장'],['{신청주소}','접수 화면 주소'],['{환불규정}','날짜별 취소 수수료'],['{학생회비}','학생 연회비'],['[[참가비표]]','차수별 참가비 표 (한 줄 통째로)']];
+const dWon=n=>{n=Math.round(+n||0);if(!n)return '0원';if(n%10000===0)return (n/10000).toLocaleString('ko-KR')+'만원';const r=n%10000,rs=r%1000===0?(r/1000)+'천':r.toLocaleString('ko-KR');if(n>10000)return Math.floor(n/10000).toLocaleString('ko-KR')+'만 '+rs+'원';return n.toLocaleString('ko-KR')+'원'};
+const dYmd=s=>/^\d{4}-\d{2}-\d{2}$/.test(s||'')?s.split('-').map(Number):null;
+const dMd=(s,y)=>{const a=dYmd(s);if(!a)return '(날짜)';return (y?a[0]+'년 ':'')+a[1]+'월 '+a[2]+'일'};
+const dWd=s=>{const a=dYmd(s);return a?'('+WDK[new Date(Date.UTC(a[0],a[1]-1,a[2])).getUTCDay()]+')':''};
+const dAdd=(s,n)=>{const a=dYmd(s);if(!a)return '';const t=new Date(Date.UTC(a[0],a[1]-1,a[2]+n));return t.toISOString().slice(0,10)};
+const dFee=(c,t,i)=>+(((c.fees||{})[t]||[])[i]||0);
+function dGuestAdd(c){const L=DOC_GUEST.map(([g,m])=>dFee(c,g,0)-dFee(c,m,0));return L.every(x=>x===L[0])?L[0]:null}
+function dRefund(c){const rf=c.refund||{},R=(rf.rules||[]).filter(r=>dYmd(r.until)).slice().sort((a,b)=>a.until<b.until?-1:1),out=[];let prev='',stop=false;
+  R.forEach(r=>{if(stop)return;const rate=+r.rate||0;if(rate>=100){prev=r.until;return}const st=prev?dMd(dAdd(prev,1)):'신청 직후';
+    if(rate<=0){out.push(st+(prev?'부터는':'부터')+' 환불 불가');stop=true}else out.push(st+'부터 취소 수수료 '+(100-rate)+'%');prev=r.until});
+  if(!stop&&prev){const af=rf.after||{},rate=+af.rate||0;out.push(dMd(dAdd(prev,1))+(rate<=0?'부터는 환불 불가':'부터 취소 수수료 '+(100-rate)+'%'))}
+  return out.join(', ')||'(환불 규정을 넣어 주세요)'}
+function dRoomFee(c){const o=c.opt||{},cap=+o.roomCap||0,f=+o.roomEmptyFee||0,L=[];if(!cap)return '';for(let k=cap;k>=Math.min(2,cap);k--)L.push(k+'인: '+(k===cap?'추가금 없음':dWon((cap-k)*f)));return L.join(', ')}
+function dVals(c){const b=c.base||{},d=c.doc||{},o=c.opt||{},bk=(S.bkA&&S.bkA.cur)||{},ga=dGuestAdd(c),y=(dYmd(b.start)||[''])[0];
+  const sameY=(dYmd(b.start)||[])[0]===(dYmd(b.end)||[])[0];
+  return {'{기간}':dMd(b.start,1)+dWd(b.start)+(d.t1?' '+d.t1:'')+' ~ '+dMd(b.end,!sameY)+dWd(b.end)+(d.t2?' '+d.t2:''),'{장소}':b.place||'추후 안내','{캠프이름}':b.name||'','{년도}':String(y),
+    '{접수시작}':dMd(b.open),'{접수마감}':dMd(b.close),'{신청불가일}':dMd(dAdd(b.close,1)),'{추가레슨}':dWon(o.lessonFee),'{비회원추가}':ga==null?'(비회원 금액은 참가비표 참고)':dWon(ga),
+    '{가족방정원}':String(o.roomCap||''),'{가족방요금}':dRoomFee(c),'{계좌}':bk.acct?[bk.bank,bk.acct,bk.holder].filter(Boolean).join(' '):'(입금 안내 통장을 「캠프 설정」에서 골라 주세요)','{신청주소}':DOC_URL,'{환불규정}':dRefund(c),'{학생회비}':dWon(o.studentDues)}}
+function dFeeTable(c){const R=c.rounds||[],d=c.doc||{},b=c.base||{};
+  return R.map((r,i)=>{const last=i===R.length-1,note=((d.rnote||[])[i]||'').trim();
+    return `<div class="rh">*${esc(r.n)} 등록 기간: <span class="${i===0?'red':''}">${esc(dMd(r.from,i===0))} ~ ${esc(dMd(r.to))}</span>${note?' '+esc(note):''}${last&&dYmd(b.close)?` <span class="red">(${esc(dMd(dAdd(b.close,1)))}부터는 신청할 수 없습니다)</span>`:''}</div>
+    <table class="ft"><thead><tr><th style="width:32%">스즈키 교사/학생</th><th style="width:32%">첫 번째 보호자/교사 자녀</th><th>두 번째 가족 추가</th></tr></thead>
+    <tbody><tr><td>${dWon(dFee(c,'학생',i))}</td><td>${dWon(dFee(c,'회원의 첫번째 보호자',i))}</td><td class="f3">악기 하는 형제 할인 없음<br>악기 안 하는 가족: ${dWon(dFee(c,'회원의 그외 악기 안하는 동반가족',i))}<br>돌 전 아기: ${dWon(dFee(c,'동반가족 중 돌전아기',i))}</td></tr></tbody></table>`}).join('')}
+/* 글 → HTML: {표시} 채우기 · **굵게** · !!빨강!! · [[참가비표]] 줄 */
+function dFmt(txt,c,V){return String(txt||'').split('\n').map(line=>{
+  if(line.trim()==='[[참가비표]]')return dFeeTable(c);
+  if(!line.trim())return '<div class="ln gap"></div>';
+  let h=esc(line).replace(/\{[^{}\s]{1,8}\}/g,m=>V[m]!=null?esc(V[m]):m);
+  h=h.replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/!!(.+?)!!/g,'<span class="red">$1</span>');
+  return '<p class="ln">'+h+'</p>'}).join('')}
+function docHtml(c){const d=c.doc||{},V=dVals(c),fill=t=>esc(String(t||'').replace(/\{[^{}\s]{1,8}\}/g,m=>V[m]!=null?V[m]:m));let n=0;
+  const meta=[['문서번호',d.no],['시행일',d.date?dMd(d.date,1):''],['수신',d.to],['참조',d.ref]].filter(x=>x[1]);
+  const secs=(d.sec||[]).filter(s=>s.on!==false).map(s=>{n++;const num=d.num==='1)'?n+')':n+'.',body=String(s.body||''),one=!body.includes('\n')&&!body.includes('[[');
+    return one?`<div class="sc"><p class="ln"><span class="sh">${num} ${esc(s.t)}:</span> ${dFmt(body,c,V).replace(/^<p class="ln">|<\/p>$/g,'')}</p></div>`
+      :`<div class="sc"><div class="sh">${num} ${esc(s.t)}</div>${dFmt(body,c,V)}</div>`}).join('');
+  return `<div class="dp"><div class="lg"><img src="${DOC_LOGO}" alt="SUZUKI MUSIC KOREA"></div>
+    ${meta.length?`<div class="meta">${meta.map(([k,v])=>`<div><b>${k}</b><span>${esc(v)}</span></div>`).join('')}</div>`:''}
+    <h1>${fill(d.title||((c.base||{}).name+' 안내'))}</h1>${d.intro?`<div class="intro">${dFmt(d.intro,c,V)}</div>`:''}${secs}
+    ${d.sign!==false?`<div class="ft-end"><div class="www">www.suzukimusickorea.org</div><div class="ko">(사)한국스즈키음악협회</div><div class="en">KOREA SUZUKI ASSOCIATION</div></div>`:''}</div>`}
+function dWarn(c){const R=c.rounds||[],W=[];DOC_FG.forEach(([l,ts])=>{const bad=ts.filter(t=>R.some((_,i)=>dFee(c,t,i)!==dFee(c,ts[0],i)));if(bad.length)W.push(`「${l}」 칸 안에서 금액이 달라요 (${bad.map(esc).join(' · ')}가 ${esc(ts[0])}와 다름) — 공문에는 ${esc(ts[0])} 금액이 나가요. 여기서 금액을 고치면 모두 같은 금액이 돼요.`)});
+  if(dGuestAdd(c)==null)W.push('비회원 금액이 회원 금액보다 항목마다 다르게 더 붙어 있어요. 아래 「비회원 추가 금액」을 넣으면 모두 같게 맞춰요.');
+  R.forEach((r,i)=>{if(i&&R[i-1].to&&r.from&&r.from<=R[i-1].to)W.push(esc(r.n)+' 기간이 앞 차수와 겹쳐요.')});
+  const b=c.base||{};if(b.close&&R.length&&R[R.length-1].to&&R[R.length-1].to!==b.close)W.push(`마지막 차수 끝(${esc(dMd(R[R.length-1].to))})과 접수 마감(${esc(dMd(b.close))})이 달라요. 공문의 「신청 불가」 날짜는 접수 마감 기준이에요.`);
+  if(!(S.bkA&&S.bkA.cur&&S.bkA.cur.acct))W.push('입금 안내 통장이 정해지지 않았어요 (「캠프 설정」 맨 위).');
+  return W}
+function vDoc(){if(!S.cc)S.cc=ccCopy();const c=S.cc;if(!c.base)return '<div class="panel hint">캠프 설정을 불러오지 못했어요. 「새로 불러오기」를 눌러 주세요.</div>';
+  if(!c.doc)return '<div class="panel hint">서버가 아직 공문을 모르는 옛 버전이에요. 새 버전이 올라간 뒤 새로 고쳐 주세요.</div>';
+  if(!S.bkA&&!S.bkAL){S.bkAL=1;setTimeout(()=>call('campBankAccts',[],r=>{S.bkA=r;S.bkAL=0;if(S.tab==='doc')render()}),0)}
+  const d=c.doc,b=c.base,R=c.rounds,o=c.opt,rf=c.refund;d.rnote=d.rnote||[];while(d.rnote.length<R.length)d.rnote.push('');d.rnote.length=R.length;
+  const inp=(p,type,extra)=>{const v=ccGet(p);return type==='check'?`<input type="checkbox" data-cc="${p}" ${v?'checked':''}>`:`<input type="${type==='num'?'text':type}" ${type==='num'?'inputmode="numeric" class="num"':''} data-cc="${p}" data-cct="${type}" value="${esc(type==='num'?(+v||0).toLocaleString('ko-KR'):v==null?'':v)}" ${extra||''}>`};
+  const ta=(p,id,rows)=>`<textarea data-cc="${p}" id="${id}" rows="${rows}" spellcheck="false">${esc(ccGet(p)||'')}</textarea>`;
+  const ga=dGuestAdd(c),W=dWarn(c);
+  return `<div class="cc"><div class="panel"><div class="spread"><div><b>공문 · 캠프 안내</b> <span class="hint">공문을 쓰면 캠프가 만들어져요. 날짜 · 장소 · 차수 · 참가비 · 가족방 · 환불 규정은 「캠프 설정」과 같은 값이라, 여기서 고치고 「저장」하면 접수 화면도 바로 바뀌어요.</span></div>
+    <div class="row" style="gap:6px"><span id="ccDirty" class="row" style="gap:6px">${ccPill()}</span><button class="btn small" type="button" id="dPrint">인쇄 · PDF 저장</button><button class="btn small primary" type="button" data-ccsave="1">저장</button></div></div>
+    <div id="dWarnBox">${dWarnHtml(W)}</div></div>
+  <div class="dg"><div>
+  <div class="panel"><h3>문서 정보 <span class="hint">비워 두면 공문에 안 나와요 · 문서번호는 다음 단계에서 공문 대장으로 자동 부여 예정</span></h3><div class="ccg">
+    <label>문서번호${inp('doc.no','text','maxlength="40" placeholder="예: 한스협 제2026-012호"')}</label><label>시행일${inp('doc.date','date')}</label>
+    <label class="w2">수신${inp('doc.to','text','maxlength="120" placeholder="예: 회원 학원 원장 · 교사"')}</label><label class="w2">참조${inp('doc.ref','text','maxlength="120"')}</label>
+    <label class="w2">제목${inp('doc.title','text','maxlength="120" placeholder="{캠프이름} 안내"')}</label>
+    <label>항목 번호<select data-cc="doc.num"><option value="1." ${d.num!=='1)'?'selected':''}>1. 2. 3.</option><option value="1)" ${d.num==='1)'?'selected':''}>1) 2) 3)</option></select></label>
+    <label>끝 협회 이름<span class="row" style="gap:6px;flex-wrap:nowrap">${inp('doc.sign','check')} 넣기</span></label></div>
+    <label style="display:block;margin-top:8px">머리말 ${ta('doc.intro','dintro',3)}</label></div>
+  <div class="panel"><h3>캠프 기본 <span class="hint">= 캠프 설정</span></h3><div class="ccg">
+    <label class="w2">캠프 이름${inp('base.name','text','maxlength="60"')}</label>
+    <label>시작일 <small class="faint">${dw(b.start)}</small>${inp('base.start','date')}</label><label>시작 시각 <span class="hint">공문에만</span>${inp('doc.t1','text','maxlength="20" placeholder="14시"')}</label>
+    <label>끝나는 날 <small class="faint">${dw(b.end)}</small>${inp('base.end','date')}</label><label>끝 시각${inp('doc.t2','text','maxlength="20" placeholder="12시"')}</label>
+    <label class="w2">장소${inp('base.place','text','maxlength="80" placeholder="추후 안내"')}</label>
+    <label>접수 시작${inp('base.open','date')}</label><label>접수 마감${inp('base.close','date')}</label></div></div>
+  <div class="panel tbl"><div class="spread"><h3>차수 · 참가비 <span class="hint">= 캠프 설정 참가비표 (회원 · 원)</span></h3><button class="btn small" type="button" data-ccr="add" ${R.length>=6?'disabled':''}>＋ 차수 추가</button></div>
+    <table class="pft cct dfeet"><thead><tr><th>차수</th><th>시작</th><th>끝</th>${DOC_FG.map(g=>`<th class="r">${g[0]}</th>`).join('')}<th>공문 메모</th><th></th></tr></thead><tbody>
+    ${R.map((r,i)=>`<tr><td>${inp('rounds.'+i+'.n','text','maxlength="10" style="width:60px"')}</td><td>${inp('rounds.'+i+'.from','date')}</td><td>${inp('rounds.'+i+'.to','date')}</td>${DOC_FG.map((g,k)=>`<td><input type="text" inputmode="numeric" class="num" data-dfee="${k}|${i}" value="${dFee(c,g[1][0],i).toLocaleString('ko-KR')}"></td>`).join('')}<td><input type="text" data-cc="doc.rnote.${i}" value="${esc(d.rnote[i]||'')}" maxlength="80" style="width:150px" placeholder="예: Early Bird"></td><td>${R.length>1?`<button class="btn small ghost" type="button" data-ccr="del|${i}">빼기</button>`:''}</td></tr>`).join('')}</tbody></table>
+    <div class="row" style="gap:8px;margin-top:8px;align-items:center"><label class="row" style="gap:6px;flex-wrap:nowrap">비회원 추가 금액 <input type="text" inputmode="numeric" class="num" id="dGuest" value="${ga==null?'':ga.toLocaleString('ko-KR')}" placeholder="${ga==null?'항목마다 다름':''}" style="width:110px"> 원</label><span class="hint">비회원 학생 · 보호자 · 동반가족 · 돌 전 아기 = 회원 금액 + 이 금액 (모든 차수)</span></div>
+    <p class="hint">교사 · 연수생 · 무소속 중급교사 · 학생은 한 칸, 첫 보호자 · 악기 하는 교사 자녀도 한 칸으로 같이 바뀌어요. 관계자 · 해외 금액은 「캠프 설정」에서.</p></div>
+  <div class="panel"><h3>추가 레슨 · 가족방 <span class="hint">= 캠프 설정</span></h3><div class="ccg">
+    <label>추가 레슨 1회<span class="row" style="gap:4px;flex-wrap:nowrap">${inp('opt.lessonFee','num','style="width:110px"')}<small class="faint">원</small></span></label>
+    <label>가족방 정원<span class="row" style="gap:4px;flex-wrap:nowrap">${inp('opt.roomCap','num','style="width:70px"')}<small class="faint">명</small></span></label>
+    <label>가족방 빈 자리 1개<span class="row" style="gap:4px;flex-wrap:nowrap">${inp('opt.roomEmptyFee','num','style="width:110px"')}<small class="faint">원</small></span></label></div></div>
+  <div class="panel"><div class="spread"><h3>취소 · 환불 규정 <span class="hint">= 캠프 설정 · 공문에는 「○월 ○일부터 취소 수수료 n%」로 나가요</span></h3><button class="btn small" type="button" data-ccf="add">＋ 규정 추가</button></div>
+    <table class="pft cct"><thead><tr><th>이 날까지</th><th>이름</th><th class="r">환불 %</th><th></th></tr></thead><tbody>
+    ${rf.rules.map((r,i)=>`<tr><td>${inp('refund.rules.'+i+'.until','date')}</td><td>${inp('refund.rules.'+i+'.label','text','maxlength="30" placeholder="예: 7월 30일까지"')}</td><td>${inp('refund.rules.'+i+'.rate','num','style="width:64px"')}</td><td><button class="btn small ghost" type="button" data-ccf="del|${i}">빼기</button></td></tr>`).join('')}
+    <tr class="off"><td><small class="faint">그 뒤</small></td><td>${inp('refund.after.label','text','maxlength="30"')}</td><td>${inp('refund.after.rate','num','style="width:64px"')}</td><td></td></tr></tbody></table>
+    <p class="hint">지금 공문 문장: <b>${esc(dRefund(c))}</b></p></div>
+  <div class="panel"><div class="spread"><h3>본문 항목</h3><button class="btn small" type="button" data-dsec="add">＋ 항목 추가</button></div>
+    <p class="hint" style="margin:4px 0 0">글 칸을 누른 뒤 아래 표시를 누르면 그 자리에 들어가요. 공문에는 캠프 설정 값으로 바뀌어 나와요. <b>**굵게**</b> · <span style="color:#d0021b">!!빨강!!</span> · 빈 줄 = 띄우기.</p>
+    <div class="dtok">${DOC_TOKS.map(([t,l])=>`<button type="button" data-dtok="${esc(t)}" title="${esc(l)}">${esc(t)}</button>`).join('')}</div>
+    ${d.sec.map((s,i)=>`<div class="dsec ${s.on===false?'off':''}"><div class="dh"><small class="faint">${i+1}</small>${inp('doc.sec.'+i+'.on','check')}<input type="text" data-cc="doc.sec.${i}.t" value="${esc(s.t)}" maxlength="40" aria-label="항목 제목">
+      <button class="btn small ghost" type="button" data-dsec="up|${i}" ${i?'':'disabled'} aria-label="위로">↑</button><button class="btn small ghost" type="button" data-dsec="down|${i}" ${i<d.sec.length-1?'':'disabled'} aria-label="아래로">↓</button><button class="btn small ghost" type="button" data-dsec="del|${i}">빼기</button></div>
+      ${ta('doc.sec.'+i+'.body','dsb_'+i,Math.min(14,Math.max(2,String(s.body||'').split('\n').length+1)))}</div>`).join('')}</div>
+  </div>
+  <div class="dprevw"><div class="spread" style="margin-bottom:6px"><b>미리보기 <span class="hint">A4 · 인쇄 모양 그대로</span></b><button class="btn small" type="button" id="dPrint2">인쇄 · PDF 저장</button></div><div class="dprev" id="docPrev">${docHtml(c)}</div></div></div></div>`}
+const dWarnHtml=W=>W.length?`<div class="dwarn">${W.map(x=>'· '+x).join('<br>')}</div>`:'';
+let dPT=0;function dPrev(){clearTimeout(dPT);dPT=setTimeout(()=>{const p=document.getElementById('docPrev');if(p&&S.cc&&S.cc.doc)p.innerHTML=docHtml(S.cc);const w=document.getElementById('dWarnBox');if(w&&S.cc&&S.cc.doc)w.innerHTML=dWarnHtml(dWarn(S.cc));const gi=document.getElementById('dGuest');if(gi&&document.activeElement!==gi){const ga=dGuestAdd(S.cc);gi.value=ga==null?'':ga.toLocaleString('ko-KR')}const pl=document.getElementById('ccDirty');if(pl)pl.innerHTML=ccPill()},120)}
+function dSetFee(k,i,v){const c=S.cc,ga=dGuestAdd(c);DOC_FG[k][1].forEach(t=>{c.fees[t]=c.fees[t]||[];c.fees[t][i]=v});if(ga!=null)DOC_GUEST.forEach(([g,m])=>{if(DOC_FG[k][1].includes(m)){c.fees[g]=c.fees[g]||[];c.fees[g][i]=v+ga}})}
+function dPrint(){if(!S.cc||!S.cc.doc)return;let r=document.getElementById('docPrintRoot');if(!r){r=document.createElement('div');r.id='docPrintRoot';document.body.appendChild(r)}r.innerHTML=docHtml(S.cc);
+  const t0=document.title,ti=(S.cc.doc.title||'{캠프이름} 안내').replace(/\{캠프이름\}/g,(S.cc.base||{}).name||'');document.title=ti.replace(/[\\\/:*?"<>|]/g,' ');
+  const im=r.querySelector('img');const go=()=>{try{window.print()}finally{setTimeout(()=>{document.title=t0},500)}};if(im&&!im.complete)im.onload=go;else go();
+  if(ccDirty())toast('저장하지 않은 내용도 인쇄돼요 · 캠프에 반영하려면 「저장」을 눌러 주세요')}
+document.addEventListener('input',e=>{if(S.tab!=='doc'||!S.cc)return;const t=e.target;
+  if(t.dataset&&t.dataset.dfee){const [k,i]=t.dataset.dfee.split('|').map(Number);dSetFee(k,i,+(t.value.replace(/[^\d]/g,'')||0))}
+  else if(t.id==='dGuest'){const v=t.value.replace(/[^\d]/g,'');if(v!==''){const a=+v;(S.cc.rounds||[]).forEach((_,i)=>DOC_GUEST.forEach(([g,m])=>{S.cc.fees[g]=S.cc.fees[g]||[];S.cc.fees[g][i]=dFee(S.cc,m,i)+a}))}}
+  dPrev()});
+document.addEventListener('change',e=>{if(S.tab!=='doc'||!S.cc)return;const t=e.target;if(t.dataset&&t.dataset.dfee||t.id==='dGuest'){if(t.value.trim()!=='')t.value=(+(t.value.replace(/[^\d]/g,'')||0)).toLocaleString('ko-KR')}dPrev()});
+document.addEventListener('focusin',e=>{const t=e.target;if(S.tab==='doc'&&t&&t.tagName==='TEXTAREA'&&t.dataset.cc)S.dFocus=t.id});
+document.addEventListener('click',e=>{if(S.tab!=='doc')return;const b=e.target.closest&&e.target.closest('button');if(!b)return;const d=b.dataset,c=S.cc;
+  if(b.id==='dPrint'||b.id==='dPrint2'){dPrint();return}
+  if(d.dtok){const ta=document.getElementById(S.dFocus||'');if(!ta){toast('먼저 넣을 글 칸을 눌러 주세요');return}const tok=d.dtok,line=tok.startsWith('[[');const s=ta.selectionStart,en=ta.selectionEnd,v=ta.value;
+    const ins=line?(s>0&&v[s-1]!=='\n'?'\n':'')+tok+'\n':tok;ta.focus();ta.setRangeText(ins,s,en,'end');ta.dispatchEvent(new Event('input',{bubbles:true}));return}
+  if(d.dsec&&c&&c.doc){const [op,i]=d.dsec.split('|'),k=+i,L=c.doc.sec;
+    if(op==='add')L.push({id:'x'+Date.now().toString(36),t:'새 항목',on:true,body:''});
+    else if(op==='up'&&k>0)L.splice(k-1,0,L.splice(k,1)[0]);else if(op==='down'&&k<L.length-1)L.splice(k+1,0,L.splice(k,1)[0]);
+    else if(op==='del'){ask('이 항목을 뺄까요?',`「${esc(L[k].t)}」 항목을 공문에서 지워요. 잠깐 숨기기만 하려면 제목 옆 체크를 끄면 돼요. 저장하기 전이면 「되돌리기」로 살릴 수 있어요.`,()=>{L.splice(k,1);render()},'빼기');return}
+    render()}},true);
+</script>
+
+<div id="bldMark" hidden>빌드표시 20261104-160858 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();</script>
 </body></html>

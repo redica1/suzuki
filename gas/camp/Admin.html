@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261104-185223 -->
+<!-- build: 20261104-185735 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -1484,8 +1484,8 @@ function conRows(){const L=[];(S.D.subs||[]).forEach(sb=>sb.ppl.forEach(p=>{if(p
     song:i.other?'':(i.song||''),oc:i.other?(i.oc||''):'',ot:i.other?(i.ot||''):'',video:i.concert==='이브닝'?(i.video||''):'',status:p.status})}));return L}
 function conAll(){const m={};(S.D.subs||[]).forEach(sb=>sb.ppl.forEach(p=>{m[p.id]={name:p.name,acad:sb.acad,status:p.status}}));return m}
 function vCon(){const sv=S.consv||'list';
-  const tabs=`<div class="row" style="gap:6px;margin-bottom:10px">${[['list','신청 목록'],['ord','연주 순서 · 리허설']].map(([k,l])=>`<button class="btn small ${sv===k?'primary':''}" type="button" data-consv="${k}">${l}</button>`).join('')}</div>`;
-  return tabs+(sv==='ord'?CORD.view():vConList())}
+  const tabs=`<div class="row" style="gap:6px;margin-bottom:10px">${[['list','신청 목록'],['ord','연주 순서 · 리허설'],['book','프로그램북 (B5 인쇄)']].map(([k,l])=>`<button class="btn small ${sv===k?'primary':''}" type="button" data-consv="${k}">${l}</button>`).join('')}</div>`;
+  return tabs+(sv==='ord'?CORD.view():sv==='book'?vConBook():vConList())}
 function vConList(){const f=S.conf||'오후',ins=S.coni||'',q=(S.conq||'').trim();const all=conRows();
   const L=all.filter(x=>(f==='all'||x.con===f)&&(!ins||x.inst===ins)&&(!q||[x.name,x.acad,x.owner,x.song,x.oc,x.ot].some(v=>String(v).includes(q))));
   const cnt=k=>all.filter(x=>x.con===k).length;const INS=[...new Set(all.map(x=>x.inst).filter(Boolean))];
@@ -2693,6 +2693,66 @@ document.addEventListener('change',e=>{if(S.tab!=='aud')return;const t=e.target;
   if(t.dataset&&t.dataset.audmemo){const i=t.dataset.audmemo.lastIndexOf('|'),id=t.dataset.audmemo.slice(0,i),st=t.dataset.audmemo.slice(i+1);call('audSet',[id,st==='제출 안 함'?'심사 전':st,t.value],r=>{S.AU=r;toast('메모를 저장했어요')},'')}});
 document.addEventListener('input',e=>{if(S.tab!=='aud'||e.target.id!=='audQ')return;S.audF=Object.assign(S.audF||{},{q:e.target.value});clearTimeout(S.audQT);S.audQT=setTimeout(()=>{const pos=e.target.selectionStart;render();const q=document.getElementById('audQ');if(q){q.focus();try{q.setSelectionRange(pos,pos)}catch(x){}}},350)});
 </script>
-<div id="bldMark" hidden>빌드표시 20261104-185223 </div>
+<style>
+/* ---------- 오후음악회 › 프로그램북 (B5, 11-04) ---------- */
+.bkwrap{display:flex;flex-direction:column;align-items:center;gap:18px;background:#e6eaec;border-radius:10px;padding:16px;overflow:auto}
+.bk{width:176mm;min-height:250mm;box-sizing:border-box;padding:15mm 14mm;background:#fff;color:#111;font-family:"Pretendard Variable",Pretendard,"Malgun Gothic",sans-serif;font-size:10.5pt;line-height:1.5;box-shadow:0 2px 12px rgba(0,0,0,.18);zoom:var(--bz,1)}
+.bk .bh{text-align:center;margin-bottom:7mm}.bk .bh .c1{font-size:10pt;color:#555;letter-spacing:.02em}.bk .bh .c2{font-size:19pt;font-weight:800;margin:1.5mm 0 3mm;letter-spacing:-.01em}.bk .bh .c3{font-size:10pt;color:#333}
+.bk .it{display:grid;grid-template-columns:8mm minmax(0,auto) 1fr minmax(0,auto);column-gap:1.5mm;align-items:end;margin:0 0 3.4mm;break-inside:avoid}
+.bk .it .no{font-weight:700}.bk .it .ko{font-weight:700}.bk .it .ld{border-bottom:1.2px dotted #777;margin-bottom:1.2mm;min-width:6mm}.bk .it .pp{text-align:right;white-space:nowrap}
+.bk .it .en{grid-column:2 / 4;color:#333;font-size:9.6pt}.bk .it .pp2{grid-column:4;text-align:right;white-space:nowrap}
+.bk .it .enin{grid-column:2 / 4;width:100%;font:inherit;font-size:9.6pt;padding:1px 4px;border:1px dashed #9ab;border-radius:4px;background:#f7fbfc}
+.bk .empty{color:#888;text-align:center;padding:20mm 0}
+@media screen{#bookPrintRoot{display:none}}
+@page book{size:B5;margin:0}
+@media print{
+  body.bprint>*:not(#bookPrintRoot){display:none !important}
+  body.bprint #bookPrintRoot{display:block !important}
+  #bookPrintRoot table.bpw{width:100%;border-collapse:collapse;page:book;break-after:page}
+  #bookPrintRoot table.bpw>*>tr>td{border:0 !important;padding:0 !important;text-align:left !important;vertical-align:top !important;background:none !important}
+  #bookPrintRoot .bk{box-shadow:none;min-height:0;width:auto;zoom:1;padding:0 14mm !important}
+  #bookPrintRoot table.bpw>thead>tr>td.rh{height:11mm;font-size:8.5pt;color:#777;text-align:right !important;padding:0 14mm 2mm 0 !important;vertical-align:bottom !important}
+  #bookPrintRoot table.bpw>tfoot>tr>td.rf{height:13mm}
+  html:has(body.bprint),body.bprint{background:#fff !important;margin:0 !important;padding:0 !important}
+}
+</style>
+<script>
+/* ---------- 오후음악회 › 프로그램북 (B5 인쇄, 11-04) ----------
+ * 「연주 순서 · 리허설」에서 정한 순서 그대로, 같은 곡이 이어지면 한 번호로 묶고 학원별 이름을 모음(교사 일정 › 미리보기와 같은 데이터).
+ * 번호. 한글 곡명 ······ 악기 이름(학원) / 아래 줄 영어 곡명(여기서 바로 입력 · 저장) · 공연마다 B5 한 묶음, 쪽마다 위에 공연 이름 */
+function bkLoad(){S.BKL=1;call('conBook',[],r=>{S.BK=r;S.BKL=0;S.bkEn={};if(S.tab==='con')render()},'프로그램북을 만들고 있어요…')}
+function bkPage(b,edit){const it=b.items||[];
+  return `<div class="bk"><div class="bh"><div class="c1">${esc(b.camp)}</div><div class="c2">${esc(b.name)}</div>${(b.when||[]).map(w=>`<div class="c3">${esc(w)}</div>`).join('')}</div>
+    ${it.length?it.map(x=>{const L=x.lines.length?x.lines:[''],en=edit&&S.bkEn&&S.bkEn[x.ko]!=null?S.bkEn[x.ko]:x.en;
+      return `<div class="it"><span class="no">${x.no}.</span><span class="ko">${esc(x.ko)}</span><span class="ld"></span><span class="pp">${esc(L[0])}</span>
+        ${edit?`<input class="enin" type="text" data-bken="${esc(x.ko)}" value="${esc(en||'')}" placeholder="영어 곡명 (예: J. S. Bach - Minuet No. 2)">`:`<span class="en">${esc(en||'')}</span>`}<span class="pp2">${esc(L[1]||'')}</span>
+        ${L.slice(2).map(l=>`<span></span><span></span><span></span><span class="pp2">${esc(l)}</span>`).join('')}</div>`}).join(''):'<div class="empty">연주 순서가 아직 없어요 · 「연주 순서 · 리허설」에서 이 공연에 사람을 넣으면 나와요</div>'}</div>`}
+function vConBook(){if(!S.BK){if(!S.BKL)setTimeout(bkLoad,0);return '<div class="panel hint">프로그램북을 만들고 있어요…</div>'}
+  const B=S.BK.books||[],sel=S.bkSel||'all',show=B.filter(b=>sel==='all'||b.id===sel),edit=!!S.bkEdit,z=S.bkZ||.8;
+  const dirty=Object.keys(S.bkEn||{}).length;
+  return `<div class="panel"><div class="spread"><div><b>프로그램북</b> <span class="hint">B5 · 「연주 순서 · 리허설」 순서 그대로 · 같은 곡이 이어지면 한 번호로 묶어요 · 교사 일정 › 미리보기와 같은 내용</span></div>
+    <div class="row" style="gap:6px;flex-wrap:wrap"><select id="bkSel"><option value="all">모든 공연 (${B.length})</option>${B.map(b=>`<option value="${esc(b.id)}" ${sel===b.id?'selected':''}>${esc(b.name)} · ${b.items.length}곡</option>`).join('')}</select>
+      <button class="btn small ${edit?'primary':''}" type="button" id="bkEdit">${edit?'영어 곡명 넣는 중':'영어 곡명 넣기'}</button>${edit?`<button class="btn small primary" type="button" id="bkEnSave" ${dirty?'':'disabled'}>영어 곡명 저장${dirty?' ('+dirty+')':''}</button>`:''}
+      <span class="dzm"><button type="button" data-bkz="-">−</button><button type="button" class="dzv" data-bkz="0">${Math.round(z*100)}%</button><button type="button" data-bkz="+">＋</button></span>
+      <button class="btn small" type="button" id="bkRe">새로 만들기</button><button class="btn small primary" type="button" id="bkPrint">인쇄 · PDF 저장</button></div></div>
+    <p class="hint" style="margin:6px 0 0">인쇄 창에서 용지가 <b>B5</b>로 잡혀요(공연마다 새 쪽). 순서를 바꾼 뒤에는 「새로 만들기」를 눌러 주세요. 영어 곡명은 같은 한글 곡명에 한 번만 넣으면 모든 공연에 같이 들어가요.</p></div>
+  <div class="bkwrap" style="--bz:${z}">${show.map(b=>bkPage(b,edit)).join('')||'<div class="hint">공연이 없어요. 「연주 순서 · 리허설」에서 공연을 만들어 주세요.</div>'}</div>`}
+function bkPrint(){const B=(S.BK&&S.BK.books)||[],sel=S.bkSel||'all',show=B.filter(b=>sel==='all'||b.id===sel);if(!show.length){toast('인쇄할 공연이 없어요');return}
+  let r=document.getElementById('bookPrintRoot');if(!r){r=document.createElement('div');r.id='bookPrintRoot';document.body.appendChild(r)}
+  r.innerHTML=show.map(b=>`<table class="bpw"><thead><tr><td class="rh">${esc(b.name)}</td></tr></thead><tfoot><tr><td class="rf"></td></tr></tfoot><tbody><tr><td>${bkPage(b,false)}</td></tr></tbody></table>`).join('');
+  document.body.classList.add('bprint');const t0=document.title;document.title=(show.length===1?show[0].name:show[0].camp+' 프로그램')+' (B5)';
+  const fr=(document.fonts&&document.fonts.ready)||Promise.resolve();fr.then(()=>{try{window.print()}finally{setTimeout(()=>{document.title=t0},500)}})}
+window.addEventListener('afterprint',()=>{document.body.classList.remove('bprint')});
+window.addEventListener('beforeprint',()=>{if(!(S.tab==='con'&&(S.consv||'list')==='book'))document.body.classList.remove('bprint')});
+document.addEventListener('click',e=>{if(S.tab!=='con'||(S.consv||'list')!=='book')return;const b=e.target.closest&&e.target.closest('button');if(!b)return;const d=b.dataset;
+  if(b.id==='bkRe'){S.BK=null;render();return}
+  if(b.id==='bkPrint'){bkPrint();return}
+  if(b.id==='bkEdit'){if(S.bkEdit&&Object.keys(S.bkEn||{}).length&&!confirm('저장하지 않은 영어 곡명이 있어요. 그만 넣을까요?'))return;S.bkEdit=!S.bkEdit;S.bkEn={};render();return}
+  if(b.id==='bkEnSave'){const m=S.bkEn||{};call('songEnSave',[m],()=>{(S.BK.books||[]).forEach(bk=>bk.items.forEach(x=>{if(m[x.ko]!=null)x.en=m[x.ko].trim()}));S.bkEn={};render();toast('영어 곡명을 저장했어요 · 교사 일정 미리보기에도 같이 들어가요')},'저장하고 있어요…');return}
+  if(d.bkz){const z=d.bkz==='0'?.8:Math.max(.4,Math.min(1.6,Math.round(((S.bkZ||.8)+(d.bkz==='+'?.1:-.1))*100)/100));S.bkZ=z;const w=document.querySelector('.bkwrap');if(w)w.style.setProperty('--bz',z);const v=b.parentNode.querySelector('.dzv');if(v)v.textContent=Math.round(z*100)+'%';return}},true);
+document.addEventListener('change',e=>{if(S.tab!=='con'||e.target.id!=='bkSel')return;S.bkSel=e.target.value;render()});
+document.addEventListener('input',e=>{const t=e.target;if(S.tab!=='con'||!t.dataset||t.dataset.bken==null)return;S.bkEn=S.bkEn||{};S.bkEn[t.dataset.bken]=t.value;document.querySelectorAll('[data-bken]').forEach(x=>{if(x!==t&&x.dataset.bken===t.dataset.bken)x.value=t.value});const sv=document.getElementById('bkEnSave');if(sv){const n=Object.keys(S.bkEn).length;sv.disabled=!n;sv.textContent='영어 곡명 저장'+(n?' ('+n+')':'')}});
+</script>
+<div id="bldMark" hidden>빌드표시 20261104-185735 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();</script>
 </body></html>

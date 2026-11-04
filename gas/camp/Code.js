@@ -1,4 +1,4 @@
-/* build: 20261104-185223 */
+/* build: 20261104-185735 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -1430,16 +1430,27 @@ function progConcerts_(c, C, evs, nameOf, dayDate) {
     rows.push({ k: 'm', v: ['', '장소: ' + (x.room || '') + (room && room[1] ? ' (' + room[1] + ')' : '')] });
     if (mc.length) rows.push({ k: 'm', v: ['', '사회 및 진행: ' + mc.join(', ') + ' 선생님'] });
     rows.push({ k: 'b', v: [''] });
+    const linesOf = it => { const G = []; it.P.forEach(p => { let g = G[G.length - 1]; if (!g || g.a !== p.a || g.ins !== p.ins) G.push(g = { a: p.a, ins: p.ins, N: [] }); g.N.push(p.n); });
+      return G.map((g, k) => (k === 0 || g.ins !== G[k - 1].ins ? (INST_PF[g.ins] || '') : '') + g.N.join(',') + (g.a ? '(' + g.a + ')' : '')); };
     items.forEach((it, n) => {
-      const G = []; it.P.forEach(p => { let g = G[G.length - 1]; if (!g || g.a !== p.a || g.ins !== p.ins) G.push(g = { a: p.a, ins: p.ins, N: [] }); g.N.push(p.n); });
-      const lines = G.map((g, k) => (k === 0 || g.ins !== G[k - 1].ins ? (INST_PF[g.ins] || '') : '') + g.N.join(',') + (g.a ? '(' + g.a + ')' : ''));
+      const lines = linesOf(it);
       const left = [it.ko, it.en];
       for (let k = 0; k < Math.max(2, lines.length); k++) rows.push({ k: k === 0 ? 'i' : 'j', v: [k === 0 ? (n + 1) + '.' : '', left[k] || '', lines[k] || ''] });
       rows.push({ k: 'b', v: [''] });
     });
     if (!items.length) rows.push({ k: 'j', v: ['', '(연주 순서가 아직 없어요 · 오후음악회 탭에서 순서를 정하면 나와요)', ''] });
-    return { id: x.id, name: x.name, rows, songs: items.map(it => it.ko) };
+    /* 프로그램북(B5) 화면용 (11-04): 같은 내용을 줄 대신 묶음으로 */
+    const book = { id: x.id, camp: C.base.name, name: x.name, when: rows.filter(r => r.k === 'm').map(r => r.v[1]), items: items.map((it, n) => ({ no: n + 1, ko: it.ko, en: it.en, lines: linesOf(it) })) };
+    return { id: x.id, name: x.name, rows, songs: items.map(it => it.ko), book };
   });
+}
+/** 오후음악회 › 프로그램북 (B5 인쇄, 11-04): 「연주 순서」 그대로 · 같은 곡은 한 번호 · 영어 곡명은 songEn */
+function conBook(token) {
+  const a = adm_(token); if (!a.sup && !['보기', '편집'].includes(a.perms.con)) throw new Error('오후음악회 권한이 있어야 볼 수 있어요.');
+  const c = actCfg_(), C = camp_(), evs = actEvents_();
+  const nm = {}; actPeople_(c.people).forEach(p => nm[p.id] = p.n); const nameOf = id => nm[id] || String(id).replace(/^[CP]:/, '');
+  const start = String(C.base.start || ''), dt0 = /^\d{4}-\d{2}-\d{2}$/.test(start) ? new Date(start + 'T00:00:00+09:00') : null, dayDate = d => dt0 ? new Date(dt0.getTime() + d * 864e5) : null;
+  return { books: progConcerts_(c, C, evs, nameOf, dayDate).map(x => x.book) };
 }
 /** 영어 곡명 저장 (미리보기 › 음악회 탭) — { 한글 곡명: 영어 } 합쳐서 저장, 빈 값은 지움 */
 function songEnSave(token, map) {

@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261104-182905 -->
+<!-- build: 20261104-182944 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -2661,7 +2661,7 @@ function vAud(){if(!S.AU){if(!S.AUL)setTimeout(audLoad,0);return '<div class="pa
     <select id="audStF"><option value="">모든 상태</option>${['심사 전','승인','비승인','보류','제출 안 함'].map(st=>`<option ${F.st===st?'selected':''}>${st}</option>`).join('')}</select>
     <input type="search" id="audQ" placeholder="이름 · 학원 · 곡 찾기" value="${esc(F.q)}" style="min-width:200px">
     <span class="hint">${R.length}건</span><button class="btn small ghost" type="button" id="audRe" style="margin-left:auto">새로 불러오기</button></div>
-    <p class="hint" style="margin:6px 0 0">주소를 누르면 새 창에서 열려요(들은 줄은 옅게 표시). 결과는 「결과 공개하기」를 누르면 <b>접수한 선생님 화면에만</b> 보여요(그 전엔 「심사 중」). 비회원(보호자 직접 접수)에게는 공개해도 「제출됨」만 보여요.</p></div>
+    <p class="hint" style="margin:6px 0 0">주소를 누르면 새 창에서 열려요(들은 줄은 옅게 표시). 결과는 「결과 공개하기」를 누르면 <b>접수한 선생님</b>(비회원은 직접 접수한 보호자) 「내 접수」에 보여요. 그 전엔 「심사 중」.</p></div>
   <div class="panel tbl"><table class="pft"><thead><tr><th>음악회</th><th>학원</th><th>이름</th><th>악기 · 진도</th><th>곡</th><th>음원</th><th>제출</th><th>심사</th><th>메모</th></tr></thead><tbody>
   ${R.map(x=>`<tr class="${seen[x.id]?'off':''}"><td>${esc(x.con)}</td><td>${esc(x.acad)}<br><small class="hint">${esc(x.owner||'')}</small></td><td><b>${esc(x.name)}</b></td><td>${esc(x.inst||'-')}<br><small class="hint">${esc(x.prog||'')}</small></td><td style="white-space:normal;max-width:220px">${esc(x.song||'-')}</td>
     <td style="max-width:240px;word-break:break-all">${x.none?'<span class="hint">제출 안 함</span>':`<a href="${esc(x.url)}" target="_blank" rel="noopener" data-audopen="${esc(x.id)}">${esc(x.url.replace(/^https?:[\/]{2}(www\.)?/,'').slice(0,40))}${x.url.length>46?'…':''}</a>`}</td>
@@ -2681,12 +2681,12 @@ document.addEventListener('click',e=>{if(S.tab!=='aud')return;const a=e.target.c
   if(d.audst){const i=d.audst.lastIndexOf('|'),id=d.audst.slice(0,i),st=d.audst.slice(i+1),x=S.AU.rows.find(r=>r.id===id),nst=x&&audSt(x)===st?'심사 전':st;
     call('audSet',[id,nst,null],r=>{S.AU=r;render();toast(nst==='심사 전'?'심사를 되돌렸어요':nst+'으로 정했어요')},'저장하고 있어요…');return}
   if(d.audpub){const [k,v]=d.audpub.split('|');const go=()=>call('audPub',[k,v==='1'],r=>{S.AU=r;render();toast(v==='1'?k+' 음악회 결과를 신청자에게 공개했어요':k+' 음악회 결과를 다시 숨겼어요')},'저장하고 있어요…');
-    if(v==='1'){const n=S.AU.rows.filter(x=>x.con===k&&audSt(x)==='심사 전').length;ask(k+' 음악회 결과를 공개할까요?',`접수한 선생님 「내 접수」에 승인 · 비승인 · 보류가 바로 보여요. 비회원 보호자에게는 보이지 않아요.${n?` <b>아직 심사 전인 음원이 ${n}개</b> 있어요 (그건 「심사 전」으로 보여요).`:''}`,go,'공개')}else go();return}},true);
+    if(v==='1'){const n=S.AU.rows.filter(x=>x.con===k&&audSt(x)==='심사 전').length;ask(k+' 음악회 결과를 공개할까요?',`접수한 선생님(비회원은 직접 접수한 보호자) 「내 접수」에 승인 · 비승인 · 보류가 바로 보여요.${n?` <b>아직 심사 전인 음원이 ${n}개</b> 있어요 (그건 「심사 전」으로 보여요).`:''}`,go,'공개')}else go();return}},true);
 document.addEventListener('change',e=>{if(S.tab!=='aud')return;const t=e.target;
   if(t.id==='audCon'||t.id==='audStF'){S.audF=Object.assign(S.audF||{},t.id==='audCon'?{con:t.value}:{st:t.value});render();return}
   if(t.dataset&&t.dataset.audmemo){const i=t.dataset.audmemo.lastIndexOf('|'),id=t.dataset.audmemo.slice(0,i),st=t.dataset.audmemo.slice(i+1);call('audSet',[id,st==='제출 안 함'?'심사 전':st,t.value],r=>{S.AU=r;toast('메모를 저장했어요')},'')}});
 document.addEventListener('input',e=>{if(S.tab!=='aud'||e.target.id!=='audQ')return;S.audF=Object.assign(S.audF||{},{q:e.target.value});clearTimeout(S.audQT);S.audQT=setTimeout(()=>{const pos=e.target.selectionStart;render();const q=document.getElementById('audQ');if(q){q.focus();try{q.setSelectionRange(pos,pos)}catch(x){}}},350)});
 </script>
-<div id="bldMark" hidden>빌드표시 20261104-182905 </div>
+<div id="bldMark" hidden>빌드표시 20261104-182944 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();</script>
 </body></html>

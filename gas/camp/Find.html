@@ -1,4 +1,4 @@
-<!doctype html><!-- build: 20261104-211324 --><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<!doctype html><!-- build: 20261104-212711 --><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
 <style>
 :root{--ink:#18232b;--muted:#5b6b73;--faint:#93a1a8;--line:#d5e6e6;--bg:#f2f8f8;--surface:#fff;--accent:#0f8a86;--soft:#e3f3f2}
@@ -79,7 +79,7 @@ textarea{width:100%;font:inherit;font-size:16px;padding:10px 12px;border:1.5px s
     <label style="display:flex;gap:8px;align-items:flex-start;font-size:14.5px;margin:4px 0 12px;cursor:pointer"><input id="inA" type="checkbox" style="width:20px;height:20px;margin:2px 0 0;flex:none"><span>캠프 참가자(보호자 포함)이며, 여기서 본 이름 · 일정 · 교실은 아이 찾기와 일정 확인에만 쓰고 다른 곳에 옮기거나 퍼뜨리지 않을게요.</span></label>
     <button type="button" id="inGo" class="btn1" style="width:100%;font-size:17px;padding:12px">들어가기</button><p class="err" id="inErr" style="margin:8px 0 0"></p></div>
   <div id="pMain" hidden>
-  <div id="home" class="tiles"><button type="button" data-tab="ntc"><b>공지사항</b><small id="ntcN">운영진 안내</small></button><button type="button" data-tab="kid"><b>학생 시간표 찾기</b><small>우리 아이 시간표 · 방</small></button><button type="button" data-tab="board"><b>수업표</b><small>전체 프로그램</small></button><button type="button" data-tab="name"><b>교사 · 교수 찾기</b><small>선생님 · 교수님 일정</small></button><button type="button" data-tab="room"><b>방 찾기</b><small>학원 · 아이 이름으로</small></button><button type="button" data-tab="con"><b>음악회</b><small>순서 · 곡</small></button><button type="button" data-tab="info"><b>식단 · 장소</b><small>식단표 · 식사 시간 · 위치 · 연락처</small></button><button type="button" data-tab="lost"><b>분실물</b><small>올리기 · 찾기</small></button><button type="button" data-tab="ask"><b>문의</b><small>운영진에게</small></button><a id="tLink" class="tile2" href="#" target="_top" hidden><b>선생님 화면</b><small>접수 · 수정 · 입금 · 우리 학원 (로그인)</small></a></div>
+  <div id="home" class="tiles"><button type="button" data-tab="help" style="border-color:var(--brand,#0e8a86)"><b>사용법</b><small>처음이면 먼저 보세요</small></button><button type="button" data-tab="ntc"><b>공지사항</b><small id="ntcN">운영진 안내</small></button><button type="button" data-tab="kid"><b>학생 시간표 찾기</b><small>우리 아이 시간표 · 방</small></button><button type="button" data-tab="board"><b>수업표</b><small>전체 프로그램</small></button><button type="button" data-tab="name"><b>교사 · 교수 찾기</b><small>선생님 · 교수님 일정</small></button><button type="button" data-tab="room"><b>방 찾기</b><small>학원 · 아이 이름으로</small></button><button type="button" data-tab="con"><b>음악회</b><small>순서 · 곡</small></button><button type="button" data-tab="info"><b>식단 · 장소</b><small>식단표 · 식사 시간 · 위치 · 연락처</small></button><button type="button" data-tab="lost"><b>분실물</b><small>올리기 · 찾기</small></button><button type="button" data-tab="ask"><b>문의</b><small>운영진에게</small></button><a id="tLink" class="tile2" href="#" target="_top" hidden><b>선생님 화면</b><small>접수 · 수정 · 입금 · 우리 학원 (로그인)</small></a></div>
   <div id="secHead" class="sechd" hidden><button type="button" data-tab="home">← 메뉴</button><b id="secT"></b></div>
   <div data-p="ntc" hidden><div id="nout"></div></div>
   <div data-p="kid" hidden><div id="kout"></div></div>
@@ -96,6 +96,7 @@ textarea{width:100%;font:inherit;font-size:16px;padding:10px 12px;border:1.5px s
   <div data-p="info" hidden><div id="iout"></div></div>
   <div data-p="lost" hidden><div id="lout"></div></div>
   <div data-p="ask" hidden><div id="aout"></div></div>
+  <div data-p="help" hidden><div id="hout"></div></div>
   <p style="text-align:right;margin:14px 0 0"><button type="button" class="btnx" id="outBtn">나가기</button></p>
   </div>
 </div>
@@ -126,9 +127,9 @@ $('outBtn').addEventListener('click',function(){if(!confirm('나갈까요? 「�
 /* 들어가기: 들어온 적 있으면 바로, 기억해 둔 이름 · 번호가 있으면 자동으로 */
 if(TOK){$('pMain').hidden=false;start()}else{needIn();if(svGet(INM==='pw'?'findpw':'find')){$('inA').checked=true;enter(true)}}
 function start(){run('campHome',null,function(r){if(!r.ok)return;HOME=r;if(r.name)$('title').textContent=r.name;var nn=(r.notices||[]).length;$('ntcN').textContent=nn?'새 소식 '+nn+'개':'운영진 안내';if(TAB==='ntc')notices();if(r.teacherUrl){$('tLink').href=r.teacherUrl;$('tLink').hidden=false}$('ntc').innerHTML=r.notice?'<div class="ntc"><b>알림</b> '+esc(r.notice)+'</div>':'';if(TAB==='con'||TAB==='info')show(TAB)});show(TAB)}
-var TITLES={ntc:'공지사항',kid:'학생 시간표 찾기',board:'수업표',name:'교사 · 교수 찾기',room:'방 찾기',con:'음악회',info:'식단 · 장소',lost:'분실물',ask:'문의'};
+var TITLES={help:'사용법',ntc:'공지사항',kid:'학생 시간표 찾기',board:'수업표',name:'교사 · 교수 찾기',room:'방 찾기',con:'음악회',info:'식단 · 장소',lost:'분실물',ask:'문의'};
 function show(t){TAB=t;$('home').hidden=t!=='home';$('secHead').hidden=t==='home';$('secT').textContent=TITLES[t]||'';document.querySelectorAll('[data-p]').forEach(function(x){x.hidden=x.getAttribute('data-p')!==t});window.scrollTo(0,0);
-  if(t==='ntc')notices();if(t==='kid')kids();if(t==='board')board();if(t==='con')concerts();if(t==='info')info();if(t==='ask')ask();
+  if(t==='help')help();if(t==='ntc')notices();if(t==='kid')kids();if(t==='board')board();if(t==='con')concerts();if(t==='info')info();if(t==='ask')ask();
   if(t==='lost')LOST.mount($('lout'),function(req,ok,fail){google.script.run.withSuccessHandler(function(r){if(r&&r.needIn){needIn();return}ok(r)}).withFailureHandler(fail).lostApiF(req,TOK)})}
 function today(days){var n=new Date(),m=n.getMonth()+1,d=n.getDate();for(var i=0;i<(days||[]).length;i++){var q=String(days[i]).match(/(\d{1,2})\s*[\/.월]\s*(\d{1,2})/);if(q&&+q[1]===m&&+q[2]===d)return i}return 0}
 function dayChips(days,D,attr){return '<div class="seg ttdays day" role="group" aria-label="날짜" style="margin:0 0 10px">'+days.map(function(x,i){return '<button type="button" '+attr+'="'+i+'" aria-pressed="'+(i===D)+'">'+esc(x)+'</button>'}).join('')+'</div>'}
@@ -207,6 +208,39 @@ function info(){var box=$('iout');if(!HOME){box.innerHTML='<p class="hint">불�
   var P=HOME.places||[];if(P.length)h+='<div class="card"><h2 style="font-size:18px">장소 안내</h2><div class="list">'+P.map(function(p){return '<div class="row"><b>'+esc(p.name)+'</b><small>'+esc(p.loc||'')+'</small></div>'}).join('')+'</div></div>';
   box.innerHTML=h||'<p class="none">아직 안내가 없어요.</p>'}
 
+/* ---------- 사용법 (11-04): 누구인지 고르면 그 사람이 쓸 것만 아주 쉽게 ---------- */
+var HROLE='p';
+var HELP={
+ p:{t:'보호자 · 학생',L:[
+  ['아이 일정 보기','「학생 시간표 찾기」에 아이 이름을 넣고 「찾기」. 그룹레슨 반 · 교실 · 시간, 개인레슨, 마스터클래스, 음악회, 우리 학원 방이 한 번에 나와요. 한 번 찾으면 이 휴대폰에 기억돼요.'],
+  ['비회원으로 직접 접수했다면','접수할 때 넣은 보호자 이름 · 휴대전화로 들어오면 아이가 저절로 나와요.'],
+  ['오늘 무슨 수업이 어디서?','「수업표」에서 날짜를 누르면 오늘 전체 프로그램이 나와요. 칸을 누르면 장소 · 시간 · 대상이 보여요.'],
+  ['방 번호','「방 찾기」에 학원 이름이나 아이 이름. (운영진이 방을 공개한 뒤부터 보여요)'],
+  ['밥 · 장소 · 연락처','「식단 · 장소」에 날짜별 식단, 식사 시간, 홀 위치, 운영실 · 의무실 연락처가 있어요.'],
+  ['음악회 순서','「음악회」에서 날짜를 누르면 순서 · 이름 · 곡이 나와요.'],
+  ['물건을 잃어버렸어요 · 주웠어요','「분실물」에서 사진을 올리거나, 올라온 물건을 찾아요. 찾은 물건은 보관 장소에 가서 받아요.'],
+  ['궁금한 것 · 불편한 것','「문의」에 적으면 운영진이 답해요. 급하면 「식단 · 장소」의 운영실 연락처로 전화해요.']]},
+ t:{t:'선생님',L:[
+  ['들어가기','회원관리 이메일 · 비밀번호(회원 로그인)로 들어가면 편해요. 이름 · 휴대전화로도 돼요.'],
+  ['내 일정','「선생님 화면 › 시간표 › 내 일정」에 오늘 할 일이 시간 순서로 나와요 (지금 · 다음 표시). 여기 「교사 · 교수 찾기」에 내 이름을 넣어도 돼요.'],
+  ['우리 학생 레슨','「선생님 화면 › 시간표 › 우리 학생 레슨」에 개인레슨 · 마스터클래스 시간 · 교수 · 방이 나와요. 학부모님께 알려 주세요.'],
+  ['길 잃은 아이를 만나면','「학생 시간표 찾기」에 아이 이름 → 지금 가야 할 교실을 바로 알려 줄 수 있어요.'],
+  ['접수 · 고치기 · 입금 신고','「선생님 화면」에서 해요 (캠프 페이지에서는 보기만).']]},
+ d:{t:'원장',L:[
+  ['우리 학원 전체 보기','「선생님 화면 › 접수 내역 › 우리 학원 전체」 — 다른 선생님이 낸 접수까지 모두 보여요.'],
+  ['입금 · 환불 상황','같은 곳 「접수 › 입금 현황」: 사람마다 청구 · 입금 · 환불 · 과납 · 미납, 차수별 소계. 「엑셀로 받기」도 돼요. 입금 전인 사람은 「며칠까지 입금하면 얼마」가 함께 보여요.'],
+  ['레슨 · 음악회 · 진도','같은 곳 「레슨」 「음악회」 「학생 진도」 탭.'],
+  ['우리 방','「선생님 화면 › 시간표 › 우리 방」, 또는 여기 「방 찾기」에 학원 이름.'],
+  ['선생님들께 알릴 것','공지는 여기 「공지사항」, 일정은 각자 「내 일정」을 보면 돼요.']]},
+ f:{t:'교수님',L:[
+  ['내 일정 · 레슨 학생','「선생님 화면 › 시간표 › 내 일정」에 공연 · 수업과 개인레슨 학생이 시간 순서로 나와요. 레슨실도 위에 보여요.'],
+  ['다른 선생님 일정','「교사 · 교수 찾기」에 이름을 넣어요.'],
+  ['전체 프로그램','「수업표」에서 날짜를 눌러요.']]}};
+function help(){var R=HELP[HROLE];
+  $('hout').innerHTML='<div class="seg ttdays day" style="margin:0 0 12px">'+Object.keys(HELP).map(function(k){return '<button type="button" data-hrole="'+k+'" aria-pressed="'+(k===HROLE)+'">'+HELP[k].t+'</button>'}).join('')+'</div>'+
+   '<div class="card"><h2 style="font-size:18px;margin:0 0 6px">'+R.t+'은(는) 이렇게 써요</h2><ol style="margin:0;padding-left:20px;line-height:1.6">'+R.L.map(function(x){return '<li style="margin:6px 0"><b>'+esc(x[0])+'</b><br><span style="color:var(--muted)">'+esc(x[1])+'</span></li>'}).join('')+'</ol></div>'+
+   '<p class="hint" style="margin:10px 2px">처음 화면으로는 위 「← 메뉴」. 다 봤으면 맨 아래 「나가기」.</p>'}
+document.addEventListener('click',function(e){var t=e.target.closest&&e.target.closest('[data-hrole]');if(!t)return;HROLE=t.getAttribute('data-hrole');help()});
 /* ---------- 문의 ---------- */
 function ask(){var box=$('aout');box.innerHTML='<div class="card"><h2 style="font-size:18px">운영진에게 요청 · 문의</h2><p class="hint" style="margin:4px 0 8px">방 · 일정 · 불편한 점 등 무엇이든 적어 주세요. 답이 오면 아래 「내 글」에 보여요.</p><textarea id="aT" maxlength="2000" placeholder="예) 304호 에어컨이 안 돼요 / 개인레슨 시간을 바꾸고 싶어요"></textarea><p style="margin:8px 0 0"><button type="button" class="btn1" id="aGo">보내기</button></p></div><div id="aMine"><p class="hint">내 글을 불러오는 중…</p></div>';
   $('aGo').addEventListener('click',function(){var t=$('aT').value.trim();if(t.length<2){alert('내용을 적어 주세요.');return}$('aGo').disabled=true;
@@ -225,5 +259,5 @@ document.addEventListener('click',function(e){var t=e.target.closest('[data-tab]
   if(t.hasAttribute('data-ev')){var id=t.getAttribute('data-ev');SEL=id;board();if(!EV[id])run('campEventPeople',id,function(r){EV[id]=r||{ok:false};if(SEL===id)board()},null)}});
 document.addEventListener('keydown',function(e){if(e.key==='Escape'&&SEL){SEL=null;board()}});
 </script>
-<div id="bldMark" hidden>빌드표시 20261104-211324 </div>
+<div id="bldMark" hidden>빌드표시 20261104-212711 </div>
 </body></html>

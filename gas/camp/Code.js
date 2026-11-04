@@ -1,4 +1,4 @@
-/* build: 20261104-182819 */
+/* build: 20261104-182905 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -2866,10 +2866,10 @@ function audAll_(subs) {
     }); });
   return out;
 }
-/** 신청자 화면용: 참가자ID → [{at, url, st}] · 결과 공개 전이면 st = 「심사 중」 */
+/** 신청자 화면용: 참가자ID → [{at, url, st}] · 결과 공개 전이면 st = 「심사 중」, 비회원(보호자) 접수는 언제나 「제출됨」 */
 function audMine_(subs) {
   const C = audCfg_(), M = {};
-  audAll_(subs).forEach(x => { if (x.none) { M[x.pid] = M[x.pid] || []; return; } (M[x.pid] = M[x.pid] || []).push({ at: x.at, url: x.url, first: !!x.first, st: C[x.con] && C[x.con].pub ? x.st : '심사 중' }); });
+  audAll_(subs).forEach(x => { if (x.none) { M[x.pid] = M[x.pid] || []; return; } (M[x.pid] = M[x.pid] || []).push({ at: x.at, url: x.url, first: !!x.first, st: x.acad === GUEST_ACAD ? '제출됨' : C[x.con] && C[x.con].pub ? x.st : '심사 중' }); });   /* 비회원(보호자 직접 접수)에게는 결과를 보이지 않음 — 선생님만 (11-04) */
   return { cfg: C, today: today_(), list: M };
 }
 function audAdd(token, pid, url) {

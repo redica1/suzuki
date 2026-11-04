@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261104-211246 -->
+<!-- build: 20261104-211324 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -2111,7 +2111,7 @@ function setPlan(){const b=B.P.base;
     <tr><td></td><td><button class="btn small ghost" type="button" data-bcpadd="1">＋ 나누는 곳</button></td><td></td></tr></tbody></table></div>`}
 
 /* ---------- 결산 ---------- */
-function vSet(){const T=[['sum','결산 표'],['pay','교사 활동비 · 교수 레슨비']];
+function vSet(){const T=[['sum','결산 표'],['pay','활동비']];
   return `<nav class="tabs2" style="margin-bottom:14px">${T.map(([k,l])=>`<button type="button" data-bss="${k}" aria-selected="${(B.ss||'sum')===k}">${l}</button>`).join('')}</nav>`+(B.ss==='pay'?vPay():vSum())}
 function vSum(){const st=stats(),L=B.P.lines,cx=(S.D.cx||[]).filter(c=>c.state==='환불 완료').reduce((t,c)=>t+(+c.amt||0),0);
   const ext=B.P.inc.filter(i=>!i.sys),extAct=ext.reduce((t,i)=>t+(+i.act||0),0),extPlan=ext.reduce((t,i)=>t+incAmt(i),0);
@@ -2146,7 +2146,7 @@ function vSum(){const st=stats(),L=B.P.lines,cx=(S.D.cx||[]).filter(c=>c.state==
     <tr class="foot"><td><b>지출 합계</b></td><td class="r num">${W(plan.cost)}</td><td class="r num">${W(conf)}</td><td class="r num">${W(paid)}</td><td colspan="2"></td><td class="r num"><b>${W(now)}</b></td><td class="r num">${sg(now-plan.cost)}</td><td colspan="3"><span class="hint">26 겨울 ${W(REF_COST)}</span></td></tr></tbody></table>
     <p class="hint">예산 금액은 「예산 계획」에서 바꿔요 (단가 · 수량 · 횟수). 여기서 줄을 더하면 예산 0원 줄로 생겨요.</p></div>`}
 
-/* ---------- 결산 › 교사 활동비 · 교수 레슨비 (11-03) ----------
+/* ---------- 결산 › 활동비 (11-03 · 11-04 이름 통일) ----------
    정산 항목(그룹레슨 · Orch · 보조교사 · 지휘 · 사회진행 …) = 단가 + 셈 기준(횟수만큼 · 1회 이상이면 N회 · 최대 N회) + 연수생 지급 + 묶는 역할(교사 일정 구분 · 역할)
    교수 = 개인레슨 칸 × 1회 단가 + 마스터클래스 신청 학생 × 1명당. 사람마다 조정(±) · 사유 · 최종 금액(합계 맞추기) · 소득 구분(사업 3.3 · 기타 8.8 · 없음)
    세금 = 회원관리와 같은 셈 (3.3 = 소득세 3% + 지방세 그 10% · 8.8 = 필요경비 60% 뺀 20% + 지방세 · 10원 미만 버림) · 「세금 없는 금액」 이하면 0
@@ -2180,7 +2180,7 @@ function vPay(){const Y=B.P.pay,D=B.D.pay||{};if(D.err)return `<div class="panel
   const C=' style="text-align:center"',Lf=' style="text-align:left"';
   const incSel=r=>`<select data-bpp="${esc(r.id)}|inc" aria-label="${esc(r.n)} 소득 구분"><option value="3.3" ${r.inc==='3.3'?'selected':''}>사업 3.3%</option><option value="8.8" ${r.inc==='8.8'?'selected':''}>기타 8.8%</option><option value="0" ${r.inc==='0'?'selected':''}>없음</option></select>${r.mInc==='기타소득'?'<br><small class="faint">본인: 교수</small>':''}`;
   const ok=v=>v?'<span class="pill ok">✓</span>':'<span class="pill due">없음</span>';
-  return bar('교사 활동비 · 교수 레슨비','교사 일정 · 개인레슨 · 마스터클래스 신청에서 횟수를 자동으로 세요 · 단가 · 조정 · 소득 구분을 고친 뒤 「저장」, 다 맞으면 「회원관리로 보내기」')+
+  return bar('활동비','교사 일정 · 개인레슨 · 마스터클래스 신청에서 횟수를 자동으로 세요 · 단가 · 조정 · 소득 구분을 고친 뒤 「저장」, 다 맞으면 「회원관리로 보내기」')+
   `<div class="tiles">${tile('지급 합계 (세전)',W(sum(all,'g')),`${all.filter(r=>r.g).length}명 · 교수 ${W(sum(P,'g'))} · 교사 ${W(sum(T,'g'))}`)}
     ${tile('세금 (원천세)',W(sum(all,'tax')),`사업 ${all.filter(r=>r.g&&r.rate==='3.3').length}명 · 기타 ${all.filter(r=>r.g&&r.rate==='8.8').length}명 · 없음 ${all.filter(r=>r.g&&r.rate==='0').length}명`)}
     ${tile('실지급 합계',W(sum(all,'net')),'계좌로 보낼 돈')}
@@ -2195,7 +2195,7 @@ function vPay(){const Y=B.P.pay,D=B.D.pay||{};if(D.err)return `<div class="panel
         <td>${(it.roles||[]).map(k=>`<span class="pill ${tot(k)?'info':'mute'}">${esc(rk(k))} ${tot(k)||''}</span>`).join(' ')||'<span class="faint">아래 표에서 역할을 묶어 주세요</span>'}</td>
         <td class="num"${C}>${cn}</td><td class="r num">${W(pa)}</td><td><button class="btn small ghost" type="button" data-bpidel="${it.id}">빼기</button></td></tr>`}).join('')}
     </tbody></table>
-    <p class="hint" style="margin:8px 0 4px"><b>역할 → 항목</b> · 교사 일정에 나온 역할을 어느 항목으로 셀지 골라요 (「마스터클래스」 일정은 교수 레슨비로 따로)</p>
+    <p class="hint" style="margin:8px 0 4px"><b>역할 → 항목</b> · 교사 일정에 나온 역할을 어느 항목으로 셀지 골라요 (「마스터클래스」 일정은 아래 「개인레슨 · 마스터클래스」로 따로)</p>
     <div class="row" style="flex-wrap:wrap;gap:6px">${roles.map(k=>{const it=itemOf(k);return `<label class="row" style="gap:4px;border:1px solid var(--line);border-radius:8px;padding:3px 6px"><span>${esc(rk(k))} <b class="num">${tot(k)}</b>${!Y.reh&&totR(k)?` <small class="faint">+리허설 ${totR(k)}</small>`:''}</span><select data-bprole="${esc(k)}"><option value="">지급 안 함</option>${Y.items.map(i=>`<option value="${i.id}" ${it&&it.id===i.id?'selected':''}>${esc(i.name)}</option>`).join('')}</select></label>`}).join('')||'<span class="hint">교사 일정에 사람이 들어간 칸이 아직 없어요.</span>'}</div></div>
   <div class="g2">
   <div class="panel"><b>정산 기준</b>
@@ -2205,7 +2205,7 @@ function vPay(){const Y=B.P.pay,D=B.D.pay||{};if(D.err)return `<div class="panel
       <label class="row" style="gap:6px">세금 없는 금액 ${nIn('data-bpy="free"',Y.free,96)} 원 이하 <span class="hint">넘으면 소득 구분대로</span></label>
       <p class="hint" style="margin:0">소득 구분 기본 = 사업소득 3.3%. 회원관리 「내 정보」에서 <b>본인이 교수라고 체크한 분만</b> 기타소득 8.8%로 시작해요.</p>
     </div></div>
-  <div class="panel tbl"><b>교수 레슨비</b> <span class="hint">개인레슨 1회 ${nIn('data-bpy="lesRate"',Y.lesRate,86)} · 마스터클래스 1명당 ${nIn('data-bpy="mcRate"',Y.mcRate,86,'0')} <label class="row" style="gap:4px;display:inline-flex"><input type="checkbox" data-bpy="mcFee" ${Y.mcFee?'checked':''}> 교수진 마스터클래스 금액 그대로</label></span>
+  <div class="panel tbl"><b>개인레슨 · 마스터클래스</b> <span class="hint">개인레슨 1회 ${nIn('data-bpy="lesRate"',Y.lesRate,86)} · 마스터클래스 1명당 ${nIn('data-bpy="mcRate"',Y.mcRate,86,'0')} <label class="row" style="gap:4px;display:inline-flex"><input type="checkbox" data-bpy="mcFee" ${Y.mcFee?'checked':''}> 교수진 마스터클래스 금액 그대로</label></span>
     <table class="pft" style="margin-top:8px"><thead><tr><th${Lf}>교수</th><th${C}>개인레슨</th><th${C}>1회 단가</th><th${C}>마스터클래스</th><th${C}>1명당</th><th${C}>제외</th><th${C}>레슨비</th></tr></thead><tbody>
     ${P.map(r=>`<tr><td>${esc(r.n)}</td><td class="num"${C}>${r.ln}</td><td${C}>${nIn(`data-bpp="${esc(r.id)}|les"`,(Y.per[r.id]||{}).les,80,fmt(Y.lesRate))}</td><td class="num"${C}>${r.mn}</td><td${C}>${nIn(`data-bpp="${esc(r.id)}|mc"`,(Y.per[r.id]||{}).mc,80,fmt(Y.mcFee?r.fee:Y.mcRate))}</td><td${C}><input type="checkbox" data-bpp="${esc(r.id)}|noLes" ${r.noLes?'checked':''} title="해외 교수 등 레슨비를 따로 드리는 분"></td><td class="r num">${W(r.les)}</td></tr>`).join('')||'<tr><td colspan="7" class="hint">개인레슨 · 마스터클래스가 있는 교수가 없어요.</td></tr>'}
     </tbody></table></div></div>
@@ -2257,7 +2257,7 @@ function click(b,d){if(S.tab!=='bplan'&&S.tab!=='bset')return false;
   if(d.bpidel){const it=B.P.pay.items.find(x=>x.id===d.bpidel);const go=()=>{B.P.pay.items=B.P.pay.items.filter(x=>x.id!==d.bpidel);render()};if(it&&(it.roles||[]).length)ask('이 항목을 뺄까요?',`<b>${esc(it.name)}</b>에 묶인 역할은 「지급 안 함」이 돼요.`,go,'빼기');else go();return true}
   if(d.bpsend){if(dirty()){toast('먼저 「저장」을 눌러 주세요 · 저장한 정산을 보내요');return true}const {all}=payRows(),Y=B.P.pay,L=all.filter(r=>r.g>0).map(r=>({tid:r.tid||'',n:r.n,what:Y.what||(((S.D.camp||{}).base||{}).id||'캠프')+' 강사료',g:r.g,rate:r.rate,memo:memoOf(r)}));
     ask('회원관리로 보낼까요?',`${L.length}명 · 세전 ${L.reduce((t,x)=>t+x.g,0).toLocaleString('ko-KR')}원. 이 시트 「정산」 탭을 새로 써요 (전에 보낸 것은 지워져요).`,()=>call('paySend',[L],r=>{B.D.pay.sent=r.at;render();toast(`${r.n}명을 보냈어요 · 회원관리 통장 › 지급 › 「캠프 정산 불러오기」를 눌러 주세요`)},'보내고 있어요…'),'보내기');return true}
-  if(d.bpaytol){const [k,v]=d.bpaytol.split('|');let l=B.P.lines.find(x=>x.auto===k);if(!l&&k==='plesson'){l={id:nid('l'),cat:'prof',name:'교수 개인레슨 · 마스터클래스 (정산)',unit:0,qty:1,times:1,cur:'KRW',scale:'fixed',guar:'',auto:'plesson',conf:'',paid:'',date:'',how:'',memo:'결산 › 교사 활동비 · 교수 레슨비에서 넣음'};B.P.lines.push(l)}
+  if(d.bpaytol){const [k,v]=d.bpaytol.split('|');let l=B.P.lines.find(x=>x.auto===k);if(!l&&k==='plesson'){l={id:nid('l'),cat:'prof',name:'교수 개인레슨 · 마스터클래스 (정산)',unit:0,qty:1,times:1,cur:'KRW',scale:'fixed',guar:'',auto:'plesson',conf:'',paid:'',date:'',how:'',memo:'결산 › 활동비에서 넣음'};B.P.lines.push(l)}
     if(l){l.conf=+v;render();toast(`「${l.name}」 확정에 ${(+v).toLocaleString('ko-KR')}원을 넣었어요 · 저장을 눌러 주세요`)}return true}
   if(d.breload){const go=()=>{B.D=null;B.P=null;B.err='';render()};if(dirty())ask('새로 불러올까요?','저장하지 않은 변경은 사라져요.',go,'새로 불러오기');else go();return true}
   if(d.breset){B.P=cp(B.D.plan);render();return true}
@@ -3012,6 +3012,6 @@ document.addEventListener('input',e=>{const t=e.target;if(S.tab!=='meal'||!t.dat
   if(k==='kind'||k==='sd')render();else{const btn=document.getElementById('mlMake');if(btn){const B=mlBase(),on=mlRows().filter(x=>x.on),tot=on.reduce((s,x)=>s+(x.n==null?(S.mlf.base||B.n):+x.n||0),0);btn.textContent=`고른 ${on.length}줄 식권 만들기 · ${tot.toLocaleString()}장`}}});
 document.addEventListener('change',e=>{const t=e.target;if(S.tab!=='meal')return;if(t.dataset&&t.dataset.mlf&&t.tagName==='SELECT'){const [i,k]=t.dataset.mlf.split('|'),r=mlRows()[+i];if(r){const old=ML_K[r.kind];r.kind=t.value;if(r.label.endsWith(old))r.label=r.label.slice(0,-old.length)+ML_K[t.value];render()}}});
 </script>
-<div id="bldMark" hidden>빌드표시 20261104-211246 </div>
+<div id="bldMark" hidden>빌드표시 20261104-211324 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();</script>
 </body></html>

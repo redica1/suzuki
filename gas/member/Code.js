@@ -1,4 +1,4 @@
-/* build: 20261104-190138 */
+/* build: 20261104-211324 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -2103,12 +2103,12 @@ function bankPay(who, op, data) {
   } finally { lock.releaseLock(); }
 }
 /* ====== 캠프 정산 → 지급 결정 (11-03) ======
- * 캠프 접수 시트 「정산」 탭(캠프 관리자 › 결산 › 교사 활동비 · 교수 레슨비 › 「회원관리로 보내기」)을 읽어 그 캠프 프로젝트의 지급 결정으로 넣음.
+ * 캠프 접수 시트 「정산」 탭(캠프 관리자 › 결산 › 활동비 › 「회원관리로 보내기」)을 읽어 그 캠프 프로젝트의 지급 결정으로 넣음.
  * 같은 프로젝트에서 전에 불러온 줄(메모 「캠프 정산」, 아직 통장과 안 이어진 것)은 지우고 새로 넣음. 이미 통장과 이어진 사람 · 내용은 건드리지 않음 */
 function bankCampPay(who) {
   const id = settings_()['캠프 시트']; if (!id) fail('회원관리 설정 「캠프 시트」가 비어 있어요. 통장 › 캠프 입금 맞추기에서 먼저 연결해 주세요.');
   const c = bankCamp(who).camp, pid = c.proj; let ss; try { ss = SpreadsheetApp.openById(id); } catch (e) { fail('캠프 접수 시트를 열 수 없어요.'); }
-  const sh = ss.getSheetByName('정산'); if (!sh || sh.getLastRow() < 2) fail('캠프 시트에 「정산」 탭이 없어요. 캠프 관리자 › 결산 › 교사 활동비 · 교수 레슨비에서 「회원관리로 보내기」를 먼저 눌러 주세요.');
+  const sh = ss.getSheetByName('정산'); if (!sh || sh.getLastRow() < 2) fail('캠프 시트에 「정산」 탭이 없어요. 캠프 관리자 › 결산 › 활동비에서 「회원관리로 보내기」를 먼저 눌러 주세요.');
   const v = sh.getDataRange().getDisplayValues(), h = v.shift().map(String), ix = k => h.indexOf(k);
   const rows = v.filter(r => r[ix('이름')] && num_(r[ix('지급액')]) > 0).map(r => ({ '프로젝트ID': pid, '교사ID': r[ix('교사ID')] || '', '이름': r[ix('이름')], '내용': r[ix('내용')] || c.id + ' 캠프 강사료', '지급액': num_(r[ix('지급액')]), '세율': ['3.3', '8.8', '0'].indexOf(String(r[ix('세율')])) >= 0 ? String(r[ix('세율')]) : '3.3', '지급예정일': '', '메모': '캠프 정산 ' + (r[ix('메모')] || '') }));
   const P = bankSheet_('지급', BANK_PAY_HEAD), L = P.objs().filter(x => x['프로젝트ID'] === pid);

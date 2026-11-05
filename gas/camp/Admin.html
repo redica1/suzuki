@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261105-221523 -->
+<!-- build: 20261105-221745 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -3194,11 +3194,13 @@ function ebTch(){const E=S.EB,TB=E.tchBook,T=ebSet(),C=E.camp||{};
     const ko=x=>/^[가-힣]/.test(x[0]);rows.sort((x,y)=>(ko(x)?0:1)-(ko(y)?0:1)||x[0].localeCompare(y[0],ko(x)?'ko':'en'));
     (TB.r||[]).slice().sort((x,y)=>io(x[0])-io(y[0])).forEach(([i,n])=>rows.push(['연수교사'+(i?' '+i:''),n]))}
   else{const A={},ord=[];(E.teachers||[]).slice(1).forEach(r=>{if(!A[r[0]]){A[r[0]]=[];ord.push(r[0])}A[r[0]].push((r[1]?r[1]+' ':'')+r[2])});rows=ord.map(a=>[a,A[a].join(' / ')])}
+  return ebTchH(rows,`${C.name?C.name+' ':''}참가 교실 및 교사 명단`,`${T.en?T.en+' · ':''}Participating Suzuki Music Schools & Teachers`)}
+function ebTchH(rows,title,sub,cls){
   /* 왼쪽 · 오른쪽: 줄 수가 아니라 대략 높이(학원 칸 9자 · 이름 칸 20자 한 줄)로 반씩 */
   const h=r=>Math.max(1,Math.ceil(r[0].length/9),Math.ceil(r[1].length/20)),tot=rows.reduce((s,r)=>s+h(r),0);let acc=0,cut=rows.length;
   for(let k=0;k<rows.length;k++){acc+=h(rows[k]);if(acc>=tot/2){cut=acc-h(rows[k])/2>tot/2?k:k+1;break}}
   const tr=r=>`<tr><td class="a">${esc(r[0])}</td><td>${esc(r[1])}</td></tr>`;
-  return `<section class="bls tch"><h2>${esc(C.name?C.name+' ':'')}참가 교실 및 교사 명단</h2><p style="text-align:center;font-size:7.8pt;color:#555;margin-top:-1.5mm">${T.en?esc(T.en)+' · ':''}Participating Suzuki Music Schools &amp; Teachers</p>
+  return `<section class="bls tch${cls||''}"><h2>${esc(title)}</h2><p style="text-align:center;font-size:7.8pt;color:#555;margin-top:-1.5mm">${esc(sub)}</p>
     <div class="tcw"><table class="tt"><tbody>${rows.slice(0,cut).map(tr).join('')}</tbody></table><table class="tt"><tbody>${rows.slice(cut).map(tr).join('')}</tbody></table></div></section>`}
 /* 교수진 쪽 (11-05): 설정 › 교수진의 「책자」(협회 · 초청) · 묶음 · 순서 · 약력 → 작년 책자 모양(협회 쪽 머리 + 묶음별 「이름 | 약력」, 초청은 새 쪽) */
 const EB_FGO=['바이올린','비올라','첼로','지휘','플루트','피아노','유아'];
@@ -3233,7 +3235,7 @@ function ebItems(){const E=S.EB;if(!E)return [];const P={};(E.pages||[]).forEach
   (E.pages||[]).forEach(p=>{if(L.some(x=>x.k===p.k)||gone.has(p.k))return;const kd=kindOf(p.k);if(kd!=='text'&&!p.h)return;L.push({k:p.k,kind:kd,t:p.t||(kd==='text'?'글 쪽':p.k),ord:p.ord,on:p.on,h:p.h,src:p.src,auto:'',hash:'',saved:true,orphan:kd!=='text',at:p.at,by:p.by})});
   return L.sort((x,y)=>x.ord-y.ord||x.k.localeCompare(y.k))}
 const ebIsImg=x=>x.kind==='text'&&/class="bls imgp/.test(x.h||'');
-function ebState(x){if(ebIsImg(x))return ['txt','이미지 쪽'];if(x.kind==='text')return ['txt',/class="bls sht/.test(x.h||'')?'시트 글 쪽':'글 쪽'];if(x.orphan)return ['chg','원본 없음'];if(!x.h)return ['auto','자동'];if(x.src&&x.src!==x.hash)return ['chg','원본 바뀜'];return ['hand',/class="bls sht/.test(x.h||'')?'시트에서':'고쳐 씀']}
+function ebState(x){if(ebIsImg(x))return ['txt','이미지 쪽'];if(x.kind==='text')return ['txt',ebIsSht(x)?'시트 글 쪽':'글 쪽'];if(x.orphan)return ['chg','원본 없음'];if(!x.h)return ['auto','자동'];if(x.src&&x.src!==x.hash)return ['chg','원본 바뀜'];return ['hand',ebIsSht(x)?'시트에서':'고쳐 씀']}
 /* 재기용 숨은 칸은 미리보기와 같은 자리(관리자 화면 CSS가 같게 걸리도록)에 */
 function ebHost(){return document.querySelector('.ebprev')||document.getElementById('app')||document.body}
 /* 같은 날 시간표 (11-05): 여러 쪽으로 나뉘어도 시간대마다 줄 높이를 같게 — 쪽마다 표를 그려 보고 같은 줄의 가장 높은 값을 모든 쪽에 (머리 줄 포함) */
@@ -3373,7 +3375,73 @@ function ebFromSheet(tb,k){const cw=tb.cw||[],rh=tb.rh||[],C=tb.cells||[];if(!cw
       return `<tr style="height:${(rh[i]/EB_SK).toFixed(1)}px">${tds}</tr>`}).join('');
     return `<section class="bls sht${k==='cover'?' cov':''}"><div class="sxw" style="font-size:${pt(D.fs)};color:${sh3(D.fc)}${ff0?';font-family:'+ff0:''}"><table class="sx"><colgroup>${cw.map(w=>`<col style="width:${(w/sum*100).toFixed(2)}%">`).join('')}</colgroup><tbody>${trs}</tbody></table></div></section>`});
   return H.join('')}
-const ebIsSht=x=>/class="bls sht/.test(x.h||'');
+/* ---- 시트를 「사람이 읽는 표」로 (11-05): 시간표 = 시간 × 장소, 음악회 = 번호 | 곡 | 영어 곡명 | 연주자, 교사 명단 = 학원 | 명단, 교수진 = 구분 | 묶음 | 이름 | 약력.
+ * A1 칸(종류)으로 알아봄 → 「시트에서 적용」은 글만 읽어 책자 디자인으로 다시 그림. 그 밖의 쪽은 예전처럼 쪽 모양 격자. */
+const EB_DK={'시간표':'sched','음악회':'con','교사 명단':'tch','교수진':'fac'};
+function ebTpl(h){const t=document.createElement('template');t.innerHTML=String(h||'');return t.content}
+function ebTx(n){if(!n)return '';let o='';const blk=/^(DIV|P|LI|H1|H2|H3|H4|TR|SECTION|TABLE)$/;
+  const w=x=>x.childNodes.forEach(c=>{if(c.nodeType===3){o+=c.textContent.replace(/\s+/g,' ');return}if(c.nodeType!==1)return;if(c.tagName==='BR'){o+='\n';return}
+    if(c.classList&&c.classList.contains('sp')){if(!o.endsWith('\n'))o+='\n';o+='\n';return}
+    if(c.classList&&c.classList.contains('sc')&&c.previousElementSibling&&c.previousElementSibling.classList.contains('sc')){if(!o.endsWith('\n'))o+='\n';o+='\n'}
+    const b=blk.test(c.tagName);if(b&&o&&!o.endsWith('\n'))o+='\n';w(c);if(b&&!o.endsWith('\n'))o+='\n'});
+  w(n);return o.split('\n').map(x=>x.trim()).join('\n').replace(/\n{3,}/g,'\n\n').trim()}
+/* 행 목록 → 시트 격자 (bookSheetPut 모양) */
+function ebDModel(rows,cw){const cells=[],rh=[],B=[1,'solid','#999999'];rows.forEach((R,r)=>{let c=0,ln=1;(R||[]).forEach(x=>{if(x==null){c++;return}const v=String(x.v==null?'':x.v);ln=Math.max(ln,v.split('\n').length);
+    cells.push([r,c,1,x.cs||1,v,{b:x.b?1:0,fs:x.fs||10,ha:x.ha||'L',va:'T',bg:x.bg||'',fc:x.fc||'#000000',bd:x.nb?[]:[B,B,B,B],w:1},null]);c+=x.cs||1});rh.push(Math.max(22,ln*17+6))});
+  return {cw,rh,cells}}
+const ebDH=(kind,title,n)=>[[{v:kind,b:1,bg:'#1f5c63',fc:'#ffffff',nb:1},{v:title,b:1,fs:12,cs:Math.max(1,n-1),nb:1}],[{v:'',nb:1},{v:'↑ 첫 칸(종류)은 그대로 두세요 · 글만 고치고 관리자 행사 책자에서 「시트에서 적용」 → 책자 모양으로 다시 그려요',fc:'#888888',fs:9,cs:Math.max(1,n-1),nb:1}]];
+const ebHD=v=>({v,b:1,bg:'#e8eef0',ha:'C'});
+/* 쪽 HTML → 시트 표 (못 알아보면 null → 쪽 모양 격자) */
+function ebDataModel(html){const t=ebTpl(html);
+  if(t.querySelector('table.st')){const secs=[...t.querySelectorAll('section.bls')].filter(s=>s.querySelector('table.st'));const s0=secs[0];
+    const stt=ebTx(s0.querySelector('.stt')),stk=ebTx(s0.querySelector('.stk')).replace(/\s*·\s*\d+\s*\/\s*\d+\s*$/,''),note=ebTx(s0.querySelector('.stn'));const rooms=[],subs=[],body=[];
+    secs.forEach(sec=>{const tb=sec.querySelector('table.st'),hr=tb.tHead?[...tb.tHead.rows]:[];if(!hr.length)return;const h0=[...hr[0].cells].slice(1),h1=hr[1]?[...hr[1].cells].slice(1):[];
+      h0.forEach((c,i)=>{rooms.push(ebTx(c));subs.push(h1[i]?ebTx(h1[i]):'')});
+      [...(tb.tBodies[0]||{rows:[]}).rows].forEach((tr,ri)=>{const B=body[ri]||(body[ri]={time:ebTx(tr.cells[0]).replace(/\s*~\s*/,'~').replace(/\n/g,''),meal:tr.classList.contains('ml'),ml:'',cells:[]});
+        if(B.meal){B.ml=B.ml||ebTx(tr.cells[1]);return}[...tr.cells].slice(1).forEach(td=>B.cells.push({v:ebTx(td),cs:td.colSpan||1}))})});
+    const n=rooms.length+1,R=[...ebDH('시간표',stt,n),[{v:'날짜',b:1},{v:stk,cs:n-1}],[{v:'안내',b:1},{v:note,cs:n-1,fc:'#b4423a'}],[],[ebHD('시간'),...rooms.map(ebHD)],[ebHD(''),...subs.map(ebHD)]];
+    body.forEach(B=>R.push(B.meal?[{v:B.time,b:1,ha:'C'},{v:B.ml,cs:n-1,b:1,bg:'#f1f1f1',ha:'C'}]:[{v:B.time,b:1,ha:'C'},...B.cells.map(c=>({v:c.v,cs:c.cs,ha:'C'}))]));
+    return ebDModel(R,[80].concat(rooms.map(()=>150)))}
+  if(t.querySelector('.it')){const eh=t.querySelector('.eh');const R=[...ebDH('음악회',ebTx(eh&&eh.querySelector('.c2')),4),[{v:'머리',b:1},{v:ebTx(eh&&eh.querySelector('.c1')),cs:3}]];
+    (eh?[...eh.querySelectorAll('.c3')]:[]).forEach(c=>R.push([{v:'안내',b:1},{v:ebTx(c),cs:3}]));R.push([],[ebHD('번호'),ebHD('곡'),ebHD('영어 곡명'),ebHD('연주자 (줄마다)')]);
+    t.querySelectorAll('.it').forEach(it=>{const q=s=>ebTx(it.querySelector(s)),lines=[...it.querySelectorAll('.pp,.pp2')].map(ebTx).filter(Boolean);R.push([{v:q('.no').replace(/\.$/,''),ha:'C'},{v:q('.ko'),b:1},{v:q('.en')},{v:lines.join('\n')}])});
+    return ebDModel(R,[50,230,280,360])}
+  if(t.querySelector('table.tt')){const R=[...ebDH('교사 명단',ebTx(t.querySelector('h2')),2),[{v:'부제',b:1},{v:ebTx(t.querySelector('section.tch>p,section>p'))}],[],[ebHD('학원'),ebHD('명단')]];
+    t.querySelectorAll('table.tt tr').forEach(tr=>{if(tr.cells.length>=2)R.push([{v:ebTx(tr.cells[0]),b:1},{v:ebTx(tr.cells[1])}])});return ebDModel(R,[200,520])}
+  const fs=[...t.querySelectorAll('section.bls')].filter(s=>s.classList.contains('fac')||/교수진/.test(ebTx(s.querySelector('.eh .c2,h2'))));
+  if(fs.length&&fs.some(s=>s.querySelector('table.ot'))){const eh=fs[0].querySelector('.eh');const R=[...ebDH('교수진',ebTx(eh&&eh.querySelector('.c2'))||ebTx(fs[0].querySelector('h2')),4),[{v:'머리',b:1},{v:ebTx(eh&&eh.querySelector('.c1')),cs:3}]];
+    (eh?[...eh.querySelectorAll('.c3')]:[]).forEach(c=>R.push([{v:'안내',b:1},{v:ebTx(c),cs:3}]));R.push([],[ebHD('구분'),ebHD('묶음'),ebHD('이름'),ebHD('약력')]);
+    fs.forEach((sec,si)=>{const kind=si===0&&!/초청/.test(ebTx(sec.querySelector('h2')))?'협회':'초청';let g='';[...sec.querySelectorAll('.oh,table.ot tr')].forEach(n=>{if(n.classList&&n.classList.contains('oh')){g=ebTx(n);return}
+      if(n.cells&&n.cells.length>=2)R.push([{v:kind,ha:'C'},{v:g},{v:ebTx(n.cells[0]),b:1},{v:ebTx(n.cells[1])}])})});
+    return ebDModel(R,[60,160,150,520])}
+  return null}
+/* 시트 표 → 쪽 HTML */
+function ebIsData(tb){const a=(tb.cells||[]).find(x=>x[0]===0&&x[1]===0);return a&&EB_DK[String(a[4]).trim()]?EB_DK[String(a[4]).trim()]:''}
+function ebSchHeur(v){return String(v||'').split(/\n\s*\n/).map(b=>b.split('\n').map(x=>x.trim()).filter(Boolean)).filter(L=>L.length).map(L=>{let h=0;return `<div class="sc">${L.map((l,i)=>{
+    if(i===0&&/^\d{1,2}:\d{2}/.test(l))return `<div class="s1">${esc(l)}</div>`;if(!h){h=1;return `<div class="s2">${esc(l)}</div>`}
+    if(/^\(.*\)$/.test(l))return `<div class="s5">${esc(l)}</div>`;if(/^[가-힣]{2,4}(\s*[,·/]\s*[가-힣]{2,4})*$/.test(l))return `<div class="s4">${esc(l)}</div>`;
+    if(/^[\x20-\x7E’‘“”–—]+$/.test(l)&&i===L.length-1)return `<div class="s6">${esc(l)}</div>`;return `<div class="s3">${esc(l)}</div>`}).join('')}</div>`}).join('')}
+function ebFromData(tb,k){const kind=ebIsData(tb),C=tb.cells||[],A={},cov={};C.forEach(x=>{A[x[0]+','+x[1]]=x;for(let i=x[0];i<x[0]+x[2];i++)for(let j=x[1];j<x[1]+x[3];j++)if(i!==x[0]||j!==x[1])cov[i+','+j]=1});
+  const V=(r,c)=>String((A[r+','+c]||[])[4]||'').trim(),nR=(tb.rh||[]).length,T=ebSet();
+  const meta=lab=>{const o=[];for(let r=0;r<nR;r++)if(V(r,0)===lab)o.push(String((A[r+','+1]||[])[4]||''));return o},hdr=lab=>{for(let r=0;r<nR;r++)if(V(r,0)===lab)return r;return -1};
+  if(kind==='sched'){const hr=hdr('시간');if(hr<0)return '';const nc=(tb.cw||[]).length;const rooms=[],subs=[];for(let c=1;c<nc;c++){if(!A[hr+','+c]&&!cov[hr+','+c])continue;rooms.push(V(hr,c));subs.push(V(hr+1,c))}
+    const n=rooms.length,body=[];for(let r=hr+2;r<nR;r++){const tm=V(r,0),anc=[];for(let c=1;c<=n;c++){const a=A[r+','+c];if(a)anc.push({c,cs:Math.min(a[3],n+1-c),v:String(a[4]||''),bg:(a[5]||{}).bg||''})}
+      if(!tm&&!anc.some(a=>a.v.trim()))continue;const meal=anc.length===1&&anc[0].c===1&&anc[0].cs>=n&&/^#f[0-9a-f]f[0-9a-f]f[0-9a-f]$|^#e/i.test(anc[0].bg);body.push({tm,meal,anc})}
+    const per=Math.max(1,Math.min(10,+T.per||5)),ch=[];for(let i=1;i<=n;i+=per)ch.push([i,Math.min(n+1,i+per)]);const stt=meta('시간표')[0]||'',stk=meta('날짜')[0]||'',note=meta('안내')[0]||'';
+    return ch.map(([a,b],ci)=>`<section class="bls sch shd"><div class="stt">${esc(stt)}</div><div class="stk">${esc(stk)}${ch.length>1?` · ${ci+1}/${ch.length}`:''}</div>${note&&ci===0?`<div class="stn">${esc(note).replace(/\n/g,'<br>')}</div>`:''}
+      <div class="stw" style="font-size:${+T.fs||6.6}pt"><table class="st"><thead><tr><th style="width:12mm">시간</th>${rooms.slice(a-1,b-1).map(x=>`<th>${esc(x).replace(/\n/g,'<br>')}</th>`).join('')}</tr>${subs.some(Boolean)?`<tr class="rsub"><th></th>${subs.slice(a-1,b-1).map(x=>`<th>${esc(x)}</th>`).join('')}</tr>`:''}</thead><tbody>
+      ${body.map(B=>{const th=`<th>${esc(B.tm).replace(/~/,'~<br>')}</th>`;if(B.meal)return `<tr class="ml">${th}<td colspan="${b-a}">${esc(B.anc[0].v).replace(/\n/g,'<br>')}</td></tr>`;
+        let h='';for(let c=a;c<b;){const x=B.anc.find(q=>q.c<=c&&q.c+q.cs>c);if(!x){h+='<td></td>';c++;continue}const e=Math.min(b,x.c+x.cs),cs=e-c;h+=`<td${cs>1?` colspan="${cs}" class="sm"`:''}>${ebSchHeur(x.v)}</td>`;c=e}
+        return `<tr>${th}${h}</tr>`}).join('')}</tbody></table></div></section>`).join('')}
+  if(kind==='con'){const hr=hdr('번호');if(hr<0)return '';const items=[];for(let r=hr+1;r<nR;r++){const no=V(r,0),ko=V(r,1),en=V(r,2),ln=String((A[r+','+3]||[])[4]||'').split('\n').map(x=>x.trim()).filter(Boolean);if(!no&&!ko&&!ln.length)continue;items.push({no:no||items.length+1,ko,en,lines:ln})}
+    const T2=ebSet(),b={name:meta('음악회')[0]||'',when:meta('안내'),items};const h=ebCon(b).replace(/<div class="c1">[^<]*<\/div>/,`<div class="c1">${esc(meta('머리')[0]||'')}</div>`);return h.replace('<section class="bls con">','<section class="bls con shd">')}
+  if(kind==='tch'){const hr=hdr('학원');if(hr<0)return '';const rows=[];for(let r=hr+1;r<nR;r++){const a=V(r,0),n=V(r,1);if(a||n)rows.push([a,n])}return ebTchH(rows,meta('교사 명단')[0]||'',meta('부제')[0]||'',' shd')}
+  if(kind==='fac'){const hr=hdr('구분');if(hr<0)return '';const rows=[];for(let r=hr+1;r<nR;r++){const q=[0,1,2,3].map(c=>V(r,c));if(q.some(Boolean))rows.push(q)}
+    const grp=L=>{let h='',g=null;L.forEach(q=>{if(q[1]!==g){if(g!==null)h+='</tbody></table>';g=q[1];h+=`<div class="oh">${esc(g)}</div><table class="ot"><tbody>`}h+=`<tr><th>${esc(q[2])}</th><td>${esc(q[3]).replace(/\n/g,', ')}</td></tr>`});return h+(g!==null?'</tbody></table>':'')};
+    const A1=rows.filter(q=>q[0]!=='초청'),B1=rows.filter(q=>q[0]==='초청');
+    return `<section class="bls txt fac shd"><div class="eh"><div class="c1">${esc(meta('머리')[0]||'')}</div><div class="c2">${esc(meta('교수진')[0]||'')}</div>${meta('안내').map(x=>`<div class="c3">${esc(x)}</div>`).join('')}</div>${grp(A1)}</section>`+(B1.length?`<section class="bls txt fac shd"><h2>- 초청 교수진 - <small style="font-size:.7em;font-weight:600">Guest Faculty</small></h2>${grp(B1)}</section>`:'')}
+  return ''}
+const ebIsSht=x=>/class="bls[^"]*\bsh[td]\b/.test(x.h||'');
 /* 보내기: mode = 'new'(시트에 없는 쪽만) · 'all'(모두 덮어씀) · 쪽 키 하나 */
 function ebExport(mode){if(S.ebEd){toast('고쳐 쓰는 쪽을 먼저 저장하거나 그만두세요');return}
   const Lall=ebItems(),m=ebSet().tabs||{},pad=i=>('0'+i).slice(-2);
@@ -3381,7 +3449,7 @@ function ebExport(mode){if(S.ebEd){toast('고쳐 쓰는 쪽을 먼저 저장하�
   if(!L.length){toast(mode==='new'?'시트에 없는 쪽이 없어요 · 모두 보냈어요':'보낼 쪽이 없어요');return}
   S.ebBusy='시트로 보낼 쪽 모양을 재고 있어요…';render();
   (document.fonts&&document.fonts.ready?document.fonts.ready:Promise.resolve()).then(()=>{
-    const tabs=[];L.forEach(x=>{const M=ebModel(ebClean(ebPg(x),true),x.k==='cover');if(M)tabs.push(Object.assign({k:x.k,name:pad(x.no)+' '+x.t},M))});
+    const tabs=[];L.forEach(x=>{const M=ebDataModel(ebPg(x))||ebModel(ebClean(ebPg(x),true),x.k==='cover');if(M)tabs.push(Object.assign({k:x.k,name:pad(x.no)+' '+x.t},M))});
     S.ebBusy=null;const B=[];for(let i=0;i<tabs.length;i+=6)B.push(tabs.slice(i,i+6));let done=0,url='';
     const next=()=>{if(!B.length){render();toast(`${done}쪽을 시트로 보냈어요`);if(url)S.ebUrl=url;render();return}const b=B.shift();
       call('bookSheetPut',[b],r=>{const E=S.EB;E.rev=r.rev;E.pages=r.pages;E.set=r.set;url=r.url;done+=b.length;next()},`시트로 보내고 있어요… (${done+1}–${done+b.length} / ${tabs.length}쪽)`)};
@@ -3393,7 +3461,7 @@ function ebApply(only){if(S.ebEd){toast('고쳐 쓰는 쪽을 먼저 저장하�
     let L=ebItems();const chg={},skip=[];let prevK=null,nNew=0;
     const gone=new Set(T.gone||[]);
     r.tabs.forEach(tb=>{let k=rev[String(tb.gid)];if(k&&gone.has(k))return;if(only&&k!==only){if(k)prevK=k;return}
-      const h=ebFromSheet(tb,k||'');if(h.length>47000){skip.push(tb.title);return}   /* 우리가 만든 HTML(글자는 esc) — 다듬기를 거치면 색이 rgb()로 길어져서 그대로 저장 */
+      const h=ebIsData(tb)?ebFromData(tb,k||''):ebFromSheet(tb,k||'');if(h.length>47000){skip.push(tb.title);return}   /* 우리가 만든 HTML(글자는 esc) — 다듬기를 거치면 색이 rgb()로 길어져서 그대로 저장 */
       if(!k){k='text:s'+tb.gid;map[k]=tb.gid;const t=String(tb.title).replace(/^\d+\s+/,'').slice(0,80)||'시트 쪽',nx={k,kind:'text',t,ord:0,on:true,h:'',hash:''};
         const at=prevK?L.findIndex(y=>y.k===prevK)+1:L.length;L.splice(at,0,nx);nNew++}
       const x=L.find(y=>y.k===k);prevK=k;if(x.h!==h)chg[k]={h,src:x.kind==='text'?'':x.hash}});
@@ -3846,6 +3914,6 @@ document.addEventListener('click',e=>{if(S.tab!=='book')return;const b=e.target.
   if(b.id==='ebSetSave'){const n=Object.assign(ebSet(),S.ebSetW||{});n.per=Math.max(1,Math.min(10,Math.round(+n.per||5)));n.fs=Math.max(5,Math.min(10,+n.fs||6.6));['en','sub','org'].forEach(k=>n[k]=String(n[k]||'').trim().slice(0,120));
     ebSend([],[],n,()=>{S.ebSetW=null;toast('책자 설정을 저장했어요')});return}},true);
 </script>
-<div id="bldMark" hidden>빌드표시 20261105-221523 </div>
+<div id="bldMark" hidden>빌드표시 20261105-221745 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();</script>
 </body></html>

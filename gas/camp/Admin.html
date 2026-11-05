@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261105-230515 -->
+<!-- build: 20261105-230651 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -3104,7 +3104,8 @@ document.addEventListener('change',e=>{const t=e.target;if(S.tab!=='meal')return
 .ebi{display:flex;flex-direction:column;align-items:center;gap:10px;width:100%}
 .ebi.off{opacity:.38}
 .ebbar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;justify-content:center;font-size:14px;color:#26333a;max-width:100%}
-.ebbar b{font-size:15px}.ebbar .epg2{color:#66757d;font-size:12px}
+.ebbar b{font-size:15px}
+.ebbar:not(.ed){flex-wrap:nowrap;overflow-x:auto;justify-content:flex-start;max-width:100%;padding-bottom:2px;scrollbar-width:thin}.ebbar:not(.ed)>*{flex:none}.ebbar:not(.ed) b{max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ebbar:not(.ed) .btn.small{padding:3px 9px;font-size:12.5px;white-space:nowrap}.ebbar .epg2{color:#66757d;font-size:12px}
 .ebbar.ed{position:sticky;top:calc(var(--hdrH,0px) + 6px);z-index:25;background:#fff;border:1px solid #c9d3d7;border-radius:10px;padding:6px 8px;box-shadow:0 3px 10px rgba(0,0,0,.12)}
 .ebbar .tb{all:unset;cursor:pointer;border:1px solid #c9d3d7;border-radius:6px;padding:2px 8px;font-size:13px;background:#f7f9fa;color:#1d2b31}.ebbar .tb:hover{background:#e9eef0}
 .ebwarn{background:#fdecea;color:#9b2c22;border-radius:8px;padding:6px 10px;font-size:13px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
@@ -3795,15 +3796,15 @@ function vEbk(){const E=S.EB;if(!E){if(!S.EBL)setTimeout(ebLoad,0);return '<div 
   const prev=L.map(x=>{const hh=ebHtml(x),[c,l]=ebState(x),isEd=S.ebEd===x.k,chg=c==='chg'&&x.kind!=='text';
     const tools=isEd?ebToolbar(x)
       :`<div class="ebbar"><b>${esc(x.t)}</b><span class="ebchip ${c}">${l}</span><span class="epg2" data-ebpg2="${esc(x.k)}"></span>${x.h&&x.at?`<span class="epg2">· ${esc(String(x.at).slice(5,16))} ${esc(x.by||'')}</span>`:''}
-        ${ed&&!ebIsImg(x)?`<button class="btn small" type="button" data-ebedit="${esc(x.k)}">${x.h||x.kind==='text'?'계속 고치기':'고쳐 쓰기'}</button>`:''}
+        ${ed&&!ebIsImg(x)?`<button class="btn small" type="button" data-ebedit="${esc(x.k)}">${x.h||x.kind==='text'?'고치기':'고쳐 쓰기'}</button>`:''}
         ${ed&&ebIsImg(x)?`<button class="btn small" type="button" data-ebimgre="${esc(x.k)}">그림 바꾸기</button><button class="btn small" type="button" data-ebimgfull="${esc(x.k)}">${/imgp full/.test(x.h)?'여백 안에 넣기':'여백 없이 가득'}</button>`:''}
-        ${!ebIsImg(x)&&ebTabOf(x.k)!=null?`<a class="btn small" target="_blank" rel="noopener" href="${esc(ebSheetUrl(ebTabOf(x.k)))}">시트 탭 열기</a>${ed?`<button class="btn small" type="button" data-ebapply1="${esc(x.k)}">이 쪽 시트에서 적용</button>`:''}`:''}
-        ${ed&&!ebIsImg(x)?`<button class="btn small" type="button" data-ebexp1="${esc(x.k)}" title="${ebTabOf(x.k)!=null?'시트 탭을 지금 책자 쪽으로 덮어써요':'이 쪽을 시트 탭으로 만들어요'}">${ebTabOf(x.k)!=null?'시트로 다시 보내기':'이 쪽 시트로 보내기'}</button>`:''}
-        ${ed&&!ebIsImg(x)?`<button class="btn small ${ebFitOn(x.k)?'primary':''}" type="button" data-ebfit="${esc(x.k)}" title="A5 한 장을 넘으면 여백 → 행간 → 글자 크기(80%까지) 순서로 줄여 한 쪽에 넣어요">${ebFitOn(x.k)?esc(ebFitLab(x.k))+' ✕':'한 쪽에 맞추기'}</button>`:''}
-        ${ed&&x.kind!=='text'&&!x.orphan?`<button class="btn small" type="button" data-ebtog="${esc(x.k)}">${x.on?'책자에서 빼기':'책자에 넣기'}</button>`:''}
-        ${ed&&x.h&&x.kind!=='text'&&!x.orphan?`<button class="btn small" type="button" data-ebreset="${esc(x.k)}">원본으로 되돌리기</button>`:''}
-        ${ed&&x.kind==='text'?`<button class="btn small" type="button" data-ebname="${esc(x.k)}">이름 바꾸기</button>`:''}
-        ${ed?`<button class="btn small" type="button" data-ebdel="${esc(x.k)}" title="${x.kind==='text'||x.orphan?'이 쪽을 지워요':'자동 쪽은 목록에서 지워요 · 위 「지운 쪽」에서 되살릴 수 있어요'}">쪽 지우기</button>`:''}</div>`;
+        ${!ebIsImg(x)&&ebTabOf(x.k)!=null?`<a class="btn small" target="_blank" rel="noopener" href="${esc(ebSheetUrl(ebTabOf(x.k)))}" title="이 쪽의 구글 시트 탭 열기">시트 탭</a>${ed?`<button class="btn small" type="button" data-ebapply1="${esc(x.k)}" title="이 쪽만 시트에서 적용">시트 적용</button>`:''}`:''}
+        ${ed&&!ebIsImg(x)?`<button class="btn small" type="button" data-ebexp1="${esc(x.k)}" title="${ebTabOf(x.k)!=null?'시트 탭을 지금 책자 쪽으로 덮어써요':'이 쪽을 시트 탭으로 만들어요'}">${ebTabOf(x.k)!=null?'시트로 보내기':'시트로'}</button>`:''}
+        ${ed&&!ebIsImg(x)?`<button class="btn small ${ebFitOn(x.k)?'primary':''}" type="button" data-ebfit="${esc(x.k)}" title="A5 한 장을 넘으면 여백 → 행간 → 글자 크기(80%까지) 순서로 줄여 한 쪽에 넣어요">${ebFitOn(x.k)?esc(ebFitLab(x.k))+' ✕':'한 쪽 맞춤'}</button>`:''}
+        ${ed&&x.kind!=='text'&&!x.orphan?`<button class="btn small" type="button" data-ebtog="${esc(x.k)}" title="${x.on?'책자에서 빼기 (목록 체크와 같음)':'책자에 넣기'}">${x.on?'빼기':'넣기'}</button>`:''}
+        ${ed&&x.h&&x.kind!=='text'&&!x.orphan?`<button class="btn small" type="button" data-ebreset="${esc(x.k)}" title="고쳐 쓴 내용을 지우고 데이터로 다시 만들기">원본으로</button>`:''}
+        ${ed&&x.kind==='text'?`<button class="btn small" type="button" data-ebname="${esc(x.k)}">이름</button>`:''}
+        ${ed?`<button class="btn small" type="button" data-ebdel="${esc(x.k)}" title="${x.kind==='text'||x.orphan?'이 쪽을 지워요':'자동 쪽은 목록에서 지워요 · 위 「지운 쪽」에서 되살릴 수 있어요'}">지우기</button>`:''}</div>`;
     const warn=chg&&!isEd?`<div class="ebwarn">${!x.orphan?ebSrcBtn(x.kind):''}${x.orphan?'원본(공연 · 날짜)이 없어졌어요. 고친 내용만 남아 있어요.':`원본 데이터가 바뀌었어요(고쳐 쓴 뒤로).`}
         ${!x.orphan?`<button class="btn small" type="button" data-ebpeek="${esc(x.k)}">${S.ebPeek===x.k?'고친 쪽 보기':'바뀐 원본 보기'}</button>${ed?`<button class="btn small" type="button" data-ebreset="${esc(x.k)}">원본으로 바꾸기</button><button class="btn small" type="button" data-ebkeep="${esc(x.k)}">고친 대로 두기</button>`:''}`:''}</div>`:'';
     return `<div class="ebi ${x.on?'':'off'}" id="eb_${esc(x.k.replace(':','_'))}">${tools}${warn}<div class="ebc" data-ebk="${esc(x.k)}" style="--ebz:${z}" ${isEd?'contenteditable="true" spellcheck="false"':''}>${hh}</div></div>`}).join('');
@@ -4111,6 +4112,6 @@ document.addEventListener('click',e=>{if(S.tab!=='book')return;const b=e.target.
   if(b.id==='ebSetSave'){const n=Object.assign(ebSet(),S.ebSetW||{});n.per=Math.max(1,Math.min(10,Math.round(+n.per||5)));n.fs=Math.max(5,Math.min(10,+n.fs||6.6));['en','sub','org'].forEach(k=>n[k]=String(n[k]||'').trim().slice(0,120));
     ebSend([],[],n,()=>{S.ebSetW=null;toast('책자 설정을 저장했어요')});return}},true);
 </script>
-<div id="bldMark" hidden>빌드표시 20261105-230515 </div>
+<div id="bldMark" hidden>빌드표시 20261105-230651 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();</script>
 </body></html>

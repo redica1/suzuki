@@ -1,4 +1,4 @@
-/* build: 20261105-210857 */
+/* build: 20261105-211040 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -1587,6 +1587,60 @@ function bookRgb_(h) { const m = /^#?([0-9a-f]{6})$/i.exec(String(h || '')); if 
 function bookHex_(c) { if (!c) return ''; const v = x => ('0' + Math.round((+x || 0) * 255).toString(16)).slice(-2); return '#' + v(c.red) + v(c.green) + v(c.blue); }
 function bookTf_(s) { const o = { bold: !!s.b, italic: !!s.i, underline: !!s.u }; if (s.ff) o.fontFamily = String(s.ff).slice(0, 40); if (+s.fs) o.fontSize = Math.max(1, Math.min(200, Math.round(+s.fs))); const c = bookRgb_(s.fc); if (c) o.foregroundColor = c; return o; }
 function bookBd_(x) { if (!Array.isArray(x)) return null; const st = x[1] === 'dotted' ? 'DOTTED' : x[1] === 'dashed' ? 'DASHED' : x[1] === 'double' ? 'DOUBLE' : +x[0] >= 3 ? 'SOLID_THICK' : +x[0] >= 2 ? 'SOLID_MEDIUM' : 'SOLID'; return { style: st, color: bookRgb_(x[2]) || { red: 0, green: 0, blue: 0 } }; }
+/* REST 를 못 쓰는 프로젝트(Sheets API 꺼짐)용 대체: 같은 요청을 SpreadsheetApp 으로 (느리지만 같은 결과) */
+function bookWriteSA_(ss, req) {
+  const byG = {}; ss.getSheets().forEach(s => byG[s.getSheetId()] = s);
+  const SB = SpreadsheetApp.BorderStyle, bst = s => ({ DOTTED: SB.DOTTED, DASHED: SB.DASHED, DOUBLE: SB.DOUBLE, SOLID_THICK: SB.SOLID_THICK, SOLID_MEDIUM: SB.SOLID_MEDIUM })[s] || SB.SOLID;
+  req.forEach(R => { const k = Object.keys(R)[0], v = R[k], sh = byG[(v.range || v.start || v.properties || {}).sheetId]; if (!sh) return;
+    if (k === 'unmergeCells') sh.getRange(1, 1, sh.getMaxRows(), sh.getMaxColumns()).breakApart();
+    else if (k === 'updateCells' && v.range) { sh.clear(); }
+    else if (k === 'updateSheetProperties') { const g = v.properties.gridProperties; if (g) { sh.setFrozenRows(0); sh.setFrozenColumns(0);
+        const mr = sh.getMaxRows(), mc = sh.getMaxColumns(); if (g.rowCount > mr) sh.insertRowsAfter(mr, g.rowCount - mr); else if (g.rowCount < mr) sh.deleteRows(g.rowCount + 1, mr - g.rowCount);
+        if (g.columnCount > mc) sh.insertColumnsAfter(mc, g.columnCount - mc); else if (g.columnCount < mc) sh.deleteColumns(g.columnCount + 1, mc - g.columnCount); }
+      if (v.properties.index != null) { ss.setActiveSheet(sh); ss.moveActiveSheet(v.properties.index + 1); } }
+    else if (k === 'updateDimensionProperties') { const r = v.range; if (r.dimension === 'COLUMNS') sh.setColumnWidth(r.startIndex + 1, v.properties.pixelSize); else sh.setRowHeight(r.startIndex + 1, v.properties.pixelSize); }
+    else if (k === 'mergeCells') { const r = v.range; sh.getRange(r.startRowIndex + 1, r.startColumnIndex + 1, r.endRowIndex - r.startRowIndex, r.endColumnIndex - r.startColumnIndex).merge(); }
+    else if (k === 'updateCells') {
+      const rows = v.rows || [], nr = rows.length, nc = Math.max(1, ...rows.map(r => (r.values || []).length)); if (!nr) return;
+      const rg = sh.getRange(1, 1, nr, nc), A = f => rows.map(r => Array.from({ length: nc }, (_, j) => f((r.values || [])[j] || {})));
+      const hex = c => c ? bookHex_(c) : null, tf = c => ((c.userEnteredFormat || {}).textFormat) || {};
+      rg.setNumberFormat('@');
+      rg.setRichTextValues(A(c => { const t = (c.userEnteredValue || {}).stringValue || '', b = SpreadsheetApp.newRichTextValue().setText(t);
+        (c.textFormatRuns || []).forEach((q, i, L) => { const e = i + 1 < L.length ? L[i + 1].startIndex : t.length; if (e <= q.startIndex) return; const f = q.format || {}, s = SpreadsheetApp.newTextStyle().setBold(!!f.bold).setItalic(!!f.italic).setUnderline(!!f.underline);
+          if (f.fontSize) s.setFontSize(f.fontSize); if (f.fontFamily) s.setFontFamily(f.fontFamily); if (f.foregroundColor) s.setForegroundColor(hex(f.foregroundColor)); b.setTextStyle(q.startIndex, e, s.build()); });
+        return b.build(); }));
+      rg.setBackgrounds(A(c => hex((c.userEnteredFormat || {}).backgroundColor)));
+      rg.setFontWeights(A(c => tf(c).bold ? 'bold' : 'normal')); rg.setFontStyles(A(c => tf(c).italic ? 'italic' : 'normal')); rg.setFontLines(A(c => tf(c).underline ? 'underline' : 'none'));
+      rg.setFontSizes(A(c => tf(c).fontSize || 10)); rg.setFontFamilies(A(c => tf(c).fontFamily || 'Noto Sans KR')); rg.setFontColors(A(c => hex(tf(c).foregroundColor) || '#000000'));
+      rg.setHorizontalAlignments(A(c => String((c.userEnteredFormat || {}).horizontalAlignment || 'LEFT').toLowerCase())); rg.setVerticalAlignments(A(c => String((c.userEnteredFormat || {}).verticalAlignment || 'MIDDLE').toLowerCase()));
+      rg.setWrapStrategies(A(c => (c.userEnteredFormat || {}).wrapStrategy === 'OVERFLOW_CELL' ? SpreadsheetApp.WrapStrategy.OVERFLOW : SpreadsheetApp.WrapStrategy.WRAP));
+      rows.forEach((r, i) => (r.values || []).forEach((c, j) => { const B = (c.userEnteredFormat || {}).borders; if (!B) return; const cell = sh.getRange(i + 1, j + 1);
+        [['top', [true, null, null, null]], ['left', [null, true, null, null]], ['bottom', [null, null, true, null]], ['right', [null, null, null, true]]].forEach(([s, f]) => { if (B[s]) cell.setBorder(f[0], f[1], f[2], f[3], null, null, hex(B[s].color) || '#000000', bst(B[s].style)); }); }));
+    }
+  });
+}
+/** 읽기 대체: REST 응답과 같은 모양으로 (선은 칸마다 읽어서 느림 · 2000칸까지) */
+function bookReadSA_(ss) {
+  let budget = 2000, canB = true;
+  const col = h => { const m = /^#?([0-9a-f]{6})/i.exec(String(h || '')); return m ? bookRgb_(m[1]) : null; };
+  const bst = b => { if (!b) return null; let st = ''; try { st = String(b.getBorderStyle()); } catch (e) { return null; } if (!st || /NONE/.test(st)) return null; let c = '#000000'; try { c = b.getColor().asRgbColor().asHexString(); } catch (e) {}
+    return { style: /DOTTED/.test(st) ? 'DOTTED' : /DASHED/.test(st) ? 'DASHED' : /DOUBLE/.test(st) ? 'DOUBLE' : /THICK/.test(st) ? 'SOLID_THICK' : /MEDIUM/.test(st) ? 'SOLID_MEDIUM' : 'SOLID', color: col(c) }; };
+  return { sheets: ss.getSheets().map(sh => {
+    const lr = Math.min(Math.max(sh.getLastRow(), 1), 400), lc = Math.min(Math.max(sh.getLastColumn(), 1), 60), rg = sh.getRange(1, 1, lr, lc);
+    const RT = rg.getRichTextValues(), DV = rg.getDisplayValues(), BG = rg.getBackgrounds(), HA = rg.getHorizontalAlignments(), VA = rg.getVerticalAlignments(), WR = rg.getWrapStrategies();
+    const FF = rg.getFontFamilies(), FS = rg.getFontSizes(), FC = rg.getFontColors(), FW = rg.getFontWeights(), FT = rg.getFontStyles(), FL = rg.getFontLines();
+    const rowData = DV.map((row, i) => ({ values: row.map((v, j) => {
+      const ef = { backgroundColor: col(BG[i][j]) || { red: 1, green: 1, blue: 1 }, horizontalAlignment: /center/i.test(HA[i][j]) ? 'CENTER' : /right/i.test(HA[i][j]) ? 'RIGHT' : 'LEFT', verticalAlignment: /top/i.test(VA[i][j]) ? 'TOP' : /middle/i.test(VA[i][j]) ? 'MIDDLE' : 'BOTTOM',
+        wrapStrategy: String(WR[i][j]) === 'WRAP' ? 'WRAP' : 'OVERFLOW_CELL', textFormat: { fontFamily: FF[i][j], fontSize: FS[i][j], bold: FW[i][j] === 'bold', italic: FT[i][j] === 'italic', underline: FL[i][j] === 'underline', foregroundColor: col(FC[i][j]) } };
+      if (canB && budget > 0) { budget--; try { const b = sh.getRange(i + 1, j + 1).getBorder(); if (b) ef.borders = { top: bst(b.getTop()), right: bst(b.getRight()), bottom: bst(b.getBottom()), left: bst(b.getLeft()) }; } catch (e) { canB = false; } }
+      const o = { formattedValue: v, effectiveFormat: ef }, rt = RT[i][j];
+      if (rt && v) { try { const runs = rt.getRuns(); if (runs.length > 1) o.textFormatRuns = runs.map(q => { const s = q.getTextStyle(); return { startIndex: q.getStartIndex(), format: { bold: s.isBold(), italic: s.isItalic(), underline: s.isUnderline(), fontSize: s.getFontSize(), fontFamily: s.getFontFamily(), foregroundColor: col(s.getForegroundColor()) } }; }); } catch (e) {} }
+      return o; }) }));
+    const merges = rg.getMergedRanges().map(m => ({ startRowIndex: m.getRow() - 1, endRowIndex: m.getRow() - 1 + m.getNumRows(), startColumnIndex: m.getColumn() - 1, endColumnIndex: m.getColumn() - 1 + m.getNumColumns() }));
+    const cm = [], rm = []; for (let j = 0; j < lc; j++) cm.push({ pixelSize: sh.getColumnWidth(j + 1) }); for (let i = 0; i < lr; i++) rm.push({ pixelSize: sh.getRowHeight(i + 1) });
+    return { properties: { sheetId: sh.getSheetId(), title: sh.getName(), index: sh.getIndex() - 1, hidden: sh.isSheetHidden() }, merges, data: [{ rowData, rowMetadata: rm, columnMetadata: cm }] };
+  }) };
+}
 /** 쪽 탭으로 보내기: tabs = [{k, name, cw:[px], rh:[px], cells:[[r,c,rs,cs,v,f,runs]]}] (한 번에 12탭까지 — 클라이언트가 나눠 부름) */
 function bookSheetPut(token, tabs) {
   const a = adm_(token); bookPerm_(a, true);
@@ -1642,10 +1696,10 @@ function bookSheetPut(token, tabs) {
       });
       req.push({ updateCells: { start: { sheetId: g, rowIndex: 0, columnIndex: 0 }, rows: G.map(row => ({ values: row })), fields: 'userEnteredValue,userEnteredFormat,textFormatRuns' } });
     });
-    if (req.length) bookApi_(id, ':batchUpdate', { requests: req });
+    let rest = true; if (req.length) { try { bookApi_(id, ':batchUpdate', { requests: req }); } catch (e) { rest = false; bookWriteSA_(ss, req); } }
     // 탭 순서 = 이름 앞 번호 순 (_읽어 주세요 는 맨 앞)
     const ord = sheets().map(s => ({ g: s.getSheetId(), n: s.getName() })).sort((x, y) => (x.n[0] === '_' ? 0 : 1) - (y.n[0] === '_' ? 0 : 1) || x.n.localeCompare(y.n, 'ko', { numeric: true }));
-    bookApi_(id, ':batchUpdate', { requests: ord.map((s, i) => ({ updateSheetProperties: { properties: { sheetId: s.g, index: i }, fields: 'index' } })) });
+    const oq = ord.map((s, i) => ({ updateSheetProperties: { properties: { sheetId: s.g, index: i }, fields: 'index' } })); if (rest) { try { bookApi_(id, ':batchUpdate', { requests: oq }); } catch (e) { bookWriteSA_(ss, oq); } } else bookWriteSA_(ss, oq);
     const live = new Set(sheets().map(s => String(s.getSheetId()))); Object.keys(map).forEach(k => { if (!live.has(String(map[k]))) delete map[k]; });
     bookSetPatch_(a, S => { S.sheet = id; S.tabs = map; });
     log_(a.name, '책자 → 시트', T.map(t => t.name || t.k).join(', ').slice(0, 300));
@@ -1658,7 +1712,9 @@ function bookSheetGet(token) {
   const P = bookPages_(), id = String(P.set.sheet || '');
   if (!id) throw new Error('아직 책자 시트가 없어요 · 「스프레드로 가져가기」를 먼저 해 주세요.');
   const fl = 'sheets(properties(sheetId,title,index,hidden),merges,data(rowMetadata(pixelSize),columnMetadata(pixelSize),rowData(values(formattedValue,effectiveFormat(backgroundColor,borders,horizontalAlignment,verticalAlignment,wrapStrategy,textFormat),textFormatRuns))))';
-  let J; try { J = bookApi_(id, '?includeGridData=true&fields=' + encodeURIComponent(fl)); } catch (x) { throw new Error('책자 시트를 읽지 못했어요 · 파일이 지워졌거나 권한이 없어요. ' + x.message); }
+  let J; try { J = bookApi_(id, '?includeGridData=true&fields=' + encodeURIComponent(fl)); } catch (x) {
+    let ss; try { ss = SpreadsheetApp.openById(id); } catch (y) { throw new Error('책자 시트를 읽지 못했어요 · 파일이 지워졌거나 권한이 없어요.'); }
+    J = bookReadSA_(ss); }
   const col = c => c ? bookHex_(c.rgbColor || c) : '';
   const tf = (t, base) => { t = t || {}; const o = Object.assign({}, base || {});
     if (t.bold != null) o.b = t.bold ? 1 : 0; if (t.italic != null) o.i = t.italic ? 1 : 0; if (t.underline != null) o.u = t.underline ? 1 : 0;

@@ -1,4 +1,4 @@
-/* build: 20261105-222217 */
+/* build: 20261105-222747 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -1449,8 +1449,22 @@ function progBuild_(opt) {
     const who = (wait.length ? wait : reh).flatMap(e => e.ppl.filter(p => wait.length || (!isPart_(p.r) && !/지휘/.test(p.r))).map(p => nameOf(p.n)));
     return { k, tgt, wait: wait.map(e => ({ d: e.d, s: e.s })), reh: reh.map(e => ({ d: e.d, s: e.s, e: e.e, room: e.room })), who: [...new Set(who)] };
   }).filter(x => x.reh.length || x.wait.length);
+  // 책자 오케스트라 명단 · 보조교사(11-05): 공연 종류마다 세부(어느 음악회) · 본공연 · 리허설(장소) · 역할별 이름 (역할 순서 = 오케 파트 순서 → 설정 → 나머지)
+  const orchBook = Object.keys(G).filter(k => /^orch/i.test(k) || G[k].some(e => e.ppl.some(p => isPart_(p.r)))).map(k => {
+    const L = G[k].slice().sort((x, y) => x.d * 1440 + mm(x.s) - (y.d * 1440 + mm(y.s))), main = L.filter(e => !e.stage || e.stage === '본공연'), reh = L.filter(e => e.stage === '리허설');
+    const order = ORCH_PARTS.slice(); ((c.roleSets || {})['공연'] || []).forEach(r => { if (!order.includes(r)) order.push(r); }); L.forEach(e => e.ppl.forEach(p => { if (!order.includes(p.r)) order.push(p.r); }));
+    const by = main.concat(L.filter(e => !main.includes(e))), roles = order.map(r => { const N = []; by.forEach(e => e.ppl.forEach(p => { if (p.r === r) { const n = nameOf(p.n); if (!N.includes(n)) N.push(n); } })); return [r, N]; }).filter(x => x[1].length);
+    const anyT = L.find(e => e.tg && Object.keys(e.tg).length);
+    return { k, sub: ((main[0] || L[0]) || {}).sub || '', tgt: anyT ? progCellS_(anyT, c, nameOf, anyT.s, anyT.e).h.filter(h => h !== k && !/^Orch/i.test(h)).join(' · ') : '', main: main.map(e => ({ d: e.d, s: e.s, e: e.e, room: e.room })), reh: reh.map(e => ({ d: e.d, s: e.s, e: e.e, room: e.room })), roles };
+  });
+  // 책자 「오프닝 리허설 대기시간」(11-05): 이름에 「오프닝 · Opening」이 든 일정 — 그룹 = 같은 본공연(가져온 일정ID) 또는 일정 하나. 대기 · 리허설 단계 시각, 대상 권, 곡(세부 · 설명), 리더(첫 역할)
+  const OG = {}; evs.filter(e => /오프닝|opening/i.test(e.title)).forEach(e => { const k = e.main || e.id; (OG[k] = OG[k] || []).push(e); });
+  const openReh = Object.keys(OG).map(k => { const L = OG[k], reh = L.filter(e => e.stage === '리허설'), wait = L.filter(e => e.stage === '대기'), base = reh[0] || L.find(e => !e.stage || e.stage === '본공연') || L[0];
+    const o = progCellS_(base, c, nameOf, base.s, base.e), bk = o.h.filter(h => !/오프닝|opening/i.test(h)).join(' · '), song = o.b.filter(b => !/오프닝|opening/i.test(b)).join(' · ');
+    return { d: base.d, wait: wait.map(e => e.s).sort()[0] || '', reh: reh.map(e => e.s).sort()[0] || (base.stage === '리허설' ? base.s : ''), bk, song, lead: o.l };
+  }).filter(x => x.reh || x.wait).sort((x, y) => x.d - y.d || (x.reh || x.wait).localeCompare(y.reh || y.wait));
   const HT = opt && opt.all ? new Set() : pvHide_(c).t;   // 책자(11-05)는 탭 숨기기와 상관없이 모두 받음
-  return { title: C.base.name, days: out, teachers: HT.has('t') ? null : teachers, orch: HT.has('o') ? null : orch, orchReh, concerts: HT.has('c') ? [] : progConcerts_(c, C, evs, nameOf, dayDate), hide: c.pvHide || { f: [], r: [], t: [] }, roleSets: Object.assign({}, ACT_ROLESETS, c.roleSets || {}), used: [...new Set(evs.flatMap(e => e.ppl.map(p => e.cat + ':' + p.r)))] };
+  return { title: C.base.name, days: out, teachers: HT.has('t') ? null : teachers, orch: HT.has('o') ? null : orch, orchReh, openReh, orchBook, concerts: HT.has('c') ? [] : progConcerts_(c, C, evs, nameOf, dayDate), hide: c.pvHide || { f: [], r: [], t: [] }, roleSets: Object.assign({}, ACT_ROLESETS, c.roleSets || {}), used: [...new Set(evs.flatMap(e => e.ppl.map(p => e.cat + ':' + p.r)))] };
 }
 /** 음악회 프로그램 (오후음악회 · 이브닝 …): 「오후음악회」 탭의 연주 순서 그대로 · 같은 곡이 이어지면 한 번호로 묶고 학원별로 이름을 모음
  *  곡 이름: 목록 곡 「V01-14 미뉴에트 2번 (바흐)」 → 「바흐 미뉴에트 2번」, 직접 입력은 작곡가 + 곡명 · 영어 곡명은 설정 songEn(관리자가 미리보기에서 입력) */
@@ -1539,7 +1553,32 @@ function bookData(token) {
   return Object.assign({ ok: true, edit: a.sup || a.perms.book === '편집',
     camp: { id: C.base.id, name: C.base.name, start: C.base.start, end: C.base.end, place: C.base.place },
     days: P.days.map((D, i) => ({ i, label: D.label, date: ymd(i), V: D.V, W: D.W, meals: D.meals, S: D.S })),
-    concerts: (P.concerts || []).map(x => x.book), teachers: P.teachers || [], orch: P.orch || [], tchBook: bookTch_(), orchReh: P.orchReh || [], fac: profs_().map(p => ({ n: p.name, i: p.inst, b: p.book, g: p.bgrp, en: p.en, ti: p.title, bio: p.bio, o: p.bord })) }, bookPages_());
+    concerts: (P.concerts || []).map(x => x.book), teachers: P.teachers || [], orch: P.orch || [], tchBook: bookTch_(), orchReh: P.orchReh || [], openReh: P.openReh || [], orchBook: P.orchBook || [], mc: (() => { try { const c = actCfg_(), A = mcApps_(), PR = profs_(); return { s: ((c.mcOrder || {}).s || []), pf: PR.filter(p => p.mc).map(p => ({ n: p.name, i: p.inst, en: p.en })), napp: Object.keys(A).reduce((o, k) => (o[k] = A[k].length, o), {}) }; } catch (x) { return { s: [], pf: [], napp: {} }; } })(), fac: profs_().map(p => ({ n: p.name, i: p.inst, b: p.book, g: p.bgrp, en: p.en, ti: p.title, bio: p.bio, o: p.bord })) }, bookPages_());
+}
+/* ---------------- 마스터클래스 순서 (11-05) ----------------
+ * 교수별 세션(날짜 · 시작 · 장소 · 1인 시간) + 줄(신청자 · 곡 / 휴식 / 안내). 신청자 = 접수에서 그 교수 마스터클래스를 고른 사람(취소 빼고).
+ * 교사 일정 설정 시트(ACTCFG)의 「mcOrder」 칸에 JSON. 시각은 화면 · 책자가 시작 + 1인 시간으로 셈. */
+function mcApps_() {
+  const A = {}; loadSubs_().forEach(sb => (sb.ppl || []).forEach(p => { if (p.status === '취소') return; const k = String(p.id).slice(String(sb.no).length + 1), i = ((sb.form || {}).info || {})[k] || {};
+    (i.mc || []).forEach(n => { (A[n] = A[n] || []).push({ pid: p.id, n: p.name, a: sb.acad, ins: p.inst || i.inst || '', by: i.by || '' }); }); }));
+  return A;
+}
+function mcData(token) {
+  const a = adm_(token); if (!a.sup && !['mcs', 'book'].some(k => ['보기', '편집'].includes(a.perms[k]))) throw new Error('마스터클래스 권한이 있어야 볼 수 있어요.');
+  const c = actCfg_(), C = camp_();
+  return { ok: true, edit: a.sup || a.perms.mcs === '편집', profs: profs_().filter(p => p.mc).map(p => ({ n: p.name, i: p.inst, min: p.min || 0, room: p.room || '', en: p.en || '', on: p.on })),
+    apps: mcApps_(), order: c.mcOrder || { s: [] }, days: c.days || [], start: C.base.start || '' };
+}
+function mcSave(token, order) {
+  const a = adm_(token); need_(a, 'mcs');
+  const t = (x, n) => String(x == null ? '' : x).trim().slice(0, n);
+  const S2 = (order && Array.isArray(order.s) ? order.s : []).slice(0, 60).map(x => ({ id: t(x.id, 20) || ('m' + Date.now().toString(36)), prof: t(x.prof, 40), d: Math.max(0, Math.min(30, +x.d || 0)), s: /^\d{2}:\d{2}$/.test(String(x.s)) ? String(x.s) : '13:00', room: t(x.room, 60), min: Math.max(5, Math.min(180, +x.min || 30)), title: t(x.title, 80),
+    rows: (Array.isArray(x.rows) ? x.rows : []).slice(0, 40).map(r => ({ t: ['p', 'b', 'n'].includes(r.t) ? r.t : 'p', pid: t(r.pid, 40), n: t(r.n, 40), song: t(r.song, 160), min: r.min ? Math.max(0, Math.min(180, +r.min || 0)) : 0, text: t(r.text, 160) })) }));
+  const v = JSON.stringify({ s: S2 }); if (v.length > 45000) throw new Error('마스터클래스 순서가 너무 길어요.');
+  const lock = lock_();
+  try { const sh = actSheets_(); const r = rows_(SH.ACTCFG).find(x => String(x['항목']) === 'mcOrder'); if (r) sh.cfg.getRange(r._row, 2).setValues([[v]]); else sh.cfg.appendRow(['mcOrder', v]); log_(a.name, '마스터클래스 순서 저장', S2.length + '세션'); }
+  finally { lock.releaseLock(); }
+  return mcData(token);
 }
 /** 책자 「참가 교실 · 교사 명단」 재료 (11-05): 교사는 학원 · 악기별, 연수생(연수생 · 소속없는 중급연수생)은 따로 악기별 → 「연수교사 Vn」 줄 */
 function bookTch_() {
@@ -1552,7 +1591,7 @@ function bookTch_() {
 /** 책자 저장: rows = 바뀐 쪽만 [{k, ord, on, t, h, src}], del = 지울 키(글 쪽 · 원본 없는 쪽), set = 설정(있을 때만) · rev 가 다르면 막음 */
 function bookSave(token, rev, rows, del, set) {
   const a = adm_(token); bookPerm_(a, true);
-  const okKey = k => /^(cover|orch|oreh|tch|fac|sched:\d{1,2}|con:[\w-]{1,40}|text:[\w-]{1,40})$/.test(k);
+  const okKey = k => /^(cover|orch|oreh|open|tch|fac|mcp|oasst|sched:\d{1,2}|con:[\w-]{1,40}|text:[\w-]{1,40})$/.test(k);
   const L = (Array.isArray(rows) ? rows : []).slice(0, 200).map(r => {
     const k = String(r && r.k || ''); if (!okKey(k)) throw new Error('쪽 이름이 맞지 않아요: ' + k);
     const h = r.h == null ? null : String(r.h); if (h && h.length > 48000) throw new Error((r.t || k) + ': 내용이 너무 길어요. 두 쪽으로 나눠 주세요.');
@@ -1692,7 +1731,7 @@ function bookReadSA_(ss) {
 /** 쪽 탭으로 보내기: tabs = [{k, name, cw:[px], rh:[px], cells:[[r,c,rs,cs,v,f,runs]]}] (한 번에 12탭까지 — 클라이언트가 나눠 부름) */
 function bookSheetPut(token, tabs) {
   const a = adm_(token); bookPerm_(a, true);
-  const okKey = k => /^(cover|orch|oreh|tch|fac|sched:\d{1,2}|con:[\w-]{1,40}|text:[\w-]{1,40})$/.test(k);
+  const okKey = k => /^(cover|orch|oreh|open|tch|fac|mcp|oasst|sched:\d{1,2}|con:[\w-]{1,40}|text:[\w-]{1,40})$/.test(k);
   const T = (Array.isArray(tabs) ? tabs : []).slice(0, 12);
   const lock = lock_(); let ss = null; const out = {};
   try {
@@ -1864,7 +1903,7 @@ function exportProgram(token) {
  * 담당자 = 교사 회원 중에서 골라 메뉴마다 편집 / 보기 / 없음 → 관리자 화면에 이름 + 휴대전화로 로그인 */
 const STAFF = '담당자';
 const STAFF_HEAD = ['교사ID', '이름', '학원', '권한', '사용', '메모', '바꾼 날'];
-const ADMIN_TABS = [['home', '한눈에'], ['subs', '접수 · 입금 확인'], ['rp', '입금 신고'], ['cx', '취소 · 환불'], ['ens', '앙상블'], ['aud', '음원 심사'], ['prof', '교수진'], ['act', '교사 일정'], ['tt', '개인레슨'], ['room', '방 배정'], ['con', '오후음악회'], ['meal', '식권'], ['book', '행사 책자'], ['stat', '통계'], ['q', '게시판'], ['ntc', '공지사항'], ['schol', '장학금'], ['mem', '회원 명단'], ['bplan', '예산 계획'], ['bset', '결산']];
+const ADMIN_TABS = [['home', '한눈에'], ['subs', '접수 · 입금 확인'], ['rp', '입금 신고'], ['cx', '취소 · 환불'], ['ens', '앙상블'], ['aud', '음원 심사'], ['prof', '교수진'], ['act', '교사 일정'], ['tt', '개인레슨'], ['room', '방 배정'], ['con', '오후음악회'], ['mcs', '마스터클래스'], ['meal', '식권'], ['book', '행사 책자'], ['stat', '통계'], ['q', '게시판'], ['ntc', '공지사항'], ['schol', '장학금'], ['mem', '회원 명단'], ['bplan', '예산 계획'], ['bset', '결산']];
 function staff_() {
   return rows_(STAFF).filter(r => r['교사ID']).map(r => { let p = {}; try { p = JSON.parse(String(r['권한'] || '{}')); } catch (x) {}
     return { tid: String(r['교사ID']), name: String(r['이름']), acad: String(r['학원'] || ''), perms: p, on: String(r['사용'] || '예') !== '아니오', memo: String(r['메모'] || '') }; });

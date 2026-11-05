@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261105-222217 -->
+<!-- build: 20261105-222747 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -69,6 +69,7 @@ input[type=date]{width:140px}
 .ccg input,.ccg select,.cct input{padding:6px 8px;border:1px solid var(--line);border-radius:6px;font:inherit;background:var(--surface);color:var(--ink);min-width:0}.cct input[type=date]{min-width:140px}.cct td{vertical-align:middle}
 .sft td:first-child{white-space:nowrap}.sft select.pv{min-width:58px;padding:4px 5px}.sft .row .btn{white-space:nowrap}.cct th.r{text-align:left}.sft select.pv.e{background:var(--accent-soft);color:var(--accent);font-weight:600}.sft select.pv.v{background:var(--sunk)}.sft th.c{font-size:14px;white-space:nowrap}
 @media (max-width:640px){.ccg .w2{grid-column:auto}}
+.mcp .mcs{border-top:1px solid var(--line);margin-top:10px;padding-top:8px}.mcp .mcs label{display:flex;flex-direction:column;gap:3px;font-size:13px;color:var(--muted)}.mct tr.br td,.mct tr.nt td{background:var(--sunk)}
 .pfpro td{background:var(--sunk)}.pfg{display:grid;grid-template-columns:repeat(4,minmax(150px,1fr));gap:8px 12px;padding:6px 2px}.pfg label{display:flex;flex-direction:column;gap:3px;font-size:13px;color:var(--muted)}.pfg .wide{grid-column:1 / -1}.pfg textarea{font:inherit;font-size:14px;padding:6px 8px;border:1px solid var(--line);border-radius:6px;resize:vertical;width:100%;box-sizing:border-box}
 .pft input[type=text],.pft select{width:100%;min-width:70px;padding:5px 7px;border:1px solid var(--line);border-radius:6px;font:inherit;background:var(--surface);color:var(--ink)}.pft select{min-width:96px}.pft td.c{text-align:center}.pft tr.off td{opacity:.5}.pft td{padding:4px 6px;vertical-align:middle}
 table.sortable th[data-sc]{cursor:pointer;user-select:none;white-space:nowrap}table.sortable th[data-sc]:hover{text-decoration:underline}table.sortable tr.foot td{border-top:2px solid var(--line,#ccc)}.sarr{font-size:12px}
@@ -331,10 +332,10 @@ function payPill(p){if(p.status==='정상'&&!pAmt(p)&&!(+p.paidAmt>0))return '<s
 
 /* ---------- 화면 ---------- */
 /* GNB: 1단(묶음) › 2단(메뉴). 권한은 2단 메뉴마다 · 아래 메뉴가 다 「없음」이면 묶음도 숨김 */
-const GROUPS=[['dash','대시보드',['home']],['ops','운영관리',['subs','rp','cx','schol','q','ntc','meal']],['sch','스케줄관리',['act','tt','ens','con','aud']],['room','방배정',['room']],['print','인쇄물',['book']],['stat','통계',['stat']],['fin','예산 · 결산',['bplan','bset']],['cfg','설정',['doc','camp','mem','cons','prof','staff']]];
-const SUBL={aud:'음원 심사',doc:'공문',mem:'회원 명단',home:'대시보드',subs:'접수 · 입금 확인',rp:'입금 신고',cx:'취소 · 환불',q:'게시판',act:'교사 일정',tt:'개인레슨',ens:'앙상블',con:'오후음악회',meal:'식권',book:'행사 책자',ntc:'공지사항',room:'방배정',stat:'통계',schol:'장학금',cons:'동의서',camp:'캠프 설정',prof:'교수진',staff:'담당자',bplan:'예산 계획',bset:'결산'};
+const GROUPS=[['dash','대시보드',['home']],['ops','운영관리',['subs','rp','cx','schol','q','ntc','meal']],['sch','스케줄관리',['act','tt','ens','con','mcs','aud']],['room','방배정',['room']],['print','인쇄물',['book']],['stat','통계',['stat']],['fin','예산 · 결산',['bplan','bset']],['cfg','설정',['doc','camp','mem','cons','prof','staff']]];
+const SUBL={aud:'음원 심사',doc:'공문',mem:'회원 명단',home:'대시보드',subs:'접수 · 입금 확인',rp:'입금 신고',cx:'취소 · 환불',q:'게시판',act:'교사 일정',tt:'개인레슨',ens:'앙상블',con:'오후음악회',mcs:'마스터클래스',meal:'식권',book:'행사 책자',ntc:'공지사항',room:'방배정',stat:'통계',schol:'장학금',cons:'동의서',camp:'캠프 설정',prof:'교수진',staff:'담당자',bplan:'예산 계획',bset:'결산'};
 const groupOf=t=>(GROUPS.find(g=>g[2].includes(t))||GROUPS[0]);
-const TABS=[['home','한눈에'],['subs','접수 · 입금 확인'],['rp','입금 신고'],['cx','취소 · 환불'],['ens','앙상블'],['aud','음원 심사'],['prof','교수진'],['act','교사 일정'],['tt','개인레슨'],['room','방 배정'],['con','오후음악회'],['meal','식권'],['book','행사 책자'],['stat','통계'],['q','게시판'],['ntc','공지사항'],['schol','장학금'],['mem','회원 명단'],['bplan','예산 계획'],['bset','결산']];
+const TABS=[['home','한눈에'],['subs','접수 · 입금 확인'],['rp','입금 신고'],['cx','취소 · 환불'],['ens','앙상블'],['aud','음원 심사'],['prof','교수진'],['act','교사 일정'],['tt','개인레슨'],['room','방 배정'],['con','오후음악회'],['mcs','마스터클래스'],['meal','식권'],['book','행사 책자'],['stat','통계'],['q','게시판'],['ntc','공지사항'],['schol','장학금'],['mem','회원 명단'],['bplan','예산 계획'],['bset','결산']];
 function render(){
   const app=document.getElementById('app'),tabs=document.getElementById('tabs');
   if(!S.D){tabs.innerHTML='';document.getElementById('tabs2').innerHTML='';app.innerHTML=vLogin();return}
@@ -350,7 +351,7 @@ function render(){
   /* 지금 묶음에 2단이 없으면 빈칸으로 → 줄이 안 보임 */
   document.getElementById('tabs2').classList.toggle('none',!document.querySelector('#tabs2 .grp:not([hidden])'));hdrH();
   const ro=RO();app.classList.toggle('ro',ro);
-  app.innerHTML=(ro?`<div class="robar">보기만 할 수 있는 메뉴예요 · 바꿔도 저장되지 않아요 (총관리자에게 「편집」 권한을 받으면 저장돼요)</div>`:'')+{home:vHome,subs:vSubs,rp:vRp,cx:vCx,ens:vEns,prof:vProf,act:()=>ACT.view(),tt:()=>LES.view(),room:()=>ROOM.view(),con:vCon,meal:()=>vMeal(),book:()=>vEbk(),stat:vStat,q:vQ,ntc:vNtc,camp:vCamp,doc:vDoc,aud:vAud,staff:vStaff,cons:vCons,schol:vSchol,mem:vMem,bplan:()=>BUD.view('plan'),bset:()=>BUD.view('set')}[S.tab]();
+  app.innerHTML=(ro?`<div class="robar">보기만 할 수 있는 메뉴예요 · 바꿔도 저장되지 않아요 (총관리자에게 「편집」 권한을 받으면 저장돼요)</div>`:'')+{home:vHome,subs:vSubs,rp:vRp,cx:vCx,ens:vEns,prof:vProf,act:()=>ACT.view(),tt:()=>LES.view(),room:()=>ROOM.view(),con:vCon,mcs:()=>vMcs(),meal:()=>vMeal(),book:()=>vEbk(),stat:vStat,q:vQ,ntc:vNtc,camp:vCamp,doc:vDoc,aud:vAud,staff:vStaff,cons:vCons,schol:vSchol,mem:vMem,bplan:()=>BUD.view('plan'),bset:()=>BUD.view('set')}[S.tab]();
   if(S.tab==='stat'||S.tab==='home')reSort();
 }
 /* 통계 표 정렬: 같은 보기·같은 표면 다시 그려도 유지 */
@@ -1566,6 +1567,49 @@ document.addEventListener('change',ev=>{if(S.tab!=='con'||(S.consv||'list')!=='o
 return {view,flush};
 })();
 
+/* ---------- 마스터클래스 순서 (11-05) ----------
+ * 교수별 세션(날짜 · 시작 · 장소 · 1인 시간) — 줄: 신청자 · 곡명 / 휴식 / 안내. 시각은 시작부터 1인 시간씩 자동. 책자 「마스터클래스」 쪽이 이걸 그대로 씀. */
+const MC_INS={바이올린:'Violin',첼로:'Cello',플루트:'Flute',비올라:'Viola',피아노:'Piano'};
+const mcHm=m=>('0'+Math.floor(m/60)).slice(-2)+':'+('0'+(m%60)).slice(-2),mcMm=t=>{const m=String(t||'').match(/^(\d{1,2}):(\d{2})/);return m?+m[1]*60+ +m[2]:0};
+function mcTimes(x){let c=mcMm(x.s);return (x.rows||[]).map(r=>{if(r.t==='n')return '';const m=r.min||(r.t==='b'?15:x.min||30),a=c;c+=m;return mcHm(a)+'~'+mcHm(c)})}
+function mcEnd(x){let c=mcMm(x.s);(x.rows||[]).forEach(r=>{if(r.t!=='n')c+=r.min||(r.t==='b'?15:x.min||30)});return mcHm(c)}
+function mcLoad(){S.MCL=1;call('mcData',[],r=>{S.MC=r;S.mcx=JSON.parse(JSON.stringify(r.order||{s:[]}));S.MCL=0;render()},'마스터클래스를 불러오고 있어요…')}
+const mcDirty=()=>S.MC&&JSON.stringify(S.mcx)!==JSON.stringify(S.MC.order||{s:[]});
+function vMcs(){if(!S.MC){if(!S.MCL)setTimeout(mcLoad,0);return '<div class="panel hint">불러오고 있어요…</div>'}
+  const M=S.MC,X=S.mcx,ed=M.edit&&!RO(),dayOpt=d=>(M.days||[]).map((l,i)=>`<option value="${i}" ${+d===i?'selected':''}>${esc(l)}</option>`).join('');
+  const used=new Set();X.s.forEach(x=>x.rows.forEach(r=>{if(r.pid)used.add(x.prof+'|'+r.pid)}));
+  const cards=M.profs.map(p=>{const ap=(M.apps[p.n]||[]),left=ap.filter(a=>!used.has(p.n+'|'+a.pid)),SS=X.s.map((x,i)=>[x,i]).filter(([x])=>x.prof===p.n);
+    return `<div class="panel mcp"><div class="spread"><div><b>${esc(p.n)}</b> <span class="hint">${esc(p.i)} · 1인 ${p.min||30}분 · 신청 ${ap.length}명 · 순서에 ${ap.length-left.length}명${left.length?` · <b style="color:var(--bad)">남은 ${left.length}명</b>`:''}</span></div>${ed?`<button class="btn small" type="button" data-mcnew="${esc(p.n)}">＋ 세션</button>`:''}</div>
+      ${SS.map(([x,i])=>{const T=mcTimes(x);return `<div class="mcs"><div class="row" style="gap:8px;flex-wrap:wrap;align-items:flex-end">
+        <label>날짜<select data-mc="${i}|d" ${ed?'':'disabled'}>${dayOpt(x.d)}</select></label><label>시작<input type="text" data-mc="${i}|s" value="${esc(x.s)}" style="width:64px" ${ed?'':'disabled'}></label>
+        <label>장소<input type="text" data-mc="${i}|room" value="${esc(x.room)}" style="width:200px" ${ed?'':'disabled'}></label><label>1인(분)<input type="text" inputmode="numeric" data-mc="${i}|min" value="${x.min}" style="width:52px" ${ed?'':'disabled'}></label>
+        <label>책자 제목 <small class="faint">비우면 「${esc((p.en||p.n)+' '+(MC_INS[p.i]||p.i)+' Master Class')}」</small><input type="text" data-mc="${i}|title" value="${esc(x.title||'')}" style="width:260px" ${ed?'':'disabled'}></label>
+        <span class="hint">끝 ${mcEnd(x)}</span>${ed?`<button class="btn small ghost" type="button" data-mcdel="${i}">세션 지우기</button>`:''}</div>
+        <table class="pft mct"><thead><tr><th style="width:110px">시간</th><th>곡명</th><th style="width:200px">이름</th><th style="width:70px">분</th><th style="width:90px"></th></tr></thead><tbody>
+        ${x.rows.map((r,j)=>r.t==='n'?`<tr class="nt"><td colspan="4"><input type="text" data-mcr="${i}|${j}|text" value="${esc(r.text)}" placeholder="안내 줄 (예: * 나머지 인원은 방에서 개인레슨으로 진행됩니다)" ${ed?'':'disabled'}></td><td>${ed?mcRowBtns(i,j):''}</td></tr>`
+          :r.t==='b'?`<tr class="br"><td>${T[j]}</td><td colspan="2"><input type="text" data-mcr="${i}|${j}|text" value="${esc(r.text||'휴식 Break')}" ${ed?'':'disabled'}></td><td><input type="text" inputmode="numeric" data-mcr="${i}|${j}|min" value="${r.min||15}" style="width:48px" ${ed?'':'disabled'}></td><td>${ed?mcRowBtns(i,j):''}</td></tr>`
+          :`<tr><td>${T[j]}</td><td><input type="text" data-mcr="${i}|${j}|song" value="${esc(r.song)}" placeholder="곡명 (예: Mendelssohn Violin Concerto in e minor Op.64 - 3rd mov.)" ${ed?'':'disabled'}></td>
+            <td><select data-mcr="${i}|${j}|pid" ${ed?'':'disabled'}><option value="">${esc(r.pid?'':'(직접) '+(r.n||''))}</option>${ap.map(a=>`<option value="${esc(a.pid)}" ${a.pid===r.pid?'selected':''} ${used.has(p.n+'|'+a.pid)&&a.pid!==r.pid?'disabled':''}>${esc(a.n)} · ${esc(a.a)}</option>`).join('')}</select></td>
+            <td><input type="text" inputmode="numeric" data-mcr="${i}|${j}|min" value="${r.min||''}" placeholder="${x.min}" style="width:48px" ${ed?'':'disabled'}></td><td>${ed?mcRowBtns(i,j):''}</td></tr>`).join('')||'<tr><td colspan="5" class="hint">아래에서 신청자를 넣어 주세요.</td></tr>'}</tbody></table>
+        ${ed?`<div class="row" style="gap:6px;margin-top:6px">${left.length?`<button class="btn small primary" type="button" data-mcall="${i}">남은 신청자 ${left.length}명 모두 넣기</button>`:''}<button class="btn small" type="button" data-mcadd="${i}|p">＋ 줄</button><button class="btn small" type="button" data-mcadd="${i}|b">＋ 휴식</button><button class="btn small" type="button" data-mcadd="${i}|n">＋ 안내 줄</button></div>`:''}</div>`}).join('')||`<p class="hint" style="margin:6px 0 0">세션이 없어요.${ed?' 「＋ 세션」으로 날짜 · 시작 · 장소를 정하세요.':''}</p>`}
+      ${left.length?`<p class="hint" style="margin:6px 0 0">남은 신청자: ${left.map(a=>esc(a.n+'('+a.a+')')).join(', ')}</p>`:''}</div>`}).join('');
+  return `<div class="panel"><div class="spread"><div><b>마스터클래스 순서</b> <span class="hint">교수별 세션 · 신청자 줄 세우기 · 곡명 — 시각은 시작부터 1인 시간씩 자동 · 행사 책자 「마스터클래스」 쪽에 그대로 나가요 (설정 › 교수진에서 마스터클래스를 켠 교수)</span></div>
+    <div class="row" style="gap:6px">${mcDirty()?'<span class="pill due">저장 안 한 변경 있음</span><button class="btn small ghost" type="button" data-mcreset="1">되돌리기</button>':''}${ed?'<button class="btn small primary" type="button" data-mcsave="1">저장</button>':''}</div></div></div>
+    ${cards||'<div class="panel hint">마스터클래스 교수가 없어요 (설정 › 교수진에서 「마스터클래스」를 켜 주세요).</div>'}`}
+function mcRowBtns(i,j){return `<span class="emv"><button type="button" class="btn small ghost" data-mcmv="${i}|${j}|-1" aria-label="위로">↑</button><button type="button" class="btn small ghost" data-mcmv="${i}|${j}|1" aria-label="아래로">↓</button><button type="button" class="btn small ghost" data-mcrdel="${i}|${j}" aria-label="지우기">×</button></span>`}
+document.addEventListener('change',e=>{if(S.tab!=='mcs'||!S.mcx)return;const t=e.target,d=t.dataset;
+  if(d.mc){const [i,k]=d.mc.split('|'),x=S.mcx.s[+i];if(!x)return;let v=t.value.trim();if(k==='s'){v=v.replace(/^(\d):/,'0$1:');if(!/^\d{2}:\d{2}$/.test(v)){toast('시작은 13:30 처럼 넣어 주세요');t.value=x.s;return}}x[k]=k==='d'||k==='min'?(+v||0):v;render();return}
+  if(d.mcr){const [i,j,k]=d.mcr.split('|'),x=S.mcx.s[+i],r=x&&x.rows[+j];if(!r)return;const v=t.value;
+    if(k==='pid'){const a=(S.MC.apps[x.prof]||[]).find(q=>q.pid===v);r.pid=v;r.n=a?a.n:r.n}else r[k]=k==='min'?(+v||0):v;render()}});
+document.addEventListener('click',e=>{if(S.tab!=='mcs'||!S.mcx)return;const b=e.target.closest&&e.target.closest('button');if(!b)return;const d=b.dataset,X=S.mcx;
+  if(d.mcnew){const p=S.MC.profs.find(q=>q.n===d.mcnew)||{};X.s.push({id:'m'+Date.now().toString(36),prof:d.mcnew,d:0,s:'13:30',room:p.room||'',min:p.min||30,title:'',rows:[]});render();return}
+  if(d.mcdel){const x=X.s[+d.mcdel];if(x&&x.rows.length&&!confirm('이 세션을 지울까요?'))return;X.s.splice(+d.mcdel,1);render();return}
+  if(d.mcadd){const [i,t]=d.mcadd.split('|');X.s[+i].rows.push(t==='p'?{t:'p',pid:'',n:'',song:'',min:0}:t==='b'?{t:'b',text:'휴식 Break',min:15}:{t:'n',text:''});render();return}
+  if(d.mcall){const x=X.s[+d.mcall],used=new Set();X.s.forEach(y=>y.rows.forEach(r=>{if(r.pid)used.add(y.prof+'|'+r.pid)}));(S.MC.apps[x.prof]||[]).filter(a=>!used.has(x.prof+'|'+a.pid)).forEach(a=>x.rows.push({t:'p',pid:a.pid,n:a.n,song:'',min:0}));render();return}
+  if(d.mcmv){const [i,j,k]=d.mcmv.split('|').map(Number),R=X.s[i].rows,to=j+k;if(to<0||to>=R.length)return;const t=R[j];R[j]=R[to];R[to]=t;render();return}
+  if(d.mcrdel){const [i,j]=d.mcrdel.split('|').map(Number);X.s[i].rows.splice(j,1);render();return}
+  if(d.mcreset){S.mcx=JSON.parse(JSON.stringify(S.MC.order||{s:[]}));render();return}
+  if(d.mcsave){call('mcSave',[X],r=>{S.MC=r;S.mcx=JSON.parse(JSON.stringify(r.order||{s:[]}));if(S.EB)S.EB=null;render();toast('마스터클래스 순서를 저장했어요 · 행사 책자에도 바로 반영돼요')},'저장하고 있어요…');return}});
 /* ---------- 교수진 (캠프 교수 · 외부 초청 교수 포함) ---------- */
 const PF_INST=['바이올린','첼로','플루트','비올라','피아노','기타'];
 const pfCopy=()=>JSON.parse(JSON.stringify((S.D.profs||[]).map(p=>({name:p.name,inst:p.inst,lesson:!!p.lesson,mc:!!p.mc,min:p.min||'',fee:p.fee||'',org:p.org||'',on:p.on!==false,memo:p.memo||'',room:p.room||'',book:p.book||'',bgrp:p.bgrp||'',en:p.en||'',title:p.title||'',bio:p.bio||'',bord:p.bord||''}))));
@@ -1609,7 +1653,7 @@ const ME=()=>(S.D&&S.D.me)||{sup:true,perms:{}};
 const permOf=k=>{const m=ME();if(m.sup)return '편집';if(k==='camp'||k==='staff'||k==='cons'||k==='doc')return '';return (m.perms||{})[k]||''};
 const visTabs=()=>TABS.concat(SUP_TABS).filter(([k])=>permOf(k));
 const RO=()=>permOf(S.tab)==='보기';
-const WRITE_FN=/^(devAud|devAudClear|audSet|audPub|devSummer|adminNoticeSave|adminMenuSave|scholSave|adminConfirm|adminAdjust|adminSetBankAcct|ogSave|ogToken|adminRejectReport|adminSaveEns|adminSaveProfs|adminRefund|adminSetIssue|schedSave|lessonSet|adminSetSetting|roomSave|conSave|campSave|staffSave|songEnSave|pvHideSave|roomCfgSave|layoutImport|roomMove|budSave|mealIssue|mealDel|bookSave|bookImgPut|bookSheetPut|songEnSave)$/;
+const WRITE_FN=/^(devAud|devAudClear|audSet|audPub|devSummer|adminNoticeSave|adminMenuSave|scholSave|adminConfirm|adminAdjust|adminSetBankAcct|ogSave|ogToken|adminRejectReport|adminSaveEns|adminSaveProfs|adminRefund|adminSetIssue|schedSave|lessonSet|adminSetSetting|roomSave|conSave|campSave|staffSave|songEnSave|pvHideSave|roomCfgSave|layoutImport|roomMove|budSave|mealIssue|mealDel|bookSave|bookImgPut|bookSheetPut|songEnSave|mcSave)$/;
 const roBlock=fn=>WRITE_FN.test(fn)&&permOf(S.tab)!=='편집';
 const RO_MSG='보기만 할 수 있는 메뉴예요. 바꾸려면 총관리자에게 「편집」 권한을 받아 주세요.';
 
@@ -3103,6 +3147,14 @@ document.addEventListener('change',e=>{const t=e.target;if(S.tab!=='meal')return
 /* 오케스트라 · 교사 명단 */
 .bls .oh{font-weight:800;font-size:9.4pt;margin:3mm 0 1mm}.bls .or{font-size:7.8pt;color:#444;margin:0 0 1mm}
 .bls table.ot{width:100%;font-size:8pt !important}.bls table.ot th{width:16mm;background:#f1f4f5;text-align:center}
+.bls .oh2{font-size:10.5pt;font-weight:800;margin:3mm 0 1mm}.bls .oh2 u{text-underline-offset:2px}.bls .oh2 span{font-size:.85em}
+.bls .or2{display:flex;gap:3mm;align-items:baseline;font-size:7.8pt;margin:0 0 1mm}
+.bls table.ot2{width:100%;border-collapse:collapse;font-size:7.6pt !important;margin:0 0 2mm}.bls table.ot2 th,.bls table.ot2 td{border:.6px solid #444;padding:.5mm 1mm !important}.bls table.ot2 tbody th{text-align:left;font-weight:700}
+.bls .orc table.ot2:not(.oa) td{border-left:0;border-right:0}.bls table.oa th{text-align:center !important}.bls table.oa th.r{font-weight:700}
+.bls table.op td,.bls table.mcb td{text-align:center;font-weight:700}.bls table.op td.pc,.bls table.mcb td.pc{font-weight:700}.bls table.op th,.bls table.mcb th{text-align:center;background:none}
+.bls table.ot2 th.t1{font-size:10.5pt !important;font-weight:800}.bls table.ot2 th.t1 span{font-size:.8em}.bls table.ot2 th.t2{font-size:8.6pt !important;text-align:right}.bls table.mcb th.t2{text-align:center;font-size:9.5pt !important}.bls table.mcb th.t3{font-size:8.6pt !important}
+.bls table.mcb td.nt{font-size:9pt !important;padding:2mm !important}.bls table.mcb{margin-bottom:4mm}
+.bls table.tt3 thead th{background:none;border-top:1.4px solid #222;border-bottom:1px solid #222;font-weight:800;text-align:center}.bls table.tt3 td{border:0;border-left:.6px solid #444;padding:.2mm 1mm !important}.bls table.tt3 td:first-child{border-left:0}.bls table.tt3 td.a{text-align:right;font-weight:700}.bls table.tt3 td.i{text-align:center;font-weight:700;white-space:nowrap;width:auto !important}.bls table.tt3 td.a{width:auto !important}.bls table.tt3 tr.g td{border-top:.6px solid #999}.bls table.tt3{border-bottom:1.4px solid #222}
 .bls .tcw{display:grid;grid-template-columns:1fr 1fr;gap:3mm;align-items:start}
 .bls table.tt{width:100%;font-size:7.6pt !important;line-height:1.3}.bls table.tt td.a{width:24mm;font-weight:700}
 .bls.txt{font-size:8.8pt}
@@ -3152,7 +3204,7 @@ document.addEventListener('change',e=>{const t=e.target;if(S.tab!=='meal')return
  * 고쳐 쓰기: 미리보기 쪽을 바로 고침 → 그 HTML 을 고정 저장, 그때 원본 지문(src)을 같이 둠 → 원본이 바뀌면 빨간 「원본이 바뀌었어요」.
  * 글 쪽: 손으로 쓰는 쪽(주의사항 등). 한글 · 워드에서 붙여 넣으면 굵게 · 표 정도만 남김. */
 const EB_DEF={en:'',sub:'',org:'(사)한국스즈키음악협회',per:5,fs:6.6,num:true};
-const EB_KIND={oreh:'리허설',fac:'교수진',cover:'표지',sched:'시간표',con:'음악회',orch:'명단',tch:'명단',text:'글'};
+const EB_KIND={open:'리허설',mcp:'마스터클래스',oasst:'명단',oreh:'리허설',fac:'교수진',cover:'표지',sched:'시간표',con:'음악회',orch:'명단',tch:'명단',text:'글'};
 function ebSet(){return Object.assign({},EB_DEF,(S.EB&&S.EB.set)||{})}
 function ebLoad(){ebFonts();S.EBL=1;if(document.fonts&&document.fonts.ready&&!S.ebFR){S.ebFR=1;document.fonts.ready.then(()=>{S.ebEqC=null;if(S.tab==='book'&&S.EB&&!S.ebEd)render()})}call('bookData',[],r=>{S.EB=r;S.EBL=0;
   /* 새 캠프(책자에 저장된 쪽이 없음) = 「데이터에서 불러오기」 방식으로 시작 */
@@ -3183,7 +3235,7 @@ function ebCon(b){const T=ebSet(),it=b.items||[];
   return `<section class="bls con"><div class="eh"><div class="c1">${esc(T.en||b.camp||'')}</div><div class="c2">${esc(b.name)}</div>${(b.when||[]).map(w=>`<div class="c3">${esc(w)}</div>`).join('')}</div>
     ${it.length?it.map(x=>{const L=x.lines.length?x.lines:[''];
       return `<div class="it"><span class="no">${x.no}.</span><span class="ko">${esc(x.ko)}</span><span class="ld"></span><span class="pp">${esc(L[0])}</span><span class="en">${esc(x.en||'')}</span><span class="pp2">${esc(L[1]||'')}</span>${L.slice(2).map(l=>`<span></span><span></span><span></span><span class="pp2">${esc(l)}</span>`).join('')}</div>`}).join(''):'<p style="text-align:center;color:#888;margin-top:20mm">(연주 순서가 아직 없어요)</p>'}</section>`}
-function ebOrch(){const O=S.EB.orch||[];let h='',tb=null;const close=()=>{if(tb!=null){h+=`<table class="ot">${tb}</table>`;tb=null}};
+function ebOrchOld(){const O=S.EB.orch||[];let h='',tb=null;const close=()=>{if(tb!=null){h+=`<table class="ot">${tb}</table>`;tb=null}};
   O.forEach(r=>{const v=r.v||[];if(r.k==='h'){close();h+=`<div class="oh">${esc(v[0])}</div>`}else if(r.k==='r'){close();h+=`<div class="or">리허설 · ${esc(v.slice(1).join(', '))}</div>`}else if(r.k==='p'){tb=(tb||'')+`<tr><th>${esc(v[0])}</th><td>${esc(v.slice(1).join(', '))}</td></tr>`}else close()});close();
   return `<section class="bls orc"><h2>오케스트라 명단 <small style="font-weight:600;font-size:.7em">Orchestra Members</small></h2>${h||'<p style="color:#888">(교사 일정에 지휘 · 악장 · Vln 1 같은 파트 역할이 들어간 공연이 없어요)</p>'}</section>`}
 function ebTch(){const E=S.EB,TB=E.tchBook,T=ebSet(),C=E.camp||{};
@@ -3194,7 +3246,18 @@ function ebTch(){const E=S.EB,TB=E.tchBook,T=ebSet(),C=E.camp||{};
     const ko=x=>/^[가-힣]/.test(x[0]);rows.sort((x,y)=>(ko(x)?0:1)-(ko(y)?0:1)||x[0].localeCompare(y[0],ko(x)?'ko':'en'));
     (TB.r||[]).slice().sort((x,y)=>io(x[0])-io(y[0])).forEach(([i,n])=>rows.push(['연수교사'+(i?' '+i:''),n]))}
   else{const A={},ord=[];(E.teachers||[]).slice(1).forEach(r=>{if(!A[r[0]]){A[r[0]]=[];ord.push(r[0])}A[r[0]].push((r[1]?r[1]+' ':'')+r[2])});rows=ord.map(a=>[a,A[a].join(' / ')])}
-  return ebTchH(rows,`${C.name?C.name+' ':''}참가 교실 및 교사 명단`,`${T.en?T.en+' · ':''}Participating Suzuki Music Schools & Teachers`)}
+  const ttl=`${C.name?C.name+' ':''}참가 교실 및 교사 명단`,sub=`${T.en?T.en+' · ':''}Participating Suzuki Music Schools & Teachers`;
+  if(T.tchSt==='여름'&&TB)return ebTchS(ebTchRows3(),ttl,sub);
+  return ebTchH(rows,ttl,sub)}
+/* 참가 교실 · 교사 명단 여름 모양 (11-05): 「교실 명 | 악기 | 교사 명」 3칸, 악기마다 한 줄, 교실 이름은 첫 줄에만(오른쪽 맞춤) */
+function ebTchRows3(){const E=S.EB,TB=E.tchBook;if(!TB)return [];const IO=['Vn','Va','Vc','Fl','Pf'],io=i=>{const k=IO.indexOf(i);return k<0?9:k},A={};
+  (TB.t||[]).forEach(([a,i,n])=>{(A[a]=A[a]||[]).push([i,n])});const ko=x=>/^[가-힣]/.test(x);
+  const R=[];Object.keys(A).sort((x,y)=>(ko(x)?0:1)-(ko(y)?0:1)||x.localeCompare(y,ko(x)?'ko':'en')).forEach(a=>A[a].sort((x,y)=>io(x[0])-io(y[0])).forEach(([i,n],j)=>R.push([j?'':a,i,n])));
+  (TB.r||[]).slice().sort((x,y)=>io(x[0])-io(y[0])).forEach(([i,n],j)=>R.push([j?'':'연수교사',i,n]));return R}
+function ebTchS(rows,title,sub,cls){const h=r=>Math.max(1,Math.ceil(String(r[2]).length/16)),tot=rows.reduce((s,r)=>s+h(r),0);let acc=0,cut=rows.length;
+  for(let k=0;k<rows.length;k++){acc+=h(rows[k]);if(acc>=tot/2){cut=k+1;while(cut<rows.length&&!rows[cut][0])cut++;break}}
+  const tb=L=>`<table class="tt tt3"><colgroup><col style="width:34%"><col style="width:12%"><col></colgroup><thead><tr><th>교 실 명</th><th>악기</th><th>교 사 명</th></tr></thead><tbody>${L.map(r=>`<tr class="${r[0]?'g':''}"><td class="a">${esc(r[0])}</td><td class="i">${esc(r[1])}</td><td>${esc(r[2])}</td></tr>`).join('')}</tbody></table>`;
+  return `<section class="bls tch${cls||''}"><h2>${esc(title)}</h2><p style="text-align:center;font-size:8.4pt;color:#222;margin-top:-1.5mm;line-height:1.35">${esc(sub).replace(/ · /,'<br>')}</p><div class="tcw">${tb(rows.slice(0,cut))}${tb(rows.slice(cut))}</div></section>`}
 function ebTchH(rows,title,sub,cls){
   /* 왼쪽 · 오른쪽: 줄 수가 아니라 대략 높이(학원 칸 9자 · 이름 칸 20자 한 줄)로 반씩 */
   const h=r=>Math.max(1,Math.ceil(r[0].length/9),Math.ceil(r[1].length/20)),tot=rows.reduce((s,r)=>s+h(r),0);let acc=0,cut=rows.length;
@@ -3215,7 +3278,7 @@ function ebFac(){const E=S.EB,T=ebSet(),C=E.camp||{},F=(E.fac||[]).filter(f=>f.b
     (B.length?`<section class="bls txt fac"><h2>- 초청 교수진 - <small style="font-size:.7em;font-weight:600">Guest Faculty</small></h2>${part(B)}</section>`:'')}
 /* ---- 표 줄 단위 검사 (11-05): 머리에 「권」 칸이 있으면 같은 줄의 곡과 권을 짝지어 비교 · 「대기」 시각이 「리허설」보다 늦은 줄 · 시간 칸(13:30~14:15)이 앞 줄과 겹치는 줄 ---- */
 function ebRowChecks(root){const out=[];if(!root)return out;const hm=t=>{const m=String(t||'').match(/(\d{1,2}):(\d{2})/);return m?+m[1]*60+ +m[2]:null};
-  root.querySelectorAll('table').forEach(tb=>{const R=[...tb.rows];if(R.length<2)return;let hi=R.findIndex(r=>[...r.cells].some(c=>/권|bk|대기|리허설|시간|time/i.test(ebTx(c))));if(hi<0||hi>3)return;
+  root.querySelectorAll('table').forEach(tb=>{const R=[...tb.rows];if(R.length<2)return;let hi=R.findIndex(r=>r.cells.length>=2&&[...r.cells].some(c=>/권|bk|대기|리허설|시간|time/i.test(ebTx(c))));if(hi<0||hi>3)return;
     const H=[...R[hi].cells].map(c=>ebTx(c)),bk=H.findIndex(h=>/권|\bbk\b/i.test(h)),wt=H.findIndex(h=>/대기|waiting/i.test(h)),rh=H.findIndex(h=>/리허설|rehearsal/i.test(h)),tm=H.findIndex((h,i)=>i!==wt&&i!==rh&&/시간|time/i.test(h)),dc=H.findIndex(h=>/날짜|일자|date|요일/i.test(h));let prevEnd=null;
     R.slice(hi+1).forEach(r=>{const C=[...r.cells].map(c=>ebTx(c));if(C.length!==H.length)return;const line=C.join(' · ');if(dc>=0&&C[dc].trim())prevEnd=null;   /* 날짜가 바뀌면 겹침 다시 */
       if(bk>=0&&/\d/.test(C[bk])){const b=C[bk].replace(/\s*\+\s*$/,'~12').replace(/\s*[&,]\s*/g,'권 ');const u=b+'권 '+C.filter((x,i)=>i!==bk).join(' ');ebSongCheck(u).forEach(x=>out.push({type:'권',msg:x.msg.replace(/: 「.*」$/,'')+`: 「${line.slice(0,70)}」`,find:C.find((x,i)=>i!==bk&&x.length>3)||''}))}
@@ -3229,6 +3292,39 @@ function ebOreh(){const E=S.EB,L=E.orchReh||[],ds=new Set();L.forEach(x=>x.reh.c
   return `<section class="bls txt oreh"><h3 style="font-size:11pt;margin:0 0 .5mm;border-bottom:.6px solid #333;display:inline-block">오케스트라 리허설 대기 및 진행 시간 안내</h3><div style="font-weight:700;margin:0 0 2mm">Orchestra Rehearsal (Orch only)</div>
     <table class="rt" style="width:100%"><thead><tr><th style="width:20%"></th><th style="width:16%">대기 시간<br>Waiting Time</th><th style="width:18%">리허설 시간<br>Rehearsal Time</th><th>담당 교사<br><small>(대기 자리 정렬 · 튜닝 · 입퇴장 관리)</small></th></tr></thead><tbody>
     ${L.map(x=>`<tr><th>${esc(x.k)}${x.tgt?`<br>(${esc(x.tgt)})`:''}</th><td style="text-align:center;font-weight:700">${tt(x.wait)}</td><td style="text-align:center;font-weight:700">${tt(x.reh)}</td><td>${esc(x.who.join(' '))}</td></tr>`).join('')||'<tr><td colspan="4" style="color:#888">(교사 일정에 Orch 리허설이 없어요)</td></tr>'}</tbody></table></section>`}
+/* ---- 날짜 도우미 (11-05): 날짜 번호 → 「8월 11일(화)」 · 「Mon.」 ---- */
+function ebDayD(d){const D=(S.EB.days||[])[d];return D&&D.date?ebDt(D.date):null}
+function ebDayKo(d){const t=ebDayD(d);return t?`${t.getMonth()+1}월 ${t.getDate()}일(${EB_KW[t.getDay()]})`:(((S.EB.days||[])[d]||{}).label||'')}
+function ebPM(s){const m=String(s||'').match(/^(\d{1,2}):(\d{2})/);if(!m)return s||'';const h=+m[1];return `${h}:${m[2]}${h<12?'AM':'PM'}`}
+/* 오케스트라 명단 (11-05 새 모양): 공연마다 「이름 (세부_요일 시각)」 · 리허설 날짜 및 시간 · 장소 · 역할 | 이름 칸 7개씩. Orch A~D(학생 오케)는 「보조교사」 쪽으로 */
+function ebOrch(){const OB=S.EB.orchBook;if(!OB)return ebOrchOld();const L=OB.filter(o=>!/^orch\s*[a-z]?$/i.test(o.k)&&o.roles.length);const N=7;
+  const sec=o=>{const m=o.main[0],when=m?`${(ebDayD(m.d)?EB_WD[ebDayD(m.d).getDay()]:'')} ${ebPM(m.s)}`:'',r=o.reh;
+    const rows=o.roles.map(([role,names])=>{const ch=[];for(let i=0;i<names.length;i+=N)ch.push(names.slice(i,i+N));return ch.map((c,ci)=>`<tr><th>${ci?'':esc(role)}</th>${c.map(n=>`<td>${esc(n)}</td>`).join('')}${'<td></td>'.repeat(N-c.length)}</tr>`).join('')}).join('');
+    return `<div class="oh2"><u>${esc(o.k)}</u>${o.sub||when.trim()?` <span>(${esc(o.sub)}${o.sub&&when.trim()?'_':''}${esc(when.trim())})</span>`:''}</div>
+      ${r.length?`<div class="or2"><b>리허설</b><b>날짜 및 시간</b><span>${r.map(x=>esc(ebDayKo(x.d)+' '+x.s+'-'+x.e)).join(', ')}</span><b>장소:</b><span>${esc([...new Set(r.map(x=>x.room).filter(Boolean))].join(', '))}</span></div>`:''}
+      <table class="ot2"><colgroup><col style="width:14%">${'<col>'.repeat(N)}</colgroup><tbody>${rows}</tbody></table>`};
+  return `<section class="bls orc"><h2>오케스트라 명단 <small style="font-weight:700;font-size:.85em">Orchestra Members</small></h2>${L.map(sec).join('')||'<p style="color:#888">(교사 일정에 지휘 · 악장 · Vln 1 같은 파트 역할이 들어간 공연이 없어요)</p>'}</section>`}
+/* 오케스트라 보조교사 (Orch A~D): 지휘 = 「지휘」 역할, 나머지 = 역할 이름(악기)별 보조교사 */
+function ebOasst(){const T=ebSet(),L=(S.EB.orchBook||[]).filter(o=>/^orch/i.test(o.k)),N=5;
+  const body=L.map(o=>{const cond=(o.roles.find(r=>/지휘/.test(r[0]))||[,[]])[1],G=o.roles.filter(r=>!/지휘/.test(r[0]));
+    const rows=[];G.forEach(([r,ns])=>{for(let i=0;i<ns.length;i+=N)rows.push([i?'':r,ns.slice(i,i+N)])});if(!rows.length)rows.push(['',[]]);
+    return rows.map((x,i)=>`<tr>${i?'':`<th rowspan="${rows.length}">${esc(o.k)}${o.tgt?`<br><small>(${esc(o.tgt)})</small>`:''}${cond.length?`<br>${esc(cond.join(', '))}`:''}</th>`}<th class="r">${esc(x[0])}</th>${x[1].map(n=>`<td>${esc(n)}</td>`).join('')}${'<td></td>'.repeat(N-x[1].length)}</tr>`).join('')}).join('');
+  const nt=String(T.oaNote||'보조교사도 악기를 가져와서 함께 켭니다.|*Perform at the Farewell Concert').split('|');
+  return `<section class="bls orc oasst"><div class="oh2"><u>오케스트라 보조교사</u> <span style="font-size:.8em">Assistant Teachers for Orchestra Classes</span></div>
+    <div style="display:flex;justify-content:space-between;font-size:7.6pt;font-weight:700;margin:0 0 1mm"><u>${esc(nt[0]||'')}</u><span>${esc(nt[1]||'')}</span></div>
+    <table class="ot2 oa"><colgroup><col style="width:16%"><col style="width:9%">${'<col>'.repeat(N)}</colgroup><tbody>${body||'<tr><td style="color:#888">(교사 일정에 Orch A~D 가 없어요)</td></tr>'}</tbody></table></section>`}
+/* 오프닝 콘서트 리허설 대기시간 (교사 일정 「오프닝」 일정 그룹) */
+function ebOpen(){const L=S.EB.openReh||[];
+  return `<section class="bls txt opn"><table class="ot2 op"><thead><tr><th colspan="5" class="t1">오프닝 콘서트 리허설 대기시간<br><span>Opening Concert Rehearsal</span></th></tr><tr><th colspan="5" class="t2">${esc(ebSet().opNote||'동선체크, 그룹리허설 (반주없이 진행됩니다)')}</th></tr>
+    <tr><th>대기시간</th><th>리허설시간</th><th>권(bk)</th><th>곡명 (Piece)</th><th>리더(Leader)</th></tr></thead><tbody>
+    ${L.map(x=>`<tr><td>${esc(x.wait)||'<span style="color:#b4423a">—</span>'}</td><td>${esc(x.reh)}</td><td>${esc(x.bk)}</td><td class="pc">${esc(x.song)}</td><td>${esc(x.lead)}</td></tr>`).join('')||'<tr><td colspan="5" style="color:#888">(교사 일정에 「오프닝」 리허설 일정이 없어요)</td></tr>'}</tbody></table></section>`}
+/* 마스터클래스 (마스터클래스 순서 화면) */
+function ebMcp(){const M=S.EB.mc||{s:[]},P={};(M.pf||[]).forEach(p=>P[p.n]=p);const L=(M.s||[]).slice().sort((a,b)=>a.d-b.d||a.s.localeCompare(b.s));
+  const box=x=>{const p=P[x.prof]||{n:x.prof},T=mcTimes(x),title=x.title||`${p.en||p.n} ${MC_INS[p.i]||p.i||''} Master Class`;
+    return `<table class="ot2 mcb"><thead><tr><th colspan="3" class="t1">${esc(title)}</th></tr><tr><th colspan="3" class="t2">일시: ${esc(ebDayKo(x.d))} ${esc(x.s)}~ ${esc(mcEnd(x))}</th></tr>${x.room?`<tr><th colspan="3" class="t3">장소: ${esc(x.room)}</th></tr>`:''}
+      <tr><th style="width:24%">시간</th><th>곡명</th><th style="width:16%">이름</th></tr></thead><tbody>
+      ${x.rows.map((r,j)=>r.t==='n'?`<tr><td colspan="3" class="nt">${esc(r.text)}</td></tr>`:r.t==='b'?`<tr><td></td><td class="pc">${esc(r.text||'휴식 Break')}</td><td></td></tr>`:`<tr><td>${esc(T[j])}</td><td class="pc">${esc(r.song)||'<span style="color:#b4423a">(곡명)</span>'}</td><td>${esc(r.n)}</td></tr>`).join('')}</tbody></table>`};
+  return `<section class="bls txt mcpg">${L.map(box).join('')||'<p style="color:#888">(마스터클래스 순서가 없어요 · 스케줄관리 › 마스터클래스)</p>'}</section>`}
 function ebNewImg(id,full){return `<section class="bls imgp${full?' full':''}"><img data-fid="${esc(id)}"></section>`}
 function ebNewText(){return '<section class="bls txt"><h2>제목</h2><p>여기에 내용을 적거나, 한글 · 워드에서 복사해 붙여 넣으세요.</p></section>'}
 /* ---- 쪽 목록: 자동 쪽 + 저장된 쪽(고친 내용 · 순서 · 사용) ---- */
@@ -3237,6 +3333,9 @@ function ebItems(){const E=S.EB;if(!E)return [];const P={};(E.pages||[]).forEach
   if((E.fac||[]).some(f=>f.b))auto.push({k:'fac',t:'교수진',d:20,a:()=>ebFac()});
   (E.days||[]).forEach(D=>auto.push({k:'sched:'+D.i,t:D.label+' 시간표',d:100+D.i,a:()=>ebSched(D)}));
   (E.concerts||[]).forEach((b,i)=>auto.push({k:'con:'+b.id,t:b.name,d:300+i,a:()=>ebCon(b)}));
+  if((E.openReh||[]).length)auto.push({k:'open',t:'오프닝 콘서트 리허설 대기시간',d:150,a:()=>ebOpen()});
+  if(((E.mc||{}).s||[]).length)auto.push({k:'mcp',t:'마스터클래스',d:160,a:()=>ebMcp()});
+  if((E.orchBook||[]).some(o=>/^orch/i.test(o.k)))auto.push({k:'oasst',t:'오케스트라 보조교사',d:805,a:()=>ebOasst()});
   if((E.orchReh||[]).length)auto.push({k:'oreh',t:'오케 리허설 대기 · 진행 시간',d:790,a:()=>ebOreh()});
   if((E.orch||[]).length)auto.push({k:'orch',t:'오케스트라 명단',d:800,a:()=>ebOrch()});
   auto.push({k:'tch',t:'참가 교실 · 교사 명단',d:900,a:()=>ebTch()});
@@ -3423,6 +3522,8 @@ function ebDataModel(html){const t=ebTpl(html);
     (eh?[...eh.querySelectorAll('.c3')]:[]).forEach(c=>R.push([{v:'안내',b:1},{v:ebTx(c),cs:3}]));R.push([],[ebHD('번호'),ebHD('곡'),ebHD('영어 곡명'),ebHD('연주자 (줄마다)')]);
     t.querySelectorAll('.it').forEach(it=>{const q=s=>ebTx(it.querySelector(s)),lines=[...it.querySelectorAll('.pp,.pp2')].map(ebTx).filter(Boolean);R.push([{v:q('.no').replace(/\.$/,''),ha:'C'},{v:q('.ko'),b:1},{v:q('.en')},{v:lines.join('\n')}])});
     return ebDModel(R,[50,230,280,360])}
+  if(t.querySelector('table.tt3')){const R=[...ebDH('교사 명단',ebTx(t.querySelector('h2')),3),[{v:'부제',b:1},{v:ebTx(t.querySelector('section>p')),cs:2}],[],[ebHD('학원'),ebHD('악기'),ebHD('명단')]];let last='';
+    t.querySelectorAll('table.tt3 tbody tr').forEach(tr=>{const a=ebTx(tr.cells[0])||last;last=a;R.push([{v:a,b:1},{v:ebTx(tr.cells[1]),ha:'C'},{v:ebTx(tr.cells[2])}])});return ebDModel(R,[200,60,480])}
   if(t.querySelector('table.tt')){const R=[...ebDH('교사 명단',ebTx(t.querySelector('h2')),2),[{v:'부제',b:1},{v:ebTx(t.querySelector('section.tch>p,section>p'))}],[],[ebHD('학원'),ebHD('명단')]];
     t.querySelectorAll('table.tt tr').forEach(tr=>{if(tr.cells.length>=2)R.push([{v:ebTx(tr.cells[0]),b:1},{v:ebTx(tr.cells[1])}])});return ebDModel(R,[200,520])}
   const fs=[...t.querySelectorAll('section.bls')].filter(s=>s.classList.contains('fac')||/교수진/.test(ebTx(s.querySelector('.eh .c2,h2'))));
@@ -3452,6 +3553,7 @@ function ebFromData(tb,k){const kind=ebIsData(tb),C=tb.cells||[],A={},cov={};C.f
         return `<tr>${th}${h}</tr>`}).join('')}</tbody></table></div></section>`).join('')}
   if(kind==='con'){const hr=hdr('번호');if(hr<0)return '';const items=[];for(let r=hr+1;r<nR;r++){const no=V(r,0),ko=V(r,1),en=V(r,2),ln=String((A[r+','+3]||[])[4]||'').split('\n').map(x=>x.trim()).filter(Boolean);if(!no&&!ko&&!ln.length)continue;items.push({no:no||items.length+1,ko,en,lines:ln})}
     const T2=ebSet(),b={name:meta('음악회')[0]||'',when:meta('안내'),items};const h=ebCon(b).replace(/<div class="c1">[^<]*<\/div>/,`<div class="c1">${esc(meta('머리')[0]||'')}</div>`);return h.replace('<section class="bls con">','<section class="bls con shd">')}
+  if(kind==='tch'&&V(hdr('학원'),1)==='악기'){const hr=hdr('학원');const rows=[];let last='';for(let r=hr+1;r<nR;r++){const a=V(r,0),i=V(r,1),n=V(r,2);if(!a&&!i&&!n)continue;rows.push([a===last?'':a,i,n]);if(a)last=a}return ebTchS(rows,meta('교사 명단')[0]||'',meta('부제')[0]||'',' shd')}
   if(kind==='tch'){const hr=hdr('학원');if(hr<0)return '';const rows=[];for(let r=hr+1;r<nR;r++){const a=V(r,0),n=V(r,1);if(a||n)rows.push([a,n])}return ebTchH(rows,meta('교사 명단')[0]||'',meta('부제')[0]||'',' shd')}
   if(kind==='fac'){const hr=hdr('구분');if(hr<0)return '';const rows=[];for(let r=hr+1;r<nR;r++){const q=[0,1,2,3].map(c=>V(r,c));if(q.some(Boolean))rows.push(q)}
     const grp=L=>{let h='',g=null;L.forEach(q=>{if(q[1]!==g){if(g!==null)h+='</tbody></table>';g=q[1];h+=`<div class="oh">${esc(g)}</div><table class="ot"><tbody>`}h+=`<tr><th>${esc(q[2])}</th><td>${esc(q[3]).replace(/\n/g,', ')}</td></tr>`});return h+(g!==null?'</tbody></table>':'')};
@@ -3523,7 +3625,7 @@ function ebAcOk(a,b){const r=x=>String(x||'').replace(/\s/g,'').toLowerCase();if
 function ebCheck(){call('bookCheckData',[],R=>{S.ebCD=R;ebCheckRun();S.ebSide='chk';S.ebSeen=new Set();S.ebCurChk=null;render()},'책자를 접수 명단과 대조하고 있어요…')}
 /* ---- 원본은 원본에서 (11-05): 책자 자동 쪽의 내용(곡 · 이름 · 시간 · 장소)이 데이터와 다르면 「원본에서 고치세요」 + 바로 가기. 모양(줄바꿈 · 글꼴 · 칸 폭)만 다르면 괜찮음.
  * 영어 곡명만 예외: 음악회 쪽에서 고친 영어 곡명은 저장할 때 원본(영어 곡명 목록 songEn)에도 같이 저장할지 물음. */
-const EB_SRC={oreh:['act','스케줄관리 › 교사 일정 (Orch 대기 · 리허설)'],fac:['prof','설정 › 교수진'],cover:['camp','캠프 설정'],sched:['act','스케줄관리 › 교사 일정'],orch:['act','스케줄관리 › 교사 일정 (역할)'],con:['con','스케줄관리 › 오후음악회 › 연주 순서'],tch:['subs','운영관리 › 접수']};
+const EB_SRC={open:['act','스케줄관리 › 교사 일정 (오프닝 리허설)'],mcp:['mcs','스케줄관리 › 마스터클래스'],oasst:['act','스케줄관리 › 교사 일정 (Orch A~D 역할)'],oreh:['act','스케줄관리 › 교사 일정 (Orch 대기 · 리허설)'],fac:['prof','설정 › 교수진'],cover:['camp','캠프 설정'],sched:['act','스케줄관리 › 교사 일정'],orch:['act','스케줄관리 › 교사 일정 (역할)'],con:['con','스케줄관리 › 오후음악회 › 연주 순서'],tch:['subs','운영관리 › 접수']};
 const ebFlat=U=>U.join('').replace(/\s+/g,'');
 function ebDiff(A,B){const cnt=new Map();A.forEach(u=>cnt.set(u,(cnt.get(u)||0)+1));const extra=[];B.forEach(u=>{const c=cnt.get(u)||0;if(c>0)cnt.set(u,c-1);else extra.push(u)});
   const miss=[];cnt.forEach((c,u)=>{for(let i=0;i<c;i++)miss.push(u)});const pairs=[];
@@ -3628,13 +3730,17 @@ function ebReady(k){const E=S.EB,kd=k.split(':')[0];
   if(kd==='con'){const b=(E.concerts||[]).find(c=>'con:'+c.id===k);if(!b)return {ok:0,m:'공연이 없어요'};const it=b.items||[];if(!it.length)return {ok:0,m:'연주 순서가 아직 없어요 (오후음악회 › 연주 순서)'};
     const noSong=it.filter(x=>/곡 미정/.test(x.ko)).length,noEn=it.filter(x=>!x.en).length,noP=it.filter(x=>!(x.lines||[]).some(l=>String(l).trim())).length;
     const w=[noSong&&`곡 미정 ${noSong}`,noEn&&`영어 곡명 없음 ${noEn}`,noP&&`연주자 없음 ${noP}`].filter(Boolean);return {ok:w.length?0:1,m:`${it.length}곡`+(w.length?' · '+w.join(' · '):' · 다 들어옴')}}
+  if(kd==='open'){const L=E.openReh||[],nw=L.filter(x=>!x.wait).length,nl=L.filter(x=>!x.lead).length,nb=L.filter(x=>!x.bk).length;return L.length?{ok:nw||nl?0:1,m:`그룹 ${L.length}개`+(nw?` · 대기 없음 ${nw}`:'')+(nl?` · 리더 없음 ${nl}`:'')+(nb?` · 권 없음 ${nb}`:'')}:{ok:0,m:'교사 일정에 「오프닝」 리허설 일정이 없어요'}}
+  if(kd==='mcp'){const M=E.mc||{s:[]},n=(M.s||[]).reduce((t,x)=>t+x.rows.filter(r=>r.t==='p').length,0),ns=(M.s||[]).reduce((t,x)=>t+x.rows.filter(r=>r.t==='p'&&!r.song).length,0),ap=Object.values(M.napp||{}).reduce((a,b)=>a+b,0);
+    return (M.s||[]).length?{ok:ns||n<ap?0:1,m:`세션 ${M.s.length} · ${n}명`+(n<ap?` · 순서에 안 넣은 신청자 ${ap-n}명`:'')+(ns?` · 곡명 없음 ${ns}`:'')}:{ok:0,m:'마스터클래스 순서가 없어요 (스케줄관리 › 마스터클래스)'}}
+  if(kd==='oasst'){const L=(E.orchBook||[]).filter(o=>/^orch/i.test(o.k)),nc=L.filter(o=>!o.roles.some(r=>/지휘/.test(r[0]))).length;return {ok:nc?0:1,m:`Orch ${L.length}개 · 보조교사 ${L.reduce((t,o)=>t+o.roles.filter(r=>!/지휘/.test(r[0])).reduce((a,r)=>a+r[1].length,0),0)}명`+(nc?` · 지휘 없음 ${nc}`:'')}}
   if(kd==='oreh'){const L=E.orchReh||[],nw=L.filter(x=>!x.wait.length).length,nr=L.filter(x=>!x.reh.length).length,nt=L.filter(x=>!x.who.length).length;
     return L.length?{ok:nw||nr||nt?0:1,m:`오케 ${L.length}개`+(nw?` · 대기 없음 ${nw} (교사 일정에서 단계 「대기」로)`:'')+(nr?` · 리허설 없음 ${nr}`:'')+(nt?` · 담당 교사 없음 ${nt}`:'')}:{ok:0,m:'교사 일정에 Orch 리허설이 없어요'}}
   if(kd==='fac'){const F=(E.fac||[]).filter(f=>f.b==='협회'||f.b==='초청'),nb=F.filter(f=>!String(f.bio||'').trim()&&!/회장/.test(f.ti||'')).length;return F.length?{ok:nb?0:1,m:`협회 ${F.filter(f=>f.b==='협회').length} · 초청 ${F.filter(f=>f.b==='초청').length}명`+(nb?` · 약력 없음 ${nb}명`:' · 약력 다 들어옴')}:{ok:0,m:'설정 › 교수진에서 「책자」(협회 · 초청)를 골라 주세요'}}
   if(kd==='orch'){const n=(E.orch||[]).filter(r=>r.k==='p').length;return n?{ok:1,m:`파트 ${n}줄`}:{ok:0,m:'교사 일정에 파트 역할이 없어요'}}
   if(kd==='tch'){const n=((E.tchBook&&E.tchBook.t)||[]).length;return n?{ok:1,m:`학원 · 악기 ${n}줄${E.tchBook.r&&E.tchBook.r.length?' + 연수교사':''}`}:{ok:0,m:'접수된 교사가 없어요'}}
   return {ok:1,m:''}}
-function ebPickHtml(){const L=S.ebSrc||[],G=[['cover','앞'],['fac','앞'],['oreh','명단'],['sched','날짜별 시간표'],['con','음악회 프로그램'],['orch','명단'],['tch','명단']];let last='';
+function ebPickHtml(){const L=S.ebSrc||[],G=[['cover','앞'],['fac','앞'],['sched','날짜별 시간표'],['open','날짜별 시간표'],['mcp','날짜별 시간표'],['oreh','명단'],['oasst','명단'],['sched','날짜별 시간표'],['con','음악회 프로그램'],['orch','명단'],['tch','명단']];let last='';
   return `<div class="panel ebpick"><div class="spread"><div><b>데이터에서 불러오기</b> <span class="hint">고른 것만 쪽으로 만들어요 · 빨간 글은 원본에 아직 빠진 것 — 원본에서 채운 뒤 불러오는 게 좋아요</span></div><button class="btn small ghost" type="button" id="ebPickX">닫기</button></div>
     ${L.map(x=>{const g=(G.find(y=>y[0]===x.kind)||[])[1]||'',gh=g!==last?`<div class="egrp">${esc(g)}</div>`:'';last=g;const R=ebReady(x.k);
       return `${gh}<div class="pk"><span class="pt">${esc(x.t)}</span><span class="pm ${R.ok?'':'bad'}">${esc(R.m)}</span>${x.in?`<button class="btn small ghost" type="button" data-ebgo="${esc(x.k)}">들어 있음 · 보기</button>`:`<button class="btn small${R.ok?' primary':''}" type="button" data-ebpick="${esc(x.k)}">불러오기</button>`}</div>`}).join('')}</div>`}
@@ -3648,7 +3754,7 @@ function ebPick(k){const src=(S.ebSrc||[]).find(x=>x.k===k);if(!src)return;const
 /* ---- 화면 ---- */
 function vEbk(){const E=S.EB;if(!E){if(!S.EBL)setTimeout(ebLoad,0);return '<div class="panel hint">책자를 만들고 있어요…</div>'}
   const L=ebItems(),ed=!!E.edit&&!RO(),z=ebZoom(),T=ebSet(),sel=S.ebSel;
-  const grp=k=>({oreh:'명단',fac:'앞',cover:'앞',sched:'날짜별 시간표',con:'음악회 프로그램',orch:'명단',tch:'명단',text:'글 쪽'})[k];
+  const grp=k=>({open:'날짜별 시간표',mcp:'날짜별 시간표',oasst:'명단',oreh:'명단',fac:'앞',cover:'앞',sched:'날짜별 시간표',con:'음악회 프로그램',orch:'명단',tch:'명단',text:'글 쪽'})[k];
   let lastG='';
   const list=L.map((x,i)=>{const [c,l]=ebState(x),g=x.kind==='text'?'':grp(x.kind);const gh=g&&g!==lastG?`<div class="egrp">${esc(g)}</div>`:'';if(g)lastG=g;
     return `${gh}<li class="${x.on?'':'off'} ${sel===x.k?'cur':''}"><input type="checkbox" data-ebon="${esc(x.k)}" ${x.on?'checked':''} ${ed?'':'disabled'} aria-label="${esc(x.t)} 넣기"><span class="eti" data-ebgo="${esc(x.k)}" title="${esc(x.t)}">${esc(x.t)}<span class="ebchip ${c}">${l}</span><br><span class="epg" data-ebpg="${esc(x.k)}"></span></span>
@@ -3679,6 +3785,9 @@ function vEbk(){const E=S.EB;if(!E){if(!S.EBL)setTimeout(ebLoad,0);return '<div 
         <label>시간표 한 쪽에 장소 몇 곳<input type="number" min="1" max="10" data-ebs="per" value="${esc(T.per)}" ${ed?'':'disabled'}></label>
         <label>시간표 글씨 크기 (pt)<input type="number" min="5" max="10" step="0.2" data-ebs="fs" value="${esc(T.fs)}" ${ed?'':'disabled'}></label>
         <label style="flex-direction:row;align-items:center;gap:6px"><input type="checkbox" data-ebs="num" ${T.num?'checked':''} ${ed?'':'disabled'}> 쪽 아래 번호 (- 2 -)</label>
+        <label>교사 명단 모양<select data-ebs="tchSt" ${ed?'':'disabled'}><option value="겨울" ${T.tchSt!=='여름'?'selected':''}>겨울 (학원 | Vn … / Vc …)</option><option value="여름" ${T.tchSt==='여름'?'selected':''}>여름 (교실 명 | 악기 | 교사 명)</option></select></label>
+        <label>보조교사 쪽 안내 <small>(| 로 왼쪽 · 오른쪽)</small><input type="text" data-ebs="oaNote" value="${esc(T.oaNote||'보조교사도 악기를 가져와서 함께 켭니다.|*Perform at the Farewell Concert')}" ${ed?'':'disabled'}></label>
+        <label>오프닝 리허설 안내<input type="text" data-ebs="opNote" value="${esc(T.opNote||'동선체크, 그룹리허설 (반주없이 진행됩니다)')}" ${ed?'':'disabled'}></label>
         <label style="flex-direction:row;align-items:center;gap:6px"><input type="checkbox" data-ebs="sen" ${T.sen!==false?'checked':''} ${ed?'':'disabled'}> 시간표 칸에 영문 줄</label></div>
       ${ed?`<div class="row" style="margin-top:8px"><button class="btn small primary" type="button" id="ebSetSave">설정 저장</button><span class="hint">설정을 바꾸면 고쳐 쓴 쪽은 「원본 바뀜」으로 보일 수 있어요.</span></div>`:''}</details>${T.sheet?`<p class="hint" style="margin:6px 0 0">시트는 책자의 1.5배 크기예요(시트 15pt = 책자 10pt). 시트에서 고친 뒤 「시트에서 적용」. 한 탭에서 쪽을 나누려면 A열에 [쪽 나눔] 줄을 두세요. 새 탭 = 새 글 쪽.</p>`:''}</div>${S.ebPickM&&ed?ebPickHtml():''}
   <div class="ebw"><div class="panel eblist">${S.ebChk?`<div class="ebtabs"><button type="button" data-ebside="list" class="${S.ebSide!=='chk'?'on':''}">쪽 순서</button><button type="button" data-ebside="chk" class="${S.ebSide==='chk'?'on':''}">검사 ${S.ebChk.items.length}</button></div>`:''}${S.ebChk&&S.ebSide==='chk'?ebChkSide():''}<div ${S.ebChk&&S.ebSide==='chk'?'hidden':''}><b>쪽 순서</b> <span class="hint" id="ebTot"></span><ol>${list||`<li style="display:block;border:0;color:var(--muted);font-size:13px">아직 쪽이 없어요.<br>위 「＋ 쪽 추가 › 데이터에서 불러오기」로 표지 · 날짜별 시간표 · 음악회를 하나씩 불러오세요.</li>`}</ol>
@@ -3935,6 +4044,6 @@ document.addEventListener('click',e=>{if(S.tab!=='book')return;const b=e.target.
   if(b.id==='ebSetSave'){const n=Object.assign(ebSet(),S.ebSetW||{});n.per=Math.max(1,Math.min(10,Math.round(+n.per||5)));n.fs=Math.max(5,Math.min(10,+n.fs||6.6));['en','sub','org'].forEach(k=>n[k]=String(n[k]||'').trim().slice(0,120));
     ebSend([],[],n,()=>{S.ebSetW=null;toast('책자 설정을 저장했어요')});return}},true);
 </script>
-<div id="bldMark" hidden>빌드표시 20261105-222217 </div>
+<div id="bldMark" hidden>빌드표시 20261105-222747 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();</script>
 </body></html>

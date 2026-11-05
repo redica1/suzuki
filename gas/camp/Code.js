@@ -1,4 +1,4 @@
-/* build: 20261104-212711 */
+/* build: 20261105-195936 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -1372,7 +1372,7 @@ function progCell_(e, c, nameOf) {
 const ORCH_PARTS = ['지휘', '악장', 'Vln 1', 'Vln 2', 'Vla', 'Vc', 'D.B', '악보계'];
 const isPart_ = r => /^(악장|vln?\s*\d|vn\s*\d|vla|va|vc|d\.?\s*b|cb|fl\s*\d?)$/i.test(String(r || '').trim());
 /** 프로그램표 만들기 (미리보기 · 구글 시트 공통) → 날짜별 칸 값 V · 칸 색 F · 식사 줄 · 참가교사 · 오케 명단 */
-function progBuild_() {
+function progBuild_(opt) {
   const c = actCfg_(), C = camp_(); const evs = actEvents_().map(e => Object.assign(e, { cat: ['공연', '레슨', '업무'].includes(e.type) ? e.type : ({ 오케스트라: '공연', 오후음악회: '공연', 음악회: '공연', 리허설: '공연', 대기: '업무' })[e.type] || '레슨' }));
   const ppl = actPeople_(c.people); const nm = {}; ppl.forEach(p => nm[p.id] = p.n); const nameOf = id => nm[id] || String(id).replace(/^[CP]:/, '');
   const days = c.days || [], out = [];
@@ -1420,7 +1420,7 @@ function progBuild_() {
     order.forEach(r => { const N = []; byMain.forEach(e => e.ppl.forEach(p => { if (p.r === r) { const n = nameOf(p.n); if (!N.includes(n)) N.push(n); } })); if (N.length) orch.push({ k: 'p', v: [r].concat(N) }); });
     orch.push({ k: 'b', v: [''] });
   });
-  const HT = pvHide_(c).t;
+  const HT = opt && opt.all ? new Set() : pvHide_(c).t;   // 책자(11-05)는 탭 숨기기와 상관없이 모두 받음
   return { title: C.base.name, days: out, teachers: HT.has('t') ? null : teachers, orch: HT.has('o') ? null : orch, concerts: HT.has('c') ? [] : progConcerts_(c, C, evs, nameOf, dayDate), hide: c.pvHide || { f: [], r: [], t: [] }, roleSets: Object.assign({}, ACT_ROLESETS, c.roleSets || {}), used: [...new Set(evs.flatMap(e => e.ppl.map(p => e.cat + ':' + p.r)))] };
 }
 /** 음악회 프로그램 (오후음악회 · 이브닝 …): 「오후음악회」 탭의 연주 순서 그대로 · 같은 곡이 이어지면 한 번호로 묶고 학원별로 이름을 모음
@@ -1484,6 +1484,59 @@ function songEnSave(token, map) {
     log_(a.name, '영어 곡명 저장', Object.keys(map || {}).length + '곡');
   } finally { lock.releaseLock(); }
   return { ok: true };
+}
+/* ================= 행사 책자 (11-05) =================
+ * 공문이 캠프의 시작이면 책자는 준비의 마지막. A5 책자 한 권을 쪽 목록으로 만듦.
+ * 자동 쪽(표지 · 날짜별 시간표 · 음악회 프로그램 · 오케 명단 · 참가 교사)은 그때그때 데이터에서 만들고(화면이 그림),
+ * 「고쳐 쓰기」로 손질한 쪽은 그 HTML 을 그대로 고정 저장 + 고칠 때의 원본 지문(src) → 원본이 바뀌면 화면이 알려 줌.
+ * 시트 「책자」: 키(cover · sched:0 · con:c12 · orch · tch · text:abc · _set · _rev) · 순서 · 사용 · 제목 · 내용(고친 HTML / _set 은 설정 JSON) · 원본 · 수정일 · 수정자 */
+const BOOK_SH = '책자', BOOK_HEAD = ['키', '순서', '사용', '제목', '내용', '원본', '수정일', '수정자'];
+function bookSh_() {
+  const ss = SpreadsheetApp.getActive(); let sh = ss.getSheetByName(BOOK_SH);
+  if (!sh) { sh = ss.insertSheet(BOOK_SH); sh.getRange(1, 1, 1, BOOK_HEAD.length).setValues([BOOK_HEAD]).setFontWeight('bold'); sh.setFrozenRows(1); sh.getRange('A:H').setNumberFormat('@'); sh.setColumnWidth(5, 420); }
+  return sh;
+}
+function bookPerm_(a, edit) { if (a.sup) return; const p = a.perms.book; if (edit ? p !== '편집' : !['보기', '편집'].includes(p)) throw new Error(edit ? '행사 책자 「편집」 권한이 있어야 해요.' : '행사 책자 권한이 있어야 볼 수 있어요.'); }
+function bookRows_() { bookSh_(); return rows_(BOOK_SH).filter(r => String(r['키'] || '')).map(r => ({ _row: r._row, k: String(r['키']), ord: +r['순서'] || 0, on: String(r['사용'] || '예') !== '아니오', t: String(r['제목'] || ''), h: String(r['내용'] || ''), src: String(r['원본'] || ''), at: String(r['수정일'] || ''), by: String(r['수정자'] || '') })); }
+function bookPages_() { const R = bookRows_(), rev = R.find(r => r.k === '_rev'), set = R.find(r => r.k === '_set');
+  let S = {}; try { S = set ? JSON.parse(set.h || '{}') : {}; } catch (x) { S = {}; }
+  return { rev: rev ? +rev.h || 0 : 0, set: S, pages: R.filter(r => r.k[0] !== '_').map(r => ({ k: r.k, ord: r.ord, on: r.on, t: r.t, h: r.h, src: r.src, at: r.at, by: r.by })) }; }
+/** 책자 화면: 자동 쪽 재료 + 저장된 쪽 목록 */
+function bookData(token) {
+  const a = adm_(token); bookPerm_(a, false);
+  const C = camp_(), P = progBuild_({ all: true });
+  const st = String(C.base.start || ''), ok = /^\d{4}-\d{2}-\d{2}$/.test(st);
+  const ymd = d => { if (!ok) return ''; const [y, m, dd] = st.split('-').map(Number); return new Date(Date.UTC(y, m - 1, dd + d)).toISOString().slice(0, 10); };
+  return Object.assign({ ok: true, edit: a.sup || a.perms.book === '편집',
+    camp: { id: C.base.id, name: C.base.name, start: C.base.start, end: C.base.end, place: C.base.place },
+    days: P.days.map((D, i) => ({ i, label: D.label, date: ymd(i), V: D.V, W: D.W, meals: D.meals })),
+    concerts: (P.concerts || []).map(x => x.book), teachers: P.teachers || [], orch: P.orch || [] }, bookPages_());
+}
+/** 책자 저장: rows = 바뀐 쪽만 [{k, ord, on, t, h, src}], del = 지울 키(글 쪽 · 원본 없는 쪽), set = 설정(있을 때만) · rev 가 다르면 막음 */
+function bookSave(token, rev, rows, del, set) {
+  const a = adm_(token); bookPerm_(a, true);
+  const okKey = k => /^(cover|orch|tch|sched:\d{1,2}|con:[\w-]{1,40}|text:[\w-]{1,40})$/.test(k);
+  const L = (Array.isArray(rows) ? rows : []).slice(0, 200).map(r => {
+    const k = String(r && r.k || ''); if (!okKey(k)) throw new Error('쪽 이름이 맞지 않아요: ' + k);
+    const h = r.h == null ? null : String(r.h); if (h && h.length > 48000) throw new Error((r.t || k) + ': 내용이 너무 길어요. 두 쪽으로 나눠 주세요.');
+    return { k, ord: Math.round(+r.ord || 0), on: r.on !== false, t: String(r.t || '').slice(0, 80), h, src: r.h == null ? null : String(r.src || '').slice(0, 24) };   // h 가 없으면 순서 · 사용만 (고친 내용은 그대로)
+  });
+  const D = (Array.isArray(del) ? del : []).map(String).filter(okKey).slice(0, 100);
+  let setJ = null; if (set && typeof set === 'object') { setJ = JSON.stringify(set); if (setJ.length > 4000) throw new Error('설정이 너무 길어요.'); }
+  const lock = lock_();
+  try {
+    const sh = bookSh_(), R = bookRows_(), cur = R.find(r => r.k === '_rev'), now = +(cur && cur.h) || 0;
+    if ((+rev || 0) !== now) throw new Error('다른 분이 먼저 책자를 고쳤어요. 「새로 만들기」로 다시 불러온 뒤 해 주세요.');
+    const by = {}; R.forEach(r => by[r.k] = r);
+    const put = (k, vals) => { const r = by[k]; if (r) sh.getRange(r._row, 1, 1, BOOK_HEAD.length).setValues([vals]); else { sh.appendRow(vals); by[k] = { _row: sh.getLastRow(), k }; } };
+    const t = stamp_();
+    L.forEach(r => { const o = by[r.k] || {}; put(r.k, [r.k, String(r.ord), r.on ? '예' : '아니오', r.t, r.h == null ? (o.h || '') : r.h, r.src == null ? (o.src || '') : r.src, r.h == null && o.at ? o.at : t, r.h == null && o.by ? o.by : a.name]); });
+    if (setJ != null) put('_set', ['_set', '', '', '설정', setJ, '', t, a.name]);
+    put('_rev', ['_rev', '', '', '', String(now + 1), '', t, a.name]);
+    D.map(k => by[k] && by[k]._row).filter(Boolean).sort((x, y) => y - x).forEach(n => sh.deleteRow(n));
+    if (L.some(r => r.h != null) || D.length) log_(a.name, '행사 책자 저장', L.filter(r => r.h != null).map(r => (r.t || r.k) + (r.h ? '' : ' (원본으로)')).join(', ') + (D.length ? ' · 지움 ' + D.join(', ') : ''));
+  } finally { lock.releaseLock(); }
+  return bookPages_();
 }
 /** 미리보기 · 시트에서 숨길 항목 저장 */
 function pvHideSave(token, h) {
@@ -1550,7 +1603,7 @@ function exportProgram(token) {
  * 담당자 = 교사 회원 중에서 골라 메뉴마다 편집 / 보기 / 없음 → 관리자 화면에 이름 + 휴대전화로 로그인 */
 const STAFF = '담당자';
 const STAFF_HEAD = ['교사ID', '이름', '학원', '권한', '사용', '메모', '바꾼 날'];
-const ADMIN_TABS = [['home', '한눈에'], ['subs', '접수 · 입금 확인'], ['rp', '입금 신고'], ['cx', '취소 · 환불'], ['ens', '앙상블'], ['aud', '음원 심사'], ['prof', '교수진'], ['act', '교사 일정'], ['tt', '개인레슨'], ['room', '방 배정'], ['con', '오후음악회'], ['meal', '식권'], ['stat', '통계'], ['q', '게시판'], ['ntc', '공지사항'], ['schol', '장학금'], ['mem', '회원 명단'], ['bplan', '예산 계획'], ['bset', '결산']];
+const ADMIN_TABS = [['home', '한눈에'], ['subs', '접수 · 입금 확인'], ['rp', '입금 신고'], ['cx', '취소 · 환불'], ['ens', '앙상블'], ['aud', '음원 심사'], ['prof', '교수진'], ['act', '교사 일정'], ['tt', '개인레슨'], ['room', '방 배정'], ['con', '오후음악회'], ['meal', '식권'], ['book', '행사 책자'], ['stat', '통계'], ['q', '게시판'], ['ntc', '공지사항'], ['schol', '장학금'], ['mem', '회원 명단'], ['bplan', '예산 계획'], ['bset', '결산']];
 function staff_() {
   return rows_(STAFF).filter(r => r['교사ID']).map(r => { let p = {}; try { p = JSON.parse(String(r['권한'] || '{}')); } catch (x) {}
     return { tid: String(r['교사ID']), name: String(r['이름']), acad: String(r['학원'] || ''), perms: p, on: String(r['사용'] || '예') !== '아니오', memo: String(r['메모'] || '') }; });

@@ -1,4 +1,4 @@
-/* build: 20261105-203317 */
+/* build: 20261105-204354 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -1537,6 +1537,28 @@ function bookSave(token, rev, rows, del, set) {
     if (L.some(r => r.h != null) || D.length) log_(a.name, '행사 책자 저장', L.filter(r => r.h != null).map(r => (r.t || r.k) + (r.h ? '' : ' (원본으로)')).join(', ') + (D.length ? ' · 지움 ' + D.join(', ') : ''));
   } finally { lock.releaseLock(); }
   return bookPages_();
+}
+/** 책자 그림 (11-05): 드라이브 폴더 「캠프 책자 이미지 {캠프코드}」에 저장 · 시트에는 파일 ID만 (<img data-fid>) */
+function bookImgFolder_() { const n = '캠프 책자 이미지 ' + camp_().base.id, it = DriveApp.getFoldersByName(n); return it.hasNext() ? it.next() : DriveApp.createFolder(n); }
+function bookImgPut(token, dataUrl, name) {
+  const a = adm_(token); bookPerm_(a, true);
+  const m = String(dataUrl || '').match(/^data:(image\/(?:jpeg|png|webp|gif));base64,([A-Za-z0-9+\/=]+)$/);
+  if (!m) throw new Error('그림 파일만 올릴 수 있어요.');
+  if (m[2].length > 9000000) throw new Error('그림이 너무 커요(6MB까지).');
+  const nm = Utilities.formatDate(new Date(), TZ, 'MMdd-HHmmss') + '-' + String(name || '그림').replace(/[^\w가-힣.\- ]/g, '').slice(0, 40);
+  const f = bookImgFolder_().createFile(Utilities.newBlob(Utilities.base64Decode(m[2]), m[1], nm));
+  log_(a.name, '책자 그림 올림', nm);
+  return { ok: true, id: f.getId() };
+}
+/** 책자 그림 받기: 이 캠프 책자 폴더 안 파일만 (다른 드라이브 파일은 막음) */
+function bookImgs(token, ids) {
+  const a = adm_(token); bookPerm_(a, false);
+  const fid = bookImgFolder_().getId(), out = {};
+  (Array.isArray(ids) ? ids : []).map(String).filter(x => /^[\w-]{10,80}$/.test(x)).slice(0, 30).forEach(id => {
+    try { const f = DriveApp.getFileById(id); const ps = f.getParents(); let ok = false; while (ps.hasNext()) if (ps.next().getId() === fid) ok = true;
+      if (!ok) return; const b = f.getBlob(); out[id] = 'data:' + b.getContentType() + ';base64,' + Utilities.base64Encode(b.getBytes()); } catch (e) {}
+  });
+  return out;
 }
 /** 미리보기 · 시트에서 숨길 항목 저장 */
 function pvHideSave(token, h) {

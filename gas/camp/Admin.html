@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261105-203317 -->
+<!-- build: 20261105-204354 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -1601,7 +1601,7 @@ const ME=()=>(S.D&&S.D.me)||{sup:true,perms:{}};
 const permOf=k=>{const m=ME();if(m.sup)return '편집';if(k==='camp'||k==='staff'||k==='cons'||k==='doc')return '';return (m.perms||{})[k]||''};
 const visTabs=()=>TABS.concat(SUP_TABS).filter(([k])=>permOf(k));
 const RO=()=>permOf(S.tab)==='보기';
-const WRITE_FN=/^(devAud|devAudClear|audSet|audPub|devSummer|adminNoticeSave|adminMenuSave|scholSave|adminConfirm|adminAdjust|adminSetBankAcct|ogSave|ogToken|adminRejectReport|adminSaveEns|adminSaveProfs|adminRefund|adminSetIssue|schedSave|lessonSet|adminSetSetting|roomSave|conSave|campSave|staffSave|songEnSave|pvHideSave|roomCfgSave|layoutImport|roomMove|budSave|mealIssue|mealDel|bookSave)$/;
+const WRITE_FN=/^(devAud|devAudClear|audSet|audPub|devSummer|adminNoticeSave|adminMenuSave|scholSave|adminConfirm|adminAdjust|adminSetBankAcct|ogSave|ogToken|adminRejectReport|adminSaveEns|adminSaveProfs|adminRefund|adminSetIssue|schedSave|lessonSet|adminSetSetting|roomSave|conSave|campSave|staffSave|songEnSave|pvHideSave|roomCfgSave|layoutImport|roomMove|budSave|mealIssue|mealDel|bookSave|bookImgPut)$/;
 const roBlock=fn=>WRITE_FN.test(fn)&&permOf(S.tab)!=='편집';
 const RO_MSG='보기만 할 수 있는 메뉴예요. 바꾸려면 총관리자에게 「편집」 권한을 받아 주세요.';
 
@@ -3075,6 +3075,18 @@ document.addEventListener('change',e=>{const t=e.target;if(S.tab!=='meal')return
 .bls .tcw{display:grid;grid-template-columns:1fr 1fr;gap:3mm;align-items:start}
 .bls table.tt{width:100%;font-size:7.6pt !important;line-height:1.3}.bls table.tt td.a{width:24mm;font-weight:700}
 .bls.txt{font-size:8.8pt}
+.bls img{max-width:100%;height:auto;vertical-align:top}
+.bls.imgp{display:flex;align-items:center;justify-content:center}
+.bls.imgp img{display:block;max-width:100%;max-height:185mm;object-fit:contain}
+.bls.imgp.full{padding:0;overflow:hidden}
+.bls.imgp.full img{width:148mm;height:210mm;max-width:none;max-height:none;object-fit:cover}
+.ebc[contenteditable=true] img{cursor:pointer}
+.ebbar.ed{flex-direction:column;align-items:stretch;gap:6px;width:min(100%,760px)}
+.ebbar.ed .r1{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.ebbar.ed .r1 b{flex:1}
+.ebbar.ed .r2{display:flex;gap:4px;align-items:center;flex-wrap:wrap}
+.ebbar.ed select{font:inherit;font-size:13px;padding:2px 4px;border:1px solid #c9d3d7;border-radius:6px;background:#fff;color:#1d2b31;max-width:150px}
+.ebbar.ed .sep{width:1px;height:20px;background:#d5dee2;margin:0 3px}
+.ebadd{display:inline-flex;gap:4px;align-items:center;background:var(--accent-soft);border-radius:8px;padding:2px 4px}
 .ebset{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px 14px;margin-top:8px}
 .ebset label{display:flex;flex-direction:column;gap:3px;font-size:13px;color:var(--muted)}
 .ebset input[type=text],.ebset input[type=number]{font:inherit;font-size:15px}
@@ -3083,7 +3095,8 @@ document.addEventListener('change',e=>{const t=e.target;if(S.tab!=='meal')return
   body.ebprint>*:not(#ebPrintRoot){display:none !important}
   body.ebprint #ebPrintRoot{display:block !important}
   #ebPrintRoot .bls{width:auto;min-height:0;box-shadow:none;padding:0;background:none !important;page:ebp}
-  #ebPrintRoot .bls.cov{page:ebc;height:210mm;overflow:hidden}
+  #ebPrintRoot .bls.cov,#ebPrintRoot .bls.imgp.full{page:ebc;height:210mm;overflow:hidden}
+  #ebPrintRoot .bls.imgp:not(.full){height:185mm}
   #ebPrintRoot .bls:not(:last-child){break-after:page}
   html:has(body.ebprint),body.ebprint{background:#fff !important;margin:0 !important;padding:0 !important}
 }
@@ -3097,7 +3110,7 @@ document.addEventListener('change',e=>{const t=e.target;if(S.tab!=='meal')return
 const EB_DEF={en:'',sub:'',org:'(사)한국스즈키음악협회',per:5,fs:6.6,num:true};
 const EB_KIND={cover:'표지',sched:'시간표',con:'음악회',orch:'명단',tch:'명단',text:'글'};
 function ebSet(){return Object.assign({},EB_DEF,(S.EB&&S.EB.set)||{})}
-function ebLoad(){S.EBL=1;call('bookData',[],r=>{S.EB=r;S.EBL=0;if(S.tab==='book')render()},'책자를 만들고 있어요…')}
+function ebLoad(){ebFonts();S.EBL=1;call('bookData',[],r=>{S.EB=r;S.EBL=0;if(S.tab==='book')render()},'책자를 만들고 있어요…')}
 function ebHash(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return (h>>>0).toString(36)}
 const ebBr=s=>esc(s).replace(/\n/g,'<br>');
 const EB_WD=['Sun.','Mon.','Tue.','Wed.','Thu.','Fri.','Sat.'],EB_MO=['Jan.','Feb.','Mar.','Apr.','May','Jun.','Jul.','Aug.','Sep.','Oct.','Nov.','Dec.'],EB_KW='일월화수목금토';
@@ -3126,6 +3139,7 @@ function ebTch(){const T=(S.EB.teachers||[]).slice(1),A={},ord=[];T.forEach(r=>{
   const rows=ord.map(a=>`<tr><td class="a">${esc(a)}</td><td>${A[a].map(esc).join('<br>')}</td></tr>`),half=Math.ceil(rows.length/2);
   return `<section class="bls tch"><h2>참가 교실 및 교사 명단</h2><p style="text-align:center;font-size:7.8pt;color:#555;margin-top:-1.5mm">Participating Suzuki Music Schools &amp; Teachers</p>
     <div class="tcw"><table class="tt"><tbody>${rows.slice(0,half).join('')}</tbody></table><table class="tt"><tbody>${rows.slice(half).join('')}</tbody></table></div></section>`}
+function ebNewImg(id,full){return `<section class="bls imgp${full?' full':''}"><img data-fid="${esc(id)}"></section>`}
 function ebNewText(){return '<section class="bls txt"><h2>제목</h2><p>여기에 내용을 적거나, 한글 · 워드에서 복사해 붙여 넣으세요.</p></section>'}
 /* ---- 쪽 목록: 자동 쪽 + 저장된 쪽(고친 내용 · 순서 · 사용) ---- */
 function ebItems(){const E=S.EB;if(!E)return [];const P={};(E.pages||[]).forEach(p=>P[p.k]=p);
@@ -3143,27 +3157,30 @@ function ebItems(){const E=S.EB;if(!E)return [];const P={};(E.pages||[]).forEach
     const ah=x.a(),hash=ebHash(ah);L.push({k:x.k,kind:kindOf(x.k),t:x.t,ord,on:p?p.on:true,h:p&&p.h||'',src:p&&p.src||'',auto:ah,hash,saved:!!p,at:p&&p.at,by:p&&p.by})});
   (E.pages||[]).forEach(p=>{if(L.some(x=>x.k===p.k))return;const kd=kindOf(p.k);if(kd!=='text'&&!p.h)return;L.push({k:p.k,kind:kd,t:p.t||(kd==='text'?'글 쪽':p.k),ord:p.ord,on:p.on,h:p.h,src:p.src,auto:'',hash:'',saved:true,orphan:kd!=='text',at:p.at,by:p.by})});
   return L.sort((x,y)=>x.ord-y.ord||x.k.localeCompare(y.k))}
-function ebState(x){if(x.kind==='text')return ['txt','글 쪽'];if(x.orphan)return ['chg','원본 없음'];if(!x.h)return ['auto','자동'];if(x.src&&x.src!==x.hash)return ['chg','원본 바뀜'];return ['hand','고쳐 씀']}
+const ebIsImg=x=>x.kind==='text'&&/class="bls imgp/.test(x.h||'');
+function ebState(x){if(ebIsImg(x))return ['txt','이미지 쪽'];if(x.kind==='text')return ['txt','글 쪽'];if(x.orphan)return ['chg','원본 없음'];if(!x.h)return ['auto','자동'];if(x.src&&x.src!==x.hash)return ['chg','원본 바뀜'];return ['hand','고쳐 씀']}
 function ebHtml(x){return S.ebEd===x.k&&S.ebBuf!=null?S.ebBuf:(S.ebPeek===x.k&&x.auto)?x.auto:(x.h||x.auto)}
 /* ---- 붙여 넣기 · 저장 때 HTML 다듬기: 허락한 태그 · 칸만 ---- */
-const EB_OK=new Set(['SECTION','DIV','P','SPAN','B','STRONG','I','EM','U','BR','H1','H2','H3','H4','TABLE','THEAD','TBODY','TFOOT','TR','TD','TH','UL','OL','LI','SMALL','SUP','SUB','HR','COLGROUP','COL']);
-const EB_DROP=new Set(['SCRIPT','STYLE','IFRAME','OBJECT','EMBED','LINK','META','TITLE','HEAD','svg','SVG','IMG','VIDEO','AUDIO','FORM','INPUT','BUTTON','SELECT','TEXTAREA','TEMPLATE','NOSCRIPT']);
-const EB_CSS=['text-align','font-size','font-weight','width','height','vertical-align','background-color','margin-top','margin-bottom','padding-left'];
+const EB_OK=new Set(['IMG','SECTION','DIV','P','SPAN','B','STRONG','I','EM','U','BR','H1','H2','H3','H4','TABLE','THEAD','TBODY','TFOOT','TR','TD','TH','UL','OL','LI','SMALL','SUP','SUB','HR','COLGROUP','COL']);
+const EB_DROP=new Set(['SCRIPT','STYLE','IFRAME','OBJECT','EMBED','LINK','META','TITLE','HEAD','svg','SVG','VIDEO','AUDIO','FORM','INPUT','BUTTON','SELECT','TEXTAREA','TEMPLATE','NOSCRIPT']);
+const EB_CSS=['text-align','font-size','font-weight','width','height','vertical-align','background-color','margin-top','margin-bottom','padding-left','font-family','letter-spacing','line-height','color','font-style','text-decoration'];
+const EB_FONTS=['Pretendard','Nanum Gothic','Nanum Myeongjo','Gowun Batang','Noto Serif KR'];
 function ebClean(html,keepCls){const t=document.createElement('template');t.innerHTML=String(html||'');
   const walk=n=>{[...n.childNodes].forEach(c=>{if(c.nodeType===8){c.remove();return}if(c.nodeType!==1)return;
+    if(c.tagName==='IMG'){const f=c.getAttribute('data-fid')||'';if(!/^[\w-]{10,80}$/.test(f)){c.remove();return}}
     if(EB_DROP.has(c.tagName)||(c.classList&&(c.classList.contains('trz')||c.classList.contains('colrz')||c.classList.contains('sarr')))){c.remove();return}
     walk(c);
     if(!EB_OK.has(c.tagName)){if(c.tagName==='A'||c.tagName==='FONT'||c.tagName==='O:P'||/^[A-Z]+$/.test(c.tagName)){c.replaceWith(...c.childNodes)}else c.replaceWith(...c.childNodes);return}
-    const st=c.style,keep={};EB_CSS.forEach(p=>{const v=st&&st.getPropertyValue(p);if(v&&!/url|expression/i.test(v))keep[p]=v});
+    const st=c.style,keep={};EB_CSS.forEach(p=>{const v=st&&st.getPropertyValue(p);if(v&&!/url|expression/i.test(v)&&(p!=='font-family'||EB_FONTS.some(f=>v.indexOf(f)>=0)))keep[p]=v});const fid=c.tagName==='IMG'?c.getAttribute('data-fid'):'';if(fid)Object.keys(keep).forEach(p=>{if(p!=='width')delete keep[p]});
     const cls=keepCls?String(c.getAttribute('class')||'').split(/\s+/).filter(x=>/^[a-z][\w-]{0,24}$/.test(x)&&x!=='ovf').join(' '):'';
     const cs=c.getAttribute('colspan'),rs=c.getAttribute('rowspan');
     [...c.attributes].forEach(a=>c.removeAttribute(a.name));
-    if(cls)c.setAttribute('class',cls);if(/^\d{1,2}$/.test(cs||''))c.setAttribute('colspan',cs);if(/^\d{1,2}$/.test(rs||''))c.setAttribute('rowspan',rs);
+    if(fid)c.setAttribute('data-fid',fid);if(cls)c.setAttribute('class',cls);if(/^\d{1,2}$/.test(cs||''))c.setAttribute('colspan',cs);if(/^\d{1,2}$/.test(rs||''))c.setAttribute('rowspan',rs);
     const css=Object.keys(keep).map(p=>p+':'+keep[p]).join(';');if(css)c.setAttribute('style',css)})};
   walk(t.content);return t.innerHTML}
 function ebSaveHtml(el){let h=ebClean(el.innerHTML,true);const t=document.createElement('template');t.innerHTML=h;
   [...t.content.childNodes].forEach(n=>{if(n.nodeType===3&&!n.textContent.trim())n.remove()});
-  [...t.content.querySelectorAll('section')].forEach(s=>{if(!s.textContent.trim()&&!s.querySelector('table,hr'))s.remove()});
+  [...t.content.querySelectorAll('section')].forEach(s=>{if(!s.textContent.trim()&&!s.querySelector('table,hr,img'))s.remove()});
   const loose=[...t.content.childNodes].filter(n=>!(n.nodeType===1&&n.tagName==='SECTION'));
   if(loose.length){const s=document.createElement('section');s.className='bls txt';loose.forEach(n=>s.appendChild(n));t.content.appendChild(s)}
   return t.innerHTML}
@@ -3180,23 +3197,20 @@ function vEbk(){const E=S.EB;if(!E){if(!S.EBL)setTimeout(ebLoad,0);return '<div 
     return `${gh}<li class="${x.on?'':'off'} ${sel===x.k?'cur':''}"><input type="checkbox" data-ebon="${esc(x.k)}" ${x.on?'checked':''} ${ed?'':'disabled'} aria-label="${esc(x.t)} 넣기"><span class="eti" data-ebgo="${esc(x.k)}" title="${esc(x.t)}">${esc(x.t)}<span class="ebchip ${c}">${l}</span><br><span class="epg" data-ebpg="${esc(x.k)}"></span></span>
       ${ed?`<span class="emv"><button type="button" data-ebmv="${i}|-1" aria-label="위로">↑</button><button type="button" data-ebmv="${i}|1" aria-label="아래로">↓</button></span>`:'<span></span>'}</li>`}).join('');
   const prev=L.map(x=>{const [c,l]=ebState(x),isEd=S.ebEd===x.k,chg=c==='chg'&&x.kind!=='text';
-    const tools=isEd?`<div class="ebbar ed" data-ebtools="1"><b>${esc(x.t)}</b> 고쳐 쓰는 중 ·
-        <button class="tb" type="button" data-ebcmd="bold"><b>굵게</b></button><button class="tb" type="button" data-ebcmd="underline"><u>밑줄</u></button>
-        <button class="tb" type="button" data-ebcmd="h2">제목</button><button class="tb" type="button" data-ebcmd="h3">소제목</button><button class="tb" type="button" data-ebcmd="p">본문</button>
-        <button class="tb" type="button" data-ebcmd="justifyCenter">가운데</button><button class="tb" type="button" data-ebcmd="justifyLeft">왼쪽</button>
-        <button class="tb" type="button" data-ebcmd="split" title="글자 칸이 있는 자리에서 뒤를 새 쪽으로">여기서 쪽 나누기</button><button class="tb" type="button" data-ebcmd="undo">되돌리기</button>
-        <button class="btn small primary" type="button" data-ebsave="${esc(x.k)}">저장</button><button class="btn small" type="button" data-ebcancel="1">그만두기</button></div>`
+    const tools=isEd?ebToolbar(x)
       :`<div class="ebbar"><b>${esc(x.t)}</b><span class="ebchip ${c}">${l}</span><span class="epg2" data-ebpg2="${esc(x.k)}"></span>${x.h&&x.at?`<span class="epg2">· ${esc(String(x.at).slice(5,16))} ${esc(x.by||'')}</span>`:''}
-        ${ed?`<button class="btn small" type="button" data-ebedit="${esc(x.k)}">${x.h||x.kind==='text'?'계속 고치기':'고쳐 쓰기'}</button>`:''}
+        ${ed&&!ebIsImg(x)?`<button class="btn small" type="button" data-ebedit="${esc(x.k)}">${x.h||x.kind==='text'?'계속 고치기':'고쳐 쓰기'}</button>`:''}
+        ${ed&&ebIsImg(x)?`<button class="btn small" type="button" data-ebimgre="${esc(x.k)}">그림 바꾸기</button><button class="btn small" type="button" data-ebimgfull="${esc(x.k)}">${/imgp full/.test(x.h)?'여백 안에 넣기':'여백 없이 가득'}</button>`:''}
+        ${ed&&x.kind!=='text'&&!x.orphan?`<button class="btn small" type="button" data-ebtog="${esc(x.k)}">${x.on?'책자에서 빼기':'책자에 넣기'}</button>`:''}
         ${ed&&x.h&&x.kind!=='text'&&!x.orphan?`<button class="btn small" type="button" data-ebreset="${esc(x.k)}">원본으로 되돌리기</button>`:''}
         ${ed&&x.kind==='text'?`<button class="btn small" type="button" data-ebname="${esc(x.k)}">이름 바꾸기</button>`:''}
         ${ed&&(x.kind==='text'||x.orphan)?`<button class="btn small" type="button" data-ebdel="${esc(x.k)}">지우기</button>`:''}</div>`;
     const warn=chg&&!isEd?`<div class="ebwarn">${x.orphan?'원본(공연 · 날짜)이 없어졌어요. 고친 내용만 남아 있어요.':`원본 데이터가 바뀌었어요(고쳐 쓴 뒤로).`}
         ${!x.orphan?`<button class="btn small" type="button" data-ebpeek="${esc(x.k)}">${S.ebPeek===x.k?'고친 쪽 보기':'바뀐 원본 보기'}</button>${ed?`<button class="btn small" type="button" data-ebreset="${esc(x.k)}">원본으로 바꾸기</button><button class="btn small" type="button" data-ebkeep="${esc(x.k)}">고친 대로 두기</button>`:''}`:''}</div>`:'';
     return `<div class="ebi ${x.on?'':'off'}" id="eb_${esc(x.k.replace(':','_'))}">${tools}${warn}<div class="ebc" data-ebk="${esc(x.k)}" style="--ebz:${z}" ${isEd?'contenteditable="true" spellcheck="false"':''}>${ebHtml(x)}</div></div>`}).join('');
-  setTimeout(ebMeasure,30);
+  setTimeout(()=>{ebImgFill(document.querySelector('.ebprev'));ebMeasure()},30);
   return `<div class="panel"><div class="spread"><div><b>행사 책자</b> <span class="hint">A5 (148 × 210mm) · 자동 쪽은 교사 일정 · 음악회 연주 순서 · 접수에서 바로 만들어요. 「고쳐 쓰기」로 손질한 쪽은 고정되고, 원본이 바뀌면 빨갛게 알려 줘요.</span></div>
-    <div class="row" style="gap:6px;flex-wrap:wrap">${ed?`<button class="btn small" type="button" id="ebAddTxt">＋ 글 쪽</button>`:''}
+    <div class="row" style="gap:6px;flex-wrap:wrap">${ed?(S.ebAdd?`<span class="ebadd"><b style="font-size:13px;padding:0 4px">새 쪽</b><button class="btn small" type="button" id="ebAddTxt">글 쪽 (직접 쓰기)</button><button class="btn small" type="button" id="ebAddImg">이미지 쪽 (그림 올리기)</button><button class="btn small ghost" type="button" id="ebAddX">닫기</button></span>`:`<button class="btn small" type="button" id="ebAddOpen" title="고른 쪽 다음에 들어가요">＋ 쪽 추가</button>`):''}
       <span class="dzm" role="group" aria-label="미리보기 크기"><button type="button" data-ebz="-" aria-label="작게">−</button><button type="button" class="dzv" data-ebz="0" title="기본 크기로">${Math.round(z*100)}%</button><button type="button" data-ebz="+" aria-label="크게">＋</button></span>
       <button class="btn small" type="button" id="ebRe">새로 만들기</button><button class="btn small" type="button" id="ebWin">새 창으로 보기</button><button class="btn small primary" type="button" id="ebPrint">인쇄 · PDF 저장</button></div></div>
     <details class="ebsetw" ${S.ebSetOpen?'open':''}><summary class="hint" style="cursor:pointer;margin-top:6px">책자 설정 (영문 행사 이름 · 표지 · 시간표 한 쪽 장소 수 · 쪽 번호)</summary>
@@ -3221,10 +3235,12 @@ function ebMeasure(){if(S.tab!=='book')return;const pr=document.getElementById('
   const t=document.getElementById('ebTot');if(t)t.textContent=`모두 약 ${tot}쪽${tot%4?` · 책으로 묶으려면 4의 배수(${Math.ceil(tot/4)*4}쪽)가 좋아요`:''}`}
 /* 인쇄 */
 function ebPrint(){const L=ebItems().filter(x=>x.on);if(!L.length){toast('넣은 쪽이 없어요');return}if(S.ebEd){toast('고쳐 쓰는 쪽을 먼저 저장하거나 그만두세요');return}
+  const H=L.map(x=>ebClean(x.h||x.auto,true));ebNeedImgs(H.join(''),()=>ebPrint2(H))}
+function ebPrint2(H){
   const T=ebSet();let r=document.getElementById('ebPrintRoot');if(!r){r=document.createElement('div');r.id='ebPrintRoot';document.body.appendChild(r)}
   let st=document.getElementById('ebPgStyle');if(!st){st=document.createElement('style');st.id='ebPgStyle';document.head.appendChild(st)}
   st.textContent=ebPageCss(T);
-  r.innerHTML=L.map(x=>ebClean(x.h||x.auto,true)).join('');
+  r.innerHTML=ebImgSrc(H.join(''));
   document.body.classList.add('ebprint');const t0=document.title;document.title=((S.EB.camp||{}).name||'캠프')+' 책자 (A5)'+dStamp();
   const fr=(document.fonts&&document.fonts.ready)||Promise.resolve();fr.then(()=>{try{window.print()}finally{setTimeout(()=>{document.title=t0},500)}})}
 window.addEventListener('afterprint',()=>{document.body.classList.remove('ebprint')});
@@ -3233,13 +3249,15 @@ function ebZoom(){if(S.ebZ==null){let v=0;try{v=+localStorage.getItem('campBookZ
 function ebPageCss(T){return `@page ebp{size:148mm 210mm;margin:12mm 10mm 13mm;${T.num?'@bottom-center{content:"- " counter(page) " -";font-family:Pretendard,sans-serif;font-size:8pt;color:#444}':''}}@page ebc{size:148mm 210mm;margin:0}`}
 /* 새 창으로 보기 (11-05, 공문과 같게): 넣은 쪽 모두를 A5 실제 크기로 새 탭에(같은 탭을 다시 씀) · − 100% ＋ 폭 맞춤 · Ctrl +/−/0 · 그 창에서 인쇄 · PDF 저장 */
 function ebOpenWin(){const L=ebItems().filter(x=>x.on);if(!L.length){toast('넣은 쪽이 없어요');return}
+  const H=L.map(x=>ebClean(S.ebEd===x.k&&S.ebBuf!=null?S.ebBuf:(x.h||x.auto),true));ebNeedImgs(H.join(''),()=>ebOpenWin2(H))}
+function ebOpenWin2(H){
   const E=S.EB,T=ebSet(),ti=String(((E.camp||{}).name||'캠프')+' 책자 (A5)').replace(/[<>&"]/g,' ');
   const css=[...document.querySelectorAll('style')].map(x=>x.textContent).filter(t=>t.indexOf('.bls{')>=0).join('\n');
-  const body=L.map(x=>ebClean(S.ebEd===x.k&&S.ebBuf!=null?S.ebBuf:(x.h||x.auto),true)).join('');
+  const body=ebImgSrc(H.join(''));
   const font='https:'+'\/\/cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css';
   const extra=ebPageCss(T)+'@media screen{html,body{margin:0;background:#dfe4e6}#ebPrintRoot{display:flex !important;flex-direction:column;align-items:center;gap:16px;padding:14px 0 40px}'+
     '.tb{position:sticky;top:0;z-index:5;display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap;padding:10px 16px;background:#1f5c63;color:#fff;font:14px "Pretendard Variable",sans-serif}.tb button{font:inherit;font-weight:700;padding:6px 14px;border:0;border-radius:8px;background:#fff;color:#1f5c63;cursor:pointer}.tb span{opacity:.85;font-size:12.5px}.zm{display:inline-flex;gap:2px;background:rgba(255,255,255,.15);border-radius:9px;padding:2px}.zm button{min-width:34px;padding:4px 8px}#zv{min-width:56px}}@media print{#ebPrintRoot{zoom:1 !important}}';
-  const html='<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+ti+dStamp()+'</title><link rel="stylesheet" href="'+font+'"><style>'+css+'\n'+extra+'</style></head><body class="ebprint">'+
+  const html='<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+ti+dStamp()+'</title><link rel="stylesheet" href="'+font+'"><link rel="stylesheet" href="'+EB_GF+'"><style>'+css+'\n'+extra+'</style></head><body class="ebprint">'+
     '<div class="tb"><b>'+ti+'</b><span class="zm"><button type="button" onclick="Z(-1)" aria-label="작게">−</button><button type="button" id="zv" onclick="Z(0)" title="100%로">100%</button><button type="button" onclick="Z(1)" aria-label="크게">＋</button><button type="button" onclick="Z(2)">폭 맞춤</button></span><button type="button" onclick="print()">인쇄 · PDF 저장</button><span>책자 화면에서 고친 뒤 「새 창으로 보기」를 다시 누르면 이 창이 새로 바뀌어요</span></div>'+
     '<div id="ebPrintRoot">'+body+'</div><scr'+'ipt>'+
     'var z=1;try{z=+localStorage.getItem("bkWinZoom")||1}catch(e){}function A(){var r=document.getElementById("ebPrintRoot");r.style.zoom=z;document.getElementById("zv").textContent=Math.round(z*100)+"%";try{localStorage.setItem("bkWinZoom",z)}catch(e){}}'+
@@ -3247,6 +3265,57 @@ function ebOpenWin(){const L=ebItems().filter(x=>x.on);if(!L.length){toast('넣�
     'document.addEventListener("keydown",function(e){if(e.ctrlKey||e.metaKey){if(e.key==="="||e.key==="+"){e.preventDefault();Z(1)}else if(e.key==="-"){e.preventDefault();Z(-1)}else if(e.key==="0"){e.preventDefault();Z(0)}}});A();</scr'+'ipt></body></html>';
   const url=URL.createObjectURL(new Blob([html],{type:'text/html;charset=utf-8'})),a=document.createElement('a');a.href=url;a.target='suzukiBook';document.body.appendChild(a);a.click();
   setTimeout(()=>{a.remove();URL.revokeObjectURL(url)},120000);if(S.ebEd)toast('새 창에 띄웠어요 · 고쳐 쓰는 중인 쪽은 아직 저장 전이에요')}
+/* ---- 글꼴 (11-05): 프리텐다드 + 구글 글꼴 4가지 ---- */
+const EB_GF='https:'+'\/\/fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Nanum+Gothic:wght@400;700;800&family=Nanum+Myeongjo:wght@400;700;800&family=Noto+Serif+KR:wght@400;600;700&display=swap';
+function ebFonts(){if(document.getElementById('ebGF'))return;const l=document.createElement('link');l.id='ebGF';l.rel='stylesheet';l.href=EB_GF;document.head.appendChild(l)}
+const EB_FF=[['"Pretendard Variable", Pretendard, sans-serif','프리텐다드'],['"Nanum Gothic", sans-serif','나눔고딕'],['"Nanum Myeongjo", serif','나눔명조'],['"Gowun Batang", serif','고운바탕'],['"Noto Serif KR", serif','본명조']];
+const EB_FS=[7,8,8.6,9,10,11,12,14,16,18,20,24,28,32,40],EB_LS=[['-0.08em','-8%'],['-0.05em','-5%'],['-0.03em','-3%'],['0','0 (기본)'],['0.03em','+3%'],['0.05em','+5%'],['0.1em','+10%'],['0.2em','+20%']];
+const EB_LH=[['1','1.0'],['1.15','1.15'],['1.3','1.3'],['1.45','1.45 (기본)'],['1.6','1.6'],['1.8','1.8'],['2','2.0'],['2.4','2.4']];
+const EB_CO=[['#111111','검정'],['#555555','회색'],['#1f5c63','청록'],['#b4423a','빨강'],['#1d4ed8','파랑'],['#7c3aed','보라']],EB_IW=['25%','40%','50%','60%','75%','100%'];
+/* 고쳐 쓰는 창: 글꼴 · 크기 · 자간 · 행간 · 색 · 굵게 … */
+function ebToolbar(x){const sel=(f,ph,L)=>`<select data-ebfmt="${f}" aria-label="${ph}"><option value="">${ph}</option>${L.map(o=>Array.isArray(o)?`<option value="${esc(o[0])}">${esc(o[1])}</option>`:`<option value="${o}">${o}${f==='fs'?'pt':''}</option>`).join('')}</select>`;
+  const tb=(c,l,t)=>`<button class="tb" type="button" data-ebcmd="${c}"${t?` title="${t}"`:''}>${l}</button>`;
+  return `<div class="ebbar ed" data-ebtools="1"><div class="r1"><b>${esc(x.t)} · 고쳐 쓰는 중</b><span class="hint" style="font-size:12px">글자를 고른 뒤 바꾸세요 · 고르지 않으면 그 문단 전체</span><button class="btn small primary" type="button" data-ebsave="${esc(x.k)}">저장</button><button class="btn small" type="button" data-ebcancel="1">그만두기</button></div>
+    <div class="r2">${sel('ff','글꼴',EB_FF)}${sel('fs','크기',EB_FS)}${sel('ls','자간',EB_LS)}${sel('lh','행간',EB_LH)}${sel('co','글자색',EB_CO)}<span class="sep"></span>
+      ${tb('bold','<b>굵게</b>')}${tb('italic','<i>기울임</i>')}${tb('underline','<u>밑줄</u>')}<span class="sep"></span>
+      ${tb('justifyLeft','왼쪽')}${tb('justifyCenter','가운데')}${tb('justifyRight','오른쪽')}<span class="sep"></span>
+      ${tb('h2','제목')}${tb('h3','소제목')}${tb('p','본문')}${tb('insertUnorderedList','• 목록')}</div>
+    <div class="r2">${tb('img','그림 넣기','지금 자리에 그림을 넣어요')}${sel('iw','그림 폭',EB_IW)}<span class="sep"></span>${tb('split','여기서 쪽 나누기','글자 칸이 있는 자리에서 뒤를 새 쪽으로')}${tb('clear','모양 지우기','고른 글자의 글꼴 · 크기 · 색 등을 지워요')}<span class="sep"></span>${tb('undo','되돌리기')}${tb('redo','다시')}</div></div>`}
+/* 그림: 캐시에 있으면 바로, 없으면 서버에서 받아 채움 */
+function ebImgIds(html){const m=String(html||'').match(/data-fid="([\w-]{10,80})"/g)||[];return [...new Set(m.map(x=>x.slice(10,-1)))]}
+function ebNeedImgs(html,cb){S.ebImg=S.ebImg||{};const miss=ebImgIds(html).filter(id=>!S.ebImg[id]);if(!miss.length){cb();return}
+  call('bookImgs',[miss],r=>{Object.assign(S.ebImg,r||{});cb()},'그림을 불러오고 있어요…')}
+function ebImgSrc(html){const t=document.createElement('template');t.innerHTML=html;t.content.querySelectorAll('img[data-fid]').forEach(i=>{const d=(S.ebImg||{})[i.getAttribute('data-fid')];if(d)i.setAttribute('src',d)});return t.innerHTML}
+function ebImgFill(root){if(!root)return;S.ebImg=S.ebImg||{};const I=[...root.querySelectorAll('img[data-fid]')],miss=[...new Set(I.map(i=>i.getAttribute('data-fid')).filter(id=>!S.ebImg[id]))];
+  const put=()=>I.forEach(i=>{const d=S.ebImg[i.getAttribute('data-fid')];if(d&&i.getAttribute('src')!==d)i.setAttribute('src',d)});put();
+  if(miss.length&&!S.ebImgL){S.ebImgL=1;google.script.run.withSuccessHandler(r=>{S.ebImgL=0;Object.assign(S.ebImg,r||{});put();setTimeout(ebMeasure,60)}).withFailureHandler(()=>{S.ebImgL=0}).bookImgs(S.tok,miss)}}
+/* 그림 고르기 → 줄여서(긴 쪽 2400px, JPEG) 올리기 */
+function ebPickImg(cb){const i=document.createElement('input');i.type='file';i.accept='image/jpeg,image/png,image/webp,image/gif';
+  i.onchange=()=>{const f=i.files&&i.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{const im=new Image();im.onload=()=>{const M=2400,k=Math.min(1,M/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);
+    const g=c.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,c.width,c.height);g.drawImage(im,0,0,c.width,c.height);const d=c.toDataURL('image/jpeg',.88);
+    call('bookImgPut',[d,f.name],r=>{S.ebImg=S.ebImg||{};S.ebImg[r.id]=d;cb(r.id)},'그림을 올리고 있어요…')};im.onerror=()=>toast('그림을 읽지 못했어요');im.src=rd.result};rd.readAsDataURL(f)};i.click()}
+/* 고쳐 쓰기: 고른 범위 기억 · 글자 모양 · 문단 모양 */
+document.addEventListener('selectionchange',()=>{if(S.tab!=='book'||!S.ebEd)return;const el=ebEditEl(),s=window.getSelection();if(el&&s.rangeCount&&el.contains(s.getRangeAt(0).commonAncestorContainer))S.ebRange=s.getRangeAt(0).cloneRange()});
+function ebRestore(){const el=ebEditEl(),s=window.getSelection();if(!el)return null;if(S.ebRange&&el.contains(S.ebRange.commonAncestorContainer)){s.removeAllRanges();s.addRange(S.ebRange)}return s.rangeCount&&el.contains(s.getRangeAt(0).commonAncestorContainer)?s.getRangeAt(0):null}
+const EB_BLK=/^(P|H1|H2|H3|H4|LI|TD|TH)$/;
+function ebBlocks(el,rg){const B=[...el.querySelectorAll('p,h1,h2,h3,h4,li,td,th')].filter(n=>rg.intersectsNode(n)&&!n.querySelector('p,h1,h2,h3,h4,li,td,th'));if(B.length)return B;
+  let n=rg.startContainer;while(n&&n!==el&&!(n.nodeType===1&&(EB_BLK.test(n.tagName)||n.tagName==='SECTION')))n=n.parentNode;return n&&n!==el?[n]:[]}
+function ebStyle(prop,val){const el=ebEditEl();if(!el)return;const rg=ebRestore();if(!rg){toast('고칠 글자를 먼저 골라 주세요');return}
+  if(prop==='line-height'||rg.collapsed){ebBlocks(el,rg).forEach(b=>b.style.setProperty(prop,val));S.ebBuf=el.innerHTML;return}
+  /* 표시용 배경색(rgb 1,2,3)으로 고른 글자를 감싼 뒤 그 칸에 모양을 줌 (다른 모양은 그대로) */
+  document.execCommand('styleWithCSS',false,true);document.execCommand('backColor',false,'#010203');document.execCommand('styleWithCSS',false,false);const N=[];
+  el.querySelectorAll('[style*="background-color"]').forEach(n=>{if(!/rgb\(1, 2, 3\)/.test(n.style.backgroundColor||''))return;n.style.removeProperty('background-color');n.style.setProperty(prop,val);N.push(n)});
+  /* 바꾼 글자를 다시 골라 둠 → 이어서 크기 · 자간 · 색도 같은 글자에 */
+  if(N.length){N.forEach(n=>n.querySelectorAll('span').forEach(c=>c.style.removeProperty(prop)));const r=document.createRange();r.setStartBefore(N[0]);r.setEndAfter(N[N.length-1]);const sl=window.getSelection();sl.removeAllRanges();sl.addRange(r);S.ebRange=r.cloneRange()}
+  S.ebBuf=el.innerHTML}
+function ebClearFmt(){const el=ebEditEl();if(!el)return;const rg=ebRestore();if(!rg)return;document.execCommand('removeFormat',false,null);
+  const B=rg.collapsed?ebBlocks(el,rg):[...el.querySelectorAll('span,p,h1,h2,h3,h4,li')].filter(n=>rg.intersectsNode(n));
+  B.forEach(n=>['font-family','font-size','letter-spacing','line-height','color','font-style'].forEach(p=>n.style&&n.style.removeProperty(p)));S.ebBuf=el.innerHTML}
+document.addEventListener('click',e=>{if(S.tab!=='book'||!S.ebEd)return;const im=e.target&&e.target.tagName==='IMG'&&e.target.closest('.ebc[contenteditable=true]')?e.target:null;
+  document.querySelectorAll('.ebc[contenteditable=true] img').forEach(x=>x.style.outline='');if(im){S.ebImgSel=im;im.style.outline='3px solid #f0b429'}},true);
+document.addEventListener('change',e=>{if(S.tab!=='book')return;const t=e.target;if(!t.dataset||!t.dataset.ebfmt)return;const f=t.dataset.ebfmt,v=t.value;t.value='';if(!v)return;
+  if(f==='iw'){const im=S.ebImgSel,el=ebEditEl();if(!im||!el||!el.contains(im)){toast('폭을 바꿀 그림을 먼저 눌러 주세요');return}im.style.width=v;im.style.outline='';S.ebBuf=el.innerHTML;return}
+  ebStyle({ff:'font-family',fs:'font-size',ls:'letter-spacing',lh:'line-height',co:'color'}[f],f==='fs'?v+'pt':v)});
 /* 고쳐 쓰기 */
 function ebEditEl(){return S.ebEd?document.querySelector(`.ebc[data-ebk="${CSS.escape(S.ebEd)}"]`):null}
 function ebStartEdit(k){if(S.ebEd&&S.ebEd!==k){if(!confirm('고쳐 쓰는 쪽이 있어요. 저장하지 않고 이 쪽으로 옮길까요?'))return}
@@ -3258,7 +3327,10 @@ function ebSplit(){const el=ebEditEl(),sel=window.getSelection();if(!el||!sel.ra
   const r2=document.createRange();r2.setStartBefore(blk);r2.setEndAfter(sec.lastChild);const fr=r2.extractContents();const ns=sec.cloneNode(false);ns.appendChild(fr);sec.after(ns);S.ebBuf=el.innerHTML;toast('여기서 새 쪽으로 나눴어요')}
 document.addEventListener('mousedown',e=>{if(S.tab!=='book')return;const b=e.target.closest&&e.target.closest('[data-ebcmd]');if(!b)return;e.preventDefault();const c=b.dataset.ebcmd,el=ebEditEl();if(!el)return;
   if(c==='split'){ebSplit();return}
-  if(['h2','h3','p'].includes(c))document.execCommand('formatBlock',false,c.toUpperCase());else document.execCommand(c,false,null);S.ebBuf=el.innerHTML},true);
+  if(c==='clear'){ebClearFmt();return}
+  if(c==='img'){const rg=ebRestore(),keep=rg&&rg.cloneRange();ebPickImg(id=>{const el2=ebEditEl();if(!el2)return;const s=window.getSelection();if(keep&&el2.contains(keep.commonAncestorContainer)){s.removeAllRanges();s.addRange(keep)}else{el2.focus()}
+    document.execCommand('insertHTML',false,`<img data-fid="${esc(id)}" style="width:100%">`);ebImgFill(el2);S.ebBuf=el2.innerHTML});return}
+  ebRestore();if(['h2','h3','p'].includes(c))document.execCommand('formatBlock',false,c.toUpperCase());else document.execCommand(c,false,null);S.ebBuf=el.innerHTML},true);
 document.addEventListener('input',e=>{if(S.tab!=='book')return;const el=e.target.closest&&e.target.closest('.ebc[contenteditable=true]');if(el){S.ebBuf=el.innerHTML;return}
   const t=e.target;if(t.dataset&&t.dataset.ebs){S.ebSetW=S.ebSetW||{};S.ebSetW[t.dataset.ebs]=t.type==='checkbox'?t.checked:t.type==='number'?+t.value:t.value}});
 document.addEventListener('paste',e=>{if(S.tab!=='book')return;const el=e.target.closest&&e.target.closest('.ebc[contenteditable=true]');if(!el)return;const cd=e.clipboardData;if(!cd)return;e.preventDefault();
@@ -3284,12 +3356,19 @@ document.addEventListener('click',e=>{if(S.tab!=='book')return;const b=e.target.
   if(d.ebpeek){S.ebPeek=S.ebPeek===d.ebpeek?null:d.ebpeek;render();return}
   if(d.ebdel){const x=ebItems().find(y=>y.k===d.ebdel);if(!x||!confirm(`「${x.t}」 쪽을 지울까요?`))return;ebSend([],[x.k],null,()=>toast('지웠어요'));return}
   if(d.ebname){const x=ebItems().find(y=>y.k===d.ebname);if(!x)return;const n=prompt('쪽 이름 (목록에만 보여요)',x.t);if(n==null||!n.trim())return;x.t=n.trim().slice(0,80);ebSend([ebRow(x)],[],null);return}
-  if(b.id==='ebAddTxt'){const L=ebItems(),k='text:'+Date.now().toString(36),cur=S.ebSel&&L.find(y=>y.k===S.ebSel),ord=cur?cur.ord+.5:(L.length?L[L.length-1].ord+10:10);
-    const nx={k,kind:'text',t:'새 글 쪽',ord,on:true};const rows=ebReorder(L.concat([nx]).sort((a,c)=>a.ord-c.ord)).map(r=>r.k===k?Object.assign(r,{h:ebNewText(),src:''}):r);
-    ebSend(rows,[],null,()=>{S.ebSel=k;ebStartEdit(k)},'글 쪽을 만들고 있어요…');return}
+  if(b.id==='ebAddOpen'){S.ebAdd=1;render();return}
+  if(b.id==='ebAddX'){S.ebAdd=0;render();return}
+  const addPage=(t,h,after)=>{const L=ebItems(),k='text:'+Date.now().toString(36),cur=S.ebSel&&L.find(y=>y.k===S.ebSel),ord=cur?cur.ord+.5:(L.length?L[L.length-1].ord+10:10);
+    const nx={k,kind:'text',t,ord,on:true};const rows=ebReorder(L.concat([nx]).sort((a,c)=>a.ord-c.ord)).map(r=>r.k===k?Object.assign(r,{h,src:''}):r);S.ebAdd=0;
+    ebSend(rows,[],null,()=>{S.ebSel=k;after&&after(k);setTimeout(()=>{const el=document.getElementById('eb_'+k.replace(':','_'));if(el)el.scrollIntoView({block:'start',behavior:'smooth'})},60)},'쪽을 만들고 있어요…')};
+  if(b.id==='ebAddTxt'){addPage('새 글 쪽',ebNewText(),k=>ebStartEdit(k));return}
+  if(b.id==='ebAddImg'){ebPickImg(id=>addPage('새 이미지 쪽',ebNewImg(id,false)));return}
+  if(d.ebimgre){const x=ebItems().find(y=>y.k===d.ebimgre);if(!x)return;ebPickImg(id=>ebSend([ebRow(x,{h:ebNewImg(id,/imgp full/.test(x.h)),src:''})],[],null,()=>toast('그림을 바꿨어요')));return}
+  if(d.ebimgfull){const x=ebItems().find(y=>y.k===d.ebimgfull);if(!x)return;const full=!/imgp full/.test(x.h);ebSend([ebRow(x,{h:x.h.replace(/class="bls imgp( full)?"/,`class="bls imgp${full?' full':''}"`),src:''})],[],null,()=>toast(full?'여백 없이 쪽 가득 · 표지처럼 번호 없이 찍혀요':'여백 안에 넣었어요'));return}
+  if(d.ebtog){const x=ebItems().find(y=>y.k===d.ebtog);if(!x)return;x.on=!x.on;ebSend([ebRow(x)],[],null,()=>toast(x.on?'책자에 넣었어요':'책자에서 뺐어요 · 왼쪽 목록 체크로 다시 넣을 수 있어요'));return}
   if(b.id==='ebSetSave'){const n=Object.assign(ebSet(),S.ebSetW||{});n.per=Math.max(1,Math.min(10,Math.round(+n.per||5)));n.fs=Math.max(5,Math.min(10,+n.fs||6.6));['en','sub','org'].forEach(k=>n[k]=String(n[k]||'').trim().slice(0,120));
     ebSend([],[],n,()=>{S.ebSetW=null;toast('책자 설정을 저장했어요')});return}},true);
 </script>
-<div id="bldMark" hidden>빌드표시 20261105-203317 </div>
+<div id="bldMark" hidden>빌드표시 20261105-204354 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();</script>
 </body></html>

@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261105-230119 -->
+<!-- build: 20261105-230210 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -3871,12 +3871,14 @@ function ebOpenWin2(H){
   const css=[...document.querySelectorAll('style')].map(x=>x.textContent).filter(t=>t.indexOf('.bls{')>=0).join('\n');
   const body=ebImgSrc(H.join(''));
   const font='https:'+'\/\/cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css';
-  const extra=ebPageCss(T)+'@media screen{html,body{margin:0;background:#dfe4e6}#ebPrintRoot{display:flex !important;flex-direction:column;align-items:center;gap:16px;padding:14px 0 40px}'+
+  const extra=ebPageCss(T)+'@media screen{.bls.ovf::after{content:attr(data-ov);position:absolute;top:1.5mm;right:2mm;background:#e5484d;color:#fff;font:700 11px sans-serif;padding:2px 7px;border-radius:9px}html,body{margin:0;background:#dfe4e6}#ebPrintRoot{display:flex !important;flex-direction:column;align-items:center;gap:16px;padding:14px 0 40px}'+
     '.tb{position:sticky;top:0;z-index:5;display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap;padding:10px 16px;background:#1f5c63;color:#fff;font:14px "Pretendard Variable",sans-serif}.tb button{font:inherit;font-weight:700;padding:6px 14px;border:0;border-radius:8px;background:#fff;color:#1f5c63;cursor:pointer}.tb span{opacity:.85;font-size:12.5px}.zm{display:inline-flex;gap:2px;background:rgba(255,255,255,.15);border-radius:9px;padding:2px}.zm button{min-width:34px;padding:4px 8px}#zv{min-width:56px}}@media print{#ebPrintRoot{zoom:1 !important}}';
   const html='<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+ti+dStamp()+'</title><link rel="stylesheet" href="'+font+'"><link rel="stylesheet" href="'+EB_GF+'"><style>'+css+'\n'+extra+'</style></head><body class="ebprint">'+
     '<div class="tb"><b>'+ti+'</b><span class="zm"><button type="button" onclick="Z(-1)" aria-label="작게">−</button><button type="button" id="zv" onclick="Z(0)" title="100%로">100%</button><button type="button" onclick="Z(1)" aria-label="크게">＋</button><button type="button" onclick="Z(2)">폭 맞춤</button></span><button type="button" onclick="print()">인쇄 · PDF 저장</button><span>책자 화면에서 고친 뒤 「새 창으로 보기」를 다시 누르면 이 창이 새로 바뀌어요</span></div>'+
     '<div id="ebPrintRoot">'+body+'</div><scr'+'ipt>'+
-    'var z=1;try{z=+localStorage.getItem("bkWinZoom")||1}catch(e){}function A(){var r=document.getElementById("ebPrintRoot");r.style.zoom=z;document.getElementById("zv").textContent=Math.round(z*100)+"%";try{localStorage.setItem("bkWinZoom",z)}catch(e){}Q()}'+
+    'var z=1;try{z=+localStorage.getItem("bkWinZoom")||1}catch(e){}function A(){var r=document.getElementById("ebPrintRoot");r.style.zoom=z;document.getElementById("zv").textContent=Math.round(z*100)+"%";try{localStorage.setItem("bkWinZoom",z)}catch(e){}Q();O()}'+
+    'function O(){var r=document.getElementById("ebPrintRoot"),zz=parseFloat(r.style.zoom)||1,p=document.createElement("div");p.style.cssText="height:210mm;width:1px;position:absolute;visibility:hidden";r.appendChild(p);var A=p.getBoundingClientRect().height;p.remove();'+
+    'var L=r.querySelectorAll("section.bls");for(var i=0;i<L.length;i++){var s=L[i],m=s.style.minHeight;s.style.minHeight="0";var h=s.getBoundingClientRect().height;s.style.minHeight=m;var n=Math.max(1,Math.round(h/A-.02+.49));s.classList.toggle("ovf",n>1);s.setAttribute("data-ov",n>1?"A5 넘침 · "+n+"쪽으로 나뉘어 찍혀요":"")}}'+
     'function Q(){var G={},L=document.querySelectorAll("#ebPrintRoot section.sch"),zz=parseFloat(document.getElementById("ebPrintRoot").style.zoom)||1;for(var i=0;i<L.length;i++){var t=L[i].querySelector(".stt");if(!t)continue;var k=t.textContent;G[k]=(G[k]||[]).concat([].slice.call(L[i].querySelectorAll("table.st")))}'+
     'for(var k in G){var T=G[k],H=[];if(T.length<2)continue;T.forEach(function(t){[].forEach.call(t.rows,function(r){r.style.height=""})});T.forEach(function(t){[].forEach.call(t.rows,function(r,j){H[j]=Math.max(H[j]||0,r.getBoundingClientRect().height)})});T.forEach(function(t){[].forEach.call(t.rows,function(r,j){r.style.height=(H[j]/zz)+"px"})})}}'+
     'var z0=1;window.addEventListener("beforeprint",function(){z0=z;document.getElementById("ebPrintRoot").style.zoom=1;Q()});window.addEventListener("afterprint",function(){z=z0;A()});'+
@@ -4109,6 +4111,6 @@ document.addEventListener('click',e=>{if(S.tab!=='book')return;const b=e.target.
   if(b.id==='ebSetSave'){const n=Object.assign(ebSet(),S.ebSetW||{});n.per=Math.max(1,Math.min(10,Math.round(+n.per||5)));n.fs=Math.max(5,Math.min(10,+n.fs||6.6));['en','sub','org'].forEach(k=>n[k]=String(n[k]||'').trim().slice(0,120));
     ebSend([],[],n,()=>{S.ebSetW=null;toast('책자 설정을 저장했어요')});return}},true);
 </script>
-<div id="bldMark" hidden>빌드표시 20261105-230119 </div>
+<div id="bldMark" hidden>빌드표시 20261105-230210 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();</script>
 </body></html>

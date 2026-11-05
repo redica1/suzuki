@@ -1,4 +1,4 @@
-/* build: 20261105-201526 */
+/* build: 20261105-202807 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -1497,7 +1497,7 @@ function bookSh_() {
   return sh;
 }
 function bookPerm_(a, edit) { if (a.sup) return; const p = a.perms.book; if (edit ? p !== '편집' : !['보기', '편집'].includes(p)) throw new Error(edit ? '행사 책자 「편집」 권한이 있어야 해요.' : '행사 책자 권한이 있어야 볼 수 있어요.'); }
-function bookRows_() { bookSh_(); return rows_(BOOK_SH).filter(r => String(r['키'] || '')).map(r => ({ _row: r._row, k: String(r['키']), ord: +r['순서'] || 0, on: String(r['사용'] || '예') !== '아니오', t: String(r['제목'] || ''), h: String(r['내용'] || ''), src: String(r['원본'] || ''), at: String(r['수정일'] || ''), by: String(r['수정자'] || '') })); }
+function bookRows_() { bookSh_(); return rows_(BOOK_SH).filter(r => String(r['키'] || '')).map(r => ({ _row: r._row, k: String(r['키']), ord: +r['순서'] || 0, on: String(r['사용'] || '예') !== '아니오', t: String(r['제목'] || ''), h: String(r['내용'] || ''), src: String(r['원본'] || ''), at: r['수정일'] instanceof Date ? Utilities.formatDate(r['수정일'], TZ, 'yyyy-MM-dd HH:mm:ss') : String(r['수정일'] || ''), by: String(r['수정자'] || '') })); }
 function bookPages_() { const R = bookRows_(), rev = R.find(r => r.k === '_rev'), set = R.find(r => r.k === '_set');
   let S = {}; try { S = set ? JSON.parse(set.h || '{}') : {}; } catch (x) { S = {}; }
   return { rev: rev ? +rev.h || 0 : 0, set: S, pages: R.filter(r => r.k[0] !== '_').map(r => ({ k: r.k, ord: r.ord, on: r.on, t: r.t, h: r.h, src: r.src, at: r.at, by: r.by })) }; }

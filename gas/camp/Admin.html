@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261105-213502 -->
+<!-- build: 20261105-213816 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -3156,10 +3156,20 @@ function ebCon(b){const T=ebSet(),it=b.items||[];
 function ebOrch(){const O=S.EB.orch||[];let h='',tb=null;const close=()=>{if(tb!=null){h+=`<table class="ot">${tb}</table>`;tb=null}};
   O.forEach(r=>{const v=r.v||[];if(r.k==='h'){close();h+=`<div class="oh">${esc(v[0])}</div>`}else if(r.k==='r'){close();h+=`<div class="or">리허설 · ${esc(v.slice(1).join(', '))}</div>`}else if(r.k==='p'){tb=(tb||'')+`<tr><th>${esc(v[0])}</th><td>${esc(v.slice(1).join(', '))}</td></tr>`}else close()});close();
   return `<section class="bls orc"><h2>오케스트라 명단 <small style="font-weight:600;font-size:.7em">Orchestra Members</small></h2>${h||'<p style="color:#888">(교사 일정에 지휘 · 악장 · Vln 1 같은 파트 역할이 들어간 공연이 없어요)</p>'}</section>`}
-function ebTch(){const T=(S.EB.teachers||[]).slice(1),A={},ord=[];T.forEach(r=>{if(!A[r[0]]){A[r[0]]=[];ord.push(r[0])}A[r[0]].push((r[1]?r[1]+' ':'')+r[2])});
-  const rows=ord.map(a=>`<tr><td class="a">${esc(a)}</td><td>${A[a].map(esc).join('<br>')}</td></tr>`),half=Math.ceil(rows.length/2);
-  return `<section class="bls tch"><h2>참가 교실 및 교사 명단</h2><p style="text-align:center;font-size:7.8pt;color:#555;margin-top:-1.5mm">Participating Suzuki Music Schools &amp; Teachers</p>
-    <div class="tcw"><table class="tt"><tbody>${rows.slice(0,half).join('')}</tbody></table><table class="tt"><tbody>${rows.slice(half).join('')}</tbody></table></div></section>`}
+function ebTch(){const E=S.EB,TB=E.tchBook,T=ebSet(),C=E.camp||{};
+  /* 학원별 「Vn 이름, 이름 / Vc 이름」 · 국내(한글) 가나다 → 해외(영문) → 연수교사 악기별 (11-05, 작년 책자 모양) */
+  const IO=['Vn','Va','Vc','Fl','Pf'],io=i=>{const k=IO.indexOf(i);return k<0?9:k};let rows=[];
+  if(TB){const A={};(TB.t||[]).forEach(([a,i,n])=>{(A[a]=A[a]||[]).push([i,n])});
+    rows=Object.keys(A).map(a=>[a,A[a].sort((x,y)=>io(x[0])-io(y[0])).map(([i,n])=>(i?i+' ':'')+n).join(' / ')]);
+    const ko=x=>/^[가-힣]/.test(x[0]);rows.sort((x,y)=>(ko(x)?0:1)-(ko(y)?0:1)||x[0].localeCompare(y[0],ko(x)?'ko':'en'));
+    (TB.r||[]).slice().sort((x,y)=>io(x[0])-io(y[0])).forEach(([i,n])=>rows.push(['연수교사'+(i?' '+i:''),n]))}
+  else{const A={},ord=[];(E.teachers||[]).slice(1).forEach(r=>{if(!A[r[0]]){A[r[0]]=[];ord.push(r[0])}A[r[0]].push((r[1]?r[1]+' ':'')+r[2])});rows=ord.map(a=>[a,A[a].join(' / ')])}
+  /* 왼쪽 · 오른쪽: 줄 수가 아니라 대략 높이(학원 칸 9자 · 이름 칸 20자 한 줄)로 반씩 */
+  const h=r=>Math.max(1,Math.ceil(r[0].length/9),Math.ceil(r[1].length/20)),tot=rows.reduce((s,r)=>s+h(r),0);let acc=0,cut=rows.length;
+  for(let k=0;k<rows.length;k++){acc+=h(rows[k]);if(acc>=tot/2){cut=acc-h(rows[k])/2>tot/2?k:k+1;break}}
+  const tr=r=>`<tr><td class="a">${esc(r[0])}</td><td>${esc(r[1])}</td></tr>`;
+  return `<section class="bls tch"><h2>${esc(C.name?C.name+' ':'')}참가 교실 및 교사 명단</h2><p style="text-align:center;font-size:7.8pt;color:#555;margin-top:-1.5mm">${T.en?esc(T.en)+' · ':''}Participating Suzuki Music Schools &amp; Teachers</p>
+    <div class="tcw"><table class="tt"><tbody>${rows.slice(0,cut).map(tr).join('')}</tbody></table><table class="tt"><tbody>${rows.slice(cut).map(tr).join('')}</tbody></table></div></section>`}
 function ebNewImg(id,full){return `<section class="bls imgp${full?' full':''}"><img data-fid="${esc(id)}"></section>`}
 function ebNewText(){return '<section class="bls txt"><h2>제목</h2><p>여기에 내용을 적거나, 한글 · 워드에서 복사해 붙여 넣으세요.</p></section>'}
 /* ---- 쪽 목록: 자동 쪽 + 저장된 쪽(고친 내용 · 순서 · 사용) ---- */
@@ -3712,6 +3722,6 @@ document.addEventListener('click',e=>{if(S.tab!=='book')return;const b=e.target.
   if(b.id==='ebSetSave'){const n=Object.assign(ebSet(),S.ebSetW||{});n.per=Math.max(1,Math.min(10,Math.round(+n.per||5)));n.fs=Math.max(5,Math.min(10,+n.fs||6.6));['en','sub','org'].forEach(k=>n[k]=String(n[k]||'').trim().slice(0,120));
     ebSend([],[],n,()=>{S.ebSetW=null;toast('책자 설정을 저장했어요')});return}},true);
 </script>
-<div id="bldMark" hidden>빌드표시 20261105-213502 </div>
+<div id="bldMark" hidden>빌드표시 20261105-213816 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();</script>
 </body></html>

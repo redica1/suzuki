@@ -1,4 +1,4 @@
-/* build: 20261105-213502 */
+/* build: 20261105-213816 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -1510,7 +1510,15 @@ function bookData(token) {
   return Object.assign({ ok: true, edit: a.sup || a.perms.book === '편집',
     camp: { id: C.base.id, name: C.base.name, start: C.base.start, end: C.base.end, place: C.base.place },
     days: P.days.map((D, i) => ({ i, label: D.label, date: ymd(i), V: D.V, W: D.W, meals: D.meals })),
-    concerts: (P.concerts || []).map(x => x.book), teachers: P.teachers || [], orch: P.orch || [] }, bookPages_());
+    concerts: (P.concerts || []).map(x => x.book), teachers: P.teachers || [], orch: P.orch || [], tchBook: bookTch_() }, bookPages_());
+}
+/** 책자 「참가 교실 · 교사 명단」 재료 (11-05): 교사는 학원 · 악기별, 연수생(연수생 · 소속없는 중급연수생)은 따로 악기별 → 「연수교사 Vn」 줄 */
+function bookTch_() {
+  const T = {}, R = {}, AB = { 바이올린: 'Vn', 첼로: 'Vc', 플루트: 'Fl', 비올라: 'Va', 피아노: 'Pf' };
+  loadSubs_().forEach(sb => (sb.ppl || []).forEach(p => { if (p.status === '취소') return; const ins = AB[p.inst] || p.inst || '';
+    if (p.type === '교사') { const k = sb.acad + '|' + ins; (T[k] = T[k] || []).push(p.name); }
+    else if (p.type === '연수생' || p.type === '소속없는 중급연수생') (R[ins] = R[ins] || []).push(p.name); }));
+  return { t: Object.keys(T).map(k => { const [a, i] = k.split('|'); return [a, i, T[k].join(', ')]; }), r: Object.keys(R).map(i => [i, R[i].join(', ')]) };
 }
 /** 책자 저장: rows = 바뀐 쪽만 [{k, ord, on, t, h, src}], del = 지울 키(글 쪽 · 원본 없는 쪽), set = 설정(있을 때만) · rev 가 다르면 막음 */
 function bookSave(token, rev, rows, del, set) {

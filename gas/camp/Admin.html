@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261105-215930 -->
+<!-- build: 20261105-220123 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -3089,6 +3089,7 @@ document.addEventListener('change',e=>{const t=e.target;if(S.tab!=='meal')return
 .bls.txt{font-size:8.8pt}
 .bls img{max-width:100%;height:auto;vertical-align:top}
 /* 표 (11-05) */
+.bls td b,.bls td strong,.bls th b,.bls th strong{font-weight:700}  /* 관리자 표 전체 규칙(tbody td b = 400)을 책자 표에서만 되돌림 */
 .bls table.ut{width:100%;margin:0 0 2mm}.bls table.hd tr:first-child>td,.bls table.hd tr:first-child>th{font-weight:700;background-color:#eef2f3}
 .bls table.bh td,.bls table.bh th{border-left:0;border-right:0}.bls table.bn td,.bls table.bn th{border:0}
 .ebc[contenteditable=true] td.ebrz,.ebc[contenteditable=true] th.ebrz{cursor:col-resize;box-shadow:inset -2px 0 0 #f0b429}
@@ -3774,6 +3775,6 @@ document.addEventListener('click',e=>{if(S.tab!=='book')return;const b=e.target.
   if(b.id==='ebSetSave'){const n=Object.assign(ebSet(),S.ebSetW||{});n.per=Math.max(1,Math.min(10,Math.round(+n.per||5)));n.fs=Math.max(5,Math.min(10,+n.fs||6.6));['en','sub','org'].forEach(k=>n[k]=String(n[k]||'').trim().slice(0,120));
     ebSend([],[],n,()=>{S.ebSetW=null;toast('책자 설정을 저장했어요')});return}},true);
 </script>
-<div id="bldMark" hidden>빌드표시 20261105-215930 </div>
+<div id="bldMark" hidden>빌드표시 20261105-220123 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();</script>
 </body></html>

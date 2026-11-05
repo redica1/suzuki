@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261105-220600 -->
+<!-- build: 20261105-221018 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -69,6 +69,7 @@ input[type=date]{width:140px}
 .ccg input,.ccg select,.cct input{padding:6px 8px;border:1px solid var(--line);border-radius:6px;font:inherit;background:var(--surface);color:var(--ink);min-width:0}.cct input[type=date]{min-width:140px}.cct td{vertical-align:middle}
 .sft td:first-child{white-space:nowrap}.sft select.pv{min-width:58px;padding:4px 5px}.sft .row .btn{white-space:nowrap}.cct th.r{text-align:left}.sft select.pv.e{background:var(--accent-soft);color:var(--accent);font-weight:600}.sft select.pv.v{background:var(--sunk)}.sft th.c{font-size:14px;white-space:nowrap}
 @media (max-width:640px){.ccg .w2{grid-column:auto}}
+.pfpro td{background:var(--sunk)}.pfg{display:grid;grid-template-columns:repeat(4,minmax(150px,1fr));gap:8px 12px;padding:6px 2px}.pfg label{display:flex;flex-direction:column;gap:3px;font-size:13px;color:var(--muted)}.pfg .wide{grid-column:1 / -1}.pfg textarea{font:inherit;font-size:14px;padding:6px 8px;border:1px solid var(--line);border-radius:6px;resize:vertical;width:100%;box-sizing:border-box}
 .pft input[type=text],.pft select{width:100%;min-width:70px;padding:5px 7px;border:1px solid var(--line);border-radius:6px;font:inherit;background:var(--surface);color:var(--ink)}.pft select{min-width:96px}.pft td.c{text-align:center}.pft tr.off td{opacity:.5}.pft td{padding:4px 6px;vertical-align:middle}
 table.sortable th[data-sc]{cursor:pointer;user-select:none;white-space:nowrap}table.sortable th[data-sc]:hover{text-decoration:underline}table.sortable tr.foot td{border-top:2px solid var(--line,#ccc)}.sarr{font-size:12px}
 table{border-collapse:collapse;width:100%;font-size:15.5px}
@@ -1567,7 +1568,8 @@ return {view,flush};
 
 /* ---------- 교수진 (캠프 교수 · 외부 초청 교수 포함) ---------- */
 const PF_INST=['바이올린','첼로','플루트','비올라','피아노','기타'];
-const pfCopy=()=>JSON.parse(JSON.stringify((S.D.profs||[]).map(p=>({name:p.name,inst:p.inst,lesson:!!p.lesson,mc:!!p.mc,min:p.min||'',fee:p.fee||'',org:p.org||'',on:p.on!==false,memo:p.memo||'',room:p.room||''}))));
+const pfCopy=()=>JSON.parse(JSON.stringify((S.D.profs||[]).map(p=>({name:p.name,inst:p.inst,lesson:!!p.lesson,mc:!!p.mc,min:p.min||'',fee:p.fee||'',org:p.org||'',on:p.on!==false,memo:p.memo||'',room:p.room||'',book:p.book||'',bgrp:p.bgrp||'',en:p.en||'',title:p.title||'',bio:p.bio||'',bord:p.bord||''}))));
+const PF_GRP={바이올린:'바이올린 Violin',비올라:'비올라 Viola',첼로:'첼로 Cello',플루트:'플루트 Flute',피아노:'피아노 Piano',기타:''};
 const pfDirty=()=>S.pf&&JSON.stringify(S.pf)!==JSON.stringify(pfCopy());
 function vProf(){if(!S.pf)S.pf=pfCopy();const L=S.pf,f=S.pff||'all';
   const on=L.filter(p=>p.on),n=k=>on.filter(p=>p.inst===k).length;
@@ -1575,9 +1577,9 @@ function vProf(){if(!S.pf)S.pf=pfCopy();const L=S.pf,f=S.pff||'all';
   const idx=L.map((p,i)=>i).filter(i=>f==='all'||L[i].inst===f);
   const used={};(S.D.subs||[]).forEach(sb=>sb.ppl.filter(q=>q.status==='정상').forEach(q=>{const i=(sb.form&&sb.form.info&&sb.form.info[q.id.slice(sb.no.length+1)])||{};[i.p1,i.p2].filter(Boolean).forEach(x=>{used[x]=used[x]||{p:0,m:0};used[x].p++});(i.mc||[]).forEach(x=>{used[x]=used[x]||{p:0,m:0};used[x].m++})}));
   return `<div class="panel"><div class="spread"><div><b>교수진</b> <span class="hint">사용 중 ${on.length}명 · 레슨 ${on.filter(p=>p.lesson).length} · 마스터클래스 ${on.filter(p=>p.mc).length} · 여기서 고치면 선생님 접수 화면의 「선호 교수」·「마스터클래스」 목록이 바뀌어요 (시트 「교수진」 탭)</span></div>
-    <div class="row" style="gap:6px">${pfDirty()?'<span class="pill due">저장 안 한 변경 있음</span><button class="btn small ghost" type="button" data-pfreset="1">되돌리기</button>':''}<button class="btn small" type="button" data-pfadd="1">＋ 교수 추가</button><button class="btn small primary" type="button" data-pfsave="1">저장</button></div></div>
+    <div class="row" style="gap:6px">${pfDirty()?'<span class="pill due">저장 안 한 변경 있음</span><button class="btn small ghost" type="button" data-pfreset="1">되돌리기</button>':''}<button class="btn small" type="button" data-pfimp="1" title="지난 캠프 DB 시트의 교수진에서 책자 · 영문 이름 · 직함 · 약력을 이름으로 맞춰 가져와요">지난 캠프에서 약력 가져오기</button><button class="btn small" type="button" data-pfadd="1">＋ 교수 추가</button><button class="btn small primary" type="button" data-pfsave="1">저장</button></div></div>
     <div class="row" style="gap:6px;margin-top:8px">${[['all','전체 '+L.length],...ins.map(i=>[i,i+' '+n(i)])].map(([k,l])=>`<button class="btn small ${f===k?'primary':''}" type="button" data-pff="${esc(k)}">${esc(l)}</button>`).join('')}</div></div>
-  <div class="panel tbl"><table class="pft"><thead><tr><th>이름</th><th>악기</th><th>레슨</th><th>마스터클래스</th><th>시간(분)</th><th>마스터클래스 금액</th><th>소속</th><th>레슨실</th><th>사용</th><th>메모</th><th>신청</th><th></th></tr></thead><tbody>
+  <div class="panel tbl"><table class="pft"><thead><tr><th>이름</th><th>악기</th><th>레슨</th><th>마스터클래스</th><th>시간(분)</th><th>마스터클래스 금액</th><th>소속</th><th>레슨실</th><th>사용</th><th>메모</th><th>책자</th><th>신청</th><th></th></tr></thead><tbody>
   ${idx.map(i=>{const p=L[i],u=used[p.name];return `<tr class="${p.on?'':'off'}"><td><input type="text" data-pf="${i}|name" value="${esc(p.name)}" placeholder="이름" maxlength="40"></td>
     <td><select data-pf="${i}|inst">${['',...PF_INST].map(x=>`<option value="${x}" ${p.inst===x?'selected':''}>${x||'악기'}</option>`).join('')}</select></td>
     <td class="c"><input type="checkbox" data-pf="${i}|lesson" ${p.lesson?'checked':''} aria-label="레슨"></td><td class="c"><input type="checkbox" data-pf="${i}|mc" ${p.mc?'checked':''} aria-label="마스터클래스"></td>
@@ -1587,8 +1589,14 @@ function vProf(){if(!S.pf)S.pf=pfCopy();const L=S.pf,f=S.pff||'all';
     <td><input type="text" data-pf="${i}|room" value="${esc(p.room||'')}" placeholder="예: H350" maxlength="30" style="width:84px" ${p.lesson?'':'disabled'}></td>
     <td class="c"><input type="checkbox" data-pf="${i}|on" ${p.on?'checked':''} aria-label="사용"></td>
     <td><input type="text" data-pf="${i}|memo" value="${esc(p.memo)}" maxlength="200"></td>
+    <td style="white-space:nowrap"><select data-pf="${i}|book" style="min-width:70px">${[['','안 넣음'],['협회','협회'],['초청','초청']].map(([v,l])=>`<option value="${v}" ${p.book===v?'selected':''}>${l}</option>`).join('')}</select> <button class="btn small ${S.pfOpen===i?'primary':''}" type="button" data-pfprof="${i}" title="책자에 나갈 영문 이름 · 직함 · 약력">프로필${p.bio?' ✓':''}</button></td>
     <td><small class="faint">${u?[u.p?'선호 '+u.p:'',u.m?'마클 '+u.m:''].filter(Boolean).join(' · '):''}</small></td>
-    <td><button class="btn small ghost" type="button" data-pfdel="${i}" title="목록에서 빼기">빼기</button></td></tr>`}).join('')||'<tr><td colspan="12" class="hint">교수가 없어요. 「＋ 교수 추가」를 눌러 주세요.</td></tr>'}
+    <td><button class="btn small ghost" type="button" data-pfdel="${i}" title="목록에서 빼기">빼기</button></td></tr>${S.pfOpen===i?`<tr class="pfpro"><td colspan="13"><div class="pfg">
+      <label>책자 묶음<input type="text" data-pf="${i}|bgrp" value="${esc(p.bgrp)}" placeholder="${esc(PF_GRP[p.inst]||'예: 지휘 Conductor')}" maxlength="40"></label>
+      <label>영문 이름<input type="text" data-pf="${i}|en" value="${esc(p.en)}" placeholder="Hwang, Kyung Ik" maxlength="80"></label>
+      <label>직함 <small class="faint">「회장」이면 교수진 쪽 머리에</small><input type="text" data-pf="${i}|title" value="${esc(p.title)}" maxlength="60"></label>
+      <label>책자 순서 <small class="faint">같은 묶음 안, 작을수록 앞</small><input type="text" inputmode="numeric" data-pf="${i}|bord" value="${esc(String(p.bord||''))}" maxlength="3" style="width:70px"></label>
+      <label class="wide">약력 <small class="faint">줄마다 한 항목 · 책자에는 「, 」로 이어서 한 칸에</small><textarea data-pf="${i}|bio" rows="4" maxlength="2000">${esc(p.bio)}</textarea></label></div></td></tr>`:''}`}).join('')||'<tr><td colspan="13" class="hint">교수가 없어요. 「＋ 교수 추가」를 눌러 주세요.</td></tr>'}
   </tbody></table></div>
   <div class="panel hint">· 「사용」을 끄면 접수 화면 목록에서만 빠지고, 이미 그 교수를 고른 접수는 그대로예요. 이미 신청이 있는 교수는 지우기보다 「사용」을 꺼 주세요.<br>· 같은 분이 두 악기를 맡으면 줄을 두 개로 넣어요. 마스터클래스 금액은 1회 기준이에요.</div>`}
 document.addEventListener('input',e=>{const t=e.target;if(!t.dataset||!t.dataset.pf||!S.pf)return;const [i,k]=t.dataset.pf.split('|');const p=S.pf[+i];if(!p)return;
@@ -2292,12 +2300,17 @@ document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)r
   if(ccClick(b,d)||sfClick(b,d)||scClick(b,d)||BUD.click(b,d))return;
   if(d.lmode){S.lmode=d.lmode;render();return}
   if(d.qf){S.qf=d.qf;render();return}
+  if(d.pfprof!==undefined){S.pfOpen=S.pfOpen===+d.pfprof?null:+d.pfprof;render();return}
+  if(d.pfimp){const u=prompt('지난 캠프 DB 시트 주소를 붙여 넣어 주세요 (그 시트의 「교수진」 탭에서 이름이 같은 교수의 책자 · 영문 이름 · 직함 · 약력을 가져와요. 이미 넣은 칸은 그대로 둬요)');if(!u)return;
+    call('adminProfImport',[u],r=>{let n=0;const add=[];(r.list||[]).forEach(q=>{const p=S.pf.find(x=>x.name===q.name);if(!p){if(q.book||q.bio)add.push(q);return}let ch=0;['book','bgrp','en','title','bio','bord'].forEach(k=>{if(!p[k]&&q[k]){p[k]=q[k];ch=1}});if(ch)n++});
+      if(add.length&&confirm(`지금 교수진에 없는 분 ${add.length}명(${add.slice(0,5).map(q=>q.name).join(', ')}${add.length>5?' …':''})도 책자용으로 추가할까요? (레슨 · 마스터클래스 없이 책자에만)`))add.forEach(q=>S.pf.push({name:q.name,inst:PF_INST.includes(q.inst)?q.inst:'기타',lesson:false,mc:false,min:'',fee:'',org:q.org||'교수진',on:false,memo:'지난 캠프에서 가져옴',room:'',book:q.book||'초청',bgrp:q.bgrp,en:q.en,title:q.title,bio:q.bio,bord:q.bord||''}));
+      render();toast(`${n}명 약력을 채웠어요${add.length?' · 없는 분 '+add.length+'명':''} · 확인 후 「저장」을 눌러 주세요`)},'지난 캠프 교수진을 읽고 있어요…');return}
   if(d.pff){S.pff=d.pff;render();return}
   if(d.pfadd){S.pf.push({name:'',inst:S.pff&&S.pff!=='all'?S.pff:'',lesson:true,mc:false,min:'',fee:'',org:'교수진',on:true,memo:'',room:''});render();const ins=document.querySelectorAll('[data-pf$="|name"]');if(ins.length)ins[ins.length-1].focus();return}
   if(d.pfdel!==undefined){const i=+d.pfdel,p=S.pf[i];const go=()=>{S.pf.splice(i,1);render()};if(p&&p.name)ask('「'+esc(p.name)+'」을(를) 목록에서 뺄까요?','저장을 눌러야 시트에 반영돼요. 이미 신청이 있으면 빼지 말고 「사용」을 꺼 주세요.',go,'빼기');else go();return}
   if(d.pfreset){S.pf=null;render();return}
-  if(d.pfsave){const L=S.pf.filter(p=>String(p.name).trim());const bad=L.find(p=>!p.inst)||L.find(p=>!p.lesson&&!p.mc)||L.find(p=>p.mc&&!+p.fee);
-    if(bad){toast(bad.name+': '+(!bad.inst?'악기를 골라 주세요':!bad.lesson&&!bad.mc?'레슨이나 마스터클래스 중 하나는 골라 주세요':'마스터클래스 금액을 넣어 주세요'));return}
+  if(d.pfsave){const L=S.pf.filter(p=>String(p.name).trim());const bad=L.find(p=>!p.inst)||L.find(p=>!p.lesson&&!p.mc&&!p.book)||L.find(p=>p.mc&&!+p.fee);
+    if(bad){toast(bad.name+': '+(!bad.inst?'악기를 골라 주세요':!bad.lesson&&!bad.mc?'레슨 · 마스터클래스 · 책자(협회/초청) 중 하나는 골라 주세요':'마스터클래스 금액을 넣어 주세요'));return}
     call('adminSaveProfs',[L],r=>{S.pf=null;setData(r);toast('교수진 '+L.filter(p=>p.on).length+'명을 저장했어요 · 접수 화면에 바로 반영돼요')},'저장하고 있어요…');return}
   if(d.consv){S.consv=d.consv;render();return}
   if(d.conf){S.conf=d.conf;render();return}
@@ -3133,7 +3146,7 @@ document.addEventListener('change',e=>{const t=e.target;if(S.tab!=='meal')return
  * 고쳐 쓰기: 미리보기 쪽을 바로 고침 → 그 HTML 을 고정 저장, 그때 원본 지문(src)을 같이 둠 → 원본이 바뀌면 빨간 「원본이 바뀌었어요」.
  * 글 쪽: 손으로 쓰는 쪽(주의사항 등). 한글 · 워드에서 붙여 넣으면 굵게 · 표 정도만 남김. */
 const EB_DEF={en:'',sub:'',org:'(사)한국스즈키음악협회',per:5,fs:6.6,num:true};
-const EB_KIND={cover:'표지',sched:'시간표',con:'음악회',orch:'명단',tch:'명단',text:'글'};
+const EB_KIND={fac:'교수진',cover:'표지',sched:'시간표',con:'음악회',orch:'명단',tch:'명단',text:'글'};
 function ebSet(){return Object.assign({},EB_DEF,(S.EB&&S.EB.set)||{})}
 function ebLoad(){ebFonts();S.EBL=1;if(document.fonts&&document.fonts.ready&&!S.ebFR){S.ebFR=1;document.fonts.ready.then(()=>{S.ebEqC=null;if(S.tab==='book'&&S.EB&&!S.ebEd)render()})}call('bookData',[],r=>{S.EB=r;S.EBL=0;
   /* 새 캠프(책자에 저장된 쪽이 없음) = 「데이터에서 불러오기」 방식으로 시작 */
@@ -3177,11 +3190,23 @@ function ebTch(){const E=S.EB,TB=E.tchBook,T=ebSet(),C=E.camp||{};
   const tr=r=>`<tr><td class="a">${esc(r[0])}</td><td>${esc(r[1])}</td></tr>`;
   return `<section class="bls tch"><h2>${esc(C.name?C.name+' ':'')}참가 교실 및 교사 명단</h2><p style="text-align:center;font-size:7.8pt;color:#555;margin-top:-1.5mm">${T.en?esc(T.en)+' · ':''}Participating Suzuki Music Schools &amp; Teachers</p>
     <div class="tcw"><table class="tt"><tbody>${rows.slice(0,cut).map(tr).join('')}</tbody></table><table class="tt"><tbody>${rows.slice(cut).map(tr).join('')}</tbody></table></div></section>`}
+/* 교수진 쪽 (11-05): 설정 › 교수진의 「책자」(협회 · 초청) · 묶음 · 순서 · 약력 → 작년 책자 모양(협회 쪽 머리 + 묶음별 「이름 | 약력」, 초청은 새 쪽) */
+const EB_FGO=['바이올린','비올라','첼로','지휘','플루트','피아노','유아'];
+function ebFacGrp(f){return f.g||({바이올린:'바이올린 Violin',비올라:'비올라 Viola',첼로:'첼로 Cello',플루트:'플루트 Flute',피아노:'피아노 Piano'})[f.i]||'기타'}
+function ebFac(){const E=S.EB,T=ebSet(),C=E.camp||{},F=(E.fac||[]).filter(f=>f.b==='협회'||f.b==='초청');
+  const head=F.find(f=>f.b==='협회'&&/회장/.test(f.ti||'')),bio=s=>String(s||'').split(/\n+/).map(x=>x.trim()).filter(Boolean).join(', ');
+  const part=L=>{const G={};L.filter(f=>f!==head).forEach(f=>{const g=ebFacGrp(f);(G[g]=G[g]||[]).push(f)});
+    const gk=Object.keys(G).sort((a,b)=>{const ia=EB_FGO.findIndex(x=>a.indexOf(x)===0),ib=EB_FGO.findIndex(x=>b.indexOf(x)===0);return (ia<0?99:ia)-(ib<0?99:ib)||a.localeCompare(b,'ko')});
+    return gk.map(g=>`<div class="oh">${esc(g)}</div><table class="ot"><tbody>${G[g].sort((a,b)=>(a.o||999)-(b.o||999)).map(f=>`<tr><th>${esc(f.n)}</th><td>${esc(bio(f.bio))||'<span style="color:#b4423a">(약력 없음)</span>'}</td></tr>`).join('')}</tbody></table>`).join('')};
+  const A=F.filter(f=>f.b==='협회'),B=F.filter(f=>f.b==='초청');
+  return `<section class="bls txt fac"><div class="eh"><div class="c1">${esc(T.en||'')}</div><div class="c2">${esc(C.name||'')} 참가 교수진</div><div class="c3">- 한국스즈키음악협회 교수진 - KSA Faculty Members -</div>${head?`<div class="c3">${esc(head.ti)} ${esc(head.n)}${head.en?` (${esc(head.en)})`:''}</div>`:''}</div>${part(A)||'<p style="color:#888">(협회 교수진이 없어요 · 설정 › 교수진에서 「책자」를 「협회」로)</p>'}</section>`+
+    (B.length?`<section class="bls txt fac"><h2>- 초청 교수진 - <small style="font-size:.7em;font-weight:600">Guest Faculty</small></h2>${part(B)}</section>`:'')}
 function ebNewImg(id,full){return `<section class="bls imgp${full?' full':''}"><img data-fid="${esc(id)}"></section>`}
 function ebNewText(){return '<section class="bls txt"><h2>제목</h2><p>여기에 내용을 적거나, 한글 · 워드에서 복사해 붙여 넣으세요.</p></section>'}
 /* ---- 쪽 목록: 자동 쪽 + 저장된 쪽(고친 내용 · 순서 · 사용) ---- */
 function ebItems(){const E=S.EB;if(!E)return [];const P={};(E.pages||[]).forEach(p=>P[p.k]=p);
   const auto=[];auto.push({k:'cover',t:'표지',d:10,a:()=>ebCover()});
+  if((E.fac||[]).some(f=>f.b))auto.push({k:'fac',t:'교수진',d:20,a:()=>ebFac()});
   (E.days||[]).forEach(D=>auto.push({k:'sched:'+D.i,t:D.label+' 시간표',d:100+D.i,a:()=>ebSched(D)}));
   (E.concerts||[]).forEach((b,i)=>auto.push({k:'con:'+b.id,t:b.name,d:300+i,a:()=>ebCon(b)}));
   if((E.orch||[]).length)auto.push({k:'orch',t:'오케스트라 명단',d:800,a:()=>ebOrch()});
@@ -3403,7 +3428,7 @@ function ebAcOk(a,b){const r=x=>String(x||'').replace(/\s/g,'').toLowerCase();if
 function ebCheck(){call('bookCheckData',[],R=>{S.ebCD=R;ebCheckRun();render()},'책자를 접수 명단과 대조하고 있어요…')}
 /* ---- 원본은 원본에서 (11-05): 책자 자동 쪽의 내용(곡 · 이름 · 시간 · 장소)이 데이터와 다르면 「원본에서 고치세요」 + 바로 가기. 모양(줄바꿈 · 글꼴 · 칸 폭)만 다르면 괜찮음.
  * 영어 곡명만 예외: 음악회 쪽에서 고친 영어 곡명은 저장할 때 원본(영어 곡명 목록 songEn)에도 같이 저장할지 물음. */
-const EB_SRC={cover:['camp','캠프 설정'],sched:['act','스케줄관리 › 교사 일정'],orch:['act','스케줄관리 › 교사 일정 (역할)'],con:['con','스케줄관리 › 오후음악회 › 연주 순서'],tch:['subs','운영관리 › 접수']};
+const EB_SRC={fac:['prof','설정 › 교수진'],cover:['camp','캠프 설정'],sched:['act','스케줄관리 › 교사 일정'],orch:['act','스케줄관리 › 교사 일정 (역할)'],con:['con','스케줄관리 › 오후음악회 › 연주 순서'],tch:['subs','운영관리 › 접수']};
 const ebFlat=U=>U.join('').replace(/\s+/g,'');
 function ebDiff(A,B){const cnt=new Map();A.forEach(u=>cnt.set(u,(cnt.get(u)||0)+1));const extra=[];B.forEach(u=>{const c=cnt.get(u)||0;if(c>0)cnt.set(u,c-1);else extra.push(u)});
   const miss=[];cnt.forEach((c,u)=>{for(let i=0;i<c;i++)miss.push(u)});const pairs=[];
@@ -3492,10 +3517,11 @@ function ebReady(k){const E=S.EB,kd=k.split(':')[0];
   if(kd==='con'){const b=(E.concerts||[]).find(c=>'con:'+c.id===k);if(!b)return {ok:0,m:'공연이 없어요'};const it=b.items||[];if(!it.length)return {ok:0,m:'연주 순서가 아직 없어요 (오후음악회 › 연주 순서)'};
     const noSong=it.filter(x=>/곡 미정/.test(x.ko)).length,noEn=it.filter(x=>!x.en).length,noP=it.filter(x=>!(x.lines||[]).some(l=>String(l).trim())).length;
     const w=[noSong&&`곡 미정 ${noSong}`,noEn&&`영어 곡명 없음 ${noEn}`,noP&&`연주자 없음 ${noP}`].filter(Boolean);return {ok:w.length?0:1,m:`${it.length}곡`+(w.length?' · '+w.join(' · '):' · 다 들어옴')}}
+  if(kd==='fac'){const F=(E.fac||[]).filter(f=>f.b==='협회'||f.b==='초청'),nb=F.filter(f=>!String(f.bio||'').trim()&&!/회장/.test(f.ti||'')).length;return F.length?{ok:nb?0:1,m:`협회 ${F.filter(f=>f.b==='협회').length} · 초청 ${F.filter(f=>f.b==='초청').length}명`+(nb?` · 약력 없음 ${nb}명`:' · 약력 다 들어옴')}:{ok:0,m:'설정 › 교수진에서 「책자」(협회 · 초청)를 골라 주세요'}}
   if(kd==='orch'){const n=(E.orch||[]).filter(r=>r.k==='p').length;return n?{ok:1,m:`파트 ${n}줄`}:{ok:0,m:'교사 일정에 파트 역할이 없어요'}}
   if(kd==='tch'){const n=((E.tchBook&&E.tchBook.t)||[]).length;return n?{ok:1,m:`학원 · 악기 ${n}줄${E.tchBook.r&&E.tchBook.r.length?' + 연수교사':''}`}:{ok:0,m:'접수된 교사가 없어요'}}
   return {ok:1,m:''}}
-function ebPickHtml(){const L=S.ebSrc||[],G=[['cover','앞'],['sched','날짜별 시간표'],['con','음악회 프로그램'],['orch','명단'],['tch','명단']];let last='';
+function ebPickHtml(){const L=S.ebSrc||[],G=[['cover','앞'],['fac','앞'],['sched','날짜별 시간표'],['con','음악회 프로그램'],['orch','명단'],['tch','명단']];let last='';
   return `<div class="panel ebpick"><div class="spread"><div><b>데이터에서 불러오기</b> <span class="hint">고른 것만 쪽으로 만들어요 · 빨간 글은 원본에 아직 빠진 것 — 원본에서 채운 뒤 불러오는 게 좋아요</span></div><button class="btn small ghost" type="button" id="ebPickX">닫기</button></div>
     ${L.map(x=>{const g=(G.find(y=>y[0]===x.kind)||[])[1]||'',gh=g!==last?`<div class="egrp">${esc(g)}</div>`:'';last=g;const R=ebReady(x.k);
       return `${gh}<div class="pk"><span class="pt">${esc(x.t)}</span><span class="pm ${R.ok?'':'bad'}">${esc(R.m)}</span>${x.in?`<button class="btn small ghost" type="button" data-ebgo="${esc(x.k)}">들어 있음 · 보기</button>`:`<button class="btn small${R.ok?' primary':''}" type="button" data-ebpick="${esc(x.k)}">불러오기</button>`}</div>`}).join('')}</div>`}
@@ -3509,7 +3535,7 @@ function ebPick(k){const src=(S.ebSrc||[]).find(x=>x.k===k);if(!src)return;const
 /* ---- 화면 ---- */
 function vEbk(){const E=S.EB;if(!E){if(!S.EBL)setTimeout(ebLoad,0);return '<div class="panel hint">책자를 만들고 있어요…</div>'}
   const L=ebItems(),ed=!!E.edit&&!RO(),z=ebZoom(),T=ebSet(),sel=S.ebSel;
-  const grp=k=>({cover:'앞',sched:'날짜별 시간표',con:'음악회 프로그램',orch:'명단',tch:'명단',text:'글 쪽'})[k];
+  const grp=k=>({fac:'앞',cover:'앞',sched:'날짜별 시간표',con:'음악회 프로그램',orch:'명단',tch:'명단',text:'글 쪽'})[k];
   let lastG='';
   const list=L.map((x,i)=>{const [c,l]=ebState(x),g=x.kind==='text'?'':grp(x.kind);const gh=g&&g!==lastG?`<div class="egrp">${esc(g)}</div>`:'';if(g)lastG=g;
     return `${gh}<li class="${x.on?'':'off'} ${sel===x.k?'cur':''}"><input type="checkbox" data-ebon="${esc(x.k)}" ${x.on?'checked':''} ${ed?'':'disabled'} aria-label="${esc(x.t)} 넣기"><span class="eti" data-ebgo="${esc(x.k)}" title="${esc(x.t)}">${esc(x.t)}<span class="ebchip ${c}">${l}</span><br><span class="epg" data-ebpg="${esc(x.k)}"></span></span>
@@ -3792,6 +3818,6 @@ document.addEventListener('click',e=>{if(S.tab!=='book')return;const b=e.target.
   if(b.id==='ebSetSave'){const n=Object.assign(ebSet(),S.ebSetW||{});n.per=Math.max(1,Math.min(10,Math.round(+n.per||5)));n.fs=Math.max(5,Math.min(10,+n.fs||6.6));['en','sub','org'].forEach(k=>n[k]=String(n[k]||'').trim().slice(0,120));
     ebSend([],[],n,()=>{S.ebSetW=null;toast('책자 설정을 저장했어요')});return}},true);
 </script>
-<div id="bldMark" hidden>빌드표시 20261105-220600 </div>
+<div id="bldMark" hidden>빌드표시 20261105-221018 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();</script>
 </body></html>

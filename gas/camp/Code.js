@@ -1,4 +1,4 @@
-/* build: 20261105-220600 */
+/* build: 20261105-221018 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -42,7 +42,7 @@ const MASTER = [{ n: '안드레아 부샤츠', fee: 150000 }, { n: '이성주', 
 const PROF_SEED = {
   '바이올린':['곽은수','김소정','김유정','김한기','민연희','변지혜','서민정','신재원','양승돈','오영근','이광호','이슬비','정호진','황경익','황선영','Ayumi Moriyama','Jeffrey Solares','Motomichi Kisohara','Sara M. Gonzales'],
   '첼로':['김현실','이숙정','황선경']};
-const PROF_HEAD = ['이름', '악기', '레슨', '마스터클래스', '시간(분)', '마스터클래스 금액', '소속', '사용', '메모', '레슨실'];
+const PROF_HEAD = ['이름', '악기', '레슨', '마스터클래스', '시간(분)', '마스터클래스 금액', '소속', '사용', '메모', '레슨실', '책자', '책자 묶음', '영문 이름', '직함', '약력', '책자 순서'];   /* 책자 = 협회 · 초청 · (빈칸 = 책자에 안 넣음) (11-05) */
 const PROF_INST = ['바이올린', '첼로', '플루트', '비올라', '피아노', '기타'];
 let PROF_CACHE = null;
 function profSheet_() {
@@ -61,7 +61,8 @@ function profs_() {
   profSheet_();
   PROF_CACHE = rows_(SH.PROF).filter(r => String(r['이름'] || '').trim()).map(r => ({
     name: String(r['이름']).trim(), inst: String(r['악기'] || '').trim(), lesson: yes_(r['레슨']), mc: yes_(r['마스터클래스']),
-    min: +r['시간(분)'] || 0, fee: +String(r['마스터클래스 금액'] || 0).replace(/[^\d]/g, '') || 0, org: String(r['소속'] || ''), on: String(r['사용'] || '예').trim() === '' || yes_(r['사용']), memo: String(r['메모'] || ''), room: String(r['레슨실'] || '') }));
+    min: +r['시간(분)'] || 0, fee: +String(r['마스터클래스 금액'] || 0).replace(/[^\d]/g, '') || 0, org: String(r['소속'] || ''), on: String(r['사용'] || '예').trim() === '' || yes_(r['사용']), memo: String(r['메모'] || ''), room: String(r['레슨실'] || ''),
+    book: String(r['책자'] || '').trim(), bgrp: String(r['책자 묶음'] || '').trim(), en: String(r['영문 이름'] || '').trim(), title: String(r['직함'] || '').trim(), bio: String(r['약력'] || ''), bord: +r['책자 순서'] || 0 }));
   return PROF_CACHE;
 }
 /** 접수 화면용: 사용하는 교수만 (선호 교수 목록 · 마스터클래스) */
@@ -1510,7 +1511,7 @@ function bookData(token) {
   return Object.assign({ ok: true, edit: a.sup || a.perms.book === '편집',
     camp: { id: C.base.id, name: C.base.name, start: C.base.start, end: C.base.end, place: C.base.place },
     days: P.days.map((D, i) => ({ i, label: D.label, date: ymd(i), V: D.V, W: D.W, meals: D.meals })),
-    concerts: (P.concerts || []).map(x => x.book), teachers: P.teachers || [], orch: P.orch || [], tchBook: bookTch_() }, bookPages_());
+    concerts: (P.concerts || []).map(x => x.book), teachers: P.teachers || [], orch: P.orch || [], tchBook: bookTch_(), fac: profs_().map(p => ({ n: p.name, i: p.inst, b: p.book, g: p.bgrp, en: p.en, ti: p.title, bio: p.bio, o: p.bord })) }, bookPages_());
 }
 /** 책자 「참가 교실 · 교사 명단」 재료 (11-05): 교사는 학원 · 악기별, 연수생(연수생 · 소속없는 중급연수생)은 따로 악기별 → 「연수교사 Vn」 줄 */
 function bookTch_() {
@@ -1523,7 +1524,7 @@ function bookTch_() {
 /** 책자 저장: rows = 바뀐 쪽만 [{k, ord, on, t, h, src}], del = 지울 키(글 쪽 · 원본 없는 쪽), set = 설정(있을 때만) · rev 가 다르면 막음 */
 function bookSave(token, rev, rows, del, set) {
   const a = adm_(token); bookPerm_(a, true);
-  const okKey = k => /^(cover|orch|tch|sched:\d{1,2}|con:[\w-]{1,40}|text:[\w-]{1,40})$/.test(k);
+  const okKey = k => /^(cover|orch|tch|fac|sched:\d{1,2}|con:[\w-]{1,40}|text:[\w-]{1,40})$/.test(k);
   const L = (Array.isArray(rows) ? rows : []).slice(0, 200).map(r => {
     const k = String(r && r.k || ''); if (!okKey(k)) throw new Error('쪽 이름이 맞지 않아요: ' + k);
     const h = r.h == null ? null : String(r.h); if (h && h.length > 48000) throw new Error((r.t || k) + ': 내용이 너무 길어요. 두 쪽으로 나눠 주세요.');
@@ -1663,7 +1664,7 @@ function bookReadSA_(ss) {
 /** 쪽 탭으로 보내기: tabs = [{k, name, cw:[px], rh:[px], cells:[[r,c,rs,cs,v,f,runs]]}] (한 번에 12탭까지 — 클라이언트가 나눠 부름) */
 function bookSheetPut(token, tabs) {
   const a = adm_(token); bookPerm_(a, true);
-  const okKey = k => /^(cover|orch|tch|sched:\d{1,2}|con:[\w-]{1,40}|text:[\w-]{1,40})$/.test(k);
+  const okKey = k => /^(cover|orch|tch|fac|sched:\d{1,2}|con:[\w-]{1,40}|text:[\w-]{1,40})$/.test(k);
   const T = (Array.isArray(tabs) ? tabs : []).slice(0, 12);
   const lock = lock_(); let ss = null; const out = {};
   try {
@@ -2386,23 +2387,36 @@ function adminSaveEns(token, no, patch) {
 function adminSaveProfs(token, list) {
   const a = adm_(token); need_(a, 'prof');
   const t = (s, n) => String(s == null ? '' : s).trim().slice(0, n || 60);
-  const L = (list || []).map(p => ({ name: t(p.name, 40), inst: t(p.inst, 20), lesson: !!p.lesson, mc: !!p.mc, min: Math.max(0, Math.min(240, +p.min || 0)), fee: Math.max(0, Math.min(5000000, +String(p.fee || 0).replace(/[^\d]/g, '') || 0)), org: t(p.org, 40), on: p.on !== false, memo: t(p.memo, 200), room: t(p.room, 30) })).filter(p => p.name);
+  const L = (list || []).map(p => ({ name: t(p.name, 40), inst: t(p.inst, 20), lesson: !!p.lesson, mc: !!p.mc, min: Math.max(0, Math.min(240, +p.min || 0)), fee: Math.max(0, Math.min(5000000, +String(p.fee || 0).replace(/[^\d]/g, '') || 0)), org: t(p.org, 40), on: p.on !== false, memo: t(p.memo, 200), room: t(p.room, 30),
+    book: ['협회', '초청'].includes(String(p.book || '')) ? String(p.book) : '', bgrp: t(p.bgrp, 40), en: t(p.en, 80), title: t(p.title, 60), bio: String(p.bio == null ? '' : p.bio).trim().slice(0, 2000), bord: Math.max(0, Math.min(999, Math.round(+p.bord || 0))) })).filter(p => p.name);
   const seen = {};
   L.forEach(p => {
     if (!PROF_INST.includes(p.inst)) throw new Error(p.name + ': 악기를 골라 주세요.');
     const k = p.name + '|' + p.inst; if (seen[k]) throw new Error(p.name + '(' + p.inst + ')이(가) 두 번 있어요.'); seen[k] = 1;
     if (p.mc && !p.fee) throw new Error(p.name + ': 마스터클래스 금액을 넣어 주세요.');
-    if (!p.lesson && !p.mc) throw new Error(p.name + ': 레슨이나 마스터클래스 중 하나는 골라 주세요.');
+    if (!p.lesson && !p.mc && !p.book) throw new Error(p.name + ': 레슨 · 마스터클래스 · 책자(협회/초청) 중 하나는 골라 주세요.');
   });
   const lock = lock_();
   try {
     const sh = profSheet_(); const last = sh.getLastRow();
     if (last > 1) sh.getRange(2, 1, last - 1, PROF_HEAD.length).clearContent();
-    if (L.length) sh.getRange(2, 1, L.length, PROF_HEAD.length).setValues(L.map(p => [p.name, p.inst, p.lesson ? '예' : '아니오', p.mc ? '예' : '아니오', p.mc ? (p.min || '') : '', p.mc ? p.fee : '', p.org, p.on ? '예' : '아니오', p.memo, p.room]));
+    if (L.length) sh.getRange(2, 1, L.length, PROF_HEAD.length).setValues(L.map(p => [p.name, p.inst, p.lesson ? '예' : '아니오', p.mc ? '예' : '아니오', p.mc ? (p.min || '') : '', p.mc ? p.fee : '', p.org, p.on ? '예' : '아니오', p.memo, p.room, p.book, p.bgrp, p.en, p.title, p.bio, p.bord || '']));
     PROF_CACHE = null;
     log_('관리자 ' + a.name, '교수진 저장', L.length + '명');
   } finally { lock.releaseLock(); }
   return adminData(token);
+}
+/** 다른 캠프(지난 캠프) DB 시트의 「교수진」에서 책자 프로필(책자 · 묶음 · 영문 · 직함 · 약력 · 순서) 읽기 — 화면이 이름으로 맞춰 넣고 「저장」은 사람이 (11-05) */
+function adminProfImport(token, url) {
+  const a = adm_(token); need_(a, 'prof');
+  const m = String(url || '').match(/[-\w]{25,}/); if (!m) throw new Error('지난 캠프 시트 주소를 넣어 주세요.');
+  let sh; try { sh = SpreadsheetApp.openById(m[0]).getSheetByName(SH.PROF); } catch (x) { throw new Error('그 시트를 열지 못했어요 · 주소와 공유를 확인해 주세요.'); }
+  if (!sh) throw new Error('그 시트에 「교수진」 탭이 없어요.');
+  const v = sh.getDataRange().getDisplayValues(), h = v[0].map(String), ix = k => h.indexOf(k);
+  const out = v.slice(1).filter(r => String(r[ix('이름')] || '').trim()).map(r => { const g = k => ix(k) >= 0 ? String(r[ix(k)] || '') : '';
+    return { name: g('이름').trim(), inst: g('악기').trim(), book: g('책자').trim(), bgrp: g('책자 묶음').trim(), en: g('영문 이름').trim(), title: g('직함').trim(), bio: g('약력'), bord: +g('책자 순서') || 0, org: g('소속') }; });
+  log_('관리자 ' + a.name, '교수진 약력 가져오기', out.length + '명');
+  return { ok: true, list: out };
 }
 /** 환불 요청 처리: 완료(환불한 날 필수) / 반려 */
 /** 환불 처리는 두 단계: ① 접수(승인) — 참가 취소·환불 예정 금액 확정  ② 환불 완료 — 실제로 돈을 보낸 날짜(필수)

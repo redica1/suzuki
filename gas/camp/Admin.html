@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261105-221018 -->
+<!-- build: 20261105-221151 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -3090,6 +3090,8 @@ document.addEventListener('change',e=>{const t=e.target;if(S.tab!=='meal')return
 .bls table.st tr.ml td{background:#f1f1f1;text-align:center;font-weight:700}
 .bls table.st td{text-align:center}
 .bls table.st .sp{display:block;height:1.2mm}
+.bls table.st td .sc+.sc{border-top:.5px solid #999;margin-top:.5mm;padding-top:.5mm}.bls table.st td .s1{font-weight:700;font-size:.92em}.bls table.st td .s2{font-weight:800}.bls table.st td .s4{font-weight:700}.bls table.st td .s5{font-size:.9em;color:#555}.bls table.st td .s6{font-size:.88em;color:#444}
+.bls table.st td.sm{vertical-align:middle}
 /* 음악회 프로그램 */
 .bls .it{display:grid;grid-template-columns:6mm minmax(0,auto) 1fr minmax(0,auto);column-gap:1.2mm;align-items:end;margin:0 0 2.4mm;break-inside:avoid}
 .bls .it .no{font-weight:700}.bls .it .ko{font-weight:700}.bls .it .ld{border-bottom:1px dotted #777;margin-bottom:1mm;min-width:5mm}.bls .it .pp{text-align:right}
@@ -3160,7 +3162,11 @@ function ebDt(s){const m=String(s||'').match(/^(\d{4})-(\d{2})-(\d{2})$/);return
 function ebCover(){const E=S.EB,C=E.camp||{},T=ebSet(),a=ebDt(C.start),b=ebDt(C.end);
   const dl=a?`${a.getFullYear()}. ${a.getMonth()+1}. ${a.getDate()}(${EB_WD[a.getDay()].replace('.','')})`+(b?` – ${b.getMonth()!==a.getMonth()?(b.getMonth()+1)+'. ':''}${b.getDate()}(${EB_WD[b.getDay()].replace('.','')})`:''):'';
   return `<section class="bls cov"><div class="cv">${T.en?`<div class="cv1">${esc(T.en)}</div>`:''}<div class="cv2">${esc(C.name||'')}</div>${T.sub?`<div class="cv3">${esc(T.sub)}</div>`:''}<div class="cv4">${esc(dl)}</div><div class="cv5">${esc(C.place||'')}</div><div class="cv6">${esc(T.org||'')}</div></div></section>`}
-function ebSched(D){const T=ebSet(),V=D.V||[],W=D.W||2,dt=ebDt(D.date);
+/* 시간표 칸 규칙 (11-05): ① 시각(시간대와 다를 때) ② 반 · 행사 이름(굵게) ③ 내용 ④ 담당(굵게) ⑤ 보조(작게, 괄호) ⑥ 영문(설정) · 한 칸에 일정 둘이면 가는 선으로 나눔 · 옆 칸과 똑같으면 합침 */
+function ebSchCell(L,T){return (L||[]).map(o=>`<div class="sc">${o.t?`<div class="s1">${esc(o.t)}</div>`:''}${(o.h||[]).map(h=>`<div class="s2">${esc(h)}</div>`).join('')}${(o.b||[]).map(b=>`<div class="s3">${esc(b)}</div>`).join('')}${o.l?`<div class="s4">${esc(o.l)}</div>`:''}${(o.a||[]).length?`<div class="s5">(${o.a.map(esc).join(' / ')})</div>`:''}${T.sen!==false&&o.en?`<div class="s6">${esc(o.en)}</div>`:''}</div>`).join('')}
+function ebSchRow(R,cs,T){let h='';for(let k=0;k<cs.length;k++){const L=R[cs[k]]||[],key=JSON.stringify(L);let n=1;if(L.length)while(k+n<cs.length&&JSON.stringify(R[cs[k+n]]||[])===key)n++;
+  h+=`<td${n>1?` colspan="${n}" class="sm"`:''}>${ebSchCell(L,T)}</td>`;k+=n-1}return h}
+function ebSched(D){const T=ebSet(),V=D.V||[],W=D.W||2,dt=ebDt(D.date),SR=D.S||null;
   const cols=[];for(let j=1;j<W;j++)if(String((V[2]||[])[j]||'').trim())cols.push(j);if(!cols.length)cols.push(1);
   const per=Math.max(1,Math.min(10,+T.per||5)),ch=[];for(let i=0;i<cols.length;i+=per)ch.push(cols.slice(i,i+per));
   const en=dt?`${EB_WD[dt.getDay()]} ${EB_MO[dt.getMonth()]} ${dt.getDate()} Schedule`:(D.label+' Schedule'),ko=dt?`${dt.getMonth()+1}월 ${dt.getDate()}일(${EB_KW[dt.getDay()]}) 일정`:D.label;
@@ -3168,7 +3174,7 @@ function ebSched(D){const T=ebSet(),V=D.V||[],W=D.W||2,dt=ebDt(D.date);
   const cell=t=>String(t||'').split(/\n\n+/).map(ebBr).join('<span class="sp"></span>');
   return ch.map((cs,n)=>`<section class="bls sch"><div class="stt">${esc(en)}</div><div class="stk">${esc(ko)}${ch.length>1?` · ${n+1}/${ch.length}`:''}</div>${note&&n===0?`<div class="stn">${ebBr(note)}</div>`:''}
     <div class="stw" style="font-size:${+T.fs||6.6}pt"><table class="st"><thead><tr><th style="width:12mm">시간</th>${cs.map(j=>`<th>${ebBr(V[2][j])}</th>`).join('')}</tr>${hasSub?`<tr class="rsub"><th></th>${cs.map(j=>`<th>${ebBr((V[3]||[])[j]||'')}</th>`).join('')}</tr>`:''}</thead><tbody>
-    ${V.slice(4).map((r,x)=>meals.has(x+4)?`<tr class="ml"><th>${ebBr(String(r[0]||'').replace('-','~\n'))}</th><td colspan="${cs.length}">${ebBr(r[1]||'')}</td></tr>`:`<tr><th>${ebBr(String(r[0]||'').replace('-','~\n'))}</th>${cs.map(j=>`<td>${cell(r[j])}</td>`).join('')}</tr>`).join('')}</tbody></table></div></section>`).join('')}
+    ${V.slice(4).map((r,x)=>meals.has(x+4)?`<tr class="ml"><th>${ebBr(String(r[0]||'').replace('-','~\n'))}</th><td colspan="${cs.length}">${ebBr(r[1]||'')}</td></tr>`:`<tr><th>${ebBr(String(r[0]||'').replace('-','~\n'))}</th>${SR&&SR[x+4]?ebSchRow(SR[x+4],cs,T):cs.map(j=>`<td>${cell(r[j])}</td>`).join('')}</tr>`).join('')}</tbody></table></div></section>`).join('')}
 function ebCon(b){const T=ebSet(),it=b.items||[];
   return `<section class="bls con"><div class="eh"><div class="c1">${esc(T.en||b.camp||'')}</div><div class="c2">${esc(b.name)}</div>${(b.when||[]).map(w=>`<div class="c3">${esc(w)}</div>`).join('')}</div>
     ${it.length?it.map(x=>{const L=x.lines.length?x.lines:[''];
@@ -3565,7 +3571,8 @@ function vEbk(){const E=S.EB;if(!E){if(!S.EBL)setTimeout(ebLoad,0);return '<div 
         <label>표지 아래 협회 이름<input type="text" data-ebs="org" value="${esc(T.org)}" ${ed?'':'disabled'}></label>
         <label>시간표 한 쪽에 장소 몇 곳<input type="number" min="1" max="10" data-ebs="per" value="${esc(T.per)}" ${ed?'':'disabled'}></label>
         <label>시간표 글씨 크기 (pt)<input type="number" min="5" max="10" step="0.2" data-ebs="fs" value="${esc(T.fs)}" ${ed?'':'disabled'}></label>
-        <label style="flex-direction:row;align-items:center;gap:6px"><input type="checkbox" data-ebs="num" ${T.num?'checked':''} ${ed?'':'disabled'}> 쪽 아래 번호 (- 2 -)</label></div>
+        <label style="flex-direction:row;align-items:center;gap:6px"><input type="checkbox" data-ebs="num" ${T.num?'checked':''} ${ed?'':'disabled'}> 쪽 아래 번호 (- 2 -)</label>
+        <label style="flex-direction:row;align-items:center;gap:6px"><input type="checkbox" data-ebs="sen" ${T.sen!==false?'checked':''} ${ed?'':'disabled'}> 시간표 칸에 영문 줄</label></div>
       ${ed?`<div class="row" style="margin-top:8px"><button class="btn small primary" type="button" id="ebSetSave">설정 저장</button><span class="hint">설정을 바꾸면 고쳐 쓴 쪽은 「원본 바뀜」으로 보일 수 있어요.</span></div>`:''}</details>${T.sheet?`<p class="hint" style="margin:6px 0 0">시트는 책자의 1.5배 크기예요(시트 15pt = 책자 10pt). 시트에서 고친 뒤 「시트에서 적용」. 한 탭에서 쪽을 나누려면 A열에 [쪽 나눔] 줄을 두세요. 새 탭 = 새 글 쪽.</p>`:''}</div>${S.ebPickM&&ed?ebPickHtml():''}${S.ebChk?ebChkHtml():''}
   <div class="ebw"><div class="panel eblist"><b>쪽 순서</b> <span class="hint" id="ebTot"></span><ol>${list||`<li style="display:block;border:0;color:var(--muted);font-size:13px">아직 쪽이 없어요.<br>위 「＋ 쪽 추가 › 데이터에서 불러오기」로 표지 · 날짜별 시간표 · 음악회를 하나씩 불러오세요.</li>`}</ol>
       <p class="hint" style="margin:8px 0 0">체크를 풀면 책자에서 빠져요. 쪽 수는 미리보기 기준 대략이에요(빨간 줄 = 다음 쪽으로 넘침).</p></div>
@@ -3760,7 +3767,7 @@ document.addEventListener('paste',e=>{if(S.tab!=='book')return;const el=e.target
   const h=cd.getData('text/html'),tx=cd.getData('text/plain');document.execCommand('insertHTML',false,h?ebClean(h,false):esc(tx).replace(/\n/g,'<br>'));S.ebBuf=el.innerHTML},true);
 document.addEventListener('change',e=>{if(S.tab!=='book')return;const t=e.target;
   if(t.dataset&&t.dataset.ebon!=null){const L=ebItems(),x=L.find(y=>y.k===t.dataset.ebon);if(!x)return;x.on=t.checked;ebSend([ebRow(x)],[],null,null,t.checked?'넣고 있어요…':'빼고 있어요…');return}
-  if(t.dataset&&t.dataset.ebs&&t.type==='checkbox'){S.ebSetW=S.ebSetW||{};S.ebSetW.num=t.checked}});
+  if(t.dataset&&t.dataset.ebs&&t.type==='checkbox'){S.ebSetW=S.ebSetW||{};S.ebSetW[t.dataset.ebs]=t.checked}});
 document.addEventListener('toggle',e=>{if(e.target.classList&&e.target.classList.contains('ebsetw'))S.ebSetOpen=e.target.open},true);
 document.addEventListener('click',e=>{if(S.tab!=='book')return;const b=e.target.closest&&e.target.closest('button,[data-ebgo],[data-ebchkgo]');if(!b)return;const d=b.dataset;
   if(d.ebchkgo!=null){ebMark(d.ebchkgo,d.ebchkf);return}
@@ -3818,6 +3825,6 @@ document.addEventListener('click',e=>{if(S.tab!=='book')return;const b=e.target.
   if(b.id==='ebSetSave'){const n=Object.assign(ebSet(),S.ebSetW||{});n.per=Math.max(1,Math.min(10,Math.round(+n.per||5)));n.fs=Math.max(5,Math.min(10,+n.fs||6.6));['en','sub','org'].forEach(k=>n[k]=String(n[k]||'').trim().slice(0,120));
     ebSend([],[],n,()=>{S.ebSetW=null;toast('책자 설정을 저장했어요')});return}},true);
 </script>
-<div id="bldMark" hidden>빌드표시 20261105-221018 </div>
+<div id="bldMark" hidden>빌드표시 20261105-221151 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();</script>
 </body></html>

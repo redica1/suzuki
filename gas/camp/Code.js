@@ -1,4 +1,4 @@
-/* build: 20261105-204354 */
+/* build: 20261105-210857 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -1559,6 +1559,141 @@ function bookImgs(token, ids) {
       if (!ok) return; const b = f.getBlob(); out[id] = 'data:' + b.getContentType() + ';base64,' + Utilities.base64Encode(b.getBytes()); } catch (e) {}
   });
   return out;
+}
+/* ---------------- 책자 ↔ 구글 시트 (11-05) ----------------
+ * 캠프 하나에 스프레드시트 하나(「{캠프 이름} 책자」), 책자 쪽마다 탭 하나 (방배정 도면처럼 시트에서 고치고 「시트에서 적용」).
+ * 「스프레드로 가져가기」: 관리자 화면이 그린 쪽 모양을 칸 격자로 바꿔 보냄 — 글자 · 굵게 · 크기 · 색 · 글꼴 · 정렬 · 선 · 칸 합치기 · 칸 폭 · 줄 높이.
+ * 「시트에서 적용」: 탭을 읽어 A5 쪽 HTML(표)로 바꿔 「책자」 시트에 저장. 한 탭 안에서 쪽 나누기 = 첫 칸에 [쪽 나눔].
+ * 시트는 책자의 1.5배 크기(글자 · 칸) — 화면에서 고치기 편하게. 시트 15pt = 책자 10pt.
+ * 칸마다 부르면 느려서 Sheets REST(v4)로 한 번에 읽고 씀 · 토큰은 이 앱이 이미 가진 스프레드시트 권한. */
+const BOOK_TABS_MAX = 60;
+function bookApi_(id, path, body) {
+  const o = { method: body ? 'post' : 'get', headers: { Authorization: 'Bearer ' + ScriptApp.getOAuthToken() }, muteHttpExceptions: true };
+  if (body) { o.contentType = 'application/json'; o.payload = JSON.stringify(body); }
+  const r = UrlFetchApp.fetch('https://sheets.googleapis.com/v4/spreadsheets/' + id + (path || ''), o), c = r.getResponseCode();
+  if (c >= 300) throw new Error('구글 시트에 쓰거나 읽지 못했어요 (' + c + ') ' + r.getContentText().slice(0, 160));
+  return JSON.parse(r.getContentText() || '{}');
+}
+function bookSheetUrl_(id) { return 'https://docs.google.com/spreadsheets/d/' + id + '/edit'; }
+/** _set 만 고침 (rev + 1) — 잠금 안에서 부름 */
+function bookSetPatch_(a, fn) {
+  const sh = bookSh_(), R = bookRows_(), set = R.find(r => r.k === '_set'), rv = R.find(r => r.k === '_rev'), now = +(rv && rv.h) || 0;
+  let S = {}; try { S = set ? JSON.parse(set.h || '{}') : {}; } catch (x) { S = {}; }
+  fn(S); const j = JSON.stringify(S); if (j.length > 4000) throw new Error('책자 설정이 너무 길어요(시트 탭이 너무 많아요).');
+  const t = stamp_(), put = (r, vals) => { if (r) sh.getRange(r._row, 1, 1, BOOK_HEAD.length).setValues([vals]); else sh.appendRow(vals); };
+  put(set, ['_set', '', '', '설정', j, '', t, a.name]); put(rv, ['_rev', '', '', '', String(now + 1), '', t, a.name]);
+}
+function bookRgb_(h) { const m = /^#?([0-9a-f]{6})$/i.exec(String(h || '')); if (!m) return null; const n = parseInt(m[1], 16); return { red: (n >> 16 & 255) / 255, green: (n >> 8 & 255) / 255, blue: (n & 255) / 255 }; }
+function bookHex_(c) { if (!c) return ''; const v = x => ('0' + Math.round((+x || 0) * 255).toString(16)).slice(-2); return '#' + v(c.red) + v(c.green) + v(c.blue); }
+function bookTf_(s) { const o = { bold: !!s.b, italic: !!s.i, underline: !!s.u }; if (s.ff) o.fontFamily = String(s.ff).slice(0, 40); if (+s.fs) o.fontSize = Math.max(1, Math.min(200, Math.round(+s.fs))); const c = bookRgb_(s.fc); if (c) o.foregroundColor = c; return o; }
+function bookBd_(x) { if (!Array.isArray(x)) return null; const st = x[1] === 'dotted' ? 'DOTTED' : x[1] === 'dashed' ? 'DASHED' : x[1] === 'double' ? 'DOUBLE' : +x[0] >= 3 ? 'SOLID_THICK' : +x[0] >= 2 ? 'SOLID_MEDIUM' : 'SOLID'; return { style: st, color: bookRgb_(x[2]) || { red: 0, green: 0, blue: 0 } }; }
+/** 쪽 탭으로 보내기: tabs = [{k, name, cw:[px], rh:[px], cells:[[r,c,rs,cs,v,f,runs]]}] (한 번에 12탭까지 — 클라이언트가 나눠 부름) */
+function bookSheetPut(token, tabs) {
+  const a = adm_(token); bookPerm_(a, true);
+  const okKey = k => /^(cover|orch|tch|sched:\d{1,2}|con:[\w-]{1,40}|text:[\w-]{1,40})$/.test(k);
+  const T = (Array.isArray(tabs) ? tabs : []).slice(0, 12);
+  const lock = lock_(); let ss = null; const out = {};
+  try {
+    const P = bookPages_();
+    if (P.set.sheet) { try { ss = SpreadsheetApp.openById(String(P.set.sheet)); } catch (x) { ss = null; } }
+    const made = !ss;
+    if (made) {
+      ss = SpreadsheetApp.create(camp_().base.name + ' 책자');
+      try { DriveApp.getFileById(ss.getId()).moveTo(bookImgFolder_()); } catch (x) {}
+      const rd = ss.getSheets()[0]; rd.setName('_읽어 주세요');
+      rd.getRange(1, 1, 7, 1).setValues([['이 파일은 캠프 관리자 › 인쇄물 › 행사 책자에서 만든 책자 원고예요. 탭 하나 = 책자 쪽 하나.'], ['고친 뒤 관리자 화면에서 「시트에서 적용」을 누르면 미리보기 · 인쇄에 들어가요.'],
+        ['• 시트는 책자의 1.5배 크기예요 — 시트 15pt = 책자 10pt, 칸 폭도 1.5배.'], ['• 한 탭에서 다음 쪽으로 넘기려면 A열 칸에 [쪽 나눔] 이라고 쓴 줄을 두세요.'],
+        ['• 새 탭을 만들면 새 글 쪽이 돼요 (탭 이름 = 쪽 이름). 이름이 _ 로 시작하는 탭은 읽지 않아요.'], ['• 줄 높이 · 칸 폭 · 칸 합치기 · 선 · 글자 모양이 그대로 쪽 모양이 돼요. 그림은 [그림 …] 칸을 그대로 두세요.'], ['• 다른 분이 고치려면 오른쪽 위 「공유」로 그분 구글 계정을 넣어 주세요.']]);
+      rd.setColumnWidth(1, 760); rd.getRange(1, 1).setFontWeight('bold');
+    }
+    const id = ss.getId(), map = Object.assign({}, made ? {} : (P.set.tabs || {}));
+    const sheets = () => ss.getSheets();
+    const req = [];
+    T.forEach(tb => {
+      const k = String(tb && tb.k || ''); if (!okKey(k)) throw new Error('쪽 이름이 맞지 않아요: ' + k);
+      const cw = (tb.cw || []).slice(0, 60).map(x => Math.max(2, Math.min(1200, Math.round(+x || 20)))), rh = (tb.rh || []).slice(0, 400).map(x => Math.max(2, Math.min(800, Math.round(+x || 21))));
+      const nc = Math.max(1, cw.length), nr = Math.max(1, rh.length);
+      let nm = String(tb.name || k).replace(/[\[\]*?:\/\\]/g, ' ').replace(/^_+/, '').trim().slice(0, 90) || k;
+      let sh = map[k] != null ? sheets().find(s => s.getSheetId() === +map[k]) : null;
+      const taken = n => sheets().some(s => s.getName() === n && (!sh || s.getSheetId() !== sh.getSheetId()));
+      for (let i = 2; taken(nm) && i < 50; i++) nm = String(tb.name || k).slice(0, 84) + ' (' + i + ')';
+      if (!sh) sh = ss.insertSheet(nm, sheets().length); else if (sh.getName() !== nm) sh.setName(nm);
+      const g = sh.getSheetId(); map[k] = g; out[k] = g;
+      req.push({ unmergeCells: { range: { sheetId: g } } }, { updateCells: { range: { sheetId: g }, fields: '*' } },
+        { updateSheetProperties: { properties: { sheetId: g, gridProperties: { rowCount: nr + 20, columnCount: nc + 1, frozenRowCount: 0, frozenColumnCount: 0 } }, fields: 'gridProperties(rowCount,columnCount,frozenRowCount,frozenColumnCount)' } });
+      cw.forEach((w, j) => req.push({ updateDimensionProperties: { range: { sheetId: g, dimension: 'COLUMNS', startIndex: j, endIndex: j + 1 }, properties: { pixelSize: w }, fields: 'pixelSize' } }));
+      req.push({ updateDimensionProperties: { range: { sheetId: g, dimension: 'COLUMNS', startIndex: nc, endIndex: nc + 1 }, properties: { pixelSize: 60 }, fields: 'pixelSize' } });
+      rh.forEach((h, i) => req.push({ updateDimensionProperties: { range: { sheetId: g, dimension: 'ROWS', startIndex: i, endIndex: i + 1 }, properties: { pixelSize: h }, fields: 'pixelSize' } }));
+      // 칸 격자 만들기 (합친 칸: 바탕은 전체, 선은 가장자리에)
+      const G = []; for (let i = 0; i < nr; i++) { G.push([]); for (let j = 0; j < nc; j++) G[i].push({}); }
+      const fmt = (i, j) => { const c = G[i] && G[i][j]; if (!c) return null; c.userEnteredFormat = c.userEnteredFormat || { wrapStrategy: 'WRAP', verticalAlignment: 'MIDDLE', textFormat: { fontFamily: 'Noto Sans KR' } }; return c.userEnteredFormat; };
+      (tb.cells || []).slice(0, 6000).forEach(x => {
+        const r = +x[0] | 0, c = +x[1] | 0; if (r < 0 || c < 0 || r >= nr || c >= nc) return;
+        const rs = Math.max(1, Math.min(nr - r, +x[2] | 0)), cs = Math.max(1, Math.min(nc - c, +x[3] | 0)), v = String(x[4] == null ? '' : x[4]).slice(0, 5000), f = x[5] || {}, bd = f.bd || [];
+        for (let i = r; i < r + rs; i++) for (let j = c; j < c + cs; j++) { const F = fmt(i, j); const bg = bookRgb_(f.bg); if (bg) F.backgroundColor = bg;
+          const B = {}; if (i === r && bookBd_(bd[0])) B.top = bookBd_(bd[0]); if (j === c + cs - 1 && bookBd_(bd[1])) B.right = bookBd_(bd[1]); if (i === r + rs - 1 && bookBd_(bd[2])) B.bottom = bookBd_(bd[2]); if (j === c && bookBd_(bd[3])) B.left = bookBd_(bd[3]);
+          if (Object.keys(B).length) F.borders = Object.assign(F.borders || {}, B); }
+        const F = fmt(r, c); F.textFormat = Object.assign({ fontFamily: 'Noto Sans KR' }, bookTf_(f));
+        F.wrapStrategy = f.w === 0 ? 'OVERFLOW_CELL' : 'WRAP'; F.horizontalAlignment = f.ha === 'C' ? 'CENTER' : f.ha === 'R' ? 'RIGHT' : 'LEFT'; F.verticalAlignment = f.va === 'T' ? 'TOP' : f.va === 'B' ? 'BOTTOM' : 'MIDDLE';
+        if (v !== '') { G[r][c].userEnteredValue = { stringValue: v };
+          const runs = (Array.isArray(x[6]) ? x[6] : []).filter(q => Array.isArray(q) && +q[0] >= 0 && +q[0] < v.length).slice(0, 200);
+          if (runs.length) { if (+runs[0][0] !== 0) runs.unshift([0, f]); G[r][c].textFormatRuns = runs.map(q => ({ startIndex: +q[0] | 0, format: Object.assign({ fontFamily: 'Noto Sans KR' }, bookTf_(q[1] || {})) })); } }
+        if (rs > 1 || cs > 1) req.push({ mergeCells: { range: { sheetId: g, startRowIndex: r, endRowIndex: r + rs, startColumnIndex: c, endColumnIndex: c + cs }, mergeType: 'MERGE_ALL' } });
+      });
+      req.push({ updateCells: { start: { sheetId: g, rowIndex: 0, columnIndex: 0 }, rows: G.map(row => ({ values: row })), fields: 'userEnteredValue,userEnteredFormat,textFormatRuns' } });
+    });
+    if (req.length) bookApi_(id, ':batchUpdate', { requests: req });
+    // 탭 순서 = 이름 앞 번호 순 (_읽어 주세요 는 맨 앞)
+    const ord = sheets().map(s => ({ g: s.getSheetId(), n: s.getName() })).sort((x, y) => (x.n[0] === '_' ? 0 : 1) - (y.n[0] === '_' ? 0 : 1) || x.n.localeCompare(y.n, 'ko', { numeric: true }));
+    bookApi_(id, ':batchUpdate', { requests: ord.map((s, i) => ({ updateSheetProperties: { properties: { sheetId: s.g, index: i }, fields: 'index' } })) });
+    const live = new Set(sheets().map(s => String(s.getSheetId()))); Object.keys(map).forEach(k => { if (!live.has(String(map[k]))) delete map[k]; });
+    bookSetPatch_(a, S => { S.sheet = id; S.tabs = map; });
+    log_(a.name, '책자 → 시트', T.map(t => t.name || t.k).join(', ').slice(0, 300));
+  } finally { lock.releaseLock(); }
+  return Object.assign({ ok: true, url: bookSheetUrl_(ss.getId()), gids: out }, bookPages_());
+}
+/** 시트 읽기: 탭마다 {gid, title, index, cw, rh, cells:[[r,c,rs,cs,v,f,runs]]} · f = {b,i,u,fs,fc,ff,bg,ha,va,bd:[t,r,b,l]} */
+function bookSheetGet(token) {
+  const a = adm_(token); bookPerm_(a, false);
+  const P = bookPages_(), id = String(P.set.sheet || '');
+  if (!id) throw new Error('아직 책자 시트가 없어요 · 「스프레드로 가져가기」를 먼저 해 주세요.');
+  const fl = 'sheets(properties(sheetId,title,index,hidden),merges,data(rowMetadata(pixelSize),columnMetadata(pixelSize),rowData(values(formattedValue,effectiveFormat(backgroundColor,borders,horizontalAlignment,verticalAlignment,wrapStrategy,textFormat),textFormatRuns))))';
+  let J; try { J = bookApi_(id, '?includeGridData=true&fields=' + encodeURIComponent(fl)); } catch (x) { throw new Error('책자 시트를 읽지 못했어요 · 파일이 지워졌거나 권한이 없어요. ' + x.message); }
+  const col = c => c ? bookHex_(c.rgbColor || c) : '';
+  const tf = (t, base) => { t = t || {}; const o = Object.assign({}, base || {});
+    if (t.bold != null) o.b = t.bold ? 1 : 0; if (t.italic != null) o.i = t.italic ? 1 : 0; if (t.underline != null) o.u = t.underline ? 1 : 0;
+    if (t.fontSize != null) o.fs = t.fontSize; if (t.fontFamily) o.ff = t.fontFamily; const fc = t.foregroundColorStyle ? col(t.foregroundColorStyle) : t.foregroundColor ? bookHex_(t.foregroundColor) : ''; if (fc) o.fc = fc; return o; };
+  const bw = b => { if (!b || !b.style || b.style === 'NONE') return null; const w = /THICK/.test(b.style) ? 3 : /MEDIUM|DOUBLE/.test(b.style) ? 2 : 1;
+    return [w, b.style === 'DOTTED' ? 'dotted' : b.style === 'DASHED' ? 'dashed' : b.style === 'DOUBLE' ? 'double' : 'solid', (b.colorStyle ? col(b.colorStyle) : bookHex_(b.color)) || '#000000']; };
+  const tabs = [];
+  (J.sheets || []).forEach(sh => {
+    const pr = sh.properties || {}, title = String(pr.title || ''); if (pr.hidden || /^_/.test(title)) return;
+    const D = (sh.data || [])[0] || {}, RD = (D.rowData || []).slice(0, 400);
+    const cell = (i, j) => ((RD[i] || {}).values || [])[j] || {};
+    const M = (sh.merges || []).map(m => [m.startRowIndex || 0, m.startColumnIndex || 0, (m.endRowIndex || 0) - (m.startRowIndex || 0), (m.endColumnIndex || 0) - (m.startColumnIndex || 0)]);
+    const anc = {}, cov = {}; M.forEach(([r, c, rs, cs]) => { anc[r + ',' + c] = [rs, cs]; for (let i = r; i < r + rs; i++) for (let j = c; j < c + cs; j++) if (i !== r || j !== c) cov[i + ',' + j] = 1; });
+    const white = c => !c || bookHex_(c) === '#ffffff';
+    let R1 = 0, C1 = 0;
+    RD.forEach((row, i) => (row.values || []).forEach((v, j) => { const ef = v.effectiveFormat || {}, b = ef.borders || {};
+      if ((v.formattedValue || '') !== '' || !white(ef.backgroundColor) || ['top', 'right', 'bottom', 'left'].some(s => bw(b[s]))) { R1 = Math.max(R1, i + 1); C1 = Math.max(C1, j + 1); } }));
+    M.forEach(([r, c, rs, cs]) => { if (r < 400) { R1 = Math.max(R1, Math.min(400, r + rs)); C1 = Math.max(C1, c + cs); } });
+    C1 = Math.min(C1, 60);
+    const cells = [];
+    for (let i = 0; i < R1; i++) for (let j = 0; j < C1; j++) {
+      if (cov[i + ',' + j]) continue;
+      const [rs, cs] = anc[i + ',' + j] || [1, 1], v = cell(i, j), ef = v.effectiveFormat || {};
+      const bT = bw((ef.borders || {}).top), bL = bw((ef.borders || {}).left), bR = bw(((cell(i, j + cs - 1).effectiveFormat || {}).borders || {}).right), bB = bw(((cell(i + rs - 1, j).effectiveFormat || {}).borders || {}).bottom);
+      const val = String(v.formattedValue == null ? '' : v.formattedValue), bg = white(ef.backgroundColor) ? '' : bookHex_(ef.backgroundColor);
+      if (val === '' && !bg && !bT && !bL && !bR && !bB && rs === 1 && cs === 1) continue;
+      const base = tf(ef.textFormat, {}), f = Object.assign({}, base, { bg, ha: ef.horizontalAlignment === 'CENTER' ? 'C' : ef.horizontalAlignment === 'RIGHT' ? 'R' : 'L', va: ef.verticalAlignment === 'TOP' ? 'T' : ef.verticalAlignment === 'MIDDLE' ? 'M' : 'B', w: ef.wrapStrategy === 'WRAP' ? 1 : 0, bd: [bT, bR, bB, bL] });
+      const runs = (v.textFormatRuns || []).map(q => [q.startIndex || 0, tf(q.format, base)]);
+      cells.push([i, j, Math.min(rs, R1 - i), Math.min(cs, C1 - j), val, f, runs.length > 1 || (runs.length === 1 && runs[0][0] > 0) ? runs : null]);
+    }
+    const cw = [], rh = []; for (let j = 0; j < C1; j++) cw.push(((D.columnMetadata || [])[j] || {}).pixelSize || 100); for (let i = 0; i < R1; i++) rh.push(((D.rowMetadata || [])[i] || {}).pixelSize || 21);
+    tabs.push({ gid: pr.sheetId, title, index: pr.index || 0, cw, rh, cells });
+  });
+  tabs.sort((x, y) => x.index - y.index);
+  return { ok: true, url: bookSheetUrl_(id), tabs: tabs.slice(0, BOOK_TABS_MAX) };
 }
 /** 미리보기 · 시트에서 숨길 항목 저장 */
 function pvHideSave(token, h) {

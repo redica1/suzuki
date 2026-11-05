@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261105-204354 -->
+<!-- build: 20261105-210857 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -1601,7 +1601,7 @@ const ME=()=>(S.D&&S.D.me)||{sup:true,perms:{}};
 const permOf=k=>{const m=ME();if(m.sup)return '편집';if(k==='camp'||k==='staff'||k==='cons'||k==='doc')return '';return (m.perms||{})[k]||''};
 const visTabs=()=>TABS.concat(SUP_TABS).filter(([k])=>permOf(k));
 const RO=()=>permOf(S.tab)==='보기';
-const WRITE_FN=/^(devAud|devAudClear|audSet|audPub|devSummer|adminNoticeSave|adminMenuSave|scholSave|adminConfirm|adminAdjust|adminSetBankAcct|ogSave|ogToken|adminRejectReport|adminSaveEns|adminSaveProfs|adminRefund|adminSetIssue|schedSave|lessonSet|adminSetSetting|roomSave|conSave|campSave|staffSave|songEnSave|pvHideSave|roomCfgSave|layoutImport|roomMove|budSave|mealIssue|mealDel|bookSave|bookImgPut)$/;
+const WRITE_FN=/^(devAud|devAudClear|audSet|audPub|devSummer|adminNoticeSave|adminMenuSave|scholSave|adminConfirm|adminAdjust|adminSetBankAcct|ogSave|ogToken|adminRejectReport|adminSaveEns|adminSaveProfs|adminRefund|adminSetIssue|schedSave|lessonSet|adminSetSetting|roomSave|conSave|campSave|staffSave|songEnSave|pvHideSave|roomCfgSave|layoutImport|roomMove|budSave|mealIssue|mealDel|bookSave|bookImgPut|bookSheetPut)$/;
 const roBlock=fn=>WRITE_FN.test(fn)&&permOf(S.tab)!=='편집';
 const RO_MSG='보기만 할 수 있는 메뉴예요. 바꾸려면 총관리자에게 「편집」 권한을 받아 주세요.';
 
@@ -3076,6 +3076,14 @@ document.addEventListener('change',e=>{const t=e.target;if(S.tab!=='meal')return
 .bls table.tt{width:100%;font-size:7.6pt !important;line-height:1.3}.bls table.tt td.a{width:24mm;font-weight:700}
 .bls.txt{font-size:8.8pt}
 .bls img{max-width:100%;height:auto;vertical-align:top}
+/* 시트에서 온 쪽 (11-05) */
+.bls .sxw{width:100%;line-height:1.22}.bls.sht.cov>.sxw{flex:1;align-self:flex-start}
+.bls table.sx{width:100%;table-layout:fixed;border-collapse:collapse}
+.bls table.sx td{border:0;padding:0 .3mm !important;vertical-align:middle;line-height:1.22;text-align:left;overflow-wrap:anywhere}
+.bls table.sx td.e{padding:0 !important;font-size:0 !important;line-height:0}
+.bls table.sx td img{display:block;margin:0 auto}
+.ebsht{display:inline-flex;gap:4px;align-items:center;background:#e7f3ec;border-radius:8px;padding:2px 4px}
+.ebbusy{background:#fff7e0;border-radius:8px;padding:6px 10px;font-size:13px;margin-top:6px}
 .bls.imgp{display:flex;align-items:center;justify-content:center}
 .bls.imgp img{display:block;max-width:100%;max-height:185mm;object-fit:contain}
 .bls.imgp.full{padding:0;overflow:hidden}
@@ -3158,12 +3166,12 @@ function ebItems(){const E=S.EB;if(!E)return [];const P={};(E.pages||[]).forEach
   (E.pages||[]).forEach(p=>{if(L.some(x=>x.k===p.k))return;const kd=kindOf(p.k);if(kd!=='text'&&!p.h)return;L.push({k:p.k,kind:kd,t:p.t||(kd==='text'?'글 쪽':p.k),ord:p.ord,on:p.on,h:p.h,src:p.src,auto:'',hash:'',saved:true,orphan:kd!=='text',at:p.at,by:p.by})});
   return L.sort((x,y)=>x.ord-y.ord||x.k.localeCompare(y.k))}
 const ebIsImg=x=>x.kind==='text'&&/class="bls imgp/.test(x.h||'');
-function ebState(x){if(ebIsImg(x))return ['txt','이미지 쪽'];if(x.kind==='text')return ['txt','글 쪽'];if(x.orphan)return ['chg','원본 없음'];if(!x.h)return ['auto','자동'];if(x.src&&x.src!==x.hash)return ['chg','원본 바뀜'];return ['hand','고쳐 씀']}
+function ebState(x){if(ebIsImg(x))return ['txt','이미지 쪽'];if(x.kind==='text')return ['txt',/class="bls sht/.test(x.h||'')?'시트 글 쪽':'글 쪽'];if(x.orphan)return ['chg','원본 없음'];if(!x.h)return ['auto','자동'];if(x.src&&x.src!==x.hash)return ['chg','원본 바뀜'];return ['hand',/class="bls sht/.test(x.h||'')?'시트에서':'고쳐 씀']}
 function ebHtml(x){return S.ebEd===x.k&&S.ebBuf!=null?S.ebBuf:(S.ebPeek===x.k&&x.auto)?x.auto:(x.h||x.auto)}
 /* ---- 붙여 넣기 · 저장 때 HTML 다듬기: 허락한 태그 · 칸만 ---- */
 const EB_OK=new Set(['IMG','SECTION','DIV','P','SPAN','B','STRONG','I','EM','U','BR','H1','H2','H3','H4','TABLE','THEAD','TBODY','TFOOT','TR','TD','TH','UL','OL','LI','SMALL','SUP','SUB','HR','COLGROUP','COL']);
 const EB_DROP=new Set(['SCRIPT','STYLE','IFRAME','OBJECT','EMBED','LINK','META','TITLE','HEAD','svg','SVG','VIDEO','AUDIO','FORM','INPUT','BUTTON','SELECT','TEXTAREA','TEMPLATE','NOSCRIPT']);
-const EB_CSS=['text-align','font-size','font-weight','width','height','vertical-align','background-color','margin-top','margin-bottom','padding-left','font-family','letter-spacing','line-height','color','font-style','text-decoration'];
+const EB_CSS=['text-align','font-size','font-weight','width','height','vertical-align','background-color','margin-top','margin-bottom','padding-left','font-family','letter-spacing','line-height','color','font-style','text-decoration','border-top','border-right','border-bottom','border-left','white-space'];
 const EB_FONTS=['Pretendard','Nanum Gothic','Nanum Myeongjo','Gowun Batang','Noto Serif KR'];
 function ebClean(html,keepCls){const t=document.createElement('template');t.innerHTML=String(html||'');
   const walk=n=>{[...n.childNodes].forEach(c=>{if(c.nodeType===8){c.remove();return}if(c.nodeType!==1)return;
@@ -3188,6 +3196,151 @@ function ebSaveHtml(el){let h=ebClean(el.innerHTML,true);const t=document.create
 function ebSend(rows,del,set,ok,msg){const E=S.EB;call('bookSave',[E.rev||0,rows||[],del||[],set||null],r=>{E.rev=r.rev;E.pages=r.pages;E.set=r.set;ok&&ok();render()},msg||'저장하고 있어요…')}
 function ebRow(x,extra){return Object.assign({k:x.k,ord:x.ord,on:x.on,t:x.t},extra||{})}
 function ebReorder(L){return L.map((x,i)=>ebRow(x,{ord:(i+1)*10}))}
+/* ---- 책자 ↔ 구글 시트 (11-05) ----
+ * 보내기: 쪽을 실제 크기(확대 1)로 그려 잎 칸(표 칸 · 글 문단 · 그리드 칸)의 위치를 재고, 모든 가장자리를 칸 선으로 삼아 시트 격자로 바꿈.
+ * 받기: 탭 격자 → <table class="sx"> (칸 폭은 비율, 줄 높이 ÷ 1.5) · [쪽 나눔] 줄에서 쪽을 나눔. */
+const EB_SK=1.5,EB_BRK='[쪽 나눔]';
+function ebSheetUrl(gid){const id=String(ebSet().sheet||'');return id?'https:'+'\/\/docs.google.com/spreadsheets/d/'+id+'/edit'+(gid!=null?'#gid='+gid:''):''}
+function ebTabOf(k){const m=ebSet().tabs||{};return m[k]!=null?m[k]:null}
+const ebHex=c=>{const m=String(c||'').match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?/);if(!m||(m[4]!=null&&+m[4]<.05))return '';return '#'+[m[1],m[2],m[3]].map(x=>('0'+(+x).toString(16)).slice(-2)).join('')};
+const EB_SFF=[['Nanum Gothic','Nanum Gothic'],['Nanum Myeongjo','Nanum Myeongjo'],['Gowun Batang','Gowun Batang'],['Noto Serif KR','Noto Serif KR']];
+const ebFam=f=>{const x=EB_SFF.find(p=>String(f||'').indexOf(p[0])>=0);return x?x[1]:''};
+function ebSty(n){const s=getComputedStyle(n);return {b:(+s.fontWeight||400)>=600?1:0,i:s.fontStyle==='italic'?1:0,u:/underline/.test(s.textDecorationLine||'')?1:0,fs:Math.max(1,Math.round(parseFloat(s.fontSize)*.75*EB_SK)),fc:ebHex(s.color)||'#000000',ff:ebFam(s.fontFamily)}}
+function ebBd(s,side){const w=parseFloat(s['border'+side+'Width'])||0,st=s['border'+side+'Style'];if(!w||st==='none'||st==='hidden')return null;const c=ebHex(s['border'+side+'Color']);if(!c)return null;return [w>=2.5?3:w>=1.5?2:1,/dotted|dashed|double/.test(st)?st:'solid',c]}
+const ebHasBox=s=>!!(ebHex(s.backgroundColor)||['Top','Right','Bottom','Left'].some(d=>ebBd(s,d)));
+/* 잎 칸 찾기: 표 칸 · 그림 · 안에 블록이 없는 요소. 선 · 바탕이 있는 바깥 상자는 B 에 */
+function ebAtoms(el,A,B){[...el.children].forEach(c=>{const s=getComputedStyle(c);if(s.display==='none')return;
+  if(c.tagName==='TD'||c.tagName==='TH'||c.tagName==='IMG'||c.tagName==='HR'){A.push(c);return}
+  const blk=[...c.children].some(k=>{const d=getComputedStyle(k).display;return d!=='none'&&!/^inline/.test(d)});
+  const ownTxt=[...c.childNodes].some(n=>n.nodeType===3&&n.textContent.trim());
+  if(!blk||ownTxt){if(c.textContent.trim()||ebHasBox(s)||c.querySelector('img'))A.push(c);return}
+  if(ebHasBox(s)&&c.tagName!=='TABLE'&&c.tagName!=='TBODY'&&c.tagName!=='THEAD'&&c.tagName!=='TR')B.push(c);ebAtoms(c,A,B)})}
+/* 칸 글자 + 글자 모양 덩어리(runs) */
+function ebTxt(el){let v='';const R=[];
+  const push=(t,n)=>{if(!t)return;const s=ebSty(n),k=JSON.stringify(s);if(!R.length||R[R.length-1][2]!==k)R.push([v.length,s,k]);v+=t};
+  const nl=()=>{if(v&&!v.endsWith('\n'))v+='\n'};
+  const img=(c,n)=>{nl();push('[그림 '+(c.getAttribute('data-fid')||'?')+(c.style.width?' '+c.style.width:'')+']',n);nl()};
+  const walk=n=>{n.childNodes.forEach(c=>{if(c.nodeType===3){let t=c.textContent.replace(/\s+/g,' ');if(!v||v.endsWith('\n'))t=t.replace(/^ /,'');push(t,n);return}
+    if(c.nodeType!==1)return;const d=getComputedStyle(c).display;if(d==='none')return;if(c.tagName==='BR'){v+='\n';return}if(c.tagName==='IMG'){img(c,n);return}
+    const blk=!/^inline/.test(d);if(blk)nl();walk(c);if(blk)nl()})};
+  if(el.tagName==='IMG')img(el,el.parentNode);else if(el.tagName!=='HR'){if(el.tagName==='LI'){const p=el.parentNode;push(p&&p.tagName==='OL'?([...p.children].indexOf(el)+1)+'. ':'• ',el)}walk(el)}
+  v=v.replace(/ +\n/g,'\n').replace(/\n+$/,'').replace(/ +$/,'');
+  const runs=R.filter(r=>r[0]<v.length).map(r=>[r[0],r[1]]);const base=runs.length?runs[0][1]:ebSty(el.tagName==='IMG'?el.parentNode:el);
+  return {v,base,runs:runs.length>1?runs:null}}
+/* 줄 · 칸 선 모으기: 가까운 값(2px)은 하나로 */
+function ebLines(a){a=a.slice().sort((x,y)=>x-y);const o=[];a.forEach(x=>{if(!o.length||x-o[o.length-1]>2)o.push(x)});return o}
+const ebIdx=(L,x)=>{let b=0,d=1e9;L.forEach((v,i)=>{const e=Math.abs(v-x);if(e<d){d=e;b=i}});return b};
+/** 쪽 HTML → 시트 격자 {cw, rh, cells} */
+function ebModel(html,cover){const box=document.createElement('div');box.className='ebc';box.style.cssText='--ebz:1;zoom:1;position:absolute;left:-14000px;top:0;pointer-events:none';
+  box.innerHTML=html;document.body.appendChild(box);
+  try{const secs=[...box.querySelectorAll('section.bls')];if(!secs.length)return null;
+    const SS=secs.map(sec=>{const R=sec.getBoundingClientRect(),s=getComputedStyle(sec),L=R.left+parseFloat(s.paddingLeft),T=R.top+parseFloat(s.paddingTop),W=R.right-parseFloat(s.paddingRight)-L;
+      const A=[],B=[];ebAtoms(sec,A,B);
+      const rr=e=>{const q=e.getBoundingClientRect();return [Math.max(0,q.left-L),Math.min(W,q.right-L),q.top-T,q.bottom-T]};
+      const at=A.map(e=>{const q=rr(e),o={e,q};if(e.tagName==='IMG'&&q[3]-q[2]<8)q[3]=q[2]+40;if(q[3]-q[2]<4&&!e.textContent.trim()&&e.tagName!=='IMG')o.thin=1;/* 글자 폭만큼 줄어든 칸(가운데 정렬 flex 등)은 부모 폭으로 넓히고 위치로 정렬을 정함 · 그리드 · 가로 flex 칸은 그대로 */if(!o.thin&&e.tagName!=='TD'&&e.tagName!=='TH'){const p=e.parentElement,ps=getComputedStyle(p);if(!/grid/.test(ps.display)&&!(/flex/.test(ps.display)&&!/column/.test(ps.flexDirection))){const pr=p.getBoundingClientRect(),l=Math.max(0,pr.left+parseFloat(ps.paddingLeft)+parseFloat(ps.borderLeftWidth)-L),r=Math.min(W,pr.right-parseFloat(ps.paddingRight)-parseFloat(ps.borderRightWidth)-L);if(r-l-(q[1]-q[0])>2){const gl=q[0]-l,gr=r-q[1];if(Math.abs(gl-gr)<3)o.ha='C';else if(gr<gl)o.ha='R';q[0]=l;q[1]=r}}}const lh=parseFloat(getComputedStyle(e).lineHeight)||parseFloat(getComputedStyle(e).fontSize)*1.45;if(!o.thin&&e.tagName!=='IMG'&&q[3]-q[2]<lh*1.5)o.one=1;return o}).filter(x=>x.q[1]-x.q[0]>1&&(x.thin||x.q[3]-x.q[2]>.5));
+      return {W,at,bx:B.map(e=>({e,q:rr(e)}))}});
+    const W=Math.max(...SS.map(x=>x.W));
+    const X=ebLines([0,W].concat(...SS.map(s=>[].concat(...s.at.concat(s.bx).map(a=>[a.q[0],a.q[1]])))).filter(x=>x>=-1&&x<=W+1));
+    /* 칸이 너무 많으면(그리드 글자 폭이 쪽마다 달라서) 가장 가까운 선부터 합쳐 24칸 이하로 */
+    while(X.length>25){let k=1,g=1e9;for(let i=1;i<X.length-1;i++){const d=Math.min(X[i]-X[i-1],X[i+1]-X[i]);if(d<g){g=d;k=i}}X.splice(k,1)}
+    const cw=X.slice(1).map((x,i)=>(x-X[i])*EB_SK),rh=[],cells=[],occ={};let r0=0;
+    SS.forEach((s,si)=>{if(si){rh.push(26);cells.push([r0,0,1,cw.length,EB_BRK+' — 이 줄 아래는 다음 쪽',{bg:'#fde68a',fs:10,fc:'#7a5b00',b:1,ha:'L',bd:[]},null]);r0++}
+      const ys=s.at.filter(a=>!a.thin).concat(s.bx).map(a=>[a.q[2],a.q[3]]);const Y=ebLines([0].concat(...ys).filter(y=>y>=0));
+      Y.slice(1).forEach((y,i)=>rh.push((y-Y[i])*EB_SK));
+      const add=(q,mk,thin)=>{let c0=ebIdx(X,q[0]),c1=ebIdx(X,q[1]),y0=ebIdx(Y,q[2]),y1=ebIdx(Y,q[3]);if(thin){y1=Math.max(1,y1);y0=y1-1}if(c1<=c0||y1<=y0)return null;
+        if(occ[(r0+y0)+','+c0]!=null)return null;let cs=c1-c0,rs=y1-y0;
+        const free=(rs,cs)=>{for(let i=0;i<rs;i++)for(let j=0;j<cs;j++)if(occ[(r0+y0+i)+','+(c0+j)]!=null)return false;return true};
+        if(!free(rs,cs)){if(free(1,cs))rs=1;else if(free(rs,1))cs=1;else{rs=1;cs=1}}
+        const cell=mk(r0+y0,c0,rs,cs);const id=cells.length;cells.push(cell);for(let i=0;i<rs;i++)for(let j=0;j<cs;j++)occ[(r0+y0+i)+','+(c0+j)]=id;return cell};
+      s.at.forEach(a=>{const st=getComputedStyle(a.e),t=ebTxt(a.e),td=a.e.tagName==='TD'||a.e.tagName==='TH';
+        const ta=st.textAlign,va=st.verticalAlign,f=Object.assign({},t.base,{bg:ebHex(st.backgroundColor),ha:/center/.test(ta)?'C':/right|end/.test(ta)?'R':'L',va:td?(/top/.test(va)?'T':/bottom/.test(va)?'B':'M'):'M',bd:['Top','Right','Bottom','Left'].map(d=>ebBd(st,d))});
+        if(a.e.tagName==='HR'){f.bd=[null,null,ebBd(st,'Top'),null]}if(a.thin)f.bd=[null,null,f.bd[2]||f.bd[0],null];if(a.ha)f.ha=a.ha;if(a.one&&t.v.indexOf('\n')<0)f.w=0;
+        add(a.q,(r,c,rs,cs)=>[r,c,rs,cs,t.v,f,t.runs],a.thin||a.e.tagName==='HR')});
+      /* 바깥 상자: 가장자리 선 · 바탕 */
+      s.bx.forEach(b=>{const st=getComputedStyle(b.e),c0=ebIdx(X,b.q[0]),c1=ebIdx(X,b.q[1]),y0=r0+ebIdx(Y,b.q[2]),y1=r0+ebIdx(Y,b.q[3]);if(c1<=c0||y1<=y0)return;
+        const sd=['Top','Right','Bottom','Left'].map(d=>ebBd(st,d)),bg=ebHex(st.backgroundColor);
+        const at=(i,j)=>{let id=occ[i+','+j];if(id==null){id=cells.length;cells.push([i,j,1,1,'',{bd:[]},null]);occ[i+','+j]=id}return cells[id]};
+        for(let i=y0;i<y1;i++)for(let j=c0;j<c1;j++){const C=at(i,j),f=C[5];f.bd=f.bd||[];if(bg&&!f.bg)f.bg=bg;
+          if(i===y0&&sd[0]&&C[0]===i)f.bd[0]=f.bd[0]||sd[0];if(i===y1-1&&sd[2]&&C[0]+C[2]===y1)f.bd[2]=f.bd[2]||sd[2];if(j===c0&&sd[3]&&C[1]===j)f.bd[3]=f.bd[3]||sd[3];if(j===c1-1&&sd[1]&&C[1]+C[3]===c1)f.bd[1]=f.bd[1]||sd[1]}});
+      r0+=Y.length-1});
+    return {cw,rh,cells}}finally{box.remove()}}
+/** 시트 탭 → 쪽 HTML */
+function ebFromSheet(tb,k){const cw=tb.cw||[],rh=tb.rh||[],C=tb.cells||[];if(!cw.length||!rh.length)return `<section class="bls sht txt"><p style="color:#888">(빈 탭 · ${esc(tb.title)})</p></section>`;
+  const sum=cw.reduce((a,b)=>a+b,0)||1,cov={},A={};
+  C.forEach(x=>{A[x[0]+','+x[1]]=x;for(let i=x[0];i<x[0]+x[2];i++)for(let j=x[1];j<x[1]+x[3];j++)if(i!==x[0]||j!==x[1])cov[i+','+j]=1});
+  const brk=new Set(C.filter(x=>x[1]===0&&String(x[4]).trim().indexOf(EB_BRK)===0).map(x=>x[0]));
+  /* 가장 많은 글자 모양 = 쪽 기본 (칸마다 다른 것만 따로) */
+  const cnt={};C.forEach(x=>{if(String(x[4]).trim()){const f=x[5]||{},key=[f.fs||10,f.ff||'',f.fc||'#000000'].join('|');cnt[key]=(cnt[key]||0)+String(x[4]).length}});
+  const dk=(Object.keys(cnt).sort((a,b)=>cnt[b]-cnt[a])[0]||'10||#000000').split('|'),D={fs:+dk[0],ff:dk[1],fc:dk[2]};
+  const pt=fs=>(Math.round(fs/EB_SK*10)/10)+'pt',ffc=ff=>{const x=EB_FF.find(p=>p[0].indexOf(ff)>=0);return x?x[0]:''};
+  const sh3=c=>{c=String(c||'#000');const m=c.match(/^#(\w)\1(\w)\2(\w)\3$/);return m?'#'+m[1]+m[2]+m[3]:c};
+  const bds=b=>b?`${b[0]>=3?'2.4px':b[0]>=2?'1.2px':'.6px'}${b[1]&&b[1]!=='solid'?' '+b[1]:' solid'} ${sh3(b[2])}`:'';
+  const spanSt=(s,base)=>{const o=[];if((s.fs||D.fs)!==D.fs)o.push('font-size:'+pt(s.fs));if((s.ff||'')!==D.ff){const f=ffc(s.ff||'');o.push('font-family:'+(f||'inherit'))}
+    if((s.fc||'#000000')!==D.fc)o.push('color:'+sh3(s.fc||'#000000'));if(!!s.b!==!!base.b)o.push('font-weight:'+(s.b?700:400));if(s.i)o.push('font-style:italic');if(s.u)o.push('text-decoration:underline');return o.join(';')};
+  const body=x=>{const v=String(x[4]),f=x[5]||{},m=v.trim().match(/^\[그림 ([\w-]{10,80})(?: (\d{1,3}%))?\]$/);if(m)return `<img data-fid="${m[1]}"${m[2]?` style="width:${m[2]}"`:''}>`;
+    const segs=x[6]&&x[6].length?x[6].map((r,i)=>[v.slice(r[0],i+1<x[6].length?x[6][i+1][0]:v.length),r[1]]):[[v,f]];
+    return segs.map(([t,s])=>{const h=esc(t).replace(/\n/g,'<br>'),st=spanSt(s,f);return st?`<span style="${st}">${h}</span>`:h}).join('')};
+  const secs=[];let cur=[];for(let i=0;i<rh.length;i++){if(brk.has(i)){secs.push(cur);cur=[];continue}cur.push(i)}secs.push(cur);
+  const ff0=ffc(D.ff);
+  const H=secs.filter(R=>R.length).map(R=>{const end=R[R.length-1]+1;
+    const trs=R.map(i=>{let tds='';for(let j=0;j<cw.length;j++){if(cov[i+','+j])continue;const x=A[i+','+j];
+        if(!x){let n=1;while(j+n<cw.length&&!cov[i+','+(j+n)]&&!A[i+','+(j+n)])n++;tds+=`<td class="e"${n>1?` colspan="${n}"`:''}></td>`;j+=n-1;continue}   /* 빈 칸은 이어서 한 칸으로 (쪽 HTML 줄이기) */
+        const f=x[5]||{},b=f.bd||[],st=[],B4=[0,1,2,3].map(q=>bds(b[q]));if(f.bg)st.push('background-color:'+sh3(f.bg));if(B4[0]&&B4.every(z=>z===B4[0]))st.push('border:'+B4[0]);else ['top','right','bottom','left'].forEach((s,q)=>{if(B4[q])st.push('border-'+s+':'+B4[q])});
+        if(f.ha==='C')st.push('text-align:center');else if(f.ha==='R')st.push('text-align:right');if(f.va==='T')st.push('vertical-align:top');else if(f.va==='B')st.push('vertical-align:bottom');
+        const v=String(x[4]);if(v.trim()&&f.b)st.push('font-weight:700');if(f.w===0&&v.indexOf('\n')<0&&v.length<60)st.push('white-space:nowrap');
+        const rs=Math.min(x[2],end-i),cs=x[3];tds+=`<td${v.trim()?'':' class="e"'}${cs>1?` colspan="${cs}"`:''}${rs>1?` rowspan="${rs}"`:''}${st.length?` style="${st.join(';')}"`:''}>${v.trim()?body(x):''}</td>`}
+      return `<tr style="height:${(rh[i]/EB_SK).toFixed(1)}px">${tds}</tr>`}).join('');
+    return `<section class="bls sht${k==='cover'?' cov':''}"><div class="sxw" style="font-size:${pt(D.fs)};color:${sh3(D.fc)}${ff0?';font-family:'+ff0:''}"><table class="sx"><colgroup>${cw.map(w=>`<col style="width:${(w/sum*100).toFixed(2)}%">`).join('')}</colgroup><tbody>${trs}</tbody></table></div></section>`});
+  return H.join('')}
+const ebIsSht=x=>/class="bls sht/.test(x.h||'');
+/* 보내기: mode = 'new'(시트에 없는 쪽만) · 'all'(모두 덮어씀) · 쪽 키 하나 */
+function ebExport(mode){if(S.ebEd){toast('고쳐 쓰는 쪽을 먼저 저장하거나 그만두세요');return}
+  const Lall=ebItems(),m=ebSet().tabs||{},pad=i=>('0'+i).slice(-2);
+  const L=Lall.map((x,i)=>Object.assign({},x,{no:i+1})).filter(x=>!ebIsImg(x)&&(mode==='all'?x.on:mode==='new'?x.on&&m[x.k]==null:x.k===mode));
+  if(!L.length){toast(mode==='new'?'시트에 없는 쪽이 없어요 · 모두 보냈어요':'보낼 쪽이 없어요');return}
+  S.ebBusy='시트로 보낼 쪽 모양을 재고 있어요…';render();
+  (document.fonts&&document.fonts.ready?document.fonts.ready:Promise.resolve()).then(()=>{
+    const tabs=[];L.forEach(x=>{const M=ebModel(ebClean(x.h||x.auto,true),x.k==='cover');if(M)tabs.push(Object.assign({k:x.k,name:pad(x.no)+' '+x.t},M))});
+    S.ebBusy=null;const B=[];for(let i=0;i<tabs.length;i+=6)B.push(tabs.slice(i,i+6));let done=0,url='';
+    const next=()=>{if(!B.length){render();toast(`${done}쪽을 시트로 보냈어요`);if(url)S.ebUrl=url;render();return}const b=B.shift();
+      call('bookSheetPut',[b],r=>{const E=S.EB;E.rev=r.rev;E.pages=r.pages;E.set=r.set;url=r.url;done+=b.length;next()},`시트로 보내고 있어요… (${done+1}–${done+b.length} / ${tabs.length}쪽)`)};
+    next()})}
+/* 적용: 시트 탭을 읽어 쪽으로 · only = 쪽 키 하나 */
+function ebApply(only){if(S.ebEd){toast('고쳐 쓰는 쪽을 먼저 저장하거나 그만두세요');return}
+  call('bookSheetGet',[],r=>{const E=S.EB,T=ebSet(),map=Object.assign({},T.tabs||{}),rev={};Object.keys(map).forEach(k=>rev[String(map[k])]=k);
+    const live=new Set(r.tabs.map(t=>String(t.gid)));Object.keys(map).forEach(k=>{if(!live.has(String(map[k])))delete map[k]});
+    let L=ebItems();const chg={},skip=[];let prevK=null,nNew=0;
+    r.tabs.forEach(tb=>{let k=rev[String(tb.gid)];if(only&&k!==only){if(k)prevK=k;return}
+      const h=ebFromSheet(tb,k||'');if(h.length>47000){skip.push(tb.title);return}   /* 우리가 만든 HTML(글자는 esc) — 다듬기를 거치면 색이 rgb()로 길어져서 그대로 저장 */
+      if(!k){k='text:s'+tb.gid;map[k]=tb.gid;const t=String(tb.title).replace(/^\d+\s+/,'').slice(0,80)||'시트 쪽',nx={k,kind:'text',t,ord:0,on:true,h:'',hash:''};
+        const at=prevK?L.findIndex(y=>y.k===prevK)+1:L.length;L.splice(at,0,nx);nNew++}
+      const x=L.find(y=>y.k===k);prevK=k;if(x.h!==h)chg[k]={h,src:x.kind==='text'?'':x.hash}});
+    const rows=L.map((x,i)=>Object.assign(ebRow(x,{ord:(i+1)*10}),chg[x.k]||{}));const n=Object.keys(chg).length;
+    if(!n&&!nNew){toast('시트와 책자가 같아요 · 바뀐 쪽이 없어요');return}
+    ebSend(rows,[],Object.assign({},E.set||{},{tabs:map}),()=>toast(`시트에서 ${n}쪽을 적용했어요${nNew?` (새 탭 ${nNew}개 → 새 글 쪽)`:''}${skip.length?' · 너무 길어 건너뜀: '+skip.join(', '):''}`),'시트 내용을 적용하고 있어요…')},'시트를 읽고 있어요…')}
+/* 기본 틀: 2026 여름 책자 순서대로 없는 손 쪽(글 쪽 자리)을 채움 */
+const EB_STD=[['안내도','after:cover',/안내도|지도|배치|map/i,'캠퍼스 안내도','그림 쪽으로 바꿔 주세요 (「이미지 쪽」 추가 후 이 쪽은 지우기).'],
+  ['주의사항','after:cover',/주의|유의|안내 ?사항|notice/i,'참가자 주의사항','1. 명찰은 행사 기간 내내 달아 주세요.\n2. 연습실 · 레슨실 시간을 지켜 주세요.\n3. 공연장에서는 사진 · 영상 촬영을 하지 않아요.'],
+  ['교수진','after:cover',/교수/,'교수진 소개','이름 · 악기 · 소속 · 약력을 넣어 주세요.'],
+  ['마스터클래스','after:sched',/마스터|오프닝|리허설/i,'오프닝 리허설 · 마스터클래스','시각 · 장소 · 곡목 표를 넣어 주세요.'],
+  ['개회','before:con',/개회|opening/i,'개회식','순서 · 그룹 연주 · 지도 교사를 넣어 주세요.'],
+  ['이브닝','after:con',/이브닝|트와일라잇|evening|twilight/i,'이브닝 콘서트','연주자 · 곡목을 넣어 주세요.'],
+  ['앙상블','after:con',/앙상블|ensemble/i,'앙상블 음악회','팀 · 곡목을 넣어 주세요.'],
+  ['폐회','after:con',/폐회|closing/i,'폐회식','순서 · 그룹 연주 · 오케스트라 곡을 넣어 주세요.'],
+  ['광고','end',/광고|후원|sponsor/i,'광고 · 후원','그림 쪽으로 바꿔 주세요.']];
+function ebStdFill(){const L=ebItems(),add=[],placed={};
+  EB_STD.forEach(([id,pos,rx,t,body])=>{if(L.some(x=>rx.test(x.t)))return;
+    const h=`<section class="bls txt"><h2>${esc(t)}</h2>${body.split('\n').map(l=>`<p>${esc(l)}</p>`).join('')}</section>`,nx={k:'text:std-'+id.charCodeAt(0).toString(36)+Date.now().toString(36).slice(-4),kind:'text',t,on:true,h,src:''};
+    const last=kd=>{let j=-1;L.forEach((x,i)=>{if(x.kind===kd)j=i});return j},first=kd=>L.findIndex(x=>x.kind===kd);
+    let at=L.length;if(pos==='after:cover'){at=first('sched');if(at<0)at=Math.min(L.length,1+Math.max(0,first('cover')))}
+    else if(pos==='after:sched'){const j=last('sched');at=j>=0?j+1:L.length}else if(pos==='before:con'){const j=first('con');at=j>=0?j:L.length}
+    else if(pos==='after:con'){const j=Math.max(last('con'),last('sched'));at=j>=0?j+1:L.length;const o=first('orch')>=0?first('orch'):first('tch');if(o>=0&&o<at)at=o}
+    else{at=L.length}
+    if(/^after:(con|sched)$/.test(pos)){at=Math.min(L.length,at+(placed[pos]||0));placed[pos]=(placed[pos]||0)+1}
+    L.splice(at,0,nx);add.push(nx.k)});
+  if(!add.length){toast('기본 틀의 쪽이 모두 있어요');return}
+  const rows=L.map((x,i)=>Object.assign(ebRow(x,{ord:(i+1)*10}),add.includes(x.k)?{h:x.h,src:''}:{}));
+  ebSend(rows,[],null,()=>toast(`기본 틀로 ${add.length}쪽을 넣었어요 · 시트로 보내서 채워 주세요`),'기본 틀을 넣고 있어요…')}
 /* ---- 화면 ---- */
 function vEbk(){const E=S.EB;if(!E){if(!S.EBL)setTimeout(ebLoad,0);return '<div class="panel hint">책자를 만들고 있어요…</div>'}
   const L=ebItems(),ed=!!E.edit&&!RO(),z=ebZoom(),T=ebSet(),sel=S.ebSel;
@@ -3201,6 +3354,8 @@ function vEbk(){const E=S.EB;if(!E){if(!S.EBL)setTimeout(ebLoad,0);return '<div 
       :`<div class="ebbar"><b>${esc(x.t)}</b><span class="ebchip ${c}">${l}</span><span class="epg2" data-ebpg2="${esc(x.k)}"></span>${x.h&&x.at?`<span class="epg2">· ${esc(String(x.at).slice(5,16))} ${esc(x.by||'')}</span>`:''}
         ${ed&&!ebIsImg(x)?`<button class="btn small" type="button" data-ebedit="${esc(x.k)}">${x.h||x.kind==='text'?'계속 고치기':'고쳐 쓰기'}</button>`:''}
         ${ed&&ebIsImg(x)?`<button class="btn small" type="button" data-ebimgre="${esc(x.k)}">그림 바꾸기</button><button class="btn small" type="button" data-ebimgfull="${esc(x.k)}">${/imgp full/.test(x.h)?'여백 안에 넣기':'여백 없이 가득'}</button>`:''}
+        ${!ebIsImg(x)&&ebTabOf(x.k)!=null?`<a class="btn small" target="_blank" rel="noopener" href="${esc(ebSheetUrl(ebTabOf(x.k)))}">시트 탭 열기</a>${ed?`<button class="btn small" type="button" data-ebapply1="${esc(x.k)}">이 쪽 시트에서 적용</button>`:''}`:''}
+        ${ed&&!ebIsImg(x)?`<button class="btn small" type="button" data-ebexp1="${esc(x.k)}" title="${ebTabOf(x.k)!=null?'시트 탭을 지금 책자 쪽으로 덮어써요':'이 쪽을 시트 탭으로 만들어요'}">${ebTabOf(x.k)!=null?'시트로 다시 보내기':'이 쪽 시트로 보내기'}</button>`:''}
         ${ed&&x.kind!=='text'&&!x.orphan?`<button class="btn small" type="button" data-ebtog="${esc(x.k)}">${x.on?'책자에서 빼기':'책자에 넣기'}</button>`:''}
         ${ed&&x.h&&x.kind!=='text'&&!x.orphan?`<button class="btn small" type="button" data-ebreset="${esc(x.k)}">원본으로 되돌리기</button>`:''}
         ${ed&&x.kind==='text'?`<button class="btn small" type="button" data-ebname="${esc(x.k)}">이름 바꾸기</button>`:''}
@@ -3212,7 +3367,7 @@ function vEbk(){const E=S.EB;if(!E){if(!S.EBL)setTimeout(ebLoad,0);return '<div 
   return `<div class="panel"><div class="spread"><div><b>행사 책자</b> <span class="hint">A5 (148 × 210mm) · 자동 쪽은 교사 일정 · 음악회 연주 순서 · 접수에서 바로 만들어요. 「고쳐 쓰기」로 손질한 쪽은 고정되고, 원본이 바뀌면 빨갛게 알려 줘요.</span></div>
     <div class="row" style="gap:6px;flex-wrap:wrap">${ed?(S.ebAdd?`<span class="ebadd"><b style="font-size:13px;padding:0 4px">새 쪽</b><button class="btn small" type="button" id="ebAddTxt">글 쪽 (직접 쓰기)</button><button class="btn small" type="button" id="ebAddImg">이미지 쪽 (그림 올리기)</button><button class="btn small ghost" type="button" id="ebAddX">닫기</button></span>`:`<button class="btn small" type="button" id="ebAddOpen" title="고른 쪽 다음에 들어가요">＋ 쪽 추가</button>`):''}
       <span class="dzm" role="group" aria-label="미리보기 크기"><button type="button" data-ebz="-" aria-label="작게">−</button><button type="button" class="dzv" data-ebz="0" title="기본 크기로">${Math.round(z*100)}%</button><button type="button" data-ebz="+" aria-label="크게">＋</button></span>
-      <button class="btn small" type="button" id="ebRe">새로 만들기</button><button class="btn small" type="button" id="ebWin">새 창으로 보기</button><button class="btn small primary" type="button" id="ebPrint">인쇄 · PDF 저장</button></div></div>
+      ${ed?`<button class="btn small" type="button" id="ebStd" title="2026 책자 순서(안내도 · 주의사항 · 교수진 · 마스터클래스 · 개회 · 이브닝 · 앙상블 · 폐회 · 광고) 중 없는 쪽을 글 쪽으로 넣어요">＋ 기본 틀</button>`:''}<span class="ebsht"><b style="font-size:13px;padding:0 4px">구글 시트</b>${ed?(S.ebExpM?`<button class="btn small" type="button" data-ebexp="new">시트에 없는 쪽만</button><button class="btn small" type="button" data-ebexp="all" title="시트에서 고친 내용이 지금 책자 내용으로 바뀌어요">모두 다시 (덮어씀)</button><button class="btn small ghost" type="button" id="ebExpX">닫기</button>`:`<button class="btn small" type="button" id="ebExpOpen">스프레드로 가져가기</button>`):''}${T.sheet?`<a class="btn small" target="_blank" rel="noopener" href="${esc(ebSheetUrl())}">시트 열기</a>${ed?`<button class="btn small primary" type="button" id="ebApply" title="시트의 모든 탭을 읽어 책자 쪽에 넣어요">시트에서 적용</button>`:''}`:''}</span><button class="btn small" type="button" id="ebRe">새로 만들기</button><button class="btn small" type="button" id="ebWin">새 창으로 보기</button><button class="btn small primary" type="button" id="ebPrint">인쇄 · PDF 저장</button></div></div>
     <details class="ebsetw" ${S.ebSetOpen?'open':''}><summary class="hint" style="cursor:pointer;margin-top:6px">책자 설정 (영문 행사 이름 · 표지 · 시간표 한 쪽 장소 수 · 쪽 번호)</summary>
       <div class="ebset"><label>영문 행사 이름 (표지 · 음악회 머리)<input type="text" data-ebs="en" value="${esc(T.en)}" placeholder="SUZUKI MUSIC KOREA 2027 WINTER MUSIC FESTIVAL" ${ed?'':'disabled'}></label>
         <label>표지 부제<input type="text" data-ebs="sub" value="${esc(T.sub)}" placeholder="WINTER MUSIC FESTIVAL" ${ed?'':'disabled'}></label>
@@ -3220,7 +3375,7 @@ function vEbk(){const E=S.EB;if(!E){if(!S.EBL)setTimeout(ebLoad,0);return '<div 
         <label>시간표 한 쪽에 장소 몇 곳<input type="number" min="1" max="10" data-ebs="per" value="${esc(T.per)}" ${ed?'':'disabled'}></label>
         <label>시간표 글씨 크기 (pt)<input type="number" min="5" max="10" step="0.2" data-ebs="fs" value="${esc(T.fs)}" ${ed?'':'disabled'}></label>
         <label style="flex-direction:row;align-items:center;gap:6px"><input type="checkbox" data-ebs="num" ${T.num?'checked':''} ${ed?'':'disabled'}> 쪽 아래 번호 (- 2 -)</label></div>
-      ${ed?`<div class="row" style="margin-top:8px"><button class="btn small primary" type="button" id="ebSetSave">설정 저장</button><span class="hint">설정을 바꾸면 고쳐 쓴 쪽은 「원본 바뀜」으로 보일 수 있어요.</span></div>`:''}</details></div>
+      ${ed?`<div class="row" style="margin-top:8px"><button class="btn small primary" type="button" id="ebSetSave">설정 저장</button><span class="hint">설정을 바꾸면 고쳐 쓴 쪽은 「원본 바뀜」으로 보일 수 있어요.</span></div>`:''}</details>${S.ebBusy?`<div class="ebbusy">${esc(S.ebBusy)}</div>`:''}${T.sheet?`<p class="hint" style="margin:6px 0 0">시트는 책자의 1.5배 크기예요(시트 15pt = 책자 10pt). 시트에서 고친 뒤 「시트에서 적용」. 한 탭에서 쪽을 나누려면 A열에 [쪽 나눔] 줄을 두세요. 새 탭 = 새 글 쪽.</p>`:''}</div>
   <div class="ebw"><div class="panel eblist"><b>쪽 순서</b> <span class="hint" id="ebTot"></span><ol>${list}</ol>
       <p class="hint" style="margin:8px 0 0">체크를 풀면 책자에서 빠져요. 쪽 수는 미리보기 기준 대략이에요(빨간 줄 = 다음 쪽으로 넘침).</p></div>
     <div class="ebprev"><div class="ebprobe" id="ebProbe"></div>${prev}</div></div>`}
@@ -3356,6 +3511,13 @@ document.addEventListener('click',e=>{if(S.tab!=='book')return;const b=e.target.
   if(d.ebpeek){S.ebPeek=S.ebPeek===d.ebpeek?null:d.ebpeek;render();return}
   if(d.ebdel){const x=ebItems().find(y=>y.k===d.ebdel);if(!x||!confirm(`「${x.t}」 쪽을 지울까요?`))return;ebSend([],[x.k],null,()=>toast('지웠어요'));return}
   if(d.ebname){const x=ebItems().find(y=>y.k===d.ebname);if(!x)return;const n=prompt('쪽 이름 (목록에만 보여요)',x.t);if(n==null||!n.trim())return;x.t=n.trim().slice(0,80);ebSend([ebRow(x)],[],null);return}
+  if(b.id==='ebStd'){ebStdFill();return}
+  if(b.id==='ebExpOpen'){S.ebExpM=1;render();return}
+  if(b.id==='ebExpX'){S.ebExpM=0;render();return}
+  if(d.ebexp){S.ebExpM=0;if(d.ebexp==='all'&&!confirm('시트의 모든 쪽 탭을 지금 책자 내용으로 덮어써요. 시트에서 고치고 아직 적용하지 않은 내용은 없어져요. 보낼까요?'))return;ebExport(d.ebexp);return}
+  if(d.ebexp1){if(ebTabOf(d.ebexp1)!=null&&!confirm('이 쪽의 시트 탭을 지금 책자 내용으로 덮어써요. 보낼까요?'))return;ebExport(d.ebexp1);return}
+  if(b.id==='ebApply'){ebApply(null);return}
+  if(d.ebapply1){ebApply(d.ebapply1);return}
   if(b.id==='ebAddOpen'){S.ebAdd=1;render();return}
   if(b.id==='ebAddX'){S.ebAdd=0;render();return}
   const addPage=(t,h,after)=>{const L=ebItems(),k='text:'+Date.now().toString(36),cur=S.ebSel&&L.find(y=>y.k===S.ebSel),ord=cur?cur.ord+.5:(L.length?L[L.length-1].ord+10:10);
@@ -3369,6 +3531,6 @@ document.addEventListener('click',e=>{if(S.tab!=='book')return;const b=e.target.
   if(b.id==='ebSetSave'){const n=Object.assign(ebSet(),S.ebSetW||{});n.per=Math.max(1,Math.min(10,Math.round(+n.per||5)));n.fs=Math.max(5,Math.min(10,+n.fs||6.6));['en','sub','org'].forEach(k=>n[k]=String(n[k]||'').trim().slice(0,120));
     ebSend([],[],n,()=>{S.ebSetW=null;toast('책자 설정을 저장했어요')});return}},true);
 </script>
-<div id="bldMark" hidden>빌드표시 20261105-204354 </div>
+<div id="bldMark" hidden>빌드표시 20261105-210857 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();</script>
 </body></html>

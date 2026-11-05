@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261105-225144 -->
+<!-- build: 20261105-225340 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -3163,6 +3163,7 @@ document.addEventListener('change',e=>{const t=e.target;if(S.tab!=='meal')return
 .bls.txt{font-size:8.8pt}
 .bls img{max-width:100%;height:auto;vertical-align:top}
 /* 표 (11-05) */
+.bls .gbx{box-sizing:border-box;padding:2.5mm 3.5mm;margin:0 auto 2.5mm;max-width:100%}.bls .gbx>p:last-child,.bls .gbx>*:last-child{margin-bottom:0}.ebc[contenteditable=true] .gbx{outline:1px dashed #f0b42999}
 .bls td b,.bls td strong,.bls th b,.bls th strong{font-weight:700}  /* 관리자 표 전체 규칙(tbody td b = 400)을 책자 표에서만 되돌림 */
 .bls table.ut{width:100%;margin:0 0 2mm}.bls table.hd tr:first-child>td,.bls table.hd tr:first-child>th{font-weight:700;background-color:#eef2f3}
 .bls table.bh td,.bls table.bh th{border-left:0;border-right:0}.bls table.bn td,.bls table.bn th{border:0}
@@ -3383,7 +3384,7 @@ function ebEqDom(root){if(!root)return;const G={};root.querySelectorAll('section
 /* ---- 붙여 넣기 · 저장 때 HTML 다듬기: 허락한 태그 · 칸만 ---- */
 const EB_OK=new Set(['IMG','SECTION','DIV','P','SPAN','B','STRONG','I','EM','U','BR','H1','H2','H3','H4','TABLE','THEAD','TBODY','TFOOT','TR','TD','TH','UL','OL','LI','SMALL','SUP','SUB','HR','COLGROUP','COL']);
 const EB_DROP=new Set(['SCRIPT','STYLE','IFRAME','OBJECT','EMBED','LINK','META','TITLE','HEAD','svg','SVG','VIDEO','AUDIO','FORM','INPUT','BUTTON','SELECT','TEXTAREA','TEMPLATE','NOSCRIPT']);
-const EB_CSS=['text-align','font-size','font-weight','width','height','vertical-align','background-color','margin-top','margin-bottom','padding-left','font-family','letter-spacing','line-height','color','font-style','text-decoration','border-top','border-right','border-bottom','border-left','white-space','table-layout'];
+const EB_CSS=['text-align','font-size','font-weight','width','height','vertical-align','background-color','margin-top','margin-bottom','padding-left','font-family','letter-spacing','line-height','color','font-style','text-decoration','border-top','border-right','border-bottom','border-left','white-space','table-layout','border-radius'];
 const EB_FONTS=['Pretendard','Nanum Gothic','Nanum Myeongjo','Gowun Batang','Noto Serif KR'];
 function ebClean(html,keepCls){const t=document.createElement('template');t.innerHTML=String(html||'');
   const walk=n=>{[...n.childNodes].forEach(c=>{if(c.nodeType===8){c.remove();return}if(c.nodeType!==1)return;
@@ -3880,10 +3881,28 @@ function ebToolbar(x){const sel=(f,ph,L)=>`<select data-ebfmt="${f}" aria-label=
       ${tb('justifyLeft','왼쪽')}${tb('justifyCenter','가운데')}${tb('justifyRight','오른쪽')}<span class="sep"></span>
       ${tb('h2','제목')}${tb('h3','소제목')}${tb('p','본문')}${tb('insertUnorderedList','• 목록')}</div>
     <div class="r2">${tb('img','그림 넣기','지금 자리에 그림을 넣어요')}${sel('iw','그림 폭',EB_IW)}<span class="sep"></span>${tb('split','여기서 쪽 나누기','글자 칸이 있는 자리에서 뒤를 새 쪽으로')}${tb('clear','모양 지우기','고른 글자의 글꼴 · 크기 · 색 등을 지워요')}<span class="sep"></span>${tb('undo','되돌리기')}${tb('redo','다시')}</div>
-    <div class="r2"><b style="font-size:12.5px;color:#4a5a62">표</b>${sel('tbl','표 넣기',EB_TS)}<span class="sep"></span>${tb('rowup','↑ 줄','위에 줄 넣기')}${tb('rowdn','↓ 줄','아래에 줄 넣기')}${tb('rowdel','줄 지우기')}<span class="sep"></span>${tb('colL','← 칸','왼쪽에 칸 넣기')}${tb('colR','칸 →','오른쪽에 칸 넣기')}${tb('coldel','칸 지우기')}<span class="sep"></span>${tb('merge','합치기','끌어서 고른 칸들을 하나로')}${tb('unmerge','나누기','합친 칸을 다시 나눠요')}${tb('thead','머리 줄','첫 줄 굵게 · 옅은 바탕 켜기/끄기')}${tb('rowfit','줄 높이 맞춤','끌어서 정한 줄 높이를 지우고 글 양에 맞춰요')}${sel('tbg','칸 바탕',EB_TBG)}${sel('tbd','선',EB_TBD)}</div></div>`}
+    <div class="r2"><b style="font-size:12.5px;color:#4a5a62">표</b>${sel('tbl','표 넣기',EB_TS)}<span class="sep"></span>${tb('rowup','↑ 줄','위에 줄 넣기')}${tb('rowdn','↓ 줄','아래에 줄 넣기')}${tb('rowdel','줄 지우기')}<span class="sep"></span>${tb('colL','← 칸','왼쪽에 칸 넣기')}${tb('colR','칸 →','오른쪽에 칸 넣기')}${tb('coldel','칸 지우기')}<span class="sep"></span>${tb('merge','합치기','끌어서 고른 칸들을 하나로')}${tb('unmerge','나누기','합친 칸을 다시 나눠요')}${tb('thead','머리 줄','첫 줄 굵게 · 옅은 바탕 켜기/끄기')}${tb('rowfit','줄 높이 맞춤','끌어서 정한 줄 높이를 지우고 글 양에 맞춰요')}${sel('tbg','칸 바탕',EB_TBG)}${sel('tbd','선',EB_TBD)}</div>
+    <div class="r2"><b style="font-size:12.5px;color:#4a5a62">글상자</b>${tb('gnew','글상자 넣기','지금 자리에 둥근 상자를 넣어요')}${sel('gbg','상자 바탕',EB_GBG)}${sel('gbd','상자 선',EB_GBD)}${sel('grd','모서리',EB_GRD)}${sel('gw','상자 폭',EB_GW)}</div></div>`}
 /* ---- 표 (11-05): 넣기 · 줄/칸 넣고 빼기 · 합치기/나누기 · 머리 줄 · 칸 바탕 · 선 · 칸 폭 끌기 ----
  * 표를 칸 격자(rowspan/colspan 반영)로 읽어 고친 뒤 다시 그림 → 합친 칸이 있어도 줄 · 칸 넣기가 맞게. thead/tbody 구분과 칸 모양(style · class · th)은 그대로. */
-const EB_TS=[['1x1','1줄 × 1칸 (글상자)'],['1x2','1줄 × 2칸'],['2x1','2줄 × 1칸'],['2x2','2줄 × 2칸'],['3x2','3줄 × 2칸'],['3x3','3줄 × 3칸'],['4x2','4줄 × 2칸'],['4x3','4줄 × 3칸'],['5x3','5줄 × 3칸'],['6x4','6줄 × 4칸'],['8x2','8줄 × 2칸']];
+const EB_TS=[['1x1','1줄 × 1칸'],['1x2','1줄 × 2칸'],['2x1','2줄 × 1칸'],['2x2','2줄 × 2칸'],['3x2','3줄 × 2칸'],['3x3','3줄 × 3칸'],['4x2','4줄 × 2칸'],['4x3','4줄 × 3칸'],['5x3','5줄 × 3칸'],['6x4','6줄 × 4칸'],['8x2','8줄 × 2칸']];
+/* 글상자 (11-05): 표가 아닌 상자 — 바탕 · 선 · 둥근 모서리 · 폭 */
+const EB_GBG=[['none','바탕 없음'],['#f1f1f1','회색'],['#e8eef0','청록 옅게'],['#fdf3e1','노랑 옅게'],['#fbe7ea','분홍 옅게'],['#1f5c63','진한 청록 (흰 글씨)']],EB_GBD=[['0','선 없음'],['thin','가는 선'],['thick','굵은 선']],EB_GRD=[['0','각진 모서리'],['2.5mm','둥근 모서리'],['5mm','많이 둥글게']],EB_GW=[['100%','폭 100%'],['75%','폭 75%'],['50%','폭 50%']];
+function ebGbxCur(){const el=ebEditEl();if(!el)return null;const rg=ebRestore();let n=rg?rg.startContainer:null;while(n&&n!==el&&!(n.nodeType===1&&n.classList.contains('gbx')))n=n.parentNode;if(!n||n===el){toast('글상자 안을 먼저 눌러 주세요');return null}return {el,box:n}}
+function ebGbx(f,v){if(f==='gnew'){const el=ebEditEl();if(!el)return;const rg=ebRestore();let n=rg?rg.startContainer:null;while(n&&n!==el&&!(n.nodeType===1&&n.tagName==='SECTION'))n=n.parentNode;
+    if(!n||n===el){const sec=el.querySelector('section.bls');if(!sec){toast('글 칸을 먼저 눌러 주세요');return}const r2=document.createRange();r2.selectNodeContents(sec);r2.collapse(false);const s2=window.getSelection();s2.removeAllRanges();s2.addRange(r2)}
+    /* 문단 안에 넣으면 브라우저가 상자를 풀어 버려서, 지금 문단(블록) 바로 뒤에 직접 넣음 */
+    const r3=window.getSelection().rangeCount?window.getSelection().getRangeAt(0):null;let blk=r3?r3.startContainer:null;while(blk&&blk.parentNode&&!(blk.parentNode.nodeType===1&&blk.parentNode.tagName==='SECTION'))blk=blk.parentNode;
+    const sec=blk&&blk.parentNode&&blk.parentNode.tagName==='SECTION'?blk.parentNode:el.querySelector('section.bls');if(!sec)return;
+    const box=document.createElement('div');box.className='gbx';box.setAttribute('style','background-color:#f1f1f1;border-radius:2.5mm');box.innerHTML='<p>글상자 — 여기에 쓰세요</p>';
+    if(blk&&blk.parentNode===sec)blk.after(box);else sec.appendChild(box);if(!box.nextSibling){const pp=document.createElement('p');pp.innerHTML='<br>';box.after(pp)}
+    const r4=document.createRange();r4.selectNodeContents(box.querySelector('p'));const s4=window.getSelection();s4.removeAllRanges();s4.addRange(r4);S.ebRange=r4.cloneRange();ebTblAfter(el);return}
+  const K=ebGbxCur();if(!K)return;const b=K.box,st=b.style;
+  if(f==='gbg'){if(v==='none'){st.removeProperty('background-color');st.removeProperty('color')}else{st.setProperty('background-color',v);if(v==='#1f5c63')st.setProperty('color','#ffffff');else st.removeProperty('color')}}
+  if(f==='gbd'){['border-top','border-right','border-bottom','border-left'].forEach(p=>v==='0'?st.removeProperty(p):st.setProperty(p,(v==='thick'?'1.6px':'.6px')+' solid '+(st.getPropertyValue('background-color')&&!/255, 255, 255/.test(st.getPropertyValue('background-color'))?'#1f5c63':'#444')))}
+  if(f==='grd'){v==='0'?st.removeProperty('border-radius'):st.setProperty('border-radius',v)}
+  if(f==='gw'){v==='100%'?st.removeProperty('width'):st.setProperty('width',v)}
+  ebTblAfter(K.el)}
 const EB_TBG=[['none','바탕 없음'],['#f1f1f1','회색'],['#e8eef0','청록 옅게'],['#fdf3e1','노랑 옅게']],EB_TBD=[['all','선 모두'],['bh','가로선만'],['bn','선 없음']];
 function ebTblNew(r,c){const w=(100/c).toFixed(2);return `<table class="ut" style="width:100%"><colgroup>${('<col style="width:'+w+'%">').repeat(c)}</colgroup><tbody>${('<tr>'+'<td><br></td>'.repeat(c)+'</tr>').repeat(r)}</tbody></table><p><br></p>`}
 function ebTblGrid(t){const rows=[...t.rows],G=[],A=[];rows.forEach((tr,r)=>{G[r]=G[r]||[];let c=0;[...tr.cells].forEach(td=>{while(G[r][c])c++;const rs=Math.max(1,td.rowSpan||1),cs=Math.max(1,td.colSpan||1),a={td,r,c,rs,cs,sec:tr.parentNode.tagName};A.push(a);
@@ -3981,6 +4000,7 @@ document.addEventListener('click',e=>{if(S.tab!=='book'||!S.ebEd)return;const im
   document.querySelectorAll('.ebc[contenteditable=true] img').forEach(x=>x.style.outline='');if(im){S.ebImgSel=im;im.style.outline='3px solid #f0b429'}},true);
 document.addEventListener('change',e=>{if(S.tab!=='book')return;const t=e.target;if(!t.dataset||!t.dataset.ebfmt)return;const f=t.dataset.ebfmt,v=t.value;t.value='';if(!v)return;
   if(f==='tbl'||f==='tbg'||f==='tbd'){ebTblFmt(f,v);return}
+  if(f==='gbg'||f==='gbd'||f==='grd'||f==='gw'){ebGbx(f,v);return}
   if(f==='iw'){const im=S.ebImgSel,el=ebEditEl();if(!im||!el||!el.contains(im)){toast('폭을 바꿀 그림을 먼저 눌러 주세요');return}im.style.width=v;im.style.outline='';S.ebBuf=el.innerHTML;return}
   ebStyle({ff:'font-family',fs:'font-size',ls:'letter-spacing',lh:'line-height',co:'color'}[f],f==='fs'?v+'pt':v)});
 /* 고쳐 쓰기 */
@@ -3993,6 +4013,7 @@ function ebSplit(){const el=ebEditEl(),sel=window.getSelection();if(!el||!sel.ra
   if(blk.tagName==='TABLE'){toast('표 안에서는 나눌 수 없어요. 표 앞이나 뒤 글줄에서 눌러 주세요');return}
   const r2=document.createRange();r2.setStartBefore(blk);r2.setEndAfter(sec.lastChild);const fr=r2.extractContents();const ns=sec.cloneNode(false);ns.appendChild(fr);sec.after(ns);S.ebBuf=el.innerHTML;toast('여기서 새 쪽으로 나눴어요')}
 document.addEventListener('mousedown',e=>{if(S.tab!=='book')return;const b=e.target.closest&&e.target.closest('[data-ebcmd]');if(!b)return;e.preventDefault();const c=b.dataset.ebcmd,el=ebEditEl();if(!el)return;
+  if(c==='gnew'){ebGbx('gnew');return}
   if(c==='rowfit'){const K=ebTblCur();if(!K)return;[...K.td.parentNode.cells].forEach(x=>x.style.removeProperty('height'));K.td.parentNode.style.removeProperty('height');ebEqDom(document.querySelector('.ebprev'));ebTblAfter(K.el);return}
   if(['rowup','rowdn','rowdel','colL','colR','coldel','merge','unmerge','thead'].includes(c)){ebTblDo(c);return}
   if(c==='split'){ebSplit();return}
@@ -4067,6 +4088,6 @@ document.addEventListener('click',e=>{if(S.tab!=='book')return;const b=e.target.
   if(b.id==='ebSetSave'){const n=Object.assign(ebSet(),S.ebSetW||{});n.per=Math.max(1,Math.min(10,Math.round(+n.per||5)));n.fs=Math.max(5,Math.min(10,+n.fs||6.6));['en','sub','org'].forEach(k=>n[k]=String(n[k]||'').trim().slice(0,120));
     ebSend([],[],n,()=>{S.ebSetW=null;toast('책자 설정을 저장했어요')});return}},true);
 </script>
-<div id="bldMark" hidden>빌드표시 20261105-225144 </div>
+<div id="bldMark" hidden>빌드표시 20261105-225340 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();</script>
 </body></html>

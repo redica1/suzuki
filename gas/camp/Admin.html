@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261105-202807 -->
+<!-- build: 20261105-203317 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -3173,7 +3173,7 @@ function ebRow(x,extra){return Object.assign({k:x.k,ord:x.ord,on:x.on,t:x.t},ext
 function ebReorder(L){return L.map((x,i)=>ebRow(x,{ord:(i+1)*10}))}
 /* ---- 화면 ---- */
 function vEbk(){const E=S.EB;if(!E){if(!S.EBL)setTimeout(ebLoad,0);return '<div class="panel hint">책자를 만들고 있어요…</div>'}
-  const L=ebItems(),ed=!!E.edit&&!RO(),z=S.ebZ||.75,T=ebSet(),sel=S.ebSel;
+  const L=ebItems(),ed=!!E.edit&&!RO(),z=ebZoom(),T=ebSet(),sel=S.ebSel;
   const grp=k=>({cover:'앞',sched:'날짜별 시간표',con:'음악회 프로그램',orch:'명단',tch:'명단',text:'글 쪽'})[k];
   let lastG='';
   const list=L.map((x,i)=>{const [c,l]=ebState(x),g=x.kind==='text'?'':grp(x.kind);const gh=g&&g!==lastG?`<div class="egrp">${esc(g)}</div>`:'';if(g)lastG=g;
@@ -3197,8 +3197,8 @@ function vEbk(){const E=S.EB;if(!E){if(!S.EBL)setTimeout(ebLoad,0);return '<div 
   setTimeout(ebMeasure,30);
   return `<div class="panel"><div class="spread"><div><b>행사 책자</b> <span class="hint">A5 (148 × 210mm) · 자동 쪽은 교사 일정 · 음악회 연주 순서 · 접수에서 바로 만들어요. 「고쳐 쓰기」로 손질한 쪽은 고정되고, 원본이 바뀌면 빨갛게 알려 줘요.</span></div>
     <div class="row" style="gap:6px;flex-wrap:wrap">${ed?`<button class="btn small" type="button" id="ebAddTxt">＋ 글 쪽</button>`:''}
-      <span class="dzm"><button type="button" data-ebz="-">−</button><button type="button" class="dzv" data-ebz="0">${Math.round(z*100)}%</button><button type="button" data-ebz="+">＋</button></span>
-      <button class="btn small" type="button" id="ebRe">새로 만들기</button><button class="btn small primary" type="button" id="ebPrint">인쇄 · PDF 저장</button></div></div>
+      <span class="dzm" role="group" aria-label="미리보기 크기"><button type="button" data-ebz="-" aria-label="작게">−</button><button type="button" class="dzv" data-ebz="0" title="기본 크기로">${Math.round(z*100)}%</button><button type="button" data-ebz="+" aria-label="크게">＋</button></span>
+      <button class="btn small" type="button" id="ebRe">새로 만들기</button><button class="btn small" type="button" id="ebWin">새 창으로 보기</button><button class="btn small primary" type="button" id="ebPrint">인쇄 · PDF 저장</button></div></div>
     <details class="ebsetw" ${S.ebSetOpen?'open':''}><summary class="hint" style="cursor:pointer;margin-top:6px">책자 설정 (영문 행사 이름 · 표지 · 시간표 한 쪽 장소 수 · 쪽 번호)</summary>
       <div class="ebset"><label>영문 행사 이름 (표지 · 음악회 머리)<input type="text" data-ebs="en" value="${esc(T.en)}" placeholder="SUZUKI MUSIC KOREA 2027 WINTER MUSIC FESTIVAL" ${ed?'':'disabled'}></label>
         <label>표지 부제<input type="text" data-ebs="sub" value="${esc(T.sub)}" placeholder="WINTER MUSIC FESTIVAL" ${ed?'':'disabled'}></label>
@@ -3223,12 +3223,30 @@ function ebMeasure(){if(S.tab!=='book')return;const pr=document.getElementById('
 function ebPrint(){const L=ebItems().filter(x=>x.on);if(!L.length){toast('넣은 쪽이 없어요');return}if(S.ebEd){toast('고쳐 쓰는 쪽을 먼저 저장하거나 그만두세요');return}
   const T=ebSet();let r=document.getElementById('ebPrintRoot');if(!r){r=document.createElement('div');r.id='ebPrintRoot';document.body.appendChild(r)}
   let st=document.getElementById('ebPgStyle');if(!st){st=document.createElement('style');st.id='ebPgStyle';document.head.appendChild(st)}
-  st.textContent=`@page ebp{size:148mm 210mm;margin:12mm 10mm 13mm;${T.num?'@bottom-center{content:"- " counter(page) " -";font-family:Pretendard,sans-serif;font-size:8pt;color:#444}':''}}@page ebc{size:148mm 210mm;margin:0}`;
+  st.textContent=ebPageCss(T);
   r.innerHTML=L.map(x=>ebClean(x.h||x.auto,true)).join('');
   document.body.classList.add('ebprint');const t0=document.title;document.title=((S.EB.camp||{}).name||'캠프')+' 책자 (A5)'+dStamp();
   const fr=(document.fonts&&document.fonts.ready)||Promise.resolve();fr.then(()=>{try{window.print()}finally{setTimeout(()=>{document.title=t0},500)}})}
 window.addEventListener('afterprint',()=>{document.body.classList.remove('ebprint')});
 window.addEventListener('beforeprint',()=>{if(S.tab!=='book')document.body.classList.remove('ebprint')});
+function ebZoom(){if(S.ebZ==null){let v=0;try{v=+localStorage.getItem('campBookZoom')}catch(x){}S.ebZ=v>=.4&&v<=1.6?v:.75}return S.ebZ}
+function ebPageCss(T){return `@page ebp{size:148mm 210mm;margin:12mm 10mm 13mm;${T.num?'@bottom-center{content:"- " counter(page) " -";font-family:Pretendard,sans-serif;font-size:8pt;color:#444}':''}}@page ebc{size:148mm 210mm;margin:0}`}
+/* 새 창으로 보기 (11-05, 공문과 같게): 넣은 쪽 모두를 A5 실제 크기로 새 탭에(같은 탭을 다시 씀) · − 100% ＋ 폭 맞춤 · Ctrl +/−/0 · 그 창에서 인쇄 · PDF 저장 */
+function ebOpenWin(){const L=ebItems().filter(x=>x.on);if(!L.length){toast('넣은 쪽이 없어요');return}
+  const E=S.EB,T=ebSet(),ti=String(((E.camp||{}).name||'캠프')+' 책자 (A5)').replace(/[<>&"]/g,' ');
+  const css=[...document.querySelectorAll('style')].map(x=>x.textContent).filter(t=>t.indexOf('.bls{')>=0).join('\n');
+  const body=L.map(x=>ebClean(S.ebEd===x.k&&S.ebBuf!=null?S.ebBuf:(x.h||x.auto),true)).join('');
+  const font='https:'+'\/\/cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css';
+  const extra=ebPageCss(T)+'@media screen{html,body{margin:0;background:#dfe4e6}#ebPrintRoot{display:flex !important;flex-direction:column;align-items:center;gap:16px;padding:14px 0 40px}'+
+    '.tb{position:sticky;top:0;z-index:5;display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap;padding:10px 16px;background:#1f5c63;color:#fff;font:14px "Pretendard Variable",sans-serif}.tb button{font:inherit;font-weight:700;padding:6px 14px;border:0;border-radius:8px;background:#fff;color:#1f5c63;cursor:pointer}.tb span{opacity:.85;font-size:12.5px}.zm{display:inline-flex;gap:2px;background:rgba(255,255,255,.15);border-radius:9px;padding:2px}.zm button{min-width:34px;padding:4px 8px}#zv{min-width:56px}}@media print{#ebPrintRoot{zoom:1 !important}}';
+  const html='<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+ti+dStamp()+'</title><link rel="stylesheet" href="'+font+'"><style>'+css+'\n'+extra+'</style></head><body class="ebprint">'+
+    '<div class="tb"><b>'+ti+'</b><span class="zm"><button type="button" onclick="Z(-1)" aria-label="작게">−</button><button type="button" id="zv" onclick="Z(0)" title="100%로">100%</button><button type="button" onclick="Z(1)" aria-label="크게">＋</button><button type="button" onclick="Z(2)">폭 맞춤</button></span><button type="button" onclick="print()">인쇄 · PDF 저장</button><span>책자 화면에서 고친 뒤 「새 창으로 보기」를 다시 누르면 이 창이 새로 바뀌어요</span></div>'+
+    '<div id="ebPrintRoot">'+body+'</div><scr'+'ipt>'+
+    'var z=1;try{z=+localStorage.getItem("bkWinZoom")||1}catch(e){}function A(){var r=document.getElementById("ebPrintRoot");r.style.zoom=z;document.getElementById("zv").textContent=Math.round(z*100)+"%";try{localStorage.setItem("bkWinZoom",z)}catch(e){}}'+
+    'function Z(k){if(k===0)z=1;else if(k===2){var s=document.querySelector("#ebPrintRoot .bls");var w=s?s.offsetWidth:560;z=Math.max(.4,Math.min(2.5,(window.innerWidth-40)/w))}else z=Math.max(.4,Math.min(2.5,Math.round((z+k*.1)*100)/100));A()}'+
+    'document.addEventListener("keydown",function(e){if(e.ctrlKey||e.metaKey){if(e.key==="="||e.key==="+"){e.preventDefault();Z(1)}else if(e.key==="-"){e.preventDefault();Z(-1)}else if(e.key==="0"){e.preventDefault();Z(0)}}});A();</scr'+'ipt></body></html>';
+  const url=URL.createObjectURL(new Blob([html],{type:'text/html;charset=utf-8'})),a=document.createElement('a');a.href=url;a.target='suzukiBook';document.body.appendChild(a);a.click();
+  setTimeout(()=>{a.remove();URL.revokeObjectURL(url)},120000);if(S.ebEd)toast('새 창에 띄웠어요 · 고쳐 쓰는 중인 쪽은 아직 저장 전이에요')}
 /* 고쳐 쓰기 */
 function ebEditEl(){return S.ebEd?document.querySelector(`.ebc[data-ebk="${CSS.escape(S.ebEd)}"]`):null}
 function ebStartEdit(k){if(S.ebEd&&S.ebEd!==k){if(!confirm('고쳐 쓰는 쪽이 있어요. 저장하지 않고 이 쪽으로 옮길까요?'))return}
@@ -3252,7 +3270,8 @@ document.addEventListener('toggle',e=>{if(e.target.classList&&e.target.classList
 document.addEventListener('click',e=>{if(S.tab!=='book')return;const b=e.target.closest&&e.target.closest('button,[data-ebgo]');if(!b)return;const d=b.dataset;
   if(b.id==='ebRe'){if(S.ebEd&&!confirm('고쳐 쓰는 내용이 지워져요. 새로 불러올까요?'))return;S.EB=null;S.ebEd=null;S.ebBuf=null;S.ebPeek=null;render();return}
   if(b.id==='ebPrint'){ebPrint();return}
-  if(d.ebz){const z=d.ebz==='0'?.75:Math.max(.4,Math.min(1.6,Math.round(((S.ebZ||.75)+(d.ebz==='+'?.1:-.1))*100)/100));S.ebZ=z;document.querySelectorAll('.ebc').forEach(c=>c.style.setProperty('--ebz',z));const v=b.parentNode.querySelector('.dzv');if(v)v.textContent=Math.round(z*100)+'%';setTimeout(ebMeasure,30);return}
+  if(b.id==='ebWin'){ebOpenWin();return}
+  if(d.ebz){const z=d.ebz==='0'?.75:Math.max(.4,Math.min(1.6,Math.round((ebZoom()+(d.ebz==='+'?.1:-.1))*100)/100));S.ebZ=z;try{localStorage.setItem('campBookZoom',z)}catch(x){}document.querySelectorAll('.ebc').forEach(c=>c.style.setProperty('--ebz',z));const v=b.parentNode.querySelector('.dzv');if(v)v.textContent=Math.round(z*100)+'%';setTimeout(ebMeasure,30);return}
   if(d.ebgo){S.ebSel=d.ebgo;const el=document.getElementById('eb_'+d.ebgo.replace(':','_'));if(el)el.scrollIntoView({block:'start',behavior:'smooth'});document.querySelectorAll('.eblist li').forEach(li=>li.classList.toggle('cur',!!li.querySelector(`[data-ebgo="${CSS.escape(d.ebgo)}"]`)));return}
   if(d.ebmv){const [i,dir]=d.ebmv.split('|').map(Number),L=ebItems(),j=i+dir;if(j<0||j>=L.length)return;const t=L[i];L[i]=L[j];L[j]=t;ebSend(ebReorder(L),[],null,null,'순서를 바꾸고 있어요…');return}
   if(d.ebedit){ebStartEdit(d.ebedit);return}
@@ -3271,6 +3290,6 @@ document.addEventListener('click',e=>{if(S.tab!=='book')return;const b=e.target.
   if(b.id==='ebSetSave'){const n=Object.assign(ebSet(),S.ebSetW||{});n.per=Math.max(1,Math.min(10,Math.round(+n.per||5)));n.fs=Math.max(5,Math.min(10,+n.fs||6.6));['en','sub','org'].forEach(k=>n[k]=String(n[k]||'').trim().slice(0,120));
     ebSend([],[],n,()=>{S.ebSetW=null;toast('책자 설정을 저장했어요')});return}},true);
 </script>
-<div id="bldMark" hidden>빌드표시 20261105-202807 </div>
+<div id="bldMark" hidden>빌드표시 20261105-203317 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();</script>
 </body></html>

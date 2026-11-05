@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261105-225340 -->
+<!-- build: 20261105-230119 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -3163,6 +3163,8 @@ document.addEventListener('change',e=>{const t=e.target;if(S.tab!=='meal')return
 .bls.txt{font-size:8.8pt}
 .bls img{max-width:100%;height:auto;vertical-align:top}
 /* 표 (11-05) */
+.bls.fit1 p,.bls.fit1 ul,.bls.fit1 ol{margin-bottom:.6mm}.bls.fit1 h2{margin-bottom:1mm}.bls.fit1 h3{margin:1.5mm 0 .8mm}.bls.fit1 .eh{margin-bottom:2.5mm}.bls.fit1 td,.bls.fit1 th{padding:.25mm .7mm !important}.bls.fit1 .it{margin-bottom:1.2mm}.bls.fit1 .oh,.bls.fit1 .oh2{margin:1.5mm 0 .5mm}.bls.fit1 .gbx{margin-bottom:1.5mm;padding:1.8mm 3mm}.bls.fit1 .cmeta{margin-bottom:3mm}
+.bls.fit2,.bls.fit2 *{line-height:1.2 !important}.bls .fitz{box-sizing:border-box}
 .bls .gbx{box-sizing:border-box;padding:2.5mm 3.5mm;margin:0 auto 2.5mm;max-width:100%}.bls .gbx>p:last-child,.bls .gbx>*:last-child{margin-bottom:0}.ebc[contenteditable=true] .gbx{outline:1px dashed #f0b42999}
 .bls td b,.bls td strong,.bls th b,.bls th strong{font-weight:700}  /* 관리자 표 전체 규칙(tbody td b = 400)을 책자 표에서만 되돌림 */
 .bls table.ut{width:100%;margin:0 0 2mm}.bls table.hd tr:first-child>td,.bls table.hd tr:first-child>th{font-weight:700;background-color:#eef2f3}
@@ -3375,16 +3377,33 @@ function ebEqSched(html){html=String(html||'');if((html.match(/<table class="st"
     T.forEach(t=>[...t.rows].forEach((r,i)=>{H[i]=Math.max(H[i]||0,r.getBoundingClientRect().height)}));
     T.forEach(t=>[...t.rows].forEach((r,i)=>{r.style.height=(Math.ceil(H[i]*10)/10)+'px'}));out=d.innerHTML}catch(e){}finally{d.remove()}
   if(S.ebEqC.size>60)S.ebEqC.clear();S.ebEqC.set(html,out);return out}
-function ebPg(x){const h=x.h||x.auto;return x.kind==='sched'?ebEqSched(h):h}
-function ebHtml(x){return S.ebEd===x.k&&S.ebBuf!=null?S.ebBuf:(S.ebPeek===x.k&&x.auto)?x.auto:(x.h||x.auto)}
+/* ---- 한 쪽에 맞추기 (11-05): _set.fit = [쪽 키] — ① 여백 줄이기(fit1) ② 행간 1.2(fit2) ③ 글자 비율(감싸는 div 의 zoom, 80%까지). 그날 시간표 여러 장은 같은 비율. 80%로도 안 되면 안 줄이고 알림 ---- */
+const ebEffZ=n=>{let z=1;while(n&&n.nodeType===1){const v=parseFloat(getComputedStyle(n).zoom);if(v&&v!==1)z*=v;if(n.classList&&n.classList.contains('ebc'))break;n=n.parentElement}return z};
+function ebFitOn(k){return (ebSet().fit||[]).includes(k)}
+function ebFitHtml(html,k){html=String(html||'');S.ebFitC=S.ebFitC||new Map();const ck=k+'|'+html,c=S.ebFitC.get(ck);if(c){S.ebFitR=S.ebFitR||{};S.ebFitR[k]=c.r;return c.h}
+  const d=document.createElement('div');d.className='ebc';d.style.cssText='--ebz:1;zoom:1;position:absolute;left:-14000px;top:0;pointer-events:none';d.innerHTML=html;ebHost().appendChild(d);
+  const pr=document.createElement('div');pr.style.cssText='height:210mm;width:1px';d.appendChild(pr);const A5=pr.getBoundingClientRect().height;pr.remove();let out=html,r={z:1,lv:0};
+  try{const secs=[...d.querySelectorAll('section.bls')].filter(s=>!s.classList.contains('cov')&&!s.classList.contains('imgp'));
+    const H=s=>{const m=s.style.minHeight;s.style.minHeight='0';const h=s.getBoundingClientRect().height;s.style.minHeight=m;return h};
+    const over=()=>secs.some(s=>H(s)>A5+1);
+    if(secs.length&&over()){secs.forEach(s=>s.classList.add('fit1'));r.lv=1;
+      if(over()){secs.forEach(s=>s.classList.add('fit2'));r.lv=2;
+        if(over()){const z=Math.min(...secs.map(s=>A5/H(s)))*0.995;
+          if(z<0.8){secs.forEach(s=>s.classList.remove('fit1','fit2'));r={z:1,lv:0,fail:1}}
+          else{const zz=Math.floor(z*1000)/1000;secs.forEach(s=>{const w=document.createElement('div');w.className='fitz';w.setAttribute('style',`zoom:${zz};width:${(100/zz).toFixed(2)}%`);w.append(...s.childNodes);s.appendChild(w)});r={z:zz,lv:3}}}}
+      out=d.innerHTML}}catch(e){}finally{d.remove()}
+  if(S.ebFitC.size>40)S.ebFitC.clear();S.ebFitC.set(ck,{h:out,r});S.ebFitR=S.ebFitR||{};S.ebFitR[k]=r;return out}
+function ebFitLab(k){const r=(S.ebFitR||{})[k];if(!r)return '맞춤';return r.fail?'맞춤 안 됨 · 너무 길어요':r.lv===0?'맞춤 (이미 한 쪽)':r.lv===1?'맞춤 · 여백':r.lv===2?'맞춤 · 여백 · 행간':`맞춤 ${Math.round(r.z*100)}%`}
+function ebPg(x){let h=x.h||x.auto;if(x.kind==='sched')h=ebEqSched(h);return ebFitOn(x.k)?ebFitHtml(h,x.k):h}
+function ebHtml(x){return S.ebEd===x.k&&S.ebBuf!=null?S.ebBuf:(S.ebPeek===x.k&&x.auto)?x.auto:S.ebEd!==x.k&&ebFitOn(x.k)?ebPg(x):(x.h||x.auto)}
 /* 미리보기에서는 지금 확대 비율로 그린 그대로 재서 맞춤 (확대하면 줄바꿈이 조금 달라져서) — 같은 날 = 제목(.stt) 글이 같은 시간표 쪽들 */
 function ebEqDom(root){if(!root)return;const G={};root.querySelectorAll('section.bls.sch').forEach(sec=>{const t=sec.querySelector('.stt');if(!t)return;const c=sec.closest('.ebc'),k=(c?c.dataset.ebk||'':'')+'|'+t.textContent;(G[k]=G[k]||[]).push(...sec.querySelectorAll('table.st'))});
-  Object.values(G).forEach(T=>{if(T.length<2)return;const c=T[0].closest('.ebc'),z=c?(parseFloat(getComputedStyle(c).zoom)||1):1;T.forEach(t=>[...t.rows].forEach(r=>r.style.removeProperty('height')));const H=[];
+  Object.values(G).forEach(T=>{if(T.length<2)return;const z=ebEffZ(T[0]);T.forEach(t=>[...t.rows].forEach(r=>r.style.removeProperty('height')));const H=[];
     T.forEach(t=>[...t.rows].forEach((r,i)=>{H[i]=Math.max(H[i]||0,r.getBoundingClientRect().height)}));T.forEach(t=>[...t.rows].forEach((r,i)=>{r.style.height=(Math.ceil(H[i]/z*10)/10)+'px'}))})}
 /* ---- 붙여 넣기 · 저장 때 HTML 다듬기: 허락한 태그 · 칸만 ---- */
 const EB_OK=new Set(['IMG','SECTION','DIV','P','SPAN','B','STRONG','I','EM','U','BR','H1','H2','H3','H4','TABLE','THEAD','TBODY','TFOOT','TR','TD','TH','UL','OL','LI','SMALL','SUP','SUB','HR','COLGROUP','COL']);
 const EB_DROP=new Set(['SCRIPT','STYLE','IFRAME','OBJECT','EMBED','LINK','META','TITLE','HEAD','svg','SVG','VIDEO','AUDIO','FORM','INPUT','BUTTON','SELECT','TEXTAREA','TEMPLATE','NOSCRIPT']);
-const EB_CSS=['text-align','font-size','font-weight','width','height','vertical-align','background-color','margin-top','margin-bottom','padding-left','font-family','letter-spacing','line-height','color','font-style','text-decoration','border-top','border-right','border-bottom','border-left','white-space','table-layout','border-radius'];
+const EB_CSS=['text-align','font-size','font-weight','width','height','vertical-align','background-color','margin-top','margin-bottom','padding-left','font-family','letter-spacing','line-height','color','font-style','text-decoration','border-top','border-right','border-bottom','border-left','white-space','table-layout','border-radius','zoom'];
 const EB_FONTS=['Pretendard','Nanum Gothic','Nanum Myeongjo','Gowun Batang','Noto Serif KR'];
 function ebClean(html,keepCls){const t=document.createElement('template');t.innerHTML=String(html||'');
   const walk=n=>{[...n.childNodes].forEach(c=>{if(c.nodeType===8){c.remove();return}if(c.nodeType!==1)return;
@@ -3773,20 +3792,21 @@ function vEbk(){const E=S.EB;if(!E){if(!S.EBL)setTimeout(ebLoad,0);return '<div 
   const list=L.map((x,i)=>{const [c,l]=ebState(x),g=x.kind==='text'?'':grp(x.kind);const gh=g&&g!==lastG?`<div class="egrp">${esc(g)}</div>`:'';if(g)lastG=g;
     return `${gh}<li class="${x.on?'':'off'} ${sel===x.k?'cur':''}"><input type="checkbox" data-ebon="${esc(x.k)}" ${x.on?'checked':''} ${ed?'':'disabled'} aria-label="${esc(x.t)} 넣기"><span class="eti" data-ebgo="${esc(x.k)}" title="${esc(x.t)}">${esc(x.t)}<span class="ebchip ${c}">${l}</span><br><span class="epg" data-ebpg="${esc(x.k)}"></span></span>
       ${ed?`<span class="emv"><button type="button" data-ebmv="${i}|-1" aria-label="위로">↑</button><button type="button" data-ebmv="${i}|1" aria-label="아래로">↓</button><button type="button" data-ebdel="${esc(x.k)}" aria-label="쪽 지우기" title="쪽 지우기" class="edel">×</button></span>`:'<span></span>'}</li>`}).join('');
-  const prev=L.map(x=>{const [c,l]=ebState(x),isEd=S.ebEd===x.k,chg=c==='chg'&&x.kind!=='text';
+  const prev=L.map(x=>{const hh=ebHtml(x),[c,l]=ebState(x),isEd=S.ebEd===x.k,chg=c==='chg'&&x.kind!=='text';
     const tools=isEd?ebToolbar(x)
       :`<div class="ebbar"><b>${esc(x.t)}</b><span class="ebchip ${c}">${l}</span><span class="epg2" data-ebpg2="${esc(x.k)}"></span>${x.h&&x.at?`<span class="epg2">· ${esc(String(x.at).slice(5,16))} ${esc(x.by||'')}</span>`:''}
         ${ed&&!ebIsImg(x)?`<button class="btn small" type="button" data-ebedit="${esc(x.k)}">${x.h||x.kind==='text'?'계속 고치기':'고쳐 쓰기'}</button>`:''}
         ${ed&&ebIsImg(x)?`<button class="btn small" type="button" data-ebimgre="${esc(x.k)}">그림 바꾸기</button><button class="btn small" type="button" data-ebimgfull="${esc(x.k)}">${/imgp full/.test(x.h)?'여백 안에 넣기':'여백 없이 가득'}</button>`:''}
         ${!ebIsImg(x)&&ebTabOf(x.k)!=null?`<a class="btn small" target="_blank" rel="noopener" href="${esc(ebSheetUrl(ebTabOf(x.k)))}">시트 탭 열기</a>${ed?`<button class="btn small" type="button" data-ebapply1="${esc(x.k)}">이 쪽 시트에서 적용</button>`:''}`:''}
         ${ed&&!ebIsImg(x)?`<button class="btn small" type="button" data-ebexp1="${esc(x.k)}" title="${ebTabOf(x.k)!=null?'시트 탭을 지금 책자 쪽으로 덮어써요':'이 쪽을 시트 탭으로 만들어요'}">${ebTabOf(x.k)!=null?'시트로 다시 보내기':'이 쪽 시트로 보내기'}</button>`:''}
+        ${ed&&!ebIsImg(x)?`<button class="btn small ${ebFitOn(x.k)?'primary':''}" type="button" data-ebfit="${esc(x.k)}" title="A5 한 장을 넘으면 여백 → 행간 → 글자 크기(80%까지) 순서로 줄여 한 쪽에 넣어요">${ebFitOn(x.k)?esc(ebFitLab(x.k))+' ✕':'한 쪽에 맞추기'}</button>`:''}
         ${ed&&x.kind!=='text'&&!x.orphan?`<button class="btn small" type="button" data-ebtog="${esc(x.k)}">${x.on?'책자에서 빼기':'책자에 넣기'}</button>`:''}
         ${ed&&x.h&&x.kind!=='text'&&!x.orphan?`<button class="btn small" type="button" data-ebreset="${esc(x.k)}">원본으로 되돌리기</button>`:''}
         ${ed&&x.kind==='text'?`<button class="btn small" type="button" data-ebname="${esc(x.k)}">이름 바꾸기</button>`:''}
         ${ed?`<button class="btn small" type="button" data-ebdel="${esc(x.k)}" title="${x.kind==='text'||x.orphan?'이 쪽을 지워요':'자동 쪽은 목록에서 지워요 · 위 「지운 쪽」에서 되살릴 수 있어요'}">쪽 지우기</button>`:''}</div>`;
     const warn=chg&&!isEd?`<div class="ebwarn">${!x.orphan?ebSrcBtn(x.kind):''}${x.orphan?'원본(공연 · 날짜)이 없어졌어요. 고친 내용만 남아 있어요.':`원본 데이터가 바뀌었어요(고쳐 쓴 뒤로).`}
         ${!x.orphan?`<button class="btn small" type="button" data-ebpeek="${esc(x.k)}">${S.ebPeek===x.k?'고친 쪽 보기':'바뀐 원본 보기'}</button>${ed?`<button class="btn small" type="button" data-ebreset="${esc(x.k)}">원본으로 바꾸기</button><button class="btn small" type="button" data-ebkeep="${esc(x.k)}">고친 대로 두기</button>`:''}`:''}</div>`:'';
-    return `<div class="ebi ${x.on?'':'off'}" id="eb_${esc(x.k.replace(':','_'))}">${tools}${warn}<div class="ebc" data-ebk="${esc(x.k)}" style="--ebz:${z}" ${isEd?'contenteditable="true" spellcheck="false"':''}>${ebHtml(x)}</div></div>`}).join('');
+    return `<div class="ebi ${x.on?'':'off'}" id="eb_${esc(x.k.replace(':','_'))}">${tools}${warn}<div class="ebc" data-ebk="${esc(x.k)}" style="--ebz:${z}" ${isEd?'contenteditable="true" spellcheck="false"':''}>${hh}</div></div>`}).join('');
   setTimeout(()=>{ebImgFill(document.querySelector('.ebprev'));ebEqDom(document.querySelector('.ebprev'));ebMeasure();ebTopH();if(S.ebEd)ebLive();if(S.ebSel)ebCur(S.ebSel,true);else ebSpy()},30);
   return `<div class="panel ebtop" id="ebTop"><div class="spread"><div><b>행사 책자</b> <span class="hint">A5 (148 × 210mm) · 자동 쪽은 교사 일정 · 음악회 연주 순서 · 접수에서 바로 만들어요. 「고쳐 쓰기」로 손질한 쪽은 고정되고, 원본이 바뀌면 빨갛게 알려 줘요.</span></div>
     <div class="row" style="gap:6px;flex-wrap:wrap">${ed?(S.ebAdd?`<span class="ebadd"><b style="font-size:13px;padding:0 4px">새 쪽</b><button class="btn small primary" type="button" id="ebPickOpen">데이터에서 불러오기</button><button class="btn small" type="button" id="ebAddTxt">글 쪽 (직접 쓰기)</button><button class="btn small" type="button" id="ebAddImg">이미지 쪽 (그림 올리기)</button><button class="btn small ghost" type="button" id="ebAddX">닫기</button></span>`:`<button class="btn small" type="button" id="ebAddOpen" title="고른 쪽 다음에 들어가요">＋ 쪽 추가</button>`):''}
@@ -3826,7 +3846,7 @@ function ebMeasure(){if(S.tab!=='book')return;const pr=document.getElementById('
   L.forEach(x=>{const c=document.querySelector(`.ebc[data-ebk="${CSS.escape(x.k)}"]`);if(!c)return;let k=0;
     c.querySelectorAll('section.bls').forEach(s=>{const z=parseFloat(getComputedStyle(c).zoom)||1,hh=s.getBoundingClientRect().height,p=Math.max(1,Math.round(hh/(ph*z)-.02+.49));s.classList.toggle('ovf',p>1);k+=p});
     if(!c.querySelector('section.bls'))k=1;
-    const lab=x.on?(k>1?`${n+1}–${n+k}쪽`:`${n+1}쪽`):'빠짐';if(x.on){n+=k;tot+=k}
+    const lab=(x.on?(k>1?`${n+1}–${n+k}쪽`:`${n+1}쪽`):'빠짐')+(ebFitOn(x.k)&&(S.ebFitR||{})[x.k]?' · 맞춤 '+(r=>r.fail?'안 들어감':r.lv===0?'필요 없음':r.lv===1?'여백':r.lv===2?'여백·행간':Math.round(r.z*100)+'%')(S.ebFitR[x.k]):'');if(x.on){n+=k;tot+=k}
     document.querySelectorAll(`[data-ebpg="${CSS.escape(x.k)}"],[data-ebpg2="${CSS.escape(x.k)}"]`).forEach(e=>e.textContent=lab+(k>1&&x.on?` (${k}쪽)`:''))});
   const t=document.getElementById('ebTot');if(t)t.textContent=`모두 약 ${tot}쪽${tot%4?` · 책으로 묶으려면 4의 배수(${Math.ceil(tot/4)*4}쪽)가 좋아요`:''}`}
 /* 인쇄 */
@@ -4065,6 +4085,7 @@ document.addEventListener('click',e=>{if(S.tab!=='book')return;const b=e.target.
   if(b.id==='ebChkX'){S.ebChk=null;try{CSS.highlights.delete('ebchk')}catch(x){}render();return}
   if(d.ebchkok){const T=ebSet();ebSend([],[],Object.assign({},T,{ok:[...new Set((T.ok||[]).concat([d.ebchkok]))].slice(-150)}),()=>{ebCheckRun();render()},'기억하고 있어요…');return}
   if(d.ebsrcgo){const s2=EB_SRC[d.ebsrcgo];if(!s2)return;if(S.ebEd&&S.ebBuf!=null&&!confirm('고쳐 쓰는 쪽을 저장하지 않고 원본 화면으로 갈까요?'))return;S.ebEd=null;S.ebBuf=null;S.EB=null;goTab(s2[0]);toast(s2[1]+'에서 고친 뒤 행사 책자로 돌아오면 자동 쪽이 따라 바뀌어요');return}
+  if(d.ebfit){const T=ebSet(),F=new Set(T.fit||[]);if(F.has(d.ebfit))F.delete(d.ebfit);else F.add(d.ebfit);ebSend([],[],Object.assign({},T,{fit:[...F]}),()=>{const r=(S.ebFitR||{})[d.ebfit];toast(F.has(d.ebfit)?(r&&r.fail?'80%로 줄여도 한 쪽에 안 들어가요 · 두 쪽으로 나눠 주세요':'한 쪽에 맞췄어요'):'맞추기를 껐어요')},'맞추고 있어요…');return}
   if(b.id==='ebPickOpen'){S.ebPickM=1;S.ebAdd=0;render();return}
   if(b.id==='ebPickX'){S.ebPickM=0;render();return}
   if(d.ebpick){ebPick(d.ebpick);return}
@@ -4088,6 +4109,6 @@ document.addEventListener('click',e=>{if(S.tab!=='book')return;const b=e.target.
   if(b.id==='ebSetSave'){const n=Object.assign(ebSet(),S.ebSetW||{});n.per=Math.max(1,Math.min(10,Math.round(+n.per||5)));n.fs=Math.max(5,Math.min(10,+n.fs||6.6));['en','sub','org'].forEach(k=>n[k]=String(n[k]||'').trim().slice(0,120));
     ebSend([],[],n,()=>{S.ebSetW=null;toast('책자 설정을 저장했어요')});return}},true);
 </script>
-<div id="bldMark" hidden>빌드표시 20261105-225340 </div>
+<div id="bldMark" hidden>빌드표시 20261105-230119 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();</script>
 </body></html>

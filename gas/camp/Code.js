@@ -1,4 +1,4 @@
-/* build: 20261105-211340 */
+/* build: 20261105-212536 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -1522,7 +1522,7 @@ function bookSave(token, rev, rows, del, set) {
     return { k, ord: Math.round(+r.ord || 0), on: r.on !== false, t: String(r.t || '').slice(0, 80), h, src: r.h == null ? null : String(r.src || '').slice(0, 24) };   // h 가 없으면 순서 · 사용만 (고친 내용은 그대로)
   });
   const D = (Array.isArray(del) ? del : []).map(String).filter(okKey).slice(0, 100);
-  let setJ = null; if (set && typeof set === 'object') { setJ = JSON.stringify(set); if (setJ.length > 4000) throw new Error('설정이 너무 길어요.'); }
+  let setJ = null; if (set && typeof set === 'object') { setJ = JSON.stringify(set); if (setJ.length > 9000) throw new Error('설정이 너무 길어요.'); }
   const lock = lock_();
   try {
     const sh = bookSh_(), R = bookRows_(), cur = R.find(r => r.k === '_rev'), now = +(cur && cur.h) || 0;
@@ -1560,6 +1560,15 @@ function bookImgs(token, ids) {
   });
   return out;
 }
+/** 책자 검사 재료 (11-05): 접수 참가자 · 교사 · 교수진의 이름 · 학원 · 악기 · 출생연도 — 화면에서 책자 글과 대조만 (저장 안 함) */
+function bookCheckData(token) {
+  const a = adm_(token); bookPerm_(a, false);
+  const P = []; loadSubs_().forEach(sb => (sb.ppl || []).forEach(p => { if (p.status === '취소') return; const k = String(p.id || '').slice(String(sb.no || '').length + 1), i = ((sb.form || {}).info || {})[k] || {};
+    P.push([String(p.name || '').trim(), String(sb.acad || ''), String(p.inst || i.inst || ''), String(i.by || ''), String(p.type || p.kind || '')]); }));
+  const T = teachers_().map(t => [String(t.name || '').trim(), t.acads.join(','), t.inst]);
+  const F = profs_().map(f => [f.name, f.org, f.inst]);
+  const C = camp_(); return { ok: true, year: +String(C.base.start || '').slice(0, 4) || new Date().getFullYear(), P, T, F };
+}
 /* ---------------- 책자 ↔ 구글 시트 (11-05) ----------------
  * 캠프 하나에 스프레드시트 하나(「{캠프 이름} 책자」), 책자 쪽마다 탭 하나 (방배정 도면처럼 시트에서 고치고 「시트에서 적용」).
  * 「스프레드로 가져가기」: 관리자 화면이 그린 쪽 모양을 칸 격자로 바꿔 보냄 — 글자 · 굵게 · 크기 · 색 · 글꼴 · 정렬 · 선 · 칸 합치기 · 칸 폭 · 줄 높이.
@@ -1579,7 +1588,7 @@ function bookSheetUrl_(id) { return 'https://docs.google.com/spreadsheets/d/' + 
 function bookSetPatch_(a, fn) {
   const sh = bookSh_(), R = bookRows_(), set = R.find(r => r.k === '_set'), rv = R.find(r => r.k === '_rev'), now = +(rv && rv.h) || 0;
   let S = {}; try { S = set ? JSON.parse(set.h || '{}') : {}; } catch (x) { S = {}; }
-  fn(S); const j = JSON.stringify(S); if (j.length > 4000) throw new Error('책자 설정이 너무 길어요(시트 탭이 너무 많아요).');
+  fn(S); const j = JSON.stringify(S); if (j.length > 9000) throw new Error('책자 설정이 너무 길어요(시트 탭이 너무 많아요).');
   const t = stamp_(), put = (r, vals) => { if (r) sh.getRange(r._row, 1, 1, BOOK_HEAD.length).setValues([vals]); else sh.appendRow(vals); };
   put(set, ['_set', '', '', '설정', j, '', t, a.name]); put(rv, ['_rev', '', '', '', String(now + 1), '', t, a.name]);
 }

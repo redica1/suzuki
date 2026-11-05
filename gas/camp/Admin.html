@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261105-211340 -->
+<!-- build: 20261105-212536 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -3027,6 +3027,9 @@ document.addEventListener('change',e=>{const t=e.target;if(S.tab!=='meal')return
 .eblist .epg{font-size:12px;color:var(--faint);white-space:nowrap}
 .eblist .emv{display:inline-flex;gap:1px}.eblist .emv button{all:unset;cursor:pointer;padding:0 5px;color:var(--muted);font-size:13px}.eblist .emv button:hover{color:var(--ink)}
 .eblist .emv button.edel:hover{color:var(--bad)}
+.ebchk .ckp{margin:6px 0 0}.ebchk ul{margin:3px 0 6px;padding-left:4px;list-style:none}.ebchk li{font-size:13px;padding:2px 0}.ebchk .ckm{cursor:pointer}.ebchk .ckm:hover{text-decoration:underline}
+.ebchk .ckok{all:unset;cursor:pointer;font-size:12px;color:var(--muted);border:1px solid var(--line);border-radius:6px;padding:0 6px;margin-left:4px}.ebchk{max-height:42vh;overflow:auto}
+::highlight(ebchk){background:#ffe066;color:#111}
 .eblist .egrp{font-size:12px;color:var(--faint);margin:10px 0 0;font-weight:700}
 .ebchip{display:inline-block;font-size:11px;font-weight:700;padding:0 6px;border-radius:9px;line-height:17px;vertical-align:1px;margin-left:4px;white-space:nowrap}
 .ebchip.auto{background:var(--sunk);color:var(--muted)}.ebchip.hand{background:var(--accent-soft);color:var(--accent)}.ebchip.chg{background:var(--bad-soft);color:var(--bad)}.ebchip.txt{background:var(--rosin-soft);color:var(--rosin)}
@@ -3346,6 +3349,55 @@ function ebStdFill(){const L=ebItems(),add=[],placed={};
   if(!add.length){toast('기본 틀의 쪽이 모두 있어요');return}
   const rows=L.map((x,i)=>Object.assign(ebRow(x,{ord:(i+1)*10}),add.includes(x.k)?{h:x.h,src:''}:{}));
   ebSend(rows,[],null,()=>toast(`기본 틀로 ${add.length}쪽을 넣었어요 · 시트로 보내서 채워 주세요`),'기본 틀을 넣고 있어요…')}
+/* ---- 책자 검사 (11-05): 사람이 고친 내용을 데이터와 대조 ----
+ * ① 원본 비교: 자동 쪽(시간표 · 음악회 · 명단 · 표지)을 고쳐 쓰거나 시트에서 적용한 뒤 — 지금 데이터로 만든 글과 줄 단위로 비교 (빠짐 · 더해짐 · 바뀜).
+ * ② 명단 대조: 모든 쪽의 「이름(학원)」 · 「이름,이름(학원)」 · 「이름(나이)」를 접수 참가자 · 교사 · 교수진과 비교 (명단에 없음 · 학원이 다름 · 나이가 다름).
+ * 「괜찮음」은 책자 설정(_set.ok)에 기억 → 다음 검사에서 빠짐. */
+function ebUnits(html){const d=document.createElement('div');d.className='ebc';d.style.cssText='--ebz:1;zoom:1;position:absolute;left:-14000px;top:0;pointer-events:none';d.innerHTML=html;document.body.appendChild(d);
+  try{return d.innerText.split(/[\n\t]+/).map(x=>x.replace(/\s+/g,' ').trim()).filter(x=>x&&!/^[\s·•.\-–—~:|]+$/.test(x)&&x.indexOf(EB_BRK)<0)}finally{d.remove()}}
+const ebBig=s=>{const a=new Map();s=s.replace(/\s/g,'');for(let i=0;i<s.length-1;i++){const g=s.slice(i,i+2);a.set(g,(a.get(g)||0)+1)}return a};
+function ebSim(x,y){if(x===y)return 1;const A=ebBig(x),B=ebBig(y);let n=0,t=0;A.forEach((v,k)=>{t+=v;n+=Math.min(v,B.get(k)||0)});B.forEach(v=>t+=v);return t?2*n/t:0}
+function ebLev(a,b){if(Math.abs(a.length-b.length)>1)return 9;const d=[...Array(b.length+1).keys()];for(let i=1;i<=a.length;i++){let p=d[0];d[0]=i;for(let j=1;j<=b.length;j++){const t=d[j];d[j]=Math.min(d[j]+1,d[j-1]+1,p+(a[i-1]===b[j-1]?0:1));p=t}}return d[b.length]}
+const ebAcN=s=>String(s||'').replace(/\s|스즈키|음악학원|학원|클래스|아카데미|suzuki|class|academy|music|school/gi,'').toLowerCase();
+const EB_NOTNAME=/^(등록|일정|시간|장소|교사|선생|선생님|학생|리허설|레슨|식사|연습|공연|음악회|협연|지휘|반주|개인|단체|오전|오후|저녁|점심|아침|대표|진행|사회|안내|참가|접수|그룹|합주|연합|앙상블|오케|피아노|첼로|바이올린|비올라|플루트)$/;
+function ebAcOk(a,b){const r=x=>String(x||'').replace(/\s/g,'').toLowerCase();if(r(a)&&r(a)===r(b))return true;a=ebAcN(a);b=ebAcN(b);if(a&&a===b)return true;return a.length>=2&&b.length>=2&&(a===b||a.indexOf(b)>=0||b.indexOf(a)>=0)}
+function ebCheck(){call('bookCheckData',[],R=>{S.ebCD=R;ebCheckRun();render()},'책자를 접수 명단과 대조하고 있어요…')}
+function ebCheckRun(){const R=S.ebCD;if(!R)return;const T=ebSet(),okS=new Set(T.ok||[]),out=[],L=ebItems().filter(x=>x.on&&!ebIsImg(x));
+  const N={};const put=(n,o)=>{if(!n)return;(N[n]=N[n]||[]).push(o)};
+  R.P.forEach(r=>put(r[0],{a:r[1],i:r[2],by:r[3],k:'참가자'}));R.T.forEach(r=>put(r[0],{a:r[1],i:r[2],k:'교사'}));R.F.forEach(r=>put(r[0],{a:r[1],i:r[2],k:'교수진'}));
+  const names=Object.keys(N),acs=[...new Set(R.P.map(r=>r[1]).concat(...R.T.map(r=>String(r[1]).split(','))).map(x=>x.trim()).filter(Boolean))];
+  const looksAc=p=>/스즈키|클래스|학원|아카데미|오케스트라|suzuki|class|academy|school/i.test(p)||acs.some(a=>ebAcOk(a,p));
+  const add=(x,type,msg,find)=>{const id=ebHash(x.k+'|'+type+'|'+msg).slice(0,8);if(okS.has(id))return;const o=out.find(i=>i.id===id);if(o){o.n=(o.n||1)+1;return}out.push({k:x.k,t:x.t,type,msg,find,id})};
+  L.forEach(x=>{const fin=ebUnits(x.h||x.auto);
+    /* ① 원본 비교 */
+    if(x.auto&&x.h&&x.kind!=='text'){const A=ebUnits(x.auto),cnt=new Map();A.forEach(u=>cnt.set(u,(cnt.get(u)||0)+1));const extra=[];
+      fin.forEach(u=>{const c=cnt.get(u)||0;if(c>0)cnt.set(u,c-1);else extra.push(u)});const miss=[];cnt.forEach((c,u)=>{for(let i=0;i<c;i++)miss.push(u)});
+      if(miss.length+extra.length>Math.max(12,A.length*.4)){add(x,'많이 다름',`데이터로 만든 글과 많이 달라요 — 데이터 ${A.length}줄 중 ${miss.length}줄이 책자에 없고, 책자에만 있는 줄이 ${extra.length}개. 이 쪽 「바뀐 원본 보기」로 비교하거나 「원본으로 바꾸기」 뒤 다시 손질하세요.`,'')}
+      else{let n=0;miss.forEach(m=>{if(n>=40)return;let bi=-1,bs=0;extra.forEach((e,i)=>{const v=ebSim(m,e);if(v>bs){bs=v;bi=i}});
+        if(bi>=0&&bs>=.55){add(x,'바뀜',`데이터 「${m}」 → 책자 「${extra[bi]}」`,extra[bi]);extra.splice(bi,1)}else add(x,'빠짐',`데이터에 있는데 책자에 없음: 「${m}」`,'');n++});
+      extra.slice(0,40).forEach(e=>add(x,'더해짐',`데이터에 없는 글: 「${e}」`,e))}}
+    /* ② 명단 대조 */
+    const rx=/((?:[가-힣]{2,4}\s*,\s*)*[가-힣]{2,4})\s*\(([^()]{1,40})\)/g;
+    fin.forEach(u=>{let m;rx.lastIndex=0;while((m=rx.exec(u))){const P=m[2].trim(),ns=m[1].split(',').map(s=>s.trim()).filter(Boolean);
+      const age=P.match(/^(\d{1,2})\s*세?$/);if(!age&&!looksAc(P))continue;
+      (age?ns.slice(-1):ns).forEach(n=>{if(EB_NOTNAME.test(n))return;const hit=N[n];
+        if(!hit){const sim=names.filter(y=>y.length===n.length&&ebLev(y,n)===1);const same=sim.filter(y=>!age&&N[y].some(o=>ebAcOk(o.a,P)));const sg=(same.length?same:sim).slice(0,4);
+          add(x,'명단에 없음',`「${n}」${age?'':` (${P})`} — 접수 · 교사 · 교수진 명단에 없는 이름${sg.length?` · 혹시 ${sg.map(y=>`${y}(${N[y][0].a||N[y][0].k})`).join(', ')}?`:''}`,n);return}
+        if(age){const by=hit.map(o=>+o.by).filter(Boolean);if(by.length&&!by.some(b=>Math.abs((R.year-b)-(+age[1]))<=1))add(x,'나이',`「${n}(${age[1]})」 — 명단 출생연도 ${by.join(', ')} (만 ${by.map(b=>R.year-b).join(', ')}세쯤)`,n);return}
+        if(!hit.some(o=>String(o.a||'').split(',').some(a=>ebAcOk(a,P))))add(x,'학원이 다름',`「${n}(${P})」 — 명단에는 ${[...new Set(hit.map(o=>(o.a||'')+' '+o.k))].join(', ')}`,n)})}})});
+  S.ebChk={at:new Date(),items:out,pages:L.length}}
+function ebChkHtml(){const C=S.ebChk;if(!C)return '';const ed=!!S.EB.edit&&!RO(),by={};C.items.forEach(i=>{(by[i.k]=by[i.k]||[]).push(i)});
+  const cnt=t=>C.items.filter(i=>i.type===t).length,col={'많이 다름':'chg',바뀜:'chg','빠짐':'chg','더해짐':'hand','명단에 없음':'chg','학원이 다름':'chg','나이':'txt'};
+  const sum=['많이 다름','바뀜','빠짐','더해짐','명단에 없음','학원이 다름','나이'].map(t=>cnt(t)?`<span class="ebchip ${col[t]}">${t} ${cnt(t)}</span>`:'').join('');
+  return `<div class="panel ebchk"><div class="spread"><div><b>책자 검사</b> <span class="hint">${C.pages}쪽 · ${C.items.length?`고칠 곳 후보 ${C.items.length}개`:'다른 곳이 없어요 ✓'} ${sum}</span></div>
+    <div class="row" style="gap:6px"><button class="btn small" type="button" id="ebChkRe">다시 검사</button><button class="btn small ghost" type="button" id="ebChkX">닫기</button></div></div>
+    <p class="hint" style="margin:4px 0 8px">① 자동 쪽을 고친 뒤 지금 데이터와 다른 줄 ② 모든 쪽의 「이름(학원)」 · 「이름(나이)」를 접수 참가자 · 교사 · 교수진과 대조. 누르면 그 쪽으로 가서 노랗게 보여 줘요. 맞는 내용이면 「괜찮음」.</p>
+    ${Object.keys(by).map(k=>`<div class="ckp"><b data-ebgo="${esc(k)}" style="cursor:pointer">${esc(by[k][0].t)}</b> <span class="hint">${by[k].length}</span><ul>${by[k].slice(0,60).map(i=>`<li><span class="ebchip ${col[i.type]}">${i.type}</span> <span class="ckm" data-ebchkgo="${esc(i.k)}" data-ebchkf="${esc(i.find||'')}">${esc(i.msg)}</span>${i.n>1?` <span class="hint">×${i.n}</span>`:''}${ed?` <button type="button" class="ckok" data-ebchkok="${i.id}">괜찮음</button>`:''}</li>`).join('')}${by[k].length>60?`<li class="hint">… ${by[k].length-60}개 더</li>`:''}</ul></div>`).join('')}</div>`}
+/* 찾은 글을 노랗게 (CSS 하이라이트, 글은 안 바꿈) */
+function ebMark(k,f){const el=document.getElementById('eb_'+k.replace(':','_'));if(!el)return;el.scrollIntoView({block:'start',behavior:'smooth'});
+  if(!f||!window.CSS||!CSS.highlights||typeof Highlight==='undefined')return;const H=new Highlight(),c=el.querySelector('.ebc'),w=document.createTreeWalker(c,NodeFilter.SHOW_TEXT);let n,first=null;
+  while((n=w.nextNode())){let i=n.textContent.indexOf(f);while(i>=0){const r=new Range();r.setStart(n,i);r.setEnd(n,i+f.length);H.add(r);if(!first)first=r;i=n.textContent.indexOf(f,i+1)}}
+  CSS.highlights.set('ebchk',H);if(first)setTimeout(()=>{const b=first.getBoundingClientRect();window.scrollBy({top:b.top-window.innerHeight/2,behavior:'smooth'})},350)}
 /* ---- 화면 ---- */
 function vEbk(){const E=S.EB;if(!E){if(!S.EBL)setTimeout(ebLoad,0);return '<div class="panel hint">책자를 만들고 있어요…</div>'}
   const L=ebItems(),ed=!!E.edit&&!RO(),z=ebZoom(),T=ebSet(),sel=S.ebSel;
@@ -3372,7 +3424,7 @@ function vEbk(){const E=S.EB;if(!E){if(!S.EBL)setTimeout(ebLoad,0);return '<div 
   return `<div class="panel ebtop" id="ebTop"><div class="spread"><div><b>행사 책자</b> <span class="hint">A5 (148 × 210mm) · 자동 쪽은 교사 일정 · 음악회 연주 순서 · 접수에서 바로 만들어요. 「고쳐 쓰기」로 손질한 쪽은 고정되고, 원본이 바뀌면 빨갛게 알려 줘요.</span></div>
     <div class="row" style="gap:6px;flex-wrap:wrap">${ed?(S.ebAdd?`<span class="ebadd"><b style="font-size:13px;padding:0 4px">새 쪽</b><button class="btn small" type="button" id="ebAddTxt">글 쪽 (직접 쓰기)</button><button class="btn small" type="button" id="ebAddImg">이미지 쪽 (그림 올리기)</button><button class="btn small ghost" type="button" id="ebAddX">닫기</button></span>`:`<button class="btn small" type="button" id="ebAddOpen" title="고른 쪽 다음에 들어가요">＋ 쪽 추가</button>`):''}
       <span class="dzm" role="group" aria-label="미리보기 크기"><button type="button" data-ebz="-" aria-label="작게">−</button><button type="button" class="dzv" data-ebz="0" title="기본 크기로">${Math.round(z*100)}%</button><button type="button" data-ebz="+" aria-label="크게">＋</button></span>
-      ${ed?`<button class="btn small" type="button" id="ebStd" title="2026 책자 순서(안내도 · 주의사항 · 교수진 · 마스터클래스 · 개회 · 이브닝 · 앙상블 · 폐회 · 광고) 중 없는 쪽을 글 쪽으로 넣어요">＋ 기본 틀</button>`:''}<span class="ebsht"><b style="font-size:13px;padding:0 4px">구글 시트</b>${ed?(S.ebExpM?`<button class="btn small" type="button" data-ebexp="new">시트에 없는 쪽만</button><button class="btn small" type="button" data-ebexp="all" title="시트에서 고친 내용이 지금 책자 내용으로 바뀌어요">모두 다시 (덮어씀)</button><button class="btn small ghost" type="button" id="ebExpX">닫기</button>`:`<button class="btn small" type="button" id="ebExpOpen">스프레드로 가져가기</button>`):''}${T.sheet?`<a class="btn small" target="_blank" rel="noopener" href="${esc(ebSheetUrl())}">시트 열기</a>${ed?`<button class="btn small primary" type="button" id="ebApply" title="시트의 모든 탭을 읽어 책자 쪽에 넣어요">시트에서 적용</button>`:''}`:''}</span>${ed&&(S.ebGoneL||[]).length?`<span class="ebadd"><button class="btn small" type="button" id="ebGoneOpen">지운 쪽 ${S.ebGoneL.length}</button>${S.ebGoneM?S.ebGoneL.map(g=>`<button class="btn small" type="button" data-ebrevive="${esc(g.k)}" title="되살리기">↺ ${esc(g.t)}</button>`).join(''):''}</span>`:''}<button class="btn small" type="button" id="ebRe">새로 만들기</button><button class="btn small" type="button" id="ebWin">새 창으로 보기</button><button class="btn small primary" type="button" id="ebPrint">인쇄 · PDF 저장</button></div></div>${S.ebBusy?`<div class="ebbusy">${esc(S.ebBusy)}</div>`:''}</div>
+      ${ed?`<button class="btn small" type="button" id="ebStd" title="2026 책자 순서(안내도 · 주의사항 · 교수진 · 마스터클래스 · 개회 · 이브닝 · 앙상블 · 폐회 · 광고) 중 없는 쪽을 글 쪽으로 넣어요">＋ 기본 틀</button>`:''}<span class="ebsht"><b style="font-size:13px;padding:0 4px">구글 시트</b>${ed?(S.ebExpM?`<button class="btn small" type="button" data-ebexp="new">시트에 없는 쪽만</button><button class="btn small" type="button" data-ebexp="all" title="시트에서 고친 내용이 지금 책자 내용으로 바뀌어요">모두 다시 (덮어씀)</button><button class="btn small ghost" type="button" id="ebExpX">닫기</button>`:`<button class="btn small" type="button" id="ebExpOpen">스프레드로 가져가기</button>`):''}${T.sheet?`<a class="btn small" target="_blank" rel="noopener" href="${esc(ebSheetUrl())}">시트 열기</a>${ed?`<button class="btn small primary" type="button" id="ebApply" title="시트의 모든 탭을 읽어 책자 쪽에 넣어요">시트에서 적용</button>`:''}`:''}</span>${ed&&(S.ebGoneL||[]).length?`<span class="ebadd"><button class="btn small" type="button" id="ebGoneOpen">지운 쪽 ${S.ebGoneL.length}</button>${S.ebGoneM?S.ebGoneL.map(g=>`<button class="btn small" type="button" data-ebrevive="${esc(g.k)}" title="되살리기">↺ ${esc(g.t)}</button>`).join(''):''}</span>`:''}<button class="btn small" type="button" id="ebChk" title="고친 내용을 데이터 · 접수 명단과 대조해 틀린 곳 후보를 찾아요">검사</button><button class="btn small" type="button" id="ebRe">새로 만들기</button><button class="btn small" type="button" id="ebWin">새 창으로 보기</button><button class="btn small primary" type="button" id="ebPrint">인쇄 · PDF 저장</button></div></div>${S.ebBusy?`<div class="ebbusy">${esc(S.ebBusy)}</div>`:''}</div>
     <div class="panel" style="padding-top:8px;padding-bottom:8px"><details class="ebsetw" ${S.ebSetOpen?'open':''}><summary class="hint" style="cursor:pointer;margin-top:6px">책자 설정 (영문 행사 이름 · 표지 · 시간표 한 쪽 장소 수 · 쪽 번호)</summary>
       <div class="ebset"><label>영문 행사 이름 (표지 · 음악회 머리)<input type="text" data-ebs="en" value="${esc(T.en)}" placeholder="SUZUKI MUSIC KOREA 2027 WINTER MUSIC FESTIVAL" ${ed?'':'disabled'}></label>
         <label>표지 부제<input type="text" data-ebs="sub" value="${esc(T.sub)}" placeholder="WINTER MUSIC FESTIVAL" ${ed?'':'disabled'}></label>
@@ -3380,7 +3432,7 @@ function vEbk(){const E=S.EB;if(!E){if(!S.EBL)setTimeout(ebLoad,0);return '<div 
         <label>시간표 한 쪽에 장소 몇 곳<input type="number" min="1" max="10" data-ebs="per" value="${esc(T.per)}" ${ed?'':'disabled'}></label>
         <label>시간표 글씨 크기 (pt)<input type="number" min="5" max="10" step="0.2" data-ebs="fs" value="${esc(T.fs)}" ${ed?'':'disabled'}></label>
         <label style="flex-direction:row;align-items:center;gap:6px"><input type="checkbox" data-ebs="num" ${T.num?'checked':''} ${ed?'':'disabled'}> 쪽 아래 번호 (- 2 -)</label></div>
-      ${ed?`<div class="row" style="margin-top:8px"><button class="btn small primary" type="button" id="ebSetSave">설정 저장</button><span class="hint">설정을 바꾸면 고쳐 쓴 쪽은 「원본 바뀜」으로 보일 수 있어요.</span></div>`:''}</details>${T.sheet?`<p class="hint" style="margin:6px 0 0">시트는 책자의 1.5배 크기예요(시트 15pt = 책자 10pt). 시트에서 고친 뒤 「시트에서 적용」. 한 탭에서 쪽을 나누려면 A열에 [쪽 나눔] 줄을 두세요. 새 탭 = 새 글 쪽.</p>`:''}</div>
+      ${ed?`<div class="row" style="margin-top:8px"><button class="btn small primary" type="button" id="ebSetSave">설정 저장</button><span class="hint">설정을 바꾸면 고쳐 쓴 쪽은 「원본 바뀜」으로 보일 수 있어요.</span></div>`:''}</details>${T.sheet?`<p class="hint" style="margin:6px 0 0">시트는 책자의 1.5배 크기예요(시트 15pt = 책자 10pt). 시트에서 고친 뒤 「시트에서 적용」. 한 탭에서 쪽을 나누려면 A열에 [쪽 나눔] 줄을 두세요. 새 탭 = 새 글 쪽.</p>`:''}</div>${S.ebChk?ebChkHtml():''}
   <div class="ebw"><div class="panel eblist"><b>쪽 순서</b> <span class="hint" id="ebTot"></span><ol>${list}</ol>
       <p class="hint" style="margin:8px 0 0">체크를 풀면 책자에서 빠져요. 쪽 수는 미리보기 기준 대략이에요(빨간 줄 = 다음 쪽으로 넘침).</p></div>
     <div class="ebprev"><div class="ebprobe" id="ebProbe"></div>${prev}</div></div>`}
@@ -3501,7 +3553,8 @@ document.addEventListener('change',e=>{if(S.tab!=='book')return;const t=e.target
   if(t.dataset&&t.dataset.ebon!=null){const L=ebItems(),x=L.find(y=>y.k===t.dataset.ebon);if(!x)return;x.on=t.checked;ebSend([ebRow(x)],[],null,null,t.checked?'넣고 있어요…':'빼고 있어요…');return}
   if(t.dataset&&t.dataset.ebs&&t.type==='checkbox'){S.ebSetW=S.ebSetW||{};S.ebSetW.num=t.checked}});
 document.addEventListener('toggle',e=>{if(e.target.classList&&e.target.classList.contains('ebsetw'))S.ebSetOpen=e.target.open},true);
-document.addEventListener('click',e=>{if(S.tab!=='book')return;const b=e.target.closest&&e.target.closest('button,[data-ebgo]');if(!b)return;const d=b.dataset;
+document.addEventListener('click',e=>{if(S.tab!=='book')return;const b=e.target.closest&&e.target.closest('button,[data-ebgo],[data-ebchkgo]');if(!b)return;const d=b.dataset;
+  if(d.ebchkgo!=null){ebMark(d.ebchkgo,d.ebchkf);return}
   if(b.id==='ebRe'){if(S.ebEd&&!confirm('고쳐 쓰는 내용이 지워져요. 새로 불러올까요?'))return;S.EB=null;S.ebEd=null;S.ebBuf=null;S.ebPeek=null;render();return}
   if(b.id==='ebPrint'){ebPrint();return}
   if(b.id==='ebWin'){ebOpenWin();return}
@@ -3525,6 +3578,9 @@ document.addEventListener('click',e=>{if(S.tab!=='book')return;const b=e.target.
   if(b.id==='ebGoneOpen'){S.ebGoneM=!S.ebGoneM;render();return}
   if(d.ebrevive){const T=ebSet();ebSend([],[],Object.assign({},T,{gone:(T.gone||[]).filter(k=>k!==d.ebrevive)}),()=>{S.ebGoneM=0;toast('되살렸어요 · 데이터에서 다시 만들어요')});return}
   if(d.ebname){const x=ebItems().find(y=>y.k===d.ebname);if(!x)return;const n=prompt('쪽 이름 (목록에만 보여요)',x.t);if(n==null||!n.trim())return;x.t=n.trim().slice(0,80);ebSend([ebRow(x)],[],null);return}
+  if(b.id==='ebChk'||b.id==='ebChkRe'){if(S.ebEd){toast('고쳐 쓰는 쪽을 먼저 저장하거나 그만두세요');return}ebCheck();return}
+  if(b.id==='ebChkX'){S.ebChk=null;try{CSS.highlights.delete('ebchk')}catch(x){}render();return}
+  if(d.ebchkok){const T=ebSet();ebSend([],[],Object.assign({},T,{ok:[...new Set((T.ok||[]).concat([d.ebchkok]))].slice(-150)}),()=>{ebCheckRun();render()},'기억하고 있어요…');return}
   if(b.id==='ebStd'){ebStdFill();return}
   if(b.id==='ebExpOpen'){S.ebExpM=1;render();return}
   if(b.id==='ebExpX'){S.ebExpM=0;render();return}
@@ -3545,6 +3601,6 @@ document.addEventListener('click',e=>{if(S.tab!=='book')return;const b=e.target.
   if(b.id==='ebSetSave'){const n=Object.assign(ebSet(),S.ebSetW||{});n.per=Math.max(1,Math.min(10,Math.round(+n.per||5)));n.fs=Math.max(5,Math.min(10,+n.fs||6.6));['en','sub','org'].forEach(k=>n[k]=String(n[k]||'').trim().slice(0,120));
     ebSend([],[],n,()=>{S.ebSetW=null;toast('책자 설정을 저장했어요')});return}},true);
 </script>
-<div id="bldMark" hidden>빌드표시 20261105-211340 </div>
+<div id="bldMark" hidden>빌드표시 20261105-212536 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();</script>
 </body></html>

@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261105-230210 -->
+<!-- build: 20261105-230515 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -3074,7 +3074,7 @@ document.addEventListener('change',e=>{const t=e.target;if(S.tab!=='meal')return
 .ebw{display:grid;grid-template-columns:270px minmax(0,1fr);gap:14px;align-items:start}
 @media (max-width:900px){.ebw{grid-template-columns:1fr}}
 /* 위 막대 고정 (11-05): 관리자 머리(--hdrH) 아래 붙음, 쪽 목록 · 고쳐 쓰기 막대는 그 아래 */
-.ebtop{position:sticky;top:var(--hdrH,0px);z-index:30;box-shadow:0 4px 10px rgba(22,35,43,.08)}
+.ebtop{position:relative}   /* 11-05: 위 막대는 스크롤하면 올라가고, 고쳐 쓰기 막대가 머리 아래에 붙음 */
 .eblist{position:sticky;top:calc(var(--hdrH,0px) + var(--ebTopH,0px) + 8px);max-height:calc(100vh - var(--hdrH,0px) - var(--ebTopH,0px) - 24px);overflow:auto;padding:10px}
 .eblist ol{list-style:none;margin:6px 0 0;padding:0}
 .eblist li{display:grid;grid-template-columns:20px minmax(0,1fr) auto;gap:6px;align-items:center;padding:5px 4px;border-bottom:1px solid var(--line);font-size:14px}
@@ -3105,7 +3105,7 @@ document.addEventListener('change',e=>{const t=e.target;if(S.tab!=='meal')return
 .ebi.off{opacity:.38}
 .ebbar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;justify-content:center;font-size:14px;color:#26333a;max-width:100%}
 .ebbar b{font-size:15px}.ebbar .epg2{color:#66757d;font-size:12px}
-.ebbar.ed{position:sticky;top:calc(var(--hdrH,0px) + var(--ebTopH,0px) + 6px);z-index:5;background:#fff;border:1px solid #c9d3d7;border-radius:10px;padding:6px 8px;box-shadow:0 3px 10px rgba(0,0,0,.12)}
+.ebbar.ed{position:sticky;top:calc(var(--hdrH,0px) + 6px);z-index:25;background:#fff;border:1px solid #c9d3d7;border-radius:10px;padding:6px 8px;box-shadow:0 3px 10px rgba(0,0,0,.12)}
 .ebbar .tb{all:unset;cursor:pointer;border:1px solid #c9d3d7;border-radius:6px;padding:2px 8px;font-size:13px;background:#f7f9fa;color:#1d2b31}.ebbar .tb:hover{background:#e9eef0}
 .ebwarn{background:#fdecea;color:#9b2c22;border-radius:8px;padding:6px 10px;font-size:13px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .ebc{display:flex;flex-direction:column;gap:22px;align-items:center;zoom:var(--ebz,.75)}
@@ -3838,7 +3838,7 @@ function ebSpy(){if(S.tab!=='book'||!S.EB||Date.now()<(S.ebSpyHold||0))return;co
   if(!best){const all=[...document.querySelectorAll('.ebi')];best=all.find(e=>e.getBoundingClientRect().top>line)||all[all.length-1]}
   if(!best)return;const k=best.querySelector('.ebc')&&best.querySelector('.ebc').dataset.ebk;if(k&&(k!==S.ebSel||!document.querySelector('.eblist li.cur')))ebCur(k,true)}
 window.addEventListener('scroll',()=>{if(S.tab!=='book')return;clearTimeout(S.ebSpyT);S.ebSpyT=setTimeout(ebSpy,80)},{passive:true});
-function ebTopH(){const t=document.getElementById('ebTop');document.documentElement.style.setProperty('--ebTopH',(t?Math.ceil(t.getBoundingClientRect().height):0)+'px')}
+function ebTopH(){document.documentElement.style.setProperty('--ebTopH','0px')}
 window.addEventListener('resize',()=>{if(S.tab==='book')ebTopH()});
 /* 쪽 수 재기: 쪽(section) 높이 ÷ A5 높이 */
 function ebMeasure(){if(S.tab!=='book')return;const pr=document.getElementById('ebProbe');if(!pr)return;const ph=pr.getBoundingClientRect().height;if(!ph)return;
@@ -4111,6 +4111,6 @@ document.addEventListener('click',e=>{if(S.tab!=='book')return;const b=e.target.
   if(b.id==='ebSetSave'){const n=Object.assign(ebSet(),S.ebSetW||{});n.per=Math.max(1,Math.min(10,Math.round(+n.per||5)));n.fs=Math.max(5,Math.min(10,+n.fs||6.6));['en','sub','org'].forEach(k=>n[k]=String(n[k]||'').trim().slice(0,120));
     ebSend([],[],n,()=>{S.ebSetW=null;toast('책자 설정을 저장했어요')});return}},true);
 </script>
-<div id="bldMark" hidden>빌드표시 20261105-230210 </div>
+<div id="bldMark" hidden>빌드표시 20261105-230515 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();</script>
 </body></html>

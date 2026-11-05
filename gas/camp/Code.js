@@ -1,4 +1,4 @@
-/* build: 20261105-222747 */
+/* build: 20261105-223144 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -1469,6 +1469,12 @@ function progBuild_(opt) {
 /** 음악회 프로그램 (오후음악회 · 이브닝 …): 「오후음악회」 탭의 연주 순서 그대로 · 같은 곡이 이어지면 한 번호로 묶고 학원별로 이름을 모음
  *  곡 이름: 목록 곡 「V01-14 미뉴에트 2번 (바흐)」 → 「바흐 미뉴에트 2번」, 직접 입력은 작곡가 + 곡명 · 영어 곡명은 설정 songEn(관리자가 미리보기에서 입력) */
 const INST_PF = { 바이올린: 'Vln.', 첼로: 'Vc.', 플루트: 'Fl.', 비올라: 'Vla.', 피아노: 'Pf.' };
+/** 곡 이름을 [작곡가, 곡명]으로 (여름 모양 「작곡가 - 곡명」, 11-05) — 목록 곡 「V01-14 미뉴에트 2번 (바흐)」 → ['바흐', '미뉴에트 2번'] */
+function songKoParts_(i) {
+  if (i.other) return [String(i.oc || '').trim(), String(i.ot || '').trim()];
+  const m = String(i.song || '').replace(/^[A-Z]\d+-\d+\s*/, '').match(/^(.*?)\s*\(([^()]*)\)\s*$/);
+  return m ? [m[2] || '스즈키', m[1]] : ['', String(i.song || '').replace(/^[A-Z]\d+-\d+\s*/, '')];
+}
 function songKo_(i) {
   if (i.other) return [i.oc, i.ot].map(x => String(x || '').trim()).filter(Boolean).join(' ');
   const m = String(i.song || '').replace(/^[A-Z]\d+-\d+\s*/, '').match(/^(.*?)\s*\(([^()]*)\)\s*$/);
@@ -1487,7 +1493,7 @@ function progConcerts_(c, C, evs, nameOf, dayDate) {
     const room = ((c.rooms || {})[x.d] || []).find(r => r[0] === x.room);
     const mc = ev ? [...new Set(ev.ppl.filter(p => /사회|진행/.test(p.r)).map(p => nameOf(p.n)))] : [];
     const L = (order[x.id] || []).map(pid => info[pid]).filter(s => s && s.p.status !== '취소');
-    const items = []; L.forEach(s => { const ko = songKo_(s.i) || '(곡 미정)'; let it = items[items.length - 1]; if (!it || it.ko !== ko) items.push(it = { ko, en: EN[ko] || '', P: [] }); it.P.push({ n: s.p.name, a: s.sb.acad, ins: s.p.inst || s.i.inst || '' }); });
+    const items = []; L.forEach(s => { const ko = songKo_(s.i) || '(곡 미정)'; let it = items[items.length - 1]; if (!it || it.ko !== ko) items.push(it = { ko, en: EN[ko] || '', kp: songKoParts_(s.i), P: [] }); it.P.push({ n: s.p.name, a: s.sb.acad, ins: s.p.inst || s.i.inst || '' }); });
     const rows = [{ k: 'f', v: ['', C.base.name] }, { k: 't', v: ['', x.name] }];
     rows.push({ k: 'm', v: ['', '일시: ' + (dt ? `${dt.getFullYear()}년 ${dt.getMonth() + 1}월 ${dt.getDate()}일(${WD[dt.getDay()]}) ` : (c.days || [])[x.d] + ' ') + ampm(x.cs)] });
     rows.push({ k: 'm', v: ['', '장소: ' + (x.room || '') + (room && room[1] ? ' (' + room[1] + ')' : '')] });
@@ -1503,7 +1509,8 @@ function progConcerts_(c, C, evs, nameOf, dayDate) {
     });
     if (!items.length) rows.push({ k: 'j', v: ['', '(연주 순서가 아직 없어요 · 오후음악회 탭에서 순서를 정하면 나와요)', ''] });
     /* 프로그램북(B5) 화면용 (11-04): 같은 내용을 줄 대신 묶음으로 */
-    const book = { id: x.id, camp: C.base.name, name: x.name, when: rows.filter(r => r.k === 'm').map(r => r.v[1]), items: items.map((it, n) => ({ no: n + 1, ko: it.ko, en: it.en, lines: linesOf(it) })) };
+    const book = { id: x.id, camp: C.base.name, name: x.name, when: rows.filter(r => r.k === 'm').map(r => r.v[1]), items: items.map((it, n) => ({ no: n + 1, ko: it.ko, en: it.en, kc: it.kp[0], kt: it.kp[1], lines: linesOf(it) })),
+      meta: { date: dt ? Utilities.formatDate(dt, TZ, 'yyyy-MM-dd') : '', t: x.cs || '', room: x.room || '', loc: room && room[1] || '', en: room && room[3] || '', mc } };   // 여름 모양(11-05): 한글 · 영어 일시 · 장소 줄
     return { id: x.id, name: x.name, rows, songs: items.map(it => it.ko), book };
   });
 }

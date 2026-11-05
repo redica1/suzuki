@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261105-222747 -->
+<!-- build: 20261105-223144 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -982,10 +982,10 @@ document.addEventListener('change',e=>{if(S.tab!=='act'||!D)return;const el=e.ta
 document.addEventListener('keydown',e=>{if(S.tab!=='act'||!D)return;if(e.key==='Escape'&&(A.swap||A.sel)){A.swap=null;A.sel=null;render()}});
 
 /* ---------- 날짜 · 장소 ---------- */
-function vSet(){return `<div class="sec-h"><div><h2>날짜 · 장소</h2><p>캠프 날짜 이름과 날마다 쓰는 장소(교실)를 정해요. 장소는 한 줄에 「장소 | 위치 | 수용 인원」 (예: Grand Hall | Stay Tower 1F | 600). 수용 인원은 몰라도 비워 두면 돼요.</p></div></div>
+function vSet(){return `<div class="sec-h"><div><h2>날짜 · 장소</h2><p>캠프 날짜 이름과 날마다 쓰는 장소(교실)를 정해요. 장소는 한 줄에 「장소 | 위치 | 수용 인원 | 영어 이름」 (예: 오디토리움 | 컨벤션 센터 1층 | 300 | Convention Center 1F, Auditorium). 수용 인원 · 영어 이름은 몰라도 비워 두면 돼요 (영어 이름은 행사 책자 음악회 여름 모양의 영어 장소 줄).</p></div></div>
   <div class="panel"><div class="row" style="gap:12px;align-items:flex-start">${D.days.map((x,i)=>`<label class="f" style="width:150px">${i+1}일째<input type="text" class="a_dayin" data-i="${i}" value="${esc(x)}"></label>`).join('')}
     <div class="row" style="gap:6px;align-self:end"><button class="btn small" type="button" id="a_dayAdd">＋ 날짜 추가</button>${D.days.length?`<button class="btn small ghost" type="button" id="a_dayDel">마지막 날짜 빼기</button>`:''}</div></div></div>
-  <div class="g2">${D.days.map((x,i)=>`<div class="panel"><b>${esc(x)} 장소</b><textarea class="a_roomin" data-i="${i}" rows="${Math.max(4,(D.rooms[i]||[]).length+1)}" style="width:100%;font:inherit;padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)">${esc((D.rooms[i]||[]).map(r=>r[0]+(r[1]||r[2]?' | '+(r[1]||''):'')+(r[2]?' | '+r[2]:'')).join('\n'))}</textarea></div>`).join('')}</div>
+  <div class="g2">${D.days.map((x,i)=>`<div class="panel"><b>${esc(x)} 장소</b><textarea class="a_roomin" data-i="${i}" rows="${Math.max(4,(D.rooms[i]||[]).length+1)}" style="width:100%;font:inherit;padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)">${esc((D.rooms[i]||[]).map(r=>r[0]+(r[1]||r[2]||r[3]?' | '+(r[1]||''):'')+(r[2]||r[3]?' | '+(r[2]||''):'')+(r[3]?' | '+r[3]:'')).join('\n'))}</textarea></div>`).join('')}</div>
   <div class="row"><button class="btn small primary" type="button" id="a_setSave">날짜·장소 저장</button><span class="cap" style="margin:0">일정이 있는 장소를 빼면 그 일정은 표에서 안 보이니 먼저 옮겨 주세요.</span></div>
   <div class="sec-h"><div><h2>행사 구분 · 종류 · 단계 · 역할</h2><p>구분은 공연 · 레슨 · 업무 세 가지예요. 종류 · 공연 단계 · 역할 목록은 여기서 추가 · 이름 변경 · 순서 · 빼기를 해요. 이름을 바꾸면 그 이름을 쓰던 일정 · 사람도 같이 바뀌어요.</p></div></div>
   <div class="g3 lstg">${CATS.map(c=>`<div class="panel lstcol"><b class="lsth">${c}</b>
@@ -1043,7 +1043,7 @@ document.addEventListener('click',ev=>{if(S.tab!=='act'||!D)return;const b=ev.ta
   if(b.id==='a_dayAdd'){D.days.push((D.days.length+1)+'일째');D.rooms[D.days.length-1]=JSON.parse(JSON.stringify(D.rooms[D.days.length-2]||[]));logIt('날짜 추가: '+D.days[D.days.length-1]);refresh();return}
   if(b.id==='a_dayDel'){const i=D.days.length-1;if(D.events.some(e=>e.d===i)){toast('그날 일정이 있어요. 일정을 먼저 지워 주세요');return}D.days.pop();delete D.rooms[i];logIt('날짜 빼기');refresh();return}
   if(b.id==='a_setSave'){document.querySelectorAll('.a_dayin').forEach(el=>{const v=el.value.trim();if(v)D.days[+el.dataset.i]=v});
-    document.querySelectorAll('.a_roomin').forEach(el=>{D.rooms[+el.dataset.i]=el.value.split('\n').map(x=>x.split('|').map(y=>y.trim())).filter(x=>x[0]).map(x=>{const c=+String(x[2]||'').replace(/[^\d]/g,'');return c?[x[0],x[1]||'',c]:[x[0],x[1]||'']})});
+    document.querySelectorAll('.a_roomin').forEach(el=>{D.rooms[+el.dataset.i]=el.value.split('\n').map(x=>x.split('|').map(y=>y.trim())).filter(x=>x[0]).map(x=>{const c=+String(x[2]||'').replace(/[^\d]/g,'');const o=[x[0],x[1]||''];if(c||x[3])o.push(c||'');if(x[3])o.push(x[3]);return o})});
     logIt('날짜·장소 고침');refresh();toast('날짜·장소를 저장했어요');return}});
 /* 미리보기: 서버가 시트에 쓸 그대로(progPreview)를 날짜별 표로 → 확인 후 「구글 시트로 보내기」 */
 function pvLoad(){if(A.pvLoading)return;A.pvLoading=true;flush(()=>run('progPreview',[],r=>{A.pvLoading=false;A.pv=r;if(A.pvT==null||A.pvT>=r.days.length&&!['t','o'].includes(A.pvT))A.pvT=0;render()},m=>{A.pvLoading=false;A.pvErr=m;render()}))}
@@ -3155,6 +3155,9 @@ document.addEventListener('change',e=>{const t=e.target;if(S.tab!=='meal')return
 .bls table.ot2 th.t1{font-size:10.5pt !important;font-weight:800}.bls table.ot2 th.t1 span{font-size:.8em}.bls table.ot2 th.t2{font-size:8.6pt !important;text-align:right}.bls table.mcb th.t2{text-align:center;font-size:9.5pt !important}.bls table.mcb th.t3{font-size:8.6pt !important}
 .bls table.mcb td.nt{font-size:9pt !important;padding:2mm !important}.bls table.mcb{margin-bottom:4mm}
 .bls table.tt3 thead th{background:none;border-top:1.4px solid #222;border-bottom:1px solid #222;font-weight:800;text-align:center}.bls table.tt3 td{border:0;border-left:.6px solid #444;padding:.2mm 1mm !important}.bls table.tt3 td:first-child{border-left:0}.bls table.tt3 td.a{text-align:right;font-weight:700}.bls table.tt3 td.i{text-align:center;font-weight:700;white-space:nowrap;width:auto !important}.bls table.tt3 td.a{width:auto !important}.bls table.tt3 tr.g td{border-top:.6px solid #999}.bls table.tt3{border-bottom:1.4px solid #222}
+.bls.csum .eh{text-align:center}.bls.csum .eh .c1{font-size:8pt;color:#111;font-weight:800}.bls.csum .eh .c2{font-size:21pt;margin:.5mm 0 3mm}
+.bls .cmeta{display:grid;grid-template-columns:auto auto;justify-content:center;column-gap:1.2mm;row-gap:.3mm;font-size:8.6pt;font-weight:700;text-align:left;margin:0 0 6mm 18mm}.bls .cmeta .k{white-space:nowrap}.bls .cmeta .full{grid-column:1 / -1}
+.bls.csum .it .ld{border-bottom:1.2px dashed #333}.bls.csum .it .ko,.bls.csum .it .pp,.bls.csum .it .pp2{font-weight:700}.bls.csum .it{margin-bottom:4mm}.bls .it.nono{grid-template-columns:0 minmax(0,auto) 1fr minmax(0,auto);column-gap:1.2mm}
 .bls .tcw{display:grid;grid-template-columns:1fr 1fr;gap:3mm;align-items:start}
 .bls table.tt{width:100%;font-size:7.6pt !important;line-height:1.3}.bls table.tt td.a{width:24mm;font-weight:700}
 .bls.txt{font-size:8.8pt}
@@ -3231,7 +3234,17 @@ function ebSched(D){const T=ebSet(),V=D.V||[],W=D.W||2,dt=ebDt(D.date),SR=D.S||n
   return ch.map((cs,n)=>`<section class="bls sch"><div class="stt">${esc(en)}</div><div class="stk">${esc(ko)}${ch.length>1?` · ${n+1}/${ch.length}`:''}</div>${note&&n===0?`<div class="stn">${ebBr(note)}</div>`:''}
     <div class="stw" style="font-size:${+T.fs||6.6}pt"><table class="st"><thead><tr><th style="width:12mm">시간</th>${cs.map(j=>`<th>${ebBr(V[2][j])}</th>`).join('')}</tr>${hasSub?`<tr class="rsub"><th></th>${cs.map(j=>`<th>${ebBr((V[3]||[])[j]||'')}</th>`).join('')}</tr>`:''}</thead><tbody>
     ${V.slice(4).map((r,x)=>meals.has(x+4)?`<tr class="ml"><th>${ebBr(String(r[0]||'').replace('-','~\n'))}</th><td colspan="${cs.length}">${ebBr(r[1]||'')}</td></tr>`:`<tr><th>${ebBr(String(r[0]||'').replace('-','~\n'))}</th>${SR&&SR[x+4]?ebSchRow(SR[x+4],cs,T):cs.map(j=>`<td>${cell(r[j])}</td>`).join('')}</tr>`).join('')}</tbody></table></div></section>`).join('')}
-function ebCon(b){const T=ebSet(),it=b.items||[];
+/* 음악회 여름 모양 (11-05): 머리 왼쪽 들여 쓴 「일시 / (영어) · 장소 / (영어) · 사회」, 곡 「작곡가 - 곡명」, 줄표 점선, 번호 켜기/끄기 */
+function ebConS(b){const T=ebSet(),it=b.items||[],M=b.meta||{},dt=ebDt(M.date),WDE=['Sun.','Mon.','Tue.','Wed.','Thu.','Fri.','Sat.'];
+  const pm=t=>{const m=String(t||'').match(/^(\d{1,2}):(\d{2})/);if(!m)return '';const h=+m[1];return ((h+11)%12+1)+':'+m[2]+(h<12?' AM':' PM')};
+  const L=[];if(dt){L.push(['일시:',`${dt.getFullYear()}년 ${dt.getMonth()+1}월 ${dt.getDate()}일(${EB_KW[dt.getDay()]}) ${pm(M.t)}`]);L.push(['',`(${WDE[dt.getDay()]} ${EB_MO[dt.getMonth()]} ${dt.getDate()}, ${dt.getFullYear()}, ${pm(M.t)})`])}
+  if(M.room){L.push(['장소:',M.room+(M.loc?` (${M.loc})`:'')]);if(M.en)L.push(['',`(${M.en})`])}if((M.mc||[]).length)L.push(['사회 및 진행:',M.mc.join(', ')+' 선생님']);
+  const meta=L.length?`<div class="cmeta">${L.map(([a,v])=>a==='사회 및 진행:'?`<span class="full">${esc(a)} ${esc(v)}</span>`:`<span class="k">${esc(a)}</span><span>${esc(v)}</span>`).join('')}</div>`:(b.when||[]).map(w=>`<div class="c3">${esc(w)}</div>`).join('');
+  const nm=x=>x.kc&&x.kt&&!/곡 미정/.test(x.ko)?x.kc+' - '+x.kt:x.ko;
+  return `<section class="bls con csum"><div class="eh"><div class="c1">${esc(T.en||b.camp||'')}</div><div class="c2">${esc(b.name)}</div>${meta}</div>
+    ${it.length?it.map(x=>{const Ls=x.lines.length?x.lines:[''];
+      return `<div class="it ${T.conNo===false?'nono':''}"><span class="no">${T.conNo===false?'':x.no+'.'}</span><span class="ko">${esc(nm(x))}</span><span class="ld"></span><span class="pp">${esc(Ls[0])}</span><span class="en">${esc(x.en||'')}</span><span class="pp2">${esc(Ls[1]||'')}</span>${Ls.slice(2).map(l=>`<span></span><span></span><span></span><span class="pp2">${esc(l)}</span>`).join('')}</div>`}).join(''):'<p style="text-align:center;color:#888;margin-top:20mm">(연주 순서가 아직 없어요)</p>'}</section>`}
+function ebCon(b){const T=ebSet(),it=b.items||[];if(T.conSt==='여름'&&b.meta)return ebConS(b);
   return `<section class="bls con"><div class="eh"><div class="c1">${esc(T.en||b.camp||'')}</div><div class="c2">${esc(b.name)}</div>${(b.when||[]).map(w=>`<div class="c3">${esc(w)}</div>`).join('')}</div>
     ${it.length?it.map(x=>{const L=x.lines.length?x.lines:[''];
       return `<div class="it"><span class="no">${x.no}.</span><span class="ko">${esc(x.ko)}</span><span class="ld"></span><span class="pp">${esc(L[0])}</span><span class="en">${esc(x.en||'')}</span><span class="pp2">${esc(L[1]||'')}</span>${L.slice(2).map(l=>`<span></span><span></span><span></span><span class="pp2">${esc(l)}</span>`).join('')}</div>`}).join(''):'<p style="text-align:center;color:#888;margin-top:20mm">(연주 순서가 아직 없어요)</p>'}</section>`}
@@ -3785,6 +3798,8 @@ function vEbk(){const E=S.EB;if(!E){if(!S.EBL)setTimeout(ebLoad,0);return '<div 
         <label>시간표 한 쪽에 장소 몇 곳<input type="number" min="1" max="10" data-ebs="per" value="${esc(T.per)}" ${ed?'':'disabled'}></label>
         <label>시간표 글씨 크기 (pt)<input type="number" min="5" max="10" step="0.2" data-ebs="fs" value="${esc(T.fs)}" ${ed?'':'disabled'}></label>
         <label style="flex-direction:row;align-items:center;gap:6px"><input type="checkbox" data-ebs="num" ${T.num?'checked':''} ${ed?'':'disabled'}> 쪽 아래 번호 (- 2 -)</label>
+        <label>음악회 모양<select data-ebs="conSt" ${ed?'':'disabled'}><option value="겨울" ${T.conSt!=='여름'?'selected':''}>겨울 (가운데 머리 · 곡명 · 점선)</option><option value="여름" ${T.conSt==='여름'?'selected':''}>여름 (일시 · 장소 영어 줄 · 작곡가 - 곡명 · 줄표)</option></select></label>
+        <label style="flex-direction:row;align-items:center;gap:6px"><input type="checkbox" data-ebs="conNo" ${T.conNo!==false?'checked':''} ${ed?'':'disabled'}> 음악회 곡 번호</label>
         <label>교사 명단 모양<select data-ebs="tchSt" ${ed?'':'disabled'}><option value="겨울" ${T.tchSt!=='여름'?'selected':''}>겨울 (학원 | Vn … / Vc …)</option><option value="여름" ${T.tchSt==='여름'?'selected':''}>여름 (교실 명 | 악기 | 교사 명)</option></select></label>
         <label>보조교사 쪽 안내 <small>(| 로 왼쪽 · 오른쪽)</small><input type="text" data-ebs="oaNote" value="${esc(T.oaNote||'보조교사도 악기를 가져와서 함께 켭니다.|*Perform at the Farewell Concert')}" ${ed?'':'disabled'}></label>
         <label>오프닝 리허설 안내<input type="text" data-ebs="opNote" value="${esc(T.opNote||'동선체크, 그룹리허설 (반주없이 진행됩니다)')}" ${ed?'':'disabled'}></label>
@@ -4044,6 +4059,6 @@ document.addEventListener('click',e=>{if(S.tab!=='book')return;const b=e.target.
   if(b.id==='ebSetSave'){const n=Object.assign(ebSet(),S.ebSetW||{});n.per=Math.max(1,Math.min(10,Math.round(+n.per||5)));n.fs=Math.max(5,Math.min(10,+n.fs||6.6));['en','sub','org'].forEach(k=>n[k]=String(n[k]||'').trim().slice(0,120));
     ebSend([],[],n,()=>{S.ebSetW=null;toast('책자 설정을 저장했어요')});return}},true);
 </script>
-<div id="bldMark" hidden>빌드표시 20261105-222747 </div>
+<div id="bldMark" hidden>빌드표시 20261105-223144 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();</script>
 </body></html>

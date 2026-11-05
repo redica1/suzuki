@@ -1,4 +1,4 @@
-/* build: 20261105-212536 */
+/* build: 20261105-212900 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -1567,7 +1567,9 @@ function bookCheckData(token) {
     P.push([String(p.name || '').trim(), String(sb.acad || ''), String(p.inst || i.inst || ''), String(i.by || ''), String(p.type || p.kind || '')]); }));
   const T = teachers_().map(t => [String(t.name || '').trim(), t.acads.join(','), t.inst]);
   const F = profs_().map(f => [f.name, f.org, f.inst]);
-  const C = camp_(); return { ok: true, year: +String(C.base.start || '').slice(0, 4) || new Date().getFullYear(), P, T, F };
+  // 곡 → 권: 신청서(App1) 곡 목록 「V04-04 협주곡 가단조 1악장 (비발디)」 = 바이올린 4권
+  let G = []; try { const h = HtmlService.createHtmlOutputFromFile('App1').getContent(); const rx = /'([VC])(\d\d)-(\d\d) ([^']{2,80})'/g; let m; while ((m = rx.exec(h))) G.push([m[1], +m[2], m[4]]); } catch (x) {}
+  const C = camp_(); return { ok: true, year: +String(C.base.start || '').slice(0, 4) || new Date().getFullYear(), P, T, F, G };
 }
 /* ---------------- 책자 ↔ 구글 시트 (11-05) ----------------
  * 캠프 하나에 스프레드시트 하나(「{캠프 이름} 책자」), 책자 쪽마다 탭 하나 (방배정 도면처럼 시트에서 고치고 「시트에서 적용」).

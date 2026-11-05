@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261105-221745 -->
+<!-- build: 20261105-222217 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -669,7 +669,7 @@ function tgChips(k,t){const L=tgNorm(t.b);const by={};L.forEach(x=>{const o=tkP(
 /* 행사 구분 (공연 · 레슨 · 업무) → 종류 → (공연) 단계 → 사람 역할 — 목록은 모두 관리자가 「날짜 · 장소」에서 고침 */
 const CATS=['공연','레슨','업무'];
 const DEF_KINDS=[['Orch A','공연'],['Orch B','공연'],['Orch C','공연'],['Orch D','공연'],['Welcome Concert','공연'],['Ensemble Concert','공연'],['Evening Concert','공연',1],['Afternoon Concert','공연',1],['Twilight Concert','공연',1],['그룹레슨','레슨'],['교사연수','레슨'],['마스터클래스','레슨'],['식당','업무']].map(([n,c,l])=>({n,c,link:!!l}));
-const DEF_STAGES=['본공연','리허설','무대 세팅'];
+const DEF_STAGES=['본공연','리허설','대기','무대 세팅'];
 const DEF_TGSONGS={Vn:['멘델스존 3악장','두 대의 바이올린','테크닉클래스','Shostakovich 1&5악장'],Vc:['테크닉클래스'],Fl:['Tonalization']};
 const DEF_ROLESETS={'공연':['지휘','반주자','통역','객석정리','무대','연주','세팅','진행','사회'],'레슨':['수업','보조','통역'],'업무':['문지기','배식','안내']};
 const OLD_CAT={레슨:'레슨',교사연수:'레슨',특별수업:'레슨',오케스트라:'공연',오후음악회:'공연',음악회:'공연',리허설:'공연',대기:'업무'};
@@ -3152,7 +3152,7 @@ document.addEventListener('change',e=>{const t=e.target;if(S.tab!=='meal')return
  * 고쳐 쓰기: 미리보기 쪽을 바로 고침 → 그 HTML 을 고정 저장, 그때 원본 지문(src)을 같이 둠 → 원본이 바뀌면 빨간 「원본이 바뀌었어요」.
  * 글 쪽: 손으로 쓰는 쪽(주의사항 등). 한글 · 워드에서 붙여 넣으면 굵게 · 표 정도만 남김. */
 const EB_DEF={en:'',sub:'',org:'(사)한국스즈키음악협회',per:5,fs:6.6,num:true};
-const EB_KIND={fac:'교수진',cover:'표지',sched:'시간표',con:'음악회',orch:'명단',tch:'명단',text:'글'};
+const EB_KIND={oreh:'리허설',fac:'교수진',cover:'표지',sched:'시간표',con:'음악회',orch:'명단',tch:'명단',text:'글'};
 function ebSet(){return Object.assign({},EB_DEF,(S.EB&&S.EB.set)||{})}
 function ebLoad(){ebFonts();S.EBL=1;if(document.fonts&&document.fonts.ready&&!S.ebFR){S.ebFR=1;document.fonts.ready.then(()=>{S.ebEqC=null;if(S.tab==='book'&&S.EB&&!S.ebEd)render()})}call('bookData',[],r=>{S.EB=r;S.EBL=0;
   /* 새 캠프(책자에 저장된 쪽이 없음) = 「데이터에서 불러오기」 방식으로 시작 */
@@ -3213,6 +3213,22 @@ function ebFac(){const E=S.EB,T=ebSet(),C=E.camp||{},F=(E.fac||[]).filter(f=>f.b
   const A=F.filter(f=>f.b==='협회'),B=F.filter(f=>f.b==='초청');
   return `<section class="bls txt fac"><div class="eh"><div class="c1">${esc(T.en||'')}</div><div class="c2">${esc(C.name||'')} 참가 교수진</div><div class="c3">- 한국스즈키음악협회 교수진 - KSA Faculty Members -</div>${head?`<div class="c3">${esc(head.ti)} ${esc(head.n)}${head.en?` (${esc(head.en)})`:''}</div>`:''}</div>${part(A)||'<p style="color:#888">(협회 교수진이 없어요 · 설정 › 교수진에서 「책자」를 「협회」로)</p>'}</section>`+
     (B.length?`<section class="bls txt fac"><h2>- 초청 교수진 - <small style="font-size:.7em;font-weight:600">Guest Faculty</small></h2>${part(B)}</section>`:'')}
+/* ---- 표 줄 단위 검사 (11-05): 머리에 「권」 칸이 있으면 같은 줄의 곡과 권을 짝지어 비교 · 「대기」 시각이 「리허설」보다 늦은 줄 · 시간 칸(13:30~14:15)이 앞 줄과 겹치는 줄 ---- */
+function ebRowChecks(root){const out=[];if(!root)return out;const hm=t=>{const m=String(t||'').match(/(\d{1,2}):(\d{2})/);return m?+m[1]*60+ +m[2]:null};
+  root.querySelectorAll('table').forEach(tb=>{const R=[...tb.rows];if(R.length<2)return;let hi=R.findIndex(r=>[...r.cells].some(c=>/권|bk|대기|리허설|시간|time/i.test(ebTx(c))));if(hi<0||hi>3)return;
+    const H=[...R[hi].cells].map(c=>ebTx(c)),bk=H.findIndex(h=>/권|\bbk\b/i.test(h)),wt=H.findIndex(h=>/대기|waiting/i.test(h)),rh=H.findIndex(h=>/리허설|rehearsal/i.test(h)),tm=H.findIndex((h,i)=>i!==wt&&i!==rh&&/시간|time/i.test(h)),dc=H.findIndex(h=>/날짜|일자|date|요일/i.test(h));let prevEnd=null;
+    R.slice(hi+1).forEach(r=>{const C=[...r.cells].map(c=>ebTx(c));if(C.length!==H.length)return;const line=C.join(' · ');if(dc>=0&&C[dc].trim())prevEnd=null;   /* 날짜가 바뀌면 겹침 다시 */
+      if(bk>=0&&/\d/.test(C[bk])){const b=C[bk].replace(/\s*\+\s*$/,'~12').replace(/\s*[&,]\s*/g,'권 ');const u=b+'권 '+C.filter((x,i)=>i!==bk).join(' ');ebSongCheck(u).forEach(x=>out.push({type:'권',msg:x.msg.replace(/: 「.*」$/,'')+`: 「${line.slice(0,70)}」`,find:C.find((x,i)=>i!==bk&&x.length>3)||''}))}
+      if(wt>=0&&rh>=0){const a=hm(C[wt]),b=hm(C[rh]);if(a!=null&&b!=null&&a>b)out.push({type:'시간',msg:`대기 ${C[wt]}가 리허설 ${C[rh]}보다 늦어요: 「${line.slice(0,60)}」`,find:C[wt]})}
+      if(tm>=0){const m=String(C[tm]).match(/(\d{1,2}:\d{2})\s*[~\-]\s*(\d{1,2}:\d{2})/);if(m){const s=hm(m[1]),e=hm(m[2]);if(e<=s)out.push({type:'시간',msg:`끝이 시작보다 빨라요: 「${C[tm]}」`,find:C[tm]});
+        if(prevEnd!=null&&s<prevEnd)out.push({type:'시간',msg:`앞 줄과 시간이 겹쳐요: 「${C[tm]}」`,find:C[tm]});prevEnd=e}}})});
+  return out}
+/* 오케스트라 리허설 대기 및 진행 시간 (11-05): 교사 일정 Orch A~D 의 단계 「대기」 · 「리허설」 · 담당 교사 */
+function ebOreh(){const E=S.EB,L=E.orchReh||[],ds=new Set();L.forEach(x=>x.reh.concat(x.wait).forEach(t=>ds.add(t.d)));const multi=ds.size>1,dl=d=>multi?((E.days||[])[d]||{}).label+' ':'';
+  const tt=A=>A.length?A.map(t=>dl(t.d)+t.s).join('<br>'):'<span style="color:#b4423a">—</span>';
+  return `<section class="bls txt oreh"><h3 style="font-size:11pt;margin:0 0 .5mm;border-bottom:.6px solid #333;display:inline-block">오케스트라 리허설 대기 및 진행 시간 안내</h3><div style="font-weight:700;margin:0 0 2mm">Orchestra Rehearsal (Orch only)</div>
+    <table class="rt" style="width:100%"><thead><tr><th style="width:20%"></th><th style="width:16%">대기 시간<br>Waiting Time</th><th style="width:18%">리허설 시간<br>Rehearsal Time</th><th>담당 교사<br><small>(대기 자리 정렬 · 튜닝 · 입퇴장 관리)</small></th></tr></thead><tbody>
+    ${L.map(x=>`<tr><th>${esc(x.k)}${x.tgt?`<br>(${esc(x.tgt)})`:''}</th><td style="text-align:center;font-weight:700">${tt(x.wait)}</td><td style="text-align:center;font-weight:700">${tt(x.reh)}</td><td>${esc(x.who.join(' '))}</td></tr>`).join('')||'<tr><td colspan="4" style="color:#888">(교사 일정에 Orch 리허설이 없어요)</td></tr>'}</tbody></table></section>`}
 function ebNewImg(id,full){return `<section class="bls imgp${full?' full':''}"><img data-fid="${esc(id)}"></section>`}
 function ebNewText(){return '<section class="bls txt"><h2>제목</h2><p>여기에 내용을 적거나, 한글 · 워드에서 복사해 붙여 넣으세요.</p></section>'}
 /* ---- 쪽 목록: 자동 쪽 + 저장된 쪽(고친 내용 · 순서 · 사용) ---- */
@@ -3221,6 +3237,7 @@ function ebItems(){const E=S.EB;if(!E)return [];const P={};(E.pages||[]).forEach
   if((E.fac||[]).some(f=>f.b))auto.push({k:'fac',t:'교수진',d:20,a:()=>ebFac()});
   (E.days||[]).forEach(D=>auto.push({k:'sched:'+D.i,t:D.label+' 시간표',d:100+D.i,a:()=>ebSched(D)}));
   (E.concerts||[]).forEach((b,i)=>auto.push({k:'con:'+b.id,t:b.name,d:300+i,a:()=>ebCon(b)}));
+  if((E.orchReh||[]).length)auto.push({k:'oreh',t:'오케 리허설 대기 · 진행 시간',d:790,a:()=>ebOreh()});
   if((E.orch||[]).length)auto.push({k:'orch',t:'오케스트라 명단',d:800,a:()=>ebOrch()});
   auto.push({k:'tch',t:'참가 교실 · 교사 명단',d:900,a:()=>ebTch()});
   const kindOf=k=>k.split(':')[0],L=[];
@@ -3506,7 +3523,7 @@ function ebAcOk(a,b){const r=x=>String(x||'').replace(/\s/g,'').toLowerCase();if
 function ebCheck(){call('bookCheckData',[],R=>{S.ebCD=R;ebCheckRun();S.ebSide='chk';S.ebSeen=new Set();S.ebCurChk=null;render()},'책자를 접수 명단과 대조하고 있어요…')}
 /* ---- 원본은 원본에서 (11-05): 책자 자동 쪽의 내용(곡 · 이름 · 시간 · 장소)이 데이터와 다르면 「원본에서 고치세요」 + 바로 가기. 모양(줄바꿈 · 글꼴 · 칸 폭)만 다르면 괜찮음.
  * 영어 곡명만 예외: 음악회 쪽에서 고친 영어 곡명은 저장할 때 원본(영어 곡명 목록 songEn)에도 같이 저장할지 물음. */
-const EB_SRC={fac:['prof','설정 › 교수진'],cover:['camp','캠프 설정'],sched:['act','스케줄관리 › 교사 일정'],orch:['act','스케줄관리 › 교사 일정 (역할)'],con:['con','스케줄관리 › 오후음악회 › 연주 순서'],tch:['subs','운영관리 › 접수']};
+const EB_SRC={oreh:['act','스케줄관리 › 교사 일정 (Orch 대기 · 리허설)'],fac:['prof','설정 › 교수진'],cover:['camp','캠프 설정'],sched:['act','스케줄관리 › 교사 일정'],orch:['act','스케줄관리 › 교사 일정 (역할)'],con:['con','스케줄관리 › 오후음악회 › 연주 순서'],tch:['subs','운영관리 › 접수']};
 const ebFlat=U=>U.join('').replace(/\s+/g,'');
 function ebDiff(A,B){const cnt=new Map();A.forEach(u=>cnt.set(u,(cnt.get(u)||0)+1));const extra=[];B.forEach(u=>{const c=cnt.get(u)||0;if(c>0)cnt.set(u,c-1);else extra.push(u)});
   const miss=[];cnt.forEach((c,u)=>{for(let i=0;i<c;i++)miss.push(u)});const pairs=[];
@@ -3526,7 +3543,9 @@ function ebCheckRun(){const R=S.ebCD;if(!R)return;const T=ebSet(),okS=new Set(T.
         if(n>Math.max(12,A.length*.4))add(x,'많이 다름',`데이터로 만든 글과 많이 달라요 — 다른 줄 ${n}개. 내용은 원본에서 고치고, 이 쪽은 「원본으로 바꾸기」 뒤 모양만 손질하세요.`,'');
         else{D.pairs.slice(0,40).forEach(([m,e])=>add(x,'바뀜',`원본 「${m}」 → 책자 「${e}」 — 원본에서 고치세요`,e));D.miss.slice(0,40).forEach(m=>add(x,'빠짐',`원본에 있는데 책자에 없음: 「${m}」`,''));D.extra.slice(0,40).forEach(e=>add(x,'더해짐',`원본에 없는 글: 「${e}」 — 원본에 넣으세요`,e))}}}
     /* ② 명단 · 나이 · 학원 · 곡의 권 */
-    ebFind(fin).forEach(i=>add(x,i.type,i.msg,i.find))});
+    ebFind(fin).forEach(i=>add(x,i.type,i.msg,i.find));
+    /* ③ 표 줄: 권 칸 ↔ 곡 · 시간 순서 */
+    ebRowChecks(ebTpl(ebPg(x))).forEach(i=>add(x,i.type,i.msg,i.find))});
   S.ebChk={at:new Date(),items:out,pages:L.length}}
 /* ---- 곡 · 권 검사 (11-05): 「Vn 3B(비발디 가단조~)」 「Bk.1-2 …」 「3권 …」처럼 권이 적힌 줄에서 곡을 찾아 신청서 곡 목록의 권과 비교 ---- */
 const EB_GEN=new Set(['협주곡','소나타','제']);
@@ -3567,7 +3586,7 @@ function ebFind(units){const R=S.ebCD;if(!R)return [];const out=[];
 function ebLiveLoad(){if(S.ebCD||S.ebCDL)return;S.ebCDL=1;google.script.run.withSuccessHandler(r=>{S.ebCDL=0;S.ebCD=r;ebLive()}).withFailureHandler(()=>{S.ebCDL=0}).bookCheckData(S.tok)}
 function ebLive(){const el=ebEditEl(),box=document.getElementById('ebLive');if(!el||!box)return;if(!S.ebCD){box.innerHTML='<span class="hint">명단 · 곡 목록을 불러오는 중… (불러오면 바로 검사해요)</span>';ebLiveLoad();return}
   const units=el.innerText.split(/[\n\t]+/).map(x=>x.replace(/\s+/g,' ').trim()).filter(Boolean),okS=new Set(ebSet().ok||[]);
-  const L=ebFind(units).filter(i=>!okS.has(ebHash(S.ebEd+'|'+i.type+'|'+i.msg).slice(0,8)));const seen=new Set(),U=L.filter(i=>!seen.has(i.msg)&&seen.add(i.msg));
+  const L=ebFind(units).concat(ebRowChecks(el)).filter(i=>!okS.has(ebHash(S.ebEd+'|'+i.type+'|'+i.msg).slice(0,8)));const seen=new Set(),U=L.filter(i=>!seen.has(i.msg)&&seen.add(i.msg));
   try{if(window.CSS&&CSS.highlights&&typeof Highlight!=='undefined'){const H=new Highlight(),w=document.createTreeWalker(el,NodeFilter.SHOW_TEXT);let n;const fs=[...new Set(U.map(i=>i.find).filter(f=>f&&f.length<=80))];
     while((n=w.nextNode()))fs.forEach(f=>{let i=n.textContent.indexOf(f);while(i>=0){const r=new Range();r.setStart(n,i);r.setEnd(n,i+f.length);H.add(r);i=n.textContent.indexOf(f,i+1)}});CSS.highlights.set('ebwarn',H)}}catch(x){}
   const x=ebItems().find(y=>y.k===S.ebEd);let srcH='';
@@ -3576,7 +3595,7 @@ function ebLive(){const el=ebEditEl(),box=document.getElementById('ebLive');if(!
       ${D.pairs.slice(0,3).map(([m,e])=>`<div>원본 「${esc(m)}」 → 책자 「${esc(e)}」</div>`).join('')}${D.miss.slice(0,2).map(m=>`<div>빠짐 「${esc(m)}」</div>`).join('')}${D.extra.slice(0,2).map(e=>`<div>더해짐 「${esc(e)}」</div>`).join('')}</div>`}}
   box.innerHTML=srcH+(U.length?`<b style="color:var(--bad)">확인해 보세요 ${U.length}</b> ${U.slice(0,6).map(i=>`<div class="lv"><span class="ebchip ${i.type==='권'||i.type==='나이'?'txt':'chg'}">${esc(i.type)}</span> ${esc(i.msg)}</div>`).join('')}${U.length>6?`<div class="hint">… ${U.length-6}개 더 (위 「검사」에서 모두)</div>`:''}`:'<span class="hint">✓ 지금 쪽에서 명단 · 나이 · 학원 · 곡의 권이 맞아요</span>')}
 /* ---- 검사 목록 = 왼쪽 칸 탭 (11-05): 쪽 순서 | 검사 n · 누르면 그 글자로 · 다음 ▶ · 본 줄 ✓ ---- */
-function ebChkSide(){const C=S.ebChk;if(!C)return '';const ed=!!S.EB.edit&&!RO(),col={'권':'txt','많이 다름':'chg',바뀜:'chg','빠짐':'chg','더해짐':'hand','명단에 없음':'chg','학원이 다름':'chg','나이':'txt'};
+function ebChkSide(){const C=S.ebChk;if(!C)return '';const ed=!!S.EB.edit&&!RO(),col={'시간':'txt','권':'txt','많이 다름':'chg',바뀜:'chg','빠짐':'chg','더해짐':'hand','명단에 없음':'chg','학원이 다름':'chg','나이':'txt'};
   const seen=S.ebSeen||(S.ebSeen=new Set()),cur=S.ebCurChk,left=C.items.filter(i=>!seen.has(i.id)).length;let last='';
   return `<div class="ckbar"><span class="hint">${C.items.length?`${C.items.length}개 · 안 본 것 ${left}`:'다른 곳이 없어요 ✓'}</span><span class="row" style="gap:4px"><button class="btn small" type="button" data-ebchknav="-1" aria-label="이전">◀</button><button class="btn small primary" type="button" data-ebchknav="1">다음 ▶</button></span></div>
     <div class="ckbar2"><button class="btn small ghost" type="button" id="ebChkRe">다시 검사</button><button class="btn small ghost" type="button" id="ebChkX">검사 닫기</button></div>
@@ -3590,7 +3609,7 @@ function ebChkGo(id){const C=S.ebChk;if(!C)return;const i=C.items.find(x=>x.id==
 function ebChkNav(d){const C=S.ebChk;if(!C||!C.items.length)return;const L=C.items,ix=L.findIndex(x=>x.id===S.ebCurChk);let j;
   if(d>0){j=L.findIndex((x,k)=>k>ix&&!(S.ebSeen||new Set()).has(x.id));if(j<0)j=(ix+1)%L.length}else j=ix<=0?L.length-1:ix-1;ebChkGo(L[j].id)}
 function ebChkHtml(){const C=S.ebChk;if(!C)return '';const ed=!!S.EB.edit&&!RO(),by={};C.items.forEach(i=>{(by[i.k]=by[i.k]||[]).push(i)});
-  const cnt=t=>C.items.filter(i=>i.type===t).length,col={'권':'txt','많이 다름':'chg',바뀜:'chg','빠짐':'chg','더해짐':'hand','명단에 없음':'chg','학원이 다름':'chg','나이':'txt'};
+  const cnt=t=>C.items.filter(i=>i.type===t).length,col={'시간':'txt','권':'txt','많이 다름':'chg',바뀜:'chg','빠짐':'chg','더해짐':'hand','명단에 없음':'chg','학원이 다름':'chg','나이':'txt'};
   const sum=['많이 다름','바뀜','빠짐','더해짐','명단에 없음','학원이 다름','나이','권'].map(t=>cnt(t)?`<span class="ebchip ${col[t]}">${t} ${cnt(t)}</span>`:'').join('');
   return `<div class="panel ebchk"><div class="spread"><div><b>책자 검사</b> <span class="hint">${C.pages}쪽 · ${C.items.length?`고칠 곳 후보 ${C.items.length}개`:'다른 곳이 없어요 ✓'} ${sum}</span></div>
     <div class="row" style="gap:6px"><button class="btn small" type="button" id="ebChkRe">다시 검사</button><button class="btn small ghost" type="button" id="ebChkX">닫기</button></div></div>
@@ -3609,11 +3628,13 @@ function ebReady(k){const E=S.EB,kd=k.split(':')[0];
   if(kd==='con'){const b=(E.concerts||[]).find(c=>'con:'+c.id===k);if(!b)return {ok:0,m:'공연이 없어요'};const it=b.items||[];if(!it.length)return {ok:0,m:'연주 순서가 아직 없어요 (오후음악회 › 연주 순서)'};
     const noSong=it.filter(x=>/곡 미정/.test(x.ko)).length,noEn=it.filter(x=>!x.en).length,noP=it.filter(x=>!(x.lines||[]).some(l=>String(l).trim())).length;
     const w=[noSong&&`곡 미정 ${noSong}`,noEn&&`영어 곡명 없음 ${noEn}`,noP&&`연주자 없음 ${noP}`].filter(Boolean);return {ok:w.length?0:1,m:`${it.length}곡`+(w.length?' · '+w.join(' · '):' · 다 들어옴')}}
+  if(kd==='oreh'){const L=E.orchReh||[],nw=L.filter(x=>!x.wait.length).length,nr=L.filter(x=>!x.reh.length).length,nt=L.filter(x=>!x.who.length).length;
+    return L.length?{ok:nw||nr||nt?0:1,m:`오케 ${L.length}개`+(nw?` · 대기 없음 ${nw} (교사 일정에서 단계 「대기」로)`:'')+(nr?` · 리허설 없음 ${nr}`:'')+(nt?` · 담당 교사 없음 ${nt}`:'')}:{ok:0,m:'교사 일정에 Orch 리허설이 없어요'}}
   if(kd==='fac'){const F=(E.fac||[]).filter(f=>f.b==='협회'||f.b==='초청'),nb=F.filter(f=>!String(f.bio||'').trim()&&!/회장/.test(f.ti||'')).length;return F.length?{ok:nb?0:1,m:`협회 ${F.filter(f=>f.b==='협회').length} · 초청 ${F.filter(f=>f.b==='초청').length}명`+(nb?` · 약력 없음 ${nb}명`:' · 약력 다 들어옴')}:{ok:0,m:'설정 › 교수진에서 「책자」(협회 · 초청)를 골라 주세요'}}
   if(kd==='orch'){const n=(E.orch||[]).filter(r=>r.k==='p').length;return n?{ok:1,m:`파트 ${n}줄`}:{ok:0,m:'교사 일정에 파트 역할이 없어요'}}
   if(kd==='tch'){const n=((E.tchBook&&E.tchBook.t)||[]).length;return n?{ok:1,m:`학원 · 악기 ${n}줄${E.tchBook.r&&E.tchBook.r.length?' + 연수교사':''}`}:{ok:0,m:'접수된 교사가 없어요'}}
   return {ok:1,m:''}}
-function ebPickHtml(){const L=S.ebSrc||[],G=[['cover','앞'],['fac','앞'],['sched','날짜별 시간표'],['con','음악회 프로그램'],['orch','명단'],['tch','명단']];let last='';
+function ebPickHtml(){const L=S.ebSrc||[],G=[['cover','앞'],['fac','앞'],['oreh','명단'],['sched','날짜별 시간표'],['con','음악회 프로그램'],['orch','명단'],['tch','명단']];let last='';
   return `<div class="panel ebpick"><div class="spread"><div><b>데이터에서 불러오기</b> <span class="hint">고른 것만 쪽으로 만들어요 · 빨간 글은 원본에 아직 빠진 것 — 원본에서 채운 뒤 불러오는 게 좋아요</span></div><button class="btn small ghost" type="button" id="ebPickX">닫기</button></div>
     ${L.map(x=>{const g=(G.find(y=>y[0]===x.kind)||[])[1]||'',gh=g!==last?`<div class="egrp">${esc(g)}</div>`:'';last=g;const R=ebReady(x.k);
       return `${gh}<div class="pk"><span class="pt">${esc(x.t)}</span><span class="pm ${R.ok?'':'bad'}">${esc(R.m)}</span>${x.in?`<button class="btn small ghost" type="button" data-ebgo="${esc(x.k)}">들어 있음 · 보기</button>`:`<button class="btn small${R.ok?' primary':''}" type="button" data-ebpick="${esc(x.k)}">불러오기</button>`}</div>`}).join('')}</div>`}
@@ -3627,7 +3648,7 @@ function ebPick(k){const src=(S.ebSrc||[]).find(x=>x.k===k);if(!src)return;const
 /* ---- 화면 ---- */
 function vEbk(){const E=S.EB;if(!E){if(!S.EBL)setTimeout(ebLoad,0);return '<div class="panel hint">책자를 만들고 있어요…</div>'}
   const L=ebItems(),ed=!!E.edit&&!RO(),z=ebZoom(),T=ebSet(),sel=S.ebSel;
-  const grp=k=>({fac:'앞',cover:'앞',sched:'날짜별 시간표',con:'음악회 프로그램',orch:'명단',tch:'명단',text:'글 쪽'})[k];
+  const grp=k=>({oreh:'명단',fac:'앞',cover:'앞',sched:'날짜별 시간표',con:'음악회 프로그램',orch:'명단',tch:'명단',text:'글 쪽'})[k];
   let lastG='';
   const list=L.map((x,i)=>{const [c,l]=ebState(x),g=x.kind==='text'?'':grp(x.kind);const gh=g&&g!==lastG?`<div class="egrp">${esc(g)}</div>`:'';if(g)lastG=g;
     return `${gh}<li class="${x.on?'':'off'} ${sel===x.k?'cur':''}"><input type="checkbox" data-ebon="${esc(x.k)}" ${x.on?'checked':''} ${ed?'':'disabled'} aria-label="${esc(x.t)} 넣기"><span class="eti" data-ebgo="${esc(x.k)}" title="${esc(x.t)}">${esc(x.t)}<span class="ebchip ${c}">${l}</span><br><span class="epg" data-ebpg="${esc(x.k)}"></span></span>
@@ -3914,6 +3935,6 @@ document.addEventListener('click',e=>{if(S.tab!=='book')return;const b=e.target.
   if(b.id==='ebSetSave'){const n=Object.assign(ebSet(),S.ebSetW||{});n.per=Math.max(1,Math.min(10,Math.round(+n.per||5)));n.fs=Math.max(5,Math.min(10,+n.fs||6.6));['en','sub','org'].forEach(k=>n[k]=String(n[k]||'').trim().slice(0,120));
     ebSend([],[],n,()=>{S.ebSetW=null;toast('책자 설정을 저장했어요')});return}},true);
 </script>
-<div id="bldMark" hidden>빌드표시 20261105-221745 </div>
+<div id="bldMark" hidden>빌드표시 20261105-222217 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();</script>
 </body></html>

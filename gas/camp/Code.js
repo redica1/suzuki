@@ -1,4 +1,4 @@
-/* build: 20261105-221745 */
+/* build: 20261105-222217 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -1442,8 +1442,15 @@ function progBuild_(opt) {
     order.forEach(r => { const N = []; byMain.forEach(e => e.ppl.forEach(p => { if (p.r === r) { const n = nameOf(p.n); if (!N.includes(n)) N.push(n); } })); if (N.length) orch.push({ k: 'p', v: [r].concat(N) }); });
     orch.push({ k: 'b', v: [''] });
   });
+  // 책자 「오케스트라 리허설 대기 및 진행 시간」(11-05): Orch 종류마다 대상(권) · 대기(단계 「대기」) · 리허설 · 담당 교사(대기 일정 사람, 없으면 리허설의 파트 · 지휘가 아닌 역할)
+  const orchReh = Object.keys(G).filter(k => /^orch/i.test(k)).sort((x, y) => x.localeCompare(y)).map(k => {
+    const L = G[k].slice().sort((x, y) => x.d * 1440 + mm(x.s) - (y.d * 1440 + mm(y.s))), reh = L.filter(e => e.stage === '리허설'), wait = L.filter(e => e.stage === '대기');
+    const anyT = reh.concat(wait, L).find(e => e.tg && Object.keys(e.tg).length), tgt = anyT ? progCellS_(anyT, c, nameOf, anyT.s, anyT.e).h.filter(h => h !== k && !/^Orch/i.test(h)).join(' · ') : '';
+    const who = (wait.length ? wait : reh).flatMap(e => e.ppl.filter(p => wait.length || (!isPart_(p.r) && !/지휘/.test(p.r))).map(p => nameOf(p.n)));
+    return { k, tgt, wait: wait.map(e => ({ d: e.d, s: e.s })), reh: reh.map(e => ({ d: e.d, s: e.s, e: e.e, room: e.room })), who: [...new Set(who)] };
+  }).filter(x => x.reh.length || x.wait.length);
   const HT = opt && opt.all ? new Set() : pvHide_(c).t;   // 책자(11-05)는 탭 숨기기와 상관없이 모두 받음
-  return { title: C.base.name, days: out, teachers: HT.has('t') ? null : teachers, orch: HT.has('o') ? null : orch, concerts: HT.has('c') ? [] : progConcerts_(c, C, evs, nameOf, dayDate), hide: c.pvHide || { f: [], r: [], t: [] }, roleSets: Object.assign({}, ACT_ROLESETS, c.roleSets || {}), used: [...new Set(evs.flatMap(e => e.ppl.map(p => e.cat + ':' + p.r)))] };
+  return { title: C.base.name, days: out, teachers: HT.has('t') ? null : teachers, orch: HT.has('o') ? null : orch, orchReh, concerts: HT.has('c') ? [] : progConcerts_(c, C, evs, nameOf, dayDate), hide: c.pvHide || { f: [], r: [], t: [] }, roleSets: Object.assign({}, ACT_ROLESETS, c.roleSets || {}), used: [...new Set(evs.flatMap(e => e.ppl.map(p => e.cat + ':' + p.r)))] };
 }
 /** 음악회 프로그램 (오후음악회 · 이브닝 …): 「오후음악회」 탭의 연주 순서 그대로 · 같은 곡이 이어지면 한 번호로 묶고 학원별로 이름을 모음
  *  곡 이름: 목록 곡 「V01-14 미뉴에트 2번 (바흐)」 → 「바흐 미뉴에트 2번」, 직접 입력은 작곡가 + 곡명 · 영어 곡명은 설정 songEn(관리자가 미리보기에서 입력) */
@@ -1532,7 +1539,7 @@ function bookData(token) {
   return Object.assign({ ok: true, edit: a.sup || a.perms.book === '편집',
     camp: { id: C.base.id, name: C.base.name, start: C.base.start, end: C.base.end, place: C.base.place },
     days: P.days.map((D, i) => ({ i, label: D.label, date: ymd(i), V: D.V, W: D.W, meals: D.meals, S: D.S })),
-    concerts: (P.concerts || []).map(x => x.book), teachers: P.teachers || [], orch: P.orch || [], tchBook: bookTch_(), fac: profs_().map(p => ({ n: p.name, i: p.inst, b: p.book, g: p.bgrp, en: p.en, ti: p.title, bio: p.bio, o: p.bord })) }, bookPages_());
+    concerts: (P.concerts || []).map(x => x.book), teachers: P.teachers || [], orch: P.orch || [], tchBook: bookTch_(), orchReh: P.orchReh || [], fac: profs_().map(p => ({ n: p.name, i: p.inst, b: p.book, g: p.bgrp, en: p.en, ti: p.title, bio: p.bio, o: p.bord })) }, bookPages_());
 }
 /** 책자 「참가 교실 · 교사 명단」 재료 (11-05): 교사는 학원 · 악기별, 연수생(연수생 · 소속없는 중급연수생)은 따로 악기별 → 「연수교사 Vn」 줄 */
 function bookTch_() {
@@ -1545,7 +1552,7 @@ function bookTch_() {
 /** 책자 저장: rows = 바뀐 쪽만 [{k, ord, on, t, h, src}], del = 지울 키(글 쪽 · 원본 없는 쪽), set = 설정(있을 때만) · rev 가 다르면 막음 */
 function bookSave(token, rev, rows, del, set) {
   const a = adm_(token); bookPerm_(a, true);
-  const okKey = k => /^(cover|orch|tch|fac|sched:\d{1,2}|con:[\w-]{1,40}|text:[\w-]{1,40})$/.test(k);
+  const okKey = k => /^(cover|orch|oreh|tch|fac|sched:\d{1,2}|con:[\w-]{1,40}|text:[\w-]{1,40})$/.test(k);
   const L = (Array.isArray(rows) ? rows : []).slice(0, 200).map(r => {
     const k = String(r && r.k || ''); if (!okKey(k)) throw new Error('쪽 이름이 맞지 않아요: ' + k);
     const h = r.h == null ? null : String(r.h); if (h && h.length > 48000) throw new Error((r.t || k) + ': 내용이 너무 길어요. 두 쪽으로 나눠 주세요.');
@@ -1685,7 +1692,7 @@ function bookReadSA_(ss) {
 /** 쪽 탭으로 보내기: tabs = [{k, name, cw:[px], rh:[px], cells:[[r,c,rs,cs,v,f,runs]]}] (한 번에 12탭까지 — 클라이언트가 나눠 부름) */
 function bookSheetPut(token, tabs) {
   const a = adm_(token); bookPerm_(a, true);
-  const okKey = k => /^(cover|orch|tch|fac|sched:\d{1,2}|con:[\w-]{1,40}|text:[\w-]{1,40})$/.test(k);
+  const okKey = k => /^(cover|orch|oreh|tch|fac|sched:\d{1,2}|con:[\w-]{1,40}|text:[\w-]{1,40})$/.test(k);
   const T = (Array.isArray(tabs) ? tabs : []).slice(0, 12);
   const lock = lock_(); let ss = null; const out = {};
   try {
@@ -2591,7 +2598,7 @@ const ACT_HEAD = ['ID', '날짜', '시작', '끝', '장소', '이름', '종류',
 const ACT_CATS = ['공연', '레슨', '업무'];
 const ACT_KINDS = [['Orch A', '공연'], ['Orch B', '공연'], ['Orch C', '공연'], ['Orch D', '공연'], ['Welcome Concert', '공연'], ['Ensemble Concert', '공연'], ['Evening Concert', '공연', 1], ['Afternoon Concert', '공연', 1], ['Twilight Concert', '공연', 1],
   ['그룹레슨', '레슨'], ['교사연수', '레슨'], ['마스터클래스', '레슨'], ['식당', '업무']].map(([n, c, l]) => ({ n, c, link: !!l }));
-const ACT_STAGES = ['본공연', '리허설', '무대 세팅'];
+const ACT_STAGES = ['본공연', '리허설', '대기', '무대 세팅'];   // 대기 (11-05): 오케 · 그룹 리허설 전 대기 자리 — 책자 「리허설 대기 및 진행」
 const ACT_ROLESETS = { '공연': ['지휘', '악장', 'Vln 1', 'Vln 2', 'Vla', 'Vc', 'D.B', '악보계', '반주자', '통역', '객석정리', '무대', '연주', '세팅', '진행', '사회'], '레슨': ['수업', '보조', '통역'], '업무': ['문지기', '배식', '안내'] };
 /** 대상 칩 { Vn:{b:[권], x:[지정학생…], m:메모}, Vc, Fl } → 시트에는 JSON (빈 악기는 뺌) */
 function tgClean_(tg) { const o = {}; ['Vn', 'Vc', 'Fl'].forEach(k => { const v = (tg || {})[k]; if (!v) return; const b = (v.b || []).map(x => String(x).slice(0, 6)).filter(x => /^(Pre|\d{1,2})[AB]{0,2}\+?$/.test(x)).slice(0, 20), x = (v.x || []).map(y => String(y).slice(0, 10)).slice(0, 6), m = String(v.m || '').slice(0, 60), sg = (v.s || []).map(y => String(y).slice(0, 40)).slice(0, 12); if (b.length || x.length || m || sg.length) o[k] = { b, x, m, s: sg }; }); return Object.keys(o).length ? JSON.stringify(o) : ''; }

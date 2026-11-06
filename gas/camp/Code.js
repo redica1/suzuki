@@ -1,4 +1,4 @@
-/* build: 20261106-230742 */
+/* build: 20261106-231416 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -1557,7 +1557,8 @@ function bookData(token) {
   const C = camp_(), P = progBuild_({ all: true });
   const st = String(C.base.start || ''), ok = /^\d{4}-\d{2}-\d{2}$/.test(st);
   const ymd = d => { if (!ok) return ''; const [y, m, dd] = st.split('-').map(Number); return new Date(Date.UTC(y, m - 1, dd + d)).toISOString().slice(0, 10); };
-  return Object.assign({ ok: true, edit: a.sup || a.perms.book === '편집',
+  let exec = ''; try { exec = ScriptApp.getService().getUrl(); } catch (x) {}
+  return Object.assign({ ok: true, edit: a.sup || a.perms.book === '편집', exec,
     camp: { id: C.base.id, name: C.base.name, start: C.base.start, end: C.base.end, place: C.base.place },
     days: P.days.map((D, i) => ({ i, label: D.label, date: ymd(i), V: D.V, W: D.W, meals: D.meals, S: D.S })),
     concerts: (P.concerts || []).map(x => x.book), teachers: P.teachers || [], orch: P.orch || [], tchBook: bookTch_(), orchReh: P.orchReh || [], openReh: P.openReh || [], orchBook: P.orchBook || [], mc: (() => { try { const c = actCfg_(), A = mcApps_(), PR = profs_(); return { s: ((c.mcOrder || {}).s || []), pf: PR.filter(p => p.mc).map(p => ({ n: p.name, i: p.inst, en: p.en })), napp: Object.keys(A).reduce((o, k) => (o[k] = A[k].length, o), {}) }; } catch (x) { return { s: [], pf: [], napp: {} }; } })(), fac: profs_().map(p => ({ n: p.name, i: p.inst, b: p.book, g: p.bgrp, en: p.en, ti: p.title, bio: p.bio, o: p.bord })) }, bookPages_());

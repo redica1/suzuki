@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261107-000731 -->
+<!-- build: 20261107-002606 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -3441,6 +3441,10 @@ function ebSpreadHtml(html,k){html=String(html||'');S.ebSpC=S.ebSpC||new Map();c
 /* 앞에 빈 쪽(MEMO) 넣기 = 펼침을 짝수 쪽에서 시작하게 */
 function ebBlankBefore(k){const L=ebItems(),x=L.find(y=>y.k===k);if(!x)return;const nk='text:'+Date.now().toString(36),nx={k:nk,kind:'text',t:'빈 쪽 (MEMO)',ord:x.ord-.5,on:true};
   const rows=ebReorder(L.concat([nx]).sort((a,c)=>a.ord-c.ord)).map(r=>r.k===nk?Object.assign(r,{h:'<section class="bls txt"><h2>MEMO</h2></section>',src:''}):r);ebSend(rows,[],null,null,'빈 쪽을 넣고 있어요…')}
+function ebSprLive(){const el=ebEditEl();if(!el)return;if(el.querySelector('section.spl')&&el.querySelector('section.spr')){toast('이미 펼침 2쪽이에요');return}
+  const L=[...el.querySelectorAll('section.bls')].find(s=>s.querySelector('.eh:not(.csp)')&&s.querySelector('.it'));if(!L){toast('음악회 머리(제목 · 일시)와 곡 줄이 있는 쪽에서만 나눌 수 있어요');return}
+  const f=L.querySelector(':scope>.fitz');if(f)f.replaceWith(...f.childNodes);L.classList.remove('fit1','fit2');const eh=L.querySelector(':scope>.eh:not(.csp)');
+  L.classList.add('spl');const r=document.createElement('section');r.className=String(L.className).replace(/\bspl\b/,'spr');const c=eh.cloneNode(true);c.classList.add('csp');r.appendChild(c);L.after(r);ebSprMove('half')}
 /* 펼침 쪽 고치는 중: 커서가 있는 곡부터 오른쪽 쪽으로 · 반반으로 다시 */
 function ebSprMove(mode){const el=ebEditEl();if(!el)return;const L=el.querySelector('section.spl'),R=el.querySelector('section.spr');if(!L||!R){toast('펼침 쪽이 아니에요');return}
   const box=s=>s.querySelector(':scope>.fitz')||s,bL=box(L),bR=box(R),head=bL.querySelector(':scope>.eh:not(.csp)');
@@ -4054,7 +4058,8 @@ function ebToolbar(x){const sel=(f,ph,L)=>`<select data-ebfmt="${f}" aria-label=
       ${tb('h2','제목')}${tb('h3','소제목')}${tb('p','본문')}${tb('insertUnorderedList','• 목록')}</div>
     <div class="r2">${tb('img','그림 넣기','지금 자리에 그림을 넣어요')}${sel('iw','그림 폭',EB_IW)}<span class="sep"></span>${tb('split','여기서 쪽 나누기','글자 칸이 있는 자리에서 뒤를 새 쪽으로')}${tb('clear','모양 지우기','고른 글자의 글꼴 · 크기 · 색 등을 지워요')}<span class="sep"></span>${tb('undo','되돌리기')}${tb('redo','다시')}</div>
     <div class="r2"><b style="font-size:12.5px;color:#4a5a62">표</b>${sel('tbl','표 넣기',EB_TS)}<span class="sep"></span>${tb('rowup','↑ 줄','위에 줄 넣기')}${tb('rowdn','↓ 줄','아래에 줄 넣기')}${tb('rowdel','줄 지우기')}<span class="sep"></span>${tb('colL','← 칸','왼쪽에 칸 넣기')}${tb('colR','칸 →','오른쪽에 칸 넣기')}${tb('coldel','칸 지우기')}<span class="sep"></span>${tb('merge','합치기','끌어서 고른 칸들을 하나로')}${tb('unmerge','나누기','합친 칸을 다시 나눠요')}${tb('thead','머리 줄','첫 줄 굵게 · 옅은 바탕 켜기/끄기')}${tb('rowfit','줄 높이 맞춤','끌어서 정한 줄 높이를 지우고 글 양에 맞춰요')}${sel('tbg','칸 바탕',EB_TBG)}${sel('tbd','선',EB_TBD)}</div>
-    <div class="r2"><b style="font-size:12.5px;color:#4a5a62">글상자</b>${tb('gnew','글상자 넣기','지금 자리에 둥근 상자를 넣어요')}${sel('gbg','상자 바탕',EB_GBG)}${sel('gbd','상자 선',EB_GBD)}${sel('grd','모서리',EB_GRD)}${sel('gw','상자 폭',EB_GW)}</div></div>`}
+    <div class="r2"><b style="font-size:12.5px;color:#4a5a62">글상자</b>${tb('gnew','글상자 넣기','지금 자리에 둥근 상자를 넣어요')}${sel('gbg','상자 바탕',EB_GBG)}${sel('gbd','상자 선',EB_GBD)}${sel('grd','모서리',EB_GRD)}${sel('gw','상자 폭',EB_GW)}</div>${/class="it\b|class="it /.test(x.h||x.auto||'')?`
+    <div class="r2"><b style="font-size:12.5px;color:#4a5a62">펼침</b><button class="tb" type="button" data-ebsprtb="split" title="머리 + 앞 곡은 왼쪽 쪽, 나머지는 오른쪽 쪽 · 반반">펼침으로 나누기</button><button class="tb" type="button" data-ebsprtb="here" title="오른쪽 쪽 첫 곡으로 둘 곡 줄을 누른 뒤">이 곡부터 오른쪽 쪽으로</button><button class="tb" type="button" data-ebsprtb="half">반반으로</button></div>`:''}</div>`}
 /* ---- 표 (11-05): 넣기 · 줄/칸 넣고 빼기 · 합치기/나누기 · 머리 줄 · 칸 바탕 · 선 · 칸 폭 끌기 ----
  * 표를 칸 격자(rowspan/colspan 반영)로 읽어 고친 뒤 다시 그림 → 합친 칸이 있어도 줄 · 칸 넣기가 맞게. thead/tbody 구분과 칸 모양(style · class · th)은 그대로. */
 const EB_TS=[['1x1','1줄 × 1칸'],['1x2','1줄 × 2칸'],['2x1','2줄 × 1칸'],['2x2','2줄 × 2칸'],['3x2','3줄 × 2칸'],['3x3','3줄 × 3칸'],['4x2','4줄 × 2칸'],['4x3','4줄 × 3칸'],['5x3','5줄 × 3칸'],['6x4','6줄 × 4칸'],['8x2','8줄 × 2칸']];
@@ -4237,6 +4242,7 @@ document.addEventListener('click',e=>{if(S.tab!=='book')return;const b=e.target.
   if(b.id==='ebChk'||b.id==='ebChkRe'){if(S.ebEd){toast('고쳐 쓰는 쪽을 먼저 저장하거나 그만두세요');return}ebCheck();return}
   if(b.id==='ebChkX'){S.ebChk=null;try{CSS.highlights.delete('ebchk')}catch(x){}render();return}
   if(d.ebblank){ebBlankBefore(d.ebblank);return}
+  if(d.ebsprtb){if(d.ebsprtb==='split')ebSprLive();else ebSprMove(d.ebsprtb);return}
   if(d.ebsprmv){ebSprMove(d.ebsprmv);return}
   if(d.ebsprsplit){ebSprSplit(d.ebsprsplit);return}
   if(d.ebsprfix){ebSprFix(d.ebsprfix);return}
@@ -4273,6 +4279,6 @@ document.addEventListener('click',e=>{if(S.tab!=='book')return;const b=e.target.
   if(b.id==='ebSetSave'){const n=Object.assign(ebSet(),S.ebSetW||{});n.per=Math.max(1,Math.min(10,Math.round(+n.per||5)));n.fs=Math.max(5,Math.min(10,+n.fs||6.6));['en','sub','org'].forEach(k=>n[k]=String(n[k]||'').trim().slice(0,120));
     ebSend([],[],n,()=>{S.ebSetW=null;toast('책자 설정을 저장했어요')});return}},true);
 </script>
-<div id="bldMark" hidden>빌드표시 20261107-000731 </div>
+<div id="bldMark" hidden>빌드표시 20261107-002606 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();</script>
 </body></html>

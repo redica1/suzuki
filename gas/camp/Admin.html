@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261106-221942 -->
+<!-- build: 20261106-223330 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -3811,7 +3811,7 @@ function vEbk(){const E=S.EB;if(!E){if(!S.EBL)setTimeout(ebLoad,0);return '<div 
     const warn=chg&&!isEd?`<div class="ebwarn">${!x.orphan?ebSrcBtn(x.kind):''}${x.orphan?'원본(공연 · 날짜)이 없어졌어요. 고친 내용만 남아 있어요.':`원본 데이터가 바뀌었어요(고쳐 쓴 뒤로).`}
         ${!x.orphan?`<button class="btn small" type="button" data-ebpeek="${esc(x.k)}">${S.ebPeek===x.k?'고친 쪽 보기':'바뀐 원본 보기'}</button>${ed?`<button class="btn small" type="button" data-ebreset="${esc(x.k)}">원본으로 바꾸기</button><button class="btn small" type="button" data-ebkeep="${esc(x.k)}">고친 대로 두기</button>`:''}`:''}</div>`:'';
     return `<div class="ebi ${x.on?'':'off'}" id="eb_${esc(x.k.replace(':','_'))}">${tools}${warn}<div class="ebc" data-ebk="${esc(x.k)}" style="--ebz:${z}" ${isEd?'contenteditable="true" spellcheck="false"':''}>${hh}</div></div>`}).join('');
-  setTimeout(()=>{ebImgFill(document.querySelector('.ebprev'));ebEqDom(document.querySelector('.ebprev'));ebMeasure();ebTopH();if(S.ebEd)ebLive();if(S.ebSel)ebCur(S.ebSel,true);else ebSpy()},30);
+  setTimeout(()=>{ebImgFill(document.querySelector('.ebprev'));ebEqDom(document.querySelector('.ebprev'));ebMeasure();ebWatch();ebTopH();if(S.ebEd)ebLive();if(S.ebSel)ebCur(S.ebSel,true);else ebSpy()},30);
   return `<div class="panel ebtop" id="ebTop"><div class="spread"><div><b>행사 책자</b> <span class="hint">A5 (148 × 210mm) · 자동 쪽은 교사 일정 · 음악회 연주 순서 · 접수에서 바로 만들어요. 「고쳐 쓰기」로 손질한 쪽은 고정되고, 원본이 바뀌면 빨갛게 알려 줘요.</span></div>
     <div class="row" style="gap:6px;flex-wrap:wrap">${ed?(S.ebAdd?`<span class="ebadd"><b style="font-size:13px;padding:0 4px">새 쪽</b><button class="btn small primary" type="button" id="ebPickOpen">데이터에서 불러오기</button><button class="btn small" type="button" id="ebAddTxt">글 쪽 (직접 쓰기)</button><button class="btn small" type="button" id="ebAddImg">이미지 쪽 (그림 올리기)</button><button class="btn small ghost" type="button" id="ebAddX">닫기</button></span>`:`<button class="btn small" type="button" id="ebAddOpen" title="고른 쪽 다음에 들어가요">＋ 쪽 추가</button>`):''}
       <span class="dzm" role="group" aria-label="미리보기 크기"><button type="button" data-ebz="-" aria-label="작게">−</button><button type="button" class="dzv" data-ebz="0" title="기본 크기로">${Math.round(z*100)}%</button><button type="button" data-ebz="+" aria-label="크게">＋</button></span>
@@ -3845,10 +3845,13 @@ window.addEventListener('scroll',()=>{if(S.tab!=='book')return;clearTimeout(S.eb
 function ebTopH(){document.documentElement.style.setProperty('--ebTopH','0px')}
 window.addEventListener('resize',()=>{if(S.tab==='book')ebTopH()});
 /* 쪽 수 재기: 쪽(section) 높이 ÷ A5 높이 */
+function ebWatch(){const h=document.querySelector('.ebprev');if(S.ebRO){S.ebRO.disconnect();S.ebRO=null}if(!h)return;
+  try{document.fonts&&document.fonts.ready.then(()=>ebMeasure())}catch(e){}
+  if(!window.ResizeObserver)return;const ro=new ResizeObserver(()=>{clearTimeout(S.ebROt);S.ebROt=setTimeout(ebMeasure,300)});h.querySelectorAll('section.bls').forEach(x=>ro.observe(x));S.ebRO=ro}
 function ebMeasure(){if(S.tab!=='book')return;const pr=document.getElementById('ebProbe');if(!pr)return;const ph=pr.getBoundingClientRect().height;if(!ph)return;
   const L=ebItems();let n=0,tot=0;
   L.forEach(x=>{const c=document.querySelector(`.ebc[data-ebk="${CSS.escape(x.k)}"]`);if(!c)return;let k=0;
-    c.querySelectorAll('section.bls').forEach(s=>{const z=parseFloat(getComputedStyle(c).zoom)||1,hh=s.getBoundingClientRect().height,p=Math.max(1,Math.round(hh/(ph*z)-.02+.49));s.classList.toggle('ovf',p>1);s.classList.toggle('okf',p<2);s.setAttribute('data-ov',p>1?`A5 넘침 · ${p}쪽으로 나뉘어 찍혀요`:'A5 1쪽 ✓');k+=p});
+    c.querySelectorAll('section.bls').forEach(s=>{const z=parseFloat(getComputedStyle(c).zoom)||1,hh=s.getBoundingClientRect().height,r=hh/(ph*z),p=Math.max(1,Math.ceil(r-.005)),mm=Math.max(1,Math.round((r-1)*210));s.classList.toggle('ovf',p>1);s.classList.toggle('okf',p<2);s.setAttribute('data-ov',p>1?`A5 넘침 +${mm}mm · ${p}쪽으로 나뉘어 찍혀요`:'A5 1쪽 ✓');k+=p});
     if(!c.querySelector('section.bls'))k=1;
     const lab=(x.on?(k>1?`${n+1}–${n+k}쪽`:`${n+1}쪽`):'빠짐')+(ebFitOn(x.k)&&(S.ebFitR||{})[x.k]?' · 맞춤 '+(r=>r.fail?'안 들어감':r.lv===0?'필요 없음':r.lv===1?'여백':r.lv===2?'여백·행간':Math.round(r.z*100)+'%')(S.ebFitR[x.k]):'');if(x.on){n+=k;tot+=k}
     document.querySelectorAll(`[data-ebpg="${CSS.escape(x.k)}"],[data-ebpg2="${CSS.escape(x.k)}"]`).forEach(e=>e.textContent=lab+(k>1&&x.on?` (${k}쪽)`:''))});
@@ -3882,7 +3885,7 @@ function ebOpenWin2(H){
     '<div id="ebPrintRoot">'+body+'</div><scr'+'ipt>'+
     'var z=1;try{z=+localStorage.getItem("bkWinZoom")||1}catch(e){}function A(){var r=document.getElementById("ebPrintRoot");r.style.zoom=z;document.getElementById("zv").textContent=Math.round(z*100)+"%";try{localStorage.setItem("bkWinZoom",z)}catch(e){}Q();O()}'+
     'function O(){var r=document.getElementById("ebPrintRoot"),zz=parseFloat(r.style.zoom)||1,p=document.createElement("div");p.style.cssText="height:210mm;width:1px;position:absolute;visibility:hidden";r.appendChild(p);var A=p.getBoundingClientRect().height;p.remove();'+
-    'var L=r.querySelectorAll("section.bls");for(var i=0;i<L.length;i++){var s=L[i],m=s.style.minHeight;s.style.minHeight="0";var h=s.getBoundingClientRect().height;s.style.minHeight=m;var n=Math.max(1,Math.round(h/A-.02+.49));s.classList.toggle("ovf",n>1);s.classList.toggle("okf",n<2);s.setAttribute("data-ov",n>1?"A5 넘침 · "+n+"쪽으로 나뉘어 찍혀요":"A5 1쪽 ✓")}}'+
+    'var L=r.querySelectorAll("section.bls");for(var i=0;i<L.length;i++){var s=L[i],m=s.style.minHeight;s.style.minHeight="0";var h=s.getBoundingClientRect().height;s.style.minHeight=m;var q=h/A,n=Math.max(1,Math.ceil(q-.005)),mm=Math.max(1,Math.round((q-1)*210));s.classList.toggle("ovf",n>1);s.classList.toggle("okf",n<2);s.setAttribute("data-ov",n>1?"A5 넘침 +"+mm+"mm · "+n+"쪽으로 나뉘어 찍혀요":"A5 1쪽 ✓")}}var T0;function W(){clearTimeout(T0);T0=setTimeout(O,300)}try{document.fonts.ready.then(O)}catch(e){}window.addEventListener("load",O);if(window.ResizeObserver){var RO=new ResizeObserver(W);[].forEach.call(document.querySelectorAll("#ebPrintRoot section.bls"),function(x){RO.observe(x)})}'+
     'function Q(){var G={},L=document.querySelectorAll("#ebPrintRoot section.sch"),zz=parseFloat(document.getElementById("ebPrintRoot").style.zoom)||1;for(var i=0;i<L.length;i++){var t=L[i].querySelector(".stt");if(!t)continue;var k=t.textContent;G[k]=(G[k]||[]).concat([].slice.call(L[i].querySelectorAll("table.st")))}'+
     'for(var k in G){var T=G[k],H=[];if(T.length<2)continue;T.forEach(function(t){[].forEach.call(t.rows,function(r){r.style.height=""})});T.forEach(function(t){[].forEach.call(t.rows,function(r,j){H[j]=Math.max(H[j]||0,r.getBoundingClientRect().height)})});T.forEach(function(t){[].forEach.call(t.rows,function(r,j){r.style.height=(H[j]/zz)+"px"})})}}'+
     'var z0=1;window.addEventListener("beforeprint",function(){z0=z;document.getElementById("ebPrintRoot").style.zoom=1;Q()});window.addEventListener("afterprint",function(){z=z0;A()});'+
@@ -4115,6 +4118,6 @@ document.addEventListener('click',e=>{if(S.tab!=='book')return;const b=e.target.
   if(b.id==='ebSetSave'){const n=Object.assign(ebSet(),S.ebSetW||{});n.per=Math.max(1,Math.min(10,Math.round(+n.per||5)));n.fs=Math.max(5,Math.min(10,+n.fs||6.6));['en','sub','org'].forEach(k=>n[k]=String(n[k]||'').trim().slice(0,120));
     ebSend([],[],n,()=>{S.ebSetW=null;toast('책자 설정을 저장했어요')});return}},true);
 </script>
-<div id="bldMark" hidden>빌드표시 20261106-221942 </div>
+<div id="bldMark" hidden>빌드표시 20261106-223330 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();</script>
 </body></html>

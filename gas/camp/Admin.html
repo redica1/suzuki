@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261106-225053 -->
+<!-- build: 20261106-225551 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -3127,7 +3127,7 @@ main.wrap:has(.ebw){max-width:1600px}
 .ebprobe{position:absolute;visibility:hidden;height:210mm;width:1px;left:0;top:0}
 /* 쪽 모양 (화면 · 인쇄 공통) */
 .bls{width:148mm;min-height:210mm;box-sizing:border-box;padding:12mm 10mm 13mm;background:#fff;color:#111;font-family:"Pretendard Variable",Pretendard,"Malgun Gothic",sans-serif;font-size:8.6pt;line-height:1.45;box-shadow:0 2px 12px rgba(0,0,0,.18);position:relative;word-break:keep-all;overflow-wrap:anywhere;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-@media screen{.bls.ovf{background-image:repeating-linear-gradient(to bottom,transparent 0,transparent calc(185mm - 1.5px),#e5484d calc(185mm - 1.5px),#e5484d 185mm);background-position:0 12mm;background-size:100% calc(100% - 12mm);background-repeat:no-repeat}.bls.okf{background-image:linear-gradient(to bottom,transparent 0,transparent calc(197mm - 1.5px),#7cc59a calc(197mm - 1.5px),#7cc59a 197mm,transparent 197mm)}.bls.cov.okf{background-image:linear-gradient(to bottom,transparent 0,transparent calc(210mm - 1.5px),#7cc59a calc(210mm - 1.5px),#7cc59a 210mm,transparent 210mm)}.bls.ovf::after,.bls.okf::after{content:attr(data-ov);position:absolute;top:1.5mm;right:2mm;color:#fff;font:700 11px sans-serif;line-height:1.3;padding:2px 7px;border-radius:9px;z-index:3;pointer-events:none}.bls.ovf::after{background:#e5484d}.bls.okf::after{background:#2f9e5b}}
+@media screen{.bls.ovf{background-image:repeating-linear-gradient(to bottom,transparent 0,transparent calc(185mm - 1.5px),#e5484d calc(185mm - 1.5px),#e5484d 185mm);background-position:0 12mm;background-size:100% calc(100% - 12mm);background-repeat:no-repeat}.bls.okf{background-image:linear-gradient(to bottom,transparent 0,transparent calc(197mm - 1.5px),#7cc59a calc(197mm - 1.5px),#7cc59a 197mm,transparent 197mm)}.bls.cov.okf{background-image:linear-gradient(to bottom,transparent 0,transparent calc(210mm - 1.5px),#7cc59a calc(210mm - 1.5px),#7cc59a 210mm,transparent 210mm)}.bls.ovx::before{content:"";position:absolute;top:0;bottom:0;right:10mm;border-right:1.5px dashed #e5484d;pointer-events:none;z-index:2}.bls.ovf::after,.bls.ovx::after,.bls.okf::after{content:attr(data-ov);position:absolute;top:1.5mm;right:2mm;color:#fff;font:700 11px sans-serif;line-height:1.3;padding:2px 7px;border-radius:9px;z-index:3;pointer-events:none}.bls.ovf::after,.bls.ovx::after{background:#e5484d}.bls.okf::after{background:#2f9e5b}}
 .bls h1{font-size:17pt;margin:0 0 2mm;text-align:center;font-weight:800}.bls h2{font-size:13pt;margin:0 0 2.5mm;font-weight:800;text-align:center}.bls h3{font-size:10pt;margin:3mm 0 1.5mm;font-weight:800}.bls h4{font-size:9pt;margin:2mm 0 1mm}
 .bls p{margin:0 0 1.6mm}.bls ul,.bls ol{margin:0 0 1.6mm;padding-left:5mm}.bls hr{border:0;border-top:.6px solid #999;margin:2mm 0}
 .bls table{border-collapse:collapse;width:auto;margin:0;background:none;font-size:inherit !important;letter-spacing:normal;color:inherit}.bls td,.bls th{border:.6px solid #666;padding:.6mm 1mm !important;font-size:inherit !important;vertical-align:top;font-size:inherit;font-family:inherit;line-height:inherit;letter-spacing:normal;color:inherit;height:auto;position:static;white-space:normal;min-width:0;text-align:left;font-weight:inherit}.bls th{font-weight:700}
@@ -3403,7 +3403,9 @@ function ebFitHtml(html,k){html=String(html||'');S.ebFitC=S.ebFitC||new Map();co
       if(over()){secs.forEach(s=>s.classList.add('fit2'));r.lv=2;
         if(over()){const z=Math.min(...secs.map(s=>A5/H(s)))*0.995;
           if(z<0.8){secs.forEach(s=>s.classList.remove('fit1','fit2'));r={z:1,lv:0,fail:1}}
-          else{const zz=Math.floor(z*1000)/1000;secs.forEach(s=>{const w=document.createElement('div');w.className='fitz';w.setAttribute('style',`zoom:${zz};width:${(100/zz).toFixed(2)}%`);w.append(...s.childNodes);s.appendChild(w)});r={z:zz,lv:3}}}}
+          else{let zz=Math.floor(z*1000)/1000;const W=[];secs.forEach(s=>{const cs=getComputedStyle(s),cw=s.clientWidth-parseFloat(cs.paddingLeft)-parseFloat(cs.paddingRight),w=document.createElement('div');w.className='fitz';w.append(...s.childNodes);s.appendChild(w);W.push([w,cw])});
+            const setZ=()=>W.forEach(([w,cw])=>w.setAttribute('style',`zoom:${zz};width:${(cw/zz).toFixed(1)}px`));setZ();
+            while(over()&&zz>0.8){zz=Math.max(0.8,Math.round((zz-0.02)*1000)/1000);setZ()}r={z:zz,lv:3};if(over())r.fail=1}}}
       out=d.innerHTML}}catch(e){}finally{d.remove()}
   if(S.ebFitC.size>40)S.ebFitC.clear();S.ebFitC.set(ck,{h:out,r});S.ebFitR=S.ebFitR||{};S.ebFitR[k]=r;return out}
 function ebFitLab(k){const r=(S.ebFitR||{})[k];if(!r)return '맞춤';return r.fail?'맞춤 안 됨 · 너무 길어요':r.lv===0?'맞춤 (이미 한 쪽)':r.lv===1?'맞춤 · 여백':r.lv===2?'맞춤 · 여백 · 행간':`맞춤 ${Math.round(r.z*100)}%`}
@@ -3425,7 +3427,7 @@ function ebClean(html,keepCls){const t=document.createElement('template');t.inne
     walk(c);
     if(!EB_OK.has(c.tagName)){if(c.tagName==='A'||c.tagName==='FONT'||c.tagName==='O:P'||/^[A-Z]+$/.test(c.tagName)){c.replaceWith(...c.childNodes)}else c.replaceWith(...c.childNodes);return}
     const st=c.style,keep={};EB_CSS.forEach(p=>{const v=st&&st.getPropertyValue(p);if(v&&!/url|expression/i.test(v)&&(p!=='font-family'||EB_FONTS.some(f=>v.indexOf(f)>=0)))keep[p]=v});const fid=c.tagName==='IMG'?c.getAttribute('data-fid'):'';if(fid)Object.keys(keep).forEach(p=>{if(p!=='width')delete keep[p]});
-    const cls=keepCls?String(c.getAttribute('class')||'').split(/\s+/).filter(x=>/^[a-z][\w-]{0,24}$/.test(x)&&x!=='ovf'&&x!=='okf'&&x!=='ebrz'&&x!=='ebrzv').join(' '):'';
+    const cls=keepCls?String(c.getAttribute('class')||'').split(/\s+/).filter(x=>/^[a-z][\w-]{0,24}$/.test(x)&&x!=='ovf'&&x!=='okf'&&x!=='ovx'&&x!=='ebrz'&&x!=='ebrzv').join(' '):'';
     const cs=c.getAttribute('colspan'),rs=c.getAttribute('rowspan');
     [...c.attributes].forEach(a=>c.removeAttribute(a.name));
     if(fid)c.setAttribute('data-fid',fid);if(cls)c.setAttribute('class',cls);if(/^\d{1,2}$/.test(cs||''))c.setAttribute('colspan',cs);if(/^\d{1,2}$/.test(rs||''))c.setAttribute('rowspan',rs);
@@ -3895,10 +3897,11 @@ window.addEventListener('resize',()=>{if(S.tab==='book')ebTopH()});
 function ebWatch(){const h=document.querySelector('.ebprev');if(S.ebRO){S.ebRO.disconnect();S.ebRO=null}if(!h)return;
   try{document.fonts&&document.fonts.ready.then(()=>ebMeasure())}catch(e){}
   if(!window.ResizeObserver)return;const ro=new ResizeObserver(()=>{clearTimeout(S.ebROt);S.ebROt=setTimeout(ebMeasure,300)});h.querySelectorAll('section.bls').forEach(x=>ro.observe(x));S.ebRO=ro}
+function ebSideOver(s){if(s.classList.contains('cov'))return 0;const R=s.getBoundingClientRect(),sc=R.width/(s.offsetWidth||1),cs=getComputedStyle(s),lim=R.right-parseFloat(cs.paddingRight)*sc+1;let mx=0;s.querySelectorAll('table,img,.gbx,.fitz>*,section>*').forEach(e=>{const b=e.getBoundingClientRect().right;if(b>mx)mx=b});const px=(mx-lim)/sc;return px>3.8?Math.round(px*25.4/96):0}
 function ebMeasure(){if(S.tab!=='book')return;const pr=document.getElementById('ebProbe');if(!pr)return;const ph=pr.getBoundingClientRect().height;if(!ph)return;
   const L=ebItems();let n=0,tot=0;
   L.forEach(x=>{const c=document.querySelector(`.ebc[data-ebk="${CSS.escape(x.k)}"]`);if(!c)return;let k=0;
-    c.querySelectorAll('section.bls').forEach(s=>{const z=parseFloat(getComputedStyle(c).zoom)||1,hh=s.getBoundingClientRect().height,r=hh/(ph*z),p=Math.max(1,Math.ceil(r-.005)),mm=Math.max(1,Math.round((r-1)*210));s.classList.toggle('ovf',p>1);s.classList.toggle('okf',p<2);s.setAttribute('data-ov',p>1?`A5 넘침 +${mm}mm · ${p}쪽으로 나뉘어 찍혀요`:'A5 1쪽 ✓');k+=p});
+    c.querySelectorAll('section.bls').forEach(s=>{const z=parseFloat(getComputedStyle(c).zoom)||1,hh=s.getBoundingClientRect().height,r=hh/(ph*z),p=Math.max(1,Math.ceil(r-.005)),mm=Math.max(1,Math.round((r-1)*210)),xm=ebSideOver(s);s.classList.toggle('ovf',p>1);s.classList.toggle('ovx',xm>0);s.classList.toggle('okf',p<2&&!xm);s.setAttribute('data-ov',[p>1?`A5 넘침 +${mm}mm · ${p}쪽으로 나뉘어 찍혀요`:'',xm?`옆으로 넘침 +${xm}mm`:''].filter(Boolean).join(' · ')||'A5 1쪽 ✓');k+=p});
     if(!c.querySelector('section.bls'))k=1;
     const lab=(x.on?(k>1?`${n+1}–${n+k}쪽`:`${n+1}쪽`):'빠짐')+(ebFitOn(x.k)&&(S.ebFitR||{})[x.k]?' · 맞춤 '+(r=>r.fail?'안 들어감':r.lv===0?'필요 없음':r.lv===1?'여백':r.lv===2?'여백·행간':Math.round(r.z*100)+'%')(S.ebFitR[x.k]):'');if(x.on){n+=k;tot+=k}
     document.querySelectorAll(`[data-ebpg="${CSS.escape(x.k)}"],[data-ebpg2="${CSS.escape(x.k)}"]`).forEach(e=>e.textContent=lab+(k>1&&x.on?` (${k}쪽)`:''))});
@@ -3932,7 +3935,7 @@ function ebOpenWin2(H){
     '<div id="ebPrintRoot">'+body+'</div><scr'+'ipt>'+
     'var z=1;try{z=+localStorage.getItem("bkWinZoom")||1}catch(e){}function A(){var r=document.getElementById("ebPrintRoot");r.style.zoom=z;document.getElementById("zv").textContent=Math.round(z*100)+"%";try{localStorage.setItem("bkWinZoom",z)}catch(e){}Q();O()}'+
     'function O(){var r=document.getElementById("ebPrintRoot"),zz=parseFloat(r.style.zoom)||1,p=document.createElement("div");p.style.cssText="height:210mm;width:1px;position:absolute;visibility:hidden";r.appendChild(p);var A=p.getBoundingClientRect().height;p.remove();'+
-    'var L=r.querySelectorAll("section.bls");for(var i=0;i<L.length;i++){var s=L[i],m=s.style.minHeight;s.style.minHeight="0";var h=s.getBoundingClientRect().height;s.style.minHeight=m;var q=h/A,n=Math.max(1,Math.ceil(q-.005)),mm=Math.max(1,Math.round((q-1)*210));s.classList.toggle("ovf",n>1);s.classList.toggle("okf",n<2);s.setAttribute("data-ov",n>1?"A5 넘침 +"+mm+"mm · "+n+"쪽으로 나뉘어 찍혀요":"A5 1쪽 ✓")}}var T0;function W(){clearTimeout(T0);T0=setTimeout(O,300)}try{document.fonts.ready.then(O)}catch(e){}window.addEventListener("load",O);if(window.ResizeObserver){var RO=new ResizeObserver(W);[].forEach.call(document.querySelectorAll("#ebPrintRoot section.bls"),function(x){RO.observe(x)})}'+
+    'var L=r.querySelectorAll("section.bls");for(var i=0;i<L.length;i++){var s=L[i],m=s.style.minHeight;s.style.minHeight="0";var h=s.getBoundingClientRect().height;s.style.minHeight=m;var q=h/A,n=Math.max(1,Math.ceil(q-.005)),mm=Math.max(1,Math.round((q-1)*210)),xm=X(s);s.classList.toggle("ovf",n>1);s.classList.toggle("ovx",xm>0);s.classList.toggle("okf",n<2&&!xm);s.setAttribute("data-ov",[n>1?"A5 넘침 +"+mm+"mm · "+n+"쪽으로 나뉘어 찍혀요":"",xm?"옆으로 넘침 +"+xm+"mm":""].filter(Boolean).join(" · ")||"A5 1쪽 ✓")}}function X(s){if(s.classList.contains("cov"))return 0;var R=s.getBoundingClientRect(),sc=R.width/(s.offsetWidth||1),cs=getComputedStyle(s),lim=R.right-parseFloat(cs.paddingRight)*sc+1,mx=0;[].forEach.call(s.querySelectorAll("table,img,.gbx,.fitz>*,section>*"),function(e){var b=e.getBoundingClientRect().right;if(b>mx)mx=b});var px=(mx-lim)/sc;return px>3.8?Math.round(px*25.4/96):0}var T0;function W(){clearTimeout(T0);T0=setTimeout(O,300)}try{document.fonts.ready.then(O)}catch(e){}window.addEventListener("load",O);if(window.ResizeObserver){var RO=new ResizeObserver(W);[].forEach.call(document.querySelectorAll("#ebPrintRoot section.bls"),function(x){RO.observe(x)})}'+
     'function Q(){var G={},L=document.querySelectorAll("#ebPrintRoot section.sch"),zz=parseFloat(document.getElementById("ebPrintRoot").style.zoom)||1;for(var i=0;i<L.length;i++){var t=L[i].querySelector(".stt");if(!t)continue;var k=t.textContent;G[k]=(G[k]||[]).concat([].slice.call(L[i].querySelectorAll("table.st")))}'+
     'for(var k in G){var T=G[k],H=[];if(T.length<2)continue;T.forEach(function(t){[].forEach.call(t.rows,function(r){r.style.height=""})});T.forEach(function(t){[].forEach.call(t.rows,function(r,j){H[j]=Math.max(H[j]||0,r.getBoundingClientRect().height)})});T.forEach(function(t){[].forEach.call(t.rows,function(r,j){r.style.height=(H[j]/zz)+"px"})})}}'+
     'var z0=1;window.addEventListener("beforeprint",function(){z0=z;document.getElementById("ebPrintRoot").style.zoom=1;Q()});window.addEventListener("afterprint",function(){z=z0;A()});'+
@@ -4167,6 +4170,6 @@ document.addEventListener('click',e=>{if(S.tab!=='book')return;const b=e.target.
   if(b.id==='ebSetSave'){const n=Object.assign(ebSet(),S.ebSetW||{});n.per=Math.max(1,Math.min(10,Math.round(+n.per||5)));n.fs=Math.max(5,Math.min(10,+n.fs||6.6));['en','sub','org'].forEach(k=>n[k]=String(n[k]||'').trim().slice(0,120));
     ebSend([],[],n,()=>{S.ebSetW=null;toast('책자 설정을 저장했어요')});return}},true);
 </script>
-<div id="bldMark" hidden>빌드표시 20261106-225053 </div>
+<div id="bldMark" hidden>빌드표시 20261106-225551 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();</script>
 </body></html>

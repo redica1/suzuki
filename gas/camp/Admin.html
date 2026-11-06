@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261106-235303 -->
+<!-- build: 20261106-235719 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -3442,6 +3442,13 @@ function ebSpreadHtml(html,k){html=String(html||'');S.ebSpC=S.ebSpC||new Map();c
 /* 앞에 빈 쪽(MEMO) 넣기 = 펼침을 짝수 쪽에서 시작하게 */
 function ebBlankBefore(k){const L=ebItems(),x=L.find(y=>y.k===k);if(!x)return;const nk='text:'+Date.now().toString(36),nx={k:nk,kind:'text',t:'빈 쪽 (MEMO)',ord:x.ord-.5,on:true};
   const rows=ebReorder(L.concat([nx]).sort((a,c)=>a.ord-c.ord)).map(r=>r.k===nk?Object.assign(r,{h:'<section class="bls txt"><h2>MEMO</h2></section>',src:''}):r);ebSend(rows,[],null,null,'빈 쪽을 넣고 있어요…')}
+/* 글 쪽 음악회(머리 + 곡 줄)를 펼침 2쪽 구조로 나누기 · 풀기 */
+function ebSprSplit(k){const x=ebItems().find(y=>y.k===k);if(!x)return;const t=ebTpl(x.h||x.auto),L=t.querySelector('section.bls');if(!L)return;
+  const unwrap=s=>{const f=s.querySelector(':scope>.fitz');if(f)f.replaceWith(...f.childNodes)};const R=t.querySelector('section.spr');let msg;
+  if(L.classList.contains('spl')&&R){unwrap(L);unwrap(R);[...R.childNodes].forEach(n=>{if(!(n.nodeType===1&&n.classList.contains('csp')))L.appendChild(n)});R.remove();L.classList.remove('spl','fit1','fit2');msg='펼침을 풀고 있어요…'}
+  else{unwrap(L);L.classList.remove('fit1','fit2');const eh=L.querySelector(':scope>.eh:not(.csp)');if(!eh){toast('이 쪽에서 음악회 머리(제목 · 일시)를 찾지 못했어요');return}
+    L.classList.add('spl');const r=document.createElement('section');r.className=String(L.className).replace(/\bspl\b/,'spr');const c=eh.cloneNode(true);c.classList.add('csp');r.appendChild(c);L.after(r);msg='펼침 2쪽으로 나누고 있어요…'}
+  const w=document.createElement('div');w.appendChild(t);ebSend([ebRow(x,{h:w.innerHTML,src:x.src||''})],[],null,null,msg)}
 /* 글 쪽 쌍(예: 13일 a/b)의 b 쪽 위에 앞 쪽 머리 높이만큼 빈 칸 넣기 · 빼기 */
 function ebSprFix(k){const L=ebItems(),i=L.findIndex(y=>y.k===k),x=L[i];if(!x)return;const t=ebTpl(x.h||x.auto),sec=t.querySelector('section.bls');if(!sec)return;const old=sec.querySelector('.csp');
   if(old){old.remove()}else{let eh=null;for(let j=i-1;j>=0&&!eh;j--){const pt=ebTpl(ebPg(L[j]));eh=pt.querySelector('.eh')}if(!eh){toast('앞 쪽에서 음악회 머리(제목 · 일시)를 찾지 못했어요');return}
@@ -3925,7 +3932,7 @@ function vEbk(){const E=S.EB;if(!E){if(!S.EBL)setTimeout(ebLoad,0);return '<div 
         ${ed&&ebIsImg(x)?`<button class="btn small" type="button" data-ebimgre="${esc(x.k)}">그림 바꾸기</button><button class="btn small" type="button" data-ebimgfull="${esc(x.k)}">${/imgp full/.test(x.h)?'여백 안에 넣기':'여백 없이 가득'}</button>`:''}
         ${!ebIsImg(x)&&ebTabOf(x.k)!=null?`<a class="btn small" target="_blank" rel="noopener" href="${esc(ebSheetUrl(ebTabOf(x.k)))}" title="이 쪽의 구글 시트 탭 열기">시트 탭</a>${ed?`<button class="btn small" type="button" data-ebapply1="${esc(x.k)}" title="이 쪽만 시트에서 적용">시트 적용</button>`:''}`:''}
         ${ed&&!ebIsImg(x)?`<button class="btn small" type="button" data-ebexp1="${esc(x.k)}" title="${ebTabOf(x.k)!=null?'시트 탭을 지금 책자 쪽으로 덮어써요':'이 쪽을 시트 탭으로 만들어요'}">${ebTabOf(x.k)!=null?'시트로 보내기':'시트로'}</button>`:''}
-        ${ed&&ebIsSpr(x)?`<button class="btn small" type="button" data-ebblank="${esc(x.k)}" style="display:none" title="펼침은 왼쪽이 짝수 쪽이어야 해요 · 앞에 빈 쪽(MEMO)을 넣어 맞춰요">앞에 빈 쪽 넣기</button>`:''}${ed&&x.kind==='text'&&/class="it\b|class="it /.test(x.h||'')&&!/class="[^"]*\beh\b/.test(String(x.h||'').replace(/class="eh csp"/g,''))?`<button class="btn small ${/\bcsp\b/.test(x.h||'')?'primary':''}" type="button" data-ebsprfix="${esc(x.k)}" title="앞 쪽 음악회 머리 높이만큼 위를 비워 펼쳤을 때 곡 줄 높이를 맞춰요">${/\bcsp\b/.test(x.h||'')?'펼침 맞춤 ✕':'펼침 맞추기'}</button>`:''}${ed&&!ebIsImg(x)&&!ebIsSpr(x)?`<button class="btn small ${ebFitOn(x.k)?'primary':''}" type="button" data-ebfit="${esc(x.k)}" title="A5 한 장을 넘으면 여백 → 행간 → 글자 크기(80%까지) 순서로 줄여 한 쪽에 넣어요">${ebFitOn(x.k)?esc(ebFitLab(x.k))+' ✕':'한 쪽 맞춤'}</button>`:''}
+        ${ed&&ebIsSpr(x)?`<button class="btn small" type="button" data-ebblank="${esc(x.k)}" style="display:none" title="펼침은 왼쪽이 짝수 쪽이어야 해요 · 앞에 빈 쪽(MEMO)을 넣어 맞춰요">앞에 빈 쪽 넣기</button>`:''}${ed&&x.kind==='text'&&/class="it\b|class="it /.test(x.h||'')&&/class="eh"/.test(x.h||'')?`<button class="btn small ${ebIsSpr(x)?'primary':''}" type="button" data-ebsprsplit="${esc(x.k)}" title="머리 + 앞 곡은 왼쪽(짝수 쪽), 나머지 곡은 오른쪽(홀수 쪽) · 오른쪽 위는 머리 높이만큼 비워 곡 줄 높이를 맞춰요">${ebIsSpr(x)?'펼침 풀기':'펼침으로 나누기'}</button>`:''}${ed&&x.kind==='text'&&/class="it\b|class="it /.test(x.h||'')&&!/class="[^"]*\beh\b/.test(String(x.h||'').replace(/class="eh csp"/g,''))?`<button class="btn small ${/\bcsp\b/.test(x.h||'')?'primary':''}" type="button" data-ebsprfix="${esc(x.k)}" title="앞 쪽 음악회 머리 높이만큼 위를 비워 펼쳤을 때 곡 줄 높이를 맞춰요">${/\bcsp\b/.test(x.h||'')?'펼침 맞춤 ✕':'펼침 맞추기'}</button>`:''}${ed&&!ebIsImg(x)&&!ebIsSpr(x)?`<button class="btn small ${ebFitOn(x.k)?'primary':''}" type="button" data-ebfit="${esc(x.k)}" title="A5 한 장을 넘으면 여백 → 행간 → 글자 크기(80%까지) 순서로 줄여 한 쪽에 넣어요">${ebFitOn(x.k)?esc(ebFitLab(x.k))+' ✕':'한 쪽 맞춤'}</button>`:''}
         ${ed&&x.kind!=='text'&&!x.orphan?`<button class="btn small" type="button" data-ebtog="${esc(x.k)}" title="${x.on?'책자에서 빼기 (목록 체크와 같음)':'책자에 넣기'}">${x.on?'빼기':'넣기'}</button>`:''}
         ${ed&&x.h&&x.kind!=='text'&&!x.orphan?`<button class="btn small" type="button" data-ebreset="${esc(x.k)}" title="고쳐 쓴 내용을 지우고 데이터로 다시 만들기">원본으로</button>`:''}
         ${ed&&x.kind==='text'?`<button class="btn small" type="button" data-ebname="${esc(x.k)}">이름</button>`:''}
@@ -4219,6 +4226,7 @@ document.addEventListener('click',e=>{if(S.tab!=='book')return;const b=e.target.
   if(b.id==='ebChk'||b.id==='ebChkRe'){if(S.ebEd){toast('고쳐 쓰는 쪽을 먼저 저장하거나 그만두세요');return}ebCheck();return}
   if(b.id==='ebChkX'){S.ebChk=null;try{CSS.highlights.delete('ebchk')}catch(x){}render();return}
   if(d.ebblank){ebBlankBefore(d.ebblank);return}
+  if(d.ebsprsplit){ebSprSplit(d.ebsprsplit);return}
   if(d.ebsprfix){ebSprFix(d.ebsprfix);return}
   if(d.ebredata){S.ebAway=0;S.ebStale=0;ebReData();return}
   if(d.ebconadd){ebConAdd(d.ebconadd);return}
@@ -4253,6 +4261,6 @@ document.addEventListener('click',e=>{if(S.tab!=='book')return;const b=e.target.
   if(b.id==='ebSetSave'){const n=Object.assign(ebSet(),S.ebSetW||{});n.per=Math.max(1,Math.min(10,Math.round(+n.per||5)));n.fs=Math.max(5,Math.min(10,+n.fs||6.6));['en','sub','org'].forEach(k=>n[k]=String(n[k]||'').trim().slice(0,120));
     ebSend([],[],n,()=>{S.ebSetW=null;toast('책자 설정을 저장했어요')});return}},true);
 </script>
-<div id="bldMark" hidden>빌드표시 20261106-235303 </div>
+<div id="bldMark" hidden>빌드표시 20261106-235719 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();</script>
 </body></html>

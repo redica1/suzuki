@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261107-004455 -->
+<!-- build: 20261107-005113 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -3163,6 +3163,7 @@ main.wrap:has(.ebw){max-width:1600px}
 .bls .csp{visibility:hidden;pointer-events:none;user-select:none}
 .etp{display:inline-block;font-size:10.5px;font-weight:700;border:1px solid;border-radius:6px;padding:0 4px;margin-right:4px;line-height:1.45;background:#fff;vertical-align:1px}
 .eblist li.tp-con{box-shadow:inset 4px 0 0 #e8590c}.eblist li.tp-sch{box-shadow:inset 4px 0 0 #0c8599}.eblist li.tp-base{box-shadow:inset 4px 0 0 #ced4da}
+.eblist .ebhd{position:sticky;top:-10px;z-index:3;background:#fff;margin:-10px -10px 0;padding:10px 10px 2px;border-bottom:1px solid var(--line)}.eblist .ebtabs{position:sticky;top:-10px;z-index:4;background:#fff}.eblist .ebtabs~div .ebhd{top:22px;margin-top:0}
 .etps{font:inherit;font-size:11.5px;font-weight:700;border:1px solid;border-radius:6px;padding:0 2px;background:#fff;max-width:120px}
 .etpl{display:flex;gap:8px;align-items:center;font-size:11.5px;margin:4px 0 6px;flex-wrap:wrap}.etpl i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:3px;vertical-align:-1px}
 .bls.spl[style*="--itg"] .it,.bls.spr[style*="--itg"] .it{margin-bottom:var(--itg)}.bls[style*="--tlm"] .ebtail{margin-top:var(--tlm)}.bls.spl[style*="--itg"] .it.ebl,.bls.spr[style*="--itg"] .it.ebl{margin-bottom:0}.bls .it .ko{font-weight:700;font-size:8.2pt}.bls .it .ld{border-bottom:1px dotted #777;margin-bottom:1mm;min-width:5mm}.bls .it .pp{text-align:right;font-size:7.4pt;font-weight:400}
@@ -4017,7 +4018,7 @@ function vEbk(){const E=S.EB;if(!E){if(!S.EBL)setTimeout(ebLoad,0);return '<div 
         <label>오프닝 리허설 안내<input type="text" data-ebs="opNote" value="${esc(T.opNote||'동선체크, 그룹리허설 (반주없이 진행됩니다)')}" ${ed?'':'disabled'}></label>
         <label style="flex-direction:row;align-items:center;gap:6px"><input type="checkbox" data-ebs="sen" ${T.sen!==false?'checked':''} ${ed?'':'disabled'}> 시간표 칸에 영문 줄</label></div>
       ${ed?`<div class="row" style="margin-top:8px"><button class="btn small primary" type="button" id="ebSetSave">설정 저장</button><span class="hint">설정을 바꾸면 고쳐 쓴 쪽은 「원본 바뀜」으로 보일 수 있어요.</span></div>`:''}</details>${T.sheet?`<p class="hint" style="margin:6px 0 0">시트는 책자의 1.5배 크기예요(시트 15pt = 책자 10pt). 시트에서 고친 뒤 「시트에서 적용」. 한 탭에서 쪽을 나누려면 A열에 [쪽 나눔] 줄을 두세요. 새 탭 = 새 글 쪽.</p>`:''}</div>${S.ebPickM&&ed?ebPickHtml():''}
-  <div class="ebw"><div class="panel eblist">${S.ebChk?`<div class="ebtabs"><button type="button" data-ebside="list" class="${S.ebSide!=='chk'?'on':''}">쪽 순서</button><button type="button" data-ebside="chk" class="${S.ebSide==='chk'?'on':''}">검사 ${S.ebChk.items.length}</button></div>`:''}${S.ebChk&&S.ebSide==='chk'?ebChkSide():''}<div ${S.ebChk&&S.ebSide==='chk'?'hidden':''}><b>쪽 순서</b> <span class="hint" id="ebTot"></span><div class="etpl">${Object.values(EB_TPL).map(t=>`<span><i style="background:${t[1]}"></i>${t[0]}</span>`).join('')}<span class="hint">템플릿</span></div><ol>${list||`<li style="display:block;border:0;color:var(--muted);font-size:13px">아직 쪽이 없어요.<br>위 「＋ 쪽 추가 › 데이터에서 불러오기」로 표지 · 날짜별 시간표 · 음악회를 하나씩 불러오세요.</li>`}</ol>
+  <div class="ebw"><div class="panel eblist">${S.ebChk?`<div class="ebtabs"><button type="button" data-ebside="list" class="${S.ebSide!=='chk'?'on':''}">쪽 순서</button><button type="button" data-ebside="chk" class="${S.ebSide==='chk'?'on':''}">검사 ${S.ebChk.items.length}</button></div>`:''}${S.ebChk&&S.ebSide==='chk'?ebChkSide():''}<div ${S.ebChk&&S.ebSide==='chk'?'hidden':''}><div class="ebhd"><b>쪽 순서</b> <span class="hint" id="ebTot"></span><div class="etpl">${Object.values(EB_TPL).map(t=>`<span><i style="background:${t[1]}"></i>${t[0]}</span>`).join('')}<span class="hint">템플릿</span></div></div><ol>${list||`<li style="display:block;border:0;color:var(--muted);font-size:13px">아직 쪽이 없어요.<br>위 「＋ 쪽 추가 › 데이터에서 불러오기」로 표지 · 날짜별 시간표 · 음악회를 하나씩 불러오세요.</li>`}</ol>
       <p class="hint" style="margin:8px 0 0">체크를 풀면 책자에서 빠져요. 쪽 수는 미리보기 기준 대략이에요(빨간 줄 = 다음 쪽으로 넘침).</p></div></div>
     <div class="ebprev"><div class="ebprobe" id="ebProbe"></div>${prev}</div><aside class="panel ebrt" id="ebRight"></aside></div>`}
 /* 지금 보는 쪽 = 왼쪽 목록 음영 (스크롤 따라감) · 미리보기에서도 그 쪽 테두리 */
@@ -4334,6 +4335,6 @@ document.addEventListener('click',e=>{if(S.tab!=='book')return;const b=e.target.
   if(b.id==='ebSetSave'){const n=Object.assign(ebSet(),S.ebSetW||{});n.per=Math.max(1,Math.min(10,Math.round(+n.per||5)));n.fs=Math.max(5,Math.min(10,+n.fs||6.6));['en','sub','org'].forEach(k=>n[k]=String(n[k]||'').trim().slice(0,120));
     ebSend([],[],n,()=>{S.ebSetW=null;toast('책자 설정을 저장했어요')});return}},true);
 </script>
-<div id="bldMark" hidden>빌드표시 20261107-004455 </div>
+<div id="bldMark" hidden>빌드표시 20261107-005113 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();</script>
 </body></html>

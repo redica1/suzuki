@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261107-005113 -->
+<!-- build: 20261107-005918 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -3158,7 +3158,8 @@ main.wrap:has(.ebw){max-width:1600px}
 .bls table.st td .sc+.sc{border-top:.5px solid #999;margin-top:.5mm;padding-top:.5mm}.bls table.st td .s1{font-weight:700;font-size:.92em}.bls table.st td .s2{font-weight:800}.bls table.st td .s4{font-weight:700}.bls table.st td .s5{font-size:.9em;color:#555}.bls table.st td .s6{font-size:.88em;color:#444}
 .bls table.st td.sm{vertical-align:middle}
 /* 음악회 프로그램 */
-.bls .it{display:grid;grid-template-columns:6mm minmax(0,auto) 1fr minmax(0,auto);column-gap:1.2mm;align-items:end;margin:0 0 1.3mm;break-inside:avoid}
+.bls .it{display:grid;grid-template-columns:6mm minmax(0,auto) 1fr minmax(0,auto);column-gap:1.2mm;align-items:start;margin:0 0 1.3mm;break-inside:avoid}
+.bls .it .no{font-size:8.2pt;line-height:1.45}.bls .it .ld{align-self:start;height:1.12em;font-size:8.2pt;margin-bottom:0}.bls .it .pp{padding-top:.6pt}
 .bls .it .no{font-weight:700}
 .bls .csp{visibility:hidden;pointer-events:none;user-select:none}
 .etp{display:inline-block;font-size:10.5px;font-weight:700;border:1px solid;border-radius:6px;padding:0 4px;margin-right:4px;line-height:1.45;background:#fff;vertical-align:1px}
@@ -4335,6 +4336,6 @@ document.addEventListener('click',e=>{if(S.tab!=='book')return;const b=e.target.
   if(b.id==='ebSetSave'){const n=Object.assign(ebSet(),S.ebSetW||{});n.per=Math.max(1,Math.min(10,Math.round(+n.per||5)));n.fs=Math.max(5,Math.min(10,+n.fs||6.6));['en','sub','org'].forEach(k=>n[k]=String(n[k]||'').trim().slice(0,120));
     ebSend([],[],n,()=>{S.ebSetW=null;toast('책자 설정을 저장했어요')});return}},true);
 </script>
-<div id="bldMark" hidden>빌드표시 20261107-005113 </div>
+<div id="bldMark" hidden>빌드표시 20261107-005918 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();</script>
 </body></html>

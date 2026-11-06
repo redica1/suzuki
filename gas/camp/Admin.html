@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261107-002606 -->
+<!-- build: 20261107-002842 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -3160,7 +3160,8 @@ main.wrap:has(.ebw){max-width:1600px}
 /* 음악회 프로그램 */
 .bls .it{display:grid;grid-template-columns:6mm minmax(0,auto) 1fr minmax(0,auto);column-gap:1.2mm;align-items:end;margin:0 0 1.3mm;break-inside:avoid}
 .bls .it .no{font-weight:700}
-.bls .csp{visibility:hidden;pointer-events:none;user-select:none}.bls .it .ko{font-weight:700;font-size:8.2pt}.bls .it .ld{border-bottom:1px dotted #777;margin-bottom:1mm;min-width:5mm}.bls .it .pp{text-align:right;font-size:7.4pt;font-weight:400}
+.bls .csp{visibility:hidden;pointer-events:none;user-select:none}
+.bls.spl[style*="--itg"] .it,.bls.spr[style*="--itg"] .it{margin-bottom:var(--itg)}.bls[style*="--tlm"] .ebtail{margin-top:var(--tlm)}.bls.spl[style*="--itg"] .it.ebl,.bls.spr[style*="--itg"] .it.ebl{margin-bottom:0}.bls .it .ko{font-weight:700;font-size:8.2pt}.bls .it .ld{border-bottom:1px dotted #777;margin-bottom:1mm;min-width:5mm}.bls .it .pp{text-align:right;font-size:7.4pt;font-weight:400}
 .bls .it .en{grid-column:2 / 4;color:#333;font-size:7pt}.bls .it .pp2{grid-column:4;text-align:right;font-size:7.4pt;font-weight:400}
 .bls:has(.it) .oh,.bls:has(.it) .oh2{margin:2mm 0 .7mm}
 /* 오케스트라 · 교사 명단 */
@@ -3484,7 +3485,7 @@ function ebClean(html,keepCls){const t=document.createElement('template');t.inne
     walk(c);
     if(!EB_OK.has(c.tagName)){if(c.tagName==='A'||c.tagName==='FONT'||c.tagName==='O:P'||/^[A-Z]+$/.test(c.tagName)){c.replaceWith(...c.childNodes)}else c.replaceWith(...c.childNodes);return}
     const st=c.style,keep={};EB_CSS.forEach(p=>{const v=st&&st.getPropertyValue(p);if(v&&!/url|expression/i.test(v)&&(p!=='font-family'||EB_FONTS.some(f=>v.indexOf(f)>=0)))keep[p]=v});const fid=c.tagName==='IMG'?c.getAttribute('data-fid'):'';if(fid)Object.keys(keep).forEach(p=>{if(p!=='width')delete keep[p]});
-    const cls=keepCls?String(c.getAttribute('class')||'').split(/\s+/).filter(x=>/^[a-z][\w-]{0,24}$/.test(x)&&x!=='ovf'&&x!=='okf'&&x!=='ovx'&&x!=='sdl'&&x!=='sdr'&&x!=='ebrz'&&x!=='ebrzv').join(' '):'';
+    const cls=keepCls?String(c.getAttribute('class')||'').split(/\s+/).filter(x=>/^[a-z][\w-]{0,24}$/.test(x)&&x!=='ovf'&&x!=='okf'&&x!=='ovx'&&x!=='sdl'&&x!=='sdr'&&x!=='ebtail'&&x!=='ebl'&&x!=='ebrz'&&x!=='ebrzv').join(' '):'';
     const cs=c.getAttribute('colspan'),rs=c.getAttribute('rowspan');
     [...c.attributes].forEach(a=>c.removeAttribute(a.name));
     if(fid)c.setAttribute('data-fid',fid);if(cls)c.setAttribute('class',cls);if(/^\d{1,2}$/.test(cs||''))c.setAttribute('colspan',cs);if(/^\d{1,2}$/.test(rs||''))c.setAttribute('rowspan',rs);
@@ -3947,7 +3948,7 @@ function vEbk(){const E=S.EB;if(!E){if(!S.EBL)setTimeout(ebLoad,0);return '<div 
         ${ed&&ebIsImg(x)?`<button class="btn small" type="button" data-ebimgre="${esc(x.k)}">그림 바꾸기</button><button class="btn small" type="button" data-ebimgfull="${esc(x.k)}">${/imgp full/.test(x.h)?'여백 안에 넣기':'여백 없이 가득'}</button>`:''}
         ${!ebIsImg(x)&&ebTabOf(x.k)!=null?`<a class="btn small" target="_blank" rel="noopener" href="${esc(ebSheetUrl(ebTabOf(x.k)))}" title="이 쪽의 구글 시트 탭 열기">시트 탭</a>${ed?`<button class="btn small" type="button" data-ebapply1="${esc(x.k)}" title="이 쪽만 시트에서 적용">시트 적용</button>`:''}`:''}
         ${ed&&!ebIsImg(x)?`<button class="btn small" type="button" data-ebexp1="${esc(x.k)}" title="${ebTabOf(x.k)!=null?'시트 탭을 지금 책자 쪽으로 덮어써요':'이 쪽을 시트 탭으로 만들어요'}">${ebTabOf(x.k)!=null?'시트로 보내기':'시트로'}</button>`:''}
-        ${ed&&ebIsSpr(x)?`<button class="btn small" type="button" data-ebblank="${esc(x.k)}" style="display:none" title="펼침은 왼쪽이 짝수 쪽이어야 해요 · 앞에 빈 쪽(MEMO)을 넣어 맞춰요">앞에 빈 쪽 넣기</button>`:''}${ed&&x.kind==='text'&&/class="it\b|class="it /.test(x.h||'')&&/class="eh"/.test(x.h||'')?`<button class="btn small ${ebIsSpr(x)?'primary':''}" type="button" data-ebsprsplit="${esc(x.k)}" title="머리 + 앞 곡은 왼쪽(짝수 쪽), 나머지 곡은 오른쪽(홀수 쪽) · 오른쪽 위는 머리 높이만큼 비워 곡 줄 높이를 맞춰요">${ebIsSpr(x)?'펼침 풀기':'펼침으로 나누기'}</button>`:''}${ed&&x.kind==='text'&&/class="it\b|class="it /.test(x.h||'')&&!/class="[^"]*\beh\b/.test(String(x.h||'').replace(/class="eh csp"/g,''))?`<button class="btn small ${/\bcsp\b/.test(x.h||'')?'primary':''}" type="button" data-ebsprfix="${esc(x.k)}" title="앞 쪽 음악회 머리 높이만큼 위를 비워 펼쳤을 때 곡 줄 높이를 맞춰요">${/\bcsp\b/.test(x.h||'')?'펼침 맞춤 ✕':'펼침 맞추기'}</button>`:''}${ed&&!ebIsImg(x)&&!ebIsSpr(x)?`<button class="btn small ${ebFitOn(x.k)?'primary':''}" type="button" data-ebfit="${esc(x.k)}" title="A5 한 장을 넘으면 여백 → 행간 → 글자 크기(80%까지) 순서로 줄여 한 쪽에 넣어요">${ebFitOn(x.k)?esc(ebFitLab(x.k))+' ✕':'한 쪽 맞춤'}</button>`:''}
+        ${ed&&ebIsSpr(x)?`<button class="btn small ${ebSet().sprFill===false?'':'primary'}" type="button" data-ebfill="1" title="펼침 음악회의 곡 사이를 늘려 아래 여백 없이 채워요 (모든 펼침 음악회에 같이)">${ebSet().sprFill===false?'아래까지 채우기':'아래까지 채움 ✓'}</button>`:''}${ed&&ebIsSpr(x)?`<button class="btn small" type="button" data-ebblank="${esc(x.k)}" style="display:none" title="펼침은 왼쪽이 짝수 쪽이어야 해요 · 앞에 빈 쪽(MEMO)을 넣어 맞춰요">앞에 빈 쪽 넣기</button>`:''}${ed&&x.kind==='text'&&/class="it\b|class="it /.test(x.h||'')&&/class="eh"/.test(x.h||'')?`<button class="btn small ${ebIsSpr(x)?'primary':''}" type="button" data-ebsprsplit="${esc(x.k)}" title="머리 + 앞 곡은 왼쪽(짝수 쪽), 나머지 곡은 오른쪽(홀수 쪽) · 오른쪽 위는 머리 높이만큼 비워 곡 줄 높이를 맞춰요">${ebIsSpr(x)?'펼침 풀기':'펼침으로 나누기'}</button>`:''}${ed&&x.kind==='text'&&/class="it\b|class="it /.test(x.h||'')&&!/class="[^"]*\beh\b/.test(String(x.h||'').replace(/class="eh csp"/g,''))?`<button class="btn small ${/\bcsp\b/.test(x.h||'')?'primary':''}" type="button" data-ebsprfix="${esc(x.k)}" title="앞 쪽 음악회 머리 높이만큼 위를 비워 펼쳤을 때 곡 줄 높이를 맞춰요">${/\bcsp\b/.test(x.h||'')?'펼침 맞춤 ✕':'펼침 맞추기'}</button>`:''}${ed&&!ebIsImg(x)&&!ebIsSpr(x)?`<button class="btn small ${ebFitOn(x.k)?'primary':''}" type="button" data-ebfit="${esc(x.k)}" title="A5 한 장을 넘으면 여백 → 행간 → 글자 크기(80%까지) 순서로 줄여 한 쪽에 넣어요">${ebFitOn(x.k)?esc(ebFitLab(x.k))+' ✕':'한 쪽 맞춤'}</button>`:''}
         ${ed&&x.kind!=='text'&&!x.orphan?`<button class="btn small" type="button" data-ebtog="${esc(x.k)}" title="${x.on?'책자에서 빼기 (목록 체크와 같음)':'책자에 넣기'}">${x.on?'빼기':'넣기'}</button>`:''}
         ${ed&&x.h&&x.kind!=='text'&&!x.orphan?`<button class="btn small" type="button" data-ebreset="${esc(x.k)}" title="고쳐 쓴 내용을 지우고 데이터로 다시 만들기">원본으로</button>`:''}
         ${ed&&x.kind==='text'?`<button class="btn small" type="button" data-ebname="${esc(x.k)}">이름</button>`:''}
@@ -3993,8 +3994,18 @@ function ebWatch(){const h=document.querySelector('.ebprev');if(S.ebRO){S.ebRO.d
   try{document.fonts&&document.fonts.ready.then(()=>ebMeasure())}catch(e){}
   if(!window.ResizeObserver)return;const ro=new ResizeObserver(()=>{clearTimeout(S.ebROt);S.ebROt=setTimeout(ebMeasure,300)});h.querySelectorAll('section.bls').forEach(x=>ro.observe(x));S.ebRO=ro}
 function ebSideOver(s){if(s.classList.contains('cov'))return 0;const R=s.getBoundingClientRect(),sc=R.width/(s.offsetWidth||1),cs=getComputedStyle(s),lim=R.right-parseFloat(cs.paddingRight)*sc+1;let mx=0;s.querySelectorAll('table,img,.gbx,.fitz>*,section>*').forEach(e=>{const b=e.getBoundingClientRect().right;if(b>mx)mx=b});const px=(mx-lim)/sc;return px>3.8?Math.round(px*25.4/96):0}
+/* 펼침 음악회 아래까지 채우기 (11-07): 곡 사이 간격(--itg)을 늘려 마지막 곡이 글 영역 끝에 닿게 · 양쪽 같은 간격(작은 쪽) · 최대 12mm · 끝 안내 문구는 맨 아래(--tlm). 새 창에도 이 함수 그대로 넣음 */
+function ebFillSpr(root,off){if(!root)return;root.querySelectorAll('section.spl').forEach(function(L){var R=L.nextElementSibling;if(!R||!R.classList.contains('spr'))return;var P=[L,R];
+  P.forEach(function(s){s.style.removeProperty('--itg');s.style.removeProperty('--tlm');s.querySelectorAll('.ebtail,.ebl').forEach(function(e){e.classList.remove('ebtail','ebl')})});if(off)return;
+  var H=function(s){var m=s.style.minHeight;s.style.minHeight='0';var h=s.getBoundingClientRect().height;s.style.minHeight=m;return h};
+  var pr=document.createElement('div');pr.style.cssText='position:absolute;left:0;top:0;width:1px;height:210mm;visibility:hidden';L.appendChild(pr);var A=pr.getBoundingClientRect().height;pr.remove();if(!A)return;
+  P.forEach(function(s){var its=s.querySelectorAll('.it'),last=its[its.length-1];if(last)last.classList.add('ebl');if(last&&last.nextElementSibling&&last.parentElement===last.nextElementSibling.parentElement)last.nextElementSibling.classList.add('ebtail')});
+  P.forEach(function(s){s.style.setProperty('--itg','0px')});var h0=P.map(H);P.forEach(function(s){s.style.setProperty('--itg','10px')});var h1=P.map(H);
+  var G=Infinity,base=4.91;P.forEach(function(s,i){var n=s.querySelectorAll('.it').length-1;if(n<1||h1[i]<=h0[i])return;var sc=(h1[i]-h0[i])/(10*n),g=(A-h0[i])/(sc*n);if(g<G)G=g});
+  if(!isFinite(G)){P.forEach(function(s){s.style.removeProperty('--itg')});return}G=Math.max(base,Math.min(G,45.35));P.forEach(function(s){s.style.setProperty('--itg',G.toFixed(2)+'px')});
+  P.forEach(function(s){if(!s.querySelector('.ebtail'))return;s.style.setProperty('--tlm','0px');var a=H(s);s.style.setProperty('--tlm','10px');var b=H(s);var sc=(b-a)/10;s.style.setProperty('--tlm',(sc>0&&A>a?((A-a)/sc).toFixed(2):'0')+'px')})})}
 function ebSide(s,pg){s.classList.toggle('sdl',!!pg&&pg%2===0);s.classList.toggle('sdr',!!pg&&pg%2===1);if(pg)s.setAttribute('data-sd',pg%2===0?`◀ 왼쪽 · ${pg}쪽`:`오른쪽 · ${pg}쪽 ▶`);else s.removeAttribute('data-sd')}
-function ebMeasure(){if(S.tab!=='book')return;const pr=document.getElementById('ebProbe');if(!pr)return;const ph=pr.getBoundingClientRect().height;if(!ph)return;
+function ebMeasure(){if(S.tab!=='book')return;const pr=document.getElementById('ebProbe');if(!pr)return;const ph=pr.getBoundingClientRect().height;if(!ph)return;try{ebFillSpr(document.querySelector('.ebprev'),ebSet().sprFill===false)}catch(e){}
   const L=ebItems();let n=0,tot=0;
   L.forEach(x=>{const c=document.querySelector(`.ebc[data-ebk="${CSS.escape(x.k)}"]`);if(!c)return;let k=0;
     c.querySelectorAll('section.bls').forEach(s=>{ebSide(s,x.on?n+k+1:0);const z=parseFloat(getComputedStyle(c).zoom)||1,hh=s.getBoundingClientRect().height,r=hh/(ph*z),p=Math.max(1,Math.ceil(r-.005)),mm=Math.max(1,Math.round((r-1)*210)),xm=ebSideOver(s);s.classList.toggle('ovf',p>1);s.classList.toggle('ovx',xm>0);s.classList.toggle('okf',p<2&&!xm);s.setAttribute('data-ov',[p>1?`A5 넘침 +${mm}mm · ${p}쪽으로 나뉘어 찍혀요`:'',xm?`옆으로 넘침 +${xm}mm`:''].filter(Boolean).join(' · ')||'A5 1쪽 ✓');k+=p});
@@ -4030,12 +4041,12 @@ function ebOpenWin2(H){
   const html='<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+ti+dStamp()+'</title><link rel="stylesheet" href="'+font+'"><link rel="stylesheet" href="'+EB_GF+'"><style>'+css+'\n'+extra+'</style></head><body class="ebprint">'+
     '<div class="tb"><b>'+ti+'</b><span class="zm"><button type="button" onclick="Z(-1)" aria-label="작게">−</button><button type="button" id="zv" onclick="Z(0)" title="100%로">100%</button><button type="button" onclick="Z(1)" aria-label="크게">＋</button><button type="button" onclick="Z(2)">폭 맞춤</button></span><button type="button" onclick="print()">인쇄 · PDF 저장</button><span>책자 화면에서 고친 뒤 「새 창으로 보기」를 다시 누르면 이 창이 새로 바뀌어요</span></div>'+
     '<div id="ebPrintRoot">'+body+'</div><scr'+'ipt>'+
-    'var z=1;try{z=+localStorage.getItem("bkWinZoom")||1}catch(e){}function A(){var r=document.getElementById("ebPrintRoot");r.style.zoom=z;document.getElementById("zv").textContent=Math.round(z*100)+"%";try{localStorage.setItem("bkWinZoom",z)}catch(e){}Q();O()}'+
+    'var F='+ebFillSpr.toString()+';var z=1;try{z=+localStorage.getItem("bkWinZoom")||1}catch(e){}function A(){var r=document.getElementById("ebPrintRoot");r.style.zoom=z;document.getElementById("zv").textContent=Math.round(z*100)+"%";try{localStorage.setItem("bkWinZoom",z)}catch(e){}Q();F(document.getElementById("ebPrintRoot"),'+(ebSet().sprFill===false?'true':'false')+');O()}'+
     'function O(){var r=document.getElementById("ebPrintRoot"),zz=parseFloat(r.style.zoom)||1,p=document.createElement("div");p.style.cssText="height:210mm;width:1px;position:absolute;visibility:hidden";r.appendChild(p);var A=p.getBoundingClientRect().height;p.remove();'+
     'var L=r.querySelectorAll("section.bls"),pg=1;for(var i=0;i<L.length;i++){var s=L[i],m=s.style.minHeight;s.classList.toggle("sdl",pg%2===0);s.classList.toggle("sdr",pg%2===1);s.setAttribute("data-sd",pg%2===0?"◀ 왼쪽 · "+pg+"쪽":"오른쪽 · "+pg+"쪽 ▶");s.style.minHeight="0";var h=s.getBoundingClientRect().height;s.style.minHeight=m;var q=h/A,n=Math.max(1,Math.ceil(q-.005)),mm=Math.max(1,Math.round((q-1)*210)),xm=X(s);pg+=n;s.classList.toggle("ovf",n>1);s.classList.toggle("ovx",xm>0);s.classList.toggle("okf",n<2&&!xm);s.setAttribute("data-ov",[n>1?"A5 넘침 +"+mm+"mm · "+n+"쪽으로 나뉘어 찍혀요":"",xm?"옆으로 넘침 +"+xm+"mm":""].filter(Boolean).join(" · ")||"A5 1쪽 ✓")}}function X(s){if(s.classList.contains("cov"))return 0;var R=s.getBoundingClientRect(),sc=R.width/(s.offsetWidth||1),cs=getComputedStyle(s),lim=R.right-parseFloat(cs.paddingRight)*sc+1,mx=0;[].forEach.call(s.querySelectorAll("table,img,.gbx,.fitz>*,section>*"),function(e){var b=e.getBoundingClientRect().right;if(b>mx)mx=b});var px=(mx-lim)/sc;return px>3.8?Math.round(px*25.4/96):0}var T0;function W(){clearTimeout(T0);T0=setTimeout(O,300)}try{document.fonts.ready.then(O)}catch(e){}window.addEventListener("load",O);if(window.ResizeObserver){var RO=new ResizeObserver(W);[].forEach.call(document.querySelectorAll("#ebPrintRoot section.bls"),function(x){RO.observe(x)})}'+
     'function Q(){var G={},L=document.querySelectorAll("#ebPrintRoot section.sch"),zz=parseFloat(document.getElementById("ebPrintRoot").style.zoom)||1;for(var i=0;i<L.length;i++){var t=L[i].querySelector(".stt");if(!t)continue;var k=t.textContent;G[k]=(G[k]||[]).concat([].slice.call(L[i].querySelectorAll("table.st")))}'+
     'for(var k in G){var T=G[k],H=[];if(T.length<2)continue;T.forEach(function(t){[].forEach.call(t.rows,function(r){r.style.height=""})});T.forEach(function(t){[].forEach.call(t.rows,function(r,j){H[j]=Math.max(H[j]||0,r.getBoundingClientRect().height)})});T.forEach(function(t){[].forEach.call(t.rows,function(r,j){r.style.height=(H[j]/zz)+"px"})})}}'+
-    'var z0=1;window.addEventListener("beforeprint",function(){z0=z;document.getElementById("ebPrintRoot").style.zoom=1;Q()});window.addEventListener("afterprint",function(){z=z0;A()});'+
+    'var z0=1;window.addEventListener("beforeprint",function(){z0=z;document.getElementById("ebPrintRoot").style.zoom=1;Q();F(document.getElementById("ebPrintRoot"),'+(ebSet().sprFill===false?'true':'false')+')});window.addEventListener("afterprint",function(){z=z0;A()});'+
     'function Z(k){if(k===0)z=1;else if(k===2){var s=document.querySelector("#ebPrintRoot .bls");var w=s?s.offsetWidth:560;z=Math.max(.4,Math.min(2.5,(window.innerWidth-40)/w))}else z=Math.max(.4,Math.min(2.5,Math.round((z+k*.1)*100)/100));A()}'+
     'document.addEventListener("keydown",function(e){if(e.ctrlKey||e.metaKey){if(e.key==="="||e.key==="+"){e.preventDefault();Z(1)}else if(e.key==="-"){e.preventDefault();Z(-1)}else if(e.key==="0"){e.preventDefault();Z(0)}}});A();</scr'+'ipt></body></html>';
   const url=URL.createObjectURL(new Blob([html],{type:'text/html;charset=utf-8'})),a=document.createElement('a');a.href=url;a.target='suzukiBook';document.body.appendChild(a);a.click();
@@ -4242,6 +4253,7 @@ document.addEventListener('click',e=>{if(S.tab!=='book')return;const b=e.target.
   if(b.id==='ebChk'||b.id==='ebChkRe'){if(S.ebEd){toast('고쳐 쓰는 쪽을 먼저 저장하거나 그만두세요');return}ebCheck();return}
   if(b.id==='ebChkX'){S.ebChk=null;try{CSS.highlights.delete('ebchk')}catch(x){}render();return}
   if(d.ebblank){ebBlankBefore(d.ebblank);return}
+  if(d.ebfill){const T=ebSet();ebSend([],[],Object.assign({},T,{sprFill:T.sprFill===false}),null,'바꾸고 있어요…');return}
   if(d.ebsprtb){if(d.ebsprtb==='split')ebSprLive();else ebSprMove(d.ebsprtb);return}
   if(d.ebsprmv){ebSprMove(d.ebsprmv);return}
   if(d.ebsprsplit){ebSprSplit(d.ebsprsplit);return}
@@ -4279,6 +4291,6 @@ document.addEventListener('click',e=>{if(S.tab!=='book')return;const b=e.target.
   if(b.id==='ebSetSave'){const n=Object.assign(ebSet(),S.ebSetW||{});n.per=Math.max(1,Math.min(10,Math.round(+n.per||5)));n.fs=Math.max(5,Math.min(10,+n.fs||6.6));['en','sub','org'].forEach(k=>n[k]=String(n[k]||'').trim().slice(0,120));
     ebSend([],[],n,()=>{S.ebSetW=null;toast('책자 설정을 저장했어요')});return}},true);
 </script>
-<div id="bldMark" hidden>빌드표시 20261107-002606 </div>
+<div id="bldMark" hidden>빌드표시 20261107-002842 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();</script>
 </body></html>

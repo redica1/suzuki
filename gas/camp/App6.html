@@ -1,4 +1,4 @@
-/* build: 20261107-005918 */
+/* build: 20261109-110726 */
   if(S.ttDay==null){const td=ttToday(days);S.ttDay=td!=null?td:(mine.length?Math.min(...mine.map(x=>x.d)):0)}
   if(tab==='me')return head+seg+(T.prof?`<p class="hint" style="margin:0 0 6px">교수 · 레슨실 <b>${esc(T.prof.room||'미정')}</b></p>`:'')+ttMineList(T,days,mine)+'</section>';
   const AC=S.user.acads||[];if(S.ttAcad&&!AC.includes(S.ttAcad))S.ttAcad='';
@@ -38,10 +38,11 @@ function render(){fillBanks();hdSync();
   if(S.view==='tt'){document.getElementById('app').innerHTML=vMyTT();['backBtn','nextBtn','mineBtn'].forEach(id=>{const e=document.getElementById(id);if(e)e.hidden=true});document.getElementById('dockLabel').textContent='내 시간표';document.getElementById('dockTotal').textContent='';const st=document.getElementById('steps');if(st)st.hidden=true;return}
   if(S.view==='q'){document.getElementById('app').innerHTML=vQ();['backBtn','nextBtn','mineBtn'].forEach(id=>{const e=document.getElementById(id);if(e)e.hidden=true});document.getElementById('dockLabel').textContent='게시판';document.getElementById('dockTotal').textContent='';return}
   {const mb=document.getElementById('mineBtn');if(mb){mb.hidden=!(S.user&&MY_SUBS.length&&S.view!=='mine');mb.textContent=`내 접수 ${MY_SUBS.length}건`}}
-  if(S.view==='mine'){document.getElementById('app').innerHTML=vMine();document.getElementById('backBtn').hidden=true;document.getElementById('nextBtn').hidden=true;document.getElementById('dockLabel').textContent='내 접수';document.getElementById('dockTotal').textContent=`${MY_SUBS.length}건`;return}
+  if(S.view==='mine'){document.getElementById('app').innerHTML=gdBtn()+vMine();document.getElementById('backBtn').hidden=true;document.getElementById('nextBtn').hidden=true;document.getElementById('dockLabel').textContent='내 접수';document.getElementById('dockTotal').textContent=`${MY_SUBS.length}건`;return}
   renderSteps();
   const app=document.getElementById('app');
   app.innerHTML = (S.editNo&&S.step<6?`<div class="note info spread" style="margin-bottom:12px"><span>${S.quickEdit?`<b>${(S.quickKeys||[]).map(k=>{const p=people().find(x=>x.key===k);return p?esc(p.name):''}).filter(Boolean).join(', ')}</b> 신청 내용 · 보면서 고칠 수 있어요. 고쳤으면 아래 「수정 내용 저장」을 눌러요.`:`<b>${esc((MY_SUBS.find(x=>x.no===S.editNo)||{}).round||'')} ${sdFmt((MY_SUBS.find(x=>x.no===S.editNo)||{}).date||'')} 접수를 고치는 중</b> · 인원을 추가하거나 정보를 바꾼 뒤 마지막 단계에서 「수정 내용 저장」을 눌러요. 입금된 사람은 금액이 바뀌면 차액만 입금하면 돼요.`}</span><button class="btn small" type="button" id="toMine">← 목록으로 돌아가기</button></div>`:'')+[vStep1,vStep2,vStep3,vEns,vStep4,vStep5][S.step-1]()+(S.editNo&&S.quickEdit&&S.step===3?quickBar():'')+(S.editNo&&S.step<6&&!(S.quickEdit&&S.step===3)?`<div class="row" style="justify-content:center;margin:18px 0 6px"><button class="btn" type="button" id="toMine2">← 저장하지 않고 목록으로 돌아가기</button></div>`:'');
+  if(!(S.step===1&&!S.user&&S.auth==='pick'))app.insertAdjacentHTML('afterbegin',gdLink());
   const t=totals(), next=document.getElementById('nextBtn'), back=document.getElementById('backBtn');
   document.getElementById('dockLabel').textContent = S.step===1?'접수 준비':`선택 ${t.n}명${t.teams.length?` · 가족방 ${t.teams.length}`:''}${t.waiting?` · 회비확인대기 ${t.waiting}명`:''}`;
   document.getElementById('dockTotal').textContent = won(t.all);

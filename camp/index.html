@@ -91,7 +91,9 @@
   document.getElementById('wait').hidden = false;
   document.getElementById('direct').href = APP;
   var AS = (location.search.match(/[?&]as=(staff|member|guest)\b/) || [])[1];   /* 회원관리 「행사 참여」에서 오면 그 로그인 화면으로 바로 */
+  var EXTRA = (/[?&]board\b/.test(location.search) ? 'board=1' : /[?&]guide\b/.test(location.search) ? 'guide=1' : '');   /* ?board = 게시판 바로 · ?guide = 접수 안내 창 */
   if (AS) { APP += '?as=' + AS; document.getElementById('direct').href = APP; }
+  if (EXTRA) { APP += (APP.indexOf('?') < 0 ? '?' : '&') + EXTRA; document.getElementById('direct').href = APP; }
   app.src = APP; app.hidden = false;
   // 10초가 지나도 안 뜨면 앱 주소로 바로 여는 링크 (회사·학교 와이파이가 막는 경우 대비)
   setTimeout(function () { document.getElementById('slow').hidden = false; }, 10000);

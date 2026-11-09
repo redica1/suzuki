@@ -1,4 +1,4 @@
-<!doctype html><!-- build: 20261107-005918 --><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}
+<!doctype html><!-- build: 20261109-110726 --><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}
 /* 내 접수 표 (11-01): 관리자 표처럼 한 줄씩 */
 .mtbl{width:100%;border-collapse:collapse;font-size:15px;letter-spacing:-.02em;white-space:nowrap}
 .mtbl th{font-size:14px;font-weight:700;color:var(--ink);background:var(--sunk);text-align:center;padding:6px 8px;border-bottom:1px solid var(--line)}
@@ -18,6 +18,21 @@
 .mtbl .num{font-family:inherit;font-variant-numeric:tabular-nums}.mtbl td,.mtbl th{letter-spacing:-.02em !important}.mtbl td.num{letter-spacing:-.04em !important;word-spacing:-.06em;font-size:13.7px}.mtbl .pill{display:inline-block;line-height:1.15;text-align:center;border-radius:9px;padding:2px 8px}.mtbl .pill small{font-size:11.5px;font-weight:600;line-height:1.05;display:block}.mtbl .pill br{display:none}
 .mtblw{overflow-x:auto}.mtbl thead th{position:sticky;top:0;z-index:3}
 @media (min-width:760px){.mtblw{overflow:visible}}
+.guideBtn{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:#1a73e8;color:#fff;border:0;border-radius:14px;padding:14px 16px;margin:0 0 14px;font:inherit;cursor:pointer;box-shadow:0 6px 18px rgba(26,115,232,.28)}
+.guideBtn .ic{flex:none;width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.2);display:grid;place-items:center;font-weight:800;font-size:19px}
+.guideBtn b{display:block;font-size:17.5px;line-height:1.35}.guideBtn small{display:block;font-size:13.5px;opacity:.92;line-height:1.4}.guideBtn .go{margin-left:auto;font-weight:800;font-size:20px;opacity:.9}
+.guideLink{display:flex;justify-content:flex-end;margin:0 0 8px}.guideLink button{font:inherit;font-size:13.5px;font-weight:700;color:#1a73e8;background:#e8f0fe;border:0;border-radius:999px;padding:4px 12px;cursor:pointer}
+.gdBg{position:fixed;inset:0;background:rgba(10,20,35,.45);display:flex;align-items:flex-end;justify-content:center;z-index:80}
+@media (min-width:640px){.gdBg{align-items:center}}
+.gdSheet{background:var(--surface);color:var(--ink);width:min(660px,100%);max-height:88vh;display:flex;flex-direction:column;border-radius:18px 18px 0 0}
+@media (min-width:640px){.gdSheet{border-radius:18px}}
+.gdHd{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:14px 16px 10px;border-bottom:1px solid var(--line)}.gdHd b{font-size:18px}
+.gdX{font:inherit;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:4px 12px;cursor:pointer}
+.gdTabs{display:flex;gap:6px;flex-wrap:wrap;padding:10px 16px 0}.gdTabs button{font:inherit;font-size:14px;font-weight:700;border:1px solid var(--line);background:var(--surface);color:var(--muted);border-radius:999px;padding:5px 12px;cursor:pointer}.gdTabs button[aria-selected="true"]{background:#1a73e8;border-color:#1a73e8;color:#fff}
+.gdBody{overflow:auto;padding:12px 16px calc(18px + env(safe-area-inset-bottom,0px));display:grid;gap:10px;font-size:16px;line-height:1.7}
+.gdBody h3{margin:4px 0 0;font-size:16.5px}.gdBody p{margin:0}.gdBody ol,.gdBody ul{margin:0;padding-left:22px;display:grid;gap:3px}.gdBody li small{color:var(--muted)}
+.gdBody table{border-collapse:collapse;width:100%;font-size:14.5px}.gdBody th,.gdBody td{border-bottom:1px solid var(--line);padding:6px;text-align:left;vertical-align:top}.gdBody th{background:var(--sunk)}
+.gdBox{border-radius:12px;padding:11px 14px;background:#e8f0fe;color:#16233a}.gdBox a{color:#0b4fb3;font-weight:700}
 </style></head><body>
 <base target="_top">
 <script>/* 화면이 하얗게 될 때 원인을 화면에 보여 주는 진단 — STG(설정 「테스트 로그인」이 있을 때)만 보임, 메인에서는 조용히 (10-31) */
@@ -460,6 +475,6 @@ var UI_KEY='camp';
 </script>
 
 <script>try{window.top.postMessage('suzuki-ready','*')}catch(e){}</script>
-<div id="bldMark" hidden>빌드표시 20261107-005918 </div>
+<div id="bldMark" hidden>빌드표시 20261109-110726 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 96px';document.body.appendChild(p)})();</script>
 </body></html>

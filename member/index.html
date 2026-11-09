@@ -59,6 +59,9 @@
   var STG  = 'https://script.google.com/macros/s/AKfycbyRLvWsahJeeLRQcKeURHCiGn05cWAgiPkctokAUgbr5D0IrtqKYaKGj6zUsnwmqHiE/exec';   // 테스트(STG) 2026-10-27
   var isTest = /[?&]test\b/i.test(location.search);
   var APP = isTest ? STG : PROD;
+  /* 주소 뒤 ?ask (문의 게시판) · ?guide (가입 안내) 등은 회원 화면에 그대로 넘김 */
+  var pass = location.search.replace(/^\?/, '').split('&').filter(function (x) { return x && !/^(test|openExternalBrowser)(=|$)/i.test(x); }).map(function (x) { return x.indexOf('=') < 0 ? x + '=1' : x; });
+  if (APP && pass.length) APP += '?' + pass.join('&');
   if (!APP) { var w = document.getElementById('wait'); w.hidden = false; w.innerHTML = '<b>선생님 회원 화면은 준비 중이에요</b><span>곧 이 주소에서 열려요.</span>'; return; }
   var ua = navigator.userAgent || '', here = location.href.split('#')[0];
   var android = /Android/i.test(ua);

@@ -1,4 +1,4 @@
-/* build: 20261109-103658 */
+/* build: 20261109-213639 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -107,7 +107,7 @@ function include(n) { return HtmlService.createTemplateFromFile(n).getRawContent
 
 function api(name, args) {
   const open = { login, hello, tHello, tEvents, tLookup, tStart, tResend, tVerify, tCreate, tLogin, tForgot, tReset, tPwChange, tMe, tSavePay, tSavePart, tSaveInfo, tSavePhoto, tAcad, tSaveAcad, tDocUp, tDocGet, tSaveStu, tSaveStus, tStuDetail, tStuSave, tStuTutor, tStuTutorDel, tStuState, tStuStateDel, tMyStu, tMyStuDetail, tMyStuPay, tTchSaves, tTchEnd, tTchEvent, tTchAssign, tTchStart, tSaveRrn, tSaveInc, tAddWork, tClassCreate, tEndWork, tMainWork, tLogout, bPost, bMine, bReply };
-  const fns = { printEvents, printEvSave, printData, printSet, printCopy, printExport, ogGet, ogSave, ogToken, boot, saveRow, setCheck, logs, importRoster, saveDues, delDues, reqs, reqDo, delAcad, payView, bulkSet, saveWorks, importPastDues, bList, bSet, bComment, photoGet, photoDel, fillRegions, saveRates, docList, docUp, docGet, docDel, payList, payOk, payOkMany, payNo, memView, rosterNow, inputStatus, inboxDone, acctReset, classFromStudents, delStus, asTeacher, bankImport, bankList: bankListTop, bankSet, bankDues, bankFromSheet, bankMeta, bankSplitSave, bankPay, bankCamp, bankCampPay, bankPayList, devVirtual };
+  const fns = { printEvents, printEvSave, printData, printSet, printCopy, printExport, ogGet, ogSave, ogToken, boot, saveRow, setCheck, logs, importRoster, saveDues, delDues, reqs, reqDo, delAcad, payView, bulkSet, saveWorks, importPastDues, importPayInfo, bList, bSet, bComment, photoGet, photoDel, fillRegions, saveRates, docList, docUp, docGet, docDel, payList, payOk, payOkMany, payNo, memView, rosterNow, inputStatus, inboxDone, acctReset, classFromStudents, delStus, asTeacher, bankImport, bankList: bankListTop, bankSet, bankDues, bankFromSheet, bankMeta, bankSplitSave, bankPay, bankCamp, bankCampPay, bankPayList, devVirtual };
   try {
     if (open[name]) return Object.assign({ ok: true }, open[name].apply(null, args || []));
     if (!fns[name]) throw new UserError('알 수 없는 요청이에요.');
@@ -635,6 +635,54 @@ function importPastDues(who, src, year) {
     log_(who.name, '연회비', year, '지난 회비 불러오기', '맞춘 ' + add.length + '명 · 못 맞춘 ' + un.length + '줄');
     return { year, n: add.length, how, un, nameOnly, dues: { h: D.h, rows: tbl_('연회비').v } };
   } finally { lock.releaseLock(); }
+}
+/** 관리자: 원본 「교사정보DB」의 계좌 · 주소 · 주민번호를 정산 파일로 옮김 (11-09 사용자 지시: 다 옮기고 주민번호는 암호화)
+ *  교사 탭 · 행사용 명단에는 넣지 않음. 이미 값이 있는 칸은 덮어쓰지 않음(선생님이 직접 넣은 것 우선). 원본 값은 기록에 남기지 않음 */
+function importPayInfo(who, src) {
+  const id = (String(src || '').match(/\/d\/([\w-]{20,})/) || [])[1] || String(src || '').trim() || settings_()['원본 시트'];
+  if (!/^[\w-]{20,}$/.test(id)) fail('원본 시트 주소를 넣어 주세요.');
+  let ss; try { ss = SpreadsheetApp.openById(id); } catch (e) { fail('원본 시트를 열지 못했어요. 이 앱을 만든 계정에 보기 권한이 있어야 해요.'); }
+  const { rows } = readSrc_(ss, '교사정보DB', '교사명', ['교사명', '전화번호', '주민번호', '집주소', '우편번호', '우편물주소', '상세주소', '은행명', '계좌번호']);
+  const T = tbl_('교사'), c = col_(T), byP = {}, byN = {};
+  T.v.forEach(r => { const tid = r[c['교사ID']], p = digits_(r[c['휴대전화']]); if (p) (byP[p] = byP[p] || []).push(tid);
+    [r[c['이름']], String(r[c['원래이름']] || '').replace(/[A-Za-z()\s]+$/, '')].map(x => String(x || '').replace(/\s+/g, '')).filter(Boolean).forEach(n => { byN[n] = byN[n] || []; if (byN[n].indexOf(tid) < 0) byN[n].push(tid); }); });
+  const nm = r => String(r['교사명'] || '').replace(/\s+/g, '').replace(/(?<=[가-힣])[A-Za-z()]+$/, '');
+  const tname = {}; T.v.forEach(r => tname[r[c['교사ID']]] = r[c['이름']]);
+  const got = {}, un = [];
+  rows.forEach(r => {
+    const n = nm(r); if (!n || /^\d+$/.test(n)) return;
+    const has = ['주민번호', '집주소', '우편물주소', '은행명', '계좌번호'].some(k => String(r[k] || '').trim()); if (!has) return;
+    const p = digits_(r['전화번호']); let tid = '';
+    if (p && byP[p] && byP[p].length === 1) tid = byP[p][0];
+    else if (p && byP[p]) { const x = byP[p].filter(t => (byN[n] || []).indexOf(t) >= 0); if (x.length === 1) tid = x[0]; }
+    if (!tid && (byN[n] || []).length === 1) tid = byN[n][0];
+    if (!tid) { un.push(String(r['교사명']).trim() + (p ? ' (' + p.slice(-4) + ')' : '') + ((byN[n] || []).length > 1 ? ' · 같은 이름 ' + byN[n].length + '명' : ' · 명단에 없음')); return; }
+    if (!got[tid]) got[tid] = r; else { const o = got[tid]; Object.keys(r).forEach(k => { if (!String(o[k] || '').trim() && String(r[k] || '').trim()) o[k] = r[k]; }); }
+  });
+  const cnt = { teachers: 0, acct: 0, home: 0, mail: 0, rrn: 0, rrnBad: 0, kept: 0 }, bad = [];
+  const lock = LockService.getScriptLock(); lock.waitLock(60000);
+  try {
+    const P = payTbl_(), h = P.h, ci = k => h.indexOf(k), now = now_();
+    Object.keys(got).forEach(tid => {
+      const r = got[tid], t = s => String(r[s] || '').trim(); let j = P.find('교사ID', tid);
+      if (j < 0) { P.v.push(h.map(k => k === '교사ID' ? tid : '')); j = P.v.length - 1; }
+      const row = P.v[j], empty = k => !String(row[ci(k)] || '').trim(), put = (k, v) => { if (v && empty(k)) { row[ci(k)] = v; return 1; } if (v && !empty(k)) cnt.kept++; return 0; };
+      let ch = 0;
+      if (t('계좌번호')) { const a = put('은행', t('은행명')) + put('계좌번호', t('계좌번호')) + put('예금주', String(tname[tid] || r['교사명']).trim()); if (a) { cnt.acct++; ch++; } }
+      if (t('집주소')) { if (put('집주소', t('집주소')) + (!t('우편물주소') ? put('집우편번호', t('우편번호')) : 0)) { cnt.home++; ch++; } }
+      const mailAddr = t('우편물주소') || t('집주소');
+      if (mailAddr) { const m = put('주소', mailAddr) + put('우편번호', t('우편번호')) + (t('우편물주소') ? put('상세주소', t('상세주소')) : 0); if (m) { cnt.mail++; ch++; } }
+      if (t('주민번호') && empty('주민번호암호')) {
+        const v = t('주민번호').replace(/\s/g, ''), m = v.match(/^(\d{2})(\d{2})(\d{2})-?([1-8])(\d{6})$/);
+        if (m && +m[2] >= 1 && +m[2] <= 12 && +m[3] >= 1 && +m[3] <= 31) { const plain = m[1] + m[2] + m[3] + '-' + m[4] + m[5]; row[ci('주민번호암호')] = enc_(plain); row[ci('주민번호표시')] = plain.slice(0, 8) + '******'; row[ci('주민번호동의일')] = '원본에서 옮김 ' + now; cnt.rrn++; ch++; }
+        else { cnt.rrnBad++; bad.push(String(tname[tid] || r['교사명']).trim() + ' (' + tid + ')'); }
+      }
+      if (ch) { row[ci('수정일')] = now; cnt.teachers++; }
+    });
+    if (P.v.length) P.sh.getRange(2, 1, P.v.length, h.length).setNumberFormat('@').setValues(P.v.map(r => { const x = r.slice(0, h.length); while (x.length < h.length) x.push(''); return x; }));
+    log_(who.name, '정산', '', '원본 계좌 · 주소 · 주민번호 옮김', '선생님 ' + cnt.teachers + '명 · 계좌 ' + cnt.acct + ' · 집 주소 ' + cnt.home + ' · 우편물 ' + cnt.mail + ' · 주민번호 ' + cnt.rrn + ' (형식 틀림 ' + cnt.rrnBad + ') · 못 맞춘 ' + un.length + '줄 (값은 기록하지 않음)');
+  } finally { lock.releaseLock(); }
+  return { cnt, un, bad, matched: Object.keys(got).length };
 }
 function readSrc_(ss, tab, mark, cols) {
   const sh = ss.getSheetByName(tab); if (!sh) fail('원본에 「' + tab + '」 탭이 없어요.');

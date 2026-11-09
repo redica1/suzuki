@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261109-103658 -->
+<!-- build: 20261109-213639 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -919,6 +919,11 @@ function vSet(){return ogPanel()+(S.test?'<div class="panel" style="border-color
   '</div><div class="panel"><h3>지난 해 교사 회비 불러오기</h3><p class="cap">그 해 「교사정보DB」에서 이름 · 휴대전화 · 납부 칸만 읽어 지금 교사 번호에 맞춰요(휴대전화 → 이름). 선생님 「내 정보 › 교사 회비」에 년도별로 보여요. 다시 돌리면 그 해 교사 회비 줄을 새로 써요.</p>'+
   '<div class="filters"><input type="text" id="pdSrc" value="'+esc(S.D.pdSrc||S.pdSrc0||'')+'" placeholder="그 해 회비 시트 주소 (docs.google.com/spreadsheets/…)" style="flex:1;min-width:260px">'+sel('pdYear',(function(){var o=[],y=new Date().getFullYear()-1;for(var i=y;i>=2018;i--)o.push(String(i));return o})(),S.pdYear||String(new Date().getFullYear()-1),'년도')+'<button class="btn primary" type="button" id="pdGo">불러오기</button></div>'+
   (S.pdRes?pdResult(S.pdRes):'')+
+  '</div><div class="panel"><h3>원본 계좌 · 주소 · 주민번호 옮기기</h3><p class="cap">원본 「교사정보DB」의 은행 · 계좌번호 · 집 주소 · 우편물 주소 · 주민번호를 관리자 전용 정산 파일로 옮겨요(휴대전화 → 이름으로 맞춤). 주민번호는 암호화해서 넣어요. 교사 탭 · 행사용 명단에는 들어가지 않아요. <b>이미 값이 있는 칸은 덮어쓰지 않아요</b>(선생님이 직접 넣은 것 우선). 비우면 설정 「원본 시트」를 읽어요.</p>'+
+  '<div class="filters"><input type="text" id="piSrc" value="" placeholder="원본 시트 주소 (비우면 설정 「원본 시트」)" style="flex:1;min-width:260px"><button class="btn primary" type="button" id="piGo">옮기기</button></div>'+
+  (S.piRes?'<div class="note info">맞춘 선생님 '+S.piRes.matched+'명 · 채운 선생님 '+S.piRes.cnt.teachers+'명 · 계좌 '+S.piRes.cnt.acct+' · 집 주소 '+S.piRes.cnt.home+' · 우편물 주소 '+S.piRes.cnt.mail+' · 주민번호 '+S.piRes.cnt.rrn+'(암호화) · 이미 있어 그대로 둔 칸 '+S.piRes.cnt.kept+'</div>'+
+    (S.piRes.bad.length?'<p class="cap">주민번호 형식이 틀려 넣지 않은 선생님 '+S.piRes.bad.length+'명: '+esc(S.piRes.bad.join(', '))+'</p>':'')+
+    (S.piRes.un.length?'<details><summary class="cap">명단과 못 맞춘 원본 줄 '+S.piRes.un.length+'개</summary><p class="cap">'+esc(S.piRes.un.join(' · '))+'</p></details>':''):'')+
   '</div><div class="panel"><h3>알아 둘 것</h3><p class="cap">모든 학원·교사·학생에는 바뀌지 않는 번호(A0001 · T0001 · S0001)가 붙어요. 캠프 · 졸업연주 · 교사연수는 이 번호로 연결해요. 데이터는 이 화면이 붙은 구글 시트에만 있고, 깃허브에는 화면 코드만 있어요.</p></div>'}
 
 /* ---------- 그리기 ---------- */
@@ -1155,6 +1160,7 @@ document.addEventListener('click',function(e){
   if(d.bst){var p2=d.bst.split('|');if(S.busy)return;S.busy=true;callS('bSet',p2[0],p2[1]).then(function(r){S.busy=false;if(!r.ok){toast(r.msg);return}setAsks(r.list);render();toast(p2[1]+'(으)로 바꿨어요')});return}
   if(d.bcm){var ta=document.getElementById('cm_'+d.bcm),tx=ta?ta.value.trim():'';if(!tx){toast('댓글을 넣어 주세요');return}if(S.busy)return;S.busy=true;b.disabled=true;
     callS('bComment',d.bcm,tx).then(function(r){S.busy=false;if(!r.ok){b.disabled=false;toast(r.msg);return}setAsks(r.list);render();toast('댓글을 남겼어요')});return}
+  if(b.id==='piGo'){var ps=document.getElementById('piSrc').value.trim();b.disabled=true;b.textContent='옮기는 중…';callS('importPayInfo',ps).then(function(r){b.disabled=false;b.textContent='옮기기';if(!r.ok){toast(r.msg);return}S.piRes=r;render();toast('정산 파일에 옮겼어요')});return}
   if(b.id==='pdGo'){var src=document.getElementById('pdSrc').value.trim(),yr=document.getElementById('pdYear').value;S.pdYear=yr;S.D.pdSrc=src;if(!src){toast('시트 주소를 넣어 주세요');return}
     b.disabled=true;b.innerHTML='<span class="spin"></span> 불러오는 중…';
     callS('importPastDues',src,yr).then(function(r){if(!r.ok){b.disabled=false;b.textContent='불러오기';toast(r.msg);return}S.pdRes=r;S.D.duesRows=objs(r.dues);index();render();toast(r.year+'년 회비를 넣었어요')});return}
@@ -1342,6 +1348,6 @@ document.addEventListener('keydown',function(e){var t=e.target;if(S.tab!=='prt'|
 </script>
 <style>table.prt th,table.prt td{text-align:left !important}table.prt th:first-child,table.prt td:first-child{text-align:center !important}table.prt th:nth-child(7),table.prt td:nth-child(7),table.prt th:nth-child(8),table.prt td:nth-child(8){text-align:center !important}table.prt td:nth-child(7) input,table.prt td:nth-child(8) input{text-align:center}table.prt tr.mutedrow td{color:var(--faint)}table.prt tr.mutedrow td b{color:var(--muted)}table.prt td{vertical-align:middle}table.prt td.padr{white-space:normal;min-width:220px;max-width:340px;line-height:1.4}</style>
 
-<div id="bldMark" hidden>빌드표시 20261109-103658 </div>
+<div id="bldMark" hidden>빌드표시 20261109-213639 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();</script>
 </body></html>

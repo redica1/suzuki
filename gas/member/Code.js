@@ -1,4 +1,4 @@
-/* build: 20261109-093814 */
+/* build: 20261109-093955 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -746,7 +746,7 @@ function tLookup(name, phone) {
   const s = { tid: t ? t[c['교사ID']] : '', name: t ? t[c['이름']] : name, phone, rosterEmail: t ? String(t[c['이메일']] || '').trim().toLowerCase() : '', stage: 'ident' };
   cput_('tk:' + token, s, 3600);
   if (!t) return { status: 'none', token };
-  return { status: 'found', token, hint: s.rosterEmail ? maskEmail_(s.rosterEmail) : '' };   // 11-09: 협회 명단 이메일을 가려서(bo***@gmail.com) 보여 줌 — 같으면 인증 없이. 명단 내용은 보여 주지 않음 (선생님이 처음부터 직접 넣음, 10-28 결정)
+  return { status: 'found', token };   // 명단 내용은 보여 주지 않음 (선생님이 처음부터 직접 넣음, 10-28 결정)
 }
 function tStart(token, email) {
   const s = tok_(token);

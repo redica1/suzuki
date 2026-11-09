@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261104-211324 -->
+<!-- build: 20261109-093633 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -215,9 +215,9 @@ function vHome(){var res='';
 function vFind(){return vHome()}
 function vEmail(){
   return steps(2)+'<div class="card"><h2>이메일</h2><p class="lede">이메일이 로그인 아이디가 되고, 인증 코드와 안내 메일이 이 주소로 가요.</p>'+
-    (S.look==='found'?'<div class="note">협회에 알려 준 이메일과 다르면, 협회가 확인한 뒤 계정이 열려요.</div>':'<div class="note">신규 회원은 협회가 확인한 뒤 계정이 열려요.</div>')+
+    (S.look==='found'?'<div class="note">협회에 알려 준 이메일'+(S.ehint?'(<b>'+esc(S.ehint)+'</b>)':'')+'을 넣으면 <b>인증 코드 없이 바로</b> 다음으로 넘어가요. 다른 이메일이면 인증 코드를 받고, 협회가 확인한 뒤 계정이 열려요.</div>':'<div class="note">신규 회원은 협회가 확인한 뒤 계정이 열려요.</div>')+
     emailBox('eEm','이메일',S.email,true)+
-    '<p class="hint">네이버·지메일을 권해요. hanmail·daum 은 메일이 늦거나 오지 않을 때가 있어요.</p>'+msgBox()+btn('sendCode','인증 코드 받기')+
+    '<p class="hint">네이버·지메일을 권해요. hanmail·daum 은 메일이 늦거나 오지 않을 때가 있어요.</p>'+msgBox()+btn('sendCode',S.look==='found'?'다음':'인증 코드 받기')+
     '<button class="btn ghost small" type="button" id="toFind">본인 찾기로</button></div>'}
 function vCode(){return steps(3)+'<div class="card"><h2>이메일 인증</h2><p class="lede"><b>'+esc(S.email)+'</b> 로 6자리 코드를 보냈어요. 10분 안에 넣어 주세요. 메일이 안 보이면 스팸함도 확인해 주세요.</p>'+
   '<label class="f" for="cCode">인증 코드<input type="text" id="cCode" class="code" inputmode="numeric" maxlength="6" autocomplete="one-time-code"></label>'+
@@ -684,7 +684,7 @@ document.addEventListener('click',function(e){if(e.target.id==='sdClose2'){S.stu
   if(b.id==='backBtn'){var p=S.hist.pop();if(p){S.v=p;S.err={};S.msg='';render();window.scrollTo(0,0)}return}
   if(b.id==='goLogin'){S.fp=null;go('login');return}
   if(b.id==='lookup'){S.name=v('iNm').trim();S.phone=v('iPh').replace(/\D/g,'');var er={};if(!S.name)er.name='이름을 넣어 주세요.';if(!/^01\d{8,9}$/.test(S.phone))er.phone='휴대전화 번호를 확인해 주세요.';S.err=er;if(Object.keys(er).length){render();return}
-    run(function(){return call('tLookup',[S.name,S.phone]).then(function(r){if(!r.ok){S.msg=r.msg;return}S.look=r.status;S.token=r.token||'';S.card=r.card||null;S.has=r;S.htype=''})});return}
+    run(function(){return call('tLookup',[S.name,S.phone]).then(function(r){if(!r.ok){S.msg=r.msg;return}S.look=r.status;S.token=r.token||'';S.ehint=r.hint||'';S.card=r.card||null;S.has=r;S.htype=''})});return}
   if(b.id==='retry'){S.look='';S.card=null;S.token='';render();return}
   
   if(b.id==='isMe'){S.mode='member';S.j=blankJ();go('email');return}
@@ -692,7 +692,7 @@ document.addEventListener('click',function(e){if(e.target.id==='sdClose2'){S.stu
   if(b.id==='asNew'){if(!S.htype){S.err={htype:'회원 종류를 골라 주세요.'};render();return}S.mode=S.htype==='외부인'?'ext':'new';S.j=blankJ();S.j.type=S.htype==='교사회원'?'교사회원':S.htype==='연수교사'?'연수교사회원':'';S.card=null;go('email');return}
   if(b.id==='toFind'){go('find');return}
   if(b.id==='sendCode'){S.email=readEmail('eEm');if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(S.email)){S.msg='이메일 주소를 확인해 주세요.';render();return}
-    run(function(){return call('tStart',[S.token,S.email]).then(function(r){if(!r.ok){S.msg=r.msg;return}S.match=r.match;S.code=r.code||'';S.hist.push('email');S.v='code';toast(S.email+' 로 인증 코드를 보냈어요')})});return}
+    run(function(){return call('tStart',[S.token,S.email]).then(function(r){if(!r.ok){S.msg=r.msg;return}S.match=r.match;if(r.skip){if(r.prefill&&S.mode==='member'){var pf=r.prefill;S.j.sex=pf.sex||'';S.j.type=pf.type||'';S.j.course=pf.course||'';S.j.works=(pf.works||[]).map(function(w){return {id:w.id,text:w.text,y:w.y,m:w.m}});S.j.noWork=false;S.j.role=pf.role;S.j.inst=pf.inst||'';S.j.certs=pf.certs||{}}S.hist.push('email');S.v='confirm';window.scrollTo(0,0);toast('협회 명단의 이메일과 같아서 인증 없이 넘어가요');return}S.code=r.code||'';S.hist.push('email');S.v='code';toast(S.email+' 로 인증 코드를 보냈어요')})});return}
   if(b.id==='resend'){run(function(){return call('tResend',[S.token]).then(function(r){if(!r.ok){S.msg=r.msg;return}S.code=r.code||'';toast('코드를 다시 보냈어요')})});return}
   if(b.id==='toEmail'){go('email');return}
   if(b.id==='verify'){var cd=v('cCode').trim();if(!/^\d{6}$/.test(cd)){S.msg='6자리 코드를 넣어 주세요.';render();return}
@@ -897,6 +897,6 @@ document.addEventListener('keydown',function(e){if(e.key!=='Enter')return;var m=
   try{google.script.url.getLocation(function(l){var a=l&&l.parameter&&l.parameter.as;if(a)setSess(a);go0()})}catch(x){go0()}})();
 </script>
 <script>try{window.top.postMessage('suzuki-ready','*')}catch(e){}</script>
-<div id="bldMark" hidden>빌드표시 20261104-211324 </div>
+<div id="bldMark" hidden>빌드표시 20261109-093633 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();</script>
 </body></html>

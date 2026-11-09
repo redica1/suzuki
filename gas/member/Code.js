@@ -1,4 +1,4 @@
-/* build: 20261104-211324 */
+/* build: 20261109-093633 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -746,7 +746,7 @@ function tLookup(name, phone) {
   const s = { tid: t ? t[c['교사ID']] : '', name: t ? t[c['이름']] : name, phone, rosterEmail: t ? String(t[c['이메일']] || '').trim().toLowerCase() : '', stage: 'ident' };
   cput_('tk:' + token, s, 3600);
   if (!t) return { status: 'none', token };
-  return { status: 'found', token };   // 명단 내용은 보여 주지 않음 (선생님이 처음부터 직접 넣음, 10-28 결정)
+  return { status: 'found', token, hint: s.rosterEmail ? maskEmail_(s.rosterEmail) : '' };   // 11-09: 협회 명단 이메일을 가려서(bo***@gmail.com) 보여 줌 — 같으면 인증 없이. 명단 내용은 보여 주지 않음 (선생님이 처음부터 직접 넣음, 10-28 결정)
 }
 function tStart(token, email) {
   const s = tok_(token);
@@ -755,6 +755,8 @@ function tStart(token, email) {
   if (acctAll_().some(a => a.email === email && a.state !== '반려')) fail('이미 가입한 이메일이에요. 로그인해 주세요.');
   /* 명단에 이메일이 있는데 다른 이메일이면 관리자 확인 (이름·번호만 아는 사람이 계정을 가로채지 못하게). 명단에 이메일이 없으면 바로 열림 */
   Object.assign(s, { email, emailMatch: !!(s.tid && (!s.rosterEmail || s.rosterEmail === email)), stage: 'code', sends: 0 });
+  /* 11-09: 협회 명단에 있는 이메일과 똑같으면 인증 코드 없이 바로 (협회가 이미 아는 주소). 명단에 이메일이 없거나 다르면 지금처럼 인증 */
+  if (s.tid && s.rosterEmail && s.rosterEmail === email) { s.stage = 'verified'; s.skipCode = true; cput_('tk:' + token, s, 3600); return { email, match: true, skip: true, prefill: prefill_(s.tid) }; }
   return sendCode_(token, s);
 }
 function tResend(token) { const s = tok_(token); if (!s.email) fail('처음부터 다시 해 주세요.'); return sendCode_(token, s); }

@@ -1,4 +1,4 @@
-/* build: 20261109-213639 */
+/* build: 20261110-145526 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -60,6 +60,7 @@ const HEAD = {
   '설정': ['항목', '값', '설명'],
   '기록': ['일시', '누가', '표', 'ID', '동작', '내용'],
   '참가이력': ['이력ID', '대상', 'ID', '행사', '년도', '기간', '역할', '상태', '메모', '수정일', '수정자'],   // 행사 참여 기록 (10-28): 캠프·졸업연주 등이 끝나면 여기에 모음
+  '공문': ['공문ID', '구분', '행사', '제목', '문서번호', '시행일', '수신', '참조', '상태', '내용', '발행일', '발행자', '수정일', '수정자'],   // 공문 대장 (11-10): 상태 = 작성 중 · 발행. 발행하면 문서번호를 매기고 내용을 고정
   '문의': ['문의ID', '작성일', '교사ID', '이름', '휴대전화', '이메일', '분류', '제목', '내용', '상태', '처리일', '처리자', '수정일'],   // 문의·요청 게시판 (10-28): 상태 = 접수 · 처리중 · 완료
   '댓글': ['댓글ID', '문의ID', '작성일', '쓴사람', '이름', '내용'],   // 쓴사람 = 관리자 · 작성자
   '사진': ['교사ID', '사진', '수정일'],
@@ -91,6 +92,7 @@ const SETTINGS = [
   ['인증 코드 화면 표시', '아니오', 'STG 시험용. 「예」면 메일과 함께 화면에도 인증 코드를 보여 줌 (메인에서는 꼭 아니오)'],
   ['정산 정보 시트', '', 'setup 이 만드는 관리자 전용 파일 ID (계좌·우편물 주소). 공유하지 마세요'],
   ['지난 회비 원본', '', '설정 › 지난 해 교사 회비 불러오기에 마지막으로 넣은 시트 ID'],
+  ['공문 번호 형식', '제{년}-{번호}호', '공문을 발행할 때 매기는 문서번호 모양. {년} = 시행 년도, {번호} = 그 해 발행 순서(3자리). 예) 한스음 제{년}-{번호}호'],
   ['행사 명단 시트', '', '캠프 · 졸업연주가 읽는 「행사용 명단」 파일 ID. 바뀌면 5분 안에(그리고 매시간) 자동으로 새로 씀 (주민번호 · 계좌 · 주소 없음). 공유하지 마세요'],
   ['서류 폴더', '', '학원 서류(사업자등록증 · 인가증 · 임대계약서)를 넣는 관리자 전용 드라이브 폴더 ID. 처음 올릴 때 자동으로 만듦'],
 ];
@@ -107,7 +109,7 @@ function include(n) { return HtmlService.createTemplateFromFile(n).getRawContent
 
 function api(name, args) {
   const open = { login, hello, tHello, tEvents, tLookup, tStart, tResend, tVerify, tCreate, tLogin, tForgot, tReset, tPwChange, tMe, tSavePay, tSavePart, tSaveInfo, tSavePhoto, tAcad, tSaveAcad, tDocUp, tDocGet, tSaveStu, tSaveStus, tStuDetail, tStuSave, tStuTutor, tStuTutorDel, tStuState, tStuStateDel, tMyStu, tMyStuDetail, tMyStuPay, tTchSaves, tTchEnd, tTchEvent, tTchAssign, tTchStart, tSaveRrn, tSaveInc, tAddWork, tClassCreate, tEndWork, tMainWork, tLogout, bPost, bMine, bReply };
-  const fns = { printEvents, printEvSave, printData, printSet, printCopy, printExport, ogGet, ogSave, ogToken, boot, saveRow, setCheck, logs, importRoster, saveDues, delDues, reqs, reqDo, delAcad, payView, bulkSet, saveWorks, importPastDues, importPayInfo, bList, bSet, bComment, photoGet, photoDel, fillRegions, saveRates, docList, docUp, docGet, docDel, payList, payOk, payOkMany, payNo, memView, rosterNow, inputStatus, inboxDone, acctReset, classFromStudents, delStus, asTeacher, bankImport, bankList: bankListTop, bankSet, bankDues, bankFromSheet, bankMeta, bankSplitSave, bankPay, bankCamp, bankCampPay, bankPayList, devVirtual };
+  const fns = { printEvents, printEvSave, printData, printSet, printCopy, printExport, ogGet, ogSave, ogToken, boot, saveRow, setCheck, logs, importRoster, saveDues, delDues, reqs, reqDo, delAcad, payView, bulkSet, saveWorks, importPastDues, importPayInfo, gmList, gmGet, gmSave, gmIssue, gmCopy, gmDel, bList, bSet, bComment, photoGet, photoDel, fillRegions, saveRates, docList, docUp, docGet, docDel, payList, payOk, payOkMany, payNo, memView, rosterNow, inputStatus, inboxDone, acctReset, classFromStudents, delStus, asTeacher, bankImport, bankList: bankListTop, bankSet, bankDues, bankFromSheet, bankMeta, bankSplitSave, bankPay, bankCamp, bankCampPay, bankPayList, devVirtual };
   try {
     if (open[name]) return Object.assign({ ok: true }, open[name].apply(null, args || []));
     if (!fns[name]) throw new UserError('알 수 없는 요청이에요.');
@@ -683,6 +685,56 @@ function importPayInfo(who, src) {
     log_(who.name, '정산', '', '원본 계좌 · 주소 · 주민번호 옮김', '선생님 ' + cnt.teachers + '명 · 계좌 ' + cnt.acct + ' · 집 주소 ' + cnt.home + ' · 우편물 ' + cnt.mail + ' · 주민번호 ' + cnt.rrn + ' (형식 틀림 ' + cnt.rrnBad + ') · 못 맞춘 ' + un.length + '줄 (값은 기록하지 않음)');
   } finally { lock.releaseLock(); }
   return { cnt, un, bad, matched: Object.keys(got).length };
+}
+/* ====================== 공문 대장 (11-10) ======================
+ * 모든 공문을 한곳에: 일반(회원 공지 등) · 여름캠프 · 겨울캠프 · 졸업연주(서울/대구/대전) · 교사연수 · 기타.
+ * 「작성 중」은 고칠 수 있고, 「발행」하면 문서번호를 매기고 내용을 고정(바꿀 일이 생기면 「복사해서 새로」 = 변경 공문). */
+const GM_KINDS = ['일반', '여름캠프', '겨울캠프', '졸업연주 서울', '졸업연주 대구', '졸업연주 대전', '교사연수', '기타'];
+function gmRow_(r, h, full) { const o = {}; h.forEach((k, i) => { if (k !== '내용' || full) o[k] = r[i]; }); return o; }
+function gmList(who) { const T = tbl_('공문'); return { list: T.v.map(r => gmRow_(r, T.h, false)).sort((a, b) => String(b['수정일']).localeCompare(String(a['수정일']))), kinds: GM_KINDS }; }
+function gmGet(who, id) { const T = tbl_('공문'), i = T.find('공문ID', id); if (i < 0) fail('공문을 찾지 못했어요.'); const o = gmRow_(T.v[i], T.h, true); let d = {}; try { d = JSON.parse(o['내용'] || '{}'); } catch (e) { } o['내용'] = d; return { doc: o }; }
+function gmClean_(d) {
+  d = d || {}; const s = v => String(v == null ? '' : v);
+  const sec = (Array.isArray(d.sec) ? d.sec : []).slice(0, 30).map(x => ({ t: s(x.t).slice(0, 80), body: s(x.body).slice(0, 8000), on: x.on !== false }));
+  const mg = {}; ['t', 'b', 'l', 'r'].forEach(k => { const v = +((d.mg || {})[k]); if (isFinite(v) && (d.mg || {})[k] !== '' && (d.mg || {})[k] != null) mg[k] = Math.max(0, Math.min(40, v)); });
+  const o = { intro: s(d.intro).slice(0, 8000), sec, num: d.num === '1)' ? '1)' : '1.', sign: d.sign !== false, mg, logo: d.logo !== false };
+  if (JSON.stringify(o).length > 45000) fail('공문 내용이 너무 길어요. 항목을 나눠 주세요.'); return o;
+}
+function gmSave(who, x) {
+  x = x || {}; const T = tbl_('공문'), stamp = now_();
+  const kind = GM_KINDS.indexOf(x['구분']) >= 0 ? x['구분'] : '일반', title = String(x['제목'] || '').trim().slice(0, 120); if (!title) fail('제목을 넣어 주세요.');
+  const date = String(x['시행일'] || '').trim(); if (date && !/^\d{4}-\d{2}-\d{2}$/.test(date)) fail('시행일을 확인해 주세요.');
+  const row = { '구분': kind, '행사': String(x['행사'] || '').slice(0, 80), '제목': title, '시행일': date, '수신': String(x['수신'] || '').slice(0, 200), '참조': String(x['참조'] || '').slice(0, 200), '내용': JSON.stringify(gmClean_(x['내용'])), '수정일': stamp, '수정자': who.name };
+  const lock = LockService.getScriptLock(); lock.waitLock(20000); let id = String(x['공문ID'] || '');
+  try {
+    if (id) { const i = T.find('공문ID', id); if (i < 0) fail('공문을 찾지 못했어요.'); if (T.get(i, '상태') === '발행') fail('발행한 공문은 고칠 수 없어요. 「복사해서 새로」로 변경 공문을 만들어 주세요.');
+      if (x._at && String(T.get(i, '수정일')) !== String(x._at)) fail('다른 곳에서 먼저 고쳤어요. 새로 고친 뒤 다시 해 주세요.'); T.set(i, row); }
+    else { id = nextId_(T, '공문ID', 'G'); T.append(Object.assign({ '공문ID': id, '상태': '작성 중', '문서번호': '' }, row)); }
+    log_(who.name, '공문', id, '저장', title);
+  } finally { lock.releaseLock(); }
+  return Object.assign(gmGet(who, id), gmList(who));
+}
+function gmIssue(who, id) {
+  const T = tbl_('공문'), lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    const i = T.find('공문ID', id); if (i < 0) fail('공문을 찾지 못했어요.'); if (T.get(i, '상태') === '발행') fail('이미 발행한 공문이에요.');
+    const date = String(T.get(i, '시행일') || '') || Utilities.formatDate(new Date(), 'Asia/Seoul', 'yyyy-MM-dd'), y = date.slice(0, 4);
+    const n = T.v.filter(r => r[T.h.indexOf('상태')] === '발행' && String(r[T.h.indexOf('시행일')]).slice(0, 4) === y).length + 1;
+    const no = String(settings_()['공문 번호 형식'] || '제{년}-{번호}호').replace(/\{년\}/g, y).replace(/\{번호\}/g, String(n).padStart(3, '0'));
+    T.set(i, { '상태': '발행', '문서번호': no, '시행일': date, '발행일': now_(), '발행자': who.name, '수정일': now_(), '수정자': who.name });
+    log_(who.name, '공문', id, '발행', no + ' · ' + T.get(i, '제목'));
+  } finally { lock.releaseLock(); }
+  return Object.assign(gmGet(who, id), gmList(who));
+}
+function gmCopy(who, id) {
+  const g = gmGet(who, id).doc, T = tbl_('공문'), nid = nextId_(T, '공문ID', 'G');
+  T.append({ '공문ID': nid, '구분': g['구분'], '행사': g['행사'], '제목': g['제목'] + (g['상태'] === '발행' ? ' (변경)' : ' (사본)'), '문서번호': '', '시행일': '', '수신': g['수신'], '참조': g['참조'], '상태': '작성 중', '내용': JSON.stringify(g['내용'] || {}), '수정일': now_(), '수정자': who.name });
+  log_(who.name, '공문', nid, '복사', id + ' → ' + nid);
+  return Object.assign(gmGet(who, nid), gmList(who));
+}
+function gmDel(who, id) {
+  const T = tbl_('공문'), i = T.find('공문ID', id); if (i < 0) fail('공문을 찾지 못했어요.'); if (T.get(i, '상태') === '발행') fail('발행한 공문은 지울 수 없어요(대장에 남아요).');
+  T.sh.deleteRow(i + 2); log_(who.name, '공문', id, '지움', T.get(i, '제목')); return gmList(who);
 }
 function readSrc_(ss, tab, mark, cols) {
   const sh = ss.getSheetByName(tab); if (!sh) fail('원본에 「' + tab + '」 탭이 없어요.');

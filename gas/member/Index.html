@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261109-213639 -->
+<!-- build: 20261110-145526 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -120,6 +120,24 @@ label.f.wide{grid-column:1/-1}
 .homebar .wrap{display:flex;gap:8px;justify-content:space-between;padding-top:8px;padding-bottom:8px}
 .spin{display:inline-block;width:16px;height:16px;border-radius:50%;border:2px solid var(--accent);border-right-color:transparent;animation:s .8s linear infinite;vertical-align:-3px}
 @keyframes s{to{transform:rotate(360deg)}}
+.gmg .grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px 12px}@media (max-width:700px){.gmg .grid2{grid-template-columns:1fr}}
+/* ---------- 공문 (11-10) ---------- */
+.gmz.wrap{max-width:1560px}
+.gmg{display:grid;grid-template-columns:minmax(0,1fr) 540px;gap:16px;align-items:start}
+@media (max-width:1100px){.gmg{grid-template-columns:1fr}}
+.gmg textarea{width:100%;font:inherit;font-size:15px;line-height:1.6;padding:8px 10px;border:1px solid var(--line);border-radius:8px;resize:vertical;box-sizing:border-box}
+.gmsec{border:1px solid var(--line);border-radius:10px;padding:10px;margin-top:10px;background:var(--surface,#fff)}
+.gmsec.off{opacity:.55}.gmsec .dh{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:6px}.gmsec .dh input[type=text]{flex:1;min-width:140px;font-weight:700}
+.gmpw{position:sticky;top:calc(var(--hdrH,0px) + 10px)}
+.gmprev{background:#e6eaec;border-radius:10px;padding:10px;max-height:calc(100vh - var(--hdrH,0px) - 80px);overflow:auto}
+.gmprev .dp{zoom:var(--dz,.62);box-shadow:0 2px 12px rgba(0,0,0,.18);margin:0 auto}
+.gmlock{background:#eef4ff;border:1px solid #b9cdf5;border-radius:8px;padding:8px 12px;margin-bottom:10px}
+.dp{width:210mm;min-height:297mm;box-sizing:border-box;padding:13mm 16mm 15mm;background:#fff;color:#111;font-family:"Pretendard Variable",Pretendard,"Malgun Gothic","Apple SD Gothic Neo",sans-serif;font-size:12.5pt;line-height:1.55;letter-spacing:-.01em;word-break:keep-all}
+.dp *{font-family:inherit}.dp .lg{text-align:center}.dp .lg img{width:46mm;height:auto}
+.dp .meta{font-size:12pt;margin:4mm 0 2mm;border-bottom:1px solid #444;padding-bottom:2mm}.dp .meta div{display:flex;gap:4mm}.dp .meta b{min-width:18mm;font-weight:700}
+.dp h1{font-size:22pt;text-align:center;margin:3mm 0 4mm;font-weight:800;letter-spacing:-.02em}
+.dp .intro{margin:0 0 3mm}.dp .sc{margin:0 0 2.6mm}.dp .sh{font-weight:800}.dp .ln{white-space:pre-wrap;margin:0}.dp .ln.gap{height:1.6mm}.dp .red{color:#d0021b}
+.dp .ft-end{margin-top:8mm;text-align:center}.dp .ft-end .www{font-weight:700;font-size:13pt}.dp .ft-end .ko{font-size:21pt;letter-spacing:.45em;margin-top:1mm;font-weight:500}.dp .ft-end .en{font-size:12pt;letter-spacing:.42em;color:#222}
 </style>
 <style>
 /* 디자인 (10-31): 글꼴 Pretendard · 회원 파랑(#4285f4) 색 · 자간 · 행간 · 낱말 단위 줄바꿈 (관리자 화면은 표가 많아 조금 촘촘하게) — 위 색 정의를 덮어씀 */
@@ -164,7 +182,7 @@ th .trz{position:absolute;right:-3px;top:0;bottom:0;width:7px;cursor:col-resize;
 var INSTS=['바이올린','첼로','비올라','플루트','피아노'];
 var T_INSTS=INSTS.concat(['지휘','기타']);
 var CHECKS=['확인 전','확인 필요','확인'];
-var TABS=[['home','메인'],['acad','학원정보'],['tch','교사정보'],['stu','학생정보'],['ext','관계자정보'],['req','승인 대기'],['pay','입금 신고'],['bank','통장'],['prog','입력 현황'],['ask','문의'],['prt','인쇄 요청'],['log','바뀐 기록'],['set','설정']];
+var TABS=[['home','메인'],['acad','학원정보'],['tch','교사정보'],['stu','학생정보'],['ext','관계자정보'],['req','승인 대기'],['pay','입금 신고'],['bank','통장'],['prog','입력 현황'],['ask','문의'],['prt','인쇄 요청'],['gm','공문'],['log','바뀐 기록'],['set','설정']];
 var S={sess:'',tab:'home',q:'',f:{},page:0,edit:null,sel:{},issue:'',D:null,test:false,busy:false,hist:[]};
 var A={},T={},ST={};
 
@@ -553,6 +571,71 @@ function vProg(){var R=S.prog;if(!R)return '<div class="panel"><span><span class
     '<div class="row" style="margin:8px 0">'+['전체','미가입','대표 없음','빈칸 있음','서류 부족','신고 대기'].map(function(k){return '<button class="btn small '+(f===k?'primary':'')+'" type="button" data-pg="'+k+'">'+k+' '+cnt(k)+'</button>'}).join('')+'</div>'+
     '<div class="panel"><div class="filters"><input type="search" id="q" placeholder="학원 · 대표 찾기" value="'+esc(S.q||'')+'" style="max-width:240px"></div><div class="tbl"><table><thead><tr><th>학원</th><th>대표</th><th>대표 가입</th><th>학원 정보</th><th>서류</th><th>협회 계약</th><th class="r">교사</th><th class="r">재원 학생</th><th class="r">성별 빈칸</th><th class="r">담당 빈칸</th><th class="r">시작일 빈칸</th><th class="r">신고 대기</th><th>학생 마지막 수정</th></tr></thead><tbody>'+
     (L.length?L.map(function(a){return '<tr><td><b>'+esc(a.name)+'</b>'+(a.kind==='클래스'?' <span class="cap">클래스</span>':'')+'</td><td>'+(a.head?esc(a.headName||a.head):'<span class="pill bad">없음</span>')+'</td><td>'+(a.headAcc?'<span class="pill ok">가입</span>':'<span class="pill due">미가입</span>')+'</td><td class="num cap">'+(a.acadEdit?esc(String(a.acadEdit).slice(0,10)):'-')+'</td><td>'+(a.kind==='클래스'?'<span class="cap">해당 없음</span>':a.docs>=3?'<span class="pill ok">3/3</span>':'<span class="pill due">'+a.docs+'/3</span>')+'</td><td>'+(a.contract?'<span class="pill ok">체결</span>':'<span class="cap">-</span>')+'</td><td class="r num">'+a.tch+'</td><td class="r num">'+a.stu+'</td><td class="r num">'+n0(a.noSex,1)+'</td><td class="r num">'+n0(a.noTutor,1)+'</td><td class="r num">'+n0(a.noStart,1)+'</td><td class="r num">'+n0(a.pend)+'</td><td class="num cap">'+(a.stuEdit?esc(String(a.stuEdit).slice(0,10)):'-')+'</td></tr>'}).join(''):'<tr><td colspan="13" class="cap">없어요.</td></tr>')+'</tbody></table></div><p class="cap">기준 시각 '+esc(R.at)+'</p></div>'}
+var GM_LOGO='data:image/jpeg;base64,\/9j\/2wBDABALDA4MChAODQ4SERATGCgaGBYWGDEjJR0oOjM9PDkzODdASFxOQERXRTc4UG1RV19iZ2hnPk1xeXBkeFxlZ2P\/2wBDARESEhgVGC8aGi9jQjhCY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2P\/wAARCABnAdgDASIAAhEBAxEB\/8QAGwABAAIDAQEAAAAAAAAAAAAAAAQFAQMGAgf\/xABCEAACAgIAAwIKBgcHBQEAAAAAAQIDBBEFEjEhUQYTIjJBYXGRsdEUFVRzksEWMzQ1UnLhI1VigZOhsnSCwvDxJP\/EABkBAQADAQEAAAAAAAAAAAAAAAABAgMEBf\/EACURAAICAgIBBQADAQAAAAAAAAABAhEDEiExBBMyQVFhFCIzcf\/aAAwDAQACEQMRAD8A+gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA8ykoxcpNJLtbfoK27jlEJarhKzXp6IrKSj2Q5JdloCn+vo\/Z5fi\/oeZ8e3B8lGpehuXQp60Psr6kfsujBiPmr2Gu+11crS3stOahHZ9GiV9G0yRllxb7YtHnO4hRg0K21t83mxXWRSGfHkTcWTq+iUZOdn4ULlfJivm9HNPs+BeYsnPEplJ7coRbf+RpGal0JQcezcYPNtkKq5Tm1GMVttlTPwgrUmoUSku9vREpxj2y0Mc5+1FyCk\/SGP2aX4v6D9IY\/Zpfi\/oU9fH9l\/42X6LoEXh+as6mVig4JS5e17PWfdLHxJ2w6xa7O\/tRqmmrRlo9tfkkgqFx2HZzUSXfqRMs4jjVYLzJz1Ul3du+7XeSWlinHtEsHLz8Mqk3yYc2vRuaX5F1wbLnncMqybElKxyel6PKegJYpQVyROBhtJbfQ5rL8M8Wm+VdFE74xeufm5U\/YSot9GLko9nTA5P9N6vsM\/8AUXyH6b1fYZ\/6i+Rb05fRX1I\/Z1hqyrXRi22xjzOuDko9+l0KrgfH1xi6yuONKpVx5nJy3\/l0LTKm68W2cfOjBte4pJOPZa01aOf4Dx3MzuIui9QlCUXLcY65NfkdMUNHFcahuVeDCucvOcNLf+xb4mVXl1c9bfc0+qKRnGXCZni4VN2bwAXNjABGvunVPS0016TLLljijtLolJvhEkGqnIjb2dGeczMpwqHbfLS9CXVvuRMMkJx2i+Bq7okA5eXhDl5GRCvHhXUpSUVtbfadNBSjBKUuaXpetExmpdEyg49mTJFzMl4zrko8ye9o0w4pW5JTg4rv3sh5Ip02SscmrSLAETNz6cOqM5tycvNivSVtnhBuDVePqXobl0EssI8NloYZzVpF6DzDthH2Ho0MgCm4j4SYWDY6o819sexqHRPubIH6ZV\/Ypf6n9AarDOStI6cycu\/DKGuzClv7z+hc8FzJ8Q4fHJsSi5yl2L0JPSQIlinBXJErIsdOPZYltxi3ogcMz7sm+VdumtbTS6G\/i+RPE4XffXrnrjzLfTsZzlHhlj19OHcjfnck18jSMbTpHNOVSXJ2AIvDs+jiWKsjGk3BvTTWnF9zJRmap2DBoysynEju2Xa+kV2tle+PQ32US165FJZIx7ZVyS7LgFN9fR+zy\/F\/QkYHEXm5MoqHJGMd9d7eyFki3SYU4vhFiADQsAAAAAAUvH8iScMeL1Frml6+74FKWvhFxDGwpxj9HhdkzW\/K6RXeyg+vLPseH+CXzOXJicpXZxZZxUqbJR6hCVk4wgtyb0kQ\/ryz7Hh\/gl8zbR4Q5NU14nExIyfZ2Vvb\/wByqwc8szWSF9ncJaikR83zY+0kLelvr6SPmebH2lvM\/wAJHp4\/ciGU\/hDJuzHTfYq38WXJS+EH67H+7fxZ4\/h+5\/8ADr+UVJ3uF+xUfdx+BwR32InHEpT6quKfuPY8ftmef4IfHpa4dJb6yS9pzJ2OTRRbHmyIKUY9vldEVN0sPeqcSvXfJfkU8iFu2zbxsusdUikNlFFmRaq6oOUn\/sWW6fstH4X8yRVmypjy1VUwj3KOjCMY3yzplmlX9UWWFjLExYUp7a7W+9mri\/7tt\/y+KJGPKc6Yzs5dyW9JEfi6b4bbr1fFHpRquDzItvIr+zmjXxVv6kitvX0jp\/2s2Griv7lh\/wBR\/wCLJR6mT4KE7\/wY\/cGN\/wB3\/JnAHf8AgwmuAY2\/8X\/Jg5\/L9i\/6SeMS5OD5sublaonp+vlZ8uPqXFKI34U1OELIxXM4z3p69jOc8Th\/3di\/hfzOjF0eLm7OQPVdc7rI11Qc5yelGK22dd4rD\/u7F\/A\/mTuHZeLiS1HCpq32OVUdP+pq5NLhGSSb5Zv8GuEPhWC\/G6+kXalP\/D3L\/wB7yyzf2G\/7uXwNsJxsgpwacX2po1ZvbhX\/AHcvgcc23bZ2JUqRyRc+Dz8q9eqP5lMXHg959\/sj+ZwYfejnx+4vAAd51AhZn6yPsJpCzP1kfYcXn\/4s0x+40Rk4yTXVFL4SZEreIeK35NUVpetrfyLk5\/jv72u9kf8AijzvDk9ZI6Ev7EfC\/bsf7yPxO8ODwv27H+8j8TvD1vH6Znn7RX8X8yv2sqy04v5lftZVnNn97OjB7EauKN8+OvR4lfFkEm8U8+j7lfFkIzn7jrw+w7aHmR9iKrwlzp4PC5OptWWvki16O9+4tYeZH2ELi0cR4yll0xuUX5EX3nqo8eHvR85B0z+i77OH4qX8r+Y1jfYMX8L+ZB61y+jmT6D4OUWY\/BaIWxcZvcuV9Vt7RTV2UUzU68DFUl0fI+z\/AHOlwbp5GJC2xJSlvsXTqEcnlOTirXBF8If3Fmfds+Zn03wgTlwLMSW\/7Ns+ZHVh6PIz9o7LwDb8RmLfZzR7P8mdVOShCUn0its5XwD\/AFOZ\/ND4M6bK5vot3JFSlyPSa7G9GOT3M1x+w5bIunkXztn1k\/d6jURfryz7Hifgl8x9eWfY8P8ABL5nA8Lb7OJ5YfZKLjwfrl422zXk65d97Od+vLPseH+CXzOn4BxWviNEoKqNNlWtwj013ovjxayts1xThKXDLcAHSdgAAAAMAHC+FFsLeMzcJqSjFReu3T7ioPp\/i4fwR9w8XD+CPuK0cU\/FcpN2fMUnJ6SbfcjpPB7gNvj4ZeZBwhB7hCXVvvfcdWoRj0il7EZCRbH4qi7bsHi6vxlbj6fQbAJRUouLOtOirlFxepLTKXwg\/XUfd\/mzrJQjPzopke3h2JfOM7aYzcVpbbPOxeC8c20+DdZV8nK8I4bPOyYtxaog9zl3+o7MxCEa4qMIqMV0SWkj0d+OCgjOc3N2VvFrGowrT7H2srDpGk+qTMcse5e4yyYN5XZrjz6RqjnTNdcrJKMI7bOh5Y9y9xlJLotFV4v6Xfk\/h5qh4uqEP4YpC6tXVSrl0ktM9g61wct82cnk41mLc67F7H6GiJxX9yw\/6j\/xZ2llVdseWyEZruaItvCsG6pV2UKUFLnS29b1rvIo7P5VpbI4Hh+BfxDJjRRFtvzpeiK72fRsaiGLjV0V+ZXFRQox6cavxdFUK4d0Vo2kmObM8j\/DXdDxtNle9c0WtnMW1Tpm4WRcZLvOrMNJ9UjSE9TkyY9zkgdZyx\/hXuHLH+Fe409b8MvQ\/Sr4Hc2rKW9peUvV3lq0mtPowkl0SRkxk9nZvGOqo5XPwp4dzTTdbfky7yd4Pedf7I\/mXU4RnFxnFSi+qa2aqMWjHlKVNag5ddHMsOs9kUWOpWjeADc1BCzP1i9hNMaMPIw+tDS6LRlq7K2MHOSSXaU3hFhW15jyeVuqxLykujS1p+46vQ69TDD4axRau7NPVd2cFhft2P8Aex+J3phQgukY+49HVjhoVyT3I+ZR9IocV5y7Y+0pJRlCTjJNNehnRHiymu39ZBS9qKZcO\/K7L4s2nD6OY4p59H3K+LPXCsGeVkRnKOqYPbbXX1F\/Ph+LOUZTpjJxWlvt7CRGKjFRikkuiRReP\/a5Gr8qoaxRkqOPzi4VQ35W29FwY5U+qXuOo5sc9JKRxwOw5I\/wr3Dlj\/CvcRR2fzPw5vC4dblTTcXCv0ya17jpIQjXBQitRitJGQScuXK8j5PNtcLqp1WLmhOLjJd6Z8z4xwq\/hWXKqxN1t7rs12SXz9R9PNd1NWRW67q4WQfWM4povCerOacN0cv4B\/qcz+aHwZ1ZGwuHYmB4z6JSqvGNOWm+3RKIk9nZaC1VHGce4BdRkTyMSt2UTe3GK7YP2dxQNaemtH1Ew4Qk9uMW\/WjOjlyeIpO06Pl50Pgb+8L\/ALr80dd4uH8EfceFjVRyPHxhGNnLytpdV\/6iUqGPxdJKVm4AEnYAAAAAAAAAAAAAAAAAAAAAYMgr+IZltN9dFPJGU+3mn0RKVukVnNQVsnmSNiPJ8r6T4t9OVw9J4+k2fWf0fyeTk36xRG6pN\/JMBDxMmy7KyK5a5a3qOjxnXZePz2QdKpj05t7J1d0Q8iUdicZI+FbbdixsuSUpdul3EfGzLbMLIuko81blrS7OxDVk+ouP0ng0YV0r8WFs9c0l26IP1pYqrdxi7fGclcUn2hRb4Kyyxik38lqZNdPjPExd2vGa7ddCNwzKsy6JTsUU1LXYvUiK4svsrS+yaDBozrpY+JO2OuaOtb9oSt0S2oq2SAVlHEpSwLrpqKsg9a17jdwzLsyqpu1JSjLXYtEuDXJnHNGTSXyTQQ8fKstzb6ZKPLX011MYWVZfk5Nc1HVctLXtY1ZKyJ0TQVt2bkSzZY2NGtOK7XP0k2p2+ITuSVmu1LoHFoRyKTaXwbTBD4ZlTyseU7EtqWuz2I1PNyci+deHCHLB6cpjR3Q9WNJ\/ZZA1Y7udS+kKKs9PL0NhUunasyCBdnOjOlXPl8VGHN07TZgW331O25RipPyEl6Czi0rKLJFy1RLBXSy8i\/JsqxI16q7HKe+1m7Ay3kwnGyKjZW9SSDi0rCyRbolGSsuyst59uPQq9QSflb7l8yRw\/KeXj88opST09dA4tKxHLGUtSUCtWVmXZV1dHitVvXlJljDm5I8+ubXbrvIaomE1Lo9ArI8Rk+JeJaSpcnFPXbv\/AOlmHFrsQmp3QABBcAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFfxGeE5qvKTUtbUkmWB5lGMlqSTXrRMXTspOOyoq+DKSsuUHJ4681yXpM5Fkcbi6tt2q3DSei0SSWktISipLUkmvWW35sz9JqCin0VvCn4zJyrop8k5eS2uvU0cRya7c6NNsuWmt7l2N7ZcpJLSMOKb20vcSpq7DxPTWzxRbXfUp1PcOi7NFNTkwx8TKx7dxsk5aWu9aL3Wuhhxi2m4ptenRCkkWnjcqpkfh0XDAqjJNPXRlPGqaVuVX2zpt216joRpdyJU6bKzw7JK+jVj3xyKI2w6NdO4hcCX\/wCSf87+CLJJLotBJLoit8NF9Hab+AQuMPXD5rva+JOMEJ07LTjtFoopY8\/psKUv7O3klLs9CX\/0l8J7LsuK9FnzLIF3ktUYwwKMtkyp8csHid8rk1CxbUkjZwiMpWZGQ4tRsluO162\/zLJpPqgQ5WiY4qld8FPxOeHK2xSU43x6SS6vRN4e7XgRd2+bT87rol6T6pAOVqiY4qk5WVvA\/wBkn\/O\/gjRiXfVltlORGSi3uMkupchpPqhvy7+SPSaSp8o10XQyKlZXvlfebTAKGyuuSmzsf6TxOda87xe17SZwzJ8dR4ua1bV5MkTdLe9doSS6Iu52qMo4tZuSfZU490cDLyY5G4qb5ovTe12\/M28IhKU8jIaajbLcdrXf8ywlFS85J+0yHK0RHFTXPCKPLolfxPKjBtSUE1r09i7CfwmdcsKKriouPZJesm6W967Qkl0Wg52qEMOs3IoWsV52T9KckubydbLe7JjDDlkRfZy7jv09xu5Y9y9xnS1rXYJSuiYY3C+eznnj5NeFC\/yOVSVifbzbev6F\/VNW1QsXSSTPWlrXoHQSnsMeL03wzIAKGwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB\/\/2Q==';
+var GM_KINDS=['일반','여름캠프','겨울캠프','졸업연주 서울','졸업연주 대구','졸업연주 대전','교사연수','기타'];
+var GM_MG={t:13,b:15,l:16,r:16};
+function gmToday(){var d=new Date();return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2)}
+/* 새 공문 양식: 빈 공문 · 회원관리(회비) 안내 */
+function gmTpl(k){
+  if(k==='member')return {'구분':'일반','행사':'','제목':'선생님 회원 사이트(회원관리 시스템) 운영 안내','시행일':gmToday(),'수신':'회원 원장님 및 선생님','참조':'',
+    '내용':{num:'1.',sign:true,logo:true,mg:{},intro:'1. 회원 여러분의 가정과 학원에 평안을 기원합니다.\n2. 협회는 회원 정보와 회비, 행사 신청을 한곳에서 관리하는 **「선생님 회원」 사이트**를 열었습니다. 도입 배경과 달라지는 점을 아래와 같이 안내드리오니 가입과 정보 입력에 협조해 주시기 바랍니다.\n\n- 아      래 -',sec:[
+      {t:'도입 배경',on:true,body:'그동안 캠프 · 졸업연주 · 교사연수 때마다 같은 정보를 신청서와 엑셀에 반복해서 적어야 했고, 명단이 행사마다 달라지거나 회비 확인 · 우편물 발송에서 빠지는 일이 있었습니다.\n이에 선생님과 학생 정보를 **한곳에 한 번만** 정리하고, 모든 행사가 이 정보를 함께 쓰도록 시스템을 마련하였습니다.'},
+      {t:'달라지는 점',on:true,body:'가. **행사 신청 통합**: 겨울캠프 · 졸업연주 · 교사연수를 한 사이트에서, 하나의 계정(이메일 · 비밀번호)으로 신청합니다.\n나. **학생 관리**: 학생별 재원 · 휴원 · 퇴원, 담당 선생님, 해마다 낸 회비와 회원 자격 기간(남은 기간)을 한 화면에서 관리합니다.\n다. **회비 관리**: 교사 회비 · 학생 회비 납부 내역을 언제든 확인하고, 입금 신고 → 협회 확인으로 처리합니다.\n라. **주소 · 우편물**: 집 주소와 우편물 받을 주소를 선생님이 직접 입력 · 수정하여 공문 · 졸업장 · 자료 발송 누락을 막습니다.\n마. **정산**: 계좌를 한 번 등록하면 캠프 · 행사 강사료 정산에 바로 반영됩니다.'},
+      {t:'학생 회원 자격',on:true,body:'학생 회비는 협회가 입금을 확인한 뒤 **12개월** 회원 자격이 주어집니다. 처음 내는 학생은 재원 시작 다음 달부터, 계속 다니는 학생은 앞 자격이 끝난 다음 달부터 이어집니다(휴원 중에도 기간은 이어집니다).'},
+      {t:'이용 방법',on:true,body:'가. 접속: {회원주소}\n나. 이름 + 휴대전화로 본인 확인 → 이메일 인증 → 비밀번호 설정\n다. 내 정보(근무 학원 · 자격 · 성별 · 계좌 · 주소)를 확인하고 채워 주십시오.\n라. 원장님께서는 「학원 관리」에서 학원 정보 · 서류와 소속 선생님, 학생 명단(성별 · 출생연도 · 담당 선생님 · 재원 시작일)을 입력해 주십시오.'},
+      {t:'일정',on:true,body:'가. 사이트 운영: 2026년 11월 1일부터\n나. **2027 겨울음악제 접수: 2026년 12월 1일부터** (가입한 계정으로 바로 신청)\n다. 입력 마감은 따로 없으며, 접수 기간 중 입력하신 내용도 몇 분 안에 신청 화면에 반영됩니다.'},
+      {t:'개인정보 보호',on:true,body:'계좌 · 주소 · 주민등록번호는 협회 담당자만 볼 수 있는 별도 파일에 보관하며, 주민등록번호는 암호화하여 강사료 원천징수 목적으로만 사용합니다.'},
+      {t:'문의',on:true,body:'사이트 오른쪽 위 「내 문의」에 남겨 주시면 답변과 처리 상황을 확인하실 수 있습니다.'}]}};
+  return {'구분':'일반','행사':'','제목':'','시행일':gmToday(),'수신':'','참조':'','내용':{num:'1.',sign:true,logo:true,mg:{},intro:'',sec:[{t:'',on:true,body:''}]}}}
+var GM_VALS={'{회원주소}':'app.suzukimusickorea.org\/member','{캠프주소}':'app.suzukimusickorea.org\/camp','{협회}':'(사)한국스즈키음악협회'};
+function gmMd(v){var m=String(v||'').match(/^(\d{4})-(\d{2})-(\d{2})/);return m?m[1]+'. '+(+m[2])+'. '+(+m[3])+'.':''}
+function gmFmt(t){return String(t||'').split('\n').map(function(line){if(!line.trim())return '<div class="ln gap"></div>';
+  var h=esc(line).replace(/\{[^{}\s]{1,8}\}/g,function(m){return GM_VALS[m]!=null?esc(GM_VALS[m]):m});
+  h=h.replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/!!(.+?)!!/g,'<span class="red">$1</span>');return '<p class="ln">'+h+'</p>'}).join('')}
+function gmMg(d){var m=(d['내용']||{}).mg||{},o={};Object.keys(GM_MG).forEach(function(k){var v=+m[k];o[k]=isFinite(v)&&m[k]!==''&&m[k]!=null?Math.max(0,Math.min(40,v)):GM_MG[k]});return o}
+function gmHtml(d){var c=d['내용']||{},n=0,M=gmMg(d);
+  var meta=[['문서번호',d['문서번호']||(d['상태']==='발행'?'':'(발행하면 매겨져요)')],['시행일',gmMd(d['시행일'])],['수신',d['수신']],['참조',d['참조']]].filter(function(x){return x[1]});
+  var secs=(c.sec||[]).filter(function(x){return x.on!==false&&(x.t||x.body)}).map(function(x){n++;var num=c.num==='1)'?n+')':n+'.',b=String(x.body||''),one=b.indexOf('\n')<0;
+    return one?'<div class="sc"><p class="ln"><span class="sh">'+num+' '+esc(x.t)+':</span> '+gmFmt(b).replace(/^<p class="ln">|<\/p>$/g,'')+'</p></div>':'<div class="sc"><div class="sh">'+num+' '+esc(x.t)+'</div>'+gmFmt(b)+'</div>'}).join('');
+  return '<div class="dp" style="padding:'+M.t+'mm '+M.r+'mm '+M.b+'mm '+M.l+'mm">'+(c.logo!==false?'<div class="lg"><img src="'+GM_LOGO+'" alt="SUZUKI MUSIC KOREA"></div>':'')+
+    (meta.length?'<div class="meta">'+meta.map(function(x){return '<div><b>'+x[0]+'</b><span>'+esc(x[1])+'</span></div>'}).join('')+'</div>':'')+
+    '<h1>'+esc(d['제목']||'(제목)')+'</h1>'+(c.intro?'<div class="intro">'+gmFmt(c.intro)+'</div>':'')+secs+
+    (c.sign!==false?'<div class="ft-end"><div class="www">www.suzukimusickorea.org</div><div class="ko">(사)한국스즈키음악협회</div><div class="en">KOREA SUZUKI ASSOCIATION</div></div>':'')+'</div>'}
+function loadGm(){S.gmL=null;callS('gmList').then(function(r){if(!r.ok){toast(r.msg);return}S.gmL=r.list;if(S.tab==='gm')render()})}
+function gmPrev(){var p=document.getElementById('gmPrev');if(p&&S.gm)p.innerHTML=gmHtml(S.gm)}
+function vGm(){if(S.gm)return vGmEdit();var L=S.gmL;if(!L)return '<div class="panel"><span><span class="spin"></span> 불러오는 중…</span></div>';
+  var f=S.f.gk||'전체',list=L.filter(function(x){return f==='전체'||(f==='졸업연주'?String(x['구분']).indexOf('졸업연주')===0:f==='캠프'?/캠프/.test(x['구분']):x['구분']===f)});
+  var cnt=function(k){return L.filter(function(x){return k==='전체'||(k==='졸업연주'?String(x['구분']).indexOf('졸업연주')===0:k==='캠프'?/캠프/.test(x['구분']):x['구분']===k)}).length};
+  return '<div class="sec-h"><div><h2>공문 대장</h2><p>모든 공문을 한곳에서 써요. 행사(캠프 · 졸업연주 · 교사연수)별로 나눠 보거나 모아 볼 수 있어요. 「발행」하면 문서번호가 매겨지고 내용이 고정돼요(고칠 일이 생기면 「복사해서 새로」 = 변경 공문).</p></div>'+
+    '<div class="row"><button class="btn primary" type="button" data-gmnew="member">+ 회원 사이트 안내 공문</button><button class="btn" type="button" data-gmnew="blank">+ 빈 공문</button></div></div>'+
+    '<div class="row" style="margin:6px 0">'+['전체','일반','캠프','졸업연주','교사연수','기타'].map(function(k){return '<button class="btn small '+(f===k?'primary':'')+'" type="button" data-gk="'+k+'">'+k+' '+cnt(k)+'</button>'}).join('')+'</div>'+
+    '<div class="panel"><div class="tbl"><table><thead><tr><th>문서번호</th><th>구분</th><th>제목</th><th>시행일</th><th>수신</th><th>상태</th><th>고친 때</th></tr></thead><tbody>'+
+    (list.length?list.map(function(x){return '<tr class="click" data-gmopen="'+esc(x['공문ID'])+'"><td class="num">'+esc(x['문서번호']||'-')+'</td><td>'+esc(x['구분'])+(x['행사']?' <span class="cap">'+esc(x['행사'])+'</span>':'')+'</td><td><b>'+esc(x['제목'])+'</b></td><td class="num">'+esc(gmMd(x['시행일'])||'-')+'</td><td class="cap">'+esc(x['수신']||'')+'</td><td>'+(x['상태']==='발행'?'<span class="pill ok">발행</span>':'<span class="pill due">작성 중</span>')+'</td><td class="num cap">'+esc(String(x['수정일']||'').slice(0,16))+'</td></tr>'}).join(''):'<tr><td colspan="7" class="cap">아직 공문이 없어요. 위 버튼으로 시작해 보세요.</td></tr>')+'</tbody></table></div></div>'+
+    '<p class="cap">캠프 공문은 지금 캠프 관리자 › 설정 › 공문에서 쓰고 있어요. 다음 단계에서 캠프 공문을 「발행」하면 이 대장에 같이 올라오게 연결해요.</p>'}
+function vGmEdit(){var d=S.gm,c=d['내용'],lock=d['상태']==='발행',dis=lock?' disabled':'',M=gmMg(d);
+  var inp=function(k,lab,type,o){o=o||'';return '<label class="f"><span>'+lab+'</span><input type="'+(type||'text')+'" data-gmf="'+k+'" value="'+esc(d[k]||'')+'"'+dis+o+'></label>'};
+  var secs=(c.sec||[]).map(function(x,i){return '<div class="gmsec'+(x.on===false?' off':'')+'"><div class="dh"><input type="checkbox" data-gmon="'+i+'"'+(x.on!==false?' checked':'')+dis+' aria-label="공문에 넣기"><input type="text" data-gmst="'+i+'" value="'+esc(x.t)+'" placeholder="항목 제목 (예: 일정)"'+dis+'>'+
+    (lock?'':'<button class="btn small" type="button" data-gmsec="up|'+i+'" aria-label="위로">↑</button><button class="btn small" type="button" data-gmsec="dn|'+i+'" aria-label="아래로">↓</button><button class="btn small ghost" type="button" data-gmsec="del|'+i+'">빼기</button>')+'</div>'+
+    '<textarea data-gmsb="'+i+'" rows="'+Math.max(2,Math.min(12,String(x.body||'').split('\n').length+1))+'" placeholder="내용 (한 줄이면 「1. 제목: 내용」처럼 한 줄로)"'+dis+'>'+esc(x.body||'')+'</textarea></div>'}).join('');
+  return '<div class="sec-h"><div><h2>'+(lock?'발행한 공문':'공문 쓰기')+'</h2><p>왼쪽을 고치면 오른쪽 미리보기가 바로 바뀌어요. 꾸밈: <b>**굵게**</b> · <span style="color:#d0021b">!!빨강!!</span> · 빈 줄 = 띄우기 · {회원주소} {캠프주소} {협회}</p></div>'+
+    '<div class="row"><button class="btn" type="button" id="gmBack">← 목록</button><button class="btn" type="button" id="gmWin">새 창으로 보기 · 인쇄 · PDF</button>'+(lock?'':'<button class="btn primary" type="button" id="gmSave">저장</button><button class="btn" type="button" id="gmIssue">발행 (번호 매기기)</button>')+(d['공문ID']?'<button class="btn" type="button" id="gmCopy">복사해서 새로</button>':'')+(d['공문ID']&&!lock?'<button class="btn ghost" type="button" id="gmDel">지우기</button>':'')+'</div></div>'+
+    '<div class="gmg"><div>'+(lock?'<div class="gmlock">발행한 공문이에요 · '+esc(d['문서번호'])+' · '+esc(String(d['발행일']||'').slice(0,16))+' '+esc(d['발행자']||'')+'. 고칠 일이 있으면 「복사해서 새로」로 변경 공문을 만들어요.</div>':'')+
+      '<div class="panel"><h3>문서 정보</h3><div class="grid2"><label class="f"><span>구분</span><select data-gmf="구분"'+dis+'>'+GM_KINDS.map(function(k){return '<option'+(d['구분']===k?' selected':'')+'>'+k+'</option>'}).join('')+'</select></label>'+inp('행사','행사 이름 <span class="cap">(있으면 · 예: 2027 겨울음악제)</span>')+
+      inp('제목','제목 <span class="req">*</span>')+inp('시행일','시행일','date')+inp('수신','수신')+inp('참조','참조')+'</div>'+
+      '<p class="cap">문서번호: '+esc(d['문서번호']||'발행할 때 설정 「공문 번호 형식」대로 자동으로 매겨져요')+'</p>'+
+      '<div class="row" style="gap:12px;flex-wrap:wrap"><label class="agree"><input type="checkbox" data-gmc="logo"'+(c.logo!==false?' checked':'')+dis+'> 로고 넣기</label><label class="agree"><input type="checkbox" data-gmc="sign"'+(c.sign!==false?' checked':'')+dis+'> 끝에 협회 이름 넣기</label>'+
+      '<label>항목 번호 <select data-gmc="num"'+dis+'><option value="1."'+(c.num!=='1)'?' selected':'')+'>1.</option><option value="1)"'+(c.num==='1)'?' selected':'')+'>1)</option></select></label>'+
+      '<span class="cap">여백 mm</span>'+['t','b','l','r'].map(function(k){return '<label class="cap">'+{t:'위',b:'아래',l:'왼쪽',r:'오른쪽'}[k]+' <input type="number" data-gmmg="'+k+'" value="'+M[k]+'" min="0" max="40" style="width:60px"'+dis+'></label>'}).join('')+'</div></div>'+
+      '<div class="panel"><h3>머리말 <span class="cap">(제목 아래 인사 · 취지)</span></h3><textarea data-gmc="intro" rows="'+Math.max(3,Math.min(10,String(c.intro||'').split('\n').length+1))+'"'+dis+'>'+esc(c.intro||'')+'</textarea></div>'+
+      '<div class="panel"><div class="spread"><h3>본문 항목 <span class="cap">(체크를 끄면 공문에서 빠져요)</span></h3>'+(lock?'':'<button class="btn small" type="button" data-gmsec="add|0">+ 항목 추가</button>')+'</div>'+secs+'</div>'+
+    '</div><div class="gmpw"><div class="spread" style="margin-bottom:6px"><b>미리보기 (A4)</b><span class="cap">'+esc(d['구분'])+'</span></div><div class="gmprev" id="gmPrev">'+gmHtml(d)+'</div></div></div>'}
+function gmWin(){var d=S.gm;if(!d)return;var css=[].map.call(document.querySelectorAll('style'),function(x){return x.textContent}).filter(function(t){return t.indexOf('.dp{')>=0}).join('\n'),M=gmMg(d);
+  var ti=String(d['제목']||'공문').replace(/[<>&"]/g,' ');var font='https:'+'\/\/cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css';
+  var ex='@page{size:A4;margin:0}html,body{margin:0}@media screen{body{background:#dfe4e6}.page{width:210mm;margin:14px auto 40px;box-shadow:0 2px 16px rgba(0,0,0,.22)}.tb{position:sticky;top:0;z-index:5;display:flex;gap:10px;align-items:center;justify-content:center;padding:10px;background:#1a73e8;color:#fff;font:15px "Pretendard Variable",sans-serif}.tb button{font:inherit;font-weight:700;padding:6px 16px;border:0;border-radius:8px;background:#fff;color:#1a73e8;cursor:pointer}}@media print{.tb{display:none}.page{box-shadow:none}.dp{min-height:0}}';
+  var html='<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>'+ti+'</title><link rel="stylesheet" href="'+font+'"><style>'+css+'\n'+ex+'</style></head><body><div class="tb"><b>'+ti+'</b><button type="button" onclick="print()">인쇄 · PDF 저장</button></div><div class="page">'+gmHtml(d)+'</div></body></html>';
+  var url=URL.createObjectURL(new Blob([html],{type:'text/html;charset=utf-8'})),a=document.createElement('a');a.href=url;a.target='suzukiGm';document.body.appendChild(a);a.click();setTimeout(function(){a.remove();URL.revokeObjectURL(url)},120000)}
+function gmPayload(){var d=S.gm;return {'공문ID':d['공문ID']||'','구분':d['구분'],'행사':d['행사'],'제목':d['제목'],'시행일':d['시행일'],'수신':d['수신'],'참조':d['참조'],'내용':d['내용'],_at:d['수정일']||''}}
+function gmSet(r){S.gm=r.doc;S.gm['내용']=S.gm['내용']||{};S.gm['내용'].sec=S.gm['내용'].sec||[];S.gmL=r.list;S.gmDirty=false;render()}
 function loadPay(){S.pays=null;callS('payList').then(function(r){if(r.ok){S.pays=r.list;S.D.payN=r.payN;if(S.tab==='pay')render()}else toast(r.msg)})}
 function nextMon1(d){var y=+d.slice(0,4),m=+d.slice(5,7);m++;if(m>12){m=1;y++}return y+'-'+('0'+m).slice(-2)+'-01'}
 function vPay(){var L=S.pays;if(!L)return '<div class="panel"><span><span class="spin"></span> 불러오는 중…</span></div>';
@@ -963,12 +1046,12 @@ function render(){
   var need=S.D.acad.concat(S.D.tch).filter(function(o){return o['확인']==='확인 필요'}).length;
   tabs.innerHTML=TABS.map(function(t){return '<button role="tab" type="button" data-tab="'+t[0]+'" aria-selected="'+(S.tab===t[0])+'">'+t[1]+(t[0]==='home'&&need?'<span class="cnt">'+need+'</span>':'')+(t[0]==='req'&&S.D.reqN?'<span class="cnt">'+S.D.reqN+'</span>':'')+(t[0]==='pay'&&S.D.payN?'<span class="cnt">'+S.D.payN+'</span>':'')+(t[0]==='ask'&&S.D.bN?'<span class="cnt">'+S.D.bN+'</span>':'')+'</button>'}).join('');
   var keepT=S._rt===S.tab&&['bank','acad','tch','stu','ext'].indexOf(S.tab)>=0?[].map.call(app.querySelectorAll('.tbl'),function(e){return [e.scrollTop,e.scrollLeft]}):[],keepY=window.scrollY;
-  app.classList.toggle('bankz',S.tab==='bank');app.innerHTML=({home:vHome,acad:vAcads,tch:vTeachers,ext:vExt,stu:vStudents,req:vReq,pay:vPay,bank:vBank,prog:vProg,prt:vPrint,ask:vAskA,log:vLog,set:vSet})[S.tab]();tipify(app);if(document.getElementById('pq_e_원장교사ID'))headFilter();
+  app.classList.toggle('bankz',S.tab==='bank');app.classList.toggle('gmz',S.tab==='gm');app.innerHTML=({home:vHome,acad:vAcads,tch:vTeachers,ext:vExt,stu:vStudents,req:vReq,pay:vPay,bank:vBank,prog:vProg,prt:vPrint,gm:vGm,ask:vAskA,log:vLog,set:vSet})[S.tab]();tipify(app);if(document.getElementById('pq_e_원장교사ID'))headFilter();
   if(keepT.length){[].forEach.call(app.querySelectorAll('.tbl'),function(e,i){if(keepT[i]){e.scrollTop=keepT[i][0];e.scrollLeft=keepT[i][1]}});window.scrollTo(0,keepY)}S._rt=S.tab;gnbH();bFloat();
   var i=TABS.map(function(t){return t[0]}).indexOf(S.tab);document.getElementById('prevBtn').disabled=i<=0;document.getElementById('nextBtn').disabled=i>=TABS.length-1;
   hSync();
 }
-function go(tab,fromBack){if(tab!==S.tab&&!fromBack)S.hist.push(S.tab);S.tab=tab;S.q='';S.f={};S.page=0;S.edit=null;S.sel={};S.issue='';S.dEdit=null;S.edAcad=null;if(tab==='log')loadLogs();if(tab==='req')loadReqs();if(tab==='ask')loadAsk();if(tab==='pay')loadPay();if(tab==='bank'&&!S.bank)loadBank();if(tab==='prog')loadProg();if(tab==='prt'&&!S.prt)loadPrt();render();window.scrollTo(0,0)}
+function go(tab,fromBack){if(tab!==S.tab&&!fromBack)S.hist.push(S.tab);S.tab=tab;S.q='';S.f={};S.page=0;S.edit=null;S.sel={};S.issue='';S.dEdit=null;S.edAcad=null;if(tab==='log')loadLogs();if(tab==='req')loadReqs();if(tab==='ask')loadAsk();if(tab==='pay')loadPay();if(tab==='bank'&&!S.bank)loadBank();if(tab==='prog')loadProg();if(tab==='prt'&&!S.prt)loadPrt();if(tab==='gm'){S.gm=null;loadGm()}render();window.scrollTo(0,0)}
 function load(){return callS('boot').then(function(r){if(!r.ok){if(S.sess)toast(r.msg);return}
   S.test=r.test;S.pdSrc0=r.pdSrc||'';S.D={acad:objs(r['학원']),tch:objs(r['교사']),stu:objs(r['학생']),duesRows:objs(r['연회비']),empty:r.empty,acc:r.acc||{},reqN:r.reqN||0,payF:r.pay||{},bN:r.bN||0,payN:r.payN||0,rates:objs(r.rates||{h:[],rows:[]}),mailLeft:r.mailLeft==null?-1:r.mailLeft,works:objs(r['근무']||{h:[],rows:[]})};index();render()})}
 function loadLogs(){S.logs=null;callS('logs').then(function(r){if(r.ok){S.logs=r;if(S.tab==='log')render()}else toast(r.msg)})}
@@ -1005,7 +1088,7 @@ document.addEventListener('click',function(e){
   if(e.target.id==='ckAll'){var per=50,l=listOf().slice(0,(S.page+1)*per),k=keyOf(kindOf());l.forEach(function(o){if(e.target.checked)S.sel[o[k]]=1;else delete S.sel[o[k]]});render();return}
   var bs=e.target.closest('tr[data-bsk],tr[data-bsa],tr[data-bspj]');if(bs){S.bf=S.bf||{};if(bs.dataset.bspj!=null)S.bf.pj=bs.dataset.bspj;if(bs.dataset.bsk!=null)S.bf.k=bs.dataset.bsk;if(bs.dataset.bsa!=null){S.bf.a=bs.dataset.bsa==='-'?'':bs.dataset.bsa;S.bf.io='입금'}S.bv='list';S.bp=0;render();return}
   var tg=e.target.closest('.tile[data-go]');if(tg&&!e.target.closest('.tip')){goTile(tg.getAttribute('data-go'));return}
-  var b=e.target.closest('button,tr[data-edit]');if(!b)return;var d=b.dataset;
+  var b=e.target.closest('button,tr[data-edit],tr[data-gmopen]');if(!b)return;var d=b.dataset;
   if(d.tab){go(d.tab);return}
   if(b.id==='prevBtn'){var i=TABS.map(function(t){return t[0]}).indexOf(S.tab);if(i>0)go(TABS[i-1][0]);return}
   if(b.id==='nextBtn'){var j=TABS.map(function(t){return t[0]}).indexOf(S.tab);if(j<TABS.length-1)go(TABS[j+1][0]);return}
@@ -1071,6 +1154,16 @@ document.addEventListener('click',function(e){
   if(d.rs){S.f.rs=d.rs;render();return}
   if(d.ps){S.f.ps=d.ps;render();return}
   if(d.pg){S.f.pg=d.pg;render();return}
+  if(d.gk){S.f.gk=d.gk;render();return}
+  if(d.gmnew){S.gm=gmTpl(d.gmnew);S.gmDirty=true;render();window.scrollTo(0,0);return}
+  if(d.gmopen){callS('gmGet',d.gmopen).then(function(r){if(!r.ok){toast(r.msg);return}r.list=S.gmL;gmSet(r);window.scrollTo(0,0)});return}
+  if(b.id==='gmBack'){if(S.gmDirty&&!window.confirm('저장하지 않은 내용이 있어요. 목록으로 갈까요?'))return;S.gm=null;render();return}
+  if(b.id==='gmWin'){gmWin();return}
+  if(b.id==='gmSave'){if(!String(S.gm['제목']||'').trim()){toast('제목을 넣어 주세요');return}b.disabled=true;callS('gmSave',gmPayload()).then(function(r){b.disabled=false;if(!r.ok){toast(r.msg);return}gmSet(r);toast('저장했어요')});return}
+  if(b.id==='gmIssue'){if(!S.gm['공문ID']||S.gmDirty){toast('먼저 「저장」해 주세요');return}if(!window.confirm('발행하면 문서번호가 매겨지고 더 고칠 수 없어요. 발행할까요?'))return;callS('gmIssue',S.gm['공문ID']).then(function(r){if(!r.ok){toast(r.msg);return}gmSet(r);toast('발행했어요 · '+r.doc['문서번호'])});return}
+  if(b.id==='gmCopy'){callS('gmCopy',S.gm['공문ID']).then(function(r){if(!r.ok){toast(r.msg);return}gmSet(r);toast('복사했어요 · 고친 뒤 저장 · 발행해요')});return}
+  if(b.id==='gmDel'){if(!window.confirm('이 공문(작성 중)을 지울까요?'))return;callS('gmDel',S.gm['공문ID']).then(function(r){if(!r.ok){toast(r.msg);return}S.gm=null;S.gmL=r.list;render();toast('지웠어요')});return}
+  if(d.gmsec&&S.gm){var q=d.gmsec.split('|'),k=+q[1],L=S.gm['내용'].sec;if(q[0]==='add')L.push({t:'',on:true,body:''});else if(q[0]==='del'){if(!window.confirm('이 항목을 뺄까요?'))return;L.splice(k,1)}else{var j=q[0]==='up'?k-1:k+1;if(j<0||j>=L.length)return;var t=L[k];L[k]=L[j];L[j]=t}S.gmDirty=true;render();return}
   if(b.id==='progRe'){loadProg();render();return}
   if(d.ibx){b.disabled=true;callS('inboxDone',d.ibx).then(function(r){b.disabled=false;if(!r.ok){toast(r.msg);return}S.prog=r;render();toast('확인했어요')});return}
   if(b.dataset&&b.dataset.ast!==undefined){S.f.st=b.dataset.ast;S.page=0;S.sel={};S.issue='';render();return}
@@ -1348,6 +1441,15 @@ document.addEventListener('keydown',function(e){var t=e.target;if(S.tab!=='prt'|
 </script>
 <style>table.prt th,table.prt td{text-align:left !important}table.prt th:first-child,table.prt td:first-child{text-align:center !important}table.prt th:nth-child(7),table.prt td:nth-child(7),table.prt th:nth-child(8),table.prt td:nth-child(8){text-align:center !important}table.prt td:nth-child(7) input,table.prt td:nth-child(8) input{text-align:center}table.prt tr.mutedrow td{color:var(--faint)}table.prt tr.mutedrow td b{color:var(--muted)}table.prt td{vertical-align:middle}table.prt td.padr{white-space:normal;min-width:220px;max-width:340px;line-height:1.4}</style>
 
-<div id="bldMark" hidden>빌드표시 20261109-213639 </div>
-<script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();</script>
+<div id="bldMark" hidden>빌드표시 20261110-145526 </div>
+<script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();
+/* 공문 편집: 칸을 고치면 모델만 바꾸고 미리보기만 다시 그림(글자 조합이 깨지지 않게) */
+function gmField(t){if(S.tab!=='gm'||!S.gm||S.gm['상태']==='발행')return false;var d=S.gm,c=d['내용'],ds=t.dataset||{};
+  if(ds.gmf){d[ds.gmf]=t.value}else if(ds.gmc){c[ds.gmc]=t.type==='checkbox'?t.checked:t.value}else if(ds.gmst!=null){c.sec[+ds.gmst].t=t.value}else if(ds.gmsb!=null){c.sec[+ds.gmsb].body=t.value}
+  else if(ds.gmon!=null){c.sec[+ds.gmon].on=t.checked;var box=t.closest('.gmsec');if(box)box.classList.toggle('off',!t.checked)}else if(ds.gmmg){c.mg=c.mg||{};c.mg[ds.gmmg]=t.value===''?'':Math.max(0,Math.min(40,+t.value||0))}else return false;
+  S.gmDirty=true;gmPrev();return true}
+document.addEventListener('input',function(e){gmField(e.target)});
+document.addEventListener('change',function(e){var t=e.target;if(t.type==='checkbox'||t.tagName==='SELECT')gmField(t)});
+window.addEventListener('beforeunload',function(e){if(S.tab==='gm'&&S.gm&&S.gmDirty){e.preventDefault();e.returnValue=''}});
+</script>
 </body></html>

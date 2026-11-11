@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261111-233002 -->
+<!-- build: 20261111-233610 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -312,7 +312,7 @@ function call(fn,args,ok,msg,tries){if(roBlock(fn)){toast(RO_MSG);return}tries=t
   if(/BUSY|lock|timed out|timeout|network|네트워크|시간 초과/i.test(m)&&tries<4){busy(true,'접속이 많아 다시 보내고 있어요… ('+(tries+1)+'/4)');setTimeout(()=>call(fn,args,ok,msg,tries+1),1500*(tries+1));return}
   busy(false);if(/로그인이 끝났/.test(m)){try{sessionStorage.removeItem('campAdmTok')}catch(x){}S.tok='';S.D=null;render();toast('로그인 시간이 끝났어요. 다시 로그인해 주세요.');return}
   toast('안 됐어요 · '+(/BUSY/.test(m)?'지금 접속이 많아요. 잠시 뒤 다시 해 주세요.':m))})[fn](S.tok,...args)}
-function goTab(t){if(!t)return;if(t==='staff'&&S.tab!=='staff'){S.SF=null;S.sf=null}if((t==='camp'||t==='cons'||t==='doc')&&S.tab!==t&&!ccDirty())S.cc=null;if(t==='doc'&&S.tab!=='doc')S.dView=null;if(t==='cons'){S.consR=null;S.consL=0}if(t==='schol'&&S.tab!=='schol'&&!scDirty()){S.SC=null;S.sc=null}if(S.tab==='act'&&t!=='act')ACT.flush();if(S.tab==='con'&&t!=='con')CORD.flush();if((t==='bplan'||t==='bset')&&S.tab!=='bplan'&&S.tab!=='bset')BUD.enter();S.tab=t;render()}
+function goTab(t){if(!t)return;if(window.UI&&UI.docEd&&UI.docEd.on()){if(!confirm('공문을 고치는 중이에요. 저장하지 않고 나갈까요?'))return;UI.docEd.close()}if(t==='staff'&&S.tab!=='staff'){S.SF=null;S.sf=null}if((t==='camp'||t==='cons'||t==='doc')&&S.tab!==t&&!ccDirty())S.cc=null;if(t==='doc'&&S.tab!=='doc')S.dView=null;if(t==='cons'){S.consR=null;S.consL=0}if(t==='schol'&&S.tab!=='schol'&&!scDirty()){S.SC=null;S.sc=null}if(S.tab==='act'&&t!=='act')ACT.flush();if(S.tab==='con'&&t!=='con')CORD.flush();if((t==='bplan'||t==='bset')&&S.tab!=='bplan'&&S.tab!=='bset')BUD.enter();S.tab=t;render()}
 /* 한글 입력: 글자를 조합하는 동안에는 다시 그리지 않음 (다시 그리면 「ㅎㅏㄴ」처럼 깨짐) → 조합이 끝나면 한 번 */
 document.addEventListener('input',e=>{if(e.isComposing&&e.target.matches&&e.target.matches('input[type=search],input[type=text]'))e.stopImmediatePropagation()},true);
 document.addEventListener('compositionend',e=>{const t=e.target;if(t.matches&&t.matches('input[type=search],input[type=text]'))setTimeout(()=>{if(document.body.contains(t))t.dispatchEvent(new Event('input',{bubbles:true}))},0)},true);
@@ -340,7 +340,8 @@ const GROUPS=[['dash','대시보드',['home']],['ops','운영관리',['subs','rp
 const SUBL={aud:'음원 심사',doc:'공문',mem:'회원 명단',home:'대시보드',subs:'접수 · 입금 확인',rp:'입금 신고',cx:'취소 · 환불',q:'게시판',act:'교사 일정',tt:'개인레슨',ens:'앙상블',con:'오후음악회',mcs:'마스터클래스',meal:'식권',book:'행사 책자',ntc:'공지사항',room:'방배정',stat:'통계',schol:'장학금',cons:'동의서',camp:'캠프 설정',prof:'교수진',staff:'담당자',bplan:'예산 계획',bset:'결산'};
 const groupOf=t=>(GROUPS.find(g=>g[2].includes(t))||GROUPS[0]);
 const TABS=[['home','한눈에'],['subs','접수 · 입금 확인'],['rp','입금 신고'],['cx','취소 · 환불'],['ens','앙상블'],['aud','음원 심사'],['prof','교수진'],['act','교사 일정'],['tt','개인레슨'],['room','방 배정'],['con','오후음악회'],['mcs','마스터클래스'],['meal','식권'],['book','행사 책자'],['stat','통계'],['q','게시판'],['ntc','공지사항'],['schol','장학금'],['mem','회원 명단'],['bplan','예산 계획'],['bset','결산']];
-function render(){
+function render(){if(S.tab==='doc'&&window.UI&&UI.docEd&&UI.docEd.on())return;/* 공문을 미리보기에서 고치는 동안에는 화면을 다시 그리지 않음 (불러오기 · 자동 새로 고침에 지워지지 않게) */
+
   const app=document.getElementById('app'),tabs=document.getElementById('tabs');
   if(!S.D){tabs.innerHTML='';document.getElementById('tabs2').innerHTML='';app.innerHTML=vLogin();return}
   const st=stats();
@@ -2748,7 +2749,7 @@ document.addEventListener('click',e=>{if(S.tab!=='doc')return;const b=e.target.c
   if(d.dapply){dApply();toast('미리보기에 적용했어요'+(ccDirty()?' · 캠프에 반영하려면 「저장」':''));return}
   if(b.id==='dPrint'||b.id==='dPrint2'){dPrint();return}
   if(b.id==='dWin'||b.id==='dWin2'){dOpenWin();return}
-  if(b.id==='dEdOpen'){dApply();const pv=document.getElementById('docPrev'),bd=pv&&pv.querySelector('.dbody');if(!bd)return;UI.docEd.open(pv,bd,{onSave:h=>{S.cc.doc.ed=h;dApply();render();const sv=document.querySelector('[data-ccsave]');if(sv)sv.click()},onCancel:()=>{render()}});return}
+  if(b.id==='dEdOpen'){try{if(!window.UI||!UI.docEd){toast('편집 도구를 불러오지 못했어요 (DocLib). 새로고침해 주세요');return}dApply();const pv=document.getElementById('docPrev'),bd=pv&&pv.querySelector('.dbody');if(!bd){toast('미리보기를 찾지 못했어요. 「적용」을 누른 뒤 다시 해 주세요');return}UI.docEd.open(pv,bd,{onSave:h=>{S.cc.doc.ed=h;dApply();render();const sv=document.querySelector('[data-ccsave]');if(sv)sv.click()},onCancel:()=>{render()}});toast('미리보기에서 고쳐요 · 다 고치면 도구 막대의 「저장」')}catch(x){toast('고치기를 열지 못했어요: '+x.message)}return}
   if(b.id==='dEdDrop'){if(!confirm('미리보기에서 고친 글을 지우고 왼쪽 글로 돌아갈까요?'))return;delete S.cc.doc.ed;dApply();render();return}
   if(d.dz){const z=d.dz==='0'?.86:Math.max(.4,Math.min(1.6,Math.round((dZoom()+(d.dz==='+'?.1:-.1))*100)/100));S.dZoom=z;try{localStorage.setItem('campDocZoom',String(z))}catch(x){}const pv=document.getElementById('docPrev');if(pv)pv.style.setProperty('--dz',z);const v=document.getElementById('dzv');if(v)v.textContent=Math.round(z*100)+'%';return}
   if(d.dmgreset&&c&&c.doc){c.doc.mg=Object.assign({},DOC_MG);render();return}
@@ -4393,6 +4394,6 @@ document.addEventListener('click',e=>{if(S.tab!=='book')return;const b=e.target.
   if(b.id==='ebSetSave'){const n=Object.assign(ebSet(),S.ebSetW||{});n.per=Math.max(1,Math.min(10,Math.round(+n.per||5)));n.fs=Math.max(5,Math.min(10,+n.fs||6.6));['en','sub','org'].forEach(k=>n[k]=String(n[k]||'').trim().slice(0,120));
     ebSend([],[],n,()=>{S.ebSetW=null;toast('책자 설정을 저장했어요')});return}},true);
 </script>
-<div id="bldMark" hidden>빌드표시 20261111-233002 </div>
+<div id="bldMark" hidden>빌드표시 20261111-233610 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();</script>
 </body></html>

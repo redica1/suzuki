@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261111-232336 -->
+<!-- build: 20261111-233610 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -1115,7 +1115,8 @@ function hSync(){var H=gh();if(!H||HIST.busy||!S.sess||!S.D||S.tab===HIST.last)r
 (function(){var H=gh();if(H&&H.setChangeHandler)try{H.setChangeHandler(function(e){var t=e&&e.state&&e.state.tab;if(!t||!S.sess||!S.D)return;HIST.busy=true;HIST.last=t;if(S.hist.length)S.hist.pop();go(t,true);HIST.busy=false})}catch(x){}})();
 function goTile(g){var p=String(g).split('|'),f={};(p[1]||'').split('&').forEach(function(kv){var i=kv.indexOf('=');if(i>0)f[kv.slice(0,i)]=kv.slice(i+1)});go(p[0]);S.f=f;S.issue=p[2]||'';S.page=0;render();window.scrollTo(0,0)}
 function tipify(root){[].forEach.call(root.querySelectorAll('.tile .s'),function(x){var t=x.textContent.trim(),k=x.parentNode.querySelector('.k');x.parentNode.removeChild(x);if(!t||!k)return;var i=document.createElement('span');i.className='tip';i.tabIndex=0;i.setAttribute('role','note');i.setAttribute('aria-label',t);i.setAttribute('data-tip',t);i.textContent='i';k.appendChild(i)})}
-function render(){
+function render(){if(S.tab==='gm'&&window.UI&&UI.docEd&&UI.docEd.on())return;
+
   var tabs=document.getElementById('tabs'),app=document.getElementById('app'),who=document.getElementById('who');
   document.getElementById('testband').hidden=!S.test;
   if(!S.sess||!S.D){tabs.innerHTML='';who.innerHTML='';document.getElementById('homebar').hidden=true;if(!S.sess)app.innerHTML=vLogin();return}
@@ -1129,7 +1130,7 @@ function render(){
   var i=TABS.map(function(t){return t[0]}).indexOf(S.tab);document.getElementById('prevBtn').disabled=i<=0;document.getElementById('nextBtn').disabled=i>=TABS.length-1;
   hSync();gmCampFrame();if(S.gm&&document.getElementById('gmPrev')){gmPrev();try{document.fonts.ready.then(function(){if(document.getElementById('gmPrev'))gmPrev()})}catch(x){}}
 }
-function go(tab,fromBack){if(tab!==S.tab&&!fromBack)S.hist.push(S.tab);S.tab=tab;S.q='';S.f={};S.page=0;S.edit=null;S.sel={};S.issue='';S.dEdit=null;S.edAcad=null;if(tab==='log')loadLogs();if(tab==='req')loadReqs();if(tab==='ask')loadAsk();if(tab==='pay')loadPay();if(tab==='bank'&&!S.bank)loadBank();if(tab==='prog')loadProg();if(tab==='prt'&&!S.prt)loadPrt();if(tab==='gm'){S.gm=null;loadGm()}render();window.scrollTo(0,0)}
+function go(tab,fromBack){if(window.UI&&UI.docEd&&UI.docEd.on()){if(!window.confirm('공문을 고치는 중이에요. 저장하지 않고 나갈까요?'))return;UI.docEd.close()}if(tab!==S.tab&&!fromBack)S.hist.push(S.tab);S.tab=tab;S.q='';S.f={};S.page=0;S.edit=null;S.sel={};S.issue='';S.dEdit=null;S.edAcad=null;if(tab==='log')loadLogs();if(tab==='req')loadReqs();if(tab==='ask')loadAsk();if(tab==='pay')loadPay();if(tab==='bank'&&!S.bank)loadBank();if(tab==='prog')loadProg();if(tab==='prt'&&!S.prt)loadPrt();if(tab==='gm'){S.gm=null;loadGm()}render();window.scrollTo(0,0)}
 function load(){return callS('boot').then(function(r){if(!r.ok){if(S.sess)toast(r.msg);return}
   S.test=r.test;S.pdSrc0=r.pdSrc||'';S.D={acad:objs(r['학원']),tch:objs(r['교사']),stu:objs(r['학생']),duesRows:objs(r['연회비']),empty:r.empty,acc:r.acc||{},reqN:r.reqN||0,payF:r.pay||{},bN:r.bN||0,payN:r.payN||0,rates:objs(r.rates||{h:[],rows:[]}),mailLeft:r.mailLeft==null?-1:r.mailLeft,works:objs(r['근무']||{h:[],rows:[]})};index();render()})}
 function loadLogs(){S.logs=null;callS('logs').then(function(r){if(r.ok){S.logs=r;if(S.tab==='log')render()}else toast(r.msg)})}
@@ -1239,7 +1240,7 @@ document.addEventListener('click',function(e){
   if(b.id==='gmBack'){if(S.gmDirty&&!window.confirm('저장하지 않은 내용이 있어요. 목록으로 갈까요?'))return;S.gm=null;render();return}
   if(b.id==='gmWin'){gmWin();return}
   if(d.gmz){var z=Math.max(.4,Math.min(1.6,Math.round((gmZoom()+(d.gmz==='+'?.06:-.06))*100)/100));S.gmZ=z;try{localStorage.setItem('memberGmZoom',z)}catch(x){}var pv=document.getElementById('gmPrev');if(pv)pv.style.setProperty('--dz',z);var zv=document.getElementById('gmZv');if(zv)zv.textContent=Math.round(z*100)+'%';gmCut();gmCampFrame();return}
-  if(b.id==='gmEdOpen'){var pv=document.getElementById('gmPrev'),bd=pv&&pv.querySelector('.dbody');if(!bd)return;UI.docEd.open(pv,bd,{onSave:function(h){S.gm['내용'].ed=h;S.gmDirty=true;render();var sv=document.getElementById('gmSave');if(sv)sv.click()},onCancel:function(){render()}});return}
+  if(b.id==='gmEdOpen'){if(!window.UI||!UI.docEd){toast('편집 도구를 불러오지 못했어요 (DocLib). 새로고침해 주세요');return}var pv=document.getElementById('gmPrev'),bd=pv&&pv.querySelector('.dbody');if(!bd){toast('미리보기를 찾지 못했어요');return}UI.docEd.open(pv,bd,{onSave:function(h){S.gm['내용'].ed=h;S.gmDirty=true;render();var sv=document.getElementById('gmSave');if(sv)sv.click()},onCancel:function(){render()}});return}
   if(b.id==='gmEdDrop'){if(!window.confirm('미리보기에서 고친 글을 지우고 왼쪽 머리말 · 항목으로 돌아갈까요?'))return;delete S.gm['내용'].ed;S.gmDirty=true;render();return}
   if(b.id==='gmCampRe2'){S.gmCampX=null;gmCampLoad();toast('캠프 공문을 새로 불러와요');return}
   if(b.id==='gmCampRe'){gmLoadCamp(true);return}
@@ -1530,7 +1531,7 @@ document.addEventListener('keydown',function(e){var t=e.target;if(S.tab!=='prt'|
 </script>
 <style>table.prt th,table.prt td{text-align:left !important}table.prt th:first-child,table.prt td:first-child{text-align:center !important}table.prt th:nth-child(7),table.prt td:nth-child(7),table.prt th:nth-child(8),table.prt td:nth-child(8){text-align:center !important}table.prt td:nth-child(7) input,table.prt td:nth-child(8) input{text-align:center}table.prt tr.mutedrow td{color:var(--faint)}table.prt tr.mutedrow td b{color:var(--muted)}table.prt td{vertical-align:middle}table.prt td.padr{white-space:normal;min-width:220px;max-width:340px;line-height:1.4}</style>
 
-<div id="bldMark" hidden>빌드표시 20261111-232336 </div>
+<div id="bldMark" hidden>빌드표시 20261111-233610 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();
 /* 공문 편집: 칸을 고치면 모델만 바꾸고 미리보기만 다시 그림(글자 조합이 깨지지 않게) */
 function gmField(t){if(S.tab!=='gm'||!S.gm||S.gm['상태']==='발행')return false;var d=S.gm,c=d['내용'],ds=t.dataset||{};

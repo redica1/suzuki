@@ -1,4 +1,4 @@
-/* build: 20261111-223215 */
+/* build: 20261111-225248 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -1179,6 +1179,7 @@ function docClean_(d, nr) {
     t1: t(d.t1, 20).trim(), t2: t(d.t2, 20).trim(), sign: d.sign !== false, inc: Array.from({ length: nr }, (_, i) => { const v = (d.inc || [])[i]; return i && v != null && v !== '' && isFinite(+v) ? Math.round(+v) : null; }), mg: (() => { const m = d.mg || {}, o = {}; [['t', 13], ['b', 15], ['l', 16], ['r', 16]].forEach(([k, v]) => { const x = +m[k]; o[k] = m[k] !== '' && m[k] != null && isFinite(x) ? Math.max(0, Math.min(40, Math.round(x * 10) / 10)) : v; }); return o; })(), intro: t(d.intro, 3000), rnote: Array.from({ length: nr }, (_, i) => t((d.rnote || [])[i], 80)), sec };
   /* 참가비표 자동 채우기 규칙 (11-11): 기준 자격 · 줄마다 기준보다 + · 차수마다 1차보다 + (금액 또는 n%) */
   const fa = v => { const s = String(v == null ? '' : v).replace(/[,\s원+]/g, ''); return /^-?\d+(\.\d+)?%?$/.test(s) ? s.slice(0, 12) : ''; };
+  o.fit = [0, 1, 2].indexOf(+d.fit) >= 0 ? +d.fit : 0; o.fitK = isFinite(+d.fitK) && +d.fitK >= 0.3 && +d.fitK <= 1 ? Math.round(+d.fitK * 1000) / 1000 : 1;
   o.rbase = FEE_TYPES.indexOf(d.rbase) >= 0 ? d.rbase : '학생';
   o.radd = {}; Object.keys(d.radd || {}).forEach(k => { if (FEE_TYPES.indexOf(k) >= 0 && k !== o.rbase && fa(d.radd[k])) o.radd[k] = fa(d.radd[k]); });
   o.cadd = Array.from({ length: nr }, (_, i) => i ? fa((d.cadd || [])[i]) : '');
@@ -1212,6 +1213,8 @@ function campSave(token, c, rev) {
   meals.forEach((m, i) => { if (!m.k) throw new Error((i + 1) + '번째 식사 이름을 적어 주세요.'); if (!/^\d{2}:\d{2}$/.test(m.s) || !/^\d{2}:\d{2}$/.test(m.e) || m.e <= m.s) throw new Error(m.k + ' 시간을 07:20 ~ 08:50 꼴로 확인해 주세요.'); if (!m.t) m.t = m.k + ' 식사'; });
   /* 화면이 그 값을 모르면(옛 화면에서 저장) 지금 값을 그대로 둠 — 공문 · 음원 설정이 꺼지거나 기본값으로 덮이지 않게 (11-04) */
   const prev = camp_(), doc = c.doc ? docClean_(c.doc, rounds.length) : Object.assign({}, prev.doc, { rnote: (prev.doc.rnote || []).slice(0, rounds.length), inc: (prev.doc.inc || []).slice(0, rounds.length) });
+  /* 문서번호 · 대장 연결은 회원관리 공문 대장이 시트에 직접 씀 → 화면 값으로 덮지 않음 (11-11) */
+  doc.no = String((prev.doc || {}).no || ''); doc.gm = String((prev.doc || {}).gm || '');
   const aud = {}; AUD_CON.forEach(k => { const x = c.aud ? ((c.aud[k]) || {}) : ((prev.aud || {})[k] || {}); aud[k] = { on: !!x.on, due: /^\d{4}-\d{2}-\d{2}$/.test(x.due || '') ? x.due : '' }; });
   const nc = { meals, base: { id: String(b.id).trim(), name: String(b.name).trim(), start: b.start, end: b.end, place: String(b.place || '').trim(), open: b.open, close: b.close, cur, guest: b.guest !== false, staff: b.staff !== false, member: b.member !== false, intl: b.intl !== false }, rounds, fees, opt, refund, consent, doc, aud };
   const lock = lock_();
@@ -1221,7 +1224,9 @@ function campSave(token, c, rev) {
     CAMP_CACHE = null; const old = camp_();
     if ((+rev || 0) !== (old.rev || 0)) throw new Error('다른 분이 먼저 캠프 설정을 바꿨어요. 새로 고친 뒤 다시 해 주세요.');
     const desc = { base: '캠프 코드 · 이름 · 날짜 · 장소 · 접수 기간 · 비회원 접수', rounds: '차수 이름과 기간', fees: '참가자격 × 차수 참가비', opt: '추가 레슨 · 마스터클래스 · 회비 · 가족방', refund: '취소·환불 규정', meals: '식사 시간 (교사 일정 모든 날짜의 식사 줄)', doc: '캠프 안내 공문 (문서 정보 · 머리말 · 항목별 글)', aud: '음악회별 음원 제출 받기 · 마감일', consent: '개인정보 동의 문구 (바꾸면 버전 날짜가 바뀜)' };
-    const vals = CAMP_KEYS.map(k => [k[1], JSON.stringify(nc[k[0]]), desc[k[0]]]).concat([['rev', String((old.rev || 0) + 1), '바꾼 횟수 (건드리지 마세요)']]);
+    const ex = rows_(CAMPCFG).reduce((o, r) => { o[String(r['항목'])] = String(r['값'] || ''); return o; }, {});
+    const vals = CAMP_KEYS.map(k => [k[1], JSON.stringify(nc[k[0]]), desc[k[0]]]).concat([['rev', String((old.rev || 0) + 1), '바꾼 횟수 (건드리지 마세요)'],
+      ['공문HTML', c.docHtml != null ? String(c.docHtml).slice(0, 48000) : (ex['공문HTML'] || ''), '회원관리 공문 대장이 읽는 공문 그림 (저장할 때 저절로)'], ['공문CSS', c.docCss != null ? String(c.docCss).slice(0, 20000) : (ex['공문CSS'] || ''), '공문 그림 모양']]);
     sh.getRange(2, 1, Math.max(sh.getLastRow(), vals.length + 1), 3).clearContent();
     sh.getRange(2, 1, vals.length, 3).setValues(vals);
     CAMP_CACHE = null;

@@ -1,4 +1,4 @@
-/* build: 20261111-223802 */
+/* build: 20261111-225248 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -109,7 +109,7 @@ function include(n) { return HtmlService.createTemplateFromFile(n).getRawContent
 
 function api(name, args) {
   const open = { login, hello, tHello, tEvents, tLookup, tStart, tResend, tVerify, tCreate, tLogin, tForgot, tReset, tPwChange, tMe, tSavePay, tSavePart, tSaveInfo, tSavePhoto, tAcad, tSaveAcad, tDocUp, tDocGet, tSaveStu, tSaveStus, tStuDetail, tStuSave, tStuTutor, tStuTutorDel, tStuState, tStuStateDel, tMyStu, tMyStuDetail, tMyStuPay, tTchSaves, tTchEnd, tTchEvent, tTchAssign, tTchStart, tSaveRrn, tSaveInc, tAddWork, tClassCreate, tEndWork, tMainWork, tLogout, bPost, bMine, bReply };
-  const fns = { printEvents, printEvSave, printData, printSet, printCopy, printExport, ogGet, ogSave, ogToken, boot, saveRow, setCheck, logs, importRoster, saveDues, delDues, reqs, reqDo, delAcad, payView, bulkSet, saveWorks, importPastDues, importPayInfo, gmList, gmGet, gmSave, gmIssue, gmCopy, gmDel, bList, bSet, bComment, bCat, photoGet, photoDel, fillRegions, saveRates, docList, docUp, docGet, docDel, payList, payOk, payOkMany, payNo, memView, rosterNow, inputStatus, inboxDone, acctReset, classFromStudents, delStus, asTeacher, bankImport, bankList: bankListTop, bankSet, bankDues, bankFromSheet, bankMeta, bankSplitSave, bankPay, bankCamp, bankCampPay, bankPayList, gmProjects, gmCamp, devVirtual };
+  const fns = { printEvents, printEvSave, printData, printSet, printCopy, printExport, ogGet, ogSave, ogToken, boot, saveRow, setCheck, logs, importRoster, saveDues, delDues, reqs, reqDo, delAcad, payView, bulkSet, saveWorks, importPastDues, importPayInfo, gmList, gmGet, gmSave, gmIssue, gmCopy, gmDel, bList, bSet, bComment, bCat, photoGet, photoDel, fillRegions, saveRates, docList, docUp, docGet, docDel, payList, payOk, payOkMany, payNo, memView, rosterNow, inputStatus, inboxDone, acctReset, classFromStudents, delStus, asTeacher, bankImport, bankList: bankListTop, bankSet, bankDues, bankFromSheet, bankMeta, bankSplitSave, bankPay, bankCamp, bankCampPay, bankPayList, gmProjects, gmCamp, gmNewCamp, gmCampSync, devVirtual };
   try {
     if (open[name]) return Object.assign({ ok: true }, open[name].apply(null, args || []));
     if (!fns[name]) throw new UserError('알 수 없는 요청이에요.');
@@ -689,7 +689,8 @@ function importPayInfo(who, src) {
 /* ====================== 공문 대장 (11-10) ======================
  * 모든 공문을 한곳에: 일반(회원 공지 등) · 여름캠프 · 겨울캠프 · 졸업연주(서울/대구/대전) · 교사연수 · 기타.
  * 「작성 중」은 고칠 수 있고, 「발행」하면 문서번호를 매기고 내용을 고정(바꿀 일이 생기면 「복사해서 새로」 = 변경 공문). */
-const GM_KINDS = ['일반', '여름캠프', '겨울캠프', '졸업연주 서울', '졸업연주 대구', '졸업연주 대전', '교사연수', '기타'];
+/* 공문 종류 (11-11): 캠프 · 졸업연주 · 기타. 예전 값(일반 · 여름캠프 …)은 그대로 둠 */
+const GM_KINDS = ['캠프', '졸업연주', '기타', '일반', '여름캠프', '겨울캠프', '졸업연주 서울', '졸업연주 대구', '졸업연주 대전', '교사연수'];
 function gmRow_(r, h, full) { const o = {}; h.forEach((k, i) => { if (k !== '내용' || full) o[k] = r[i]; }); return o; }
 function gmList(who) { const T = tbl_('공문'); return { list: T.v.map(r => gmRow_(r, T.h, false)).sort((a, b) => String(b['수정일']).localeCompare(String(a['수정일']))), kinds: GM_KINDS }; }
 function gmGet(who, id) { const T = tbl_('공문'), i = T.find('공문ID', id); if (i < 0) fail('공문을 찾지 못했어요.'); const o = gmRow_(T.v[i], T.h, true); let d = {}; try { d = JSON.parse(o['내용'] || '{}'); } catch (e) { } o['내용'] = d; return { doc: o }; }
@@ -697,12 +698,12 @@ function gmClean_(d) {
   d = d || {}; const s = v => String(v == null ? '' : v);
   const sec = (Array.isArray(d.sec) ? d.sec : []).slice(0, 30).map(x => ({ t: s(x.t).slice(0, 80), body: s(x.body).slice(0, 8000), on: x.on !== false }));
   const mg = {}; ['t', 'b', 'l', 'r'].forEach(k => { const v = +((d.mg || {})[k]); if (isFinite(v) && (d.mg || {})[k] !== '' && (d.mg || {})[k] != null) mg[k] = Math.max(0, Math.min(40, v)); });
-  const o = { intro: s(d.intro).slice(0, 8000), sec, num: d.num === '1)' ? '1)' : '1.', sign: d.sign !== false, mg, logo: d.logo !== false, wtop: d.wtop === true, row1: d.row1 === true, ts: (t => isFinite(t) && t >= 10 && t <= 40 ? Math.round(t) : 22)(+d.ts), lh: (t => d.lh !== '' && d.lh != null && isFinite(t) && t >= 1 && t <= 2.5 ? Math.round(t * 100) / 100 : '')(+d.lh), sg: (t => d.sg !== '' && d.sg != null && isFinite(t) && t >= 0 && t <= 15 ? Math.round(t * 10) / 10 : '')(+d.sg), proj: s(d.proj).slice(0, 20), camp: s(d.camp).slice(0, 20) };
+  const o = { intro: s(d.intro).slice(0, 8000), sec, num: d.num === '1)' ? '1)' : '1.', sign: d.sign !== false, mg, logo: d.logo !== false, wtop: d.wtop === true, row1: d.row1 === true, ts: (t => isFinite(t) && t >= 10 && t <= 40 ? Math.round(t) : 22)(+d.ts), lh: (t => d.lh !== '' && d.lh != null && isFinite(t) && t >= 1 && t <= 2.5 ? Math.round(t * 100) / 100 : '')(+d.lh), sg: (t => d.sg !== '' && d.sg != null && isFinite(t) && t >= 0 && t <= 15 ? Math.round(t * 10) / 10 : '')(+d.sg), proj: s(d.proj).slice(0, 20), camp: s(d.camp).slice(0, 20), fit: [0, 1, 2].indexOf(+d.fit) >= 0 ? +d.fit : 0, fitK: isFinite(+d.fitK) && +d.fitK >= 0.3 && +d.fitK <= 1 ? Math.round(+d.fitK * 1000) / 1000 : 1 };
   if (JSON.stringify(o).length > 45000) fail('공문 내용이 너무 길어요. 항목을 나눠 주세요.'); return o;
 }
 function gmSave(who, x) {
   x = x || {}; const T = tbl_('공문'), stamp = now_();
-  const kind = GM_KINDS.indexOf(x['구분']) >= 0 ? x['구분'] : '일반', title = String(x['제목'] || '').trim().slice(0, 120); if (!title) fail('제목을 넣어 주세요.');
+  const kind = GM_KINDS.indexOf(x['구분']) >= 0 && x['구분'] !== '캠프' ? x['구분'] : '기타', title = String(x['제목'] || '').trim().slice(0, 120); if (!title) fail('제목을 넣어 주세요.');
   const date = String(x['시행일'] || '').trim(); if (date && !/^\d{4}-\d{2}-\d{2}$/.test(date)) fail('시행일을 확인해 주세요.');
   const row = { '구분': kind, '행사': String(x['행사'] || '').slice(0, 80), '제목': title, '시행일': date, '수신': String(x['수신'] || '').slice(0, 200), '참조': String(x['참조'] || '').slice(0, 200), '내용': JSON.stringify(gmClean_(x['내용'])), '수정일': stamp, '수정자': who.name };
   const lock = LockService.getScriptLock(); lock.waitLock(20000); let id = String(x['공문ID'] || '');
@@ -718,11 +719,18 @@ function gmIssue(who, id) {
   const T = tbl_('공문'), lock = LockService.getScriptLock(); lock.waitLock(20000);
   try {
     const i = T.find('공문ID', id); if (i < 0) fail('공문을 찾지 못했어요.'); if (T.get(i, '상태') === '발행') fail('이미 발행한 공문이에요.');
-    const date = String(T.get(i, '시행일') || '') || Utilities.formatDate(new Date(), 'Asia/Seoul', 'yyyy-MM-dd'), y = date.slice(0, 4);
+    const date = String(T.get(i, '시행일') || '').slice(0, 10) || Utilities.formatDate(new Date(), 'Asia/Seoul', 'yyyy-MM-dd'), y = date.slice(0, 4);
     const n = T.v.filter(r => r[T.h.indexOf('상태')] === '발행' && String(r[T.h.indexOf('시행일')]).slice(0, 4) === y).length + 1;
     const no = String(settings_()['공문 번호 형식'] || 'KSA 제{년}-{번호}호').replace(/\{년\}/g, y).replace(/\{번호\}/g, String(n).padStart(3, '0'));
     let ct = {}; try { ct = JSON.parse(T.get(i, '내용') || '{}'); } catch (e) { }
-    if (ct.camp && !ct.campSnap) { try { const cd = gmCamp(who); if (cd.camp && cd.camp.base && cd.camp.base.id === ct.camp) { ct.campSnap = cd.camp; T.set(i, { '내용': JSON.stringify(ct) }); } } catch (e) { } }
+    if (T.get(i, '구분') === '캠프' && ct.camp) {
+      const cd = gmCamp(who); if (!cd.camp || cd.camp.base.id !== ct.camp) fail(cd.msg || '이 캠프 공문의 캠프가 지금 회원관리와 연결된 캠프가 아니에요.');
+      if (!cd.html) fail('캠프 관리자 › 설정 › 공문에서 한 번 「저장」해 주세요 (회원관리로 보낼 공문 그림이 아직 없어요).');
+      const dd = cd.camp.doc || {};
+      ct.html = gmInjectNo_(cd.html, no, dd.date ? '' : date); ct.css = cd.css; ct.mg = dd.mg || {};
+      T.set(i, { '내용': JSON.stringify(ct), '행사': cd.camp.base.name, '제목': gmCampTitle_(cd.camp), '수신': dd.to || '', '참조': dd.ref || '' });
+      gmCampDocSet_({ no: no, date: dd.date || date });
+    }
     T.set(i, { '상태': '발행', '문서번호': no, '시행일': date, '발행일': now_(), '발행자': who.name, '수정일': now_(), '수정자': who.name });
     log_(who.name, '공문', id, '발행', no + ' · ' + T.get(i, '제목'));
   } finally { lock.releaseLock(); }
@@ -731,6 +739,7 @@ function gmIssue(who, id) {
 function gmCopy(who, id) {
   const g = gmGet(who, id).doc, T = tbl_('공문'), nid = nextId_(T, '공문ID', 'G');
   T.append({ '공문ID': nid, '구분': g['구분'], '행사': g['행사'], '제목': g['제목'] + (g['상태'] === '발행' ? ' (변경)' : ' (사본)'), '문서번호': '', '시행일': '', '수신': g['수신'], '참조': g['참조'], '상태': '작성 중', '내용': JSON.stringify(Object.assign({}, g['내용'], { campSnap: undefined }) || {}), '수정일': now_(), '수정자': who.name });
+  if (g['구분'] === '캠프' && (g['내용'] || {}).camp) { const ti = T.find('공문ID', nid); T.set(ti, { '내용': JSON.stringify({ camp: g['내용'].camp }) }); try { gmCampDocSet_({ gm: nid, no: '' }); } catch (e) { } }
   log_(who.name, '공문', nid, '복사', id + ' → ' + nid);
   return Object.assign(gmGet(who, nid), gmList(who));
 }
@@ -747,12 +756,52 @@ function gmCamp(who) {
   rd('캠프설정').forEach(r => { const k = K[String(r['항목'])]; if (!k || !r['값']) return; try { c[k] = JSON.parse(String(r['값']).replace(/돌전아기/g, '15개월 미만')); } catch (e) { } });
   if (!c.base.id) return { camp: null, msg: '캠프 시트에 캠프 설정이 아직 없어요.' };
   Object.keys(c.fees).forEach(t => { const a = (c.fees[t] || []).slice(0, c.rounds.length); while (a.length < c.rounds.length) a.push(a.length ? a[a.length - 1] : 0); c.fees[t] = a; });
+  let html = '', css = ''; rd('캠프설정').forEach(r => { if (r['항목'] === '공문HTML') html = String(r['값'] || ''); if (r['항목'] === '공문CSS') css = String(r['값'] || ''); });
   const st = {}; rd('설정').forEach(r => st[String(r['항목'])] = String(r['값'] || ''));
   c.bank = { bank: st['입금 은행'] || '', acct: st['입금 계좌번호'] || '', holder: st['예금주'] || '' };
-  c.at = now_(); return { camp: c };
+  c.at = now_(); return { camp: c, html: html, css: css };
+}
+/* 캠프 공문 (11-11): 만들기 · 발행은 회원관리 대장, 글 · 날짜 · 참가비 · 취소 수수료 입력은 캠프 관리자 › 설정 › 공문 (= 캠프 설정, 저절로 맞음).
+   캠프가 저장할 때 「공문HTML · 공문CSS」를 캠프설정 탭에 같이 써 두고, 회원관리는 그 그림을 보여 주고 발행 때 번호를 넣어 고정함 */
+function gmCampTitle_(c) { const b = c.base || {}, d = c.doc || {}; return String(d.title || '{캠프이름} 안내').replace(/\{캠프이름\}/g, b.name || '').replace(/\{년도\}/g, String(b.start || '').slice(0, 4)).slice(0, 120) || (b.name + ' 안내'); }
+function gmCampDocSet_(patch) {
+  const id = settings_()['캠프 시트']; if (!id) fail('회원관리 설정 「캠프 시트」가 비어 있어요.');
+  const sh = SpreadsheetApp.openById(id).getSheetByName('캠프설정'); if (!sh) fail('캠프 시트에 「캠프설정」 탭이 없어요.');
+  const v = sh.getDataRange().getValues();
+  for (let r = 1; r < v.length; r++) if (String(v[r][0]) === '공문') { let o = {}; try { o = JSON.parse(String(v[r][1] || '{}')); } catch (e) { } Object.assign(o, patch); sh.getRange(r + 1, 2).setValue(JSON.stringify(o)); return true; }
+  return false;
+}
+function gmInjectNo_(html, no, dateYmd) {
+  const e = x => String(x).replace(/[<>&"]/g, ' '), rows = [];
+  if (no) rows.push('<div><b>문서번호</b><span>' + e(no) + '</span></div>');
+  if (dateYmd && html.indexOf('<b>시행일</b>') < 0) { const a = dateYmd.split('-').map(Number); rows.push('<div><b>시행일</b><span>' + a[0] + '년 ' + a[1] + '월 ' + a[2] + '일</span></div>'); }
+  if (!rows.length) return html;
+  if (html.indexOf('<div class="meta">') >= 0) return html.replace('<div class="meta">', '<div class="meta">' + rows.join(''));
+  return html.replace('<h1>', '<div class="meta">' + rows.join('') + '</div><h1>');
+}
+function gmNewCamp(who) {
+  const cd = gmCamp(who); if (!cd.camp) fail(cd.msg || '캠프 설정을 불러오지 못했어요.');
+  const c = cd.camp, d = c.doc || {}, T = tbl_('공문');
+  if (d.gm) { const j = T.find('공문ID', d.gm); if (j >= 0 && T.get(j, '상태') !== '발행') return Object.assign(gmCampSync(who, d.gm), { reused: true }); }
+  const lock = LockService.getScriptLock(); lock.waitLock(20000); let id;
+  try {
+    id = nextId_(T, '공문ID', 'G');
+    T.append({ '공문ID': id, '구분': '캠프', '행사': c.base.name, '제목': gmCampTitle_(c), '문서번호': '', '시행일': d.date || '', '수신': d.to || '', '참조': d.ref || '', '상태': '작성 중', '내용': JSON.stringify({ camp: c.base.id }), '수정일': now_(), '수정자': who.name });
+    gmCampDocSet_({ gm: id, no: '' });
+    log_(who.name, '공문', id, '캠프 공문 만듦', c.base.id);
+  } finally { lock.releaseLock(); }
+  return Object.assign(gmGet(who, id), gmList(who), { camp: cd });
+}
+function gmCampSync(who, id) {
+  const T = tbl_('공문'), i = T.find('공문ID', id); if (i < 0) fail('공문을 찾지 못했어요.');
+  let ct = {}; try { ct = JSON.parse(T.get(i, '내용') || '{}'); } catch (e) { }
+  let cd = null;
+  if (T.get(i, '상태') !== '발행' && ct.camp) { cd = gmCamp(who); if (cd.camp && cd.camp.base.id === ct.camp) { const c = cd.camp, d = c.doc || {}; T.set(i, { '행사': c.base.name, '제목': gmCampTitle_(c), '시행일': d.date || '', '수신': d.to || '', '참조': d.ref || '' }); } }
+  return Object.assign(gmGet(who, id), gmList(who), { camp: cd });
 }
 function gmDel(who, id) {
   const T = tbl_('공문'), i = T.find('공문ID', id); if (i < 0) fail('공문을 찾지 못했어요.'); if (T.get(i, '상태') === '발행') fail('발행한 공문은 지울 수 없어요(대장에 남아요).');
+  if (T.get(i, '구분') === '캠프') { try { const cd = gmCamp(who); if (cd.camp && (cd.camp.doc || {}).gm === id) gmCampDocSet_({ gm: '' }); } catch (e) { } }
   T.sh.deleteRow(i + 2); log_(who.name, '공문', id, '지움', T.get(i, '제목')); return gmList(who);
 }
 function readSrc_(ss, tab, mark, cols) {

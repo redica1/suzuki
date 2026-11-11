@@ -1,4 +1,4 @@
-/* build: 20261112-001252 */
+/* build: 20261112-003729 */
   if(!open.length) return MY_SUBS.length?`<div class="panel rp">${bankHTML()}<span class="hint">지금 입금할 금액이 없어요.</span></div>`:'';
   /* 평소엔 한 줄로 접어 둠: 「입금 신고하기」를 누르면 펼침 (11-03) */
   if(!S.rpOpen){const due=open.reduce((t,x)=>t+dueOf(x.p),0);return `<div class="panel rp">${bankHTML()}<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><span><b>입금 필요 ${open.length}명</b> · <b class="num">${won(due)}</b> <span class="hint">입금한 뒤 알려 주세요</span></span><button class="btn primary" type="button" data-rpopen="1">입금 신고하기</button></div></div>`}
@@ -80,7 +80,7 @@ function payTbl(R){const W=v=>(+v||0).toLocaleString('ko-KR'),Rows=R.map(({sb,p}
     <p class="hint" style="margin:8px 0 0">칸 제목을 누르면 정렬, 칸 경계를 끌면 너비가 바뀌어요. 과납 · 미납 = 입금 − 청구 − 환불(요청 + 완료). 빨강 = 덜 냄, 초록 = 더 냄. 취소했거나 취소 요청한 사람의 청구는 환불하고 남는 돈(취소 수수료)이에요.</p></div>`}
 /* 접수 표 보기 바꾸기: 접수 · 입금 / 레슨 · 마스터클래스 / 음악회 / 참가 정보 (같은 사람 명단, 칸만 바뀜) */
 const MVIEWS=[['pay','접수'],['les','레슨'],['con','음악회'],['info','학생 진도']];
-const MSUBS={pay:[['pay','입금 현황'],['room','가족방 현황']],les:[['grp','그룹레슨'],['les','개인레슨'],['mc','마스터클래스']],con:[['오후','오후 음악회'],['트와일라잇','트와일라잇 음악회'],['이브닝','이브닝 음악회']]};
+const MSUBS={pay:[['pay','입금 현황'],['room','가족방 현황']],les:[['grp','그룹레슨'],['les','개인레슨'],['mc','마스터클래스']],get con(){return (CAMP.cons||['오후','트와일라잇','이브닝']).map(k=>[k,k+' 음악회'])}};
 function curSub(){const L=MSUBS[S.mview||'pay']||[];return L.some(x=>x[0]===S.msub)?S.msub:(L[0]||[])[0]||''}
 const famTab=()=>(S.mview||'pay')==='pay'&&curSub()==='room';
 function mvSeg(){const v=S.mview||'pay',L=MSUBS[v]||[],c=curSub();return `<div class="itabs" role="tablist" aria-label="보기" style="margin:4px 0 8px">${MVIEWS.map(([k,l])=>`<button type="button" role="tab" data-mview="${k}" aria-pressed="${v===k}">${l}</button>`).join('')}</div>${L.length?`<div class="row" role="group" style="gap:6px;margin:0 0 10px;flex-wrap:wrap">${L.map(([k,l])=>`<button class="btn small ${c===k?'primary':'ghost'}" type="button" data-msub="${k}" aria-pressed="${c===k}">${l}</button>`).join('')}</div>`:''}`}

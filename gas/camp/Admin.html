@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261112-001252 -->
+<!-- build: 20261112-003729 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -1482,7 +1482,8 @@ return {view};
 
 
 /* ================= 오후음악회 (신청 목록 · 연주 순서 · 리허설) ================= */
-const CON_KINDS=['오후','트와일라잇','이브닝','없음'];
+/* 음악회 목록 = 캠프 설정 cons (11-12, 추가 · 빼기) */
+const conList=()=>{const c=(S.cc&&Array.isArray(S.cc.cons)&&S.cc.cons)||(S.D&&S.D.camp&&Array.isArray(S.D.camp.cons)&&S.D.camp.cons);return c&&c.length?c:['오후','트와일라잇','이브닝']};
 const CAMP_YEAR=2027, CAMP_DAY='01-11';   /* 캠프 첫날 기준 만 나이 (생일을 모르면 출생연도로: 캠프가 1월이라 대부분 생일 전 → 캠프 해 − 출생연도 − 1) */
 const manAge=by=>{by=String(by||'').trim();if(!/^\d{4}/.test(by))return '';const y=+by.slice(0,4);const md=by.length>=10?by.slice(5,10):'';return CAMP_YEAR-y-(md&&md<=CAMP_DAY?0:1)};
 const bookNo=g=>{g=String(g||'');if(/pre/i.test(g))return 0;const m=g.match(/(\d+)권/);return m?+m[1]+(/B/.test(g.slice(m.index,m.index+4))?.5:0)+(/이상/.test(g)?.6:0):99};
@@ -1502,7 +1503,7 @@ function vConList(){const f=S.conf||'오후',ins=S.coni||'',q=(S.conq||'').trim(
   S.conTSV=[H,...rows].map(r=>r.map(v=>String(v==null?'':v).replace(/[\t\n]/g,' ')).join('\t')).join('\n');
   return `<div class="panel"><div class="spread"><div><b>음악회 신청</b> <span class="hint">2026 여름 「오후음악회용」 시트처럼 · 취소한 사람은 빠짐 · 만 나이는 캠프 첫날(${CAMP_YEAR}-${CAMP_DAY}) 기준, 출생연도만 있으면 생일 전으로 셈 · 머리 칸 눌러 정렬</span></div>
     <div class="row" style="gap:6px"><button class="btn small" type="button" id="conCopy">표 복사 (시트에 붙여넣기)</button><button class="btn small" type="button" id="reload">새로 불러오기</button></div></div>
-    <div class="row" style="gap:6px;margin-top:8px">${[...CON_KINDS.slice(0,3),'없음','all'].map(k=>`<button class="btn small ${f===k?'primary':''}" type="button" data-conf="${k}">${k==='all'?'전체 '+all.length:k==='없음'?'신청 안 함 '+cnt(k):k+' '+cnt(k)}</button>`).join('')}
+    <div class="row" style="gap:6px;margin-top:8px">${[...conList(),'없음','all'].map(k=>`<button class="btn small ${f===k?'primary':''}" type="button" data-conf="${k}">${k==='all'?'전체 '+all.length:k==='없음'?'신청 안 함 '+cnt(k):k+' '+cnt(k)}</button>`).join('')}
       <span style="width:12px"></span>${['',...INS].map(k=>`<button class="btn small ${ins===k?'primary':''}" type="button" data-coni="${esc(k)}">${k?esc(k)+' '+L.filter(x=>x.inst===k).length:'악기 전체'}</button>`).join('')}
       <input type="search" id="conq" value="${esc(S.conq||'')}" placeholder="이름·학원·교사·곡" style="margin-left:auto;width:min(220px,100%)"></div></div>
   ${ST(H,rows.map(r=>r.map((v,j)=>j===H.length-1&&/^https?:/i.test(String(v))?`<a href="${esc(v)}" target="_blank" rel="noopener">영상 열기</a>`:esc(v))),null,H.length)}
@@ -1768,7 +1769,8 @@ function vCamp(){if(!S.cc){S.cc=ccCopy();try{if(S.cc.doc&&S.cc.fees&&S.cc.rounds
   <div class="panel"><h3>추가 금액 · 가족방</h3><div class="ccg">${OPT_F.map(([k,l,u])=>`<label>${l}<span class="row" style="gap:4px;flex-wrap:nowrap">${inp('opt.'+k,'num','style="width:120px"')}<small class="faint">${u}</small></span></label>`).join('')}</div>
     <p class="hint">마스터클래스 금액은 교수마다 「교수진」 탭에서 정해요.</p></div>
   ${c.aud?`<div class="panel"><h3>음악회 음원 제출 <span class="hint">켠 음악회만 신청서 · 「내 접수」에 음원 칸이 나와요 · 마감일을 비우면 캠프 시작 전날까지</span></h3>
-    <table class="pft cct" style="width:auto"><thead><tr><th>음악회</th><th class="c">음원 받기</th><th>마감일</th></tr></thead><tbody>${['오후','트와일라잇','이브닝'].map(k=>`<tr class="${(c.aud[k]||{}).on?'':'off'}"><td><b>${k}</b></td><td class="c">${inp('aud.'+k+'.on','check')}</td><td>${inp('aud.'+k+'.due','date')}</td></tr>`).join('')}</tbody></table>
+    <table class="pft cct" style="width:auto"><thead><tr><th>음악회</th><th class="c">음원 받기</th><th>마감일</th><th></th></tr></thead><tbody>${(Array.isArray(c.cons)?c.cons:(c.cons=['오후','트와일라잇','이브닝'].slice())).map(k=>{c.aud=c.aud||{};c.aud[k]=c.aud[k]||{on:false,due:''};return `<tr class="${(c.aud[k]||{}).on?'':'off'}"><td><b>${esc(k)}</b></td><td class="c">${inp('aud.'+k+'.on','check')}</td><td>${inp('aud.'+k+'.due','date')}</td><td><button class="btn small ghost" type="button" data-condel="${esc(k)}" ${c.cons.length<=1?'disabled':''}>빼기</button></td></tr>`}).join('')}</tbody></table>
+    <div class="row" style="gap:6px;margin-top:8px;align-items:center"><input type="text" id="conNew" maxlength="12" placeholder="새 음악회 이름 (예: 갈라)" style="width:200px"><button class="btn small" type="button" id="conAdd" ${c.cons.length>=8?'disabled':''}>＋ 음악회 추가</button><span class="hint">음악회는 8개까지 · 이름은 12자까지 · 빼도 이미 그 음악회를 고른 접수는 그대로 남아요(다시 같은 이름으로 넣으면 이어져요) · 「저장」을 눌러야 반영</span></div>
     <p class="hint">심사 · 결과 공개는 「스케줄관리 › 음원 심사」에서 해요.</p></div>`:''}
   <div class="panel"><div class="spread"><h3>취소 · 환불 규정 <span class="hint">공문처럼 「이 날부터 취소 수수료 n%」</span></h3><span class="row" style="gap:6px"><button class="btn small" type="button" data-dbd="def">시작일 기준 기본값</button><button class="btn small" type="button" data-dbd="add">＋ 구간 추가</button></span></div>
     ${dBandsHtml(c,true)}
@@ -2072,7 +2074,7 @@ function stLes(L){const LS=L.filter(x=>x.lessons>0);const M=L.filter(x=>x.mc.len
     +ST(['선호 교수 1','신청자','레슨 횟수','선호 교수 2로 고른 사람'],cnt(LS,x=>x.p1||'(안 고름)').map(([k,n])=>[esc(k),n,LS.filter(x=>(x.p1||'(안 고름)')===k).reduce((t,x)=>t+x.lessons,0),LS.filter(x=>x.p2===k).length||'']))
     +`<div class="panel"><b>마스터클래스</b> <span class="hint">${M.length}명</span></div>`
     +ST(['교수','신청자','이름'],[...new Set(M.flatMap(x=>x.mc))].map(m=>{const Q=M.filter(x=>x.mc.includes(m));return [esc(m),Q.length,Q.map(x=>esc(x.p.name)+' <small class="faint">'+esc(x.acad)+'</small>').join(', ')]}))}
-function stCon(L){const C=L.filter(x=>x.concert);return ['오후','트와일라잇','이브닝'].map(c=>{const Q=C.filter(x=>x.concert===c);return `<div class="panel tbl"><b>${c} 음악회 ${Q.length}명</b>${Q.length?`<table style="margin-top:6px"><thead><tr><th>이름</th><th>학원</th><th>악기</th><th>곡</th></tr></thead><tbody>${Q.map(x=>`<tr><td>${esc(x.p.name)}</td><td>${esc(x.acad)}</td><td>${esc(x.inst)}</td><td>${esc(x.song)}</td></tr>`).join('')}</tbody></table>`:''}</div>`}).join('')}
+function stCon(L){const C=L.filter(x=>x.concert);return conList().map(c=>{const Q=C.filter(x=>x.concert===c);return `<div class="panel tbl"><b>${c} 음악회 ${Q.length}명</b>${Q.length?`<table style="margin-top:6px"><thead><tr><th>이름</th><th>학원</th><th>악기</th><th>곡</th></tr></thead><tbody>${Q.map(x=>`<tr><td>${esc(x.p.name)}</td><td>${esc(x.acad)}</td><td>${esc(x.inst)}</td><td>${esc(x.song)}</td></tr>`).join('')}</tbody></table>`:''}</div>`}).join('')}
 function stRoom(L){const R=L.filter(x=>x.room);return ST(['학원','가족방 수','대표'],[...new Set(R.map(x=>x.acad))].map(a=>{const Q=R.filter(x=>x.acad===a);return [esc(a),Q.length,Q.map(x=>esc(x.p.name)).join(', ')]}),['합계',R.length,''])}
 
 /* ================= 예산 · 결산 =================
@@ -2774,11 +2776,15 @@ document.addEventListener('click',e=>{if(S.tab!=='doc')return;const b=e.target.c
 <script>
 /* ---------- 음원 심사 (스케줄관리 › 음원 심사, 11-04) ----------
  * 신청자가 「내 접수」에서 넣은 음원 주소를 눌러 듣고 승인 · 비승인 · 보류. 결과는 음악회마다 「결과 공개」를 켜야 신청자에게 보임. */
-const AUD_CONS=['이브닝','트와일라잇','오후'];
+const audCons=()=>conList().slice().reverse();
+/* 음악회 추가 · 빼기 (11-12) */
+document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('button');if(!b||!S.cc)return;const c=S.cc;if(!Array.isArray(c.cons))c.cons=conList().slice();c.aud=c.aud||{};
+  if(b.id==='conAdd'){const i=document.getElementById('conNew'),n=String(i&&i.value||'').replace(/[|,]/g,' ').trim().slice(0,12);if(!n){toast('새 음악회 이름을 넣어 주세요');return}if(n==='없음'||c.cons.includes(n)){toast('이미 있는 이름이에요');return}if(c.cons.length>=8){toast('음악회는 8개까지예요');return}c.cons.push(n);c.aud[n]=c.aud[n]||{on:false,due:''};render();toast(n+' 음악회를 넣었어요 · 「저장」을 눌러 주세요');return}
+  if(b.dataset.condel){const k=b.dataset.condel;if(c.cons.length<=1)return;if(!confirm(k+' 음악회를 목록에서 뺄까요? 이미 고른 접수는 그대로 남아요.'))return;c.cons=c.cons.filter(x=>x!==k);delete c.aud[k];render();toast(k+' 음악회를 뺐어요 · 「저장」을 눌러 주세요');return}});
 const audSt=x=>x.none?'제출 안 함':(x.st||'심사 전');
 function audLoad(){S.AUL=1;call('audList',[],r=>{S.AU=r;S.AUL=0;if(S.tab==='aud')render()},'음원 목록을 불러오고 있어요…')}
 function vAud(){if(!S.AU){if(!S.AUL)setTimeout(audLoad,0);return '<div class="panel hint">음원 목록을 불러오는 중…</div>'}
-  const A=S.AU,C=A.cfg||{},on=AUD_CONS.filter(k=>(C[k]||{}).on),F=S.audF||{con:'',st:'심사 전',q:''};S.audF=F;
+  const A=S.AU,C=A.cfg||{},on=audCons().filter(k=>(C[k]||{}).on),F=S.audF||{con:'',st:'심사 전',q:''};S.audF=F;
   if(!on.length)return '<div class="panel hint">음원을 받는 음악회가 없어요. 「설정 › 캠프 설정 › 음악회 음원 제출」에서 켜 주세요.</div>';
   const cnt=(k,st)=>A.rows.filter(x=>x.con===k&&audSt(x)===st).length,people=k=>new Set(A.rows.filter(x=>x.con===k).map(x=>x.pid)).size;
   const cards=on.map(k=>{const c=C[k];return `<div class="panel" style="flex:1;min-width:260px;margin:0"><div class="spread"><b style="font-size:16px">${k} 음악회</b>
@@ -2786,7 +2792,7 @@ function vAud(){if(!S.AU){if(!S.AUL)setTimeout(audLoad,0);return '<div class="pa
       <div class="hint" style="margin:4px 0">마감 ${c.end?esc(kday(c.end)):'없음'}${c.due?'':' (캠프 시작 전날)'} · 신청 ${people(k)}명</div>
       <div class="row" style="gap:6px;flex-wrap:wrap">${['심사 전','승인','비승인','보류','제출 안 함'].map(st=>`<button class="btn small ${F.con===k&&F.st===st?'primary':'ghost'}" type="button" data-audfl="${k}|${st}">${st} ${cnt(k,st)}</button>`).join('')}</div></div>`}).join('');
   const q=F.q.trim(),R=A.rows.filter(x=>(!F.con||x.con===F.con)&&(!F.st||audSt(x)===F.st)&&(!q||[x.name,x.acad,x.owner,x.song].some(v=>String(v||'').includes(q))))
-    .sort((a,b)=>AUD_CONS.indexOf(a.con)-AUD_CONS.indexOf(b.con)||String(a.acad).localeCompare(String(b.acad),'ko')||String(a.name).localeCompare(String(b.name),'ko')||String(a.at).localeCompare(String(b.at)));
+    .sort((a,b)=>audCons().indexOf(a.con)-audCons().indexOf(b.con)||String(a.acad).localeCompare(String(b.acad),'ko')||String(a.name).localeCompare(String(b.name),'ko')||String(a.at).localeCompare(String(b.at)));
   const seen=S.audSeen||(S.audSeen={}),ro=RO();
   const btn=(x,st,cls)=>`<button class="btn small ${audSt(x)===st?cls:'ghost'}" type="button" data-audst="${esc(x.id)}|${st}" ${ro?'disabled':''}>${st}</button>`;
   return `<div class="row" style="gap:12px;flex-wrap:wrap;align-items:stretch;margin-bottom:12px">${cards}</div>
@@ -4403,6 +4409,6 @@ document.addEventListener('click',e=>{if(S.tab!=='book')return;const b=e.target.
   if(b.id==='ebSetSave'){const n=Object.assign(ebSet(),S.ebSetW||{});n.per=Math.max(1,Math.min(10,Math.round(+n.per||5)));n.fs=Math.max(5,Math.min(10,+n.fs||6.6));['en','sub','org'].forEach(k=>n[k]=String(n[k]||'').trim().slice(0,120));
     ebSend([],[],n,()=>{S.ebSetW=null;toast('책자 설정을 저장했어요')});return}},true);
 </script>
-<div id="bldMark" hidden>빌드표시 20261112-001252 </div>
+<div id="bldMark" hidden>빌드표시 20261112-003729 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();</script>
 </body></html>

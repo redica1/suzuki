@@ -1,4 +1,4 @@
-/* build: 20261112-001252 */
+/* build: 20261112-003729 */
 /* ---------- 캠프 설정 (관리자 화면에서 입력되는 값) ---------- */
 const ROOM = { cap:4, emptyFee:130000 }; // 가족방: 4인 기준, 빈 자리 1개당 추가 비용
 const CAMP = { id:'27W', ri:0, lessonFee:60000, lessonMax:5, mcFee:150000,
@@ -88,7 +88,7 @@ const FEES = { // 참가자격 × 차수 (관리자 참가비표에서 입력, 2
 const WD='일월화수목금토';
 const dOf=d=>{const [y,m,dd]=d.split('-').map(Number);return new Date(Date.UTC(y,m-1,dd))};
 const kdw=d=>{const x=dOf(d);return `${x.getUTCMonth()+1}. ${x.getUTCDate()}.(${WD[x.getUTCDay()]})`};
-function applyCamp(c){if(!c||!c.base||!Array.isArray(c.rounds)||!c.rounds.length)return;CAMP.pre=c.pre||'';CAMP.aud=c.aud||null;const b=c.base,o=c.opt||{};
+function applyCamp(c){if(!c||!c.base||!Array.isArray(c.rounds)||!c.rounds.length)return;CAMP.pre=c.pre||'';CAMP.aud=c.aud||null;CAMP.cons=Array.isArray(c.cons)&&c.cons.length?c.cons:null;const b=c.base,o=c.opt||{};
   const keepRi=S&&S.editNo&&S.riBack!==undefined;
   CAMP.id=b.id;['lessonFee','lessonMax','mcFee','studentDues','teacherDues'].forEach(k=>{if(o[k]!==undefined)CAMP[k]=+o[k]});
   if(o.roomCap)ROOM.cap=+o.roomCap;if(o.roomEmptyFee!==undefined)ROOM.emptyFee=+o.roomEmptyFee;

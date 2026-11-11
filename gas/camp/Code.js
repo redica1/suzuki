@@ -1,4 +1,4 @@
-/* build: 20261112-001252 */
+/* build: 20261112-003729 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -1117,6 +1117,7 @@ const CAMP_DEF = {
     { k: '점심', t: 'Lunch 점심 식사', s: '11:30', e: '13:20', on: true, first: false, last: true },
     { k: '저녁', t: 'Dinner 저녁 식사', s: '17:30', e: '19:20', on: true, first: true, last: false }],
   /* 음원 제출 (11-04): 음악회마다 받을지 · 마감일(비우면 캠프 시작 전날까지). 결과 공개는 설정 「음원 결과 공개」 (심사 화면에서) */
+  cons: ['오후', '트와일라잇', '이브닝'],   /* 음악회 이름 목록 (11-12): 캠프 관리자 설정에서 추가 · 빼기 */
   aud: { '오후': { on: false, due: '' }, '트와일라잇': { on: true, due: '' }, '이브닝': { on: true, due: '' } },
   /* 공문 (11-04): 캠프 안내 공문 = 캠프의 시작. 글 속 {기간}·{장소}·[[참가비표]] 같은 표시는 위 캠프 설정 값으로 채워져서, 공문과 접수 화면 금액·날짜가 어긋나지 않음 */
   doc: { no: '', date: '', to: '', ref: '', title: '{캠프이름} 안내', num: '1.', t1: '14시', t2: '12시', sign: true, mg: { t: 13, b: 15, l: 16, r: 16 }, rnote: ['(*입금 확인 후 신청 등록 완료)', '', ''],
@@ -1141,7 +1142,9 @@ const CAMP_DEF = {
     { id: 'photo', title: '사진·영상 촬영과 홍보 활용 동의 (선택)', req: false, on: true, body: '캠프 중 찍은 사진·영상(참가자 모습 포함)을 협회 홈페이지, SNS, 소식지 같은 홍보에 쓸 수 있어요.\n보유 기간: 게시물을 내려 달라고 요청할 때까지\n\n동의하지 않아도 접수할 수 있어요. 동의하지 않으면 홍보물에 쓰지 않아요.' }
   ] },
 };
-const CAMP_KEYS = [['base', '기본'], ['rounds', '차수'], ['fees', '참가비'], ['opt', '옵션'], ['refund', '환불'], ['consent', '동의'], ['meals', '식사'], ['doc', '공문'], ['aud', '음원']];
+const CAMP_KEYS = [['base', '기본'], ['rounds', '차수'], ['fees', '참가비'], ['opt', '옵션'], ['refund', '환불'], ['consent', '동의'], ['meals', '식사'], ['doc', '공문'], ['aud', '음원'], ['cons', '음악회']];
+const CON_DEF = ['오후', '트와일라잇', '이브닝'];
+function consClean_(a) { const o = []; (Array.isArray(a) ? a : []).forEach(x => { const n = String(x == null ? '' : x).replace(/[|,]/g, ' ').trim().slice(0, 12); if (n && n !== '없음' && o.indexOf(n) < 0 && o.length < 8) o.push(n); }); return o.length ? o : CON_DEF.slice(); }
 let CAMP_CACHE = null;
 /* 참가 구분 이름 바뀜 (11-11): 「돌전아기」 → 「15개월 미만」 · 예전에 저장된 접수 · 캠프설정도 읽을 때 새 이름으로 */
 function retype_(s) { return String(s).replace(/돌전아기/g, '15개월 미만'); }
@@ -1155,6 +1158,7 @@ function camp_() {
     try { const o = JSON.parse(retype_(v)); c[k] = Array.isArray(o) ? o : Object.assign(c[k], o); } catch (x) {}
   });
   /* 참가비표 칸 수 = 차수 수 (새로 생긴 참가자격·차수는 마지막 금액으로 채움) */
+  c.cons = consClean_(c.cons);
   FEE_TYPES.forEach(t => { const a = (c.fees[t] || []).slice(0, c.rounds.length); while (a.length < c.rounds.length) a.push(a.length ? a[a.length - 1] : 0); c.fees[t] = a; });
   return (CAMP_CACHE = c);
 }
@@ -1240,8 +1244,9 @@ function campSave(token, c, rev) {
   doc.no = String((prev.doc || {}).no || ''); doc.gm = String((prev.doc || {}).gm || '');
   /* 거꾸로 (11-11): 캠프에서 공문을 저장하면 회원관리 공문 대장에 저절로 한 줄(구분 캠프 · 작성 중). 이미 있으면 제목 · 시행일 · 수신 · 참조만 맞춤 */
   let linkMsg = '';
-  const aud = {}; AUD_CON.forEach(k => { const x = c.aud ? ((c.aud[k]) || {}) : ((prev.aud || {})[k] || {}); aud[k] = { on: !!x.on, due: /^\d{4}-\d{2}-\d{2}$/.test(x.due || '') ? x.due : '' }; });
-  const nc = { meals, base: { id: String(b.id).trim(), name: String(b.name).trim(), start: b.start, end: b.end, place: String(b.place || '').trim(), open: b.open, close: b.close, cur, guest: b.guest !== false, staff: b.staff !== false, member: b.member !== false, intl: b.intl !== false }, rounds, fees, opt, refund, consent, doc, aud };
+  const cons = c.cons ? consClean_(c.cons) : consClean_(prev.cons);
+  const aud = {}; cons.forEach(k => { const x = c.aud ? ((c.aud[k]) || {}) : ((prev.aud || {})[k] || {}); aud[k] = { on: !!x.on, due: /^\d{4}-\d{2}-\d{2}$/.test(x.due || '') ? x.due : '' }; });
+  const nc = { meals, base: { id: String(b.id).trim(), name: String(b.name).trim(), start: b.start, end: b.end, place: String(b.place || '').trim(), open: b.open, close: b.close, cur, guest: b.guest !== false, staff: b.staff !== false, member: b.member !== false, intl: b.intl !== false }, rounds, fees, opt, refund, consent, doc, aud, cons };
   const lock = lock_();
   try {
     const ss = SpreadsheetApp.getActive(); let sh = ss.getSheetByName(CAMPCFG);
@@ -1250,7 +1255,7 @@ function campSave(token, c, rev) {
     if ((+rev || 0) !== (old.rev || 0)) throw new Error('다른 분이 먼저 캠프 설정을 바꿨어요. 새로 고친 뒤 다시 해 주세요.');
     /* 저장이 확실할 때(번호 확인 뒤)만 공문 대장에 올림 — 저장 실패로 대장 줄만 늘어나지 않게 */
     try { const g = campDocLink_(nc.base, nc.doc, a.name); if (g) nc.doc.gm = g; else linkMsg = '회원관리 시트(설정 「회원관리 시트」)나 그 시트의 「공문」 탭을 찾지 못해 공문 대장에 올리지 못했어요.'; } catch (e) { linkMsg = '공문 대장에 올리지 못했어요: ' + e.message; }
-    const desc = { base: '캠프 코드 · 이름 · 날짜 · 장소 · 접수 기간 · 비회원 접수', rounds: '차수 이름과 기간', fees: '참가자격 × 차수 참가비', opt: '추가 레슨 · 마스터클래스 · 회비 · 가족방', refund: '취소·환불 규정', meals: '식사 시간 (교사 일정 모든 날짜의 식사 줄)', doc: '캠프 안내 공문 (문서 정보 · 머리말 · 항목별 글)', aud: '음악회별 음원 제출 받기 · 마감일', consent: '개인정보 동의 문구 (바꾸면 버전 날짜가 바뀜)' };
+    const desc = { base: '캠프 코드 · 이름 · 날짜 · 장소 · 접수 기간 · 비회원 접수', rounds: '차수 이름과 기간', fees: '참가자격 × 차수 참가비', opt: '추가 레슨 · 마스터클래스 · 회비 · 가족방', refund: '취소·환불 규정', cons: '음악회 이름 목록 (설정에서 추가 · 빼기)', meals: '식사 시간 (교사 일정 모든 날짜의 식사 줄)', doc: '캠프 안내 공문 (문서 정보 · 머리말 · 항목별 글)', aud: '음악회별 음원 제출 받기 · 마감일', consent: '개인정보 동의 문구 (바꾸면 버전 날짜가 바뀜)' };
     const ex = rows_(CAMPCFG).reduce((o, r) => { o[String(r['항목'])] = String(r['값'] || ''); return o; }, {});
     const vals = CAMP_KEYS.map(k => [k[1], JSON.stringify(nc[k[0]]), desc[k[0]]]).concat([['rev', String((old.rev || 0) + 1), '바꾼 횟수 (건드리지 마세요)'],
       ['공문HTML', c.docHtml != null ? String(c.docHtml).slice(0, 48000) : (ex['공문HTML'] || ''), '회원관리 공문 대장이 읽는 공문 그림 (저장할 때 저절로)'], ['공문CSS', c.docCss != null ? String(c.docCss).slice(0, 20000) : (ex['공문CSS'] || ''), '공문 그림 모양']]);
@@ -3022,7 +3027,7 @@ function campEventPeople_(id) {
   const e = actEvents_().find(x => x.id === String(id)); if (!e) return { ok: false, msg: '그 일정을 찾지 못했어요. 새로 고쳐 주세요.' };
   const staff = e.ppl.map(x => ({ name: pn(x.n), role: x.r || '' }));
   let students = [];
-  const ck = /afternoon|오후/i.test(e.title) ? '오후' : /twilight|트와일라잇/i.test(e.title) ? '트와일라잇' : /evening|이브닝/i.test(e.title) ? '이브닝' : '';
+  const ck = camp_().cons.find(n => String(e.title).indexOf(n) >= 0) || (/afternoon|오후/i.test(e.title) ? '오후' : /twilight|트와일라잇/i.test(e.title) ? '트와일라잇' : /evening|이브닝/i.test(e.title) ? '이브닝' : '');
   if (ck && (!e.stage || e.stage === '본공연')) students = all.filter(s => s.concert === ck).map(s => ({ name: s.name, acad: s.acad, note: s.inst })).sort((a, b) => a.acad.localeCompare(b.acad) || a.name.localeCompare(b.name));
   if (e.title === '그룹레슨') { const groupsOf = grpMatch_(); students = all.filter(s => groupsOf(s.inst, s.prog).some(g => g.id === e.id)).map(s => ({ name: s.name, acad: s.acad, note: s.inst })).sort((a, b) => a.acad.localeCompare(b.acad) || a.name.localeCompare(b.name)); }
   return { ok: true, open: true, staff, students };
@@ -3322,13 +3327,13 @@ const CON_HEAD = ['공연', '날짜', '공연 시작', '순서', '리허설', '�
  * 접수 때 넣은 주소(form.info.video)는 시트에 없으면 「접수 때 넣은 주소」로 같이 보여 주고, 심사하면 그때 시트에 줄이 생김. */
 const AUD = '음원';
 const AUD_HEAD = ['음원ID', '제출일시', '접수번호', '참가자ID', '이름', '학원', '음악회', '주소', '제출자', '상태', '심사자', '심사일', '메모'];
-const AUD_CON = ['오후', '트와일라잇', '이브닝'];
+/* 음악회 목록은 캠프 설정 cons (11-12) */
 const AUD_ST = ['심사 전', '승인', '비승인', '보류'];
 const audUrlOk_ = u => /^https?:\/\/\S{4,}$/i.test(u) && u.length <= 500;
 function audCfg_() {
   const c = camp_(), A = c.aud || {}, pub = String(setting_('음원 결과 공개') || '').split(',').map(x => x.trim()).filter(Boolean), o = {};
   const lastDay = c.base && c.base.start ? (() => { const d = new Date(c.base.start + 'T00:00:00'); d.setDate(d.getDate() - 1); return Utilities.formatDate(d, TZ, 'yyyy-MM-dd'); })() : '';
-  AUD_CON.forEach(k => { const x = A[k] || {}; o[k] = { on: !!x.on, due: x.due || '', end: x.due || lastDay, pub: pub.includes(k) }; });
+  camp_().cons.forEach(k => { const x = A[k] || {}; o[k] = { on: !!x.on, due: x.due || '', end: x.due || lastDay, pub: pub.includes(k) }; });
   return o;
 }
 function audRows_() {
@@ -3405,7 +3410,7 @@ function audSet(token, id, st, memo) {
 function devAud(token, n) {
   const a = adm_(token); needSup_(a);
   if (!String(setting_('테스트 로그인') || '').trim()) throw new Error('테스트(STG)에서만 쓸 수 있어요.');
-  const C = audCfg_(), cons = AUD_CON.filter(k => C[k].on); if (!cons.length) throw new Error('먼저 「캠프 설정 › 음악회 음원 제출」에서 음원 받기를 켜 주세요.');
+  const C = audCfg_(), cons = camp_().cons.filter(k => C[k] && C[k].on); if (!cons.length) throw new Error('먼저 「캠프 설정 › 음악회 음원 제출」에서 음원 받기를 켜 주세요.');
   n = Math.max(3, Math.min(20, +n || 8));
   const SONGS = [['A. Vivaldi', 'Violin Concerto in A minor, RV 356 1st mvt'], ['J. S. Bach', 'Concerto for Two Violins in D minor, BWV 1043 1st mvt'], ['F. Seitz', 'Pupil\'s Concerto No. 2, Op. 13 1st mvt'], ['G. Fauré', 'Élégie, Op. 24'], ['C. Saint-Saëns', 'The Swan'], ['J. Haydn', 'Cello Concerto in C major 1st mvt']];
   const lock = lock_(); const made = [];
@@ -3441,8 +3446,8 @@ function devAudClear(token) {
 }
 function audPub(token, con, on) {
   const a = adm_(token); need_(a, 'aud');
-  if (!AUD_CON.includes(con)) throw new Error('음악회를 확인해 주세요.');
-  const cur = String(setting_('음원 결과 공개') || '').split(',').map(x => x.trim()).filter(x => AUD_CON.includes(x) && x !== con);
+  if (!camp_().cons.includes(con)) throw new Error('음악회를 확인해 주세요.');
+  const cur = String(setting_('음원 결과 공개') || '').split(',').map(x => x.trim()).filter(x => camp_().cons.includes(x) && x !== con);
   if (on) cur.push(con);
   ensureSettings_(); const sh = SpreadsheetApp.getActive().getSheetByName('설정'), row = rows_('설정').find(x => String(x['항목']) === '음원 결과 공개');
   if (row) sh.getRange(row._row, 2).setValue(cur.join(', ')); else sh.appendRow(['음원 결과 공개', cur.join(', '), '음원 심사 결과를 신청자에게 보여 줄 음악회']);

@@ -198,7 +198,7 @@ function roomRow(key,name){
 }
 /* 가족 추가 버튼 + 형제 고르기 (형제는 같은 학원, 먼저 신청 명단에 추가되어 있어야 함) */
 function famChips(key,owner,name){
-  const FC=isGuest()?[['비회원 보호자','보호자'],['비회원 동반가족','동반가족'],['비회원 돌전아기','돌 전 아기']]:FAM_CHIPS[owner];
+  const FC=isGuest()?[['비회원 보호자','보호자'],['비회원 동반가족','동반가족'],['비회원 15개월 미만','15개월 미만']]:FAM_CHIPS[owner];
   const chips=`<div class="chips"><span class="hint" style="align-self:center">${esc(name)} 가족 추가</span>${!S.join[key]&&!isStaffAcad()?`<button class="chip" type="button" data-sibpick="${key}">+ ${owner==='teacher'?'자녀 (참가 학생)':'형제'}</button>`:''}${FC.map(([t,l])=>`<button class="chip" type="button" data-addfam="${key}|${t}">+ ${l}</button>`).join('')}</div>`;
   if(S.sibOpen!==key) return chips;
   const cands=people().filter(p=>p.kind==='student'&&p.key!==key&&!S.join[p.key]&&!sibsOf(p.key).length);

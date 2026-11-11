@@ -26,13 +26,13 @@ const JSON_CHUNK = 45000;                   // 시트 한 칸 글자 수 한도(
 const FEES = {
   '교사': [560000, 570000, 590000], '연수생': [560000, 570000, 590000], '소속없는 중급연수생': [560000, 570000, 590000], '학생': [560000, 570000, 590000],
   '회원의 악기하는 자녀': [510000, 520000, 540000], '회원의 첫번째 보호자': [510000, 520000, 540000],
-  '회원의 그외 악기 안하는 동반가족': [410000, 420000, 440000], '동반가족 중 돌전아기': [310000, 320000, 340000],
+  '회원의 그외 악기 안하는 동반가족': [410000, 420000, 440000], '동반가족 중 15개월 미만': [310000, 320000, 340000],
   /* 비회원(학부모 직접 접수) — 금액은 「캠프 설정」 참가비표에서 정함 (기본값은 회원 금액과 같게 넣어 둠) */
-  '비회원 학생': [560000, 570000, 590000], '비회원 보호자': [510000, 520000, 540000], '비회원 동반가족': [410000, 420000, 440000], '비회원 돌전아기': [310000, 320000, 340000],
+  '비회원 학생': [560000, 570000, 590000], '비회원 보호자': [510000, 520000, 540000], '비회원 동반가족': [410000, 420000, 440000], '비회원 15개월 미만': [310000, 320000, 340000],
   /* 관계자 (10-31) — 금액은 「캠프 설정」 참가비표에서 (기본 0원) */
   '초빙교수': [0, 0, 0], '반주자': [0, 0, 0], '지휘자': [0, 0, 0], '통역': [0, 0, 0], '초청강사': [0, 0, 0], '스태프': [0, 0, 0], '기타 관계자': [0, 0, 0],
   /* 해외 단체 (10-31, 영어 화면) — 금액은 「캠프 설정」 참가비표에서, 연회비 없음 */
-  '해외 학생': [0, 0, 0], '해외 교사': [0, 0, 0], '해외 보호자': [0, 0, 0], '해외 동반가족': [0, 0, 0], '해외 돌전아기': [0, 0, 0]   /* 해외 줄은 USD (opt.usdRate 로 원화 청구액 계산) */
+  '해외 학생': [0, 0, 0], '해외 교사': [0, 0, 0], '해외 보호자': [0, 0, 0], '해외 동반가족': [0, 0, 0], '해외 15개월 미만': [0, 0, 0]   /* 해외 줄은 USD (opt.usdRate 로 원화 청구액 계산) */
 };
 const ROUND_NAMES = ['1차', '2차', '3차'];
 const OPT = { lessonFee: 60000, lessonMax: 5, studentDues: 30000, teacherDues: 300000, roomCap: 4, roomEmptyFee: 130000 };
@@ -234,7 +234,7 @@ function login(name, phone, consent) {
 const STAFF_ACAD = '관계자';
 const NOACAD = '소속 없음';   /* 학원 소속이 없는 회원 선생님(협회 단체납부 등)의 접수 묶음 (10-31). 본인 접수만 보임 */
 const STAFF_TYPES = ['초빙교수', '반주자', '지휘자', '통역', '초청강사', '스태프', '기타 관계자'];
-const STAFF_FAM = ['회원의 첫번째 보호자', '회원의 그외 악기 안하는 동반가족', '동반가족 중 돌전아기'];
+const STAFF_FAM = ['회원의 첫번째 보호자', '회원의 그외 악기 안하는 동반가족', '동반가족 중 15개월 미만'];
 const isStaffT_ = t => t && t.kind === '외부인';
 function staffOk_(t, staff) {
   if (staff && !isStaffT_(t)) throw new Error('관계자(외부인) 계정이 아니에요. 회원 선생님은 처음 화면에서 「회원 선생님」을 골라 주세요.');
@@ -242,10 +242,10 @@ function staffOk_(t, staff) {
 /* ---------------- 해외 단체 (10-31) ----------------
  * 해외 단체(예: 필리핀) = 대표 한 명이 영어 화면(?page=intl)에서 단체 사람을 모두 접수. 운영진이 관리자 「접수 · 입금 확인 › 해외」에서 단체를 만들고
  * 접속 코드를 대표 이메일로 보냄 → 대표는 이메일 + 코드로 로그인. 단체 하나 = 접수 하나(학원 「해외 · 단체이름」, sb.intl = true).
- * 참가 구분 = 해외 학생 · 해외 교사 · 해외 보호자 · 해외 동반가족 · 해외 돌전아기 (캠프 설정 참가비표), 연회비 없음. 송금은 단체가 한꺼번에 → 대표가 송금 신고(intlRep),
+ * 참가 구분 = 해외 학생 · 해외 교사 · 해외 보호자 · 해외 동반가족 · 해외 15개월 미만 (캠프 설정 참가비표), 연회비 없음. 송금은 단체가 한꺼번에 → 대표가 송금 신고(intlRep),
  * 운영진이 받은 금액으로 사람마다 입금 확인(기존 일괄 확인). */
 const INTL_SH = '해외단체', INTL_HEAD = ['단체ID', '단체', '나라', '대표', '이메일', '접속코드', '만든날', '사용', '메모'];
-const INTL_TYPES = ['해외 학생', '해외 교사', '해외 보호자', '해외 동반가족', '해외 돌전아기'];
+const INTL_TYPES = ['해외 학생', '해외 교사', '해외 보호자', '해외 동반가족', '해외 15개월 미만'];
 const INTL_PLAY = ['해외 학생', '해외 교사'];
 function intlSheet_() { const ss = SpreadsheetApp.getActive(); let sh = ss.getSheetByName(INTL_SH); if (!sh) { sh = ss.insertSheet(INTL_SH); sh.getRange(1, 1, 1, INTL_HEAD.length).setValues([INTL_HEAD]).setFontWeight('bold'); sh.setFrozenRows(1); sh.getRange('A:I').setNumberFormat('@'); } return sh; }
 function intlGroups_() { intlSheet_(); return rows_(INTL_SH).filter(r => r['단체ID']).map(r => ({ id: String(r['단체ID']), name: String(r['단체']), country: String(r['나라'] || ''), lead: String(r['대표'] || ''), email: String(r['이메일'] || '').toLowerCase(), code: String(r['접속코드'] || ''), at: String(r['만든날'] || ''), on: String(r['사용'] || '예') !== '아니오', memo: String(r['메모'] || ''), _row: r._row })); }
@@ -584,7 +584,7 @@ function loadSubs_() {
   const admin = adminMap_();
   return rows_(SH.SUB).filter(r => r['접수번호']).map(r => {
     const js = ['JSON_1', 'JSON_2', 'JSON_3', 'JSON_4'].map(k => String(r[k] || '')).join('');
-    let sb; try { sb = JSON.parse(js); } catch (e) { return null; }
+    let sb; try { sb = JSON.parse(retype_(js)); } catch (e) { return null; }
     applyAdmin_(sb, admin);
     return sb;
   }).filter(Boolean);
@@ -753,7 +753,7 @@ function recalc_(sb) {
     p.type = i.type; p.fee = FEES[i.type][pr];
     if (intl) { p.usd = +FEES[i.type][pr] || 0; p.fee = Math.round(p.usd * (+OPT.usdRate || 1450)); }   /* 해외: 참가비표 값 = USD, 원화 청구액 = USD × 환율 */ p.lesson = les * OPT.lessonFee + mc;
     p.dues = paid ? 0 : (isT ? OPT.teacherDues : OPT.studentDues);
-    p.room = roomBy[k] || ((f.room || {})[k] ? 0 : (+((f.roomPen || {})[k]) || 0));   /* 가족방만 취소한 대표: 남은 취소 수수료 (11-11) */
+    p.room = roomBy[k] !== undefined ? Math.max(0, roomBy[k] - (+(((f.roomCredit || {})[k]) || {}).amt || 0)) : ((f.room || {})[k] ? 0 : (+((f.roomPen || {})[k]) || 0));   /* 넘겨받은 가족방 금액만큼 덜 냄 (11-11) */   /* 가족방만 취소한 대표: 남은 취소 수수료 (11-11) */
     const aj = ADJ[p.id]; if (aj) { if (aj.fee !== '') p.fee = +aj.fee; if (aj.room !== '') p.room = +aj.room; p.adj = aj.memo || '운영진 조정'; } else delete p.adj;   /* 운영진 청구 조정 (11-01) */
   });
   return sb;
@@ -864,6 +864,20 @@ function roomPen_(cur, sb) {
   if (Object.keys(pen).length) nf.roomPen = pen; else delete nf.roomPen;
 }
 
+/** 가족방 대표가 빠지고 새 대표(교사 · 학생)가 이어 쓸 때 (11-11): 빠지는 대표가 이미 낸 가족방 금액은 새 대표에게 넘어가고,
+ *  새 대표는 추가분만 냄. form.roomCredit[새 대표] = { from: 빠진 대표, amt } · 화면 값은 믿지 않고 지난 값 + 이번 넘김으로 다시 계산 */
+function roomCredit_(cur, sb) {
+  const nf = sb.form = sb.form || {}, of = cur.form || {}, oc = of.roomCredit || {}, cr = {}, nr = nf.room || {}, orr = of.room || {}, nj = nf.join || {};
+  Object.keys(oc).forEach(k => { if (nr[k]) cr[k] = oc[k]; });
+  Object.keys(orr).forEach(o => {
+    if (!orr[o] || nr[o]) return; const n = nj[o]; if (!n || !nr[n] || orr[n]) return;
+    const c = cur.ppl.find(p => p.id === cur.no + '_' + o), s = sb.ppl.find(p => p.id === cur.no + '_' + o);
+    if (!c || !s || s.status === '정상' || !(+c.paidAmt > 0)) return;
+    const amt = (+c.room || 0) + (+((oc[o] || {}).amt) || 0); if (amt > 0) cr[n] = { from: o, amt };
+  });
+  if (Object.keys(cr).length) nf.roomCredit = cr; else delete nf.roomCredit;
+}
+
 /** 내 접수 저장 (인원 추가·정보 수정·입금 신고·신고 수정·취소) — 내가 낸 접수만 */
 function saveSubs(token, subs) {
   const u = who_(token);
@@ -878,7 +892,7 @@ function saveSubs(token, subs) {
       if (!cur) throw new Error(sb.no + ' 접수를 찾지 못했어요.');
       if (cur.owner !== u.name) throw new Error(sb.no + '는 ' + cur.owner + ' 선생님이 낸 접수라 고칠 수 없어요.');
       sb.acad = cur.acad; sb.owner = cur.owner; if (cur.contact) sb.contact = cur.contact; else delete sb.contact; sb.createdAt = cur.createdAt; sb.no = cur.no; sb.reqId = cur.reqId; sb.rev = (+cur.rev || 0) + 1;
-      roomPen_(cur, sb);
+      roomPen_(cur, sb); roomCredit_(cur, sb);
       recalc_(sb);
       teacherDup_(all, sb, sb.ppl.filter(p => !cur.ppl.some(c => c.id === p.id)).map(p => p.id));
       stuDup_(all, sb, sb.ppl.filter(p => !cur.ppl.some(c => c.id === p.id)).map(p => p.id));
@@ -1087,9 +1101,9 @@ function adm_(token) {
 /* ---------------- 캠프 설정 (「캠프설정」 시트 · 총관리자만 바꿈) ----------------
  * 시트 한 줄 = 한 묶음(기본 · 차수 · 참가비 · 옵션 · 환불), 값은 JSON. 시트가 없으면 아래 기본값을 씀 */
 const CAMPCFG = '캠프설정';
-const FEE_TYPES = ['교사', '연수생', '소속없는 중급연수생', '학생', '회원의 악기하는 자녀', '회원의 첫번째 보호자', '회원의 그외 악기 안하는 동반가족', '동반가족 중 돌전아기', '비회원 학생', '비회원 보호자', '비회원 동반가족', '비회원 돌전아기',
+const FEE_TYPES = ['교사', '연수생', '소속없는 중급연수생', '학생', '회원의 악기하는 자녀', '회원의 첫번째 보호자', '회원의 그외 악기 안하는 동반가족', '동반가족 중 15개월 미만', '비회원 학생', '비회원 보호자', '비회원 동반가족', '비회원 15개월 미만',
   '초빙교수', '반주자', '지휘자', '통역', '초청강사', '스태프', '기타 관계자',
-  '해외 학생', '해외 교사', '해외 보호자', '해외 동반가족', '해외 돌전아기'];
+  '해외 학생', '해외 교사', '해외 보호자', '해외 동반가족', '해외 15개월 미만'];
 const CAMP_DEF = {
   base: { id: CAMP_ID, name: CAMP_NAME, start: '2027-01-11', end: '2027-01-15', place: '추후 안내', open: '2026-12-01', close: '2026-12-28', cur: 'auto', guest: true, staff: true, member: true, intl: true },
   rounds: [{ n: '1차', from: '2026-12-01', to: '2026-12-10' }, { n: '2차', from: '2026-12-11', to: '2026-12-20' }, { n: '3차', from: '2026-12-21', to: '2026-12-28' }],
@@ -1129,6 +1143,8 @@ const CAMP_DEF = {
 };
 const CAMP_KEYS = [['base', '기본'], ['rounds', '차수'], ['fees', '참가비'], ['opt', '옵션'], ['refund', '환불'], ['consent', '동의'], ['meals', '식사'], ['doc', '공문'], ['aud', '음원']];
 let CAMP_CACHE = null;
+/* 참가 구분 이름 바뀜 (11-11): 「돌전아기」 → 「15개월 미만」 · 예전에 저장된 접수 · 캠프설정도 읽을 때 새 이름으로 */
+function retype_(s) { return String(s).replace(/돌전아기/g, '15개월 미만'); }
 function camp_() {
   if (CAMP_CACHE) return CAMP_CACHE;
   const c = JSON.parse(JSON.stringify(CAMP_DEF)); c.rev = 0;
@@ -1136,7 +1152,7 @@ function camp_() {
     const k = (CAMP_KEYS.find(x => x[1] === String(r['항목'])) || [])[0], v = String(r['값'] || '');
     if (String(r['항목']) === 'rev') { c.rev = +v || 0; return; }
     if (!k || !v) return;
-    try { const o = JSON.parse(v); c[k] = Array.isArray(o) ? o : Object.assign(c[k], o); } catch (x) {}
+    try { const o = JSON.parse(retype_(v)); c[k] = Array.isArray(o) ? o : Object.assign(c[k], o); } catch (x) {}
   });
   /* 참가비표 칸 수 = 차수 수 (새로 생긴 참가자격·차수는 마지막 금액으로 채움) */
   FEE_TYPES.forEach(t => { const a = (c.fees[t] || []).slice(0, c.rounds.length); while (a.length < c.rounds.length) a.push(a.length ? a[a.length - 1] : 0); c.fees[t] = a; });
@@ -2196,7 +2212,7 @@ function devSummer(token) {
           /* 가족: 학생 하나에 보호자(+동반가족 · 아기), 절반은 가족방 */
           if (famLeft > 0 && rnd() < .5) { const sur = sname[0], list = [['회원의 첫번째 보호자', sur + pick(G) + pick(G)]];
             if (famLeft > 1 && rnd() < .35) list.push(['회원의 그외 악기 안하는 동반가족', sur + pick(G) + pick(G)]);
-            if (famLeft > 2 && rnd() < .05) list.push(['동반가족 중 돌전아기', sur + pick(G) + pick(G)]);
+            if (famLeft > 2 && rnd() < .05) list.push(['동반가족 중 15개월 미만', sur + pick(G) + pick(G)]);
             list.forEach(([type, fname], fi) => { const fk = 'fs' + n + '_' + j + '_' + fi; fam.push({ id: fk, type, name: fname, link: key }); info[fk] = { type, gender: fi === 0 ? '여' : pick(['여', '남']) };
               ppl.push({ id: no + '_' + fk, name: fname, kind: '가족', type, inst: '', status: '정상', addAt: at, batch: 1 }); famLeft--; });
             if (rnd() < .5) room[key] = true; }
@@ -2278,9 +2294,9 @@ function devScenario(token) {
     sb = mk(VACAD, tN(3), [TT(3)].concat(Ss(13, 14))); s = rep(sb, sb.ppl, tN(3), '2026-10-10'); dep('2026-10-10', '11:05', tN(3), s); save(sb, '교사 회비 포함 청구');
     // 5 윤채아 10명 신청 · 5명 신고 · 6명분 입금
     sb = mk(VACAD, tN(4), Ss(15, 24)); s = rep(sb, sb.ppl.slice(0, 5), tN(4), '2026-10-12'); dep('2026-10-12', '16:20', tN(4), s + chg(sb.ppl[5])); save(sb, '10명 · 5명 신고 · 6명분 입금');
-    // 6 원장: 학생 2 + 가족(보호자 · 동반가족 · 돌 전 아기) + 가족방, 보호자 이름으로 신고 · 입금
+    // 6 원장: 학생 2 + 가족(보호자 · 동반가족 · 15개월 미만) + 가족방, 보호자 이름으로 신고 · 입금
     const k25 = String(ST[25]['ID']);
-    sb = mk(VACAD, tN(0), Ss(25, 26).map((x, j) => j === 0 ? Object.assign(x, { room: true }) : x).concat([{ key: 'fv1', name: '가부모', type: '회원의 첫번째 보호자', fam: k25 }, { key: 'fv2', name: '가동생', type: '회원의 그외 악기 안하는 동반가족', fam: k25 }, { key: 'fv3', name: '가아기', type: '동반가족 중 돌전아기', fam: k25 }]));
+    sb = mk(VACAD, tN(0), Ss(25, 26).map((x, j) => j === 0 ? Object.assign(x, { room: true }) : x).concat([{ key: 'fv1', name: '가부모', type: '회원의 첫번째 보호자', fam: k25 }, { key: 'fv2', name: '가동생', type: '회원의 그외 악기 안하는 동반가족', fam: k25 }, { key: 'fv3', name: '가아기', type: '동반가족 중 15개월 미만', fam: k25 }]));
     s = rep(sb, sb.ppl, '가부모', '2026-10-14'); dep('2026-10-14', '20:03', '가부모', s); save(sb, '가족 · 가족방 · 보호자 이름 입금');
     // 7 서이든: 개인레슨 3번 + 마스터클래스
     sb = mk(VACAD, tN(1), [Object.assign(S(27), { les: 3, mc: mcs.length ? [mcs[0].n] : [] })]); s = rep(sb, sb.ppl, tN(1), '2026-10-15'); dep('2026-10-15', '13:15', tN(1), s); save(sb, '레슨 · 마스터클래스');
@@ -3452,7 +3468,7 @@ function budSeed_() {
   let j = 0; const I = o => Object.assign({ id: 'i' + (++j), amt: 0, cur: 'KRW', scale: 'fixed', sys: false, act: '', memo: '' }, o);
   return {
     base: { n: 600, rmix: [474, 39, 7], fx: { USD: 1450, JPY: 9.5 }, cut: { pct: 10, parts: [['7%', 7], ['3%', 3]] }, hotelFix: true, sMin: 350, sMax: 700, sStep: 25 },
-    mix: { '학생': 266, '교사': 95, '연수생': 26, '회원의 악기하는 자녀': 20, '회원의 첫번째 보호자': 69, '회원의 그외 악기 안하는 동반가족': 29, '동반가족 중 돌전아기': 1, '비회원 학생': 2, '비회원 보호자': 2 },
+    mix: { '학생': 266, '교사': 95, '연수생': 26, '회원의 악기하는 자녀': 20, '회원의 첫번째 보호자': 69, '회원의 그외 악기 안하는 동반가족': 29, '동반가족 중 15개월 미만': 1, '비회원 학생': 2, '비회원 보호자': 2 },
     inc: [
       I({ name: '추가 레슨 · 마스터클래스', amt: 4200000, scale: 'person', sys: true, memo: '26 여름: 추가 레슨 24명 · 마스터클래스 9명 · 접수 입금에 함께 들어옴' }),
       I({ name: '해외 참가 달러 수입', amt: 0, cur: 'USD', memo: '26 겨울 $29,495 (통장 밖 · 환전 25,000,000원)' }),
@@ -3482,7 +3498,7 @@ function budRead_() {
   R.forEach(r => { const k = String(r['항목'] || ''), v = String(r['값'] == null ? '' : r['값']);
     if (k === 'rev') rev = +v || 0; else { const m = k.match(/^plan(\d*)$/); if (m) parts.push([+(m[1] || 1), v]); } });
   if (!parts.length) return { plan: null, rev };
-  try { return { plan: JSON.parse(parts.sort((a, b) => a[0] - b[0]).map(x => x[1]).join('')), rev }; } catch (x) { return { plan: null, rev, err: '예산결산 시트의 값을 읽지 못했어요.' }; }
+  try { return { plan: JSON.parse(retype_(parts.sort((a, b) => a[0] - b[0]).map(x => x[1]).join(''))), rev }; } catch (x) { return { plan: null, rev, err: '예산결산 시트의 값을 읽지 못했어요.' }; }
 }
 function budCanSee_(a) { if (!a.sup && !['bplan', 'bset'].some(k => a.perms[k] === '보기' || a.perms[k] === '편집')) throw new Error('예산 · 결산을 볼 권한이 없어요.'); }
 function budData(token) {

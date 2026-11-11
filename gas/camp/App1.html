@@ -68,12 +68,12 @@ const roomCell=(M,p)=>{const o=M[p.id];return `<td>${o?(o.isRep?`<span class="cc
 /* 가족방 아래 표: 위 접수 표와 같은 칸으로, 방마다 묶어서 */
 function famRoomsHTML(subs,noHead){const R=roomsOf(subs);const nc=Math.max(ROOM.cap-1,...R.map(r=>r.mem.length-1));
   return (noHead?'':`<h3 style="margin:18px 0 6px;font-size:18px">가족방</h3>`)+(R.length?`<div class="panel"><div class="mtblw"><table class="mtbl"><thead><tr><th>#</th><th>대표</th>${Array.from({length:nc},(_,k)=>`<th>가족 ${k+1}</th>`).join('')}<th>인원</th><th class="r">가족방 추가 금액</th>${S.view==='mine'?'<th></th>':''}</tr></thead><tbody>${R.map((r,i)=>{const others=r.mem.filter(x=>x.p.id!==r.rep.id);return `<tr><td class="num">${i+1}</td><td><b>${esc(r.rep.name)}</b> <span class="cchip2">대표</span></td>${Array.from({length:nc},(_,k)=>`<td>${others[k]?esc(others[k].p.name):'<span class="hint">-</span>'}</td>`).join('')}<td class="num">${r.mem.length}명</td><td class="r num"><b>${won(r.fee)}</b></td>${S.view==='mine'?`<td>${r.rep.status==='정상'&&r.sb.owner===S.user.name?`<button class="btn small ghost" type="button" data-roomcx="${r.sb.no}|${r.rep.id}">가족방만 취소</button>`:''}</td>`:''}</tr>${S.view==='mine'&&S.roomCx===r.rep.id?`<tr><td colspan="${nc+5}" style="text-align:left">${roomCxPanel(r)}</td></tr>`:''}`}).join('')}</tbody></table></div><p class="hint" style="margin:8px 0 0">한 방에 ${ROOM.cap}명이 안 차면 빈 자리마다 ${won(ROOM.emptyFee)}이 대표에게 붙어요 (${ROOM.cap}명이면 0원). 방 번호는 운영진이 정한 뒤 알려 드려요. 같은 층 · 옆방 같은 요청은 「게시판」에서 「가족방 요청」으로 남겨 주세요.</p></div>`:`<div class="panel"><p class="hint" style="margin:0">신청한 가족방이 없어요. 가족방은 접수하거나 고칠 때 참가 정보에서 신청해요.</p></div>`)}
-/* 구분 표시: 교사 · 관계자 · 학생 · 보호자 · 동반가족 · 돌전아기 · 가족 색 따로 */
+/* 구분 표시: 교사 · 관계자 · 학생 · 보호자 · 동반가족 · 15개월 미만 · 가족 색 따로 */
 /* 시간표 · 우리 학생 레슨: 우리 학원(겸임이면 모든 학원) 학생 중 개인레슨이나 마스터클래스가 있는 학생 (누가 접수했든) */
 /* 시간표 날짜: 캠프 기간 중이면 오늘 날짜가 처음에 골라짐 (「1/12(화)」 모양) */
 const ttToday=days=>{const n=new Date(),m=n.getMonth()+1,d=n.getDate();const i=(days||[]).findIndex(x=>{const q=String(x).match(/(\d{1,2})\s*[\/.월]\s*(\d{1,2})/);return q&&+q[1]===m&&+q[2]===d});return i<0?null:i};
 const ttStu=T=>(T.students||[]).filter(x=>(!S.ttAcad||x.acad===S.ttAcad)&&((x.lessons||[]).length||(x.mc||[]).length));
-function kBadge(k){const c={'교사':'kt','관계자':'kr','학생':'ks','보호자':'kp','동반가족':'kf','돌전아기':'kb','가족':'kf'}[k]||'ks';return `<span class="kind ${c}">${esc(k)}</span>`}
+function kBadge(k){const c={'교사':'kt','관계자':'kr','학생':'ks','보호자':'kp','동반가족':'kf','15개월 미만':'kb','가족':'kf'}[k]||'ks';return `<span class="kind ${c}">${esc(k)}</span>`}
 const stampTxt=x=>{if(!x)return '';const [d,t]=x.split(' ');return `${kday(d)}${t?' '+t.slice(0,5):''}`};
 function ensureRoster(a){
     if(!ROSTER[a]) ROSTER[a]=a===classOf(S.user)?{teachers:[],students:[]}:rosterFor(a);
@@ -81,8 +81,8 @@ function ensureRoster(a){
 const ROUNDS = [['1차','12월 1일 ~ 12월 10일'],['2차','12월 11일 ~ 12월 20일'],['3차','12월 21일 ~ 12월 28일']];
 const FEES = { // 참가자격 × 차수 (관리자 참가비표에서 입력, 2026 여름 금액을 예시로 사용)
   '교사':[560000,570000,590000],'연수생':[560000,570000,590000],'소속없는 중급연수생':[560000,570000,590000],'학생':[560000,570000,590000],'회원의 악기하는 자녀':[510000,520000,540000],
-  '회원의 첫번째 보호자':[510000,520000,540000],'회원의 그외 악기 안하는 동반가족':[410000,420000,440000],'동반가족 중 돌전아기':[310000,320000,340000],
-  '비회원 학생':[560000,570000,590000],'비회원 보호자':[510000,520000,540000],'비회원 동반가족':[410000,420000,440000],'비회원 돌전아기':[310000,320000,340000],
+  '회원의 첫번째 보호자':[510000,520000,540000],'회원의 그외 악기 안하는 동반가족':[410000,420000,440000],'동반가족 중 15개월 미만':[310000,320000,340000],
+  '비회원 학생':[560000,570000,590000],'비회원 보호자':[510000,520000,540000],'비회원 동반가족':[410000,420000,440000],'비회원 15개월 미만':[310000,320000,340000],
   '초빙교수':[0,0,0],'반주자':[0,0,0],'지휘자':[0,0,0],'통역':[0,0,0],'초청강사':[0,0,0],'스태프':[0,0,0],'기타 관계자':[0,0,0] };
 /* 캠프 설정: 관리자 「캠프 설정」 값으로 위의 기본값을 바꿈 (페이지를 열 때 + 로그인 · 저장할 때마다) */
 const WD='일월화수목금토';
@@ -104,10 +104,10 @@ function applyCamp(c){if(!c||!c.base||!Array.isArray(c.rounds)||!c.rounds.length
     document.getElementById('campPlace').textContent=b.place||'추후 안내'}catch(e){}}
 const TEACHER_TYPES = ['교사','연수생','소속없는 중급연수생'];
 const PLAYS = new Set([...TEACHER_TYPES,'학생','회원의 악기하는 자녀','비회원 학생']); // 레슨·음악회 질문 대상 (현재 진도는 학생만)
-const FAMILY_TYPES = ['회원의 첫번째 보호자','회원의 그외 악기 안하는 동반가족','동반가족 중 돌전아기'];
-const FAM_CHIPS = { student:[['회원의 첫번째 보호자','보호자'],['회원의 그외 악기 안하는 동반가족','동반가족'],['동반가족 중 돌전아기','돌 전 아기']],
-                    teacher:[['회원의 그외 악기 안하는 동반가족','동반가족'],['동반가족 중 돌전아기','돌 전 아기']] };
-const FAM_SHORT = {'비회원 보호자':'보호자','비회원 동반가족':'동반가족','비회원 돌전아기':'돌 전 아기','회원의 첫번째 보호자':'보호자','회원의 그외 악기 안하는 동반가족':'동반가족','동반가족 중 돌전아기':'돌 전 아기'};
+const FAMILY_TYPES = ['회원의 첫번째 보호자','회원의 그외 악기 안하는 동반가족','동반가족 중 15개월 미만'];
+const FAM_CHIPS = { student:[['회원의 첫번째 보호자','보호자'],['회원의 그외 악기 안하는 동반가족','동반가족'],['동반가족 중 15개월 미만','15개월 미만']],
+                    teacher:[['회원의 그외 악기 안하는 동반가족','동반가족'],['동반가족 중 15개월 미만','15개월 미만']] };
+const FAM_SHORT = {'비회원 보호자':'보호자','비회원 동반가족':'동반가족','비회원 15개월 미만':'15개월 미만','회원의 첫번째 보호자':'보호자','회원의 그외 악기 안하는 동반가족':'동반가족','동반가족 중 15개월 미만':'15개월 미만'};
 
 const PROF = {
   '바이올린':['곽은수','김소정','김유정','김한기','민연희','변지혜','서민정','신재원','양승돈','오영근','이광호','이슬비','정호진','황경익','황선영','Ayumi Moriyama','Jeffrey Solares','Motomichi Kisohara','Sara M. Gonzales'],
@@ -219,7 +219,7 @@ function totals(){ const ps=people(); let camp=0,dues=0; ps.forEach(p=>{const f=
 /* ---------- 회원 / 비회원(학부모) · 개인정보 동의 ---------- */
 const GUEST_ACAD='비회원';
 const isGuest=()=>!!(S.user&&S.user.guest);
-const GUEST_FAM=['비회원 보호자','비회원 동반가족','비회원 돌전아기'];
+const GUEST_FAM=['비회원 보호자','비회원 동반가족','비회원 15개월 미만'];
 /* 관계자 (10-31): 회원관리 「외부인」 계정으로 로그인 → 학원 「관계자」, 본인은 역할(참가비는 캠프 설정 참가비표), 가족은 회원 가족 참가비 */
 const STAFF_ACAD='관계자';
 const isStaffT=u=>!!(u&&u.staff);

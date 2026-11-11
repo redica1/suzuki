@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261112-003729 -->
+<!-- build: 20261112-003951 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -2692,10 +2692,12 @@ function vDoc(){if(!S.cc){S.cc=ccCopy();try{if(S.cc.doc&&S.cc.fees&&S.cc.rounds)
       ${ta('doc.sec.'+i+'.body','dsb_'+i,Math.min(14,Math.max(2,String(s.body||'').split('\n').length+1)))}</div>`).join('')}</div>
   <div class="dapply"><span class="pend" id="dPendTxt">${pend?'미리보기에 적용 안 한 내용이 있어요':''}</span><span class="hint">Ctrl + Enter</span><button class="btn primary" type="button" data-dapply="1">적용</button></div>
   </div>
-  <div class="dprevw"><div class="spread" style="margin-bottom:6px"><b>미리보기 <span id="dPgInfo" class="hint" style="font-weight:700"></span></b><span class="row" style="gap:6px"><span class="dzm" role="group" aria-label="미리보기 크기"><button type="button" data-dz="-" aria-label="작게">−</button><button type="button" class="dzv" data-dz="0" title="기본 크기로" id="dzv">${Math.round(dZoom()*100)}%</button><button type="button" data-dz="+" aria-label="크게">＋</button></span><button class="btn small primary" type="button" data-dapply="1">적용</button><button class="btn small primary" type="button" id="dEdOpen">미리보기에서 고치기</button><button class="btn small" type="button" id="dWin2">새 창으로 보기</button><button class="btn small" type="button" id="dPrint2">인쇄 · PDF 저장</button></span></div><div class="dprev ${pend?'stale':''}" id="docPrev" style="--dz:${dZoom()}">${docHtml(V0)}</div></div></div></div>`}
+  <div class="dprevw"><div class="spread" style="margin-bottom:6px"><b>미리보기 ${d.ed?'<span class="pill due" title="왼쪽 제목 · 머리말 · 본문은 안 나와요">미리보기에서 고친 글 사용 중</span> ':''}<span id="dPgInfo" class="hint" style="font-weight:700"></span></b><span class="row" style="gap:6px"><span class="dzm" role="group" aria-label="미리보기 크기"><button type="button" data-dz="-" aria-label="작게">−</button><button type="button" class="dzv" data-dz="0" title="기본 크기로" id="dzv">${Math.round(dZoom()*100)}%</button><button type="button" data-dz="+" aria-label="크게">＋</button></span><button class="btn small primary" type="button" data-dapply="1">적용</button><button class="btn small primary" type="button" id="dEdOpen">미리보기에서 고치기</button><button class="btn small" type="button" id="dWin2">새 창으로 보기</button><button class="btn small" type="button" id="dPrint2">인쇄 · PDF 저장</button></span></div><div class="dprev ${pend?'stale':''}" id="docPrev" style="--dz:${dZoom()}">${docHtml(V0)}</div></div></div></div>`}
 const dWarnHtml=W=>W.length?`<div class="dwarn">${W.map(x=>'· '+x).join('<br>')}</div>`:'';
 let dPT=0;const dPend=()=>!!(S.cc&&S.dView&&JSON.stringify(S.cc)!==JSON.stringify(S.dView));
-function dPrev(){clearTimeout(dPT);dPT=setTimeout(()=>{const pd=dPend(),pt=document.getElementById('dPendTxt'),pv=document.getElementById('docPrev');if(pt)pt.textContent=pd?'미리보기에 적용 안 한 내용이 있어요':'';if(pv)pv.classList.toggle('stale',pd);const pl=document.getElementById('ccDirty');if(pl)pl.innerHTML=ccPill()},80)}
+/* 왼쪽을 고치면 0.7초 뒤 미리보기에 저절로 적용 (11-12: 회원관리 공문처럼 바로 보이게, 「적용」을 몰라도) */
+let dAT=0;
+function dPrev(){clearTimeout(dPT);clearTimeout(dAT);dAT=setTimeout(()=>{if(S.tab==='doc'&&dPend()&&!(UI.docEd&&UI.docEd.on())){const a=document.activeElement,id=a&&a.id,st=a&&a.selectionStart,en=a&&a.selectionEnd;dApply();if(id){const n=document.getElementById(id);if(n&&n!==document.activeElement){n.focus();try{n.setSelectionRange(st,en)}catch(x){}}}}},700);dPT=setTimeout(()=>{const pd=dPend(),pt=document.getElementById('dPendTxt'),pv=document.getElementById('docPrev');if(pt)pt.textContent=pd?'미리보기에 적용 안 한 내용이 있어요':'';if(pv)pv.classList.toggle('stale',pd);const pl=document.getElementById('ccDirty');if(pl)pl.innerHTML=ccPill()},80)}
 /* 쪽 맞추기 (11-11): 1쪽 · 2쪽에 무조건 들어가게 글 전체를 줄임. 인쇄 모양(쪽마다 위 · 아래 여백) 기준으로 재서 doc.fitK 에 저장 */
 function dFitCalc(c){const d=c&&c.doc;if(!d)return;const N=+d.fit||0;if(!N){d.fitK=1;return}const M=dMg(c),avail=N*(297-M.t-M.b)*.975-(N===1?3:8);
   let box=document.getElementById('dFitM');if(!box){box=document.createElement('div');box.id='dFitM';box.style.cssText='position:fixed;left:-4000px;top:0;width:210mm;visibility:hidden;pointer-events:none';document.body.appendChild(box)}
@@ -4409,6 +4411,6 @@ document.addEventListener('click',e=>{if(S.tab!=='book')return;const b=e.target.
   if(b.id==='ebSetSave'){const n=Object.assign(ebSet(),S.ebSetW||{});n.per=Math.max(1,Math.min(10,Math.round(+n.per||5)));n.fs=Math.max(5,Math.min(10,+n.fs||6.6));['en','sub','org'].forEach(k=>n[k]=String(n[k]||'').trim().slice(0,120));
     ebSend([],[],n,()=>{S.ebSetW=null;toast('책자 설정을 저장했어요')});return}},true);
 </script>
-<div id="bldMark" hidden>빌드표시 20261112-003729 </div>
+<div id="bldMark" hidden>빌드표시 20261112-003951 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();</script>
 </body></html>

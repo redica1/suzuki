@@ -1144,6 +1144,11 @@ function docClean_(d, nr) {
   const sec = (Array.isArray(d.sec) ? d.sec : D.sec).slice(0, 30).map((x, i) => ({ id: t(x.id, 20).replace(/[^\w-]/g, '') || ('x' + i), t: t(x.t, 40).trim(), on: x.on !== false, body: t(x.body, 8000) }));
   const o = { no: t(d.no, 40).trim(), date: /^\d{4}-\d{2}-\d{2}$/.test(d.date || '') ? d.date : '', to: t(d.to, 120).trim(), ref: t(d.ref, 120).trim(), title: t(d.title, 120).trim(), num: d.num === '1)' ? '1)' : '1.',
     t1: t(d.t1, 20).trim(), t2: t(d.t2, 20).trim(), sign: d.sign !== false, inc: Array.from({ length: nr }, (_, i) => { const v = (d.inc || [])[i]; return i && v != null && v !== '' && isFinite(+v) ? Math.round(+v) : null; }), mg: (() => { const m = d.mg || {}, o = {}; [['t', 13], ['b', 15], ['l', 16], ['r', 16]].forEach(([k, v]) => { const x = +m[k]; o[k] = m[k] !== '' && m[k] != null && isFinite(x) ? Math.max(0, Math.min(40, Math.round(x * 10) / 10)) : v; }); return o; })(), intro: t(d.intro, 3000), rnote: Array.from({ length: nr }, (_, i) => t((d.rnote || [])[i], 80)), sec };
+  /* 참가비표 자동 채우기 규칙 (11-11): 기준 자격 · 줄마다 기준보다 + · 차수마다 1차보다 + (금액 또는 n%) */
+  const fa = v => { const s = String(v == null ? '' : v).replace(/[,\s원+]/g, ''); return /^-?\d+(\.\d+)?%?$/.test(s) ? s.slice(0, 12) : ''; };
+  o.rbase = FEE_TYPES.indexOf(d.rbase) >= 0 ? d.rbase : '학생';
+  o.radd = {}; Object.keys(d.radd || {}).forEach(k => { if (FEE_TYPES.indexOf(k) >= 0 && k !== o.rbase && fa(d.radd[k])) o.radd[k] = fa(d.radd[k]); });
+  o.cadd = Array.from({ length: nr }, (_, i) => i ? fa((d.cadd || [])[i]) : '');
   if (JSON.stringify(o).length > 45000) throw new Error('공문 글이 너무 길어요. 항목 글을 조금 줄여 주세요.');
   return o;
 }

@@ -12,17 +12,17 @@
   if(d.pedit){const [no,id]=d.pedit.split('|');startEdit(no,[id.slice(no.length+1)]);return}
   if(d.seledit){const no=d.seledit;const sb0=MY_SUBS.find(x=>x.no===no);const all=(S.cx[no]||[]);const ids=all.filter(id=>{const p=sb0&&sb0.ppl.find(q=>q.id===id);return !(p&&p.pay==='신고')});if(ids.length<all.length)toast(`입금 신고 확인 중인 ${all.length-ids.length}명은 운영진 확인 전까지 고칠 수 없어서 뺐어요`,true);if(!ids.length)return;startEdit(no,ids.map(id=>id.slice(no.length+1)));return}
   if(d.cxclear){delete S.cx[d.cxclear];render();return}
-  if(d.cxgo){const sb=MY_SUBS.find(x=>x.no===d.cxgo);const sel=(S.cx[sb.no]||[]).filter(id=>{const p=sb.ppl.find(q=>q.id===id);return p&&canCxP(p)});const {r,amt,paid}=refundOf(sb,sel);const er=m=>{document.getElementById('cxErr').textContent=m};
+  if(d.cxgo){const sb=MY_SUBS.find(x=>x.no===d.cxgo);const sel=(S.cx[sb.no]||[]).filter(id=>{const p=sb.ppl.find(q=>q.id===id);return p&&canCxP(p)});const dOn=!!S.cxDocOn&&hasDoc(refundRule(S.today)),{r,rate,amt,paid}=refundOf(sb,sel,dOn);const er=m=>{document.getElementById('cxErr').textContent=m};
     {const left=sb.ppl.filter(p=>p.status==='정상'&&!sel.includes(p.id)).length,m=teamMates(sb.no);if(!left&&m.length)return er(`이 접수는 앙상블 「${repTeam(sb.no).name}」 팀 대표예요. 함께하는 학원(${m.join(', ')})이 있어서 모두 취소할 수 없어요. 함께하는 학원과 이야기한 뒤 운영진에게 연락해 주세요.`)}
     const why=document.getElementById('cxWhy').value;if(!why)return er('취소 사유를 선택해 주세요.');
-    if(r.doc&&paid){const f=document.getElementById('cxDoc');if(!f||!f.files.length)return er('이 기간에는 진단서를 올려야 취소할 수 있어요.')}
+    if((r.doc||dOn)&&paid){const f=document.getElementById('cxDoc');if(!f||!f.files.length)return er(dOn?'진단서 제출을 골랐어요. 전염병 · 골절 진단서를 올려 주세요.':'이 기간에는 진단서를 올려야 취소할 수 있어요.')}
     if(paid&&amt>0){const bk=document.getElementById('cxBank').value,ac=document.getElementById('cxAcct').value.replace(/[^\d-]/g,''),ho=document.getElementById('cxHolder').value.trim();if(!bk||ac.length<8||!ho)return er('환불 받을 은행·계좌번호·예금주를 넣어 주세요.')}
     const names=sb.ppl.filter(p=>sel.includes(p.id)).map(p=>p.name);
-    if(paid){const f=document.getElementById('cxDoc'),req={no:sb.no,acad:sb.acad,names,ids:sel,why,amt,rule:`${r.label} · ${r.rate?r.rate+'% 환불':'환불 없음'}`,bank:(document.getElementById('cxBank')||{}).value||'',acct:((document.getElementById('cxAcct')||{}).value||'').replace(/[^\d-]/g,''),holder:((document.getElementById('cxHolder')||{}).value||'').trim()};
+    if(paid){const f=document.getElementById('cxDoc'),req={no:sb.no,acad:sb.acad,names,ids:sel,why,amt,rule:`${r.label}${hasDoc(r)?(dOn?' · 진단서 제출':' · 진단서 미제출'):''} · ${rate?rate+'% 환불':'환불 없음'}`,doc:dOn,bank:(document.getElementById('cxBank')||{}).value||'',acct:((document.getElementById('cxAcct')||{}).value||'').replace(/[^\d-]/g,''),holder:((document.getElementById('cxHolder')||{}).value||'').trim()};
       const go=file=>{req.file=file;api('cancelReq',[req],()=>{})};
       if(f&&f.files&&f.files[0]){const fl=f.files[0];const rd=new FileReader();rd.onload=()=>go({name:fl.name,type:fl.type,data:String(rd.result).split(',')[1]});rd.readAsDataURL(fl)}else go(null)}
     sb.ppl.forEach(p=>{if(sel.includes(p.id)){p.status=isPaid(p)?'취소요청':'취소';p.cxReqAt=nowStamp();if(!isPaid(p))p.cxWhy=why}});subSave();
-    delete S.cx[sb.no];S.cxOpen='';S.cxReason='';S.cxDone={names,amt,paid};render();window.scrollTo({top:0});toast(paid?'취소 요청을 보냈어요':'취소했어요');return}
+    delete S.cx[sb.no];S.cxOpen='';S.cxReason='';S.cxDocOn=false;S.cxDone={names,amt,paid};render();window.scrollTo({top:0});toast(paid?'취소 요청을 보냈어요':'취소했어요');return}
   if(b.id==='homeBtn'&&!S.user){S.view='form';S.auth='pick';S.chk=null;S.verr='';go(1);return}
   if(b.id==='homeBtn'){S.view='form';if(S.step===6)Object.assign(S,{note:'',acad:'',verified:false,picked:{},extra:[],fam:[],info:{},room:{},join:{},ens:{on:false},agree:false});go(1);return}
   if(d.tab){S.tab=d.tab;S.rq='';render();return}
@@ -107,6 +107,7 @@ document.addEventListener('change',e=>{if(e.target.id==='qWhere'){S.qWhere=e.tar
   if(el.dataset&&el.dataset.cx){const [no,id]=el.dataset.cx.split('|');const a=S.cx[no]||(S.cx[no]=[]);if(el.checked){if(!a.includes(id))a.push(id)}else S.cx[no]=a.filter(x=>x!==id);if(!S.cx[no].length)delete S.cx[no];S.cxDone=null;render();return}
   if(el.id==='today'&&el.value){S.today=el.value;S.ruleOpen=true;render();return}
   if(el.id==='cxWhy'){S.cxReason=el.value;return}
+  if(el.name==='cxDocSel'){S.cxDocOn=el.value==='1';const w=document.getElementById('cxWhy');if(w)S.cxReason=w.value;render();return}
 });
 const fmtPhone=v=>{let d=String(v).replace(/\D/g,'');if(/^010010/.test(d))d=d.slice(3);d=d.slice(0,11);return d.length<4?d:d.length<8?d.slice(0,3)+'-'+d.slice(3):d.slice(0,3)+'-'+d.slice(3,7)+'-'+d.slice(7)};
 const consEv=e=>{

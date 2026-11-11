@@ -1078,8 +1078,9 @@ const CAMP_DEF = {
   rounds: [{ n: '1차', from: '2026-12-01', to: '2026-12-10' }, { n: '2차', from: '2026-12-11', to: '2026-12-20' }, { n: '3차', from: '2026-12-21', to: '2026-12-28' }],
   fees: FEES,
   opt: { lessonFee: OPT.lessonFee, lessonMax: OPT.lessonMax, mcFee: 150000, studentDues: OPT.studentDues, teacherDues: OPT.teacherDues, roomCap: OPT.roomCap, roomEmptyFee: OPT.roomEmptyFee, usdRate: 1450 },
-  refund: { rules: [{ until: '2026-12-10', label: '접수 마감 전', rate: 100, doc: false }, { until: '2026-12-28', label: '캠프 14일 전까지', rate: 50, doc: false }, { until: '2027-01-10', label: '캠프 전날까지', rate: 0, doc: true }],
-    after: { label: '캠프 시작 후', rate: 0, doc: true, allow: false }, duesRefund: false },
+  /* 환불: rate = 진단서 미제출 환불 %, drate = 전염병 · 골절 진단서 제출 시 환불 % (null = rate 와 같음) · 11-11 규정 */
+  refund: { rules: [{ until: '2026-12-31', label: '수수료 없음', rate: 100, drate: null, doc: false }, { until: '2027-01-04', label: '수수료 10%', rate: 90, drate: null, doc: false }, { until: '2027-01-08', label: '수수료 20%', rate: 80, drate: 90, doc: false }],
+    after: { label: '환불 불가', rate: 0, drate: 50, doc: false, allow: true }, duesRefund: false },
   /* 식사 시간: 교사 일정 모든 날짜에 식사 줄로 들어감 · first/last = 첫날 · 마지막 날에도 넣을지 */
   meals: [{ k: '아침', t: 'Breakfast 아침 식사', s: '07:20', e: '08:50', on: true, first: false, last: true },
     { k: '점심', t: 'Lunch 점심 식사', s: '11:30', e: '13:20', on: true, first: false, last: true },
@@ -1160,9 +1161,10 @@ function campSave(token, c, rev) {
   const fees = {}; FEE_TYPES.forEach(t => { fees[t] = rounds.map((_, i) => num(((c.fees || {})[t] || [])[i])); });
   const o = c.opt || {}, opt = {}; Object.keys(CAMP_DEF.opt).forEach(k => opt[k] = num(o[k]));
   if (!opt.roomCap) throw new Error('가족방 정원을 적어 주세요.');
-  const rf = c.refund || {}, rules = (rf.rules || []).map(r => ({ until: String(r.until || ''), label: String(r.label || '').trim(), rate: Math.max(0, Math.min(100, Math.round(+r.rate || 0))), doc: !!r.doc }));
+  const rf = c.refund || {}, pc = v => Math.max(0, Math.min(100, Math.round(+v || 0))), dr = v => v === null || v === undefined || v === '' ? null : pc(v),
+    rules = (rf.rules || []).map(r => ({ until: String(r.until || ''), label: String(r.label || '').trim(), rate: pc(r.rate), drate: dr(r.drate), doc: !!r.doc }));
   rules.forEach((r, i) => { if (!ok.test(r.until) || !r.label) throw new Error((i + 1) + '번째 환불 규정의 날짜·이름을 확인해 주세요.'); if (i && r.until <= rules[i - 1].until) throw new Error('환불 규정은 날짜 순서대로 적어 주세요.'); });
-  const af = rf.after || {}, refund = { rules, after: { label: String(af.label || '캠프 시작 후'), rate: Math.max(0, Math.min(100, Math.round(+af.rate || 0))), doc: !!af.doc, allow: !!af.allow }, duesRefund: !!rf.duesRefund };
+  const af = rf.after || {}, refund = { rules, after: { label: String(af.label || '캠프 시작 후'), rate: pc(af.rate), drate: dr(af.drate), doc: !!af.doc, allow: !!af.allow }, duesRefund: !!rf.duesRefund };
   const cur = b.cur === 'auto' || b.cur === '' || b.cur == null ? 'auto' : String(Math.max(0, Math.min(rounds.length - 1, +b.cur || 0)));
   const oc = (c.consent && c.consent.items) || [], dc = CAMP_DEF.consent.items;
   const consent = { ver: today_(), items: dc.map(d => { const x = oc.find(y => y.id === d.id) || d; const fixed = d.id === 'collect';

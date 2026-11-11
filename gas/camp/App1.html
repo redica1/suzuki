@@ -5,10 +5,16 @@ const CAMP = { id:'27W', ri:0, lessonFee:60000, lessonMax:5, mcFee:150000,
   studentDues:30000, teacherDues:300000, perSubmitMax:Infinity }; // 한 번에 접수할 수 있는 인원: 제한 없음 (2026-10-21)
 /* 취소·환불 규정 — 운영실 「캠프 설정」에서 정해요 (보통 3~4개). 위에서부터 처음 맞는 규칙을 적용 */
 const REFUND = { rules:[
-  {until:'2026-12-10', label:'접수 마감 전', rate:100, doc:false},
-  {until:'2026-12-28', label:'캠프 14일 전까지', rate:50, doc:false},
-  {until:'2027-01-10', label:'캠프 전날까지', rate:0, doc:true}],
-  after:{label:'캠프 시작 후', rate:0, doc:true, allow:false}, duesRefund:false };
+  {until:'2026-12-31', label:'수수료 없음', rate:100, drate:null, doc:false},
+  {until:'2027-01-04', label:'수수료 10%', rate:90, drate:null, doc:false},
+  {until:'2027-01-08', label:'수수료 20%', rate:80, drate:90, doc:false}],
+  after:{label:'환불 불가', rate:0, drate:50, doc:false, allow:true}, duesRefund:false };
+/* rate = 진단서 미제출 환불 %, drate = 전염병 · 골절 진단서 제출 시 환불 % (없으면 rate 와 같음) */
+const docRate=r=>r&&r.drate!=null&&r.drate!==''?+r.drate:+(r&&r.rate||0);
+const hasDoc=r=>!!r&&r.drate!=null&&r.drate!==''&&+r.drate!==+r.rate;
+const rateOf=(r,doc)=>doc?docRate(r):+(r&&r.rate||0);
+const rateTxt=n=>n?'참가비 '+n+'% 환불':'환불 없음';
+const kdayN=d=>{const a=String(d).split('-').map(Number);const t=new Date(Date.UTC(a[0],a[1]-1,a[2]+1));return (t.getUTCMonth()+1)+'월 '+t.getUTCDate()+'일'};
 /* 입금 전 접수는 수수료가 없는 기간(100% 환불)에만 취소 가능 */
 const unpaidCancelOk=()=>refundRule(S.today).allow!==false; // 입금 전이면 캠프 시작 전까지 언제든 바로 취소 (10/23 결정)
 /* 사람별 입금: pay = '전' | '신고' | '확인'. 입금 확인된 사람만 환불 대상 */
@@ -232,4 +238,4 @@ const intlUrl=()=>String(SHARE_URL||'https:\/\/app.suzukimusickorea.org\/camp\/'
 const consItems=()=>CONSENT.items.filter(x=>x.on);
 const consAll=()=>consItems().every(x=>S.cons&&S.cons[x.id]);
 const consReqOk=()=>consItems().filter(x=>x.req).every(x=>S.cons&&S.cons[x.id]);
-function refundBody(){return REFUND.rules.map(r=>`- ${kday(r.until)}까지 (${r.label}): ${r.rate?`참가비 ${r.rate}% 환불`:'환불 없음'}${r.doc?' · 진단서 등 증빙이 있으면 운영진이 따로 판단':''}`).join('\n')+`\n- 그 뒤 (${REFUND.after.label}): ${REFUND.after.allow===false?'취소할 수 없어요':REFUND.after.rate?`참가비 ${REFUND.after.rate}% 환불`:'환불 없음'}\n\n취소를 요청한 날을 기준으로 위 규정을 적용해요. ${REFUND.duesRefund?'':'연회비는 환불되지 않아요. '}입금 전이면 바로 취소할 수 있어요.`}
+function refundBody(){return REFUND.rules.map(r=>`- ${kday(r.until)}까지: 진단서 미제출 ${rateTxt(r.rate)}${hasDoc(r)?` · 전염병 · 골절 진단서 제출 ${rateTxt(docRate(r))}`:''}${r.doc?' · 진단서가 있어야 취소':''}`).join('\n')+`\n- 그 뒤: ${REFUND.after.allow===false?'취소할 수 없어요':`진단서 미제출 ${rateTxt(REFUND.after.rate)}${hasDoc(REFUND.after)?` · 전염병 · 골절 진단서 제출 ${rateTxt(docRate(REFUND.after))}`:''}`}\n\n취소를 요청한 날을 기준으로 위 규정을 적용해요. ${REFUND.duesRefund?'':'연회비는 환불되지 않아요. '}입금 전이면 바로 취소할 수 있어요.`}

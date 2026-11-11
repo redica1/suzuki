@@ -565,7 +565,7 @@ function vRp(){const L=people().filter(x=>x.p.status==='정상'&&x.p.pay==='신�
     <td><div class="row" style="flex-wrap:nowrap"><button class="btn small primary" type="button" data-ok="${p.id}">확인</button><button class="btn small" type="button" data-rej="${p.id}">반려</button></div></td></tr>`}).join('')||'<tr><td colspan="13" class="hint">확인을 기다리는 입금 신고가 없어요.</td></tr>'}
   </tbody></table></div>`}
 /* 환불 규정 (선생님 화면과 같은 값) — 예전 기록에 규정이 없으면 요청 날짜로 계산 */
-const CX_RULES=[{until:'2026-12-10',label:'접수 마감 전',rate:100},{until:'2026-12-28',label:'캠프 14일 전까지',rate:50},{until:'2027-01-10',label:'캠프 전날까지',rate:0}];
+const CX_RULES=[{until:'2026-12-31',label:'수수료 없음',rate:100,drate:null},{until:'2027-01-04',label:'수수료 10%',rate:90,drate:null},{until:'2027-01-08',label:'수수료 20%',rate:80,drate:90}];
 function cxInfo(c){const ppl=[];(S.D.subs||[]).forEach(sb=>{if(sb.no===c.no)sb.ppl.forEach(p=>{if((c.ids||[]).includes(p.id))ppl.push(p)})});
   const base=c.base||ppl.reduce((t,p)=>t+pAmt(p),0),paid=c.paid||ppl.reduce((t,p)=>t+(+p.paidAmt||0)+((p.refund&&+p.refund.amt)||0),0);
   let rule=c.rule;if(!rule){if(c.state==='바로 취소')rule='입금 전 취소 (환불 없음)';else if(c.why==='차액 환불')rule='차액 환불 (참가 그대로)';else{const d=String(c.at).slice(0,10),r=CX_RULES.find(x=>d<=x.until);rule=r?`${r.label} · ${r.rate?r.rate+'% 환불':'환불 없음'}`:'캠프 시작 후'}}
@@ -1738,7 +1738,7 @@ function vCamp(){if(!S.cc)S.cc=ccCopy();const c=S.cc;if(!c.base)return '<div cla
     ${dBandsHtml(c,true)}
     <div class="row" style="gap:16px;margin-top:6px;flex-wrap:wrap"><label class="row" style="gap:6px">${inp('refund.after.allow','check')} 캠프 시작 뒤에도 취소 요청 받기</label><label class="row" style="gap:6px">${inp('refund.duesRefund','check')} 연회비도 환불</label></div>
     <p class="hint">공문 문장: <b>${esc(dRefund(c))}</b></p>
-    <p class="hint" style="margin:0">취소 요청한 날이 든 구간의 수수료를 빼고 환불해요. 「진단서」를 켠 구간은 진단서를 내야 취소할 수 있어요. 기본값 = 시작 10일 전부터 10% · 6일 전부터 20% · 2일 전부터 환불 불가.</p></div>
+    <p class="hint" style="margin:0">취소 요청한 날이 든 구간의 수수료를 빼고 환불해요. 「진단서 제출」 칸을 비우면 미제출과 같아요. 숫자를 넣으면 선생님이 취소할 때 「진단서 제출 / 미제출」을 고르고, 제출을 고르면 진단서 파일을 꼭 올려야 해요. 기본값 = 시작 10일 전부터 10% · 6일 전부터 20% · 2일 전부터 환불 불가.</p></div>
   <div class="panel"><div class="spread"><h3>식사 시간 <span class="hint">교사 일정 모든 날짜의 식사 줄 · 프로그램북에도 그대로</span></h3><button class="btn small" type="button" data-ccm="add" ${(c.meals||[]).length>=6?'disabled':''}>＋ 식사 추가</button></div>
     <table class="pft cct"><thead><tr><th>식사</th><th>시작</th><th>끝</th><th>표에 나오는 글</th><th class="c">사용</th><th></th></tr></thead><tbody>
     ${(c.meals||[]).map((m,i)=>`<tr class="${m.on===false?'off':''}"><td>${inp('meals.'+i+'.k','text','maxlength="10" style="width:70px"')}</td><td>${inp('meals.'+i+'.s','time')}</td><td>${inp('meals.'+i+'.e','time')}</td><td>${inp('meals.'+i+'.t','text','maxlength="120" style="min-width:220px" placeholder="예: Lunch 점심 식사 · 식사 장소: 밀타임"')}</td><td class="c">${inp('meals.'+i+'.on','check')}</td><td><button class="btn small ghost" type="button" data-ccm="del|${i}">빼기</button></td></tr>`).join('')||'<tr><td colspan="6" class="hint">식사 시간이 없어요.</td></tr>'}</tbody></table>
@@ -2531,11 +2531,13 @@ const dWd=s=>{const a=dYmd(s);return a?'('+WDK[new Date(Date.UTC(a[0],a[1]-1,a[2
 const dAdd=(s,n)=>{const a=dYmd(s);if(!a)return '';const t=new Date(Date.UTC(a[0],a[1]-1,a[2]+n));return t.toISOString().slice(0,10)};
 const dFee=(c,t,i)=>+(((c.fees||{})[t]||[])[i]||0);
 function dGuestAdd(c){const L=DOC_GUEST.map(([g,m])=>dFee(c,g,0)-dFee(c,m,0));return L.every(x=>x===L[0])?L[0]:null}
-function dRefund(c){const rf=c.refund||{},R=(rf.rules||[]).filter(r=>dYmd(r.until)).slice().sort((a,b)=>a.until<b.until?-1:1),out=[];let prev='',stop=false;
-  R.forEach(r=>{if(stop)return;const rate=+r.rate||0;if(rate>=100){prev=r.until;return}const st=prev?dMd(dAdd(prev,1)):'신청 직후';
-    if(rate<=0){out.push(st+(prev?'부터는':'부터')+' 환불 불가');stop=true}else out.push(st+'부터 취소 수수료 '+(100-rate)+'%');prev=r.until});
-  if(!stop&&prev){const af=rf.after||{},rate=+af.rate||0;out.push(dMd(dAdd(prev,1))+(rate<=0?'부터는 환불 불가':'부터 취소 수수료 '+(100-rate)+'%'))}
-  return out.join(', ')||'(환불 규정을 넣어 주세요)'}
+function dRefund1(c,doc){const rf=c.refund||{},rt=r=>doc&&r.drate!=null&&r.drate!==''?+r.drate:(+r.rate||0),R=(rf.rules||[]).filter(r=>dYmd(r.until)).slice().sort((a,b)=>a.until<b.until?-1:1),out=[];let prev='',stop=false,last=null;
+  R.forEach(r=>{if(stop)return;const rate=rt(r);if(rate>=100){prev=r.until;last=rate;return}if(rate===last){prev=r.until;return}const st=prev?dMd(dAdd(prev,1)):'신청 직후';
+    if(rate<=0){out.push(st+(prev?'부터는':'부터')+' 환불 불가');stop=true}else out.push(st+'부터 취소 수수료 '+(100-rate)+'%');prev=r.until;last=rate});
+  if(!stop&&prev){const rate=rt(rf.after||{});if(rate!==last)out.push(dMd(dAdd(prev,1))+(rate<=0?'부터는 환불 불가':'부터 취소 수수료 '+(100-rate)+'%'))}
+  return out.join(', ')}
+function dRefund(c){const rf=c.refund||{},hd=[...(rf.rules||[]),rf.after||{}].some(r=>r.drate!=null&&r.drate!==''&&+r.drate!==+r.rate),a=dRefund1(c,false);
+  if(!a)return '(환불 규정을 넣어 주세요)';return hd?'진단서 미제출: '+a+' / 전염병 · 골절 진단서 제출: '+(dRefund1(c,true)||'전액 환불'):a}
 function dRoomFee(c){const o=c.opt||{},cap=+o.roomCap||0,f=+o.roomEmptyFee||0,L=[];if(!cap)return '';for(let k=cap;k>=Math.min(2,cap);k--)L.push(k+'인: '+(k===cap?'추가금 없음':dWon((cap-k)*f)));return L.join(', ')}
 function dVals(c){const b=c.base||{},d=c.doc||{},o=c.opt||{},bk=(S.bkA&&S.bkA.cur)||{},ga=dGuestAdd(c),y=(dYmd(b.start)||[''])[0];
   const sameY=(dYmd(b.start)||[])[0]===(dYmd(b.end)||[])[0];
@@ -2572,19 +2574,23 @@ function dWarn(c){const R=c.rounds||[],W=[];DOC_FG.forEach(([l,ts])=>{const bad=
   if(!(S.bkA&&S.bkA.cur&&S.bkA.cur.acct))W.push('입금 안내 통장이 정해지지 않았어요 (「캠프 설정」 맨 위).');
   return W}
 /* 환불 규정 ↔ 공문 구간 (11-04): 시스템은 「이 날까지 환불 n%」, 공문은 「이 날부터 수수료 n%」 → 화면은 공문 말투로 넣고 저장은 시스템 꼴로 바꿈 */
-function dBands(c){const rf=c.refund||{},R=(rf.rules||[]).slice(),B=[];if(!R.length)return [{from:'',fee:100-(+(rf.after||{}).rate||0)}];
-  B.push({from:'',fee:100-(+R[0].rate||0)});R.forEach((r,i)=>B.push({from:dAdd(r.until,1),fee:100-(+(i+1<R.length?R[i+1].rate:(rf.after||{}).rate)||0)}));return B}
+/* 구간마다 fee = 진단서 미제출 수수료, dfee = 전염병 · 골절 진단서 제출 시 수수료 (null = 미제출과 같음) · 11-11 */
+const dDf=r=>r&&r.drate!=null&&r.drate!==''?100-(+r.drate||0):null;
+function dBands(c){const rf=c.refund||{},R=(rf.rules||[]).slice(),B=[],af=rf.after||{};if(!R.length)return [{from:'',fee:100-(+af.rate||0),dfee:dDf(af)}];
+  B.push({from:'',fee:100-(+R[0].rate||0),dfee:dDf(R[0])});R.forEach((r,i)=>{const nx=i+1<R.length?R[i+1]:af;B.push({from:dAdd(r.until,1),fee:100-(+nx.rate||0),dfee:dDf(nx)})});return B}
 function dSetBands(c,B){const rf=c.refund||(c.refund={}),old=rf.rules||[],lab=f=>f<=0?'수수료 없음':f>=100?'환불 불가':'수수료 '+f+'%';
-  rf.rules=B.slice(0,-1).map((b,i)=>({until:dAdd(B[i+1].from,-1),label:lab(b.fee),rate:100-b.fee,doc:!!(old[i]&&old[i].doc)}));
-  const L=B[B.length-1];rf.after=Object.assign({},rf.after||{},{label:lab(L.fee),rate:100-L.fee});if(rf.after.allow==null)rf.after.allow=false}
+  const dr=b=>b.dfee==null||b.dfee===''?null:100-b.dfee;
+  rf.rules=B.slice(0,-1).map((b,i)=>({until:dAdd(B[i+1].from,-1),label:lab(b.fee),rate:100-b.fee,drate:dr(b),doc:!!(old[i]&&old[i].doc)}));
+  const L=B[B.length-1];rf.after=Object.assign({},rf.after||{},{label:lab(L.fee),rate:100-L.fee,drate:dr(L)});if(rf.after.allow==null)rf.after.allow=false}
 function dBandsHtml(c,flags){const B=dBands(c),st=(c.base||{}).start,bad=B.some((b,i)=>i&&(!dYmd(b.from)||(i>1&&b.from<=B[i-1].from)));
   const before=f=>{const a=dYmd(f),s0=dYmd(st);if(!a||!s0)return '';const n=Math.round((Date.UTC(s0[0],s0[1]-1,s0[2])-Date.UTC(a[0],a[1]-1,a[2]))/864e5);return n>0?'캠프 '+n+'일 전':n===0?'캠프 첫날':'캠프 '+(-n)+'일째'};
-  return `<table class="pft cct"><thead><tr><th>이 날부터</th><th></th><th class="r">취소 수수료 %</th>${flags?'<th class="c">진단서</th>':''}<th></th></tr></thead><tbody>${B.map((b,i)=>`<tr><td>${i?`<input type="date" data-dbf="${i}" value="${esc(b.from)}">`:'<small class="faint">신청한 때부터</small>'}</td><td style="white-space:nowrap"><small class="hint">${i?esc(before(b.from)):''}</small></td><td><input type="text" inputmode="numeric" class="num" data-dbp="${i}" value="${b.fee}" style="width:64px"></td>${flags?`<td class="c"><input type="checkbox" data-dbdoc="${i}" ${dBandDoc(c,i,B.length)?'checked':''}></td>`:''}<td>${i?`<button class="btn small ghost" type="button" data-dbd="del|${i}">빼기</button>`:''}</td></tr>`).join('')}</tbody></table>
+  return `<table class="pft cct"><thead><tr><th>이 날부터</th><th></th><th class="r">수수료 % <small class="faint">진단서 미제출</small></th><th class="r">수수료 % <small class="faint">전염병 · 골절 진단서 제출</small></th><th></th></tr></thead><tbody>${B.map((b,i)=>`<tr><td>${i?`<input type="date" data-dbf="${i}" value="${esc(b.from)}">`:'<small class="faint">신청한 때부터</small>'}</td><td style="white-space:nowrap"><small class="hint">${i?esc(before(b.from)):''}</small></td><td><input type="text" inputmode="numeric" class="num" data-dbp="${i}" value="${b.fee}" style="width:64px"></td><td><input type="text" inputmode="numeric" class="num" data-dbq="${i}" value="${b.dfee==null?'':b.dfee}" placeholder="같음" style="width:64px"></td><td>${i?`<button class="btn small ghost" type="button" data-dbd="del|${i}">빼기</button>`:''}</td></tr>`).join('')}</tbody></table>
     ${bad?'<div class="dwarn">날짜를 위에서 아래로 늦어지는 순서로 넣어 주세요. (순서가 맞아야 저장돼요)</div>':''}`}
 const dBandDoc=(c,i,n)=>{const rf=c.refund||{};return i<n-1?!!((rf.rules||[])[i]||{}).doc:!!(rf.after||{}).doc};
 function dBandsRead(){const B=[{from:'',fee:0}];document.querySelectorAll('[data-dbp]').forEach(el=>{const i=+el.dataset.dbp;B[i]=B[i]||{from:'',fee:0};B[i].fee=Math.max(0,Math.min(100,+(el.value.replace(/[^\d]/g,'')||0)))});
+  document.querySelectorAll('[data-dbq]').forEach(el=>{const i=+el.dataset.dbq,v=el.value.replace(/[^\d]/g,'');B[i]=B[i]||{from:'',fee:0};B[i].dfee=v===''?null:Math.max(0,Math.min(100,+v))});
   document.querySelectorAll('[data-dbf]').forEach(el=>{const i=+el.dataset.dbf;B[i]=B[i]||{from:'',fee:0};B[i].from=el.value});return B}
-document.addEventListener('input',e=>{if((S.tab!=='doc'&&S.tab!=='camp')||!S.cc)return;const t=e.target;if(!(t.dataset&&(t.dataset.dbp!=null||t.dataset.dbf!=null)))return;
+document.addEventListener('input',e=>{if((S.tab!=='doc'&&S.tab!=='camp')||!S.cc)return;const t=e.target;if(!(t.dataset&&(t.dataset.dbp!=null||t.dataset.dbf!=null||t.dataset.dbq!=null)))return;
   const B=dBandsRead();if(B.every((b,i)=>!i||dYmd(b.from))&&B.every((b,i)=>i<2||b.from>B[i-1].from))dSetBands(S.cc,B);if(S.tab==='doc')dPrev();else{const pl=document.getElementById('ccDirty');if(pl)pl.innerHTML=ccPill()}});
 document.addEventListener('change',e=>{if((S.tab!=='doc'&&S.tab!=='camp')||!S.cc)return;const t=e.target;if(t.dataset&&t.dataset.dbdoc!=null){const i=+t.dataset.dbdoc,rf=S.cc.refund,n=dBands(S.cc).length;if(i<n-1)rf.rules[i].doc=t.checked;else rf.after.doc=t.checked;const pl=document.getElementById('ccDirty');if(pl)pl.innerHTML=ccPill();return}if(t.dataset&&(t.dataset.dbp!=null||t.dataset.dbf!=null))render()});
 document.addEventListener('click',e=>{if((S.tab!=='doc'&&S.tab!=='camp')||!S.cc)return;const b=e.target.closest&&e.target.closest('button');if(!b||!b.dataset.dbd)return;const op=b.dataset.dbd,c=S.cc;let B=dBands(c);

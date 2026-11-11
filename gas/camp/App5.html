@@ -147,7 +147,8 @@ document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest
 document.addEventListener('keydown',e=>{if(e.target&&e.target.id==='audIn'&&e.key==='Enter'){e.preventDefault();const b=document.querySelector('[data-audgo]');if(b)b.click()}});
 function vMine(){
   const r=refundRule(S.today);
-  const rulesTxt=REFUND.rules.map(x=>`<li><b>${kday(x.until)}까지</b> · ${x.label} — ${x.rate?`참가비 ${x.rate}% 환불`:'<b>환불 없음</b>'}${x.doc?' · <b>진단서 필요</b>':''}</li>`).join('')+`<li><b>그 이후</b> · ${REFUND.after.label} — ${REFUND.after.allow?'':'취소 불가'}</li>`;
+  const RL=[...REFUND.rules.map((x,i)=>({x,from:i?REFUND.rules[i-1].until:'',to:x.until})),{x:REFUND.after,from:(REFUND.rules[REFUND.rules.length-1]||{}).until||'',to:''}],anyDoc=RL.some(o=>hasDoc(o.x));
+  const rulesTxt=`<table class="mtbl"><thead><tr><th>취소한 날</th><th>진단서 미제출</th>${anyDoc?'<th>전염병 · 골절 진단서 제출</th>':''}</tr></thead><tbody>${RL.map(o=>`<tr><td>${o.from?(o.to?kdayN(o.from)+' ~ '+kday(o.to):kdayN(o.from)+'부터'):kday(o.to)+'까지'}</td><td>${o.x===REFUND.after&&REFUND.after.allow===false?'<b>취소 불가</b>':o.x.rate?o.x.rate+'% 환불':'<b>환불 없음</b>'}${o.x.doc?' · 진단서 필요':''}</td>${anyDoc?`<td>${o.x===REFUND.after&&REFUND.after.allow===false?'-':docRate(o.x)?docRate(o.x)+'% 환불':'<b>환불 없음</b>'}</td>`:''}</tr>`).join('')}</tbody></table>`;
   const done=S.cxDone?`<div class="note ok"><b>${S.cxDone.paid?'취소 요청을 보냈어요.':'취소했어요.'}</b> ${S.cxDone.names.map(esc).join(', ')} · ${S.cxDone.paid?`환불 예정 ${won(S.cxDone.amt)} · 운영진이 확인한 뒤 ${S.cxDone.amt?'입력한 계좌로 보내 드려요':'처리 결과를 알려 드려요'}.`:'입금 전이라 바로 취소됐어요.'}</div>`:'';
   const all=MY_SUBS.flatMap(sb=>sb.ppl.filter(p=>p.status==='정상')); const okAmt=all.reduce((t,p)=>t+(p.paidAmt||0),0), allAmt=all.reduce((t,p)=>t+pAmt(p),0);
   if(S.mscope==='acad')return vAcad();
@@ -180,19 +181,22 @@ function vMine(){
       return `<div class="panel enscard spread"><div><span class="pill new">앙상블 · 함께하는 학원</span> 「<b>${esc(t.name)}</b>」 팀 (대표 학원 ${esc(t.rep)}${byTxt(t)})에 함께해요.<br><span class="hint">곡·시간 같은 팀 정보는 대표 학원이 넣어요.</span></div>${my?`<button class="btn" type="button" data-ensedit="${my.no}">앙상블 수정</button>`:''}</div>`}
     return mb?`<div class="panel enscard spread"><div><span class="pill new">앙상블 · 함께하는 학원</span> 대표 <b>${esc(last.form.ens.joinRep||'')}</b> 팀에 함께해요 · 대표 학원 신청 전<br><span class="hint">곡·시간 같은 팀 정보는 대표 학원이 넣어요.</span></div><button class="btn" type="button" data-ensedit="${last.no}">앙상블 수정</button></div>`
       :`<div class="panel enscard spread"><div><span class="pill new">앙상블</span> <b style="font-size:18px">앙상블은 아직 신청하지 않았어요</b><br><span class="hint">여러 학원이 한 팀으로 나가요. 우리 학원이 대표로 신청할 수 있어요.</span></div><button class="btn primary" type="button" data-ensnew="${last.no}">＋ 앙상블 신청하기</button></div>`})()}
-  <details class="panel" ${S.ruleOpen?'open':''} id="ruleBox"><summary><b>취소·환불 규정</b> <span class="hint">오늘(${kday(S.today)}) 취소하면: ${r.rate?`참가비 ${r.rate}% 환불`:'환불 없음'}${r.doc?' · 진단서 필요':''}${r.allow===false?' · 취소 불가':''}</span></summary>
-    <ul class="rules">${rulesTxt}</ul><p class="hint">${REFUND.duesRefund?'':'연회비는 환불되지 않아요. '}환불 금액은 입금이 확인된 사람의 참가비·레슨비 기준이에요. 입금 전인 사람은 수수료가 없는 기간(전액 환불 기간)에는 바로 취소되고, 수수료가 생기는 날부터는 입금이 확인된 사람만 취소 요청할 수 있어요.</p>
+  <details class="panel" ${S.ruleOpen?'open':''} id="ruleBox"><summary><b>취소·환불 규정</b> <span class="hint">오늘(${kday(S.today)}) 취소하면: 진단서 미제출 ${rateTxt(r.rate)}${hasDoc(r)?` · 전염병 · 골절 진단서 제출 ${rateTxt(docRate(r))}`:''}${r.doc?' · 진단서 필요':''}${r.allow===false?' · 취소 불가':''}</span></summary>
+    <div class="mtblw">${rulesTxt}</div><p class="hint">${REFUND.duesRefund?'':'연회비는 환불되지 않아요. '}환불 금액은 입금이 확인된 사람의 참가비·레슨비 기준이에요. 입금 전인 사람은 수수료가 없는 기간(전액 환불 기간)에는 바로 취소되고, 수수료가 생기는 날부터는 입금이 확인된 사람만 취소 요청할 수 있어요.</p>
     </details>
   </section>`}
 function cxPanel(sb,sel){
-  const {r,base,amt,paid}=refundOf(sb,sel); const blocked=r.allow===false&&paid; const nUn=sb.ppl.filter(p=>sel.includes(p.id)&&!isPaid(p)).length;
+  const dOn=!!S.cxDocOn,{r,rate,base,amt,amtNo,amtDoc,paid}=refundOf(sb,sel,dOn); const blocked=r.allow===false&&paid; const nUn=sb.ppl.filter(p=>sel.includes(p.id)&&!isPaid(p)).length;
   return `<div class="cxbox"><b>${sel.length}명 취소</b>
     ${blocked?`<div class="note warn">캠프가 시작돼서 취소할 수 없어요. 운영진에게 문의해 주세요.</div>`:`
-    <dl class="kv"><dt>적용 규정</dt><dd>${r.label} (${kday(r.until||S.today)}까지) · ${r.rate?`${r.rate}% 환불`:'환불 없음'}</dd>
+    ${paid&&hasDoc(r)?`<fieldset class="f cxdoc"><legend>진단서 <span class="hint">진단서를 내면 환불이 달라져요</span></legend>
+      <label class="row" style="gap:6px"><input type="radio" name="cxDocSel" value="0" ${dOn?'':'checked'}> 진단서 미제출 — ${rateTxt(r.rate)} (${won(amtNo)})</label>
+      <label class="row" style="gap:6px"><input type="radio" name="cxDocSel" value="1" ${dOn?'checked':''}> 전염병 · 골절 진단서 제출 — ${rateTxt(docRate(r))} (${won(amtDoc)})</label></fieldset>`:''}
+    <dl class="kv"><dt>적용 규정</dt><dd>${kday(S.today)} 취소 · ${hasDoc(r)?(dOn?'진단서 제출':'진단서 미제출')+' · ':''}${rate?`${rate}% 환불`:'환불 없음'}</dd>
       ${paid?`<dt>환불 기준 금액</dt><dd class="num">${won(base)} <span class="hint">입금 확인된 ${sel.length-nUn}명</span></dd><dt>환불 예정</dt><dd class="num"><b>${won(amt)}</b></dd>`:''}
       ${nUn?`<dt>입금 전</dt><dd>${nUn}명은 입금 전이라 바로 취소돼요</dd>`:''}</dl>
     <label class="f" for="cxWhy">취소 사유<select id="cxWhy">${['','질병·부상','개인 사정','일정 변경','기타'].map(x=>`<option value="${x}" ${x===S.cxReason?'selected':''}>${x||'선택해 주세요'}</option>`).join('')}</select></label>
-    ${r.doc&&paid?`<label class="f" for="cxDoc">진단서 <span class="hint">필수 · 이 기간에는 진단서가 있어야 취소돼요 (사진·PDF)</span><input type="file" id="cxDoc" accept="image/\x2a,application/pdf"></label>`:''}
+    ${(r.doc||(dOn&&hasDoc(r)))&&paid?`<label class="f" for="cxDoc">진단서 <span class="hint">필수 · ${r.doc?'이 기간에는 진단서가 있어야 취소돼요':'전염병 · 골절 진단서를 올려 주세요'} (사진·PDF) · 운영진이 확인한 뒤 환불해요</span><input type="file" id="cxDoc" accept="image/\x2a,application/pdf"></label>`:''}
     ${paid&&amt>0?`<div class="grid2"><label class="f" for="cxBank">환불 받을 은행${bankInp('cxBank')}</label>
       <label class="f" for="cxAcct">계좌번호<input type="text" id="cxAcct" inputmode="numeric"></label><label class="f" for="cxHolder">예금주<input type="text" id="cxHolder" value="${esc(S.user.name)}"></label></div>`:''}
     <p class="err" id="cxErr"></p>

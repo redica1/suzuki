@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261111-235513 -->
+<!-- build: 20261111-235838 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -2749,7 +2749,7 @@ document.addEventListener('click',e=>{if(S.tab!=='doc')return;const b=e.target.c
   if(d.dapply){dApply();toast('미리보기에 적용했어요'+(ccDirty()?' · 캠프에 반영하려면 「저장」':''));return}
   if(b.id==='dPrint'||b.id==='dPrint2'){dPrint();return}
   if(b.id==='dWin'||b.id==='dWin2'){dOpenWin();return}
-  if(b.id==='dEdOpen'){try{if(!window.UI||!UI.docEd){toast('편집 도구를 불러오지 못했어요 (DocLib). 새로고침해 주세요');return}dApply();const pv=document.getElementById('docPrev'),bd=pv&&pv.querySelector('.dbody');if(!bd){toast('미리보기를 찾지 못했어요. 「적용」을 누른 뒤 다시 해 주세요');return}UI.docEd.open(pv,bd,{onSave:h=>{S.cc.doc.ed=h;dApply();render();const sv=document.querySelector('[data-ccsave]');if(sv)sv.click()},onCancel:()=>{render()}});toast('미리보기에서 고쳐요 · 다 고치면 도구 막대의 「저장」')}catch(x){toast('고치기를 열지 못했어요: '+x.message)}return}
+  if(b.id==='dEdOpen'){try{if(!window.UI||!UI.docEd){toast('편집 도구를 불러오지 못했어요 (DocLib). 새로고침해 주세요');return}dApply();const pv=document.getElementById('docPrev'),bd=pv&&pv.querySelector('.dbody');if(!bd){toast('미리보기를 찾지 못했어요. 「적용」을 누른 뒤 다시 해 주세요');return}const eb=document.getElementById('dEdOpen');UI.docEd.open(pv,bd,{btn:eb,barIn:eb&&eb.parentNode&&eb.parentNode.parentNode,onSave:h=>{S.cc.doc.ed=h;dApply();render();const sv=document.querySelector('[data-ccsave]');if(sv)sv.click()},onCancel:()=>{render()}});toast('미리보기에서 고쳐요 · 다 고치면 도구 막대의 「저장」')}catch(x){toast('고치기를 열지 못했어요: '+x.message)}return}
   if(b.id==='dEdDrop'){if(!confirm('미리보기에서 고친 글을 지우고 왼쪽 글로 돌아갈까요?'))return;delete S.cc.doc.ed;dApply();render();return}
   if(d.dz){const z=d.dz==='0'?1.15:Math.max(.4,Math.min(1.6,Math.round((dZoom()+(d.dz==='+'?.1:-.1))*100)/100));S.dZoom=z;try{localStorage.setItem('campDocZoom',String(z))}catch(x){}const pv=document.getElementById('docPrev');if(pv)pv.style.setProperty('--dz',z);const v=document.getElementById('dzv');if(v)v.textContent=Math.round(z*100)+'%';return}
   if(d.dmgreset&&c&&c.doc){c.doc.mg=Object.assign({},DOC_MG);render();return}
@@ -4394,6 +4394,6 @@ document.addEventListener('click',e=>{if(S.tab!=='book')return;const b=e.target.
   if(b.id==='ebSetSave'){const n=Object.assign(ebSet(),S.ebSetW||{});n.per=Math.max(1,Math.min(10,Math.round(+n.per||5)));n.fs=Math.max(5,Math.min(10,+n.fs||6.6));['en','sub','org'].forEach(k=>n[k]=String(n[k]||'').trim().slice(0,120));
     ebSend([],[],n,()=>{S.ebSetW=null;toast('책자 설정을 저장했어요')});return}},true);
 </script>
-<div id="bldMark" hidden>빌드표시 20261111-235513 </div>
+<div id="bldMark" hidden>빌드표시 20261111-235838 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();</script>
 </body></html>

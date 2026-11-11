@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261111-235513 -->
+<!-- build: 20261111-235838 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -1240,7 +1240,7 @@ document.addEventListener('click',function(e){
   if(b.id==='gmBack'){if(S.gmDirty&&!window.confirm('저장하지 않은 내용이 있어요. 목록으로 갈까요?'))return;S.gm=null;render();return}
   if(b.id==='gmWin'){gmWin();return}
   if(d.gmz){var z=Math.max(.4,Math.min(1.6,Math.round((gmZoom()+(d.gmz==='+'?.06:-.06))*100)/100));S.gmZ=z;try{localStorage.setItem('memberGmZoom',z)}catch(x){}var pv=document.getElementById('gmPrev');if(pv)pv.style.setProperty('--dz',z);var zv=document.getElementById('gmZv');if(zv)zv.textContent=Math.round(z*100)+'%';gmCut();gmCampFrame();return}
-  if(b.id==='gmEdOpen'){if(!window.UI||!UI.docEd){toast('편집 도구를 불러오지 못했어요 (DocLib). 새로고침해 주세요');return}var pv=document.getElementById('gmPrev'),bd=pv&&pv.querySelector('.dbody');if(!bd){toast('미리보기를 찾지 못했어요');return}UI.docEd.open(pv,bd,{onSave:function(h){S.gm['내용'].ed=h;S.gmDirty=true;render();var sv=document.getElementById('gmSave');if(sv)sv.click()},onCancel:function(){render()}});return}
+  if(b.id==='gmEdOpen'){if(!window.UI||!UI.docEd){toast('편집 도구를 불러오지 못했어요 (DocLib). 새로고침해 주세요');return}var pv=document.getElementById('gmPrev'),bd=pv&&pv.querySelector('.dbody');if(!bd){toast('미리보기를 찾지 못했어요');return}var eb=document.getElementById('gmEdOpen');UI.docEd.open(pv,bd,{btn:eb,barIn:eb&&eb.parentNode&&eb.parentNode.parentNode,onSave:function(h){S.gm['내용'].ed=h;S.gmDirty=true;render();var sv=document.getElementById('gmSave');if(sv)sv.click()},onCancel:function(){render()}});return}
   if(b.id==='gmEdDrop'){if(!window.confirm('미리보기에서 고친 글을 지우고 왼쪽 머리말 · 항목으로 돌아갈까요?'))return;delete S.gm['내용'].ed;S.gmDirty=true;render();return}
   if(b.id==='gmCampRe2'){S.gmCampX=null;gmCampLoad();toast('캠프 공문을 새로 불러와요');return}
   if(b.id==='gmCampRe'){gmLoadCamp(true);return}
@@ -1531,7 +1531,7 @@ document.addEventListener('keydown',function(e){var t=e.target;if(S.tab!=='prt'|
 </script>
 <style>table.prt th,table.prt td{text-align:left !important}table.prt th:first-child,table.prt td:first-child{text-align:center !important}table.prt th:nth-child(7),table.prt td:nth-child(7),table.prt th:nth-child(8),table.prt td:nth-child(8){text-align:center !important}table.prt td:nth-child(7) input,table.prt td:nth-child(8) input{text-align:center}table.prt tr.mutedrow td{color:var(--faint)}table.prt tr.mutedrow td b{color:var(--muted)}table.prt td{vertical-align:middle}table.prt td.padr{white-space:normal;min-width:220px;max-width:340px;line-height:1.4}</style>
 
-<div id="bldMark" hidden>빌드표시 20261111-235513 </div>
+<div id="bldMark" hidden>빌드표시 20261111-235838 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();
 /* 공문 편집: 칸을 고치면 모델만 바꾸고 미리보기만 다시 그림(글자 조합이 깨지지 않게) */
 function gmField(t){if(S.tab!=='gm'||!S.gm||S.gm['상태']==='발행')return false;var d=S.gm,c=d['내용'],ds=t.dataset||{};

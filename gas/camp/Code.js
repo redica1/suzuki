@@ -1,4 +1,4 @@
-/* build: 20261112-023000 */
+/* build: 20261112-023127 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -3514,6 +3514,31 @@ function audSet(token, id, st, memo) {
     const c = AUD_HEAD.indexOf('상태') + 1;
     sh.getRange(r._row, c, 1, 4).setValues([[st, st === '심사 전' ? '' : a.name || '총관리자', st === '심사 전' ? '' : today_(), String(memo == null ? r.memo : memo).slice(0, 200)]]);
     log_('관리자 ' + (a.name || ''), '음원 심사', r.pid + ' · ' + r.con + ' · ' + st);
+  } finally { lock.releaseLock(); }
+  return audList(token);
+}
+/** 관리자 음원 고치기 · 지우기 (11-12): 시트에 있는 줄만 (접수 때 넣은 주소 「V:」는 신청서에서 고침) */
+function audEdit(token, id, o) {
+  const a = adm_(token); need_(a, 'aud'); o = o || {};
+  const url = String(o.url || '').trim(), comp = String(o.comp || '').trim().slice(0, 60), title = String(o.title || '').trim().slice(0, 120), con = String(o.con || '');
+  if (!audUrlOk_(url)) throw new Error('주소를 https:' + '//' + ' 로 시작하게 넣어 주세요.');
+  const lock = lock_();
+  try {
+    const r = audRows_().find(x => x.id === String(id || '')); if (!r) throw new Error('시트에 없는 음원이에요(접수 때 넣은 주소는 신청서에서 고쳐요). 새로 불러와 주세요.');
+    const sh = SpreadsheetApp.getActive().getSheetByName(AUD), head = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0].map(String);
+    const set = (h, v) => { const c = head.indexOf(h); if (c >= 0) sh.getRange(r._row, c + 1).setValue(v); };
+    set('주소', "'" + url); set('작곡가', comp); set('곡명', title);
+    if (con && !r.pid) { if (!audCfg_()[con]) throw new Error('음악회를 확인해 주세요.'); set('음악회', con); }
+    log_('관리자 ' + (a.name || ''), '음원 고침', r.name + ' · ' + r.id);
+  } finally { lock.releaseLock(); }
+  return audList(token);
+}
+function audDel(token, id) {
+  const a = adm_(token); need_(a, 'aud'); const lock = lock_();
+  try {
+    const r = audRows_().find(x => x.id === String(id || '')); if (!r) throw new Error('시트에 없는 음원이에요(접수 때 넣은 주소는 신청서에서 지워요). 새로 불러와 주세요.');
+    SpreadsheetApp.getActive().getSheetByName(AUD).deleteRow(r._row);
+    log_('관리자 ' + (a.name || ''), '음원 지움', r.name + ' · ' + r.con + ' · ' + r.url);
   } finally { lock.releaseLock(); }
   return audList(token);
 }

@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261112-023000 -->
+<!-- build: 20261112-023127 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -1660,7 +1660,7 @@ const ME=()=>(S.D&&S.D.me)||{sup:true,perms:{}};
 const permOf=k=>{const m=ME();if(m.sup)return '편집';if(k==='camp'||k==='staff'||k==='cons'||k==='doc')return '';return (m.perms||{})[k]||''};
 const visTabs=()=>TABS.concat(SUP_TABS).filter(([k])=>permOf(k));
 const RO=()=>permOf(S.tab)==='보기';
-const WRITE_FN=/^(devAud|devAudClear|audSet|audPub|devSummer|adminNoticeSave|adminMenuSave|scholSave|adminConfirm|adminAdjust|adminSetBankAcct|ogSave|ogToken|adminRejectReport|adminSaveEns|adminSaveProfs|adminRefund|adminSetIssue|schedSave|lessonSet|adminSetSetting|roomSave|conSave|campSave|staffSave|songEnSave|pvHideSave|roomCfgSave|layoutImport|roomMove|budSave|mealIssue|mealDel|bookSave|bookImgPut|bookSheetPut|songEnSave|mcSave)$/;
+const WRITE_FN=/^(audEdit|audDel|devAud|devAudClear|audSet|audPub|devSummer|adminNoticeSave|adminMenuSave|scholSave|adminConfirm|adminAdjust|adminSetBankAcct|ogSave|ogToken|adminRejectReport|adminSaveEns|adminSaveProfs|adminRefund|adminSetIssue|schedSave|lessonSet|adminSetSetting|roomSave|conSave|campSave|staffSave|songEnSave|pvHideSave|roomCfgSave|layoutImport|roomMove|budSave|mealIssue|mealDel|bookSave|bookImgPut|bookSheetPut|songEnSave|mcSave)$/;
 const roBlock=fn=>WRITE_FN.test(fn)&&permOf(S.tab)!=='편집';
 const RO_MSG='보기만 할 수 있는 메뉴예요. 바꾸려면 총관리자에게 「편집」 권한을 받아 주세요.';
 
@@ -2804,19 +2804,29 @@ function vAud(){if(!S.AU){if(!S.AUL)setTimeout(audLoad,0);return '<div class="pa
     <input type="search" id="audQ" placeholder="이름 · 학원 · 곡 찾기" value="${esc(F.q)}" style="min-width:200px">
     <span class="hint">${R.length}건</span><button class="btn small ghost" type="button" id="audRe" style="margin-left:auto">새로 불러오기</button></div>
     <p class="hint" style="margin:6px 0 0">주소를 누르면 새 창에서 열려요(들은 줄은 옅게 표시). 결과는 「결과 공개하기」를 누르면 <b>접수한 선생님</b>(비회원은 직접 접수한 보호자) 「내 접수」에 보여요. 그 전엔 「심사 중」.</p></div>
-  <div class="panel tbl"><table class="pft"><thead><tr><th>음악회</th><th>학원</th><th>이름</th><th>악기 · 진도</th><th>곡</th><th>음원</th><th>제출</th><th>심사</th><th>메모</th></tr></thead><tbody>
-  ${R.map(x=>`<tr class="${seen[x.id]?'off':''}"><td>${esc(x.con)}</td><td>${esc(x.acad)}<br><small class="hint">${esc(x.owner||'')}</small></td><td><b>${esc(x.name)}</b>${x.pre?'<br><span class="pill" style="background:#fdf3e1;color:#9a5b00">아직 접수 안 함</span>':x.early?'<br><small class="hint">접수 전에 냄</small>':''}</td><td>${esc(x.inst||'-')}<br><small class="hint">${esc(x.prog||'')}</small></td><td style="white-space:normal;max-width:220px">${esc(x.song||'-')}</td>
+  <div class="panel tbl"><table class="pft"><thead><tr><th>음악회</th><th>학원</th><th>이름</th><th>악기 · 진도</th><th>곡</th><th>음원</th><th>제출</th><th>심사</th><th>메모</th><th></th></tr></thead><tbody>
+  ${R.map(x=>S.audEd&&S.audEd.id===x.id?audEdRow(x):`<tr class="${seen[x.id]?'off':''}"><td>${esc(x.con)}</td><td>${esc(x.acad)}<br><small class="hint">${esc(x.owner||'')}</small></td><td><b>${esc(x.name)}</b>${x.pre?'<br><span class="pill" style="background:#fdf3e1;color:#9a5b00">아직 접수 안 함</span>':x.early?'<br><small class="hint">접수 전에 냄</small>':''}</td><td>${esc(x.inst||'-')}<br><small class="hint">${esc(x.prog||'')}</small></td><td style="white-space:normal;max-width:220px">${esc(x.song||'-')}</td>
     <td style="max-width:240px;word-break:break-all">${x.none?'<span class="hint">제출 안 함</span>':`<a href="${esc(x.url)}" target="_blank" rel="noopener" data-audopen="${esc(x.id)}">${esc(x.url.replace(/^https?:[\/]{2}(www\.)?/,'').slice(0,40))}${x.url.length>46?'…':''}</a>`}</td>
     <td class="num"><small>${x.first?'접수 때':esc(tsFmtA(x.at))}${x.early?'<br>먼저 내기':''}</small></td>
     <td style="white-space:nowrap">${x.none?'':`${btn(x,'승인','primary')} ${btn(x,'비승인','primary')} ${btn(x,'보류','primary')}${x.rv?`<br><small class="hint">${esc(x.rv)} · ${esc(kday(x.rd))}</small>`:''}`}</td>
-    <td>${x.none?'':`<input type="text" data-audmemo="${esc(x.id)}|${esc(audSt(x))}" value="${esc(x.memo||'')}" maxlength="200" placeholder="메모 (신청자에게 안 보임)" style="min-width:160px" ${ro?'disabled':''}>`}</td></tr>`).join('')||'<tr><td colspan="9" class="hint">해당하는 음원이 없어요.</td></tr>'}
+    <td>${x.none?'':`<input type="text" data-audmemo="${esc(x.id)}|${esc(audSt(x))}" value="${esc(x.memo||'')}" maxlength="200" placeholder="메모 (신청자에게 안 보임)" style="min-width:160px" ${ro?'disabled':''}>`}</td><td style="white-space:nowrap">${!ro&&x.id&&!/^V:/.test(x.id)?`<button class="btn small ghost" type="button" data-audedit="${esc(x.id)}">고치기</button> <button class="btn small ghost" type="button" data-auddel="${esc(x.id)}" style="color:#c62828">지우기</button>`:x.id&&/^V:/.test(x.id)?'<small class="hint">신청서에서</small>':''}</td></tr>`).join('')||'<tr><td colspan="10" class="hint">해당하는 음원이 없어요.</td></tr>'}
   </tbody></table></div>
   <div class="panel"><b>테스트용 가상 음원</b> <span class="hint">STG에서만 · 가상 접수 학생 몇 명에게 음악회를 정하고 음원 주소를 상태별(접수 때 · 심사 전 · 승인 · 보류 · 비승인 · 제출 안 함)로 넣어요</span>
     <div class="row" style="gap:8px;margin-top:8px"><button class="btn small primary" type="button" id="audFake">가상 음원 8명 만들기</button><button class="btn small ghost" type="button" id="audFakeX">가상 음원 지우기</button></div></div>`}
+function audEdRow(x){const e=S.audEd,C=(S.AU&&S.AU.cfg)||{};return `<tr><td colspan="10"><div class="row" style="gap:8px;flex-wrap:wrap;align-items:center;padding:6px 0"><b>${esc(x.name)}</b> <small class="hint">${esc(x.acad)}</small>
+  ${x.pid?`<span class="pill">${esc(x.con)}</span>`:`<select id="audEdCon">${Object.keys(C).filter(k=>C[k].on||k===x.con).map(k=>`<option ${k===e.con?'selected':''}>${esc(k)}</option>`).join('')}</select>`}
+  <input type="text" id="audEdComp" value="${esc(e.comp)}" placeholder="작곡가" maxlength="60" style="width:160px"><input type="text" id="audEdTitle" value="${esc(e.title)}" placeholder="곡명" maxlength="120" style="min-width:220px"><input type="url" id="audEdUrl" value="${esc(e.url)}" placeholder="음원 주소" style="min-width:280px">
+  <button class="btn small primary" type="button" id="audEdSave">저장</button><button class="btn small ghost" type="button" id="audEdX">닫기</button></div></td></tr>`}
 const tsFmtA=x=>{const m=String(x||'').match(/^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}:\d{2}))?/);return m?`${+m[2]}/${+m[3]}${m[4]?' '+m[4]:''}`:''};
 document.addEventListener('click',e=>{if(S.tab!=='aud')return;const a=e.target.closest&&e.target.closest('a[data-audopen]');if(a){(S.audSeen=S.audSeen||{})[a.dataset.audopen]=1;const tr=a.closest('tr');if(tr)tr.classList.add('off');return}
   const b=e.target.closest&&e.target.closest('button');if(!b)return;const d=b.dataset;
   if(b.id==='audRe'){S.AU=null;render();return}
+  if(d.audedit){const x=S.AU.rows.find(r=>r.id===d.audedit);if(x)S.audEd={id:x.id,con:x.con,comp:x.comp||'',title:x.title||(x.comp?'':x.song||''),url:x.url||''};render();return}
+  if(b.id==='audEdX'){S.audEd=null;render();return}
+  if(b.id==='audEdSave'){const g=id=>((document.getElementById(id)||{}).value||'').trim(),e=S.audEd,o={con:g('audEdCon')||e.con,comp:g('audEdComp'),title:g('audEdTitle'),url:g('audEdUrl')};
+    if(!/^https?:\S{6,}$/i.test(o.url)){toast('주소를 https:\/\/ 로 시작하게 넣어 주세요');return}
+    call('audEdit',[e.id,o],r=>{S.AU=r;S.audEd=null;render();toast('고쳤어요')},'저장하고 있어요…');return}
+  if(d.auddel){const x=S.AU.rows.find(r=>r.id===d.auddel);if(!x)return;ask('이 음원을 지울까요?',`<b>${esc(x.name)}</b> · ${esc(x.con)} · ${esc(x.url)}<br>시트에서 줄을 지워요. 되돌릴 수 없어요.`,()=>call('audDel',[x.id],r=>{S.AU=r;S.audEd=null;render();toast('지웠어요')},'지우고 있어요…'),'지우기');return}
   if(b.id==='audFake'){call('devAud',[8],r=>{S.AU=r;S.audF={con:'',st:'',q:''};render();toast('가상 음원을 넣었어요 · '+(r.made||[]).join(', '))},'가상 음원을 만들고 있어요…');return}
   if(b.id==='audFakeX'){ask('가상 음원을 지울까요?','「(가상)」으로 넣은 음원 줄만 지워요. 학생에게 정한 음악회는 그대로예요.',()=>call('devAudClear',[],r=>{S.AU=r;render();toast('가상 음원 '+r.n+'줄을 지웠어요')},'지우고 있어요…'),'지우기');return}
   if(d.audfl){const [k,st]=d.audfl.split('|');S.audF=Object.assign(S.audF||{},{con:k,st});render();return}
@@ -4411,6 +4421,6 @@ document.addEventListener('click',e=>{if(S.tab!=='book')return;const b=e.target.
   if(b.id==='ebSetSave'){const n=Object.assign(ebSet(),S.ebSetW||{});n.per=Math.max(1,Math.min(10,Math.round(+n.per||5)));n.fs=Math.max(5,Math.min(10,+n.fs||6.6));['en','sub','org'].forEach(k=>n[k]=String(n[k]||'').trim().slice(0,120));
     ebSend([],[],n,()=>{S.ebSetW=null;toast('책자 설정을 저장했어요')});return}},true);
 </script>
-<div id="bldMark" hidden>빌드표시 20261112-023000 </div>
+<div id="bldMark" hidden>빌드표시 20261112-023127 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();</script>
 </body></html>

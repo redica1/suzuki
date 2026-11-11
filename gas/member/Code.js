@@ -1,4 +1,4 @@
-/* build: 20261111-235838 */
+/* build: 20261112-000301 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -698,7 +698,7 @@ function gmClean_(d) {
   d = d || {}; const s = v => String(v == null ? '' : v);
   const sec = (Array.isArray(d.sec) ? d.sec : []).slice(0, 30).map(x => ({ t: s(x.t).slice(0, 80), body: s(x.body).slice(0, 8000), on: x.on !== false }));
   const mg = {}; ['t', 'b', 'l', 'r'].forEach(k => { const v = +((d.mg || {})[k]); if (isFinite(v) && (d.mg || {})[k] !== '' && (d.mg || {})[k] != null) mg[k] = Math.max(0, Math.min(40, v)); });
-  const o = { intro: s(d.intro).slice(0, 8000), sec, num: d.num === '1)' ? '1)' : '1.', sign: d.sign !== false, mg, logo: d.logo !== false, wtop: d.wtop === true, row1: d.row1 === true, ts: (t => isFinite(t) && t >= 10 && t <= 40 ? Math.round(t) : 22)(+d.ts), lh: (t => d.lh !== '' && d.lh != null && isFinite(t) && t >= 1 && t <= 2.5 ? Math.round(t * 100) / 100 : '')(+d.lh), sg: (t => d.sg !== '' && d.sg != null && isFinite(t) && t >= 0 && t <= 15 ? Math.round(t * 10) / 10 : '')(+d.sg), proj: s(d.proj).slice(0, 20), camp: s(d.camp).slice(0, 20), fit: [0, 1, 2].indexOf(+d.fit) >= 0 ? +d.fit : 0, fitK: isFinite(+d.fitK) && +d.fitK >= 0.3 && +d.fitK <= 1 ? Math.round(+d.fitK * 1000) / 1000 : 1, ed: d.ed ? s(d.ed).replace(/<script[\s\S]*?<\/script>/gi, '').replace(/\son\w+="[^"]*"/gi, '').slice(0, 30000) : '' };
+  const o = { intro: s(d.intro).slice(0, 8000), sec, num: d.num === '1)' ? '1)' : '1.', sign: d.sign !== false, mg, logo: d.logo !== false, wtop: d.wtop === true, row1: d.row1 === true, ts: (t => isFinite(t) && t >= 10 && t <= 40 ? Math.round(t) : 22)(+d.ts), lw: (t => isFinite(t) && t >= 20 && t <= 140 ? Math.round(t) : 60)(+d.lw), lh: (t => d.lh !== '' && d.lh != null && isFinite(t) && t >= 1 && t <= 2.5 ? Math.round(t * 100) / 100 : '')(+d.lh), sg: (t => d.sg !== '' && d.sg != null && isFinite(t) && t >= 0 && t <= 15 ? Math.round(t * 10) / 10 : '')(+d.sg), proj: s(d.proj).slice(0, 20), camp: s(d.camp).slice(0, 20), fit: [0, 1, 2].indexOf(+d.fit) >= 0 ? +d.fit : 0, fitK: isFinite(+d.fitK) && +d.fitK >= 0.3 && +d.fitK <= 1 ? Math.round(+d.fitK * 1000) / 1000 : 1, ed: d.ed ? s(d.ed).replace(/<script[\s\S]*?<\/script>/gi, '').replace(/\son\w+="[^"]*"/gi, '').slice(0, 30000) : '' };
   if (!o.ed) delete o.ed;
   if (JSON.stringify(o).length > 45000) fail('공문 내용이 너무 길어요. 항목을 나눠 주세요.'); return o;
 }

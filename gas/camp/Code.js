@@ -1,4 +1,4 @@
-/* build: 20261111-235838 */
+/* build: 20261112-000301 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -1180,6 +1180,8 @@ function docClean_(d, nr) {
   /* 참가비표 자동 채우기 규칙 (11-11): 기준 자격 · 줄마다 기준보다 + · 차수마다 1차보다 + (금액 또는 n%) */
   const fa = v => { const s = String(v == null ? '' : v).replace(/[,\s원+]/g, ''); return /^-?\d+(\.\d+)?%?$/.test(s) ? s.slice(0, 12) : ''; };
   if (d.ed) o.ed = t(d.ed, 30000).replace(/<script[\s\S]*?<\/script>/gi, '').replace(/\son\w+="[^"]*"/gi, '');
+  /* 제목 글씨 pt · 로고 너비 mm (11-12 공통 공문 규칙): 왼쪽에서 − + */
+  o.ts = isFinite(+d.ts) && +d.ts >= 12 && +d.ts <= 40 ? Math.round(+d.ts) : 22; o.lw = isFinite(+d.lw) && +d.lw >= 20 && +d.lw <= 140 ? Math.round(+d.lw) : 60;
   o.fit = [0, 1, 2].indexOf(+d.fit) >= 0 ? +d.fit : 0; o.fitK = isFinite(+d.fitK) && +d.fitK >= 0.3 && +d.fitK <= 1 ? Math.round(+d.fitK * 1000) / 1000 : 1;
   o.rbase = FEE_TYPES.indexOf(d.rbase) >= 0 ? d.rbase : '학생';
   o.radd = {}; Object.keys(d.radd || {}).forEach(k => { if (FEE_TYPES.indexOf(k) >= 0 && k !== o.rbase && fa(d.radd[k])) o.radd[k] = fa(d.radd[k]); });

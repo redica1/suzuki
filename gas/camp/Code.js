@@ -1,4 +1,4 @@
-/* build: 20261111-230522 */
+/* build: 20261111-230759 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -1197,6 +1197,9 @@ function campDocLink_(b, doc, who) {
   if (doc.gm) { const r = all.findIndex(x => x[ci('공문ID')] === doc.gm); if (r >= 0) {
     if (all[r][ci('상태')] !== '발행') Object.keys(upd).forEach(k => { if (ci(k) >= 0 && k !== '구분') sh.getRange(r + 2, ci(k) + 1).setNumberFormat('@').setValue(upd[k]); });
     return doc.gm; } }
+  /* 연결이 비어 있어도 같은 캠프의 작성 중 줄이 있으면 그 줄을 씀 (겹쳐 생기지 않게) */
+  const same = all.findIndex(x => x[ci('구분')] === '캠프' && x[ci('상태')] !== '발행' && (() => { try { return JSON.parse(x[ci('내용')] || '{}').camp === b.id; } catch (e) { return false; } })());
+  if (same >= 0) { doc.gm = all[same][ci('공문ID')]; return campDocLink_(b, doc, who); }
   let m = 0; all.forEach(x => { const v = String(x[ci('공문ID')]); if (v.charAt(0) === 'G') m = Math.max(m, +v.replace(/\D/g, '') || 0); });
   const id = 'G' + String(m + 1).padStart(4, '0');
   const o = Object.assign({ '공문ID': id, '문서번호': '', '상태': '작성 중', '내용': JSON.stringify({ camp: b.id }), '수정일': now, '수정자': String(who || '캠프') + ' (캠프)' }, upd);
@@ -1233,7 +1236,7 @@ function campSave(token, c, rev) {
   /* 문서번호 · 대장 연결은 회원관리 공문 대장이 시트에 직접 씀 → 화면 값으로 덮지 않음 (11-11) */
   doc.no = String((prev.doc || {}).no || ''); doc.gm = String((prev.doc || {}).gm || '');
   /* 거꾸로 (11-11): 캠프에서 공문을 저장하면 회원관리 공문 대장에 저절로 한 줄(구분 캠프 · 작성 중). 이미 있으면 제목 · 시행일 · 수신 · 참조만 맞춤 */
-  let linkMsg = ''; try { const g = campDocLink_(b, doc, a.name); if (g) doc.gm = g; else linkMsg = '회원관리 시트(설정 「회원관리 시트」)나 그 시트의 「공문」 탭을 찾지 못해 공문 대장에 올리지 못했어요.'; } catch (e) { linkMsg = '공문 대장에 올리지 못했어요: ' + e.message; }
+  let linkMsg = '';
   const aud = {}; AUD_CON.forEach(k => { const x = c.aud ? ((c.aud[k]) || {}) : ((prev.aud || {})[k] || {}); aud[k] = { on: !!x.on, due: /^\d{4}-\d{2}-\d{2}$/.test(x.due || '') ? x.due : '' }; });
   const nc = { meals, base: { id: String(b.id).trim(), name: String(b.name).trim(), start: b.start, end: b.end, place: String(b.place || '').trim(), open: b.open, close: b.close, cur, guest: b.guest !== false, staff: b.staff !== false, member: b.member !== false, intl: b.intl !== false }, rounds, fees, opt, refund, consent, doc, aud };
   const lock = lock_();
@@ -1242,6 +1245,8 @@ function campSave(token, c, rev) {
     if (!sh) { sh = ss.insertSheet(CAMPCFG); sh.getRange(1, 1, 1, 3).setValues([['항목', '값', '설명']]).setFontWeight('bold'); sh.setFrozenRows(1); sh.getRange('B:B').setNumberFormat('@'); }
     CAMP_CACHE = null; const old = camp_();
     if ((+rev || 0) !== (old.rev || 0)) throw new Error('다른 분이 먼저 캠프 설정을 바꿨어요. 새로 고친 뒤 다시 해 주세요.');
+    /* 저장이 확실할 때(번호 확인 뒤)만 공문 대장에 올림 — 저장 실패로 대장 줄만 늘어나지 않게 */
+    try { const g = campDocLink_(nc.base, nc.doc, a.name); if (g) nc.doc.gm = g; else linkMsg = '회원관리 시트(설정 「회원관리 시트」)나 그 시트의 「공문」 탭을 찾지 못해 공문 대장에 올리지 못했어요.'; } catch (e) { linkMsg = '공문 대장에 올리지 못했어요: ' + e.message; }
     const desc = { base: '캠프 코드 · 이름 · 날짜 · 장소 · 접수 기간 · 비회원 접수', rounds: '차수 이름과 기간', fees: '참가자격 × 차수 참가비', opt: '추가 레슨 · 마스터클래스 · 회비 · 가족방', refund: '취소·환불 규정', meals: '식사 시간 (교사 일정 모든 날짜의 식사 줄)', doc: '캠프 안내 공문 (문서 정보 · 머리말 · 항목별 글)', aud: '음악회별 음원 제출 받기 · 마감일', consent: '개인정보 동의 문구 (바꾸면 버전 날짜가 바뀜)' };
     const ex = rows_(CAMPCFG).reduce((o, r) => { o[String(r['항목'])] = String(r['값'] || ''); return o; }, {});
     const vals = CAMP_KEYS.map(k => [k[1], JSON.stringify(nc[k[0]]), desc[k[0]]]).concat([['rev', String((old.rev || 0) + 1), '바꾼 횟수 (건드리지 마세요)'],

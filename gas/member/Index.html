@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261111-222742 -->
+<!-- build: 20261111-223215 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -533,16 +533,22 @@ function accPill(id){var a=S.D.acc[id];return a==='사용'?'<span class="pill ok
 /* ---------- 승인 대기 ---------- */
 /* ---------- 문의 · 요청 (10-28) ---------- */
 function loadAsk(){S.asks=null;callS('bList').then(function(r){if(r.ok){setAsks(r.list);if(r.warn)toast(r.warn)}if(S.tab==='ask')render()})}
+/* 게시판 분류 (11-11 공통) · 예전 분류도 어디로 묶어 봄 */
+var B_TREE=[['회원 · 회비',['가입 · 로그인','내 정보 · 학원 정보 고치기','학생 · 교사 명단','회비 · 입금','질문']],['캠프 · 음악제',['접수가 안 돼요','방 요청','입금 · 취소 · 환불','앙상블 · 레슨 · 시간표','질문']],['졸업연주',['신청 · 접수','입금 · 취소','질문']],['교사연수',['신청 · 접수','입금 · 취소','질문']],['그 밖',['건의','질문']]];
+function bArea(q){var c=String(q['분류']||'');if(c.indexOf(' › ')>0)return c.split(' › ')[0];if(q.camp)return '캠프 · 음악제';return {'회원가입':'회원 · 회비','정보 수정':'회원 · 회비','회비':'회원 · 회비','캠프·행사':'캠프 · 음악제'}[c]||'그 밖'}
 function setAsks(L){S.asks=L;S.D.bN=L.filter(function(q){return q['상태']==='접수'}).length}
 function vAskA(){var L=S.asks;if(!L)return '<div class="panel"><span><span class="spin"></span> 불러오는 중…</span></div>';
   var src=S.askSrc||'';L=L.filter(function(q){return !src||(src==='c'?q.camp:!q.camp)});
+  var ar=S.askArea||'';if(ar)L=L.filter(function(q){return bArea(q)===ar});
   var st=S.askSt||'열림',cnt=function(x){return L.filter(function(q){return x==='전체'||(x==='열림'?q['상태']!=='완료':q['상태']===x)}).length};
   var list=L.filter(function(q){return st==='전체'||(st==='열림'?q['상태']!=='완료':q['상태']===st)});
   var pill=function(s){return '<span class="pill '+(s==='완료'?'ok':s==='처리중'?'info':'bad')+'">'+esc(s)+'</span>'};
   return '<div class="sec-h"><div><h2>문의 · 요청</h2><p>회원관리 「문의 · 요청 남기기」와 캠프 접수 「게시판」로 들어온 글을 함께 봐요. 회원 글은 답을 화면과 이메일로, 캠프 글은 캠프 화면 「내가 올린 글」로 받아요.</p></div>'+
-    '<div class="row">'+[['','모두'],['m','회원관리'],['c','캠프']].map(function(x){var n=S.asks.filter(function(q){return !x[0]||(x[0]==='c'?q.camp:!q.camp)}).length;return '<button class="btn small '+(src===x[0]?'primary':'ghost')+'" type="button" data-asrc="'+x[0]+'">'+x[1]+' '+n+'</button>'}).join('')+'<span class="cap" style="margin:0 4px">|</span>'+['열림','접수','처리중','완료','전체'].map(function(x){return '<button class="btn small '+(st===x?'primary':'')+'" type="button" data-ast="'+x+'">'+(x==='열림'?'처리 전 · 중':x)+' '+cnt(x)+'</button>'}).join('')+'<button class="btn small ghost" type="button" id="askRe">새로 고침</button></div></div>'+
+    '<div class="row">'+[['','모두'],['m','회원관리'],['c','캠프']].map(function(x){var n=S.asks.filter(function(q){return !x[0]||(x[0]==='c'?q.camp:!q.camp)}).length;return '<button class="btn small '+(src===x[0]?'primary':'ghost')+'" type="button" data-asrc="'+x[0]+'">'+x[1]+' '+n+'</button>'}).join('')+'<span class="cap" style="margin:0 4px">|</span>'+['열림','접수','처리중','완료','전체'].map(function(x){return '<button class="btn small '+(st===x?'primary':'')+'" type="button" data-ast="'+x+'">'+(x==='열림'?'처리 전 · 중':x)+' '+cnt(x)+'</button>'}).join('')+'<button class="btn small ghost" type="button" id="askRe">새로 고침</button></div>'+
+    '<div class="row" style="margin-top:6px"><span class="cap">어디</span>'+[''].concat(B_TREE.map(function(x){return x[0]})).map(function(x){var n=S.asks.filter(function(q){return !x||bArea(q)===x}).length;return '<button class="btn small '+((S.askArea||'')===x?'primary':'ghost')+'" type="button" data-aarea="'+esc(x)+'">'+(x||'모두')+' '+n+'</button>'}).join('')+'</div></div>'+
     (list.length?list.map(function(q){var id=q['문의ID'],t=q['교사ID']&&T[q['교사ID']];
       return '<div class="panel"><div class="sec-h"><h3>'+pill(q['상태'])+' <span class="cap">'+esc(q['분류'])+'</span> '+esc(q['제목'])+'</h3><span class="cap num">'+esc(q['작성일'])+'</span></div>'+
+        '<div class="row" style="gap:6px"><span class="cap">분류 바꾸기</span><select data-bcat="'+esc(id)+'" style="max-width:320px"><option value="">(그대로)</option>'+B_TREE.filter(function(x){return !q.camp||x[0]==='캠프 · 음악제'}).map(function(x){return '<optgroup label="'+esc(x[0])+'">'+x[1].map(function(t){var v=x[0]+' › '+t;return '<option value="'+esc(v)+'"'+(v===q['분류']?' disabled':'')+'>'+esc(t)+'</option>'}).join('')+'</optgroup>'}).join('')+'</select></div>'+
         (q.camp?'<dl class="kv"><dt>보낸 사람</dt><dd><b>'+esc(q['이름'])+'</b> <span class="pill info">캠프</span>'+(q['교사ID']?' <span class="pill info">회원 '+esc(q['교사ID'])+'</span>'+(t?' <button class="btn small ghost" type="button" data-opent="'+esc(q['교사ID'])+'">교사 열기</button>':''):' <span class="pill mute">계정 연결 없음</span>')+(q.acad?' <span class="cap">'+esc(q.acad)+'</span>':'')+'</dd><dt>휴대전화</dt><dd class="num">'+(t&&t['휴대전화']?fmt(t['휴대전화']):q.p4?'뒤 4자리 '+esc(q.p4):'-')+'</dd>'+(q.pic?'<dt>사진</dt><dd><a href="'+esc(q.pic)+'" target="_blank" rel="noopener">사진 보기 ↗</a></dd>':'')+'</dl>':
         '<dl class="kv"><dt>보낸 사람</dt><dd><b>'+esc(q['이름'])+'</b> '+(q['교사ID']?'<span class="pill info">회원 '+esc(q['교사ID'])+'</span>'+(t?' <button class="btn small ghost" type="button" data-opent="'+esc(q['교사ID'])+'">교사 열기</button>':''):'<span class="pill mute">비로그인</span>')+'</dd>'+
         '<dt>휴대전화</dt><dd class="num">'+(fmt(q['휴대전화'])||'-')+'</dd>'+(q['이메일']?'<dt>이메일</dt><dd>'+esc(q['이메일'])+'</dd>':'')+'</dl>')+
@@ -1299,6 +1305,7 @@ document.addEventListener('click',function(e){
     callS('reqDo',rp[0],rp[1],memo,rp[2]).then(function(r){S.busy=false;if(!r.ok){toast(r.msg);return}S.reqs=objs(r);S.D.reqN=S.reqs.filter(function(q){return q['상태']==='대기'}).length;toast(rp[1]+' · 메일을 보냈어요');load()});return}
   if(d.ast){S.askSt=d.ast;render();return}
   if(d.asrc!=null&&b.hasAttribute('data-asrc')){S.askSrc=d.asrc;render();return}
+  if(b.hasAttribute&&b.hasAttribute('data-aarea')){S.askArea=d.aarea;render();return}
   if(b.id==='askRe'){loadAsk();render();return}
   if(d.bst){var p2=d.bst.split('|');if(S.busy)return;S.busy=true;callS('bSet',p2[0],p2[1]).then(function(r){S.busy=false;if(!r.ok){toast(r.msg);return}setAsks(r.list);render();toast(p2[1]+'(으)로 바꿨어요')});return}
   if(d.bcm){var ta=document.getElementById('cm_'+d.bcm),tx=ta?ta.value.trim():'';if(!tx){toast('댓글을 넣어 주세요');return}if(S.busy)return;S.busy=true;b.disabled=true;
@@ -1494,7 +1501,7 @@ document.addEventListener('keydown',function(e){var t=e.target;if(S.tab!=='prt'|
 </script>
 <style>table.prt th,table.prt td{text-align:left !important}table.prt th:first-child,table.prt td:first-child{text-align:center !important}table.prt th:nth-child(7),table.prt td:nth-child(7),table.prt th:nth-child(8),table.prt td:nth-child(8){text-align:center !important}table.prt td:nth-child(7) input,table.prt td:nth-child(8) input{text-align:center}table.prt tr.mutedrow td{color:var(--faint)}table.prt tr.mutedrow td b{color:var(--muted)}table.prt td{vertical-align:middle}table.prt td.padr{white-space:normal;min-width:220px;max-width:340px;line-height:1.4}</style>
 
-<div id="bldMark" hidden>빌드표시 20261111-222742 </div>
+<div id="bldMark" hidden>빌드표시 20261111-223215 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();
 /* 공문 편집: 칸을 고치면 모델만 바꾸고 미리보기만 다시 그림(글자 조합이 깨지지 않게) */
 function gmField(t){if(S.tab!=='gm'||!S.gm||S.gm['상태']==='발행')return false;var d=S.gm,c=d['내용'],ds=t.dataset||{};
@@ -1503,6 +1510,7 @@ function gmField(t){if(S.tab!=='gm'||!S.gm||S.gm['상태']==='발행')return fal
   S.gmDirty=true;gmPrev();return true}
 document.addEventListener('input',function(e){gmField(e.target)});
 document.addEventListener('change',function(e){var t=e.target;if(t.type==='checkbox'||t.tagName==='SELECT')gmField(t)});
+document.addEventListener('change',function(e){var t=e.target;if(!t.dataset||!t.dataset.bcat||!t.value)return;if(S.busy)return;S.busy=true;callS('bCat',t.dataset.bcat,t.value).then(function(r){S.busy=false;if(!r.ok){toast(r.msg);return}setAsks(r.list);render();toast('분류를 바꿨어요')})});
 window.addEventListener('beforeunload',function(e){if(S.tab==='gm'&&S.gm&&S.gmDirty){e.preventDefault();e.returnValue=''}});
 </script>
 </body></html>

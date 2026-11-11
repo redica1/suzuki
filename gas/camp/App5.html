@@ -1,4 +1,4 @@
-/* build: 20261111-222753 */
+/* build: 20261111-223215 */
   if(!open.length) return MY_SUBS.length?`<div class="panel rp">${bankHTML()}<span class="hint">지금 입금할 금액이 없어요.</span></div>`:'';
   /* 평소엔 한 줄로 접어 둠: 「입금 신고하기」를 누르면 펼침 (11-03) */
   if(!S.rpOpen){const due=open.reduce((t,x)=>t+dueOf(x.p),0);return `<div class="panel rp">${bankHTML()}<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><span><b>입금 필요 ${open.length}명</b> · <b class="num">${won(due)}</b> <span class="hint">입금한 뒤 알려 주세요</span></span><button class="btn primary" type="button" data-rpopen="1">입금 신고하기</button></div></div>`}
@@ -210,16 +210,17 @@ function cxPanel(sb,sel){
     <p class="err" id="cxErr"></p>
     <div class="row"><button class="btn primary" type="button" data-cxgo="${sb.no}">${paid?'취소 요청하기':'취소하기'}</button><button class="btn ghost" type="button" data-cxclear="${sb.no}">선택 해제</button></div>`}</div>`}
 /* ---------- 게시판 게시판 ---------- */
-const Q_WHERE=['로그인','학원 확인','참가자 선택','참가 정보','앙상블','신청 확인 · 접수하기','내 접수 · 입금 신고','취소 · 환불','가족방 요청','방 요청','기타'];
+/* 게시판 종류 (11-11 회원관리와 공통 「캠프 · 음악제」): 방 요청 · 가족방 요청은 하나로. 어느 화면에서 썼는지는 「환경」에 저절로 남음 */
+const Q_WHERE=['접수가 안 돼요','방 요청','입금 · 취소 · 환불','앙상블 · 레슨 · 시간표','질문'],Q_HINT={'가입 · 로그인':'어느 단계에서 막혔는지 적어 주세요.','내 정보 · 학원 정보 고치기':'무엇을 무엇으로 바꿔야 하는지 적어 주세요.','학생 · 교사 명단':'학생 · 선생님 이름과 바꿀 내용을 적어 주세요.','회비 · 입금':'입금일 · 금액 · 입금자 이름을 적어 주세요.','접수가 안 돼요':'무엇을 누르니 어떻게 됐는지 적고, 화면 사진을 올려 주세요.','방 요청':'가족방도 여기로. 같은 층 · 옆방 · 아기 침대 · 방 바꾸기 등을 적어 주세요.','입금 · 취소 · 환불':'접수번호 · 입금일 · 금액을 적어 주세요.','앙상블 · 레슨 · 시간표':'학생 이름과 바랐으면 하는 내용을 적어 주세요.','신청 · 접수':'무엇을 신청하다 어떻게 됐는지 적어 주세요.','입금 · 취소':'입금일 · 금액을 적어 주세요.','건의':'바랐으면 하는 것을 적어 주세요.','질문':'궁금한 점을 적어 주세요.'};
 const qPill=st=>st==='해결'?'<span class="pill ok">해결</span>':st==='해결 중'?'<span class="pill new">해결 중</span>':'<span class="pill due">미해결</span>';
-function curWhere(){const v=S.qBack||{};if(v.view==='mine')return '내 접수 · 입금 신고';if(!S.user)return '로그인';return Q_WHERE[Math.min(Math.max(v.step||1,1),5)]||'기타'}
+function curWhere(){return ''}
 function vQ(){const mine=S.qMine||[];const login=!!S.user;
   return `<section class="sec"><div class="spread"><h2>게시판</h2><button class="btn small ghost" type="button" id="qBack">← 돌아가기</button></div>
   <p class="lede">접수하다가 안 되는 것, 이상한 것, 바랐으면 하는 것을 적어 주세요. 운영진이 보고 <b>미해결 → 해결 중 → 해결</b>로 표시하고 답을 달아요.</p>
   ${login?'':`<div class="panel" style="display:grid;gap:6px"><b>로그인한 뒤 글을 남길 수 있어요</b><span class="hint">누가 남겼는지 알고 답을 드리려고 로그인한 분만 받아요. 로그인이 안 되면 카카오톡 채널 「suzukimusickorea」로 알려 주세요.</span></div>`}
   <div class="panel" style="display:grid;gap:10px" ${login?'':'hidden'}>
     ${login?`<div class="hint">${esc(S.user.name)} 선생님 · ${esc((S.user.acads||[]).join(', '))}</div>`:`<div class="grid2"><label class="f" for="qName">이름 <span class="req">*</span><input type="text" id="qName" value="${esc(S.qName||'')}"></label><label class="f" for="qPhone">휴대전화 <span class="req">*</span><input type="tel" id="qPhone" inputmode="numeric" value="${esc(S.qPhone||'010-')}"></label></div><label class="f" for="qAcad">학원<input type="text" id="qAcad" value="${esc(S.qAcad||'')}"></label>`}
-    <label class="f" for="qWhere">어떤 글인가요? <span class="hint">방 관련(같은 층 · 옆방 · 아기 침대 · 방 바꾸기 등)은 「가족방 요청」이나 「방 요청」을 골라 주세요</span><select id="qWhere">${Q_WHERE.map(x=>`<option ${x===(S.qWhere||curWhere())?'selected':''}>${x}</option>`).join('')}</select></label>
+    <div class="f"><span>어떤 글인가요? <span class="req">*</span></span><div class="seg" role="group" style="flex-wrap:wrap">${Q_WHERE.map(x=>`<button type="button" data-qw="${esc(x)}" aria-pressed="${x===S.qWhere}">${esc(x)}</button>`).join('')}</div><p class="hint" id="qHint" style="margin:4px 0 0">${esc(Q_HINT[S.qWhere]||'')}</p><input type="hidden" id="qWhere" value="${esc(S.qWhere||'')}"></div>
     <label class="f" for="qText">무슨 일이 있었나요? <span class="req">*</span><textarea id="qText" rows="5" maxlength="2000" placeholder="무엇을 누르니 어떻게 됐는지 적어 주시면 빨리 고칠 수 있어요.">${esc(S.qText||'')}</textarea></label>
     <label class="f" for="qPic">화면 사진 <span class="hint">있으면 · 5MB까지</span><input type="file" id="qPic" accept="image/\x2a"></label>
     <div class="row" style="justify-content:flex-end"><span class="err" id="qErr" style="margin-right:auto"></span><button class="btn primary" type="button" id="qSend">올리기</button></div>

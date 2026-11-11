@@ -1,4 +1,4 @@
-/* build: 20261111-222742 */
+/* build: 20261111-223215 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -109,7 +109,7 @@ function include(n) { return HtmlService.createTemplateFromFile(n).getRawContent
 
 function api(name, args) {
   const open = { login, hello, tHello, tEvents, tLookup, tStart, tResend, tVerify, tCreate, tLogin, tForgot, tReset, tPwChange, tMe, tSavePay, tSavePart, tSaveInfo, tSavePhoto, tAcad, tSaveAcad, tDocUp, tDocGet, tSaveStu, tSaveStus, tStuDetail, tStuSave, tStuTutor, tStuTutorDel, tStuState, tStuStateDel, tMyStu, tMyStuDetail, tMyStuPay, tTchSaves, tTchEnd, tTchEvent, tTchAssign, tTchStart, tSaveRrn, tSaveInc, tAddWork, tClassCreate, tEndWork, tMainWork, tLogout, bPost, bMine, bReply };
-  const fns = { printEvents, printEvSave, printData, printSet, printCopy, printExport, ogGet, ogSave, ogToken, boot, saveRow, setCheck, logs, importRoster, saveDues, delDues, reqs, reqDo, delAcad, payView, bulkSet, saveWorks, importPastDues, importPayInfo, gmList, gmGet, gmSave, gmIssue, gmCopy, gmDel, bList, bSet, bComment, photoGet, photoDel, fillRegions, saveRates, docList, docUp, docGet, docDel, payList, payOk, payOkMany, payNo, memView, rosterNow, inputStatus, inboxDone, acctReset, classFromStudents, delStus, asTeacher, bankImport, bankList: bankListTop, bankSet, bankDues, bankFromSheet, bankMeta, bankSplitSave, bankPay, bankCamp, bankCampPay, bankPayList, gmProjects, gmCamp, devVirtual };
+  const fns = { printEvents, printEvSave, printData, printSet, printCopy, printExport, ogGet, ogSave, ogToken, boot, saveRow, setCheck, logs, importRoster, saveDues, delDues, reqs, reqDo, delAcad, payView, bulkSet, saveWorks, importPastDues, importPayInfo, gmList, gmGet, gmSave, gmIssue, gmCopy, gmDel, bList, bSet, bComment, bCat, photoGet, photoDel, fillRegions, saveRates, docList, docUp, docGet, docDel, payList, payOk, payOkMany, payNo, memView, rosterNow, inputStatus, inboxDone, acctReset, classFromStudents, delStus, asTeacher, bankImport, bankList: bankListTop, bankSet, bankDues, bankFromSheet, bankMeta, bankSplitSave, bankPay, bankCamp, bankCampPay, bankPayList, gmProjects, gmCamp, devVirtual };
   try {
     if (open[name]) return Object.assign({ ok: true }, open[name].apply(null, args || []));
     if (!fns[name]) throw new UserError('알 수 없는 요청이에요.');
@@ -1827,7 +1827,9 @@ function reqDo(who, id, act, memo, linkTid) {
 }
 
 /* ---------- 문의·요청 게시판 (10-28) ---------- */
-const B_CATS = ['회원가입', '정보 수정', '회비', '캠프·행사', '기타'], B_STATES = ['접수', '처리중', '완료'];
+/* 게시판 분류 (11-11 공통): 어디 › 종류. 캠프 게시판도 같은 「캠프 · 음악제」 종류를 씀 */
+const B_TREE = [['회원 · 회비',['가입 · 로그인','내 정보 · 학원 정보 고치기','학생 · 교사 명단','회비 · 입금','질문']],['캠프 · 음악제',['접수가 안 돼요','방 요청','입금 · 취소 · 환불','앙상블 · 레슨 · 시간표','질문']],['졸업연주',['신청 · 접수','입금 · 취소','질문']],['교사연수',['신청 · 접수','입금 · 취소','질문']],['그 밖',['건의','질문']]], B_STATES = ['접수', '처리중', '완료'];
+const bCatOk_ = c => B_TREE.some(([a, L]) => L.some(t => a + ' › ' + t === c));
 function bText_(v, n) { return String(v == null ? '' : v).replace(/\r\n?/g, '\n').trim().slice(0, n); }
 function bObjs_() { const Q = tbl_('문의'), C = tbl_('댓글'); const o = (T, r) => { const x = {}; T.h.forEach((k, j) => x[k] = r[j]); return x; };
   const cm = {}; C.v.forEach(r => { const c = o(C, r); (cm[c['문의ID']] = cm[c['문의ID']] || []).push(c); });
@@ -1840,7 +1842,8 @@ function bPost(sess, d) {
   let tid = '', name, phone, email = '';
   if (u) { const T = tbl_('교사'), i = T.find('교사ID', u.tid); tid = u.tid; name = i >= 0 ? T.get(i, '이름') : ''; phone = i >= 0 ? T.get(i, '휴대전화') : ''; email = u.email; }
   else { name = bText_(d.name, 20); phone = digits_(d.phone); if (!name) fail('이름을 넣어 주세요.'); if (!/^01\d{8,9}$/.test(phone)) fail('휴대전화 번호를 확인해 주세요.'); }
-  const cat = B_CATS.indexOf(d.cat) >= 0 ? d.cat : '기타', title = bText_(d.title, 80), body = bText_(d.body, 2000);
+  if (!bCatOk_(d.cat)) fail('어디 일인지 · 어떤 글인지 골라 주세요.');
+  const cat = d.cat, title = bText_(d.title, 80), body = bText_(d.body, 2000);
   if (!title) fail('제목을 넣어 주세요.'); if (body.length < 2) fail('내용을 넣어 주세요.');
   limit_('bp:' + (phone || tid), 5, 3600, '한 시간에 5개까지 남길 수 있어요. 잠시 뒤 다시 해 주세요.');
   limit_('bp:all', 300, 3600, '지금 글이 많이 들어오고 있어요. 잠시 뒤 다시 해 주세요.');
@@ -1918,7 +1921,7 @@ function campQs_() {
   const v = sh.getDataRange().getDisplayValues(), h = v.shift().map(String), g = (r, k) => { const j = h.indexOf(k); return j >= 0 ? String(r[j] || '') : ''; };
   return v.filter(r => g(r, '번호')).map(r => { const st = CQ_ST[g(r, '상태') || '미해결'] || '접수', rep = g(r, '답변'), where = g(r, '화면'), txt = g(r, '내용');
     return { '문의ID': 'C:' + g(r, '번호'), camp: 1, '작성일': g(r, '일시'), '교사ID': g(r, '교사ID'), '이름': g(r, '이름'), '휴대전화': '', p4: g(r, '연락처 뒤4자리'), acad: g(r, '학원'), pic: g(r, '사진'),
-      '분류': '캠프 · ' + (where || '기타'), '제목': txt.split('\n')[0].slice(0, 60), '내용': txt, '상태': st, '처리일': g(r, '처리일'), '처리자': g(r, '처리자'),
+      '분류': '캠프 · 음악제 › ' + (where || '기타'), '제목': txt.split('\n')[0].slice(0, 60), '내용': txt, '상태': st, '처리일': g(r, '처리일'), '처리자': g(r, '처리자'),
       comments: rep ? [{ '쓴사람': '관리자', '이름': g(r, '처리자'), '작성일': g(r, '처리일'), '내용': rep }] : [] }; }); }
 function campQSet_(who, qid, state, reply) {
   const no = String(qid).slice(2), sh = campQSheet_(); if (!sh) fail('캠프 접수 시트가 연결돼 있지 않아요 (설정 「캠프 시트」).');
@@ -1943,6 +1946,15 @@ function bSet(who, qid, state) {
   Q.set(i, { '상태': state, '처리일': state === '완료' ? now_() : Q.get(i, '처리일'), '처리자': who.name, '수정일': now_() });
   log_(who.name, '문의', qid, '상태', state);
   return bList(who);
+}
+/* 관리자: 잘못 고른 분류 바꾸기 (11-11). 캠프 글은 캠프 종류 안에서만 (캠프 시트 「화면」 칸) */
+function bCat(who, qid, cat) {
+  if (!bCatOk_(cat)) fail('분류를 골라 주세요.');
+  if (/^C:/.test(qid)) { const pre = '캠프 · 음악제 › '; if (cat.indexOf(pre) !== 0) fail('캠프 글은 캠프 · 음악제 종류 안에서만 바꿀 수 있어요.');
+    const sh = campQSheet_(); if (!sh) fail('캠프 시트가 연결돼 있지 않아요.'); const v = sh.getDataRange().getValues(), h = v[0].map(String), ni = h.indexOf('번호'), wi = h.indexOf('화면'), r = v.findIndex((x, i) => i > 0 && String(x[ni]) === qid.slice(2)); if (r < 1 || wi < 0) fail('그 캠프 글을 찾지 못했어요.');
+    sh.getRange(r + 1, wi + 1).setValue(cat.slice(pre.length)); }
+  else { const Q = tbl_('문의'), i = Q.find('문의ID', qid); if (i < 0) fail('그 문의를 찾지 못했어요.'); Q.set(i, { '분류': cat, '수정일': now_() }); }
+  log_(who.name, '문의', qid, '분류', cat); return bList(who);
 }
 function bComment(who, qid, text) {
   text = bText_(text, 1000); if (!text) fail('댓글을 넣어 주세요.');

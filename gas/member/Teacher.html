@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261111-222742 -->
+<!-- build: 20261111-223215 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -336,7 +336,7 @@ function payCards(m){var p=m.pay||{},ed=S.payEd,d=S.pay||{};
       mailBlock(d,p.haddr?p.haddr:'')+msgBox()+edBtns():
       '<p>'+(p.addr?(sameNow?'<span class="pill info">집 주소와 같음</span> ':'')+(p.zip?'<span class="num">('+esc(p.zip)+')</span> ':'')+esc(p.addr)+' '+esc(p.addr2):'<span class="hint">아직 없어요</span>')+'</p>')+'</div>';
   return a+h+ml}
-var B_CATS=['회원가입','정보 수정','회비','캠프·행사','기타'];
+var B_TREE=[['회원 · 회비',['가입 · 로그인','내 정보 · 학원 정보 고치기','학생 · 교사 명단','회비 · 입금','질문']],['캠프 · 음악제',['접수가 안 돼요','방 요청','입금 · 취소 · 환불','앙상블 · 레슨 · 시간표','질문']],['졸업연주',['신청 · 접수','입금 · 취소','질문']],['교사연수',['신청 · 접수','입금 · 취소','질문']],['그 밖',['건의','질문']]],B_HINT={'가입 · 로그인':'어느 단계에서 막혔는지 적어 주세요.','내 정보 · 학원 정보 고치기':'무엇을 무엇으로 바꿔야 하는지 적어 주세요.','학생 · 교사 명단':'학생 · 선생님 이름과 바꿀 내용을 적어 주세요.','회비 · 입금':'입금일 · 금액 · 입금자 이름을 적어 주세요.','접수가 안 돼요':'무엇을 누르니 어떻게 됐는지 적고, 화면 사진을 올려 주세요.','방 요청':'가족방도 여기로. 같은 층 · 옆방 · 아기 침대 · 방 바꾸기 등을 적어 주세요.','입금 · 취소 · 환불':'접수번호 · 입금일 · 금액을 적어 주세요.','앙상블 · 레슨 · 시간표':'학생 이름과 바랐으면 하는 내용을 적어 주세요.','신청 · 접수':'무엇을 신청하다 어떻게 됐는지 적어 주세요.','입금 · 취소':'입금일 · 금액을 적어 주세요.','건의':'바랐으면 하는 것을 적어 주세요.','질문':'궁금한 점을 적어 주세요.'};
 function stPill(s){return '<span class="pill '+(s==='완료'?'ok':s==='처리중'?'info':'due')+'">'+esc(s)+'</span>'}
 function vAsk(){var a=S.ask||(S.ask={cat:'',title:'',body:'',name:'',phone:''}),me=S.sess&&S.me;
   if(S.askDone)return '<div class="card"><h2>문의를 받았어요</h2><p class="lede">협회가 확인하고 '+(me?'오른쪽 위 「내 문의」에 답을 남기고 이메일로 알려 드려요.':'남겨 주신 휴대전화로 연락드려요.')+'</p>'+(me?'<button class="btn primary block" type="button" id="toMe">내 정보로</button>':'<button class="btn block" type="button" id="goHome">처음 화면</button>')+'</div>';
@@ -346,7 +346,7 @@ function vAsk(){var a=S.ask||(S.ask={cat:'',title:'',body:'',name:'',phone:''}),
       '<div class="note">로그인하지 않고 남겨요. 답은 남겨 주신 휴대전화로 연락드려요. 계정이 있으면 <button class="btn small ghost" type="button" id="goLogin" style="padding:0 6px">로그인</button> 뒤 남기면 답을 화면에서 볼 수 있어요.</div>'+
       '<div class="two"><div><label class="f" for="aNm">이름 <span class="req">*</span><input type="text" id="aNm" value="'+esc(a.name)+'" autocomplete="name" '+bad('aname')+'></label>'+fe('aname')+'</div>'+
       '<div><label class="f" for="aPh">휴대전화 <span class="req">*</span><input type="tel" id="aPh" value="'+esc(a.phone)+'" inputmode="numeric" autocomplete="tel" '+bad('aphone')+'></label>'+fe('aphone')+'</div></div>')+
-    '<div class="f"><span>분류</span>'+seg('acat',B_CATS,a.cat||'기타')+'</div>'+
+    (function(){var ar=a.area||'회원 · 회비',L=(B_TREE.filter(function(x){return x[0]===ar})[0]||B_TREE[0])[1];return '<div class="f"><span>어디 일인가요? <span class="req">*</span></span>'+seg('aarea',B_TREE.map(function(x){return x[0]}),ar)+'</div><div class="f"><span>어떤 글인가요? <span class="req">*</span></span>'+seg('acat',L,a.cat||'')+fe('acat')+(a.cat&&B_HINT[a.cat]?'<p class="hint" style="margin:4px 0 0">'+esc(B_HINT[a.cat])+'</p>':'')+'</div>'})()+
     '<label class="f" for="aTi">제목 <span class="req">*</span><input type="text" id="aTi" maxlength="80" value="'+esc(a.title)+'" '+bad('atitle')+'></label>'+fe('atitle')+
     '<label class="f" for="aBo">내용 <span class="req">*</span><textarea id="aBo" rows="6" maxlength="2000" '+bad('abody')+'>'+esc(a.body)+'</textarea></label>'+fe('abody')+
     '<div class="hp" aria-hidden="true"><label>비워 두세요<input type="text" id="aHp" tabindex="-1" autocomplete="off"></label></div>'+
@@ -715,7 +715,7 @@ document.addEventListener('click',function(e){if(e.target.id==='sdClose2'){S.stu
     run(function(){return call('tVerify',[S.token,cd]).then(function(r){if(!r.ok){S.msg=r.msg;return}if(r.prefill&&S.mode==='member'){var pf=r.prefill;S.j.sex=pf.sex||'';S.j.type=pf.type||'';S.j.course=pf.course||'';S.j.works=(pf.works||[]).map(function(w){return {id:w.id,text:w.text,y:w.y,m:w.m}});S.j.noWork=false;S.j.role=pf.role;S.j.inst=pf.inst||'';S.j.certs=pf.certs||{}}S.hist.push('code');S.v='confirm';window.scrollTo(0,0);toast('이메일 인증을 마쳤어요')})});return}
   if(b.id==='toCode'){readConfirm();go('code');return}
   if(d.seg==='sdsx'){sdRead();S.stuDet.form.sex=d.val;render();return}
-  if(d.seg&&d.seg!=='acat'&&d.seg!=='lease'&&d.seg!=='sstate'&&d.seg!=='grp'){readConfirm();var k=d.seg,val=d.val;
+  if(d.seg&&d.seg!=='acat'&&d.seg!=='aarea'&&d.seg!=='lease'&&d.seg!=='sstate'&&d.seg!=='grp'){readConfirm();var k=d.seg,val=d.val;
     if(k==='type'){S.j.type=val;if(val==='교사회원')S.j.course='';else if(!S.j.course)S.j.course='초급'}else S.j[k]=val;
     delete S.err[k];render();return}
   if(d.acad){if(S.v==='me'){S.addW={id:d.acad,y:'',m:''};S.aq='';render();return}readConfirm();if(S.j.works.length<3)S.j.works.push({id:d.acad,text:'',y:'',m:''});S.j.noWork=false;S.aq='';delete S.err.acad;render();var aq=document.getElementById('aq');if(aq)aq.focus();return}
@@ -846,13 +846,14 @@ document.addEventListener('click',function(e){if(e.target.id==='sdClose2'){S.stu
   if(b.id==='gnbEv'){if(!S.sess)return;go('events');loadEvents();return}
   if(b.id==='gnbAsk'){if(!S.sess)return;go('mine');loadMine();return}
   if(b.id==='goAsk'){S.ask=null;S.askDone=false;go('ask');return}
+  if(d.seg==='aarea'){readAsk();S.ask.area=d.val;S.ask.cat='';render();return}
   if(d.seg==='acat'){readAsk();S.ask.cat=d.val;render();return}
   if(b.id==='askSend'){readAsk();var aq=S.ask,e5={},me5=S.sess&&S.me;
     if(!me5){if(!aq.name)e5.aname='이름을 넣어 주세요.';if(!/^01\d{8,9}$/.test(aq.phone))e5.aphone='휴대전화 번호를 확인해 주세요.'}
-    if(!aq.title.trim())e5.atitle='제목을 넣어 주세요.';if(aq.body.trim().length<2)e5.abody='내용을 넣어 주세요.';
+    if(!aq.cat)e5.acat='어떤 글인지 골라 주세요.';if(!aq.title.trim())e5.atitle='제목을 넣어 주세요.';if(aq.body.trim().length<2)e5.abody='내용을 넣어 주세요.';
     S.err=e5;if(Object.keys(e5).length){render();return}
     var hp=(document.getElementById('aHp')||{}).value||'';
-    run(function(){return call('bPost',[me5?S.sess:'',{name:aq.name,phone:aq.phone,cat:aq.cat||'기타',title:aq.title,body:aq.body,hp:hp}]).then(function(r){if(!r.ok){S.msg=r.msg;return}S.askDone=true;S.ask=null;if(me5)loadMine();window.scrollTo(0,0)})});return}
+    run(function(){return call('bPost',[me5?S.sess:'',{name:aq.name,phone:aq.phone,cat:(aq.area||'회원 · 회비')+' › '+aq.cat,title:aq.title,body:aq.body,hp:hp}]).then(function(r){if(!r.ok){S.msg=r.msg;return}S.askDone=true;S.ask=null;if(me5)loadMine();window.scrollTo(0,0)})});return}
   if(d.qopen){S.qOpen=S.qOpen===d.qopen?'':d.qopen;render();return}
   if(d.qrep){var tx=(document.getElementById('rp_'+d.qrep)||{}).value||'';if(!tx.trim()){toast('댓글을 넣어 주세요');return}
     run(function(){return call('bReply',[S.sess,d.qrep,tx]).then(function(r){if(!r.ok){toast(r.msg);return}S.mine=r.list;toast('댓글을 남겼어요')})});return}
@@ -952,6 +953,6 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')gdClose()});
   try{google.script.url.getLocation(function(l){var pr=l&&l.parameter||{},a=pr.as;if(a)setSess(a);if('ask' in pr||pr.v==='ask'){S.v0='ask'}if(pr.guide!==undefined)S.gd0=pr.guide||'why';go0()})}catch(x){go0()}})();
 </script>
 <script>try{window.top.postMessage('suzuki-ready','*')}catch(e){}</script>
-<div id="bldMark" hidden>빌드표시 20261111-222742 </div>
+<div id="bldMark" hidden>빌드표시 20261111-223215 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();</script>
 </body></html>

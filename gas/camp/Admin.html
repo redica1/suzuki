@@ -2574,7 +2574,7 @@ function dVals(c){const b=c.base||{},d=c.doc||{},o=c.opt||{},bk=(S.bkA&&S.bkA.cu
     '{가족방정원}':String(o.roomCap||''),'{가족방요금}':dRoomFee(c),'{계좌}':bk.acct?[bk.bank,bk.acct,bk.holder].filter(Boolean).join(' '):'(입금 안내 통장을 「캠프 설정」에서 골라 주세요)','{신청주소}':DOC_URL,'{환불규정}':dRefund(c),'{학생회비}':dWon(o.studentDues)}}
 function dFeeTable(c){const R=c.rounds||[],d=c.doc||{},b=c.base||{};
   return R.map((r,i)=>{const last=i===R.length-1,note=((d.rnote||[])[i]||'').trim();
-    return `<div class="rh">*${esc(r.n)} 등록 기간: <span class="${i===0?'red':''}">${esc(dMd(r.from,i===0))} ~ ${esc(dMd(r.to))}</span>${note?' '+esc(note):''}${last&&dYmd(b.close)?` <span class="red">(${esc(dMd(dAdd(b.close,1)))}부터는 신청할 수 없습니다)</span>`:''}</div>
+    return `<div class="rh">*${esc(r.n)} 등록 기간: <span class="${i===0?'red':''}">${esc(dMd(r.from,i===0))} ~ ${esc(dMd(r.to))}</span>${note?' '+esc(note):''}${last&&dYmd(b.close)?` <span class="red">(이후는 신청할 수 없습니다)</span>`:''}</div>
     <table class="ft"><thead><tr><th style="width:32%">스즈키 교사/학생</th><th style="width:32%">첫 번째 보호자/교사 자녀</th><th>두 번째 가족 추가</th></tr></thead>
     <tbody><tr><td>${dWon(dFee(c,'학생',i))}</td><td>${dWon(dFee(c,'회원의 첫번째 보호자',i))}</td><td class="f3">악기 하는 형제 할인 없음<br>악기 안 하는 가족: ${dWon(dFee(c,'회원의 그외 악기 안하는 동반가족',i))}<br>돌 전 아기: ${dWon(dFee(c,'동반가족 중 돌전아기',i))}</td></tr></tbody></table>`}).join('')}
 /* 글 → HTML: {표시} 채우기 · **굵게** · !!빨강!! · [[참가비표]] 줄 */

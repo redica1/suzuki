@@ -1,4 +1,4 @@
-/* build: 20261112-021340 */
+/* build: 20261112-021620 */
     ps.forEach(p=>{p.pay='신고';p.rep=rep;delete S.rpRow[p.id]});S.afterSave=()=>repDone(ps.map(p=>p.id));subSave();S.rp=null;S.rpOpen=false;S.rpMemo=undefined;render();toast(`${ps.length}명 입금 신고를 보냈어요 · 운영진이 확인하면 「입금 확인」으로 바뀌어요`);return}
   if(b.id==='rpFill'){const n=document.getElementById('rpAllN').value.trim(),dd=document.getElementById('rpAllD').value;S.rpAllN=n;S.rpAllD=dd;const sel=S.rp||[];
     if(!n&&!dd){toast('적용할 입금자명이나 입금일을 적어 주세요');return}unpaidPpl().filter(x=>sel.includes(x.p.id)).forEach(({p})=>{const v=rpv(p);if(n)v.n=n;if(dd)v.d=dd});render();toast(`선택한 ${sel.length}명에게 적용했어요`);return}
@@ -299,31 +299,45 @@ function apDoor(){const L=apCons();if(!L.length||!MEMBER_OPEN)return '';const A=
   return `<button type="button" class="apDoor" id="apDoor"><span class="ic" aria-hidden="true">♪</span><span><b>${esc(L.join(' · '))} 음원 먼저 내기</b><small>${due?`${+due.slice(5,7)}월 ${+due.slice(8,10)}일까지 · `:''}회원 선생님이 우리 학원 학생을 골라 곡과 주소만 넣어요 · 캠프 접수 때 저절로 이어져요</small></span></button>`}
 function apLoad(){if(S.APL)return;S.APL=1;api('audPreList',[],r=>{S.APL=0;S.AP=r;if(!S.apSid&&r.stu.length)S.apSid='';render()},()=>{S.APL=0})}
 function vAudPre(){const A=S.AP;if(!A){apLoad();return '<section class="sec"><p class="hint">불러오는 중…</p></section>'}
-  const open=A.cons.filter(c=>c.open),q=(S.apQ||'').trim(),stu=A.stu.filter(x=>!q||x.name.includes(q)),sel=A.stu.find(x=>x.id===S.apSid),mine=A.rows.slice().reverse();
-  const f=S.apF||(S.apF={con:(open[0]||{}).name||'',comp:'',title:'',url:''});
-  return `<section class="sec"><h2>음원 먼저 내기</h2><p class="lede">${esc(S.who||'')} 선생님 · 우리 학원 학생을 고르고 곡과 음원 주소만 넣어 주세요. 캠프 접수는 따로 해요(접수 때 이 학생을 담으면 음악회 · 곡 · 음원이 미리 채워져요).</p>
+  const open=A.cons.filter(c=>c.open),q=(S.apQ||'').trim(),stu=A.stu.filter(x=>!q||x.name.includes(q)),mine=A.rows.slice().reverse(),L=S.apL||(S.apL=[]),ac=A.acads||[];
+  const conSeg=e=>`<div class="apSeg">${open.map(c=>`<label><input type="radio" name="apCon_${e.k}" data-apk="${e.k}" data-apf="con" value="${esc(c.name)}" ${e.con===c.name?'checked':''}>${esc(c.name)}${c.end?` <small>~${+c.end.slice(5,7)}/${+c.end.slice(8,10)}</small>`:''}</label>`).join('')}</div>`;
+  const inp=(e,f,ph,ty,mx)=>`<input type="${ty||'text'}" data-apk="${e.k}" data-apf="${f}" value="${esc(e[f]||'')}" placeholder="${ph}" ${mx?`maxlength="${mx}"`:''}>`;
+  return `<section class="sec"><h2>음원 먼저 내기</h2><p class="lede">${esc(S.who||'')} 선생님 · 학생을 여러 명 골라 한 번에 낼 수 있어요. 캠프 접수 때 이 학생을 담으면 음악회 · 곡 · 음원이 미리 채워져요.</p>
     ${open.length?'':'<div class="note warn">지금 음원을 받는 음악회가 없어요.</div>'}
-    <label class="f"><span>1. 학생</span><input type="search" id="apQ" placeholder="이름으로 찾기" value="${esc(S.apQ||'')}"></label>
-    <div class="apStu">${stu.map(x=>`<label><input type="radio" name="apStu" value="${esc(x.id)}" ${x.id===S.apSid?'checked':''}><span><b>${esc(x.name)}</b>${x.tag?` <small class="hint">${esc(x.tag)}</small>`:''} <small class="hint">${esc(x.inst||'')} · ${esc(x.acad)}</small></span>${A.rows.some(r=>r.sid===x.id)?'<span class="pill" style="margin-left:auto">냄</span>':''}</label>`).join('')||'<p class="hint">명단에 학생이 없어요. 회원관리 › 학생 관리에서 먼저 넣어 주세요.</p>'}</div>
-    ${sel?`<div class="note" style="margin-top:6px"><b>${esc(sel.name)}</b> · ${esc(sel.inst||'')} · ${esc(sel.acad)} (회원 명단에서 그대로)</div>`:''}
-    <div class="f"><span style="font-weight:700">2. 음악회</span><div class="apSeg">${open.map(c=>`<label><input type="radio" name="apCon" value="${esc(c.name)}" ${f.con===c.name?'checked':''}>${esc(c.name)}${c.end?` <small>~${+c.end.slice(5,7)}/${+c.end.slice(8,10)}</small>`:''}</label>`).join('')}</div></div>
-    <label class="f"><span>3. 작곡가</span><input type="text" id="apComp" maxlength="60" value="${esc(f.comp)}" placeholder="예: W. A. Mozart"></label>
-    <label class="f"><span>곡명</span><input type="text" id="apTitle" maxlength="120" value="${esc(f.title)}" placeholder="예: Violin Concerto No. 3, 1st mov."></label>
-    <label class="f"><span>4. 음원 주소</span><input type="url" id="apUrl" value="${esc(f.url)}" placeholder="https:// (유튜브 「일부 공개」 링크 등)"></label>
+    <h3 class="apH">1. 학생 고르기 <small class="hint">여러 명 골라도 돼요 · 회원관리 학생 명단(우리 학원)</small></h3>
+    <input type="search" id="apQ" placeholder="이름으로 찾기" value="${esc(S.apQ||'')}">
+    <div class="apStu">${stu.map(x=>`<label><input type="checkbox" data-apstu="${esc(x.id)}" ${L.some(e=>e.sid===x.id)?'checked':''}><span><b>${esc(x.name)}</b>${x.tag?` <small class="hint">${esc(x.tag)}</small>`:''} <small class="hint">${esc(x.inst||'')} · ${esc(x.acad)}</small></span>${A.rows.some(r=>r.sid===x.id)?'<span class="pill" style="margin-left:auto">냄</span>':''}</label>`).join('')||`<p class="hint">${q?'찾는 이름이 명단에 없어요.':'명단에 학생이 없어요.'} 아래 「명단에 없는 학생 추가」로 넣어 주세요.</p>`}</div>
+    ${S.apNew?`<div class="apNew"><b>명단에 없는 학생 추가</b><div class="sgRow"><input type="text" id="apNn" placeholder="학생 이름" maxlength="20" value="${esc(q)}"><select id="apNi"><option value="">악기</option><option>바이올린</option><option>첼로</option><option>비올라</option><option>플루트</option></select>${ac.length>1?`<select id="apNa">${ac.map(a=>`<option>${esc(a)}</option>`).join('')}</select>`:''}<button class="btn primary" type="button" id="apNadd">추가</button><button class="btn ghost" type="button" id="apNx">닫기</button></div><p class="hint" style="margin:0">회원관리 학생 명단에는 캠프 접수 때 같이 올라가요.</p></div>`:`<button class="btn ghost small" type="button" id="apNopen" style="margin-top:8px">+ 명단에 없는 학생 추가</button>`}
+    <h3 class="apH">2. 학생마다 음악회 · 곡 · 음원 주소 <small class="hint">${L.length}명</small></h3>
+    ${L.length?L.map((e,n)=>`<div class="apCard"><div class="spread"><b>${n+1}. ${esc(e.name)} <small class="hint">${esc(e.inst||'')} · ${esc(e.acad||'')}${e.nw?' · 명단에 없음(새로)':''}</small></b><button class="btn ghost small" type="button" data-aprm="${e.k}">빼기</button></div>
+      ${conSeg(e)}<div class="apGrid">${inp(e,'comp','작곡가 예: W. A. Mozart','text',60)}${inp(e,'title','곡명 예: Violin Concerto No. 3, 1st mov.','text',120)}</div>${inp(e,'url','음원 주소 https:// (유튜브 「일부 공개」 링크 등)','url')}</div>`).join(''):'<p class="hint">위에서 학생을 골라 주세요.</p>'}
     <p class="hint">낸 주소는 고치거나 지울 수 없어요. 바꾸려면 새 주소를 더 내 주세요.</p>
-    <div class="row"><button class="btn primary" type="button" id="apSend" ${open.length?'':'disabled'}>음원 내기</button><button class="btn ghost" type="button" id="apBack">처음으로</button></div></section>
+    <div class="row"><button class="btn primary" type="button" id="apSend" ${open.length&&L.length?'':'disabled'}>${L.length>1?L.length+'명 ':''}음원 내기</button><button class="btn ghost" type="button" id="apBack">처음으로</button></div></section>
   <section class="sec"><h2>우리 학원이 낸 음원 <span class="hint">${mine.length}건</span></h2>
-    ${mine.length?`<div style="overflow-x:auto"><table class="mtbl"><thead><tr><th>학생</th><th>음악회</th><th>곡</th><th>음원</th><th>상태</th></tr></thead><tbody>${mine.map(r=>`<tr><td class="l"><b>${esc(r.name)}</b><br><small class="hint">${esc(r.inst||'')} · ${esc(r.acad)}</small></td><td>${esc(r.con)}</td><td class="l">${esc((r.comp+' '+r.title).trim())}</td><td><a href="${esc(r.url)}" target="_blank" rel="noopener">보기 ↗</a><br><small class="hint">${esc(String(r.at).slice(5,16))} · ${esc(r.by)}</small></td><td>${esc(r.st)}</td></tr>`).join('')}</tbody></table></div>`:'<p class="hint">아직 낸 음원이 없어요.</p>'}
+    ${mine.length?`<div style="overflow-x:auto"><table class="mtbl"><thead><tr><th>학생</th><th>음악회</th><th>곡</th><th>음원</th><th>상태</th></tr></thead><tbody>${mine.map(r=>`<tr><td class="l"><b>${esc(r.name)}</b>${String(r.sid).startsWith('N:')?' <small class="pill">새로</small>':''}<br><small class="hint">${esc(r.inst||'')} · ${esc(r.acad)}</small></td><td>${esc(r.con)}</td><td class="l">${esc((r.comp+' '+r.title).trim())}</td><td><a href="${esc(r.url)}" target="_blank" rel="noopener">보기 ↗</a><br><small class="hint">${esc(String(r.at).slice(5,16))} · ${esc(r.by)}</small></td><td>${esc(r.st)}</td></tr>`).join('')}</tbody></table></div>`:'<p class="hint">아직 낸 음원이 없어요.</p>'}
     <p class="hint">심사 결과는 협회가 공개할 때까지 「심사 중」으로 보여요. 같은 학원 선생님 것도 같이 보여요.</p></section>`}
+function apDef(){const o=(S.AP.cons.filter(c=>c.open)[0]||{}).name||'';const l=(S.apL||[]).slice(-1)[0];return l&&l.con?l.con:o}
 document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('button');if(!b)return;
   if(b.id==='apDoor'){S.apGo=true;S.AP=null;if(S.user&&S.auth==='in'&&!S.user.guest){S.apGo=false;S.view='audpre';render()}else{S.mode='member';S.lgAlt=false;S.cons={};S.chk=null;S.verr='';S.auth='login';render()}window.scrollTo({top:0});return}
   if(S.view!=='audpre')return;
   if(b.id==='apBack'){S.view='form';S.step=1;render();return}
-  if(b.id==='apSend'){const f=S.apF;f.comp=(document.getElementById('apComp')||{}).value||'';f.title=(document.getElementById('apTitle')||{}).value||'';f.url=((document.getElementById('apUrl')||{}).value||'').trim();
-    if(!S.apSid){toast('학생을 먼저 골라 주세요');return}if(!f.con){toast('음악회를 골라 주세요');return}if(!f.title.trim()){toast('곡명을 넣어 주세요');return}if(!/^https?:\S{6,}$/i.test(f.url)){toast('주소를 https:// 로 시작하게 넣어 주세요');return}
-    const nm=(S.AP.stu.find(x=>x.id===S.apSid)||{}).name||'';api('audPreAdd',[{sid:S.apSid,con:f.con,comp:f.comp,title:f.title,url:f.url}],r=>{S.AP=r;S.apF={con:f.con,comp:'',title:'',url:''};S.apSid='';render();window.scrollTo({top:0});toast(nm+' 음원을 냈어요')});return}});
-document.addEventListener('change',e=>{if(S.view!=='audpre')return;const t=e.target;if(t.name==='apStu'){S.apSid=t.value;const f=S.apF;f.comp=(document.getElementById('apComp')||{}).value||'';f.title=(document.getElementById('apTitle')||{}).value||'';f.url=(document.getElementById('apUrl')||{}).value||'';render()}if(t.name==='apCon'){S.apF.con=t.value}});
-document.addEventListener('input',e=>{if(S.view!=='audpre'||e.target.id!=='apQ')return;S.apQ=e.target.value;const p=e.target.selectionStart,f=S.apF;['comp','title','url'].forEach(k=>{const el=document.getElementById('ap'+k[0].toUpperCase()+k.slice(1));if(el)f[k]=el.value});render();const n=document.getElementById('apQ');if(n){n.focus();n.setSelectionRange(p,p)}});
+  if(b.id==='apNopen'){S.apNew=true;render();const n=document.getElementById('apNn');if(n)n.focus();return}
+  if(b.id==='apNx'){S.apNew=false;render();return}
+  if(b.id==='apNadd'){const g=id=>((document.getElementById(id)||{}).value||'').trim(),nm=g('apNn').replace(/\s+/g,' '),ins=g('apNi'),ac=g('apNa')||(S.AP.acads||[])[0]||'';
+    if(nm.length<2){toast('학생 이름을 넣어 주세요');return}if(!ins){toast('악기를 골라 주세요');return}
+    const hit=S.AP.stu.find(x=>x.name===nm&&x.acad===ac);if(hit){if(!S.apL.some(x=>x.sid===hit.id))S.apL.push({k:'s'+hit.id,sid:hit.id,name:hit.name,inst:hit.inst,acad:hit.acad,con:apDef(),comp:'',title:'',url:''});S.apNew=false;S.apQ='';render();toast(nm+' 학생은 명단에 있어서 명단에서 골랐어요');return}
+    if(S.apL.some(x=>x.nw&&x.name===nm&&x.acad===ac)){toast('이미 넣은 학생이에요');return}
+    S.apL.push({k:'n'+Date.now(),nw:{name:nm,inst:ins,acad:ac},name:nm,inst:ins,acad:ac,con:apDef(),comp:'',title:'',url:''});S.apNew=false;S.apQ='';render();toast(nm+' 학생을 넣었어요');return}
+  if(b.dataset.aprm){S.apL=S.apL.filter(x=>x.k!==b.dataset.aprm);render();return}
+  if(b.id==='apSend'){const L=S.apL||[];if(!L.length){toast('학생을 먼저 골라 주세요');return}
+    for(const x of L){const w=x.name+': ';if(!x.con){toast(w+'음악회를 골라 주세요');return}if(!String(x.title||'').trim()){toast(w+'곡명을 넣어 주세요');return}if(!/^https?:\S{6,}$/i.test(String(x.url||'').trim())){toast(w+'주소를 https:// 로 시작하게 넣어 주세요');return}}
+    const n=L.length;api('audPreAddMany',[L.map(x=>x.nw?{nw:x.nw,con:x.con,comp:x.comp,title:x.title,url:String(x.url).trim()}:{sid:x.sid,con:x.con,comp:x.comp,title:x.title,url:String(x.url).trim()})],r=>{S.AP=r;S.apL=[];render();window.scrollTo({top:0});toast(n+'명 음원을 냈어요')},null,'음원을 내고 있어요…');return}});
+document.addEventListener('change',e=>{if(S.view!=='audpre')return;const t=e.target;
+  if(t.dataset&&t.dataset.apstu){const id=t.dataset.apstu,x=S.AP.stu.find(s=>s.id===id);if(t.checked){if(x&&!S.apL.some(v=>v.sid===id))S.apL.push({k:'s'+id,sid:id,name:x.name,inst:x.inst,acad:x.acad,con:apDef(),comp:'',title:'',url:''})}else S.apL=S.apL.filter(v=>v.sid!==id);render();return}
+  if(t.dataset&&t.dataset.apf==='con'){const v=S.apL.find(x=>x.k===t.dataset.apk);if(v)v.con=t.value}});
+document.addEventListener('input',e=>{if(S.view!=='audpre')return;const t=e.target;
+  if(t.dataset&&t.dataset.apk&&t.dataset.apf&&t.dataset.apf!=='con'){const v=(S.apL||[]).find(x=>x.k===t.dataset.apk);if(v)v[t.dataset.apf]=t.value;return}
+  if(t.id!=='apQ')return;S.apQ=t.value;const p=t.selectionStart;render();const n=document.getElementById('apQ');if(n){n.focus();n.setSelectionRange(p,p)}});
 
 
 /* ---------- 뒤로 (아래 「← 뒤로」 버튼 · 브라우저 뒤로가기) 11-12 ---------- */

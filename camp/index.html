@@ -91,7 +91,7 @@
   document.getElementById('wait').hidden = false;
   document.getElementById('direct').href = APP;
   var AS = (location.search.match(/[?&]as=(staff|member|guest)\b/) || [])[1];   /* 회원관리 「행사 참여」에서 오면 그 로그인 화면으로 바로 */
-  var EXTRA = (/[?&]board\b/.test(location.search) ? 'board=1' : /[?&]guide\b/.test(location.search) ? 'guide=1' : '');   /* ?board = 게시판 바로 · ?guide = 접수 안내 창 */
+  var EXTRA = (/[?&]board\b/.test(location.search) ? 'board=1' : /[?&]guide\b/.test(location.search) ? 'guide=1' : /[?&]aud\b/.test(location.search) ? 'aud=1' : '');   /* ?board = 게시판 바로 · ?guide = 접수 안내 창 */
   if (AS) { APP += '?as=' + AS; document.getElementById('direct').href = APP; }
   if (EXTRA) { APP += (APP.indexOf('?') < 0 ? '?' : '&') + EXTRA; document.getElementById('direct').href = APP; }
   app.src = APP; app.hidden = false;

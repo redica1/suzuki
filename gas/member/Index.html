@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261112-000301 -->
+<!-- build: 20261112-004556 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -614,7 +614,7 @@ function gcRefund1(c,doc){var rf=c.refund||{},rt=function(r){return doc&&r.drate
   if(!stop&&prev){var rate=rt(rf.after||{});if(rate!==last)out.push(gcMd(gcAdd(prev,1))+(rate<=0?'부터는 환불 불가':'부터 취소 수수료 '+(100-rate)+'%'))}
   return out.join(', ')}
 function gcRefund(c){var rf=c.refund||{},hd=(rf.rules||[]).concat([rf.after||{}]).some(function(r){return r.drate!=null&&r.drate!==''&&+r.drate!==+r.rate}),a=gcRefund1(c,false);
-  if(!a)return '(환불 규정을 캠프 설정에 넣어 주세요)';return hd?'진단서 미제출: '+a+' / 전염병 · 골절 진단서 제출: '+(gcRefund1(c,true)||'전액 환불'):a}
+  if(!a)return '(환불 규정을 캠프 설정에 넣어 주세요)';return hd?'진단서 미제출: '+a+' / 전염병 · 팔·손 골절 진단서 제출: '+(gcRefund1(c,true)||'전액 환불'):a}
 function gcRoomFee(c){var o=c.opt||{},cap=+o.roomCap||0,f=+o.roomEmptyFee||0,L=[];if(!cap)return '';for(var k=cap;k>=Math.min(2,cap);k--)L.push(k+'인: '+(k===cap?'추가금 없음':gcWon((cap-k)*f)));return L.join(', ')}
 function gcVals(c){var b=c.base||{},d=c.doc||{},o=c.opt||{},bk=c.bank||{},ga=gcGuestAdd(c),y=(gcYmd(b.start)||[''])[0],sameY=(gcYmd(b.start)||[])[0]===(gcYmd(b.end)||[])[0];
   return {'{기간}':gcMd(b.start,1)+gcWd(b.start)+(d.t1?' '+d.t1:'')+' ~ '+gcMd(b.end,!sameY)+gcWd(b.end)+(d.t2?' '+d.t2:''),'{장소}':b.place||'추후 안내','{캠프이름}':b.name||'','{년도}':String(y),
@@ -1540,7 +1540,7 @@ document.addEventListener('keydown',function(e){var t=e.target;if(S.tab!=='prt'|
 </script>
 <style>table.prt th,table.prt td{text-align:left !important}table.prt th:first-child,table.prt td:first-child{text-align:center !important}table.prt th:nth-child(7),table.prt td:nth-child(7),table.prt th:nth-child(8),table.prt td:nth-child(8){text-align:center !important}table.prt td:nth-child(7) input,table.prt td:nth-child(8) input{text-align:center}table.prt tr.mutedrow td{color:var(--faint)}table.prt tr.mutedrow td b{color:var(--muted)}table.prt td{vertical-align:middle}table.prt td.padr{white-space:normal;min-width:220px;max-width:340px;line-height:1.4}</style>
 
-<div id="bldMark" hidden>빌드표시 20261112-000301 </div>
+<div id="bldMark" hidden>빌드표시 20261112-004556 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();
 /* 공문 편집: 칸을 고치면 모델만 바꾸고 미리보기만 다시 그림(글자 조합이 깨지지 않게) */
 function gmField(t){if(S.tab!=='gm'||!S.gm||S.gm['상태']==='발행')return false;var d=S.gm,c=d['내용'],ds=t.dataset||{};

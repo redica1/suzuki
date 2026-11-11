@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261112-003951 -->
+<!-- build: 20261112-004557 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -2577,7 +2577,7 @@ function dRefund1(c,doc){const rf=c.refund||{},rt=r=>doc&&r.drate!=null&&r.drate
   if(!stop&&prev){const rate=rt(rf.after||{});if(rate!==last)out.push(dMd(dAdd(prev,1))+(rate<=0?'부터는 환불 불가':'부터 취소 수수료 '+(100-rate)+'%'))}
   return out.join(', ')}
 function dRefund(c){const rf=c.refund||{},hd=[...(rf.rules||[]),rf.after||{}].some(r=>r.drate!=null&&r.drate!==''&&+r.drate!==+r.rate),a=dRefund1(c,false);
-  if(!a)return '(환불 규정을 넣어 주세요)';return hd?'진단서 미제출: '+a+' / 전염병 · 골절 진단서 제출: '+(dRefund1(c,true)||'전액 환불'):a}
+  if(!a)return '(환불 규정을 넣어 주세요)';return hd?'진단서 미제출: '+a+' / 전염병 · 팔·손 골절 진단서 제출: '+(dRefund1(c,true)||'전액 환불'):a}
 function dRoomFee(c){const o=c.opt||{},cap=+o.roomCap||0,f=+o.roomEmptyFee||0,L=[];if(!cap)return '';for(let k=cap;k>=Math.min(2,cap);k--)L.push(k+'인: '+(k===cap?'추가금 없음':dWon((cap-k)*f)));return L.join(', ')}
 function dVals(c){const b=c.base||{},d=c.doc||{},o=c.opt||{},bk=(S.bkA&&S.bkA.cur)||{},ga=dGuestAdd(c),y=(dYmd(b.start)||[''])[0];
   const sameY=(dYmd(b.start)||[])[0]===(dYmd(b.end)||[])[0];
@@ -2614,7 +2614,7 @@ function dWarn(c){const R=c.rounds||[],W=[];DOC_FG.forEach(([l,ts])=>{const bad=
   if(!(S.bkA&&S.bkA.cur&&S.bkA.cur.acct))W.push('입금 안내 통장이 정해지지 않았어요 (「캠프 설정」 맨 위).');
   return W}
 /* 환불 규정 ↔ 공문 구간 (11-04): 시스템은 「이 날까지 환불 n%」, 공문은 「이 날부터 수수료 n%」 → 화면은 공문 말투로 넣고 저장은 시스템 꼴로 바꿈 */
-/* 구간마다 fee = 진단서 미제출 수수료, dfee = 전염병 · 골절 진단서 제출 시 수수료 (null = 미제출과 같음) · 11-11 */
+/* 구간마다 fee = 진단서 미제출 수수료, dfee = 전염병 · 팔·손 골절 진단서 제출 시 수수료 (null = 미제출과 같음) · 11-11 */
 const dDf=r=>r&&r.drate!=null&&r.drate!==''?100-(+r.drate||0):null;
 function dBands(c){const rf=c.refund||{},R=(rf.rules||[]).slice(),B=[],af=rf.after||{};if(!R.length)return [{from:'',fee:100-(+af.rate||0),dfee:dDf(af)}];
   B.push({from:'',fee:100-(+R[0].rate||0),dfee:dDf(R[0])});R.forEach((r,i)=>{const nx=i+1<R.length?R[i+1]:af;B.push({from:dAdd(r.until,1),fee:100-(+nx.rate||0),dfee:dDf(nx)})});return B}
@@ -2624,7 +2624,7 @@ function dSetBands(c,B){const rf=c.refund||(c.refund={}),old=rf.rules||[],lab=f=
   const L=B[B.length-1];rf.after=Object.assign({},rf.after||{},{label:lab(L.fee),rate:100-L.fee,drate:dr(L)});if(rf.after.allow==null)rf.after.allow=false}
 function dBandsHtml(c,flags){const B=dBands(c),st=(c.base||{}).start,bad=B.some((b,i)=>i&&(!dYmd(b.from)||(i>1&&b.from<=B[i-1].from)));
   const before=f=>{const a=dYmd(f),s0=dYmd(st);if(!a||!s0)return '';const n=Math.round((Date.UTC(s0[0],s0[1]-1,s0[2])-Date.UTC(a[0],a[1]-1,a[2]))/864e5);return n>0?'캠프 '+n+'일 전':n===0?'캠프 첫날':'캠프 '+(-n)+'일째'};
-  return `<table class="pft cct"><thead><tr><th>이 날부터</th><th></th><th class="r">수수료 % <small class="faint">진단서 미제출</small></th><th class="r">수수료 % <small class="faint">전염병 · 골절 진단서 제출</small></th><th></th></tr></thead><tbody>${B.map((b,i)=>`<tr><td>${i?`<input type="date" data-dbf="${i}" value="${esc(b.from)}">`:'<small class="faint">신청한 때부터</small>'}</td><td style="white-space:nowrap"><small class="hint">${i?esc(before(b.from)):''}</small></td><td><input type="text" inputmode="numeric" class="num" data-dbp="${i}" value="${b.fee}" style="width:64px"></td><td><input type="text" inputmode="numeric" class="num" data-dbq="${i}" value="${b.dfee==null?'':b.dfee}" placeholder="같음" style="width:64px"></td><td>${i?`<button class="btn small ghost" type="button" data-dbd="del|${i}">빼기</button>`:''}</td></tr>`).join('')}</tbody></table>
+  return `<table class="pft cct"><thead><tr><th>이 날부터</th><th></th><th class="r">수수료 % <small class="faint">진단서 미제출</small></th><th class="r">수수료 % <small class="faint">전염병 · 팔·손 골절 진단서 제출</small></th><th></th></tr></thead><tbody>${B.map((b,i)=>`<tr><td>${i?`<input type="date" data-dbf="${i}" value="${esc(b.from)}">`:'<small class="faint">신청한 때부터</small>'}</td><td style="white-space:nowrap"><small class="hint">${i?esc(before(b.from)):''}</small></td><td><input type="text" inputmode="numeric" class="num" data-dbp="${i}" value="${b.fee}" style="width:64px"></td><td><input type="text" inputmode="numeric" class="num" data-dbq="${i}" value="${b.dfee==null?'':b.dfee}" placeholder="같음" style="width:64px"></td><td>${i?`<button class="btn small ghost" type="button" data-dbd="del|${i}">빼기</button>`:''}</td></tr>`).join('')}</tbody></table>
     ${bad?'<div class="dwarn">날짜를 위에서 아래로 늦어지는 순서로 넣어 주세요. (순서가 맞아야 저장돼요)</div>':''}`}
 const dBandDoc=(c,i,n)=>{const rf=c.refund||{};return i<n-1?!!((rf.rules||[])[i]||{}).doc:!!(rf.after||{}).doc};
 function dBandsRead(){const B=[{from:'',fee:0}];document.querySelectorAll('[data-dbp]').forEach(el=>{const i=+el.dataset.dbp;B[i]=B[i]||{from:'',fee:0};B[i].fee=Math.max(0,Math.min(100,+(el.value.replace(/[^\d]/g,'')||0)))});
@@ -4411,6 +4411,6 @@ document.addEventListener('click',e=>{if(S.tab!=='book')return;const b=e.target.
   if(b.id==='ebSetSave'){const n=Object.assign(ebSet(),S.ebSetW||{});n.per=Math.max(1,Math.min(10,Math.round(+n.per||5)));n.fs=Math.max(5,Math.min(10,+n.fs||6.6));['en','sub','org'].forEach(k=>n[k]=String(n[k]||'').trim().slice(0,120));
     ebSend([],[],n,()=>{S.ebSetW=null;toast('책자 설정을 저장했어요')});return}},true);
 </script>
-<div id="bldMark" hidden>빌드표시 20261112-003951 </div>
+<div id="bldMark" hidden>빌드표시 20261112-004557 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();</script>
 </body></html>

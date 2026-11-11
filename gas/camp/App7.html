@@ -1,4 +1,4 @@
-/* build: 20261112-003951 */
+/* build: 20261112-004557 */
     ps.forEach(p=>{p.pay='신고';p.rep=rep;delete S.rpRow[p.id]});S.afterSave=()=>repDone(ps.map(p=>p.id));subSave();S.rp=null;S.rpOpen=false;S.rpMemo=undefined;render();toast(`${ps.length}명 입금 신고를 보냈어요 · 운영진이 확인하면 「입금 확인」으로 바뀌어요`);return}
   if(b.id==='rpFill'){const n=document.getElementById('rpAllN').value.trim(),dd=document.getElementById('rpAllD').value;S.rpAllN=n;S.rpAllD=dd;const sel=S.rp||[];
     if(!n&&!dd){toast('적용할 입금자명이나 입금일을 적어 주세요');return}unpaidPpl().filter(x=>sel.includes(x.p.id)).forEach(({p})=>{const v=rpv(p);if(n)v.n=n;if(dd)v.d=dd});render();toast(`선택한 ${sel.length}명에게 적용했어요`);return}
@@ -17,7 +17,7 @@
   if(d.cxgo){const sb=MY_SUBS.find(x=>x.no===d.cxgo);const sel=(S.cx[sb.no]||[]).filter(id=>{const p=sb.ppl.find(q=>q.id===id);return p&&canCxP(p)});const dOn=!!S.cxDocOn&&hasDoc(refundRule(S.today)),{r,rate,amt,paid}=refundOf(sb,sel,dOn);const er=m=>{document.getElementById('cxErr').textContent=m};
     {const left=sb.ppl.filter(p=>p.status==='정상'&&!sel.includes(p.id)).length,m=teamMates(sb.no);if(!left&&m.length)return er(`이 접수는 앙상블 「${repTeam(sb.no).name}」 팀 대표예요. 함께하는 학원(${m.join(', ')})이 있어서 모두 취소할 수 없어요. 함께하는 학원과 이야기한 뒤 운영진에게 연락해 주세요.`)}
     const why=document.getElementById('cxWhy').value;if(!why)return er('취소 사유를 선택해 주세요.');
-    if((r.doc||dOn)&&paid){const f=document.getElementById('cxDoc');if(!f||!f.files.length)return er(dOn?'진단서 제출을 골랐어요. 전염병 · 골절 진단서를 올려 주세요.':'이 기간에는 진단서를 올려야 취소할 수 있어요.')}
+    if((r.doc||dOn)&&paid){const f=document.getElementById('cxDoc');if(!f||!f.files.length)return er(dOn?'진단서 제출을 골랐어요. 전염병 · 팔·손 골절 진단서를 올려 주세요.':'이 기간에는 진단서를 올려야 취소할 수 있어요.')}
     if(paid&&amt>0){const bk=document.getElementById('cxBank').value,ac=document.getElementById('cxAcct').value.replace(/[^\d-]/g,''),ho=document.getElementById('cxHolder').value.trim();if(!bk||ac.length<8||!ho)return er('환불 받을 은행·계좌번호·예금주를 넣어 주세요.')}
     {const RS=cxRooms(sb,sel).filter(o=>o.left.length);for(const o of RS){const m=(S.cxRoom||{})[o.r.rep.id]||{},mode=m.mode||(!o.repOut||o.cand.length?'keep':'all');
       if(mode==='all')return er(`${o.r.rep.name} 가족방 가족을 모두 취소하려면 「가족방 가족 모두 취소」를 다시 눌러 주세요.`);

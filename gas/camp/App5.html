@@ -1,4 +1,4 @@
-/* build: 20261111-222242 */
+/* build: 20261111-222753 */
   if(!open.length) return MY_SUBS.length?`<div class="panel rp">${bankHTML()}<span class="hint">지금 입금할 금액이 없어요.</span></div>`:'';
   /* 평소엔 한 줄로 접어 둠: 「입금 신고하기」를 누르면 펼침 (11-03) */
   if(!S.rpOpen){const due=open.reduce((t,x)=>t+dueOf(x.p),0);return `<div class="panel rp">${bankHTML()}<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><span><b>입금 필요 ${open.length}명</b> · <b class="num">${won(due)}</b> <span class="hint">입금한 뒤 알려 주세요</span></span><button class="btn primary" type="button" data-rpopen="1">입금 신고하기</button></div></div>`}
@@ -216,7 +216,8 @@ function curWhere(){const v=S.qBack||{};if(v.view==='mine')return '내 접수 ·
 function vQ(){const mine=S.qMine||[];const login=!!S.user;
   return `<section class="sec"><div class="spread"><h2>게시판</h2><button class="btn small ghost" type="button" id="qBack">← 돌아가기</button></div>
   <p class="lede">접수하다가 안 되는 것, 이상한 것, 바랐으면 하는 것을 적어 주세요. 운영진이 보고 <b>미해결 → 해결 중 → 해결</b>로 표시하고 답을 달아요.</p>
-  <div class="panel" style="display:grid;gap:10px">
+  ${login?'':`<div class="panel" style="display:grid;gap:6px"><b>로그인한 뒤 글을 남길 수 있어요</b><span class="hint">누가 남겼는지 알고 답을 드리려고 로그인한 분만 받아요. 로그인이 안 되면 카카오톡 채널 「suzukimusickorea」로 알려 주세요.</span></div>`}
+  <div class="panel" style="display:grid;gap:10px" ${login?'':'hidden'}>
     ${login?`<div class="hint">${esc(S.user.name)} 선생님 · ${esc((S.user.acads||[]).join(', '))}</div>`:`<div class="grid2"><label class="f" for="qName">이름 <span class="req">*</span><input type="text" id="qName" value="${esc(S.qName||'')}"></label><label class="f" for="qPhone">휴대전화 <span class="req">*</span><input type="tel" id="qPhone" inputmode="numeric" value="${esc(S.qPhone||'010-')}"></label></div><label class="f" for="qAcad">학원<input type="text" id="qAcad" value="${esc(S.qAcad||'')}"></label>`}
     <label class="f" for="qWhere">어떤 글인가요? <span class="hint">방 관련(같은 층 · 옆방 · 아기 침대 · 방 바꾸기 등)은 「가족방 요청」이나 「방 요청」을 골라 주세요</span><select id="qWhere">${Q_WHERE.map(x=>`<option ${x===(S.qWhere||curWhere())?'selected':''}>${x}</option>`).join('')}</select></label>
     <label class="f" for="qText">무슨 일이 있었나요? <span class="req">*</span><textarea id="qText" rows="5" maxlength="2000" placeholder="무엇을 누르니 어떻게 됐는지 적어 주시면 빨리 고칠 수 있어요.">${esc(S.qText||'')}</textarea></label>

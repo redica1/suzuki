@@ -1,4 +1,4 @@
-/* build: 20261111-222242 */
+/* build: 20261111-222753 */
   if(S.ttDay==null){const td=ttToday(days);S.ttDay=td!=null?td:(mine.length?Math.min(...mine.map(x=>x.d)):0)}
   if(tab==='me')return head+seg+(T.prof?`<p class="hint" style="margin:0 0 6px">교수 · 레슨실 <b>${esc(T.prof.room||'미정')}</b></p>`:'')+ttMineList(T,days,mine)+'</section>';
   const AC=S.user.acads||[];if(S.ttAcad&&!AC.includes(S.ttAcad))S.ttAcad='';
@@ -9,7 +9,7 @@ function openQ(){if(S.view!=='q')S.qBack={view:S.view,step:S.step};S.qWhere='';S
   if(S.user&&S.token)api('myIssues',[],r=>{S.qMine=r.mine||[];if(S.view==='q')render()},null,'불러오고 있어요…')}
 function sendQ(){const er=m=>{document.getElementById('qErr').textContent=m};const g=id=>((document.getElementById(id)||{}).value||'').trim();
   const d={text:g('qText'),where:g('qWhere'),name:g('qName'),phone:g('qPhone'),acad:g('qAcad'),env:`화면 ${(S.qBack||{}).view||''}/${(S.qBack||{}).step||''} · ${S.editNo?'수정 '+S.editNo+' · ':''}${navigator.userAgent.slice(0,200)}`};
-  if(!S.user&&(!d.name||d.phone.replace(/\D/g,'').length<10))return er('이름과 휴대전화를 넣어 주세요.');
+  if(!S.user||!S.token)return er('로그인한 뒤 남길 수 있어요.');
   if(d.text.length<2)return er('어떤 문제인지 적어 주세요.');
   const f=document.getElementById('qPic');const go=file=>{d.file=file;
     const call=()=>{busy(true,'올리고 있어요…');google.script.run.withSuccessHandler(r=>{busy(false);S.qText='';S.qMine=r.mine||S.qMine;render();toast(`${r.no}번으로 올렸어요 · 운영진이 확인하면 답을 달아요`,true)}).withFailureHandler(e=>{busy(false);er((e&&e.message)||String(e))}).submitIssue(S.token||'',d)};call()};

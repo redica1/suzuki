@@ -1,4 +1,4 @@
-/* build: 20261111-222242 */
+/* build: 20261111-222753 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -2617,13 +2617,14 @@ function issues_() {
     where: String(r['화면'] || ''), text: String(r['내용'] || ''), pic: String(r['사진'] || ''), state: String(r['상태'] || '미해결'), reply: String(r['답변'] || ''),
     done: dstr_(r['처리일']), by: String(r['처리자'] || ''), env: String(r['환경'] || ''), tid: String(r['교사ID'] || '') }));
 }
-/** 선생님: 글 쓰기 (로그인 안 해도 됨 — 로그인이 안 되는 오류도 적을 수 있게) */
+/** 선생님: 글 쓰기 — 로그인한 사람만 (11-11 사용자 결정. 로그인이 안 되는 경우는 카카오톡 채널로) */
 function submitIssue(token, d) {
   d = d || {};
   let u = null; try { if (token) u = who_(token); } catch (e) {}
   const name = String(u ? u.name : d.name || '').trim().slice(0, 20);
   const p4 = String(d.phone || '').replace(/\D/g, '').slice(-4);
   const text = String(d.text || '').trim();
+  if (!u) throw new Error('로그인한 뒤 남길 수 있어요. 로그인이 안 되면 카카오톡 채널 「suzukimusickorea」로 알려 주세요.');   /* 11-11: 로그인한 사람만 (누가 썼는지 알 수 있게) */
   if (!name) throw new Error('이름을 넣어 주세요.');
   if (!u && p4.length < 4) throw new Error('휴대전화 번호를 넣어 주세요 (답을 드릴 때 써요).');
   if (text.length < 2) throw new Error('어떤 문제인지 적어 주세요.');

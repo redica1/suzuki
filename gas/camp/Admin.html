@@ -565,7 +565,7 @@ function vRp(){const L=people().filter(x=>x.p.status==='정상'&&x.p.pay==='신�
     <td><div class="row" style="flex-wrap:nowrap"><button class="btn small primary" type="button" data-ok="${p.id}">확인</button><button class="btn small" type="button" data-rej="${p.id}">반려</button></div></td></tr>`}).join('')||'<tr><td colspan="13" class="hint">확인을 기다리는 입금 신고가 없어요.</td></tr>'}
   </tbody></table></div>`}
 /* 환불 규정 (선생님 화면과 같은 값) — 예전 기록에 규정이 없으면 요청 날짜로 계산 */
-const CX_RULES=[{until:'2026-12-31',label:'수수료 없음',rate:100,drate:null},{until:'2027-01-04',label:'수수료 10%',rate:90,drate:null},{until:'2027-01-08',label:'수수료 20%',rate:80,drate:90}];
+const CX_RULES=[{until:'2026-12-31',label:'수수료 없음',rate:100,drate:null},{until:'2027-01-04',label:'수수료 10%',rate:90,drate:100},{until:'2027-01-08',label:'수수료 20%',rate:80,drate:90}];
 function cxInfo(c){const ppl=[];(S.D.subs||[]).forEach(sb=>{if(sb.no===c.no)sb.ppl.forEach(p=>{if((c.ids||[]).includes(p.id))ppl.push(p)})});
   const base=c.base||ppl.reduce((t,p)=>t+pAmt(p),0),paid=c.paid||ppl.reduce((t,p)=>t+(+p.paidAmt||0)+((p.refund&&+p.refund.amt)||0),0);
   let rule=c.rule;if(!rule){if(c.state==='바로 취소')rule='입금 전 취소 (환불 없음)';else if(c.why==='차액 환불')rule='차액 환불 (참가 그대로)';else{const d=String(c.at).slice(0,10),r=CX_RULES.find(x=>d<=x.until);rule=r?`${r.label} · ${r.rate?r.rate+'% 환불':'환불 없음'}`:'캠프 시작 후'}}

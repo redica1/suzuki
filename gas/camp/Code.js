@@ -1079,7 +1079,7 @@ const CAMP_DEF = {
   fees: FEES,
   opt: { lessonFee: OPT.lessonFee, lessonMax: OPT.lessonMax, mcFee: 150000, studentDues: OPT.studentDues, teacherDues: OPT.teacherDues, roomCap: OPT.roomCap, roomEmptyFee: OPT.roomEmptyFee, usdRate: 1450 },
   /* 환불: rate = 진단서 미제출 환불 %, drate = 전염병 · 골절 진단서 제출 시 환불 % (null = rate 와 같음) · 11-11 규정 */
-  refund: { rules: [{ until: '2026-12-31', label: '수수료 없음', rate: 100, drate: null, doc: false }, { until: '2027-01-04', label: '수수료 10%', rate: 90, drate: null, doc: false }, { until: '2027-01-08', label: '수수료 20%', rate: 80, drate: 90, doc: false }],
+  refund: { rules: [{ until: '2026-12-31', label: '수수료 없음', rate: 100, drate: null, doc: false }, { until: '2027-01-04', label: '수수료 10%', rate: 90, drate: 100, doc: false }, { until: '2027-01-08', label: '수수료 20%', rate: 80, drate: 90, doc: false }],
     after: { label: '환불 불가', rate: 0, drate: 50, doc: false, allow: true }, duesRefund: false },
   /* 식사 시간: 교사 일정 모든 날짜에 식사 줄로 들어감 · first/last = 첫날 · 마지막 날에도 넣을지 */
   meals: [{ k: '아침', t: 'Breakfast 아침 식사', s: '07:20', e: '08:50', on: true, first: false, last: true },

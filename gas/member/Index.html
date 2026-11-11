@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261111-193732 -->
+<!-- build: 20261111-194756 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -133,11 +133,11 @@ label.f.wide{grid-column:1/-1}
 .gmprev .dp{zoom:var(--dz,.62);box-shadow:0 2px 12px rgba(0,0,0,.18);margin:0 auto}
 .gmprev .dp{position:relative}.gmprev .pgcut{position:absolute;left:0;right:0;height:0;border-top:2px dashed #e53935;pointer-events:none}.gmprev .pgcut span{position:absolute;right:2mm;top:-7mm;font-size:10pt;font-weight:700;color:#e53935;background:#fff;padding:0 2mm}
 .gmlock{background:#eef4ff;border:1px solid #b9cdf5;border-radius:8px;padding:8px 12px;margin-bottom:10px}
-.dp{width:210mm;min-height:297mm;box-sizing:border-box;padding:13mm 16mm 15mm;background:#fff;color:#111;font-family:"Pretendard Variable",Pretendard,"Malgun Gothic","Apple SD Gothic Neo",sans-serif;font-size:12.5pt;line-height:1.55;letter-spacing:-.01em;word-break:keep-all}
+.dp{width:210mm;min-height:297mm;box-sizing:border-box;padding:13mm 16mm 15mm;background:#fff;color:#111;font-family:"Pretendard Variable",Pretendard,"Malgun Gothic","Apple SD Gothic Neo",sans-serif;font-size:12.5pt;line-height:var(--lh,1.55);letter-spacing:-.01em;word-break:keep-all}
 .dp *{font-family:inherit}.dp .lg{text-align:center}.dp .lg img{width:46mm;height:auto}
 .dp .wtop{font-size:10.5pt;color:#333;margin:4mm 0 0;letter-spacing:.02em}.dp .wtop+.meta{margin-top:1.5mm}.dp .meta{font-size:12pt;margin:4mm 0 2mm;border-bottom:1px solid #444;padding-bottom:2mm}.dp .meta .mr{display:flex;flex-wrap:wrap;column-gap:9mm;row-gap:1mm}.dp .meta .mr>div{display:flex;gap:4mm}.dp .meta b{font-weight:700;white-space:nowrap;min-width:18mm}.dp .meta.one .mr>div{gap:3mm}.dp .meta.one b{min-width:0}
 .dp h1{font-size:22pt;text-align:center;margin:3mm 0 4mm;font-weight:800;letter-spacing:-.02em}
-.dp .intro{margin:0 0 3mm}.dp .sc{margin:0 0 2.6mm}.dp .sh{font-weight:800}.dp .ln{white-space:pre-wrap;margin:0}.dp .ln.gap{height:1.6mm}.dp .red{color:#d0021b}
+.dp .intro{margin:0 0 calc(var(--sg,2.6mm) + .4mm)}.dp .sc{margin:0 0 var(--sg,2.6mm)}.dp .rh{font-weight:700;margin:1.6mm 0 .7mm}.dp table.ft{width:100%;border-collapse:collapse;margin:0 0 1mm;break-inside:avoid;font-size:12pt}.dp table.ft th,.dp table.ft td{font-size:12pt;color:#111;border:1px solid #333;padding:.7mm 2mm;text-align:center;vertical-align:middle}.dp table.ft th{background:#eaf1f9;font-weight:700;-webkit-print-color-adjust:exact;print-color-adjust:exact}.dp table.ft td.f3{font-size:11.5pt !important;line-height:1.32}.dp .sh{font-weight:800}.dp .ln{white-space:pre-wrap;margin:0}.dp .ln.gap{height:1.6mm}.dp .red{color:#d0021b}
 .dp .ft-end{margin-top:8mm;text-align:center}.dp .ft-end .www{font-weight:700;font-size:13pt}.dp .ft-end .ko{font-size:21pt;letter-spacing:.45em;margin-top:1mm;font-weight:500}.dp .ft-end .en{font-size:12pt;letter-spacing:.42em;color:#222}
 </style>
 <style>
@@ -590,17 +590,59 @@ function gmTpl(k){
   return {'구분':'일반','행사':'','제목':'','시행일':gmToday(),'수신':'','참조':'','내용':{num:'1.',sign:true,logo:true,mg:{},intro:'',sec:[{t:'',on:true,body:''}]}}}
 var GM_VALS={'{회원주소}':'app.suzukimusickorea.org\/member','{캠프주소}':'app.suzukimusickorea.org\/camp','{협회}':'(사)한국스즈키음악협회'};
 function gmMd(v){var m=String(v||'').match(/^(\d{4})-(\d{2})-(\d{2})/);return m?m[1]+'. '+(+m[2])+'. '+(+m[3])+'.':''}
-function gmFmt(t){return String(t||'').split('\n').map(function(line){if(!line.trim())return '<div class="ln gap"></div>';
-  var h=esc(line).replace(/\{[^{}\s]{1,8}\}/g,function(m){return GM_VALS[m]!=null?esc(GM_VALS[m]):m});
+/* 캠프 값 (캠프 관리자 공문과 같은 규칙) — 숫자는 캠프 설정에서만 고치고, 공문은 불러와 보여 주기만 */
+var GC_URL='https:'+String.fromCharCode(47,47)+'app.suzukimusickorea.org/camp/',GC_WD='일월화수목금토';
+function gcWon(n){n=Math.round(+n||0);if(!n)return '0원';if(n%10000===0)return (n/10000).toLocaleString('ko-KR')+'만원';var r=n%10000,rs=r%1000===0?(r/1000)+'천':r.toLocaleString('ko-KR');if(n>10000)return Math.floor(n/10000).toLocaleString('ko-KR')+'만 '+rs+'원';return n.toLocaleString('ko-KR')+'원'}
+function gcYmd(x){return /^\d{4}-\d{2}-\d{2}$/.test(x||'')?x.split('-').map(Number):null}
+function gcMd(x,y){var a=gcYmd(x);if(!a)return '(날짜)';return (y?a[0]+'년 ':'')+a[1]+'월 '+a[2]+'일'}
+function gcWd(x){var a=gcYmd(x);return a?'('+GC_WD[new Date(Date.UTC(a[0],a[1]-1,a[2])).getUTCDay()]+')':''}
+function gcAdd(x,n){var a=gcYmd(x);if(!a)return '';return new Date(Date.UTC(a[0],a[1]-1,a[2]+n)).toISOString().slice(0,10)}
+function gcFee(c,t,i){return +(((c.fees||{})[t]||[])[i]||0)}
+function gcGuestAdd(c){var G=[['비회원 학생','학생'],['비회원 보호자','회원의 첫번째 보호자'],['비회원 동반가족','회원의 그외 악기 안하는 동반가족'],['비회원 15개월 미만','동반가족 중 15개월 미만']],L=G.map(function(g){return gcFee(c,g[0],0)-gcFee(c,g[1],0)});return L.every(function(x){return x===L[0]})?L[0]:null}
+function gcRefund1(c,doc){var rf=c.refund||{},rt=function(r){return doc&&r.drate!=null&&r.drate!==''?+r.drate:(+r.rate||0)},R=(rf.rules||[]).filter(function(r){return gcYmd(r.until)}).slice().sort(function(a,b){return a.until<b.until?-1:1}),out=[],prev='',stop=false,last=null;
+  R.forEach(function(r){if(stop)return;var rate=rt(r);if(rate>=100){prev=r.until;last=rate;return}if(rate===last){prev=r.until;return}var st=prev?gcMd(gcAdd(prev,1)):'신청 직후';
+    if(rate<=0){out.push(st+(prev?'부터는':'부터')+' 환불 불가');stop=true}else out.push(st+'부터 취소 수수료 '+(100-rate)+'%');prev=r.until;last=rate});
+  if(!stop&&prev){var rate=rt(rf.after||{});if(rate!==last)out.push(gcMd(gcAdd(prev,1))+(rate<=0?'부터는 환불 불가':'부터 취소 수수료 '+(100-rate)+'%'))}
+  return out.join(', ')}
+function gcRefund(c){var rf=c.refund||{},hd=(rf.rules||[]).concat([rf.after||{}]).some(function(r){return r.drate!=null&&r.drate!==''&&+r.drate!==+r.rate}),a=gcRefund1(c,false);
+  if(!a)return '(환불 규정을 캠프 설정에 넣어 주세요)';return hd?'진단서 미제출: '+a+' / 전염병 · 골절 진단서 제출: '+(gcRefund1(c,true)||'전액 환불'):a}
+function gcRoomFee(c){var o=c.opt||{},cap=+o.roomCap||0,f=+o.roomEmptyFee||0,L=[];if(!cap)return '';for(var k=cap;k>=Math.min(2,cap);k--)L.push(k+'인: '+(k===cap?'추가금 없음':gcWon((cap-k)*f)));return L.join(', ')}
+function gcVals(c){var b=c.base||{},d=c.doc||{},o=c.opt||{},bk=c.bank||{},ga=gcGuestAdd(c),y=(gcYmd(b.start)||[''])[0],sameY=(gcYmd(b.start)||[])[0]===(gcYmd(b.end)||[])[0];
+  return {'{기간}':gcMd(b.start,1)+gcWd(b.start)+(d.t1?' '+d.t1:'')+' ~ '+gcMd(b.end,!sameY)+gcWd(b.end)+(d.t2?' '+d.t2:''),'{장소}':b.place||'추후 안내','{캠프이름}':b.name||'','{년도}':String(y),
+    '{접수시작}':gcMd(b.open),'{접수마감}':gcMd(b.close),'{신청불가일}':gcMd(gcAdd(b.close,1)),'{추가레슨}':gcWon(o.lessonFee),'{비회원추가}':ga==null?'(비회원 금액은 참가비표 참고)':gcWon(ga),
+    '{가족방정원}':String(o.roomCap||''),'{가족방요금}':gcRoomFee(c),'{계좌}':bk.acct?[bk.bank,bk.acct,bk.holder].filter(Boolean).join(' '):'(입금 안내 통장을 캠프 설정에서 골라 주세요)','{신청주소}':GC_URL,'{환불규정}':gcRefund(c),'{학생회비}':gcWon(o.studentDues)}}
+function gcFeeTable(c){var R=c.rounds||[],d=c.doc||{},b=c.base||{};
+  return R.map(function(r,i){var last=i===R.length-1,note=((d.rnote||[])[i]||'').trim();
+    return '<div class="rh">*'+esc(r.n)+' 등록 기간: <span class="'+(i===0?'red':'')+'">'+esc(gcMd(r.from,i===0))+' ~ '+esc(gcMd(r.to))+'</span>'+(note?' '+esc(note):'')+(last&&gcYmd(b.close)?' <span class="red">(이후는 신청할 수 없습니다)</span>':'')+'</div>'+
+    '<table class="ft"><thead><tr><th style="width:32%">스즈키 교사/학생</th><th style="width:32%">첫 번째 보호자/교사 자녀</th><th>두 번째 가족 추가</th></tr></thead>'+
+    '<tbody><tr><td>'+gcWon(gcFee(c,'학생',i))+'</td><td>'+gcWon(gcFee(c,'회원의 첫번째 보호자',i))+'</td><td class="f3">악기 하는 형제 할인 없음<br>악기 안 하는 가족: '+gcWon(gcFee(c,'회원의 그외 악기 안하는 동반가족',i))+'<br>15개월 미만: '+gcWon(gcFee(c,'동반가족 중 15개월 미만',i))+'</td></tr></tbody></table>'}).join('')}
+var GC_TOKS=['{기간}','{장소}','{캠프이름}','{년도}','{접수시작}','{접수마감}','{신청불가일}','{추가레슨}','{비회원추가}','{가족방정원}','{가족방요금}','{계좌}','{신청주소}','{환불규정}','{학생회비}','[[참가비표]]'];
+function gmCampOf(d){var c=(d&&d['내용'])||{};if(c.campSnap)return c.campSnap;if(c.camp&&S.gmCampD&&S.gmCampD.base&&S.gmCampD.base.id===c.camp)return S.gmCampD;return null}
+function gmLoadCamp(force){if(S.gmCampL&&!force)return;S.gmCampL=1;callS('gmCamp').then(function(r){S.gmCampL=0;if(!r.ok){toast(r.msg);return}S.gmCampD=r.camp;S.gmCampMsg=r.msg||'';if(S.tab==='gm'&&S.gm){render();if(force)toast(r.camp?'캠프 설정을 새로 불러왔어요':r.msg)}})}
+function gmLoadProjs(){if(S.gmProjs||S.gmProjL)return;S.gmProjL=1;callS('gmProjects').then(function(r){S.gmProjL=0;S.gmProjs=r.ok?r.projs:[];if(S.tab==='gm'&&S.gm)render()})}
+function gmProjPick(v){var d=S.gm,c=d['내용'],P=(S.gmProjs||[]).filter(function(x){return x.id===v})[0];c.proj=v;c.camp=P&&P.camp?P.camp:'';if(P){d['행사']=P.name;if(P.camp){d['구분']=/여름/.test(P.name)?'여름캠프':'겨울캠프';gmLoadCamp()}}else d['행사']='';S.gmDirty=true;render()}
+function gmCampImport(){var cc=S.gmCampD,d=S.gm,c=d['내용'];if(!cc||!cc.doc||!(cc.doc.sec||cc.doc.intro)){toast('캠프 공문 글이 없어요');return}var x=cc.doc;
+  if(!confirm('캠프 관리자 「공문」에 쓰던 제목 · 머리말 · 항목을 이 공문으로 가져올까요? 지금 쓴 머리말 · 항목은 바뀌어요.'))return;
+  if(x.title)d['제목']=x.title;if(x.to)d['수신']=x.to;if(x.ref)d['참조']=x.ref;c.intro=x.intro||'';c.sec=(x.sec||[]).map(function(q){return {t:q.t||'',body:q.body||'',on:q.on!==false}});if(x.num)c.num=x.num;if(x.mg)c.mg=x.mg;c.sign=x.sign!==false;S.gmDirty=true;render();toast('캠프 공문 글을 가져왔어요 · 「저장」을 눌러 주세요')}
+function gmUsePanel(d,lock){gmLoadProjs();var c=d['내용'],P=S.gmProjs,cc=gmCampOf(d);if(c.camp&&!c.campSnap&&!S.gmCampD&&!S.gmCampL)gmLoadCamp();
+  var opts='<option value="">일반 (행사와 상관없음)</option>'+(P||[]).map(function(x){return '<option value="'+esc(x.id)+'"'+(c.proj===x.id?' selected':'')+'>'+esc(x.name)+(x.biz?' · '+esc(x.biz):'')+'</option>'}).join('');
+  var camp='';if(c.camp){var b=cc&&cc.base||{};camp=cc?'<div class="note" style="margin-top:8px"><b>'+esc(b.name||c.camp)+'</b> · '+esc(gcVals(cc)['{기간}'])+' · 차수 '+(cc.rounds||[]).length+'개 · '+(c.campSnap?'발행할 때 고정한 값':'캠프 설정에서 불러옴 '+esc(String(cc.at||'').slice(5,16)))+
+      '<br><span class="cap">날짜 · 장소 · 차수 · 참가비 · 환불 규정은 <b>캠프 설정에서만</b> 고쳐요. 공문 글에 넣는 말: '+GC_TOKS.map(function(t){return '<code>'+t+'</code>'}).join(' ')+'</span>'+
+      (lock?'':'<div class="row" style="gap:6px;margin-top:6px;flex-wrap:wrap"><a class="btn small" href="'+GC_URL+'admin.html'+(S.test?'?test':'')+'" target="_blank" rel="noopener">캠프 설정 열기 ↗</a><button class="btn small" type="button" id="gmCampRe">새로 불러오기</button><button class="btn small ghost" type="button" id="gmCampImp">캠프 공문 글 가져오기</button></div>')+'</div>'
+    :'<div class="note warn" style="margin-top:8px">'+(S.gmCampL?'캠프 설정을 불러오는 중…':esc(S.gmCampMsg||'이 캠프는 지금 회원관리와 연결된 캠프 시트가 아니에요. 통장 › 캠프 입금 맞추기에서 연결해 주세요.'))+'</div>'}
+  return '<div class="panel"><h3>쓸 곳 <span class="cap">(어느 행사 공문인지 · 통장 › 프로젝트 목록)</span></h3><select data-gmc="proj" style="min-width:260px"'+(lock?' disabled':'')+'>'+(P?opts:'<option>불러오는 중…</option>')+'</select>'+camp+'</div>'}
+var GM_CC=null,GM_V=GM_VALS;
+function gmFmt(t){return String(t||'').split('\n').map(function(line){if(line.trim()==='[[참가비표]]')return GM_CC?gcFeeTable(GM_CC):'<p class="ln"><span class="red">[[참가비표]] = 쓸 곳을 캠프로 고르면 차수별 참가비 표가 들어가요</span></p>';if(!line.trim())return '<div class="ln gap"></div>';
+  var h=esc(line).replace(/\{[^{}\s]{1,8}\}/g,function(m){return GM_V[m]!=null?esc(GM_V[m]):m});
   h=h.replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/!!(.+?)!!/g,'<span class="red">$1</span>');return '<p class="ln">'+h+'</p>'}).join('')}
 function gmMg(d){var m=(d['내용']||{}).mg||{},o={};Object.keys(GM_MG).forEach(function(k){var v=+m[k];o[k]=isFinite(v)&&m[k]!==''&&m[k]!=null?Math.max(0,Math.min(40,v)):GM_MG[k]});return o}
-function gmHtml(d){var c=d['내용']||{},n=0,M=gmMg(d);
+function gmHtml(d){var c=d['내용']||{},n=0,M=gmMg(d);GM_CC=gmCampOf(d);GM_V=GM_CC?Object.assign({},GM_VALS,gcVals(GM_CC)):GM_VALS;
   var meta=[['문서번호',d['문서번호']||(d['상태']==='발행'?'':'(발행하면 매겨져요)')],['시행일',gmMd(d['시행일'])],['수신',d['수신']],['참조',d['참조']]].filter(function(x){return x[1]});
-  var secs=(c.sec||[]).filter(function(x){return x.on!==false&&(x.t||x.body)}).map(function(x){n++;var num=c.num==='1)'?n+')':n+'.',b=String(x.body||''),one=b.indexOf('\n')<0;
+  var secs=(c.sec||[]).filter(function(x){return x.on!==false&&(x.t||x.body)}).map(function(x){n++;var num=c.num==='1)'?n+')':n+'.',b=String(x.body||''),one=b.indexOf('\n')<0&&b.indexOf('[[')<0;
     return one?'<div class="sc"><p class="ln"><span class="sh">'+num+' '+esc(x.t)+':</span> '+gmFmt(b).replace(/^<p class="ln">|<\/p>$/g,'')+'</p></div>':'<div class="sc"><div class="sh">'+num+' '+esc(x.t)+'</div>'+gmFmt(b)+'</div>'}).join('');
-  return '<div class="dp" style="padding:'+M.t+'mm '+M.r+'mm '+M.b+'mm '+M.l+'mm">'+(c.logo!==false?'<div class="lg"><img src="'+GM_LOGO+'" alt="SUZUKI MUSIC KOREA"></div>':'')+
+  var LH=+c.lh,SG=+c.sg;return '<div class="dp" style="padding:'+M.t+'mm '+M.r+'mm '+M.b+'mm '+M.l+'mm'+(c.lh!==''&&c.lh!=null&&isFinite(LH)&&LH>=1&&LH<=2.5?';--lh:'+LH:'')+(c.sg!==''&&c.sg!=null&&isFinite(SG)&&SG>=0&&SG<=15?';--sg:'+SG+'mm':'')+'">'+(c.logo!==false?'<div class="lg"><img src="'+GM_LOGO+'" alt="SUZUKI MUSIC KOREA"></div>':'')+
     (c.wtop===true?'<div class="wtop">www.suzukimusickorea.org</div>':'')+(meta.length?'<div class="meta'+(c.row1===true?' one':'')+'">'+(c.row1===true?[meta.filter(function(x){return x[0]!=='참조'}),meta.filter(function(x){return x[0]==='참조'})]:meta.map(function(x){return [x]})).filter(function(r){return r.length}).map(function(r){return '<div class="mr">'+r.map(function(x){return '<div><b>'+x[0]+'</b><span>'+esc(x[1])+'</span></div>'}).join('')+'</div>'}).join('')+'</div>':'')+
-    '<h1'+(function(){var t=+c.ts;return isFinite(t)&&t>=10&&t<=40&&t!==22?' style="font-size:'+t+'pt"':''})()+'>'+esc(d['제목']||'(제목)')+'</h1>'+(c.intro?'<div class="intro">'+gmFmt(c.intro)+'</div>':'')+secs+
+    '<h1'+(function(){var t=+c.ts;return isFinite(t)&&t>=10&&t<=40&&t!==22?' style="font-size:'+t+'pt"':''})()+'>'+esc(String(d['제목']||'(제목)').replace(/\{[^{}\s]{1,8}\}/g,function(m){return GM_V[m]!=null?GM_V[m]:m}))+'</h1>'+(c.intro?'<div class="intro">'+gmFmt(c.intro)+'</div>':'')+secs+
     (c.sign!==false?'<div class="ft-end"><div class="www">www.suzukimusickorea.org</div><div class="ko">(사)한국스즈키음악협회</div><div class="en">KOREA SUZUKI ASSOCIATION</div></div>':'')+'</div>'}
 function loadGm(){S.gmL=null;callS('gmList').then(function(r){if(!r.ok){toast(r.msg);return}S.gmL=r.list;if(S.tab==='gm')render()})}
 function gmPrev(){var p=document.getElementById('gmPrev');if(p&&S.gm)p.innerHTML=gmHtml(S.gm);gmCut()}
@@ -624,11 +666,11 @@ function vGmEdit(){var d=S.gm,c=d['내용'],lock=d['상태']==='발행',dis=lock
   return '<div class="sec-h"><div><h2>'+(lock?'발행한 공문':'공문 쓰기')+'</h2><p>왼쪽을 고치면 오른쪽 미리보기가 바로 바뀌어요. 꾸밈: <b>**굵게**</b> · <span style="color:#d0021b">!!빨강!!</span> · 빈 줄 = 띄우기 · {회원주소} {캠프주소} {협회}</p></div>'+
     '<div class="row"><button class="btn" type="button" id="gmBack">← 목록</button><button class="btn" type="button" id="gmWin">새 창으로 보기 · 인쇄 · PDF</button>'+(lock?'':'<button class="btn primary" type="button" id="gmSave">저장</button><button class="btn" type="button" id="gmIssue">발행 (번호 매기기)</button>')+(d['공문ID']?'<button class="btn" type="button" id="gmCopy">복사해서 새로</button>':'')+(d['공문ID']&&!lock?'<button class="btn ghost" type="button" id="gmDel">지우기</button>':'')+'</div></div>'+
     '<div class="gmg"><div>'+(lock?'<div class="gmlock">발행한 공문이에요 · '+esc(d['문서번호'])+' · '+esc(String(d['발행일']||'').slice(0,16))+' '+esc(d['발행자']||'')+'. 고칠 일이 있으면 「복사해서 새로」로 변경 공문을 만들어요.</div>':'')+
-      '<div class="panel"><h3>문서 정보</h3><div class="grid2"><label class="f"><span>구분</span><select data-gmf="구분"'+dis+'>'+GM_KINDS.map(function(k){return '<option'+(d['구분']===k?' selected':'')+'>'+k+'</option>'}).join('')+'</select></label>'+inp('행사','행사 이름 <span class="cap">(있으면 · 예: 2027 겨울음악제)</span>')+
+      gmUsePanel(d,lock)+'<div class="panel"><h3>문서 정보</h3><div class="grid2"><label class="f"><span>구분</span><select data-gmf="구분"'+dis+'>'+GM_KINDS.map(function(k){return '<option'+(d['구분']===k?' selected':'')+'>'+k+'</option>'}).join('')+'</select></label>'+inp('행사','행사 이름 <span class="cap">(있으면 · 예: 2027 겨울음악제)</span>')+
       inp('제목','제목 <span class="req">*</span>')+inp('시행일','시행일','date')+inp('수신','수신')+inp('참조','참조')+'</div>'+
       '<p class="cap">문서번호: '+esc(d['문서번호']||'발행할 때 설정 「공문 번호 형식」대로 자동으로 매겨져요')+'</p>'+
       '<div class="row" style="gap:12px;flex-wrap:wrap"><label class="agree"><input type="checkbox" data-gmc="logo"'+(c.logo!==false?' checked':'')+dis+'> 로고 넣기</label><label class="agree"><input type="checkbox" data-gmc="sign"'+(c.sign!==false?' checked':'')+dis+'> 끝에 협회 이름 넣기</label><label class="agree"><input type="checkbox" data-gmc="wtop"'+(c.wtop===true?' checked':'')+dis+'> 위에 홈페이지 주소 넣기</label><label class="agree"><input type="checkbox" data-gmc="row1"'+(c.row1===true?' checked':'')+dis+'> 문서번호 · 시행일 · 수신 한 줄로</label>'+
-      '<label>항목 번호 <select data-gmc="num"'+dis+'><option value="1."'+(c.num!=='1)'?' selected':'')+'>1.</option><option value="1)"'+(c.num==='1)'?' selected':'')+'>1)</option></select></label>'+'<label>제목 글씨 <input type="number" data-gmc="ts" min="14" max="36" step="1" value="'+esc(c.ts||22)+'" style="width:64px"'+dis+'> pt</label>'+
+      '<label>항목 번호 <select data-gmc="num"'+dis+'><option value="1."'+(c.num!=='1)'?' selected':'')+'>1.</option><option value="1)"'+(c.num==='1)'?' selected':'')+'>1)</option></select></label>'+'<label>제목 글씨 <input type="number" data-gmc="ts" min="14" max="36" step="1" value="'+esc(c.ts||22)+'" style="width:64px"'+dis+'> pt</label>'+'<label>줄 간격 <input type="number" data-gmc="lh" min="1" max="2.5" step="0.05" value="'+esc(c.lh!=null&&c.lh!==''?c.lh:1.55)+'" style="width:70px"'+dis+'> <span class="cap">기본 1.55</span></label>'+'<label>항목 사이 <input type="number" data-gmc="sg" min="0" max="15" step="0.5" value="'+esc(c.sg!=null&&c.sg!==''?c.sg:2.6)+'" style="width:64px"'+dis+'> mm <span class="cap">기본 2.6</span></label>'+
       '<span class="cap">여백 mm</span>'+['t','b','l','r'].map(function(k){return '<label class="cap">'+{t:'위',b:'아래',l:'왼쪽',r:'오른쪽'}[k]+' <input type="number" data-gmmg="'+k+'" value="'+M[k]+'" min="0" max="40" style="width:60px"'+dis+'></label>'}).join('')+'</div></div>'+
       '<div class="panel"><h3>머리말 <span class="cap">(제목 아래 인사 · 취지)</span></h3><textarea data-gmc="intro" rows="'+Math.max(3,Math.min(10,String(c.intro||'').split('\n').length+1))+'"'+dis+'>'+esc(c.intro||'')+'</textarea></div>'+
       '<div class="panel"><div class="spread"><h3>본문 항목 <span class="cap">(체크를 끄면 공문에서 빠져요)</span></h3>'+(lock?'':'<button class="btn small" type="button" data-gmsec="add|0">+ 항목 추가</button>')+'</div>'+secs+'</div>'+
@@ -1163,6 +1205,8 @@ document.addEventListener('click',function(e){
   if(d.gmopen){callS('gmGet',d.gmopen).then(function(r){if(!r.ok){toast(r.msg);return}r.list=S.gmL;gmSet(r);window.scrollTo(0,0)});return}
   if(b.id==='gmBack'){if(S.gmDirty&&!window.confirm('저장하지 않은 내용이 있어요. 목록으로 갈까요?'))return;S.gm=null;render();return}
   if(b.id==='gmWin'){gmWin();return}
+  if(b.id==='gmCampRe'){gmLoadCamp(true);return}
+  if(b.id==='gmCampImp'){gmCampImport();return}
   if(b.id==='gmSave'){if(!String(S.gm['제목']||'').trim()){toast('제목을 넣어 주세요');return}b.disabled=true;callS('gmSave',gmPayload()).then(function(r){b.disabled=false;if(!r.ok){toast(r.msg);return}gmSet(r);toast('저장했어요')});return}
   if(b.id==='gmIssue'){if(!S.gm['공문ID']||S.gmDirty){toast('먼저 「저장」해 주세요');return}if(!window.confirm('발행하면 문서번호가 매겨지고 더 고칠 수 없어요. 발행할까요?'))return;callS('gmIssue',S.gm['공문ID']).then(function(r){if(!r.ok){toast(r.msg);return}gmSet(r);toast('발행했어요 · '+r.doc['문서번호'])});return}
   if(b.id==='gmCopy'){callS('gmCopy',S.gm['공문ID']).then(function(r){if(!r.ok){toast(r.msg);return}gmSet(r);toast('복사했어요 · 고친 뒤 저장 · 발행해요')});return}
@@ -1448,11 +1492,11 @@ document.addEventListener('keydown',function(e){var t=e.target;if(S.tab!=='prt'|
 </script>
 <style>table.prt th,table.prt td{text-align:left !important}table.prt th:first-child,table.prt td:first-child{text-align:center !important}table.prt th:nth-child(7),table.prt td:nth-child(7),table.prt th:nth-child(8),table.prt td:nth-child(8){text-align:center !important}table.prt td:nth-child(7) input,table.prt td:nth-child(8) input{text-align:center}table.prt tr.mutedrow td{color:var(--faint)}table.prt tr.mutedrow td b{color:var(--muted)}table.prt td{vertical-align:middle}table.prt td.padr{white-space:normal;min-width:220px;max-width:340px;line-height:1.4}</style>
 
-<div id="bldMark" hidden>빌드표시 20261111-193732 </div>
+<div id="bldMark" hidden>빌드표시 20261111-194756 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();
 /* 공문 편집: 칸을 고치면 모델만 바꾸고 미리보기만 다시 그림(글자 조합이 깨지지 않게) */
 function gmField(t){if(S.tab!=='gm'||!S.gm||S.gm['상태']==='발행')return false;var d=S.gm,c=d['내용'],ds=t.dataset||{};
-  if(ds.gmf){d[ds.gmf]=t.value}else if(ds.gmc){c[ds.gmc]=t.type==='checkbox'?t.checked:t.value}else if(ds.gmst!=null){c.sec[+ds.gmst].t=t.value}else if(ds.gmsb!=null){c.sec[+ds.gmsb].body=t.value}
+  if(ds.gmc==='proj'){gmProjPick(t.value);return true}if(ds.gmf){d[ds.gmf]=t.value}else if(ds.gmc){c[ds.gmc]=t.type==='checkbox'?t.checked:t.value}else if(ds.gmst!=null){c.sec[+ds.gmst].t=t.value}else if(ds.gmsb!=null){c.sec[+ds.gmsb].body=t.value}
   else if(ds.gmon!=null){c.sec[+ds.gmon].on=t.checked;var box=t.closest('.gmsec');if(box)box.classList.toggle('off',!t.checked)}else if(ds.gmmg){c.mg=c.mg||{};c.mg[ds.gmmg]=t.value===''?'':Math.max(0,Math.min(40,+t.value||0))}else return false;
   S.gmDirty=true;gmPrev();return true}
 document.addEventListener('input',function(e){gmField(e.target)});

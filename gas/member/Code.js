@@ -1,4 +1,4 @@
-/* build: 20261111-193732 */
+/* build: 20261111-194756 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -109,7 +109,7 @@ function include(n) { return HtmlService.createTemplateFromFile(n).getRawContent
 
 function api(name, args) {
   const open = { login, hello, tHello, tEvents, tLookup, tStart, tResend, tVerify, tCreate, tLogin, tForgot, tReset, tPwChange, tMe, tSavePay, tSavePart, tSaveInfo, tSavePhoto, tAcad, tSaveAcad, tDocUp, tDocGet, tSaveStu, tSaveStus, tStuDetail, tStuSave, tStuTutor, tStuTutorDel, tStuState, tStuStateDel, tMyStu, tMyStuDetail, tMyStuPay, tTchSaves, tTchEnd, tTchEvent, tTchAssign, tTchStart, tSaveRrn, tSaveInc, tAddWork, tClassCreate, tEndWork, tMainWork, tLogout, bPost, bMine, bReply };
-  const fns = { printEvents, printEvSave, printData, printSet, printCopy, printExport, ogGet, ogSave, ogToken, boot, saveRow, setCheck, logs, importRoster, saveDues, delDues, reqs, reqDo, delAcad, payView, bulkSet, saveWorks, importPastDues, importPayInfo, gmList, gmGet, gmSave, gmIssue, gmCopy, gmDel, bList, bSet, bComment, photoGet, photoDel, fillRegions, saveRates, docList, docUp, docGet, docDel, payList, payOk, payOkMany, payNo, memView, rosterNow, inputStatus, inboxDone, acctReset, classFromStudents, delStus, asTeacher, bankImport, bankList: bankListTop, bankSet, bankDues, bankFromSheet, bankMeta, bankSplitSave, bankPay, bankCamp, bankCampPay, bankPayList, devVirtual };
+  const fns = { printEvents, printEvSave, printData, printSet, printCopy, printExport, ogGet, ogSave, ogToken, boot, saveRow, setCheck, logs, importRoster, saveDues, delDues, reqs, reqDo, delAcad, payView, bulkSet, saveWorks, importPastDues, importPayInfo, gmList, gmGet, gmSave, gmIssue, gmCopy, gmDel, bList, bSet, bComment, photoGet, photoDel, fillRegions, saveRates, docList, docUp, docGet, docDel, payList, payOk, payOkMany, payNo, memView, rosterNow, inputStatus, inboxDone, acctReset, classFromStudents, delStus, asTeacher, bankImport, bankList: bankListTop, bankSet, bankDues, bankFromSheet, bankMeta, bankSplitSave, bankPay, bankCamp, bankCampPay, bankPayList, gmProjects, gmCamp, devVirtual };
   try {
     if (open[name]) return Object.assign({ ok: true }, open[name].apply(null, args || []));
     if (!fns[name]) throw new UserError('알 수 없는 요청이에요.');
@@ -697,7 +697,7 @@ function gmClean_(d) {
   d = d || {}; const s = v => String(v == null ? '' : v);
   const sec = (Array.isArray(d.sec) ? d.sec : []).slice(0, 30).map(x => ({ t: s(x.t).slice(0, 80), body: s(x.body).slice(0, 8000), on: x.on !== false }));
   const mg = {}; ['t', 'b', 'l', 'r'].forEach(k => { const v = +((d.mg || {})[k]); if (isFinite(v) && (d.mg || {})[k] !== '' && (d.mg || {})[k] != null) mg[k] = Math.max(0, Math.min(40, v)); });
-  const o = { intro: s(d.intro).slice(0, 8000), sec, num: d.num === '1)' ? '1)' : '1.', sign: d.sign !== false, mg, logo: d.logo !== false, wtop: d.wtop === true, row1: d.row1 === true, ts: (t => isFinite(t) && t >= 10 && t <= 40 ? Math.round(t) : 22)(+d.ts) };
+  const o = { intro: s(d.intro).slice(0, 8000), sec, num: d.num === '1)' ? '1)' : '1.', sign: d.sign !== false, mg, logo: d.logo !== false, wtop: d.wtop === true, row1: d.row1 === true, ts: (t => isFinite(t) && t >= 10 && t <= 40 ? Math.round(t) : 22)(+d.ts), lh: (t => d.lh !== '' && d.lh != null && isFinite(t) && t >= 1 && t <= 2.5 ? Math.round(t * 100) / 100 : '')(+d.lh), sg: (t => d.sg !== '' && d.sg != null && isFinite(t) && t >= 0 && t <= 15 ? Math.round(t * 10) / 10 : '')(+d.sg), proj: s(d.proj).slice(0, 20), camp: s(d.camp).slice(0, 20) };
   if (JSON.stringify(o).length > 45000) fail('공문 내용이 너무 길어요. 항목을 나눠 주세요.'); return o;
 }
 function gmSave(who, x) {
@@ -721,6 +721,8 @@ function gmIssue(who, id) {
     const date = String(T.get(i, '시행일') || '') || Utilities.formatDate(new Date(), 'Asia/Seoul', 'yyyy-MM-dd'), y = date.slice(0, 4);
     const n = T.v.filter(r => r[T.h.indexOf('상태')] === '발행' && String(r[T.h.indexOf('시행일')]).slice(0, 4) === y).length + 1;
     const no = String(settings_()['공문 번호 형식'] || 'KSA 제{년}-{번호}호').replace(/\{년\}/g, y).replace(/\{번호\}/g, String(n).padStart(3, '0'));
+    let ct = {}; try { ct = JSON.parse(T.get(i, '내용') || '{}'); } catch (e) { }
+    if (ct.camp && !ct.campSnap) { try { const cd = gmCamp(who); if (cd.camp && cd.camp.base && cd.camp.base.id === ct.camp) { ct.campSnap = cd.camp; T.set(i, { '내용': JSON.stringify(ct) }); } } catch (e) { } }
     T.set(i, { '상태': '발행', '문서번호': no, '시행일': date, '발행일': now_(), '발행자': who.name, '수정일': now_(), '수정자': who.name });
     log_(who.name, '공문', id, '발행', no + ' · ' + T.get(i, '제목'));
   } finally { lock.releaseLock(); }
@@ -728,9 +730,26 @@ function gmIssue(who, id) {
 }
 function gmCopy(who, id) {
   const g = gmGet(who, id).doc, T = tbl_('공문'), nid = nextId_(T, '공문ID', 'G');
-  T.append({ '공문ID': nid, '구분': g['구분'], '행사': g['행사'], '제목': g['제목'] + (g['상태'] === '발행' ? ' (변경)' : ' (사본)'), '문서번호': '', '시행일': '', '수신': g['수신'], '참조': g['참조'], '상태': '작성 중', '내용': JSON.stringify(g['내용'] || {}), '수정일': now_(), '수정자': who.name });
+  T.append({ '공문ID': nid, '구분': g['구분'], '행사': g['행사'], '제목': g['제목'] + (g['상태'] === '발행' ? ' (변경)' : ' (사본)'), '문서번호': '', '시행일': '', '수신': g['수신'], '참조': g['참조'], '상태': '작성 중', '내용': JSON.stringify(Object.assign({}, g['내용'], { campSnap: undefined }) || {}), '수정일': now_(), '수정자': who.name });
   log_(who.name, '공문', nid, '복사', id + ' → ' + nid);
   return Object.assign(gmGet(who, nid), gmList(who));
+}
+/* 공문 「쓸 곳」 = 통장 › 프로젝트 (캠프 · 졸업연주 · 교사연수 …). 캠프는 연결된 캠프 시트의 설정을 불러와 {기간} [[참가비표]] 등을 채움 (숫자는 캠프 설정에서만 고침) */
+function gmProjects(who) {
+  let L = []; try { L = bankSheet_('프로젝트', BANK_PROJ_HEAD).objs().filter(r => r['사용'] !== '안씀').map(r => ({ id: r['프로젝트ID'], name: r['이름'], biz: r['사업'] || '', camp: r['캠프ID'] || '', start: r['시작일'] || '' })); } catch (e) { }
+  return { projs: L.sort((a, b) => String(b.start).localeCompare(String(a.start))) };
+}
+function gmCamp(who) {
+  const id = settings_()['캠프 시트']; if (!id) return { camp: null, msg: '회원관리 설정 「캠프 시트」가 비어 있어요 (통장 › 캠프 입금 맞추기에서 연결).' };
+  let ss; try { ss = SpreadsheetApp.openById(id); } catch (e) { return { camp: null, msg: '캠프 접수 시트를 열 수 없어요.' }; }
+  const rd = name => { const sh = ss.getSheetByName(name); if (!sh) return []; const v = sh.getDataRange().getDisplayValues(), h = (v.shift() || []).map(String); return v.filter(r => r.some(x => x !== '')).map(r => { const o = {}; h.forEach((k, j) => o[k] = r[j]); return o; }); };
+  const K = { '기본': 'base', '차수': 'rounds', '참가비': 'fees', '옵션': 'opt', '환불': 'refund', '공문': 'doc' }, c = { base: {}, rounds: [], fees: {}, opt: {}, refund: {}, doc: {} };
+  rd('캠프설정').forEach(r => { const k = K[String(r['항목'])]; if (!k || !r['값']) return; try { c[k] = JSON.parse(String(r['값']).replace(/돌전아기/g, '15개월 미만')); } catch (e) { } });
+  if (!c.base.id) return { camp: null, msg: '캠프 시트에 캠프 설정이 아직 없어요.' };
+  Object.keys(c.fees).forEach(t => { const a = (c.fees[t] || []).slice(0, c.rounds.length); while (a.length < c.rounds.length) a.push(a.length ? a[a.length - 1] : 0); c.fees[t] = a; });
+  const st = {}; rd('설정').forEach(r => st[String(r['항목'])] = String(r['값'] || ''));
+  c.bank = { bank: st['입금 은행'] || '', acct: st['입금 계좌번호'] || '', holder: st['예금주'] || '' };
+  c.at = now_(); return { camp: c };
 }
 function gmDel(who, id) {
   const T = tbl_('공문'), i = T.find('공문ID', id); if (i < 0) fail('공문을 찾지 못했어요.'); if (T.get(i, '상태') === '발행') fail('발행한 공문은 지울 수 없어요(대장에 남아요).');

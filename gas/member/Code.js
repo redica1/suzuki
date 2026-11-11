@@ -1,4 +1,4 @@
-/* build: 20261111-220958 */
+/* build: 20261111-222242 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -1906,7 +1906,7 @@ function campQs_() {
   const sh = campQSheet_(); if (!sh || sh.getLastRow() < 2) return [];
   const v = sh.getDataRange().getDisplayValues(), h = v.shift().map(String), g = (r, k) => { const j = h.indexOf(k); return j >= 0 ? String(r[j] || '') : ''; };
   return v.filter(r => g(r, '번호')).map(r => { const st = CQ_ST[g(r, '상태') || '미해결'] || '접수', rep = g(r, '답변'), where = g(r, '화면'), txt = g(r, '내용');
-    return { '문의ID': 'C:' + g(r, '번호'), camp: 1, '작성일': g(r, '일시'), '교사ID': '', '이름': g(r, '이름'), '휴대전화': '', p4: g(r, '연락처 뒤4자리'), acad: g(r, '학원'), pic: g(r, '사진'),
+    return { '문의ID': 'C:' + g(r, '번호'), camp: 1, '작성일': g(r, '일시'), '교사ID': g(r, '교사ID'), '이름': g(r, '이름'), '휴대전화': '', p4: g(r, '연락처 뒤4자리'), acad: g(r, '학원'), pic: g(r, '사진'),
       '분류': '캠프 · ' + (where || '기타'), '제목': txt.split('\n')[0].slice(0, 60), '내용': txt, '상태': st, '처리일': g(r, '처리일'), '처리자': g(r, '처리자'),
       comments: rep ? [{ '쓴사람': '관리자', '이름': g(r, '처리자'), '작성일': g(r, '처리일'), '내용': rep }] : [] }; }); }
 function campQSet_(who, qid, state, reply) {
@@ -1917,6 +1917,12 @@ function campQSet_(who, qid, state, reply) {
   set('처리자', who.name); set('처리일', (CQ_BACK[state] || String(v[r][h.indexOf('상태')])) === '미해결' ? '' : Utilities.formatDate(new Date(), 'Asia/Seoul', 'yyyy-MM-dd'));
   log_(who.name, '문의', qid, state ? '상태' : '캠프 답', state || String(reply).slice(0, 60));
 }
+/* 캠프 글에 답하면 그 글을 쓴 회원(교사ID)에게 메일 (11-11). 교사ID 없는 예전 글 · 비회원은 안 보냄 */
+function campQMail_(qid, text) {
+  try { const q = campQs_().find(x => x['문의ID'] === qid); if (!q || !q['교사ID']) return;
+    const a = acctAll_().find(x => String(x.tid) === String(q['교사ID']) && x.state === '사용'); if (!a || !a.email) return;
+    mail_(a.email, '[스즈키 캠프] 남기신 글에 답이 달렸어요', '<p>캠프 화면에 남기신 글(' + esc_(q['분류']) + ')에 협회가 답을 남겼어요.</p><blockquote>' + esc_(text).replace(/\n/g, '<br>') + '</blockquote><p>캠프 화면 「내가 올린 글」에서 볼 수 있어요.</p>');
+  } catch (e) {} }
 function bList(who) { let all = bObjs_(), warn = ''; try { all = all.concat(campQs_()); } catch (e) { warn = '캠프 글을 읽지 못했어요: ' + e.message; }
   all.sort((a, b) => String(b['작성일']).localeCompare(String(a['작성일']))); return { list: all, warn }; }
 function bSet(who, qid, state) {
@@ -1929,7 +1935,7 @@ function bSet(who, qid, state) {
 }
 function bComment(who, qid, text) {
   text = bText_(text, 1000); if (!text) fail('댓글을 넣어 주세요.');
-  if (/^C:/.test(qid)) { const lk = LockService.getScriptLock(); lk.waitLock(20000); try { const cur = (campQs_().find(x => x['문의ID'] === qid) || {})['상태']; campQSet_(who, qid, cur === '접수' ? '처리중' : '', text); } finally { lk.releaseLock(); } return bList(who); }
+  if (/^C:/.test(qid)) { const lk = LockService.getScriptLock(); lk.waitLock(20000); try { const cur = (campQs_().find(x => x['문의ID'] === qid) || {})['상태']; campQSet_(who, qid, cur === '접수' ? '처리중' : '', text); campQMail_(qid, text); } finally { lk.releaseLock(); } return bList(who); }
   const Q = tbl_('문의'), i = Q.find('문의ID', qid); if (i < 0) fail('그 문의를 찾지 못했어요.');
   bAddComment_(qid, '관리자', who.name, text);
   if (Q.get(i, '상태') === '접수') Q.set(i, { '상태': '처리중', '처리자': who.name, '수정일': now_() });

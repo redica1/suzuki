@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261111-220958 -->
+<!-- build: 20261111-222242 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -543,12 +543,12 @@ function vAskA(){var L=S.asks;if(!L)return '<div class="panel"><span><span class
     '<div class="row">'+[['','모두'],['m','회원관리'],['c','캠프']].map(function(x){var n=S.asks.filter(function(q){return !x[0]||(x[0]==='c'?q.camp:!q.camp)}).length;return '<button class="btn small '+(src===x[0]?'primary':'ghost')+'" type="button" data-asrc="'+x[0]+'">'+x[1]+' '+n+'</button>'}).join('')+'<span class="cap" style="margin:0 4px">|</span>'+['열림','접수','처리중','완료','전체'].map(function(x){return '<button class="btn small '+(st===x?'primary':'')+'" type="button" data-ast="'+x+'">'+(x==='열림'?'처리 전 · 중':x)+' '+cnt(x)+'</button>'}).join('')+'<button class="btn small ghost" type="button" id="askRe">새로 고침</button></div></div>'+
     (list.length?list.map(function(q){var id=q['문의ID'],t=q['교사ID']&&T[q['교사ID']];
       return '<div class="panel"><div class="sec-h"><h3>'+pill(q['상태'])+' <span class="cap">'+esc(q['분류'])+'</span> '+esc(q['제목'])+'</h3><span class="cap num">'+esc(q['작성일'])+'</span></div>'+
-        (q.camp?'<dl class="kv"><dt>보낸 사람</dt><dd><b>'+esc(q['이름'])+'</b> <span class="pill info">캠프</span>'+(q.acad?' <span class="cap">'+esc(q.acad)+'</span>':'')+'</dd><dt>휴대전화</dt><dd class="num">'+(q.p4?'뒤 4자리 '+esc(q.p4):'-')+'</dd>'+(q.pic?'<dt>사진</dt><dd><a href="'+esc(q.pic)+'" target="_blank" rel="noopener">사진 보기 ↗</a></dd>':'')+'</dl>':
+        (q.camp?'<dl class="kv"><dt>보낸 사람</dt><dd><b>'+esc(q['이름'])+'</b> <span class="pill info">캠프</span>'+(q['교사ID']?' <span class="pill info">회원 '+esc(q['교사ID'])+'</span>'+(t?' <button class="btn small ghost" type="button" data-opent="'+esc(q['교사ID'])+'">교사 열기</button>':''):' <span class="pill mute">계정 연결 없음</span>')+(q.acad?' <span class="cap">'+esc(q.acad)+'</span>':'')+'</dd><dt>휴대전화</dt><dd class="num">'+(t&&t['휴대전화']?fmt(t['휴대전화']):q.p4?'뒤 4자리 '+esc(q.p4):'-')+'</dd>'+(q.pic?'<dt>사진</dt><dd><a href="'+esc(q.pic)+'" target="_blank" rel="noopener">사진 보기 ↗</a></dd>':'')+'</dl>':
         '<dl class="kv"><dt>보낸 사람</dt><dd><b>'+esc(q['이름'])+'</b> '+(q['교사ID']?'<span class="pill info">회원 '+esc(q['교사ID'])+'</span>'+(t?' <button class="btn small ghost" type="button" data-opent="'+esc(q['교사ID'])+'">교사 열기</button>':''):'<span class="pill mute">비로그인</span>')+'</dd>'+
         '<dt>휴대전화</dt><dd class="num">'+(fmt(q['휴대전화'])||'-')+'</dd>'+(q['이메일']?'<dt>이메일</dt><dd>'+esc(q['이메일'])+'</dd>':'')+'</dl>')+
         '<div class="qbody">'+esc(q['내용'])+'</div>'+
         q.comments.map(function(c){return '<div class="cmt'+(c['쓴사람']==='관리자'?' adm':'')+'"><b>'+esc(c['쓴사람']==='관리자'?'협회 · '+c['이름']:c['이름'])+'</b> <span class="cap num">'+esc(c['작성일'])+'</span><div class="qbody">'+esc(c['내용'])+'</div></div>'}).join('')+
-        '<div class="row" style="align-items:flex-start;margin-top:6px"><textarea id="cm_'+esc(id)+'" rows="2" placeholder="'+(q.camp?'답 (캠프 화면 「내가 올린 글」에 보여요 · 새로 쓰면 앞 답을 바꿔요)':'댓글 (회원에게는 화면 · 이메일로 보여요)')+'" style="flex:1;min-width:220px"></textarea><button class="btn small primary" type="button" data-bcm="'+esc(id)+'">'+(q.camp?'답 저장':'댓글')+'</button></div>'+
+        '<div class="row" style="align-items:flex-start;margin-top:6px"><textarea id="cm_'+esc(id)+'" rows="2" placeholder="'+(q.camp?(q['교사ID']?'답 (캠프 화면 「내가 올린 글」 · 회원 이메일로 알려요 · 새로 쓰면 앞 답을 바꿔요)':'답 (캠프 화면 「내가 올린 글」에 보여요 · 새로 쓰면 앞 답을 바꿔요)'):'댓글 (회원에게는 화면 · 이메일로 보여요)')+'" style="flex:1;min-width:220px"></textarea><button class="btn small primary" type="button" data-bcm="'+esc(id)+'">'+(q.camp?'답 저장':'댓글')+'</button></div>'+
         '<div class="row" style="margin-top:6px"><span class="cap">상태</span>'+['접수','처리중','완료'].map(function(x){return '<button class="btn small '+(q['상태']===x?'primary':'')+'" type="button" data-bst="'+esc(id)+'|'+x+'">'+x+'</button>'}).join('')+(q['처리자']?'<span class="cap">'+esc(q['처리자'])+(q['처리일']?' · 완료 '+esc(q['처리일']):'')+'</span>':'')+'</div></div>'}).join(''):'<div class="panel"><p class="cap">문의가 없어요.</p></div>')}
 function loadProg(){S.prog=null;callS('inputStatus').then(function(r){if(r.ok){S.prog=r;if(S.tab==='prog')render()}else toast(r.msg)})}
 function vInbox(X){if(!X)return '';var n=X.need.length;
@@ -1494,7 +1494,7 @@ document.addEventListener('keydown',function(e){var t=e.target;if(S.tab!=='prt'|
 </script>
 <style>table.prt th,table.prt td{text-align:left !important}table.prt th:first-child,table.prt td:first-child{text-align:center !important}table.prt th:nth-child(7),table.prt td:nth-child(7),table.prt th:nth-child(8),table.prt td:nth-child(8){text-align:center !important}table.prt td:nth-child(7) input,table.prt td:nth-child(8) input{text-align:center}table.prt tr.mutedrow td{color:var(--faint)}table.prt tr.mutedrow td b{color:var(--muted)}table.prt td{vertical-align:middle}table.prt td.padr{white-space:normal;min-width:220px;max-width:340px;line-height:1.4}</style>
 
-<div id="bldMark" hidden>빌드표시 20261111-220958 </div>
+<div id="bldMark" hidden>빌드표시 20261111-222242 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();
 /* 공문 편집: 칸을 고치면 모델만 바꾸고 미리보기만 다시 그림(글자 조합이 깨지지 않게) */
 function gmField(t){if(S.tab!=='gm'||!S.gm||S.gm['상태']==='발행')return false;var d=S.gm,c=d['내용'],ds=t.dataset||{};

@@ -1,4 +1,4 @@
-/* build: 20261111-194756 */
+/* build: 20261111-222242 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -465,7 +465,7 @@ function loginT_(t, consent) {
   if (isStaffT_(t)) {
     consentLog_('관계자', t.name, t.p4, consent);
     const token = Utilities.getUuid(), acads = [STAFF_ACAD];
-    CacheService.getScriptCache().put('tok_' + token, JSON.stringify({ name: t.name, acads, staff: true }), 21600);
+    CacheService.getScriptCache().put('tok_' + token, JSON.stringify({ name: t.name, acads, staff: true, tid: t.id }), 21600);
     log_(t.name, '관계자 로그인', '');
     return Object.assign({ ok: true, token, today: today_(), teacher: { id: t.id, name: t.name, role: '관계자', inst: t.inst, acads, home: acads, p4: t.p4, staff: true, email: acctEmail_(t.id) }, myAcct: myAcct_(t.name) }, bundle_(acads, t.name));
   }
@@ -477,7 +477,7 @@ function loginT_(t, consent) {
   if (!acads.length && !t.acads.length && (!open || open.includes(NOACAD))) acads = [NOACAD];
   if (!acads.length) return { ok: false, msg: open ? '지금은 ' + open.join(', ') + '만 접수할 수 있어요.' : '소속 학원이 없어요. 협회에 문의해 주세요.' };
   const token = Utilities.getUuid();
-  CacheService.getScriptCache().put('tok_' + token, JSON.stringify({ name: t.name, acads }), 21600);
+  CacheService.getScriptCache().put('tok_' + token, JSON.stringify({ name: t.name, acads, tid: t.id }), 21600);
   log_(t.name, '로그인', '');
   return Object.assign({ ok: true, token, today: today_(), teacher: { id: t.id, name: t.name, role: t.role, inst: t.inst, acads, home: t.acads, p4: t.p4, email: acctEmail_(t.id) }, myAcct: myAcct_(t.name) }, bundle_(acads, t.name));
 }
@@ -2603,18 +2603,19 @@ function mail_(sb, u) {
 /* ---------------- 게시판 게시판 (「문의」 시트) ----------------
    글은 시트 한 줄(칸 13개)이라 용량 걱정 없음. 사진은 드라이브 「캠프 문의 사진」 폴더에(5MB까지). */
 const ISS = '문의';
-const ISS_HEAD = ['번호', '일시', '이름', '연락처 뒤4자리', '학원', '화면', '내용', '사진', '상태', '답변', '처리일', '처리자', '환경'];
+const ISS_HEAD = ['번호', '일시', '이름', '연락처 뒤4자리', '학원', '화면', '내용', '사진', '상태', '답변', '처리일', '처리자', '환경', '교사ID'];   // 교사ID (11-11): 회원 계정으로 로그인해 쓴 글 → 회원관리 문의와 연결
 const ISS_STATES = ['미해결', '해결 중', '해결'];
 function issSheet_() {
   const ss = SpreadsheetApp.getActive(); let sh = ss.getSheetByName(ISS);
   if (!sh) { sh = ss.insertSheet(ISS); sh.appendRow(ISS_HEAD); sh.setFrozenRows(1); sh.getRange('A:A').setNumberFormat('@'); }
+  else { const h = sh.getRange(1, 1, 1, Math.max(1, sh.getLastColumn())).getValues()[0].map(String); if (h.indexOf('교사ID') < 0) sh.getRange(1, h.filter(String).length + 1).setValue('교사ID'); }
   return sh;
 }
 function issues_() {
   issSheet_();
   return rows_(ISS).filter(r => r['번호']).map(r => ({ row: r._row, no: String(r['번호']), at: String(r['일시']), name: String(r['이름']), p4: String(r['연락처 뒤4자리'] || ''), acad: String(r['학원'] || ''),
     where: String(r['화면'] || ''), text: String(r['내용'] || ''), pic: String(r['사진'] || ''), state: String(r['상태'] || '미해결'), reply: String(r['답변'] || ''),
-    done: dstr_(r['처리일']), by: String(r['처리자'] || ''), env: String(r['환경'] || '') }));
+    done: dstr_(r['처리일']), by: String(r['처리자'] || ''), env: String(r['환경'] || ''), tid: String(r['교사ID'] || '') }));
 }
 /** 선생님: 글 쓰기 (로그인 안 해도 됨 — 로그인이 안 되는 오류도 적을 수 있게) */
 function submitIssue(token, d) {
@@ -2644,14 +2645,17 @@ function submitIssue(token, d) {
     const n = rows_(ISS).reduce((m, r) => Math.max(m, +String(r['번호']).replace(/\D/g, '') || 0), 0) + 1;
     no = 'Q' + String(n).padStart(3, '0');
     const acad = u ? (u.acads || []).join(', ') : String(d.acad || '').slice(0, 40);
-    sh.appendRow([no, stamp_(), name, p4 ? "'" + p4 : '', acad, String(d.where || '').slice(0, 40), text, pic, '미해결', '', '', '', String(d.env || '').slice(0, 300)]);
+    const H = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0].map(String), row = new Array(H.length).fill('');
+    const put = (k, v) => { const j = H.indexOf(k); if (j >= 0) row[j] = v; };
+    put('번호', no); put('일시', stamp_()); put('이름', name); put('연락처 뒤4자리', p4 ? "'" + p4 : ''); put('학원', acad); put('화면', String(d.where || '').slice(0, 40)); put('내용', text); put('사진', pic); put('상태', '미해결'); put('환경', String(d.env || '').slice(0, 300)); put('교사ID', u && u.tid ? u.tid : '');
+    sh.appendRow(row);
     C.put(k, '1', 60);
   } finally { lock.releaseLock(); }
   log_(name, '문의', no);
-  return { ok: true, no, mine: u ? myIssues_(u.name) : [] };
+  return { ok: true, no, mine: u ? myIssues_(u) : [] };
 }
-function myIssues_(name) { return issues_().filter(x => x.name === name).reverse().map(x => ({ no: x.no, at: x.at, where: x.where, text: x.text, pic: !!x.pic, state: x.state, reply: x.reply, done: x.done })); }
-function myIssues(token) { const u = who_(token); return { ok: true, mine: myIssues_(u.name) }; }
+function myIssues_(u) { return issues_().filter(x => x.tid && u.tid ? x.tid === u.tid : x.name === u.name)   /* 교사ID 있으면 교사ID로, 예전 글 · 비회원은 이름으로 */.reverse().map(x => ({ no: x.no, at: x.at, where: x.where, text: x.text, pic: !!x.pic, state: x.state, reply: x.reply, done: x.done })); }
+function myIssues(token) { const u = who_(token); return { ok: true, mine: myIssues_(u) }; }
 /** 관리자: 상태·답변 */
 function adminSetIssue(token, row, state, reply) {
   const a = adm_(token); need_(a, ['q', 'room']);   // 가족방 요청 글은 방 배정 담당도 답할 수 있음

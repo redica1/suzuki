@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261111-190939 -->
+<!-- build: 20261111-190959 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -134,7 +134,7 @@ label.f.wide{grid-column:1/-1}
 .gmlock{background:#eef4ff;border:1px solid #b9cdf5;border-radius:8px;padding:8px 12px;margin-bottom:10px}
 .dp{width:210mm;min-height:297mm;box-sizing:border-box;padding:13mm 16mm 15mm;background:#fff;color:#111;font-family:"Pretendard Variable",Pretendard,"Malgun Gothic","Apple SD Gothic Neo",sans-serif;font-size:12.5pt;line-height:1.55;letter-spacing:-.01em;word-break:keep-all}
 .dp *{font-family:inherit}.dp .lg{text-align:center}.dp .lg img{width:46mm;height:auto}
-.dp .meta{font-size:12pt;margin:4mm 0 2mm;border-bottom:1px solid #444;padding-bottom:2mm}.dp .meta .mr{display:flex;flex-wrap:wrap;column-gap:9mm;row-gap:1mm}.dp .meta .mr>div{display:flex;gap:3mm}.dp .meta b{font-weight:700;white-space:nowrap}
+.dp .wtop{font-size:10.5pt;color:#333;margin:4mm 0 0;letter-spacing:.02em}.dp .wtop+.meta{margin-top:1.5mm}.dp .meta{font-size:12pt;margin:4mm 0 2mm;border-bottom:1px solid #444;padding-bottom:2mm}.dp .meta .mr{display:flex;flex-wrap:wrap;column-gap:9mm;row-gap:1mm}.dp .meta .mr>div{display:flex;gap:3mm}.dp .meta b{font-weight:700;white-space:nowrap}
 .dp h1{font-size:22pt;text-align:center;margin:3mm 0 4mm;font-weight:800;letter-spacing:-.02em}
 .dp .intro{margin:0 0 3mm}.dp .sc{margin:0 0 2.6mm}.dp .sh{font-weight:800}.dp .ln{white-space:pre-wrap;margin:0}.dp .ln.gap{height:1.6mm}.dp .red{color:#d0021b}
 .dp .ft-end{margin-top:8mm;text-align:center}.dp .ft-end .www{font-weight:700;font-size:13pt}.dp .ft-end .ko{font-size:21pt;letter-spacing:.45em;margin-top:1mm;font-weight:500}.dp .ft-end .en{font-size:12pt;letter-spacing:.42em;color:#222}
@@ -598,7 +598,7 @@ function gmHtml(d){var c=d['내용']||{},n=0,M=gmMg(d);
   var secs=(c.sec||[]).filter(function(x){return x.on!==false&&(x.t||x.body)}).map(function(x){n++;var num=c.num==='1)'?n+')':n+'.',b=String(x.body||''),one=b.indexOf('\n')<0;
     return one?'<div class="sc"><p class="ln"><span class="sh">'+num+' '+esc(x.t)+':</span> '+gmFmt(b).replace(/^<p class="ln">|<\/p>$/g,'')+'</p></div>':'<div class="sc"><div class="sh">'+num+' '+esc(x.t)+'</div>'+gmFmt(b)+'</div>'}).join('');
   return '<div class="dp" style="padding:'+M.t+'mm '+M.r+'mm '+M.b+'mm '+M.l+'mm">'+(c.logo!==false?'<div class="lg"><img src="'+GM_LOGO+'" alt="SUZUKI MUSIC KOREA"></div>':'')+
-    (meta.length?'<div class="meta">'+[meta.filter(function(x){return x[0]!=='참조'}),meta.filter(function(x){return x[0]==='참조'})].filter(function(r){return r.length}).map(function(r){return '<div class="mr">'+r.map(function(x){return '<div><b>'+x[0]+'</b><span>'+esc(x[1])+'</span></div>'}).join('')+'</div>'}).join('')+'</div>':'')+
+    '<div class="wtop">www.suzukimusickorea.org</div>'+(meta.length?'<div class="meta">'+[meta.filter(function(x){return x[0]!=='참조'}),meta.filter(function(x){return x[0]==='참조'})].filter(function(r){return r.length}).map(function(r){return '<div class="mr">'+r.map(function(x){return '<div><b>'+x[0]+'</b><span>'+esc(x[1])+'</span></div>'}).join('')+'</div>'}).join('')+'</div>':'')+
     '<h1>'+esc(d['제목']||'(제목)')+'</h1>'+(c.intro?'<div class="intro">'+gmFmt(c.intro)+'</div>':'')+secs+
     (c.sign!==false?'<div class="ft-end"><div class="www">www.suzukimusickorea.org</div><div class="ko">(사)한국스즈키음악협회</div><div class="en">KOREA SUZUKI ASSOCIATION</div></div>':'')+'</div>'}
 function loadGm(){S.gmL=null;callS('gmList').then(function(r){if(!r.ok){toast(r.msg);return}S.gmL=r.list;if(S.tab==='gm')render()})}
@@ -1441,7 +1441,7 @@ document.addEventListener('keydown',function(e){var t=e.target;if(S.tab!=='prt'|
 </script>
 <style>table.prt th,table.prt td{text-align:left !important}table.prt th:first-child,table.prt td:first-child{text-align:center !important}table.prt th:nth-child(7),table.prt td:nth-child(7),table.prt th:nth-child(8),table.prt td:nth-child(8){text-align:center !important}table.prt td:nth-child(7) input,table.prt td:nth-child(8) input{text-align:center}table.prt tr.mutedrow td{color:var(--faint)}table.prt tr.mutedrow td b{color:var(--muted)}table.prt td{vertical-align:middle}table.prt td.padr{white-space:normal;min-width:220px;max-width:340px;line-height:1.4}</style>
 
-<div id="bldMark" hidden>빌드표시 20261111-190939 </div>
+<div id="bldMark" hidden>빌드표시 20261111-190959 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();
 /* 공문 편집: 칸을 고치면 모델만 바꾸고 미리보기만 다시 그림(글자 조합이 깨지지 않게) */
 function gmField(t){if(S.tab!=='gm'||!S.gm||S.gm['상태']==='발행')return false;var d=S.gm,c=d['내용'],ds=t.dataset||{};

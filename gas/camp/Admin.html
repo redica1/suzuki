@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261111-225248 -->
+<!-- build: 20261111-230111 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -2639,7 +2639,7 @@ function vDoc(){if(!S.cc)S.cc=ccCopy();const c=S.cc;if(!c.base)return '<div clas
   const ta=(p,id,rows)=>`<textarea data-cc="${p}" id="${id}" rows="${rows}" spellcheck="false">${esc(ccGet(p)||'')}</textarea>`;
   if(!S.dView)S.dView=JSON.parse(JSON.stringify(c));const V0=S.dView,pend=dPend();
   const ga=dGuestAdd(c),W=dWarn(V0);
-  return `<div class="note info" style="margin-bottom:10px">${d.gm?`<b>회원관리 공문 대장 ${esc(d.gm)}${d.no?` · 발행 ${esc(d.no)}`:' · 작성 중'}</b> — 여기서 고치고 「저장」하면 회원관리 공문 미리보기에도 그대로 나와요. 발행(문서번호)은 회원관리 › 공문에서 해요.`:`<b>공문 만들기는 회원관리 › 공문 › 「+ 캠프 공문」에서 해요.</b> 만들면 이 캠프 공문이 공문 대장에 올라가고, 글 · 날짜 · 참가비 · 취소 수수료 입력은 여기서 해요(캠프 설정과 같은 값).`} <a href="${'https:'+'\/\/app.suzukimusickorea.org/member/admin.html'+(S.D&&S.D.me&&/자동/.test(S.D.me.name||'')?'?test':'')}" target="_blank" rel="noopener">회원관리 공문 열기 ↗</a></div><div class="cc"><div class="panel"><div class="spread"><div><b>공문 · 캠프 안내</b> <span class="hint">공문을 쓰면 캠프가 만들어져요. 날짜 · 장소 · 차수 · 참가비 · 가족방 · 환불 규정은 「캠프 설정」과 같은 값이라, 여기서 고치고 「저장」하면 접수 화면도 바로 바뀌어요.</span></div>
+  return `<div class="note info" style="margin-bottom:10px">${d.gm?`<b>회원관리 공문 대장 ${esc(d.gm)}${d.no?` · 발행 ${esc(d.no)}`:' · 작성 중'}</b> — 여기서 고치고 「저장」하면 회원관리 공문 미리보기에도 그대로 나와요. 발행(문서번호)은 회원관리 › 공문에서 해요.`:`<b>아직 회원관리 공문 대장에 없어요.</b> 여기서 「저장」하면 공문 대장에 저절로 올라가요(작성 중). 발행(문서번호)은 회원관리 › 공문에서 해요.`} <a href="${'https:'+'\/\/app.suzukimusickorea.org/member/admin.html'+(S.D&&S.D.me&&/자동/.test(S.D.me.name||'')?'?test':'')}" target="_blank" rel="noopener">회원관리 공문 열기 ↗</a></div><div class="cc"><div class="panel"><div class="spread"><div><b>공문 · 캠프 안내</b> <span class="hint">공문을 쓰면 캠프가 만들어져요. 날짜 · 장소 · 차수 · 참가비 · 가족방 · 환불 규정은 「캠프 설정」과 같은 값이라, 여기서 고치고 「저장」하면 접수 화면도 바로 바뀌어요.</span></div>
     <div class="row" style="gap:6px"><span id="ccDirty" class="row" style="gap:6px">${ccPill()}</span><button class="btn small" type="button" id="dWin">새 창으로 보기</button><button class="btn small" type="button" id="dPrint">인쇄 · PDF 저장</button><button class="btn small primary" type="button" data-ccsave="1">저장</button></div></div>
     <div id="dWarnBox">${dWarnHtml(W)}</div></div>
   <div class="dg"><div>
@@ -4384,6 +4384,6 @@ document.addEventListener('click',e=>{if(S.tab!=='book')return;const b=e.target.
   if(b.id==='ebSetSave'){const n=Object.assign(ebSet(),S.ebSetW||{});n.per=Math.max(1,Math.min(10,Math.round(+n.per||5)));n.fs=Math.max(5,Math.min(10,+n.fs||6.6));['en','sub','org'].forEach(k=>n[k]=String(n[k]||'').trim().slice(0,120));
     ebSend([],[],n,()=>{S.ebSetW=null;toast('책자 설정을 저장했어요')});return}},true);
 </script>
-<div id="bldMark" hidden>빌드표시 20261111-225248 </div>
+<div id="bldMark" hidden>빌드표시 20261111-230111 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();</script>
 </body></html>

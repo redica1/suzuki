@@ -1,4 +1,4 @@
-/* build: 20261111-225248 */
+/* build: 20261111-230111 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -1186,6 +1186,23 @@ function docClean_(d, nr) {
   if (JSON.stringify(o).length > 45000) throw new Error('공문 글이 너무 길어요. 항목 글을 조금 줄여 주세요.');
   return o;
 }
+function campDocLink_(b, doc, who) {
+  const mid = memberSheetId_(); if (!mid) return '';
+  const sh = SpreadsheetApp.openById(mid).getSheetByName('공문'); if (!sh) return '';
+  const all = sh.getDataRange().getDisplayValues(), h = (all.shift() || []).map(String), ci = k => h.indexOf(k);
+  if (ci('공문ID') < 0) return '';
+  const title = String(doc.title || '{캠프이름} 안내').replace(/\{캠프이름\}/g, b.name || '').replace(/\{년도\}/g, String(b.start || '').slice(0, 4)).slice(0, 120) || (b.name + ' 안내');
+  const now = Utilities.formatDate(new Date(), 'Asia/Seoul', 'yyyy-MM-dd HH:mm:ss');
+  const upd = { '구분': '캠프', '행사': b.name || '', '제목': title, '시행일': doc.date || '', '수신': doc.to || '', '참조': doc.ref || '' };
+  if (doc.gm) { const r = all.findIndex(x => x[ci('공문ID')] === doc.gm); if (r >= 0) {
+    if (all[r][ci('상태')] !== '발행') Object.keys(upd).forEach(k => { if (ci(k) >= 0 && k !== '구분') sh.getRange(r + 2, ci(k) + 1).setNumberFormat('@').setValue(upd[k]); });
+    return doc.gm; } }
+  let m = 0; all.forEach(x => { const v = String(x[ci('공문ID')]); if (v.charAt(0) === 'G') m = Math.max(m, +v.replace(/\D/g, '') || 0); });
+  const id = 'G' + String(m + 1).padStart(4, '0');
+  const o = Object.assign({ '공문ID': id, '문서번호': '', '상태': '작성 중', '내용': JSON.stringify({ camp: b.id }), '수정일': now, '수정자': String(who || '캠프') + ' (캠프)' }, upd);
+  sh.getRange(all.length + 2, 1, 1, h.length).setNumberFormat('@').setValues([h.map(k => o[k] == null ? '' : String(o[k]))]);
+  return id;
+}
 function campSave(token, c, rev) {
   const a = adm_(token); needSup_(a);
   const ok = /^\d{4}-\d{2}-\d{2}$/, num = v => Math.max(0, Math.round(+v || 0));
@@ -1215,6 +1232,8 @@ function campSave(token, c, rev) {
   const prev = camp_(), doc = c.doc ? docClean_(c.doc, rounds.length) : Object.assign({}, prev.doc, { rnote: (prev.doc.rnote || []).slice(0, rounds.length), inc: (prev.doc.inc || []).slice(0, rounds.length) });
   /* 문서번호 · 대장 연결은 회원관리 공문 대장이 시트에 직접 씀 → 화면 값으로 덮지 않음 (11-11) */
   doc.no = String((prev.doc || {}).no || ''); doc.gm = String((prev.doc || {}).gm || '');
+  /* 거꾸로 (11-11): 캠프에서 공문을 저장하면 회원관리 공문 대장에 저절로 한 줄(구분 캠프 · 작성 중). 이미 있으면 제목 · 시행일 · 수신 · 참조만 맞춤 */
+  try { doc.gm = campDocLink_(b, doc, a.name) || doc.gm; } catch (e) { }
   const aud = {}; AUD_CON.forEach(k => { const x = c.aud ? ((c.aud[k]) || {}) : ((prev.aud || {})[k] || {}); aud[k] = { on: !!x.on, due: /^\d{4}-\d{2}-\d{2}$/.test(x.due || '') ? x.due : '' }; });
   const nc = { meals, base: { id: String(b.id).trim(), name: String(b.name).trim(), start: b.start, end: b.end, place: String(b.place || '').trim(), open: b.open, close: b.close, cur, guest: b.guest !== false, staff: b.staff !== false, member: b.member !== false, intl: b.intl !== false }, rounds, fees, opt, refund, consent, doc, aud };
   const lock = lock_();

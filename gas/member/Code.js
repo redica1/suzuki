@@ -1,4 +1,4 @@
-/* build: 20261111-225248 */
+/* build: 20261111-230336 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -101,7 +101,7 @@ const SETTINGS = [
 function doGet(e) {
   const admin = e && e.parameter && e.parameter.page === 'admin';
   return HtmlService.createTemplateFromFile(admin ? 'Index' : 'Teacher').evaluate()
-    .setTitle(admin ? '스즈키 회원관리' : '스즈키 선생님 회원')
+    .setTitle((function () { try { return settings_()['테스트 표시'] === '예' ? '[STG] ' : ''; } catch (x) { return ''; } })() + (admin ? '스즈키 회원관리' : '스즈키 선생님 회원'))
     .addMetaTag('viewport', 'width=device-width, initial-scale=1')
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }

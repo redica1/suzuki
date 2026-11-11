@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261111-230336 -->
+<!-- build: 20261111-231036 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -653,8 +653,9 @@ function gmHtml(d){var c=d['내용']||{},n=0,M=gmMg(d);GM_CC=gmCampOf(d);GM_V=GM
 function loadGm(){S.gmL=null;callS('gmList').then(function(r){if(!r.ok){toast(r.msg);return}S.gmL=r.list;if(S.tab==='gm')render()})}
 function gmZoom(){if(S.gmZ==null){var v=0;try{v=+localStorage.getItem('memberGmZoom')}catch(x){}S.gmZ=v>=.4&&v<=1.6?v:.86}return S.gmZ}
 function gmPrev(){var p=document.getElementById('gmPrev');if(p&&S.gm){gmFitCalc();p.innerHTML=gmHtml(S.gm)}gmCut()}
-function gmCut(){var p=document.getElementById('gmPrev'),dp=p&&p.querySelector('.dp');if(!dp)return;var k=1,cut,over;
-  do{cut=document.createElement('div');cut.className='pgcut';cut.style.top=(297*k)+'mm';dp.appendChild(cut);over=dp.scrollHeight>cut.offsetTop+2;cut.innerHTML='<span>'+k+'쪽 끝'+(over?' · 아래는 '+(k+1)+'쪽':'')+'</span>';k++}while(over&&k<6);
+function gmCut(){var p=document.getElementById('gmPrev'),dp=p&&p.querySelector('.dp'),f=dp&&dp.querySelector('.fitc');if(!dp||!f||!S.gm)return;dp.querySelectorAll('.pgcut').forEach(function(x){x.remove()});
+  var M=gmMg(S.gm),per=297-M.t-M.b,pr=document.createElement('div');pr.style.cssText='position:absolute;left:0;top:0;width:1px;height:100mm;visibility:hidden';dp.appendChild(pr);var mm=f.getBoundingClientRect().height/pr.getBoundingClientRect().height*100;pr.remove();
+  var n=Math.max(1,Math.ceil((mm-.5)/per)),k;for(k=1;k<=n;k++){var cut=document.createElement('div');cut.className='pgcut';cut.style.top=(M.t+k*per)+'mm';cut.innerHTML='<span>'+k+'쪽 끝'+(k<n?' · 아래는 '+(k+1)+'쪽':'')+'</span>';dp.appendChild(cut)}k=n+1;
   var w=document.getElementById('gmPgInfo');if(w){var n=k-1;var c0=S.gm&&S.gm['내용']||{};w.textContent=(+c0.fit?(+c0.fit)+'쪽에 맞춤'+(+c0.fitK<1?' · 글씨 '+Math.round(+c0.fitK*100)+'%':'')+' · ':'')+(n>1?n+'쪽 · 빨간 줄 아래는 다음 쪽으로 넘어가요':'1쪽 안에 들어가요');w.style.color=n>1?'#e53935':''}}
 function vGm(){if(S.gm)return vGmEdit();var L=S.gmL;if(!L)return '<div class="panel"><span><span class="spin"></span> 불러오는 중…</span></div>';
   var f=S.f.gk||'전체',list=L.filter(function(x){return f==='전체'||(f==='졸업연주'?String(x['구분']).indexOf('졸업연주')===0:f==='캠프'?/캠프/.test(x['구분']):(f==='기타'?!/캠프|졸업연주/.test(x['구분']):x['구분']===f))});
@@ -675,8 +676,8 @@ function gmFitCalc(){var d=S.gm;if(!d)return;var c=d['내용'],N=+c.fit||0;if(!N
 function gmCampDoc(d){var c=d['내용']||{};if(d['상태']==='발행'&&c.html)return {html:c.html,css:c.css||'',mg:c.mg||{}};var X=S.gmCampX;if(X&&X.camp&&X.html&&X.camp.base.id===c.camp)return {html:X.html,css:X.css||'',mg:(X.camp.doc||{}).mg||{}};return null}
 function gmCampSrc(cd,z,print){var font='https:'+String.fromCharCode(47,47)+'cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css',M=cd.mg,mt=isFinite(+M.t)?+M.t:13,mb=isFinite(+M.b)?+M.b:15;
   var ex=print?'@page{size:A4;margin:'+mt+'mm 0 '+mb+'mm}html,body{margin:0}@media screen{body{background:#dfe4e6}.page{width:210mm;margin:14px auto 40px;background:#fff;padding:'+mt+'mm 0 '+mb+'mm;box-shadow:0 2px 16px rgba(0,0,0,.22)}.tb{position:sticky;top:0;z-index:5;display:flex;gap:10px;align-items:center;justify-content:center;padding:10px;background:#1a73e8;color:#fff;font:15px sans-serif}.tb button{font:inherit;font-weight:700;padding:6px 16px;border:0;border-radius:8px;background:#fff;color:#1a73e8;cursor:pointer}}@media print{.tb{display:none}}.dp{padding-top:0!important;padding-bottom:0!important;min-height:0!important}'
-    :'html,body{margin:0;background:#e6eaec}body{padding:10px}.dp{zoom:'+z+';box-shadow:0 2px 12px rgba(0,0,0,.18);margin:0 auto}';
-  return '<!doctype html><html lang="ko"><head><meta charset="utf-8"><link rel="stylesheet" href="'+font+'"><style>'+cd.css+'\n'+ex+'</style></head><body>'+(print?'<div class="tb"><b>캠프 공문</b><button type="button" onclick="print()">인쇄 · PDF 저장</button></div><div class="page">':'')+cd.html.split('{{LOGO}}').join(GM_LOGO)+(print?'</div>':'')+'</body></html>'}
+    :'html,body{margin:0;background:#e6eaec}body{padding:10px}.dp{zoom:'+z+';box-shadow:0 2px 12px rgba(0,0,0,.18);margin:0 auto;position:relative}.pgcut{position:absolute;left:0;right:0;height:0;border-top:2px dashed #e53935}.pgcut span{position:absolute;right:2mm;top:-7mm;font:700 10pt sans-serif;color:#e53935;background:#fff;padding:0 2mm}';
+  return '<!doctype html><html lang="ko"><head><meta charset="utf-8"><link rel="stylesheet" href="'+font+'"><style>'+cd.css+'\n'+ex+'</style></head><body>'+(print?'<div class="tb"><b>캠프 공문</b><button type="button" onclick="print()">인쇄 · PDF 저장</button></div><div class="page">':'')+cd.html.split('{{LOGO}}').join(GM_LOGO)+(print?'</div>':'<script>(function(){var dp=document.querySelector(".dp"),f=dp&&(dp.querySelector(".fitc")||dp);if(!dp)return;var per='+(297-mt-mb)+',pr=document.createElement("div");pr.style.cssText="position:absolute;top:0;width:1px;height:100mm";dp.appendChild(pr);var mm=f.getBoundingClientRect().height/pr.getBoundingClientRect().height*100;pr.remove();var n=Math.max(1,Math.ceil((mm-.5)/per));for(var k=1;k<=n;k++){var d=document.createElement("div");d.className="pgcut";d.style.top=('+mt+'+k*per)+"mm";d.innerHTML="<span>"+k+"쪽 끝"+(k<n?" · 아래는 "+(k+1)+"쪽":"")+"</span>";dp.appendChild(d)}try{parent.postMessage({gmPages:n},"*")}catch(e){}})()<\/script>')+'</body></html>'}
 function gmCampLoad(){var d=S.gm;if(!d||!d['공문ID']||S.gmCampL)return;S.gmCampL=1;callS('gmCampSync',d['공문ID']).then(function(r){S.gmCampL=0;if(!r.ok){toast(r.msg);return}var keep=S.gm;S.gmCampX=r.camp||{};if(keep&&keep['공문ID']===r.doc['공문ID']){S.gm=r.doc;S.gm['내용']=S.gm['내용']||{};S.gmL=r.list}if(S.tab==='gm'&&S.gm)render()})}
 function vGmCamp(d){var c=d['내용'],lock=d['상태']==='발행',X=S.gmCampX,cc=X&&X.camp,cd=gmCampDoc(d);if(!lock&&!X&&!S.gmCampL)setTimeout(gmCampLoad,0);
   var url='https:'+String.fromCharCode(47,47)+'app.suzukimusickorea.org/camp/admin.html'+(S.test?'?test':'');
@@ -1528,7 +1529,7 @@ document.addEventListener('keydown',function(e){var t=e.target;if(S.tab!=='prt'|
 </script>
 <style>table.prt th,table.prt td{text-align:left !important}table.prt th:first-child,table.prt td:first-child{text-align:center !important}table.prt th:nth-child(7),table.prt td:nth-child(7),table.prt th:nth-child(8),table.prt td:nth-child(8){text-align:center !important}table.prt td:nth-child(7) input,table.prt td:nth-child(8) input{text-align:center}table.prt tr.mutedrow td{color:var(--faint)}table.prt tr.mutedrow td b{color:var(--muted)}table.prt td{vertical-align:middle}table.prt td.padr{white-space:normal;min-width:220px;max-width:340px;line-height:1.4}</style>
 
-<div id="bldMark" hidden>빌드표시 20261111-230336 </div>
+<div id="bldMark" hidden>빌드표시 20261111-231036 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();
 /* 공문 편집: 칸을 고치면 모델만 바꾸고 미리보기만 다시 그림(글자 조합이 깨지지 않게) */
 function gmField(t){if(S.tab!=='gm'||!S.gm||S.gm['상태']==='발행')return false;var d=S.gm,c=d['내용'],ds=t.dataset||{};

@@ -1,4 +1,4 @@
-/* build: 20261111-230111 */
+/* build: 20261111-230522 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -1233,7 +1233,7 @@ function campSave(token, c, rev) {
   /* 문서번호 · 대장 연결은 회원관리 공문 대장이 시트에 직접 씀 → 화면 값으로 덮지 않음 (11-11) */
   doc.no = String((prev.doc || {}).no || ''); doc.gm = String((prev.doc || {}).gm || '');
   /* 거꾸로 (11-11): 캠프에서 공문을 저장하면 회원관리 공문 대장에 저절로 한 줄(구분 캠프 · 작성 중). 이미 있으면 제목 · 시행일 · 수신 · 참조만 맞춤 */
-  try { doc.gm = campDocLink_(b, doc, a.name) || doc.gm; } catch (e) { }
+  let linkMsg = ''; try { const g = campDocLink_(b, doc, a.name); if (g) doc.gm = g; else linkMsg = '회원관리 시트(설정 「회원관리 시트」)나 그 시트의 「공문」 탭을 찾지 못해 공문 대장에 올리지 못했어요.'; } catch (e) { linkMsg = '공문 대장에 올리지 못했어요: ' + e.message; }
   const aud = {}; AUD_CON.forEach(k => { const x = c.aud ? ((c.aud[k]) || {}) : ((prev.aud || {})[k] || {}); aud[k] = { on: !!x.on, due: /^\d{4}-\d{2}-\d{2}$/.test(x.due || '') ? x.due : '' }; });
   const nc = { meals, base: { id: String(b.id).trim(), name: String(b.name).trim(), start: b.start, end: b.end, place: String(b.place || '').trim(), open: b.open, close: b.close, cur, guest: b.guest !== false, staff: b.staff !== false, member: b.member !== false, intl: b.intl !== false }, rounds, fees, opt, refund, consent, doc, aud };
   const lock = lock_();
@@ -1252,7 +1252,7 @@ function campSave(token, c, rev) {
     if (JSON.stringify(old.meals || []) !== JSON.stringify(meals) || c.mealsApply) nc.mealsDays = mealsApply_(meals);
     log_(a.name, '캠프 설정 저장', nc.base.id + ' · ' + nc.base.start + '~' + nc.base.end);
   } finally { lock.releaseLock(); }
-  return { ok: true, camp: campPublic_(), mealsDays: nc.mealsDays };
+  return { ok: true, camp: campPublic_(), mealsDays: nc.mealsDays, gm: nc.doc && nc.doc.gm, linkMsg: linkMsg };
 }
 /** 캠프 설정의 식사 시간 → 교사 일정(일정설정 meals) 모든 날짜에 다시 넣기
  *  예전 식사 줄(표시 k가 있거나 아침·점심·저녁 / Breakfast·Lunch·Dinner 글이 든 줄)은 바꾸고, 그 밖의 줄(간식 등)은 그대로 둠 → 바꾼 날짜 수 */

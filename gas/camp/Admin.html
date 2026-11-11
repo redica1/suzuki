@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261111-230111 -->
+<!-- build: 20261111-230522 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -1804,7 +1804,7 @@ function ccClick(b,d){if(S.tab!=='camp'&&S.tab!=='cons'&&S.tab!=='doc')return fa
   if(b.id==='fkClear'){ask('가상 접수를 모두 지울까요?','가상 표시가 있는 접수와 그 참가자 줄만 지워요. 진짜 접수는 그대로예요. 방 · 레슨 · 일정에 넣은 가상 인원은 따로 빼 주세요.',()=>call('devFakeClear',[],r=>{setData(r.adm);toast('가상 접수 줄 '+r.n+'개를 지웠어요')},'지우고 있어요…'),'지우기');return true}
   if(d.ccsave){const old=S.D.camp||{},idCh=old.base&&old.base.id!==c.base.id;const ap=document.getElementById('ccMealsApply');c.mealsApply=!!(ap&&ap.checked);
     if(c.doc){try{const ex=dExport(c);c.docHtml=ex.html;c.docCss=ex.css}catch(x){}}
-    const go=()=>call('campSave',[c,old.rev||0],r=>{S.D.camp=r.camp;S.cc=null;S.dView=null;applyCampAdm(r.camp);render();toast('캠프 설정을 저장했어요 · 선생님 화면에 바로 반영돼요'+(r.mealsDays?` · 교사 일정 ${r.mealsDays}일에 식사 시간을 넣었어요`:''));if(r.mealsDays)ACT.reset()},'저장하고 있어요…');
+    const go=()=>call('campSave',[c,old.rev||0],r=>{S.D.camp=r.camp;S.cc=null;S.dView=null;applyCampAdm(r.camp);render();toast('캠프 설정을 저장했어요 · 선생님 화면에 바로 반영돼요'+(r.gm?` · 공문 대장 ${r.gm}`:'')+(r.mealsDays?` · 교사 일정 ${r.mealsDays}일에 식사 시간을 넣었어요`:''));if(r.linkMsg)setTimeout(()=>toast(r.linkMsg),2600);if(r.mealsDays)ACT.reset()},'저장하고 있어요…');
     if(idCh&&(S.D.subs||[]).length)ask('캠프 코드를 바꿀까요?',`이미 접수가 ${(S.D.subs||[]).length}건 있어요. 새 접수부터 <b>${esc(c.base.id)}-001</b>처럼 번호가 매겨지고, 지난 접수 번호는 그대로예요. 보통은 새 캠프를 열 때만 바꿔요.`,go,'그래도 저장');
     else go();return true}
   return false}
@@ -4384,6 +4384,6 @@ document.addEventListener('click',e=>{if(S.tab!=='book')return;const b=e.target.
   if(b.id==='ebSetSave'){const n=Object.assign(ebSet(),S.ebSetW||{});n.per=Math.max(1,Math.min(10,Math.round(+n.per||5)));n.fs=Math.max(5,Math.min(10,+n.fs||6.6));['en','sub','org'].forEach(k=>n[k]=String(n[k]||'').trim().slice(0,120));
     ebSend([],[],n,()=>{S.ebSetW=null;toast('책자 설정을 저장했어요')});return}},true);
 </script>
-<div id="bldMark" hidden>빌드표시 20261111-230111 </div>
+<div id="bldMark" hidden>빌드표시 20261111-230522 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();</script>
 </body></html>

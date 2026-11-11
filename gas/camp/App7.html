@@ -1,4 +1,4 @@
-/* build: 20261112-020755 */
+/* build: 20261112-021051 */
     ps.forEach(p=>{p.pay='신고';p.rep=rep;delete S.rpRow[p.id]});S.afterSave=()=>repDone(ps.map(p=>p.id));subSave();S.rp=null;S.rpOpen=false;S.rpMemo=undefined;render();toast(`${ps.length}명 입금 신고를 보냈어요 · 운영진이 확인하면 「입금 확인」으로 바뀌어요`);return}
   if(b.id==='rpFill'){const n=document.getElementById('rpAllN').value.trim(),dd=document.getElementById('rpAllD').value;S.rpAllN=n;S.rpAllD=dd;const sel=S.rp||[];
     if(!n&&!dd){toast('적용할 입금자명이나 입금일을 적어 주세요');return}unpaidPpl().filter(x=>sel.includes(x.p.id)).forEach(({p})=>{const v=rpv(p);if(n)v.n=n;if(dd)v.d=dd});render();toast(`선택한 ${sel.length}명에게 적용했어요`);return}
@@ -325,3 +325,20 @@ document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest
 document.addEventListener('change',e=>{if(S.view!=='audpre')return;const t=e.target;if(t.name==='apStu'){S.apSid=t.value;const f=S.apF;f.comp=(document.getElementById('apComp')||{}).value||'';f.title=(document.getElementById('apTitle')||{}).value||'';f.url=(document.getElementById('apUrl')||{}).value||'';render()}if(t.name==='apCon'){S.apF.con=t.value}});
 document.addEventListener('input',e=>{if(S.view!=='audpre'||e.target.id!=='apQ')return;S.apQ=e.target.value;const p=e.target.selectionStart,f=S.apF;['comp','title','url'].forEach(k=>{const el=document.getElementById('ap'+k[0].toUpperCase()+k.slice(1));if(el)f[k]=el.value});render();const n=document.getElementById('apQ');if(n){n.focus();n.setSelectionRange(p,p)}});
 
+
+/* ---------- 뒤로 (아래 「← 뒤로」 버튼 · 브라우저 뒤로가기) 11-12 ---------- */
+function canBack(){if(['pay','lost','tt','q','audpre','mine'].includes(S.view))return true;if(!S.user)return S.auth!=='pick';return S.step>1&&S.step<6}
+function navBack(){
+  if(S.view==='pay'||S.view==='lost'){const k=S.lostBack||{view:'mine'};S.view=k.view==='lost'||k.view==='pay'?'mine':k.view;if(k.step)S.step=k.step;render();window.scrollTo({top:0});return true}
+  if(['tt','q','audpre','mine'].includes(S.view)){S.view='form';if(S.view==='form'&&S.step===6)S.step=1;render();window.scrollTo({top:0});return true}
+  if(!S.user){if(S.auth==='pick')return false;S.view='form';S.auth='pick';S.chk=null;S.verr='';S.apGo=false;go(1);return true}
+  if(S.step>1&&S.step<6){go(S.step-1);return true}
+  return false}
+let HN=0,HK='',HPOP=false;
+function hKey(){return [S.view,S.user?1:0,S.auth,S.step].join('|')}
+function hPush(){try{const k=hKey();if(k===HK)return;const first=!HK;HK=k;if(first||HPOP){HPOP=false;return}google.script.history.push({n:++HN})}catch(e){}}
+function dockBack(){const b=document.getElementById('backBtn');if(b){b.hidden=!canBack();b.textContent='← 뒤로'}}
+try{google.script.history.setChangeHandler(e=>{const n=(e&&e.state&&e.state.n)||0;if(n<HN){HN=n;HPOP=true;if(!navBack())HPOP=false}else HN=n})}catch(e){}
+{const R0=render;render=function(){const r=R0.apply(this,arguments);dockBack();hPush();return r}}
+HK=hKey();dockBack();
+function backBtnGo(){navBack()}

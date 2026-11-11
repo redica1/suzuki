@@ -1,4 +1,4 @@
-/* build: 20261112-020755 */
+/* build: 20261112-021051 */
   if(S.ttDay==null){const td=ttToday(days);S.ttDay=td!=null?td:(mine.length?Math.min(...mine.map(x=>x.d)):0)}
   if(tab==='me')return head+seg+(T.prof?`<p class="hint" style="margin:0 0 6px">교수 · 레슨실 <b>${esc(T.prof.room||'미정')}</b></p>`:'')+ttMineList(T,days,mine)+'</section>';
   const AC=S.user.acads||[];if(S.ttAcad&&!AC.includes(S.ttAcad))S.ttAcad='';
@@ -194,7 +194,7 @@ document.addEventListener('click',e=>{
         api('submitNew',[sb],r=>{S.no=r.no;S.reqId='';applyBundle(r);S.cartAt={};S.rp=null;go(6);if(r.again)toast('이미 접수된 내용이에요 · '+r.no,true)},()=>{render()},'접수하고 있어요…')}
       return}
     go(S.step+1);return}
-  if(b.id==='backBtn'){go(S.step-1);return}
+  if(b.id==='backBtn'){backBtnGo();return}
   if(b.id==='toMine'||b.id==='toMine2'||b.id==='toMine3'||b.id==='mineBtn'||b.id==='hdMine'){if(S.editNo){S.editNo=null;S.editOnly=null;if(S.riBack!==undefined){CAMP.ri=S.riBack;S.riBack=undefined}resetForm();S.acad='';S.verified=false;S.step=1}S.view='mine';S.cxDone=null;render();window.scrollTo({top:0});return}
   if(b.id==='toForm'){S.view='form';if(S.editNo&&S.riBack!==undefined){CAMP.ri=S.riBack;S.riBack=undefined}S.editNo=null;S.editOnly=null;if(S.step===6||S.step>1){resetForm();S.acad='';S.verified=false;S.step=1}render();window.scrollTo({top:0});return}
   if(d.subedit){startEdit(d.subedit,null);return}

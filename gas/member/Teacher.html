@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261111-223215 -->
+<!-- build: 20261111-223802 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -154,6 +154,15 @@ h1,h2,h3,.band h1,.sec>h2,.card h2{font-weight:800;letter-spacing:0}
 .guideBtn .ic{flex:none;width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.2);display:grid;place-items:center;font-weight:800;font-size:18px}
 .guideBtn b{display:block;font-size:17px;line-height:1.35}.guideBtn small{display:block;font-size:13.5px;opacity:.92;line-height:1.4}
 .guideLink{display:flex;justify-content:flex-end;margin:0 0 6px}.guideLink button{font:inherit;font-size:13.5px;font-weight:700;color:#1a73e8;background:none;border:0;padding:2px 4px;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.gdMans{display:flex;gap:6px;padding:10px 16px 0}.gdMans button{font:inherit;font-size:14px;font-weight:700;border:1px solid var(--accent);background:var(--surface);color:var(--accent);border-radius:8px;padding:5px 12px;cursor:pointer}.gdMans button[aria-pressed="true"]{background:var(--accent);color:#fff}
+.csFab{position:fixed;right:16px;bottom:88px;z-index:55;display:flex;align-items:center;gap:6px;border:0;border-radius:999px;padding:12px 18px;background:#1a73e8;color:#fff;font:inherit;font-weight:800;font-size:15.5px;box-shadow:0 8px 22px rgba(26,115,232,.35);cursor:pointer}.csFab[aria-expanded="true"]{background:#16303a}
+.csPanel{position:fixed;right:16px;bottom:146px;z-index:56;width:min(380px,calc(100vw - 32px));height:min(560px,calc(100vh - 220px));background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:0 14px 40px rgba(0,0,0,.22);display:flex;flex-direction:column;overflow:hidden}
+.csHd{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--line)}.csHd b{font-size:16px}.csMan{display:flex;gap:4px;flex:1;flex-wrap:wrap}.csMan button{font:inherit;font-size:12.5px;border:1px solid var(--line);background:var(--surface);color:var(--accent);border-radius:999px;padding:2px 8px;cursor:pointer}
+.csLog{flex:1;overflow:auto;padding:12px;display:flex;flex-direction:column;gap:8px;background:var(--bg,#f4f6fa)}.csMsg{max-width:92%;padding:9px 12px;border-radius:12px;font-size:14.5px;line-height:1.55}.csMsg.bot{background:var(--surface);border:1px solid var(--line);align-self:flex-start}.csMsg.me{background:#1a73e8;color:#fff;align-self:flex-end}
+.csMsg ul,.csMsg ol{margin:4px 0;padding-left:18px}.csChips{display:flex;flex-wrap:wrap;gap:6px}.csChips button{font:inherit;font-size:13px;border:1px solid var(--accent);background:var(--surface);color:var(--accent);border-radius:999px;padding:4px 10px;cursor:pointer}
+.csAns{display:grid;gap:6px;padding:6px 0;border-bottom:1px dashed var(--line)}.csAns:last-of-type{border-bottom:0}.csAns>b{font-size:13.5px;color:var(--accent)}.csTx{font-size:14px}.csAns .btn{justify-self:start}.linkish{all:unset;color:var(--accent);font-weight:700;cursor:pointer;text-decoration:underline}
+.csForm{display:flex;gap:6px;padding:10px;border-top:1px solid var(--line)}.csForm input{flex:1;min-width:0}
+@media print{.csFab,.csPanel{display:none!important}}
 .gdBg{position:fixed;inset:0;background:rgba(10,20,35,.45);display:flex;align-items:flex-end;justify-content:center;z-index:60}
 @media (min-width:640px){.gdBg{align-items:center}}
 .gdSheet{background:var(--surface);color:var(--ink);width:min(640px,100%);max-height:88vh;display:flex;flex-direction:column;border-radius:18px 18px 0 0}
@@ -934,9 +943,7 @@ function gdBtn(){return '<button type="button" class="guideBtn" data-gd="why" ar
 function gdDraw(){var g=document.getElementById('gdBg');if(!g)return;
   document.getElementById('gdTabs').innerHTML=GD_ORDER.map(function(k){return '<button type="button" role="tab" aria-selected="'+(k===GD_CUR)+'" data-gdk="'+k+'">'+GD[k].t+'</button>'}).join('');
   var b=document.getElementById('gdBody');b.innerHTML=GD[GD_CUR].h+'<div class="gdBox b"><b>궁금한 점 · 가입이 안 될 때는 언제나 게시판에 적어 주세요.</b> 로그인 전에도 이름 · 휴대전화로 남길 수 있어요.<br>&#128073; <a href="'+GD_BOARD+'" target="_top" id="gdAsk">회원관리 문의 게시판 바로가기</a></div>';b.scrollTop=0}
-function gdOpen(k){var g=document.getElementById('gdBg');if(!g){g=document.createElement('div');g.className='gdBg';g.id='gdBg';g.setAttribute('role','dialog');g.setAttribute('aria-modal','true');g.setAttribute('aria-labelledby','gdT');
-    g.innerHTML='<div class="gdSheet"><div class="gdHd"><b id="gdT">회원가입 안내</b><button type="button" class="gdX" id="gdX">닫기</button></div><div class="gdTabs" role="tablist" id="gdTabs"></div><div class="gdBody" id="gdBody"></div></div>';document.body.appendChild(g)}
-  GD_CUR=GD[k]?k:'why';gdDraw();g.hidden=false;document.getElementById('gdX').focus()}
+function gdOpen(k){manOpen('join',k)}   /* 예전 회원가입 안내 → 회원가입 매뉴얼 (11-11) */
 function gdClose(){var g=document.getElementById('gdBg');if(g)g.hidden=true}
 document.addEventListener('click',function(e){var t=e.target;if(!t||!t.closest)return;
   var o=t.closest('[data-gd]');if(o){e.preventDefault();e.stopPropagation();gdOpen(o.getAttribute('data-gd'));return}
@@ -944,7 +951,140 @@ document.addEventListener('click',function(e){var t=e.target;if(!t||!t.closest)r
   if(t===g||t.id==='gdX'){gdClose();return}
   var k=t.closest('[data-gdk]');if(k){GD_CUR=k.getAttribute('data-gdk');gdDraw();return}
   if(t.closest('#gdAsk')){e.preventDefault();gdClose();S.ask=null;S.askDone=false;go('ask')}},true);
-document.addEventListener('keydown',function(e){if(e.key==='Escape')gdClose()});
+document.addEventListener('keydown',function(e){if(e.key==='Escape'){gdClose();if(typeof CS!=='undefined'&&CS.open){CS.open=false;csDraw()}}});
+/* 매뉴얼 · 자동 상담 (11-11): 회원가입 매뉴얼 · 원장 매뉴얼. 자동 상담은 이 글만 근거로 찾아 줌 (q = 찾는 말) */
+var MAN={
+ join:{t:'회원가입 매뉴얼',s:[
+  {k:'why',t:'왜 가입하나요',q:['왜','가입 이유','무엇','좋은 점','혜택','회원 사이트'],h:GD.why.h},
+  {k:'who',t:'나는 어떤 회원?',q:['어떤 회원','회원 종류','교사회원','연수교사','관계자','학부모','누가'],h:
+   '<p>회원 확인에서 이름 · 휴대전화를 넣으면 나에게 맞는 가입 길을 알려 드려요.</p><ul>'+
+   '<li><b>기존 회원</b> · 협회 명단에 있는 선생님. 정보가 미리 들어가 있어 빈칸만 채우면 돼요.</li>'+
+   '<li><b>명단에 없는 선생님</b> · 교사회원(스즈키 교사 자격이 있는 선생님) 또는 연수교사(지금 초급 연수 중인 선생님).</li>'+
+   '<li><b>관계자</b> · 반주자 · 스태프 · 통역 · 초청 강사 · 초빙교수처럼 행사에서 일하거나 강사료를 받는 분. 회비는 없어요.</li>'+
+   '<li><b>학부모</b> · 내년 4월부터 학부모 가입을 열 예정이에요. 지금은 원장님이 학원 학생으로 등록해 주세요.</li></ul>'},
+  {k:'mem',t:'기존 회원 가입',q:['기존 회원','명단에 있','교사회원 가입하기','가입 방법','가입하기','회원가입'],h:GD.mem.h+
+   '<div class="gdBox w"><b>협회 명단과 다른 이메일로 가입하면</b> 남의 정보를 가져가는 일을 막으려고 협회가 확인한 뒤 계정이 열려요. 되도록 협회에 알려 둔 이메일로 가입해 주세요.</div>'},
+  {k:'new',t:'명단에 없는 선생님',q:['명단에 없','새 회원','신규','연수교사 가입','처음 가입'],h:GD['new'].h},
+  {k:'ext',t:'관계자(외부인)',q:['관계자','외부인','반주자','스태프','통역','강사료','초빙'],h:GD.ext.h},
+  {k:'code',t:'인증 코드가 안 와요',q:['인증 코드','인증코드','코드가 안','메일이 안','이메일이 안','스팸','코드 다시'],h:
+   '<ol><li>인증 코드는 <b>10분</b> 안에 넣어야 해요. 지나면 「코드 다시 받기」를 눌러 주세요.</li>'+
+   '<li>메일함에 없으면 <b>스팸함 · 프로모션함</b>을 봐 주세요. 보낸 이름은 「한국스즈키음악협회」, 제목은 「[스즈키] 인증 코드 …」예요.</li>'+
+   '<li>이메일 주소에 오타가 없는지 확인해 주세요 (naver.com · gmail.com 등).</li>'+
+   '<li>그래도 안 오면 카카오톡 채널 「suzukimusickorea」로 이름 · 휴대전화 · 이메일을 알려 주세요.</li></ol>'},
+  {k:'notfound',t:'명단에 있는데 「없어요」가 나와요',q:['없어요','못 찾','명단에 없다고','번호가 바뀌','휴대전화 바뀌','이름이 달라'],h:
+   '<ul><li>협회 명단의 <b>휴대전화 번호가 예전 번호</b>일 수 있어요. 예전 번호로 한 번 더 해 보세요.</li>'+
+   '<li>이름 띄어쓰기 · 영문 이름이 다를 수 있어요.</li>'+
+   '<li>그래도 안 되면 「협회 명단에 없어요」로 가입해도 괜찮아요. 협회가 확인해서 <b>기존 기록과 합쳐</b> 드려요 (근무 · 회비 기록이 그대로 이어져요).</li></ul>'},
+  {k:'login',t:'로그인 · 비밀번호',q:['로그인','비밀번호','비번','잊었','재설정','잠겼','열 수 없','구글 계정'],h:
+   '<ul><li>가입한 <b>이메일 + 비밀번호</b>로 로그인해요. 캠프 접수도 같은 이메일 · 비밀번호예요.</li>'+
+   '<li>비밀번호를 잊었으면 로그인 화면 <b>「비밀번호를 잊었어요」</b> → 가입한 이메일 → 「재설정 코드 받기」 → 코드와 새 비밀번호.</li>'+
+   '<li>여러 번 틀리면 15분 동안 잠겨요. 잠시 뒤 다시 해 주세요.</li>'+
+   '<li>화면 대신 「현재 파일을 열 수 없습니다」가 나오면 구글 계정이 여러 개 로그인돼 있어서예요. 화면 아래 안내대로 <b>크롬 시크릿 창</b>이나 다른 브라우저에서 열어 주세요.</li>'+
+   '<li>카카오톡에서 열면 크롬으로 넘어가요. 넘어가지 않으면 주소를 복사해 크롬에 붙여 주세요.</li></ul>'},
+  {k:'me',t:'내 정보 고치기',q:['내 정보','주소','우편물','계좌','사진','성별','소속 학원','근무','정보 수정','고치'],h:
+   '<p>오른쪽 위 <b>「내 정보」</b>에서 언제든 고쳐요. 마감은 없어요.</p><ul>'+
+   '<li><b>기본 정보</b> · 이름 · 성별(필수) · 휴대전화 · 전공 · 자격.</li>'+
+   '<li><b>소속 학원</b> · 근무 시작 년 · 월, 그만둔 학원은 끝낸 날짜. 주 소속을 골라요.</li>'+
+   '<li><b>우편물 받을 주소</b> · 협회 우편물(공문 · 포스터)이 가는 곳이에요. 직접 넣어야 빠지지 않아요.</li>'+
+   '<li><b>강사료 정보</b> · 강사료를 받으실 분만 계좌 · 주민등록번호.</li><li><b>사진</b> · 행사 책자에 쓰여요. 정면, 밝은 배경이 좋아요.</li></ul>'},
+  {k:'privacy',t:'개인정보는 안전한가요',q:['개인정보','주민','주민등록번호','암호화','안전','보안'],h:
+   '<ul><li>주민등록번호는 <b>강사료를 받을 때만</b> 넣는 선택 항목이에요. 암호화해서 협회 관리자만 열 수 있고, 열면 기록이 남아요.</li>'+
+   '<li>계좌 · 주소도 관리자 전용 파일에 따로 보관해요.</li><li>게시판 · 문의 글에는 주민등록번호 · 계좌번호를 적지 말아 주세요.</li></ul>'},
+  {k:'event',t:'행사 신청 (캠프 · 졸업연주 · 교사연수)',q:['캠프','겨울','음악제','졸업연주','교사연수','행사','신청','접수'],h:
+   '<ul><li>위쪽 <b>「행사 참여」</b>에서 지금 신청할 수 있는 행사가 나와요.</li>'+
+   '<li>겨울 음악제(캠프)는 <b>12월 1일</b>부터 접수해요. 같은 이메일 · 비밀번호로 들어가요.</li>'+
+   '<li>학생은 <b>회비가 확인된(또는 입금 신고한) 학생</b>이 회원으로 접수돼요. 원장님이 학생 회비를 미리 챙겨 주세요.</li>'+
+   '<li>접수 중에도 학생 · 정보를 고치면 5분 안에 접수 명단에 반영돼요.</li></ul>'},
+  {k:'ask',t:'문의 · 상담',q:['문의','상담','게시판','질문','연락','카카오','카톡'],h:
+   '<ul><li>먼저 오른쪽 아래 <b>「상담하기」</b>에 궁금한 것을 적어 보세요. 매뉴얼에서 맞는 답을 찾아 드려요.</li>'+
+   '<li>답이 없으면 로그인한 뒤 <b>「내 문의」</b>에 남겨 주세요. 어디 일인지 · 어떤 글인지 고르면 담당자가 빨리 봐요. 답은 화면과 이메일로 와요.</li>'+
+   '<li>로그인이 안 되면 카카오톡 채널 <b>「suzukimusickorea」</b>로 알려 주세요.</li></ul>'}]},
+ dir:{t:'원장 매뉴얼',s:[
+  {k:'start',t:'원장님 화면 한눈에',q:['원장','처음','메뉴','어디서','한눈에','화면'],h:
+   '<p>로그인하면 위쪽에 <b>학원 관리 · 교사 관리 · 학생 관리 · 내 정보</b>가 보여요. 오른쪽 위에는 행사 참여 · 내 문의가 있어요.</p>'+
+   '<ul><li>입력 <b>마감은 없어요</b>. 고친 내용은 5분 안에 캠프 · 졸업연주 접수 명단에 반영돼요.</li>'+
+   '<li>표는 칸 제목을 누르면 정렬, 칸 끝을 끌면 너비 조절, 위 「표에서 찾기」로 찾아요. 아래로 내려도 위 필터와 칸 제목은 그대로 있어요.</li></ul>'},
+  {k:'acad',t:'학원 관리',q:['학원 관리','학원 정보','서류','사업자등록증','교육청','인가증','임대','등기부','계약'],h:
+   '<ul><li><b>학원 정보</b> · 이름 · 주소 · 연락처와 서류 · 협회 계약 상태가 결과로 보여요.</li>'+
+   '<li>서류는 <b>「학원 정보 수정」</b>에서 올려요: 사업자등록증 · 교육청 인가증 · 임대계약서(등기부등본).</li>'+
+   '<li>아래 <b>교사 명단 · 학생 명단</b> 탭과 전공별 탭으로 우리 학원 사람을 한눈에 봐요.</li></ul>'},
+  {k:'tch',t:'교사 관리',q:['교사 관리','선생님 정보','강사','자격','티처트레이너','휴직','복귀','퇴직','근무 시작','교사 회비'],h:
+   '<ol><li>표에서 바로 고쳐요: 이름 · 성별 · 휴대전화 · 직급 · 전공 · 회원 구분 · <b>자격</b>(여러 개 고르기, 티처트레이너 포함).</li>'+
+   '<li>다 고친 뒤 위쪽 <b>「저장」</b>을 한 번 눌러요.</li>'+
+   '<li>줄 끝 <b>「자세히」</b>에서: 근무 시작 날짜, <b>휴직 · 복귀 · 퇴직 · 다시 근무 시작</b>을 날짜와 함께 추가해요.</li>'+
+   '<li>같은 곳에서 <b>학생 배정</b>(체크 + 시작일), 해마다 낸 <b>교사 회비</b>, 선생님이 넣은 집 주소를 봐요.</li></ol>'},
+  {k:'stu',t:'학생 관리 · 학생 추가',q:['학생 관리','학생 추가','학생 등록','원생','재원','휴원','퇴원','출생','성별','명단'],h:
+   '<ol><li><b>「+ 학생 추가」</b> → 새 줄에 상태 · 이름 · <b>성별(필수)</b> · 출생연도 · 전공 · 담당 선생님 · 재원 시작을 넣어요.</li>'+
+   '<li>아래 <b>「저장」</b>을 눌러야 반영돼요. 저장 전에는 「되돌리기」로 취소할 수 있어요.</li>'+
+   '<li>휴원 · 퇴원은 상태를 바꾸고 그 날짜를 넣어요. 바뀐 상태는 이력으로 남아요. 「휴원 · 퇴원도 보기」를 켜면 다시 보여요.</li>'+
+   '<li>한 학생은 <b>한 학원에만</b> 재원할 수 있어요.</li><li>넣거나 고친 학생은 협회가 확인해요.</li></ol>'},
+  {k:'tutor',t:'담당 선생님 바꾸기',q:['담당','담당 선생님','선생님 바꾸','선생님 변경','배정'],h:
+   '<ul><li>담당 선생님 칸에는 학생 <b>전공에 맞는 선생님만</b> 나와요.</li>'+
+   '<li>바꾸면 옆에 <b>「부터 [날짜]」</b>가 나와요. 그 날짜부터 새 선생님, 앞 선생님은 전날까지로 기록돼요.</li>'+
+   '<li>「자세히」의 「이 선생님으로 바꾸기」에서도 날짜를 골라 바꿀 수 있어요.</li></ul>'},
+  {k:'dues',t:'학생 회비 · 입금 신고',q:['회비','입금','입금 신고','납부','미납','반려','확인 대기','연회비'],h:
+   '<ol><li>회비를 협회 통장에 낸 뒤, 학생 줄 <b>「자세히」 → 입금 신고</b>에 낸 금액 · 낸 날짜(입금일)를 넣어요.</li>'+
+   '<li>협회가 통장과 맞춰 보고 <b>확인</b>해요. 날짜 · 금액이 다르면 고쳐서 확인하거나 사유와 함께 <b>반려</b>해요.</li>'+
+   '<li>확인되면 회비 칸이 <b>납부</b>로 바뀌고 회원 자격이 시작돼요.</li></ol>'},
+  {k:'term',t:'회원 자격 · 잔여기간',q:['잔여기간','자격','기간','만료','개월','남은','언제부터','12개월','빨간'],h:
+   '<ul><li>학생 회원 자격은 <b>입금일 기준 12개월</b>이에요 (협회 확인 날짜가 아니에요).</li>'+
+   '<li>처음 내면 <b>재원 시작 다음 달</b>부터, 계속 다니는 학생은 <b>앞 자격이 끝난 다음 달</b>부터 이어져요. 늦게 내도 거슬러 계산해요.</li>'+
+   '<li>휴원 중에도 자격 기간은 멈추지 않아요.</li>'+
+   '<li>잔여기간은 N개월로 보이고, 한 달 미만이면 <b>빨간 N일</b>, 끝나면 「만료」예요.</li></ul>'},
+  {k:'camp',t:'캠프 접수와 학생 회비',q:['캠프','음악제','접수','회원가','비회원','12월'],h:
+   '<ul><li>캠프는 12월 1일부터 같은 이메일 · 비밀번호로 접수해요.</li>'+
+   '<li>접수 화면에 우리 학원 학생과 회비 상태가 자동으로 나와요. 회비가 확인되었거나 입금 신고한 학생이 회원으로 접수돼요.</li>'+
+   '<li>접수 중에 학생을 추가 · 수정해도 5분 안에 접수 화면에 반영돼요.</li></ul>'},
+  {k:'tview',t:'선생님 회원이 보는 화면',q:['선생님 화면','강사 화면','내 학생','선생님도'],h:
+   '<ul><li>원장이 아닌 선생님은 <b>내 학생 · 내 정보</b>가 보여요.</li>'+
+   '<li>원장님이 배정한 학생만 보이고, 「보기」에서 입금 신고를 할 수 있어요. 학생 정보 수정은 원장님이 해요.</li></ul>'},
+  {k:'faq',t:'자주 묻는 것',q:['마감','두 학원','언제까지','반영','학부모'],h:
+   '<ul><li><b>마감</b>이 없어요. 언제든 넣고 고쳐요.</li><li>학생은 두 학원에 동시에 재원할 수 없어요.</li>'+
+   '<li>학부모 가입은 내년 4월부터 열 예정이에요. 그 전에는 원장님이 학생을 등록해요.</li>'+
+   '<li>더 궁금하면 오른쪽 아래 「상담하기」 → 답이 없으면 「내 문의」로 남겨 주세요.</li></ul>'}]}
+};
+var MAN_CUR={m:'join',k:'why'};
+function manText(h){var d=document.createElement('div');d.innerHTML=h;return (d.textContent||'').replace(/\s+/g,' ').trim()}
+function manOpen(m,k){var g=document.getElementById('gdBg');if(!g){g=document.createElement('div');g.className='gdBg';g.id='gdBg';g.setAttribute('role','dialog');g.setAttribute('aria-modal','true');g.setAttribute('aria-labelledby','gdT');
+    g.innerHTML='<div class="gdSheet"><div class="gdHd"><b id="gdT"></b><button type="button" class="gdX" id="gdX">닫기</button></div><div class="gdMans" id="gdMans"></div><div class="gdTabs" role="tablist" id="gdTabs"></div><div class="gdBody" id="gdBody"></div></div>';document.body.appendChild(g)}
+  MAN_CUR.m=MAN[m]?m:'join';var L=MAN[MAN_CUR.m].s;MAN_CUR.k=L.some(function(x){return x.k===k})?k:L[0].k;manDraw();g.hidden=false;document.getElementById('gdX').focus()}
+function manDraw(){var M=MAN[MAN_CUR.m],sec=M.s.filter(function(x){return x.k===MAN_CUR.k})[0]||M.s[0];
+  document.getElementById('gdT').textContent=M.t;
+  document.getElementById('gdMans').innerHTML=Object.keys(MAN).map(function(m){return '<button type="button" data-manm="'+m+'" aria-pressed="'+(m===MAN_CUR.m)+'">'+MAN[m].t+'</button>'}).join('');
+  document.getElementById('gdTabs').innerHTML=M.s.map(function(x){return '<button type="button" role="tab" aria-selected="'+(x.k===sec.k)+'" data-mank="'+x.k+'">'+x.t+'</button>'}).join('');
+  var b=document.getElementById('gdBody');b.innerHTML='<h3 style="margin-top:0">'+sec.t+'</h3>'+sec.h+'<div class="gdBox b"><b>더 궁금하면</b> 오른쪽 아래 「상담하기」에 물어보거나, 로그인한 뒤 「내 문의」에 남겨 주세요. 로그인이 안 되면 카카오톡 채널 「suzukimusickorea」.</div>';b.scrollTop=0}
+/* 자동 상담: 매뉴얼 글에서 찾아 답함 */
+var CS={open:false,log:[]};
+function csNorm(x){return String(x||'').toLowerCase().replace(/[\s·.,?!~「」()\-]/g,'')}
+function csFind(q){var nq=csNorm(q),toks=String(q).split(/[\s,.?!]+/).filter(function(t){return t.length>=2}),out=[];
+  Object.keys(MAN).forEach(function(m){MAN[m].s.forEach(function(x){var sc=0,tx=csNorm(x.t+' '+manText(x.h));
+    x.q.forEach(function(w){if(nq.indexOf(csNorm(w))>=0)sc+=3});if(nq.indexOf(csNorm(x.t))>=0)sc+=3;
+    toks.forEach(function(t){var n=csNorm(t);if(n.length>=2&&tx.indexOf(n)>=0)sc+=1;else if(n.length>=3&&tx.indexOf(n.slice(0,n.length-1))>=0)sc+=0.5});
+    if(sc>=2)out.push({m:m,x:x,sc:sc+(m==='dir'&&S.me&&isDirector()?0.5:0)})})});
+  return out.sort(function(a,b){return b.sc-a.sc}).slice(0,3)}
+function isDirector(){try{return !!(headInfo().hs||[]).length}catch(e){return false}}
+var CS_CHIPS=['가입은 어떻게 해요?','인증 코드가 안 와요','비밀번호를 잊었어요','학생 추가','회비 입금 신고','회원 잔여기간','담당 선생님 바꾸기','캠프 접수'];
+function csAnswer(q){var R=csFind(q);if(!R.length)return '<p>매뉴얼에서 맞는 답을 찾지 못했어요. 다르게 물어보거나, '+(S.sess?'「내 문의」에 남겨 주세요.':'로그인한 뒤 「내 문의」에 남겨 주세요. 로그인이 안 되면 카카오톡 채널 「suzukimusickorea」로 알려 주세요.')+'</p><div class="csAct"><button type="button" class="btn small primary" data-csask="1">'+(S.sess?'문의 남기기':'로그인하고 문의 남기기')+'</button></div>';
+  return R.map(function(r,i){var t=manText(r.x.h);return '<div class="csAns"><b>'+(i?'':'이 안내가 맞을 것 같아요 · ')+esc(MAN[r.m].t)+' › '+esc(r.x.t)+'</b><div class="csTx">'+(i?esc(t.slice(0,90))+'…':r.x.h)+'</div><button type="button" class="btn small" data-man="'+r.m+'|'+r.x.k+'">매뉴얼에서 보기</button></div>'}).join('')+'<p class="hint" style="margin:6px 0 0">답이 안 되면 <button type="button" class="linkish" data-csask="1">문의 남기기</button></p>'}
+function csDraw(){var p=document.getElementById('csPanel');if(!p)return;p.hidden=!CS.open;document.getElementById('csFab').setAttribute('aria-expanded',String(CS.open));if(!CS.open)return;
+  var lg=document.getElementById('csLog');lg.innerHTML='<div class="csMsg bot">안녕하세요. 회원가입 · 원장 매뉴얼에서 답을 찾아 드려요. 궁금한 것을 적거나 아래에서 골라 주세요.</div><div class="csChips">'+CS_CHIPS.map(function(c){return '<button type="button" data-csq="'+esc(c)+'">'+esc(c)+'</button>'}).join('')+'</div>'+
+    CS.log.map(function(m){return '<div class="csMsg '+m.w+'">'+m.h+'</div>'}).join('');lg.scrollTop=lg.scrollHeight}
+function csAsk(q){q=String(q||'').trim();if(!q)return;CS.log.push({w:'me',h:esc(q)});CS.log.push({w:'bot',h:csAnswer(q)});if(CS.log.length>30)CS.log=CS.log.slice(-30);csDraw();var i=document.getElementById('csIn');if(i){i.value='';i.focus()}}
+function csMount(){if(document.getElementById('csFab'))return;var f=document.createElement('button');f.type='button';f.id='csFab';f.className='csFab';f.setAttribute('aria-controls','csPanel');f.setAttribute('aria-expanded','false');
+  f.innerHTML='<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg><span>상담하기</span>';document.body.appendChild(f);
+  var p=document.createElement('div');p.id='csPanel';p.className='csPanel';p.hidden=true;p.setAttribute('role','dialog');p.setAttribute('aria-label','자동 상담');
+  p.innerHTML='<div class="csHd"><b>자동 상담</b><span class="csMan"><button type="button" data-man="join|why">회원가입 매뉴얼</button><button type="button" data-man="dir|start">원장 매뉴얼</button></span><button type="button" class="gdX" id="csX" aria-label="닫기">닫기</button></div><div class="csLog" id="csLog"></div><form class="csForm" id="csForm"><input type="text" id="csIn" placeholder="예) 인증 코드가 안 와요" autocomplete="off" maxlength="100"><button type="submit" class="btn small primary">묻기</button></form>';document.body.appendChild(p)}
+document.addEventListener('click',function(e){var t=e.target;if(!t||!t.closest)return;
+  if(t.closest('#csFab')){CS.open=!CS.open;csDraw();if(CS.open){var i=document.getElementById('csIn');if(i)i.focus()}return}
+  if(t.closest('#csX')){CS.open=false;csDraw();return}
+  var q=t.closest('[data-csq]');if(q){csAsk(q.getAttribute('data-csq'));return}
+  var a=t.closest('[data-csask]');if(a){CS.open=false;csDraw();if(S.sess){S.ask=null;S.askDone=false;go('ask')}else go('login');return}
+  var mm=t.closest('[data-man]');if(mm){e.preventDefault();var p2=mm.getAttribute('data-man').split('|');manOpen(p2[0],p2[1]);return}
+  var g=document.getElementById('gdBg');if(!g||g.hidden)return;
+  var m2=t.closest('[data-manm]');if(m2){MAN_CUR.m=m2.getAttribute('data-manm');MAN_CUR.k=MAN[MAN_CUR.m].s[0].k;manDraw();return}
+  var k2=t.closest('[data-mank]');if(k2){MAN_CUR.k=k2.getAttribute('data-mank');manDraw();return}},true);
+document.addEventListener('submit',function(e){if(e.target&&e.target.id==='csForm'){e.preventDefault();csAsk(document.getElementById('csIn').value)}});
+csMount();
 
 (function start(){try{S.sess=sessionStorage.getItem('tm-sess')||''}catch(x){}
   var go0=function(){call('tHello').then(function(h){if(h.ok){S.test=!!h.test;S.acads=h.acads||[]}
@@ -953,6 +1093,6 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')gdClose()});
   try{google.script.url.getLocation(function(l){var pr=l&&l.parameter||{},a=pr.as;if(a)setSess(a);if('ask' in pr||pr.v==='ask'){S.v0='ask'}if(pr.guide!==undefined)S.gd0=pr.guide||'why';go0()})}catch(x){go0()}})();
 </script>
 <script>try{window.top.postMessage('suzuki-ready','*')}catch(e){}</script>
-<div id="bldMark" hidden>빌드표시 20261111-223215 </div>
+<div id="bldMark" hidden>빌드표시 20261111-223802 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();</script>
 </body></html>

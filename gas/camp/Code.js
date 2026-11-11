@@ -1,4 +1,4 @@
-/* build: 20261112-022342 */
+/* build: 20261112-023000 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -3395,8 +3395,39 @@ function audPreMap_(acads) {
 function audPreList(token) {
   const u = who_(token), C = audCfg_(), cons = Object.keys(C).filter(k => C[k].pre), td = today_();
   const stu = rows_(SH.S).filter(r => r['ID'] && u.acads.includes(String(r['학원']))).map(r => ({ id: String(r['ID']), name: String(r['이름']), acad: String(r['학원']), inst: String(r['악기'] || ''), tag: String(r['구분 표시'] || '') }));
-  const rows = audRows_().filter(r => !r.pid && r.sid && u.acads.includes(r.acad)).map(r => ({ id: r.id, at: r.at, sid: r.sid, name: r.name, acad: r.acad, con: r.con, url: r.url, comp: r.comp, title: r.title, inst: r.rinst, by: r.by, st: C[r.con] && C[r.con].pub ? r.st : '심사 중' }));
+  const rows = audRows_().filter(r => !r.pid && r.sid && u.acads.includes(r.acad)).map(r => ({ id: r.id, at: r.at, sid: r.sid, name: r.name, acad: r.acad, con: r.con, url: r.url, comp: r.comp, title: r.title, inst: r.rinst, by: r.by, st: C[r.con] && C[r.con].pub ? r.st : '심사 중', ed: audPreCanEdit_(r, C, td) }));
   return { ok: true, today: td, acads: u.acads, cons: cons.map(k => ({ name: k, end: C[k].end, open: !C[k].end || td <= C[k].end })), stu, rows };
+}
+/** 고치기 · 지우기 (11-12): 우리 학원 줄 · 음악회 마감 전 · 아직 심사 전(심사자 없음)일 때만 */
+function audPreCanEdit_(r, C, td) { const c = C[r.con]; return !!(c && (!c.end || td <= c.end) && !r.rv && (r.st === '심사 전' || !r.st)); }
+function audPreFind_(u, id) {
+  const r = audRows_().find(x => x.id === String(id || '') && !x.pid && x.sid);
+  if (!r || !u.acads.includes(r.acad)) throw new Error('고칠 음원을 찾지 못했어요. 화면을 새로 고쳐 주세요.');
+  if (!audPreCanEdit_(r, audCfg_(), today_())) throw new Error('마감이 지났거나 심사가 시작돼서 고칠 수 없어요. 협회에 문의해 주세요.');
+  return r;
+}
+function audPreEdit(token, id, o) {
+  const u = who_(token); o = o || {}; const url = String(o.url || '').trim(), con = String(o.con || ''), comp = String(o.comp || '').trim().slice(0, 60), title = String(o.title || '').trim().slice(0, 120);
+  if (!audUrlOk_(url)) throw new Error('주소를 https:' + '//' + ' 로 시작하게 넣어 주세요.');
+  if (!title) throw new Error('곡명을 넣어 주세요.');
+  const C = audCfg_()[con]; if (!C || !C.pre) throw new Error((con || '그') + ' 음악회는 지금 음원을 받지 않아요.');
+  if (C.end && today_() > C.end) throw new Error(con + ' 음원 마감(' + C.end + ')이 지났어요.');
+  const lock = lock_();
+  try {
+    const r = audPreFind_(u, id), sh = SpreadsheetApp.getActive().getSheetByName(AUD), head = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0].map(String);
+    const set = (h, v) => { const c = head.indexOf(h); if (c >= 0) sh.getRange(r._row, c + 1).setValue(v); };
+    set('음악회', con); set('주소', "'" + url); set('작곡가', comp); set('곡명', title); set('메모', ('고침 ' + stamp_() + ' ' + u.name + ' ' + (r.memo || '')).slice(0, 300));
+    log_(u.name, '음원 먼저 내기 고침', r.name + ' · ' + r.id);
+  } finally { lock.releaseLock(); }
+  return audPreList(token);
+}
+function audPreDel(token, id) {
+  const u = who_(token), lock = lock_();
+  try {
+    const r = audPreFind_(u, id); SpreadsheetApp.getActive().getSheetByName(AUD).deleteRow(r._row);
+    log_(u.name, '음원 먼저 내기 지움', r.name + ' · ' + r.con + ' · ' + r.id);
+  } finally { lock.releaseLock(); }
+  return audPreList(token);
 }
 function audPreAdd(token, o) { return audPreAddMany(token, [o]); }
 /** 여러 학생 한꺼번에 (11-12). 명단에 없는 학생은 o.nw = {name, inst, acad} → 학생ID 'N:이름' (캠프 접수 때 같은 학원 · 같은 이름에 붙음). 하나라도 틀리면 아무것도 안 냄 */

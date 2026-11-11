@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261111-232337 -->
+<!-- build: 20261111-233002 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -65,6 +65,8 @@ input[type=date]{width:140px}
 .tbl{overflow-x:auto}
 .robar{background:var(--rosin-soft);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:15.5px}
 .cc h3{font-size:17px;margin:0 0 8px}.cc .panel{margin-bottom:10px}.ccg{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px 14px}.ccg label{display:grid;gap:4px;font-size:15px;font-weight:600}.ccg label .hint{font-weight:400;font-size:13.5px}.ccg .w2{grid-column:span 2}
+.ccg4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px 14px}.ccg4 label{display:grid;gap:4px;font-size:15px;font-weight:600;align-content:start}.ccg4 label.all{grid-column:1/-1}.ccg4 label small{font-weight:400}.ccg4 input{padding:6px 8px;border:1px solid var(--line);border-radius:6px;font:inherit;background:var(--surface);color:var(--ink);min-width:0;width:100%;box-sizing:border-box}
+@media (max-width:700px){.ccg4{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .ccons{display:grid;gap:6px;padding:10px 0;border-top:1px solid var(--line)}.ccons textarea{width:100%;font:inherit;font-size:15px;line-height:1.55;padding:8px 10px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink);resize:vertical}.cct tr.gfee td{background:var(--sunk)}
 .cct input[data-fauto]{background:var(--accent-soft) !important;border-color:transparent !important;color:var(--accent)}.cct tr.fadd th{background:var(--sunk);font-weight:500}.cct select[data-frbase]{padding:5px 8px;border:1px solid var(--line);border-radius:6px;font:inherit}
 .ccg input,.ccg select,.cct input{padding:6px 8px;border:1px solid var(--line);border-radius:6px;font:inherit;background:var(--surface);color:var(--ink);min-width:0}.cct input[type=date]{min-width:140px}.cct td{vertical-align:middle}
@@ -2653,12 +2655,12 @@ function vDoc(){if(!S.cc)S.cc=ccCopy();const c=S.cc;if(!c.base)return '<div clas
     <label>끝 협회 이름<span class="row" style="gap:6px;flex-wrap:nowrap">${inp('doc.sign','check')} 넣기</span></label>
     <label class="w2">여백 <span class="hint">mm · 0~40 · 미리보기와 인쇄에 같이</span><span class="row" style="gap:10px;flex-wrap:wrap">${[['t','위'],['b','아래'],['l','왼쪽'],['r','오른쪽']].map(([k,l])=>`<span class="row" style="gap:4px;flex-wrap:nowrap"><small>${l}</small><input type="number" min="0" max="40" step="1" data-dmg="${k}" value="${dMg(c)[k]}" style="width:64px"></span>`).join('')}<button class="btn small ghost" type="button" data-dmgreset="1">기본값</button></span></label></div>
     <label style="display:block;margin-top:8px">머리말 ${ta('doc.intro','dintro',3)}</label></div>
-  <div class="panel"><h3>캠프 기본 <span class="hint">= 캠프 설정</span></h3><div class="ccg">
-    <label class="w2">캠프 이름${inp('base.name','text','maxlength="60"')}</label>
-    <label>시작일 <small class="faint">${dw(b.start)}</small>${inp('base.start','date')}</label><label>시작 시각 <span class="hint">공문에만</span>${inp('doc.t1','text','maxlength="20" placeholder="14시"')}</label>
-    <label>끝나는 날 <small class="faint">${dw(b.end)}</small>${inp('base.end','date')}</label><label>끝 시각${inp('doc.t2','text','maxlength="20" placeholder="12시"')}</label>
-    <label class="w2">장소${inp('base.place','text','maxlength="80" placeholder="추후 안내"')}</label>
-    <label>접수 시작${inp('base.open','date')}</label><label>접수 마감${inp('base.close','date')}</label></div></div>
+  <div class="panel"><h3>캠프 기본 <span class="hint">= 캠프 설정</span></h3><div class="ccg4">
+    <label class="all"><span>캠프 이름</span>${inp('base.name','text','maxlength="60"')}</label>
+    <label class="all"><span>장소</span>${inp('base.place','text','maxlength="80" placeholder="추후 안내"')}</label>
+    <label><span>시작일 <small class="faint">${dw(b.start)}</small></span>${inp('base.start','date')}</label><label><span>시작 시각 <small class="faint">공문에만</small></span>${inp('doc.t1','text','maxlength="20" placeholder="14시"')}</label>
+    <label><span>끝나는 날 <small class="faint">${dw(b.end)}</small></span>${inp('base.end','date')}</label><label><span>끝 시각 <small class="faint">공문에만</small></span>${inp('doc.t2','text','maxlength="20" placeholder="12시"')}</label>
+    <label><span>접수 시작</span>${inp('base.open','date')}</label><label><span>접수 마감</span>${inp('base.close','date')}</label></div></div>
   <div class="panel tbl"><div class="spread"><h3>차수 · 참가비 <span class="hint">= 캠프 설정 참가비표 (회원 · 원)</span></h3><button class="btn small" type="button" data-ccr="add" ${R.length>=6?'disabled':''}>＋ 차수 추가</button></div>
     <table class="pft cct dfeet"><thead><tr><th>차수</th><th>시작</th><th>끝</th><th class="r">1차보다 +</th><th></th></tr></thead><tbody>
     ${R.map((r,i)=>`<tr><td>${inp('rounds.'+i+'.n','text','maxlength="10" style="width:44px"')}</td><td>${inp('rounds.'+i+'.from','date')}</td><td>${inp('rounds.'+i+'.to','date')}</td><td>${i?`<input type="text" inputmode="numeric" class="num" data-dinc="${i}" value="${d.inc[i]!=null?(+d.inc[i]).toLocaleString('ko-KR'):''}" placeholder="${dIncNow(c,i)}" title="넣으면 1차 금액 + 이 금액으로 맞추고, 1차를 바꿀 때 같이 바뀌어요" style="width:72px">`:'<small class="faint">기준</small>'}</td><td>${R.length>1?`<button class="btn small ghost" type="button" data-ccr="del|${i}" title="이 차수 빼기" aria-label="이 차수 빼기">×</button>`:''}</td></tr>`).join('')}</tbody></table>
@@ -4391,6 +4393,6 @@ document.addEventListener('click',e=>{if(S.tab!=='book')return;const b=e.target.
   if(b.id==='ebSetSave'){const n=Object.assign(ebSet(),S.ebSetW||{});n.per=Math.max(1,Math.min(10,Math.round(+n.per||5)));n.fs=Math.max(5,Math.min(10,+n.fs||6.6));['en','sub','org'].forEach(k=>n[k]=String(n[k]||'').trim().slice(0,120));
     ebSend([],[],n,()=>{S.ebSetW=null;toast('책자 설정을 저장했어요')});return}},true);
 </script>
-<div id="bldMark" hidden>빌드표시 20261111-232337 </div>
+<div id="bldMark" hidden>빌드표시 20261111-233002 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();</script>
 </body></html>

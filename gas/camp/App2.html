@@ -1,15 +1,25 @@
-/* build: 20261112-021139 */
-function vAuthPick(){return gdBtn()+apDoor()+`<section class="sec"><h2>접수 시작</h2>
-  <p class="lede">어떻게 접수하시나요?</p>
-  <div class="pick2">
+/* build: 20261112-021340 */
+function vAuthPick(){const off=!!CAMP.pre;return gdBtn()+apDoor()+`<section class="sec"><h2>접수 시작</h2>
+  ${off?`<p class="note warn" style="margin:6px 0 12px"><b>${+CAMP.pre.slice(5,7)}월 ${+CAMP.pre.slice(8,10)}일에 접수가 열려요.</b> 그 전에 아래에서 회원가입을 마쳐 두세요.</p>`:'<p class="lede">어떻게 접수하시나요?</p>'}
+  <div class="pick2${off?' pickoff':''}"${off?' aria-disabled="true"':''}>
     ${MEMBER_OPEN?`<button type="button" class="pickcard" data-mode="member"><b>회원 선생님</b><span>협회 회원 선생님이 학원 학생들을 접수해요. 회원 이메일 · 비밀번호로 로그인해요.</span></button>`:''}
     ${GUEST_OPEN?`<button type="button" class="pickcard" data-mode="guest"><b>비회원 (학부모)</b><span>회원 학원에 다니지 않는 아이를 보호자가 직접 접수해요. 보호자 이름과 휴대전화만 있으면 돼요.</span></button>`:''}
     ${STAFF_OPEN?`<button type="button" class="pickcard" data-mode="staff"><b>관계자</b><span>초빙교수 · 반주자 · 지휘자 · 통역 · 초청강사 · 스태프. 협회 회원관리에 「관계자」로 가입한 이메일 · 비밀번호로 로그인해요.</span></button>`:''}
     ${INTL_OPEN?`<a class="pickcard" href="${esc(intlUrl())}" target="_blank" rel="noopener" style="text-decoration:none;color:inherit" lang="en"><b>Overseas participants <small style="font-weight:500">· 해외 참가</small></b><span>For groups from other countries. Registration is in English and fees are in USD. Your group leader signs in with the access code from the association. ↗</span></a>`:''}
   </div>
   ${typeof TEST_LOGIN==='string'&&TEST_LOGIN?`<button class="btn ghost" type="button" id="tLogin" style="border-style:dashed;margin-top:10px">STG 시험: ${esc(TEST_LOGIN.split('/')[0])} 선생님으로 바로 로그인</button>`:''}
+  ${off?sgBox():''}
   ${S.verr&&!S.user?`<p class="err" style="margin-top:8px">${esc(S.verr)}</p>`:''}
   ${GUEST_OPEN?'<p class="hint">회원 학원에 다니는 학생은 담당 선생님이 한꺼번에 접수해요. 잘 모르겠으면 다니는 학원 선생님께 먼저 여쭤 주세요.</p>':''}</section>`}
+/* 접수 전 회원가입 확인 (11-12): 이름 · 휴대전화 → 가입 여부 → 회원가입으로 */
+function sgBox(){const r=S.sgR,U=MEMBER_URL||'https:\/\/app.suzukimusickorea.org/member/';
+  const msg=!r?'':!r.ok?`<p class="err">${esc(r.msg||'')}</p>`:r.st==='ready'?`<p class="note ok"><b>회원가입이 되어 있어요.</b> 접수가 열리면 「회원 선생님」에서 회원 이메일 · 비밀번호로 로그인하세요.</p>`
+    :r.st==='wait'?`<p class="note info"><b>가입 신청이 들어와 있어요.</b> 협회가 확인하면 이메일로 알려 드려요. 다시 가입하지 않아도 돼요.</p>`
+    :r.st==='nosignup'?`<p class="note warn"><b>협회 회원 명단에는 있지만 아직 회원가입 전이에요.</b> 아래에서 회원가입을 해 주세요(명단의 이름 · 휴대전화로 바로 확인돼요).</p>`
+    :`<p class="note warn"><b>회원 명단에서 찾지 못했어요.</b> 처음이시면 아래에서 회원가입을 해 주세요. 이름 · 번호가 바뀌었으면 게시판에 남겨 주세요.</p>`;
+  return `<div class="sgBox"><h3>회원가입 확인</h3><p class="hint">캠프 접수는 협회 회원 계정으로 해요. 이름과 휴대전화를 넣으면 회원가입이 되어 있는지 알려 드려요.</p>
+    <div class="sgRow"><input type="text" id="sgName" value="${esc(S.sgN||'')}" placeholder="이름" autocomplete="name" aria-label="이름"><input type="tel" id="sgPhone" value="${esc(S.sgP||'')}" placeholder="휴대전화 010-0000-0000" inputmode="numeric" autocomplete="tel" aria-label="휴대전화"><button class="btn" type="button" id="sgChk">확인</button></div>
+    ${msg}<a class="btn primary sgGo" href="${esc(U)}" target="_blank" rel="noopener">회원가입 하러 가기 ↗</a></div>`}
 /* 이메일 칸: 회원관리 로그인과 같은 모양 (아이디 @ 주소 고르기 · 직접 입력) */
 const DOMAINS=['naver.com','gmail.com','daum.net','hanmail.net','kakao.com','nate.com','icloud.com','hotmail.com'];
 function emailBox(id,val){val=String(val||'');const at=val.indexOf('@'),u=at>=0?val.slice(0,at):val,d=at>=0?val.slice(at+1):'',known=DOMAINS.includes(d);

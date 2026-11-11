@@ -1,4 +1,4 @@
-/* build: 20261112-021139 */
+/* build: 20261112-021340 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -227,6 +227,29 @@ function login(name, phone, consent) {
   const t = teachers_().find(x => bare_(x.name) === nm && x.p4 && ph.endsWith(x.p4));
   if (!t) return { ok: false, msg: '회원 명단의 이름·휴대전화와 맞지 않아요.' };
   return loginT_(t, consent);
+}
+/** 접수 전(11-12): 이름 · 휴대전화로 회원가입이 되어 있는지만 알려 줌 (아무것도 저장 안 함, 번호마다 10분에 8번까지)
+ *  → { ok, st: 'ready'(가입 · 사용) | 'wait'(승인 대기) | 'nosignup'(명단에 있음 · 가입 전) | 'none'(명단에 없음) } */
+function signupCheck(name, phone) {
+  const nm = bare_(name), ph = String(phone || '').replace(/\D/g, '');
+  if (!nm || !/^01\d{8,9}$/.test(ph)) return { ok: false, msg: '이름과 휴대전화를 확인해 주세요.' };
+  const C = CacheService.getScriptCache(), k = 'sg_' + ph, n = +(C.get(k) || 0);
+  if (n >= 8) return { ok: false, msg: '여러 번 확인했어요. 10분 뒤 다시 해 주세요.' };
+  C.put(k, String(n + 1), 600);
+  const mid = memberSheetId_();
+  if (mid) {
+    try {
+      const ss = SpreadsheetApp.openById(mid), tv = ss.getSheetByName('교사').getDataRange().getDisplayValues(), th = tv[0];
+      const iI = th.indexOf('교사ID'), iN = th.indexOf('이름'), iP = th.indexOf('휴대전화'), iS = th.indexOf('상태');
+      const T = tv.slice(1).filter(r => r[iI] && bare_(r[iN]) === nm && String(r[iP]).replace(/\D/g, '') === ph && r[iS] !== '삭제');
+      if (!T.length) return { ok: true, st: 'none' };
+      const av = ss.getSheetByName('계정').getDataRange().getDisplayValues(), ah = av[0], aT = ah.indexOf('교사ID'), aS = ah.indexOf('상태');
+      const ids = T.map(r => String(r[iI])), A = av.slice(1).filter(r => ids.includes(String(r[aT])) && r[aS] !== '반려').map(r => r[aS]);
+      return { ok: true, st: A.includes('사용') ? 'ready' : A.includes('대기') ? 'wait' : 'nosignup' };
+    } catch (e) { Logger.log('signupCheck: ' + e.message); }
+  }
+  const t = teachers_().find(x => bare_(x.name) === nm && x.p4 && ph.endsWith(x.p4));
+  return { ok: true, st: t ? 'nosignup' : 'none' };
 }
 /* ---------------- 관계자 (10-31) ----------------
  * 회원관리 「외부인」(X0001) 계정 = 관계자: 학원 「관계자」로만 접수, 본인 참가 구분 = 역할(초빙교수 · 반주자 …, 참가비는 캠프 설정 참가비표), 가족은 회원 가족 참가비, 연회비 없음.

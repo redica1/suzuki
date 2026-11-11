@@ -1,4 +1,4 @@
-/* build: 20261111-192416 */
+/* build: 20261111-192503 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -697,7 +697,7 @@ function gmClean_(d) {
   d = d || {}; const s = v => String(v == null ? '' : v);
   const sec = (Array.isArray(d.sec) ? d.sec : []).slice(0, 30).map(x => ({ t: s(x.t).slice(0, 80), body: s(x.body).slice(0, 8000), on: x.on !== false }));
   const mg = {}; ['t', 'b', 'l', 'r'].forEach(k => { const v = +((d.mg || {})[k]); if (isFinite(v) && (d.mg || {})[k] !== '' && (d.mg || {})[k] != null) mg[k] = Math.max(0, Math.min(40, v)); });
-  const o = { intro: s(d.intro).slice(0, 8000), sec, num: d.num === '1)' ? '1)' : '1.', sign: d.sign !== false, mg, logo: d.logo !== false, wtop: d.wtop === true, row1: d.row1 === true };
+  const o = { intro: s(d.intro).slice(0, 8000), sec, num: d.num === '1)' ? '1)' : '1.', sign: d.sign !== false, mg, logo: d.logo !== false, wtop: d.wtop === true, row1: d.row1 === true, ts: (t => isFinite(t) && t >= 10 && t <= 40 ? Math.round(t) : 22)(+d.ts) };
   if (JSON.stringify(o).length > 45000) fail('공문 내용이 너무 길어요. 항목을 나눠 주세요.'); return o;
 }
 function gmSave(who, x) {

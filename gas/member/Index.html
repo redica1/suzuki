@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261111-192416 -->
+<!-- build: 20261111-192503 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -600,7 +600,7 @@ function gmHtml(d){var c=d['내용']||{},n=0,M=gmMg(d);
     return one?'<div class="sc"><p class="ln"><span class="sh">'+num+' '+esc(x.t)+':</span> '+gmFmt(b).replace(/^<p class="ln">|<\/p>$/g,'')+'</p></div>':'<div class="sc"><div class="sh">'+num+' '+esc(x.t)+'</div>'+gmFmt(b)+'</div>'}).join('');
   return '<div class="dp" style="padding:'+M.t+'mm '+M.r+'mm '+M.b+'mm '+M.l+'mm">'+(c.logo!==false?'<div class="lg"><img src="'+GM_LOGO+'" alt="SUZUKI MUSIC KOREA"></div>':'')+
     (c.wtop===true?'<div class="wtop">www.suzukimusickorea.org</div>':'')+(meta.length?'<div class="meta'+(c.row1===true?' one':'')+'">'+(c.row1===true?[meta.filter(function(x){return x[0]!=='참조'}),meta.filter(function(x){return x[0]==='참조'})]:meta.map(function(x){return [x]})).filter(function(r){return r.length}).map(function(r){return '<div class="mr">'+r.map(function(x){return '<div><b>'+x[0]+'</b><span>'+esc(x[1])+'</span></div>'}).join('')+'</div>'}).join('')+'</div>':'')+
-    '<h1>'+esc(d['제목']||'(제목)')+'</h1>'+(c.intro?'<div class="intro">'+gmFmt(c.intro)+'</div>':'')+secs+
+    '<h1'+(function(){var t=+c.ts;return isFinite(t)&&t>=10&&t<=40&&t!==22?' style="font-size:'+t+'pt"':''})()+'>'+esc(d['제목']||'(제목)')+'</h1>'+(c.intro?'<div class="intro">'+gmFmt(c.intro)+'</div>':'')+secs+
     (c.sign!==false?'<div class="ft-end"><div class="www">www.suzukimusickorea.org</div><div class="ko">(사)한국스즈키음악협회</div><div class="en">KOREA SUZUKI ASSOCIATION</div></div>':'')+'</div>'}
 function loadGm(){S.gmL=null;callS('gmList').then(function(r){if(!r.ok){toast(r.msg);return}S.gmL=r.list;if(S.tab==='gm')render()})}
 function gmPrev(){var p=document.getElementById('gmPrev');if(p&&S.gm)p.innerHTML=gmHtml(S.gm);gmCut()}
@@ -628,7 +628,7 @@ function vGmEdit(){var d=S.gm,c=d['내용'],lock=d['상태']==='발행',dis=lock
       inp('제목','제목 <span class="req">*</span>')+inp('시행일','시행일','date')+inp('수신','수신')+inp('참조','참조')+'</div>'+
       '<p class="cap">문서번호: '+esc(d['문서번호']||'발행할 때 설정 「공문 번호 형식」대로 자동으로 매겨져요')+'</p>'+
       '<div class="row" style="gap:12px;flex-wrap:wrap"><label class="agree"><input type="checkbox" data-gmc="logo"'+(c.logo!==false?' checked':'')+dis+'> 로고 넣기</label><label class="agree"><input type="checkbox" data-gmc="sign"'+(c.sign!==false?' checked':'')+dis+'> 끝에 협회 이름 넣기</label><label class="agree"><input type="checkbox" data-gmc="wtop"'+(c.wtop===true?' checked':'')+dis+'> 위에 홈페이지 주소 넣기</label><label class="agree"><input type="checkbox" data-gmc="row1"'+(c.row1===true?' checked':'')+dis+'> 문서번호 · 시행일 · 수신 한 줄로</label>'+
-      '<label>항목 번호 <select data-gmc="num"'+dis+'><option value="1."'+(c.num!=='1)'?' selected':'')+'>1.</option><option value="1)"'+(c.num==='1)'?' selected':'')+'>1)</option></select></label>'+
+      '<label>항목 번호 <select data-gmc="num"'+dis+'><option value="1."'+(c.num!=='1)'?' selected':'')+'>1.</option><option value="1)"'+(c.num==='1)'?' selected':'')+'>1)</option></select></label>'+'<label>제목 글씨 <input type="number" data-gmc="ts" min="14" max="36" step="1" value="'+esc(c.ts||22)+'" style="width:64px"'+dis+'> pt</label>'+
       '<span class="cap">여백 mm</span>'+['t','b','l','r'].map(function(k){return '<label class="cap">'+{t:'위',b:'아래',l:'왼쪽',r:'오른쪽'}[k]+' <input type="number" data-gmmg="'+k+'" value="'+M[k]+'" min="0" max="40" style="width:60px"'+dis+'></label>'}).join('')+'</div></div>'+
       '<div class="panel"><h3>머리말 <span class="cap">(제목 아래 인사 · 취지)</span></h3><textarea data-gmc="intro" rows="'+Math.max(3,Math.min(10,String(c.intro||'').split('\n').length+1))+'"'+dis+'>'+esc(c.intro||'')+'</textarea></div>'+
       '<div class="panel"><div class="spread"><h3>본문 항목 <span class="cap">(체크를 끄면 공문에서 빠져요)</span></h3>'+(lock?'':'<button class="btn small" type="button" data-gmsec="add|0">+ 항목 추가</button>')+'</div>'+secs+'</div>'+
@@ -1445,7 +1445,7 @@ document.addEventListener('keydown',function(e){var t=e.target;if(S.tab!=='prt'|
 </script>
 <style>table.prt th,table.prt td{text-align:left !important}table.prt th:first-child,table.prt td:first-child{text-align:center !important}table.prt th:nth-child(7),table.prt td:nth-child(7),table.prt th:nth-child(8),table.prt td:nth-child(8){text-align:center !important}table.prt td:nth-child(7) input,table.prt td:nth-child(8) input{text-align:center}table.prt tr.mutedrow td{color:var(--faint)}table.prt tr.mutedrow td b{color:var(--muted)}table.prt td{vertical-align:middle}table.prt td.padr{white-space:normal;min-width:220px;max-width:340px;line-height:1.4}</style>
 
-<div id="bldMark" hidden>빌드표시 20261111-192416 </div>
+<div id="bldMark" hidden>빌드표시 20261111-192503 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();
 /* 공문 편집: 칸을 고치면 모델만 바꾸고 미리보기만 다시 그림(글자 조합이 깨지지 않게) */
 function gmField(t){if(S.tab!=='gm'||!S.gm||S.gm['상태']==='발행')return false;var d=S.gm,c=d['내용'],ds=t.dataset||{};

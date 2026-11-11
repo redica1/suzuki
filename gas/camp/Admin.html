@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261112-000301 -->
+<!-- build: 20261112-001252 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -1674,6 +1674,9 @@ const ccPill=()=>ccDirty()?'<span class="pill due">저장 안 한 변경 있음<
 /* 참가비표 자동 채우기 (11-11): doc.rbase = 기준 참가자격, doc.radd[자격] = 기준보다 + (금액 · n%), doc.cadd[차수] = 1차보다 + (금액 · n%)
    금액이면 doc.inc 에도 같이 넣어 공문 「1차보다 +」 와 같은 값 */
 const FEE_AUTO=['교사','연수생','소속없는 중급연수생','학생','회원의 악기하는 자녀','회원의 첫번째 보호자','회원의 그외 악기 안하는 동반가족','동반가족 중 15개월 미만','비회원 학생','비회원 보호자','비회원 동반가족','비회원 15개월 미만'];
+/* 비회원 줄의 「+」는 같은 종류 회원 금액에 더함 (11-12 사용자: 비회원 보호자 = 회원 보호자 + 10만 원) */
+const FEE_PAIR={'비회원 학생':'학생','비회원 보호자':'회원의 첫번째 보호자','비회원 동반가족':'회원의 그외 악기 안하는 동반가족','비회원 15개월 미만':'동반가족 중 15개월 미만'};
+const fBase=(d,t)=>FEE_PAIR[t]&&FEE_PAIR[t]!==t?FEE_PAIR[t]:d.rbase;
 const fAdd=s=>{s=String(s==null?'':s).replace(/[,\s원+]/g,'');const m=s.match(/^(-?\d+(?:\.\d+)?)(%?)$/);return m?{v:+m[1],pct:!!m[2]}:null};
 const fShow=s=>{const a=fAdd(s);return !a?'':a.pct?a.v+'%':a.v.toLocaleString('ko-KR')};
 const fAp=(x,a)=>Math.max(0,a.pct?Math.round(x*(1+a.v/100)/1000)*1000:Math.round(x+a.v));
@@ -1682,7 +1685,7 @@ function feeRule(c){const d=c.doc,n=(c.rounds||[]).length;if(!d)return null;d.ra
 function feeIsAuto(c,t,i){const d=c.doc;if(!d||!FEE_AUTO.includes(t))return false;feeRule(c);if(t!==d.rbase&&fAdd(d.radd[t]))return true;return i>0&&!!fAdd(d.cadd[i])}
 function feeAuto(c){const d=feeRule(c);if(!d)return;const F=c.fees,n=c.rounds.length,B=d.rbase,row=t=>F[t]=F[t]||[];
   for(let i=1;i<n;i++){const a=fAdd(d.cadd[i]);if(a)row(B)[i]=fAp(+row(B)[0]||0,a)}
-  FEE_AUTO.forEach(t=>{if(t===B)return;const ra=fAdd(d.radd[t]);if(ra){for(let i=0;i<n;i++)row(t)[i]=fAp(+row(B)[i]||0,ra);return}
+  FEE_AUTO.forEach(t=>{if(t===B)return;const ra=fAdd(d.radd[t]),BB=fBase(d,t);if(ra){for(let i=0;i<n;i++)row(t)[i]=fAp(+row(BB)[i]||0,ra);return}
     for(let i=1;i<n;i++){const a=fAdd(d.cadd[i]);if(a)row(t)[i]=fAp(+row(t)[0]||0,a)}});
   d.inc=d.cadd.map((s,i)=>{const a=fAdd(s);return i&&a&&!a.pct?a.v:null})}
 function feeSync(skip){const c=S.cc;document.querySelectorAll('input[data-cc^="fees."]').forEach(el=>{const [,t,i]=el.dataset.cc.match(/^fees\.(.+)\.(\d+)$/)||[];if(t==null)return;
@@ -1732,7 +1735,7 @@ function bkPanel(){if(!S.bkA){if(!S.bkAL){S.bkAL=1;setTimeout(()=>call('campBank
   return `<div class="panel"><b>입금 안내 통장</b> <span class="hint">선생님 · 보호자 접수 화면과 접수 확인 메일에 보이는 계좌예요. 회원관리 › 통장 › 설정에 등록한 통장에서 골라요.</span>
   <div class="row" style="gap:8px;margin-top:8px;flex-wrap:wrap;align-items:center"><select id="bkSel" style="min-width:320px">${A.list.length?'':'<option value="">회원관리에 등록한 통장이 없어요</option>'}${A.list.map(x=>`<option value="${esc(x.id)}" ${sel&&sel.id===x.id?'selected':''}>${esc(x.name)} · ${esc(x.bank)} ${esc(x.acct)} · ${esc(x.holder)}</option>`).join('')}</select><button class="btn small primary" type="button" id="bkSave" ${A.list.length?'':'disabled'}>이 통장으로 안내</button></div>
   <p class="hint" style="margin:6px 0 0">지금 안내: ${c.acct?`<b>${esc(c.bank)} ${esc(c.acct)} · ${esc(c.holder)}</b>${c.auto?' (따로 고르지 않아 회원관리 첫 통장을 씀)':''}`:'<b style="color:#c0392b">없음 — 꼭 골라 주세요</b>'}</p></div>`}
-function vCamp(){if(!S.cc)S.cc=ccCopy();const c=S.cc;if(!c.base)return '<div class="panel hint">캠프 설정을 불러오지 못했어요. 「새로 불러오기」를 눌러 주세요.</div>';
+function vCamp(){if(!S.cc){S.cc=ccCopy();try{if(S.cc.doc&&S.cc.fees&&S.cc.rounds)feeAuto(S.cc)}catch(x){}}const c=S.cc;if(!c.base)return '<div class="panel hint">캠프 설정을 불러오지 못했어요. 「새로 불러오기」를 눌러 주세요.</div>';
   const b=c.base,R=c.rounds,o=c.opt,rf=c.refund;
   const inp=(p,type,extra)=>{const v=ccGet(p);return type==='check'?`<input type="checkbox" data-cc="${p}" ${v?'checked':''}>`:`<input type="${type==='num'?'text':type}" ${type==='num'?'inputmode="numeric" class="num"':''} data-cc="${p}" data-cct="${type}" value="${esc(type==='num'?(+v||0).toLocaleString('ko-KR'):v==null?'':v)}" ${extra||''}>`};
   const days=b.start&&b.end?Math.round((Date.parse(b.end)-Date.parse(b.start))/864e5):0;
@@ -1760,8 +1763,8 @@ function vCamp(){if(!S.cc)S.cc=ccCopy();const c=S.cc;if(!c.base)return '<div cla
     ${c.doc?(()=>{const d=feeRule(c);return `<div class="row" style="gap:8px;align-items:center;margin:4px 0 8px;flex-wrap:wrap"><label class="row" style="gap:6px;flex-wrap:nowrap">기준 참가자격 <select data-frbase="1">${FEE_AUTO.map(t=>`<option ${t===d.rbase?'selected':''}>${esc(t)}</option>`).join('')}</select></label>
       <span class="hint">「+」 칸에 <b>금액</b>(예: 10,000 · -150,000) 또는 <b>비율</b>(예: 5% · -30%)을 넣으면 그 줄 · 그 차수가 기준값을 따라 자동으로 채워져요. 비우면 직접 넣은 값 그대로예요.</span></div>`})():''}
     <table class="pft cct"><thead><tr><th>참가자격</th>${c.doc?'<th class="r">기준보다 +</th>':''}${R.map(r=>`<th class="r">${esc(r.n)}</th>`).join('')}</tr>
-    ${c.doc?`<tr class="fadd"><th><small>차수별 + <span class="faint">(1차보다)</span></small></th><th></th>${R.map((_,i)=>`<th class="r">${i?`<input type="text" class="num" data-fcadd="${i}" value="${esc(fShow(feeRule(c).cadd[i]))}" placeholder="+" style="width:110px" aria-label="${esc(R[i].n)} 1차보다 더하는 금액 또는 비율">`:'<small class="faint">기준</small>'}</th>`).join('')}</tr>`:''}</thead><tbody>${FEE_TYPES.map(t=>`<tr class="${/^(비회원|해외) /.test(t)||STAFF_TYPES.includes(t)?'gfee':''}"><td>${esc(t)}${/^해외 /.test(t)?' <b class="hint">USD</b>':''}</td>${c.doc?`<td>${t===feeRule(c).rbase?'<small class="faint">기준</small>':FEE_AUTO.includes(t)?`<input type="text" class="num" data-fradd="${esc(t)}" value="${esc(fShow(feeRule(c).radd[t]))}" placeholder="+" style="width:100px" aria-label="${esc(t)} 기준보다 더하는 금액 또는 비율">`:''}</td>`:''}${R.map((_,i)=>`<td>${inp('fees.'+t+'.'+i,'num','style="width:110px"'+(feeIsAuto(c,t,i)?' data-fauto="1"':''))}</td>`).join('')}</tr>`).join('')}</tbody></table>
-    <p class="hint">자동으로 채워지는 칸은 옅은 파랑이에요. 기준 줄 1차 금액을 고치면 따라가는 칸이 같이 바뀌어요. 그 줄의 「기준보다 +」를 넣은 상태에서 칸을 직접 고치면 그 줄 따라가기가 풀려요. 관계자 · 해외(USD) 줄은 자동 계산에서 빠져요.</p><p class="hint">「해외 …」 줄은 <b>USD</b>로 넣어요. 영어 접수 화면에 USD로 보이고, 원화 청구액은 아래 「해외 참가비 환율」로 계산해요.</p></div>
+    ${c.doc?`<tr class="fadd"><th><small>차수별 + <span class="faint">(1차보다)</span></small></th><th></th>${R.map((_,i)=>`<th class="r">${i?`<input type="text" class="num" data-fcadd="${i}" value="${esc(fShow(feeRule(c).cadd[i]))}" placeholder="+" style="width:110px" aria-label="${esc(R[i].n)} 1차보다 더하는 금액 또는 비율">`:'<small class="faint">기준</small>'}</th>`).join('')}</tr>`:''}</thead><tbody>${FEE_TYPES.map(t=>`<tr class="${/^(비회원|해외) /.test(t)||STAFF_TYPES.includes(t)?'gfee':''}"><td>${esc(t)}${/^해외 /.test(t)?' <b class="hint">USD</b>':''}</td>${c.doc?`<td>${t===feeRule(c).rbase?'<small class="faint">기준</small>':FEE_AUTO.includes(t)?`<input type="text" class="num" data-fradd="${esc(t)}" value="${esc(fShow(feeRule(c).radd[t]))}" placeholder="+" style="width:100px" aria-label="${esc(t)} ${FEE_PAIR[t]?esc(FEE_PAIR[t])+'보다':'기준보다'} 더하는 금액 또는 비율">${FEE_PAIR[t]?`<small class="faint" style="display:block">${esc(FEE_PAIR[t].replace('회원의 ','회원 '))}보다 +</small>`:''}`:''}</td>`:''}${R.map((_,i)=>`<td>${inp('fees.'+t+'.'+i,'num','style="width:110px"'+(feeIsAuto(c,t,i)?' data-fauto="1"':''))}</td>`).join('')}</tr>`).join('')}</tbody></table>
+    <p class="hint">자동으로 채워지는 칸은 옅은 파랑이에요. 기준 줄 1차 금액을 고치면 따라가는 칸이 같이 바뀌어요. <b>비회원 네 줄의 「+」는 같은 종류 회원 금액(비회원 보호자 → 회원 보호자, 비회원 15개월 미만 → 동반가족 중 15개월 미만)에 더해요.</b> 그 줄의 「기준보다 +」를 넣은 상태에서 칸을 직접 고치면 그 줄 따라가기가 풀려요. 관계자 · 해외(USD) 줄은 자동 계산에서 빠져요.</p><p class="hint">「해외 …」 줄은 <b>USD</b>로 넣어요. 영어 접수 화면에 USD로 보이고, 원화 청구액은 아래 「해외 참가비 환율」로 계산해요.</p></div>
   <div class="panel"><h3>추가 금액 · 가족방</h3><div class="ccg">${OPT_F.map(([k,l,u])=>`<label>${l}<span class="row" style="gap:4px;flex-wrap:nowrap">${inp('opt.'+k,'num','style="width:120px"')}<small class="faint">${u}</small></span></label>`).join('')}</div>
     <p class="hint">마스터클래스 금액은 교수마다 「교수진」 탭에서 정해요.</p></div>
   ${c.aud?`<div class="panel"><h3>음악회 음원 제출 <span class="hint">켠 음악회만 신청서 · 「내 접수」에 음원 칸이 나와요 · 마감일을 비우면 캠프 시작 전날까지</span></h3>
@@ -2637,7 +2640,7 @@ document.addEventListener('click',e=>{if((S.tab!=='doc'&&S.tab!=='camp')||!S.cc)
 function dIncNow(c,i){const L=DOC_FG.map(g=>dFee(c,g[1][0],i)-dFee(c,g[1][0],0));return L.every(x=>x===L[0])?'지금 '+(L[0]>=0?'+':'')+L[0].toLocaleString('ko-KR'):'칸마다 다름'}
 function dIncRow(i,skip){const c=S.cc,a=+((c.doc.inc||[])[i]);if(!isFinite(a))return;DOC_FG.forEach((g,k)=>{const v=Math.max(0,dFee(c,g[1][0],0)+a);dSetFee(k,i,v);const el=document.querySelector('[data-dfee="'+k+'|'+i+'"]');if(el&&el!==skip)el.value=v.toLocaleString('ko-KR')})}
 function dIncAll(skip){(S.cc.doc.inc||[]).forEach((a,i)=>{if(i&&a!=null)dIncRow(i,skip)})}
-function vDoc(){if(!S.cc)S.cc=ccCopy();const c=S.cc;if(!c.base)return '<div class="panel hint">캠프 설정을 불러오지 못했어요. 「새로 불러오기」를 눌러 주세요.</div>';
+function vDoc(){if(!S.cc){S.cc=ccCopy();try{if(S.cc.doc&&S.cc.fees&&S.cc.rounds)feeAuto(S.cc)}catch(x){}}const c=S.cc;if(!c.base)return '<div class="panel hint">캠프 설정을 불러오지 못했어요. 「새로 불러오기」를 눌러 주세요.</div>';
   if(!c.doc)return '<div class="panel hint">서버가 아직 공문을 모르는 옛 버전이에요. 새 버전이 올라간 뒤 새로 고쳐 주세요.</div>';
   if(!S.bkA&&!S.bkAL){S.bkAL=1;setTimeout(()=>call('campBankAccts',[],r=>{S.bkA=r;S.bkAL=0;if(S.tab==='doc')render()}),0)}
   const d=c.doc,b=c.base,R=c.rounds,o=c.opt,rf=c.refund;d.rnote=d.rnote||[];while(d.rnote.length<R.length)d.rnote.push('');d.rnote.length=R.length;d.inc=d.inc||[];while(d.inc.length<R.length)d.inc.push(null);d.inc.length=R.length;d.inc[0]=null;
@@ -4400,6 +4403,6 @@ document.addEventListener('click',e=>{if(S.tab!=='book')return;const b=e.target.
   if(b.id==='ebSetSave'){const n=Object.assign(ebSet(),S.ebSetW||{});n.per=Math.max(1,Math.min(10,Math.round(+n.per||5)));n.fs=Math.max(5,Math.min(10,+n.fs||6.6));['en','sub','org'].forEach(k=>n[k]=String(n[k]||'').trim().slice(0,120));
     ebSend([],[],n,()=>{S.ebSetW=null;toast('책자 설정을 저장했어요')});return}},true);
 </script>
-<div id="bldMark" hidden>빌드표시 20261112-000301 </div>
+<div id="bldMark" hidden>빌드표시 20261112-001252 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();</script>
 </body></html>

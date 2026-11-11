@@ -1,4 +1,4 @@
-/* build: 20261111-231036 */
+/* build: 20261111-232337 */
 /* 공통 화면 라이브러리 — 원본은 gas/common/UiLib.html 하나. 고칠 때는 원본만 고치고 python3 -I gas/common/sync.py 로 각 앱 폴더에 복사
  * 캠프 · 회원관리 화면이 같이 씀. 페이지에서 먼저 var UI_KEY='camp' 처럼 저장 이름 앞글자를 정함
  * 4) 프로그램표 UI.grid · 칸 팝업 UI.gridDet  5) 이름 · 비밀번호 기억하기 svBox · svSet · svId · svPw
@@ -35,13 +35,13 @@ function tblApply(t,st){const tb=t.tBodies[0];if(!tb)return;const rows=[...tb.ro
   if(st.s&&st.s.i!=null&&!t.querySelector('tbody td[colspan]')){const i=st.s.i,d=st.s.d;rows.sort((a,b)=>{const x=sval(a.cells[i]&&a.cells[i].textContent),y=sval(b.cells[i]&&b.cells[i].textContent);
     const r=(x.n!=null&&y.n!=null)?x.n-y.n:(x.n!=null?-1:y.n!=null?1:String(x.s).localeCompare(String(y.s),'ko',{numeric:true}));return d*r});rows.forEach(r=>tb.appendChild(r))}
   const q=String(st.q||'').replace(/\s+/g,'').toLowerCase();let n=0;rows.forEach(r=>{const ok=!q||r.textContent.replace(/\s+/g,'').toLowerCase().includes(q);r.style.display=ok?'':'none';if(ok)n++});
-  const c=(t.closest('.mtblw')||t).previousElementSibling;if(c&&c.classList.contains('tfind')){const m=c.querySelector('.tfn');if(m)m.textContent=q?n+'건':''}
+  const c=(t.closest('.mtblw'+(window.UI_DOCK?','+window.UI_DOCK:''))||t).previousElementSibling;if(c&&c.classList.contains('tfind')){const m=c.querySelector('.tfn');if(m)m.textContent=q?n+'건':''}
   t.querySelectorAll('thead th').forEach((th,j)=>{const a=th.querySelector('.sarr');if(a)a.textContent=st.s&&st.s.i===j?(st.s.d>0?' ▲':' ▼'):''})}
 function tblEnhance(){document.querySelectorAll(UI_SEL.split(',').map(x=>x.trim()+':not(.nosort):not([data-enh])').join(',')).forEach((t,_)=>{t.dataset.enh='1';
   const all=[...document.querySelectorAll(UI_SEL.split(',').map(x=>x.trim()+':not(.nosort)').join(','))],k=tkey(t,all.indexOf(t)),st=TBLS[k]||(TBLS[k]={q:'',s:null});
   t.querySelectorAll('thead th').forEach((th,j)=>{if(th.querySelector('input')||!th.textContent.trim())return;th.dataset.lb=th.dataset.lb||th.textContent.trim();th.classList.add('sortable');th.insertAdjacentHTML('beforeend','<span class="sarr"></span>');
     th.addEventListener('click',e=>{if(e.target.closest('.colrz'))return;st.s=st.s&&st.s.i===j?(st.s.d>0?{i:j,d:-1}:null):{i:j,d:1};tblApply(t,st)})});
-  const w=t.closest('.mtblw')||t;if((t.tBodies[0]||{rows:[]}).rows.length>=3){const f=document.createElement('div');f.className='tfind';f.innerHTML='<input type="search" placeholder="표에서 찾기 (이름 · 학원 · 악기 …)" aria-label="표에서 찾기"><span class="tfn hint"></span>';
+  const w=t.closest('.mtblw'+(window.UI_DOCK?','+window.UI_DOCK:''))||t;if((t.tBodies[0]||{rows:[]}).rows.length>=3){const f=document.createElement('div');f.className='tfind';f.innerHTML='<input type="search" placeholder="표에서 찾기 (이름 · 학원 · 악기 …)" aria-label="표에서 찾기"><span class="tfn hint"></span>';
     const inp=f.querySelector('input');inp.value=st.q||'';inp.addEventListener('input',()=>{st.q=inp.value;tblApply(t,st)});w.parentNode.insertBefore(f,w)}
   if(st.q||st.s)tblApply(t,st)})}
 new MutationObserver(()=>{clearTimeout(tblEnhance.t);tblEnhance.t=setTimeout(tblEnhance,40)}).observe(document.body,{childList:true,subtree:true});
@@ -102,3 +102,34 @@ function svSet(k,id,pw){var c=document.getElementById('svPw_'+k);if(!c)return;tr
 function svBox(k,label){return '<label class="svpw" style="display:flex;align-items:center;gap:6px;font-size:14px;margin:2px 0 10px;cursor:pointer;font-weight:500"><input type="checkbox" id="svPw_'+k+'" '+(svGet(k)?'checked':'')+' style="width:18px;height:18px;margin:0;flex:none"> '+(label||'비밀번호 저장하기')+' <span style="opacity:.65;font-size:12.5px;font-weight:400">이 기기에만 · 공용 PC는 체크하지 마세요</span></label>'}
 function svId(k,d){var s=svGet(k);return s&&s.id?s.id:(d||'')}
 function svPw(k){var s=svGet(k);return s&&s.pw?s.pw:''}
+/* 표 위 고정 (11-11): 페이지(오른쪽 큰 스크롤)를 내리면 표 바로 위 필터 · 탭 · 찾기칸과 표 머리줄이 맨 위 메뉴(UI_DOCK_TOP, 기본 .gnb) 밑에 걸려 고정됨. 표 안 스크롤은 없음
+ * 페이지에서 var UI_DOCK='.tbl,.stbl' 처럼 표 상자 선택자를 정함. 위 필터 = 상자 앞 형제들(화면 45%까지)을 sticky 로, 머리줄은 가로 스크롤 상자 안이라 translateY 로 따라 내림
+ * 인라인으로 max-height 를 px 로 준 작은 상자는 예전처럼 상자 안에서 굴러감. 빼고 싶은 상자는 .nodock */
+(function(){const SEL=window.UI_DOCK||'';if(!SEL)return;
+  const c=document.createElement('style');c.textContent='.uidock{max-height:none!important;overflow-y:visible;overscroll-behavior:auto!important}.uidock>table>thead th{will-change:transform}.uidock>table>thead th:not(.sk){position:relative!important;top:auto!important}.uibox>table>thead th{position:sticky!important;top:0}.uihead{position:sticky!important;z-index:6}';document.head.appendChild(c);
+  const topH=()=>{const g=document.querySelector(window.UI_DOCK_TOP||'.gnb');return g?g.offsetHeight:0};
+  const vis=el=>el&&el.offsetParent!==null&&el.getBoundingClientRect().height>0;
+  const bgOf=el=>{for(let x=el.parentElement;x;x=x.parentElement){const b=getComputedStyle(x).backgroundColor;if(b&&b!=='transparent'&&!/rgba\(.*,\s*0\)$/.test(b))return b}return '#fff'};
+  function heads(box,lim){const a=[];let el=box.previousElementSibling,sum=0;
+    while(el){if(vis(el)){if(el.querySelector('table')&&!el.classList.contains('tfind'))break;const h=el.getBoundingClientRect().height;if(sum+h>lim)break;sum+=h;a.unshift(el)}el=el.previousElementSibling}
+    return a}
+  const DK=[];
+  function fit(){const vh=window.innerHeight,T=topH();DK.length=0;
+    document.querySelectorAll('.uihead').forEach(h=>{h.classList.remove('uihead');h.style.top='';h.style.boxShadow='';h.style.background=''});
+    document.querySelectorAll('.uidock>table>thead th').forEach(x=>{x.style.transform=''});
+    document.querySelectorAll(SEL).forEach(box=>{
+      if(box.classList.contains('nodock')||!vis(box)||!box.querySelector('table'))return;
+      if(box.dataset.mh0===undefined)box.dataset.mh0=box.style.maxHeight||'';
+      if(/^\d+px$/.test(box.dataset.mh0)){box.classList.add('uibox');return}
+      box.classList.add('uidock');const t=box.querySelector('table'),hs=heads(box,vh*0.45),bg=bgOf(box);
+      let y=T;hs.forEach((h,k)=>{const nx=k<hs.length-1?hs[k+1]:box,gap=Math.max(0,nx.getBoundingClientRect().top-h.getBoundingClientRect().bottom);
+        h.classList.add('uihead');h.style.top=Math.round(y)+'px';h.style.background=bg;h.style.boxShadow=gap?'0 '+Math.ceil(gap)+'px 0 0 '+bg:'';y+=h.getBoundingClientRect().height+gap});
+      DK.push({box:box,t:t,line:Math.round(y)})});
+    move()}
+  function move(){DK.forEach(d=>{const th=d.t.tHead;if(!th||!d.t.isConnected)return;const r=th.getBoundingClientRect(),tr=d.t.getBoundingClientRect(),cur=d.off||0;
+    const top0=r.top;
+    const o=Math.max(0,Math.min(d.line-top0,tr.bottom-top0-r.height));if(o!==cur){d.off=o;[...th.querySelectorAll('th')].forEach(x=>{x.style.transform=o?'translateY('+o+'px)':''})}})}
+  let raf=0;window.addEventListener('scroll',()=>{if(!raf)raf=requestAnimationFrame(()=>{raf=0;move()})},{passive:true});
+  const later=()=>{clearTimeout(fit.t);fit.t=setTimeout(fit,60)};
+  new MutationObserver(later).observe(document.body,{childList:true,subtree:true});window.addEventListener('resize',later);window.addEventListener('load',later);later();
+  UI.dockFit=fit})();

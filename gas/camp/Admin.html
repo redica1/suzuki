@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261111-231036 -->
+<!-- build: 20261111-232337 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -294,6 +294,7 @@ th .trz{position:absolute;right:-3px;top:0;bottom:0;width:7px;cursor:col-resize;
 <main class="wrap" id="app"></main>
 <div class="toast" id="toast" hidden></div>
 <div class="busy" id="busy" hidden></div>
+<script><?!= include('DocLib') ?></script>
 <script>
 const S={tok:'',tab:'home',q:'',open:{},sel:{},D:null,f:'all',rpSel:{},openA:{},openR:{}};
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -2581,20 +2582,20 @@ function dFeeTable(c){const R=c.rounds||[],d=c.doc||{},b=c.base||{};
     <tbody><tr><td>${dWon(dFee(c,'학생',i))}</td><td>${dWon(dFee(c,'회원의 첫번째 보호자',i))}</td><td class="f3">악기 하는 형제 할인 없음<br>악기 안 하는 가족: ${dWon(dFee(c,'회원의 그외 악기 안하는 동반가족',i))}<br>15개월 미만: ${dWon(dFee(c,'동반가족 중 15개월 미만',i))}</td></tr></tbody></table>`}).join('')}
 /* 글 → HTML: {표시} 채우기 · **굵게** · !!빨강!! · [[참가비표]] 줄 */
 function dFmt(txt,c,V){return String(txt||'').split('\n').map(line=>{
-  if(line.trim()==='[[참가비표]]')return dFeeTable(c);
+  if(line.trim()==='[[참가비표]]')return '<div class="tok" data-tok="[[참가비표]]">'+dFeeTable(c)+'</div>';
   if(!line.trim())return '<div class="ln gap"></div>';
-  let h=esc(line).replace(/\{[^{}\s]{1,8}\}/g,m=>V[m]!=null?esc(V[m]):m);
+  let h=esc(line).replace(/\{[^{}\s]{1,8}\}/g,m=>V[m]!=null?'<span class="tok" data-tok="'+m+'">'+esc(V[m])+'</span>':m);
   h=h.replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/!!(.+?)!!/g,'<span class="red">$1</span>');
   return '<p class="ln">'+h+'</p>'}).join('')}
 const DOC_MG={t:13,b:15,l:16,r:16};function dMg(c){const m=(c.doc||{}).mg||{},o={};Object.keys(DOC_MG).forEach(k=>{const v=+m[k];o[k]=isFinite(v)&&m[k]!==''&&m[k]!=null?Math.max(0,Math.min(40,v)):DOC_MG[k]});return o}
-function docHtml(c){const d=c.doc||{},V=dVals(c),fill=t=>esc(String(t||'').replace(/\{[^{}\s]{1,8}\}/g,m=>V[m]!=null?V[m]:m));let n=0;
+function docHtml(c){const d=c.doc||{},V=dVals(c),fill=t=>esc(String(t||'')).replace(/\{[^{}\s]{1,8}\}/g,m=>V[m]!=null?'<span class="tok" data-tok="'+m+'">'+esc(V[m])+'</span>':m);let n=0;
   const meta=[['문서번호',d.no],['시행일',d.date?dMd(d.date,1):''],['수신',d.to],['참조',d.ref]].filter(x=>x[1]);
   const secs=(d.sec||[]).filter(s=>s.on!==false).map(s=>{n++;const num=d.num==='1)'?n+')':n+'.',body=String(s.body||''),one=!body.includes('\n')&&!body.includes('[[');
     return one?`<div class="sc"><p class="ln"><span class="sh">${num} ${esc(s.t)}:</span> ${dFmt(body,c,V).replace(/^<p class="ln">|<\/p>$/g,'')}</p></div>`
       :`<div class="sc"><div class="sh">${num} ${esc(s.t)}</div>${dFmt(body,c,V)}</div>`}).join('');
   const M=dMg(c),FK=+d.fit&&+d.fitK>0&&+d.fitK<1?+d.fitK:1;return `<div class="dp" style="padding:${M.t}mm ${M.r}mm ${M.b}mm ${M.l}mm"><div class="fitc"${FK<1?` style="zoom:${FK}"`:''}><div class="lg"><img src="${DOC_LOGO}" alt="SUZUKI MUSIC KOREA"></div>
     ${meta.length?`<div class="meta">${meta.map(([k,v])=>`<div><b>${k}</b><span>${esc(v)}</span></div>`).join('')}</div>`:''}
-    <h1>${fill(d.title||((c.base||{}).name+' 안내'))}</h1>${d.intro?`<div class="intro">${dFmt(d.intro,c,V)}</div>`:''}${secs}
+    <div class="dbody">${d.ed?UI.docTokFill(d.ed,k=>k==='[[참가비표]]'?dFeeTable(c):V[k]!=null?esc(V[k]):null):`<h1>${fill(d.title||((c.base||{}).name+' 안내'))}</h1>${d.intro?`<div class="intro">${dFmt(d.intro,c,V)}</div>`:''}${secs}`}</div>
     ${d.sign!==false?`<div class="ft-end"><div class="www">www.suzukimusickorea.org</div><div class="ko">(사)한국스즈키음악협회</div><div class="en">KOREA SUZUKI ASSOCIATION</div></div>`:''}</div></div>`}
 function dWarn(c){const R=c.rounds||[],W=[];DOC_FG.forEach(([l,ts])=>{const bad=ts.filter(t=>R.some((_,i)=>dFee(c,t,i)!==dFee(c,ts[0],i)));if(bad.length)W.push(`「${l}」 칸 안에서 금액이 달라요 (${bad.map(esc).join(' · ')}가 ${esc(ts[0])}와 다름) — 공문에는 ${esc(ts[0])} 금액이 나가요. 여기서 금액을 고치면 모두 같은 금액이 돼요.`)});
   if(dGuestAdd(c)==null)W.push('비회원 금액이 회원 금액보다 항목마다 다르게 더 붙어 있어요. 아래 「비회원 추가 금액」을 넣으면 모두 같게 맞춰요.');
@@ -2643,7 +2644,7 @@ function vDoc(){if(!S.cc)S.cc=ccCopy();const c=S.cc;if(!c.base)return '<div clas
   return `<div class="note info" style="margin-bottom:10px">${d.gm?`<b>회원관리 공문 대장 ${esc(d.gm)}${d.no?` · 발행 ${esc(d.no)}`:' · 작성 중'}</b> — 여기서 고치고 「저장」하면 회원관리 공문 미리보기에도 그대로 나와요. 발행(문서번호)은 회원관리 › 공문에서 해요.`:`<b>아직 회원관리 공문 대장에 없어요.</b> 여기서 「저장」하면 공문 대장에 저절로 올라가요(작성 중). 발행(문서번호)은 회원관리 › 공문에서 해요.`} <a href="${'https:'+'\/\/app.suzukimusickorea.org/member/admin.html'+(S.D&&S.D.me&&/자동/.test(S.D.me.name||'')?'?test':'')}" target="_blank" rel="noopener">회원관리 공문 열기 ↗</a></div><div class="cc"><div class="panel"><div class="spread"><div><b>공문 · 캠프 안내</b> <span class="hint">공문을 쓰면 캠프가 만들어져요. 날짜 · 장소 · 차수 · 참가비 · 가족방 · 환불 규정은 「캠프 설정」과 같은 값이라, 여기서 고치고 「저장」하면 접수 화면도 바로 바뀌어요.</span></div>
     <div class="row" style="gap:6px"><span id="ccDirty" class="row" style="gap:6px">${ccPill()}</span><button class="btn small" type="button" id="dWin">새 창으로 보기</button><button class="btn small" type="button" id="dPrint">인쇄 · PDF 저장</button><button class="btn small primary" type="button" data-ccsave="1">저장</button></div></div>
     <div id="dWarnBox">${dWarnHtml(W)}</div></div>
-  <div class="dg"><div>
+  <div class="dg"><div>${d.ed?`<div class="note warn" style="margin-bottom:10px"><b>미리보기에서 고친 글을 쓰고 있어요.</b> 왼쪽 제목 · 머리말 · 본문 항목은 공문에 안 나와요. 날짜 · 참가비 · 취소 수수료 같은 캠프 값(노란 칸)은 왼쪽에서 고치면 그대로 바뀌어요. <button class="btn small" type="button" id="dEdDrop">고친 글 지우고 왼쪽 글로</button></div>`:''}
   <div class="panel"><h3>문서 정보 <span class="hint">비워 두면 공문에 안 나와요 · 문서번호는 회원관리 공문 대장에서 자동으로 매겨져요</span></h3><div class="ccg">
     <label>문서번호 <span class="hint">회원관리에서 발행하면 매겨져요</span><input type="text" value="${esc(d.no||'')}" placeholder="(발행 전)" disabled></label><label>시행일${inp('doc.date','date')}</label>
     <label class="w2">수신${inp('doc.to','text','maxlength="120" placeholder="예: 회원 학원 원장 · 교사"')}</label><label class="w2">참조${inp('doc.ref','text','maxlength="120"')}</label>
@@ -2682,7 +2683,7 @@ function vDoc(){if(!S.cc)S.cc=ccCopy();const c=S.cc;if(!c.base)return '<div clas
       ${ta('doc.sec.'+i+'.body','dsb_'+i,Math.min(14,Math.max(2,String(s.body||'').split('\n').length+1)))}</div>`).join('')}</div>
   <div class="dapply"><span class="pend" id="dPendTxt">${pend?'미리보기에 적용 안 한 내용이 있어요':''}</span><span class="hint">Ctrl + Enter</span><button class="btn primary" type="button" data-dapply="1">적용</button></div>
   </div>
-  <div class="dprevw"><div class="spread" style="margin-bottom:6px"><b>미리보기 <span class="hint">A4 · 인쇄 모양 그대로 · 왼쪽에서 고친 뒤 「적용」</span> <span id="dPgInfo" class="hint" style="font-weight:700"></span></b><span class="row" style="gap:6px"><span class="dzm" role="group" aria-label="미리보기 크기"><button type="button" data-dz="-" aria-label="작게">−</button><button type="button" class="dzv" data-dz="0" title="기본 크기로" id="dzv">${Math.round(dZoom()*100)}%</button><button type="button" data-dz="+" aria-label="크게">＋</button></span><button class="btn small primary" type="button" data-dapply="1">적용</button><button class="btn small" type="button" id="dWin2">새 창으로 보기</button><button class="btn small" type="button" id="dPrint2">인쇄 · PDF 저장</button></span></div><div class="dprev ${pend?'stale':''}" id="docPrev" style="--dz:${dZoom()}">${docHtml(V0)}</div></div></div></div>`}
+  <div class="dprevw"><div class="spread" style="margin-bottom:6px"><b>미리보기 <span class="hint">A4 · 인쇄 모양 그대로 · 왼쪽에서 고친 뒤 「적용」</span> <span id="dPgInfo" class="hint" style="font-weight:700"></span></b><span class="row" style="gap:6px"><span class="dzm" role="group" aria-label="미리보기 크기"><button type="button" data-dz="-" aria-label="작게">−</button><button type="button" class="dzv" data-dz="0" title="기본 크기로" id="dzv">${Math.round(dZoom()*100)}%</button><button type="button" data-dz="+" aria-label="크게">＋</button></span><button class="btn small primary" type="button" data-dapply="1">적용</button><button class="btn small primary" type="button" id="dEdOpen">미리보기에서 고치기</button><button class="btn small" type="button" id="dWin2">새 창으로 보기</button><button class="btn small" type="button" id="dPrint2">인쇄 · PDF 저장</button></span></div><div class="dprev ${pend?'stale':''}" id="docPrev" style="--dz:${dZoom()}">${docHtml(V0)}</div></div></div></div>`}
 const dWarnHtml=W=>W.length?`<div class="dwarn">${W.map(x=>'· '+x).join('<br>')}</div>`:'';
 let dPT=0;const dPend=()=>!!(S.cc&&S.dView&&JSON.stringify(S.cc)!==JSON.stringify(S.dView));
 function dPrev(){clearTimeout(dPT);dPT=setTimeout(()=>{const pd=dPend(),pt=document.getElementById('dPendTxt'),pv=document.getElementById('docPrev');if(pt)pt.textContent=pd?'미리보기에 적용 안 한 내용이 있어요':'';if(pv)pv.classList.toggle('stale',pd);const pl=document.getElementById('ccDirty');if(pl)pl.innerHTML=ccPill()},80)}
@@ -2700,12 +2701,9 @@ function dCssPick(){let out='';[].forEach.call(document.querySelectorAll('style'
     else if(ch==='}'){dep--;if(!skip)out+='}';if(dep===0){start=i+1;skip=false}}else if(dep>0&&!skip)out+=ch}});return out.slice(0,20000)}
 function dExport(c){dFitCalc(c);return {html:docHtml(c).split(DOC_LOGO).join('{{LOGO}}').slice(0,48000),css:dCssPick()}}
 /* 쪽 끝 빨간 점선 (11-11): 인쇄는 쪽마다 위 · 아래 여백 → 미리보기에서 k쪽 끝 = 위 여백 + k × (297 − 위 − 아래) mm */
-function dCut(){const pv=document.getElementById('docPrev'),dp=pv&&pv.querySelector('.dp'),f=dp&&dp.querySelector('.fitc');if(!dp||!f)return;dp.querySelectorAll('.pgcut,.pgprobe').forEach(x=>x.remove());
-  const c=S.dView||S.cc;if(!c)return;const M=dMg(c),per=297-M.t-M.b,pr=document.createElement('div');pr.className='pgprobe';pr.style.cssText='position:absolute;left:0;top:0;width:1px;height:100mm;visibility:hidden';dp.appendChild(pr);
-  const mm=f.getBoundingClientRect().height/pr.getBoundingClientRect().height*100;pr.remove();const n=Math.max(1,Math.ceil((mm-.5)/per));
-  for(let k=1;k<=n;k++){const d=document.createElement('div');d.className='pgcut';d.style.top=(M.t+k*per)+'mm';d.innerHTML='<span>'+k+'쪽 끝'+(k<n?' · 아래는 '+(k+1)+'쪽':'')+'</span>';dp.appendChild(d)}
-  const w=document.getElementById('dPgInfo');if(w){w.textContent=n+'쪽'+(n>1?' · 빨간 줄 아래는 다음 쪽':'')+(dFitTxt(c)?' · '+dFitTxt(c):'');w.style.color=n>1?'#e53935':''}}
-function dApply(){if(!S.cc||!S.cc.doc)return;dFitCalc(S.cc);S.dView=JSON.parse(JSON.stringify(S.cc));const p=document.getElementById('docPrev');if(p){p.innerHTML=docHtml(S.dView);p.classList.remove('stale');dCut()}const pt=document.getElementById('dPendTxt');if(pt)pt.textContent='';const ft=document.getElementById('dFitInfo');if(ft)ft.textContent=dFitTxt(S.cc);const w=document.getElementById('dWarnBox');if(w)w.innerHTML=dWarnHtml(dWarn(S.dView));const gi=document.getElementById('dGuest');if(gi&&document.activeElement!==gi){const ga=dGuestAdd(S.cc);gi.value=ga==null?'':ga.toLocaleString('ko-KR')}const pl=document.getElementById('ccDirty');if(pl)pl.innerHTML=ccPill()}
+function dCut(){const pv=document.getElementById('docPrev'),dp=pv&&pv.querySelector('.dp');if(!dp||(UI.docEd&&UI.docEd.on()))return;const c=S.dView||S.cc;if(!c)return;const M=dMg(c),n=UI.docPages(dp,M.t,M.b);
+  const w=document.getElementById('dPgInfo');if(w){w.textContent='A4 '+n+'쪽'+(n>1?' · 쪽마다 나눠 보여요':' ✓')+(dFitTxt(c)?' · '+dFitTxt(c):'');w.style.color=n>1?'#e53935':''}}
+function dApply(){if(!S.cc||!S.cc.doc||(UI.docEd&&UI.docEd.on()))return;dFitCalc(S.cc);S.dView=JSON.parse(JSON.stringify(S.cc));const p=document.getElementById('docPrev');if(p){p.innerHTML=docHtml(S.dView);p.classList.remove('stale');dCut()}const pt=document.getElementById('dPendTxt');if(pt)pt.textContent='';const ft=document.getElementById('dFitInfo');if(ft)ft.textContent=dFitTxt(S.cc);const w=document.getElementById('dWarnBox');if(w)w.innerHTML=dWarnHtml(dWarn(S.dView));const gi=document.getElementById('dGuest');if(gi&&document.activeElement!==gi){const ga=dGuestAdd(S.cc);gi.value=ga==null?'':ga.toLocaleString('ko-KR')}const pl=document.getElementById('ccDirty');if(pl)pl.innerHTML=ccPill()}
 function dSetFee(k,i,v){const c=S.cc,ga=dGuestAdd(c);DOC_FG[k][1].forEach(t=>{c.fees[t]=c.fees[t]||[];c.fees[t][i]=v});if(ga!=null)DOC_GUEST.forEach(([g,m])=>{if(DOC_FG[k][1].includes(m)){c.fees[g]=c.fees[g]||[];c.fees[g][i]=v+ga}})}
 /* 브라우저 인쇄(Ctrl+P · 메뉴)로 찍어도 지금 값으로: 인쇄 직전에 인쇄용 공문을 다시 만듦. 공문 화면이 아니면 인쇄용 공문을 비움 (11-04) */
 window.addEventListener('beforeprint',()=>{const r=document.getElementById('docPrintRoot');if(S.tab==='doc'&&S.cc&&S.cc.doc){if(!S.dPrinting)dBuildPrint();document.body.classList.add('dprint')}else{document.body.classList.remove('dprint');if(r)r.remove()}});
@@ -2748,6 +2746,8 @@ document.addEventListener('click',e=>{if(S.tab!=='doc')return;const b=e.target.c
   if(d.dapply){dApply();toast('미리보기에 적용했어요'+(ccDirty()?' · 캠프에 반영하려면 「저장」':''));return}
   if(b.id==='dPrint'||b.id==='dPrint2'){dPrint();return}
   if(b.id==='dWin'||b.id==='dWin2'){dOpenWin();return}
+  if(b.id==='dEdOpen'){dApply();const pv=document.getElementById('docPrev'),bd=pv&&pv.querySelector('.dbody');if(!bd)return;UI.docEd.open(pv,bd,{onSave:h=>{S.cc.doc.ed=h;dApply();render();const sv=document.querySelector('[data-ccsave]');if(sv)sv.click()},onCancel:()=>{render()}});return}
+  if(b.id==='dEdDrop'){if(!confirm('미리보기에서 고친 글을 지우고 왼쪽 글로 돌아갈까요?'))return;delete S.cc.doc.ed;dApply();render();return}
   if(d.dz){const z=d.dz==='0'?.86:Math.max(.4,Math.min(1.6,Math.round((dZoom()+(d.dz==='+'?.1:-.1))*100)/100));S.dZoom=z;try{localStorage.setItem('campDocZoom',String(z))}catch(x){}const pv=document.getElementById('docPrev');if(pv)pv.style.setProperty('--dz',z);const v=document.getElementById('dzv');if(v)v.textContent=Math.round(z*100)+'%';return}
   if(d.dmgreset&&c&&c.doc){c.doc.mg=Object.assign({},DOC_MG);render();return}
   if(d.dtok){const ta=document.getElementById(S.dFocus||'');if(!ta){toast('먼저 넣을 글 칸을 눌러 주세요');return}const tok=d.dtok,line=tok.startsWith('[[');const s=ta.selectionStart,en=ta.selectionEnd,v=ta.value;
@@ -4391,6 +4391,6 @@ document.addEventListener('click',e=>{if(S.tab!=='book')return;const b=e.target.
   if(b.id==='ebSetSave'){const n=Object.assign(ebSet(),S.ebSetW||{});n.per=Math.max(1,Math.min(10,Math.round(+n.per||5)));n.fs=Math.max(5,Math.min(10,+n.fs||6.6));['en','sub','org'].forEach(k=>n[k]=String(n[k]||'').trim().slice(0,120));
     ebSend([],[],n,()=>{S.ebSetW=null;toast('책자 설정을 저장했어요')});return}},true);
 </script>
-<div id="bldMark" hidden>빌드표시 20261111-231036 </div>
+<div id="bldMark" hidden>빌드표시 20261111-232337 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();</script>
 </body></html>

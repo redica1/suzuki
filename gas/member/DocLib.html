@@ -1,0 +1,81 @@
+/* build: 20261111-232336 */
+/* 공문 편집 라이브러리 — 원본 gas/common/DocLib.html (sync.py 가 camp · member 로 복사). 캠프 관리자 · 회원관리 공문이 같이 씀 */
+(function(){var UI=window.UI||(window.UI={});
+/* 6) 공문 미리보기에서 바로 고치기 UI.docEd (11-11) — 행사책자 「고쳐 쓰는 중」과 같은 도구 막대.
+ * 고칠 곳 = 미리보기 .dp 안의 .dbody (제목 · 머리말 · 항목). 캠프 값 자리 .tok[data-tok] 은 잠가 두고, 저장한 글은 칸을 비워 두었다가 그릴 때 다시 채움 (UI.docTokFill)
+ * UI.docEd.open(barHost, editEl, {onSave(html), onCancel()}) · UI.docEd.close() · UI.docEd.on() */
+(function(){
+  const FF=[['"Pretendard Variable", Pretendard, sans-serif','프리텐다드'],['"Nanum Gothic", sans-serif','나눔고딕'],['"Nanum Myeongjo", serif','나눔명조'],['"Gowun Batang", serif','고운바탕'],['"Noto Serif KR", serif','본명조']];
+  const FS=[8,9,10,11,11.5,12,12.5,13,14,16,18,20,22,24,28,32],LS=[['-0.08em','-8%'],['-0.05em','-5%'],['-0.03em','-3%'],['0','0 (기본)'],['0.03em','+3%'],['0.05em','+5%'],['0.1em','+10%'],['0.2em','+20%']];
+  const LH=[['1','1.0'],['1.15','1.15'],['1.3','1.3'],['1.48','1.48 (기본)'],['1.6','1.6'],['1.8','1.8'],['2','2.0']],CO=[['#111111','검정'],['#555555','회색'],['#d0021b','빨강'],['#1d4ed8','파랑'],['#1f5c63','청록'],['#7c3aed','보라']];
+  const TS=[['1x2','1줄 × 2칸'],['2x2','2줄 × 2칸'],['3x2','3줄 × 2칸'],['3x3','3줄 × 3칸'],['4x3','4줄 × 3칸'],['5x4','5줄 × 4칸']],GBG=[['#f1f1f1','회색'],['#eaf1f9','하늘 옅게'],['#fdf3e1','노랑 옅게'],['#fbe7ea','분홍 옅게'],['none','바탕 없음']];
+  const css='.uded{position:sticky;top:calc(var(--hdrH,0px) + 6px);z-index:30;background:#fff;border:1px solid #cfe3e1;border-radius:12px;box-shadow:0 6px 18px rgba(0,0,0,.12);padding:8px 10px;margin:0 0 8px;font:13px/1.4 "Pretendard Variable",Pretendard,sans-serif;color:#1d2b2a}'+
+    '.uded .r1{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding-bottom:6px;border-bottom:1px dashed #d8e6e5;margin-bottom:6px}.uded .r1 b{font-size:14px}.uded .r1 .h{color:#6b7b7a;font-size:12px;margin-right:auto}'+
+    '.uded .r2{display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin:4px 0}.uded select,.uded button.tb{font:inherit;font-size:12.5px;border:1px solid #cfdcdb;background:#fff;border-radius:7px;padding:3px 7px;cursor:pointer;color:#1d2b2a}'+
+    '.uded button.tb:hover{border-color:#0e8a86}.uded .sep{width:1px;height:20px;background:#dfe8e7;margin:0 3px}.uded .sv{background:#0e8a86;color:#fff;border:0;border-radius:8px;padding:5px 14px;font-weight:700;cursor:pointer}.uded .cx{background:#fff;border:1px solid #cfdcdb;border-radius:8px;padding:5px 12px;cursor:pointer}'+
+    '.dbody[contenteditable=true]{outline:2px dashed #0e8a86;outline-offset:2mm;cursor:text}.dbody[contenteditable=true] .tok{background:#fff6d6;outline:1px dashed #d9a400;border-radius:2px}'+
+    '.dp table.ut{width:100%;border-collapse:collapse;margin:1mm 0}.dp table.ut td,.dp table.ut th{border:1px solid #333;padding:.7mm 2mm;vertical-align:middle}.dp .gbx{border-radius:2.5mm;padding:2mm 3mm;margin:1.5mm 0}.dp .gbx p{margin:0}';
+  function addCss(){if(document.getElementById('udedCss'))return;const s=document.createElement('style');s.id='udedCss';s.textContent=css;document.head.appendChild(s)}
+  let ed=null,bar=null,opt=null,rg=null,hist=[],fut=[];
+  const keep=()=>{const s=getSelection();if(s.rangeCount&&ed&&ed.contains(s.getRangeAt(0).commonAncestorContainer))rg=s.getRangeAt(0).cloneRange()};
+  const back=()=>{if(!rg)return null;const s=getSelection();s.removeAllRanges();s.addRange(rg);return rg};
+  const snap=()=>{hist.push(ed.innerHTML);if(hist.length>60)hist.shift();fut=[]};
+  const blk=n=>{while(n&&n!==ed){if(n.nodeType===1&&/^(P|DIV|H1|H2|H3|LI|TD|TH)$/.test(n.tagName))return n;n=n.parentNode}return null};
+  function blocks(r){const L=[];ed.querySelectorAll('p,div,h1,h2,h3,li,td,th').forEach(b=>{if(r.intersectsNode(b)&&!b.querySelector('p,div,h1,h2,h3,li,td,th'))L.push(b)});const b0=blk(r.startContainer);if(b0&&L.indexOf(b0)<0)L.push(b0);return L}
+  function style(p,v){const r=back();if(!r)return toast0('고칠 글자를 먼저 눌러 주세요');snap();
+    if(r.collapsed||p==='line-height'){blocks(r).forEach(b=>v===''?b.style.removeProperty(p):b.style.setProperty(p,v))}
+    else{const sp=document.createElement('span');sp.style.setProperty(p,v);sp.appendChild(r.extractContents());r.insertNode(sp);const n=document.createRange();n.selectNodeContents(sp);const s=getSelection();s.removeAllRanges();s.addRange(n);rg=n.cloneRange()}}
+  function cmd(c){const r=back();if(!r&&c!=='undo'&&c!=='redo')return toast0('고칠 글자를 먼저 눌러 주세요');
+    if(c==='undo'){if(!hist.length)return;fut.push(ed.innerHTML);ed.innerHTML=hist.pop();lock();return}
+    if(c==='redo'){if(!fut.length)return;hist.push(ed.innerHTML);ed.innerHTML=fut.pop();lock();return}
+    snap();if(c==='h2'||c==='h3'||c==='p')document.execCommand('formatBlock',false,c);
+    else if(c==='gbx'){const box=document.createElement('div');box.className='gbx';box.style.backgroundColor='#f1f1f1';box.innerHTML='<p>글상자 — 여기에 쓰세요</p>';const b=blk(r.startContainer);(b&&b.parentNode?b:ed.lastChild||ed).after?((b||ed.lastElementChild).after(box)):ed.appendChild(box)}
+    else if(/^(rowdn|rowdel|colR|coldel)$/.test(c)){let td=r.startContainer;while(td&&td!==ed&&!(td.nodeType===1&&/^(TD|TH)$/.test(td.tagName)))td=td.parentNode;if(!td||td===ed){hist.pop();return toast0('표 안의 칸을 먼저 눌러 주세요')}
+      const tr=td.parentNode,t=td.closest('table'),ci=[...tr.cells].indexOf(td);
+      if(c==='rowdn'){const n=tr.cloneNode(true);[...n.cells].forEach(x=>{x.innerHTML='<br>'});tr.after(n)}
+      if(c==='rowdel'){if(t.rows.length<=1)t.remove();else tr.remove()}
+      if(c==='colR')[...t.rows].forEach(x=>{const ref=x.cells[Math.min(ci,x.cells.length-1)],n=document.createElement(ref?ref.tagName:'td');n.innerHTML='<br>';ref?ref.after(n):x.appendChild(n)});
+      if(c==='coldel')[...t.rows].forEach(x=>{if(x.cells.length<=1)x.remove();else if(x.cells[ci])x.cells[ci].remove()})}
+    else document.execCommand(c,false,null);keep()}
+  function sel(f,v){if(f==='ff')style('font-family',v);else if(f==='fs')style('font-size',v?v+'pt':'');else if(f==='ls')style('letter-spacing',v);else if(f==='lh')style('line-height',v);else if(f==='co')style('color',v);
+    else if(f==='tbl'){const r=back();if(!r)return toast0('표를 넣을 자리를 먼저 눌러 주세요');snap();const [a,b]=v.split('x').map(Number);document.execCommand('insertHTML',false,'<table class="ut"><tbody>'+('<tr>'+'<td><br></td>'.repeat(b)+'</tr>').repeat(a)+'</tbody></table><p><br></p>')}
+    else if(f==='gbg'){const r=back();let n=r&&r.startContainer;while(n&&n!==ed&&!(n.nodeType===1&&n.classList.contains('gbx')))n=n.parentNode;if(!n||n===ed)return toast0('글상자 안을 먼저 눌러 주세요');snap();v==='none'?n.style.removeProperty('background-color'):n.style.backgroundColor=v}}
+  function toast0(m){if(typeof toast==='function')toast(m);else alert(m)}
+  function lock(){ed.querySelectorAll('.tok').forEach(t=>t.setAttribute('contenteditable','false'))}
+  function out(){const c=ed.cloneNode(true);c.removeAttribute('contenteditable');c.querySelectorAll('[contenteditable]').forEach(x=>x.removeAttribute('contenteditable'));c.querySelectorAll('.tok').forEach(t=>{t.innerHTML='';[...t.attributes].forEach(a=>{if(a.name!=='class'&&a.name!=='data-tok')t.removeAttribute(a.name)})});c.querySelectorAll('.pgcut,.pgprobe,.pgsp').forEach(x=>x.remove());return c.innerHTML}
+  function tools(){const s=(f,ph,L,u)=>'<select data-uedf="'+f+'" aria-label="'+ph+'"><option value="">'+ph+'</option>'+L.map(o=>Array.isArray(o)?'<option value="'+o[0].replace(/"/g,'&quot;')+'">'+o[1]+'</option>':'<option value="'+o+'">'+o+(u||'')+'</option>').join('')+'</select>';
+    const b=(c,l,t)=>'<button class="tb" type="button" data-uedc="'+c+'"'+(t?' title="'+t+'"':'')+'>'+l+'</button>';
+    return '<div class="r1"><b>공문 · 고쳐 쓰는 중</b><span class="h">글자를 고른 뒤 바꾸세요 · 고르지 않으면 그 문단 전체 · 노란 칸은 캠프 설정 값이라 왼쪽에서 고쳐요</span><button type="button" class="sv" data-uedc="save">저장</button><button type="button" class="cx" data-uedc="cancel">그만두기</button></div>'+
+      '<div class="r2">'+s('ff','글꼴',FF)+s('fs','크기',FS,'pt')+s('ls','자간',LS)+s('lh','행간',LH)+s('co','글자색',CO)+'<span class="sep"></span>'+b('bold','<b>굵게</b>')+b('italic','<i>기울임</i>')+b('underline','<u>밑줄</u>')+'<span class="sep"></span>'+b('justifyLeft','왼쪽')+b('justifyCenter','가운데')+b('justifyRight','오른쪽')+'</div>'+
+      '<div class="r2">'+b('h2','제목')+b('h3','소제목')+b('p','본문')+b('insertUnorderedList','• 목록')+'<span class="sep"></span>'+b('removeFormat','모양 지우기')+b('undo','되돌리기')+b('redo','다시')+'</div>'+
+      '<div class="r2"><b style="font-size:12.5px;color:#4a5a62">표</b>'+s('tbl','표 넣기',TS)+b('rowdn','↓ 줄','아래에 줄 넣기')+b('rowdel','줄 지우기')+b('colR','칸 →','오른쪽에 칸 넣기')+b('coldel','칸 지우기')+'<span class="sep"></span><b style="font-size:12.5px;color:#4a5a62">글상자</b>'+b('gbx','글상자 넣기')+s('gbg','상자 바탕',GBG)+'</div>'}
+  function onBar(e){const t=e.target.closest('[data-uedc]');if(!t)return;e.preventDefault();const c=t.getAttribute('data-uedc');
+    if(c==='save'){const h=out(),o=opt;close();if(o&&o.onSave)o.onSave(h);return}if(c==='cancel'){const o=opt;close();if(o&&o.onCancel)o.onCancel();return}cmd(c)}
+  function onSel(e){const t=e.target.closest('[data-uedf]');if(!t||!t.value)return;sel(t.getAttribute('data-uedf'),t.value);t.value=''}
+  function open(host,el,o){addCss();close();ed=el;opt=o||{};hist=[];fut=[];rg=null;const dp0=ed.closest('.dp');if(dp0)dp0.querySelectorAll('.pgsp,.pgcut').forEach(x=>x.remove());ed.setAttribute('contenteditable','true');lock();
+    bar=document.createElement('div');bar.className='uded';bar.innerHTML=tools();host.parentNode.insertBefore(bar,host);
+    bar.addEventListener('mousedown',e=>{if(e.target.closest('button'))e.preventDefault()});bar.addEventListener('click',onBar);bar.addEventListener('change',onSel);
+    document.addEventListener('selectionchange',keep);ed.addEventListener('keydown',ek);ed.focus()}
+  function ek(e){if((e.ctrlKey||e.metaKey)&&!e.shiftKey&&e.key==='z'){e.preventDefault();cmd('undo')}else if(!e.ctrlKey&&!e.metaKey&&e.key.length===1&&(!hist.length||hist[hist.length-1]!==ed.innerHTML)&&!ek.t){snap();ek.t=setTimeout(()=>{ek.t=0},1200)}}
+  function close(){if(bar){bar.remove();bar=null}if(ed){ed.removeAttribute('contenteditable');ed.removeEventListener('keydown',ek)}document.removeEventListener('selectionchange',keep);ed=null}
+  UI.docEd={open,close,on:()=>!!ed};
+  /* 저장한 글의 캠프 값 자리를 지금 값으로 채움: <span class="tok" data-tok="{기간}"></span> · <div class="tok" data-tok="[[참가비표]]"></div> */
+  UI.docTokFill=function(h,val){return String(h||'').replace(/<(span|div) class="tok" data-tok="([^"]+)"[^>]*>[\s\S]*?<\/\1>/g,(m,tag,k)=>{const v=val(k.replace(/&quot;/g,'"'));return '<'+tag+' class="tok" data-tok="'+k+'">'+(v==null?k:v)+'</'+tag+'>'})};
+})();
+/* 7) 공문 미리보기 쪽 나눔 UI.docPages (11-11) — 행사책자처럼 쪽마다 따로 보이게. 인쇄처럼 줄(또는 표)이 쪽 끝을 넘으면 그 줄부터 다음 쪽으로 밀고,
+ * 그 자리에 「아래 여백 + 회색 쪽 사이 + 위 여백」 칸(.pgsp)을 넣음. 미리보기에만 넣고 인쇄 · 저장에는 없음. 돌려주는 값 = 쪽 수 */
+function docPages(dp,mt,mb){if(!dp)return 0;dp.querySelectorAll('.pgsp,.pgcut,.pgprobe').forEach(function(x){x.remove()});var f=dp.querySelector('.fitc')||dp,K=parseFloat(f.style.zoom)||1,GAP=9,per=297-mt-mb;
+  var pr=document.createElement('div');pr.className='pgprobe';pr.style.cssText='position:absolute;left:0;top:0;width:1px;height:100mm;visibility:hidden';dp.appendChild(pr);var px=pr.getBoundingClientRect().height/100;pr.remove();if(!px)return 1;
+  var Q='.lg,.meta,h1,h2,h3,.ln,.sh,.rh,table,.ft-end,.gbx,li,p,.wtop';var all=[].slice.call(f.querySelectorAll(Q)),L=all.filter(function(e){return e.tagName==='TABLE'?!e.parentNode.closest('table'):(!e.closest('table')&&!all.some(function(o){return o!==e&&e.contains(o)&&o.tagName!=='TABLE'||o!==e&&o.tagName==='TABLE'&&e.contains(o)}))});var page=1,guard=0;
+  while(guard++<12){var top0=dp.getBoundingClientRect().top,lim=(page-1)*(297+GAP)+mt+per,el=null;
+    for(var i=0;i<L.length;i++){var r=L[i].getBoundingClientRect();if(!r.height)continue;if((r.bottom-top0)/px>lim+.3){el=L[i];break}}
+    if(!el)break;var t=(el.getBoundingClientRect().top-top0)/px,need=Math.max(0,lim-t),h=need+mb+GAP+mt;
+    if(t<(page-1)*(297+GAP)+mt+.5){page++;continue}
+    var sp=document.createElement('div');sp.className='pgsp';var a=((need+mb)/h*100).toFixed(3),b=((need+mb+GAP)/h*100).toFixed(3);
+    sp.style.cssText='position:relative;height:'+(h/K)+'mm;margin-left:-'+(40/K)+'mm;margin-right:-'+(40/K)+'mm;background:linear-gradient(to bottom,transparent 0,transparent '+a+'%,#e6eaec '+a+'%,#e6eaec '+b+'%,transparent '+b+'%);pointer-events:none';
+    sp.innerHTML='<span style="position:absolute;left:50%;top:'+a+'%;height:'+(b-a)+'%;transform:translateX(-50%);display:flex;align-items:center;font:700 '+(9/K)+'pt sans-serif;color:#7c3aed;white-space:nowrap">'+page+'쪽 끝 · '+(page+1)+'쪽 ▶</span>';
+    el.parentNode.insertBefore(sp,el);page++}
+  dp.style.minHeight=(page*297+(page-1)*GAP)+'mm';dp.style.overflow='hidden';return page}
+UI.docPages=docPages;
+
+})();

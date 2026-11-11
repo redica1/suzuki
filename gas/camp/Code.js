@@ -1,4 +1,4 @@
-/* build: 20261111-231036 */
+/* build: 20261111-232337 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -104,7 +104,7 @@ function doGet(e) {
   const intl = e && e.parameter && e.parameter.page === 'intl';
   if (e && e.parameter && e.parameter.page === 'meal') return HtmlService.createHtmlOutputFromFile('Meal').setTitle(cname + ' · 식권 스캐너').addMetaTag('viewport', 'width=device-width, initial-scale=1, user-scalable=no').setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);   // 식권 스캐너 (11-04)
   if (e && e.parameter && e.parameter.page === 'find') return HtmlService.createTemplateFromFile('Find').evaluate().setTitle(cname + ' · 일정 찾기').addMetaTag('viewport', 'width=device-width, initial-scale=1').setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
-  if (admin) page = HtmlService.createHtmlOutputFromFile('Admin');
+  if (admin) page = HtmlService.createTemplateFromFile('Admin').evaluate();
   else if (intl) page = HtmlService.createHtmlOutputFromFile('Intl');
   else { const t = HtmlService.createTemplateFromFile('Index'); let share = ''; let tl = ''; try { ensureSettings_(); share = setting_('공유주소'); tl = setting_('테스트 로그인'); } catch (x) {} t.shareUrl = share; t.testLogin = tl; t.campJson = cj; try { t.loginPw = { pw: '1', both: '2' }[loginMode_()] || ''; t.memberUrl = setting_('회원관리 주소'); } catch (x) { t.loginPw = ''; t.memberUrl = ''; } /* 테스트 로그인: STG 「설정」에만 (이름/휴대전화) — 로그인 칸을 미리 채움 · campJson: 「캠프설정」 시트 값 (날짜·장소·차수·참가비) */ page = t.evaluate(); }
   return page
@@ -1179,6 +1179,7 @@ function docClean_(d, nr) {
     t1: t(d.t1, 20).trim(), t2: t(d.t2, 20).trim(), sign: d.sign !== false, inc: Array.from({ length: nr }, (_, i) => { const v = (d.inc || [])[i]; return i && v != null && v !== '' && isFinite(+v) ? Math.round(+v) : null; }), mg: (() => { const m = d.mg || {}, o = {}; [['t', 13], ['b', 15], ['l', 16], ['r', 16]].forEach(([k, v]) => { const x = +m[k]; o[k] = m[k] !== '' && m[k] != null && isFinite(x) ? Math.max(0, Math.min(40, Math.round(x * 10) / 10)) : v; }); return o; })(), intro: t(d.intro, 3000), rnote: Array.from({ length: nr }, (_, i) => t((d.rnote || [])[i], 80)), sec };
   /* 참가비표 자동 채우기 규칙 (11-11): 기준 자격 · 줄마다 기준보다 + · 차수마다 1차보다 + (금액 또는 n%) */
   const fa = v => { const s = String(v == null ? '' : v).replace(/[,\s원+]/g, ''); return /^-?\d+(\.\d+)?%?$/.test(s) ? s.slice(0, 12) : ''; };
+  if (d.ed) o.ed = t(d.ed, 30000).replace(/<script[\s\S]*?<\/script>/gi, '').replace(/\son\w+="[^"]*"/gi, '');
   o.fit = [0, 1, 2].indexOf(+d.fit) >= 0 ? +d.fit : 0; o.fitK = isFinite(+d.fitK) && +d.fitK >= 0.3 && +d.fitK <= 1 ? Math.round(+d.fitK * 1000) / 1000 : 1;
   o.rbase = FEE_TYPES.indexOf(d.rbase) >= 0 ? d.rbase : '학생';
   o.radd = {}; Object.keys(d.radd || {}).forEach(k => { if (FEE_TYPES.indexOf(k) >= 0 && k !== o.rbase && fa(d.radd[k])) o.radd[k] = fa(d.radd[k]); });

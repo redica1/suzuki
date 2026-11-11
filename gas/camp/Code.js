@@ -753,7 +753,7 @@ function recalc_(sb) {
     p.type = i.type; p.fee = FEES[i.type][pr];
     if (intl) { p.usd = +FEES[i.type][pr] || 0; p.fee = Math.round(p.usd * (+OPT.usdRate || 1450)); }   /* 해외: 참가비표 값 = USD, 원화 청구액 = USD × 환율 */ p.lesson = les * OPT.lessonFee + mc;
     p.dues = paid ? 0 : (isT ? OPT.teacherDues : OPT.studentDues);
-    p.room = roomBy[k] || 0;
+    p.room = roomBy[k] || ((f.room || {})[k] ? 0 : (+((f.roomPen || {})[k]) || 0));   /* 가족방만 취소한 대표: 남은 취소 수수료 (11-11) */
     const aj = ADJ[p.id]; if (aj) { if (aj.fee !== '') p.fee = +aj.fee; if (aj.room !== '') p.room = +aj.room; p.adj = aj.memo || '운영진 조정'; } else delete p.adj;   /* 운영진 청구 조정 (11-01) */
   });
   return sb;
@@ -848,6 +848,22 @@ function submitNew(token, sb) {
   return Object.assign({ ok: true, no: sb.no }, bundle_(u.acads, u.name));
 }
 
+/** 가족방만 취소 (11-11): 참가는 그대로인 대표의 가족방을 빼면, 입금된 경우 오늘 환불 규정(진단서 미제출)만큼 돌려주고 나머지는 취소 수수료로 남김.
+ *  form.roomPen[대표] = 남는 금액 · 화면이 보낸 값은 믿지 않고 서버가 지난 값 + 이번에 뺀 방으로 다시 계산 */
+function roomPen_(cur, sb) {
+  const nf = sb.form = sb.form || {}, of = cur.form || {}, op = of.roomPen || {}, pen = {}, nr = nf.room || {};
+  const R = camp_().refund || {}, td = today_(), rule = (R.rules || []).find(r => td <= r.until) || R.after || {}, rate = Math.max(0, Math.min(100, +rule.rate || 0));
+  Object.keys(op).forEach(k => { if (!nr[k]) pen[k] = +op[k] || 0; });
+  Object.keys(of.room || {}).forEach(k => {
+    if (!of.room[k] || nr[k]) return;
+    const id = cur.no + '_' + k, c = cur.ppl.find(p => p.id === id), n = sb.ppl.find(p => p.id === id);
+    if (!c || !n || n.status !== '정상' || !(+c.paidAmt > 0) || !(+c.room > 0)) return;
+    pen[k] = (+c.room) - Math.floor((+c.room) * rate / 100 / 100) * 100;
+  });
+  Object.keys(pen).forEach(k => { if (!(pen[k] > 0)) delete pen[k]; });
+  if (Object.keys(pen).length) nf.roomPen = pen; else delete nf.roomPen;
+}
+
 /** 내 접수 저장 (인원 추가·정보 수정·입금 신고·신고 수정·취소) — 내가 낸 접수만 */
 function saveSubs(token, subs) {
   const u = who_(token);
@@ -862,6 +878,7 @@ function saveSubs(token, subs) {
       if (!cur) throw new Error(sb.no + ' 접수를 찾지 못했어요.');
       if (cur.owner !== u.name) throw new Error(sb.no + '는 ' + cur.owner + ' 선생님이 낸 접수라 고칠 수 없어요.');
       sb.acad = cur.acad; sb.owner = cur.owner; if (cur.contact) sb.contact = cur.contact; else delete sb.contact; sb.createdAt = cur.createdAt; sb.no = cur.no; sb.reqId = cur.reqId; sb.rev = (+cur.rev || 0) + 1;
+      roomPen_(cur, sb);
       recalc_(sb);
       teacherDup_(all, sb, sb.ppl.filter(p => !cur.ppl.some(c => c.id === p.id)).map(p => p.id));
       stuDup_(all, sb, sb.ppl.filter(p => !cur.ppl.some(c => c.id === p.id)).map(p => p.id));

@@ -139,6 +139,17 @@ function stepsOf(p){if(p.status!=='정상'||(+p.paidAmt||0)>0||p.pay==='신고'|
 const md=d=>{const m=String(d||'').match(/^\d{4}-(\d{2})-(\d{2})/);return m?(+m[1])+'/'+(+m[2]):''};
 function stepsHtml(p){const L=stepsOf(p);return L.length?`<br><small class="hint pts" style="color:#b45309">${L.map((x,i)=>i===0?`${md(x.to)}까지 입금 ${won(x.amt)}`:x.last?`이후 ${won(x.amt)}`:`${md(x.to)}까지 ${won(x.amt)}`).join('<br>')}</small>`:''}
 function subTotal(sb,ids){return sb.ppl.filter(p=>!ids||ids.includes(p.id)).reduce((t,p)=>t+pAmt(p),0)}
+/* 가족방과 취소 (11-11): 고른 사람이 든 가족방마다 남는 사람 · 새 대표 후보(교사 · 학생만) · 빈 자리로 늘어나는 금액 */
+const pKey=(sb,p)=>p.id.slice(sb.no.length+1);
+function cxRooms(sb,sel){return roomsOf([sb]).filter(r=>r.mem.some(x=>sel.includes(x.p.id))).map(r=>{const left=r.mem.filter(x=>!sel.includes(x.p.id)).map(x=>x.p),repOut=sel.includes(r.rep.id);
+  const cand=repOut?left.filter(p=>p.kind==='교사'||p.kind==='학생'):[],emp=n=>Math.max(0,ROOM.cap-n)*ROOM.emptyFee;return {r,left,repOut,cand,add:repOut?emp(left.length):emp(left.length)-emp(r.mem.length)}})}
+/* 가족방만 취소: 대표에게 붙은 가족방 금액 · 입금됐으면 오늘 환불 규정(진단서 미제출)대로 돌려받고 수수료는 남음 */
+function roomCxOf(r){const room=+r.rep.room||0,paid=isPaid(r.rep),rate=rateOf(refundRule(S.today),false),back=paid?Math.floor(room*rate/100/100)*100:0;return {room,paid,rate,back,keep:paid?room-back:0}}
+function roomCxPanel(r){const o=roomCxOf(r);
+  return `<div class="cxbox"><b>${esc(r.rep.name)} 가족방만 취소</b> <span class="hint">사람은 그대로 참가해요</span>
+    <dl class="kv"><dt>가족방 금액</dt><dd class="num">${won(o.room)}</dd>${o.paid?`<dt>오늘 취소하면</dt><dd>${o.rate?o.rate+'% 환불':'환불 없음'} · 돌려받는 금액 <b>${won(o.back)}</b>${o.keep?` · 취소 수수료 ${won(o.keep)}은 남아요`:''}</dd>`:'<dt>입금 전</dt><dd>입금 전이라 가족방 금액이 청구에서 바로 빠져요</dd>'}</dl>
+    <p class="hint" style="margin:0">가족방을 취소하면 ${r.mem.map(x=>esc(x.p.name)).join(', ')}은(는) 가족방 없이 참가하고, 방은 본부에서 배정해요.${o.paid&&o.back?' 돌려받는 금액은 「차액 돌려받기 요청」으로 계좌를 넣어 주세요.':''}</p>
+    <div class="row"><button class="btn primary" type="button" data-roomcxgo="${r.sb.no}|${r.rep.id}">가족방 취소하기</button><button class="btn ghost" type="button" data-roomcx="">닫기</button></div></div>`}
 function refundOf(sb,ids,doc){const r=refundRule(S.today);const ps=sb.ppl.filter(p=>ids.includes(p.id)&&isPaid(p));const rate=rateOf(r,doc);
   const base=ps.reduce((t,p)=>t+Math.max(0,(p.paidAmt||0)-(REFUND.duesRefund?0:p.dues)),0);return {r,rate,base,paid:ps.length>0,amt:Math.floor(base*rate/100/100)*100,amtNo:Math.floor(base*rateOf(r,false)/100/100)*100,amtDoc:Math.floor(base*docRate(r)/100/100)*100}}
 function stTag(st,p){return st==='정상'?(p&&p.cxRejected?`<span class="pill bad">취소 요청 반려${p.cxWhy?' · '+esc(p.cxWhy):''}</span>`:''):st==='취소요청'?'<span class="pill due">취소 요청<br><small>확인 중</small></span>':`<span class="pill lock">취소${p&&p.refund?(p.refund.date?' · 환불<br><small style="display:block">'+sdFmt(p.refund.date)+'</small><small style="display:block">'+won(p.refund.amt)+'</small>':' · 환불 예정<br><small>'+won(p.refund.amt)+'</small>'):''}</span>`}

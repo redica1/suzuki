@@ -1,4 +1,4 @@
-/* build: 20261112-021620 */
+/* build: 20261112-022342 */
     ps.forEach(p=>{p.pay='신고';p.rep=rep;delete S.rpRow[p.id]});S.afterSave=()=>repDone(ps.map(p=>p.id));subSave();S.rp=null;S.rpOpen=false;S.rpMemo=undefined;render();toast(`${ps.length}명 입금 신고를 보냈어요 · 운영진이 확인하면 「입금 확인」으로 바뀌어요`);return}
   if(b.id==='rpFill'){const n=document.getElementById('rpAllN').value.trim(),dd=document.getElementById('rpAllD').value;S.rpAllN=n;S.rpAllD=dd;const sel=S.rp||[];
     if(!n&&!dd){toast('적용할 입금자명이나 입금일을 적어 주세요');return}unpaidPpl().filter(x=>sel.includes(x.p.id)).forEach(({p})=>{const v=rpv(p);if(n)v.n=n;if(dd)v.d=dd});render();toast(`선택한 ${sel.length}명에게 적용했어요`);return}
@@ -310,7 +310,7 @@ function vAudPre(){const A=S.AP;if(!A){apLoad();return '<section class="sec"><p 
     ${S.apNew?`<div class="apNew"><b>명단에 없는 학생 추가</b><div class="sgRow"><input type="text" id="apNn" placeholder="학생 이름" maxlength="20" value="${esc(q)}"><select id="apNi"><option value="">악기</option><option>바이올린</option><option>첼로</option><option>비올라</option><option>플루트</option></select>${ac.length>1?`<select id="apNa">${ac.map(a=>`<option>${esc(a)}</option>`).join('')}</select>`:''}<button class="btn primary" type="button" id="apNadd">추가</button><button class="btn ghost" type="button" id="apNx">닫기</button></div><p class="hint" style="margin:0">회원관리 학생 명단에는 캠프 접수 때 같이 올라가요.</p></div>`:`<button class="btn ghost small" type="button" id="apNopen" style="margin-top:8px">+ 명단에 없는 학생 추가</button>`}
     <h3 class="apH">2. 학생마다 음악회 · 곡 · 음원 주소 <small class="hint">${L.length}명</small></h3>
     ${L.length?L.map((e,n)=>`<div class="apCard"><div class="spread"><b>${n+1}. ${esc(e.name)} <small class="hint">${esc(e.inst||'')} · ${esc(e.acad||'')}${e.nw?' · 명단에 없음(새로)':''}</small></b><button class="btn ghost small" type="button" data-aprm="${e.k}">빼기</button></div>
-      ${conSeg(e)}<div class="apGrid">${inp(e,'comp','작곡가 예: W. A. Mozart','text',60)}${inp(e,'title','곡명 예: Violin Concerto No. 3, 1st mov.','text',120)}</div>${inp(e,'url','음원 주소 https:// (유튜브 「일부 공개」 링크 등)','url')}</div>`).join(''):'<p class="hint">위에서 학생을 골라 주세요.</p>'}
+      ${conSeg(e)}<div class="apGrid">${inp(e,'comp','작곡가 예: W. A. Mozart','text',60)}${inp(e,'title','곡명 예: Violin Concerto No. 3, 1st mov.','text',120)}</div>${inp(e,'url','음원 주소 https:\/\/ (유튜브 「일부 공개」 링크 등)','url')}</div>`).join(''):'<p class="hint">위에서 학생을 골라 주세요.</p>'}
     <p class="hint">낸 주소는 고치거나 지울 수 없어요. 바꾸려면 새 주소를 더 내 주세요.</p>
     <div class="row"><button class="btn primary" type="button" id="apSend" ${open.length&&L.length?'':'disabled'}>${L.length>1?L.length+'명 ':''}음원 내기</button><button class="btn ghost" type="button" id="apBack">처음으로</button></div></section>
   <section class="sec"><h2>우리 학원이 낸 음원 <span class="hint">${mine.length}건</span></h2>
@@ -330,7 +330,7 @@ document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest
     S.apL.push({k:'n'+Date.now(),nw:{name:nm,inst:ins,acad:ac},name:nm,inst:ins,acad:ac,con:apDef(),comp:'',title:'',url:''});S.apNew=false;S.apQ='';render();toast(nm+' 학생을 넣었어요');return}
   if(b.dataset.aprm){S.apL=S.apL.filter(x=>x.k!==b.dataset.aprm);render();return}
   if(b.id==='apSend'){const L=S.apL||[];if(!L.length){toast('학생을 먼저 골라 주세요');return}
-    for(const x of L){const w=x.name+': ';if(!x.con){toast(w+'음악회를 골라 주세요');return}if(!String(x.title||'').trim()){toast(w+'곡명을 넣어 주세요');return}if(!/^https?:\S{6,}$/i.test(String(x.url||'').trim())){toast(w+'주소를 https:// 로 시작하게 넣어 주세요');return}}
+    for(const x of L){const w=x.name+': ';if(!x.con){toast(w+'음악회를 골라 주세요');return}if(!String(x.title||'').trim()){toast(w+'곡명을 넣어 주세요');return}if(!/^https?:\S{6,}$/i.test(String(x.url||'').trim())){toast(w+'주소를 https:\/\/ 로 시작하게 넣어 주세요');return}}
     const n=L.length;api('audPreAddMany',[L.map(x=>x.nw?{nw:x.nw,con:x.con,comp:x.comp,title:x.title,url:String(x.url).trim()}:{sid:x.sid,con:x.con,comp:x.comp,title:x.title,url:String(x.url).trim()})],r=>{S.AP=r;S.apL=[];render();window.scrollTo({top:0});toast(n+'명 음원을 냈어요')},null,'음원을 내고 있어요…');return}});
 document.addEventListener('change',e=>{if(S.view!=='audpre')return;const t=e.target;
   if(t.dataset&&t.dataset.apstu){const id=t.dataset.apstu,x=S.AP.stu.find(s=>s.id===id);if(t.checked){if(x&&!S.apL.some(v=>v.sid===id))S.apL.push({k:'s'+id,sid:id,name:x.name,inst:x.inst,acad:x.acad,con:apDef(),comp:'',title:'',url:''})}else S.apL=S.apL.filter(v=>v.sid!==id);render();return}

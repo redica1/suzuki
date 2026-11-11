@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261111-200151 -->
+<!-- build: 20261111-220401 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -138,7 +138,7 @@ table.tcht td,table.tcht th{white-space:nowrap}
 .asg{display:grid;gap:4px;max-height:260px;overflow:auto;border:1px solid var(--line);border-radius:8px;padding:8px}.asg label{display:flex;gap:6px;align-items:center;cursor:pointer}
 .msel{position:relative;min-width:150px}.msel summary{list-style:none;cursor:pointer;border:1px solid var(--line);border-radius:8px;padding:7px 26px 7px 10px;background:var(--bg);max-width:190px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:16px;position:relative}.msel summary:after{content:"\25BE";position:absolute;right:9px;top:50%;transform:translateY(-50%);color:var(--muted)}.msel summary::-webkit-details-marker{display:none}.mselp{margin-top:4px;background:#fff;border:1px solid var(--line);border-radius:8px;box-shadow:0 6px 20px rgba(0,0,0,.12);padding:8px 10px;display:grid;gap:6px;min-width:190px}.mselp label{display:flex;gap:6px;align-items:center;white-space:nowrap;cursor:pointer;font-size:16px}
 .mselp label{justify-content:flex-start;text-align:left}.mselp input[type=checkbox]{width:auto;flex:none;margin:0}
-table[data-stick] .sk{position:sticky;z-index:2;background:var(--surface)}table[data-stick] thead .sk{z-index:3}table[data-stick] .skl{box-shadow:6px 0 6px -6px rgba(0,0,0,.25)}tr.dirty td.sk{background:var(--rosin-soft)}tr.past td.sk{opacity:1;color:var(--muted)}
+table[data-stick] .sk{position:sticky;z-index:2;background:var(--surface)}table[data-stick] thead .sk{z-index:4}.stbl.uidock>table>thead th{z-index:3;background:var(--surface);box-shadow:inset 0 -1px 0 var(--line)}table[data-stick] .skl{box-shadow:6px 0 6px -6px rgba(0,0,0,.25)}tr.dirty td.sk{background:var(--rosin-soft)}tr.past td.sk{opacity:1;color:var(--muted)}
 </style>
 <style>
 /* 디자인 (10-31): 글꼴 Pretendard · 회원 파랑(#4285f4) 색 · 자간 .02em · 행간 1.75 · 낱말 단위 줄바꿈 — 위 색 정의를 덮어씀 */
@@ -172,7 +172,7 @@ h1,h2,h3,.band h1,.sec>h2,.card h2{font-weight:800;letter-spacing:0}
 <main class="wrap" id="app"><div class="card"><span><span class="spin"></span> 여는 중이에요…</span></div></main>
 <div class="homebar"><div class="wrap"><button class="btn ghost" type="button" id="homeBtn">&#8962; 처음</button><button class="btn ghost" type="button" id="backBtn">이전</button></div></div>
 <div class="toast" id="toast" hidden></div>
-<script>var UI_KEY='member';var UI_TABLES='table.stt,table.stu:not(.tedit),table.wtab';
+<script>var UI_KEY='member';var UI_TABLES='table.stt,table.stu:not(.tedit),table.wtab';var UI_DOCK='.tbl,.stbl';
 <?!= include('UiLib') ?>
 </script>
 <script>
@@ -951,6 +951,6 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')gdClose()});
   try{google.script.url.getLocation(function(l){var pr=l&&l.parameter||{},a=pr.as;if(a)setSess(a);if('ask' in pr||pr.v==='ask'){S.v0='ask'}if(pr.guide!==undefined)S.gd0=pr.guide||'why';go0()})}catch(x){go0()}})();
 </script>
 <script>try{window.top.postMessage('suzuki-ready','*')}catch(e){}</script>
-<div id="bldMark" hidden>빌드표시 20261111-200151 </div>
+<div id="bldMark" hidden>빌드표시 20261111-220401 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();</script>
 </body></html>

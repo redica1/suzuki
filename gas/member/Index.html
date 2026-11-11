@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261111-200151 -->
+<!-- build: 20261111-220401 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -176,7 +176,7 @@ th .trz{position:absolute;right:-3px;top:0;bottom:0;width:7px;cursor:col-resize;
   <div class="row"><button class="btn" type="button" id="prevBtn">이전</button><button class="btn" type="button" id="nextBtn">다음</button></div>
 </div></div>
 <div class="toast" id="toast" hidden></div>
-<script>var UI_KEY='member';var UI_TABLES='table.stt,table.stu:not(.tedit),table.wtab';
+<script>var UI_KEY='member';var UI_TABLES='table.stt,table.stu:not(.tedit),table.wtab';var UI_DOCK='.tbl,.stbl';
 <?!= include('UiLib') ?>
 </script>
 <script>
@@ -1494,7 +1494,7 @@ document.addEventListener('keydown',function(e){var t=e.target;if(S.tab!=='prt'|
 </script>
 <style>table.prt th,table.prt td{text-align:left !important}table.prt th:first-child,table.prt td:first-child{text-align:center !important}table.prt th:nth-child(7),table.prt td:nth-child(7),table.prt th:nth-child(8),table.prt td:nth-child(8){text-align:center !important}table.prt td:nth-child(7) input,table.prt td:nth-child(8) input{text-align:center}table.prt tr.mutedrow td{color:var(--faint)}table.prt tr.mutedrow td b{color:var(--muted)}table.prt td{vertical-align:middle}table.prt td.padr{white-space:normal;min-width:220px;max-width:340px;line-height:1.4}</style>
 
-<div id="bldMark" hidden>빌드표시 20261111-200151 </div>
+<div id="bldMark" hidden>빌드표시 20261111-220401 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();
 /* 공문 편집: 칸을 고치면 모델만 바꾸고 미리보기만 다시 그림(글자 조합이 깨지지 않게) */
 function gmField(t){if(S.tab!=='gm'||!S.gm||S.gm['상태']==='발행')return false;var d=S.gm,c=d['내용'],ds=t.dataset||{};

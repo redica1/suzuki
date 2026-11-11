@@ -35,13 +35,13 @@ function tblApply(t,st){const tb=t.tBodies[0];if(!tb)return;const rows=[...tb.ro
   if(st.s&&st.s.i!=null&&!t.querySelector('tbody td[colspan]')){const i=st.s.i,d=st.s.d;rows.sort((a,b)=>{const x=sval(a.cells[i]&&a.cells[i].textContent),y=sval(b.cells[i]&&b.cells[i].textContent);
     const r=(x.n!=null&&y.n!=null)?x.n-y.n:(x.n!=null?-1:y.n!=null?1:String(x.s).localeCompare(String(y.s),'ko',{numeric:true}));return d*r});rows.forEach(r=>tb.appendChild(r))}
   const q=String(st.q||'').replace(/\s+/g,'').toLowerCase();let n=0;rows.forEach(r=>{const ok=!q||r.textContent.replace(/\s+/g,'').toLowerCase().includes(q);r.style.display=ok?'':'none';if(ok)n++});
-  const c=(t.closest('.mtblw')||t).previousElementSibling;if(c&&c.classList.contains('tfind')){const m=c.querySelector('.tfn');if(m)m.textContent=q?n+'건':''}
+  const c=(t.closest('.mtblw'+(window.UI_DOCK?','+window.UI_DOCK:''))||t).previousElementSibling;if(c&&c.classList.contains('tfind')){const m=c.querySelector('.tfn');if(m)m.textContent=q?n+'건':''}
   t.querySelectorAll('thead th').forEach((th,j)=>{const a=th.querySelector('.sarr');if(a)a.textContent=st.s&&st.s.i===j?(st.s.d>0?' ▲':' ▼'):''})}
 function tblEnhance(){document.querySelectorAll(UI_SEL.split(',').map(x=>x.trim()+':not(.nosort):not([data-enh])').join(',')).forEach((t,_)=>{t.dataset.enh='1';
   const all=[...document.querySelectorAll(UI_SEL.split(',').map(x=>x.trim()+':not(.nosort)').join(','))],k=tkey(t,all.indexOf(t)),st=TBLS[k]||(TBLS[k]={q:'',s:null});
   t.querySelectorAll('thead th').forEach((th,j)=>{if(th.querySelector('input')||!th.textContent.trim())return;th.dataset.lb=th.dataset.lb||th.textContent.trim();th.classList.add('sortable');th.insertAdjacentHTML('beforeend','<span class="sarr"></span>');
     th.addEventListener('click',e=>{if(e.target.closest('.colrz'))return;st.s=st.s&&st.s.i===j?(st.s.d>0?{i:j,d:-1}:null):{i:j,d:1};tblApply(t,st)})});
-  const w=t.closest('.mtblw')||t;if((t.tBodies[0]||{rows:[]}).rows.length>=3){const f=document.createElement('div');f.className='tfind';f.innerHTML='<input type="search" placeholder="표에서 찾기 (이름 · 학원 · 악기 …)" aria-label="표에서 찾기"><span class="tfn hint"></span>';
+  const w=t.closest('.mtblw'+(window.UI_DOCK?','+window.UI_DOCK:''))||t;if((t.tBodies[0]||{rows:[]}).rows.length>=3){const f=document.createElement('div');f.className='tfind';f.innerHTML='<input type="search" placeholder="표에서 찾기 (이름 · 학원 · 악기 …)" aria-label="표에서 찾기"><span class="tfn hint"></span>';
     const inp=f.querySelector('input');inp.value=st.q||'';inp.addEventListener('input',()=>{st.q=inp.value;tblApply(t,st)});w.parentNode.insertBefore(f,w)}
   if(st.q||st.s)tblApply(t,st)})}
 new MutationObserver(()=>{clearTimeout(tblEnhance.t);tblEnhance.t=setTimeout(tblEnhance,40)}).observe(document.body,{childList:true,subtree:true});
@@ -102,3 +102,29 @@ function svSet(k,id,pw){var c=document.getElementById('svPw_'+k);if(!c)return;tr
 function svBox(k,label){return '<label class="svpw" style="display:flex;align-items:center;gap:6px;font-size:14px;margin:2px 0 10px;cursor:pointer;font-weight:500"><input type="checkbox" id="svPw_'+k+'" '+(svGet(k)?'checked':'')+' style="width:18px;height:18px;margin:0;flex:none"> '+(label||'비밀번호 저장하기')+' <span style="opacity:.65;font-size:12.5px;font-weight:400">이 기기에만 · 공용 PC는 체크하지 마세요</span></label>'}
 function svId(k,d){var s=svGet(k);return s&&s.id?s.id:(d||'')}
 function svPw(k){var s=svGet(k);return s&&s.pw?s.pw:''}
+/* 표 위 고정 (11-11): 표 상자(페이지에서 var UI_DOCK='.tbl,.stbl' 처럼 정함)와 바로 위 필터 · 탭 · 찾기칸이 맨 위 메뉴(UI_DOCK_TOP, 기본 .gnb) 밑에 붙어 그대로 있고 줄만 굴러감
+ * 상자 높이 = 화면 − 메뉴 − 위 필터 높이. 표 위에서 굴리면 먼저 페이지가 올라가 필터가 메뉴 밑에 붙은 다음 표 줄이 굴러감. 표 끝에 닿으면 페이지가 이어서 굴러감
+ * 아래에 붙은 막대(UI_DOCK_BOT, 기본 .homebar)만큼 뺌. 빼고 싶은 상자는 .nodock */
+(function(){const SEL=window.UI_DOCK||'';if(!SEL)return;
+  const c=document.createElement('style');c.textContent='.uidock{overflow:auto!important;overscroll-behavior:auto!important}.uidock>table>thead th{position:sticky!important;top:0}';document.head.appendChild(c);
+  const topH=()=>{const g=document.querySelector(window.UI_DOCK_TOP||'.gnb');return g?g.offsetHeight:0};
+  const botH=()=>{let h=0;document.querySelectorAll(window.UI_DOCK_BOT||'.homebar').forEach(x=>{if(vis2(x))h+=x.offsetHeight});return h};const vis2=el=>el&&getComputedStyle(el).display!=='none'&&el.getBoundingClientRect().height>0;
+  const vis=el=>el&&el.offsetParent!==null&&el.getBoundingClientRect().height>0;
+  function head(box,lim){let h=box,el=box.previousElementSibling,sum=0;
+    while(el){if(vis(el)){if(el.querySelector('table')&&!el.classList.contains('tfind'))break;const r=el.getBoundingClientRect();if(sum+r.height>lim)break;sum+=r.height;h=el}el=el.previousElementSibling}
+    return h}
+  function fit(){const vh=window.innerHeight,T=topH();document.querySelectorAll(SEL).forEach(box=>{
+    if(box.classList.contains('nodock')||!vis(box)||!box.querySelector('table'))return;
+    if(box.dataset.mh0===undefined)box.dataset.mh0=box.style.maxHeight||'';
+    let h=head(box,vh*0.45);const above=box.getBoundingClientRect().top-h.getBoundingClientRect().top;
+    let mh=Math.round(Math.max(240,vh-T-botH()-above-10));const m0=/^(\d+)px$/.exec(box.dataset.mh0);if(m0)mh=Math.min(mh,+m0[1]);
+    box.classList.add('uidock');box._dh=h;if(box.style.maxHeight!==mh+'px')box.style.maxHeight=mh+'px'})}
+  const later=()=>{clearTimeout(fit.t);fit.t=setTimeout(fit,60)};
+  new MutationObserver(later).observe(document.body,{childList:true,subtree:true});window.addEventListener('resize',later);window.addEventListener('load',later);later();
+  document.addEventListener('wheel',e=>{if(e.deltaY<=0||e.ctrlKey||!e.target.closest)return;const box=e.target.closest('.uidock');if(!box)return;
+    if(box.scrollTop+box.clientHeight>=box.scrollHeight-1)return;
+    const gap=(box._dh&&box._dh.isConnected?box._dh:box).getBoundingClientRect().top-topH();if(gap<=1)return;
+    const se=document.scrollingElement||document.documentElement,room=se.scrollHeight-se.clientHeight-se.scrollTop;if(room<1)return;
+    const d=e.deltaMode===1?e.deltaY*16:e.deltaMode===2?e.deltaY*window.innerHeight:e.deltaY;
+    e.preventDefault();window.scrollBy(0,Math.min(d,gap,room))},{passive:false});
+  UI.dockFit=fit})();

@@ -1,4 +1,4 @@
-/* build: 20261112-004557 */
+/* build: 20261112-014528 */
 /* ---------- 캠프 설정 (관리자 화면에서 입력되는 값) ---------- */
 const ROOM = { cap:4, emptyFee:130000 }; // 가족방: 4인 기준, 빈 자리 1개당 추가 비용
 const CAMP = { id:'27W', ri:0, lessonFee:60000, lessonMax:5, mcFee:150000,
@@ -37,7 +37,7 @@ function api(fn,args,ok,fail,msg,tries){tries=tries||0;if(!msg&&/^(my|tt|get|loa
 /* 교수진: 서버 「교수진」 시트에서 받아 선호 교수 · 마스터클래스 목록을 바꿈 */
 function applyProfs(L){if(!Array.isArray(L)||!L.length)return;Object.keys(PROF).forEach(k=>delete PROF[k]);L.filter(p=>p.l).forEach(p=>(PROF[p.i]=PROF[p.i]||[]).push(p.n));
   MASTER.length=0;L.filter(p=>p.mc).forEach(p=>MASTER.push({n:p.n,i:p.i,min:+p.min||45,fee:+p.fee||0}))}
-function applyBundle(d){S.myPay=d.myPay||null;if(d.aud)S.aud=d.aud;if(d.camp)applyCamp(d.camp);if(d.profs)applyProfs(d.profs);if(d.subs){ALL_SUBS.length=0;ALL_SUBS.push(...d.subs);S.snap={};d.subs.forEach(sb=>S.snap[sb.no]=JSON.stringify(sb))}if(d.teams)ENS=d.teams;if(d.bank)S.bank=d.bank;if(d.today)S.today=d.today;loadMine()}
+function applyBundle(d){S.myPay=d.myPay||null;if(d.audPre)window.AUDPRE=d.audPre;if(d.aud)S.aud=d.aud;if(d.camp)applyCamp(d.camp);if(d.profs)applyProfs(d.profs);if(d.subs){ALL_SUBS.length=0;ALL_SUBS.push(...d.subs);S.snap={};d.subs.forEach(sb=>S.snap[sb.no]=JSON.stringify(sb))}if(d.teams)ENS=d.teams;if(d.bank)S.bank=d.bank;if(d.today)S.today=d.today;loadMine()}
 /* 바뀐 접수만 보냄. 「보냈어요」 같은 알림은 서버 저장이 끝난 뒤에 띄움 (실패하면 최신 내용으로 다시 불러옴) */
 function subSave(){const mine=ALL_SUBS.filter(sb=>S.user&&sb.owner===S.user.name&&JSON.stringify(sb)!==(S.snap||{})[sb.no]);if(!mine.length)return;
   S.saving=true;S.savedMsg='';
@@ -203,7 +203,7 @@ function people(){ // 선택된 사람들 (명단 + 신고 학생 + 가족)
   const res=[]; out.forEach(p=>{ res.push(p); S.fam.filter(f=>f.link===p.key).forEach(f=>res.push({key:f.id,kind:'family',name:f.name||'(이름 미입력)',inst:'',sub:`${FAM_SHORT[f.type]} · ${p.name} 가족`,paid:true,defType:f.type,link:f.link})) });
   return res;
 }
-function info(p){ if(!S.info[p.key]) S.info[p.key]={by:p.birth?String(p.birth):'',gender:'',teacher:p.teacher||'',type:p.defType,prog:'',pref:false,p1:'',p2:'',lessons:0,mc:[],concert:'없음',song:'',other:false,oc:'',ot:''}; return S.info[p.key] }
+function info(p){ if(!S.info[p.key]) S.info[p.key]={by:p.birth?String(p.birth):'',gender:'',teacher:p.teacher||'',type:p.defType,prog:'',pref:false,p1:'',p2:'',lessons:0,mc:[],concert:'없음',song:'',other:false,oc:'',ot:''}; {const a=(window.AUDPRE||{})[p.key],i=S.info[p.key];if(a&&i.concert==='없음'&&!i._ap){i._ap=1;i.concert=a.con;i.other=true;i.oc=a.comp||'';i.ot=a.title||'';i.video=a.url||''}} return S.info[p.key] }
 /* 사람별 차수 (11-04 · 입금해야 그 차수): 새 사람 = 지금 차수 · 고치는 접수의 사람 = 입금(또는 신고)했으면 그 차수, 아니면 지금 차수 — 서버 recalc_ 와 같은 규칙 */
 function pRi(key){const cur=S.editNo&&S.riBack!==undefined?S.riBack:CAMP.ri;if(!S.editNo)return cur;const sb=(typeof MY_SUBS!=='undefined'?MY_SUBS:[]).find(x=>x.no===S.editNo),p=sb&&sb.ppl.find(q=>q.id===sb.no+'_'+key);if(!p)return cur;
   const r=p.rnd!=null?+p.rnd:CAMP.ri;return (+p.paidAmt||0)>0||p.pay==='신고'?r:Math.max(r,cur)}

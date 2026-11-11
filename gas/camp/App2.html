@@ -1,5 +1,5 @@
-/* build: 20261112-004557 */
-function vAuthPick(){return gdBtn()+`<section class="sec"><h2>접수 시작</h2>
+/* build: 20261112-014528 */
+function vAuthPick(){return gdBtn()+apDoor()+`<section class="sec"><h2>접수 시작</h2>
   <p class="lede">어떻게 접수하시나요?</p>
   <div class="pick2">
     ${MEMBER_OPEN?`<button type="button" class="pickcard" data-mode="member"><b>회원 선생님</b><span>협회 회원 선생님이 학원 학생들을 접수해요. 회원 이메일 · 비밀번호로 로그인해요.</span></button>`:''}
@@ -91,7 +91,7 @@ function renderSteps(){
     const n=i+1, cls=n===S.step?'on':(n<S.step?'done':''); const can = n<S.step && S.step<6;
     return `<li class="${cls}"><button type="button" ${can?`data-go="${n}"`:'disabled'} aria-current="${n===S.step?'step':'false'}"><span class="bar"></span>${n}. ${t}</button></li>`}).join('');
 }
-function login(t){S.user=t;S.who=t.name;S.phone=t.p4?`010-****-${t.p4}`:String(t.phone||'').replace(/(\d{3})(\d{4})(\d{4})/,'$1-$2-$3');S.email=t.email||S.lgId||'';S.mailEd=false;S.verr='';S.auth='in'; loadMine(); if(MY_SUBS.length)S.view='mine'; render();}
+function login(t){S.user=t;S.who=t.name;S.phone=t.p4?`010-****-${t.p4}`:String(t.phone||'').replace(/(\d{3})(\d{4})(\d{4})/,'$1-$2-$3');S.email=t.email||S.lgId||'';S.mailEd=false;S.verr='';S.auth='in'; loadMine(); if(MY_SUBS.length)S.view='mine'; if(S.apGo){S.apGo=false;S.view='audpre';S.AP=null} render();}
 function findT(ph){ph=String(ph).replace(/\D/g,'');return TEACHER_DB.find(t=>t.phone===ph)}
 function classOf(u){return `${u.name} 클래스`}
 function vStep1(){

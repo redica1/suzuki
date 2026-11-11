@@ -1,4 +1,4 @@
-/* build: 20261112-004557 */
+/* build: 20261112-014528 */
   if(S.ttDay==null){const td=ttToday(days);S.ttDay=td!=null?td:(mine.length?Math.min(...mine.map(x=>x.d)):0)}
   if(tab==='me')return head+seg+(T.prof?`<p class="hint" style="margin:0 0 6px">교수 · 레슨실 <b>${esc(T.prof.room||'미정')}</b></p>`:'')+ttMineList(T,days,mine)+'</section>';
   const AC=S.user.acads||[];if(S.ttAcad&&!AC.includes(S.ttAcad))S.ttAcad='';
@@ -28,7 +28,7 @@ function fillBanks(){const d=document.getElementById('bankList');if(d&&!d.childr
 /* 머리 버튼: 로그인 전 「로그인」 · 뒤 「내 접수 · 로그아웃」 (모든 화면에서) */
 function hdSync(){['hdMine','hdOut'].forEach(id=>{const x=document.getElementById(id);if(x)x.hidden=!S.user});const x=document.getElementById('hdIn');if(x)x.hidden=!!S.user;const m=document.getElementById('hdMine');if(m)m.hidden=!S.user||S.view==='mine';const t=document.getElementById('hdTT');if(t)t.hidden=!S.user||S.user.guest||S.view==='tt';const l=document.getElementById('hdLost');if(l)l.hidden=!S.user||S.view==='lost';const py=document.getElementById('hdPay');if(py)py.hidden=!S.user||!S.myPay||S.view==='pay'}
 function render(){fillBanks();hdSync();
-  {const st=document.getElementById('steps');if(st)st.hidden=S.view==='mine'||S.view==='q'||!!(S.editNo&&S.quickEdit)}
+  {const st=document.getElementById('steps');if(st)st.hidden=S.view==='audpre'||S.view==='mine'||S.view==='q'||!!(S.editNo&&S.quickEdit)}
   if(S.view==='pay'){const L=S.myPay||[],tx=x=>{const g=+x.g||0,f=v=>Math.floor(v/10)*10,it=x.rate==='3.3'?f(g*0.03):x.rate==='8.8'?f(g*0.4*0.2):0,lt=f(it*0.1);return {it,lt,net:g-it-lt}},W=v=>(+v||0).toLocaleString('ko-KR')+'원';
     document.getElementById('app').innerHTML=`<section class="sec"><div class="spread"><h2>내 수당</h2><button class="btn small ghost" type="button" id="lostBack">← 돌아가기</button></div>
       <p class="hint">캠프에서 받으실 금액이에요. 세금은 ${'3.3% = 사업소득, 8.8% = 기타소득(교수)'}이고, 회원관리 「내 정보」에 넣은 계좌로 보내 드려요.</p>
@@ -39,6 +39,7 @@ function render(){fillBanks();hdSync();
   if(S.view==='tt'){document.getElementById('app').innerHTML=vMyTT();['backBtn','nextBtn','mineBtn'].forEach(id=>{const e=document.getElementById(id);if(e)e.hidden=true});document.getElementById('dockLabel').textContent='내 시간표';document.getElementById('dockTotal').textContent='';const st=document.getElementById('steps');if(st)st.hidden=true;return}
   if(S.view==='q'){document.getElementById('app').innerHTML=vQ();['backBtn','nextBtn','mineBtn'].forEach(id=>{const e=document.getElementById(id);if(e)e.hidden=true});document.getElementById('dockLabel').textContent='게시판';document.getElementById('dockTotal').textContent='';return}
   {const mb=document.getElementById('mineBtn');if(mb){mb.hidden=!(S.user&&MY_SUBS.length&&S.view!=='mine');mb.textContent=`내 접수 ${MY_SUBS.length}건`}}
+  if(S.view==='audpre'){document.getElementById('app').innerHTML=vAudPre();['backBtn','nextBtn'].forEach(id=>{const x=document.getElementById(id);if(x)x.hidden=true});const dl=document.getElementById('dockLabel');if(dl)dl.textContent='음원 먼저 내기';const dt=document.getElementById('dockTotal');if(dt)dt.textContent='';return}
   if(S.view==='mine'){document.getElementById('app').innerHTML=gdBtn()+vMine();document.getElementById('backBtn').hidden=true;document.getElementById('nextBtn').hidden=true;document.getElementById('dockLabel').textContent='내 접수';document.getElementById('dockTotal').textContent=`${MY_SUBS.length}건`;return}
   renderSteps();
   const app=document.getElementById('app');

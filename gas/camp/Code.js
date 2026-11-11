@@ -1,4 +1,4 @@
-/* build: 20261112-004557 */
+/* build: 20261112-014528 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -576,7 +576,8 @@ function bundle_(acads, owner) {
   try { cxAmt_(all.filter(sb => acads.includes(sb.acad))); } catch (x) {}
   const vis = all.filter(sb => acads.includes(sb.acad) && ((sb.acad !== GUEST_ACAD && sb.acad !== STAFF_ACAD && sb.acad !== NOACAD) || sb.owner === owner));
   let aud = null; try { aud = audMine_(vis); } catch (x) {}
-  return { aud, rosters, subs: vis, teams: teams_(all), bank: bankInfo_(), today: today_(), profs, camp, myPay: (() => { try { const me = ts.filter(t => t.name === owner); return myPay_(me.length === 1 ? me[0].id : '', owner); } catch (x) { return null; } })() };
+  let audPre = {}; try { audPre = audPreMap_(acads); } catch (x) {}
+  return { aud, audPre, rosters, subs: vis, teams: teams_(all), bank: bankInfo_(), today: today_(), profs, camp, myPay: (() => { try { const me = ts.filter(t => t.name === owner); return myPay_(me.length === 1 ? me[0].id : '', owner); } catch (x) { return null; } })() };
 }
 
 /* ---------------- 접수 읽고 쓰기 ---------------- */
@@ -1245,7 +1246,7 @@ function campSave(token, c, rev) {
   /* 거꾸로 (11-11): 캠프에서 공문을 저장하면 회원관리 공문 대장에 저절로 한 줄(구분 캠프 · 작성 중). 이미 있으면 제목 · 시행일 · 수신 · 참조만 맞춤 */
   let linkMsg = '';
   const cons = c.cons ? consClean_(c.cons) : consClean_(prev.cons);
-  const aud = {}; cons.forEach(k => { const x = c.aud ? ((c.aud[k]) || {}) : ((prev.aud || {})[k] || {}); aud[k] = { on: !!x.on, due: /^\d{4}-\d{2}-\d{2}$/.test(x.due || '') ? x.due : '' }; });
+  const aud = {}; cons.forEach(k => { const x = c.aud ? ((c.aud[k]) || {}) : ((prev.aud || {})[k] || {}); aud[k] = { on: !!x.on, pre: !!x.on && !!x.pre, due: /^\d{4}-\d{2}-\d{2}$/.test(x.due || '') ? x.due : '' }; });
   const nc = { meals, base: { id: String(b.id).trim(), name: String(b.name).trim(), start: b.start, end: b.end, place: String(b.place || '').trim(), open: b.open, close: b.close, cur, guest: b.guest !== false, staff: b.staff !== false, member: b.member !== false, intl: b.intl !== false }, rounds, fees, opt, refund, consent, doc, aud, cons };
   const lock = lock_();
   try {
@@ -3326,39 +3327,74 @@ const CON_HEAD = ['공연', '날짜', '공연 시작', '순서', '리허설', '�
  * 관리자(스케줄관리 › 음원 심사): 주소를 눌러 듣고 승인 · 비승인 · 보류. 결과는 「결과 공개」를 켠 음악회만 신청자에게 보임(그 전엔 「심사 중」).
  * 접수 때 넣은 주소(form.info.video)는 시트에 없으면 「접수 때 넣은 주소」로 같이 보여 주고, 심사하면 그때 시트에 줄이 생김. */
 const AUD = '음원';
-const AUD_HEAD = ['음원ID', '제출일시', '접수번호', '참가자ID', '이름', '학원', '음악회', '주소', '제출자', '상태', '심사자', '심사일', '메모'];
+const AUD_HEAD = ['음원ID', '제출일시', '접수번호', '참가자ID', '이름', '학원', '음악회', '주소', '제출자', '상태', '심사자', '심사일', '메모', '학생ID', '작곡가', '곡명', '악기'];   /* 뒤 4칸 = 접수 전 「음원 먼저 내기」 (11-12) */
 /* 음악회 목록은 캠프 설정 cons (11-12) */
 const AUD_ST = ['심사 전', '승인', '비승인', '보류'];
 const audUrlOk_ = u => /^https?:\/\/\S{4,}$/i.test(u) && u.length <= 500;
 function audCfg_() {
   const c = camp_(), A = c.aud || {}, pub = String(setting_('음원 결과 공개') || '').split(',').map(x => x.trim()).filter(Boolean), o = {};
   const lastDay = c.base && c.base.start ? (() => { const d = new Date(c.base.start + 'T00:00:00'); d.setDate(d.getDate() - 1); return Utilities.formatDate(d, TZ, 'yyyy-MM-dd'); })() : '';
-  camp_().cons.forEach(k => { const x = A[k] || {}; o[k] = { on: !!x.on, due: x.due || '', end: x.due || lastDay, pub: pub.includes(k) }; });
+  camp_().cons.forEach(k => { const x = A[k] || {}; o[k] = { on: !!x.on, pre: !!x.on && !!x.pre, due: x.due || '', end: x.due || lastDay, pub: pub.includes(k) }; });
   return o;
 }
 function audRows_() {
   return rows_(AUD).filter(r => r['음원ID']).map(r => ({ id: String(r['음원ID']), at: dstr_(r['제출일시']).slice(0, 16) || String(r['제출일시']).slice(0, 16), no: String(r['접수번호']), pid: String(r['참가자ID']),
     name: String(r['이름']), acad: String(r['학원']), con: String(r['음악회']), url: String(r['주소']).replace(/^'/, '').trim(), by: String(r['제출자']), st: String(r['상태'] || '심사 전'),
-    rv: String(r['심사자'] || ''), rd: dstr_(r['심사일']), memo: String(r['메모'] || ''), _row: r._row }));
+    rv: String(r['심사자'] || ''), rd: dstr_(r['심사일']), memo: String(r['메모'] || ''), sid: String(r['학생ID'] || ''), comp: String(r['작곡가'] || ''), title: String(r['곡명'] || ''), rinst: String(r['악기'] || ''), _row: r._row }));
 }
 /** 접수 → 음원 목록 (시트 줄 + 접수 때 넣은 주소). 정상 참가자 · 받는 음악회만 */
-function audAll_(subs) {
-  const C = audCfg_(), R = audRows_(), out = [];
+function audAll_(subs, acads) {
+  const C = audCfg_(), R0 = audRows_(), PRE = R0.filter(r => !r.pid && r.sid), R = R0.filter(r => r.pid || !r.sid), out = [], used = {};
   subs.forEach(sb => { const info = ((sb.form || {}).info) || {};
     sb.ppl.forEach(p => { if (p.status === '취소') return; const k = p.id.slice(sb.no.length + 1), i = info[k] || {}, con = String(i.concert || '');
-      if (!C[con] || !C[con].on) return;
-      const mine = R.filter(r => r.pid === p.id), v = String(i.video || '').trim();
+      const k0 = p.id.slice(sb.no.length + 1), pre = PRE.filter(r => r.sid === k0 && r.acad === sb.acad);   /* 접수 전에 낸 음원(학생ID) → 이 참가자에게 붙임 */
+      pre.forEach(r => used[r.id] = 1);
+      if (!C[con] || !C[con].on) { pre.forEach(r => out.push(Object.assign({}, r, { pid: p.id, no: sb.no, early: true, owner: sb.owner, inst: String(p.inst || i.inst || r.rinst), prog: String(i.prog || ''), song: (r.comp + ' ' + r.title).trim() }))); return; }
+      const mine = R.filter(r => r.pid === p.id).concat(pre.map(r => Object.assign({}, r, { pid: p.id, no: sb.no, early: true }))), v = String(i.video || '').trim();
       if (v && !mine.some(r => r.url === v)) out.push({ id: 'V:' + p.id, at: '', no: sb.no, pid: p.id, name: p.name, acad: sb.acad, owner: sb.owner, con, url: v, by: sb.owner, st: '심사 전', rv: '', rd: '', memo: '', first: true, inst: String(p.inst || i.inst || ''), prog: String(i.prog || ''), song: i.other ? (String(i.oc || '') + ' ' + String(i.ot || '')).trim() : String(i.song || '') });
       mine.forEach(r => out.push(Object.assign({}, r, { owner: sb.owner, con, inst: String(p.inst || i.inst || ''), prog: String(i.prog || ''), song: i.other ? (String(i.oc || '') + ' ' + String(i.ot || '')).trim() : String(i.song || '') })));
       if (!v && !mine.length) out.push({ id: '', no: sb.no, pid: p.id, name: p.name, acad: sb.acad, owner: sb.owner, con, url: '', st: '', none: true, inst: String(p.inst || i.inst || ''), prog: String(i.prog || ''), song: i.other ? (String(i.oc || '') + ' ' + String(i.ot || '')).trim() : String(i.song || '') });
     }); });
+  PRE.forEach(r => { if (used[r.id] || (acads && !acads.includes(r.acad))) return; out.push(Object.assign({}, r, { no: '', pid: '', owner: r.by, pre: true, early: true, inst: r.rinst, prog: '', song: (r.comp + ' ' + r.title).trim() })); });
   return out;
 }
 /** 신청자 화면용: 참가자ID → [{at, url, st}] · 결과 공개 전이면 st = 「심사 중」 */
 function audMine_(subs) {
   const C = audCfg_(), M = {};
-  audAll_(subs).forEach(x => { if (x.none) { M[x.pid] = M[x.pid] || []; return; } (M[x.pid] = M[x.pid] || []).push({ at: x.at, url: x.url, first: !!x.first, st: C[x.con] && C[x.con].pub ? x.st : '심사 중' }); });   /* 결과 공개 뒤: 접수한 선생님 · 직접 접수한 비회원 보호자가 봄 (11-04 사용자 확인) */
+  audAll_(subs, []).forEach(x => { if (x.none) { M[x.pid] = M[x.pid] || []; return; } (M[x.pid] = M[x.pid] || []).push({ at: x.at, url: x.url, first: !!x.first, st: C[x.con] && C[x.con].pub ? x.st : '심사 중' }); });   /* 결과 공개 뒤: 접수한 선생님 · 직접 접수한 비회원 보호자가 봄 (11-04 사용자 확인) */
   return { cfg: C, today: today_(), list: M };
+}
+/* ===== 접수 전 「음원 먼저 내기」 (11-12): 회원 선생님이 우리 학원 학생(회원 명단)을 골라 음악회 · 곡 · 주소만 냄.
+   음악회마다 「접수 전에도 받기」(aud.k.pre)를 켠 곳만. 12/1 접수에서 그 학생을 담으면 같은 학생ID로 이 음원이 붙고, 신청서에 음악회 · 곡 · 주소가 미리 채워짐 ===== */
+function audPreMap_(acads) {
+  const M = {}; audRows_().filter(r => !r.pid && r.sid && acads.includes(r.acad)).forEach(r => { M[r.sid] = { con: r.con, comp: r.comp, title: r.title, url: r.url, at: r.at }; }); return M;
+}
+function audPreList(token) {
+  const u = who_(token), C = audCfg_(), cons = Object.keys(C).filter(k => C[k].pre), td = today_();
+  const stu = rows_(SH.S).filter(r => r['ID'] && u.acads.includes(String(r['학원']))).map(r => ({ id: String(r['ID']), name: String(r['이름']), acad: String(r['학원']), inst: String(r['악기'] || ''), tag: String(r['구분 표시'] || '') }));
+  const rows = audRows_().filter(r => !r.pid && r.sid && u.acads.includes(r.acad)).map(r => ({ id: r.id, at: r.at, sid: r.sid, name: r.name, acad: r.acad, con: r.con, url: r.url, comp: r.comp, title: r.title, inst: r.rinst, by: r.by, st: C[r.con] && C[r.con].pub ? r.st : '심사 중' }));
+  return { ok: true, today: td, cons: cons.map(k => ({ name: k, end: C[k].end, open: !C[k].end || td <= C[k].end })), stu, rows };
+}
+function audPreAdd(token, o) {
+  const u = who_(token); o = o || {}; const url = String(o.url || '').trim(), con = String(o.con || ''), sid = String(o.sid || ''), comp = String(o.comp || '').trim().slice(0, 60), title = String(o.title || '').trim().slice(0, 120);
+  if (!audUrlOk_(url)) throw new Error('주소를 https:// 로 시작하게 넣어 주세요 (유튜브 「일부 공개」 링크 등).');
+  if (!title) throw new Error('곡명을 넣어 주세요.');
+  const C = audCfg_()[con]; if (!C || !C.pre) throw new Error((con || '그') + ' 음악회는 지금 음원을 받지 않아요.');
+  if (C.end && today_() > C.end) throw new Error(con + ' 음원 마감(' + C.end + ')이 지났어요.');
+  const st = rows_(SH.S).find(r => String(r['ID']) === sid && u.acads.includes(String(r['학원'])));
+  if (!st) throw new Error('우리 학원 명단에 있는 학생만 낼 수 있어요.');
+  const lock = lock_();
+  try {
+    const R = audRows_().filter(r => r.sid === sid && !r.pid);
+    if (R.some(r => r.url === url && r.con === con)) throw new Error('이미 낸 주소예요.');
+    if (R.length >= 10) throw new Error('한 학생에 음원은 10개까지 낼 수 있어요.');
+    ensureHead_(AUD, AUD_HEAD);
+    const sh = SpreadsheetApp.getActive().getSheetByName(AUD), head = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0].map(String);
+    const v = { '음원ID': 'U' + Utilities.formatDate(new Date(), TZ, 'yyMMddHHmmss') + Math.floor(Math.random() * 90 + 10), '제출일시': stamp_(), '접수번호': '', '참가자ID': '', '이름': String(st['이름']), '학원': String(st['학원']), '음악회': con, '주소': "'" + url, '제출자': u.name, '상태': '심사 전', '학생ID': sid, '작곡가': comp, '곡명': title, '악기': String(st['악기'] || '') };
+    sh.appendRow(head.map(h => v[h] == null ? '' : v[h]));
+    log_(u.name, '음원 먼저 내기', sid + ' · ' + con);
+  } finally { lock.releaseLock(); }
+  return audPreList(token);
 }
 function audAdd(token, pid, url) {
   const u = who_(token); url = String(url || '').trim();

@@ -158,7 +158,6 @@ document.addEventListener('change',e=>{
     if(d.f==='type'&&!PLAYS.has(el.value)){i.lessons=0;i.mc=[];i.concert='없음'}
     if(d.f==='type'){const fm=S.fam.find(x=>x.id===d.k);if(fm)fm.type=el.value}
     if(d.f==='p1'&&(i.p2===el.value||!el.value))i.p2='';
-    if(d.f==='lessons'&&!i.lessons){i.p1='';i.p2=''}
     render();const n=document.getElementById(el.id);n&&n.focus();return}
   if(d.room){const k=d.room;delete S.room[k];delete S.join[k];
     if(el.value==='own')S.room[k]=true; else if(el.value.startsWith('j:'))S.join[k]=el.value.slice(2);

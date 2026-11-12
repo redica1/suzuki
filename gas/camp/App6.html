@@ -1,4 +1,4 @@
-/* build: 20261112-023127 */
+/* build: 20261112-102550 */
   if(S.ttDay==null){const td=ttToday(days);S.ttDay=td!=null?td:(mine.length?Math.min(...mine.map(x=>x.d)):0)}
   if(tab==='me')return head+seg+(T.prof?`<p class="hint" style="margin:0 0 6px">교수 · 레슨실 <b>${esc(T.prof.room||'미정')}</b></p>`:'')+ttMineList(T,days,mine)+'</section>';
   const AC=S.user.acads||[];if(S.ttAcad&&!AC.includes(S.ttAcad))S.ttAcad='';
@@ -122,6 +122,7 @@ document.addEventListener('click',e=>{
   if(d.consopen){S.consOpen=S.consOpen||{};S.consOpen[d.consopen]=!S.consOpen[d.consopen];render();return}
   if(b.id==='consNext'){if(!consReqOk()){const miss=consItems().filter(x=>x.req&&!(S.cons||{})[x.id]).map(x=>x.title);S.verr='필수 항목에 동의해 주세요: '+miss.join(', ');render();return}
     S.verr='';const c=S.chk||{};if(c.kind==='guest')doGuestLogin(c.nm,c.ph);else if(c.pw)doMemberLoginPw(c.em,c.pw);else doMemberLogin(c.nm,c.ph);return}
+  if(b.dataset.tname){S.mode='member';S.cons={};consItems().forEach(x=>S.cons[x.id]=true);doTestLogin(b.dataset.tname);return}
   if(b.id==='tLogin'){const [n,ph]=TEST_LOGIN.split('/');S.mode='member';S.cons={};consItems().forEach(x=>S.cons[x.id]=true);doMemberLogin(n.trim(),String(ph||'').replace(/\D/g,''));return}
   if(b.id==='toPhone'||b.id==='toEmail'){S.lgAlt=b.id==='toPhone';S.verr='';render();return}
   if(b.id==='doLogin'&&LOGIN_PW&&(!S.lgAlt||S.mode==='staff')){const em=emailOf('lgId'),pw=document.getElementById('lgPw').value||'';S.lgId=em;

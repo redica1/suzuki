@@ -1,4 +1,4 @@
-/* build: 20261112-023127 */
+/* build: 20261112-102550 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -106,7 +106,7 @@ function doGet(e) {
   if (e && e.parameter && e.parameter.page === 'find') return HtmlService.createTemplateFromFile('Find').evaluate().setTitle(cname + ' · 일정 찾기').addMetaTag('viewport', 'width=device-width, initial-scale=1').setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
   if (admin) page = HtmlService.createTemplateFromFile('Admin').evaluate();
   else if (intl) page = HtmlService.createHtmlOutputFromFile('Intl');
-  else { const t = HtmlService.createTemplateFromFile('Index'); let share = ''; let tl = ''; try { ensureSettings_(); share = setting_('공유주소'); tl = setting_('테스트 로그인'); } catch (x) {} t.shareUrl = share; t.testLogin = tl; t.campJson = cj; try { t.loginPw = { pw: '1', both: '2' }[loginMode_()] || ''; t.memberUrl = setting_('회원관리 주소'); } catch (x) { t.loginPw = ''; t.memberUrl = ''; } /* 테스트 로그인: STG 「설정」에만 (이름/휴대전화) — 로그인 칸을 미리 채움 · campJson: 「캠프설정」 시트 값 (날짜·장소·차수·참가비) */ page = t.evaluate(); }
+  else { const t = HtmlService.createTemplateFromFile('Index'); let share = ''; let tl = ''; try { ensureSettings_(); share = setting_('공유주소'); tl = setting_('테스트 로그인'); } catch (x) {} t.shareUrl = share; t.testLogin = tl; try { t.testNames = tl ? setting_('테스트 선생님') : ''; } catch (x) { t.testNames = ''; } t.campJson = cj; try { t.loginPw = { pw: '1', both: '2' }[loginMode_()] || ''; t.memberUrl = setting_('회원관리 주소'); } catch (x) { t.loginPw = ''; t.memberUrl = ''; } /* 테스트 로그인: STG 「설정」에만 (이름/휴대전화) — 로그인 칸을 미리 채움 · campJson: 「캠프설정」 시트 값 (날짜·장소·차수·참가비) */ page = t.evaluate(); }
   return page
     .setTitle(intl ? 'Suzuki Winter Music Camp · Overseas Registration' : cname + (admin ? ' 접수 관리' : ' 접수'))
     .addMetaTag('viewport', 'width=device-width, initial-scale=1')
@@ -226,6 +226,15 @@ function login(name, phone, consent) {
   if (!nm || ph.length < 10) return { ok: false, msg: '이름과 휴대전화를 모두 넣어 주세요.' };
   const t = teachers_().find(x => bare_(x.name) === nm && x.p4 && ph.endsWith(x.p4));
   if (!t) return { ok: false, msg: '회원 명단의 이름·휴대전화와 맞지 않아요.' };
+  return loginT_(t, consent);
+}
+/** STG 시험 (11-12): 설정 「테스트 선생님」(쉼표로 이름 여럿)에 있는 선생님으로 비밀번호 없이 들어감. 「테스트 로그인」이 있는 STG에서만 */
+function testLogin(name, consent) {
+  let tl = '', tn = ''; try { tl = String(setting_('테스트 로그인') || '').trim(); tn = String(setting_('테스트 선생님') || ''); } catch (e) {}
+  const nm = bare_(name);
+  if (!tl || !nm || !tn.split(/[,\n]/).map(bare_).includes(nm)) return { ok: false, msg: 'STG 시험 선생님이 아니에요.' };
+  const t = teachers_().find(x => bare_(x.name) === nm);
+  if (!t) return { ok: false, msg: nm + ' 선생님이 캠프 명단에 없어요.' };
   return loginT_(t, consent);
 }
 /** 접수 전(11-12): 이름 · 휴대전화로 회원가입이 되어 있는지만 알려 줌 (아무것도 저장 안 함, 번호마다 10분에 8번까지)

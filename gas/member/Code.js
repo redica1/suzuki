@@ -1,4 +1,4 @@
-/* build: 20261113-123337 */
+/* build: 20261113-123755 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -730,6 +730,8 @@ function gmIssue(who, id, opt) {
       const dd = cd.camp.doc || {};
       ct.html = gmInjectNo_(cd.html, no, dd.date ? '' : date); ct.css = cd.css; ct.mg = dd.mg || {};
       /* 회원관리에서 고른 쪽 맞추기(11-13): 미리보기에서 잰 글씨 크기로 굳힘 */
+      /* 회원관리에서 바꾼 여백(11-13) */
+      const om = opt && opt.mg; if (om && ['t', 'b', 'l', 'r'].every(k => isFinite(+om[k]) && +om[k] >= 0 && +om[k] <= 40)) { ct.mg = { t: +om.t, b: +om.b, l: +om.l, r: +om.r }; ct.html = ct.html.replace(/(<div class="dp" style="[^"]*?)padding:[^;"]*/, '$1padding:' + ct.mg.t + 'mm ' + ct.mg.r + 'mm ' + ct.mg.b + 'mm ' + ct.mg.l + 'mm'); }
       const fk = opt && +opt.fitK; if ([1, 2].indexOf(+(opt || {}).fit) >= 0 && fk >= 0.3 && fk <= 1) { ct.html = ct.html.replace(/<div class="fitc"[^>]*>/, '<div class="fitc"' + (fk < 1 ? ' style="zoom:' + (Math.round(fk * 1000) / 1000) + '"' : '') + '>'); ct.fit = +opt.fit; ct.fitK = fk; }
       T.set(i, { '내용': JSON.stringify(ct), '행사': cd.camp.base.name, '제목': gmCampTitle_(cd.camp), '수신': dd.to || '', '참조': dd.ref || '' });
       gmCampDocSet_({ no: no, date: dd.date || date });

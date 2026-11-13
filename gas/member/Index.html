@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261113-105219 -->
+<!-- build: 20261113-105726 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -139,7 +139,7 @@ label.f.wide{grid-column:1/-1}
 .dp *{font-family:inherit}.dp .lg{text-align:center}.dp .lg img{width:46mm;height:auto}
 .dp .wtop{font-size:10.5pt;color:#333;margin:4mm 0 0;letter-spacing:.02em}.dp .wtop+.meta{margin-top:1.5mm}.dp .meta{font-size:12pt;margin:4mm 0 2mm;border-bottom:1px solid #444;padding-bottom:2mm}.dp .meta .mr{display:flex;flex-wrap:wrap;column-gap:9mm;row-gap:1mm}.dp .meta .mr>div{display:flex;gap:4mm}.dp .meta b{font-weight:700;white-space:nowrap;min-width:18mm}.dp .meta.one .mr>div{gap:3mm}.dp .meta.one b{min-width:0}
 .dp h1{font-size:22pt;text-align:center;margin:3mm 0 4mm;font-weight:800;letter-spacing:-.02em}
-.dp .intro{margin:0 0 calc(var(--sg,2.6mm) + .4mm)}.dp .sc{margin:0 0 var(--sg,2.6mm)}.dp .rh{font-weight:700;margin:1.6mm 0 .7mm}.dp table.ft{width:100%;border-collapse:collapse;margin:0 0 1mm;break-inside:avoid;font-size:12pt}.dp table.ft th,.dp table.ft td{font-size:12pt;color:#111;border:1px solid #333;padding:.7mm 2mm;text-align:center;vertical-align:middle}.dp table.ft th{background:#eaf1f9;font-weight:700;-webkit-print-color-adjust:exact;print-color-adjust:exact}.dp table.ft td.f3{font-size:11.5pt !important;line-height:1.32}.dp .sh{font-weight:800}.dp .ln{white-space:pre-wrap;margin:0}.dp .ln.gap{height:1.6mm}.dp .red{color:#d0021b}
+.dp .intro{margin:0 0 calc(var(--sg,2.6mm) + .4mm)}.dp .sc{margin:0 0 var(--sg,2.6mm)}.dp .rh{font-weight:700;margin:1.6mm 0 .7mm}.dp table.ft{width:100%;border-collapse:collapse;margin:0 0 1mm;break-inside:avoid;font-size:12pt}.dp table.ft th,.dp table.ft td{font-size:12pt;color:#111;border:1px solid #333;padding:.7mm 2mm;text-align:center;vertical-align:middle}.dp table.ft th{background:#eaf1f9;font-weight:700;-webkit-print-color-adjust:exact;print-color-adjust:exact}.dp table.ft td.f3{font-size:11.5pt !important;line-height:1.32}.dp .sh{font-weight:800;font-size:var(--hs,12.5pt)}.dp .dbody{font-size:var(--bs,12.5pt)}.dp .ln{white-space:pre-wrap;margin:0}.dp .ln.gap{height:1.6mm}.dp .red{color:#d0021b}
 .dp .ft-end{margin-top:8mm;text-align:center}.dp .ft-end .www{font-weight:700;font-size:13pt}.dp .ft-end .ko{font-size:21pt;letter-spacing:.45em;margin-top:1mm;font-weight:500}.dp .ft-end .en{font-size:12pt;letter-spacing:.42em;color:#222}
 </style>
 <style>
@@ -614,7 +614,7 @@ function gcRefund1(c,doc){var rf=c.refund||{},rt=function(r){return doc&&r.drate
   if(!stop&&prev){var rate=rt(rf.after||{});if(rate!==last)out.push(gcMd(gcAdd(prev,1))+(rate<=0?'부터는 환불 불가':'부터 취소 수수료 '+(100-rate)+'%'))}
   return out.join(', ')}
 function gcRefund(c){var rf=c.refund||{},hd=(rf.rules||[]).concat([rf.after||{}]).some(function(r){return r.drate!=null&&r.drate!==''&&+r.drate!==+r.rate}),a=gcRefund1(c,false);
-  if(!a)return '(환불 규정을 캠프 설정에 넣어 주세요)';return hd?'진단서 미제출: '+a+' / 전염병 · 팔·손 골절 진단서 제출: '+(gcRefund1(c,true)||'전액 환불'):a}
+  if(!a)return '(환불 규정을 캠프 설정에 넣어 주세요)';return hd?'진단서 미제출: '+a+'\n전염병 · 팔·손 골절 진단서 제출: '+(gcRefund1(c,true)||'전액 환불'):a}
 function gcRoomFee(c){var o=c.opt||{},cap=+o.roomCap||0,f=+o.roomEmptyFee||0,L=[];if(!cap)return '';for(var k=cap;k>=Math.min(2,cap);k--)L.push(k+'인: '+(k===cap?'추가금 없음':gcWon((cap-k)*f)));return L.join(', ')}
 function gcVals(c){var b=c.base||{},d=c.doc||{},o=c.opt||{},bk=c.bank||{},ga=gcGuestAdd(c),y=(gcYmd(b.start)||[''])[0],sameY=(gcYmd(b.start)||[])[0]===(gcYmd(b.end)||[])[0];
   return {'{기간}':gcMd(b.start,1)+gcWd(b.start)+(d.t1?' '+d.t1:'')+' ~ '+gcMd(b.end,!sameY)+gcWd(b.end)+(d.t2?' '+d.t2:''),'{장소}':b.place||'추후 안내','{캠프이름}':b.name||'','{년도}':String(y),
@@ -649,9 +649,9 @@ function gmHtml(d){var c=d['내용']||{},n=0,M=gmMg(d);GM_CC=gmCampOf(d);GM_V=GM
   var meta=[['문서번호',d['문서번호']||(d['상태']==='발행'?'':'(발행하면 매겨져요)')],['시행일',gmMd(d['시행일'])],['수신',d['수신']],['참조',d['참조']]].filter(function(x){return x[1]});
   var secs=(c.sec||[]).filter(function(x){return x.on!==false&&(x.t||x.body)}).map(function(x){n++;var num=c.num==='1)'?n+')':n+'.',b=String(x.body||''),one=b.indexOf('\n')<0&&b.indexOf('[[')<0;
     return one?'<div class="sc"><p class="ln"><span class="sh">'+num+' '+esc(x.t)+':</span> '+gmFmt(b).replace(/^<p class="ln">|<\/p>$/g,'')+'</p></div>':'<div class="sc"><div class="sh">'+num+' '+esc(x.t)+'</div>'+gmFmt(b)+'</div>'}).join('');
-  var LH=+c.lh,SG=+c.sg;return '<div class="dp" style="padding:'+M.t+'mm '+M.r+'mm '+M.b+'mm '+M.l+'mm'+(c.lh!==''&&c.lh!=null&&isFinite(LH)&&LH>=1&&LH<=2.5?';--lh:'+LH:'')+(c.sg!==''&&c.sg!=null&&isFinite(SG)&&SG>=0&&SG<=15?';--sg:'+SG+'mm':'')+'"><div class="fitc"'+(+c.fit&&+c.fitK>0&&+c.fitK<1?' style="zoom:'+(+c.fitK)+'"':'')+'>'+(c.logo!==false?'<div class="lg"><img src="'+GM_LOGO+'" alt="SUZUKI MUSIC KOREA" style="width:'+gmLw(c)+'mm"></div>':'')+
+  var LH=+c.lh,SG=+c.sg;return '<div class="dp" style="padding:'+M.t+'mm '+M.r+'mm '+M.b+'mm '+M.l+'mm'+(c.lh!==''&&c.lh!=null&&isFinite(LH)&&LH>=1&&LH<=2.5?';--lh:'+LH:'')+(c.sg!==''&&c.sg!=null&&isFinite(SG)&&SG>=0&&SG<=15?';--sg:'+SG+'mm':'')+(gmHs(c)!==12.5?';--hs:'+gmHs(c)+'pt':'')+(gmBs(c)!==12.5?';--bs:'+gmBs(c)+'pt':'')+'"><div class="fitc"'+(+c.fit&&+c.fitK>0&&+c.fitK<1?' style="zoom:'+(+c.fitK)+'"':'')+'>'+(c.logo!==false?'<div class="lg"><img src="'+GM_LOGO+'" alt="SUZUKI MUSIC KOREA" style="width:'+gmLw(c)+'mm"></div>':'')+
     (c.wtop===true?'<div class="wtop">www.suzukimusickorea.org</div>':'')+(meta.length?'<div class="meta'+(c.row1===true?' one':'')+'">'+(c.row1===true?[meta.filter(function(x){return x[0]!=='참조'}),meta.filter(function(x){return x[0]==='참조'})]:meta.map(function(x){return [x]})).filter(function(r){return r.length}).map(function(r){return '<div class="mr">'+r.map(function(x){return '<div><b>'+x[0]+'</b><span>'+esc(x[1])+'</span></div>'}).join('')+'</div>'}).join('')+'</div>':'')+
-    '<div class="dbody">'+(c.ed?UI.docTokFill(c.ed,function(k){return GM_V[k]!=null?esc(GM_V[k]):null}):'<h1'+(function(){var t=+c.ts;return isFinite(t)&&t>=10&&t<=40&&t!==22?' style="font-size:'+t+'pt"':''})()+'>'+esc(String(d['제목']||'(제목)').replace(/\{[^{}\s]{1,8}\}/g,function(m){return GM_V[m]!=null?GM_V[m]:m}))+'</h1>'+(c.intro?'<div class="intro">'+gmFmt(c.intro)+'</div>':'')+secs)+'</div>'+
+    '<div class="dbody">'+(c.ed?UI.docTokFill(c.ed,function(k){return GM_V[k]!=null?esc(GM_V[k]).replace(/\n/g,'<br>'):null}):'<h1'+(function(){var t=+c.ts;return isFinite(t)&&t>=10&&t<=40&&t!==22?' style="font-size:'+t+'pt"':''})()+'>'+esc(String(d['제목']||'(제목)').replace(/\{[^{}\s]{1,8}\}/g,function(m){return GM_V[m]!=null?GM_V[m]:m}))+'</h1>'+(c.intro?'<div class="intro">'+gmFmt(c.intro)+'</div>':'')+secs)+'</div>'+
     (c.sign!==false?'<div class="ft-end"><div class="www">www.suzukimusickorea.org</div><div class="ko">(사)한국스즈키음악협회</div><div class="en">KOREA SUZUKI ASSOCIATION</div></div>':'')+'</div></div>'}
 function loadGm(){S.gmL=null;callS('gmList').then(function(r){if(!r.ok){toast(r.msg);return}S.gmL=r.list;if(S.tab==='gm')render()})}
 function gmZoom(){if(S.gmZ==null){var v=0;try{v=+localStorage.getItem('memberGmZoom')}catch(x){}S.gmZ=v>=.4&&v<=1.6?v:1.15}return S.gmZ}
@@ -698,7 +698,10 @@ function gmCampFrame(){var f=document.getElementById('gmCampFrame'),cd=S.gm&&gmC
 /* 제목 글씨 · 로고 크기 − + (11-12 공통 공문 규칙, 캠프 dStep 과 같음) */
 function gmTs(c){var t=+(c||{}).ts;return isFinite(t)&&t>=10&&t<=40?Math.round(t):22}
 function gmLw(c){var t=+(c||{}).lw;return isFinite(t)&&t>=20&&t<=140?Math.round(t):60}
-var GMSTEP={ts:[12,40,1],lw:[20,140,5]};
+/* 항목 제목 글씨 · 본문 글씨 pt (11-13): 기본 12.5 = 예전 크기 */
+function gmPt(v,lo,hi){var t=+v;return v!==''&&v!=null&&isFinite(t)&&t>=lo&&t<=hi?Math.round(t*2)/2:12.5}
+function gmHs(c){return gmPt((c||{}).hs,10,20)}function gmBs(c){return gmPt((c||{}).bs,10,16)}
+var GMSTEP={ts:[12,40,1],lw:[20,140,5],hs:[10,20,1],bs:[10,16,0.5]},GMGET={ts:gmTs,lw:gmLw,hs:gmHs,bs:gmBs};
 function gmStep(k,v,u,lock){return '<span class="stp"><button type="button" data-gmstep="'+k+'|-1" aria-label="작게"'+(lock?' disabled':'')+'>−</button><b id="gmstv_'+k+'">'+v+u+'</b><button type="button" data-gmstep="'+k+'|1" aria-label="크게"'+(lock?' disabled':'')+'>+</button></span>'}
 function vGmEdit(){var d=S.gm,c=d['내용'],lock=d['상태']==='발행',dis=lock?' disabled':'',M=gmMg(d);if(d['구분']==='캠프'&&c.camp)return vGmCamp(d);
   var inp=function(k,lab,type,o){o=o||'';return '<label class="f"><span>'+lab+'</span><input type="'+(type||'text')+'" data-gmf="'+k+'" value="'+esc(d[k]||'')+'"'+dis+o+'></label>'};
@@ -711,6 +714,7 @@ function vGmEdit(){var d=S.gm,c=d['내용'],lock=d['상태']==='발행',dis=lock
       '<div class="panel"><h3>문서 정보</h3><div class="grid2"><label class="f"><span>구분</span><select data-gmf="구분"'+dis+'>'+GM_KINDS.concat(GM_KINDS.indexOf(d['구분'])<0&&d['구분']?[d['구분']]:[]).map(function(k){return '<option'+(d['구분']===k?' selected':'')+'>'+k+'</option>'}).join('')+'</select></label>'+inp('행사','행사 이름 <span class="cap">(있으면 · 예: 2027 겨울음악제)</span>')+
       inp('제목','제목 <span class="req">*</span>')+inp('시행일','시행일','date')+inp('수신','수신')+inp('참조','참조')+'</div>'+
       '<div class="gmstep">제목 글씨 '+gmStep('ts',gmTs(c),'pt',lock)+'<span style="width:14px"></span>로고 크기 '+gmStep('lw',gmLw(c),'mm',lock)+'</div>'+
+      '<div class="gmstep">항목 제목 글씨 '+gmStep('hs',gmHs(c),'pt',lock)+'<span style="width:14px"></span>본문 글씨 '+gmStep('bs',gmBs(c),'pt',lock)+'</div>'+
       '<p class="cap">문서번호: '+esc(d['문서번호']||'발행할 때 설정 「공문 번호 형식」대로 자동으로 매겨져요')+'</p>'+
       '<div class="row" style="gap:12px;flex-wrap:wrap"><label class="agree"><input type="checkbox" data-gmc="logo"'+(c.logo!==false?' checked':'')+dis+'> 로고 넣기</label><label class="agree"><input type="checkbox" data-gmc="sign"'+(c.sign!==false?' checked':'')+dis+'> 끝에 협회 이름 넣기</label><label class="agree"><input type="checkbox" data-gmc="wtop"'+(c.wtop===true?' checked':'')+dis+'> 위에 홈페이지 주소 넣기</label><label class="agree"><input type="checkbox" data-gmc="row1"'+(c.row1===true?' checked':'')+dis+'> 문서번호 · 시행일 · 수신 한 줄로</label>'+
       '<label>쪽 맞추기 <select data-gmc="fit"'+dis+'><option value="0"'+(!+c.fit?' selected':'')+'>안 함</option><option value="1"'+(+c.fit===1?' selected':'')+'>1쪽에 맞추기</option><option value="2"'+(+c.fit===2?' selected':'')+'>2쪽에 맞추기</option></select></label>'+'<label>항목 번호 <select data-gmc="num"'+dis+'><option value="1."'+(c.num!=='1)'?' selected':'')+'>1.</option><option value="1)"'+(c.num==='1)'?' selected':'')+'>1)</option></select></label>'+'<label>줄 간격 <input type="number" data-gmc="lh" min="1" max="2.5" step="0.05" value="'+esc(c.lh!=null&&c.lh!==''?c.lh:1.55)+'" style="width:70px"'+dis+'> <span class="cap">기본 1.55</span></label>'+'<label>항목 사이 <input type="number" data-gmc="sg" min="0" max="15" step="0.5" value="'+esc(c.sg!=null&&c.sg!==''?c.sg:2.6)+'" style="width:64px"'+dis+'> mm <span class="cap">기본 2.6</span></label>'+
@@ -1250,7 +1254,7 @@ document.addEventListener('click',function(e){
   if(d.gmopen){callS('gmGet',d.gmopen).then(function(r){if(!r.ok){toast(r.msg);return}r.list=S.gmL;gmSet(r);window.scrollTo(0,0)});return}
   if(b.id==='gmBack'){if(S.gmDirty&&!window.confirm('저장하지 않은 내용이 있어요. 목록으로 갈까요?'))return;S.gm=null;render();return}
   if(b.id==='gmWin'){gmWin();return}
-  if(d.gmstep&&S.gm&&S.gm['상태']!=='발행'){var sp=d.gmstep.split('|'),R=GMSTEP[sp[0]],c9=S.gm['내용'];if(R){var cu=sp[0]==='ts'?gmTs(c9):gmLw(c9);c9[sp[0]]=Math.max(R[0],Math.min(R[1],cu+(+sp[1])*R[2]));var vv=document.getElementById('gmstv_'+sp[0]);if(vv)vv.textContent=c9[sp[0]]+(sp[0]==='ts'?'pt':'mm');S.gmDirty=true;gmPrev()}return}
+  if(d.gmstep&&S.gm&&S.gm['상태']!=='발행'){var sp=d.gmstep.split('|'),R=GMSTEP[sp[0]],c9=S.gm['내용'];if(R){var cu=GMGET[sp[0]](c9);c9[sp[0]]=Math.round(Math.max(R[0],Math.min(R[1],cu+(+sp[1])*R[2]))*2)/2;var vv=document.getElementById('gmstv_'+sp[0]);if(vv)vv.textContent=c9[sp[0]]+(sp[0]==='lw'?'mm':'pt');S.gmDirty=true;gmPrev()}return}
   if(d.gmz){var z=Math.max(.4,Math.min(1.6,Math.round((gmZoom()+(d.gmz==='+'?.06:-.06))*100)/100));S.gmZ=z;try{localStorage.setItem('memberGmZoom',z)}catch(x){}var pv=document.getElementById('gmPrev');if(pv)pv.style.setProperty('--dz',z);var zv=document.getElementById('gmZv');if(zv)zv.textContent=Math.round(z*100)+'%';gmCut();gmCampFrame();return}
   if(b.id==='gmEdOpen'){if(!window.UI||!UI.docEd){toast('편집 도구를 불러오지 못했어요 (DocLib). 새로고침해 주세요');return}var pv=document.getElementById('gmPrev'),bd=pv&&pv.querySelector('.dbody');if(!bd){toast('미리보기를 찾지 못했어요');return}var eb=document.getElementById('gmEdOpen');UI.docEd.open(pv,bd,{btn:eb,barIn:eb&&eb.parentNode&&eb.parentNode.parentNode,onSave:function(h){S.gm['내용'].ed=h;S.gmDirty=true;render();var sv=document.getElementById('gmSave');if(sv)sv.click()},onCancel:function(){render()}});return}
   if(b.id==='gmEdDrop'){if(!window.confirm('미리보기에서 고친 글을 지우고 왼쪽 머리말 · 항목으로 돌아갈까요?'))return;delete S.gm['내용'].ed;S.gmDirty=true;render();return}
@@ -1543,7 +1547,7 @@ document.addEventListener('keydown',function(e){var t=e.target;if(S.tab!=='prt'|
 </script>
 <style>table.prt th,table.prt td{text-align:left !important}table.prt th:first-child,table.prt td:first-child{text-align:center !important}table.prt th:nth-child(7),table.prt td:nth-child(7),table.prt th:nth-child(8),table.prt td:nth-child(8){text-align:center !important}table.prt td:nth-child(7) input,table.prt td:nth-child(8) input{text-align:center}table.prt tr.mutedrow td{color:var(--faint)}table.prt tr.mutedrow td b{color:var(--muted)}table.prt td{vertical-align:middle}table.prt td.padr{white-space:normal;min-width:220px;max-width:340px;line-height:1.4}</style>
 
-<div id="bldMark" hidden>빌드표시 20261113-105219 </div>
+<div id="bldMark" hidden>빌드표시 20261113-105726 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();
 /* 공문 편집: 칸을 고치면 모델만 바꾸고 미리보기만 다시 그림(글자 조합이 깨지지 않게) */
 function gmField(t){if(S.tab!=='gm'||!S.gm||S.gm['상태']==='발행')return false;var d=S.gm,c=d['내용'],ds=t.dataset||{};

@@ -1,4 +1,4 @@
-/* build: 20261113-113638 */
+/* build: 20261113-115645 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -101,7 +101,7 @@ const SETTINGS = [
 function doGet(e) {
   const admin = e && e.parameter && e.parameter.page === 'admin';
   return HtmlService.createTemplateFromFile(admin ? 'Index' : 'Teacher').evaluate()
-    .setTitle((function () { try { return settings_()['테스트 표시'] === '예' ? '[STG] ' : ''; } catch (x) { return ''; } })() + (admin ? '스즈키 회원관리' : '스즈키 선생님 회원'))
+    .setTitle((function () { try { return settings_()['테스트 표시'] === '예' ? '[STG] ' : ''; } catch (x) { return ''; } })() + (admin ? '스즈키 회원관리' : '스즈키 교사 회원'))
     .addMetaTag('viewport', 'width=device-width, initial-scale=1')
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
@@ -882,7 +882,7 @@ function setSetting_(k, v) {
   const i = vals.findIndex(r => r[0] === k); if (i >= 0) sh.getRange(i + 1, 2).setValue(v); else sh.appendRow([k, v, '']);
 }
 
-/* ====================== 선생님 회원 (계정 · 가입 · 로그인) ======================
+/* ====================== 교사 회원 (계정 · 가입 · 로그인) ======================
  * 흐름: 이름 + 휴대전화로 명단에서 찾기 → 이메일(명단 이메일과 같으면 바로, 다르면 관리자 확인) → 6자리 인증 코드(10분, 5번)
  *       → 소속·악기 「맞아요/달라요」 + 회원 구분 고르기 → 비밀번호 + 동의 → 계정
  *       명단에 없으면 같은 흐름으로 「회원 가입 신청」 → 관리자 승인 뒤 로그인
@@ -1431,7 +1431,7 @@ function duesReport_(sid, paid, paidAt, who, by, md, note) {
   else if (paid || paidAt) D.append(Object.assign({ '대상': '학생', 'ID': sid, '년도': CUR_Y, '부과': '', '납부': paid, '납부일': paidAt, '메모': by + '이 입금 신고(' + md + ')' + (note ? ': ' + note : ''), '수정일': now_(), '수정자': who }, rp));
   return CUR_Y + ' 회비 ' + (oldP || '없음') + ' → ' + (paid || '없음') + (paidAt ? '(' + paidAt + ')' : '');
 }
-/* ---------- 선생님 회원: 내가 담당하는 학생 (보기 + 입금 신고) ---------- */
+/* ---------- 교사 회원: 내가 담당하는 학생 (보기 + 입금 신고) ---------- */
 function myAcads_(u) { const an = acadNames_(); return worksOf_(u.tid).filter(w => !w['종료'] && w['학원ID']).map(w => ({ id: w['학원ID'], name: an[w['학원ID']] || w['학원ID'], main: w['주근무'] === '예' })).filter((x, k, a) => a.findIndex(y => y.id === x.id) === k); }
 function myStuOk_(u, aid, sid) {
   if (!myAcads_(u).some(a => a.id === aid)) fail('지금 근무하는 학원의 학생만 볼 수 있어요.');
@@ -2116,7 +2116,7 @@ function acctReset(who, tid, mail) {
   log_(who.name, '계정', tid, '비밀번호 초기화', L.map(a => maskEmail_(a.email)).join(', '));
   let sent = false;
   if (mail !== false) { try { L.forEach(a => mail_(a.email, '[스즈키] 임시 비밀번호를 보내 드려요',
-    '<p>협회 관리자가 선생님 회원 비밀번호를 새로 만들었어요.</p><p>임시 비밀번호: <b style="font-size:18px;letter-spacing:.05em">' + esc_(pw) + '</b></p><p>이 비밀번호로 로그인한 뒤, 로그인 화면의 「비밀번호를 잊었어요」에서 원하는 비밀번호로 바꿔 주세요.</p><p>직접 요청하지 않았다면 협회에 알려 주세요.</p>')); sent = true; } catch (e) { } }
+    '<p>협회 관리자가 교사 회원 비밀번호를 새로 만들었어요.</p><p>임시 비밀번호: <b style="font-size:18px;letter-spacing:.05em">' + esc_(pw) + '</b></p><p>이 비밀번호로 로그인한 뒤, 로그인 화면의 「비밀번호를 잊었어요」에서 원하는 비밀번호로 바꿔 주세요.</p><p>직접 요청하지 않았다면 협회에 알려 주세요.</p>')); sent = true; } catch (e) { } }
   return { pw, emails: L.map(a => a.email), sent };
 }
 function acctAll_() { const T = tbl_('계정'); return T.v.map((r, i) => ({ i, email: String(r[0]).toLowerCase(), tid: r[1], hash: r[2], salt: r[3], state: r[4], memo: r[9] })); }

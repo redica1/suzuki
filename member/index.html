@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>스즈키 선생님 회원</title><script>if(/[?&]test\b/i.test(location.search)&&document.title.indexOf('[STG]')<0)document.title='[STG] '+document.title</script>
+<title>스즈키 교사 회원</title><script>if(/[?&]test\b/i.test(location.search)&&document.title.indexOf('[STG]')<0)document.title='[STG] '+document.title</script>
 <!--
-  스즈키 선생님 회원 (계정 만들기 · 로그인 · 내 정보) — 공유용 페이지 (2026-10-28)
+  스즈키 교사 회원 (계정 만들기 · 로그인 · 내 정보) — 공유용 페이지 (2026-10-28)
   · https://app.suzukimusickorea.org/member/       → 메인 (선생님께 보내는 주소)
   · https://app.suzukimusickorea.org/member/?test  → 테스트(STG)
   · 관리자: https://app.suzukimusickorea.org/member/admin.html
@@ -56,7 +56,7 @@
   <a class="sub" id="copyUrl" href="#">버튼이 안 되면: 주소 복사하기</a>
 </div>
 <div id="help" hidden role="alert"><button type="button" id="helpX" aria-label="닫기">×</button><b>화면에 「현재 파일을 열 수 없습니다」가 보이나요?</b>크롬에 구글 계정이 여러 개 로그인되어 있으면 생기는 문제예요. 아래 버튼을 누르면 바로 열려요. 그래도 안 되면 시크릿 창(Ctrl+Shift+N)에서 열어 주세요.<br><a class="btn2" id="helpGo" target="_top">회원 화면 바로 열기</a></div>
-<iframe id="app" title="스즈키 선생님 회원" allow="clipboard-write; screen-wake-lock" hidden></iframe>
+<iframe id="app" title="스즈키 교사 회원" allow="clipboard-write; screen-wake-lock" hidden></iframe>
 <script>
 (function () {
   var PROD = 'https://script.google.com/macros/s/AKfycbwL8TpfpY6MOOZI9_W8RCWj4V3B7rXsg4C2TqewDEcYrRYNBWGbJipsE3bU1GKQQzi6Jw/exec';   // 메인 앱 주소 (10-31 releaseNow)
@@ -66,7 +66,7 @@
   /* 주소 뒤 ?ask (문의 게시판) · ?guide (가입 안내) 등은 회원 화면에 그대로 넘김 */
   var pass = location.search.replace(/^\?/, '').split('&').filter(function (x) { return x && !/^(test|openExternalBrowser)(=|$)/i.test(x); }).map(function (x) { return x.indexOf('=') < 0 ? x + '=1' : x; });
   if (APP && pass.length) APP += '?' + pass.join('&');
-  if (!APP) { var w = document.getElementById('wait'); w.hidden = false; w.innerHTML = '<b>선생님 회원 화면은 준비 중이에요</b><span>곧 이 주소에서 열려요.</span>'; return; }
+  if (!APP) { var w = document.getElementById('wait'); w.hidden = false; w.innerHTML = '<b>교사 회원 화면은 준비 중이에요</b><span>곧 이 주소에서 열려요.</span>'; return; }
   var ua = navigator.userAgent || '', here = location.href.split('#')[0];
   var android = /Android/i.test(ua);
   var kakao = /KAKAOTALK/i.test(ua), line = / Line\//i.test(ua);

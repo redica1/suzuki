@@ -509,9 +509,10 @@ function loginT_(t, consent) {
   if (!acads.length && !t.acads.length && (!open || open.includes(NOACAD))) acads = [NOACAD];
   if (!acads.length) return { ok: false, msg: open ? '지금은 ' + open.join(', ') + '만 접수할 수 있어요.' : '소속 학원이 없어요. 협회에 문의해 주세요.' };
   const token = Utilities.getUuid();
-  CacheService.getScriptCache().put('tok_' + token, JSON.stringify({ name: t.name, acads, tid: t.id }), 21600);
+  const heads = t.role === '원장' ? t.acads.filter(a => acads.includes(a)) : [];   /* 원장: 소속 학원 접수는 누가 냈든 고칠 수 있음 (11-13) */
+  CacheService.getScriptCache().put('tok_' + token, JSON.stringify({ name: t.name, acads, tid: t.id, heads }), 21600);
   log_(t.name, '로그인', '');
-  return Object.assign({ ok: true, token, today: today_(), teacher: { id: t.id, name: t.name, role: t.role, inst: t.inst, acads, home: t.acads, p4: t.p4, email: acctEmail_(t.id) }, myAcct: myAcct_(t.name) }, bundle_(acads, t.name));
+  return Object.assign({ ok: true, token, today: today_(), teacher: { id: t.id, name: t.name, role: t.role, inst: t.inst, acads, home: t.acads, heads, p4: t.p4, email: acctEmail_(t.id) }, myAcct: myAcct_(t.name) }, bundle_(acads, t.name));
 }
 
 /** 학생도 같은 학원 다른 접수에 살아 있으면(정상 · 취소 요청 중) 다시 못 넣음 — 새 접수 · 고칠 때 새로 넣는 사람 (11-03: 취소 요청 중인 학생이 다른 접수에 또 들어가던 것) */
@@ -546,7 +547,7 @@ function withdrawCx(token, no, pid) {
   const lock = lock_();
   try {
     const all = loadSubs_(), sb = all.find(x => x.no === no);
-    if (!sb || sb.owner !== u.name) throw new Error('이 접수의 취소 요청을 거둘 수 없어요.');
+    if (!canEdit_(u, sb)) throw new Error('이 접수의 취소 요청을 거둘 수 없어요.');
     const r = rows_(SH.CX).filter(x => String(x['접수번호']) === no && String(x['사유']) !== '차액 환불' && String(x['참가자ID'] || '').split(',').includes(pid)).pop();
     if (!r) throw new Error('취소 요청을 찾지 못했어요. 새로 고쳐 주세요.');
     if (String(r['처리'] || '요청') !== '요청') throw new Error('운영진이 이미 처리했어요(' + r['처리'] + '). 운영진에게 문의해 주세요.');
@@ -570,6 +571,8 @@ function addAcad(token, acad) {
   if (!u.acads.includes(acad)) { u.acads.push(acad); C.put('tok_' + token, JSON.stringify(u), 21600); log_(u.name, '다른 학원 접수(겸임)', acad); }
   return Object.assign({ ok: true, acads: u.acads }, bundle_(u.acads, u.name));
 }
+/** 고칠 수 있는 접수 (11-13): 내가 낸 접수 + 원장이면 내 학원(소속 학원)에 들어온 접수 전부. 접수한 선생님(owner)은 그대로 */
+function canEdit_(u, sb) { return !!sb && !!u && (sb.owner === u.name || ((u.heads || []).indexOf(sb.acad) >= 0 && sb.acad !== GUEST_ACAD && sb.acad !== STAFF_ACAD && sb.acad !== NOACAD)); }
 function who_(token) {
   const v = CacheService.getScriptCache().get('tok_' + token);
   if (!v) throw new Error('로그인이 끝났어요. 화면을 새로 고쳐 다시 로그인해 주세요.');
@@ -923,7 +926,7 @@ function saveSubs(token, subs) {
     (subs || []).forEach(sb => {
       const cur = all.find(x => x.no === sb.no);
       if (!cur) throw new Error(sb.no + ' 접수를 찾지 못했어요.');
-      if (cur.owner !== u.name) throw new Error(sb.no + '는 ' + cur.owner + ' 선생님이 낸 접수라 고칠 수 없어요.');
+      if (!canEdit_(u, cur)) throw new Error(sb.no + '는 ' + cur.owner + ' 선생님이 낸 접수라 고칠 수 없어요.');
       sb.acad = cur.acad; sb.owner = cur.owner; if (cur.contact) sb.contact = cur.contact; else delete sb.contact; sb.createdAt = cur.createdAt; sb.no = cur.no; sb.reqId = cur.reqId; sb.rev = (+cur.rev || 0) + 1;
       roomPen_(cur, sb); roomCredit_(cur, sb);
       recalc_(sb);
@@ -998,7 +1001,7 @@ function overRefundReq(token, req) {
   const lock = lock_();
   try {
     const all = loadSubs_(); const sb = all.find(x => x.no === req.no);
-    if (!sb || sb.owner !== u.name || !u.acads.includes(sb.acad)) throw new Error('이 접수의 환불을 요청할 수 없어요.');
+    if (!canEdit_(u, sb) || !u.acads.includes(sb.acad)) throw new Error('이 접수의 환불을 요청할 수 없어요.');
     applyAdmin_(sb, adminMap_());
     const items = sb.ppl.filter(p => (req.ids || []).includes(p.id) && p.status === '정상' && !p.ovReq && (+p.paidAmt || 0) - amt_(p) > 0)
       .map(p => ({ p, amt: (+p.paidAmt || 0) - amt_(p) }));
@@ -1020,7 +1023,7 @@ function cancelReq(token, req) {
   const lock = lock_();
   try {
   const sb = loadSubs_().find(x => x.no === req.no);
-  if (!sb || sb.owner !== u.name || !u.acads.includes(sb.acad)) throw new Error('이 접수의 환불을 요청할 수 없어요.');
+  if (!canEdit_(u, sb) || !u.acads.includes(sb.acad)) throw new Error('이 접수의 환불을 요청할 수 없어요.');
   const ps = sb.ppl.filter(p => (req.ids || []).includes(p.id));
   if (!ps.length) throw new Error('환불 요청할 사람을 찾지 못했어요.');
   guardRepTeam_(sb.no, loadSubs_(), true, sb.ppl.filter(p => p.status === '정상' && !(req.ids || []).includes(p.id)).length);
@@ -3488,7 +3491,7 @@ function audAdd(token, pid, url) {
   const lock = lock_();
   try {
     const sb = loadSubs_().find(x => pid.indexOf(x.no + '-') === 0);
-    if (!sb || sb.owner !== u.name || !u.acads.includes(sb.acad)) throw new Error('이 접수에는 음원을 넣을 수 없어요.');
+    if (!canEdit_(u, sb) || !u.acads.includes(sb.acad)) throw new Error('이 접수에는 음원을 넣을 수 없어요.');
     const p = sb.ppl.find(x => x.id === pid); if (!p || p.status !== '정상') throw new Error('참가 중인 사람에게만 음원을 넣을 수 있어요.');
     const i = (((sb.form || {}).info) || {})[pid.slice(sb.no.length + 1)] || {}, con = String(i.concert || ''), C = audCfg_()[con];
     if (!C || !C.on) throw new Error((con || '이') + ' 음악회는 음원을 받지 않아요.');

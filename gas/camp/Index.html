@@ -1,4 +1,4 @@
-<!doctype html><!-- build: 20261113-124044 --><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}
+<!doctype html><!-- build: 20261113-124506 --><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}
 /* 내 접수 표 (11-01): 관리자 표처럼 한 줄씩 */
 .mtbl{width:100%;border-collapse:collapse;font-size:15px;letter-spacing:-.02em;white-space:nowrap}
 .mtbl th{font-size:14px;font-weight:700;color:var(--ink);background:var(--sunk);text-align:center;padding:6px 8px;border-bottom:1px solid var(--line)}
@@ -59,7 +59,7 @@ d.textContent='[진단] '+e.message+' · 줄 '+n+' 칸 '+e.colno+'\n'+out.join('
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" as="style" crossorigin href="https://fonts.googleapis.com/css2?family=Nanum+Gothic:wght@400;700;800&display=swap">
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&display=swap">
 <style>
 /* Layout: one narrow column (max 720px) like a paper application, a winter-ink header band, a sticky running-total bar at the bottom. */
@@ -72,7 +72,7 @@ d.textContent='[진단] '+e.message+' · 줄 '+n+' 칸 '+e.colno+'\n'+out.join('
   --band:#16303a; --band-ink:#e8f1f3; --band-muted:#a9c0c7;
   --display:"Gowun Batang", "Nanum Myeongjo", "AppleMyungjo", serif;
   --body:"IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
-  --mono:"Nanum Gothic",sans-serif;
+  --mono:"IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
   --r:10px;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
@@ -421,8 +421,8 @@ select:disabled{opacity:.5}
 <style>
 /* 디자인 (10-31): 글꼴 Pretendard · 캠프 청록(#0f9d9a) 색 · 자간 .02em · 행간 1.75 · 낱말 단위 줄바꿈 — 위 색 정의를 덮어씀 */
 :root{--bg:#f2fafa; --surface:#ffffff; --sunk:#e6f4f3; --line:#cdebe9; --ink:#132a2c; --muted:#4f6668; --faint:#7f9698; --accent:#0b7a78; --accent-ink:#ffffff; --accent-soft:#e3f5f4; --band:#0f9d9a; --band-ink:#ffffff; --band-muted:#dcf4f2;
-  --display:"Nanum Gothic",-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
-  --body:"Nanum Gothic",-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif}
+  --display:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  --body:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0c1918; --surface:#132423; --sunk:#182e2d; --line:#24403e; --ink:#e4f2f1; --muted:#9fbcba; --faint:#6f8c8a; --accent:#5fd4cf; --accent-ink:#062221; --accent-soft:#163634; --band:#0b4f4d; --band-ink:#ffffff; --band-muted:#bfe7e4;}}
 :root[data-theme="dark"]{--bg:#0c1918; --surface:#132423; --sunk:#182e2d; --line:#24403e; --ink:#e4f2f1; --muted:#9fbcba; --faint:#6f8c8a; --accent:#5fd4cf; --accent-ink:#062221; --accent-soft:#163634; --band:#0b4f4d; --band-ink:#ffffff; --band-muted:#bfe7e4;}
 body{line-height:1.75;letter-spacing:.02em;word-break:keep-all}
@@ -484,6 +484,6 @@ var UI_KEY='camp';
 </script>
 
 <script>try{window.top.postMessage('suzuki-ready','*')}catch(e){}</script>
-<div id="bldMark" hidden>빌드표시 20261113-123021 </div>
+<div id="bldMark" hidden>빌드표시 20261113-124506 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 96px';document.body.appendChild(p)})();</script>
 </body></html>

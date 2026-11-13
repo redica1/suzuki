@@ -1,4 +1,4 @@
-/* build: 20261113-134609 */
+/* build: 20261113-135529 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -109,7 +109,7 @@ function include(n) { return HtmlService.createTemplateFromFile(n).getRawContent
 
 function api(name, args) {
   const open = { login, hello, tHello, tEvents, tLookup, tStart, tResend, tVerify, tCreate, tLogin, tForgot, tReset, tPwChange, tMe, tSavePay, tSavePart, tSaveInfo, tSavePhoto, tAcad, tSaveAcad, tDocUp, tDocGet, tSaveStu, tSaveStus, tStuDetail, tStuSave, tStuTutor, tStuTutorDel, tStuState, tStuStateDel, tMyStu, tMyStuDetail, tMyStuPay, tTchSaves, tTchEnd, tTchEvent, tTchAssign, tTchStart, tSaveRrn, tSaveInc, tAddWork, tClassCreate, tEndWork, tMainWork, tLogout, bPost, bMine, bReply };
-  const fns = { printEvents, printEvSave, printData, printSet, printCopy, printExport, ogGet, ogSave, ogToken, boot, saveRow, setCheck, logs, importRoster, saveDues, delDues, reqs, reqDo, delAcad, payView, bulkSet, saveWorks, importPastDues, importPayInfo, gmList, gmGet, gmSave, gmIssue, gmCopy, gmDel, bList, bSet, bComment, bCat, photoGet, photoDel, fillRegions, saveRates, docList, docUp, docGet, docDel, payList, payOk, payOkMany, payNo, memView, rosterNow, inputStatus, inboxDone, acctReset, classFromStudents, delStus, asTeacher, bankImport, bankList: bankListTop, bankSet, bankDues, bankFromSheet, bankMeta, bankSplitSave, bankPay, bankCamp, bankCampPay, bankPayList, gmProjects, gmCamp, gmNewCamp, gmCampSync, devVirtual };
+  const fns = { printEvents, printEvSave, printData, printSet, printCopy, printExport, ogGet, ogSave, ogToken, boot, saveRow, setCheck, logs, importRoster, saveDues, delDues, reqs, reqDo, delAcad, payView, payAddrSet, bulkSet, saveWorks, importPastDues, importPayInfo, gmList, gmGet, gmSave, gmIssue, gmCopy, gmDel, bList, bSet, bComment, bCat, photoGet, photoDel, fillRegions, saveRates, docList, docUp, docGet, docDel, payList, payOk, payOkMany, payNo, memView, rosterNow, inputStatus, inboxDone, acctReset, classFromStudents, delStus, asTeacher, bankImport, bankList: bankListTop, bankSet, bankDues, bankFromSheet, bankMeta, bankSplitSave, bankPay, bankCamp, bankCampPay, bankPayList, gmProjects, gmCamp, gmNewCamp, gmCampSync, devVirtual };
   try {
     if (open[name]) return Object.assign({ ok: true }, open[name].apply(null, args || []));
     if (!fns[name]) throw new UserError('알 수 없는 요청이에요.');
@@ -1809,6 +1809,19 @@ function payView(who, tid) {
   return { pay: { bank: p['은행'], acct: p['계좌번호'], holder: p['예금주'], zip: p['우편번호'], addr: p['주소'], addr2: p['상세주소'], hzip: p['집우편번호'], haddr: p['집주소'], haddr2: p['집상세주소'], rrn, rrnAt: p['주민번호동의일'], at: p['수정일'] } };
 }
 
+/* 관리자: 회원 주소 고치기 (11-13). 집 주소 · 우편물 주소만 (계좌 · 주민번호는 안 건드림). 값은 기록에 남기지 않음 */
+function payAddrSet(who, tid, d) {
+  d = d || {}; const T = tbl_('교사'), k = T.find('교사ID', tid); if (k < 0) fail('그 교사를 찾지 못했어요.');
+  const s = (x, n) => String(x == null ? '' : x).replace(/[\r\n]+/g, ' ').trim().slice(0, n), z = x => s(x, 10).replace(/[^\d-]/g, '');
+  const o = { '우편번호': z(d.zip), '주소': s(d.addr, 150), '상세주소': s(d.addr2, 100), '집우편번호': z(d.hzip), '집주소': s(d.haddr, 150), '집상세주소': s(d.haddr2, 100), '수정일': now_() };
+  const lk = LockService.getScriptLock(); lk.waitLock(10000);
+  try { const P = payTbl_(), j = P.find('교사ID', tid);
+    if (j >= 0) P.set(j, o); else P.append(Object.assign({ '교사ID': tid, '이메일': String(T.v[k][col_(T)['이메일']] || '') }, o));
+  } finally { lk.releaseLock(); }
+  log_(who.name, '정산', tid, '관리자 주소 고침', (o['집주소'] ? '집' : '') + (o['주소'] ? (o['집주소'] ? ' · ' : '') + '우편물' : ''));
+  try { PropertiesService.getScriptProperties().setProperty('rosterDirty', '1'); } catch (e) {}
+  return payView(who, tid);
+}
 /* ---------- 주민번호 암호화 ----------
  * 열쇠: 스크립트 속성 RRN_KEY (32바이트, 시트·깃허브에 없음). 열쇠를 잃으면 풀 수 없으니 관리자만 따로 보관.
  * 방식: HMAC-SHA256 을 키 스트림으로 쓰는 CTR 암호 + HMAC-SHA256 인증 태그 (encrypt-then-MAC). 저장 형식 v1.nonce.암호문.태그 (base64) */

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261113-134609 -->
+<!-- build: 20261113-135529 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -457,7 +457,12 @@ function payBoxA(id){var f=S.D.payF[id]||{},v=S.payOpen&&S.payOpen.id===id?S.pay
   var has=function(x){return x?'<span class="pill ok">있음</span>':'<span class="pill mute">없음</span>'};
   return '<div class="panel" style="padding:12px;border-color:var(--rosin);background:var(--rosin-soft)"><div class="sec-h"><b>정산 정보 <span class="cap">관리자 전용 파일 · 열 때마다 기록돼요</span></b>'+
     (v?'<button class="btn small" type="button" id="payClose">가리기</button>':'<button class="btn small primary" type="button" data-payv="'+id+'">내용 보기</button>')+'</div>'+
-    (v?'<dl class="kv"><dt>계좌</dt><dd>'+esc(v.bank)+' <span class="num">'+esc(v.acct)+'</span> · '+esc(v.holder)+'</dd><dt>집 주소</dt><dd>'+(v.hzip?'('+esc(v.hzip)+') ':'')+esc(v.haddr)+' '+esc(v.haddr2)+'</dd><dt>우편물 주소</dt><dd>'+(v.zip?'('+esc(v.zip)+') ':'')+esc(v.addr)+' '+esc(v.addr2)+'</dd><dt>주민등록번호</dt><dd class="num">'+(v.rrn?esc(v.rrn)+' <span class="cap">'+esc(v.rrnAt)+'</span>':'-')+'</dd><dt>마지막 수정</dt><dd class="num">'+esc(v.at||'-')+'</dd></dl>'
+    (v?'<dl class="kv"><dt>계좌</dt><dd>'+esc(v.bank)+' <span class="num">'+esc(v.acct)+'</span> · '+esc(v.holder)+'</dd><dt>집 주소</dt><dd>'+(v.hzip?'('+esc(v.hzip)+') ':'')+esc(v.haddr)+' '+esc(v.haddr2)+'</dd><dt>우편물 주소</dt><dd>'+(v.zip?'('+esc(v.zip)+') ':'')+esc(v.addr)+' '+esc(v.addr2)+'</dd><dt>주민등록번호</dt><dd class="num">'+(v.rrn?esc(v.rrn)+' <span class="cap">'+esc(v.rrnAt)+'</span>':'-')+'</dd><dt>마지막 수정</dt><dd class="num">'+esc(v.at||'-')+'</dd></dl>'+
+      (S.payAddr===id?'<div class="panel" style="padding:10px;display:grid;gap:8px"><b>주소 고치기 <span class="cap">고치면 행사 명단 · 우편물 주소에도 반영돼요</span></b>'+
+        '<div class="row" style="gap:6px;align-items:center"><span class="cap" style="width:72px">집 주소</span><input id="paHz" value="'+esc(v.hzip||'')+'" placeholder="우편번호" style="width:96px"><input id="paHa" value="'+esc(v.haddr||'')+'" placeholder="도로명 주소" style="flex:2;min-width:220px"><input id="paHd" value="'+esc(v.haddr2||'')+'" placeholder="상세 주소" style="flex:1;min-width:140px"></div>'+
+        '<div class="row" style="gap:6px;align-items:center"><span class="cap" style="width:72px">우편물 주소</span><input id="paMz" value="'+esc(v.zip||'')+'" placeholder="우편번호" style="width:96px"><input id="paMa" value="'+esc(v.addr||'')+'" placeholder="도로명 주소" style="flex:2;min-width:220px"><input id="paMd" value="'+esc(v.addr2||'')+'" placeholder="상세 주소 (학원 이름 등)" style="flex:1;min-width:140px"><button class="btn small ghost" type="button" id="paCopy">집 주소와 같게</button></div>'+
+        '<div class="row" style="gap:6px"><button class="btn small primary" type="button" id="paSave" data-id="'+esc(id)+'">주소 저장</button><button class="btn small ghost" type="button" id="paCancel">그만두기</button></div></div>'
+       :'<div class="row"><button class="btn small" type="button" data-payaddr="'+esc(id)+'">주소 고치기</button></div>')
       :'<div class="row"><span class="cap">계좌</span> '+has(f.a)+' <span class="cap">집 주소</span> '+has(f.h)+' <span class="cap">우편물 주소</span> '+has(f.m)+' <span class="cap">주민번호</span> '+has(f.r)+'</div>')+'</div>'}
 
 /* ---------- 연회비 ---------- */
@@ -1251,7 +1256,11 @@ document.addEventListener('click',function(e){
   if(d.gostu){var sid=d.edit.split('|')[1];go('stu');S.edit={kind:'stu',id:sid};render();window.scrollTo(0,0);return}
   if(d.edit){var q2=d.edit.split('|');S.wEd=null;S.dEdit=null;S.payOpen=null;S.edAcad=null;S.edit=S.edit&&S.edit.id===q2[1]?null:{kind:q2[0],id:q2[1]};render();window.scrollTo({top:0,behavior:'smooth'});return}
   if(d.new){S.edit={kind:d.new,id:'new'};S.edAcad=null;render();window.scrollTo(0,0);return}
-  if(b.id==='closeEd'){S.edit=null;S.payOpen=null;render();return}
+  if(b.id==='closeEd'){S.edit=null;S.payOpen=null;S.payAddr=null;render();return}
+  if(d.payaddr){S.payAddr=d.payaddr;render();var f0=document.getElementById('paHa');if(f0)f0.focus();return}
+  if(b.id==='paCancel'){S.payAddr=null;render();return}
+  if(b.id==='paCopy'){[['paHz','paMz'],['paHa','paMa'],['paHd','paMd']].forEach(function(x){document.getElementById(x[1]).value=document.getElementById(x[0]).value});return}
+  if(b.id==='paSave'){var pid=b.dataset.id,gv=function(i){var e=document.getElementById(i);return e?e.value:''};b.disabled=true;callS('payAddrSet',pid,{hzip:gv('paHz'),haddr:gv('paHa'),haddr2:gv('paHd'),zip:gv('paMz'),addr:gv('paMa'),addr2:gv('paMd')}).then(function(r){b.disabled=false;if(!r.ok){toast(r.msg);return}S.payOpen={id:pid,pay:r.pay};S.payAddr=null;var pf=S.D.payF[pid]=S.D.payF[pid]||{};pf.h=!!r.pay.haddr;pf.m=!!r.pay.addr;render();toast('주소를 고쳤어요')});return}
   if(d.payv){callS('payView',d.payv).then(function(r){if(!r.ok){toast(r.msg);return}if(!r.pay){toast('정산 정보가 아직 없어요');return}S.payOpen={id:d.payv,pay:r.pay};render()});return}
   if(b.id==='payClose'){S.payOpen=null;render();return}
   if(b.id==='delStu'||b.id==='bDelStu'){var ids=b.id==='delStu'?[S.edit.id]:Object.keys(S.sel);if(!ids.length)return;var nm1=ids.length===1&&ST[ids[0]]?ST[ids[0]]['이름']+' 학생을':ids.length+'명을';if(!confirm(nm1+' 지울까요? 담당 · 재원 이력도 함께 지워지고 되돌릴 수 없어요.\n(회비를 낸 학생은 지우지 않아요 — 퇴원으로 바꿔 주세요)'))return;b.disabled=true;
@@ -1578,7 +1587,7 @@ document.addEventListener('keydown',function(e){var t=e.target;if(S.tab!=='prt'|
 </script>
 <style>table.prt th,table.prt td{text-align:left !important}table.prt th:first-child,table.prt td:first-child{text-align:center !important}table.prt th:nth-child(7),table.prt td:nth-child(7),table.prt th:nth-child(8),table.prt td:nth-child(8){text-align:center !important}table.prt td:nth-child(7) input,table.prt td:nth-child(8) input{text-align:center}table.prt tr.mutedrow td{color:var(--faint)}table.prt tr.mutedrow td b{color:var(--muted)}table.prt td{vertical-align:middle}table.prt td.padr{white-space:normal;min-width:220px;max-width:340px;line-height:1.4}</style>
 
-<div id="bldMark" hidden>빌드표시 20261113-134609 </div>
+<div id="bldMark" hidden>빌드표시 20261113-135529 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();
 /* 공문 편집: 칸을 고치면 모델만 바꾸고 미리보기만 다시 그림(글자 조합이 깨지지 않게) */
 function gmField(t){if(S.tab!=='gm'||!S.gm||S.gm['상태']==='발행')return false;var d=S.gm,c=d['내용'],ds=t.dataset||{};

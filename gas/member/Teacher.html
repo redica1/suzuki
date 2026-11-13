@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261113-121758 -->
+<!-- build: 20261113-122325 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -263,7 +263,7 @@ function acadFields(){var j=S.j;
      '<input type="search" id="aq" value="'+esc(S.aq||'')+'" placeholder="'+(j.works.length?'다른 소속 학원 더 찾기':'학원 이름으로 찾기')+'" autocomplete="off" '+bad('acad')+'><ul class="list" id="aList">'+aItems(aHits())+'</ul>'+
      '<div class="row"><button class="btn small ghost" type="button" id="typeAcad">목록에 없어요 · 직접 적기</button></div>'));
   return '<div class="f"><span>지금 근무하는 학원 <span class="req">*</span> <span class="opt">3곳까지 · 처음 고른 곳이 주 소속 · 학원마다 근무 시작 날짜를 넣어요</span></span>'+
-    (j.noWork?'':workList())+pick+
+    (j.noWork?'':workList()+'<p class="hint" style="margin:4px 0 0;color:var(--accent)">✔ 근무 시작 날짜가 정확히 기억나지 않아도 괜찮아요. 대략 넣고 나중에 「내 정보」에서 언제든 고칠 수 있어요.</p>')+pick+
     '<label class="agree" for="noWork"><input type="checkbox" id="noWork" '+(j.noWork?'checked':'')+'><div><b>현재 소속 학원 없음</b><span class="hint"> 지금 다니는 학원이 없어요</span></div></label>'+fe('acad')+
     '<p class="hint">그만둔 학원은 가입한 뒤 「내 정보」에서 종료 날짜를 넣으면 근무 이력으로 남아요.</p></div>'}
 function extFields(){var j=S.j;
@@ -275,7 +275,7 @@ function extFields(){var j=S.j;
 function certBox(){var j=S.j,ys=[];for(var y=new Date().getFullYear();y>=1985;y--)ys.push(String(y));
   return '<div class="f"><span>보유 자격 <span class="opt">있는 것 모두 · 고르면 취득 년도 필수</span></span><div style="display:grid;gap:6px">'+CERTS.map(function(n){var on=n in j.certs;
     return '<div class="row" style="border:1px solid '+(on?'var(--accent)':'var(--line)')+';border-radius:9px;padding:6px 10px"><label class="agree" style="flex:1;align-items:center"><input type="checkbox" data-cert="'+n+'" '+(on?'checked':'')+'> '+n+'</label>'+
-      (on?'<select data-cy="'+n+'" style="width:auto;padding:6px 8px" aria-label="'+n+' 취득 년도" '+bad('cy_'+n)+'><option value="">년도</option>'+ys.map(function(y){return '<option '+(j.certs[n]===y?'selected':'')+'>'+y+'</option>'}).join('')+'</select>':'')+'</div>'+fe('cy_'+n)}).join('')+'</div></div>'}
+      (on?'<select data-cy="'+n+'" style="width:auto;padding:6px 8px" aria-label="'+n+' 취득 년도" '+bad('cy_'+n)+'><option value="">년도</option>'+ys.map(function(y){return '<option '+(j.certs[n]===y?'selected':'')+'>'+y+'</option>'}).join('')+'</select>':'')+'</div>'+fe('cy_'+n)}).join('')+'</div><p class="hint" style="margin:4px 0 0;color:var(--accent)">✔ 정확히 기억나지 않아도 괜찮아요. 대략 넣고 나중에 「내 정보」에서 언제든 고칠 수 있어요.</p></div>'}
 function vConfirm(){var j=S.j,nw=S.look!=='found',ext=nw&&S.mode==='ext';if(!j.pay.holder)j.pay.holder=S.name;
   var head=!nw?'<div class="note ok"><b>인증을 마쳤어요.</b> 협회에 있는 선생님 정보를 불러왔어요. 맞는지 확인하고, 다르거나 빈 곳을 고쳐 주세요. 넣은 내용으로 협회 명단이 바뀌어요.</div>':nw?'<div class="note"><b>인증을 마쳤어요.</b> 가입 신청 내용을 적어 주세요. 협회가 확인한 뒤 계정이 열려요.</div>':'<div class="note ok"><b>인증을 마쳤어요.</b> 지금 선생님 정보를 넣어 주세요. 넣은 내용으로 협회 명단이 바뀌어요.</div>';
   if(ext)head='<div class="note"><b>인증을 마쳤어요.</b> 등록 내용을 적어 주세요. 협회가 확인한 뒤 계정이 열려요.</div>';
@@ -1093,6 +1093,6 @@ csMount();
   try{google.script.url.getLocation(function(l){var pr=l&&l.parameter||{},a=pr.as;if(a)setSess(a);if('ask' in pr||pr.v==='ask'){S.v0='ask'}if(pr.guide!==undefined)S.gd0=pr.guide||'why';go0()})}catch(x){go0()}})();
 </script>
 <script>try{window.top.postMessage('suzuki-ready','*')}catch(e){}</script>
-<div id="bldMark" hidden>빌드표시 20261113-121758 </div>
+<div id="bldMark" hidden>빌드표시 20261113-122325 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();</script>
 </body></html>

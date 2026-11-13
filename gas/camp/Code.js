@@ -1,4 +1,4 @@
-/* build: 20261113-155219 */
+/* build: 20261113-155736 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -144,6 +144,7 @@ function doPost(e) {
     /* op=sub: 새 접수 1건 (교사 1 · 학생 3) */
     const i = +q.i || 0, acad = '가상몰림' + (i % 20) + '스즈키';
     let t = Date.now(); const all = loadSubs_(); const tRead = Date.now() - t;
+    RC_MEMO = { adj: adjMap_(), t: teachers_(), s: rows_(SH.S), via: duesViaCamp_(), am: adminMap_() };
     let tw = Date.now(); const lock = lock_(); const wait = Date.now() - tw, tIn = Date.now(); let no = '', tWrite = 0, tTeam = 0;
     try {
       no = subNoNext_();
@@ -153,7 +154,7 @@ function doPost(e) {
       const sb = { no, acad, owner: '몰림' + i, fake: true, load: true, createdAt: at, date: at.slice(0, 10), email: '', rev: 1, reqId: 'ld' + t0 + '_' + i, form: { ri: 0, picked, info, extra: [], fam: [], room: {}, join: {}, ens: { on: false } }, ppl };
       recalc_(sb); sb.ppl.forEach(p => p.dues = 0); checkEns_(sb, all); teacherDup_(all, sb);
       t = Date.now(); writeSub_(sb, 'append'); tWrite = Date.now() - t;
-    } finally { lock.releaseLock(); }
+    } finally { RC_MEMO = null; lock.releaseLock(); }
     const inLock = Date.now() - tIn; t = Date.now(); bundle_([acad], '몰림' + i); const tBundle = Date.now() - t;
     return out({ ok: true, no, wait, inLock, tRead, tWrite, tTeam, tBundle, total: Date.now() - t0 });
   } catch (x) { return out({ ok: false, msg: String(x && x.message || x), total: Date.now() - t0 }); }
@@ -917,6 +918,7 @@ function submitNew(token, sb) {
   sb.owner = u.name;
   if (u.guest) sb.contact = String(u.phone || '').replace(/(\d{3})(\d{3,4})(\d{4})/, '$1-$2-$3');   // 비회원 보호자 연락처 (관리자 화면 · 시트에만)
   sb.rev = 1;
+  RC_MEMO = { adj: adjMap_(), t: teachers_(), s: rows_(SH.S), via: duesViaCamp_(), am: adminMap_() };   /* 금액 계산에 쓰는 시트도 잠그기 전에 읽어 둠 */
   const lock = lock_();
   try {
     if (sb.reqId && C.get('req_' + sb.reqId)) { lock.releaseLock(); const d = C.get('req_' + sb.reqId); return Object.assign({ ok: true, no: d, again: true }, bundle_(u.acads, u.name)); }
@@ -928,7 +930,7 @@ function submitNew(token, sb) {
     writeSub_(sb, 'append');
     if (sb.reqId) C.put('req_' + sb.reqId, no, 21600);
     if (sb.form && sb.form.ens && (sb.form.ens.on || sb.form.ens.member)) { all.push(sb); writeTeams_(all); }
-  } finally { lock.releaseLock(); }
+  } finally { RC_MEMO = null; lock.releaseLock(); }
   log_(u.name, '새 접수', sb.no + ' · ' + sb.ppl.length + '명');
   try { mail_(sb, u); } catch (e) { Logger.log('메일: ' + e.message); }
   return Object.assign({ ok: true, no: sb.no }, bundle_(u.acads, u.name));

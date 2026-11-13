@@ -1,4 +1,4 @@
-/* build: 20261113-123021 */
+/* build: 20261113-123330 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -1134,7 +1134,7 @@ function cleanPay_(d, need, hasAcct) {
   o.hzip = digits_(d.hzip).slice(0, 5); o.haddr = String(d.haddr || '').trim().slice(0, 120); o.haddr2 = String(d.haddr2 || '').trim().slice(0, 80);
   o.same = d.same !== false;
   o.zip = o.same ? o.hzip : digits_(d.zip).slice(0, 5); o.addr = o.same ? o.haddr : String(d.addr || '').trim().slice(0, 120); o.addr2 = o.same ? o.haddr2 : String(d.addr2 || '').trim().slice(0, 80);
-  if (o.acct && !/^[\d-]{8,20}$/.test(o.acct)) fail('계좌번호는 숫자와 - 로 넣어 주세요.');
+  if (o.acct && !/^[\d-]{8,20}$/.test(o.acct)) fail('계좌번호를 다시 확인해 주세요 (숫자 8~20자리).');
   if ((o.acct || need) && (!o.bank || !o.holder)) fail('은행과 예금주를 넣어 주세요.');
   if (need && !o.acct && !hasAcct) fail('계좌번호를 넣어 주세요.');
   if (need && !o.haddr) fail('집 주소를 넣어 주세요. 「주소 검색」을 눌러요.');
@@ -1747,7 +1747,7 @@ function tSavePart(sess, part, d) {
   if (part === 'acct') {
     const bank = String(d.bank || '').trim().slice(0, 20), holder = String(d.holder || '').trim().slice(0, 20), acct = String(d.acct || '').replace(/[^\d-]/g, '');
     if (!bank || !holder) fail('은행과 예금주를 넣어 주세요.');
-    if (acct && !/^[\d-]{8,20}$/.test(acct)) fail('계좌번호는 숫자와 - 로 넣어 주세요.');
+    if (acct && !/^[\d-]{8,20}$/.test(acct)) fail('계좌번호를 다시 확인해 주세요 (숫자 8~20자리).');
     if (!acct && !old['계좌번호']) fail('계좌번호를 넣어 주세요.');
     const eng = String(d.eng || '').trim().slice(0, 60); if (eng && !/^[A-Za-z .'-]+$/.test(eng)) fail('영문 이름은 영어로 넣어 주세요.');
     Object.assign(row, { '은행': bank, '예금주': holder }); if (acct) row['계좌번호'] = acct;

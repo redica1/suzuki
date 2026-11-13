@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261113-123021 -->
+<!-- build: 20261113-123330 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -335,7 +335,7 @@ function payCards(m){var p=m.pay||{},ed=S.payEd,d=S.pay||{};
       '<label class="f" for="pEng">영문 이름 <span class="opt">선택 · 명찰·프로그램북 · 예: Kim Suzuki</span><input type="text" id="pEng" value="'+esc(d.eng)+'" autocomplete="off" '+bad('eng')+'></label>'+fe('eng')+
       (p.acct?'<p class="hint">지금 등록된 계좌: <b class="num">'+esc(p.bank+' '+p.acct)+'</b> · 바꿀 때만 계좌번호를 새로 넣어 주세요.</p>':'')+
       '<div class="two"><label class="f" for="pBank">은행 <span class="req">*</span><select id="pBank" '+bad('bank')+'><option value="">선택</option>'+BANKS.map(function(b){return '<option '+(b===d.bank?'selected':'')+'>'+b+'</option>'}).join('')+'</select></label>'+
-      '<label class="f" for="pAcct">계좌번호 '+(p.acct?'<span class="opt">바꿀 때만</span>':'<span class="req">*</span>')+'<input type="text" id="pAcct" '+bad('acct')+' value="'+esc(d.acct)+'" inputmode="numeric" autocomplete="off" placeholder="숫자와 -"></label></div>'+
+      '<label class="f" for="pAcct">계좌번호 <span class="hint" style="font-weight:400">숫자만 넣어도 되고, - 를 넣어도 돼요</span> '+(p.acct?'<span class="opt">바꿀 때만</span>':'<span class="req">*</span>')+'<input type="text" id="pAcct" '+bad('acct')+' value="'+esc(d.acct)+'" inputmode="numeric" autocomplete="off"></label></div>'+
       '<label class="f" for="pHold">예금주 <span class="req">*</span><input type="text" id="pHold" '+bad('holder')+' value="'+esc(d.holder)+'"></label>'+fe('bank')+fe('acct')+fe('holder')+msgBox()+edBtns():
       '<dl class="kv"><dt>영문 이름</dt><dd>'+esc(m.eng||'-')+'</dd><dt>계좌</dt><dd>'+(p.acct?esc(p.bank)+' <span class="num">'+esc(p.acct)+'</span> · '+esc(p.holder):'-')+'</dd></dl>')+'</div>';
   var sameNow=p.addr&&p.addr===p.haddr&&p.addr2===p.haddr2&&p.zip===p.hzip;
@@ -630,7 +630,7 @@ function payFields(d,editing,cur){
     mailBlock(d,'')+
     '<h3 style="margin-top:4px">계좌 <span class="opt">강사료 지급·환불</span></h3>'+(cur&&cur.acct?'<p class="hint">지금 등록된 계좌: <b class="num">'+esc(cur.bank+' '+cur.acct)+'</b> · 바꿀 때만 새로 넣어 주세요.</p>':'')+
     '<div class="two"><label class="f" for="pBank">은행 <span class="req">*</span><select id="pBank" '+bad('bank')+'><option value="">선택</option>'+BANKS.map(function(b){return '<option '+(b===d.bank?'selected':'')+'>'+b+'</option>'}).join('')+'</select></label>'+
-    '<label class="f" for="pAcct">계좌번호 '+(cur&&cur.acct?'<span class="opt">바꿀 때만</span>':'<span class="req">*</span>')+'<input type="text" id="pAcct" '+bad('acct')+' value="'+esc(d.acct)+'" inputmode="numeric" autocomplete="off" placeholder="숫자와 -"></label></div>'+
+    '<label class="f" for="pAcct">계좌번호 <span class="hint" style="font-weight:400">숫자만 넣어도 되고, - 를 넣어도 돼요</span> '+(cur&&cur.acct?'<span class="opt">바꿀 때만</span>':'<span class="req">*</span>')+'<input type="text" id="pAcct" '+bad('acct')+' value="'+esc(d.acct)+'" inputmode="numeric" autocomplete="off"></label></div>'+
     '<label class="f" for="pHold">예금주 <span class="req">*</span><input type="text" id="pHold" '+bad('holder')+' value="'+esc(d.holder)+'"></label>'+fe('bank')+fe('acct')+fe('holder')+(editing?'':rrnSignup(d))+'</div>'}
 function rrnNotice(){return '<details><summary>자세히</summary>항목: 주민등록번호. 목적: 강사료 원천징수와 지급명세서 제출(소득세법). 강사료를 받지 않으면 넣지 않아도 돼요. 보관: 세법이 정한 기간이 지나면 지워요. 암호화해서 보관하고 협회 관리자만 볼 수 있어요.</details>'}
 function rrnSignup(d){return '<h3 style="margin-top:4px">주민등록번호 <span class="opt">선택 · 강사료를 받으실 분만</span></h3>'+
@@ -776,7 +776,7 @@ document.addEventListener('click',function(e){if(e.target.id==='sdClose2'){S.stu
     S.payEd=d.ped;S.err={};S.msg='';S.postFor='';render();return}
   if(b.id==='pedNo'){S.payEd='';S.pay=null;S.err={};S.msg='';S.postFor='';render();return}
   if(b.id==='pedSave'){readPayIn();var q2=S.pay,k2=S.payEd,e4={},hasA=!!(S.me.pay&&S.me.pay.acct);
-    if(k2==='acct'){if(!q2.bank)e4.bank='은행을 골라 주세요.';if(!q2.acct&&!hasA)e4.acct='계좌번호를 넣어 주세요.';else if(q2.acct&&!/^[\d-]{8,20}$/.test(q2.acct))e4.acct='계좌번호는 숫자와 - 로 넣어 주세요.';if(!q2.holder)e4.holder='예금주를 넣어 주세요.';if(q2.eng&&!/^[A-Za-z .'-]+$/.test(q2.eng))e4.eng='영문 이름은 영어로 넣어 주세요.'}
+    if(k2==='acct'){if(!q2.bank)e4.bank='은행을 골라 주세요.';if(!q2.acct&&!hasA)e4.acct='계좌번호를 넣어 주세요.';else if(q2.acct&&!/^[\d-]{8,20}$/.test(q2.acct))e4.acct='계좌번호를 다시 확인해 주세요 (숫자 8~20자리).';if(!q2.holder)e4.holder='예금주를 넣어 주세요.';if(q2.eng&&!/^[A-Za-z .'-]+$/.test(q2.eng))e4.eng='영문 이름은 영어로 넣어 주세요.'}
     if(k2==='home'&&!q2.haddr)e4.a_h='「주소 검색」으로 집 주소를 넣어 주세요.';
     if(k2==='mail'&&!q2.same&&!q2.addr)e4.a_m='「주소 검색」으로 우편물 받을 주소를 넣어 주세요.';
     S.err=e4;if(Object.keys(e4).length){render();return}
@@ -1093,6 +1093,6 @@ csMount();
   try{google.script.url.getLocation(function(l){var pr=l&&l.parameter||{},a=pr.as;if(a)setSess(a);if('ask' in pr||pr.v==='ask'){S.v0='ask'}if(pr.guide!==undefined)S.gd0=pr.guide||'why';go0()})}catch(x){go0()}})();
 </script>
 <script>try{window.top.postMessage('suzuki-ready','*')}catch(e){}</script>
-<div id="bldMark" hidden>빌드표시 20261113-123021 </div>
+<div id="bldMark" hidden>빌드표시 20261113-123330 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();</script>
 </body></html>

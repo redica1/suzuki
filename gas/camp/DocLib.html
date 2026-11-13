@@ -1,4 +1,4 @@
-/* build: 20261113-105726 */
+/* build: 20261113-111005 */
 /* 공문 편집 라이브러리 — 원본 gas/common/DocLib.html (sync.py 가 camp · member 로 복사). 캠프 관리자 · 회원관리 공문이 같이 씀 */
 (function(){var UI=window.UI||(window.UI={});
 /* 6) 공문 미리보기에서 바로 고치기 UI.docEd (11-11) — 행사책자 「고쳐 쓰는 중」과 같은 도구 막대.
@@ -82,5 +82,29 @@ function docPages(dp,mt,mb){if(!dp)return 0;dp.querySelectorAll('.pgsp,.pgcut,.p
     el.parentNode.insertBefore(sp,el);page++}
   dp.style.minHeight=(page*297+(page-1)*GAP)+'mm';dp.style.overflow='hidden';return page}
 UI.docPages=docPages;
+/* 8) 공문 JPG 받기 UI.docJpg (11-13) — A4 한 쪽 = 그림 한 장(쪽마다 따로 받기), 인쇄와 같은 여백, 쪽은 줄 사이에서 자름. html2canvas(cdnjs)로 그림.
+ * docJpg(공문 .dp 가 든 html, {t,b,l,r 여백 mm, name 파일 이름}) → 받은 장 수. 파일 이름 = name_YYYYMMDD_HHMM(_n쪽).jpg
+ * 새 창 · 캠프 공문 미리보기 안에서도 쓰도록 이 함수 하나로 끝남 (String(UI.docJpg)로 넣음) */
+function docJpg(html,o){o=o||{};var t=+o.t||0,b=+o.b||0,l=+o.l||0,r=+o.r||0,R=200/25.4,SC=2.2;
+  function lib(){if(window.html2canvas)return Promise.resolve();return new Promise(function(ok,no){var s=document.createElement('script');s.src='https:'+String.fromCharCode(47,47)+'cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';s.onload=ok;s.onerror=function(){no(new Error('그림 도구를 불러오지 못했어요 (인터넷 연결 확인)'))};document.head.appendChild(s)})}
+  var host=document.createElement('div');host.style.cssText='position:absolute;left:-30000px;top:0;background:#fff;zoom:1';host.innerHTML=html;document.body.appendChild(host);
+  var dp=host.querySelector('.dp');if(!dp){host.remove();return Promise.reject(new Error('공문을 찾지 못했어요'))}
+  [].forEach.call(host.querySelectorAll('.pgsp,.pgcut,.pgprobe'),function(x){x.remove()});[].forEach.call(host.querySelectorAll('[contenteditable]'),function(x){x.removeAttribute('contenteditable')});
+  var f=dp.querySelector('.fitc'),K=f&&parseFloat(f.style.zoom)||1;if(f)f.style.zoom='';
+  dp.style.cssText+=';zoom:1;padding:0;margin:0;width:'+((210-l-r)/K)+'mm;min-height:0;box-shadow:none;overflow:visible';void dp.offsetHeight;
+  var fr=document.fonts&&document.fonts.ready||Promise.resolve();
+  return lib().then(function(){return fr}).then(function(){
+    var pr=document.createElement('div');pr.style.cssText='position:absolute;width:1px;height:100mm';dp.appendChild(pr);var px=pr.getBoundingClientRect().height/100;pr.remove();
+    var B=dp.getBoundingClientRect(),top0=B.top,H=B.height,per=(297-t-b)/K*px;
+    var E=[].map.call(dp.querySelectorAll('.lg,.meta>div,h1,h2,h3,.ln,.sh,.rh,tr,table.ft,.ft-end,.gbx,li,p,.wtop,img'),function(e){var q=e.getBoundingClientRect();return [q.top-top0,q.bottom-top0]}).filter(function(a){return a[1]>a[0]});
+    var cuts=[0],s=0,g=0;while(s<H-1&&g++<30){var c=s+per;if(c>=H-1){cuts.push(H);break}var m=c,ch=true;while(ch){ch=false;for(var i=0;i<E.length;i++){if(E[i][0]<m-.5&&E[i][1]>m+.5&&E[i][0]>s+1){m=E[i][0];ch=true}}}if(m<=s+1)m=c;cuts.push(m);s=m}
+    return window.html2canvas(dp,{scale:SC,backgroundColor:'#ffffff',logging:false,useCORS:true}).then(function(cv){
+      var k=cv.width/B.width,d=new Date(),z=function(n){return ('0'+n).slice(-2)},nm=(o.name||'공문')+'_'+d.getFullYear()+z(d.getMonth()+1)+z(d.getDate())+'_'+z(d.getHours())+z(d.getMinutes()),n=cuts.length-1,P=[];
+      for(var i=0;i<n;i++){var a=cuts[i],e=cuts[i+1],pc=document.createElement('canvas');pc.width=Math.round(210*R);pc.height=Math.round(297*R);var x=pc.getContext('2d');x.fillStyle='#ffffff';x.fillRect(0,0,pc.width,pc.height);
+        x.drawImage(cv,0,Math.round(a*k),cv.width,Math.round((e-a)*k),l*R,t*R,(210-l-r)*R,(e-a)/px*K*R);P.push(pc)}
+      host.remove();window.__docJpg=P;
+      return P.reduce(function(pm,pc,i){return pm.then(function(){return new Promise(function(ok){pc.toBlob(function(bl){var u=URL.createObjectURL(bl),A=document.createElement('a');A.href=u;A.download=nm+(n>1?'_'+(i+1)+'쪽':'')+'.jpg';document.body.appendChild(A);A.click();setTimeout(function(){A.remove();URL.revokeObjectURL(u);ok()},500)},'image/jpeg',.92)})})},Promise.resolve()).then(function(){return n})})
+  }).catch(function(x){if(host.parentNode)host.remove();throw x})}
+UI.docJpg=docJpg;
 
 })();

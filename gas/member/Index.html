@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261113-124507 -->
+<!-- build: 20261113-134609 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -589,7 +589,7 @@ function gmToday(){var d=new Date();return d.getFullYear()+'-'+('0'+(d.getMonth(
 /* 새 공문 양식: 빈 공문 · 회원관리(회비) 안내 */
 function gmTpl(k){
   if(k==='member')return {'구분':'기타','행사':'','제목':'교사 회원 사이트(회원관리 시스템) 운영 안내','시행일':gmToday(),'수신':'회원 원장님 및 선생님','참조':'',
-    '내용':{num:'1.',sign:true,logo:true,mg:{},intro:'1. 회원 여러분의 가정과 학원에 평안을 기원합니다.\n2. 협회는 회원 정보와 회비, 행사 신청을 한곳에서 관리하는 **「교사 회원」 사이트**를 열었습니다. 도입 배경과 달라지는 점을 아래와 같이 안내드리오니 가입과 정보 입력에 협조해 주시기 바랍니다.\n\n- 아      래 -',sec:[
+    '내용':{num:'1.',sign:true,logo:true,mg:{},intro:'• 회원 여러분의 가정과 학원에 평안을 기원합니다.\n• 협회는 회원 정보와 회비, 행사 신청을 한곳에서 관리하는 **「교사 회원」 사이트**를 열었습니다. 도입 배경과 달라지는 점을 아래와 같이 안내드리오니 가입과 정보 입력에 협조해 주시기 바랍니다.\n\n- 아      래 -',sec:[
       {t:'도입 배경',on:true,body:'그동안 캠프 · 졸업연주 · 교사연수 때마다 같은 정보를 신청서와 엑셀에 반복해서 적어야 했고, 명단이 행사마다 달라지거나 회비 확인 · 우편물 발송에서 빠지는 일이 있었습니다.\n이에 선생님과 학생 정보를 **한곳에 한 번만** 정리하고, 모든 행사가 이 정보를 함께 쓰도록 시스템을 마련하였습니다.'},
       {t:'달라지는 점',on:true,body:'가. **행사 신청 통합**: 겨울캠프 · 졸업연주 · 교사연수를 한 사이트에서, 하나의 계정(이메일 · 비밀번호)으로 신청합니다.\n나. **학생 관리**: 학생별 재원 · 휴원 · 퇴원, 담당 선생님, 해마다 낸 회비와 회원 자격 기간(남은 기간)을 한 화면에서 관리합니다.\n다. **회비 관리**: 교사 회비 · 학생 회비 납부 내역을 언제든 확인하고, 입금 신고 → 협회 확인으로 처리합니다.\n라. **주소 · 우편물**: 집 주소와 우편물 받을 주소를 선생님이 직접 입력 · 수정하여 공문 · 졸업장 · 자료 발송 누락을 막습니다.\n마. **정산**: 계좌를 한 번 등록하면 캠프 · 행사 강사료 정산에 바로 반영됩니다.'},
       {t:'학생 회원 자격',on:true,body:'학생 회비는 협회가 입금을 확인한 뒤 **12개월** 회원 자격이 주어집니다. 처음 내는 학생은 재원 시작 다음 달부터, 계속 다니는 학생은 앞 자격이 끝난 다음 달부터 이어집니다(휴원 중에도 기간은 이어집니다).'},
@@ -1578,7 +1578,7 @@ document.addEventListener('keydown',function(e){var t=e.target;if(S.tab!=='prt'|
 </script>
 <style>table.prt th,table.prt td{text-align:left !important}table.prt th:first-child,table.prt td:first-child{text-align:center !important}table.prt th:nth-child(7),table.prt td:nth-child(7),table.prt th:nth-child(8),table.prt td:nth-child(8){text-align:center !important}table.prt td:nth-child(7) input,table.prt td:nth-child(8) input{text-align:center}table.prt tr.mutedrow td{color:var(--faint)}table.prt tr.mutedrow td b{color:var(--muted)}table.prt td{vertical-align:middle}table.prt td.padr{white-space:normal;min-width:220px;max-width:340px;line-height:1.4}</style>
 
-<div id="bldMark" hidden>빌드표시 20261113-124507 </div>
+<div id="bldMark" hidden>빌드표시 20261113-134609 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();
 /* 공문 편집: 칸을 고치면 모델만 바꾸고 미리보기만 다시 그림(글자 조합이 깨지지 않게) */
 function gmField(t){if(S.tab!=='gm'||!S.gm||S.gm['상태']==='발행')return false;var d=S.gm,c=d['내용'],ds=t.dataset||{};

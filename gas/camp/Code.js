@@ -1,4 +1,4 @@
-/* build: 20261113-134609 */
+/* build: 20261113-150614 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -98,6 +98,7 @@ const CX_HEAD = ['요청 일시', '접수번호', '학원', '요청 교사', '�
 
 /* ---------------- 웹 앱 ---------------- */
 function doGet(e) {
+  if (e && e.parameter && e.parameter.perf) return perf_();   /* 속도 재기 (11-13): 시간만 보여 줌 */
   const admin = e && e.parameter && e.parameter.page === 'admin';
   let page, cname = CAMP_NAME, cj = '';
   try { const c = campPublic_(); cname = c.base.name; cj = JSON.stringify(c); } catch (x) {}
@@ -113,6 +114,16 @@ function doGet(e) {
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
 
+function perf_() {
+  const T = [], t0 = Date.now(); let t = t0; const m = k => { const n = Date.now(); T.push(k + ' ' + (n - t) + 'ms'); t = n; };
+  CAMP_CACHE = null; const c = campPublic_(); m('campPublic_'); const cj = JSON.stringify(c); m('stringify ' + cj.length + '자');
+  ensureSettings_(); m('ensureSettings_'); setting_('공유주소'); setting_('테스트 로그인'); m('setting_');
+  const tp = HtmlService.createTemplateFromFile('Index'); tp.shareUrl = ''; tp.testLogin = ''; tp.testNames = ''; tp.campJson = cj; tp.loginPw = ''; tp.memberUrl = '';
+  let h = ''; try { h = tp.evaluate().getContent(); } catch (x) { h = 'ERR ' + x.message; } m('Index evaluate ' + h.length + '자');
+  try { const a = HtmlService.createTemplateFromFile('Admin').evaluate().getContent(); m('Admin evaluate ' + a.length + '자'); } catch (x) { m('Admin ERR'); }
+  T.push('합계 ' + (Date.now() - t0) + 'ms');
+  return ContentService.createTextOutput(T.join('\n'));
+}
 /** 화면 코드가 길어서 App1, App2 … 파일로 나눠 둠 → Index.html 이 붙여서 보냄 */
 function include(name) { return HtmlService.createTemplateFromFile(name).getRawContent(); }   // App1~5는 자바스크립트라 HTML 검사 없이 그대로 붙임
 

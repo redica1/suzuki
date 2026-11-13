@@ -1,4 +1,4 @@
-/* build: 20261113-120312 */
+/* build: 20261113-120647 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -698,7 +698,7 @@ function gmClean_(d) {
   d = d || {}; const s = v => String(v == null ? '' : v);
   const sec = (Array.isArray(d.sec) ? d.sec : []).slice(0, 30).map(x => ({ t: s(x.t).slice(0, 80), body: s(x.body).slice(0, 8000), on: x.on !== false }));
   const mg = {}; ['t', 'b', 'l', 'r'].forEach(k => { const v = +((d.mg || {})[k]); if (isFinite(v) && (d.mg || {})[k] !== '' && (d.mg || {})[k] != null) mg[k] = Math.max(0, Math.min(40, v)); });
-  const o = { intro: s(d.intro).slice(0, 8000), sec, num: d.num === '1)' ? '1)' : '1.', sign: d.sign !== false, mg, logo: d.logo !== false, wtop: d.wtop === true, row1: d.row1 === true, ts: (t => isFinite(t) && t >= 10 && t <= 40 ? Math.round(t) : 22)(+d.ts), lw: (t => isFinite(t) && t >= 20 && t <= 140 ? Math.round(t) : 60)(+d.lw), hs: (v => v !== '' && v != null && isFinite(+v) && +v >= 10 && +v <= 20 ? Math.round(+v * 2) / 2 : 12.5)(d.hs), bs: (v => v !== '' && v != null && isFinite(+v) && +v >= 10 && +v <= 16 ? Math.round(+v * 2) / 2 : 12.5)(d.bs), lh: (t => d.lh !== '' && d.lh != null && isFinite(t) && t >= 1 && t <= 2.5 ? Math.round(t * 100) / 100 : '')(+d.lh), sg: (t => d.sg !== '' && d.sg != null && isFinite(t) && t >= 0 && t <= 15 ? Math.round(t * 10) / 10 : '')(+d.sg), proj: s(d.proj).slice(0, 20), camp: s(d.camp).slice(0, 20), fit: [0, 1, 2].indexOf(+d.fit) >= 0 ? +d.fit : 0, fitK: isFinite(+d.fitK) && +d.fitK >= 0.3 && +d.fitK <= 1 ? Math.round(+d.fitK * 1000) / 1000 : 1, ed: d.ed ? s(d.ed).replace(/<script[\s\S]*?<\/script>/gi, '').replace(/\son\w+="[^"]*"/gi, '').slice(0, 30000) : '' };
+  const o = { intro: s(d.intro).slice(0, 8000), sec, num: d.num === '1)' ? '1)' : '1.', sign: d.sign !== false, sdom: d.sdom !== false, mg, logo: d.logo !== false, wtop: d.wtop === true, row1: d.row1 === true, ts: (t => isFinite(t) && t >= 10 && t <= 40 ? Math.round(t) : 22)(+d.ts), lw: (t => isFinite(t) && t >= 20 && t <= 140 ? Math.round(t) : 60)(+d.lw), hs: (v => v !== '' && v != null && isFinite(+v) && +v >= 10 && +v <= 20 ? Math.round(+v * 2) / 2 : 12.5)(d.hs), bs: (v => v !== '' && v != null && isFinite(+v) && +v >= 10 && +v <= 16 ? Math.round(+v * 2) / 2 : 12.5)(d.bs), lh: (t => d.lh !== '' && d.lh != null && isFinite(t) && t >= 1 && t <= 2.5 ? Math.round(t * 100) / 100 : '')(+d.lh), sg: (t => d.sg !== '' && d.sg != null && isFinite(t) && t >= 0 && t <= 15 ? Math.round(t * 10) / 10 : '')(+d.sg), proj: s(d.proj).slice(0, 20), camp: s(d.camp).slice(0, 20), fit: [0, 1, 2].indexOf(+d.fit) >= 0 ? +d.fit : 0, fitK: isFinite(+d.fitK) && +d.fitK >= 0.3 && +d.fitK <= 1 ? Math.round(+d.fitK * 1000) / 1000 : 1, ed: d.ed ? s(d.ed).replace(/<script[\s\S]*?<\/script>/gi, '').replace(/\son\w+="[^"]*"/gi, '').slice(0, 30000) : '' };
   if (!o.ed) delete o.ed;
   if (JSON.stringify(o).length > 45000) fail('공문 내용이 너무 길어요. 항목을 나눠 주세요.'); return o;
 }
@@ -716,7 +716,7 @@ function gmSave(who, x) {
   } finally { lock.releaseLock(); }
   return Object.assign(gmGet(who, id), gmList(who));
 }
-function gmIssue(who, id) {
+function gmIssue(who, id, opt) {
   const T = tbl_('공문'), lock = LockService.getScriptLock(); lock.waitLock(20000);
   try {
     const i = T.find('공문ID', id); if (i < 0) fail('공문을 찾지 못했어요.'); if (T.get(i, '상태') === '발행') fail('이미 발행한 공문이에요.');
@@ -729,6 +729,8 @@ function gmIssue(who, id) {
       if (!cd.html) fail('캠프 관리자 › 설정 › 공문에서 한 번 「저장」해 주세요 (회원관리로 보낼 공문 그림이 아직 없어요).');
       const dd = cd.camp.doc || {};
       ct.html = gmInjectNo_(cd.html, no, dd.date ? '' : date); ct.css = cd.css; ct.mg = dd.mg || {};
+      /* 회원관리에서 고른 쪽 맞추기(11-13): 미리보기에서 잰 글씨 크기로 굳힘 */
+      const fk = opt && +opt.fitK; if ([1, 2].indexOf(+(opt || {}).fit) >= 0 && fk >= 0.3 && fk <= 1) { ct.html = ct.html.replace(/<div class="fitc"[^>]*>/, '<div class="fitc"' + (fk < 1 ? ' style="zoom:' + (Math.round(fk * 1000) / 1000) + '"' : '') + '>'); ct.fit = +opt.fit; ct.fitK = fk; }
       T.set(i, { '내용': JSON.stringify(ct), '행사': cd.camp.base.name, '제목': gmCampTitle_(cd.camp), '수신': dd.to || '', '참조': dd.ref || '' });
       gmCampDocSet_({ no: no, date: dd.date || date });
     }

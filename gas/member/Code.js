@@ -1,4 +1,4 @@
-/* build: 20261113-122325 */
+/* build: 20261113-123021 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -760,6 +760,7 @@ function gmCamp(who) {
   if (!c.base.id) return { camp: null, msg: '캠프 시트에 캠프 설정이 아직 없어요.' };
   Object.keys(c.fees).forEach(t => { const a = (c.fees[t] || []).slice(0, c.rounds.length); while (a.length < c.rounds.length) a.push(a.length ? a[a.length - 1] : 0); c.fees[t] = a; });
   let html = '', css = ''; rd('캠프설정').forEach(r => { if (r['항목'] === '공문HTML') html = String(r['값'] || ''); if (r['항목'] === '공문CSS') css = String(r['값'] || ''); });
+  css = css.replace(/"Pretendard Variable",\s*Pretendard,/g, '"Nanum Gothic",');   /* 11-13 글꼴 나눔고딕으로 통일: 예전에 저장된 공문 그림도 */
   const st = {}; rd('설정').forEach(r => st[String(r['항목'])] = String(r['값'] || ''));
   c.bank = { bank: st['입금 은행'] || '', acct: st['입금 계좌번호'] || '', holder: st['예금주'] || '' };
   c.at = now_(); return { camp: c, html: html, css: css };

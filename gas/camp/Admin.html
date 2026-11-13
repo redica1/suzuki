@@ -1,11 +1,11 @@
 <!doctype html>
-<!-- build: 20261113-121758 -->
+<!-- build: 20261113-123021 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
 <title>캠프 접수 관리</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" as="style" crossorigin href="https://fonts.googleapis.com/css2?family=Nanum+Gothic:wght@400;700;800&display=swap">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&display=swap">
 <style>
 :root{
@@ -14,7 +14,7 @@
   --accent:#1f5c63; --accent-ink:#ffffff; --accent-soft:#dcecee;
   --rosin:#b7791f; --rosin-soft:#fbf0dc; --ok:#2f7a4b; --ok-soft:#e1f1e6; --bad:#b4423a; --bad-soft:#f8e4e2;
   --band:#16303a; --band-ink:#e8f1f3; --band-muted:#a9c0c7;
-  --display:"Gowun Batang",serif; --body:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif; --mono:"IBM Plex Mono",ui-monospace,monospace; --r:10px;
+  --display:"Gowun Batang",serif; --body:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif; --mono:"Nanum Gothic",sans-serif; --r:10px;
   --b1:#2f6f8f;--b2:#b5651d;--b3:#6b8e23;--b4:#8e4585;--b5:#c0392b;--b6:#1f8a70;
 }
 @media (prefers-color-scheme: dark){:root{
@@ -264,8 +264,8 @@ tr.off td{opacity:.5}
 <style>
 /* 디자인 (10-31): 글꼴 Pretendard · 캠프 청록(#0f9d9a) 색 · 자간 · 행간 · 낱말 단위 줄바꿈 (관리자 화면은 표가 많아 조금 촘촘하게) — 위 색 정의를 덮어씀 */
 :root{--bg:#f2fafa; --surface:#ffffff; --sunk:#e6f4f3; --line:#cdebe9; --ink:#132a2c; --muted:#4f6668; --faint:#7f9698; --accent:#0b7a78; --accent-ink:#ffffff; --accent-soft:#e3f5f4; --band:#0f9d9a; --band-ink:#ffffff; --band-muted:#dcf4f2;
-  --display:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
-  --body:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif}
+  --display:"Nanum Gothic",-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  --body:"Nanum Gothic",-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0c1918; --surface:#132423; --sunk:#182e2d; --line:#24403e; --ink:#e4f2f1; --muted:#9fbcba; --faint:#6f8c8a; --accent:#5fd4cf; --accent-ink:#062221; --accent-soft:#163634; --band:#0b4f4d; --band-ink:#ffffff; --band-muted:#bfe7e4;}}
 :root[data-theme="dark"]{--bg:#0c1918; --surface:#132423; --sunk:#182e2d; --line:#24403e; --ink:#e4f2f1; --muted:#9fbcba; --faint:#6f8c8a; --accent:#5fd4cf; --accent-ink:#062221; --accent-soft:#163634; --band:#0b4f4d; --band-ink:#ffffff; --band-muted:#bfe7e4;}
 body{line-height:1.65;letter-spacing:.015em;word-break:keep-all;overflow-wrap:anywhere}
@@ -2502,7 +2502,7 @@ render();
   var q=0;new MutationObserver(function(){if(q)return;q=1;requestAnimationFrame(function(){q=0;setup();[].forEach.call(document.querySelectorAll('table.cflt'),function(t){var r=t.tHead&&t.tHead.rows[0];if(r)t.style.setProperty('--cfh1',r.offsetHeight+'px')})})}).observe(document.body,{childList:true,subtree:true});setup();
 })();
 </script>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nanum+Gothic:wght@400;700;800&display=swap">
 <style>
 /* ---------- 공문 (설정 › 공문) · 공문 글꼴 = 프리텐다드 (11-04) ---------- */
 .dg{display:grid;grid-template-columns:minmax(0,36fr) minmax(0,64fr);gap:16px;align-items:start}   /* 11-11: 입력 2/3로 줄이고 미리보기 넓게 */
@@ -2526,7 +2526,7 @@ render();
 .dprev.stale{outline:3px solid #f0c36d}
 .dwarn{background:#fff6e5;border:1px solid #f0c36d;color:#6b4a00;border-radius:8px;padding:6px 10px;font-size:13px;margin-top:8px}
 /* 인쇄 양식 (A4) — 미리보기와 인쇄가 같은 모양 */
-.dp{width:210mm;min-height:297mm;box-sizing:border-box;padding:14mm 17mm 16mm;background:#fff;color:#111;font-family:"Pretendard Variable",Pretendard,"Malgun Gothic","Apple SD Gothic Neo",sans-serif;font-size:12.5pt;line-height:1.48;letter-spacing:-.01em;word-break:keep-all}
+.dp{width:210mm;min-height:297mm;box-sizing:border-box;padding:14mm 17mm 16mm;background:#fff;color:#111;font-family:"Nanum Gothic","Malgun Gothic","Apple SD Gothic Neo",sans-serif;font-size:12.5pt;line-height:1.48;letter-spacing:-.01em;word-break:keep-all}
 .dp .lg{text-align:center}.dp .lg img{width:46mm;height:auto}
 .dp .wtop{text-align:center;font-size:10.5pt;color:#333;margin:2mm 0 0;letter-spacing:.02em}
 .dp .meta{font-size:12pt;margin:4mm 0 2mm;border-bottom:1px solid #444;padding-bottom:2mm}.dp .meta div{display:flex;gap:4mm}.dp .meta b{min-width:18mm;font-weight:700}
@@ -2741,9 +2741,9 @@ function dOpenWin(){if(!S.cc||!S.cc.doc)return;dApply();
   const css=[...document.querySelectorAll('style')].map(x=>x.textContent).filter(t=>t.indexOf('.dp{')>=0).join('\n'),M=dMg(S.cc);
   const ti=String((S.cc.doc.title||'{캠프이름} 안내').replace(/\{캠프이름\}/g,(S.cc.base||{}).name||'')).replace(/[<>&"]/g,' ');
   const body='<table class="pw"><thead><tr><td style="height:'+M.t+'mm"></td></tr></thead><tfoot><tr><td style="height:'+M.b+'mm"></td></tr></tfoot><tbody><tr><td>'+docHtml(S.cc)+'</td></tr></tbody></table>';
-  const font='https:'+'\/\/cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css';
+  const font='https:'+'\/\/fonts.googleapis.com/css2?family=Nanum+Gothic:wght@400;700;800&display=swap';
   const extra='@media screen{html,body{margin:0;background:#dfe4e6}#docPrintRoot{display:block !important;width:210mm;margin:14px auto 40px;background:#fff;box-shadow:0 2px 16px rgba(0,0,0,.22)}#docPrintRoot .dp{zoom:1;box-shadow:none;min-height:0;width:auto;padding-top:0 !important;padding-bottom:0 !important}'+
-    '.tb{position:sticky;top:0;z-index:5;display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap;padding:10px 16px;background:#1f5c63;color:#fff;font:14px "Pretendard Variable",sans-serif}.tb button{font:inherit;font-weight:700;padding:6px 14px;border:0;border-radius:8px;background:#fff;color:#1f5c63;cursor:pointer}.tb span{opacity:.85;font-size:12.5px}.zm{display:inline-flex;gap:2px;background:rgba(255,255,255,.15);border-radius:9px;padding:2px}.zm button{min-width:34px;padding:4px 8px}#zv{min-width:56px}}@media print{#docPrintRoot{zoom:1 !important}}'+
+    '.tb{position:sticky;top:0;z-index:5;display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap;padding:10px 16px;background:#1f5c63;color:#fff;font:14px "Nanum Gothic",sans-serif}.tb button{font:inherit;font-weight:700;padding:6px 14px;border:0;border-radius:8px;background:#fff;color:#1f5c63;cursor:pointer}.tb span{opacity:.85;font-size:12.5px}.zm{display:inline-flex;gap:2px;background:rgba(255,255,255,.15);border-radius:9px;padding:2px}.zm button{min-width:34px;padding:4px 8px}#zv{min-width:56px}}@media print{#docPrintRoot{zoom:1 !important}}'+
     '#docPrintRoot table.pw{width:100%;border-collapse:collapse}#docPrintRoot table.pw>*>tr>td{border:0;padding:0;text-align:left;vertical-align:top}';
   const html='<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+dFileT(ti)+dStamp()+'</title><link rel="stylesheet" href="'+font+'"><style>'+css+'\n'+extra+'</style></head><body class="dprint">'+dNameJs(ti)+dJpgJs(M,ti)+
     '<div class="tb"><b>'+ti+'</b><span class="zm"><button type="button" onclick="Z(-1)" aria-label="작게">−</button><button type="button" id="zv" onclick="Z(0)" title="100%로">100%</button><button type="button" onclick="Z(1)" aria-label="크게">＋</button><button type="button" onclick="Z(2)">폭 맞춤</button></span><button type="button" onclick="print()">PDF 받기 (인쇄)</button><button type="button" onclick="J(this)">JPG 받기</button><span>공문 화면에서 고친 뒤 「새 창으로 보기」를 다시 누르면 이 창이 새로 바뀌어요</span></div>'+
@@ -2856,7 +2856,7 @@ document.addEventListener('input',e=>{if(S.tab!=='aud'||e.target.id!=='audQ')ret
 <style>
 /* ---------- 오후음악회 › 프로그램북 (B5, 11-04) ---------- */
 .bkwrap{display:flex;flex-direction:column;align-items:center;gap:18px;background:#e6eaec;border-radius:10px;padding:16px;overflow:auto}
-.bk{width:176mm;min-height:250mm;box-sizing:border-box;padding:15mm 14mm;background:#fff;color:#111;font-family:"Pretendard Variable",Pretendard,"Malgun Gothic",sans-serif;font-size:10.5pt;line-height:1.5;box-shadow:0 2px 12px rgba(0,0,0,.18);zoom:var(--bz,1)}
+.bk{width:176mm;min-height:250mm;box-sizing:border-box;padding:15mm 14mm;background:#fff;color:#111;font-family:"Nanum Gothic","Malgun Gothic",sans-serif;font-size:10.5pt;line-height:1.5;box-shadow:0 2px 12px rgba(0,0,0,.18);zoom:var(--bz,1)}
 .bk .bh{text-align:center;margin-bottom:7mm}.bk .bh .c1{font-size:10pt;color:#555;letter-spacing:.02em}.bk .bh .c2{font-size:19pt;font-weight:800;margin:1.5mm 0 3mm;letter-spacing:-.01em}.bk .bh .c3{font-size:10pt;color:#333}
 .bk .it{display:grid;grid-template-columns:8mm minmax(0,auto) 1fr minmax(0,auto);column-gap:1.5mm;align-items:end;margin:0 0 3.4mm;break-inside:avoid}
 .bk .it .no{font-weight:700}.bk .it .ko{font-weight:700}.bk .it .ld{border-bottom:1.2px dotted #777;margin-bottom:1.2mm;min-width:6mm}.bk .it .pp{text-align:right;white-space:nowrap}
@@ -2918,7 +2918,7 @@ document.addEventListener('input',e=>{const t=e.target;if(S.tab!=='con'||!t.data
 .mlt td,.mlt th{vertical-align:middle}.mlt input[type=text]{width:120px}.mlt input[type=time]{width:124px}.mlt input[type=number]{width:72px;text-align:right}.mlt select{width:auto}
 .mlt tr.off td{opacity:.55}.mlt .k1{color:#b45309}.mlt .k2{color:#047857}.mlt .k3{color:#4f46e5}.mlt .k4{color:#334155}
 .mlprev{display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap}.mlprev .mt{box-shadow:0 2px 10px rgba(0,0,0,.15);zoom:1.35}
-.mt{width:50mm;height:74.5mm;box-sizing:border-box;position:relative;background:#fff;color:#1e293b;font-family:"Pretendard Variable",Pretendard,"Malgun Gothic",sans-serif;text-align:center;overflow:hidden;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.mt{width:50mm;height:74.5mm;box-sizing:border-box;position:relative;background:#fff;color:#1e293b;font-family:"Nanum Gothic","Malgun Gothic",sans-serif;text-align:center;overflow:hidden;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 .mt .in{position:absolute;inset:1.7mm;border:.17mm solid #cbd5e1}
 .mt .lb{position:absolute;left:2.5mm;right:2.5mm;top:4.3mm;font-weight:800;font-size:10.5pt;line-height:1.2;white-space:nowrap;overflow:hidden;letter-spacing:-.02em}
 .mt .bd{position:absolute;left:50%;top:10.15mm;width:15.2mm;height:4.75mm;margin-left:-7.6mm;color:#fff;font-weight:800;font-size:8.2pt;line-height:4.75mm}
@@ -3229,7 +3229,7 @@ main.wrap:has(.ebw),main.wrap:has(.dg){max-width:1600px}
 .ebc[contenteditable=true] .bls{cursor:text}
 .ebprobe{position:absolute;visibility:hidden;height:210mm;width:1px;left:0;top:0}
 /* 쪽 모양 (화면 · 인쇄 공통) */
-.bls{width:148mm;min-height:210mm;box-sizing:border-box;padding:12mm 10mm 13mm;background:#fff;color:#111;font-family:"Pretendard Variable",Pretendard,"Malgun Gothic",sans-serif;font-size:8.6pt;line-height:1.45;box-shadow:0 2px 12px rgba(0,0,0,.18);position:relative;word-break:keep-all;overflow-wrap:anywhere;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.bls{width:148mm;min-height:210mm;box-sizing:border-box;padding:12mm 10mm 13mm;background:#fff;color:#111;font-family:"Nanum Gothic","Malgun Gothic",sans-serif;font-size:8.6pt;line-height:1.45;box-shadow:0 2px 12px rgba(0,0,0,.18);position:relative;word-break:keep-all;overflow-wrap:anywhere;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 @media screen{.bls.ovf{background-image:repeating-linear-gradient(to bottom,transparent 0,transparent calc(185mm - 1.5px),#e5484d calc(185mm - 1.5px),#e5484d 185mm);background-position:0 12mm;background-size:100% calc(100% - 12mm);background-repeat:no-repeat}.bls.okf{background-image:linear-gradient(to bottom,transparent 0,transparent calc(197mm - 1.5px),#7cc59a calc(197mm - 1.5px),#7cc59a 197mm,transparent 197mm)}.bls.cov.okf{background-image:linear-gradient(to bottom,transparent 0,transparent calc(210mm - 1.5px),#7cc59a calc(210mm - 1.5px),#7cc59a 210mm,transparent 210mm)}.bls.ovx:not(.ovf){background-image:linear-gradient(to right,transparent calc(100% - 10mm - 1.5px),#e5484d calc(100% - 10mm - 1.5px),#e5484d calc(100% - 10mm),transparent calc(100% - 10mm))}.bls.ovx.ovf{background-image:repeating-linear-gradient(to bottom,transparent 0,transparent calc(185mm - 1.5px),#e5484d calc(185mm - 1.5px),#e5484d 185mm),linear-gradient(to right,transparent calc(100% - 10mm - 1.5px),#e5484d calc(100% - 10mm - 1.5px),#e5484d calc(100% - 10mm),transparent calc(100% - 10mm));background-position:0 12mm,0 0;background-size:100% calc(100% - 12mm),100% 100%;background-repeat:no-repeat}.bls.sdl::before,.bls.sdr::before{content:attr(data-sd);position:absolute;top:1.5mm;left:2mm;color:#fff;font:700 11px sans-serif;line-height:1.3;padding:2px 7px;border-radius:9px;z-index:3;pointer-events:none}.bls.sdl::before{background:#2563eb}.bls.sdr::before{background:#7c3aed}.bls.ovf::after,.bls.ovx::after,.bls.okf::after{content:attr(data-ov);position:absolute;top:1.5mm;right:2mm;color:#fff;font:700 11px sans-serif;line-height:1.3;padding:2px 7px;border-radius:9px;z-index:3;pointer-events:none}.bls.ovf::after,.bls.ovx::after{background:#e5484d}.bls.okf::after{background:#2f9e5b}}
 .bls h1{font-size:17pt;margin:0 0 2mm;text-align:center;font-weight:800}.bls h2{font-size:13pt;margin:0 0 2.5mm;font-weight:800;text-align:center}.bls h3{font-size:10pt;margin:3mm 0 1.5mm;font-weight:800}.bls h4{font-size:9pt;margin:2mm 0 1mm}
 .bls p{margin:0 0 1.6mm}.bls ul,.bls ol{margin:0 0 1.6mm;padding-left:5mm}.bls hr{border:0;border-top:.6px solid #999;margin:2mm 0}
@@ -4170,7 +4170,7 @@ function ebPrint2(H){
 window.addEventListener('afterprint',()=>{document.body.classList.remove('ebprint')});
 window.addEventListener('beforeprint',()=>{if(S.tab!=='book')document.body.classList.remove('ebprint')});
 function ebZoom(){if(S.ebZ==null){let v=0;try{v=+localStorage.getItem('campBookZoom')}catch(x){}S.ebZ=v>=.4&&v<=1.6?v:.75}return S.ebZ}
-function ebPageCss(T){return `@page ebp{size:148mm 210mm;margin:12mm 10mm 13mm;${T.num?'@bottom-center{content:"- " counter(page) " -";font-family:Pretendard,sans-serif;font-size:8pt;color:#444}':''}}@page ebc{size:148mm 210mm;margin:0}`}
+function ebPageCss(T){return `@page ebp{size:148mm 210mm;margin:12mm 10mm 13mm;${T.num?'@bottom-center{content:"- " counter(page) " -";font-family:'Nanum Gothic',sans-serif;font-size:8pt;color:#444}':''}}@page ebc{size:148mm 210mm;margin:0}`}
 /* 새 창으로 보기 (11-05, 공문과 같게): 넣은 쪽 모두를 A5 실제 크기로 새 탭에(같은 탭을 다시 씀) · − 100% ＋ 폭 맞춤 · Ctrl +/−/0 · 그 창에서 인쇄 · PDF 저장 */
 function ebOpenWin(){const L=ebItems().filter(x=>x.on);if(!L.length){toast('넣은 쪽이 없어요');return}
   const H=L.map(x=>ebClean(S.ebEd===x.k&&S.ebBuf!=null?(x.kind==='sched'?ebEqSched(S.ebBuf):S.ebBuf):ebPg(x),true));ebNeedImgs(H.join(''),()=>ebOpenWin2(H))}
@@ -4178,9 +4178,9 @@ function ebOpenWin2(H){
   const E=S.EB,T=ebSet(),ti=String(((E.camp||{}).name||'캠프')+' 책자 (A5)').replace(/[<>&"]/g,' ');
   const css=[...document.querySelectorAll('style')].map(x=>x.textContent).filter(t=>t.indexOf('.bls{')>=0).join('\n');
   const body=ebImgSrc(H.join(''));
-  const font='https:'+'\/\/cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css';
+  const font='https:'+'\/\/fonts.googleapis.com/css2?family=Nanum+Gothic:wght@400;700;800&display=swap';
   const extra=ebPageCss(T)+'@media screen{html,body{margin:0;background:#dfe4e6}#ebPrintRoot{display:flex !important;flex-direction:column;align-items:center;gap:16px;padding:14px 0 40px}'+
-    '.tb{position:sticky;top:0;z-index:5;display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap;padding:10px 16px;background:#1f5c63;color:#fff;font:14px "Pretendard Variable",sans-serif}.tb button{font:inherit;font-weight:700;padding:6px 14px;border:0;border-radius:8px;background:#fff;color:#1f5c63;cursor:pointer}.tb span{opacity:.85;font-size:12.5px}.zm{display:inline-flex;gap:2px;background:rgba(255,255,255,.15);border-radius:9px;padding:2px}.zm button{min-width:34px;padding:4px 8px}#zv{min-width:56px}}@media print{#ebPrintRoot{zoom:1 !important}}';
+    '.tb{position:sticky;top:0;z-index:5;display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap;padding:10px 16px;background:#1f5c63;color:#fff;font:14px "Nanum Gothic",sans-serif}.tb button{font:inherit;font-weight:700;padding:6px 14px;border:0;border-radius:8px;background:#fff;color:#1f5c63;cursor:pointer}.tb span{opacity:.85;font-size:12.5px}.zm{display:inline-flex;gap:2px;background:rgba(255,255,255,.15);border-radius:9px;padding:2px}.zm button{min-width:34px;padding:4px 8px}#zv{min-width:56px}}@media print{#ebPrintRoot{zoom:1 !important}}';
   const html='<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+ti+dStamp()+'</title><link rel="stylesheet" href="'+font+'"><link rel="stylesheet" href="'+EB_GF+'"><style>'+css+'\n'+extra+'</style></head><body class="ebprint">'+
     '<div class="tb"><b>'+ti+'</b><span class="zm"><button type="button" onclick="Z(-1)" aria-label="작게">−</button><button type="button" id="zv" onclick="Z(0)" title="100%로">100%</button><button type="button" onclick="Z(1)" aria-label="크게">＋</button><button type="button" onclick="Z(2)">폭 맞춤</button></span><button type="button" onclick="print()">인쇄 · PDF 저장</button><span>책자 화면에서 고친 뒤 「새 창으로 보기」를 다시 누르면 이 창이 새로 바뀌어요</span></div>'+
     '<div id="ebPrintRoot">'+body+'</div><scr'+'ipt>'+
@@ -4197,7 +4197,7 @@ function ebOpenWin2(H){
 /* ---- 글꼴 (11-05): 프리텐다드 + 구글 글꼴 4가지 ---- */
 const EB_GF='https:'+'\/\/fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Nanum+Gothic:wght@400;700;800&family=Nanum+Myeongjo:wght@400;700;800&family=Noto+Serif+KR:wght@400;600;700&display=swap';
 function ebFonts(){if(document.getElementById('ebGF'))return;const l=document.createElement('link');l.id='ebGF';l.rel='stylesheet';l.href=EB_GF;document.head.appendChild(l)}
-const EB_FF=[['"Pretendard Variable", Pretendard, sans-serif','프리텐다드'],['"Nanum Gothic", sans-serif','나눔고딕'],['"Nanum Myeongjo", serif','나눔명조'],['"Gowun Batang", serif','고운바탕'],['"Noto Serif KR", serif','본명조']];
+const EB_FF=[['"Nanum Gothic", sans-serif','나눔고딕'],['"Nanum Myeongjo", serif','나눔명조'],['"Gowun Batang", serif','고운바탕'],['"Noto Serif KR", serif','본명조']];
 const EB_FS=[7,8,8.6,9,10,11,12,14,16,18,20,24,28,32,40],EB_LS=[['-0.08em','-8%'],['-0.05em','-5%'],['-0.03em','-3%'],['0','0 (기본)'],['0.03em','+3%'],['0.05em','+5%'],['0.1em','+10%'],['0.2em','+20%']];
 const EB_LH=[['1','1.0'],['1.15','1.15'],['1.3','1.3'],['1.45','1.45 (기본)'],['1.6','1.6'],['1.8','1.8'],['2','2.0'],['2.4','2.4']];
 const EB_CO=[['#111111','검정'],['#555555','회색'],['#1f5c63','청록'],['#b4423a','빨강'],['#1d4ed8','파랑'],['#7c3aed','보라']],EB_IW=['25%','40%','50%','60%','75%','100%'];
@@ -4435,6 +4435,6 @@ document.addEventListener('click',e=>{if(S.tab!=='book')return;const b=e.target.
   if(b.id==='ebSetSave'){const n=Object.assign(ebSet(),S.ebSetW||{});n.per=Math.max(1,Math.min(10,Math.round(+n.per||5)));n.fs=Math.max(5,Math.min(10,+n.fs||6.6));['en','sub','org'].forEach(k=>n[k]=String(n[k]||'').trim().slice(0,120));
     ebSend([],[],n,()=>{S.ebSetW=null;toast('책자 설정을 저장했어요')});return}},true);
 </script>
-<div id="bldMark" hidden>빌드표시 20261113-105219 </div>
+<div id="bldMark" hidden>빌드표시 20261113-123021 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();</script>
 </body></html>

@@ -1,4 +1,4 @@
-/* build: 20261113-111005 */
+/* build: 20261113-113638 */
 /* 공통 화면 라이브러리 — 원본은 gas/common/UiLib.html 하나. 고칠 때는 원본만 고치고 python3 -I gas/common/sync.py 로 각 앱 폴더에 복사
  * 캠프 · 회원관리 화면이 같이 씀. 페이지에서 먼저 var UI_KEY='camp' 처럼 저장 이름 앞글자를 정함
  * 4) 프로그램표 UI.grid · 칸 팝업 UI.gridDet  5) 이름 · 비밀번호 기억하기 svBox · svSet · svId · svPw
@@ -104,6 +104,7 @@ function svId(k,d){var s=svGet(k);return s&&s.id?s.id:(d||'')}
 function svPw(k){var s=svGet(k);return s&&s.pw?s.pw:''}
 /* 표 위 고정 (11-11): 페이지(오른쪽 큰 스크롤)를 내리면 표 바로 위 필터 · 탭 · 찾기칸과 표 머리줄이 맨 위 메뉴(UI_DOCK_TOP, 기본 .gnb) 밑에 걸려 고정됨. 표 안 스크롤은 없음
  * 페이지에서 var UI_DOCK='.tbl,.stbl' 처럼 표 상자 선택자를 정함. 위 필터 = 상자 앞 형제들(화면 45%까지)을 sticky 로, 머리줄은 가로 스크롤 상자 안이라 translateY 로 따라 내림
+ * 상자 앞 형제 중 .dockfrom 이 있으면 거기부터만 고정 (그 위는 그냥 올라감 · 11-13 인쇄 요청)
  * 인라인으로 max-height 를 px 로 준 작은 상자는 예전처럼 상자 안에서 굴러감. 빼고 싶은 상자는 .nodock */
 (function(){const SEL=window.UI_DOCK||'';if(!SEL)return;
   const c=document.createElement('style');c.textContent='.uidock{max-height:none!important;overflow-y:visible;overscroll-behavior:auto!important}.uidock>table>thead th{will-change:transform}.uidock>table>thead th:not(.sk){position:relative!important;top:auto!important}.uibox>table>thead th{position:sticky!important;top:0}.uihead{position:sticky!important;z-index:6}';document.head.appendChild(c);
@@ -111,7 +112,7 @@ function svPw(k){var s=svGet(k);return s&&s.pw?s.pw:''}
   const vis=el=>el&&el.offsetParent!==null&&el.getBoundingClientRect().height>0;
   const bgOf=el=>{for(let x=el.parentElement;x;x=x.parentElement){const b=getComputedStyle(x).backgroundColor;if(b&&b!=='transparent'&&!/rgba\(.*,\s*0\)$/.test(b))return b}return '#fff'};
   function heads(box,lim){const a=[];let el=box.previousElementSibling,sum=0;
-    while(el){if(vis(el)){if(el.querySelector('table')&&!el.classList.contains('tfind'))break;const h=el.getBoundingClientRect().height;if(sum+h>lim)break;sum+=h;a.unshift(el)}el=el.previousElementSibling}
+    while(el){if(vis(el)){if(el.querySelector('table')&&!el.classList.contains('tfind'))break;const h=el.getBoundingClientRect().height;if(sum+h>lim)break;sum+=h;a.unshift(el);if(el.classList.contains('dockfrom'))break}el=el.previousElementSibling}
     return a}
   const DK=[];
   function fit(){const vh=window.innerHeight,T=topH();DK.length=0;

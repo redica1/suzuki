@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261113-111005 -->
+<!-- build: 20261113-113638 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -1484,7 +1484,7 @@ function vPrint(){var P=S.prt;if(!P||!P.evs)return '<div class="panel"><span><sp
   all.forEach(function(x){var r=R[x.id];if(r&&(r.d||r.p)){nP++;sumD+=r.d;sumP+=r.p;if(!(AD[x.id]&&AD[x.id].a1))noAddr++}});
   var L=prtVisible(),f=P.f||{},chk=P.sel||{},nSel=Object.keys(chk).filter(function(k){return chk[k]}).length;
   var sum='<div class="row" style="gap:10px;flex-wrap:wrap;margin:0 0 12px">'+[['보낼 사람',nP+'명'],['공문',sumD+'장'],['포스터',sumP+'장'],['우편물 주소 없음',noAddr+'명',noAddr]].map(function(c){return '<div class="panel" style="margin:0;padding:10px 16px;min-width:130px"><div class="cap">'+c[0]+'</div><b style="font-size:20px'+(c[2]?';color:#c0392b':'')+'">'+c[1]+'</b></div>'}).join('')+'</div>';
-  var flt='<div class="panel"><div class="row" style="gap:8px;flex-wrap:wrap;align-items:center">'+
+  var flt='<div class="panel dockfrom"><div class="row" style="gap:8px;flex-wrap:wrap;align-items:center">'+
     '<input type="search" id="prtQ" placeholder="이름 · 학원 · 전화 찾기" value="'+esc(P.q||'')+'" style="min-width:200px">'+
     sel('prtKd',[['','모든 사람'],['교사','교사 · 연수교사'],['외부인','관계자(외부인)']],f.kd||'','구분')+
     '<label class="row" style="gap:4px"><input type="checkbox" id="prtHead" '+(f.head?'checked':'')+'> 원장만</label>'+
@@ -1556,7 +1556,7 @@ document.addEventListener('keydown',function(e){var t=e.target;if(S.tab!=='prt'|
 </script>
 <style>table.prt th,table.prt td{text-align:left !important}table.prt th:first-child,table.prt td:first-child{text-align:center !important}table.prt th:nth-child(7),table.prt td:nth-child(7),table.prt th:nth-child(8),table.prt td:nth-child(8){text-align:center !important}table.prt td:nth-child(7) input,table.prt td:nth-child(8) input{text-align:center}table.prt tr.mutedrow td{color:var(--faint)}table.prt tr.mutedrow td b{color:var(--muted)}table.prt td{vertical-align:middle}table.prt td.padr{white-space:normal;min-width:220px;max-width:340px;line-height:1.4}</style>
 
-<div id="bldMark" hidden>빌드표시 20261113-111005 </div>
+<div id="bldMark" hidden>빌드표시 20261113-113638 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();
 /* 공문 편집: 칸을 고치면 모델만 바꾸고 미리보기만 다시 그림(글자 조합이 깨지지 않게) */
 function gmField(t){if(S.tab!=='gm'||!S.gm||S.gm['상태']==='발행')return false;var d=S.gm,c=d['내용'],ds=t.dataset||{};

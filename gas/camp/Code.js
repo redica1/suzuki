@@ -1,4 +1,4 @@
-/* build: 20261113-151635 */
+/* build: 20261113-152043 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -1078,7 +1078,7 @@ function setupAdmin_() {
 }
 /** 화면 열 때는 6시간에 한 번만 설정 줄을 확인 (속도 11-13 · 매번 하면 1.4초) */
 function ensureSettingsLazy_() { const C = CacheService.getScriptCache(); if (C.get('setEns')) return; ensureSettings_(); C.put('setEns', '1', 21600); }
-function ensureSettings_() { SET_MEMO = null;
+function ensureSettings_() { setMemoClear_();
   const sh = setupAdmin_();
   sh.getRange('B:B').setNumberFormat('@');   // 값 칸은 글자 그대로 (날짜·계좌번호가 바뀌지 않게)
   const have = rows_('설정').map(r => String(r['항목']));
@@ -1109,7 +1109,16 @@ function bankInfo_() {
 }
 /* 설정 한 줄 읽기 — 한 번의 요청 안에서는 시트를 한 번만 읽음 (캠프 페이지가 느리던 것, 11-03). 설정을 쓰기 전 ensureSettings_ 가 지움 */
 let SET_MEMO = null;
-function setting_(k) { if (!SET_MEMO) { SET_MEMO = {}; rows_('설정').forEach(x => { const n = String(x['항목']); if (!(n in SET_MEMO)) SET_MEMO[n] = dstr_(x['값']).trim(); }); } return SET_MEMO[k] || ''; }
+/* 속도 (11-13): 설정 탭 값을 30초 기억 (화면 열 때 시트를 안 열게). 설정을 바꾸는 곳은 ensureSettings_ 를 먼저 부르므로 거기서 지움 */
+function setMemoClear_() { SET_MEMO = null; try { CacheService.getScriptCache().remove('setMemoJ'); } catch (e) {} }
+function setting_(k) {
+  if (!SET_MEMO) {
+    try { const j = CacheService.getScriptCache().get('setMemoJ'); if (j) SET_MEMO = JSON.parse(j); } catch (e) {}
+    if (!SET_MEMO) { SET_MEMO = {}; rows_('설정').forEach(x => { const n = String(x['항목']); if (!(n in SET_MEMO)) SET_MEMO[n] = dstr_(x['값']).trim(); });
+      try { const j = JSON.stringify(SET_MEMO); if (j.length < 95000) CacheService.getScriptCache().put('setMemoJ', j, 30); } catch (e) {} }
+  }
+  return SET_MEMO[k] || '';
+}
 function ensureHead_(name, head) {
   const ss = SpreadsheetApp.getActive(); let sh = ss.getSheetByName(name);
   if (!sh) { sh = ss.insertSheet(name); sh.getRange(1, 1, 1, head.length).setValues([head]).setFontWeight('bold'); sh.setFrozenRows(1); sh.getRange(1, 1, Math.max(sh.getMaxRows(), 2), head.length).setNumberFormat('@'); return; }   /* 없는 탭은 머리글과 함께 만듦 (11-04: 「음원」) */
@@ -3136,7 +3145,7 @@ function adminSetSetting(token, key, val) {
   ensureSettings_(); const sh = SpreadsheetApp.getActive().getSheetByName('설정');
   const r = rows_('설정').find(x => String(x['항목']) === key);
   if (r) sh.getRange(r._row, 2).setValues([[String(val)]]); else sh.appendRow([key, String(val), '']);
-  log_('관리자 ' + a.name, '설정 바꿈', key + ' = ' + val); SET_MEMO = null;
+  log_('관리자 ' + a.name, '설정 바꿈', key + ' = ' + val); setMemoClear_();
   return { ok: true, val: setting_(key) };
 }
 /** 캠프 설정 › 입금 안내 통장: 회원관리 › 통장에 등록한 통장 목록 + 지금 쓰는 계좌 (11-01) */
@@ -3619,7 +3628,7 @@ function audPub(token, con, on) {
   if (on) cur.push(con);
   ensureSettings_(); const sh = SpreadsheetApp.getActive().getSheetByName('설정'), row = rows_('설정').find(x => String(x['항목']) === '음원 결과 공개');
   if (row) sh.getRange(row._row, 2).setValue(cur.join(', ')); else sh.appendRow(['음원 결과 공개', cur.join(', '), '음원 심사 결과를 신청자에게 보여 줄 음악회']);
-  SET_MEMO = null; log_('관리자 ' + (a.name || ''), '음원 결과 공개', con + ' = ' + (on ? '공개' : '숨김'));
+  setMemoClear_(); log_('관리자 ' + (a.name || ''), '음원 결과 공개', con + ' = ' + (on ? '공개' : '숨김'));
   return audList(token);
 }
 function conGet(token) {

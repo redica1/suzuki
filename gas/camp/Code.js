@@ -1,4 +1,4 @@
-/* build: 20261113-154453 */
+/* build: 20261113-155219 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -148,7 +148,7 @@ function doPost(e) {
     try {
       no = subNoNext_();
       const at = stamp_(), info = {}, picked = {}, ppl = [];
-      [['t_ld0', '교사'], ['ld1', '학생'], ['ld2', '학생'], ['ld3', '학생']].forEach(([k, ty], j) => { picked[k] = true; info[k] = ty === '교사' ? { type: '교사', gender: '여', concert: '없음' } : { type: '학생', gender: '여', by: '2016', teacher: '몰림' + i, prog: '2권A 요정의 춤 ~', lessons: 0, concert: '없음' };
+      [['t_ld' + t0 + i, '교사'], ['ld1', '학생'], ['ld2', '학생'], ['ld3', '학생']].forEach(([k, ty], j) => { picked[k] = true; info[k] = ty === '교사' ? { type: '교사', gender: '여', concert: '없음' } : { type: '학생', gender: '여', by: '2016', teacher: '몰림' + i, prog: '2권A 요정의 춤 ~', lessons: 0, concert: '없음' };
         ppl.push({ id: no + '_' + k, name: '몰림' + i + '-' + j, kind: ty, type: ty, inst: '바이올린', status: '정상', addAt: at, batch: 1, pay: '전', paidAmt: 0 }); });
       const sb = { no, acad, owner: '몰림' + i, fake: true, load: true, createdAt: at, date: at.slice(0, 10), email: '', rev: 1, reqId: 'ld' + t0 + '_' + i, form: { ri: 0, picked, info, extra: [], fam: [], room: {}, join: {}, ens: { on: false } }, ppl };
       recalc_(sb); sb.ppl.forEach(p => p.dues = 0); checkEns_(sb, all); teacherDup_(all, sb);

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261113-123755 -->
+<!-- build: 20261113-124044 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -657,7 +657,7 @@ function loadGm(){S.gmL=null;callS('gmList').then(function(r){if(!r.ok){toast(r.
 function gmZoom(){if(S.gmZ==null){var v=0;try{v=+localStorage.getItem('memberGmZoom')}catch(x){}S.gmZ=v>=.4&&v<=1.6?v:1.15}return S.gmZ}
 function gmPrev(){if(UI.docEd&&UI.docEd.on())return;var p=document.getElementById('gmPrev');if(p&&S.gm){gmFitCalc();p.innerHTML=gmHtml(S.gm)}gmCut()}
 function gmCut(){var p=document.getElementById('gmPrev'),dp=p&&p.querySelector('.dp');if(!dp||!S.gm||(UI.docEd&&UI.docEd.on()))return;var M=gmMg(S.gm),n=UI.docPages(dp,M.t,M.b),k=n+1;
-  var w=document.getElementById('gmPgInfo');if(w){var n=k-1;var c0=S.gm&&S.gm['내용']||{};w.textContent=(+c0.fit?(+c0.fit)+'쪽에 맞춤'+(+c0.fitK<1?' · 글씨 '+Math.round(+c0.fitK*100)+'%':'')+' · ':'')+(n>1?'A4 '+n+'쪽':'A4 1쪽 ✓');w.style.color=n>1?'#e53935':''}}
+  var w=document.getElementById('gmPgInfo');if(w){var n=k-1;var c0=S.gm&&S.gm['내용']||{};var N0=+c0.fit||1,ok=n<=N0;w.textContent=(+c0.fit?(+c0.fit)+'쪽에 맞춤'+(+c0.fitK<1?' · 글씨 '+Math.round(+c0.fitK*100)+'%':'')+' · ':'')+'A4 '+n+'쪽'+(ok?' ✓':' · '+N0+'쪽을 넘어요');w.style.color=ok?'':'#e53935'}}
 function vGm(){if(S.gm)return vGmEdit();var L=S.gmL;if(!L)return '<div class="panel"><span><span class="spin"></span> 불러오는 중…</span></div>';
   var f=S.f.gk||'전체',list=L.filter(function(x){return f==='전체'||(f==='졸업연주'?String(x['구분']).indexOf('졸업연주')===0:f==='캠프'?/캠프/.test(x['구분']):(f==='기타'?!/캠프|졸업연주/.test(x['구분']):x['구분']===f))});
   var cnt=function(k){return L.filter(function(x){return k==='전체'||(k==='졸업연주'?String(x['구분']).indexOf('졸업연주')===0:k==='캠프'?/캠프/.test(x['구분']):(k==='기타'?!/캠프|졸업연주/.test(x['구분']):x['구분']===k))}).length};
@@ -715,10 +715,13 @@ function vGmCamp(d){var c=d['내용'],lock=d['상태']==='발행',X=S.gmCampX,cc
       '<p class="cap" style="margin-top:8px">여백 · 줄 간격 · 글씨 크기는 캠프 쪽 공문 화면에서 정해요.</p></div>'+
       (lock||!cd?'':'<div class="panel"><h3>여백 mm <span class="cap">('+(cd.mo?'여기서 바꾼 여백 · 발행할 때 굳어요':'캠프 설정 여백')+')</span></h3><div class="row" style="gap:8px;align-items:center;flex-wrap:wrap">'+['t','b','l','r'].map(function(k){var M0=gmCampMg(cd);return '<label class="cap">'+{t:'위',b:'아래',l:'왼쪽',r:'오른쪽'}[k]+' <input type="number" data-gcmg="'+k+'" min="0" max="40" step="0.5" value="'+M0[k]+'" style="width:60px"></label>'}).join('')+(cd.mo?'<button class="btn small ghost" type="button" id="gmCampMg0">캠프 설정대로</button>':'')+'</div></div>'+
       '<div class="panel"><h3>쪽 맞추기 <span class="cap">(발행할 때 이 크기로 굳어요)</span></h3><div class="row" style="gap:8px;align-items:center;flex-wrap:wrap"><select id="gmCampFit">'+[[0,'캠프 설정대로'],[1,'1쪽에 맞추기'],[2,'2쪽에 맞추기']].map(function(o){return '<option value="'+o[0]+'"'+(gmCampFit(d)===o[0]?' selected':'')+'>'+o[1]+'</option>'}).join('')+'</select><span class="cap" id="gmCampFitInfo">'+(cd.k&&cd.k<1?'글씨 '+Math.round(cd.k*100)+'%'+(cd.k<.7?' · <b style="color:#c0392b">글씨가 많이 작아요 — 캠프에서 문장을 줄이는 게 좋아요</b>':''):gmCampFit(d)?'줄이지 않아도 맞아요':'')+'</span></div></div>')+'</div>'+
-    '<div class="gmpw"><div class="spread" style="margin-bottom:6px"><b>미리보기 (A4)</b><span class="row" style="gap:4px;flex-wrap:nowrap"><button class="btn small" type="button" data-gmz="-" aria-label="작게">−</button><span class="cap num" id="gmZv">'+Math.round(gmZoom()*100)+'%</span><button class="btn small" type="button" data-gmz="+" aria-label="크게">+</button></span></div>'+
+    '<div class="gmpw"><div class="spread" style="margin-bottom:6px"><b>미리보기 (A4) <span id="gmCampPg" class="cap" style="font-weight:700"></span></b><span class="row" style="gap:4px;flex-wrap:nowrap"><button class="btn small" type="button" data-gmz="-" aria-label="작게">−</button><span class="cap num" id="gmZv">'+Math.round(gmZoom()*100)+'%</span><button class="btn small" type="button" data-gmz="+" aria-label="크게">+</button></span></div>'+
       '<div class="gmprev">'+(cd?'<iframe id="gmCampFrame" title="캠프 공문 미리보기" style="width:100%;border:0;display:block;min-height:400px" onload="try{this.style.height=(this.contentDocument.documentElement.scrollHeight+4)+\'px\'}catch(e){}"></iframe>':'<p class="cap" style="padding:20px">미리보기가 아직 없어요.</p>')+'</div></div></div>'}
 document.addEventListener('change',function(e){var t=e.target;if(!t||!t.dataset||!t.dataset.gcmg||!S.gm)return;var id=S.gm['공문ID']||'',cd=gmCampDoc(S.gm);if(!cd)return;var m=Object.assign({},gmCampMg(cd));m[t.dataset.gcmg]=Math.max(0,Math.min(40,Math.round((+t.value||0)*10)/10));S.gmCM=S.gmCM||{};S.gmCM[id]=m;try{localStorage.setItem('gmCampMg_'+id,JSON.stringify(m))}catch(x){}render()});
 document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('#gmCampMg0');if(!b||!S.gm)return;var id=S.gm['공문ID']||'';S.gmCM=S.gmCM||{};S.gmCM[id]=null;try{localStorage.removeItem('gmCampMg_'+id)}catch(x){}render()});
+/* 캠프 공문 미리보기 쪽 수 (iframe이 알려 줌) · 고른 쪽 수 안이면 ✓, 넘으면 빨강 (11-13) */
+window.addEventListener('message',function(e){var dt=e.data;if(!dt||dt.gmPages==null||!S.gm)return;var w=document.getElementById('gmCampPg');if(!w)return;var c=S.gm['내용']||{},X=S.gmCampX,n=+dt.gmPages||1;
+  var N=S.gm['상태']==='발행'?(+c.fit||+((X&&X.camp&&X.camp.doc)||{}).fit||1):(gmCampFit(S.gm)||+((X&&X.camp&&X.camp.doc)||{}).fit||1),ok=n<=N;w.textContent='A4 '+n+'쪽'+(ok?' ✓':' · '+N+'쪽을 넘어요');w.style.color=ok?'':'#e53935'});
 document.addEventListener('change',function(e){var t=e.target;if(!t||t.id!=='gmCampFit'||!S.gm)return;var id=S.gm['공문ID']||'';S.gmCF=S.gmCF||{};S.gmCF[id]=+t.value||0;try{localStorage.setItem('gmCampFit_'+id,String(S.gmCF[id]))}catch(x){}render()});
 function gmCampFrame(){var f=document.getElementById('gmCampFrame'),cd=S.gm&&gmCampDoc(S.gm);if(f&&cd)f.srcdoc=gmCampSrc(cd,gmZoom(),false)}
 /* 제목 글씨 · 로고 크기 − + (11-12 공통 공문 규칙, 캠프 dStep 과 같음) */
@@ -1574,7 +1577,7 @@ document.addEventListener('keydown',function(e){var t=e.target;if(S.tab!=='prt'|
 </script>
 <style>table.prt th,table.prt td{text-align:left !important}table.prt th:first-child,table.prt td:first-child{text-align:center !important}table.prt th:nth-child(7),table.prt td:nth-child(7),table.prt th:nth-child(8),table.prt td:nth-child(8){text-align:center !important}table.prt td:nth-child(7) input,table.prt td:nth-child(8) input{text-align:center}table.prt tr.mutedrow td{color:var(--faint)}table.prt tr.mutedrow td b{color:var(--muted)}table.prt td{vertical-align:middle}table.prt td.padr{white-space:normal;min-width:220px;max-width:340px;line-height:1.4}</style>
 
-<div id="bldMark" hidden>빌드표시 20261113-123755 </div>
+<div id="bldMark" hidden>빌드표시 20261113-124044 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();
 /* 공문 편집: 칸을 고치면 모델만 바꾸고 미리보기만 다시 그림(글자 조합이 깨지지 않게) */
 function gmField(t){if(S.tab!=='gm'||!S.gm||S.gm['상태']==='발행')return false;var d=S.gm,c=d['내용'],ds=t.dataset||{};

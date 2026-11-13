@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261113-123755 -->
+<!-- build: 20261113-124044 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -2717,7 +2717,8 @@ function dCssPick(){let out='';[].forEach.call(document.querySelectorAll('style'
 function dExport(c){dFitCalc(c);return {html:docHtml(c).split(DOC_LOGO).join('{{LOGO}}').slice(0,48000),css:dCssPick()}}
 /* 쪽 끝 빨간 점선 (11-11): 인쇄는 쪽마다 위 · 아래 여백 → 미리보기에서 k쪽 끝 = 위 여백 + k × (297 − 위 − 아래) mm */
 function dCut(){const pv=document.getElementById('docPrev'),dp=pv&&pv.querySelector('.dp');if(!dp||(UI.docEd&&UI.docEd.on()))return;const c=S.dView||S.cc;if(!c)return;const M=dMg(c),n=UI.docPages(dp,M.t,M.b);
-  const w=document.getElementById('dPgInfo');if(w){w.textContent='A4 '+n+'쪽'+(n>1?'':' ✓')+(dFitTxt(c)?' · '+dFitTxt(c):'');w.style.color=n>1?'#e53935':''}}
+  /* 쪽 맞추기를 고르면 그 쪽 수 안은 ✓, 넘을 때만 빨강 (11-13) */
+  const w=document.getElementById('dPgInfo');if(w){const N=+((c.doc||{}).fit)||1,ok=n<=N;w.textContent='A4 '+n+'쪽'+(ok?' ✓':' · '+N+'쪽을 넘어요')+(dFitTxt(c)?' · '+dFitTxt(c):'');w.style.color=ok?'':'#e53935'}}
 /* 제목 글씨 · 로고 크기 − + (11-12 공통 공문 규칙) */
 const dTs=d=>{const t=+(d||{}).ts;return isFinite(t)&&t>=12&&t<=40?Math.round(t):22},dLw=d=>{const t=+(d||{}).lw;return isFinite(t)&&t>=20&&t<=140?Math.round(t):60};
 /* 항목 제목 글씨 · 본문 글씨 pt (11-13): 기본 12.5 = 예전 크기 */
@@ -4170,7 +4171,7 @@ function ebPrint2(H){
 window.addEventListener('afterprint',()=>{document.body.classList.remove('ebprint')});
 window.addEventListener('beforeprint',()=>{if(S.tab!=='book')document.body.classList.remove('ebprint')});
 function ebZoom(){if(S.ebZ==null){let v=0;try{v=+localStorage.getItem('campBookZoom')}catch(x){}S.ebZ=v>=.4&&v<=1.6?v:.75}return S.ebZ}
-function ebPageCss(T){return `@page ebp{size:148mm 210mm;margin:12mm 10mm 13mm;${T.num?'@bottom-center{content:"- " counter(page) " -";font-family:'Nanum Gothic',sans-serif;font-size:8pt;color:#444}':''}}@page ebc{size:148mm 210mm;margin:0}`}
+function ebPageCss(T){return `@page ebp{size:148mm 210mm;margin:12mm 10mm 13mm;${T.num?'@bottom-center{content:"- " counter(page) " -";font-family:\"Nanum Gothic\",sans-serif;font-size:8pt;color:#444}':''}}@page ebc{size:148mm 210mm;margin:0}`}
 /* 새 창으로 보기 (11-05, 공문과 같게): 넣은 쪽 모두를 A5 실제 크기로 새 탭에(같은 탭을 다시 씀) · − 100% ＋ 폭 맞춤 · Ctrl +/−/0 · 그 창에서 인쇄 · PDF 저장 */
 function ebOpenWin(){const L=ebItems().filter(x=>x.on);if(!L.length){toast('넣은 쪽이 없어요');return}
   const H=L.map(x=>ebClean(S.ebEd===x.k&&S.ebBuf!=null?(x.kind==='sched'?ebEqSched(S.ebBuf):S.ebBuf):ebPg(x),true));ebNeedImgs(H.join(''),()=>ebOpenWin2(H))}

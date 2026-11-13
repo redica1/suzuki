@@ -35,7 +35,7 @@ const FEES = {
   '해외 학생': [0, 0, 0], '해외 교사': [0, 0, 0], '해외 보호자': [0, 0, 0], '해외 동반가족': [0, 0, 0], '해외 15개월 미만': [0, 0, 0]   /* 해외 줄은 USD (opt.usdRate 로 원화 청구액 계산) */
 };
 const ROUND_NAMES = ['1차', '2차', '3차'];
-const OPT = { lessonFee: 60000, lessonMax: 5, studentDues: 30000, teacherDues: 300000, roomCap: 4, roomEmptyFee: 130000 };
+const OPT = { lessonFee: 60000, lessonMax: 5, studentDues: 30000, teacherDues: 300000, roomCap: 4, roomEmptyFee: 140000 };
 const PLAYS = ['교사', '연수생', '소속없는 중급연수생', '학생', '회원의 악기하는 자녀', '비회원 학생', '해외 학생', '해외 교사'];
 const MASTER = [{ n: '안드레아 부샤츠', fee: 150000 }, { n: '이성주', fee: 150000 }];
 /* 교수진: 「교수진」 시트에서 관리 (처음 한 번만 아래 목록으로 채움) */

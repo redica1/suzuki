@@ -1,4 +1,4 @@
-/* build: 20261113-115645 */
+/* build: 20261113-120312 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -774,6 +774,12 @@ function gmCampDocSet_(patch) {
 }
 function gmInjectNo_(html, no, dateYmd) {
   const e = x => String(x).replace(/[<>&"]/g, ' '), rows = [];
+  /* 캠프가 자리를 잡아 둔 공문(11-13): 그 자리 글자만 바꿈 → 줄 수 · 쪽 수 그대로 */
+  if (html.indexOf('data-gm="no"') >= 0) {
+    let h = html.replace(/<span data-gm="no">[^<]*<\/span>/, '<span data-gm="no">' + e(no) + '</span>');
+    if (dateYmd) { const a = dateYmd.split('-').map(Number); h = h.replace(/<span data-gm="date">[^<]*<\/span>/, '<span data-gm="date">' + a[0] + '년 ' + a[1] + '월 ' + a[2] + '일</span>'); }
+    return h;
+  }
   if (no) rows.push('<div><b>문서번호</b><span>' + e(no) + '</span></div>');
   if (dateYmd && html.indexOf('<b>시행일</b>') < 0) { const a = dateYmd.split('-').map(Number); rows.push('<div><b>시행일</b><span>' + a[0] + '년 ' + a[1] + '월 ' + a[2] + '일</span></div>'); }
   if (!rows.length) return html;

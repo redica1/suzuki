@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261113-113638 -->
+<!-- build: 20261113-120238 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -2599,12 +2599,13 @@ function dFmt(txt,c,V){return String(txt||'').split('\n').map(line=>{
   return '<p class="ln">'+h+'</p>'}).join('')}
 const DOC_MG={t:13,b:15,l:16,r:16};function dMg(c){const m=(c.doc||{}).mg||{},o={};Object.keys(DOC_MG).forEach(k=>{const v=+m[k];o[k]=isFinite(v)&&m[k]!==''&&m[k]!=null?Math.max(0,Math.min(40,v)):DOC_MG[k]});return o}
 function docHtml(c){const d=c.doc||{},V=dVals(c),fill=t=>esc(String(t||'')).replace(/\{[^{}\s]{1,8}\}/g,m=>V[m]!=null?'<span class="tok" data-tok="'+m+'">'+esc(V[m])+'</span>':m);let n=0;
-  const meta=[['문서번호',d.no],['시행일',d.date?dMd(d.date,1):''],['수신',d.to],['참조',d.ref]].filter(x=>x[1]);
+  /* 문서번호 · 시행일 줄은 발행 전에도 자리를 잡아 둠 → 발행할 때 글자만 바뀌어 쪽 수가 그대로 (11-13) */
+  const meta=[['문서번호',d.no||'(발행하면 매겨져요)','no'],['시행일',d.date?dMd(d.date,1):'(발행하는 날)','date'],['수신',d.to],['참조',d.ref]].filter(x=>x[1]);
   const secs=(d.sec||[]).filter(s=>s.on!==false).map(s=>{n++;const num=d.num==='1)'?n+')':n+'.',body=String(s.body||''),one=!body.includes('\n')&&!body.includes('[[');
     return one?`<div class="sc"><p class="ln"><span class="sh">${num} ${esc(s.t)}:</span> ${dFmt(body,c,V).replace(/^<p class="ln">|<\/p>$/g,'')}</p></div>`
       :`<div class="sc"><div class="sh">${num} ${esc(s.t)}</div>${dFmt(body,c,V)}</div>`}).join('');
   const M=dMg(c),FK=+d.fit&&+d.fitK>0&&+d.fitK<1?+d.fitK:1;return `<div class="dp" style="padding:${M.t}mm ${M.r}mm ${M.b}mm ${M.l}mm${dHs(d)!==12.5?`;--hs:${dHs(d)}pt`:''}${dBs(d)!==12.5?`;--bs:${dBs(d)}pt`:''}"><div class="fitc"${FK<1?` style="zoom:${FK}"`:''}><div class="lg"><img src="${DOC_LOGO}" alt="SUZUKI MUSIC KOREA" style="width:${dLw(d)}mm"></div>
-    ${meta.length?`<div class="meta">${meta.map(([k,v])=>`<div><b>${k}</b><span>${esc(v)}</span></div>`).join('')}</div>`:''}
+    ${meta.length?`<div class="meta">${meta.map(([k,v,g])=>`<div><b>${k}</b><span${g?` data-gm="${g}"`:''}>${esc(v)}</span></div>`).join('')}</div>`:''}
     <div class="dbody">${d.ed?UI.docTokFill(d.ed,k=>k==='[[참가비표]]'?dFeeTable(c):V[k]!=null?esc(V[k]).replace(/\n/g,'<br>'):null):`<h1${dTs(d)!==22?` style="font-size:${dTs(d)}pt"`:''}>${fill(d.title||((c.base||{}).name+' 안내'))}</h1>${d.intro?`<div class="intro">${dFmt(d.intro,c,V)}</div>`:''}${secs}`}</div>
     ${d.sign!==false?`<div class="ft-end"><div class="www">www.suzukimusickorea.org</div><div class="ko">(사)한국스즈키음악협회</div><div class="en">KOREA SUZUKI ASSOCIATION</div></div>`:''}</div></div>`}
 function dWarn(c){const R=c.rounds||[],W=[];DOC_FG.forEach(([l,ts])=>{const bad=ts.filter(t=>R.some((_,i)=>dFee(c,t,i)!==dFee(c,ts[0],i)));if(bad.length)W.push(`「${l}」 칸 안에서 금액이 달라요 (${bad.map(esc).join(' · ')}가 ${esc(ts[0])}와 다름) — 공문에는 ${esc(ts[0])} 금액이 나가요. 여기서 금액을 고치면 모두 같은 금액이 돼요.`)});
@@ -2655,7 +2656,7 @@ function vDoc(){if(!S.cc){S.cc=ccCopy();try{if(S.cc.doc&&S.cc.fees&&S.cc.rounds)
     <div class="row" style="gap:6px"><span id="ccDirty" class="row" style="gap:6px">${ccPill()}</span><button class="btn small" type="button" id="dWin">새 창으로 보기</button><button class="btn small" type="button" id="dPrint">PDF 받기</button><button class="btn small" type="button" id="dJpg">JPG 받기</button><button class="btn small primary" type="button" data-ccsave="1">저장</button></div></div>
     <div id="dWarnBox">${dWarnHtml(W)}</div></div>
   <div class="dg"><div>${d.ed?`<div class="note warn" style="margin-bottom:10px"><b>미리보기에서 고친 글을 쓰고 있어요.</b> 왼쪽 제목 · 머리말 · 본문 항목은 공문에 안 나와요. 날짜 · 참가비 · 취소 수수료 같은 캠프 값(노란 칸)은 왼쪽에서 고치면 그대로 바뀌어요. <button class="btn small" type="button" id="dEdDrop">고친 글 지우고 왼쪽 글로</button></div>`:''}
-  <div class="panel"><h3>문서 정보 <span class="hint">비워 두면 공문에 안 나와요 · 문서번호는 회원관리 공문 대장에서 자동으로 매겨져요</span></h3><div class="ccg">
+  <div class="panel"><h3>문서 정보 <span class="hint">수신 · 참조는 비워 두면 안 나와요 · 문서번호 · 시행일 줄은 늘 자리를 잡아 두고, 회원관리 공문 대장에서 발행할 때 채워져요(쪽 수 그대로)</span></h3><div class="ccg">
     <label>문서번호 <span class="hint">회원관리에서 발행하면 매겨져요</span><input type="text" value="${esc(d.no||'')}" placeholder="(발행 전)" disabled></label><label>시행일${inp('doc.date','date')}</label>
     <label class="w2">수신${inp('doc.to','text','maxlength="120" placeholder="예: 회원 학원 원장 · 교사"')}</label><label class="w2">참조${inp('doc.ref','text','maxlength="120"')}</label>
     <label class="w2">제목${inp('doc.title','text','maxlength="120" placeholder="{캠프이름} 안내"')}<span class="dstep">제목 글씨 ${dStep('ts',dTs(d),'pt')}<span style="width:14px"></span>로고 크기 ${dStep('lw',dLw(d),'mm')}</span><span class="dstep">항목 제목 글씨 ${dStep('hs',dHs(d),'pt')}<span style="width:14px"></span>본문 글씨 ${dStep('bs',dBs(d),'pt')}</span></label>

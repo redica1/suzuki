@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261112-111937 -->
+<!-- build: 20261113-105219 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -2727,6 +2727,9 @@ function dBuildPrint(){dApply();let r=document.getElementById('docPrintRoot');if
 /* 새 창으로 보기 (11-04): 지금 공문을 A4 실제 크기로 새 탭에 띄움(같은 탭을 다시 씀). 그 창에서 바로 인쇄 · PDF 저장 */
 function dZoom(){if(S.dZoom==null){let v=0;try{v=+localStorage.getItem('campDocZoom')}catch(x){}S.dZoom=v>=.4&&v<=1.6?v:1.15}return S.dZoom}
 /* 받는 파일 이름 끝에 날짜 · 시각 (같은 이름이 겹치지 않게, 11-04) */
+/* 공문 PDF 파일 이름 = 제목_YYYYMMDD_HHMM, 새 창은 인쇄 · PDF 저장을 누른 때 시각 (11-13) */
+function dFileT(t){return String(t||'공문').replace(/[\\\/:*?"<>|]/g,' ').replace(/\s+/g,' ').trim()||'공문'}
+function dNameJs(t){return '<scr'+'ipt>(function(){var T='+JSON.stringify(dFileT(t))+';window.addEventListener("beforeprint",function(){var d=new Date(),z=function(n){return ("0"+n).slice(-2)};document.title=T+"_"+d.getFullYear()+z(d.getMonth()+1)+z(d.getDate())+"_"+z(d.getHours())+z(d.getMinutes())})})()</scr'+'ipt>'}
 function dStamp(){const d=new Date(),z=n=>String(n).padStart(2,'0');return '_'+d.getFullYear()+z(d.getMonth()+1)+z(d.getDate())+'_'+z(d.getHours())+z(d.getMinutes())}
 function dOpenWin(){if(!S.cc||!S.cc.doc)return;dApply();
   const css=[...document.querySelectorAll('style')].map(x=>x.textContent).filter(t=>t.indexOf('.dp{')>=0).join('\n'),M=dMg(S.cc);
@@ -2736,7 +2739,7 @@ function dOpenWin(){if(!S.cc||!S.cc.doc)return;dApply();
   const extra='@media screen{html,body{margin:0;background:#dfe4e6}#docPrintRoot{display:block !important;width:210mm;margin:14px auto 40px;background:#fff;box-shadow:0 2px 16px rgba(0,0,0,.22)}#docPrintRoot .dp{zoom:1;box-shadow:none;min-height:0;width:auto;padding-top:0 !important;padding-bottom:0 !important}'+
     '.tb{position:sticky;top:0;z-index:5;display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap;padding:10px 16px;background:#1f5c63;color:#fff;font:14px "Pretendard Variable",sans-serif}.tb button{font:inherit;font-weight:700;padding:6px 14px;border:0;border-radius:8px;background:#fff;color:#1f5c63;cursor:pointer}.tb span{opacity:.85;font-size:12.5px}.zm{display:inline-flex;gap:2px;background:rgba(255,255,255,.15);border-radius:9px;padding:2px}.zm button{min-width:34px;padding:4px 8px}#zv{min-width:56px}}@media print{#docPrintRoot{zoom:1 !important}}'+
     '#docPrintRoot table.pw{width:100%;border-collapse:collapse}#docPrintRoot table.pw>*>tr>td{border:0;padding:0;text-align:left;vertical-align:top}';
-  const html='<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+ti+dStamp()+'</title><link rel="stylesheet" href="'+font+'"><style>'+css+'\n'+extra+'</style></head><body class="dprint">'+
+  const html='<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+dFileT(ti)+dStamp()+'</title><link rel="stylesheet" href="'+font+'"><style>'+css+'\n'+extra+'</style></head><body class="dprint">'+dNameJs(ti)+
     '<div class="tb"><b>'+ti+'</b><span class="zm"><button type="button" onclick="Z(-1)" aria-label="작게">−</button><button type="button" id="zv" onclick="Z(0)" title="100%로">100%</button><button type="button" onclick="Z(1)" aria-label="크게">＋</button><button type="button" onclick="Z(2)">폭 맞춤</button></span><button type="button" onclick="print()">인쇄 · PDF 저장</button><span>공문 화면에서 고친 뒤 「새 창으로 보기」를 다시 누르면 이 창이 새로 바뀌어요</span></div>'+
     '<div id="docPrintRoot">'+body+'</div><scr'+'ipt>(function(){var d=document.querySelector(".dp");if(d)d.style.padding="0 '+M.r+'mm 0 '+M.l+'mm"})();'+
     'var z=1;try{z=+localStorage.getItem("gmZoom")||1}catch(e){}function A(){var r=document.getElementById("docPrintRoot");r.style.zoom=z;document.getElementById("zv").textContent=Math.round(z*100)+"%";try{localStorage.setItem("gmZoom",z)}catch(e){}}'+
@@ -2745,7 +2748,7 @@ function dOpenWin(){if(!S.cc||!S.cc.doc)return;dApply();
   const url=URL.createObjectURL(new Blob([html],{type:'text/html;charset=utf-8'})),a=document.createElement('a');a.href=url;a.target='suzukiGongmun';document.body.appendChild(a);a.click();
   setTimeout(()=>{a.remove();URL.revokeObjectURL(url)},120000);if(ccDirty())toast('새 창에 띄웠어요 · 아직 저장하지 않은 내용이에요')}
 function dPrint(){if(!S.cc||!S.cc.doc)return;S.dPrinting=1;dBuildPrint();document.body.classList.add('dprint');let r=document.getElementById('docPrintRoot');
-  const t0=document.title,ti=(S.cc.doc.title||'{캠프이름} 안내').replace(/\{캠프이름\}/g,(S.cc.base||{}).name||'');document.title=ti.replace(/[\\\/:*?"<>|]/g,' ')+dStamp();
+  const t0=document.title,ti=(S.cc.doc.title||'{캠프이름} 안내').replace(/\{캠프이름\}/g,(S.cc.base||{}).name||'');document.title=dFileT(ti)+dStamp();
   const im=r.querySelector('img');const go=()=>{try{window.print()}finally{setTimeout(()=>{document.title=t0},500)}};const fr=(document.fonts&&document.fonts.ready)||Promise.resolve();fr.then(()=>{if(im&&!im.complete)im.onload=go;else go()});
   if(ccDirty())toast('저장하지 않은 내용도 인쇄돼요 · 캠프에 반영하려면 「저장」을 눌러 주세요')}
 document.addEventListener('input',e=>{if(S.tab!=='doc'||!S.cc)return;const t=e.target;
@@ -4421,6 +4424,6 @@ document.addEventListener('click',e=>{if(S.tab!=='book')return;const b=e.target.
   if(b.id==='ebSetSave'){const n=Object.assign(ebSet(),S.ebSetW||{});n.per=Math.max(1,Math.min(10,Math.round(+n.per||5)));n.fs=Math.max(5,Math.min(10,+n.fs||6.6));['en','sub','org'].forEach(k=>n[k]=String(n[k]||'').trim().slice(0,120));
     ebSend([],[],n,()=>{S.ebSetW=null;toast('책자 설정을 저장했어요')});return}},true);
 </script>
-<div id="bldMark" hidden>빌드표시 20261112-111937 </div>
+<div id="bldMark" hidden>빌드표시 20261113-105219 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();</script>
 </body></html>

@@ -1,4 +1,4 @@
-/* build: 20261113-153819 */
+/* build: 20261113-154453 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -143,19 +143,18 @@ function doPost(e) {
     if (q.op === 'read') { const acad = String(q.acad || ''); const b = bundle_([acad], ''); return out({ ok: true, ms: Date.now() - t0, n: (b.subs || []).length }); }
     /* op=sub: 새 접수 1건 (교사 1 · 학생 3) */
     const i = +q.i || 0, acad = '가상몰림' + (i % 20) + '스즈키';
-    let tw = Date.now(); const lock = lock_(); const wait = Date.now() - tw, tIn = Date.now(); let no = '', tRead = 0, tWrite = 0, tTeam = 0;
+    let t = Date.now(); const all = loadSubs_(); const tRead = Date.now() - t;
+    let tw = Date.now(); const lock = lock_(); const wait = Date.now() - tw, tIn = Date.now(); let no = '', tWrite = 0, tTeam = 0;
     try {
-      let t = Date.now(); const all = loadSubs_(); tRead = Date.now() - t;
-      const n = all.reduce((m, x) => Math.max(m, +String(x.no).split('-')[1] || 0), 0) + 1; no = camp_().base.id + '-' + String(n).padStart(3, '0');
+      no = subNoNext_();
       const at = stamp_(), info = {}, picked = {}, ppl = [];
       [['t_ld0', '교사'], ['ld1', '학생'], ['ld2', '학생'], ['ld3', '학생']].forEach(([k, ty], j) => { picked[k] = true; info[k] = ty === '교사' ? { type: '교사', gender: '여', concert: '없음' } : { type: '학생', gender: '여', by: '2016', teacher: '몰림' + i, prog: '2권A 요정의 춤 ~', lessons: 0, concert: '없음' };
         ppl.push({ id: no + '_' + k, name: '몰림' + i + '-' + j, kind: ty, type: ty, inst: '바이올린', status: '정상', addAt: at, batch: 1, pay: '전', paidAmt: 0 }); });
       const sb = { no, acad, owner: '몰림' + i, fake: true, load: true, createdAt: at, date: at.slice(0, 10), email: '', rev: 1, reqId: 'ld' + t0 + '_' + i, form: { ri: 0, picked, info, extra: [], fam: [], room: {}, join: {}, ens: { on: false } }, ppl };
-      recalc_(sb); sb.ppl.forEach(p => p.dues = 0);
-      t = Date.now(); writeSub_(sb, true); tWrite = Date.now() - t;
-      t = Date.now(); all.push(sb); writeTeams_(all); tTeam = Date.now() - t;
+      recalc_(sb); sb.ppl.forEach(p => p.dues = 0); checkEns_(sb, all); teacherDup_(all, sb);
+      t = Date.now(); writeSub_(sb, 'append'); tWrite = Date.now() - t;
     } finally { lock.releaseLock(); }
-    const inLock = Date.now() - tIn; let t = Date.now(); bundle_([acad], '몰림' + i); const tBundle = Date.now() - t;
+    const inLock = Date.now() - tIn; t = Date.now(); bundle_([acad], '몰림' + i); const tBundle = Date.now() - t;
     return out({ ok: true, no, wait, inLock, tRead, tWrite, tTeam, tBundle, total: Date.now() - t0 });
   } catch (x) { return out({ ok: false, msg: String(x && x.message || x), total: Date.now() - t0 }); }
 }
@@ -701,7 +700,7 @@ function applyAdmin_(sb, admin) {
   return sb;
 }
 
-function writeSub_(sb, isNew) { writeSubRow_(sb, isNew); writePeople_(sb); try { staffProfs_(sb); } catch (e) { Logger.log('교수진 자동 추가: ' + e.message); } }
+function writeSub_(sb, isNew) { writeSubRow_(sb, isNew); writePeople_(sb, isNew); try { staffProfs_(sb); } catch (e) { Logger.log('교수진 자동 추가: ' + e.message); } }
 function writeSubRow_(sb, isNew) {
   const ss = SpreadsheetApp.getActive();
   const sh = ss.getSheetByName(SH.SUB);
@@ -714,15 +713,16 @@ function writeSubRow_(sb, isNew) {
   const e = sb.form && sb.form.ens || {};
   const row = [sb.no, sb.createdAt || stamp_(), isNew ? '' : stamp_(), sb.acad, sb.owner, sb.round, live.length, bill, paid, Math.max(0, bill - paid),
     e.on ? '대표 · ' + (e.group || '') : e.member ? '함께 · ' + (e.joinNo || e.joinRep || '') : ''].concat(chunks);
-  const found = rows_(SH.SUB).find(r => String(r['접수번호']) === sb.no);
+  /* 새 접수는 같은 번호가 없으니 시트를 다시 읽지 않고 바로 붙임 (속도 11-13) */
+  const found = isNew === 'append' ? null : rows_(SH.SUB).find(r => String(r['접수번호']) === sb.no);
   if (found) { row[1] = found['접수일시'] instanceof Date ? Utilities.formatDate(found['접수일시'], TZ, 'yyyy-MM-dd HH:mm:ss') : found['접수일시']; sh.getRange(found._row, 1, 1, row.length).setValues([row]); }
   else sh.appendRow(row);
 }
 
 /** 참가자 시트: 그 접수의 줄을 다시 씀. 운영진 칸은 참가자ID 기준으로 지킴 */
-function writePeople_(sb) {
+function writePeople_(sb, isNew) {
   const sh = SpreadsheetApp.getActive().getSheetByName(SH.P);
-  const old = rows_(SH.P).filter(r => String(r['접수번호']) === sb.no);
+  const old = isNew === 'append' ? [] : rows_(SH.P).filter(r => String(r['접수번호']) === sb.no);
   const keep = {}; old.forEach(r => keep[String(r['참가자ID'])] = ADMIN_COLS.map(k => r[k]));
   old.map(r => r._row).sort((a, b) => b - a).forEach(r => sh.deleteRow(r));
   const f = sb.form || {}, info = f.info || {};
@@ -907,27 +907,39 @@ function takeRefundAcct_(p) {
 function submitNew(token, sb) {
   const u = who_(token); regGate_();
   if (!u.acads.includes(sb.acad)) throw new Error('이 학원으로 접수할 수 없어요.');
+  /* 속도 (11-13 몰림 시험: 10명 동시에 4명이 BUSY): 잠그기 전에 읽고 검사 · 잠근 동안은 번호만 받고 바로 붙여 씀 · 메일은 잠금 밖 */
+  const C = CacheService.getScriptCache();
+  if (sb.reqId) { const d = C.get('req_' + sb.reqId); if (d) return Object.assign({ ok: true, no: d, again: true }, bundle_(u.acads, u.name)); }
+  const all = loadSubs_();
+  if (sb.reqId) { const done = all.find(x => x.reqId === sb.reqId); if (done) return Object.assign({ ok: true, no: done.no, again: true }, bundle_(u.acads, u.name)); }
+  stuDup_(all, sb, null);
+  const tmp = sb.no;
+  sb.owner = u.name;
+  if (u.guest) sb.contact = String(u.phone || '').replace(/(\d{3})(\d{3,4})(\d{4})/, '$1-$2-$3');   // 비회원 보호자 연락처 (관리자 화면 · 시트에만)
+  sb.rev = 1;
   const lock = lock_();
   try {
-    const all = loadSubs_();
-    // 응답이 늦어 다시 보냈거나 자동 재시도한 같은 요청이면 → 이미 만든 접수를 그대로 돌려줌
-    if (sb.reqId) { const done = all.find(x => x.reqId === sb.reqId); if (done) { lock.releaseLock(); return Object.assign({ ok: true, no: done.no, again: true }, bundle_(u.acads, u.name)); } }
-    // 같은 학원 다른 접수에 이미 있는 사람은 다시 못 넣음
-    stuDup_(all, sb, null);
-    const n = all.reduce((m, x) => Math.max(m, +String(x.no).split('-')[1] || 0), 0) + 1;
-    const no = camp_().base.id + '-' + String(n).padStart(3, '0');
-    const tmp = sb.no;
-    sb.no = no; sb.owner = u.name; sb.createdAt = stamp_();
-    if (u.guest) sb.contact = String(u.phone || '').replace(/(\d{3})(\d{3,4})(\d{4})/, '$1-$2-$3');   // 비회원 보호자 연락처 (관리자 화면 · 시트에만)
+    if (sb.reqId && C.get('req_' + sb.reqId)) { lock.releaseLock(); const d = C.get('req_' + sb.reqId); return Object.assign({ ok: true, no: d, again: true }, bundle_(u.acads, u.name)); }
+    const no = subNoNext_();
+    sb.no = no; sb.createdAt = stamp_();
     sb.ppl.forEach(p => { p.id = no + p.id.slice(tmp.length); p.pay = '전'; p.paidAmt = 0; delete p.rep; });
-    sb.rev = 1; recalc_(sb); checkEns_(sb, all);
+    recalc_(sb); checkEns_(sb, all);
     teacherDup_(all, sb);
-    writeSub_(sb, true);
-    all.push(sb); writeTeams_(all);
-    log_(u.name, '새 접수', no + ' · ' + sb.ppl.length + '명');
-    mail_(sb, u);
+    writeSub_(sb, 'append');
+    if (sb.reqId) C.put('req_' + sb.reqId, no, 21600);
+    if (sb.form && sb.form.ens && (sb.form.ens.on || sb.form.ens.member)) { all.push(sb); writeTeams_(all); }
   } finally { lock.releaseLock(); }
+  log_(u.name, '새 접수', sb.no + ' · ' + sb.ppl.length + '명');
+  try { mail_(sb, u); } catch (e) { Logger.log('메일: ' + e.message); }
   return Object.assign({ ok: true, no: sb.no }, bundle_(u.acads, u.name));
+}
+/** 다음 접수번호: 접수 시트 「접수번호」 칸만 읽음 (잠근 안에서 부름) */
+function subNoNext_() {
+  const sh = SpreadsheetApp.getActive().getSheetByName(SH.SUB), lr = sh.getLastRow();
+  const head = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0].map(String), c = head.indexOf('접수번호') + 1;
+  const v = lr > 1 && c > 0 ? sh.getRange(2, c, lr - 1, 1).getValues() : [];
+  const n = v.reduce((m, r) => Math.max(m, +String(r[0]).split('-')[1] || 0), 0) + 1;
+  return camp_().base.id + '-' + String(n).padStart(3, '0');
 }
 
 /** 가족방만 취소 (11-11): 참가는 그대로인 대표의 가족방을 빼면, 입금된 경우 오늘 환불 규정(진단서 미제출)만큼 돌려주고 나머지는 취소 수수료로 남김.

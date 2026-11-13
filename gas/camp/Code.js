@@ -1,4 +1,4 @@
-/* build: 20261113-150614 */
+/* build: 20261113-151635 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -107,7 +107,7 @@ function doGet(e) {
   if (e && e.parameter && e.parameter.page === 'find') return HtmlService.createTemplateFromFile('Find').evaluate().setTitle(cname + ' · 일정 찾기').addMetaTag('viewport', 'width=device-width, initial-scale=1').setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
   if (admin) page = HtmlService.createTemplateFromFile('Admin').evaluate();
   else if (intl) page = HtmlService.createHtmlOutputFromFile('Intl');
-  else { const t = HtmlService.createTemplateFromFile('Index'); let share = ''; let tl = ''; try { ensureSettings_(); share = setting_('공유주소'); tl = setting_('테스트 로그인'); } catch (x) {} t.shareUrl = share; t.testLogin = tl; try { t.testNames = tl ? setting_('테스트 선생님') : ''; } catch (x) { t.testNames = ''; } t.campJson = cj; try { t.loginPw = { pw: '1', both: '2' }[loginMode_()] || ''; t.memberUrl = setting_('회원관리 주소'); } catch (x) { t.loginPw = ''; t.memberUrl = ''; } /* 테스트 로그인: STG 「설정」에만 (이름/휴대전화) — 로그인 칸을 미리 채움 · campJson: 「캠프설정」 시트 값 (날짜·장소·차수·참가비) */ page = t.evaluate(); }
+  else { const t = HtmlService.createTemplateFromFile('Index'); let share = ''; let tl = ''; try { ensureSettingsLazy_(); share = setting_('공유주소'); tl = setting_('테스트 로그인'); } catch (x) {} t.shareUrl = share; t.testLogin = tl; try { t.testNames = tl ? setting_('테스트 선생님') : ''; } catch (x) { t.testNames = ''; } t.campJson = cj; try { t.loginPw = { pw: '1', both: '2' }[loginMode_()] || ''; t.memberUrl = setting_('회원관리 주소'); } catch (x) { t.loginPw = ''; t.memberUrl = ''; } /* 테스트 로그인: STG 「설정」에만 (이름/휴대전화) — 로그인 칸을 미리 채움 · campJson: 「캠프설정」 시트 값 (날짜·장소·차수·참가비) */ page = t.evaluate(); }
   return page
     .setTitle(intl ? 'Suzuki Winter Music Camp · Overseas Registration' : cname + (admin ? ' 접수 관리' : ' 접수'))
     .addMetaTag('viewport', 'width=device-width, initial-scale=1')
@@ -117,7 +117,7 @@ function doGet(e) {
 function perf_() {
   const T = [], t0 = Date.now(); let t = t0; const m = k => { const n = Date.now(); T.push(k + ' ' + (n - t) + 'ms'); t = n; };
   CAMP_CACHE = null; const c = campPublic_(); m('campPublic_'); const cj = JSON.stringify(c); m('stringify ' + cj.length + '자');
-  ensureSettings_(); m('ensureSettings_'); setting_('공유주소'); setting_('테스트 로그인'); m('setting_');
+  ensureSettingsLazy_(); m('ensureSettingsLazy_'); setting_('공유주소'); setting_('테스트 로그인'); m('setting_');
   const tp = HtmlService.createTemplateFromFile('Index'); tp.shareUrl = ''; tp.testLogin = ''; tp.testNames = ''; tp.campJson = cj; tp.loginPw = ''; tp.memberUrl = '';
   let h = ''; try { h = tp.evaluate().getContent(); } catch (x) { h = 'ERR ' + x.message; } m('Index evaluate ' + h.length + '자');
   try { const a = HtmlService.createTemplateFromFile('Admin').evaluate().getContent(); m('Admin evaluate ' + a.length + '자'); } catch (x) { m('Admin ERR'); }
@@ -1076,6 +1076,8 @@ function setupAdmin_() {
     sh.setFrozenRows(1); }
   return sh;
 }
+/** 화면 열 때는 6시간에 한 번만 설정 줄을 확인 (속도 11-13 · 매번 하면 1.4초) */
+function ensureSettingsLazy_() { const C = CacheService.getScriptCache(); if (C.get('setEns')) return; ensureSettings_(); C.put('setEns', '1', 21600); }
 function ensureSettings_() { SET_MEMO = null;
   const sh = setupAdmin_();
   sh.getRange('B:B').setNumberFormat('@');   // 값 칸은 글자 그대로 (날짜·계좌번호가 바뀌지 않게)
@@ -1195,8 +1197,12 @@ function consClean_(a) { const o = []; (Array.isArray(a) ? a : []).forEach(x => 
 let CAMP_CACHE = null;
 /* 참가 구분 이름 바뀜 (11-11): 「돌전아기」 → 「15개월 미만」 · 예전에 저장된 접수 · 캠프설정도 읽을 때 새 이름으로 */
 function retype_(s) { return String(s).replace(/돌전아기/g, '15개월 미만'); }
+/* 속도 (11-13): 캠프설정 시트를 2분 동안 기억 (화면 열 때마다 시트를 읽지 않게). 저장할 때 지움 · 저장 전 번호 확인은 늘 시트에서 */
+let CAMP_NOCC = false;
+function campCacheClear_() { try { CacheService.getScriptCache().remove('campCfgJ'); } catch (e) {} }
 function camp_() {
   if (CAMP_CACHE) return CAMP_CACHE;
+  if (!CAMP_NOCC) { try { const j = CacheService.getScriptCache().get('campCfgJ'); if (j) return (CAMP_CACHE = JSON.parse(j)); } catch (e) {} }
   const c = JSON.parse(JSON.stringify(CAMP_DEF)); c.rev = 0;
   rows_(CAMPCFG).forEach(r => {
     const k = (CAMP_KEYS.find(x => x[1] === String(r['항목'])) || [])[0], v = String(r['값'] || '');
@@ -1207,6 +1213,7 @@ function camp_() {
   /* 참가비표 칸 수 = 차수 수 (새로 생긴 참가자격·차수는 마지막 금액으로 채움) */
   c.cons = consClean_(c.cons);
   FEE_TYPES.forEach(t => { const a = (c.fees[t] || []).slice(0, c.rounds.length); while (a.length < c.rounds.length) a.push(a.length ? a[a.length - 1] : 0); c.fees[t] = a; });
+  try { const j = JSON.stringify(c); if (j.length < 95000) CacheService.getScriptCache().put('campCfgJ', j, 120); } catch (e) {}
   return (CAMP_CACHE = c);
 }
 /** 지금 차수: 「현재 차수」를 정해 두면 그것, 자동이면 오늘 날짜가 든 차수 (마감 뒤면 마지막 차수) */
@@ -1300,7 +1307,7 @@ function campSave(token, c, rev) {
   try {
     const ss = SpreadsheetApp.getActive(); let sh = ss.getSheetByName(CAMPCFG);
     if (!sh) { sh = ss.insertSheet(CAMPCFG); sh.getRange(1, 1, 1, 3).setValues([['항목', '값', '설명']]).setFontWeight('bold'); sh.setFrozenRows(1); sh.getRange('B:B').setNumberFormat('@'); }
-    CAMP_CACHE = null; const old = camp_();
+    CAMP_CACHE = null; CAMP_NOCC = true; campCacheClear_(); const old = camp_(); CAMP_CACHE = null;
     if ((+rev || 0) !== (old.rev || 0)) throw new Error('다른 분이 먼저 캠프 설정을 바꿨어요. 새로 고친 뒤 다시 해 주세요.');
     /* 저장이 확실할 때(번호 확인 뒤)만 공문 대장에 올림 — 저장 실패로 대장 줄만 늘어나지 않게 */
     try { const g = campDocLink_(nc.base, nc.doc, a.name); if (g) nc.doc.gm = g; else linkMsg = '회원관리 시트(설정 「회원관리 시트」)나 그 시트의 「공문」 탭을 찾지 못해 공문 대장에 올리지 못했어요.'; } catch (e) { linkMsg = '공문 대장에 올리지 못했어요: ' + e.message; }
@@ -1310,7 +1317,7 @@ function campSave(token, c, rev) {
       ['공문HTML', c.docHtml != null ? String(c.docHtml).slice(0, 48000) : (ex['공문HTML'] || ''), '회원관리 공문 대장이 읽는 공문 그림 (저장할 때 저절로)'], ['공문CSS', c.docCss != null ? String(c.docCss).slice(0, 20000) : (ex['공문CSS'] || ''), '공문 그림 모양']]);
     sh.getRange(2, 1, Math.max(sh.getLastRow(), vals.length + 1), 3).clearContent();
     sh.getRange(2, 1, vals.length, 3).setValues(vals);
-    CAMP_CACHE = null;
+    CAMP_CACHE = null; campCacheClear_();
     if (JSON.stringify(old.meals || []) !== JSON.stringify(meals) || c.mealsApply) nc.mealsDays = mealsApply_(meals);
     log_(a.name, '캠프 설정 저장', nc.base.id + ' · ' + nc.base.start + '~' + nc.base.end);
   } finally { lock.releaseLock(); }

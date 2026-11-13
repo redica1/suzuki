@@ -1,4 +1,4 @@
-/* build: 20261113-152043 */
+/* build: 20261113-153819 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -123,6 +123,41 @@ function perf_() {
   try { const a = HtmlService.createTemplateFromFile('Admin').evaluate().getContent(); m('Admin evaluate ' + a.length + '자'); } catch (x) { m('Admin ERR'); }
   T.push('합계 ' + (Date.now() - t0) + 'ms');
   return ContentService.createTextOutput(T.join('\n'));
+}
+/* ---------- 몰림 시험 (11-13, STG만): 브라우저에서 동시에 POST → 실제 새 접수와 같은 잠금 · 읽기 · 쓰기를 하고 걸린 시간을 돌려줌 ----------
+ *  STG(설정 「테스트 로그인」이 있음) + 설정 「몰림 시험 키」가 맞을 때만. 만든 접수는 가상 표시(fake) → 관리자 「가상 접수 모두 지우기」 또는 op=clear */
+function doPost(e) {
+  const out = o => ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON);
+  const t0 = Date.now(); let q = {};
+  try { q = JSON.parse((e && e.postData && e.postData.contents) || '{}'); } catch (x) {}
+  try {
+    const key = String(setting_('몰림 시험 키') || '');
+    if (!String(setting_('테스트 로그인') || '').trim() || key.length < 12 || q.key !== key) return out({ ok: false, msg: 'no' });
+    if (q.op === 'clear') {
+      const lock = lock_(); let k = 0;
+      try { const fk = loadSubs_().filter(sb => sb.fake && sb.load).map(sb => sb.no); const ss = SpreadsheetApp.getActive();
+        [[SH.SUB, '접수번호'], [SH.P, '접수번호']].forEach(([name, col]) => { const sh = ss.getSheetByName(name); rows_(name).filter(r => fk.includes(String(r[col]))).map(r => r._row).sort((x, y) => y - x).forEach(r => { sh.deleteRow(r); k++; }); });
+        writeTeams_(loadSubs_()); } finally { lock.releaseLock(); }
+      return out({ ok: true, rows: k });
+    }
+    if (q.op === 'read') { const acad = String(q.acad || ''); const b = bundle_([acad], ''); return out({ ok: true, ms: Date.now() - t0, n: (b.subs || []).length }); }
+    /* op=sub: 새 접수 1건 (교사 1 · 학생 3) */
+    const i = +q.i || 0, acad = '가상몰림' + (i % 20) + '스즈키';
+    let tw = Date.now(); const lock = lock_(); const wait = Date.now() - tw, tIn = Date.now(); let no = '', tRead = 0, tWrite = 0, tTeam = 0;
+    try {
+      let t = Date.now(); const all = loadSubs_(); tRead = Date.now() - t;
+      const n = all.reduce((m, x) => Math.max(m, +String(x.no).split('-')[1] || 0), 0) + 1; no = camp_().base.id + '-' + String(n).padStart(3, '0');
+      const at = stamp_(), info = {}, picked = {}, ppl = [];
+      [['t_ld0', '교사'], ['ld1', '학생'], ['ld2', '학생'], ['ld3', '학생']].forEach(([k, ty], j) => { picked[k] = true; info[k] = ty === '교사' ? { type: '교사', gender: '여', concert: '없음' } : { type: '학생', gender: '여', by: '2016', teacher: '몰림' + i, prog: '2권A 요정의 춤 ~', lessons: 0, concert: '없음' };
+        ppl.push({ id: no + '_' + k, name: '몰림' + i + '-' + j, kind: ty, type: ty, inst: '바이올린', status: '정상', addAt: at, batch: 1, pay: '전', paidAmt: 0 }); });
+      const sb = { no, acad, owner: '몰림' + i, fake: true, load: true, createdAt: at, date: at.slice(0, 10), email: '', rev: 1, reqId: 'ld' + t0 + '_' + i, form: { ri: 0, picked, info, extra: [], fam: [], room: {}, join: {}, ens: { on: false } }, ppl };
+      recalc_(sb); sb.ppl.forEach(p => p.dues = 0);
+      t = Date.now(); writeSub_(sb, true); tWrite = Date.now() - t;
+      t = Date.now(); all.push(sb); writeTeams_(all); tTeam = Date.now() - t;
+    } finally { lock.releaseLock(); }
+    const inLock = Date.now() - tIn; let t = Date.now(); bundle_([acad], '몰림' + i); const tBundle = Date.now() - t;
+    return out({ ok: true, no, wait, inLock, tRead, tWrite, tTeam, tBundle, total: Date.now() - t0 });
+  } catch (x) { return out({ ok: false, msg: String(x && x.message || x), total: Date.now() - t0 }); }
 }
 /** 화면 코드가 길어서 App1, App2 … 파일로 나눠 둠 → Index.html 이 붙여서 보냄 */
 function include(name) { return HtmlService.createTemplateFromFile(name).getRawContent(); }   // App1~5는 자바스크립트라 HTML 검사 없이 그대로 붙임

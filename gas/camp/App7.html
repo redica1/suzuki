@@ -1,4 +1,4 @@
-/* build: 20261114-160138 */
+/* build: 20261114-160959 */
     ps.forEach(p=>{p.pay='신고';p.rep=rep;delete S.rpRow[p.id]});S.afterSave=()=>repDone(ps.map(p=>p.id));subSave();S.rp=null;S.rpOpen=false;S.rpMemo=undefined;render();toast(`${ps.length}명 입금 신고를 보냈어요 · 운영진이 확인하면 「입금 확인」으로 바뀌어요`);return}
   if(b.id==='rpFill'){const n=document.getElementById('rpAllN').value.trim(),dd=document.getElementById('rpAllD').value;S.rpAllN=n;S.rpAllD=dd;const sel=S.rp||[];
     if(!n&&!dd){toast('적용할 입금자명이나 입금일을 적어 주세요');return}unpaidPpl().filter(x=>sel.includes(x.p.id)).forEach(({p})=>{const v=rpv(p);if(n)v.n=n;if(dd)v.d=dd});render();toast(`선택한 ${sel.length}명에게 적용했어요`);return}
@@ -106,7 +106,7 @@
   if(b.id==='ensClear'){ensSave([]);render();toast('시험으로 넣은 앙상블 팀을 지웠어요');return}
   if(d.ensrm){if(S.editNo&&joinedOf(S.editNo).includes(d.ensrm)){toast(d.ensrm+'은(는) 직접 함께 신청한 학원이라 뺄 수 없어요',true);return}S.ens.acads=(S.ens.acads||[]).filter(a=>a!==d.ensrm);render();return}
   if(d.ensmem&&b.matches('input')){S.ens.mem=S.ens.mem||{};S.ens.mem[d.ensmem]=b.checked;render();return}
-  if(b.id==='again'){S.note='';S.picked={};S.extra=[];S.fam=[];S.room={};S.join={};S.info={};S.agree=false;S.ens={on:false};go(2);toast('같은 학원으로 추가 접수를 시작해요');return}
+  if(b.id==='again'){S.note='';S.rnote='';S.rreq={};S.picked={};S.extra=[];S.fam=[];S.room={};S.rreq={};S.rnote="";S.join={};S.info={};S.agree=false;S.ens={on:false};go(2);toast('같은 학원으로 추가 접수를 시작해요');return}
   if(b.id==='restart'){Object.assign(S,{note:'',step:1,verified:false,picked:{},extra:[],fam:[],room:{},join:{},info:{},agree:false,ens:{on:false},verr:''});render();return}
 });
 document.addEventListener('change',e=>{if(e.target.id==='qWhere'){S.qWhere=e.target.value;return}const el=e.target;
@@ -126,7 +126,7 @@ const consEv=e=>{
   if(e.target.dataset&&e.target.dataset.cons){S.cons=S.cons||{};S.cons[e.target.dataset.cons]=e.target.checked;const a=document.getElementById('consAll');if(a)a.checked=consAll();return}
   return true};
 document.addEventListener('change',consEv);
-document.addEventListener('input',e=>{if(e.target.id==='noteMemo')S.note=e.target.value});
+document.addEventListener('input',e=>{if(e.target.id==='noteMemo')S.note=e.target.value;if(e.target.id==='rnoteMemo')S.rnote=e.target.value;if(e.target.dataset&&e.target.dataset.rreq){S.rreq=S.rreq||{};S.rreq[e.target.dataset.rreq]=e.target.value}});
 document.addEventListener('click',e=>{const t=e.target;if(!t)return;
   if(t.id==='cxOpenAll'){S.cxOpen='*';render();return}
   if(t.id==='selEditAll'){const L=MY_SUBS.filter(sb=>(S.cx[sb.no]||[]).length&&sb.form);if(!L.length)return;if(L.length>1)toast('고른 사람을 한 묶음씩 고쳐요. 저장하면 나머지도 이어서 고칠 수 있어요',true);const b=document.createElement('button');b.type='button';b.dataset.seledit=L[0].no;b.hidden=true;document.body.appendChild(b);b.click();b.remove();return}});
@@ -201,7 +201,7 @@ const GD={
  mem:{t:'회원 선생님 접수',q:['접수 방법','어떻게 접수','학생 추가','학생 넣기','신청 방법','접수번호','가족 추가','형제'],h:'<ol><li>「회원 선생님」 → 회원관리 이메일 · 비밀번호로 로그인 → 개인정보 동의</li><li><b>신청할 사람 담기</b>: 본인을 넣고, 「학생 추가」에서 우리 학원 학생을 골라요<br><small>회비 확인이 안 된 학생은 연회비가 함께 청구돼요</small></li><li><b>학생마다</b> 권수(진도)는 꼭 · 추가레슨 · 선호 교수 · 마스터클래스 · 음악회는 원하면</li><li><b>가족 추가</b>: 보호자 · 동반가족 · 15개월 미만 아기, 형제 · 자녀 연결, 필요하면 「가족방 신청」</li><li><b>신청 확인 → 접수</b>: 사람별 금액 · 합계 확인 → 접수번호가 나와요</li></ol><p class="hint">접수한 내용은 「내 접수」에서 언제든 다시 보고 고칠 수 있어요.</p>'},
  lesson:{t:'레슨 · 선호 교수',q:['레슨','선호 교수','교수 선택','교수님','추가 레슨','추가레슨','개인 레슨','마스터클래스','몇 번'],h:()=>'<ul><li><b>기본 교수레슨</b>(30분 1회)은 참가비에 들어 있어요.</li><li><b>추가 개인레슨</b>: 30분에 '+won(CAMP.lessonFee)+', 한 사람 '+CAMP.lessonMax+'회까지.</li><li><b>선호 교수 1 · 2</b>: 추가레슨을 신청하지 않아도 고를 수 있어요. 추가레슨을 신청하면 선호 교수 1은 꼭 골라요. 선호 교수 2는 1을 고른 뒤 열려요.</li><li>선호 교수는 배정에 참고해요. 교수님 일정에 따라 다른 교수님으로 배정될 수 있어요.</li><li><b>마스터클래스</b>: 교수님마다 시간 · 금액이 달라요. 여러 개 신청할 수 있어요.</li></ul>'},
  concert:{t:'음악회 · 음원',q:['음악회','이브닝','오후음악회','트와일라잇','앙상블','음원','유튜브','오디션','곡명','심사'],h:'<ul><li>신청서에서 학생마다 <b>음악회와 곡</b>을 골라요. 오후음악회는 곡명을 쓰지 않으면 참가하지 않는 것으로 봐요.</li><li><b>음원(유튜브 주소)</b>이 필요한 음악회는 「내 접수」나 첫 화면 「음원 먼저 내기」에서 넣어요. 마감일은 화면에 나와요.</li><li>심사 결과는 협회가 공개하면 「내 접수」에 보여요.</li><li><b>앙상블</b>은 대표 학원이 신청하고, 함께하는 학원을 넣어요.</li></ul>'},
- room:{t:'가족방 · 숙소',q:['가족방','숙소','방 배정','몇 명','4인','5인','15개월','아기','방 요청','같은 방','침대'],h:()=>'<ul><li><b>숙소는 5~6인 1실 사용이 기본</b>이에요. 가족이 아니면 5인 1실로 배정해요.</li><li><b>가족방</b>은 신청서에서 <b>가족 추가</b>(보호자 · 동반가족 · 15개월 미만 · 형제 · 자녀)를 한 사람만 신청할 수 있어요. 한 방 '+ROOM.cap+'명까지예요.</li><li>'+ROOM.cap+'명보다 적으면 빈 자리 1개마다 '+won(ROOM.emptyFee)+'이 추가돼요.</li><li>15개월 미만 아기도 가족 추가에 넣어요.</li><li>「어느 학원과 붙여 주세요」 같은 방 요청은 게시판에 남겨 주세요. 본부가 원칙에 따라 배정해요.</li></ul>'},
+ room:{t:'가족방 · 숙소',q:['가족방','숙소','방 배정','몇 명','4인','5인','15개월','아기','방 요청','같은 방','침대'],h:()=>'<ul><li><b>숙소는 5~6인 1실 사용이 기본</b>이에요. 가족이 아니면 5인 1실로 배정해요.</li><li><b>가족방</b>은 신청서에서 <b>가족 추가</b>(보호자 · 동반가족 · 15개월 미만 · 형제 · 자녀)를 한 사람만 신청할 수 있어요. 한 방 '+ROOM.cap+'명까지예요.</li><li>'+ROOM.cap+'명보다 적으면 빈 자리 1개마다 '+won(ROOM.emptyFee)+'이 추가돼요.</li><li>15개월 미만 아기도 가족 추가에 넣어요.</li><li><b>방 요청</b>(「○○학원과 붙여 주세요」 · 「침대방 꼭」 등)은 신청서에 적어요. 가족방은 「가족방 신청」 아래 칸, 학생 · 선생님 방(5인 1실)은 참가 정보 맨 아래 「방 요청 사항」 칸이에요. 나중에 생긴 요청은 게시판 「방 요청」으로 남겨도 돼요.</li><li>「꼭 · 반드시」라고 쓰면 꼭 지킬 요청으로 봐요. 본부가 원칙에 따라 배정해서 다 들어드리지 못할 수 있어요.</li></ul>'},
  head:{t:'원장님',q:['원장','다른 선생님 접수','우리 학원 전체','고칠 수','수정','삭제','권한','학원 전체'],h:'<p>「접수 내역 › 우리 학원 전체」에서 다른 선생님이 낸 접수까지 모두 보여요 (일반 선생님은 보기만).</p><p><b>원장님은 고칠 수 있어요</b>: 「접수 내역 › 우리 학원 전체」 아래 목록에서 다른 선생님이 낸 접수도 체크해서 정보 수정 · 취소를 해요(「접수 교사」 칸에 누가 냈는지 보여요). 「내가 낸 접수」는 원장님이 직접 낸 것만이에요. 접수한 선생님 이름은 그대로 남아요. (회원관리 교사 정보의 직급이 「원장」이어야 해요 · 바뀌면 다시 로그인)</p><ul><li><b>입금 현황</b>: 사람마다 청구 · 입금 · 환불 · 과납 · 미납, 차수별 소계 · 총계, 「엑셀로 받기」</li><li><b>가족방 현황</b> · <b>레슨</b>(그룹 · 개인 · 마스터클래스) · <b>음악회 · 학생 진도</b></li></ul>'},
  guest:{t:'비회원 보호자',q:['비회원','학부모','보호자 접수','학원 안 다니','직접 신청'],h:'<ol><li>「비회원 (학부모)」 → 보호자 이름 · 휴대전화 → 개인정보 동의</li><li>아이 이름 · 출생연도 · 악기 · 권수</li><li>보호자 · 동반가족 · 15개월 미만, 필요하면 가족방 신청</li><li>신청 확인 → 접수 → 입금 → 「입금 신고」</li><li>다음에 볼 때는 같은 이름 · 휴대전화로 들어오면 내 접수가 나와요</li></ol>'},
  staff:{t:'관계자',q:['관계자','초빙교수','반주자','지휘자','통역','스태프'],h:'<ol><li>「관계자」 → 회원관리 <b>관계자</b> 이메일 · 비밀번호로 로그인</li><li>본인 역할을 고르고, 같이 오는 가족이 있으면 넣어요</li><li>접수하면 끝 · 참가비는 역할에 따라 정해져 있어요</li></ol><p class="hint">아직 계정이 없으면 회원관리에서 「관계자」로 먼저 가입해 주세요 (승인 후 로그인).</p>'},
@@ -260,7 +260,7 @@ try{google.script.url.getLocation(l=>{const pr=(l&&l.parameter)||{};if('board' i
 /* 처음 화면: 로그인부터 */
 render();
 /* 소속 고르기 (학원 · 겸임 학원 · 내 클래스) */
-function pickAcad(a){const go=()=>{S.acad=a;S.rq='';S.sel={};S.ptab='교사';S.acQ='';S.acOpen=false;S.picked={};S.extra=[];S.fam=[];S.info={};S.room={};
+function pickAcad(a){const go=()=>{S.acad=a;S.rq='';S.sel={};S.ptab='교사';S.acQ='';S.acOpen=false;S.picked={};S.extra=[];S.fam=[];S.info={};S.room={};S.rreq={};S.rnote="";
     ensureRoster(a);S.verified=true;render()};
     /* 내 소속이 아닌 학원(겸임): 서버에서 그 학원 명단을 받아 옴 — 소속은 그대로 */
     if(S.token&&S.user&&!(S.user.acads||[]).includes(a)){api('addAcad',[a],r=>{const keep=S.user;loadFromServer(r);S.user=keep;S.user.acads=r.acads;go();toast(a+' 명단을 열었어요 · 소속은 그대로예요',true)},null,'명단을 불러오고 있어요…');return}

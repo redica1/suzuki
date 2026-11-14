@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261114-160138 -->
+<!-- build: 20261114-160959 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -1318,7 +1318,7 @@ function famRooms(){const L=[];(S.D.subs||[]).forEach(sb=>{const f=sb.form||{},r
     const mem=[...heads.map(h=>{const p=P(h);return {name:p.name,t:h===k?'대표':'형제·자녀'}}),...fm.map(x=>({name:(P(x.id)||{}).name||x.name,t:({'회원의 첫번째 보호자':'보호자','비회원 보호자':'보호자','동반가족 중 15개월 미만':'15개월 미만','비회원 15개월 미만':'15개월 미만'})[x.type]||'동반가족'}))];
     const ids=[...heads,...fm.map(x=>x.id)].map(x=>P(x)).filter(Boolean);const due=ids.reduce((t,p)=>t+pAmt(p)-(+p.paidAmt||0),0);
     const rs=(R?R.rooms:[]).filter(r=>(r.occ||[]).some(o=>o.k==='fam'&&o.no===sb.no&&o.v.startsWith(rep.name))||(/가족방/.test(r.kind)&&(r.pw.includes(rep.name)||r.memo.includes(rep.name))));
-    L.push({sb,rep,mem,n:mem.length,fee:+rep.room||0,paid:ids.every(p=>(+p.paidAmt||0)>0&&pAmt(p)-(+p.paidAmt||0)<=0),due,rs,req:(S.D.issues||[]).filter(x=>ROOM_REQ.includes(x.where)&&(x.name===sb.owner||x.acad===sb.acad)).length})})});
+    L.push({sb,rep,mem,rq:((f.rreq||{})[k])||'',n:mem.length,fee:+rep.room||0,paid:ids.every(p=>(+p.paidAmt||0)>0&&pAmt(p)-(+p.paidAmt||0)<=0),due,rs,req:(S.D.issues||[]).filter(x=>ROOM_REQ.includes(x.where)&&(x.name===sb.owner||x.acad===sb.acad)).length})})});
   return L.sort((a,b)=>a.sb.acad.localeCompare(b.sb.acad,'ko')||a.rep.name.localeCompare(b.rep.name,'ko'))}
 function vFam(head){const L=famRooms(),q=(A.fq||'').trim(),cap=(S.D.camp&&S.D.camp.opt&&+S.D.camp.opt.roomCap)||4;
   const show=L.filter(x=>(!q||[x.sb.acad,x.sb.owner,x.rep.name,...x.mem.map(m=>m.name)].some(v=>String(v).includes(q)))&&(A.ff!=='none'||!x.rs.length));
@@ -1332,16 +1332,30 @@ function vFam(head){const L=famRooms(),q=(A.fq||'').trim(),cap=(S.D.camp&&S.D.ca
     <td style="white-space:normal">${x.mem.map(m=>`${esc(m.name)} <small class="faint">${m.t}</small>`).join(', ')}</td><td class="r num"${x.n>cap?' style="color:var(--bad)"':''}>${x.n}</td><td class="r num">${x.fee?won(x.fee):'-'}</td>
     <td>${x.paid?'<span class="pill ok">입금 확인</span>':`<span class="pill due">남은 ${won(x.due)}</span>`}</td>
     <td>${x.rs.map(r=>`<button class="btn small" type="button" data-rgo="${esc(r.no)}">${esc(r.no)} ${esc(r.kind)}</button>`).join(' ')||'<span class="hint">미정</span>'}</td>
-    <td>${x.req?`<button class="btn small" type="button" data-rv="freq">${x.req}건</button>`:''}</td></tr>`).join('')||'<tr><td colspan="9" class="hint">해당하는 가족방 신청이 없어요.</td></tr>'}
+    <td>${x.rq?`<div style="white-space:normal;max-width:260px;text-align:left">${reqChips(x.rq)} <small>${esc(x.rq)}</small></div>`:''}${x.req?`<button class="btn small" type="button" data-rv="freq">게시판 ${x.req}건</button>`:''}</td></tr>`).join('')||'<tr><td colspan="9" class="hint">해당하는 가족방 신청이 없어요.</td></tr>'}
   </tbody></table></div></div>`}
 const ST_LBL={'미해결':'미처리','해결 중':'처리 중','해결':'처리 완료'};
+/* 방 요청 모으기 · 꼬리표 (11-14): 신청서(일반 방 rnote · 가족방 rreq) + 게시판 「방 요청」 글을 한곳에.
+   꼬리표는 글에서 낱말로 찾음 — 「꼭 · 반드시 · 필수 · 무조건」이면 반드시, 아니면 되면 좋음. 글에 나온 학원 이름은 「누구와」로 */
+const REQ_TAGS=[['붙여 주세요',/붙여|붙게|같은 ?층|옆 ?방|가까|근처|함께|같이|나란히/],['침대방',/침대/],['온돌 · 바닥방',/온돌|바닥/],['낮은 층 · 엘리베이터',/낮은 ?층|저층|1층|엘리베이터|계단/],['성별',/남학생|여학생|남자|여자|성별|남아|여아/],['아기 · 유아',/아기|유아|영아|유모차|15개월|아이 ?침대/],['건강 · 돌봄',/다리|휠체어|알레르기|아파|건강|임신|임산|수술|깁스/],['조용한 방',/조용|소음|시끄/],['인원 · 방 크기',/인실|명이|큰 ?방|작은 ?방|넓은/]];
+function reqTags(t){t=String(t||'');const must=/꼭|반드시|필수|무조건|제발/.test(t),acads=[...new Set((S.D.subs||[]).map(sb=>sb.acad))].filter(a=>{if(!a)return false;const c=a.replace(/스즈키|음악학원|음악교실|학원|교실/g,'').trim();return (c.length>=2&&t.includes(c))||t.includes(a)});
+  return {must,tags:REQ_TAGS.filter(x=>x[1].test(t)).map(x=>x[0]),acads}}
+function reqChips(t){const r=reqTags(t);return `<span class="pill ${r.must?'due':'mute'}">${r.must?'반드시':'되면 좋음'}</span> ${r.tags.map(x=>`<span class="pill new">${esc(x)}</span>`).join(' ')}${r.acads.length?` <span class="pill ok">누구와: ${r.acads.map(esc).join(', ')}</span>`:''}`}
+function formReqs(){const L=[];(S.D.subs||[]).forEach(sb=>{if(!sb.ppl.some(p=>p.status!=='취소'))return;const f=sb.form||{};
+  if(f.rnote)L.push({src:'신청서 · 일반 방',sb,who:sb.owner,text:f.rnote,n:sb.ppl.filter(p=>p.status!=='취소').length});
+  Object.keys(f.rreq||{}).forEach(k=>{if(!(f.room||{})[k])return;const p=sb.ppl.find(q=>q.id===sb.no+'_'+k);if(!p||p.status==='취소')return;L.push({src:'신청서 · 가족방',sb,who:p.name+' 가족',text:f.rreq[k]})})});
+  return L.sort((a,b)=>a.sb.acad.localeCompare(b.sb.acad,'ko'))}
 function vFreq(head){const all=(S.D.issues||[]).filter(x=>ROOM_REQ.includes(x.where)).slice().reverse(),f=A.qf||'open';
   const L=all.filter(x=>f==='all'||(f==='open'?x.state!=='해결':x.state===f));const pill=st=>st==='해결'?'<span class="pill ok">처리 완료</span>':st==='해결 중'?'<span class="pill new">처리 중</span>':'<span class="pill due">미처리</span>';
-  const fams=famRooms();
-  return `<div class="act">${head}<div class="panel"><div class="spread"><div class="row" style="gap:6px">${[['open','안 끝난 것 '+all.filter(x=>x.state!=='해결').length],['해결 중','처리 중 '+all.filter(x=>x.state==='해결 중').length],['all','전체 '+all.length],['해결','처리 완료']].map(([k,l])=>`<button class="btn small ${f===k?'primary':''}" type="button" data-rqf="${k}">${l}</button>`).join('')}</div></div>
+  const fams=famRooms(),FR=formReqs(),tg={};[...FR.map(x=>x.text),...all.map(x=>x.text)].forEach(t=>{const r=reqTags(t);r.tags.forEach(k=>tg[k]=(tg[k]||0)+1);if(r.must)tg['반드시']=(tg['반드시']||0)+1});
+  const formBox=`<div class="panel"><div class="spread"><h3 style="margin:0">신청서에 적은 방 요청 <span class="hint">${FR.length}건 · 일반 방 ${FR.filter(x=>x.src==='신청서 · 일반 방').length} · 가족방 ${FR.filter(x=>x.src==='신청서 · 가족방').length}</span></h3></div>
+    ${Object.keys(tg).length?`<p class="hint" style="margin:6px 0">꼬리표 모아 보기 (신청서 + 게시판): ${Object.entries(tg).sort((a,b)=>b[1]-a[1]).map(([k,n])=>`<span class="pill ${k==='반드시'?'due':'new'}">${esc(k)} ${n}</span>`).join(' ')}</p>`:''}
+    ${FR.length?`<div class="mtblw"><table class="mtbl"><thead><tr><th>출처</th><th>학원</th><th>누구</th><th>꼬리표</th><th>요청 글</th></tr></thead><tbody>${FR.map(x=>`<tr><td>${esc(x.src.replace('신청서 · ',''))}</td><td>${esc(x.sb.acad)}</td><td>${esc(x.who)}${x.n?` <small class="faint">${x.n}명</small>`:''}<br><small class="faint">${esc(x.sb.owner)} · ${esc(x.sb.no)}</small></td><td style="white-space:normal;text-align:left">${reqChips(x.text)}</td><td style="white-space:pre-wrap;text-align:left;min-width:220px">${esc(x.text)}</td></tr>`).join('')}</tbody></table></div>`:'<p class="hint" style="margin:0">아직 신청서에 적은 방 요청이 없어요.</p>'}
+    <p class="hint" style="margin:6px 0 0">꼬리표는 글에서 낱말로 찾아 붙여요 (「꼭 · 반드시」가 있으면 <b>반드시</b>, 없으면 <b>되면 좋음</b>). 글에 나온 학원 이름은 「누구와」로 보여요.</p></div>`;
+  return `<div class="act">${head}${formBox}<h3 style="margin:14px 0 6px">게시판 방 요청</h3><div class="panel"><div class="spread"><div class="row" style="gap:6px">${[['open','안 끝난 것 '+all.filter(x=>x.state!=='해결').length],['해결 중','처리 중 '+all.filter(x=>x.state==='해결 중').length],['all','전체 '+all.length],['해결','처리 완료']].map(([k,l])=>`<button class="btn small ${f===k?'primary':''}" type="button" data-rqf="${k}">${l}</button>`).join('')}</div></div>
     <span class="hint">선생님 · 보호자가 「게시판」에서 분류를 「방 요청」이나 「가족방 요청」으로 골라 올린 글이에요. 처리 상태와 답을 저장하면 올린 분 화면에 보여요 (게시판 메뉴에도 같이 보여요).</span></div>
   ${L.map(x=>{const fm=fams.filter(y=>y.sb.owner===x.name);return `<div class="panel" style="display:grid;gap:8px"><div class="spread"><span><b class="num">${esc(x.no)}</b> · <span class="pill mute">${esc(x.where)}</span> · ${esc(String(x.at).slice(5,16))} · <b>${esc(x.name)}</b>${x.p4?` <small class="faint">(…${esc(x.p4)})</small>`:''} · ${esc(x.acad)}</span>${pill(x.state)}</div>
-    <div style="white-space:pre-wrap">${esc(x.text)}</div>${x.pic?`<a href="${esc(x.pic)}" target="_blank" rel="noopener">사진 보기</a>`:''}
+    <div>${reqChips(x.text)}</div><div style="white-space:pre-wrap">${esc(x.text)}</div>${x.pic?`<a href="${esc(x.pic)}" target="_blank" rel="noopener">사진 보기</a>`:''}
     ${fm.length?`<div class="hint">이분의 가족방: ${fm.map(y=>`${esc(y.rep.name)} 가족 ${y.n}명 · ${y.rs.length?y.rs.map(r=>esc(r.no)).join(', '):'방 미정'}`).join(' / ')}</div>`:''}
     <div class="row" style="gap:8px;align-items:flex-start;flex-wrap:wrap"><select id="qs_${x.row}">${['미해결','해결 중','해결'].map(o=>`<option value="${o}" ${o===x.state?'selected':''}>${ST_LBL[o]}</option>`).join('')}</select>
       <textarea id="qr_${x.row}" rows="2" style="flex:1;min-width:220px" placeholder="올린 분께 보일 답변">${esc(x.reply)}</textarea><button class="btn small primary" type="button" data-qsave="${x.row}">저장</button></div>
@@ -4437,6 +4451,6 @@ document.addEventListener('click',e=>{if(S.tab!=='book')return;const b=e.target.
   if(b.id==='ebSetSave'){const n=Object.assign(ebSet(),S.ebSetW||{});n.per=Math.max(1,Math.min(10,Math.round(+n.per||5)));n.fs=Math.max(5,Math.min(10,+n.fs||6.6));['en','sub','org'].forEach(k=>n[k]=String(n[k]||'').trim().slice(0,120));
     ebSend([],[],n,()=>{S.ebSetW=null;toast('책자 설정을 저장했어요')});return}},true);
 </script>
-<div id="bldMark" hidden>빌드표시 20261114-160138 </div>
+<div id="bldMark" hidden>빌드표시 20261114-160959 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();</script>
 </body></html>

@@ -1,4 +1,4 @@
-${''/* build: 20261114-160138 */}
+${''/* build: 20261114-160959 */}
     ${S.extra.length?`<div class="xhead">명단에 없어 추가한 학생 ${S.extra.length}명 <span class="hint">체크한 학생만 접수돼요 · 연회비 30,000원이 함께 청구돼요 · 「빼기」는 목록에서 지워요</span></div><ul class="roster">${S.extra.map(s=>`<li><input type="checkbox" id="xk_${s.id}" ${s.on!==false?'checked':''} data-xon="${s.id}" aria-label="${esc(s.name)} 선택"><label class="who" for="xk_${s.id}"><b>${esc(s.name)} <span class="kind ks">학생</span></b><small>${age(s.birth)}세 · ${s.inst} · 담당 ${esc(s.teacher)}</small></label><span class="row" style="flex-wrap:nowrap"><span class="pill new">신규 추가</span><button class="btn small ghost" type="button" data-rmx="${s.id}">빼기</button></span></li>`).join('')}</ul>`:''}
     ${S.showNew?`<div class="adder"><b>명단에 없는 학생 추가</b>
       <p class="hint">늦게 들어온 학생은 여기서 추가하고 연회비 30,000원을 캠프비와 함께 입금해 주세요. 운영진이 확인하면 정식 접수돼요.</p>
@@ -86,9 +86,11 @@ function vStep3(){
   ${teams().some(x=>x.over)?`<div class="note">가족방은 한 방에 ${ROOM.cap}명까지예요: ${teams().filter(x=>x.over).map(x=>`${esc(x.rep.name)} 가족 ${x.n}명`).join(', ')}</div>`:''}
   ${S.editOnly?`<div class="note info spread"><span><b>${S.editOnly.length}명만 고치는 중</b> · ${ps.filter(p=>S.editOnly.includes(p.key)).map(p=>esc(p.name)).join(', ')}</span><button class="btn small ghost" type="button" id="showAllCards">모두 보기</button></div>`:''}
   ${ps.filter(p=>p.kind!=='family'&&(!S.editOnly||S.editOnly.includes(p.key))).map(pCard).join('')}
-  ${isStaffAcad()?redBox():''}
+  ${isStaffAcad()?redBox():rnoteBox()}
   </section>`;
 }
+/* 일반 방 요청 (11-14): 가족방이 아닌 사람들의 방 (5인 1실) — 학원 단위로 한 칸 */
+function rnoteBox(){return `<div class="panel"><label class="f" for="rnoteMemo" style="margin:0">방 요청 사항 <span class="opt">선택</span><textarea id="rnoteMemo" maxlength="300" rows="2" placeholder="예) ○○학원과 같은 층으로 붙여 주세요 · 침대방 꼭 · 남학생끼리">${esc(S.rnote||'')}</textarea><small class="hint">가족방이 아닌 학생 · 선생님 방(5인 1실) 요청이에요. 가족방 요청은 가족방 신청 칸 아래에 써요. 「꼭 · 반드시」라고 쓰면 꼭 지킬 요청으로 봐요.</small></label></div>`}
 function redBox(){return `<div class="panel"><label class="f" for="noteMemo" style="margin:0">운영진에게 남길 말 <span class="opt">선택</span><input type="text" id="noteMemo" value="${esc(S.note||'')}" maxlength="100" placeholder="예: 아내 · 아이 동반, 가족방 사용"></label></div>`}
 const ENS_KEY='sz-ens-27w';
 function ensTeams(){return ENS}

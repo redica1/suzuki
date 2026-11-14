@@ -1,4 +1,4 @@
-/* build: 20261114-160138 */
+/* build: 20261114-160959 */
   if(S.ttDay==null){const td=ttToday(days);S.ttDay=td!=null?td:(mine.length?Math.min(...mine.map(x=>x.d)):0)}
   if(tab==='me')return head+seg+(T.prof?`<p class="hint" style="margin:0 0 6px">교수 · 레슨실 <b>${esc(T.prof.room||'미정')}</b></p>`:'')+ttMineList(T,days,mine)+'</section>';
   const AC=S.user.acads||[];if(S.ttAcad&&!AC.includes(S.ttAcad))S.ttAcad='';
@@ -96,7 +96,7 @@ function warnMissing(){const {L,el}=missWhat();beep();try{navigator.vibrate&&nav
   const tt=document.getElementById('toast');toast(m,true);clearTimeout(toast.t);toast.t=setTimeout(()=>tt.hidden=true,4500)}
 /* 접수 고치기 시작: only=null 이면 사람 추가(2단계), 사람 키 목록이면 그 사람들만 정보 수정(3단계) */
 function startEdit(no,only){const sb=MY_SUBS.find(x=>x.no===no);const f=JSON.parse(JSON.stringify(sb.form));S.acad=sb.acad;ensureRoster(sb.acad);S.verified=true;
-  Object.assign(S,{picked:f.picked,extra:f.extra,fam:f.fam,info:f.info,room:f.room,join:f.join||{},ens:f.ens||{on:false},note:f.note||'',agree:false,sel:{},cartAt:{}});
+  Object.assign(S,{picked:f.picked,extra:f.extra,fam:f.fam,info:f.info,room:f.room,join:f.join||{},ens:f.ens||{on:false},note:f.note||'',rreq:Object.assign({},f.rreq||{}),rnote:f.rnote||'',agree:false,sel:{},cartAt:{}});
   sb.ppl.forEach(p=>{if(p.status==='취소'){const k=p.id.slice(sb.no.length+1);delete S.picked[k];S.fam=S.fam.filter(x=>x.id!==k);S.extra=S.extra.filter(x=>x.id!==k)}});
   S.riBack=CAMP.ri;if(f.ri!==undefined)CAMP.ri=f.ri;S.editNo=sb.no;S.editOnly=only;S.cx={};S.cxOpen='';S.view='form';
   try{S.editBaseAmt={};makeSub(sb.no).ppl.forEach(p=>S.editBaseAmt[p.id]=pAmt(p))}catch(e){S.editBaseAmt=null}

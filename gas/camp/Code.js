@@ -1,4 +1,4 @@
-/* build: 20261114-160138 */
+/* build: 20261114-160959 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -788,6 +788,10 @@ function writeTeams_(all) {
 function recalc_(sb) {
   const M = RC_MEMO || {}, CC = camp_(), FEES = CC.fees, OPT = CC.opt, ADJ = M.adj || adjMap_();
   if (sb.form) { delete sb.form.red; if (sb.form.note != null) sb.form.note = String(sb.form.note || '').trim().slice(0, 100) || null; }
+  if (sb.form) {   /* 방 요청 (11-14): 일반 방 rnote · 가족방 rreq[대표] — 글자 수만 자름 */
+    const F = sb.form; if (F.rnote != null) F.rnote = String(F.rnote || '').trim().slice(0, 300) || null;
+    if (F.rreq && typeof F.rreq === 'object') { const o = {}; Object.keys(F.rreq).slice(0, 30).forEach(k => { const v = String(F.rreq[k] || '').trim().slice(0, 300); if (v) o[String(k).slice(0, 40)] = v; }); F.rreq = Object.keys(o).length ? o : null; } else if (F.rreq != null) F.rreq = null;
+  }
   const f = sb.form || {}, info = f.info || {}, ri = Math.max(0, Math.min(CC.rounds.length - 1, +f.ri || 0));
   sb.round = CC.rounds[ri].n;
   const guest = sb.acad === GUEST_ACAD;   // 비회원: 연회비 없음 · 비회원 참가비

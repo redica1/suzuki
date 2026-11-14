@@ -1,4 +1,4 @@
-/* build: 20261114-160138 */
+/* build: 20261114-160959 */
 function vAuthPick(){const off=!!CAMP.pre;return gdBtn()+apDoor()+`<section class="sec"><h2>접수 시작</h2>
   ${off?`<p class="note warn" style="margin:6px 0 12px"><b>${+CAMP.pre.slice(5,7)}월 ${+CAMP.pre.slice(8,10)}일에 접수가 열려요.</b> 그 전에 아래에서 회원가입을 마쳐 두세요.</p>`:'<p class="lede">어떻게 접수하시나요?</p>'}
   <div class="pick2${off?' pickoff':''}"${off?' aria-disabled="true"':''}>
@@ -85,19 +85,19 @@ function vGuestStep2(){const t=totals();
   </section>`}
 function doMemberLogin(nm,ph){busy(true,'들어가고 있어요…');google.script.run.withSuccessHandler(r=>{busy(false);if(!r.ok){S.verr=r.msg;if(S.auth==='consent'&&!/동의/.test(r.msg))S.auth='login';render();return}
       S.token=r.token;S.today=r.today;S.myAcct=r.myAcct||null;loadFromServer(r);login({...r.teacher,acads:r.teacher.acads});
-      if(!MY_SUBS.length&&r.teacher.acads.length===1){const a=r.teacher.acads[0];S.acad=a;S.rq='';S.sel={};S.ptab='교사';S.picked={};S.extra=[];S.fam=[];S.info={};S.room={};ensureRoster(a);S.verified=true;render()}})
+      if(!MY_SUBS.length&&r.teacher.acads.length===1){const a=r.teacher.acads[0];S.acad=a;S.rq='';S.sel={};S.ptab='교사';S.picked={};S.extra=[];S.fam=[];S.info={};S.room={};S.rreq={};S.rnote="";ensureRoster(a);S.verified=true;render()}})
       .withFailureHandler(e=>{busy(false);S.verr='연결이 잠시 안 돼요. 다시 눌러 주세요. ('+((e&&e.message)||e)+')';render()}).login(nm,ph,S.cons||{})}
 function doTestLogin(nm){busy(true,'들어가고 있어요…');google.script.run.withSuccessHandler(r=>{busy(false);if(!r.ok){S.verr=r.msg;render();return}
       S.token=r.token;S.today=r.today;S.myAcct=r.myAcct||null;loadFromServer(r);login({...r.teacher,acads:r.teacher.acads});
-      if(!MY_SUBS.length&&r.teacher.acads.length===1){const a=r.teacher.acads[0];S.acad=a;S.rq='';S.sel={};S.ptab='교사';S.picked={};S.extra=[];S.fam=[];S.info={};S.room={};ensureRoster(a);S.verified=true;render()}})
+      if(!MY_SUBS.length&&r.teacher.acads.length===1){const a=r.teacher.acads[0];S.acad=a;S.rq='';S.sel={};S.ptab='교사';S.picked={};S.extra=[];S.fam=[];S.info={};S.room={};S.rreq={};S.rnote="";ensureRoster(a);S.verified=true;render()}})
       .withFailureHandler(e=>{busy(false);S.verr='연결이 잠시 안 돼요. 다시 눌러 주세요. ('+((e&&e.message)||e)+')';render()}).testLogin(nm,S.cons||{})}
 function doMemberLoginPw(em,pw){busy(true,'들어가고 있어요…');google.script.run.withSuccessHandler(r=>{busy(false);if(!r.ok){S.verr=r.msg;if(S.auth==='consent'&&!/동의/.test(r.msg))S.auth='login';render();return}
       S.token=r.token;S.today=r.today;S.myAcct=r.myAcct||null;loadFromServer(r);login({...r.teacher,acads:r.teacher.acads});
-      if(!MY_SUBS.length&&r.teacher.acads.length===1){const a=r.teacher.acads[0];S.acad=a;S.rq='';S.sel={};S.ptab='교사';S.picked={};S.extra=[];S.fam=[];S.info={};S.room={};ensureRoster(a);S.verified=true;render()}})
+      if(!MY_SUBS.length&&r.teacher.acads.length===1){const a=r.teacher.acads[0];S.acad=a;S.rq='';S.sel={};S.ptab='교사';S.picked={};S.extra=[];S.fam=[];S.info={};S.room={};S.rreq={};S.rnote="";ensureRoster(a);S.verified=true;render()}})
       .withFailureHandler(e=>{busy(false);S.verr='연결이 잠시 안 돼요. 다시 눌러 주세요. ('+((e&&e.message)||e)+')';render()}).loginPw(em,pw,S.cons||{},S.mode==='staff')}
 function doGuestLogin(nm,ph){busy(true,'들어가고 있어요…');google.script.run.withSuccessHandler(r=>{busy(false);if(!r.ok){S.verr=r.msg;if(S.auth==='consent'&&!/동의/.test(r.msg))S.auth='guest';render();return}
       S.token=r.token;S.today=r.today;S.myAcct=r.myAcct||null;loadFromServer(r);login({...r.teacher});
-      if(!MY_SUBS.length){S.acad=GUEST_ACAD;S.rq='';S.sel={};S.picked={};S.extra=[];S.fam=[];S.info={};S.room={};ensureRoster(GUEST_ACAD);S.verified=true;render()}})
+      if(!MY_SUBS.length){S.acad=GUEST_ACAD;S.rq='';S.sel={};S.picked={};S.extra=[];S.fam=[];S.info={};S.room={};S.rreq={};S.rnote="";ensureRoster(GUEST_ACAD);S.verified=true;render()}})
       .withFailureHandler(e=>{busy(false);S.verr='연결이 잠시 안 돼요. 다시 눌러 주세요. ('+((e&&e.message)||e)+')';render()}).guestLogin(nm,ph,S.cons||{})}
 function renderSteps(){
   if(!S.user){const PRE=['접수 종류 선택',S.mode==='guest'?'보호자 확인':'본인 확인','개인정보 동의'],cur=S.auth==='pick'?1:S.auth==='consent'?3:2;
@@ -209,6 +209,7 @@ function roomRow(key,name){
   <label class="roomck" for="rm_${key}"><input type="checkbox" id="rm_${key}" data-roomck="${key}" ${S.room[key]?'checked':''}>
     <span><b>가족방 신청</b> · ${n}명${sibs.length?` (${isT?'자녀':'형제'} ${sibs.length}명 포함)`:''}${n>ROOM.cap?` <span style="color:var(--bad)">(한 방은 ${ROOM.cap}명까지)</span>`:''}</span>
     <span class="num">${!fee?'추가 비용 없음':S.room[key]?`<span class="pill ok">청구에 +${won(fee)}</span>`:`신청하면 +${won(fee)}`}</span></label>
+  ${S.room[key]?`<label class="f" for="rq_${key}" style="margin:6px 0 0">가족방 요청 사항 <span class="opt">선택</span><textarea id="rq_${key}" data-rreq="${key}" maxlength="300" rows="2" placeholder="예) ○○학원 가족과 가까운 방 · 침대방 꼭 · 낮은 층 · 아기 침대 필요">${esc((S.rreq||{})[key]||'')}</textarea><small class="hint">「꼭 · 반드시」라고 쓰면 꼭 지킬 요청으로 봐요. 다 들어드리지 못할 수 있어요.</small></label>`:''}
   <p class="hint" style="margin:0">가족방은 ${ROOM.cap}명 한 방 기준이에요. 빈 자리 1개마다 ${won(ROOM.emptyFee)}이 더해져요 (${ROOM.cap}명이면 추가 비용 없음).</p>`;
 }
 /* 가족 추가 버튼 + 형제 고르기 (형제는 같은 학원, 먼저 신청 명단에 추가되어 있어야 함) */

@@ -1,4 +1,4 @@
-/* build: 20261115-015331 */
+/* build: 20261115-015718 */
 /* 공통 화면 라이브러리 — 원본은 gas/common/UiLib.html 하나. 고칠 때는 원본만 고치고 python3 -I gas/common/sync.py 로 각 앱 폴더에 복사
  * 캠프 · 회원관리 화면이 같이 씀. 페이지에서 먼저 var UI_KEY='camp' 처럼 저장 이름 앞글자를 정함
  * 4) 프로그램표 UI.grid · 칸 팝업 UI.gridDet  5) 이름 · 비밀번호 기억하기 svBox · svSet · svId · svPw
@@ -19,9 +19,10 @@ function colwApply(){document.querySelectorAll(UI_SEL).forEach(t=>{const ths=[..
 function colFit(t,ths,W){const n=W.length,need=W.map(()=>0),hard=W.map(()=>false);
   t.querySelectorAll('tbody tr,tfoot tr').forEach(tr=>{let c=0;[...tr.children].forEach(td=>{const sp=+td.colSpan||1,foot=!!td.closest('tfoot');
     if(sp===1&&c<n&&(foot||td.classList.contains('num')||td.classList.contains('r')||td.querySelector('.num'))){const over=td.scrollWidth-td.clientWidth;hard[c]=true;need[c]=Math.max(need[c],W[c]+(over>0?over+4:0))}c+=sp})});
-  let ch=false;const V=W.map((w,i)=>{if(need[i]>w){ch=true;return Math.ceil(need[i])}return w});
+  let ch=false;const V=W.map((w,i)=>{if(need[i]>w){ch=true;return Math.ceil(need[i])}return w});const hasW=W.map(()=>0);
+  t.querySelectorAll('tbody tr,tfoot tr').forEach(tr=>{let c=0;[...tr.children].forEach(td=>{const sp=+td.colSpan||1;if(sp===1&&c<n&&hard[c]&&td.offsetParent){const cs=getComputedStyle(td),rg=document.createRange();rg.selectNodeContents(td);hasW[c]=Math.max(hasW[c],Math.ceil(rg.getBoundingClientRect().width+parseFloat(cs.paddingLeft)+parseFloat(cs.paddingRight)+4))}c+=sp})});
   const box=t.closest('.mtblw')||t.parentElement,cw=box?box.clientWidth:0,tot=V.reduce((a,b)=>a+b,0);
-  if(cw>200&&tot>cw){let ex=tot-cw;const sl=V.map((w,i)=>hard[i]?0:Math.max(0,w-48)),S=sl.reduce((a,b)=>a+b,0);if(S>0){const k=Math.min(1,ex/S);for(let i=0;i<n;i++)if(sl[i])V[i]=Math.round(V[i]-sl[i]*k);ch=true}}
+  if(cw>200&&tot>cw){let ex=tot-cw;const sl=V.map((w,i)=>hard[i]?Math.max(0,w-Math.max(hasW[i],36)):Math.max(0,w-40)),S=sl.reduce((a,b)=>a+b,0);if(S>0){const k=Math.min(1,ex/S);for(let i=0;i<n;i++)if(sl[i])V[i]=Math.round(V[i]-sl[i]*k);ch=true}}
   return ch?V:null}
 new MutationObserver(()=>{clearTimeout(colwApply.t);colwApply.t=setTimeout(colwApply,30)}).observe(document.body,{childList:true,subtree:true});
 document.addEventListener('pointerdown',e=>{const h=e.target.closest&&e.target.closest('.colrz');if(!h)return;e.preventDefault();e.stopPropagation();
@@ -50,7 +51,7 @@ function tblApply(t,st){const tb=t.tBodies[0];if(!tb)return;const rows=[...tb.ro
     
     const r=(x.n!=null&&y.n!=null)?x.n-y.n:(x.n!=null?-1:y.n!=null?1:String(x.s).localeCompare(String(y.s),'ko',{numeric:true}));return d*r});rows.forEach(r=>tb.appendChild(r))}
   const q=String(st.q||'').replace(/\s+/g,'').toLowerCase();let n=0;rows.forEach(r=>{const ok=!q||rval(r).replace(/\s+/g,'').toLowerCase().includes(q);r.style.display=ok?'':'none';if(ok)n++});
-  const c0=(t.closest('.mtblw'+(window.UI_DOCK?','+window.UI_DOCK:''))||t).previousElementSibling,c=c0&&(c0.classList.contains('tfind')?c0:c0.querySelector('.tfindslot>.tfind'));if(c){const m=c.querySelector('.tfn');if(m)m.textContent=q?n+'건':''}
+  const c0=(t.closest('.mtblw'+(window.UI_DOCK?','+window.UI_DOCK:''))||t).previousElementSibling,c=c0&&(c0.classList.contains('tfind')?c0:c0.querySelector('.tfindslot>.tfind'));if(c){const m=c.querySelector('.tfn');if(m){m.textContent=q?n+'건':'';if(q&&!n&&typeof window.UI_FIND_MISS==='function'){const h=window.UI_FIND_MISS(String(st.q||'').trim(),t);if(h){const e=document.createElement('span');e.className='tfmiss';e.innerHTML=' '+h;m.appendChild(e)}}}}
   t.querySelectorAll('thead th').forEach((th,j)=>{const a=th.querySelector('.sarr');if(a)a.textContent=st.s&&st.s.i===j?(st.s.d>0?' ▲':' ▼'):''})}
 function tblEnhance(){document.querySelectorAll(UI_SEL.split(',').map(x=>x.trim()+':not(.nosort):not([data-enh])').join(',')).forEach((t,_)=>{t.dataset.enh='1';
   const all=[...document.querySelectorAll(UI_SEL.split(',').map(x=>x.trim()+':not(.nosort)').join(','))],k=tkey(t,all.indexOf(t)),st=TBLS[k]||(TBLS[k]={q:'',s:null});

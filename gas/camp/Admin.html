@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261114-235621 -->
+<!-- build: 20261115-000206 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -367,7 +367,10 @@ function render(){if(S.tab==='doc'&&window.UI&&UI.docEd&&UI.docEd.on())return;/*
   /* 지금 묶음에 2단이 없으면 빈칸으로 → 줄이 안 보임 */
   document.getElementById('tabs2').classList.toggle('none',!document.querySelector('#tabs2 .grp:not([hidden])'));hdrH();
   const ro=RO();app.classList.toggle('ro',ro);
+  /* 다시 그려도 가로 스크롤 자리 그대로 (11-15: 담당자 표에서 고르면 맨 앞으로 가던 것) */
+  const XS=S._xsTab===S.tab?[...app.querySelectorAll('.mtblw,.tbl')].map(e=>e.scrollLeft):[];
   app.innerHTML=(ro?`<div class="robar">보기만 할 수 있는 메뉴예요 · 바꿔도 저장되지 않아요 (총관리자에게 「편집」 권한을 받으면 저장돼요)</div>`:'')+{home:vHome,subs:vSubs,rp:vRp,cx:vCx,ens:vEns,prof:vProf,act:()=>ACT.view(),tt:()=>LES.view(),room:()=>ROOM.view(),con:vCon,mcs:()=>vMcs(),meal:()=>vMeal(),book:()=>vEbk(),stat:vStat,q:vQ,ntc:vNtc,camp:vCamp,doc:vDoc,aud:vAud,staff:vStaff,cons:vCons,schol:vSchol,mem:vMem,bplan:()=>BUD.view('plan'),bset:()=>BUD.view('set')}[S.tab]();
+  if(XS.some(x=>x))app.querySelectorAll('.mtblw,.tbl').forEach((e,i)=>{if(XS[i])e.scrollLeft=XS[i]});S._xsTab=S.tab;
   if(S.tab==='stat'||S.tab==='home')reSort();
   if(document.getElementById('docPrev'))setTimeout(dCut,0);
 }
@@ -4461,6 +4464,6 @@ document.addEventListener('click',e=>{if(S.tab!=='book')return;const b=e.target.
   if(b.id==='ebSetSave'){const n=Object.assign(ebSet(),S.ebSetW||{});n.per=Math.max(1,Math.min(10,Math.round(+n.per||5)));n.fs=Math.max(5,Math.min(10,+n.fs||6.6));['en','sub','org'].forEach(k=>n[k]=String(n[k]||'').trim().slice(0,120));
     ebSend([],[],n,()=>{S.ebSetW=null;toast('책자 설정을 저장했어요')});return}},true);
 </script>
-<div id="bldMark" hidden>빌드표시 20261114-235621 </div>
+<div id="bldMark" hidden>빌드표시 20261115-000206 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();</script>
 </body></html>

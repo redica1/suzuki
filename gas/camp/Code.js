@@ -1,4 +1,4 @@
-/* build: 20261115-005621 */
+/* build: 20261115-010220 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -736,7 +736,7 @@ function parentClean_(d) {
   d = d || {}; const t = (v, n) => String(v == null ? '' : v).replace(/[\r|]/g, ' ').trim().slice(0, n);
   const yr = v => { const y = String(v || '').replace(/\D/g, '').slice(0, 6); return y; };
   const g = v => (v === '남' || v === '여') ? v : '';
-  const kids = (Array.isArray(d.kids) ? d.kids : []).slice(0, 8).map(x => { const a = parseInt(String(x.age == null ? '' : x.age).replace(/\D/g, ''), 10); return { name: t(x.name, 20), inst: t(x.inst, 10), age: a >= 0 && a <= 30 ? a : '', go: ['간다', '안 간다', '모름'].includes(x.go) ? x.go : '간다' }; }).filter(x => x.name);
+  const kids = (Array.isArray(d.kids) ? d.kids : []).slice(0, 8).map(x => { const a = parseInt(String(x.age == null ? '' : x.age).replace(/\D/g, ''), 10); const by = String(x.by || '').replace(/\D/g, '').slice(0, 4); return { name: t(x.name, 20), inst: t(x.inst, 10), age: a >= 0 && a <= 30 ? a : '', by: /^(19|20)\d\d$/.test(by) ? by : '', go: ['간다', '안 간다', '모름'].includes(x.go) ? x.go : '간다' }; }).filter(x => x.name);
   const fam = (Array.isArray(d.fam) ? d.fam : []).slice(0, 12).map(x => ({ type: x.type === '15개월 미만' ? '15개월 미만' : '동반가족', name: t(x.name, 20), gender: g(x.gender), by: yr(x.by) })).filter(x => x.name);
   return { kids, fam, me: { gender: g((d.me || {}).gender), by: yr((d.me || {}).by), go: (d.me || {}).go === false ? false : true }, room: { fam: !!(d.room || {}).fam, note: t((d.room || {}).note, 300) }, memo: t(d.memo, 300) };
 }

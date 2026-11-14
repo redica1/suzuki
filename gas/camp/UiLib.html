@@ -1,4 +1,4 @@
-/* build: 20261115-014734 */
+/* build: 20261115-014928 */
 /* 공통 화면 라이브러리 — 원본은 gas/common/UiLib.html 하나. 고칠 때는 원본만 고치고 python3 -I gas/common/sync.py 로 각 앱 폴더에 복사
  * 캠프 · 회원관리 화면이 같이 씀. 페이지에서 먼저 var UI_KEY='camp' 처럼 저장 이름 앞글자를 정함
  * 4) 프로그램표 UI.grid · 칸 팝업 UI.gridDet  5) 이름 · 비밀번호 기억하기 svBox · svSet · svId · svPw
@@ -6,7 +6,7 @@
  * 화면 스크립트 안에서는 슬래시 두 개를 쓰지 말 것 (구글이 주석으로 보고 지움) */
 /* 어떤 표에 붙일지: 페이지에서 var UI_TABLES='table.stt,table.stu' 처럼 (기본 table.mtbl). 스타일은 여기서 넣음 */
 const UI_SEL=window.UI_TABLES||'table.mtbl';
-(function(){const c=document.createElement('style');c.textContent='.uix th .colrz{position:absolute;top:0;right:-3px;width:7px;height:100%;cursor:col-resize;z-index:4;touch-action:none}.uix th .colrz:hover,.uix th .colrz.on{background:#0e8a86;opacity:.35}table.uix.colfix{table-layout:fixed;min-width:0}table.uix.colfix td,table.uix.colfix th{overflow:hidden;text-overflow:ellipsis}.uix th.sortable{cursor:pointer;user-select:none}.uix th.sortable:hover{text-decoration:underline}.sarr{font-size:11px;opacity:.6}.tfind{display:flex;align-items:center;gap:8px;margin:0 0 8px}.tfind input{flex:1;max-width:320px;font:inherit;font-size:14.5px;padding:6px 10px;border:1px solid #cfdede;border-radius:8px;background:#fff;color:inherit}.tfn{font-size:13px;opacity:.7}';document.head.appendChild(c)})();
+(function(){const c=document.createElement('style');c.textContent='.uix th .colrz{position:absolute;top:0;right:-3px;width:7px;height:100%;cursor:col-resize;z-index:4;touch-action:none}.uix th .colrz:hover,.uix th .colrz.on{background:#0e8a86;opacity:.35}table.uix.colfix{table-layout:fixed;min-width:0}table.uix.colfix td,table.uix.colfix th{overflow:hidden;text-overflow:ellipsis}table.uix.colfix tfoot td{overflow:visible;text-overflow:clip}table.uix.colfix td.num,table.uix.colfix td.r,table.uix.colfix tfoot td{white-space:nowrap}.uix th.sortable{cursor:pointer;user-select:none}.uix th.sortable:hover{text-decoration:underline}.sarr{font-size:11px;opacity:.6}.tfind{display:flex;align-items:center;gap:8px;margin:0 0 8px}.tfind input{flex:1;max-width:320px;font:inherit;font-size:14.5px;padding:6px 10px;border:1px solid #cfdede;border-radius:8px;background:#fff;color:inherit}.tfn{font-size:13px;opacity:.7}';document.head.appendChild(c)})();
 /* 표 칸 너비 늘리고 줄이기 (11-03): 모든 표 머리줄 칸 오른쪽 끝을 끌어서. 두 번 누르면 원래대로. 이 브라우저에 표마다 기억 */
 const COLW_KEY=(window.UI_KEY||'ui')+'ColW2';
 function colwAll(){try{return JSON.parse(localStorage.getItem(COLW_KEY)||'{}')||{}}catch(e){return {}}}
@@ -14,7 +14,15 @@ function colwSave(o){try{localStorage.setItem(COLW_KEY,JSON.stringify(o))}catch(
 const tblKey=t=>[...t.querySelectorAll('thead th')].map(th=>th.dataset.lb||th.textContent.replace(/[▲▼]/g,'').trim()).join('|');
 function colwApply(){document.querySelectorAll(UI_SEL).forEach(t=>{const ths=[...t.querySelectorAll('thead tr:first-child th')];if(!ths.length)return;t.classList.add('uix');
   ths.forEach((th,i)=>{if(!th.querySelector('.colrz')){if(getComputedStyle(th).position==='static')th.style.position='relative';const h=document.createElement('span');h.className='colrz';h.dataset.ci=i;h.setAttribute('aria-hidden','true');th.appendChild(h)}});
-  const W=colwAll()[tblKey(t)];if(W&&W.length===ths.length){t.classList.add('colfix');t.style.width=W.reduce((a,b)=>a+b,0)+'px';ths.forEach((th,i)=>{th.style.width=W[i]+'px'})}})}
+  const W=colwAll()[tblKey(t)];if(W&&W.length===ths.length){t.classList.add('colfix');const set=V=>{t.style.width=V.reduce((a,b)=>a+b,0)+'px';ths.forEach((th,i)=>{th.style.width=V[i]+'px'})};set(W);const F=colFit(t,ths,W.slice());if(F)set(F)}})}
+/* 저장한 열 너비를 다시 쓸 때 (11-15 사용자: 넓이 맞추기 · 합계는 무조건 보이게): 금액 · 숫자 칸(.num · .r)과 합계 줄은 글자가 잘리지 않게 넓히고, 표가 상자보다 넓으면 다른 칸을 줄여 상자에 맞춤 */
+function colFit(t,ths,W){const n=W.length,need=W.map(()=>0),hard=W.map(()=>false);
+  t.querySelectorAll('tbody tr,tfoot tr').forEach(tr=>{let c=0;[...tr.children].forEach(td=>{const sp=+td.colSpan||1,foot=!!td.closest('tfoot');
+    if(sp===1&&c<n&&(foot||td.classList.contains('num')||td.classList.contains('r')||td.querySelector('.num'))){const over=td.scrollWidth-td.clientWidth;hard[c]=true;need[c]=Math.max(need[c],W[c]+(over>0?over+4:0))}c+=sp})});
+  let ch=false;const V=W.map((w,i)=>{if(need[i]>w){ch=true;return Math.ceil(need[i])}return w});
+  const box=t.closest('.mtblw')||t.parentElement,cw=box?box.clientWidth:0,tot=V.reduce((a,b)=>a+b,0);
+  if(cw>200&&tot>cw){let ex=tot-cw;const sl=V.map((w,i)=>hard[i]?0:Math.max(0,w-48)),S=sl.reduce((a,b)=>a+b,0);if(S>0){const k=Math.min(1,ex/S);for(let i=0;i<n;i++)if(sl[i])V[i]=Math.round(V[i]-sl[i]*k);ch=true}}
+  return ch?V:null}
 new MutationObserver(()=>{clearTimeout(colwApply.t);colwApply.t=setTimeout(colwApply,30)}).observe(document.body,{childList:true,subtree:true});
 document.addEventListener('pointerdown',e=>{const h=e.target.closest&&e.target.closest('.colrz');if(!h)return;e.preventDefault();e.stopPropagation();
   const t=h.closest('table'),ths=[...t.querySelectorAll('thead tr:first-child th')],i=+h.dataset.ci,W=ths.map(th=>th.getBoundingClientRect().width);

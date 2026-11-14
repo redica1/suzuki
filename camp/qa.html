@@ -37,7 +37,7 @@
 (function () {
   var PROD = 'https://script.google.com/macros/s/AKfycbzrzYgEsPnHVcBIjobN9xB6nGBcZ7nPYMX7hDtx3OoI7WYokszGDLhcO0lHWYz9rWAt7w/exec';   // 메인 (실제 접수)
   var STG  = 'https://script.google.com/macros/s/AKfycby2WK6m-LkmOgUM3V2P_yA0f2kobvlfJw7qmNE36Tzxg6xvj6dQPKJuVFmT68zP7_55/exec';   // 테스트 (STG)
-  var APP = STG + '?page=qa';   /* 시험 체크는 STG 에만 있음 */
+  var APP = STG + '?page=qa' + location.search.replace(/^\?/, '&');   /* 시험 체크는 STG 에만 있음 */
   var ua = navigator.userAgent || '', here = location.href.split('#')[0];
   var android = /Android/i.test(ua);
   var kakao = /KAKAOTALK/i.test(ua), line = / Line\//i.test(ua);

@@ -1,4 +1,4 @@
-<!doctype html><!-- build: 20261114-145952 --><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<!doctype html><!-- build: 20261114-154832 --><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
 <style>
 :root{--ink:#18232b;--muted:#5b6b73;--line:#d5e6e6;--bg:#f2f8f8;--surface:#fff;--accent:#0f8a86;--soft:#e3f3f2;--ok:#1e7f4f;--okbg:#e5f5ec;--bad:#c0392b;--badbg:#fdecea}
@@ -55,7 +55,7 @@ function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){retur
 function ls(k,v){try{if(v===undefined)return localStorage.getItem(k)||'';localStorage.setItem(k,v)}catch(e){return ''}}
 function groups(){var g=[];ROWS.forEach(function(r){if(g.indexOf(r.who)<0)g.push(r.who)});return g}
 function cnt(L){var a=0,b=0;L.forEach(function(r){if(r.res==='잘 됨')a++;else if(r.res==='문제 있음')b++});return {ok:a,bad:b,done:a+b,n:L.length}}
-function drawTabs(){var G=groups();if(!TAB||(TAB!=='*'&&G.indexOf(TAB)<0))TAB=ls('qaTab')||G[0];if(TAB!=='*'&&G.indexOf(TAB)<0)TAB=G[0];
+function drawTabs(){var G=groups();if(TAB&&TAB.charAt(0)==='#'){var nn=TAB.slice(1);TAB=G.filter(function(g){return g.indexOf(nn+'.')===0})[0]||null;if(TAB)ls('qaTab',TAB)}if(!TAB||(TAB!=='*'&&G.indexOf(TAB)<0))TAB=ls('qaTab')||G[0];if(TAB!=='*'&&G.indexOf(TAB)<0)TAB=G[0];
   $('tabs').innerHTML=G.map(function(g){var c=cnt(ROWS.filter(function(r){return r.who===g}));return '<button type="button" role="tab" data-tab="'+esc(g)+'" aria-pressed="'+(TAB===g)+'">'+esc(g)+'<small>'+c.done+'/'+c.n+'</small></button>'}).join('')+
   '<button type="button" role="tab" data-tab="*" aria-pressed="'+(TAB==='*')+'">전체 결과<small>'+cnt(ROWS).done+'/'+ROWS.length+'</small></button>'}
 function card(r){var k=r.res==='잘 됨'?'ok':r.res==='문제 있음'?'bad':'';
@@ -79,6 +79,9 @@ document.addEventListener('click',function(e){var t=e.target;if(!t||!t.closest)r
   b=t.closest('[data-save]');if(b){var id2=b.getAttribute('data-save'),r=ROWS.filter(function(x){return x.id===id2})[0],ta2=document.querySelector('[data-memo="'+id2+'"]');save(id2,r?r.res:'',ta2?ta2.value:'')}});
 document.addEventListener('input',function(e){var t=e.target;if(t&&t.getAttribute&&t.getAttribute('data-memo')){var id=t.getAttribute('data-memo');DIRTY[id]=1;DRAFT[id]=t.value;var s=document.querySelector('[data-save="'+id+'"]');if(s)s.disabled=false}
   if(t&&t.id==='me')ls('qaMe',t.value)});
-$('me').value=ls('qaMe');load();
+$('me').value=ls('qaMe');
+/* 접수 화면 시험 선생님 링크에서 오면 ?tab=번호&me=이름 */
+function urlParams(cb){try{google.script.url.getLocation(function(l){cb((l&&l.parameter)||{})})}catch(e){cb({})}}
+urlParams(function(p){if(p.me&&!$('me').value){$('me').value=String(p.me).slice(0,20);ls('qaMe',$('me').value)}if(p.tab)TAB=p.tab==='all'?'*':'#'+p.tab;load()});
 </script>
 </body></html>

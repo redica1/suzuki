@@ -37,7 +37,8 @@ const cval=n=>{if(!n)return '';if(!n.querySelector(UI_F))return n.textContent;le
   if(T==='SELECT'){const o=x.options[x.selectedIndex];s+=' '+(o&&o.value!==''?o.text:'')+' ';return}if(T==='TEXTAREA'){s+=' '+x.value+' ';return}if(T==='INPUT'){s+=' '+(x.type==='checkbox'||x.type==='radio'?(x.checked?'✓':''):x.value)+' ';return}x.childNodes.forEach(w)};w(n);return s};
 const rval=r=>r.querySelector(UI_F)?[...r.cells].map(cval).join(' '):r.textContent;
 function tblApply(t,st){const tb=t.tBodies[0];if(!tb)return;const rows=[...tb.rows];
-  if(st.s&&st.s.i!=null&&!t.querySelector('tbody td[colspan]')){const i=st.s.i,d=st.s.d;rows.sort((a,b)=>{const x=sval(cval(a.cells[i])),y=sval(cval(b.cells[i]));const ex=x.n==null&&!String(x.s).trim(),ey=y.n==null&&!String(y.s).trim();if(ex!==ey)return ex?1:-1;   /* 빈 칸은 늘 아래로 */
+  if(st.s&&st.s.i!=null&&!t.querySelector('tbody td[colspan]')){const i=st.s.i,d=st.s.d;rows.sort((a,b)=>{const ga=a.dataset.g||'',gb=b.dataset.g||'';if(ga!==gb)return ga<gb?-1:1;   /* 줄에 data-g 가 있으면 그 묶음 순서가 먼저 (예: 참가한 사람 늘 위) */
+    const x=sval(cval(a.cells[i])),y=sval(cval(b.cells[i]));const ex=x.n==null&&!String(x.s).trim(),ey=y.n==null&&!String(y.s).trim();if(ex!==ey)return ex?1:-1;   /* 빈 칸은 늘 아래로 */
     
     const r=(x.n!=null&&y.n!=null)?x.n-y.n:(x.n!=null?-1:y.n!=null?1:String(x.s).localeCompare(String(y.s),'ko',{numeric:true}));return d*r});rows.forEach(r=>tb.appendChild(r))}
   const q=String(st.q||'').replace(/\s+/g,'').toLowerCase();let n=0;rows.forEach(r=>{const ok=!q||rval(r).replace(/\s+/g,'').toLowerCase().includes(q);r.style.display=ok?'':'none';if(ok)n++});

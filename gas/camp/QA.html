@@ -1,4 +1,4 @@
-<!doctype html><!-- build: 20261114-191223 --><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<!doctype html><!-- build: 20261114-163721 --><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
 <style>
 :root{--ink:#18232b;--muted:#5b6b73;--line:#d5e6e6;--bg:#f2f8f8;--surface:#fff;--accent:#0f8a86;--soft:#e3f3f2;--ok:#1e7f4f;--okbg:#e5f5ec;--bad:#c0392b;--badbg:#fdecea}
@@ -47,9 +47,6 @@ textarea{display:block;width:calc(100% - 48px);margin:8px 0 0 48px;font:inherit;
 .pill{display:inline-block;font-size:12.5px;font-weight:700;border-radius:999px;padding:1px 8px}
 .pill.ok{background:var(--okbg);color:var(--ok)}.pill.bad{background:var(--badbg);color:var(--bad)}
 .err{color:var(--bad);font-weight:700}
-.reply{margin:8px 0 0 48px;padding:8px 10px;border-left:3px solid #b3541e;background:#fff4ec;border-radius:8px;font-size:14.5px}
-.rbox{margin:0 0 10px 48px}.rbox textarea{width:100%;margin:4px 0 0;min-height:44px}.rbox .save{margin:6px 8px 0 0}
-@media (max-width:560px){.reply,.rbox{margin-left:0}}
 @media (max-width:560px){.how,.row,.meta,.save,.others{margin-left:0}textarea{width:100%;margin-left:0}}
 </style></head><body>
 <div class="band"><h1>[STG] 캠프 접수 시험 체크</h1><p>할 일 52개를 한 사람씩 모두 해 봐요. 해 본 뒤 「잘 됨」 또는 「문제 있음」을 누르고, 이상한 점은 메모에 적어 주세요. 실제 접수가 아니에요.</p></div>
@@ -60,7 +57,7 @@ textarea{display:block;width:calc(100% - 48px);margin:8px 0 0 48px;font:inherit;
   <div id="out"><p class="hint">불러오는 중…</p></div>
 </main>
 <script>
-var TASKS=[],RES=[],TAB=null,DIRTY={},DRAFT={},RDRAFT={};
+var TASKS=[],RES=[],TAB=null,DIRTY={},DRAFT={};
 function $(id){return document.getElementById(id)}
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
 function ls(k,v){try{if(v===undefined)return localStorage.getItem(k)||'';localStorage.setItem(k,v)}catch(e){return ''}}
@@ -81,7 +78,7 @@ function card(t){var r=mine(t.id),k=r.res==='잘 됨'?'ok':r.res==='문제 있�
   '<div class="row">'+[['잘 됨','k1'],['문제 있음','k2'],['','k0']].map(function(x){return '<button type="button" class="st '+x[1]+'" data-res="'+esc(x[0])+'" data-id="'+esc(t.id)+'" aria-pressed="'+(r.res===x[0])+'">'+(x[0]||'아직 안 함')+'</button>'}).join('')+'</div>'+
   '<textarea data-memo="'+esc(t.id)+'" placeholder="메모 · 어느 화면에서 무엇이 이상했는지 (휴대폰이면 기종도)" aria-label="'+esc(t.id)+' 메모">'+esc(DIRTY[t.id]?DRAFT[t.id]:r.memo)+'</textarea>'+
   '<button type="button" class="save" data-save="'+esc(t.id)+'"'+(DIRTY[t.id]?'':' disabled')+'>메모 저장</button>'+
-  '<div class="meta" id="m_'+esc(t.id)+'">'+(r.at?'내가 적은 시각 · '+esc(r.at):'')+'</div>'+(r.reply?'<div class="reply"><b>운영진 답</b> '+esc(r.reply)+' <span class="hint">'+esc(r.rat||'')+'</span></div>':'')+
+  '<div class="meta" id="m_'+esc(t.id)+'">'+(r.at?'내가 적은 시각 · '+esc(r.at):'')+'</div>'+
   (oth.length?'<div class="others">다른 분: '+oth.map(function(x){return '<b>'+esc(x.by)+'</b> '+(x.res==='잘 됨'?'<span class="o">잘 됨</span>':x.res==='문제 있음'?'<span class="x">문제 있음</span>':'')+(x.memo?' · '+esc(x.memo):'')}).join(' / ')+'</div>':'')+'</div>'}
 function summary(){var P=people(),G=groups();
   if(!P.length)return '<p class="hint">아직 결과가 없어요.</p>';
@@ -89,7 +86,7 @@ function summary(){var P=people(),G=groups();
   h+='<h3 style="margin:0 0 8px">할 일 × 사람 <span class="hint">○ 잘 됨 · × 문제 있음 · 칸을 누르면 메모</span></h3><div class="mx"><table><thead><tr><th class="l">할 일</th>'+P.map(function(p){return '<th>'+esc(p)+'</th>'}).join('')+'</tr></thead><tbody>'+
     G.map(function(g){return '<tr><td class="g" colspan="'+(P.length+1)+'">'+esc(g)+'</td></tr>'+TASKS.filter(function(t){return t.grp===g}).map(function(t){return '<tr><td class="l"><b>'+esc(t.id)+'</b> '+esc(t.task)+'</td>'+P.map(function(p){var r=RES.filter(function(x){return x.id===t.id&&x.by===p})[0];if(!r||(!r.res&&!r.memo))return '<td></td>';var m=r.res==='잘 됨'?'<span class="o">○</span>':r.res==='문제 있음'?'<span class="x">×</span>':'·';return '<td title="'+esc(r.memo||'')+'">'+m+(r.memo?'<sup>메모</sup>':'')+'</td>'}).join('')+'</tr>'}).join('')}).join('')+'</tbody></table></div>';
   var B=RES.filter(function(x){return x.res==='문제 있음'||x.memo});
-  h+='<h3 style="margin:18px 0 8px">문제 있음 · 메모 '+B.length+'건</h3>'+(B.length?TASKS.map(function(t){var L=B.filter(function(x){return x.id===t.id});if(!L.length)return '';return '<div class="card '+(L.some(function(x){return x.res==='문제 있음'})?'bad':'')+'"><div class="hd"><span class="no">'+esc(t.id)+'</span><h3>'+esc(t.task)+'</h3></div>'+L.map(function(x){var k=x.id+'|'+x.by;return '<p class="how">'+(x.res?'<span class="pill '+(x.res==='잘 됨'?'ok':'bad')+'">'+esc(x.res)+'</span> ':'')+'<b>'+esc(x.by)+'</b> '+esc(x.memo||'')+' <span class="hint">'+esc(x.at||'')+'</span></p>'+'<div class="rbox"><textarea data-rp="'+esc(k)+'" placeholder="운영진 답 (결과는 그대로 두고 답만 남겨요)" aria-label="'+esc(x.by)+' 메모에 답">'+esc(RDRAFT[k]!=null?RDRAFT[k]:x.reply||'')+'</textarea><button type="button" class="save" data-rps="'+esc(k)+'">답 저장</button><span class="meta" id="rp_'+esc(k)+'">'+(x.rat?'답 · '+esc(x.rat):'')+'</span></div>'}).join('')+'</div>'}).join(''):'<p class="hint">아직 없어요.</p>');
+  h+='<h3 style="margin:18px 0 8px">문제 있음 · 메모 '+B.length+'건</h3>'+(B.length?TASKS.map(function(t){var L=B.filter(function(x){return x.id===t.id});if(!L.length)return '';return '<div class="card '+(L.some(function(x){return x.res==='문제 있음'})?'bad':'')+'"><div class="hd"><span class="no">'+esc(t.id)+'</span><h3>'+esc(t.task)+'</h3></div>'+L.map(function(x){return '<p class="how">'+(x.res?'<span class="pill '+(x.res==='잘 됨'?'ok':'bad')+'">'+esc(x.res)+'</span> ':'')+'<b>'+esc(x.by)+'</b> '+esc(x.memo||'')+' <span class="hint">'+esc(x.at||'')+'</span></p>'}).join('')+'</div>'}).join(''):'<p class="hint">아직 없어요.</p>');
   return h}
 function draw(){drawTabs();var o=$('out');
   if(TAB==='*'){o.innerHTML=summary();return}
@@ -104,10 +101,8 @@ function save(id,res,memo){var by=me();if(!by){$('me').focus();alert('맨 위에
 document.addEventListener('click',function(e){var t=e.target;if(!t||!t.closest)return;
   var b=t.closest('[data-tab]');if(b){TAB=b.getAttribute('data-tab');ls('qaTab',TAB);draw();window.scrollTo(0,0);return}
   b=t.closest('[data-res]');if(b){var id=b.getAttribute('data-id'),ta=document.querySelector('[data-memo="'+id+'"]');save(id,b.getAttribute('data-res'),ta?ta.value:'');return}
-  b=t.closest('[data-rps]');if(b){var k=b.getAttribute('data-rps'),p=k.split('|'),ta=document.querySelector('[data-rp="'+k.replace(/"/g,'')+'"]'),txt=ta?ta.value:'',m=document.getElementById('rp_'+k);if(m)m.textContent='저장하는 중…';
-    google.script.run.withSuccessHandler(function(x){if(!x||!x.ok){if(m)m.innerHTML='<span class="err">'+esc(x&&x.msg||'저장 못 했어요')+'</span>';return}var r=RES.filter(function(q){return q.id===p[0]&&q.by===p[1]})[0];if(r){r.reply=txt;r.rat=x.at}delete RDRAFT[k];if(m)m.textContent=x.at?'답 · '+x.at:'답을 지웠어요'}).withFailureHandler(function(){if(m)m.innerHTML='<span class="err">저장 못 했어요 · 다시 눌러 주세요</span>'}).qaReply({id:p[0],by:p[1],reply:txt});return}
   b=t.closest('[data-save]');if(b){var id2=b.getAttribute('data-save'),ta2=document.querySelector('[data-memo="'+id2+'"]');save(id2,mine(id2).res,ta2?ta2.value:'')}});
-document.addEventListener('input',function(e){var t=e.target;if(t&&t.getAttribute&&t.getAttribute('data-rp')){RDRAFT[t.getAttribute('data-rp')]=t.value;return}if(t&&t.getAttribute&&t.getAttribute('data-memo')){var id=t.getAttribute('data-memo');DIRTY[id]=1;DRAFT[id]=t.value;var s=document.querySelector('[data-save="'+id+'"]');if(s)s.disabled=false}});
+document.addEventListener('input',function(e){var t=e.target;if(t&&t.getAttribute&&t.getAttribute('data-memo')){var id=t.getAttribute('data-memo');DIRTY[id]=1;DRAFT[id]=t.value;var s=document.querySelector('[data-save="'+id+'"]');if(s)s.disabled=false}});
 /* 이름 칸을 벗어나며 바로 버튼을 누르는 경우 그 누름이 사라지지 않게 조금 뒤에 다시 그림 */
 $('me').addEventListener('change',function(){ls('qaMe',me());DIRTY={};DRAFT={};setTimeout(draw,250)});
 $('me').value=ls('qaMe');

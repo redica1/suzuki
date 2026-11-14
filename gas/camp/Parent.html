@@ -1,4 +1,4 @@
-<!doctype html><!-- build: 20261115-005425 --><html lang="ko"><head><meta charset="utf-8"><link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"><meta name="viewport" content="width=device-width,initial-scale=1">
+<!doctype html><!-- build: 20261115-005621 --><html lang="ko"><head><meta charset="utf-8"><link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
 <style>
 /* 학부모 신청 (11-15): 학원 다니는 아이의 보호자가 회원가입 없이 「간다 / 안 간다」와 같이 가는 가족 이름만 학원 선생님께 보냄 */
@@ -69,15 +69,14 @@ function vForm(){var I=S.I,d=S.d;if(!I.open)return '<div class="card"><h2>지금
   var kids=d.kids.map(function(k,i){return '<div class="kid"><div class="top"><span class="pill">아이 '+(i+1)+'</span>'+(d.kids.length>1?'<span style="flex:1"></span><button class="x" type="button" data-kdel="'+i+'">빼기</button>':'')+'</div>'+
     '<input type="text" data-k="'+i+'|name" value="'+esc(k.name)+'" maxlength="20" placeholder="아이 이름 (꼭)" aria-label="아이 이름">'+
     '<div class="row"><select data-k="'+i+'|inst" aria-label="전공(악기)" class="sel"><option value="">전공(악기)</option>'+INSTS.map(function(x){return '<option'+(k.inst===x?' selected':'')+'>'+x+'</option>'}).join('')+'</select>'+
-    '<span class="row" style="gap:4px;flex-wrap:nowrap"><span style="font-weight:700">만</span><input type="text" class="age" data-k="'+i+'|age" value="'+esc(k.age)+'" inputmode="numeric" maxlength="2" placeholder="나이" aria-label="만 나이"><span style="font-weight:700">세</span></span></div>'+
-    '<div class="row"><span style="font-weight:700;font-size:15px">캠프에</span>'+seg('data-kgo',i,k.go,[['간다','가요'],['안 간다','안 가요'],['모름','몰라요']])+'</div></div>'}).join('');
+    '<span class="row" style="gap:4px;flex-wrap:nowrap"><span style="font-weight:700">만</span><input type="text" class="age" data-k="'+i+'|age" value="'+esc(k.age)+'" inputmode="numeric" maxlength="2" placeholder="나이" aria-label="만 나이"><span style="font-weight:700">세</span></span></div>'+'</div>'}).join('');
   var fam=d.fam.map(function(f,i){return '<div class="fam"><div class="top"><span class="pill">'+esc(f.type)+'</span><input type="text" data-f="'+i+'|name" value="'+esc(f.name)+'" maxlength="20" placeholder="이름" aria-label="'+esc(f.type)+' 이름"><button class="x" type="button" data-fdel="'+i+'">빼기</button></div>'+
     '<div class="row"><span class="opt">선택</span>'+seg('data-fg',i,f.gender,[['남','남'],['여','여']],1)+'<input type="text" class="by" data-f="'+i+'|by" value="'+esc(f.by)+'" inputmode="numeric" maxlength="6" placeholder="'+(f.type==='15개월 미만'?'생년월 202508':'출생연도')+'" aria-label="출생연도"></div></div>'}).join('');
   return '<div class="card"><h3><span class="no">1</span>보호자</h3><p class="hint" style="margin-top:0">입력하는 분이 첫 번째 보호자예요. 회원가입은 필요 없어요.</p>'+
     '<div class="two"><label class="f">이름<input type="text" id="pn" value="'+esc(S.nm)+'" autocomplete="name" maxlength="20" placeholder="예) 홍길동"></label><label class="f">휴대전화<input type="tel" id="pp" value="'+esc(S.ph)+'" inputmode="numeric" autocomplete="tel" placeholder="010-0000-0000"></label></div></div>'+
   '<div class="card"><h3><span class="no">2</span>다니는 학원</h3><input type="search" id="pa" list="acList" value="'+esc(S.ac)+'" placeholder="학원 이름을 넣어 골라 주세요" autocomplete="off" aria-label="다니는 학원"><datalist id="acList">'+I.acads.map(function(a){return '<option value="'+esc(a)+'">'}).join('')+'</datalist>'+
     '<div class="row" style="margin-top:10px"><button class="btn small" type="button" id="load">전에 보낸 신청 불러오기</button><span class="opt">이름 · 휴대전화 · 학원이 같으면 고칠 수 있어요</span></div></div>'+stNote()+
-  '<div class="card"><h3><span class="no">3</span>아이</h3>'+kids+'<button class="btn small" type="button" id="kadd">＋ 아이 추가 (형제 · 자매)</button></div>'+
+  '<div class="card"><h3><span class="no">3</span>캠프에 가는 아이</h3><p class="hint" style="margin-top:0">가는 아이만 넣어 주세요.</p>'+kids+'<button class="btn small" type="button" id="kadd">＋ 아이 추가 (형제 · 자매)</button></div>'+
   '<div class="card"><h3><span class="no">4</span>같이 가는 가족</h3>'+
     '<div class="row" style="margin-bottom:10px"><span style="font-weight:700;font-size:15px">보호자(나)도</span>'+seg('data-mego',0,d.me.go?'y':'n',[['y','같이 가요'],['n','안 가요']])+'</div>'+
     (fam||'')+'<div class="row"><button class="btn small" type="button" data-fadd="동반가족">＋ 동반가족 (악기 안 함)</button><button class="btn small" type="button" data-fadd="15개월 미만">＋ 15개월 미만 아기</button></div><p class="hint" style="margin-bottom:0">이름만 넣어도 돼요. 성별 · 출생연도는 선택이에요.</p></div>'+
@@ -90,7 +89,7 @@ function vForm(){var I=S.I,d=S.d;if(!I.open)return '<div class="card"><h2>지금
   (S.err?'<p class="err">'+esc(S.err)+'</p>':'')}
 function render(){var a=document.getElementById('app');if(!S.I){a.innerHTML='<div class="card hint">불러오고 있어요…</div>';return}
   var y=window.scrollY;a.innerHTML=vForm();window.scrollTo(0,y);document.getElementById('dock').hidden=!S.I.open}
-function setReq(r){S.req=r;S.d=r&&r.d?JSON.parse(JSON.stringify(r.d)):blank();if(!S.d.kids.length)S.d.kids=blank().kids;if(!S.d.me)S.d.me={go:true,gender:'',by:''};if(!S.d.room)S.d.room={fam:false,note:''};S.d.kids.forEach(function(k){if(k.inst==null)k.inst='';if(k.age==null)k.age=''});S.dirty=false}
+function setReq(r){S.req=r;S.d=r&&r.d?JSON.parse(JSON.stringify(r.d)):blank();if(!S.d.kids.length)S.d.kids=blank().kids;if(!S.d.me)S.d.me={go:true,gender:'',by:''};if(!S.d.room)S.d.room={fam:false,note:''};S.d.kids.forEach(function(k){if(k.inst==null)k.inst='';if(k.age==null)k.age='';k.go='간다'});S.dirty=false}
 function who(){S.nm=document.getElementById('pn').value.trim();S.ph=document.getElementById('pp').value.trim();S.ac=document.getElementById('pa').value.trim();
   if(!S.nm||!S.ph){return '보호자 이름과 휴대전화를 넣어 주세요.'}if(!S.ac)return '다니는 학원을 골라 주세요.';if(S.I.acads.indexOf(S.ac)<0)return '학원을 목록에서 골라 주세요. 목록에 없으면 학원 선생님께 여쭤 주세요.';return ''}
 document.addEventListener('input',function(e){var t=e.target,d=S.d;if(!d)return;

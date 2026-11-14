@@ -1,0 +1,84 @@
+<!doctype html><!-- build: 20261114-145952 --><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<base target="_top">
+<style>
+:root{--ink:#18232b;--muted:#5b6b73;--line:#d5e6e6;--bg:#f2f8f8;--surface:#fff;--accent:#0f8a86;--soft:#e3f3f2;--ok:#1e7f4f;--okbg:#e5f5ec;--bad:#c0392b;--badbg:#fdecea}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 -apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif;letter-spacing:-.01em}
+.band{background:#b3541e;color:#fff;padding:20px 16px 16px}
+.band h1{margin:0;font-size:21px;font-weight:800}
+.band p{margin:6px 0 0;opacity:.92;font-size:14.5px}
+.wrap{max-width:760px;margin:0 auto;padding:14px 16px 60px}
+.me{display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin:0 0 12px}
+.me input{font:inherit;padding:8px 10px;border:1.5px solid var(--line);border-radius:10px;width:140px}
+.links{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 12px}
+.links a{font-size:14px;font-weight:700;color:var(--accent);background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:5px 12px;text-decoration:none}
+.tabs{display:flex;gap:4px;overflow-x:auto;border-bottom:1px solid var(--line);margin:0 0 12px}
+.tabs button{all:unset;cursor:pointer;padding:9px 12px;font-weight:700;color:var(--muted);border-bottom:3px solid transparent;white-space:nowrap;font-size:15px}
+.tabs button[aria-pressed=true]{color:var(--ink);border-color:var(--accent)}
+.tabs small{font-weight:600;color:var(--muted);margin-left:4px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;margin:0 0 10px}
+.card.ok{border-color:#9fd3b6;background:var(--okbg)}
+.card.bad{border-color:#f0a99f;background:var(--badbg)}
+.hd{display:flex;gap:8px;align-items:baseline}
+.no{font-weight:800;color:var(--accent);font-size:14px;min-width:40px}
+.card h3{margin:0;font-size:17px}
+.how{margin:4px 0 10px 48px;color:var(--muted);font-size:14.5px}
+.row{display:flex;gap:6px;flex-wrap:wrap;margin-left:48px}
+.st{font:inherit;font-size:14px;font-weight:700;border:1.5px solid var(--line);background:var(--surface);border-radius:999px;padding:5px 12px;cursor:pointer}
+.st[aria-pressed=true].k1{background:var(--ok);border-color:var(--ok);color:#fff}
+.st[aria-pressed=true].k2{background:var(--bad);border-color:var(--bad);color:#fff}
+.st[aria-pressed=true].k0{background:#5b6b73;border-color:#5b6b73;color:#fff}
+textarea{display:block;width:calc(100% - 48px);margin:8px 0 0 48px;font:inherit;font-size:15px;min-height:60px;padding:8px 10px;border:1.5px solid var(--line);border-radius:10px;resize:vertical}
+.meta{margin:4px 0 0 48px;font-size:12.5px;color:var(--muted)}
+.save{font:inherit;font-weight:800;font-size:14px;border:0;border-radius:10px;background:var(--accent);color:#fff;padding:6px 14px;cursor:pointer;margin:6px 0 0 48px}
+.save[disabled]{opacity:.45;cursor:default}
+.hint{color:var(--muted);font-size:14px}
+.sum{width:100%;border-collapse:collapse;background:var(--surface);border-radius:12px;overflow:hidden;font-size:14.5px}
+.sum th,.sum td{border-bottom:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+.sum th{background:var(--soft)}
+.pill{display:inline-block;font-size:12.5px;font-weight:700;border-radius:999px;padding:1px 8px}
+.pill.ok{background:var(--okbg);color:var(--ok)}.pill.bad{background:var(--badbg);color:var(--bad)}
+.err{color:var(--bad);font-weight:700}
+@media (max-width:560px){.how,.row,.meta,.save{margin-left:0}textarea{width:100%;margin-left:0}}
+</style></head><body>
+<div class="band"><h1>[STG] 캠프 접수 시험 체크</h1><p>한 사람에 10개씩 · 해 보고 「잘 됨」 또는 「문제 있음」을 누르고, 이상한 점은 메모에 적어 주세요. 실제 접수가 아니에요.</p></div>
+<main class="wrap">
+  <div class="me"><label for="me">내 이름</label><input id="me" maxlength="20" placeholder="예) 김민지"><span class="hint">적은 사람으로 남아요</span></div>
+  <div class="links"><a href="https://app.suzukimusickorea.org/camp/?test" target="_blank" rel="noopener">STG 접수 화면 열기</a><a href="https://app.suzukimusickorea.org/camp/admin.html?test" target="_blank" rel="noopener">STG 관리자</a><a href="https://app.suzukimusickorea.org/camp/find.html?test" target="_blank" rel="noopener">STG 일정 찾기</a></div>
+  <div class="tabs" id="tabs" role="tablist"></div>
+  <div id="out"><p class="hint">불러오는 중…</p></div>
+</main>
+<script>
+var ROWS=[],TAB=null,DIRTY={},DRAFT={};
+function $(id){return document.getElementById(id)}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+function ls(k,v){try{if(v===undefined)return localStorage.getItem(k)||'';localStorage.setItem(k,v)}catch(e){return ''}}
+function groups(){var g=[];ROWS.forEach(function(r){if(g.indexOf(r.who)<0)g.push(r.who)});return g}
+function cnt(L){var a=0,b=0;L.forEach(function(r){if(r.res==='잘 됨')a++;else if(r.res==='문제 있음')b++});return {ok:a,bad:b,done:a+b,n:L.length}}
+function drawTabs(){var G=groups();if(!TAB||(TAB!=='*'&&G.indexOf(TAB)<0))TAB=ls('qaTab')||G[0];if(TAB!=='*'&&G.indexOf(TAB)<0)TAB=G[0];
+  $('tabs').innerHTML=G.map(function(g){var c=cnt(ROWS.filter(function(r){return r.who===g}));return '<button type="button" role="tab" data-tab="'+esc(g)+'" aria-pressed="'+(TAB===g)+'">'+esc(g)+'<small>'+c.done+'/'+c.n+'</small></button>'}).join('')+
+  '<button type="button" role="tab" data-tab="*" aria-pressed="'+(TAB==='*')+'">전체 결과<small>'+cnt(ROWS).done+'/'+ROWS.length+'</small></button>'}
+function card(r){var k=r.res==='잘 됨'?'ok':r.res==='문제 있음'?'bad':'';
+  return '<div class="card '+k+'" id="c_'+esc(r.id)+'"><div class="hd"><span class="no">'+esc(r.id)+'</span><h3>'+esc(r.task)+'</h3></div><p class="how">'+esc(r.how)+'</p>'+
+  '<div class="row">'+[['잘 됨','k1'],['문제 있음','k2'],['','k0']].map(function(x){return '<button type="button" class="st '+x[1]+'" data-res="'+esc(x[0])+'" data-id="'+esc(r.id)+'" aria-pressed="'+(r.res===x[0])+'">'+(x[0]||'아직 안 함')+'</button>'}).join('')+'</div>'+
+  '<textarea data-memo="'+esc(r.id)+'" placeholder="메모 · 어느 화면에서 무엇이 이상했는지 (휴대폰이면 기종도)" aria-label="'+esc(r.id)+' 메모">'+esc(DIRTY[r.id]?DRAFT[r.id]:r.memo)+'</textarea>'+
+  '<button type="button" class="save" data-save="'+esc(r.id)+'"'+(DIRTY[r.id]?'':' disabled')+'>메모 저장</button>'+
+  '<div class="meta" id="m_'+esc(r.id)+'">'+(r.at?'마지막 · '+esc(r.by||'이름 없음')+' · '+esc(r.at):'')+'</div></div>'}
+function draw(){drawTabs();var o=$('out');
+  if(TAB==='*'){var G=groups();o.innerHTML='<table class="sum"><thead><tr><th>담당</th><th>한 것</th><th>잘 됨</th><th>문제 있음</th></tr></thead><tbody>'+G.map(function(g){var c=cnt(ROWS.filter(function(r){return r.who===g}));return '<tr><td>'+esc(g)+'</td><td>'+c.done+' / '+c.n+'</td><td>'+c.ok+'</td><td>'+c.bad+'</td></tr>'}).join('')+'</tbody></table>'+
+    '<h3 style="margin:18px 0 8px">문제 있음 · 메모</h3>'+(ROWS.filter(function(r){return r.res==='문제 있음'||r.memo}).map(function(r){return '<div class="card '+(r.res==='문제 있음'?'bad':'')+'"><div class="hd"><span class="no">'+esc(r.id)+'</span><h3>'+esc(r.task)+'</h3></div><p class="how">'+(r.res?'<span class="pill '+(r.res==='잘 됨'?'ok':'bad')+'">'+esc(r.res)+'</span> ':'')+esc(r.memo||'(메모 없음)')+'</p><div class="meta">'+esc(r.by||'')+' '+esc(r.at||'')+'</div></div>'}).join('')||'<p class="hint">아직 없어요.</p>');return}
+  o.innerHTML=ROWS.filter(function(r){return r.who===TAB}).map(card).join('')}
+function load(){google.script.run.withSuccessHandler(function(r){if(!r||!r.ok){$('out').innerHTML='<p class="err">'+esc(r&&r.msg||'불러오지 못했어요')+'</p>';return}ROWS=r.rows;draw()}).withFailureHandler(function(e){$('out').innerHTML='<p class="err">불러오지 못했어요. 새로 고쳐 주세요. ('+esc(e&&e.message)+')</p>'}).qaList()}
+function save(id,res,memo){var r=ROWS.filter(function(x){return x.id===id})[0];if(!r)return;var by=$('me').value.trim();
+  if(!by){$('me').focus();alert('맨 위에 내 이름을 먼저 적어 주세요.');return}
+  var m=$('m_'+id);if(m)m.textContent='저장하는 중…';
+  google.script.run.withSuccessHandler(function(x){if(!x||!x.ok){if(m)m.innerHTML='<span class="err">'+esc(x&&x.msg||'저장 못 했어요')+'</span>';return}r.res=res;r.memo=memo;r.by=by;r.at=x.at;delete DIRTY[id];delete DRAFT[id];draw()}).withFailureHandler(function(e){if(m)m.innerHTML='<span class="err">저장 못 했어요 · 다시 눌러 주세요</span>'}).qaSave({id:id,res:res,memo:memo,by:by})}
+document.addEventListener('click',function(e){var t=e.target;if(!t||!t.closest)return;
+  var b=t.closest('[data-tab]');if(b){TAB=b.getAttribute('data-tab');ls('qaTab',TAB);draw();window.scrollTo(0,0);return}
+  b=t.closest('[data-res]');if(b){var id=b.getAttribute('data-id'),ta=document.querySelector('[data-memo="'+id+'"]');save(id,b.getAttribute('data-res'),ta?ta.value:'');return}
+  b=t.closest('[data-save]');if(b){var id2=b.getAttribute('data-save'),r=ROWS.filter(function(x){return x.id===id2})[0],ta2=document.querySelector('[data-memo="'+id2+'"]');save(id2,r?r.res:'',ta2?ta2.value:'')}});
+document.addEventListener('input',function(e){var t=e.target;if(t&&t.getAttribute&&t.getAttribute('data-memo')){var id=t.getAttribute('data-memo');DIRTY[id]=1;DRAFT[id]=t.value;var s=document.querySelector('[data-save="'+id+'"]');if(s)s.disabled=false}
+  if(t&&t.id==='me')ls('qaMe',t.value)});
+$('me').value=ls('qaMe');load();
+</script>
+</body></html>

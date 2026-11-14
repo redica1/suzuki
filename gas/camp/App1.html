@@ -1,4 +1,4 @@
-/* build: 20261115-015718 */
+/* build: 20261115-020314 */
 /* ---------- 캠프 설정 (관리자 화면에서 입력되는 값) ---------- */
 const ROOM = { cap:4, emptyFee:140000 }; // 가족방: 4인 기준, 빈 자리 1개당 추가 비용
 const CAMP = { id:'27W', ri:0, lessonFee:60000, lessonMax:5, mcFee:150000,
@@ -37,7 +37,7 @@ function api(fn,args,ok,fail,msg,tries){tries=tries||0;if(!msg&&/^(my|tt|get|loa
 /* 교수진: 서버 「교수진」 시트에서 받아 선호 교수 · 마스터클래스 목록을 바꿈 */
 function applyProfs(L){if(!Array.isArray(L)||!L.length)return;Object.keys(PROF).forEach(k=>delete PROF[k]);L.filter(p=>p.l).forEach(p=>(PROF[p.i]=PROF[p.i]||[]).push(p.n));
   MASTER.length=0;L.filter(p=>p.mc).forEach(p=>MASTER.push({n:p.n,i:p.i,min:+p.min||45,fee:+p.fee||0}))}
-function applyBundle(d){if(Array.isArray(d.taken))window.TAKEN=d.taken;if(Array.isArray(d.preq))window.PREQ=d.preq;if(d.pbank)window.PBANK=d.pbank;S.myPay=d.myPay||null;if(d.audPre)window.AUDPRE=d.audPre;if(d.aud)S.aud=d.aud;if(d.camp)applyCamp(d.camp);if(d.profs)applyProfs(d.profs);if(d.subs){ALL_SUBS.length=0;ALL_SUBS.push(...d.subs);S.snap={};d.subs.forEach(sb=>S.snap[sb.no]=JSON.stringify(sb))}if(d.teams)ENS=d.teams;if(d.bank)S.bank=d.bank;if(d.today)S.today=d.today;loadMine()}
+function applyBundle(d){if(Array.isArray(d.taken))window.TAKEN=d.taken;if(Array.isArray(d.preq))window.PREQ=d.preq;if(d.pbank)window.PBANK=d.pbank;if(Array.isArray(d.ppilot))window.PPILOT=d.ppilot;S.myPay=d.myPay||null;if(d.audPre)window.AUDPRE=d.audPre;if(d.aud)S.aud=d.aud;if(d.camp)applyCamp(d.camp);if(d.profs)applyProfs(d.profs);if(d.subs){ALL_SUBS.length=0;ALL_SUBS.push(...d.subs);S.snap={};d.subs.forEach(sb=>S.snap[sb.no]=JSON.stringify(sb))}if(d.teams)ENS=d.teams;if(d.bank)S.bank=d.bank;if(d.today)S.today=d.today;loadMine()}
 /* 바뀐 접수만 보냄. 「보냈어요」 같은 알림은 서버 저장이 끝난 뒤에 띄움 (실패하면 최신 내용으로 다시 불러옴) */
 /* 고칠 수 있는 접수: 내가 낸 것 + 원장이면 내 학원 접수 전부 (11-13) */
 const isHeadU=()=>!!(S.user&&(S.user.heads||[]).length);
@@ -101,7 +101,7 @@ function applyCamp(c){if(!c||!c.base||!Array.isArray(c.rounds)||!c.rounds.length
   if(c.fees)Object.keys(c.fees).forEach(t=>FEES[t]=c.fees[t]);
   if(c.refund&&Array.isArray(c.refund.rules)){REFUND.rules=c.refund.rules;if(c.refund.after)REFUND.after=c.refund.after;REFUND.duesRefund=!!c.refund.duesRefund}
   const ri=Math.max(0,Math.min(ROUNDS.length-1,+c.ri||0));if(keepRi)S.riBack=ri;else CAMP.ri=ri;
-  if(c.consent&&Array.isArray(c.consent.items)){CONSENT.ver=c.consent.ver;CONSENT.items=c.consent.items}GUEST_OPEN=b.guest!==false;STAFF_OPEN=b.staff!==false;MEMBER_OPEN=b.member!==false;INTL_OPEN=b.intl!==false;
+  if(c.consent&&Array.isArray(c.consent.items)){CONSENT.ver=c.consent.ver;CONSENT.items=c.consent.items}GUEST_OPEN=b.guest!==false;STAFF_OPEN=b.staff!==false;MEMBER_OPEN=b.member!==false;PQ_ON=!!c.pq;INTL_OPEN=b.intl!==false;
   CAMP.name=b.name;CAMP.start=b.start;CAMP.end=b.end;CAMP.place=b.place;
   try{const n=Math.round((dOf(b.end)-dOf(b.start))/864e5);const y1=b.start.slice(0,4),y2=b.end.slice(0,4);
     document.getElementById('campTitle').textContent=b.name+' 접수';document.title=b.name+' 접수';
@@ -248,7 +248,7 @@ const CONSENT={ver:'2026-10-24',items:[
   {id:'minor',title:'만 14세 미만 참가자 보호자 동의',req:true,on:true,body:'만 14세 미만 참가자의 개인정보는 법정대리인(보호자)의 동의를 받아야 해요.\n- 선생님이 접수할 때: 접수하는 만 14세 미만 학생의 보호자에게 위 수집·이용, 제3자 제공 내용을 알리고 동의를 받았어요.\n- 보호자가 직접 접수할 때: 나는 접수하는 만 14세 미만 참가자의 법정대리인(보호자)이며 위 내용에 동의해요.'},
   {id:'refund',title:'취소·환불 규정 확인',req:true,on:true,body:''},
   {id:'photo',title:'사진·영상 촬영과 홍보 활용 동의 (선택)',req:false,on:false,body:'캠프 중 찍은 사진·영상(참가자 모습 포함)을 협회 홈페이지, SNS, 소식지 같은 홍보에 쓸 수 있어요.\n보유 기간: 게시물을 내려 달라고 요청할 때까지\n\n동의하지 않아도 접수할 수 있어요. 동의하지 않으면 홍보물에 쓰지 않아요.'}]};
-let GUEST_OPEN=true,STAFF_OPEN=true,MEMBER_OPEN=true,INTL_OPEN=true;
+let GUEST_OPEN=true,STAFF_OPEN=true,MEMBER_OPEN=true,INTL_OPEN=true,PQ_ON=false;
 /* 해외 참가(영어 접수) 주소: 공유주소 + intl.html (STG = 테스트 로그인 줄이 있을 때 ?test) */
 /* STG 시험 체크 (11-14): 모두 50개를 하되, 시험 선생님 순서대로 시작 묶음만 1~6번으로 나눔 (겹치지 않게 출발) */
 const qaUrl=(n,i)=>String(SHARE_URL||'https:\/\/app.suzukimusickorea.org\/camp\/').replace(/\/?$/,'\/')+'qa.html?tab='+(i<6?(i+1):'all')+'&me='+encodeURIComponent(n);

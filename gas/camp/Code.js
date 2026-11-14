@@ -1,4 +1,4 @@
-/* build: 20261115-015718 */
+/* build: 20261115-020314 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -84,6 +84,7 @@ const SETTINGS = [['관리자 아이디', 'admin', '관리자 화면(?page=admin
   ['수당 공개', '아니오', '「예」면 선생님 화면에 「내 수당」(결산에서 회원관리로 보낸 정산)이 보여요. 정산을 마치기 전까지는 「아니오」'],
   ['해외 송금 안내', '', '해외 단체 영어 화면에 보이는 송금 안내 (영어로: 은행 · SWIFT · 계좌 · 예금주 · 주소 등)'],
   ['접수 가능 학원', '마포스즈키', '「전체」 또는 학원 이름을 쉼표로 (예: 마포스즈키, 미사스즈키)'],
+  ['학부모 신청 학원', '', '학부모 신청(학부모가 직접 보내는 캠프 신청)을 쓰는 학원을 쉼표로 (예: 마포스즈키, 가상스즈키). 「전체」면 모든 학원, 비우면 아무 학원도 안 씀 (11-15: 이번 캠프는 일부 학원만 시범)'],
   ['시간표 공개', '아니오', '「예」면 선생님 화면 「내 시간표」에 교사 일정·개인레슨이 보여요']];
 
 const SH = {
@@ -693,7 +694,8 @@ function bundle_(acads, owner) {
   /* 중복 접수 막기용: 남의 접수 내용은 보내지 않고 「이미 접수된 사람」 번호만 (학생 = 내 학원들, 선생님 = 모든 학원) */
   const taken = []; all.forEach(sb => { if (vis.includes(sb)) return; sb.ppl.forEach(p => { if (p.status !== '정상' && p.status !== '취소요청') return; const k = String(p.id).slice(String(sb.no).length + 1); if (/^t_/.test(k) || acads.includes(sb.acad)) taken.push(k); }); });
   const preq = parentFor_(acads.filter(a => a !== GUEST_ACAD && a !== STAFF_ACAD && a !== NOACAD)), pbank = acadBanks_(acads);
-  return { aud, audPre, preq, pbank, rosters, subs: vis, taken, teams: teams_(all), bank: bankInfo_(), today: today_(), profs, camp, myPay: (() => { try { const me = ts.filter(t => t.name === owner); return myPay_(me.length === 1 ? me[0].id : '', owner); } catch (x) { return null; } })() };
+  const ppilot = acads.filter(a => a !== GUEST_ACAD && a !== STAFF_ACAD && a !== NOACAD && parentOk_(a));
+  return { aud, audPre, preq, pbank, ppilot, rosters, subs: vis, taken, teams: teams_(all), bank: bankInfo_(), today: today_(), profs, camp, myPay: (() => { try { const me = ts.filter(t => t.name === owner); return myPay_(me.length === 1 ? me[0].id : '', owner); } catch (x) { return null; } })() };
 }
 
 
@@ -707,15 +709,19 @@ function parentSheet_() { const ss = SpreadsheetApp.getActive(); let sh = ss.get
   return sh; }
 const pdt_ = v => v instanceof Date ? Utilities.formatDate(v, TZ, 'yyyy-MM-dd HH:mm:ss') : String(v || '');   /* 시트가 날짜로 바꾼 칸도 「2026-11-15 01:36:22」로 (11-15: 「ov 15 2026」 이 보이던 것) */
 function parentRows_() { return rows_(PARENT_SH).filter(r => r['신청ID']).map(r => { let d = {}; try { d = JSON.parse(String(r['내용'] || '{}')); } catch (e) {} let m = {}; try { m = JSON.parse(String(r['돈'] || '{}')) || {}; } catch (e) {} return { m, email: String(r['이메일'] || ''), pin: String(r['비번'] || ''), id: String(r['신청ID']), acad: String(r['학원']), name: String(r['보호자']), phone: String(r['휴대전화']).replace(/\D/g, ''), d, at0: pdt_(r['처음']), at: pdt_(r['마지막']), st: String(r['상태'] || '보냄'), by: String(r['담은 선생님'] || ''), byAt: pdt_(r['담은 때']), _row: r._row }; }); }
+/* 학부모 신청 시범 학원 (11-15 사용자: 일부 학원만 이번에 써 보기) — null = 전체, [] = 안 씀 */
+function parentPilot_() { const v = String(setting_('학부모 신청 학원') || '').trim(); if (!v) return []; if (/^전체$/.test(v)) return null; return v.split(',').map(s => s.trim()).filter(Boolean); }
+function parentOk_(a) { const p = parentPilot_(); return p === null || p.includes(a); }
 function parentAcads_() {
   const open = acadOpen_(), set = {};
   rows_(SH.S).forEach(r => { const a = String(r['학원'] || '').trim(); if (a) set[a] = 1; });
   try { teachers_().forEach(t => (t.acads || []).forEach(a => { if (a) set[a] = 1; })); } catch (e) {}
-  return Object.keys(set).filter(a => a !== GUEST_ACAD && a !== STAFF_ACAD && a !== NOACAD && (!open || open.includes(a))).sort((x, y) => x.localeCompare(y, 'ko'));
+  return Object.keys(set).filter(a => a !== GUEST_ACAD && a !== STAFF_ACAD && a !== NOACAD && (!open || open.includes(a)) && parentOk_(a)).sort((x, y) => x.localeCompare(y, 'ko'));
 }
 function parentInit() {
   const C = camp_();
-  return { ok: true, open: C.base.member !== false, acads: parentAcads_(), camp: { name: C.base.name, start: C.base.start, end: C.base.end, place: C.base.place }, consent: (C.consent.items || []).filter(x => x.on), refund: C.refund, roomCap: (C.opt || {}).roomCap || 4,
+  const pa = parentAcads_();
+  return { ok: true, open: C.base.member !== false && pa.length > 0, acads: pa, camp: { name: C.base.name, start: C.base.start, end: C.base.end, place: C.base.place }, consent: (C.consent.items || []).filter(x => x.on), refund: C.refund, roomCap: (C.opt || {}).roomCap || 4,
     /* 예상 참가비 (11-15): 학생 · 첫 보호자 · 동반가족 · 15개월 미만 × 차수, 지금 차수, 학생 회비 · 가족방 빈 자리 · 추가레슨 */
     price: { fees: ['학생', '회원의 첫번째 보호자', '회원의 그외 악기 안하는 동반가족', '동반가족 중 15개월 미만'].reduce((o, k) => { o[k] = C.fees[k] || []; return o; }, {}), rounds: C.rounds.map(r => ({ n: r.n, from: r.from, to: r.to })), ri: curRound_(C), dues: +(C.opt || {}).studentDues || 0, empty: +(C.opt || {}).roomEmptyFee || 0, lesson: +(C.opt || {}).lessonFee || 0 } };
 }
@@ -727,7 +733,7 @@ function parentSub_(id, all) {
     const sb = (all || loadSubs_()).find(x => x.form && Array.isArray(x.form.preq) && x.form.preq.includes(id)); if (!sb) return null;
     const info = (sb.form && sb.form.info) || {};
     const ppl = sb.ppl.filter(p => p.status === '정상' || p.status === '취소요청').map(p => { const k = String(p.id).slice(String(sb.no).length + 1), i = info[k] || {};
-      return { name: p.name, type: p.type || '', fee: +p.fee || 0, lesson: +p.lesson || 0, dues: +p.dues || 0, room: +p.room || 0, les: +i.lessons || 0, mc: Array.isArray(i.mc) ? i.mc.length : 0, st: p.status }; });
+      return { id: p.id, name: p.name, type: p.type || '', fee: +p.fee || 0, lesson: +p.lesson || 0, dues: +p.dues || 0, room: +p.room || 0, les: +i.lessons || 0, mc: Array.isArray(i.mc) ? i.mc.length : 0, st: p.status }; });
     return { no: sb.no, round: sb.round || '', ppl, total: ppl.reduce((t, p) => t + p.fee + p.lesson + p.dues + p.room, 0) };
   } catch (e) { return null; }
 }
@@ -936,7 +942,7 @@ function parentCxDo(token, id, act, amt, note) {
   return { ok: true, preq: parentFor_(u.acads || []) };
 }
 /* 선생님 화면에 보내는 학부모 신청 (그 학원 것만, 휴대전화는 그 학원 선생님에게만) */
-function parentFor_(acads) { try { const L = parentRows_().filter(r => acads.includes(r.acad)); const all = L.length ? loadSubs_() : []; return L.map(r => ({ id: r.id, acad: r.acad, name: r.name, phone: r.phone.replace(/(\d{3})(\d{3,4})(\d{4})/, '$1-$2-$3'), d: r.d, at: r.at, st: r.st, by: r.by, byAt: r.byAt, m: r.m || {}, sub: parentSub_(r.id, all) })); } catch (e) { return []; } }
+function parentFor_(acads) { try { acads = acads.filter(parentOk_); if (!acads.length) return []; const L = parentRows_().filter(r => acads.includes(r.acad)); const all = L.length ? loadSubs_() : []; return L.map(r => ({ id: r.id, acad: r.acad, name: r.name, phone: r.phone.replace(/(\d{3})(\d{3,4})(\d{4})/, '$1-$2-$3'), d: r.d, at: r.at, st: r.st, by: r.by, byAt: r.byAt, m: r.m || {}, sub: parentSub_(r.id, all) })); } catch (e) { return []; } }
 function parentMark(token, id) {
   const u = who_(token), r = parentRows_().find(x => x.id === String(id));
   if (!r || !(u.acads || []).includes(r.acad)) throw new Error('신청을 찾지 못했어요.');
@@ -1576,7 +1582,7 @@ function curRound_(c) {
 /** 접수 시작 전이면 시작일(yyyy-mm-dd), 아니면 ''. 시작일 = 캠프 설정 「접수 시작」, 없으면 1차 시작일. STG(설정 「테스트 로그인」 있음)는 언제나 열림 */
 function regPre_(c) { c = c || camp_(); try { if (String(setting_('테스트 로그인') || '').trim()) return ''; } catch (e) { } const o = String(c.base.open || (c.rounds[0] || {}).from || ''); return /^\d{4}-\d{2}-\d{2}$/.test(o) && today_() < o ? o : ''; }
 function regGate_() { const o = regPre_(); if (o) throw new Error('접수는 ' + (+o.slice(5, 7)) + '월 ' + (+o.slice(8, 10)) + '일부터 받아요. 그때 다시 와 주세요.'); }
-function campPublic_() { const c = camp_(); return Object.assign({}, c, { ri: curRound_(c), pre: regPre_(c) }); }
+function campPublic_() { const c = camp_(), pp = parentPilot_(); return Object.assign({}, c, { ri: curRound_(c), pre: regPre_(c), pq: pp === null || pp.length > 0 }); }
 function campGet(token) { const a = adm_(token); needSup_(a); return { camp: campPublic_(), subs: rows_(SH.SUB).filter(r => r['접수번호']).length }; }
 /** 공문 값 정리 (캠프 설정 저장 때) — 글자 수를 자르고, 한 칸(5만 자) 안에 들어가는지 확인 */
 function docClean_(d, nr) {

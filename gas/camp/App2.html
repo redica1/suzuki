@@ -1,9 +1,9 @@
-/* build: 20261115-015718 */
+/* build: 20261115-020314 */
 function vAuthPick(){const off=!!CAMP.pre;return gdBtn()+apDoor()+`<section class="sec"><h2>접수 시작</h2>
   ${off?`<p class="note warn" style="margin:6px 0 12px"><b>${+CAMP.pre.slice(5,7)}월 ${+CAMP.pre.slice(8,10)}일에 접수가 열려요.</b> 그 전에 아래에서 회원가입을 마쳐 두세요.</p>`:'<p class="lede">어떻게 접수하시나요?</p>'}
   <div class="pick2${off?' pickoff':''}"${off?' aria-disabled="true"':''}>
     ${MEMBER_OPEN?`<button type="button" class="pickcard" data-mode="member"><b>회원 선생님</b><span>협회 회원 선생님이 학원 학생들을 접수해요. 회원 이메일 · 비밀번호로 로그인해요.</span></button>`:''}
-    ${MEMBER_OPEN?`<a class="pickcard" href="${esc(parentUrl())}" target="_top" style="text-decoration:none;color:inherit"><b>학부모 (학원 다니는 학생)</b><span>학생이 캠프에 가는지와 같이 가는 가족 이름만 학원 선생님께 알려요. 접수는 선생님이 해요. 회원가입 없이 이름 · 휴대전화로.</span></a>`:''}
+    ${MEMBER_OPEN&&PQ_ON?`<a class="pickcard" href="${esc(parentUrl())}" target="_top" style="text-decoration:none;color:inherit"><b>학부모 (학원 다니는 학생)</b><span>학생이 캠프에 가는지와 같이 가는 가족 이름만 학원 선생님께 알려요. 접수는 선생님이 해요. 회원가입 없이 이름 · 휴대전화로.</span></a>`:''}
     ${GUEST_OPEN?`<button type="button" class="pickcard" data-mode="guest"><b>비회원 (학부모)</b><span>회원 학원에 다니지 않는 아이를 보호자가 직접 접수해요. 보호자 이름과 휴대전화만 있으면 돼요.</span></button>`:''}
     ${STAFF_OPEN?`<button type="button" class="pickcard" data-mode="staff"><b>관계자</b><span>초빙교수 · 반주자 · 지휘자 · 통역 · 초청강사 · 스태프. 협회 회원관리에 「관계자」로 가입한 이메일 · 비밀번호로 로그인해요.</span></button>`:''}
     ${INTL_OPEN?`<a class="pickcard" href="${esc(intlUrl())}" target="_blank" rel="noopener" style="text-decoration:none;color:inherit" lang="en"><b>Overseas participants <small style="font-weight:500">· 해외 참가</small></b><span>For groups from other countries. Registration is in English and fees are in USD. Your group leader can register right away, no access code needed. ↗</span></a>`:''}

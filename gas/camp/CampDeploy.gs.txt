@@ -211,6 +211,25 @@ function status() {
   Logger.log(out.join('\n'));
 }
 
+/* ---------- STG 버전 200개 한도 정리 (11-14) ----------
+ * 앱스크립트는 버전을 200개까지만 둠. 「프로젝트 기록」에는 배포에 걸린 버전이 숨겨져서 지울 수 없음.
+ * 1) stgDeployList   : STG 스크립트의 배포 목록을 로그로 (몇 개인지 · 어느 버전에 걸렸는지)
+ * 2) stgDeployCleanup: STG 주소(STG.deploymentId)와 HEAD(테스트 배포)를 뺀 나머지 배포를 지움 → 그 버전들이 「프로젝트 기록」에 나타나 지울 수 있게 됨
+ *    (지운 배포의 주소는 더는 안 열림. 캠프 STG 주소는 STG.deploymentId 하나만 씀)
+ * 3) 그다음 STG 앱스크립트 › 프로젝트 기록 › 휴지통(버전 삭제) 창에서 맨 위 체크(모두 고르기)로 옛 버전을 한꺼번에 지움 */
+function deployList_(t) { let out = [], tok = ''; do { const r = api_(t, 'get', '/deployments?pageSize=50' + (tok ? '&pageToken=' + encodeURIComponent(tok) : '')); out = out.concat(r.deployments || []); tok = r.nextPageToken || ''; } while (tok); return out; }
+function stgDeployList() {
+  const L = deployList_(STG);
+  Logger.log('STG 배포 ' + L.length + '개');
+  L.forEach(d => { const c = d.deploymentConfig || {}; Logger.log((d.deploymentId === STG.deploymentId ? '[STG 주소] ' : '') + (c.versionNumber ? '버전 ' + c.versionNumber : 'HEAD') + ' · ' + (c.description || '') + ' · ' + d.deploymentId.slice(0, 16) + '…'); });
+}
+function stgDeployCleanup() {
+  const L = deployList_(STG), del = L.filter(d => d.deploymentId !== STG.deploymentId && (d.deploymentConfig || {}).versionNumber);
+  let n = 0, bad = [];
+  del.forEach(d => { try { api_(STG, 'delete', '/deployments/' + d.deploymentId); n++; } catch (e) { bad.push(d.deploymentId.slice(0, 12) + ': ' + e.message.slice(0, 80)); } });
+  Logger.log('STG 배포 ' + L.length + '개 중 ' + n + '개 지움 (STG 주소 · HEAD 는 남김)' + (bad.length ? '\n못 지운 것: ' + bad.join(' / ') : '') + '\n이제 STG 앱스크립트 › 프로젝트 기록 › 휴지통에서 옛 버전을 모두 골라 지워 주세요.');
+}
+
 /* ---------- 내부 ---------- */
 function need_(t) { if (!t.scriptId || !t.deploymentId) throw new Error(t.name + ' 의 scriptId 를 먼저 채워 주세요.'); }
 

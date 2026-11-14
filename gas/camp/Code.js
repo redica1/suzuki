@@ -1,4 +1,4 @@
-/* build: 20261115-014436 */
+/* build: 20261115-014734 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -874,7 +874,22 @@ function parentAuth_(name, phone, acad, pin) {
 function parentMoneySet_(row, m, st) { const sh = parentSheet_(); sh.getRange(row._row, 12).setValue(JSON.stringify(m)); if (st) sh.getRange(row._row, 8).setValue(st); }
 function parentPay(name, phone, acad, pin, p) {
   const c = parentAuth_(name, phone, acad, pin); if (c.err) return { ok: false, msg: c.err };
-  p = p || {}; const nm = String(p.nm || '').trim().slice(0, 20), date = String(p.date || '').slice(0, 10), amt = Math.max(0, Math.min(50000000, +String(p.amt || '').replace(/[^\d]/g, '') || 0));
+  p = p || {};
+  /* 입금 신고 고치기 · 지우기 (11-15): 학원이 확인하기 전(신고 · 반려)만 */
+  if (p.i !== undefined && p.i !== null && p.i !== '') {
+    const lk = lock_(); let o2, what = '';
+    try { const r = parentRows_().find(x => x.id === c.had.id), m = r.m || {}, L = m.reps || [], i = +p.i, x = L[i];
+      if (!x) return { ok: false, msg: '그 입금 신고를 찾지 못했어요. 새로 열어 주세요.' };
+      if (x.st === '확인') return { ok: false, msg: '학원이 이미 확인한 신고는 고치거나 지울 수 없어요. 학원 선생님께 말씀해 주세요.' };
+      if (p.del) { L.splice(i, 1); what = '지움 ' + x.amt; }
+      else { const n2 = String(p.nm || '').trim().slice(0, 20), d2 = String(p.date || '').slice(0, 10), a2 = Math.max(0, Math.min(50000000, +String(p.amt || '').replace(/[^\d]/g, '') || 0));
+        if (!n2) return { ok: false, msg: '입금자명을 넣어 주세요.' }; if (!/^\d{4}-\d{2}-\d{2}$/.test(d2)) return { ok: false, msg: '입금일을 골라 주세요.' }; if (!a2) return { ok: false, msg: '금액을 넣어 주세요.' };
+        L[i] = { at: stamp_(), nm: n2, date: d2, amt: a2, st: '신고', ed: (x.ed || 0) + 1 }; what = '고침 ' + x.amt + '→' + a2; }
+      m.reps = L; parentMoneySet_(r, m); o2 = parentRows_().find(y => y.id === c.had.id); } finally { lk.releaseLock(); }
+    log_(c.nm + '(' + c.ph.slice(-4) + ')', '학부모 입금 신고 ' + (p.del ? '지움' : '고침'), c.ac + ' · ' + what);
+    return { ok: true, req: parentOut_(o2) };
+  }
+  const nm = String(p.nm || '').trim().slice(0, 20), date = String(p.date || '').slice(0, 10), amt = Math.max(0, Math.min(50000000, +String(p.amt || '').replace(/[^\d]/g, '') || 0));
   if (!nm) return { ok: false, msg: '입금자명을 넣어 주세요.' }; if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return { ok: false, msg: '입금일을 골라 주세요.' }; if (!amt) return { ok: false, msg: '금액을 넣어 주세요.' };
   const lock = lock_(); let out;
   try { const r = parentRows_().find(x => x.id === c.had.id), m = r.m || {}; m.reps = (m.reps || []).concat([{ at: stamp_(), nm, date, amt, st: '신고' }]).slice(-20); parentMoneySet_(r, m); out = parentRows_().find(x => x.id === c.had.id); } finally { lock.releaseLock(); }

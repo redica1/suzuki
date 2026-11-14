@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261114-233225 -->
+<!-- build: 20261114-234923 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -271,7 +271,7 @@ tr.off td{opacity:.5}
 /* 디자인 (10-31): 글꼴 Pretendard · 캠프 청록(#0f9d9a) 색 · 자간 · 행간 · 낱말 단위 줄바꿈 (관리자 화면은 표가 많아 조금 촘촘하게) — 위 색 정의를 덮어씀 */
 :root{--bg:#f2fafa; --surface:#ffffff; --sunk:#e6f4f3; --line:#cdebe9; --ink:#132a2c; --muted:#4f6668; --faint:#7f9698; --accent:#0b7a78; --accent-ink:#ffffff; --accent-soft:#e3f5f4; --band:#0f9d9a; --band-ink:#ffffff; --band-muted:#dcf4f2;
   --display:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
-  --body:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif}
+  --body:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;--mono:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",sans-serif}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0c1918; --surface:#132423; --sunk:#182e2d; --line:#24403e; --ink:#e4f2f1; --muted:#9fbcba; --faint:#6f8c8a; --accent:#5fd4cf; --accent-ink:#062221; --accent-soft:#163634; --band:#0b4f4d; --band-ink:#ffffff; --band-muted:#bfe7e4;}}
 :root[data-theme="dark"]{--bg:#0c1918; --surface:#132423; --sunk:#182e2d; --line:#24403e; --ink:#e4f2f1; --muted:#9fbcba; --faint:#6f8c8a; --accent:#5fd4cf; --accent-ink:#062221; --accent-soft:#163634; --band:#0b4f4d; --band-ink:#ffffff; --band-muted:#bfe7e4;}
 body{line-height:1.65;letter-spacing:.015em;word-break:keep-all;overflow-wrap:anywhere}
@@ -292,6 +292,7 @@ td .btn.small{padding:0 6px;line-height:1.5}
 .statv td,.statv td.r,.statv td.num,.statv .apay .r{text-align:center !important}
 table .num,td.num,th.num{font-family:inherit !important;font-variant-numeric:tabular-nums}
 th .trz{position:absolute;right:-3px;top:0;bottom:0;width:7px;cursor:col-resize;z-index:3}th .trz:hover,th .trz.on{background:rgba(26,115,232,.35)}
+.num,.tile .v,input.num{font-variant-numeric:tabular-nums}/*mono*/
 </style></head>
 <body>
 <div class="hdr" id="hdr"><div class="band"><div class="wrap">
@@ -4457,6 +4458,6 @@ document.addEventListener('click',e=>{if(S.tab!=='book')return;const b=e.target.
   if(b.id==='ebSetSave'){const n=Object.assign(ebSet(),S.ebSetW||{});n.per=Math.max(1,Math.min(10,Math.round(+n.per||5)));n.fs=Math.max(5,Math.min(10,+n.fs||6.6));['en','sub','org'].forEach(k=>n[k]=String(n[k]||'').trim().slice(0,120));
     ebSend([],[],n,()=>{S.ebSetW=null;toast('책자 설정을 저장했어요')});return}},true);
 </script>
-<div id="bldMark" hidden>빌드표시 20261114-233225 </div>
+<div id="bldMark" hidden>빌드표시 20261114-234923 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();</script>
 </body></html>

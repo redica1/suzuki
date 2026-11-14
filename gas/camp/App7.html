@@ -1,4 +1,4 @@
-/* build: 20261115-004825 */
+/* build: 20261115-005425 */
     ps.forEach(p=>{p.pay='신고';p.rep=rep;delete S.rpRow[p.id]});S.afterSave=()=>repDone(ps.map(p=>p.id));subSave();S.rp=null;S.rpOpen=false;S.rpMemo=undefined;render();toast(`${ps.length}명 입금 신고를 보냈어요 · 운영진이 확인하면 「입금 확인」으로 바뀌어요`);return}
   if(b.id==='rpFill'){const n=document.getElementById('rpAllN').value.trim(),dd=document.getElementById('rpAllD').value;S.rpAllN=n;S.rpAllD=dd;const sel=S.rp||[];
     if(!n&&!dd){toast('적용할 입금자명이나 입금일을 적어 주세요');return}unpaidPpl().filter(x=>sel.includes(x.p.id)).forEach(({p})=>{const v=rpv(p);if(n)v.n=n;if(dd)v.d=dd});render();toast(`선택한 ${sel.length}명에게 적용했어요`);return}
@@ -440,7 +440,7 @@ document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest
 const PQ_ST={보냄:['새 신청','new'],바뀜:['바뀜','due'],담음:['담음','ok']};
 function preqList(){return (window.PREQ||[]).filter(r=>r.acad===S.acad)}
 function preqPanel(){if(isGuest()||isStaffAcad())return '';const L=preqList();if(!L.length)return '';const n=L.filter(r=>r.st!=='담음').length;
-  const kid=k=>`${esc(k.name)} <small class="${k.go==='간다'?'':'faint'}">${k.go==='간다'?'가요':k.go==='안 간다'?'안 가요':'미정'}</small>`;
+  const kid=k=>`${esc(k.name)}${k.inst||k.age!==''&&k.age!=null?` <small class="faint">(${esc([k.inst,k.age!==''&&k.age!=null?'만 '+k.age+'세':''].filter(Boolean).join(' · '))})</small>`:''} <small class="${k.go==='간다'?'':'faint'}">${k.go==='간다'?'가요':k.go==='안 간다'?'안 가요':'미정'}</small>`;
   return `<details class="panel preq" ${n?'open':''}><summary><b>학부모가 보낸 신청 ${L.length}건</b>${n?` <span class="pill new">확인할 것 ${n}</span>`:''} <span class="hint">「접수에 담기」를 누르면 가는 아이 · 보호자 · 가족 · 방 요청이 채워져요. 권수 · 곡은 다음 단계에서 넣어요</span></summary>
   <div class="preqL">${L.map(r=>{const d=r.d||{},st=PQ_ST[r.st]||PQ_ST.보냄,fam=(d.fam||[]);
     return `<div class="preqR"><div class="preqH"><b>${esc(r.name)}</b> <small class="faint">${esc(r.phone)}</small> <span class="pill ${st[1]}">${st[0]}</span> <small class="faint">${esc(String(r.at).slice(5,16))}${r.by?` · ${esc(r.by)} 선생님이 담음`:''}</small></div>
@@ -448,9 +448,11 @@ function preqPanel(){if(isGuest()||isStaffAcad())return '';const L=preqList();if
       <button class="btn small ${r.st==='담음'?'':'primary'}" type="button" data-preq="${esc(r.id)}">${r.st==='담음'?'다시 담기':'접수에 담기'}</button></div>`}).join('')}</div></details>`}
 function preqTake(id){const r=preqList().find(x=>x.id===id);if(!r)return;const d=r.d||{},R=roster(),nm=x=>String(x||'').replace(/\s+/g,'');
   const go=(d.kids||[]).filter(k=>k.go==='간다'),got=[],miss=[],dup=[],done=[];
-  go.forEach(k=>{const c=R.students.filter(s=>nm(bare(s.name))===nm(k.name));if(c.length!==1){(c.length?dup:miss).push(k.name);return}const s=c[0];if(bookedOf(s)&&!S.picked[s.id]){done.push(k.name);return}got.push(s.id)});
+  const newKids=[];go.forEach(k=>{const c=R.students.filter(s=>nm(bare(s.name))===nm(k.name));if(!c.length&&k.inst){newKids.push(k);return}if(c.length!==1){(c.length?dup:miss).push(k.name);return}const s=c[0];if(bookedOf(s)&&!S.picked[s.id]){done.push(k.name);return}got.push(s.id)});
+  /* 명단에 없는데 전공을 넣은 아이는 「명단에 없는 학생」으로 (연회비 함께) · 이미 넣었으면 다시 안 넣음 */
+  newKids.forEach(k=>{let x=S.extra.find(e=>nm(e.name)===nm(k.name));if(!x){const y=k.age!==''&&k.age!=null&&typeof manToYear==='function'?manToYear(k.age):'';x={id:'x'+Date.now()+Math.floor(Math.random()*1000),name:k.name,birth:y?String(y):'',inst:k.inst,start:'-',teacher:'',from:'학부모'};S.extra.push(x);S.cartAt[x.id]=nowStamp()}x.on=true;got.push(x.id)});
   if(!got.length){toast(`담을 아이를 명단에서 찾지 못했어요${miss.length?' · 명단에 없음: '+miss.join(', '):''}${dup.length?' · 같은 이름이 여럿: '+dup.join(', '):''}${done.length?' · 이미 접수됨: '+done.join(', '):''}`,true);return}
-  const at=nowStamp();got.forEach(i=>{S.picked[i]=true;if(!S.cartAt[i])S.cartAt[i]=at;delete S.sel[i]});const head=got[0];
+  const at=nowStamp();got.forEach(i=>{if(S.extra.some(e=>e.id===i))return;S.picked[i]=true;if(!S.cartAt[i])S.cartAt[i]=at;delete S.sel[i]});const head=got[0];
   const T={'동반가족':'회원의 그외 악기 안하는 동반가족','15개월 미만':'동반가족 중 15개월 미만'},FI=(ty,f)=>({by:String(f.by||'').slice(0,4),gender:f.gender||'',teacher:'',type:ty,prog:'',pref:false,p1:'',p2:'',lessons:0,mc:[],concert:'없음',song:'',other:false,oc:'',ot:''});
   const add=(name,ty,f)=>{if(S.fam.some(x=>x.link===head&&nm(x.name)===nm(name)))return 0;const fid='f'+Date.now()+Math.floor(Math.random()*1000);S.fam.push({id:fid,name,type:ty,link:head});S.info[fid]=FI(ty,f||{});return 1};
   let nf=0;if(!(d.me&&d.me.go===false))nf+=add(r.name,'회원의 첫번째 보호자',d.me||{});(d.fam||[]).forEach(f=>{nf+=add(f.name,T[f.type]||T['동반가족'],f)});
@@ -458,5 +460,5 @@ function preqTake(id){const r=preqList().find(x=>x.id===id);if(!r)return;const d
   else if(d.room&&d.room.note){S.rnote=[S.rnote,`${r.name}: ${d.room.note}`].filter(Boolean).join(' / ').slice(0,300)}
   S.preqTaken=[...new Set([...(S.preqTaken||[]),r.id])];
   api('parentMark',[r.id],x=>{if(x&&x.preq)window.PREQ=x.preq;render()},null,'표시하고 있어요…');
-  render();toast(`아이 ${got.length}명 · 가족 ${nf}명을 담았어요${miss.length?' · 명단에 없음: '+miss.join(', ')+' (「명단에 없는 학생 추가」로)':''}${dup.length?' · 같은 이름 여럿: '+dup.join(', ')+' (직접 골라 주세요)':''}${done.length?' · 이미 접수됨: '+done.join(', '):''}`,miss.length+dup.length>0)}
+  render();toast(`아이 ${got.length}명${newKids.length?`(명단에 없어 새로 ${newKids.length}명 · 연회비 함께)`:''} · 가족 ${nf}명을 담았어요${miss.length?' · 명단에 없음: '+miss.join(', ')+' (「명단에 없는 학생 추가」로)':''}${dup.length?' · 같은 이름 여럿: '+dup.join(', ')+' (직접 골라 주세요)':''}${done.length?' · 이미 접수됨: '+done.join(', '):''}`,miss.length+dup.length>0)}
 document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-preq]');if(!b)return;e.preventDefault();preqTake(b.dataset.preq)});

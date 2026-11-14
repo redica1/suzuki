@@ -1,4 +1,4 @@
-/* build: 20261115-004825 */
+/* build: 20261115-005425 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -736,7 +736,7 @@ function parentClean_(d) {
   d = d || {}; const t = (v, n) => String(v == null ? '' : v).replace(/[\r|]/g, ' ').trim().slice(0, n);
   const yr = v => { const y = String(v || '').replace(/\D/g, '').slice(0, 6); return y; };
   const g = v => (v === '남' || v === '여') ? v : '';
-  const kids = (Array.isArray(d.kids) ? d.kids : []).slice(0, 8).map(x => ({ name: t(x.name, 20), go: ['간다', '안 간다', '모름'].includes(x.go) ? x.go : '모름' })).filter(x => x.name);
+  const kids = (Array.isArray(d.kids) ? d.kids : []).slice(0, 8).map(x => { const a = parseInt(String(x.age == null ? '' : x.age).replace(/\D/g, ''), 10); return { name: t(x.name, 20), inst: t(x.inst, 10), age: a >= 0 && a <= 30 ? a : '', go: ['간다', '안 간다', '모름'].includes(x.go) ? x.go : '모름' }; }).filter(x => x.name);
   const fam = (Array.isArray(d.fam) ? d.fam : []).slice(0, 12).map(x => ({ type: x.type === '15개월 미만' ? '15개월 미만' : '동반가족', name: t(x.name, 20), gender: g(x.gender), by: yr(x.by) })).filter(x => x.name);
   return { kids, fam, me: { gender: g((d.me || {}).gender), by: yr((d.me || {}).by), go: (d.me || {}).go === false ? false : true }, room: { fam: !!(d.room || {}).fam, note: t((d.room || {}).note, 300) }, memo: t(d.memo, 300) };
 }
@@ -754,6 +754,31 @@ function parentSave(tok, d) {
   } finally { lock.releaseLock(); }
   log_(u.nm + '(' + u.ph.slice(-4) + ')', '학부모 신청 저장', u.ac + ' · 아이 ' + x.kids.length + ' · 가족 ' + x.fam.length);
   return { ok: true, req: parentOut_(out) };
+}
+/* 한 화면 신청 (11-15 사용자: 이름 · 전화 → 학원 → 아이(이름 · 전공 · 나이) → 가요/안 가요/몰라요 → 가족) — 들어가기 없이 보내기 한 번 */
+function parentCheck_(name, phone, acad) {
+  const nm = String(name || '').trim().replace(/\s+/g, ' '), ph = String(phone || '').replace(/\D/g, ''), ac = String(acad || '').trim();
+  if (nm.length < 2 || nm.length > 20 || /[()|,]/.test(nm)) return { err: '보호자 이름을 2~20자로 넣어 주세요.' };
+  if (!/^01\d{8,9}$/.test(ph)) return { err: '휴대전화를 확인해 주세요.' };
+  if (!parentAcads_().includes(ac)) return { err: '다니는 학원을 목록에서 골라 주세요.' };
+  const Ca = CacheService.getScriptCache(), k = 'ptf_' + ph, n = +(Ca.get(k) || 0);
+  if (n >= 10) return { err: '잠시 뒤 다시 해 주세요 (15분).' };
+  const had = parentRows_().find(r => r.phone === ph && r.acad === ac);
+  if (had && had.name !== nm) { Ca.put(k, String(n + 1), 900); return { err: '이 휴대전화로 「' + maskName_(had.name) + '」 님이 이미 신청했어요. 처음에 넣은 보호자 이름으로 넣어 주세요.' }; }
+  return { nm, ph, ac, had };
+}
+function parentLoad(name, phone, acad) {
+  const C = camp_(); if (C.base.member === false) return { ok: false, msg: '지금은 학원 접수를 받지 않아요.' };
+  const c = parentCheck_(name, phone, acad); if (c.err) return { ok: false, msg: c.err };
+  return { ok: true, req: parentOut_(c.had) };
+}
+function parentSubmit(name, phone, acad, consent, d) {
+  const C = camp_(); if (C.base.member === false) return { ok: false, msg: '지금은 학원 접수를 받지 않아요.' };
+  const c = parentCheck_(name, phone, acad); if (c.err) return { ok: false, msg: c.err };
+  const ce = consentErr_(consent); if (ce) return { ok: false, msg: ce };
+  if (!c.had) consentLog_('학부모 신청', c.nm, c.ph, consent);
+  const tok = Utilities.getUuid(); CacheService.getScriptCache().put('pt_' + tok, JSON.stringify({ nm: c.nm, ph: c.ph, ac: c.ac }), 600);
+  return parentSave(tok, d);
 }
 /* 선생님 화면에 보내는 학부모 신청 (그 학원 것만, 휴대전화는 그 학원 선생님에게만) */
 function parentFor_(acads) { try { return parentRows_().filter(r => acads.includes(r.acad)).map(r => ({ id: r.id, acad: r.acad, name: r.name, phone: r.phone.replace(/(\d{3})(\d{3,4})(\d{4})/, '$1-$2-$3'), d: r.d, at: r.at, st: r.st, by: r.by, byAt: r.byAt })); } catch (e) { return []; } }

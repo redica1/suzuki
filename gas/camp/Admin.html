@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261115-004825 -->
+<!-- build: 20261115-005425 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -295,6 +295,15 @@ td .btn.small{padding:0 6px;line-height:1.5}
 table .num,td.num,th.num{font-family:inherit !important;font-variant-numeric:tabular-nums}
 th .trz{position:absolute;right:-3px;top:0;bottom:0;width:7px;cursor:col-resize;z-index:3}th .trz:hover,th .trz.on{background:rgba(26,115,232,.35)}
 .num,.tile .v,input.num{font-variant-numeric:tabular-nums}/*mono*/
+.csFab{position:fixed;right:16px;bottom:88px;z-index:55;display:flex;align-items:center;gap:6px;border:0;border-radius:999px;padding:12px 18px;background:#1a73e8;color:#fff;font:inherit;font-weight:800;font-size:15.5px;box-shadow:0 8px 22px rgba(26,115,232,.35);cursor:pointer}.csFab[aria-expanded="true"]{background:#16303a}
+.csPanel{position:fixed;right:16px;bottom:146px;z-index:56;width:min(380px,calc(100vw - 32px));height:min(560px,calc(100vh - 220px));background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:0 14px 40px rgba(0,0,0,.22);display:flex;flex-direction:column;overflow:hidden}.csPanel[hidden]{display:none}
+.csHd{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--line)}.csHd b{font-size:16px}.csMan{display:flex;gap:4px;flex:1;flex-wrap:wrap}.csMan button{font:inherit;font-size:12.5px;border:1px solid var(--line);background:var(--surface);color:var(--accent);border-radius:999px;padding:2px 8px;cursor:pointer}
+.csLog{flex:1;overflow:auto;padding:12px;display:flex;flex-direction:column;gap:8px;background:var(--bg)}.csMsg{max-width:92%;padding:9px 12px;border-radius:12px;font-size:14.5px;line-height:1.55}.csMsg.bot{background:var(--surface);border:1px solid var(--line);align-self:flex-start}.csMsg.me{background:#1a73e8;color:#fff;align-self:flex-end}
+.csMsg ul,.csMsg ol{margin:4px 0;padding-left:18px}.csMsg{min-width:0;overflow-wrap:anywhere}.csMsg table{border-collapse:collapse;font-size:12.5px;width:100%;min-width:0;table-layout:fixed}.csMsg th,.csMsg td{border:1px solid var(--line);padding:3px 6px}.csChips{display:flex;flex-wrap:wrap;gap:6px}.csChips button{font:inherit;font-size:13px;border:1px solid var(--accent);background:var(--surface);color:var(--accent);border-radius:999px;padding:4px 10px;cursor:pointer}
+.csAns{display:grid;grid-template-columns:minmax(0,1fr);gap:6px;padding:6px 0;border-bottom:1px dashed var(--line)}.csAns:last-of-type{border-bottom:0}.csAns>b{font-size:13.5px;color:var(--accent)}.csTx{font-size:14px;min-width:0}.csTx table td,.csTx table th{white-space:normal;word-break:keep-all;overflow-wrap:anywhere}.csAns .btn{justify-self:start}.linkish{all:unset;color:var(--accent);font-weight:700;cursor:pointer;text-decoration:underline}
+.csForm{display:flex;gap:6px;padding:10px;border-top:1px solid var(--line)}.csForm input{flex:1;min-width:0}
+.csFab{bottom:20px!important}.csPanel{bottom:78px!important;height:min(600px,calc(100vh - 160px))!important}
+@media print{.csFab,.csPanel{display:none!important}}
 </style></head>
 <body>
 <div class="hdr" id="hdr"><div class="band"><div class="wrap">
@@ -4464,6 +4473,66 @@ document.addEventListener('click',e=>{if(S.tab!=='book')return;const b=e.target.
   if(b.id==='ebSetSave'){const n=Object.assign(ebSet(),S.ebSetW||{});n.per=Math.max(1,Math.min(10,Math.round(+n.per||5)));n.fs=Math.max(5,Math.min(10,+n.fs||6.6));['en','sub','org'].forEach(k=>n[k]=String(n[k]||'').trim().slice(0,120));
     ebSend([],[],n,()=>{S.ebSetW=null;toast('책자 설정을 저장했어요')});return}},true);
 </script>
-<div id="bldMark" hidden>빌드표시 20261115-004825 </div>
+<div id="bldMark" hidden>빌드표시 20261115-005425 </div>
+<script>
+/* 관리자 상담 (11-15): 관리자 매뉴얼 글에서만 찾아 답함 (AI 아님 · 없는 답은 지어내지 않음). 장마다 t 제목 · q 찾는 말 · k 바로 갈 메뉴 · h 본문 */
+const AGD={
+ start:{t:'처음 · 메뉴 구성',k:'home',q:['처음','메뉴','어디','구성','시작','로그인','총관리자','담당 선생님'],h:'<ul><li>맨 위 메뉴: <b>대시보드 · 운영관리 · 스케줄관리 · 방배정 · 인쇄물 · 통계 · 예산 · 결산 · 설정</b>. 묶음을 누르면 아래 줄에 세부 메뉴가 나와요.</li><li><b>총관리자</b>(아이디 · 비밀번호)는 모든 메뉴를 써요. <b>담당 선생님</b>은 회원관리 이메일 · 비밀번호로 들어오고, 「설정 › 담당자」에서 받은 권한(편집 · 보기 · 없음)만큼 보여요.</li><li>「보기」 권한 메뉴는 위에 「보기만 할 수 있는 메뉴예요」 띠가 떠요. 바꿔도 저장되지 않아요.</li><li>표는 칸 제목을 누르면 정렬, 표 위 칸에서 찾기, 칸 제목 오른쪽 끝을 끌면 너비가 바뀌어요.</li></ul>'},
+ home:{t:'대시보드',k:'home',q:['대시보드','한눈에','인원','총 참가','청구 합계','학원별 접수'],h:'<ul><li>인원 · 금액은 <b>취소한 사람을 빼고</b> 통계와 같은 기준이에요.</li><li>금액: 청구 합계 · 입금 신고(확인 기다리는 것) · 입금 확인 · 환불 금액(요청 · 예정 · 완료).</li><li>학원별 접수 인원: 전공별 · 참가자격별 · 입금 현황 탭.</li></ul>'},
+ subs:{t:'접수 · 입금 확인',k:'subs',q:['접수 확인','입금 확인','입금확인','확인 누르','통장 날짜','한꺼번에','여러 명','참가비 조정','가족방비','관계자 대신','해외 단체'],h:'<ul><li>사람 줄의 <b>「확인」</b>을 누르면 입금일(통장 날짜, 없으면 신고 날짜)과 금액(신고 금액)이 채워져요. 다르면 칸에 직접 넣고 확인해요.</li><li>여러 명은 체크한 뒤 아래 막대에서 한꺼번에 확인해요. 입금일을 비우면 통장 날짜(없으면 신고 날짜)로 해요.</li><li>사람마다 참가비 · 가족방비를 바꿀 칸만 넣어 조정하고 메모를 남길 수 있어요(비우면 원래 계산).</li><li><b>차수는 확인한 입금일</b>로 정해져요.</li><li>같은 메뉴 안 <b>해외</b>: 단체 만들기 · 접속 코드 · 송금 신고. <b>관계자</b>: 초빙교수 · 반주자 등을 운영진이 대신 등록(연회비 없음, 초빙교수는 교수진에 자동으로).</li></ul>'},
+ rp:{t:'입금 신고 확인 · 반려',k:'rp',q:['입금 신고','신고 확인','반려','입금자명','통장 맞추','통장 다시','신고일'],h:'<ul><li>선생님 · 보호자가 「입금 신고」한 것을 통장과 입금자명 · 날짜 · 금액으로 맞춰 보고, <b>통장 입금일을 골라 「확인」</b>해요.</li><li>통장에 맞는 입금이 있으면 날짜가 미리 채워지고, 확인할 때 그 통장 입금에 사람별로 저절로 이어져요.</li><li>맞지 않으면 <b>「반려」</b> — 사유가 선생님 화면에 보여요.</li><li>여러 명은 선택해서 「신고일 넣기 / 날짜 넣기」 후 선택 확인 · 선택 반려.</li><li>통장이 안 보이면 「통장 다시 읽기」.</li></ul>'},
+ cx:{t:'취소 · 환불',k:'cx',q:['취소','환불','환불 접수','환불 완료','송금','차액 환불','과납','철회','진단서','위약금'],h:'<ol><li><b>환불 접수</b>: 요청을 확인하고 환불액을 정해 「환불 접수」 → 그 사람은 「취소 · 환불 예정」 (환불액 0원이면 바로 「취소 확정」).</li><li><b>송금</b>: 실제로 돈을 보낸 뒤 보낸 날을 골라 「환불 완료」.</li></ol><ul><li><b>차액 환불</b>은 취소가 아니라 입금확인액만 줄어요(더 낸 돈 돌려주기).</li><li><b>반려</b>하면 참가 상태로 돌아가요. <b>철회</b>는 선생님이 요청을 거둔 것.</li><li>입금 전 취소는 운영진 처리가 없어요.</li><li>환불 규정 · 진단서 비율은 「설정 › 캠프 설정 › 취소 · 환불 규정」. 위 표에 기간별 합계가 나와요.</li></ul>'},
+ schol:{t:'장학금',k:'schol',q:['장학금','학원별 지급','지급일'],h:'<ul><li>학원별 학생 수(학생 + 악기하는 교사자녀, 취소 뺌, 비회원 제외)로 기준 금액이 정해져요.</li><li>「인원별 기준」에 「＋ 구간 추가」 (예: 10명 이상 400,000원). 큰 인원부터 처음 맞는 구간을 써요.</li><li>학원마다 조정 금액 · 상태 · 지급일 · 메모를 넣고 저장. 통계 › 학원별 표에도 장학금 칸이 생겨요.</li></ul>'},
+ q:{t:'게시판 답하기',k:'q',q:['게시판','문의','답 달','답하기','질문 답','방 요청 글'],h:'<ul><li>선생님이 접수 화면 위 「게시판」으로 올린 글이에요.</li><li>상태를 바꾸고 답을 적어 <b>「저장」</b>하면 선생님 화면(내가 올린 글)에 보여요. 시트 「문의」 탭에도 남아요.</li></ul>'},
+ ntc:{t:'공지사항 · 식단표',k:'ntc',q:['공지','공지사항','맨 위 띠','노란','식단','식단표','메뉴'],h:'<ul><li><b>맨 위 띠(한 줄)</b>: 캠프 페이지 첫 화면 맨 위에 노랗게 떠요. 비우면 안 보여요.</li><li>공지 글은 「중요」를 켜면 맨 위에 노란 카드로 나와요.</li><li><b>식단표</b>: 날짜를 고르고 끼니마다 메뉴(한 줄에 하나) · 메모(원산지 등) → 「식단표 저장」 → 캠프 페이지 「식사 · 장소」. 「앞날 식단 그대로 가져오기」도 있어요. 캠프 날짜는 교사 일정 › 날짜 · 장소에서.</li></ul>'},
+ meal:{t:'식권',k:'meal',q:['식권','QR','스캐너','바코드','인쇄 식권','중복 스캔'],h:'<ul><li>식권 만들기: 캠프 설정 「식사 시간」 × 교사 일정 날짜로 줄이 생겨요. 매수는 지금 참가 인원 + 교수진이 기본, 스태프 · 여분을 생각해 고쳐요.</li><li>인쇄는 A4 · <b>배율 100%(실제 크기)</b>, 「용지에 맞춤」 끄기. 한 장에 12장. 같은 묶음은 몇 번 인쇄해도 같은 번호예요.</li><li>스캐너: 식당 입구 휴대폰(크롬) + 바코드건. 「주소 복사 · 스캐너 열기」. 처음 한 번 화면을 눌러야 소리가 나요.</li><li>「중복 스캔」은 같은 번호를 두 번 이상 낸 횟수. 인쇄해서 나눠 준 묶음은 지우지 마세요.</li></ul>'},
+ act:{t:'교사 일정 · 날짜 · 장소',k:'act',q:['교사 일정','프로그램표','날짜 · 장소','날짜 장소','장소 추가','일정 넣기','교사별'],h:'<ul><li>캠프 날짜 · 장소 · 사람 · 못 오는 날은 <b>「교사 일정 › 날짜 · 장소」</b>에서 먼저 넣어요. 식단 · 식권 · 개인레슨이 이 날짜를 써요.</li><li>프로그램표 · 교사별 횟수 · 교사별 일정이 있어요. 일정마다 구분(공연 · 레슨 · 업무) → 종류 → 사람 역할, 대상(악기별 권수 칩 예: 1 · 1A · 4B+ · 7+).</li><li>다른 화면에서 먼저 고쳤으면 「최신 내용으로 다시 불러왔어요」가 떠요.</li></ul>'},
+ tt:{t:'개인레슨 배정',k:'tt',q:['개인레슨','레슨 배정','추가레슨','레슨 시간표','교수 시간표','레슨 넣기'],h:'<ul><li>칸을 누르면 학생을 넣거나 바꿔요. 희망 교수로 고른 학생과 레슨이 덜 채워진 학생이 위에 나와요. 칸을 누르면 바로 시트 「개인레슨」에 저장돼요.</li><li>추가레슨을 신청한 학생만 나오고, 신청한 횟수를 다 채우면 더 못 넣어요.</li><li>교사 일정이 있는 시간은 넣을 수 없어요. 취소한 학생은 빼 주세요.</li><li>레슨 교수는 「설정 › 교수진」, 날짜는 「교사 일정 › 날짜 · 장소」. 「선생님께 시간표 공개」로 선생님 화면에 보여요.</li></ul>'},
+ ens:{t:'앙상블',k:'ens',q:['앙상블','팀','함께하는 학원','연주시간','대표 학원'],h:'<ul><li>팀 줄을 누르면 자세한 내용이 열려요. 운영진이 여기서 바로 고칠 수 있고, 선생님 화면에도 바뀐 내용이 보여요.</li><li>함께하는 학원(쉼표로) · 곡 · 총 연주시간 · <b>운영진 메모</b>(선생님에게 안 보임, 예: 무대 순서 · 반주자 배정).</li></ul>'},
+ con:{t:'오후음악회 · 연주 순서',k:'con',q:['오후음악회','음악회 순서','연주 순서','리허설','프로그램북','자동 배정','만 나이'],h:'<ul><li>음악회 신청 목록(취소한 사람 빠짐 · 만 나이는 캠프 첫날 기준). 「표 복사」로 시트에 붙여 넣어요.</li><li>연주 순서 · 리허설: 공연은 교사 일정의 「오후음악회」에서 가져와요. 이름 · 날짜 · 시작 · 리허설 · 장소 · 1인(분)을 고치면 1초 뒤 저장.</li><li><b>자동 배정</b>은 만 나이순으로 나눠 넣어요. ▲ ▼로 옮기기. 프로그램북(B5 인쇄)도 있어요.</li></ul>'},
+ mcs:{t:'마스터클래스 순서',k:'mcs',q:['마스터클래스','세션','클래스 순서'],h:'<ul><li>교수별로 「＋ 세션」(날짜 · 시작 · 장소) → 아래 신청자를 줄 세우고 곡명을 넣어요. 시각은 시작부터 1인 시간씩 자동.</li><li>저장하면 행사 책자 「마스터클래스」 쪽에 바로 반영돼요.</li><li>교수 목록은 「설정 › 교수진」에서 마스터클래스를 켠 교수.</li></ul>'},
+ aud:{t:'음원 심사 · 결과 공개',k:'aud',q:['음원','심사','결과 공개','유튜브','승인','보류','비승인','이브닝'],h:'<ul><li>주소를 누르면 새 창에서 열리고, 들은 줄은 옅게 표시돼요. 심사 · 메모를 넣어요.</li><li><b>「결과 공개하기」</b>를 누르면 접수한 선생님(비회원은 보호자) 「내 접수」에 승인 · 비승인 · 보류가 보여요. 그 전엔 「심사 중」. 다시 숨길 수도 있어요.</li><li>음원 받는 음악회 · 마감일은 「설정 › 캠프 설정 › 음악회 음원 제출」.</li></ul>'},
+ room:{t:'방배정 · 방 요청',k:'room',q:['방배정','방 배정','방 요청','가족방','침대','같은 방','비번','방 편집'],h:'<ul><li>방 편집 순서: ① 방 정보(평수 · 침대 · 정원 · 타입) ② 사용 날짜 ③ 방종류 ④ 메인(학원 · 사람 · 가족) + 숙박 인원 ⑤ 보조 ⑥ 비번 수신자 · 메모 · 공개 · 색.</li><li><b>방 요청</b> 탭: 신청서의 가족방 요청 · 일반 방 요청과 게시판 「방 요청」 글을 모아 「반드시 / 되면 좋음」, 종류, 누구와(학원) 꼬리표로 보여요.</li><li>가족방 신청 탭: 가족방을 신청한 팀과 요청.</li></ul>'},
+ book:{t:'행사 책자',k:'book',q:['책자','행사 책자','A5','인쇄','PDF','표지','고쳐 쓰기'],h:'<ul><li>A5(148 × 210mm). 자동 쪽은 교사 일정 · 음악회 연주 순서 · 접수에서 바로 만들어요.</li><li>「고쳐 쓰기」로 손질한 쪽은 고정되고, 원본이 바뀌면 빨갛게 알려 줘요(원본으로 바꾸기 / 고친 대로 두기).</li><li>글 쪽 · 이미지 쪽을 더할 수 있어요. 「검사」로 넘침을 확인한 뒤 「인쇄 · PDF 저장」.</li></ul>'},
+ stat:{t:'통계 · 학원별 입금 현황',k:'stat',q:['통계','학원별 입금','과납','미납','입금 현황','참가자격별'],h:'<ul><li>취소한 사람은 빼고 지금 들어온 접수 기준.</li><li><b>학원별 입금 현황</b>: 과납/미납 = 입금액 − 신청 금액 − 환불 완료액. + 는 돌려줄 돈, − 는 덜 들어온 돈. 취소한 사람은 위약금만 신청 금액으로 잡혀서 환불을 마치면 0.</li><li>학원 줄을 누르면 사람별로 펼쳐지고 「이 학원 입금 확인하러 가기」.</li></ul>'},
+ bud:{t:'예산 · 결산',k:'bplan',q:['예산','결산','지출','견적','남는 돈'],h:'<ul><li>예산 계획: 참가비는 캠프 설정에서 불러오고, 예상 인원과 지출 줄(단가 · 수량 · 횟수 · 인원 따라)을 채우면 인원별로 얼마 남는지 바로 계산돼요.</li><li>저장하면 시트 「예산결산」에 남아요. 결산은 「예산 · 결산 › 결산」.</li></ul>'},
+ doc:{t:'공문',k:'doc',q:['공문','문서번호','발행','PDF','JPG','쪽 맞추기','시행일'],h:'<ul><li>캠프 안내 공문을 쓰면 캠프가 만들어져요. 날짜 · 장소 · 차수 · 참가비 · 가족방 · 환불 규정은 「캠프 설정」과 같은 값이라, 여기서 고치고 「저장」하면 접수 화면도 바로 바뀌어요.</li><li>저장하면 회원관리 공문 대장에 올라가요(작성 중). <b>발행(문서번호)은 회원관리 › 공문</b>에서 해요.</li><li>미리보기에서 글을 직접 고칠 수 있어요. 새 창으로 보기 · PDF · JPG 받기.</li></ul>'},
+ camp:{t:'캠프 설정 (총관리자)',k:'camp',q:['캠프 설정','차수','참가비표','참가비','접수 끄기','접수 켜기','환불 규정','식사 시간','음악회 추가','환율','연회비 금액','추가레슨 금액'],h:'<ul><li>총관리자만 보여요. 저장하면 선생님 접수 화면(날짜 · 장소 · 차수 · 참가비 · 환불 규정)이 바로 바뀌어요.</li><li>접수 받기 켜고 끄기: 회원 · 비회원 · 해외 · 관계자.</li><li>차수 추가 · 기간. <b>참가비표</b>는 「+」 칸에 금액이나 %를 넣으면 기준값을 따라 자동으로 채워져요(옅은 파랑).</li><li>추가레슨 금액 · 횟수, 연회비, 가족방 빈 자리 금액, 해외 환율.</li><li>음악회 목록 · 음원 제출 · 마감, <b>취소 · 환불 규정</b>(진단서 제출 비율), 식사 시간.</li><li>다른 사람이 먼저 저장했으면 저장이 막혀요. 새로 고친 뒤 다시 해 주세요.</li></ul>'},
+ mem:{t:'회원 명단',k:'mem',q:['회원 명단','명단','참가 미참가','회원관리에서 가져오기','표 복사'],h:'<ul><li>회원관리 교사 · 학생 전체. 이번 캠프에 접수한 사람은 <b>참가</b>로 늘 위에 있어요(정렬해도).</li><li>「회원관리에서 가져오기」로 바로 맞추고, 연동이 켜져 있으면 5분마다 바뀐 게 있으면 저절로 맞춰요(버튼에 마우스를 올리면 상태가 보여요).</li><li>「표 복사」로 보이는 줄을 엑셀에 붙여 넣어요.</li></ul>'},
+ cons:{t:'동의서',k:'cons',q:['동의서','개인정보 동의','동의 문구','동의 기록'],h:'<ul><li>선생님 · 보호자가 로그인 전에 보는 동의 문구예요. 저장하면 바로 반영되고, 바꾼 날이 문구 버전이 돼요.</li><li>「취소 · 환불 규정 확인」은 캠프 설정 환불 규정이 자동으로 들어가요. 「개인정보 수집 · 이용 동의」는 끌 수 없어요.</li><li>아래에 동의 기록(최근 1,000건) · 시트 「동의기록」.</li></ul>'},
+ prof:{t:'교수진',k:'prof',q:['교수진','교수 추가','선호 교수','레슨 교수','새 악기','지휘','약력','프로필','교수 빼기'],h:'<ul><li>여기서 고치면 선생님 접수 화면의 「선호 교수」 · 「마스터클래스」 목록이 바뀌어요.</li><li>「사용」을 끄면 접수 화면 목록에서만 빠지고, 이미 고른 접수는 그대로예요. 신청이 있는 교수는 지우기보다 사용을 꺼 주세요.</li><li>악기 고르기 칸의 <b>「＋ 새 악기…」</b>로 지휘 · 하프 등을 더해요.</li><li>프로필(책자 묶음 · 영문 이름 · 직함 · 약력), 「지난 캠프에서 약력 가져오기」. 같은 분이 두 악기면 줄 두 개.</li></ul>'},
+ staff:{t:'담당자 · 권한',k:'staff',q:['담당자','권한','편집 권한','보기 권한','담당 선생님 추가'],h:'<ul><li>총관리자만. 교사 회원 중에서 골라 메뉴마다 편집 / 보기 / 없음을 정해요. 「모두 보기 · 모두 없음」으로 한 번에.</li><li>담당자는 관리자 화면 「담당 선생님」에서 회원관리 이메일 · 비밀번호로 들어와요. 권한은 다음에 무엇을 누를 때부터 바로 적용.</li><li>휴대전화 · 계좌 같은 개인정보는 해당 메뉴 권한이 있을 때만 쓰세요.</li></ul>'},
+ parent:{t:'학부모 신청',k:'',q:['학부모 신청','학부모가 보낸','부모 신청'],h:'<ul><li>학원 다니는 아이의 학부모가 회원가입 없이 「가요 / 안 가요」와 같이 가는 가족 이름을 학원에 보내는 선택 기능이에요(주소 /camp/parent.html).</li><li>선생님 화면 「참가자 선택」 위에 「학부모가 보낸 신청」으로 보이고, 선생님이 「접수에 담기」 → 권수 · 곡을 넣어 접수해요.</li><li>모든 신청은 시트 「학부모 신청」에 있어요(상태: 보냄 · 담음 · 바뀜).</li></ul>'},
+ ver:{t:'STG · 메인 반영',k:'',q:['STG','메인','반영','빌드','버전','테스트','적용'],h:'<ul><li>고친 코드는 먼저 <b>STG</b>(테스트)에 올라가요. 화면 맨 아래 「빌드 26.11.15 00:48」 같은 번호로 버전을 봐요.</li><li>메인은 도우미 「STG 지금 적용」 화면 아래 <b>「체크한 것 메인에 반영」</b>으로만 바뀌어요(메인 시트 백업 후). 문제가 있으면 「되돌리기」.</li><li>STG 버전이 200개로 꽉 차면 STG 앱스크립트 › 프로젝트 기록에서 옛 버전을 지워요.</li></ul>'}
+};
+const AGD_ORDER=Object.keys(AGD);
+const acNorm=x=>String(x||'').toLowerCase().replace(/[\s·.,?!~「」()\-]/g,'');
+const acText=h=>{const d=document.createElement('div');d.innerHTML=String(h).replace(/<\/(li|p|tr|td|th|h3)>/g,' $&');return (d.textContent||'').replace(/\s+/g,' ').trim()};
+function acFind(q){const nq=acNorm(q),toks=String(q).split(/[\s,.?!]+/).filter(t=>t.length>=2),out=[];
+  AGD_ORDER.forEach(k=>{const x=AGD[k],tx=acNorm(x.t+' '+acText(x.h));let sc=0;(x.q||[]).forEach(w=>{if(nq.indexOf(acNorm(w))>=0)sc+=3});if(nq.indexOf(acNorm(x.t))>=0)sc+=3;
+    toks.forEach(t=>{const n=acNorm(t);if(n.length>=2&&tx.indexOf(n)>=0)sc+=1;else if(n.length>=3&&tx.indexOf(n.slice(0,n.length-1))>=0)sc+=0.5});if(sc>=2)out.push({k,sc})});
+  return out.sort((a,b)=>b.sc-a.sc).slice(0,3)}
+const AC={open:false,log:[]};
+const acGo=k=>AGD[k]&&AGD[k].k?`<button type="button" class="btn small" data-acgo="${AGD[k].k}">이 메뉴 열기</button>`:'';
+function acAnswer(q){const R=acFind(q);
+  if(!R.length)return '<p>매뉴얼에서 맞는 답을 찾지 못했어요. 아래 주제에서 골라 보세요.</p><div class="csChips">'+AGD_ORDER.map(k=>`<button type="button" data-ack="${k}">${esc(AGD[k].t)}</button>`).join('')+'</div>';
+  return R.map((r,i)=>{const x=AGD[r.k];return `<div class="csAns"><b>${i?'':'이 안내가 맞을 것 같아요 · '}${esc(x.t)}</b><div class="csTx">${i?esc(acText(x.h).slice(0,90))+'…':x.h}</div><div class="row" style="gap:6px">${i?`<button type="button" class="btn small" data-ack="${r.k}">자세히</button>`:''}${acGo(r.k)}</div></div>`}).join('')}
+function acDraw(){const p=document.getElementById('acPanel');if(!p)return;p.hidden=!AC.open;document.getElementById('acFab').setAttribute('aria-expanded',String(AC.open));if(!AC.open)return;
+  const lg=document.getElementById('acLog');lg.innerHTML='<div class="csMsg bot">관리자 매뉴얼에서 답을 찾아 드려요. 궁금한 것을 적거나 아래에서 골라 주세요.</div><div class="csChips">'+['입금 확인 하는 법','입금 신고 반려','환불 완료 처리','참가비표 바꾸기','교수 추가','방 요청 보기','음원 결과 공개','식권 인쇄','담당자 권한','메인 반영'].map(c=>`<button type="button" data-acq="${esc(c)}">${esc(c)}</button>`).join('')+'</div>'+
+    AC.log.map(m=>'<div class="csMsg '+m.w+'">'+m.h+'</div>').join('');const me=lg.querySelectorAll('.csMsg.me');lg.scrollTop=me.length?me[me.length-1].offsetTop-8:0}
+function acAsk(q,h){q=String(q||'').trim();if(!q)return;AC.log.push({w:'me',h:esc(q)});AC.log.push({w:'bot',h:h||acAnswer(q)});if(AC.log.length>30)AC.log=AC.log.slice(-30);acDraw();const i=document.getElementById('acIn');if(i){i.value='';i.focus()}}
+function acMount(){if(document.getElementById('acFab'))return;const f=document.createElement('button');f.type='button';f.id='acFab';f.className='csFab';f.setAttribute('aria-controls','acPanel');f.setAttribute('aria-expanded','false');
+  f.innerHTML='<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg><span>관리자 도움말</span>';document.body.appendChild(f);
+  const p=document.createElement('div');p.id='acPanel';p.className='csPanel';p.hidden=true;p.setAttribute('role','dialog');p.setAttribute('aria-label','관리자 도움말');
+  p.innerHTML='<div class="csHd"><b>관리자 도움말</b><span class="csMan"><button type="button" data-ack="start">처음 · 메뉴</button></span><button type="button" class="btn small ghost" id="acX" aria-label="닫기">닫기</button></div><div class="csLog" id="acLog"></div><form class="csForm" id="acForm"><input type="text" id="acIn" placeholder="예) 입금 신고 반려는 어떻게?" autocomplete="off" maxlength="100" aria-label="궁금한 것"><button type="submit" class="btn small primary">묻기</button></form>';document.body.appendChild(p)}
+document.addEventListener('click',e=>{const t=e.target;if(!t||!t.closest)return;
+  if(t.closest('#acFab')){AC.open=!AC.open;acDraw();if(AC.open){const i=document.getElementById('acIn');if(i)i.focus()}return}
+  if(t.closest('#acX')){AC.open=false;acDraw();return}
+  const q=t.closest('[data-acq]');if(q){acAsk(q.getAttribute('data-acq'));return}
+  const k=t.closest('[data-ack]');if(k){const x=AGD[k.getAttribute('data-ack')];if(x)acAsk(x.t,`<div class="csAns"><b>${esc(x.t)}</b><div class="csTx">${x.h}</div>${acGo(k.getAttribute('data-ack'))}</div>`);return}
+  const g=t.closest('[data-acgo]');if(g){if(typeof goTab==='function')goTab(g.getAttribute('data-acgo'));return}});
+document.addEventListener('submit',e=>{if(e.target&&e.target.id==='acForm'){e.preventDefault();acAsk(document.getElementById('acIn').value)}},true);
+try{acMount()}catch(x){}
+</script>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();</script>
 </body></html>

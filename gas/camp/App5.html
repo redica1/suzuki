@@ -1,4 +1,4 @@
-/* build: 20261114-162226 */
+/* build: 20261114-163343 */
   if(!open.length) return MY_SUBS.length?`<div class="panel rp">${bankHTML()}<span class="hint">지금 입금할 금액이 없어요.</span></div>`:'';
   /* 평소엔 한 줄로 접어 둠: 「입금 신고하기」를 누르면 펼침 (11-03) */
   if(!S.rpOpen){const due=open.reduce((t,x)=>t+dueOf(x.p),0);return `<div class="panel rp">${bankHTML()}<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><span><b>입금 필요 ${open.length}명</b> · <b class="num">${won(due)}</b> <span class="hint">입금한 뒤 알려 주세요</span></span><button class="btn primary" type="button" data-rpopen="1">입금 신고하기</button></div></div>`}
@@ -35,9 +35,9 @@ const famHost=(sb,p)=>{if(p.kind!=='가족')return null;const key=p.id.slice(Str
 const mineOk=(sb,p)=>{if(!S.mtab||S.mtab==='전체')return true;const pay=(S.mview||'pay')==='pay';if(pay&&p.kind==='가족'){const h=famHost(sb,p);return !!h&&catOf(sb,h)===S.mtab}return (pay?catOf(sb,p):catOf2(sb,p))===S.mtab};
 /* 가족은 따라오는 사람 바로 밑에 */
 function famAfter(R){const fam=R.filter(x=>famHost(x.sb,x.p)),rest=R.filter(x=>!famHost(x.sb,x.p)),out=[];rest.forEach(x=>{out.push(x);fam.filter(f=>famHost(f.sb,f.p).id===x.p.id).forEach(f=>out.push(f))});fam.forEach(f=>{if(!out.includes(f))out.push(f)});return out}
-/* 접수 내역: 내가 낸 것 / 우리 학원 전체 (다른 선생님 접수는 보기만) */
+/* 접수 내역: 내가 낸 것 / 우리 학원 전체 (원장만 · 11-14 원장이 아니면 다른 사람 접수는 아예 안 보임) */
 const acadSubs=()=>ALL_SUBS.filter(sb=>S.user&&(S.user.acads||[]).includes(sb.acad)&&true).slice().sort((a,b)=>String(b.createdAt||b.date).localeCompare(String(a.createdAt||a.date))||String(b.no).localeCompare(String(a.no)));
-function scopeSeg(){const A=acadSubs();return `<div class="seg atabs" role="tablist" style="margin:6px 0 10px"><button type="button" role="tab" data-mscope="mine" aria-pressed="${S.mscope!=='acad'}">내가 낸 접수 ${mySubsOwn().length}건</button><button type="button" role="tab" data-mscope="acad" aria-pressed="${S.mscope==='acad'}">우리 학원 전체 ${A.length}건</button></div>`}
+function scopeSeg(){if(!isHeadU())return '';const A=acadSubs();return `<div class="seg atabs" role="tablist" style="margin:6px 0 10px"><button type="button" role="tab" data-mscope="mine" aria-pressed="${S.mscope!=='acad'}">내가 낸 접수 ${mySubsOwn().length}건</button><button type="button" role="tab" data-mscope="acad" aria-pressed="${S.mscope==='acad'}">우리 학원 전체 ${A.length}건</button></div>`}
 function vAcad(){const A=acadSubs(),AF=()=>S.aOwner?A.filter(sb=>sb.owner===S.aOwner):A;const live=A.flatMap(sb=>sb.ppl.filter(p=>p.status==='정상'));
   const bill=live.reduce((t,p)=>t+pAmt(p),0),paid=live.reduce((t,p)=>t+(p.paidAmt||0),0);
   const by={};A.forEach(sb=>{const o=by[sb.owner]||(by[sb.owner]={n:0,ppl:0,bill:0,paid:0,rp:0,cat:{}});o.n++;sb.ppl.filter(p=>p.status==='정상').forEach(p=>{o.ppl++;{const c=catOf(sb,p);o.cat[c]=(o.cat[c]||0)+1}o.bill+=pAmt(p);o.paid+=p.paidAmt||0;if(p.pay==='신고')o.rp++})});
@@ -150,7 +150,7 @@ document.addEventListener('keydown',e=>{if(e.target&&e.target.id==='audIn'&&e.ke
 const mySubsOwn=()=>MY_SUBS.filter(sb=>S.user&&sb.owner===S.user.name);
 /* 지금 화면에 보이는 고칠 수 있는 접수 (전체 선택용) */
 const visSubs=()=>S.mscope==='acad'&&isHeadU()?acadSubs().filter(sb=>canEditSub(sb)&&(!S.aOwner||sb.owner===S.aOwner)):mySubsOwn();
-function vMine(){if(S.mscope==='acad')return vAcad();return vMineCore(mySubsOwn(),true)}
+function vMine(){if(S.mscope==='acad'&&isHeadU())return vAcad();return vMineCore(mySubsOwn(),true)}
 /* 접수 목록 (고치기 · 취소). L = 보여 줄 접수, head = 위 제목 · 탭 · 안내 · 입금 신고까지 (11-13: 원장은 「우리 학원 전체」에서 이 목록으로 고침) */
 function vMineCore(L,head){
   const r=refundRule(S.today);

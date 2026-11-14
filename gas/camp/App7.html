@@ -1,4 +1,4 @@
-/* build: 20261115-012015 */
+/* build: 20261115-013644 */
     ps.forEach(p=>{p.pay='신고';p.rep=rep;delete S.rpRow[p.id]});S.afterSave=()=>repDone(ps.map(p=>p.id));subSave();S.rp=null;S.rpOpen=false;S.rpMemo=undefined;render();toast(`${ps.length}명 입금 신고를 보냈어요 · 운영진이 확인하면 「입금 확인」으로 바뀌어요`);return}
   if(b.id==='rpFill'){const n=document.getElementById('rpAllN').value.trim(),dd=document.getElementById('rpAllD').value;S.rpAllN=n;S.rpAllD=dd;const sel=S.rp||[];
     if(!n&&!dd){toast('적용할 입금자명이나 입금일을 적어 주세요');return}unpaidPpl().filter(x=>sel.includes(x.p.id)).forEach(({p})=>{const v=rpv(p);if(n)v.n=n;if(dd)v.d=dd});render();toast(`선택한 ${sel.length}명에게 적용했어요`);return}
@@ -462,7 +462,8 @@ function preqPanel(mine){if(isGuest()||(!mine&&isStaffAcad()))return '';const L=
 document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-ppay],[data-pcx],[data-pbank],[data-pqurl],[data-pqmsg]');if(!b)return;e.preventDefault();const d=b.dataset;
   if(d.pqmsg){const r=(window.PREQ||[]).find(x=>x.id===d.pqmsg);if(!r||!r.sub)return;const sb=r.sub,R=((r.m||{}).reps||[]).filter(x=>x.st==='확인'),paid=R.reduce((t,x)=>t+x.amt,0),due=sb.total-paid,bk=(window.PBANK||{})[r.acad];
     const ex=sb.ppl.filter(p=>p.lesson).map(p=>p.name+(p.les?' 추가레슨 '+p.les+'회':'')+(p.mc?' 마스터클래스 '+p.mc+'개':'')+' '+won(p.lesson)).join(', ');
-    const msg=`[${CAMP.name||'스즈키 캠프'}] ${r.name}님, ${r.acad}에서 캠프 접수를 마쳤어요 (접수번호 ${sb.no}).\n${sb.ppl.map(p=>p.name).join(' · ')}\n확정 금액 ${won(sb.total)}${ex?'\n추가: '+ex:''}\n지금까지 입금 확인 ${won(paid)}${due>0?'\n더 보내 주실 금액 '+won(due):''}${bk?'\n학원 통장 '+bk.bank+' '+bk.acct+' ('+bk.holder+')':''}\n입금하신 뒤 신고 · 확인: ${parentUrl()}`;
+    const pv=(r.m||{}).prevTotal,chg=pv!=null&&pv!==sb.total;
+    const msg=`[${CAMP.name||'스즈키 캠프'}] ${r.name}님, ${r.acad}입니다.\n${chg?`캠프 금액이 ${won(pv)}에서 ${won(sb.total)}으로 바뀌었어요.`:`캠프 접수를 마쳤어요 (접수번호 ${sb.no}).`}\n학생: ${sb.ppl.map(p=>p.name).join(' · ')}${ex?'\n추가레슨 · 마스터클래스: '+ex:''}\n확정 금액 ${won(sb.total)} · 입금 확인 ${won(paid)}${due>0?`\n▶ 더 보내 주실 금액 ${won(due)}`:'\n다 내셨어요.'}${bk&&due>0?`\n\n입금 계좌 (복사해서 입금해 주세요)\n${bk.bank} ${bk.acct}\n예금주 ${bk.holder}`:''}\n\n입금하신 뒤 아래에서 입금 신고해 주세요.\n${parentUrl()}`;
     try{navigator.clipboard.writeText(msg).then(()=>toast('안내 문자를 복사했어요 · 카톡에 붙여 넣어 주세요'),()=>prompt('안내 문자',msg))}catch(x){prompt('안내 문자',msg)}return}
   if(d.pqurl){const u=parentUrl();try{navigator.clipboard.writeText(u).then(()=>toast('주소를 복사했어요 · 학부모 단톡방에 붙여 넣어 주세요'),()=>prompt('주소',u))}catch(x){prompt('주소',u)}return}
   if(d.ppay){const [id,i,ok]=d.ppay.split('|');let why='';if(ok!=='1'){why=prompt('반려 사유 (학부모에게 보여요)')||'';if(!why.trim())return}api('parentPayDo',[id,+i,ok==='1',why],x=>{if(x&&x.preq)window.PREQ=x.preq;render();toast(ok==='1'?'입금을 확인했어요':'반려했어요')},null,'저장하고 있어요…');return}

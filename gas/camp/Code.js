@@ -1,4 +1,4 @@
-/* build: 20261115-012015 */
+/* build: 20261115-013644 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -701,11 +701,11 @@ function bundle_(acads, owner) {
  * 학원 다니는 아이의 학부모가 회원가입 없이 이름 · 휴대전화 · 학원만으로 들어와 「간다 / 안 간다」와 같이 가는 가족 이름만 냄.
  * 학원 선생님 화면(참가자 선택)에 「학부모 신청」으로 보이고, 선생님이 「접수에 담기」 → 권수 · 곡 등을 넣어 지금처럼 접수.
  * 돈은 지금처럼 학원이 모아서 협회에 냄 (학부모 → 협회 직접 입금 없음). 입력한 사람 = 첫 번째 보호자 */
-const PARENT_SH = '학부모 신청', PARENT_HEAD = ['신청ID', '학원', '보호자', '휴대전화', '내용', '처음', '마지막', '상태', '담은 선생님', '담은 때', '비번', '돈'];   /* 비번 = 4자리 해시 · 돈 = 입금 신고 · 취소 요청 JSON (11-15) */
-function parentSheet_() { const ss = SpreadsheetApp.getActive(); let sh = ss.getSheetByName(PARENT_SH); if (!sh) { sh = ss.insertSheet(PARENT_SH); sh.getRange(1, 1, 1, PARENT_HEAD.length).setValues([PARENT_HEAD]).setFontWeight('bold'); sh.setFrozenRows(1); sh.getRange('A:L').setNumberFormat('@'); }
+const PARENT_SH = '학부모 신청', PARENT_HEAD = ['신청ID', '학원', '보호자', '휴대전화', '내용', '처음', '마지막', '상태', '담은 선생님', '담은 때', '비번', '돈', '이메일'];   /* 비번 = 4자리 해시 · 돈 = 입금 신고 · 취소 요청 JSON (11-15) */
+function parentSheet_() { const ss = SpreadsheetApp.getActive(); let sh = ss.getSheetByName(PARENT_SH); if (!sh) { sh = ss.insertSheet(PARENT_SH); sh.getRange(1, 1, 1, PARENT_HEAD.length).setValues([PARENT_HEAD]).setFontWeight('bold'); sh.setFrozenRows(1); sh.getRange('A:M').setNumberFormat('@'); }
   else if (sh.getLastColumn() < PARENT_HEAD.length) { sh.getRange(1, 1, 1, PARENT_HEAD.length).setValues([PARENT_HEAD]).setFontWeight('bold'); }   /* 예전 시트에 비번 · 돈 칸 더하기 */
   return sh; }
-function parentRows_() { return rows_(PARENT_SH).filter(r => r['신청ID']).map(r => { let d = {}; try { d = JSON.parse(String(r['내용'] || '{}')); } catch (e) {} let m = {}; try { m = JSON.parse(String(r['돈'] || '{}')) || {}; } catch (e) {} return { m, pin: String(r['비번'] || ''), id: String(r['신청ID']), acad: String(r['학원']), name: String(r['보호자']), phone: String(r['휴대전화']).replace(/\D/g, ''), d, at0: String(r['처음']), at: String(r['마지막']), st: String(r['상태'] || '보냄'), by: String(r['담은 선생님'] || ''), byAt: String(r['담은 때'] || ''), _row: r._row }; }); }
+function parentRows_() { return rows_(PARENT_SH).filter(r => r['신청ID']).map(r => { let d = {}; try { d = JSON.parse(String(r['내용'] || '{}')); } catch (e) {} let m = {}; try { m = JSON.parse(String(r['돈'] || '{}')) || {}; } catch (e) {} return { m, email: String(r['이메일'] || ''), pin: String(r['비번'] || ''), id: String(r['신청ID']), acad: String(r['학원']), name: String(r['보호자']), phone: String(r['휴대전화']).replace(/\D/g, ''), d, at0: String(r['처음']), at: String(r['마지막']), st: String(r['상태'] || '보냄'), by: String(r['담은 선생님'] || ''), byAt: String(r['담은 때'] || ''), _row: r._row }; }); }
 function parentAcads_() {
   const open = acadOpen_(), set = {};
   rows_(SH.S).forEach(r => { const a = String(r['학원'] || '').trim(); if (a) set[a] = 1; });
@@ -788,7 +788,7 @@ function parentLoad(name, phone, acad, pin) {
   if (c.had.pin && c.had.pin !== pinHash_(c.had.id, String(pin || ''))) { const Ca = CacheService.getScriptCache(), k = 'ptf_' + c.ph; Ca.put(k, String(+(Ca.get(k) || 0) + 1), 900); return { ok: false, msg: '비밀번호 4자리가 맞지 않아요.' }; }
   return { ok: true, req: parentOut_(c.had) };
 }
-function parentSubmit(name, phone, acad, consent, d, pin) {
+function parentSubmit(name, phone, acad, consent, d, pin, email) {
   const C = camp_(); if (C.base.member === false) return { ok: false, msg: '지금은 학원 접수를 받지 않아요.' };
   const c = parentCheck_(name, phone, acad); if (c.err) return { ok: false, msg: c.err };
   pin = String(pin || '');
@@ -797,9 +797,47 @@ function parentSubmit(name, phone, acad, consent, d, pin) {
   const ce = consentErr_(consent); if (ce) return { ok: false, msg: ce };
   if (!c.had) consentLog_('학부모 신청', c.nm, c.ph, consent);
   const tok = Utilities.getUuid(); CacheService.getScriptCache().put('pt_' + tok, JSON.stringify({ nm: c.nm, ph: c.ph, ac: c.ac }), 600);
+  email = String(email || '').trim().toLowerCase().slice(0, 80);
+  if (email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return { ok: false, msg: '이메일 주소를 확인해 주세요.' };
   const res = parentSave(tok, d);
-  try { const r = parentRows_().find(x => x.id === res.req.id); if (r && !r.pin) { parentSheet_().getRange(r._row, 11).setValue(pinHash_(r.id, pin)); } } catch (e) {}
+  try { const r = parentRows_().find(x => x.id === res.req.id); if (r) { if (!r.pin) parentSheet_().getRange(r._row, 11).setValue(pinHash_(r.id, pin)); if (email) parentSheet_().getRange(r._row, 13).setValue(email); } } catch (e) {}
+  try { const r = parentRows_().find(x => x.id === res.req.id); parentMail_(r, '캠프 신청을 학원에 보냈어요', ['학원: ' + r.acad, '학생: ' + (r.d.kids || []).map(k => k.name).join(', '), '같이 가는 가족: ' + ([(r.d.me || {}).go === false ? '' : r.name].concat((r.d.fam || []).map(f => f.name + '(' + f.type + ')')).filter(Boolean).join(', ') || '없음'), '', '학원 선생님이 권수 · 곡을 넣어 접수하면 확정 금액을 다시 알려 드려요.', '추가 개인레슨 · 마스터클래스는 학원이 넣고, 넣으면 비용이 더해져요.']); } catch (e) {}
   return res;
+}
+/* 첫 단계 (11-15 사용자: 이름 · 휴대전화 · 이메일 · 비밀번호 → 확인 → 다음 화면): 이 휴대전화로 낸 신청을 찾아 줌 */
+function parentLookup(name, phone, pin) {
+  const C = camp_(); if (C.base.member === false) return { ok: false, msg: '지금은 학원 접수를 받지 않아요.' };
+  const nm = String(name || '').trim().replace(/\s+/g, ' '), ph = String(phone || '').replace(/\D/g, '');
+  if (nm.length < 2 || nm.length > 20 || /[()|,]/.test(nm)) return { ok: false, msg: '보호자 이름을 2~20자로 넣어 주세요.' };
+  if (!/^01\d{8,9}$/.test(ph)) return { ok: false, msg: '휴대전화를 확인해 주세요.' };
+  if (!/^\d{4}$/.test(String(pin || ''))) return { ok: false, msg: '비밀번호 숫자 4자리를 넣어 주세요.' };
+  const Ca = CacheService.getScriptCache(), k = 'ptf_' + ph, n = +(Ca.get(k) || 0);
+  if (n >= 10) return { ok: false, msg: '잠시 뒤 다시 해 주세요 (15분).' };
+  const L = parentRows_().filter(r => r.phone === ph);
+  if (L.some(r => r.name !== nm)) { Ca.put(k, String(n + 1), 900); return { ok: false, msg: '이 휴대전화로 「' + maskName_(L[0].name) + '」 님이 이미 신청했어요. 처음에 넣은 보호자 이름으로 넣어 주세요.' }; }
+  if (L.some(r => r.pin && r.pin !== pinHash_(r.id, String(pin)))) { Ca.put(k, String(n + 1), 900); return { ok: false, msg: '비밀번호 4자리가 맞지 않아요. 처음 보낼 때 정한 숫자예요.' }; }
+  return { ok: true, reqs: L.map(parentOut_) };
+}
+/* 학부모 메일 (11-15): 이메일을 넣은 학부모에게 신청 · 접수 금액 · 입금 · 취소 소식 */
+function parentMail_(r, title, lines) {
+  if (!r || !r.email) return false;
+  try { const C = camp_(), url = 'https:\/\/app.suzukimusickorea.org/camp/parent.html' + (String(setting_('테스트 로그인') || '').trim() ? '?test' : '');
+    MailApp.sendEmail({ to: r.email, subject: '[' + C.base.name + '] ' + title, name: '한국스즈키음악협회', body: r.name + '님,\n\n' + title + '.\n\n' + lines.join('\n') + '\n\n내 신청 보기 · 입금 신고 · 취소: ' + url + '\n(이름 · 휴대전화 · 비밀번호 4자리로 들어와요)\n\n궁금한 점은 다니는 학원 선생님께 여쭤 주세요.' }); return true; } catch (e) { try { log_('시스템', '학부모 메일 실패', String(e)); } catch (x) {} return false; }
+}
+/* 학원이 학부모 신청을 담아 접수를 저장하면: 확정 금액이 바뀌었을 때만 메일 (추가레슨 · 마스터클래스 넣거나 바꿨을 때 포함) */
+function parentNotifySubs_(nos) {
+  try {
+    const all = loadSubs_(), rows = parentRows_();
+    all.filter(sb => nos.includes(sb.no) && sb.form && Array.isArray(sb.form.preq)).forEach(sb => sb.form.preq.forEach(id => {
+      const r = rows.find(x => x.id === id); if (!r) return; const sub = parentSub_(id, all); if (!sub) return;
+      const m = r.m || {}; if (m.lastTotal === sub.total) return;
+      if (m.lastTotal != null) m.prevTotal = m.lastTotal; m.lastTotal = sub.total; m.totalAt = stamp_();
+      if (!r.email) { parentMoneySet_(r, m); return; }
+      const paid = (m.reps || []).filter(x => x.st === '확인').reduce((t, x) => t + x.amt, 0), ex = sub.ppl.reduce((t, p) => t + p.lesson, 0), bk = acadBank_(r.acad);
+      parentMail_(r, (m.prevTotal == null ? '학원이 캠프 접수를 마쳤어요' : '캠프 접수 금액이 바뀌었어요') + ' (' + sub.no + ')', (m.prevTotal != null ? ['금액이 ' + (+m.prevTotal).toLocaleString('ko-KR') + '원에서 ' + sub.total.toLocaleString('ko-KR') + '원으로 바뀌었어요.', ''] : []).concat(sub.ppl.map(p => '- ' + p.name + ' ' + (p.fee + p.lesson + p.dues + p.room).toLocaleString('ko-KR') + '원' + (p.lesson ? ' (추가레슨 · 마스터클래스 ' + p.lesson.toLocaleString('ko-KR') + '원 포함)' : '')).concat(['', '확정 금액: ' + sub.total.toLocaleString('ko-KR') + '원' + (ex ? ' (추가레슨 · 마스터클래스 ' + ex.toLocaleString('ko-KR') + '원 포함)' : ''), '입금 확인: ' + paid.toLocaleString('ko-KR') + '원', sub.total > paid ? '더 보내 주실 금액: ' + (sub.total - paid).toLocaleString('ko-KR') + '원' : '다 내셨어요.', bk ? '학원 통장: ' + bk.bank + ' ' + bk.acct + ' (' + bk.holder + ')' : ''])));
+      parentMoneySet_(r, m);
+    }));
+  } catch (e) { try { log_('시스템', '학부모 접수 메일 실패', String(e)); } catch (x) {} }
 }
 
 /* ---------- 학부모 ↔ 학원 돈 (11-15 사용자: 학원 통장 · 입금 신고 · 취소 · 환불 요청, 처리는 그 학원 원장 · 선생님) ----------
@@ -858,6 +896,7 @@ function parentCancel(name, phone, acad, pin, x) {
     }
     out = parentRows_().find(y => y.id === c.had.id);
   } finally { lock.releaseLock(); }
+  try { if (!x.undo) parentMail_(out, now ? '캠프 신청을 취소했어요' : '취소 · 환불 요청을 학원에 보냈어요', ['사유: ' + String(x.why || '').slice(0, 200), now ? '' : '학원이 확인한 뒤 환불액을 알려 드려요.']); } catch (e) {}
   log_(c.nm + '(' + c.ph.slice(-4) + ')', x.undo ? '학부모 취소 요청 거둠' : now ? '학부모 신청 취소' : '학부모 취소 · 환불 요청', c.ac);
   return { ok: true, req: parentOut_(out) };
 }
@@ -867,6 +906,7 @@ function parentPayDo(token, id, i, ok, why) {
   if (!r || !(u.acads || []).includes(r.acad)) throw new Error('신청을 찾지 못했어요.');
   const lock = lock_();
   try { const m = r.m || {}, rp = (m.reps || [])[+i]; if (!rp) throw new Error('입금 신고를 찾지 못했어요.'); rp.st = ok ? '확인' : '반려'; rp.why = ok ? '' : String(why || '').slice(0, 100); rp.by = u.name; rp.byAt = stamp_(); parentMoneySet_(r, m); } finally { lock.releaseLock(); }
+  try { const rp = (r.m.reps || [])[+i]; parentMail_(r, ok ? '학원이 입금을 확인했어요' : '입금 신고가 반려됐어요', [rp.date + ' · ' + rp.nm + ' · ' + (+rp.amt).toLocaleString('ko-KR') + '원', ok ? '' : '사유: ' + (rp.why || '-') + ' · 확인 후 다시 신고해 주세요.']); } catch (e) {}
   log_(u.name, ok ? '학부모 입금 확인' : '학부모 입금 반려', r.acad + ' · ' + r.name);
   return { ok: true, preq: parentFor_(u.acads || []) };
 }
@@ -875,6 +915,7 @@ function parentCxDo(token, id, act, amt, note) {
   if (!r || !(u.acads || []).includes(r.acad)) throw new Error('신청을 찾지 못했어요.');
   const lock = lock_();
   try { const m = r.m || {}; if (!m.cx) throw new Error('취소 요청이 없어요.'); m.cx.st = act === '처리' ? '처리' : '반려'; m.cx.amt = Math.max(0, +String(amt || '').replace(/[^\d]/g, '') || 0); m.cx.note = String(note || '').slice(0, 200); m.cx.by = u.name; m.cx.byAt = stamp_(); parentMoneySet_(r, m, act === '처리' ? '취소' : ''); } finally { lock.releaseLock(); }
+  try { const cx = r.m.cx; parentMail_(r, act === '처리' ? '취소 · 환불을 처리했어요' : '취소 요청이 반려됐어요', [act === '처리' ? '환불액: ' + (+cx.amt || 0).toLocaleString('ko-KR') + '원' + (cx.acct ? ' · 받으실 계좌 ' + cx.bank + ' ****' + String(cx.acct).replace(/\D/g, '').slice(-4) : '') : '참가는 그대로예요.', cx.note ? '학원 메모: ' + cx.note : '']); } catch (e) {}
   log_(u.name, act === '처리' ? '학부모 취소 · 환불 처리' : '학부모 취소 요청 반려', r.acad + ' · ' + r.name);
   return { ok: true, preq: parentFor_(u.acads || []) };
 }
@@ -1165,6 +1206,7 @@ function submitNew(token, sb) {
   } finally { RC_MEMO = null; lock.releaseLock(); }
   log_(u.name, '새 접수', sb.no + ' · ' + sb.ppl.length + '명');
   try { mail_(sb, u); } catch (e) { Logger.log('메일: ' + e.message); }
+  try { if (sb.form && Array.isArray(sb.form.preq) && sb.form.preq.length) parentNotifySubs_([sb.no]); } catch (e) {}
   return Object.assign({ ok: true, no: sb.no }, bundle_(u.acads, u.name));
 }
 /** 다음 접수번호: 접수 시트 「접수번호」 칸만 읽음 (잠근 안에서 부름) */
@@ -1281,6 +1323,7 @@ function saveSubs(token, subs) {
     });
     writeTeams_(all);
   } finally { lock.releaseLock(); }
+  try { parentNotifySubs_((subs || []).filter(x => x.form && Array.isArray(x.form.preq) && x.form.preq.length).map(x => x.no)); } catch (e) {}
   return Object.assign({ ok: true }, bundle_(u.acads, u.name));
 }
 

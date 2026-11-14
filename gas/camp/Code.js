@@ -3600,7 +3600,7 @@ function audAdd(token, pid, url) {
   if (!audUrlOk_(url)) throw new Error('주소를 https:// 로 시작하게 넣어 주세요 (유튜브 「일부 공개」 링크 등).');
   const lock = lock_();
   try {
-    const sb = loadSubs_().find(x => pid.indexOf(x.no + '-') === 0);
+    const sb = loadSubs_().find(x => pid.indexOf(x.no + '_') === 0);
     if (!canEdit_(u, sb) || !u.acads.includes(sb.acad)) throw new Error('이 접수에는 음원을 넣을 수 없어요.');
     const p = sb.ppl.find(x => x.id === pid); if (!p || p.status !== '정상') throw new Error('참가 중인 사람에게만 음원을 넣을 수 있어요.');
     const i = (((sb.form || {}).info) || {})[pid.slice(sb.no.length + 1)] || {}, con = String(i.concert || ''), C = audCfg_()[con];
@@ -3628,7 +3628,7 @@ function audSet(token, id, st, memo) {
     ensureHead_(AUD, AUD_HEAD); const sh = SpreadsheetApp.getActive().getSheetByName(AUD);
     let r = audRows_().find(x => x.id === id);
     if (!r && /^V:/.test(id)) {   /* 접수 때 넣은 주소: 처음 심사할 때 시트에 줄을 만듦 */
-      const pid = id.slice(2), sb = loadSubs_().find(x => pid.indexOf(x.no + '-') === 0), p = sb && sb.ppl.find(x => x.id === pid);
+      const pid = id.slice(2), sb = loadSubs_().find(x => pid.indexOf(x.no + '_') === 0), p = sb && sb.ppl.find(x => x.id === pid);
       const i = sb ? (((sb.form || {}).info) || {})[pid.slice(sb.no.length + 1)] || {} : {};
       if (!p || !String(i.video || '').trim()) throw new Error('그 음원을 찾지 못했어요. 새로 불러와 주세요.');
       sh.appendRow(['U' + Utilities.formatDate(new Date(), TZ, 'yyMMddHHmmss') + Math.floor(Math.random() * 90 + 10), sb.date || stamp_(), sb.no, pid, p.name, sb.acad, String(i.concert || ''), "'" + String(i.video).trim(), sb.owner + ' (접수 때)', '심사 전', '', '', '']);

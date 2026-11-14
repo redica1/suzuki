@@ -1,4 +1,4 @@
-/* build: 20261115-001951 */
+/* build: 20261115-004825 */
     ps.forEach(p=>{p.pay='신고';p.rep=rep;delete S.rpRow[p.id]});S.afterSave=()=>repDone(ps.map(p=>p.id));subSave();S.rp=null;S.rpOpen=false;S.rpMemo=undefined;render();toast(`${ps.length}명 입금 신고를 보냈어요 · 운영진이 확인하면 「입금 확인」으로 바뀌어요`);return}
   if(b.id==='rpFill'){const n=document.getElementById('rpAllN').value.trim(),dd=document.getElementById('rpAllD').value;S.rpAllN=n;S.rpAllD=dd;const sel=S.rp||[];
     if(!n&&!dd){toast('적용할 입금자명이나 입금일을 적어 주세요');return}unpaidPpl().filter(x=>sel.includes(x.p.id)).forEach(({p})=>{const v=rpv(p);if(n)v.n=n;if(dd)v.d=dd});render();toast(`선택한 ${sel.length}명에게 적용했어요`);return}
@@ -106,7 +106,7 @@
   if(b.id==='ensClear'){ensSave([]);render();toast('시험으로 넣은 앙상블 팀을 지웠어요');return}
   if(d.ensrm){if(S.editNo&&joinedOf(S.editNo).includes(d.ensrm)){toast(d.ensrm+'은(는) 직접 함께 신청한 학원이라 뺄 수 없어요',true);return}S.ens.acads=(S.ens.acads||[]).filter(a=>a!==d.ensrm);render();return}
   if(d.ensmem&&b.matches('input')){S.ens.mem=S.ens.mem||{};S.ens.mem[d.ensmem]=b.checked;render();return}
-  if(b.id==='again'){S.note='';S.rnote='';S.rreq={};S.picked={};S.extra=[];S.fam=[];S.room={};S.rreq={};S.rnote="";S.join={};S.info={};S.agree=false;S.ens={on:false};go(2);toast('같은 학원으로 추가 접수를 시작해요');return}
+  if(b.id==='again'){S.note='';S.rnote='';S.rreq={};S.picked={};S.extra=[];S.fam=[];S.room={};S.rreq={};S.rnote="";S.preqTaken=[];S.join={};S.info={};S.agree=false;S.ens={on:false};go(2);toast('같은 학원으로 추가 접수를 시작해요');return}
   if(b.id==='restart'){Object.assign(S,{note:'',step:1,verified:false,picked:{},extra:[],fam:[],room:{},join:{},info:{},agree:false,ens:{on:false},verr:''});render();return}
 });
 document.addEventListener('change',e=>{if(e.target.id==='qWhere'){S.qWhere=e.target.value;return}const el=e.target;
@@ -206,6 +206,7 @@ const GD={
  concert:{t:'음악회 · 음원',q:['음악회','이브닝','오후음악회','트와일라잇','앙상블','음원','오디션','곡명','심사'],h:'<ul><li>신청서에서 학생마다 <b>음악회와 곡</b>을 골라요. 음악회를 고르면 <b>연주곡은 꼭</b> 넣어야 해요(목록에 없으면 작곡가 · 곡명).</li><li><b>음원(유튜브 주소)</b>이 필요한 음악회는 「내 접수」나 첫 화면 「음원 먼저 내기」에서 넣어요. 마감일은 화면에 나와요.</li><li>심사 결과는 협회가 공개하면 「내 접수」에 보여요.</li><li><b>앙상블</b>은 대표 학원이 신청하고, 함께하는 학원을 넣어요.</li></ul>'},
  room:{t:'가족방 · 숙소',q:['가족방','숙소','방 배정','몇 명','4인','5인','15개월','아기','방 요청','같은 방','침대'],h:()=>'<ul><li><b>숙소는 5~6인 1실 사용이 기본</b>이에요. 가족이 아니면 5인 1실로 배정해요.</li><li><b>가족방</b>은 신청서에서 <b>가족 추가</b>(보호자 · 동반가족 · 15개월 미만 · 형제 · 자녀)를 한 사람만 신청할 수 있어요. 한 방 '+ROOM.cap+'명까지예요.</li><li>'+ROOM.cap+'명보다 적으면 빈 자리 1개마다 '+won(ROOM.emptyFee)+'이 추가돼요.</li><li>15개월 미만 아기도 가족 추가에 넣어요.</li><li><b>방 요청</b>(「○○학원과 붙여 주세요」 · 「침대방 꼭」 등)은 신청서에 적어요. 가족방은 「가족방 신청」 아래 칸, 학생 · 선생님 방(5인 1실)은 참가 정보 맨 아래 「방 요청 사항」 칸이에요. 나중에 생긴 요청은 게시판 「방 요청」으로 남겨도 돼요.</li><li>「꼭 · 반드시」라고 쓰면 꼭 지킬 요청으로 봐요. 본부가 원칙에 따라 배정해서 다 들어드리지 못할 수 있어요.</li></ul>'},
  head:{t:'원장님',q:['원장','다른 선생님 접수','우리 학원 전체','고칠 수','수정','삭제','권한','학원 전체'],h:'<p>「접수 내역 › 우리 학원 전체」는 <b>원장님만</b> 보여요. 다른 선생님이 낸 접수까지 모두 나와요. 원장이 아닌 선생님은 내가 낸 접수만 보여요.</p><p><b>원장님은 고칠 수 있어요</b>: 「접수 내역 › 우리 학원 전체」 아래 목록에서 다른 선생님이 낸 접수도 체크해서 정보 수정 · 취소를 해요(「접수 교사」 칸에 누가 냈는지 보여요). 「내가 낸 접수」는 원장님이 직접 낸 것만이에요. 접수한 선생님 이름은 그대로 남아요. (회원관리 교사 정보의 직급이 「원장」이어야 해요 · 바뀌면 다시 로그인)</p><ul><li><b>입금 현황</b>: 사람마다 청구 · 입금 · 환불 · 과납 · 미납, 차수별 소계 · 총계, 「엑셀로 받기」</li><li><b>가족방 현황</b> · <b>레슨</b>(그룹 · 개인 · 마스터클래스) · <b>음악회 · 학생 진도</b></li></ul>'},
+ parent:{t:'학부모 신청 (학원 다니는 아이)',q:['학부모 신청','학부모가','부모님','엄마','아빠가','보호자가 신청','가족 이름','학부모 링크'],h:'<ul><li>학원에 다니는 아이의 학부모는 첫 화면 <b>「학부모 (학원 다니는 아이)」</b>에서 회원가입 없이 보호자 이름 · 휴대전화 · 학원만 넣고 들어가요.</li><li>아이 이름(꼭)과 가요 / 안 가요 / 아직 몰라요, 같이 가는 동반가족 · 15개월 미만 이름, 가족방 희망 · 방 요청을 보내요. 입력한 사람이 첫 번째 보호자예요.</li><li>선생님 화면 「참가자 선택」 위에 <b>「학부모가 보낸 신청」</b>이 떠요. 「접수에 담기」를 누르면 가는 아이 · 보호자 · 가족 · 가족방이 채워지고, 권수 · 곡 · 레슨은 선생님이 넣어 접수해요.</li><li>돈은 지금처럼 학원이 모아서 협회에 내요.</li></ul>'},
  guest:{t:'비회원 보호자',q:['비회원','학부모','보호자 접수','학원 안 다니','직접 신청'],h:'<ol><li>「비회원 (학부모)」 → 보호자 이름 · 휴대전화 → 개인정보 동의</li><li>아이 이름 · 출생연도 · 악기 · 권수</li><li>보호자 · 동반가족 · 15개월 미만, 필요하면 가족방 신청</li><li>신청 확인 → 접수 → 입금 → 「입금 신고」</li><li>다음에 볼 때는 같은 이름 · 휴대전화로 들어오면 내 접수가 나와요</li></ol>'},
  staff:{t:'관계자',q:['관계자','초빙교수','반주자','지휘자','통역','스태프'],h:'<ol><li>「관계자」 → 회원관리 <b>관계자</b> 이메일 · 비밀번호로 로그인</li><li>본인 역할을 고르고, 같이 오는 가족이 있으면 넣어요</li><li>접수하면 끝 · 참가비는 역할에 따라 정해져 있어요</li></ol><p class="hint">아직 계정이 없으면 회원관리에서 「관계자」로 먼저 가입해 주세요 (승인 후 로그인).</p>'},
  pay:{t:'입금 · 차수',q:['입금','계좌','입금 신고','입금했어요','입금 확인','입금자명','차수','입금할 금액'],h:'<ol><li>접수 화면에 나온 계좌로 입금</li><li>「내 접수 › 입금 신고」에서 입금자명 · 입금일 · 금액</li><li>협회가 통장을 확인하면 「입금 확인」</li></ol><p>입금 전인 사람은 청구 칸에 <b>마감별 금액</b>이 같이 보여요. 예) 「12/7까지 입금 ○○원 · 12/18까지 ○○원 · 이후 ○○원」</p><p class="hint">차수는 협회가 확인한 실제 입금일로 정해져요. 신고만 하고 입금하지 않으면 반려되고 그때의 차수 금액으로 바뀌어요. 더 낸 돈(과납)은 「차액 돌려받기 요청」으로 받아요.</p>'},
@@ -232,7 +233,7 @@ const GD={
  intl:{t:'해외 참가',q:['해외','외국','overseas','english','영어','달러','usd','international'],h:'<ul><li>해외 단체는 첫 화면의 <b>「Overseas participants · 해외 참가」</b> 카드로 들어가요. 영어 화면이에요.</li><li>해외 단체 담당자가 단체 명단을 한꺼번에 넣어요.</li><li>국내 학원 학생 · 선생님은 이 카드를 쓰지 않아요.</li></ul>'},
  ask:{t:'문의 · 게시판',q:['문의','질문','게시판','연락','전화','카톡','카카오톡','메일','운영진','협회에 묻','답이 없'],h:'<ul><li>궁금한 점은 <b>캠프 게시판</b>에 남겨 주세요. 운영진이 게시판에서 답해요.</li><li>공문 안내: 카카오톡 <b>suzukimusickorea</b> 또는 메일 suzukimusickorea1995@gmail.com</li><li>캠프 중 아이 안전 같은 급한 일만 운영실로 전화해 주세요.</li></ul>'}
 };
-const GD_ORDER=['first','when','who','login','mem','type','fee','dues','birth','steps','taken','lesson','concert','audio','ens','room','head','guest','staff','intl','consent','pay','refund','cancel','mine','meal','camp','ask'];let GD_CUR='first',GD_LAST=null;
+const GD_ORDER=['first','when','who','login','mem','type','fee','dues','birth','steps','taken','lesson','concert','audio','ens','room','head','guest','staff','parent','intl','consent','pay','refund','cancel','mine','meal','camp','ask'];let GD_CUR='first',GD_LAST=null;
 const gdH=x=>typeof x.h==='function'?x.h():x.h;
 function gdBtn(){return '<button type="button" class="guideBtn" data-gd="first" aria-haspopup="dialog"><span class="ic" aria-hidden="true">?</span><span><b>캠프 접수 안내 · 사용법</b><small>처음이면 먼저 보세요 · 접수부터 입금 · 취소까지 한눈에</small></span><span class="go" aria-hidden="true">›</span></button>'}
 function gdKey(){const m=S.user?(S.user.guest?'guest':(typeof isStaffAcad==='function'&&isStaffAcad())?'staff':'mem'):(S.mode==='guest'?'guest':S.mode==='staff'?'staff':S.mode==='member'?'mem':'who');return S.step>=5?'pay':m}
@@ -283,7 +284,7 @@ try{google.script.url.getLocation(l=>{const pr=(l&&l.parameter)||{};if('board' i
 /* 처음 화면: 로그인부터 */
 render();
 /* 소속 고르기 (학원 · 겸임 학원 · 내 클래스) */
-function pickAcad(a){const go=()=>{S.acad=a;S.rq='';S.sel={};S.ptab='교사';S.acQ='';S.acOpen=false;S.picked={};S.extra=[];S.fam=[];S.info={};S.room={};S.rreq={};S.rnote="";
+function pickAcad(a){const go=()=>{S.acad=a;S.rq='';S.sel={};S.ptab='교사';S.acQ='';S.acOpen=false;S.picked={};S.extra=[];S.fam=[];S.info={};S.room={};S.rreq={};S.rnote="";S.preqTaken=[];
     ensureRoster(a);S.verified=true;render()};
     /* 내 소속이 아닌 학원(겸임): 서버에서 그 학원 명단을 받아 옴 — 소속은 그대로 */
     if(S.token&&S.user&&!(S.user.acads||[]).includes(a)){api('addAcad',[a],r=>{const keep=S.user;loadFromServer(r);S.user=keep;S.user.acads=r.acads;go();toast(a+' 명단을 열었어요 · 소속은 그대로예요',true)},null,'명단을 불러오고 있어요…');return}
@@ -434,3 +435,28 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter'&&(e.target.id==='sgNa
 document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('#sgChk');if(!b)return;
   const n=(S.sgN||'').trim(),p=(S.sgP||'').replace(/\D/g,'');if(!n||!/^01\d{8,9}$/.test(p)){S.sgR={ok:false,msg:'이름과 휴대전화(010…)를 넣어 주세요.'};render();return}
   api('signupCheck',[n,p],r=>{S.sgR=r;render()},()=>{S.sgR={ok:false,msg:'확인하지 못했어요. 잠시 뒤 다시 해 주세요.'};render()},'확인하고 있어요…')});
+
+/* 학부모 신청 (11-15): 이 학원 학부모가 보낸 「간다 · 가족 이름」 → 「접수에 담기」로 신청 명단 · 가족 · 방에 채움. 권수 · 곡은 다음 단계에서 선생님이 */
+const PQ_ST={보냄:['새 신청','new'],바뀜:['바뀜','due'],담음:['담음','ok']};
+function preqList(){return (window.PREQ||[]).filter(r=>r.acad===S.acad)}
+function preqPanel(){if(isGuest()||isStaffAcad())return '';const L=preqList();if(!L.length)return '';const n=L.filter(r=>r.st!=='담음').length;
+  const kid=k=>`${esc(k.name)} <small class="${k.go==='간다'?'':'faint'}">${k.go==='간다'?'가요':k.go==='안 간다'?'안 가요':'미정'}</small>`;
+  return `<details class="panel preq" ${n?'open':''}><summary><b>학부모가 보낸 신청 ${L.length}건</b>${n?` <span class="pill new">확인할 것 ${n}</span>`:''} <span class="hint">「접수에 담기」를 누르면 가는 아이 · 보호자 · 가족 · 방 요청이 채워져요. 권수 · 곡은 다음 단계에서 넣어요</span></summary>
+  <div class="preqL">${L.map(r=>{const d=r.d||{},st=PQ_ST[r.st]||PQ_ST.보냄,fam=(d.fam||[]);
+    return `<div class="preqR"><div class="preqH"><b>${esc(r.name)}</b> <small class="faint">${esc(r.phone)}</small> <span class="pill ${st[1]}">${st[0]}</span> <small class="faint">${esc(String(r.at).slice(5,16))}${r.by?` · ${esc(r.by)} 선생님이 담음`:''}</small></div>
+      <div class="preqB"><span>아이: ${(d.kids||[]).map(kid).join(' · ')}</span><span>보호자: ${d.me&&d.me.go===false?'<small class="faint">안 가요</small>':esc(r.name)}${fam.length?` · 가족: ${fam.map(f=>esc(f.name)+` <small class="faint">${esc(f.type)}</small>`).join(' · ')}`:''}</span>${d.room&&(d.room.fam||d.room.note)?`<span>방: ${d.room.fam?'<b>가족방 원함</b>':''}${d.room.note?' · '+esc(d.room.note):''}</span>`:''}${d.memo?`<span>한마디: ${esc(d.memo)}</span>`:''}</div>
+      <button class="btn small ${r.st==='담음'?'':'primary'}" type="button" data-preq="${esc(r.id)}">${r.st==='담음'?'다시 담기':'접수에 담기'}</button></div>`}).join('')}</div></details>`}
+function preqTake(id){const r=preqList().find(x=>x.id===id);if(!r)return;const d=r.d||{},R=roster(),nm=x=>String(x||'').replace(/\s+/g,'');
+  const go=(d.kids||[]).filter(k=>k.go==='간다'),got=[],miss=[],dup=[],done=[];
+  go.forEach(k=>{const c=R.students.filter(s=>nm(bare(s.name))===nm(k.name));if(c.length!==1){(c.length?dup:miss).push(k.name);return}const s=c[0];if(bookedOf(s)&&!S.picked[s.id]){done.push(k.name);return}got.push(s.id)});
+  if(!got.length){toast(`담을 아이를 명단에서 찾지 못했어요${miss.length?' · 명단에 없음: '+miss.join(', '):''}${dup.length?' · 같은 이름이 여럿: '+dup.join(', '):''}${done.length?' · 이미 접수됨: '+done.join(', '):''}`,true);return}
+  const at=nowStamp();got.forEach(i=>{S.picked[i]=true;if(!S.cartAt[i])S.cartAt[i]=at;delete S.sel[i]});const head=got[0];
+  const T={'동반가족':'회원의 그외 악기 안하는 동반가족','15개월 미만':'동반가족 중 15개월 미만'},FI=(ty,f)=>({by:String(f.by||'').slice(0,4),gender:f.gender||'',teacher:'',type:ty,prog:'',pref:false,p1:'',p2:'',lessons:0,mc:[],concert:'없음',song:'',other:false,oc:'',ot:''});
+  const add=(name,ty,f)=>{if(S.fam.some(x=>x.link===head&&nm(x.name)===nm(name)))return 0;const fid='f'+Date.now()+Math.floor(Math.random()*1000);S.fam.push({id:fid,name,type:ty,link:head});S.info[fid]=FI(ty,f||{});return 1};
+  let nf=0;if(!(d.me&&d.me.go===false))nf+=add(r.name,'회원의 첫번째 보호자',d.me||{});(d.fam||[]).forEach(f=>{nf+=add(f.name,T[f.type]||T['동반가족'],f)});
+  if(d.room&&d.room.fam&&nf){S.room[head]=true;got.slice(1).forEach(k=>{S.join[k]=head;delete S.room[k]});if(d.room.note){S.rreq=S.rreq||{};S.rreq[head]=d.room.note}}
+  else if(d.room&&d.room.note){S.rnote=[S.rnote,`${r.name}: ${d.room.note}`].filter(Boolean).join(' / ').slice(0,300)}
+  S.preqTaken=[...new Set([...(S.preqTaken||[]),r.id])];
+  api('parentMark',[r.id],x=>{if(x&&x.preq)window.PREQ=x.preq;render()},null,'표시하고 있어요…');
+  render();toast(`아이 ${got.length}명 · 가족 ${nf}명을 담았어요${miss.length?' · 명단에 없음: '+miss.join(', ')+' (「명단에 없는 학생 추가」로)':''}${dup.length?' · 같은 이름 여럿: '+dup.join(', ')+' (직접 골라 주세요)':''}${done.length?' · 이미 접수됨: '+done.join(', '):''}`,miss.length+dup.length>0)}
+document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-preq]');if(!b)return;e.preventDefault();preqTake(b.dataset.preq)});

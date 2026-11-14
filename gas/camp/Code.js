@@ -1,4 +1,4 @@
-/* build: 20261115-001951 */
+/* build: 20261115-004825 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -105,6 +105,7 @@ function doGet(e) {
   const intl = e && e.parameter && e.parameter.page === 'intl';
   if (e && e.parameter && e.parameter.page === 'meal') return HtmlService.createHtmlOutputFromFile('Meal').setTitle(cname + ' · 식권 스캐너').addMetaTag('viewport', 'width=device-width, initial-scale=1, user-scalable=no').setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);   // 식권 스캐너 (11-04)
   if (e && e.parameter && e.parameter.page === 'qa') return qaOn_() ? HtmlService.createHtmlOutputFromFile('QA').setTitle('[STG] 캠프 접수 시험 체크').addMetaTag('viewport', 'width=device-width, initial-scale=1').setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL) : HtmlService.createHtmlOutput('STG에서만 열려요.');
+  if (e && e.parameter && e.parameter.page === 'parent') return HtmlService.createHtmlOutputFromFile('Parent').setTitle(cname + ' · 학부모 신청').addMetaTag('viewport', 'width=device-width, initial-scale=1').setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
   if (e && e.parameter && e.parameter.page === 'find') return HtmlService.createTemplateFromFile('Find').evaluate().setTitle(cname + ' · 일정 찾기').addMetaTag('viewport', 'width=device-width, initial-scale=1').setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
   if (admin) page = HtmlService.createTemplateFromFile('Admin').evaluate();
   else if (intl) page = HtmlService.createHtmlOutputFromFile('Intl');
@@ -691,7 +692,77 @@ function bundle_(acads, owner) {
   let audPre = {}; try { audPre = audPreMap_(acads); } catch (x) {}
   /* 중복 접수 막기용: 남의 접수 내용은 보내지 않고 「이미 접수된 사람」 번호만 (학생 = 내 학원들, 선생님 = 모든 학원) */
   const taken = []; all.forEach(sb => { if (vis.includes(sb)) return; sb.ppl.forEach(p => { if (p.status !== '정상' && p.status !== '취소요청') return; const k = String(p.id).slice(String(sb.no).length + 1); if (/^t_/.test(k) || acads.includes(sb.acad)) taken.push(k); }); });
-  return { aud, audPre, rosters, subs: vis, taken, teams: teams_(all), bank: bankInfo_(), today: today_(), profs, camp, myPay: (() => { try { const me = ts.filter(t => t.name === owner); return myPay_(me.length === 1 ? me[0].id : '', owner); } catch (x) { return null; } })() };
+  const preq = parentFor_(acads.filter(a => a !== GUEST_ACAD && a !== STAFF_ACAD && a !== NOACAD));
+  return { aud, audPre, preq, rosters, subs: vis, taken, teams: teams_(all), bank: bankInfo_(), today: today_(), profs, camp, myPay: (() => { try { const me = ts.filter(t => t.name === owner); return myPay_(me.length === 1 ? me[0].id : '', owner); } catch (x) { return null; } })() };
+}
+
+
+/* ---------------- 학부모 신청 (11-15, 선택 기능) ----------------
+ * 학원 다니는 아이의 학부모가 회원가입 없이 이름 · 휴대전화 · 학원만으로 들어와 「간다 / 안 간다」와 같이 가는 가족 이름만 냄.
+ * 학원 선생님 화면(참가자 선택)에 「학부모 신청」으로 보이고, 선생님이 「접수에 담기」 → 권수 · 곡 등을 넣어 지금처럼 접수.
+ * 돈은 지금처럼 학원이 모아서 협회에 냄 (학부모 → 협회 직접 입금 없음). 입력한 사람 = 첫 번째 보호자 */
+const PARENT_SH = '학부모 신청', PARENT_HEAD = ['신청ID', '학원', '보호자', '휴대전화', '내용', '처음', '마지막', '상태', '담은 선생님', '담은 때'];
+function parentSheet_() { const ss = SpreadsheetApp.getActive(); let sh = ss.getSheetByName(PARENT_SH); if (!sh) { sh = ss.insertSheet(PARENT_SH); sh.getRange(1, 1, 1, PARENT_HEAD.length).setValues([PARENT_HEAD]).setFontWeight('bold'); sh.setFrozenRows(1); sh.getRange('A:J').setNumberFormat('@'); } return sh; }
+function parentRows_() { return rows_(PARENT_SH).filter(r => r['신청ID']).map(r => { let d = {}; try { d = JSON.parse(String(r['내용'] || '{}')); } catch (e) {} return { id: String(r['신청ID']), acad: String(r['학원']), name: String(r['보호자']), phone: String(r['휴대전화']).replace(/\D/g, ''), d, at0: String(r['처음']), at: String(r['마지막']), st: String(r['상태'] || '보냄'), by: String(r['담은 선생님'] || ''), byAt: String(r['담은 때'] || ''), _row: r._row }; }); }
+function parentAcads_() {
+  const open = acadOpen_(), set = {};
+  rows_(SH.S).forEach(r => { const a = String(r['학원'] || '').trim(); if (a) set[a] = 1; });
+  try { teachers_().forEach(t => (t.acads || []).forEach(a => { if (a) set[a] = 1; })); } catch (e) {}
+  return Object.keys(set).filter(a => a !== GUEST_ACAD && a !== STAFF_ACAD && a !== NOACAD && (!open || open.includes(a))).sort((x, y) => x.localeCompare(y, 'ko'));
+}
+function parentInit() {
+  const C = camp_();
+  return { ok: true, open: C.base.member !== false, acads: parentAcads_(), camp: { name: C.base.name, start: C.base.start, end: C.base.end, place: C.base.place }, consent: (C.consent.items || []).filter(x => x.on), refund: C.refund, roomCap: (C.opt || {}).roomCap || 4 };
+}
+function parentWho_(tok) { const v = tok && CacheService.getScriptCache().get('pt_' + tok); if (!v) throw new Error('들어온 지 오래되어 끊겼어요. 처음 화면에서 다시 들어와 주세요.'); return JSON.parse(v); }
+function parentOut_(r) { return r ? { id: r.id, acad: r.acad, name: r.name, d: r.d, at: r.at, st: r.st, byAt: r.byAt } : null; }
+function parentLogin(name, phone, acad, consent) {
+  const C = camp_(); if (C.base.member === false) return { ok: false, msg: '지금은 학원 접수를 받지 않아요.' };
+  const nm = String(name || '').trim().replace(/\s+/g, ' '), ph = String(phone || '').replace(/\D/g, ''), ac = String(acad || '').trim();
+  if (nm.length < 2 || nm.length > 20 || /[()|,]/.test(nm)) return { ok: false, msg: '보호자 이름을 2~20자로 넣어 주세요.' };
+  if (!/^01\d{8,9}$/.test(ph)) return { ok: false, msg: '휴대전화를 확인해 주세요.' };
+  if (!parentAcads_().includes(ac)) return { ok: false, msg: '다니는 학원을 목록에서 골라 주세요.' };
+  const ce = consentErr_(consent); if (ce) return { ok: false, msg: ce };
+  const Ca = CacheService.getScriptCache(), k = 'ptf_' + ph, n = +(Ca.get(k) || 0);
+  if (n >= 10) return { ok: false, msg: '잠시 뒤 다시 해 주세요 (15분).' };
+  const had = parentRows_().find(r => r.phone === ph && r.acad === ac);
+  if (had && had.name !== nm) { Ca.put(k, String(n + 1), 900); return { ok: false, msg: '이 휴대전화로 「' + maskName_(had.name) + '」 님이 이미 신청했어요. 처음에 넣은 보호자 이름으로 넣어 주세요.' }; }
+  consentLog_('학부모 신청', nm, ph, consent);
+  const tok = Utilities.getUuid(); Ca.put('pt_' + tok, JSON.stringify({ nm, ph, ac }), 21600);
+  log_(nm + '(' + ph.slice(-4) + ')', '학부모 신청 들어옴', ac);
+  return { ok: true, token: tok, me: { name: nm, acad: ac, p4: ph.slice(-4) }, req: parentOut_(had) };
+}
+function parentClean_(d) {
+  d = d || {}; const t = (v, n) => String(v == null ? '' : v).replace(/[\r|]/g, ' ').trim().slice(0, n);
+  const yr = v => { const y = String(v || '').replace(/\D/g, '').slice(0, 6); return y; };
+  const g = v => (v === '남' || v === '여') ? v : '';
+  const kids = (Array.isArray(d.kids) ? d.kids : []).slice(0, 8).map(x => ({ name: t(x.name, 20), go: ['간다', '안 간다', '모름'].includes(x.go) ? x.go : '모름' })).filter(x => x.name);
+  const fam = (Array.isArray(d.fam) ? d.fam : []).slice(0, 12).map(x => ({ type: x.type === '15개월 미만' ? '15개월 미만' : '동반가족', name: t(x.name, 20), gender: g(x.gender), by: yr(x.by) })).filter(x => x.name);
+  return { kids, fam, me: { gender: g((d.me || {}).gender), by: yr((d.me || {}).by), go: (d.me || {}).go === false ? false : true }, room: { fam: !!(d.room || {}).fam, note: t((d.room || {}).note, 300) }, memo: t(d.memo, 300) };
+}
+function parentSave(tok, d) {
+  const u = parentWho_(tok), x = parentClean_(d);
+  if (!x.kids.length) throw new Error('아이 이름을 1명 이상 넣어 주세요.');
+  const lock = lock_();
+  let out;
+  try {
+    const sh = parentSheet_(), L = parentRows_(), had = L.find(r => r.phone === u.ph && r.acad === u.ac);
+    const ph = "'" + u.ph.replace(/(\d{3})(\d{3,4})(\d{4})/, '$1-$2-$3'), j = JSON.stringify(x);
+    if (had) { sh.getRange(had._row, 2, 1, 7).setValues([[u.ac, u.nm, ph, j, had.at0, stamp_(), had.st === '담음' ? '바뀜' : had.st === '바뀜' ? '바뀜' : '보냄']]); }
+    else { const id = 'P' + String(L.reduce((m, r) => Math.max(m, +r.id.slice(1) || 0), 0) + 1).padStart(4, '0'); sh.appendRow([id, u.ac, u.nm, ph, j, stamp_(), stamp_(), '보냄', '', '']); }
+    out = parentRows_().find(r => r.phone === u.ph && r.acad === u.ac);
+  } finally { lock.releaseLock(); }
+  log_(u.nm + '(' + u.ph.slice(-4) + ')', '학부모 신청 저장', u.ac + ' · 아이 ' + x.kids.length + ' · 가족 ' + x.fam.length);
+  return { ok: true, req: parentOut_(out) };
+}
+/* 선생님 화면에 보내는 학부모 신청 (그 학원 것만, 휴대전화는 그 학원 선생님에게만) */
+function parentFor_(acads) { try { return parentRows_().filter(r => acads.includes(r.acad)).map(r => ({ id: r.id, acad: r.acad, name: r.name, phone: r.phone.replace(/(\d{3})(\d{3,4})(\d{4})/, '$1-$2-$3'), d: r.d, at: r.at, st: r.st, by: r.by, byAt: r.byAt })); } catch (e) { return []; } }
+function parentMark(token, id) {
+  const u = who_(token), r = parentRows_().find(x => x.id === String(id));
+  if (!r || !(u.acads || []).includes(r.acad)) throw new Error('신청을 찾지 못했어요.');
+  const lock = lock_();
+  try { parentSheet_().getRange(r._row, 8, 1, 3).setValues([['담음', u.name, stamp_()]]); } finally { lock.releaseLock(); }
+  return { ok: true, preq: parentFor_(u.acads || []) };
 }
 
 /* ---------------- 접수 읽고 쓰기 ---------------- */
@@ -822,6 +893,7 @@ function recalc_(sb) {
   if (sb.form) { delete sb.form.red; if (sb.form.note != null) sb.form.note = String(sb.form.note || '').trim().slice(0, 100) || null; }
   if (sb.form) {   /* 방 요청 (11-14): 일반 방 rnote · 가족방 rreq[대표] — 글자 수만 자름 */
     const F = sb.form; if (F.rnote != null) F.rnote = String(F.rnote || '').trim().slice(0, 300) || null;
+    if (F.preq != null) F.preq = (Array.isArray(F.preq) ? F.preq : []).map(x => String(x).replace(/[^\w]/g, '').slice(0, 10)).filter(Boolean).slice(0, 20);   /* 학부모 신청에서 담은 것 (11-15) */
     if (F.rreq && typeof F.rreq === 'object') { const o = {}; Object.keys(F.rreq).slice(0, 30).forEach(k => { const v = String(F.rreq[k] || '').trim().slice(0, 300); if (v) o[String(k).slice(0, 40)] = v; }); F.rreq = Object.keys(o).length ? o : null; } else if (F.rreq != null) F.rreq = null;
   }
   const f = sb.form || {}, info = f.info || {}, ri = Math.max(0, Math.min(CC.rounds.length - 1, +f.ri || 0));

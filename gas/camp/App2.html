@@ -1,17 +1,18 @@
-/* build: 20261115-001951 */
+/* build: 20261115-004825 */
 function vAuthPick(){const off=!!CAMP.pre;return gdBtn()+apDoor()+`<section class="sec"><h2>접수 시작</h2>
   ${off?`<p class="note warn" style="margin:6px 0 12px"><b>${+CAMP.pre.slice(5,7)}월 ${+CAMP.pre.slice(8,10)}일에 접수가 열려요.</b> 그 전에 아래에서 회원가입을 마쳐 두세요.</p>`:'<p class="lede">어떻게 접수하시나요?</p>'}
   <div class="pick2${off?' pickoff':''}"${off?' aria-disabled="true"':''}>
     ${MEMBER_OPEN?`<button type="button" class="pickcard" data-mode="member"><b>회원 선생님</b><span>협회 회원 선생님이 학원 학생들을 접수해요. 회원 이메일 · 비밀번호로 로그인해요.</span></button>`:''}
+    ${MEMBER_OPEN?`<a class="pickcard" href="${esc(parentUrl())}" target="_top" style="text-decoration:none;color:inherit"><b>학부모 (학원 다니는 아이)</b><span>아이가 캠프에 가는지와 같이 가는 가족 이름만 학원 선생님께 알려요. 접수는 선생님이 해요. 회원가입 없이 이름 · 휴대전화로.</span></a>`:''}
     ${GUEST_OPEN?`<button type="button" class="pickcard" data-mode="guest"><b>비회원 (학부모)</b><span>회원 학원에 다니지 않는 아이를 보호자가 직접 접수해요. 보호자 이름과 휴대전화만 있으면 돼요.</span></button>`:''}
     ${STAFF_OPEN?`<button type="button" class="pickcard" data-mode="staff"><b>관계자</b><span>초빙교수 · 반주자 · 지휘자 · 통역 · 초청강사 · 스태프. 협회 회원관리에 「관계자」로 가입한 이메일 · 비밀번호로 로그인해요.</span></button>`:''}
-    ${INTL_OPEN?`<a class="pickcard" href="${esc(intlUrl())}" target="_blank" rel="noopener" style="text-decoration:none;color:inherit" lang="en"><b>Overseas participants <small style="font-weight:500">· 해외 참가</small></b><span>For groups from other countries. Registration is in English and fees are in USD. Your group leader signs in with the access code from the association. ↗</span></a>`:''}
+    ${INTL_OPEN?`<a class="pickcard" href="${esc(intlUrl())}" target="_blank" rel="noopener" style="text-decoration:none;color:inherit" lang="en"><b>Overseas participants <small style="font-weight:500">· 해외 참가</small></b><span>For groups from other countries. Registration is in English and fees are in USD. Your group leader can register right away, no access code needed. ↗</span></a>`:''}
   </div>
   ${typeof TEST_LOGIN==='string'&&TEST_LOGIN?`<button class="btn ghost" type="button" id="tLogin" style="border-style:dashed;margin-top:10px">STG 시험: ${esc(TEST_LOGIN.split('/')[0])} 선생님으로 바로 로그인</button>`:''}
   ${typeof TEST_LOGIN==='string'&&TEST_LOGIN&&typeof TEST_NAMES==='string'&&TEST_NAMES.trim()?`<div class="tNames"><h3>STG 시험 선생님으로 바로 들어가기</h3><div class="pick2">${TEST_NAMES.split(/[,\n]/).map(x=>x.trim()).filter(Boolean).map((n,i)=>`<div class="tWrap"><button class="pickcard tCard" type="button" data-tname="${esc(n)}"><b>${esc(n)} 선생님</b><span>STG 시험 · 비밀번호 없이 바로 들어가요</span></button><a class="tMis" href="${esc(qaUrl(n,i))}" target="_blank" rel="noopener">시험 체크 · 의견 남기기 <small>(${i<6?(i+1)+'번 묶음부터':'전체 결과'})</small></a></div>`).join('')}</div></div>`:''}
   ${off?sgBox():''}
   ${S.verr&&!S.user?`<p class="err" style="margin-top:8px">${esc(S.verr)}</p>`:''}
-  ${GUEST_OPEN?'<p class="hint">회원 학원에 다니는 학생은 담당 선생님이 한꺼번에 접수해요. 잘 모르겠으면 다니는 학원 선생님께 먼저 여쭤 주세요.</p>':''}</section>`}
+  ${GUEST_OPEN?'<p class="hint">회원 학원에 다니는 학생은 담당 선생님이 한꺼번에 접수해요. 학부모는 「학부모 (학원 다니는 아이)」에서 가는지 · 같이 가는 가족만 알려 주면 돼요.</p>':''}</section>`}
 /* 접수 전 회원가입 확인 (11-12): 이름 · 휴대전화 → 가입 여부 → 회원가입으로 */
 function sgBox(){const r=S.sgR,U=MEMBER_URL||'https:\/\/app.suzukimusickorea.org/member/';
   const msg=!r?'':!r.ok?`<p class="err">${esc(r.msg||'')}</p>`:r.st==='ready'?`<p class="note ok"><b>회원가입이 되어 있어요.</b> 접수가 열리면 「회원 선생님」에서 회원 이메일 · 비밀번호로 로그인하세요.</p>`
@@ -85,19 +86,19 @@ function vGuestStep2(){const t=totals();
   </section>`}
 function doMemberLogin(nm,ph){busy(true,'들어가고 있어요…');google.script.run.withSuccessHandler(r=>{busy(false);if(!r.ok){S.verr=r.msg;if(S.auth==='consent'&&!/동의/.test(r.msg))S.auth='login';render();return}
       S.token=r.token;S.today=r.today;S.myAcct=r.myAcct||null;loadFromServer(r);login({...r.teacher,acads:r.teacher.acads});
-      if(!MY_SUBS.length&&r.teacher.acads.length===1){const a=r.teacher.acads[0];S.acad=a;S.rq='';S.sel={};S.ptab='교사';S.picked={};S.extra=[];S.fam=[];S.info={};S.room={};S.rreq={};S.rnote="";ensureRoster(a);S.verified=true;render()}})
+      if(!MY_SUBS.length&&r.teacher.acads.length===1){const a=r.teacher.acads[0];S.acad=a;S.rq='';S.sel={};S.ptab='교사';S.picked={};S.extra=[];S.fam=[];S.info={};S.room={};S.rreq={};S.rnote="";S.preqTaken=[];ensureRoster(a);S.verified=true;render()}})
       .withFailureHandler(e=>{busy(false);S.verr='연결이 잠시 안 돼요. 다시 눌러 주세요. ('+((e&&e.message)||e)+')';render()}).login(nm,ph,S.cons||{})}
 function doTestLogin(nm){busy(true,'들어가고 있어요…');google.script.run.withSuccessHandler(r=>{busy(false);if(!r.ok){S.verr=r.msg;render();return}
       S.token=r.token;S.today=r.today;S.myAcct=r.myAcct||null;loadFromServer(r);login({...r.teacher,acads:r.teacher.acads});
-      if(!MY_SUBS.length&&r.teacher.acads.length===1){const a=r.teacher.acads[0];S.acad=a;S.rq='';S.sel={};S.ptab='교사';S.picked={};S.extra=[];S.fam=[];S.info={};S.room={};S.rreq={};S.rnote="";ensureRoster(a);S.verified=true;render()}})
+      if(!MY_SUBS.length&&r.teacher.acads.length===1){const a=r.teacher.acads[0];S.acad=a;S.rq='';S.sel={};S.ptab='교사';S.picked={};S.extra=[];S.fam=[];S.info={};S.room={};S.rreq={};S.rnote="";S.preqTaken=[];ensureRoster(a);S.verified=true;render()}})
       .withFailureHandler(e=>{busy(false);S.verr='연결이 잠시 안 돼요. 다시 눌러 주세요. ('+((e&&e.message)||e)+')';render()}).testLogin(nm,S.cons||{})}
 function doMemberLoginPw(em,pw){busy(true,'들어가고 있어요…');google.script.run.withSuccessHandler(r=>{busy(false);if(!r.ok){S.verr=r.msg;if(S.auth==='consent'&&!/동의/.test(r.msg))S.auth='login';render();return}
       S.token=r.token;S.today=r.today;S.myAcct=r.myAcct||null;loadFromServer(r);login({...r.teacher,acads:r.teacher.acads});
-      if(!MY_SUBS.length&&r.teacher.acads.length===1){const a=r.teacher.acads[0];S.acad=a;S.rq='';S.sel={};S.ptab='교사';S.picked={};S.extra=[];S.fam=[];S.info={};S.room={};S.rreq={};S.rnote="";ensureRoster(a);S.verified=true;render()}})
+      if(!MY_SUBS.length&&r.teacher.acads.length===1){const a=r.teacher.acads[0];S.acad=a;S.rq='';S.sel={};S.ptab='교사';S.picked={};S.extra=[];S.fam=[];S.info={};S.room={};S.rreq={};S.rnote="";S.preqTaken=[];ensureRoster(a);S.verified=true;render()}})
       .withFailureHandler(e=>{busy(false);S.verr='연결이 잠시 안 돼요. 다시 눌러 주세요. ('+((e&&e.message)||e)+')';render()}).loginPw(em,pw,S.cons||{},S.mode==='staff')}
 function doGuestLogin(nm,ph){busy(true,'들어가고 있어요…');google.script.run.withSuccessHandler(r=>{busy(false);if(!r.ok){S.verr=r.msg;if(S.auth==='consent'&&!/동의/.test(r.msg))S.auth='guest';render();return}
       S.token=r.token;S.today=r.today;S.myAcct=r.myAcct||null;loadFromServer(r);login({...r.teacher});
-      if(!MY_SUBS.length){S.acad=GUEST_ACAD;S.rq='';S.sel={};S.picked={};S.extra=[];S.fam=[];S.info={};S.room={};S.rreq={};S.rnote="";ensureRoster(GUEST_ACAD);S.verified=true;render()}})
+      if(!MY_SUBS.length){S.acad=GUEST_ACAD;S.rq='';S.sel={};S.picked={};S.extra=[];S.fam=[];S.info={};S.room={};S.rreq={};S.rnote="";S.preqTaken=[];ensureRoster(GUEST_ACAD);S.verified=true;render()}})
       .withFailureHandler(e=>{busy(false);S.verr='연결이 잠시 안 돼요. 다시 눌러 주세요. ('+((e&&e.message)||e)+')';render()}).guestLogin(nm,ph,S.cons||{})}
 function renderSteps(){
   if(!S.user){const PRE=['접수 종류 선택',S.mode==='guest'?'보호자 확인':'본인 확인','개인정보 동의'],cur=S.auth==='pick'?1:S.auth==='consent'?3:2;
@@ -277,6 +278,7 @@ function vStep2(){
   const studentsForLink = people().filter(p=>p.kind==='student');
   return `<section class="sec"><h2>${esc(S.acad)} 참가자 선택</h2>
   <p class="lede">${isStaffAcad()?'본인을 체크하고 「신청 명단에 추가」를 눌러요. 함께 오는 가족은 다음 단계에서 넣어요.':'탭에서 교사·학생을 체크하고 「신청 명단에 추가」를 눌러요. 탭을 옮겨 가며 여러 번 추가할 수 있어요. 가족은 다음 단계에서 넣어요.'}</p>
+  ${preqPanel()}
   ${cartPanel()}
   <div class="panel">
     <div class="itabs" role="tablist" aria-label="교사·악기">${ptabList().map(o=>`<button type="button" role="tab" data-ptab="${o.t}" aria-pressed="${S.ptab===o.t}">${o.t==='교사'&&isStaffAcad()?'관계자':o.t}<small>${o.k}/${o.n}</small></button>`).join('')}</div>

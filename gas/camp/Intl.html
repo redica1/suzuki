@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head>
-<!-- build: 20261115-001737 -->
+<!-- build: 20261115-001951 -->
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <base target="_top">
 <title>Suzuki Winter Music Camp · Overseas Registration</title>
@@ -49,13 +49,19 @@ function run(fn,args,ok){busy(true);google.script.run.withSuccessHandler(functio
 function setD(r){S.D=r;S.list=(r.ppl||[]).map(function(p){return {key:p.key,first:p.first,last:p.last,type:p.type,gender:p.gender,by:p.by,inst:p.inst,prog:p.prog,note:p.note,room:p.room||'',fee:p.fee,paid:p.paid,pay:p.pay}});S.dirty=false;S.err='';
   var c=r.camp||{};document.getElementById('ttl').textContent=(c.name?c.name.replace('스즈키 겨울 음악제','Suzuki Winter Music Camp'):'Suzuki Winter Music Camp');
   document.getElementById('when').textContent=(c.start||'')+' ~ '+(c.end||'')+' · Overseas group registration · '+r.group.name}
-function vLogin(){return '<div class="card" style="max-width:520px"><h2>Group leader sign in</h2>'+
+function agBox(){return '<label style="display:flex;gap:10px;align-items:flex-start;font-weight:400"><input type="checkbox" id="ag" style="width:22px;min-height:22px;margin-top:3px"><span>I agree that the association collects and uses the participants’ names, gender, birth year, instrument and level to run the camp (room assignment, lessons, name tags), and shares names and gender with the camp hotel. I confirm that guardians of participants under 14 have agreed. The data is deleted after the camp settlement.</span></label>'}
+/* 코드 없이 새 단체 (11-15) */
+function vNew(){return '<div class="card" style="max-width:520px"><h2>Register a new group</h2>'+
+  '<p class="hint">No access code needed. Enter your group and leader details, and you can start registering right away. We will show you an access code and also email it to you, so you can sign in again later.</p>'+
+  '<div style="display:grid;gap:12px;margin-top:10px"><label>Group name<input type="text" id="ng" maxlength="40" placeholder="e.g. Taipei Suzuki Strings"></label><label>Country<input type="text" id="nc" maxlength="30" placeholder="e.g. Taiwan"></label><label>Leader name<input type="text" id="nl" maxlength="40"></label><label>Email<input type="email" id="ne" autocomplete="email" inputmode="email"></label>'+agBox()+
+  (S.err?'<p class="err">'+esc(S.err)+'</p>':'')+'<button class="btn primary" type="button" id="ngo">Register and start</button><button class="btn ghost" type="button" id="tosign">I already have an access code</button></div></div>'}
+function vLogin(){if(S.mode==='new')return vNew();return '<div class="card" style="max-width:520px"><h2>Group leader sign in</h2>'+
   '<p class="hint">Sign in with the email address and the access code sent to you by the Korea Suzuki Music Association. One leader registers everyone in the group: students, teachers, parents and family.</p>'+
   '<div style="display:grid;gap:12px;margin-top:10px"><label>Email<input type="email" id="em" autocomplete="username" inputmode="email"></label>'+
   '<label>Access code<input type="text" id="cd" placeholder="XXXX-XXXX" autocomplete="one-time-code" style="text-transform:uppercase"></label>'+
-  '<label style="display:flex;gap:10px;align-items:flex-start;font-weight:400"><input type="checkbox" id="ag" style="width:22px;min-height:22px;margin-top:3px"><span>I agree that the association collects and uses the participants’ names, gender, birth year, instrument and level to run the camp (room assignment, lessons, name tags), and shares names and gender with the camp hotel. I confirm that guardians of participants under 14 have agreed. The data is deleted after the camp settlement.</span></label>'+
+  agBox()+
   (S.err?'<p class="err">'+esc(S.err)+'</p>':'')+'<button class="btn primary" type="button" id="go">Sign in</button>'+
-  '<p class="hint">No access code? Please email the association to receive one for your group.</p>'+(S.test?'<button class="btn" type="button" id="tgo" style="border-style:dashed">STG 시험: 시험 단체로 바로 로그인</button>':'')+'</div></div>'}
+  '<div class="note" style="margin-top:4px"><b>No access code?</b> You can register without one. <button class="btn small primary" type="button" id="tonew" style="margin-left:6px">Register a new group</button></div>'+(S.test?'<button class="btn" type="button" id="tgo" style="border-style:dashed">STG 시험: 시험 단체로 바로 로그인</button>':'')+'</div></div>'}
 function rooms(){var g={};S.list.forEach(function(p,i){var t=String(p.room||'').trim().toLowerCase();if(t)(g[t]=g[t]||[]).push(i)});return g}
 function roomFeeOf(){var g=rooms(),out={},cap=S.D.roomCap||4;Object.keys(g).forEach(function(t){out[t]={n:g[t].length,fee:Math.max(0,cap-g[t].length)*(S.D.roomEmptyUsd||0),over:g[t].length>cap,first:g[t][0]}});return out}
 function sum(){var L=S.list,by={},tot=0,paid=0,room=0;L.forEach(function(p){by[p.type]=(by[p.type]||0)+1;var f=S.D.fees[p.type]||0;tot+=f;paid+=+p.paid||0});var R=roomFeeOf();Object.keys(R).forEach(function(t){room+=R[t].fee});return {by:by,tot:tot+room,paid:paid,room:room,rooms:R}}
@@ -79,7 +85,7 @@ function vMain(){var D=S.D,s=sum();
   var roomBox='<div class="card"><h2>Family rooms</h2><p class="hint">A family room is for one family, up to '+cap+' people. Type the same family room name (for example “Dela Cruz family”) for everyone who will share the room. If fewer than '+cap+' people stay, each empty bed costs '+won(D.roomEmptyUsd||0)+'. Leave it blank for people who stay in the group rooms.</p>'+
     (rk.length?'<table><thead><tr><th>Family room</th><th class="r">People</th><th class="r">Empty beds</th></tr></thead><tbody>'+rk.map(function(t){var x=RR[t];return '<tr><td>'+esc(S.list[x.first].room)+(x.over?' <span class="pill due">max '+cap+'</span>':'')+'</td><td class="r num">'+x.n+'</td><td class="r num">'+won(x.fee)+'</td></tr>'}).join('')+'</tbody></table>':'<p class="hint">No family rooms yet.</p>')+
     '<datalist id="roomNames">'+rk.map(function(t){return '<option value="'+esc(S.list[RR[t].first].room)+'">'}).join('')+'</datalist></div>';
-  return '<div class="card"><div class="spread"><div><h2>'+esc(D.group.name)+'</h2><span class="hint">'+esc(D.group.country)+(D.group.lead?' · leader '+esc(D.group.lead):'')+' · '+esc(D.group.email)+(D.no?' · registration '+esc(D.no):'')+'</span></div><button class="btn small ghost" type="button" id="out">Sign out</button></div>'+
+  return (S.newCode?'<div class="note" style="margin-bottom:16px"><b>Your group is ready.</b> Your access code is <b style="font-size:20px;letter-spacing:.08em">'+esc(S.newCode)+'</b>. Please keep it: you need your email and this code to sign in again. We also emailed it to '+esc(D.group.email)+'.</div>':'')+'<div class="card"><div class="spread"><div><h2>'+esc(D.group.name)+'</h2><span class="hint">'+esc(D.group.country)+(D.group.lead?' · leader '+esc(D.group.lead):'')+' · '+esc(D.group.email)+(D.no?' · registration '+esc(D.no):'')+'</span></div><button class="btn small ghost" type="button" id="out">Sign out</button></div>'+
     '<p class="hint" style="margin-top:8px">Camp: '+esc(D.camp.start)+' ~ '+esc(D.camp.end)+(D.camp.place&&D.camp.place!=='추후 안내'?' · '+esc(D.camp.place):'')+'. Fees include the camp program, room and meals. No membership fee for overseas participants.</p>'+fee+'</div>'+
     '<div class="card"><div class="spread"><h2>Participants</h2><div class="row"><button class="btn small" type="button" data-add="해외 학생">+ Student</button><button class="btn small" type="button" data-add="해외 교사">+ Teacher</button><button class="btn small" type="button" data-add="해외 보호자">+ Parent</button><button class="btn small" type="button" data-add="해외 동반가족">+ Family</button><button class="btn small" type="button" data-add="해외 15개월 미만">+ Infant</button></div></div>'+
     '<p class="hint">Enter every person who will come. Names in English as in the passport. You can come back later to add or change people. People whose payment is confirmed cannot be removed here.</p>'+
@@ -98,8 +104,11 @@ document.addEventListener('change',function(e){var t=e.target;if(t.dataset&&t.da
 document.addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;var d=b.dataset;
   if(b.id==='go'){var em=document.getElementById('em').value.trim(),cd=document.getElementById('cd').value.trim(),ag=document.getElementById('ag').checked;if(!em||!cd){S.err='Please enter your email and access code.';render();return}if(!ag){S.err='Please agree to the collection and use of personal information.';render();return}
     run('intlLogin',[em,cd,true],function(r){S.tok=r.token;setD(r);render()});return}
+  if(b.id==='tonew'||b.id==='tosign'){S.mode=b.id==='tonew'?'new':'';S.err='';render();return}
+  if(b.id==='ngo'){var v=function(id){return document.getElementById(id).value.trim()},ag=document.getElementById('ag').checked;if(!ag){S.err='Please agree to the collection and use of personal information.';render();return}
+    run('intlSignup',[{name:v('ng'),country:v('nc'),lead:v('nl'),email:v('ne')},true],function(r){S.tok=r.token;S.newCode=r.code||'';S.mode='';setD(r);render()});return}
   if(b.id==='tgo'){run('intlTestLogin',[],function(r){S.tok=r.token;setD(r);render()});return}
-  if(b.id==='out'){if(S.dirty&&!confirm('You have unsaved changes. Sign out anyway?'))return;S.tok='';S.D=null;S.err='';render();return}
+  if(b.id==='out'){if(S.dirty&&!confirm('You have unsaved changes. Sign out anyway?'))return;S.tok='';S.D=null;S.err='';S.newCode='';render();return}
   if(d.add){S.list.push({key:'',first:'',last:'',type:d.add,gender:'',by:'',inst:'',prog:'',note:'',paid:0});S.dirty=true;render();var L=document.querySelectorAll('[data-f="first"]');if(L.length)L[L.length-1].focus();return}
   if(d.rm!==undefined){var p=S.list[+d.rm];if(p.key&&!confirm('Remove '+((p.first||'')+' '+(p.last||'')).trim()+'?'))return;S.list.splice(+d.rm,1);S.dirty=true;render();return}
   if(b.id==='save'){run('intlSave',[S.tok,S.list.map(function(p){return {key:p.key,first:p.first,last:p.last,type:p.type,gender:p.gender,by:p.by,inst:p.inst,prog:p.prog,note:p.note,room:p.room}})],function(r){setD(r);render();toast('Saved · '+r.ppl.length+' people')});return}

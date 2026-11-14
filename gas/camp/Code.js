@@ -1,4 +1,4 @@
-/* build: 20261115-001737 */
+/* build: 20261115-001951 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -379,6 +379,34 @@ function intlLogin(email, code, agree) {
   const token = Utilities.getUuid(); Ca.put('intl_' + token, JSON.stringify({ id: g.id }), 21600);
   log_('해외 ' + g.name, '로그인', email);
   return Object.assign({ ok: true, token }, intlData_(g.id));
+}
+/** 코드 없이 새 단체 만들기 (11-15): 대표가 단체 이름 · 나라 · 이름 · 이메일만 넣으면 단체가 만들어지고 바로 들어감.
+ *  접속 코드는 화면에 한 번 보여 주고 그 이메일로도 보냄(다음에 들어올 때 씀). 이미 있는 이메일이면 단체를 새로 만들지 않고 코드를 그 이메일로 다시 보냄 */
+function intlMail_(g, why) { try { MailApp.sendEmail(g.email, '[' + camp_().base.name.replace('스즈키 겨울 음악제', 'Suzuki Winter Music Camp') + '] Your access code', 'Group: ' + g.name + '\nAccess code: ' + g.code + '\n\nSign in again at https:\/\/app.suzukimusickorea.org/camp/intl.html with this email and code.\n(' + why + ')'); return true; } catch (e) { return false; } }
+function intlSignup(o, agree) {
+  const C = camp_(); if (C.base.intl === false) return { ok: false, msg: 'Overseas registration is closed. Please contact the association.' };
+  o = o || {}; const name = String(o.name || '').trim().replace(/\s+/g, ' ').replace(/[·|,]/g, ' ').slice(0, 40), email = String(o.email || '').trim().toLowerCase(), lead = String(o.lead || '').trim().slice(0, 40), country = String(o.country || '').trim().slice(0, 30);
+  if (name.length < 2) return { ok: false, msg: 'Please enter your group name.' };
+  if (!country) return { ok: false, msg: 'Please enter your country.' };
+  if (!lead) return { ok: false, msg: 'Please enter the leader name.' };
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return { ok: false, msg: 'Please check the email address.' };
+  if (agree !== true) return { ok: false, msg: 'Please agree to the collection and use of personal information.' };
+  const Ca = CacheService.getScriptCache(), k = 'intls_' + email, n = +(Ca.get(k) || 0);
+  if (n >= 5) return { ok: false, msg: 'Too many attempts. Please try again in 15 minutes.' };
+  Ca.put(k, String(n + 1), 900);
+  const lock = lock_();
+  let g;
+  try {
+    const sh = intlSheet_(), L = intlGroups_(), had = L.find(x => x.email === email);
+    if (had) { const sent = intlMail_(had, 'requested again'); return { ok: false, msg: 'This email already has a group (' + had.name + '). ' + (sent ? 'We sent the access code to that email. Please sign in with it.' : 'Please sign in with the access code, or contact the association.') }; }
+    let nm = name; for (let i = 2; L.some(x => x.name === nm); i++) nm = name.slice(0, 36) + ' ' + i;
+    const id = 'G' + String(L.reduce((m, x) => Math.max(m, +x.id.slice(1) || 0), 0) + 1).padStart(3, '0');
+    sh.appendRow([id, nm, country, lead, email, intlCode_(), stamp_(), '예', '대표가 직접 만듦 (코드 없이)']);
+    g = intlGroups_().find(x => x.id === id);
+  } finally { lock.releaseLock(); }
+  log_('해외 ' + g.name, '직접 만들기', email);
+  intlMail_(g, 'new group');
+  return Object.assign(intlLogin(g.email, g.code, true), { code: g.code });
 }
 function intlData_(gid) {
   const g = intlGroups_().find(x => x.id === gid); if (!g) throw new Error('Group not found.');

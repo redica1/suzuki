@@ -1,4 +1,4 @@
-<!doctype html><!-- build: 20261114-160959 --><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<!doctype html><!-- build: 20261114-161329 --><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
 <style>
 :root{--ink:#18232b;--muted:#5b6b73;--line:#d5e6e6;--bg:#f2f8f8;--surface:#fff;--accent:#0f8a86;--soft:#e3f3f2;--ok:#1e7f4f;--okbg:#e5f5ec;--bad:#c0392b;--badbg:#fdecea}
@@ -49,7 +49,7 @@ textarea{display:block;width:calc(100% - 48px);margin:8px 0 0 48px;font:inherit;
 .err{color:var(--bad);font-weight:700}
 @media (max-width:560px){.how,.row,.meta,.save,.others{margin-left:0}textarea{width:100%;margin-left:0}}
 </style></head><body>
-<div class="band"><h1>[STG] 캠프 접수 시험 체크</h1><p>할 일 50개를 한 사람씩 모두 해 봐요. 해 본 뒤 「잘 됨」 또는 「문제 있음」을 누르고, 이상한 점은 메모에 적어 주세요. 실제 접수가 아니에요.</p></div>
+<div class="band"><h1>[STG] 캠프 접수 시험 체크</h1><p>할 일 52개를 한 사람씩 모두 해 봐요. 해 본 뒤 「잘 됨」 또는 「문제 있음」을 누르고, 이상한 점은 메모에 적어 주세요. 실제 접수가 아니에요.</p></div>
 <main class="wrap">
   <div class="me"><label for="me"><b>내 이름</b></label><input id="me" maxlength="20" placeholder="예) 김민지"><span class="hint" id="myProg">이름을 적으면 내 결과만 따로 남아요</span></div>
   <div class="links"><a href="https://app.suzukimusickorea.org/camp/?test" target="_blank" rel="noopener">STG 접수 화면 열기</a><a href="https://app.suzukimusickorea.org/camp/admin.html?test" target="_blank" rel="noopener">STG 관리자</a><a href="https://app.suzukimusickorea.org/camp/find.html?test" target="_blank" rel="noopener">STG 일정 찾기</a></div>
@@ -90,7 +90,7 @@ function summary(){var P=people(),G=groups();
   return h}
 function draw(){drawTabs();var o=$('out');
   if(TAB==='*'){o.innerHTML=summary();return}
-  if(!me()){o.innerHTML='<div class="card"><b>맨 위 「내 이름」을 먼저 적어 주세요.</b><p class="hint" style="margin:4px 0 0">이름마다 결과가 따로 남아요. 다섯 분이 각자 50개를 모두 해요.</p></div>'+TASKS.filter(function(t){return t.grp===TAB}).map(function(t){return '<div class="card"><div class="hd"><span class="no">'+esc(t.id)+'</span><h3>'+esc(t.task)+'</h3></div><p class="how">'+esc(t.how)+'</p></div>'}).join('');return}
+  if(!me()){o.innerHTML='<div class="card"><b>맨 위 「내 이름」을 먼저 적어 주세요.</b><p class="hint" style="margin:4px 0 0">이름마다 결과가 따로 남아요. 다섯 분이 각자 모두 해요.</p></div>'+TASKS.filter(function(t){return t.grp===TAB}).map(function(t){return '<div class="card"><div class="hd"><span class="no">'+esc(t.id)+'</span><h3>'+esc(t.task)+'</h3></div><p class="how">'+esc(t.how)+'</p></div>'}).join('');return}
   o.innerHTML=TASKS.filter(function(t){return t.grp===TAB}).map(card).join('')+nextBtn()}
 function nextBtn(){var G=groups(),i=G.indexOf(TAB);return i>=0&&i<G.length-1?'<button type="button" class="save" style="margin:4px 0 0" data-tab="'+esc(G[i+1])+'">다음 묶음: '+esc(G[i+1])+' →</button>':''}
 function load(){google.script.run.withSuccessHandler(function(r){if(!r||!r.ok){$('out').innerHTML='<p class="err">'+esc(r&&r.msg||'불러오지 못했어요')+'</p>';return}TASKS=r.tasks;RES=r.res;draw()}).withFailureHandler(function(e){$('out').innerHTML='<p class="err">불러오지 못했어요. 새로 고쳐 주세요. ('+esc(e&&e.message)+')</p>'}).qaList()}

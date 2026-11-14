@@ -1,4 +1,4 @@
-/* build: 20261114-160959 */
+/* build: 20261114-161329 */
 function vAuthPick(){const off=!!CAMP.pre;return gdBtn()+apDoor()+`<section class="sec"><h2>접수 시작</h2>
   ${off?`<p class="note warn" style="margin:6px 0 12px"><b>${+CAMP.pre.slice(5,7)}월 ${+CAMP.pre.slice(8,10)}일에 접수가 열려요.</b> 그 전에 아래에서 회원가입을 마쳐 두세요.</p>`:'<p class="lede">어떻게 접수하시나요?</p>'}
   <div class="pick2${off?' pickoff':''}"${off?' aria-disabled="true"':''}>
@@ -8,7 +8,7 @@ function vAuthPick(){const off=!!CAMP.pre;return gdBtn()+apDoor()+`<section clas
     ${INTL_OPEN?`<a class="pickcard" href="${esc(intlUrl())}" target="_blank" rel="noopener" style="text-decoration:none;color:inherit" lang="en"><b>Overseas participants <small style="font-weight:500">· 해외 참가</small></b><span>For groups from other countries. Registration is in English and fees are in USD. Your group leader signs in with the access code from the association. ↗</span></a>`:''}
   </div>
   ${typeof TEST_LOGIN==='string'&&TEST_LOGIN?`<button class="btn ghost" type="button" id="tLogin" style="border-style:dashed;margin-top:10px">STG 시험: ${esc(TEST_LOGIN.split('/')[0])} 선생님으로 바로 로그인</button>`:''}
-  ${typeof TEST_LOGIN==='string'&&TEST_LOGIN&&typeof TEST_NAMES==='string'&&TEST_NAMES.trim()?`<div class="tNames"><h3>STG 시험 선생님으로 바로 들어가기</h3><div class="pick2">${TEST_NAMES.split(/[,\n]/).map(x=>x.trim()).filter(Boolean).map((n,i)=>`<div class="tWrap"><button class="pickcard tCard" type="button" data-tname="${esc(n)}"><b>${esc(n)} 선생님</b><span>STG 시험 · 비밀번호 없이 바로 들어가요</span></button><a class="tMis" href="${esc(qaUrl(n,i))}" target="_blank" rel="noopener">시험 체크 50개 · 의견 남기기 <small>(${i<6?(i+1)+'번 묶음부터':'전체 결과'})</small></a></div>`).join('')}</div></div>`:''}
+  ${typeof TEST_LOGIN==='string'&&TEST_LOGIN&&typeof TEST_NAMES==='string'&&TEST_NAMES.trim()?`<div class="tNames"><h3>STG 시험 선생님으로 바로 들어가기</h3><div class="pick2">${TEST_NAMES.split(/[,\n]/).map(x=>x.trim()).filter(Boolean).map((n,i)=>`<div class="tWrap"><button class="pickcard tCard" type="button" data-tname="${esc(n)}"><b>${esc(n)} 선생님</b><span>STG 시험 · 비밀번호 없이 바로 들어가요</span></button><a class="tMis" href="${esc(qaUrl(n,i))}" target="_blank" rel="noopener">시험 체크 · 의견 남기기 <small>(${i<6?(i+1)+'번 묶음부터':'전체 결과'})</small></a></div>`).join('')}</div></div>`:''}
   ${off?sgBox():''}
   ${S.verr&&!S.user?`<p class="err" style="margin-top:8px">${esc(S.verr)}</p>`:''}
   ${GUEST_OPEN?'<p class="hint">회원 학원에 다니는 학생은 담당 선생님이 한꺼번에 접수해요. 잘 모르겠으면 다니는 학원 선생님께 먼저 여쭤 주세요.</p>':''}</section>`}

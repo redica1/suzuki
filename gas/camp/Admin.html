@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261114-235237 -->
+<!-- build: 20261114-235621 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -76,7 +76,9 @@ input[type=date]{width:140px}
 .mcp .mcs{border-top:1px solid var(--line);margin-top:10px;padding-top:8px}.mcp .mcs label{display:flex;flex-direction:column;gap:3px;font-size:13px;color:var(--muted)}.mct tr.br td,.mct tr.nt td{background:var(--sunk)}
 .pfpro td{background:var(--sunk)}.pfg{display:grid;grid-template-columns:repeat(4,minmax(150px,1fr));gap:8px 12px;padding:6px 2px}.pfg label{display:flex;flex-direction:column;gap:3px;font-size:13px;color:var(--muted)}.pfg .wide{grid-column:1 / -1}.pfg textarea{font:inherit;font-size:14px;padding:6px 8px;border:1px solid var(--line);border-radius:6px;resize:vertical;width:100%;box-sizing:border-box}
 .pft input[type=text],.pft select{width:100%;min-width:70px;padding:5px 7px;border:1px solid var(--line);border-radius:6px;font:inherit;background:var(--surface);color:var(--ink)}.pft select{min-width:96px}.pft td.c{text-align:center}.pft tr.off td{opacity:.5}
-.mtblw{overflow-x:auto}.memwrap .memflt{padding-bottom:8px}.memflt .tfindslot .tfind input{width:150px}.memflt .tfn:empty{display:none}.memflt>*{flex-shrink:0}.memflt #memA{flex-shrink:1;min-width:90px;max-width:160px}.memflt .btn{white-space:nowrap}.memwrap .tfind{margin:0;padding:0 0 8px}.memt td.l,.memt th.l{text-align:left}.pfbar{gap:6px;flex-wrap:wrap;align-items:center;padding-bottom:8px}.tfindslot .tfind{margin:0}.tfindslot .tfind input{width:250px}.pfwrap .tfind{margin:0;padding:0 0 8px}.pfx td select{width:auto!important;min-width:0!important}.pfx td input[type=text]{min-width:56px}.pfx td.l input[data-pf$='|name']{min-width:172px}.pfx td.l input[data-pf$='|memo']{min-width:56px}.pfx td input[data-pf$='|room']{width:72px!important}.pfx td input[data-pf$='|fee']{width:84px!important}.pfx td input[data-pf$='|min']{width:44px!important}.pfx th{white-space:nowrap!important;line-height:1.25}.pfx td .onoff{gap:5px}.pfx td .onoff em{min-width:22px}.pfx th{text-align:center;background:var(--sunk)}.pfx th.l,.pfx td.l{text-align:left}.pfx td{text-align:center}
+.mtblw{overflow-x:auto}.memwrap .memflt{padding-bottom:8px}.memflt .tfindslot .tfind input{width:150px}.memflt .tfn:empty{display:none}.memflt>*{flex-shrink:0}.memflt #memA{flex-shrink:1;min-width:90px;max-width:160px}.memflt .btn{white-space:nowrap}.memwrap .tfind{margin:0;padding:0 0 8px}.memt td.l,.memt th.l{text-align:left}.sfbar{gap:6px;flex-wrap:wrap;align-items:center;padding-bottom:8px}.sfbar #sfq{width:280px;padding:6px 9px;border:1px solid var(--line);border-radius:6px;font:inherit;background:var(--surface);color:var(--ink)}#sfCand>.row{margin:0!important}#sfCand:empty{display:none}
+.sft th{white-space:normal!important;word-break:keep-all;line-height:1.25;min-width:52px}.sft .sk{position:sticky;left:0;z-index:2;background:var(--surface);text-align:left;white-space:nowrap}.sft thead .sk{z-index:7!important;background:var(--sunk)}.sft td{padding:4px 5px!important}.sft .onoff{padding:3px 8px 3px 9px;gap:5px}.sft td .btn.small{white-space:nowrap}.sft tr.off td{opacity:1}.sft tr.off td>*:not(.onoff){opacity:.5}
+.pfbar{gap:6px;flex-wrap:wrap;align-items:center;padding-bottom:8px}.tfindslot .tfind{margin:0}.tfindslot .tfind input{width:250px}.pfwrap .tfind{margin:0;padding:0 0 8px}.pfx td select{width:auto!important;min-width:0!important}.pfx td input[type=text]{min-width:56px}.pfx td.l input[data-pf$='|name']{min-width:172px}.pfx td.l input[data-pf$='|memo']{min-width:56px}.pfx td input[data-pf$='|room']{width:72px!important}.pfx td input[data-pf$='|fee']{width:84px!important}.pfx td input[data-pf$='|min']{width:44px!important}.pfx th{white-space:nowrap!important;line-height:1.25}.pfx td .onoff{gap:5px}.pfx td .onoff em{min-width:22px}.pfx th{text-align:center;background:var(--sunk)}.pfx th.l,.pfx td.l{text-align:left}.pfx td{text-align:center}
 .pfx td input:not([type=checkbox]):not([type=radio]),.pfx td select{height:auto!important;min-height:30px;padding:4px 7px!important;font-size:14px!important;line-height:1.35;border-radius:6px}
 .pfx td input[type=checkbox]{width:18px;height:18px}.pfx .onoff{padding:3px 8px 3px 9px}.pfx td .btn.small{white-space:nowrap}
 .pfx tr.off td{opacity:1}.pfx tr.off td>*:not(.onoff){opacity:.5}
@@ -1935,23 +1937,21 @@ function vStaff(){if(!S.SF){if(!S.sfLoading)setTimeout(stLoad,0);return '<div cl
   const L=S.sf,T=S.SF.tabs,q=(S.sfq||'').trim().replace(/\s/g,'');
   const have=new Set(L.map(s=>s.tid));
   const cand=q?S.SF.teachers.filter(t=>!have.has(t.id)&&(t.name.replace(/\s/g,'').includes(q)||(t.acad||'').replace(/\s/g,'').includes(q))).slice(0,12):[];
-  return `<div class="panel"><div class="spread"><div><b>담당자 · 권한</b> <span class="hint">교사 회원 중에서 골라 메뉴마다 「편집 / 보기 / 없음」을 정해요 · 담당자는 관리자 화면 「담당 선생님」에서 회원관리 이메일 · 비밀번호로 들어와요</span></div>
-    <div class="row" style="gap:6px"><span id="sfDirty" class="row" style="gap:6px">${sfPill()}</span><button class="btn small primary" type="button" data-sfsave="1">저장</button></div></div>
-    <div class="row" style="gap:6px;margin-top:10px"><input type="search" id="sfq" placeholder="담당자 추가: 교사 이름이나 학원" value="${esc(S.sfq||'')}" style="min-width:240px;padding:6px 9px;border:1px solid var(--line);border-radius:6px;font:inherit;background:var(--surface);color:var(--ink)"></div>
-    <div id="sfCand">${sfCandHTML()}</div></div>
-    <div class="panel tbl"><table class="pft sft"><thead><tr><th>담당자</th><th>사용</th>${T.map(([k,l])=>`<th class="c">${esc(l)}</th>`).join('')}<th>한 번에</th><th>메모</th><th></th></tr></thead><tbody>
-  ${L.map((s,i)=>`<tr class="${s.on?'':'off'}"><td><b>${esc(s.name)}</b><br><small class="faint">${esc(s.acad||'')}</small></td><td class="c"><input type="checkbox" data-sf="${i}|on" ${s.on?'checked':''} aria-label="사용"></td>
+  return `<div class="panel sfwrap"><div class="row sfbar"><span class="tfindslot"></span><input type="search" id="sfq" placeholder="＋ 담당자 추가: 교사 이름이나 학원" value="${esc(S.sfq||'')}" title="교사 회원 중에서 골라 메뉴마다 「편집 / 보기 / 없음」을 정해요 · 담당자는 관리자 화면 「담당 선생님」에서 회원관리 이메일 · 비밀번호로 들어와요"><span style="flex:1"></span><span id="sfDirty" class="row" style="gap:6px">${sfPill()}</span><button class="btn small primary" type="button" data-sfsave="1">저장</button><div id="sfCand" style="flex-basis:100%">${sfCandHTML()}</div></div>
+    <div class="mtblw"><table class="pft sft mtbl"><thead><tr><th class="sk">담당자</th><th>사용</th>${T.map(([k,l])=>`<th class="c">${esc(l)}</th>`).join('')}<th>한 번에</th><th>메모</th><th></th></tr></thead><tbody>
+  ${L.map((s,i)=>`<tr class="${s.on?'':'off'}"><td class="sk"><b>${esc(s.name)}</b><br><small class="faint">${esc(s.acad||'')}</small></td><td class="c"><button type="button" class="onoff ${s.on?'on':''}" role="switch" aria-checked="${s.on}" data-sfon="${i}" aria-label="사용"><i><b></b></i><em>${s.on?'ON':'OFF'}</em></button></td>
     ${T.map(([k,l])=>`<td><select data-sf="${i}|p|${k}" aria-label="${esc(l)}" class="pv${s.perms[k]==='편집'?' e':s.perms[k]==='보기'?' v':''}">${PERM_V.map(([v,t])=>`<option value="${v}" ${(s.perms[k]||'')===v?'selected':''}>${t}</option>`).join('')}</select></td>`).join('')}
     <td><div class="row" style="gap:4px;flex-wrap:nowrap"><button class="btn small ghost" type="button" data-sfall="${i}|보기">모두 보기</button><button class="btn small ghost" type="button" data-sfall="${i}|">모두 없음</button></div></td>
     <td><input type="text" data-sf="${i}|memo" value="${esc(s.memo||'')}" maxlength="200" placeholder="예: 교사 일정 담당"></td>
     <td><button class="btn small ghost" type="button" data-sfdel="${i}">빼기</button></td></tr>`).join('')||`<tr><td colspan="${T.length+5}" class="hint">아직 담당자가 없어요. 위 칸에 교사 이름을 넣어 추가해 주세요.</td></tr>`}
-  </tbody></table></div>
-  <div class="panel hint">· <b>편집</b> = 보고 바꿀 수 있음 · <b>보기</b> = 볼 수만 있음 (저장은 서버가 막아요) · <b>없음</b> = 메뉴가 안 보임<br>· 「캠프 설정」·「담당자」는 총관리자(아이디·비밀번호)만 써요. 권한을 바꾸면 담당자가 다음에 무엇을 누를 때부터 바로 적용돼요.<br>· 모든 메뉴에서 접수 명단(이름·학원)은 보여요. 휴대전화·계좌 같은 개인정보는 해당 메뉴(취소 · 환불 등)에 권한이 있을 때만 쓰세요.</div>`}
+  </tbody></table></div></div>
+  <div class="panel hint">· 교사 회원 중에서 골라 메뉴마다 「편집 / 보기 / 없음」을 정해요. 담당자는 관리자 화면 「담당 선생님」에서 회원관리 이메일 · 비밀번호로 들어와요.<br>· <b>편집</b> = 보고 바꿀 수 있음 · <b>보기</b> = 볼 수만 있음 (저장은 서버가 막아요) · <b>없음</b> = 메뉴가 안 보임<br>· 「캠프 설정」·「담당자」는 총관리자(아이디·비밀번호)만 써요. 권한을 바꾸면 담당자가 다음에 무엇을 누를 때부터 바로 적용돼요.<br>· 모든 메뉴에서 접수 명단(이름·학원)은 보여요. 휴대전화·계좌 같은 개인정보는 해당 메뉴(취소 · 환불 등)에 권한이 있을 때만 쓰세요.</div>`}
 document.addEventListener('input',e=>{const t=e.target;if(t.id==='sfq'){S.sfq=t.value;const c=document.getElementById('sfCand');if(c)c.innerHTML=sfCandHTML();return}
   if(!t.dataset||!t.dataset.sf||!S.sf)return;const [i,k,tab]=t.dataset.sf.split('|');const s=S.sf[+i];if(!s)return;
   if(k==='on'){s.on=t.checked;render()}else if(k==='memo'){s.memo=t.value;const p=document.getElementById('sfDirty');if(p)p.innerHTML=sfPill()}else if(k==='p'){if(t.value)s.perms[tab]=t.value;else delete s.perms[tab];render()}});
 document.addEventListener('change',e=>{const t=e.target;if(t.dataset&&t.dataset.sf&&t.tagName==='SELECT'&&S.sf){const [i,k,tab]=t.dataset.sf.split('|');const s=S.sf[+i];if(s&&k==='p'){if(t.value)s.perms[tab]=t.value;else delete s.perms[tab];render()}}});
 function sfClick(b,d){if(S.tab!=='staff')return false;
+  if(d.sfon!==undefined&&S.sf){const s=S.sf[+d.sfon];if(s){s.on=!s.on;render()}return true}
   if(d.sfreset){S.sf=JSON.parse(JSON.stringify(S.SF.staff));render();return true}
   if(d.sfadd){const t=S.SF.teachers.find(x=>x.id===d.sfadd);if(t){S.sf.push({tid:t.id,name:t.name,acad:t.acad,perms:{home:'보기'},on:true,memo:''});S.sfq=''}render();return true}
   if(d.sfdel){const s=S.sf[+d.sfdel];ask('담당자에서 뺄까요?',`<b>${esc(s.name)}</b> 선생님은 저장한 뒤부터 관리자 화면에 들어올 수 없어요.`,()=>{S.sf.splice(+d.sfdel,1);render()},'빼기');return true}
@@ -4461,6 +4461,6 @@ document.addEventListener('click',e=>{if(S.tab!=='book')return;const b=e.target.
   if(b.id==='ebSetSave'){const n=Object.assign(ebSet(),S.ebSetW||{});n.per=Math.max(1,Math.min(10,Math.round(+n.per||5)));n.fs=Math.max(5,Math.min(10,+n.fs||6.6));['en','sub','org'].forEach(k=>n[k]=String(n[k]||'').trim().slice(0,120));
     ebSend([],[],n,()=>{S.ebSetW=null;toast('책자 설정을 저장했어요')});return}},true);
 </script>
-<div id="bldMark" hidden>빌드표시 20261114-235237 </div>
+<div id="bldMark" hidden>빌드표시 20261114-235621 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();</script>
 </body></html>

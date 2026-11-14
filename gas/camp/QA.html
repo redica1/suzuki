@@ -1,4 +1,4 @@
-<!doctype html><!-- build: 20261114-154832 --><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<!doctype html><!-- build: 20261114-155239 --><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
 <style>
 :root{--ink:#18232b;--muted:#5b6b73;--line:#d5e6e6;--bg:#f2f8f8;--surface:#fff;--accent:#0f8a86;--soft:#e3f3f2;--ok:#1e7f4f;--okbg:#e5f5ec;--bad:#c0392b;--badbg:#fdecea}
@@ -7,9 +7,11 @@ body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 -apple-system
 .band{background:#b3541e;color:#fff;padding:20px 16px 16px}
 .band h1{margin:0;font-size:21px;font-weight:800}
 .band p{margin:6px 0 0;opacity:.92;font-size:14.5px}
-.wrap{max-width:760px;margin:0 auto;padding:14px 16px 60px}
+.wrap{max-width:820px;margin:0 auto;padding:14px 16px 60px}
 .me{display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin:0 0 12px}
 .me input{font:inherit;padding:8px 10px;border:1.5px solid var(--line);border-radius:10px;width:140px}
+.me b{font-size:15px}
+.bar{flex:1;min-width:120px;height:10px;background:var(--soft);border-radius:999px;overflow:hidden}.bar i{display:block;height:100%;background:var(--accent)}
 .links{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 12px}
 .links a{font-size:14px;font-weight:700;color:var(--accent);background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:5px 12px;text-decoration:none}
 .tabs{display:flex;gap:4px;overflow-x:auto;border-bottom:1px solid var(--line);margin:0 0 12px}
@@ -32,56 +34,80 @@ textarea{display:block;width:calc(100% - 48px);margin:8px 0 0 48px;font:inherit;
 .meta{margin:4px 0 0 48px;font-size:12.5px;color:var(--muted)}
 .save{font:inherit;font-weight:800;font-size:14px;border:0;border-radius:10px;background:var(--accent);color:#fff;padding:6px 14px;cursor:pointer;margin:6px 0 0 48px}
 .save[disabled]{opacity:.45;cursor:default}
+.others{margin:8px 0 0 48px;font-size:13.5px;color:var(--muted)}
+.others b{color:var(--ink)}
 .hint{color:var(--muted);font-size:14px}
-.sum{width:100%;border-collapse:collapse;background:var(--surface);border-radius:12px;overflow:hidden;font-size:14.5px}
-.sum th,.sum td{border-bottom:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
-.sum th{background:var(--soft)}
+.mx{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:12px}
+.mx table{border-collapse:collapse;font-size:14px;min-width:100%}
+.mx th,.mx td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:center;white-space:nowrap}
+.mx th{background:var(--soft);position:sticky;top:0}
+.mx td.l,.mx th.l{text-align:left;white-space:normal;min-width:180px}
+.mx td.g{background:#f7fbfb;font-weight:800;text-align:left;color:var(--accent)}
+.o{color:var(--ok);font-weight:800}.x{color:var(--bad);font-weight:800}
 .pill{display:inline-block;font-size:12.5px;font-weight:700;border-radius:999px;padding:1px 8px}
 .pill.ok{background:var(--okbg);color:var(--ok)}.pill.bad{background:var(--badbg);color:var(--bad)}
 .err{color:var(--bad);font-weight:700}
-@media (max-width:560px){.how,.row,.meta,.save{margin-left:0}textarea{width:100%;margin-left:0}}
+@media (max-width:560px){.how,.row,.meta,.save,.others{margin-left:0}textarea{width:100%;margin-left:0}}
 </style></head><body>
-<div class="band"><h1>[STG] 캠프 접수 시험 체크</h1><p>한 사람에 10개씩 · 해 보고 「잘 됨」 또는 「문제 있음」을 누르고, 이상한 점은 메모에 적어 주세요. 실제 접수가 아니에요.</p></div>
+<div class="band"><h1>[STG] 캠프 접수 시험 체크</h1><p>할 일 50개를 한 사람씩 모두 해 봐요. 해 본 뒤 「잘 됨」 또는 「문제 있음」을 누르고, 이상한 점은 메모에 적어 주세요. 실제 접수가 아니에요.</p></div>
 <main class="wrap">
-  <div class="me"><label for="me">내 이름</label><input id="me" maxlength="20" placeholder="예) 김민지"><span class="hint">적은 사람으로 남아요</span></div>
+  <div class="me"><label for="me"><b>내 이름</b></label><input id="me" maxlength="20" placeholder="예) 김민지"><span class="hint" id="myProg">이름을 적으면 내 결과만 따로 남아요</span></div>
   <div class="links"><a href="https://app.suzukimusickorea.org/camp/?test" target="_blank" rel="noopener">STG 접수 화면 열기</a><a href="https://app.suzukimusickorea.org/camp/admin.html?test" target="_blank" rel="noopener">STG 관리자</a><a href="https://app.suzukimusickorea.org/camp/find.html?test" target="_blank" rel="noopener">STG 일정 찾기</a></div>
   <div class="tabs" id="tabs" role="tablist"></div>
   <div id="out"><p class="hint">불러오는 중…</p></div>
 </main>
 <script>
-var ROWS=[],TAB=null,DIRTY={},DRAFT={};
+var TASKS=[],RES=[],TAB=null,DIRTY={},DRAFT={};
 function $(id){return document.getElementById(id)}
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
 function ls(k,v){try{if(v===undefined)return localStorage.getItem(k)||'';localStorage.setItem(k,v)}catch(e){return ''}}
-function groups(){var g=[];ROWS.forEach(function(r){if(g.indexOf(r.who)<0)g.push(r.who)});return g}
-function cnt(L){var a=0,b=0;L.forEach(function(r){if(r.res==='잘 됨')a++;else if(r.res==='문제 있음')b++});return {ok:a,bad:b,done:a+b,n:L.length}}
-function drawTabs(){var G=groups();if(TAB&&TAB.charAt(0)==='#'){var nn=TAB.slice(1);TAB=G.filter(function(g){return g.indexOf(nn+'.')===0})[0]||null;if(TAB)ls('qaTab',TAB)}if(!TAB||(TAB!=='*'&&G.indexOf(TAB)<0))TAB=ls('qaTab')||G[0];if(TAB!=='*'&&G.indexOf(TAB)<0)TAB=G[0];
-  $('tabs').innerHTML=G.map(function(g){var c=cnt(ROWS.filter(function(r){return r.who===g}));return '<button type="button" role="tab" data-tab="'+esc(g)+'" aria-pressed="'+(TAB===g)+'">'+esc(g)+'<small>'+c.done+'/'+c.n+'</small></button>'}).join('')+
-  '<button type="button" role="tab" data-tab="*" aria-pressed="'+(TAB==='*')+'">전체 결과<small>'+cnt(ROWS).done+'/'+ROWS.length+'</small></button>'}
-function card(r){var k=r.res==='잘 됨'?'ok':r.res==='문제 있음'?'bad':'';
-  return '<div class="card '+k+'" id="c_'+esc(r.id)+'"><div class="hd"><span class="no">'+esc(r.id)+'</span><h3>'+esc(r.task)+'</h3></div><p class="how">'+esc(r.how)+'</p>'+
-  '<div class="row">'+[['잘 됨','k1'],['문제 있음','k2'],['','k0']].map(function(x){return '<button type="button" class="st '+x[1]+'" data-res="'+esc(x[0])+'" data-id="'+esc(r.id)+'" aria-pressed="'+(r.res===x[0])+'">'+(x[0]||'아직 안 함')+'</button>'}).join('')+'</div>'+
-  '<textarea data-memo="'+esc(r.id)+'" placeholder="메모 · 어느 화면에서 무엇이 이상했는지 (휴대폰이면 기종도)" aria-label="'+esc(r.id)+' 메모">'+esc(DIRTY[r.id]?DRAFT[r.id]:r.memo)+'</textarea>'+
-  '<button type="button" class="save" data-save="'+esc(r.id)+'"'+(DIRTY[r.id]?'':' disabled')+'>메모 저장</button>'+
-  '<div class="meta" id="m_'+esc(r.id)+'">'+(r.at?'마지막 · '+esc(r.by||'이름 없음')+' · '+esc(r.at):'')+'</div></div>'}
+function me(){return $('me').value.trim()}
+function groups(){var g=[];TASKS.forEach(function(t){if(g.indexOf(t.grp)<0)g.push(t.grp)});return g}
+function mine(id){var n=me();return RES.filter(function(r){return r.id===id&&r.by===n})[0]||{res:'',memo:''}}
+function people(){var p=[];RES.forEach(function(r){if(r.by&&p.indexOf(r.by)<0)p.push(r.by)});return p.sort()}
+function done(L,who){return L.filter(function(t){var r=RES.filter(function(x){return x.id===t.id&&x.by===who})[0];return r&&r.res}).length}
+function drawTabs(){var G=groups(),n=me();
+  if(TAB&&TAB.charAt(0)==='#'){var nn=TAB.slice(1);TAB=G.filter(function(g){return g.indexOf(nn+'.')===0})[0]||null;if(TAB)ls('qaTab',TAB)}
+  if(!TAB)TAB=ls('qaTab')||G[0];if(TAB!=='*'&&G.indexOf(TAB)<0)TAB=G[0];
+  $('tabs').innerHTML=G.map(function(g){var L=TASKS.filter(function(t){return t.grp===g});return '<button type="button" role="tab" data-tab="'+esc(g)+'" aria-pressed="'+(TAB===g)+'">'+esc(g)+'<small>'+(n?done(L,n):0)+'/'+L.length+'</small></button>'}).join('')+
+  '<button type="button" role="tab" data-tab="*" aria-pressed="'+(TAB==='*')+'">전체 결과</button>';
+  var d=n?done(TASKS,n):0;$('myProg').innerHTML=n?'<span class="bar" style="display:inline-block;width:120px;vertical-align:middle"><i style="width:'+Math.round(d/Math.max(1,TASKS.length)*100)+'%"></i></span> 내가 한 것 <b>'+d+' / '+TASKS.length+'</b>':'이름을 적으면 내 결과만 따로 남아요'}
+function card(t){var r=mine(t.id),k=r.res==='잘 됨'?'ok':r.res==='문제 있음'?'bad':'',
+  oth=RES.filter(function(x){return x.id===t.id&&x.by!==me()&&(x.res||x.memo)});
+  return '<div class="card '+k+'"><div class="hd"><span class="no">'+esc(t.id)+'</span><h3>'+esc(t.task)+'</h3></div><p class="how">'+esc(t.how)+'</p>'+
+  '<div class="row">'+[['잘 됨','k1'],['문제 있음','k2'],['','k0']].map(function(x){return '<button type="button" class="st '+x[1]+'" data-res="'+esc(x[0])+'" data-id="'+esc(t.id)+'" aria-pressed="'+(r.res===x[0])+'">'+(x[0]||'아직 안 함')+'</button>'}).join('')+'</div>'+
+  '<textarea data-memo="'+esc(t.id)+'" placeholder="메모 · 어느 화면에서 무엇이 이상했는지 (휴대폰이면 기종도)" aria-label="'+esc(t.id)+' 메모">'+esc(DIRTY[t.id]?DRAFT[t.id]:r.memo)+'</textarea>'+
+  '<button type="button" class="save" data-save="'+esc(t.id)+'"'+(DIRTY[t.id]?'':' disabled')+'>메모 저장</button>'+
+  '<div class="meta" id="m_'+esc(t.id)+'">'+(r.at?'내가 적은 시각 · '+esc(r.at):'')+'</div>'+
+  (oth.length?'<div class="others">다른 분: '+oth.map(function(x){return '<b>'+esc(x.by)+'</b> '+(x.res==='잘 됨'?'<span class="o">잘 됨</span>':x.res==='문제 있음'?'<span class="x">문제 있음</span>':'')+(x.memo?' · '+esc(x.memo):'')}).join(' / ')+'</div>':'')+'</div>'}
+function summary(){var P=people(),G=groups();
+  if(!P.length)return '<p class="hint">아직 결과가 없어요.</p>';
+  var h='<h3 style="margin:0 0 8px">사람별 진행</h3><div class="mx" style="margin-bottom:14px"><table><thead><tr><th class="l">이름</th><th>한 것</th><th>잘 됨</th><th>문제 있음</th></tr></thead><tbody>'+P.map(function(p){var R=RES.filter(function(x){return x.by===p});return '<tr><td class="l">'+esc(p)+'</td><td>'+R.filter(function(x){return x.res}).length+' / '+TASKS.length+'</td><td class="o">'+R.filter(function(x){return x.res==='잘 됨'}).length+'</td><td class="x">'+R.filter(function(x){return x.res==='문제 있음'}).length+'</td></tr>'}).join('')+'</tbody></table></div>';
+  h+='<h3 style="margin:0 0 8px">할 일 × 사람 <span class="hint">○ 잘 됨 · × 문제 있음 · 칸을 누르면 메모</span></h3><div class="mx"><table><thead><tr><th class="l">할 일</th>'+P.map(function(p){return '<th>'+esc(p)+'</th>'}).join('')+'</tr></thead><tbody>'+
+    G.map(function(g){return '<tr><td class="g" colspan="'+(P.length+1)+'">'+esc(g)+'</td></tr>'+TASKS.filter(function(t){return t.grp===g}).map(function(t){return '<tr><td class="l"><b>'+esc(t.id)+'</b> '+esc(t.task)+'</td>'+P.map(function(p){var r=RES.filter(function(x){return x.id===t.id&&x.by===p})[0];if(!r||(!r.res&&!r.memo))return '<td></td>';var m=r.res==='잘 됨'?'<span class="o">○</span>':r.res==='문제 있음'?'<span class="x">×</span>':'·';return '<td title="'+esc(r.memo||'')+'">'+m+(r.memo?'<sup>메모</sup>':'')+'</td>'}).join('')+'</tr>'}).join('')}).join('')+'</tbody></table></div>';
+  var B=RES.filter(function(x){return x.res==='문제 있음'||x.memo});
+  h+='<h3 style="margin:18px 0 8px">문제 있음 · 메모 '+B.length+'건</h3>'+(B.length?TASKS.map(function(t){var L=B.filter(function(x){return x.id===t.id});if(!L.length)return '';return '<div class="card '+(L.some(function(x){return x.res==='문제 있음'})?'bad':'')+'"><div class="hd"><span class="no">'+esc(t.id)+'</span><h3>'+esc(t.task)+'</h3></div>'+L.map(function(x){return '<p class="how">'+(x.res?'<span class="pill '+(x.res==='잘 됨'?'ok':'bad')+'">'+esc(x.res)+'</span> ':'')+'<b>'+esc(x.by)+'</b> '+esc(x.memo||'')+' <span class="hint">'+esc(x.at||'')+'</span></p>'}).join('')+'</div>'}).join(''):'<p class="hint">아직 없어요.</p>');
+  return h}
 function draw(){drawTabs();var o=$('out');
-  if(TAB==='*'){var G=groups();o.innerHTML='<table class="sum"><thead><tr><th>담당</th><th>한 것</th><th>잘 됨</th><th>문제 있음</th></tr></thead><tbody>'+G.map(function(g){var c=cnt(ROWS.filter(function(r){return r.who===g}));return '<tr><td>'+esc(g)+'</td><td>'+c.done+' / '+c.n+'</td><td>'+c.ok+'</td><td>'+c.bad+'</td></tr>'}).join('')+'</tbody></table>'+
-    '<h3 style="margin:18px 0 8px">문제 있음 · 메모</h3>'+(ROWS.filter(function(r){return r.res==='문제 있음'||r.memo}).map(function(r){return '<div class="card '+(r.res==='문제 있음'?'bad':'')+'"><div class="hd"><span class="no">'+esc(r.id)+'</span><h3>'+esc(r.task)+'</h3></div><p class="how">'+(r.res?'<span class="pill '+(r.res==='잘 됨'?'ok':'bad')+'">'+esc(r.res)+'</span> ':'')+esc(r.memo||'(메모 없음)')+'</p><div class="meta">'+esc(r.by||'')+' '+esc(r.at||'')+'</div></div>'}).join('')||'<p class="hint">아직 없어요.</p>');return}
-  o.innerHTML=ROWS.filter(function(r){return r.who===TAB}).map(card).join('')}
-function load(){google.script.run.withSuccessHandler(function(r){if(!r||!r.ok){$('out').innerHTML='<p class="err">'+esc(r&&r.msg||'불러오지 못했어요')+'</p>';return}ROWS=r.rows;draw()}).withFailureHandler(function(e){$('out').innerHTML='<p class="err">불러오지 못했어요. 새로 고쳐 주세요. ('+esc(e&&e.message)+')</p>'}).qaList()}
-function save(id,res,memo){var r=ROWS.filter(function(x){return x.id===id})[0];if(!r)return;var by=$('me').value.trim();
-  if(!by){$('me').focus();alert('맨 위에 내 이름을 먼저 적어 주세요.');return}
+  if(TAB==='*'){o.innerHTML=summary();return}
+  if(!me()){o.innerHTML='<div class="card"><b>맨 위 「내 이름」을 먼저 적어 주세요.</b><p class="hint" style="margin:4px 0 0">이름마다 결과가 따로 남아요. 다섯 분이 각자 50개를 모두 해요.</p></div>'+TASKS.filter(function(t){return t.grp===TAB}).map(function(t){return '<div class="card"><div class="hd"><span class="no">'+esc(t.id)+'</span><h3>'+esc(t.task)+'</h3></div><p class="how">'+esc(t.how)+'</p></div>'}).join('');return}
+  o.innerHTML=TASKS.filter(function(t){return t.grp===TAB}).map(card).join('')+nextBtn()}
+function nextBtn(){var G=groups(),i=G.indexOf(TAB);return i>=0&&i<G.length-1?'<button type="button" class="save" style="margin:4px 0 0" data-tab="'+esc(G[i+1])+'">다음 묶음: '+esc(G[i+1])+' →</button>':''}
+function load(){google.script.run.withSuccessHandler(function(r){if(!r||!r.ok){$('out').innerHTML='<p class="err">'+esc(r&&r.msg||'불러오지 못했어요')+'</p>';return}TASKS=r.tasks;RES=r.res;draw()}).withFailureHandler(function(e){$('out').innerHTML='<p class="err">불러오지 못했어요. 새로 고쳐 주세요. ('+esc(e&&e.message)+')</p>'}).qaList()}
+function save(id,res,memo){var by=me();if(!by){$('me').focus();alert('맨 위에 내 이름을 먼저 적어 주세요.');return}
   var m=$('m_'+id);if(m)m.textContent='저장하는 중…';
-  google.script.run.withSuccessHandler(function(x){if(!x||!x.ok){if(m)m.innerHTML='<span class="err">'+esc(x&&x.msg||'저장 못 했어요')+'</span>';return}r.res=res;r.memo=memo;r.by=by;r.at=x.at;delete DIRTY[id];delete DRAFT[id];draw()}).withFailureHandler(function(e){if(m)m.innerHTML='<span class="err">저장 못 했어요 · 다시 눌러 주세요</span>'}).qaSave({id:id,res:res,memo:memo,by:by})}
+  google.script.run.withSuccessHandler(function(x){if(!x||!x.ok){if(m)m.innerHTML='<span class="err">'+esc(x&&x.msg||'저장 못 했어요')+'</span>';return}
+    var r=RES.filter(function(q){return q.id===id&&q.by===by})[0];if(!r){r={id:id,by:by};RES.push(r)}r.res=res;r.memo=memo;r.at=x.at;delete DIRTY[id];delete DRAFT[id];draw()}).withFailureHandler(function(){if(m)m.innerHTML='<span class="err">저장 못 했어요 · 다시 눌러 주세요</span>'}).qaSave({id:id,res:res,memo:memo,by:by})}
 document.addEventListener('click',function(e){var t=e.target;if(!t||!t.closest)return;
   var b=t.closest('[data-tab]');if(b){TAB=b.getAttribute('data-tab');ls('qaTab',TAB);draw();window.scrollTo(0,0);return}
   b=t.closest('[data-res]');if(b){var id=b.getAttribute('data-id'),ta=document.querySelector('[data-memo="'+id+'"]');save(id,b.getAttribute('data-res'),ta?ta.value:'');return}
-  b=t.closest('[data-save]');if(b){var id2=b.getAttribute('data-save'),r=ROWS.filter(function(x){return x.id===id2})[0],ta2=document.querySelector('[data-memo="'+id2+'"]');save(id2,r?r.res:'',ta2?ta2.value:'')}});
-document.addEventListener('input',function(e){var t=e.target;if(t&&t.getAttribute&&t.getAttribute('data-memo')){var id=t.getAttribute('data-memo');DIRTY[id]=1;DRAFT[id]=t.value;var s=document.querySelector('[data-save="'+id+'"]');if(s)s.disabled=false}
-  if(t&&t.id==='me')ls('qaMe',t.value)});
+  b=t.closest('[data-save]');if(b){var id2=b.getAttribute('data-save'),ta2=document.querySelector('[data-memo="'+id2+'"]');save(id2,mine(id2).res,ta2?ta2.value:'')}});
+document.addEventListener('input',function(e){var t=e.target;if(t&&t.getAttribute&&t.getAttribute('data-memo')){var id=t.getAttribute('data-memo');DIRTY[id]=1;DRAFT[id]=t.value;var s=document.querySelector('[data-save="'+id+'"]');if(s)s.disabled=false}});
+/* 이름 칸을 벗어나며 바로 버튼을 누르는 경우 그 누름이 사라지지 않게 조금 뒤에 다시 그림 */
+$('me').addEventListener('change',function(){ls('qaMe',me());DIRTY={};DRAFT={};setTimeout(draw,250)});
 $('me').value=ls('qaMe');
-/* 접수 화면 시험 선생님 링크에서 오면 ?tab=번호&me=이름 */
+/* 접수 화면 시험 선생님 링크에서 오면 ?tab=먼저 할 묶음&me=이름 */
 function urlParams(cb){try{google.script.url.getLocation(function(l){cb((l&&l.parameter)||{})})}catch(e){cb({})}}
-urlParams(function(p){if(p.me&&!$('me').value){$('me').value=String(p.me).slice(0,20);ls('qaMe',$('me').value)}if(p.tab)TAB=p.tab==='all'?'*':'#'+p.tab;load()});
+urlParams(function(p){if(p.me){$('me').value=String(p.me).slice(0,20);ls('qaMe',$('me').value)}if(p.tab)TAB=p.tab==='all'?'*':'#'+p.tab;load()});
 </script>
 </body></html>

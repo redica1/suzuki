@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261114-235010 -->
+<!-- build: 20261114-235237 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -1643,19 +1643,21 @@ document.addEventListener('click',e=>{if(S.tab!=='mcs'||!S.mcx)return;const b=e.
   if(d.mcreset){S.mcx=JSON.parse(JSON.stringify(S.MC.order||{s:[]}));render();return}
   if(d.mcsave){call('mcSave',[X],r=>{S.MC=r;S.mcx=JSON.parse(JSON.stringify(r.order||{s:[]}));if(S.EB)S.EB=null;render();toast('마스터클래스 순서를 저장했어요 · 행사 책자에도 바로 반영돼요')},'저장하고 있어요…');return}});
 /* ---------- 교수진 (캠프 교수 · 외부 초청 교수 포함) ---------- */
-const PF_INST=['바이올린','첼로','플루트','비올라','피아노','기타'];
+const PF_INST=['바이올린','첼로','플루트','비올라','피아노','지휘','기타'];
+/* 악기 목록 (11-14): 기본 + 이번에 더한 것 + 교수진에 이미 있는 악기 · 고르기 칸 「＋ 새 악기」로 더함 */
+const pfInsts=L=>{const o=[];[...PF_INST.filter(x=>x!=='기타'),...(S.pfInstAdd||[]),...(L||[]).map(p=>p.inst),'기타'].forEach(x=>{x=String(x||'').trim();if(x&&o.indexOf(x)<0)o.push(x)});return o};
 const pfCopy=()=>JSON.parse(JSON.stringify((S.D.profs||[]).map(p=>({name:p.name,inst:p.inst,lesson:!!p.lesson,mc:!!p.mc,min:p.min||'',fee:p.fee||'',org:p.org||'',on:p.on!==false,memo:p.memo||'',room:p.room||'',book:p.book||'',bgrp:p.bgrp||'',en:p.en||'',title:p.title||'',bio:p.bio||'',bord:p.bord||''}))));
-const PF_GRP={바이올린:'바이올린 Violin',비올라:'비올라 Viola',첼로:'첼로 Cello',플루트:'플루트 Flute',피아노:'피아노 Piano',기타:''};
+const PF_GRP={바이올린:'바이올린 Violin',비올라:'비올라 Viola',첼로:'첼로 Cello',플루트:'플루트 Flute',피아노:'피아노 Piano',지휘:'지휘 Conductor',기타:''};
 const pfDirty=()=>S.pf&&JSON.stringify(S.pf)!==JSON.stringify(pfCopy());
 function vProf(){if(!S.pf)S.pf=pfCopy();const L=S.pf,f=S.pff||'all';
   const on=L.filter(p=>p.on),n=k=>on.filter(p=>p.inst===k).length;
-  const ins=PF_INST.filter(i=>L.some(p=>p.inst===i));
+  const AI=pfInsts(L),ins=AI.filter(i=>L.some(p=>p.inst===i));
   const idx=L.map((p,i)=>i).filter(i=>f==='all'||L[i].inst===f);
   const used={};(S.D.subs||[]).forEach(sb=>sb.ppl.filter(q=>q.status==='정상').forEach(q=>{const i=(sb.form&&sb.form.info&&sb.form.info[q.id.slice(sb.no.length+1)])||{};[i.p1,i.p2].filter(Boolean).forEach(x=>{used[x]=used[x]||{p:0,m:0};used[x].p++});(i.mc||[]).forEach(x=>{used[x]=used[x]||{p:0,m:0};used[x].m++})}));
   return `<div class="panel pfwrap"><div class="row pfbar"><span class="tfindslot"></span>${[['all','전체 '+L.length],...ins.map(i=>[i,i+' '+n(i)])].map(([k,l])=>`<button class="btn small ${f===k?'primary':''}" type="button" data-pff="${esc(k)}">${esc(l)}</button>`).join('')}<span style="flex:1"></span>${pfDirty()?'<span class="pill due">저장 안 한 변경 있음</span><button class="btn small ghost" type="button" data-pfreset="1">되돌리기</button>':''}<button class="btn small" type="button" data-pfimp="1" title="지난 캠프 DB 시트의 교수진에서 책자 · 영문 이름 · 직함 · 약력을 이름으로 맞춰 가져와요">지난 캠프에서 약력 가져오기</button><button class="btn small" type="button" data-pfadd="1">＋ 교수 추가</button><button class="btn small primary" type="button" data-pfsave="1">저장</button></div>
   <div class="mtblw"><table class="pft pfx mtbl"><thead><tr><th class="l">이름</th><th>악기</th><th>레슨</th><th>마스터<br>클래스</th><th>시간<br>(분)</th><th>마스터클래스<br>금액</th><th>소속</th><th>레슨실</th><th>사용</th><th class="l">메모</th><th>책자</th><th>프로필</th><th>신청</th><th></th></tr></thead><tbody>
   ${idx.map(i=>{const p=L[i],u=used[p.name];return `<tr class="${p.on?'':'off'}"><td class="l"><input type="text" data-pf="${i}|name" value="${esc(p.name)}" placeholder="이름" maxlength="40"></td>
-    <td><select data-pf="${i}|inst">${['',...PF_INST].map(x=>`<option value="${x}" ${p.inst===x?'selected':''}>${x||'악기'}</option>`).join('')}</select></td>
+    <td><select data-pf="${i}|inst">${['',...AI].map(x=>`<option value="${esc(x)}" ${p.inst===x?'selected':''}>${esc(x||'악기')}</option>`).join('')}<option value="__add">＋ 새 악기…</option></select></td>
     <td class="c"><input type="checkbox" data-pf="${i}|lesson" ${p.lesson?'checked':''} aria-label="레슨"></td><td class="c"><input type="checkbox" data-pf="${i}|mc" ${p.mc?'checked':''} aria-label="마스터클래스"></td>
     <td><input type="text" inputmode="numeric" class="num" data-pf="${i}|min" value="${esc(String(p.min||''))}" ${p.mc?'':'disabled'} style="width:56px"></td>
     <td><input type="text" inputmode="numeric" class="num" data-pf="${i}|fee" value="${p.fee?(+p.fee).toLocaleString('ko-KR'):''}" ${p.mc?'':'disabled'} style="width:96px"></td>
@@ -1675,9 +1677,10 @@ function vProf(){if(!S.pf)S.pf=pfCopy();const L=S.pf,f=S.pff||'all';
       <label class="wide">약력 <small class="faint">줄마다 한 항목 · 책자에는 「, 」로 이어서 한 칸에</small><textarea data-pf="${i}|bio" rows="4" maxlength="2000">${esc(p.bio)}</textarea></label></div></div>`:''})()}
   <div class="panel hint">· 「사용」을 끄면 접수 화면 목록에서만 빠지고, 이미 그 교수를 고른 접수는 그대로예요. 이미 신청이 있는 교수는 지우기보다 「사용」을 꺼 주세요.<br>· 같은 분이 두 악기를 맡으면 줄을 두 개로 넣어요. 마스터클래스 금액은 1회 기준이에요.</div>`}
 document.addEventListener('input',e=>{const t=e.target;if(!t.dataset||!t.dataset.pf||!S.pf)return;const [i,k]=t.dataset.pf.split('|');const p=S.pf[+i];if(!p)return;
+  if(k==='inst'&&t.value==='__add'){const v=String(prompt('새 악기 이름 (예: 지휘, 하프, 성악)')||'').replace(/[|,]/g,' ').trim().slice(0,12);if(v){S.pfInstAdd=S.pfInstAdd||[];if(S.pfInstAdd.indexOf(v)<0)S.pfInstAdd.push(v);p.inst=v}render();return}
   p[k]=t.type==='checkbox'?t.checked:(k==='fee'||k==='min')?t.value.replace(/[^\d]/g,''):t.value;
   if(t.type==='checkbox'||t.tagName==='SELECT')render()});
-document.addEventListener('change',e=>{const t=e.target;if(t.dataset&&t.dataset.pf&&t.tagName==='SELECT'&&S.pf){const [i,k]=t.dataset.pf.split('|');S.pf[+i][k]=t.value;render()}});
+document.addEventListener('change',e=>{const t=e.target;if(t.dataset&&t.dataset.pf&&t.tagName==='SELECT'&&S.pf&&t.value!=='__add'){const [i,k]=t.dataset.pf.split('|');S.pf[+i][k]=t.value;render()}});
 /* ---------- 권한: 총관리자(아이디·비밀번호) = 전부 · 담당자(교사 회원) = 메뉴마다 편집 / 보기 / 없음 ---------- */
 const SUP_TABS=[['doc','공문'],['camp','캠프 설정'],['cons','동의서'],['staff','담당자']];
 const ME=()=>(S.D&&S.D.me)||{sup:true,perms:{}};
@@ -2408,7 +2411,7 @@ document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)r
   if(d.pfprof!==undefined){S.pfOpen=S.pfOpen===+d.pfprof?null:+d.pfprof;render();if(S.pfOpen!=null){const x=document.querySelector('.panel.pfpro');if(x)x.scrollIntoView({block:'nearest',behavior:'smooth'})}return}
   if(d.pfimp){const u=prompt('지난 캠프 DB 시트 주소를 붙여 넣어 주세요 (그 시트의 「교수진」 탭에서 이름이 같은 교수의 책자 · 영문 이름 · 직함 · 약력을 가져와요. 이미 넣은 칸은 그대로 둬요)');if(!u)return;
     call('adminProfImport',[u],r=>{let n=0;const add=[];(r.list||[]).forEach(q=>{const p=S.pf.find(x=>x.name===q.name);if(!p){if(q.book||q.bio)add.push(q);return}let ch=0;['book','bgrp','en','title','bio','bord'].forEach(k=>{if(!p[k]&&q[k]){p[k]=q[k];ch=1}});if(ch)n++});
-      if(add.length&&confirm(`지금 교수진에 없는 분 ${add.length}명(${add.slice(0,5).map(q=>q.name).join(', ')}${add.length>5?' …':''})도 책자용으로 추가할까요? (레슨 · 마스터클래스 없이 책자에만)`))add.forEach(q=>S.pf.push({name:q.name,inst:PF_INST.includes(q.inst)?q.inst:'기타',lesson:false,mc:false,min:'',fee:'',org:q.org||'교수진',on:false,memo:'지난 캠프에서 가져옴',room:'',book:q.book||'초청',bgrp:q.bgrp,en:q.en,title:q.title,bio:q.bio,bord:q.bord||''}));
+      if(add.length&&confirm(`지금 교수진에 없는 분 ${add.length}명(${add.slice(0,5).map(q=>q.name).join(', ')}${add.length>5?' …':''})도 책자용으로 추가할까요? (레슨 · 마스터클래스 없이 책자에만)`))add.forEach(q=>S.pf.push({name:q.name,inst:(q.inst?q.inst:'기타'),lesson:false,mc:false,min:'',fee:'',org:q.org||'교수진',on:false,memo:'지난 캠프에서 가져옴',room:'',book:q.book||'초청',bgrp:q.bgrp,en:q.en,title:q.title,bio:q.bio,bord:q.bord||''}));
       render();toast(`${n}명 약력을 채웠어요${add.length?' · 없는 분 '+add.length+'명':''} · 확인 후 「저장」을 눌러 주세요`)},'지난 캠프 교수진을 읽고 있어요…');return}
   if(d.pff){S.pff=d.pff;render();return}
   if(d.pfadd){S.pf.push({name:'',inst:S.pff&&S.pff!=='all'?S.pff:'',lesson:true,mc:false,min:'',fee:'',org:'교수진',on:true,memo:'',room:''});render();const ins=document.querySelectorAll('[data-pf$="|name"]');if(ins.length)ins[ins.length-1].focus();return}
@@ -4458,6 +4461,6 @@ document.addEventListener('click',e=>{if(S.tab!=='book')return;const b=e.target.
   if(b.id==='ebSetSave'){const n=Object.assign(ebSet(),S.ebSetW||{});n.per=Math.max(1,Math.min(10,Math.round(+n.per||5)));n.fs=Math.max(5,Math.min(10,+n.fs||6.6));['en','sub','org'].forEach(k=>n[k]=String(n[k]||'').trim().slice(0,120));
     ebSend([],[],n,()=>{S.ebSetW=null;toast('책자 설정을 저장했어요')});return}},true);
 </script>
-<div id="bldMark" hidden>빌드표시 20261114-235010 </div>
+<div id="bldMark" hidden>빌드표시 20261114-235237 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();</script>
 </body></html>

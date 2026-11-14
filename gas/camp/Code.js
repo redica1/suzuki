@@ -1,4 +1,4 @@
-/* build: 20261114-235010 */
+/* build: 20261114-235237 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -43,7 +43,7 @@ const PROF_SEED = {
   '바이올린':['곽은수','김소정','김유정','김한기','민연희','변지혜','서민정','신재원','양승돈','오영근','이광호','이슬비','정호진','황경익','황선영','Ayumi Moriyama','Jeffrey Solares','Motomichi Kisohara','Sara M. Gonzales'],
   '첼로':['김현실','이숙정','황선경']};
 const PROF_HEAD = ['이름', '악기', '레슨', '마스터클래스', '시간(분)', '마스터클래스 금액', '소속', '사용', '메모', '레슨실', '책자', '책자 묶음', '영문 이름', '직함', '약력', '책자 순서'];   /* 책자 = 협회 · 초청 · (빈칸 = 책자에 안 넣음) (11-05) */
-const PROF_INST = ['바이올린', '첼로', '플루트', '비올라', '피아노', '기타'];
+const PROF_INST = ['바이올린', '첼로', '플루트', '비올라', '피아노', '지휘', '기타'];   /* 기본 목록 · 관리자 교수진에서 새 악기를 더할 수 있음 (11-14) */
 let PROF_CACHE = null;
 function profSheet_() {
   const ss = SpreadsheetApp.getActive(); let sh = ss.getSheetByName(SH.PROF);
@@ -2691,7 +2691,8 @@ function adminSaveProfs(token, list) {
     book: ['협회', '초청'].includes(String(p.book || '')) ? String(p.book) : '', bgrp: t(p.bgrp, 40), en: t(p.en, 80), title: t(p.title, 60), bio: String(p.bio == null ? '' : p.bio).trim().slice(0, 2000), bord: Math.max(0, Math.min(999, Math.round(+p.bord || 0))) })).filter(p => p.name);
   const seen = {};
   L.forEach(p => {
-    if (!PROF_INST.includes(p.inst)) throw new Error(p.name + ': 악기를 골라 주세요.');
+    if (!p.inst) throw new Error(p.name + ': 악기를 골라 주세요.');
+    p.inst = p.inst.replace(/[|,]/g, ' ').trim().slice(0, 12);
     const k = p.name + '|' + p.inst; if (seen[k]) throw new Error(p.name + '(' + p.inst + ')이(가) 두 번 있어요.'); seen[k] = 1;
     if (p.mc && !p.fee) throw new Error(p.name + ': 마스터클래스 금액을 넣어 주세요.');
     if (!p.lesson && !p.mc && !p.book) throw new Error(p.name + ': 레슨 · 마스터클래스 · 책자(협회/초청) 중 하나는 골라 주세요.');

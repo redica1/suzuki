@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261114-161329 -->
+<!-- build: 20261114-162226 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -1345,12 +1345,14 @@ function formReqs(){const L=[];(S.D.subs||[]).forEach(sb=>{if(!sb.ppl.some(p=>p.
   if(f.rnote)L.push({src:'신청서 · 일반 방',sb,who:sb.owner,text:f.rnote,n:sb.ppl.filter(p=>p.status!=='취소').length});
   Object.keys(f.rreq||{}).forEach(k=>{if(!(f.room||{})[k])return;const p=sb.ppl.find(q=>q.id===sb.no+'_'+k);if(!p||p.status==='취소')return;L.push({src:'신청서 · 가족방',sb,who:p.name+' 가족',text:f.rreq[k]})})});
   return L.sort((a,b)=>a.sb.acad.localeCompare(b.sb.acad,'ko'))}
+document.addEventListener('click',e=>{const b=e.target&&e.target.closest&&e.target.closest('#fkReq');if(!b)return;ask('예시 방 요청을 넣을까요?','가상 접수에만 「○○와 같은 층 · 침대방 꼭 · 아기 침대」 같은 요청 글을 넣어요. 진짜 접수는 그대로예요.',()=>call('devFakeRoomReq',[],r=>{if(!r.ok){toast(r.msg);return}setData(r.adm);render();toast('방 요청 예시를 넣었어요 · 일반 방 '+r.nG+'건 · 가족방 '+r.nF+'건')},'예시를 넣지 못했어요'));});
 function vFreq(head){const all=(S.D.issues||[]).filter(x=>ROOM_REQ.includes(x.where)).slice().reverse(),f=A.qf||'open';
   const L=all.filter(x=>f==='all'||(f==='open'?x.state!=='해결':x.state===f));const pill=st=>st==='해결'?'<span class="pill ok">처리 완료</span>':st==='해결 중'?'<span class="pill new">처리 중</span>':'<span class="pill due">미처리</span>';
   const fams=famRooms(),FR=formReqs(),tg={};[...FR.map(x=>x.text),...all.map(x=>x.text)].forEach(t=>{const r=reqTags(t);r.tags.forEach(k=>tg[k]=(tg[k]||0)+1);if(r.must)tg['반드시']=(tg['반드시']||0)+1});
   const formBox=`<div class="panel"><div class="spread"><h3 style="margin:0">신청서에 적은 방 요청 <span class="hint">${FR.length}건 · 일반 방 ${FR.filter(x=>x.src==='신청서 · 일반 방').length} · 가족방 ${FR.filter(x=>x.src==='신청서 · 가족방').length}</span></h3></div>
     ${Object.keys(tg).length?`<p class="hint" style="margin:6px 0">꼬리표 모아 보기 (신청서 + 게시판): ${Object.entries(tg).sort((a,b)=>b[1]-a[1]).map(([k,n])=>`<span class="pill ${k==='반드시'?'due':'new'}">${esc(k)} ${n}</span>`).join(' ')}</p>`:''}
     ${FR.length?`<div class="mtblw"><table class="mtbl"><thead><tr><th>출처</th><th>학원</th><th>누구</th><th>꼬리표</th><th>요청 글</th></tr></thead><tbody>${FR.map(x=>`<tr><td>${esc(x.src.replace('신청서 · ',''))}</td><td>${esc(x.sb.acad)}</td><td>${esc(x.who)}${x.n?` <small class="faint">${x.n}명</small>`:''}<br><small class="faint">${esc(x.sb.owner)} · ${esc(x.sb.no)}</small></td><td style="white-space:normal;text-align:left">${reqChips(x.text)}</td><td style="white-space:pre-wrap;text-align:left;min-width:220px">${esc(x.text)}</td></tr>`).join('')}</tbody></table></div>`:'<p class="hint" style="margin:0">아직 신청서에 적은 방 요청이 없어요.</p>'}
+    ${(S.D.subs||[]).some(sb=>sb.fake)?`<p style="margin:8px 0 0"><button class="btn small" type="button" id="fkReq">예시 방 요청 넣기 (가상 접수에만)</button> <small class="hint">STG 시험용 · 가상 접수 절반쯤에 일반 방 · 가족방 요청 글을 넣어요</small></p>`:''}
     <p class="hint" style="margin:6px 0 0">꼬리표는 글에서 낱말로 찾아 붙여요 (「꼭 · 반드시」가 있으면 <b>반드시</b>, 없으면 <b>되면 좋음</b>). 글에 나온 학원 이름은 「누구와」로 보여요.</p></div>`;
   return `<div class="act">${head}${formBox}<h3 style="margin:14px 0 6px">게시판 방 요청</h3><div class="panel"><div class="spread"><div class="row" style="gap:6px">${[['open','안 끝난 것 '+all.filter(x=>x.state!=='해결').length],['해결 중','처리 중 '+all.filter(x=>x.state==='해결 중').length],['all','전체 '+all.length],['해결','처리 완료']].map(([k,l])=>`<button class="btn small ${f===k?'primary':''}" type="button" data-rqf="${k}">${l}</button>`).join('')}</div></div>
     <span class="hint">선생님 · 보호자가 「게시판」에서 분류를 「방 요청」이나 「가족방 요청」으로 골라 올린 글이에요. 처리 상태와 답을 저장하면 올린 분 화면에 보여요 (게시판 메뉴에도 같이 보여요).</span></div>
@@ -4451,6 +4453,6 @@ document.addEventListener('click',e=>{if(S.tab!=='book')return;const b=e.target.
   if(b.id==='ebSetSave'){const n=Object.assign(ebSet(),S.ebSetW||{});n.per=Math.max(1,Math.min(10,Math.round(+n.per||5)));n.fs=Math.max(5,Math.min(10,+n.fs||6.6));['en','sub','org'].forEach(k=>n[k]=String(n[k]||'').trim().slice(0,120));
     ebSend([],[],n,()=>{S.ebSetW=null;toast('책자 설정을 저장했어요')});return}},true);
 </script>
-<div id="bldMark" hidden>빌드표시 20261114-161329 </div>
+<div id="bldMark" hidden>빌드표시 20261114-162226 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();</script>
 </body></html>

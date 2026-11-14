@@ -1,4 +1,4 @@
-/* build: 20261114-161329 */
+/* build: 20261114-162226 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -2316,6 +2316,31 @@ function devFakeSubs(token, nT, nS) {
     log_(a.name, '가상 접수 만듦', made.join(', '));
   } finally { lock.releaseLock(); }
   return { ok: true, made, adm: adminData(token) };
+}
+/** STG 예시 (11-14): 가상 접수(fake)에 방 요청 예시를 넣음 — 일반 방 요청(rnote) 절반쯤 · 가족방이 있으면 가족방 요청(rreq) 절반쯤. 진짜 접수는 건드리지 않음 */
+function devFakeRoomReq(token) {
+  const a = adm_(token); needSup_(a);
+  let seed = Date.now() % 2147483647; const rnd = () => (seed = (seed * 48271) % 2147483647) / 2147483647; const pick = L => L[Math.floor(rnd() * L.length)];
+  const GEN = ['{A}와 같은 층으로 붙여 주세요', '침대방 꼭 부탁드려요. 저학년이 많아요', '남학생 3명은 남학생끼리 방 주세요', '{A} 선생님들과 옆방이면 좋겠어요', '선생님 방은 학생 방 가까이 반드시 붙여 주세요',
+    '엘리베이터 가까운 낮은 층이면 좋겠어요', '조용한 방 부탁드립니다', '작년처럼 {A}와 같이 쓰고 싶어요', '여학생 방은 온돌방이면 좋겠어요', '{A}와 꼭 같은 층 부탁드려요. 연습을 같이 해요'];
+  const FAM = ['아기 침대 꼭 필요해요', '{A} 가족과 같은 층이면 좋겠어요', '할머니가 다리가 불편하셔서 낮은 층 반드시 부탁드려요', '침대방 원해요', '유모차 때문에 엘리베이터 가까운 방이면 좋겠어요',
+    '15개월 아기가 있어서 조용한 방 부탁드려요', '{A} 가족과 옆방 꼭 부탁드려요', '온돌방이면 좋겠어요'];
+  const lock = lock_(); let nG = 0, nF = 0;
+  try {
+    const all = loadSubs_(), fk = all.filter(sb => sb.fake && sb.ppl.some(p => p.status !== '취소'));
+    if (!fk.length) return { ok: false, msg: '가상 접수가 없어요. 설정 › 시험 도구에서 「여름캠프 규모로 가상 접수」를 먼저 만들어 주세요 (가족방도 같이 생겨요).' };
+    const acads = [...new Set(fk.map(sb => sb.acad))];
+    const other = me => { const L = acads.filter(x => x !== me); return L.length ? pick(L) : me; };
+    fk.forEach(sb => {
+      const f = sb.form = sb.form || {}; let ch = false;
+      if (rnd() < 0.55) { f.rnote = pick(GEN).replace('{A}', other(sb.acad)); nG++; ch = true; }
+      const rooms = Object.keys(f.room || {}).filter(k => f.room[k]);
+      if (rooms.length) { f.rreq = f.rreq || {}; rooms.forEach(k => { if (rnd() < 0.6) { f.rreq[k] = pick(FAM).replace('{A}', other(sb.acad)); nF++; ch = true; } }); }
+      if (ch) { sb.rev = (+sb.rev || 0) + 1; recalc_(sb); writeSubRow_(sb, false); }
+    });
+    log_(a.name, '방 요청 예시 넣음', '일반 ' + nG + ' · 가족방 ' + nF);
+  } finally { lock.releaseLock(); }
+  return { ok: true, nG, nF, adm: adminData(token) };
 }
 function devFakeClear(token) {
   const a = adm_(token); needSup_(a);

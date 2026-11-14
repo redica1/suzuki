@@ -1,4 +1,4 @@
-<!doctype html><!-- build: 20261115-011336 --><html lang="ko"><head><meta charset="utf-8"><link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"><meta name="viewport" content="width=device-width,initial-scale=1">
+<!doctype html><!-- build: 20261115-012015 --><html lang="ko"><head><meta charset="utf-8"><link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
 <style>
 /* 학부모 신청 (11-15): 학원 다니는 학생의 보호자가 회원가입 없이 「간다 / 안 간다」와 같이 가는 가족 이름만 학원 선생님께 보냄 */
@@ -67,7 +67,8 @@ function refundText(R){if(!R||!R.rules)return '';var p=null,L=R.rules.map(functi
   var A=R.after||{};if(p)L.push('- 그 뒤: '+(A.allow===false?'취소 불가':(+A.rate||0)+'% 환불'+((A.drate!=null&&A.drate!==''&&+A.drate!==+A.rate)?' (진단서 제출 시 '+A.drate+'%)':'')));return '취소하는 날에 따라 환불해요.\n'+L.join('\n')}
 function blank(){return {kids:[{name:'',inst:'',age:'',go:'간다'}],fam:[],me:{go:true,gender:'',by:''},room:{fam:false,note:''},memo:''}}
 function seg(attr,i,val,opts,sm){return '<div class="seg'+(sm?' sm':'')+'" role="group">'+opts.map(function(o){return '<button type="button" '+attr+'="'+i+'|'+esc(o[0])+'" aria-pressed="'+(val===o[0])+'">'+esc(o[1])+'</button>'}).join('')+'</div>'}
-function stNote(){var r=S.req;if(!r)return '';
+function stNote(){var r=S.req;if(!r)return '';var sub=r.sub,reps=((r.m||{}).reps||[]).filter(function(x){return x.st!=='반려'}),paid=reps.reduce(function(t,x){return t+x.amt},0);
+  if(sub){var ex=sub.ppl.reduce(function(t,p){return t+p.lesson},0),due=sub.total-paid;return '<p class="note '+(due>0?'warn':'ok')+'"><b>학원이 접수했어요 (접수번호 '+esc(sub.no)+').</b> 확정 금액 <b>'+won(sub.total)+'</b>'+(ex?' (추가레슨 · 마스터클래스 '+won(ex)+' 포함)':'')+(due>0?' · <b>더 보낼 금액 '+won(due)+'</b> — 아래 「입금 · 입금 신고」에서 보내고 신고해 주세요.':due<0?' · 더 낸 금액 '+won(-due):' · 다 냈어요.')+'</p>'}
   if(r.st==='담음')return '<p class="note ok"><b>학원 선생님이 접수에 담았어요.</b> 바꿀 게 있으면 고쳐서 다시 보내 주세요. 선생님께 「바뀜」으로 알려져요.</p>';
   return '<p class="note ok"><b>학원 선생님께 보냈어요</b> ('+esc(String(r.at).slice(5,16))+'). 고칠 게 있으면 고쳐서 다시 보내면 돼요.</p>'}
 function vForm(){var I=S.I,d=S.d;if(!I.open)return '<div class="card"><h2>지금은 신청을 받지 않아요</h2><p class="hint">다니는 학원 선생님께 여쭤 주세요.</p></div>';

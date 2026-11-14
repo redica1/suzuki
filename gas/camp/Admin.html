@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261114-234923 -->
+<!-- build: 20261114-235010 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -1883,13 +1883,13 @@ function vMem(){if(!S.MEM){if(!S.memL)setTimeout(memLoad,0);return '<div class="
   const L=all.filter(x=>(f==='all'||(f==='on'?!!x.on:!x.on))&&(!ac||String(x.acad).split(',').map(y=>y.trim()).includes(ac))&&(!q||[x.name,x.acad,x.inst].some(v=>String(v).includes(q))))
     .sort((x,y)=>(!!y.on-!!x.on)||String(x.acad).localeCompare(String(y.acad),'ko')||x.name.localeCompare(y.name,'ko'));
   const nOn=all.filter(x=>x.on).length;
-  S.conTSV=[['학원','전공','이름','참가','접수번호'],...L.map(x=>[x.acad,x.inst,x.name,x.on?'참가':'미참가',x.on?x.on.no:''])].map(r=>r.join('\t')).join('\n');
+  S.conTSV=[['학원','전공','이름','참가'],...L.map(x=>[x.acad,x.inst,x.name,x.on?'참가':'미참가'])].map(r=>r.join('\t')).join('\n');
   const syncT=S.MEM.sync&&S.MEM.sync.src?('회원관리 연동 켜짐 · 회원관리 명단 '+(S.MEM.sync.stamp||'-')+' · 캠프에 맞춘 때 '+(S.MEM.sync.at||'-')+' · 5분마다 바뀐 게 있으면 자동으로 맞춰요'):'회원관리 연동 꺼짐 · 설정 「회원 명단 파일」에 회원관리 「행사용 명단」 파일 ID를 넣으면 켜져요';
   return `<div class="cc"><div class="panel memwrap"><div class="row memflt" style="gap:6px;flex-wrap:nowrap;align-items:center"><span class="tfindslot"></span>${[['t','교사 '+S.MEM.teachers.length],['s','학생 '+S.MEM.students.length]].map(([v,l])=>`<button class="btn small ${k===v?'primary':''}" type="button" data-memk="${v}">${l}</button>`).join('')}<span style="width:6px"></span>
       ${[['all','전체 '+all.length],['on','참가 '+nOn],['off','미참가 '+(all.length-nOn)]].map(([v,l])=>`<button class="btn small ${f===v?'primary':''}" type="button" data-memf="${v}">${l}</button>`).join('')}
       <select id="memA"><option value="">학원 전체</option>${acads.map(a=>`<option ${a===ac?'selected':''}>${esc(a)}</option>`).join('')}</select><span style="flex:1"></span><button class="btn small" type="button" id="conCopy" title="보이는 줄을 엑셀에 붙여 넣을 수 있게 복사">표 복사</button><button class="btn small" type="button" data-memre="1" title="캠프 시트의 명단을 다시 읽어요">새로 불러오기</button><button class="btn small primary" type="button" data-memsync="1" title="${esc(syncT)}">회원관리에서 가져오기</button></div>
-  <div class="mtblw"><table class="mtbl memt"><thead><tr><th class="l">학원</th><th>전공</th><th class="l">이름</th>${k==='t'?'<th>직급</th>':''}<th>참가</th><th>접수번호</th></tr></thead><tbody>
-    ${L.map(x=>`<tr class="${x.on?'':'memoff'}" data-g="${x.on?0:1}"><td class="l">${esc(x.acad)}</td><td>${esc(x.inst||'-')}</td><td class="l"><b>${esc(x.name)}</b>${k==='t'&&x.state&&x.state!=='승인'?` <small class="faint">(${esc(x.state)})</small>`:''}</td>${k==='t'?`<td>${esc(x.role||'')}</td>`:''}<td>${x.on?`<span class="pill ok">참가</span>${x.on.type&&x.on.type!=='교사'&&x.on.type!=='학생'?` <small>${esc(x.on.type)}</small>`:''}`:'<span class="pill mute">미참가</span>'}</td><td class="num">${x.on?esc(x.on.no):''}</td></tr>`).join('')||`<tr><td colspan="6" class="hint">해당하는 사람이 없어요.</td></tr>`}</tbody></table></div></div></div>`}
+  <div class="mtblw"><table class="mtbl memt"><thead><tr><th class="l">학원</th><th>전공</th><th>이름</th>${k==='t'?'<th>직급</th>':''}<th>참가</th></tr></thead><tbody>
+    ${L.map(x=>`<tr class="${x.on?'':'memoff'}" data-g="${x.on?0:1}"><td class="l">${esc(x.acad)}</td><td>${esc(x.inst||'-')}</td><td><b>${esc(x.name)}</b>${k==='t'&&x.state&&x.state!=='승인'?` <small class="faint">(${esc(x.state)})</small>`:''}</td>${k==='t'?`<td>${esc(x.role||'')}</td>`:''}<td>${x.on?`<span class="pill ok">참가</span>${x.on.type&&x.on.type!=='교사'&&x.on.type!=='학생'?` <small>${esc(x.on.type)}</small>`:''}`:'<span class="pill mute">미참가</span>'}</td></tr>`).join('')||`<tr><td colspan="5" class="hint">해당하는 사람이 없어요.</td></tr>`}</tbody></table></div></div></div>`}
 function vSchol(){if(!S.SC){if(!S.schL)setTimeout(schLoad,0);return '<div class="panel hint">장학금을 불러오고 있어요…</div>'}
   const T=S.sc.tiers,N=schPlayers();const acads=[...new Set([...Object.keys(N),...S.sc.rows.map(r=>r.acad)])].sort((a,b)=>(N[b]||0)-(N[a]||0)||a.localeCompare(b,'ko'));
   const L=acads.map(a=>{const r=S.sc.rows.find(x=>x.acad===a)||{acad:a,amt:'',state:'예정',date:'',memo:''};const n=N[a]||0,base=tierOf(T,n),pay=r.amt===''||r.amt==null?base:+r.amt;return {a,r,n,base,pay}});
@@ -4458,6 +4458,6 @@ document.addEventListener('click',e=>{if(S.tab!=='book')return;const b=e.target.
   if(b.id==='ebSetSave'){const n=Object.assign(ebSet(),S.ebSetW||{});n.per=Math.max(1,Math.min(10,Math.round(+n.per||5)));n.fs=Math.max(5,Math.min(10,+n.fs||6.6));['en','sub','org'].forEach(k=>n[k]=String(n[k]||'').trim().slice(0,120));
     ebSend([],[],n,()=>{S.ebSetW=null;toast('책자 설정을 저장했어요')});return}},true);
 </script>
-<div id="bldMark" hidden>빌드표시 20261114-234923 </div>
+<div id="bldMark" hidden>빌드표시 20261114-235010 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();</script>
 </body></html>

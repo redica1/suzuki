@@ -31,10 +31,16 @@ const TBLS={};
 const tkey=(t,i)=>i+'|'+[...t.querySelectorAll('thead th')].map(th=>th.dataset.lb||th.textContent.trim()).join('/');
 const sval=x=>{const v=String(x||'').replace(/\s+/g,' ').trim(),m=v.match(/^[+\-]?[\d,]*\d(\.\d+)?/);if(m&&!/^[\/.:\-]/.test(v.slice(m[0].length))&&!/^\d{4}\.\d/.test(v))return {n:+m[0].replace(/[,+]/g,'')};   /* 숫자 뒤에 작은 글씨(참가 550,000 등)가 붙어도 앞 숫자로 정렬 */
   if(/^\d{2,4}[.\-]\d/.test(v))return {s:v.replace(/\d+/g,d=>d.padStart(4,'0'))};return {s:v}};
+/* 칸 값 (11-14): 입력칸 · 고르기 · 체크가 든 칸(관리자 편집 표)은 화면에 보이는 값으로 정렬 · 찾기. 그런 칸이 없으면 글자 그대로 */
+const UI_F='input,select,textarea';
+const cval=n=>{if(!n)return '';if(!n.querySelector(UI_F))return n.textContent;let s='';const w=x=>{if(x.nodeType===3){s+=x.nodeValue;return}if(x.nodeType!==1)return;const T=x.tagName;if(T==='BUTTON'||T==='SCRIPT'||T==='STYLE'||T==='OPTION')return;
+  if(T==='SELECT'){const o=x.options[x.selectedIndex];s+=' '+(o&&o.value!==''?o.text:'')+' ';return}if(T==='TEXTAREA'){s+=' '+x.value+' ';return}if(T==='INPUT'){s+=' '+(x.type==='checkbox'||x.type==='radio'?(x.checked?'✓':''):x.value)+' ';return}x.childNodes.forEach(w)};w(n);return s};
+const rval=r=>r.querySelector(UI_F)?[...r.cells].map(cval).join(' '):r.textContent;
 function tblApply(t,st){const tb=t.tBodies[0];if(!tb)return;const rows=[...tb.rows];
-  if(st.s&&st.s.i!=null&&!t.querySelector('tbody td[colspan]')){const i=st.s.i,d=st.s.d;rows.sort((a,b)=>{const x=sval(a.cells[i]&&a.cells[i].textContent),y=sval(b.cells[i]&&b.cells[i].textContent);
+  if(st.s&&st.s.i!=null&&!t.querySelector('tbody td[colspan]')){const i=st.s.i,d=st.s.d;rows.sort((a,b)=>{const x=sval(cval(a.cells[i])),y=sval(cval(b.cells[i]));const ex=x.n==null&&!String(x.s).trim(),ey=y.n==null&&!String(y.s).trim();if(ex!==ey)return ex?1:-1;   /* 빈 칸은 늘 아래로 */
+    
     const r=(x.n!=null&&y.n!=null)?x.n-y.n:(x.n!=null?-1:y.n!=null?1:String(x.s).localeCompare(String(y.s),'ko',{numeric:true}));return d*r});rows.forEach(r=>tb.appendChild(r))}
-  const q=String(st.q||'').replace(/\s+/g,'').toLowerCase();let n=0;rows.forEach(r=>{const ok=!q||r.textContent.replace(/\s+/g,'').toLowerCase().includes(q);r.style.display=ok?'':'none';if(ok)n++});
+  const q=String(st.q||'').replace(/\s+/g,'').toLowerCase();let n=0;rows.forEach(r=>{const ok=!q||rval(r).replace(/\s+/g,'').toLowerCase().includes(q);r.style.display=ok?'':'none';if(ok)n++});
   const c=(t.closest('.mtblw'+(window.UI_DOCK?','+window.UI_DOCK:''))||t).previousElementSibling;if(c&&c.classList.contains('tfind')){const m=c.querySelector('.tfn');if(m)m.textContent=q?n+'건':''}
   t.querySelectorAll('thead th').forEach((th,j)=>{const a=th.querySelector('.sarr');if(a)a.textContent=st.s&&st.s.i===j?(st.s.d>0?' ▲':' ▼'):''})}
 function tblEnhance(){document.querySelectorAll(UI_SEL.split(',').map(x=>x.trim()+':not(.nosort):not([data-enh])').join(',')).forEach((t,_)=>{t.dataset.enh='1';

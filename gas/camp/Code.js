@@ -1,4 +1,4 @@
-/* build: 20261114-163343 */
+/* build: 20261114-163721 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -661,7 +661,9 @@ function bundle_(acads, owner) {
   const vis = all.filter(sb => acads.includes(sb.acad) && (sb.owner === owner || (heads.includes(sb.acad) && sb.acad !== GUEST_ACAD && sb.acad !== STAFF_ACAD && sb.acad !== NOACAD)));
   let aud = null; try { aud = audMine_(vis); } catch (x) {}
   let audPre = {}; try { audPre = audPreMap_(acads); } catch (x) {}
-  return { aud, audPre, rosters, subs: vis, teams: teams_(all), bank: bankInfo_(), today: today_(), profs, camp, myPay: (() => { try { const me = ts.filter(t => t.name === owner); return myPay_(me.length === 1 ? me[0].id : '', owner); } catch (x) { return null; } })() };
+  /* 중복 접수 막기용: 남의 접수 내용은 보내지 않고 「이미 접수된 사람」 번호만 (학생 = 내 학원들, 선생님 = 모든 학원) */
+  const taken = []; all.forEach(sb => { if (vis.includes(sb)) return; sb.ppl.forEach(p => { if (p.status !== '정상' && p.status !== '취소요청') return; const k = String(p.id).slice(String(sb.no).length + 1); if (/^t_/.test(k) || acads.includes(sb.acad)) taken.push(k); }); });
+  return { aud, audPre, rosters, subs: vis, taken, teams: teams_(all), bank: bankInfo_(), today: today_(), profs, camp, myPay: (() => { try { const me = ts.filter(t => t.name === owner); return myPay_(me.length === 1 ? me[0].id : '', owner); } catch (x) { return null; } })() };
 }
 
 /* ---------------- 접수 읽고 쓰기 ---------------- */

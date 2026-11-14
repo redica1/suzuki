@@ -148,6 +148,8 @@ document.addEventListener('input',e=>{if(e.target.type==='checkbox'&&(e.target.i
   if(el.id==='email'){S.email=el.value;return}
   if(el.id==='req'){S.req=el.value;return}
   if(d.famname){const f=S.fam.find(x=>x.id===d.famname);if(f){f.name=el.value;const h=document.querySelector(`#card_${f.id} h3`);if(h)h.textContent=el.value||'(이름 미입력)';el.classList.toggle('empty',!el.value);setNext()}return}
+  if(d.man&&el.tagName==='INPUT'){el.value=el.value.replace(/\D/g,'').slice(0,2);const I=S.info[d.man];I.man=el.value;const pp=people().find(x=>x.key===d.man),y=el.value===''?'':String(manToYear(el.value));
+    if(el.value!==''){I.by=y;const b=document.getElementById('ag_'+d.man);if(b){b.value=y;b.classList.toggle('empty',yearBad(pp,y))}}const h=document.getElementById('agh_'+d.man);if(h)h.innerHTML=el.value===''?ageHint(pp,I.by):ageHint(pp,y,true);setNext();return}
   if(d.f&&(el.tagName==='INPUT')){S.info[d.k][d.f]=el.value;if(d.f==='video'){el.classList.toggle('empty',!videoOk(S.info[d.k]));setNext();return}if(d.f==='by'){el.value=el.value.replace(/\D/g,'').slice(0,4);S.info[d.k].by=el.value;{const pp=people().find(x=>x.key===d.k);el.classList.toggle('empty',yearBad(pp,el.value));const h=document.getElementById('agh_'+d.k);if(h)h.innerHTML=ageHint(pp,el.value)}setNext()}return}
   if(d.ens==='tm'||d.ens==='ts'){el.value=el.value.replace(/\D/g,'').slice(0,2);if(d.ens==='ts'&&+el.value>59)el.value='59';S.ens[d.ens]=el.value;return}
   if(d.ens&&el.type==='text'){S.ens[d.ens]=el.value;if(d.ens==='group')setNext();if(d.ens==='extra'){const pos=el.selectionStart;render();const n=document.getElementById('enX');n.focus();n.setSelectionRange(pos,pos)}return}

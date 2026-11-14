@@ -1,4 +1,4 @@
-/* build: 20261115-010925 */
+/* build: 20261115-011336 */
     ps.forEach(p=>{p.pay='신고';p.rep=rep;delete S.rpRow[p.id]});S.afterSave=()=>repDone(ps.map(p=>p.id));subSave();S.rp=null;S.rpOpen=false;S.rpMemo=undefined;render();toast(`${ps.length}명 입금 신고를 보냈어요 · 운영진이 확인하면 「입금 확인」으로 바뀌어요`);return}
   if(b.id==='rpFill'){const n=document.getElementById('rpAllN').value.trim(),dd=document.getElementById('rpAllD').value;S.rpAllN=n;S.rpAllD=dd;const sel=S.rp||[];
     if(!n&&!dd){toast('적용할 입금자명이나 입금일을 적어 주세요');return}unpaidPpl().filter(x=>sel.includes(x.p.id)).forEach(({p})=>{const v=rpv(p);if(n)v.n=n;if(dd)v.d=dd});render();toast(`선택한 ${sel.length}명에게 적용했어요`);return}
@@ -148,7 +148,7 @@ document.addEventListener('input',e=>{if(e.target.type==='checkbox'&&(e.target.i
   if(el.id==='email'){S.email=el.value;return}
   if(el.id==='req'){S.req=el.value;return}
   if(d.famname){const f=S.fam.find(x=>x.id===d.famname);if(f){f.name=el.value;const h=document.querySelector(`#card_${f.id} h3`);if(h)h.textContent=el.value||'(이름 미입력)';el.classList.toggle('empty',!el.value);setNext()}return}
-  if(d.man&&el.tagName==='INPUT'){el.value=el.value.replace(/\D/g,'').slice(0,2);const I=S.info[d.man];I.man=el.value;const pp=people().find(x=>x.key===d.man),y=el.value===''?'':String(manToYear(el.value));
+  if(d.man&&el.tagName==='INPUT'){/* 생일 지남/전 고르기는 아래 click */el.value=el.value.replace(/\D/g,'').slice(0,2);const I=S.info[d.man];I.man=el.value;const pp=people().find(x=>x.key===d.man),y=el.value===''?'':String(manToYear(el.value));
     if(el.value!==''){I.by=y;const b=document.getElementById('ag_'+d.man);if(b){b.value=y;b.classList.toggle('empty',yearBad(pp,y))}}const h=document.getElementById('agh_'+d.man);if(h)h.innerHTML=el.value===''?ageHint(pp,I.by):ageHint(pp,y,true);setNext();return}
   if(d.f&&(el.tagName==='INPUT')){S.info[d.k][d.f]=el.value;if(d.f==='video'){el.classList.toggle('empty',!videoOk(S.info[d.k]));setNext();return}if(d.f==='by'){el.value=el.value.replace(/\D/g,'').slice(0,4);S.info[d.k].by=el.value;{const pp=people().find(x=>x.key===d.k);el.classList.toggle('empty',yearBad(pp,el.value));const h=document.getElementById('agh_'+d.k);if(h)h.innerHTML=ageHint(pp,el.value)}setNext()}return}
   if(d.ens==='tm'||d.ens==='ts'){el.value=el.value.replace(/\D/g,'').slice(0,2);if(d.ens==='ts'&&+el.value>59)el.value='59';S.ens[d.ens]=el.value;return}
@@ -478,3 +478,4 @@ function preqTake(id){const r=preqList().find(x=>x.id===id);if(!r)return;const d
   api('parentMark',[r.id],x=>{if(x&&x.preq)window.PREQ=x.preq;render()},null,'표시하고 있어요…');
   render();toast(`학생 ${got.length}명${newKids.length?`(명단에 없어 새로 ${newKids.length}명 · 연회비 함께)`:''} · 가족 ${nf}명을 담았어요${miss.length?' · 명단에 없음: '+miss.join(', ')+' (「명단에 없는 학생 추가」로)':''}${dup.length?' · 같은 이름 여럿: '+dup.join(', ')+' (직접 골라 주세요)':''}${done.length?' · 이미 접수됨: '+done.join(', '):''}`,miss.length+dup.length>0)}
 document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-preq]');if(!b)return;e.preventDefault();preqTake(b.dataset.preq)});
+document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-bday]');if(!b)return;e.preventDefault();const [k,y]=b.dataset.bday.split('|');const I=S.info[k];if(!I)return;I.by=y;const pp=people().find(x=>x.key===k),inp=document.getElementById('ag_'+k);if(inp){inp.value=y;inp.classList.toggle('empty',yearBad(pp,y))}b.parentNode.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));setNext()});

@@ -1,4 +1,4 @@
-/* build: 20261115-010925 */
+/* build: 20261115-011336 */
 /* ---------- 캠프 설정 (관리자 화면에서 입력되는 값) ---------- */
 const ROOM = { cap:4, emptyFee:140000 }; // 가족방: 4인 기준, 빈 자리 1개당 추가 비용
 const CAMP = { id:'27W', ri:0, lessonFee:60000, lessonMax:5, mcFee:150000,
@@ -166,7 +166,8 @@ function songOk(i){return !i.concert||i.concert==='없음'||(i.other?!!String(i.
 const thisYear=()=>+String(S.today||new Date().toISOString()).slice(0,4)||2026;
 function manToYear(a){a=+a;return a>=0&&a<=99?thisYear()-a:''}
 function ageHint(p,v,fromMan){if(!okYear(v))return fromMan?'<span style="color:var(--bad)">만 나이를 숫자로 넣어 주세요</span>':'';const m=thisYear()-(+v),odd=p&&p.kind==='student'&&(m<2||m>25);
-  const base=fromMan?`출생연도 ${v}년으로 넣었어요 · 올해 생일이 아직이면 ${(+v)-1}년으로 고쳐 주세요`:`지금 만 ${Math.max(0,m-1)}~${m}세`;
+  /* 만 나이로 넣으면 생일 지남 / 생일 전 두 해 중에서 고름 (11-15) */
+  const k=p&&p.key,base=fromMan?`<span class="bdseg" role="group" aria-label="올해 생일">${[[+v,'생일 지남'],[(+v)-1,'생일 전']].map(([y,l])=>`<button type="button" data-bday="${esc(k)}|${y}" aria-pressed="${String(info(p).by)===String(y)}">${y}년생 <small>${l}</small></button>`).join('')}</span>`:`지금 만 ${Math.max(0,m-1)}~${m}세`;
   return odd?`<span style="color:var(--bad);font-weight:700">${base} · 학생 나이가 맞는지 확인해 주세요</span>`:base}
 function missingSong(){ return people().filter(p=>p.kind==='student'&&PLAYS.has(info(p).type)&&!songOk(info(p))) }
 function missingPref(){ return people().filter(p=>p.kind!=='family'&&PLAYS.has(info(p).type)&&+info(p).lessons>0&&(PROF[p.inst]||[]).length&&!info(p).p1) }

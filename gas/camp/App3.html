@@ -63,7 +63,7 @@ function pCard(p){
       ${songs.length?`<div class="checks"><label><input type="checkbox" data-other="${p.key}" ${i.other?'checked':''}>목록에 없는 곡이에요</label></div>`:`<p class="hint" style="margin:0">${esc(p.inst||'이 악기')}는 곡 목록이 없어요. 작곡가와 곡명을 직접 넣어 주세요.</p>`}
       ${i.other?`<div class="grid2"><label class="f" for="oc_${p.key}">작곡가<input type="text" id="oc_${p.key}" data-f="oc" data-k="${p.key}" value="${esc(i.oc)}"></label>
       <label class="f" for="ot_${p.key}">곡명 (원어로 정확히) <span class="req">*</span><input type="text" id="ot_${p.key}" data-f="ot" data-k="${p.key}" value="${esc(i.ot)}"></label></div>`:''}
-      ${audOn(i.concert)?`<label class="f" for="vd_${p.key}"><span>음원 주소 <span class="opt">선택</span> <span class="hint">유튜브 「일부 공개」 링크 등 · https로 시작 · 접수 뒤 「내 접수 › 음악회」에서 마감일까지 더 넣을 수 있어요</span></span><input type="url" id="vd_${p.key}" data-f="video" data-k="${p.key}" value="${esc(i.video||'')}" placeholder="https:\/\/youtu.be/…" ${videoOk(i)?'':'class="empty"'} autocomplete="off"></label>`:''}
+      ${audOn(i.concert)?`<label class="f" for="vd_${p.key}"><span class="vdLbl">음원 주소 <span class="opt">(선택)</span></span><span class="vdHint">유튜브 「일부 공개」 링크 등 · https로 시작 · 접수 뒤 「내 접수 › 음악회」에서 마감일까지 더 넣을 수 있어요</span><input type="url" id="vd_${p.key}" data-f="video" data-k="${p.key}" value="${esc(i.video||'')}" placeholder="https:\/\/youtu.be/…" ${videoOk(i)?'':'class="empty"'} autocomplete="off"></label>`:''}
     </div>`:''}
     </div>
 
@@ -75,7 +75,7 @@ function pCard(p){
 function vStep3(){
   const ps=people();
   return `<section class="sec"><h2>${S.editNo&&S.quickEdit?'신청 내용':'참가 정보 입력'}</h2>
-  ${S.editNo&&!S.quickEdit?`<div class="note info">접수 고치는 중 · <b>색이 칠해진 「새로 추가」 카드</b>가 이번에 정보를 넣을 사람이에요. 회색 카드는 이미 접수된 사람이라 필요할 때만 고치면 돼요.</div>`:''}
+  ${S.editNo&&!S.quickEdit?`<div class="note info"><b class="editTag">접수 고치는 중</b> · <b>색이 칠해진 「새로 추가」 카드</b>가 이번에 정보를 넣을 사람이에요. 회색 카드는 이미 접수된 사람이라 필요할 때만 고치면 돼요.</div>`:''}
   <p class="lede">${isGuest()?'아이마다 성별과 권수(현재 진도)를 넣고, 레슨·음악회를 골라 주세요. 함께 오는 보호자·가족은 각 아이 카드 아래 「가족 추가」에서 넣어요.':'이름·악기·담당 교사와 학생 출생연도는 명단에서 가져왔어요. 모든 참가자의 출생연도와 성별을 확인하고, 진도·레슨·음악회를 선택해 주세요.'}</p>
   ${missingVideo().length?`<div class="note">음원 주소는 https로 시작해야 해요 (비워 두고 나중에 넣어도 돼요): ${missingVideo().map(p=>esc(p.name)).join(', ')}</div>`:''}
   ${missingProg().length?`<div class="note">권수(현재 진도)를 선택해 주세요: ${missingProg().map(p=>esc(p.name)).join(', ')}</div>`:''}

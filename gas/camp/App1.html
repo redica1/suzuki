@@ -159,6 +159,11 @@ const audOn=con=>CAMP.aud?!!(CAMP.aud[con]||{}).on:con==='이브닝';
 const videoOk=i=>!String(i.video||'').trim()||/^https?:\S{6,}$/i.test(String(i.video||'').trim());
 function missingVideo(){ return people().filter(p=>p.kind==='student'&&PLAYS.has(info(p).type)&&!videoOk(info(p))) }
 function missingProg(){ return people().filter(p=>p.kind==='student'&&PLAYS.has(info(p).type)&&!info(p).prog) }
+/* 음악회를 신청하면 곡 필수 (11-14): 목록 곡 또는 「목록에 없는 곡」이면 곡명 */
+function songOk(i){return !i.concert||i.concert==='없음'||(i.other?!!String(i.ot||'').trim():!!i.song)}
+/* 출생연도 옆 「캠프 때 n세」 · 학생이 너무 어리거나 많으면 확인 부탁 (대충 넣은 연도 잡기) */
+function ageHint(p,v){if(!okYear(v))return '';const a=age(+v),odd=p&&p.kind==='student'&&(a<3||a>25);return odd?`<span style="color:var(--bad);font-weight:700">캠프 때 ${a}세 · 출생연도가 맞는지 확인해 주세요</span>`:`캠프 때 ${a}세`}
+function missingSong(){ return people().filter(p=>p.kind==='student'&&PLAYS.has(info(p).type)&&!songOk(info(p))) }
 function missingPref(){ return people().filter(p=>p.kind!=='family'&&PLAYS.has(info(p).type)&&+info(p).lessons>0&&(PROF[p.inst]||[]).length&&!info(p).p1) }
 function missingTeacher(){ return isGuest()?[]:people().filter(p=>p.kind==='student'&&!info(p).teacher) }
 function teams(){ // 가족방 팀: 대표(학생·교사) + 그 가족 + 같은 방으로 묶은 형제와 그 가족

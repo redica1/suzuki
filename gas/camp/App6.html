@@ -61,7 +61,7 @@ function render(){fillBanks();hdSync();
 /* 「다음」을 막는 조건: 그 단계에서 보이는 것만 (2단계는 사람이 1명 이상이면 통과, 가족 이름·가족방 인원은 3단계에서) */
 function blocked(){const t=totals();
   return (S.step===1&&!(S.user&&S.acad))||(S.step===2&&(t.n===0||t.n>CAMP.perSubmitMax))
-    ||(S.step===3&&(missingTeacher().length>0||missingBasic().length>0||missingProg().length>0||missingVideo().length>0||missingPref().length>0||S.fam.some(f=>!f.name.trim())||t.teams.some(x=>x.over)))
+    ||(S.step===3&&(missingTeacher().length>0||missingBasic().length>0||missingProg().length>0||missingVideo().length>0||missingPref().length>0||missingSong().length>0||S.fam.some(f=>!f.name.trim())||t.teams.some(x=>x.over)))
     ||(S.step===4&&S.ens.on&&!(S.ens.group||'').trim())||(S.step===4&&S.ens.member&&!S.ens.joinNo&&!(S.ens.joinRep||'').trim())||(S.step===5&&!S.agree)}
 function toast(m,force){if(S.saving&&!force){S.savedMsg=m;return}const el=document.getElementById('toast');el.textContent=m;el.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>el.hidden=true,2200)}
 function go(n){if(isGuest()&&n===4)n=S.step>4?3:5;S.step=n;render();window.scrollTo({top:0})}
@@ -80,6 +80,7 @@ function missWhat(){const t=totals(),L=[],el=[],Q=x=>{const e=typeof x==='string
       if(!i.gender){m.push('성별');const g=document.querySelector(`[data-gender^="${p.key}|"]`);if(g)Q(g.parentElement)}
       if(p.kind==='student'&&PLAYS.has(i.type)&&!i.prog){m.push('권수');Q('#pg_'+p.key)}
       if(p.kind==='student'&&PLAYS.has(i.type)&&!videoOk(i)){m.push('음원 주소 (https로 시작)');Q('#vd_'+p.key)}
+      if(missingSong().some(x=>x.key===p.key)){m.push('연주곡');Q(i.other?'#ot_'+p.key:'#sg_'+p.key)}
       if(missingPref().some(x=>x.key===p.key)){m.push('선호 교수 1');Q('#p1_'+p.key)}
       if(m.length)L.push(`${p.name}: ${m.join('·')}`)});
     S.fam.filter(f=>!f.name.trim()).forEach(f=>{L.push(`${FAM_SHORT[f.type]||'가족'} 이름`);Q('#fn_'+f.id)});

@@ -1,4 +1,4 @@
-/* build: 20261115-013644 */
+/* build: 20261115-014436 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -705,7 +705,8 @@ const PARENT_SH = '학부모 신청', PARENT_HEAD = ['신청ID', '학원', '보�
 function parentSheet_() { const ss = SpreadsheetApp.getActive(); let sh = ss.getSheetByName(PARENT_SH); if (!sh) { sh = ss.insertSheet(PARENT_SH); sh.getRange(1, 1, 1, PARENT_HEAD.length).setValues([PARENT_HEAD]).setFontWeight('bold'); sh.setFrozenRows(1); sh.getRange('A:M').setNumberFormat('@'); }
   else if (sh.getLastColumn() < PARENT_HEAD.length) { sh.getRange(1, 1, 1, PARENT_HEAD.length).setValues([PARENT_HEAD]).setFontWeight('bold'); }   /* 예전 시트에 비번 · 돈 칸 더하기 */
   return sh; }
-function parentRows_() { return rows_(PARENT_SH).filter(r => r['신청ID']).map(r => { let d = {}; try { d = JSON.parse(String(r['내용'] || '{}')); } catch (e) {} let m = {}; try { m = JSON.parse(String(r['돈'] || '{}')) || {}; } catch (e) {} return { m, email: String(r['이메일'] || ''), pin: String(r['비번'] || ''), id: String(r['신청ID']), acad: String(r['학원']), name: String(r['보호자']), phone: String(r['휴대전화']).replace(/\D/g, ''), d, at0: String(r['처음']), at: String(r['마지막']), st: String(r['상태'] || '보냄'), by: String(r['담은 선생님'] || ''), byAt: String(r['담은 때'] || ''), _row: r._row }; }); }
+const pdt_ = v => v instanceof Date ? Utilities.formatDate(v, TZ, 'yyyy-MM-dd HH:mm:ss') : String(v || '');   /* 시트가 날짜로 바꾼 칸도 「2026-11-15 01:36:22」로 (11-15: 「ov 15 2026」 이 보이던 것) */
+function parentRows_() { return rows_(PARENT_SH).filter(r => r['신청ID']).map(r => { let d = {}; try { d = JSON.parse(String(r['내용'] || '{}')); } catch (e) {} let m = {}; try { m = JSON.parse(String(r['돈'] || '{}')) || {}; } catch (e) {} return { m, email: String(r['이메일'] || ''), pin: String(r['비번'] || ''), id: String(r['신청ID']), acad: String(r['학원']), name: String(r['보호자']), phone: String(r['휴대전화']).replace(/\D/g, ''), d, at0: pdt_(r['처음']), at: pdt_(r['마지막']), st: String(r['상태'] || '보냄'), by: String(r['담은 선생님'] || ''), byAt: pdt_(r['담은 때']), _row: r._row }; }); }
 function parentAcads_() {
   const open = acadOpen_(), set = {};
   rows_(SH.S).forEach(r => { const a = String(r['학원'] || '').trim(); if (a) set[a] = 1; });

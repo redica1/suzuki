@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261115-013644 -->
+<!-- build: 20261115-014436 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -401,7 +401,7 @@ function svPw(k){var s=svGet(k);return s&&s.pw?s.pw:''}
 function vLogin(){const m=S.lmode||'sup';return `<div class="panel login"><h2 style="font-family:var(--display);font-size:21px;margin:0 0 10px">관리자 로그인</h2>
   <div class="row lmode" role="tablist" style="gap:6px;margin-bottom:10px"><button class="btn small ${m==='sup'?'primary':''}" type="button" data-lmode="sup" aria-pressed="${m==='sup'}">총관리자</button><button class="btn small ${m==='stf'?'primary':''}" type="button" data-lmode="stf" aria-pressed="${m==='stf'}">담당 선생님</button></div>
   ${m==='sup'?`<label>아이디<input type="text" id="lid" autocomplete="username" value="${esc(svId('ca','admin'))}"></label>
-  <label>비밀번호<input type="password" id="lpw" autocomplete="current-password" value="${esc(svPw('ca'))}"></label>${svBox('ca')}`:!S.lalt?`<label>이메일<input type="email" id="lem" autocomplete="username" inputmode="email" placeholder="회원관리 선생님 회원 이메일" value="${esc(svId('cs'))}"></label>
+  <label>비밀번호<input type="password" id="lpw" autocomplete="current-password" value="${esc(svPw('ca'))}"></label>${svBox('ca')}`:!S.lalt?`<label>이메일<input type="email" id="lem" data-esplit autocomplete="username" inputmode="email" placeholder="회원관리 선생님 회원 이메일" value="${esc(svId('cs'))}"></label>
   <label>비밀번호<input type="password" id="lpw2" autocomplete="current-password" value="${esc(svPw('cs'))}"></label>${svBox('cs')}
   <button class="btn ghost small" type="button" id="lalt">회원 가입 전이에요 · 이름과 휴대전화로</button>`:`<label>이름<input type="text" id="lnm" autocomplete="name" placeholder="회원 명단의 이름"></label>
   <label>휴대전화<input type="tel" id="lph" inputmode="tel" autocomplete="tel" placeholder="010-0000-0000"></label>
@@ -437,7 +437,7 @@ function vIntlAdm(){const G=S.IG;if(!G){if(!S.igL){S.igL=1;call('intlAdmin',[{}]
     <label>단체 이름 *<input type="text" id="ig_name" value="${esc(F.name||'')}" placeholder="Philippines Suzuki" style="width:180px"></label>
     <label>나라<input type="text" id="ig_country" value="${esc(F.country||'')}" placeholder="Philippines" style="width:130px"></label>
     <label>대표 이름<input type="text" id="ig_lead" value="${esc(F.lead||'')}" style="width:150px"></label>
-    <label>대표 이메일 *<input type="email" id="ig_email" value="${esc(F.email||'')}" style="width:200px"></label>
+    <label>대표 이메일 *<input type="email" id="ig_email" data-esplit value="${esc(F.email||'')}" style="width:200px"></label>
     <button class="btn primary small" type="button" id="igAdd">단체 만들기</button></div>
   <p class="hint" style="margin-top:8px">대표가 송금을 신고하면 위 표에 보여요. 돈이 들어오면 아래 그 단체 접수에서 사람들을 체크해 같은 입금일로 한꺼번에 입금 확인해 주세요(환율 · 수수료 차이는 메모에).</p></div>`}
 document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('button');if(!b)return;const d=b.dataset;
@@ -4473,7 +4473,7 @@ document.addEventListener('click',e=>{if(S.tab!=='book')return;const b=e.target.
   if(b.id==='ebSetSave'){const n=Object.assign(ebSet(),S.ebSetW||{});n.per=Math.max(1,Math.min(10,Math.round(+n.per||5)));n.fs=Math.max(5,Math.min(10,+n.fs||6.6));['en','sub','org'].forEach(k=>n[k]=String(n[k]||'').trim().slice(0,120));
     ebSend([],[],n,()=>{S.ebSetW=null;toast('책자 설정을 저장했어요')});return}},true);
 </script>
-<div id="bldMark" hidden>빌드표시 20261115-013644 </div>
+<div id="bldMark" hidden>빌드표시 20261115-014436 </div>
 <script>
 /* 관리자 상담 (11-15): 관리자 매뉴얼 글에서만 찾아 답함 (AI 아님 · 없는 답은 지어내지 않음). 장마다 t 제목 · q 찾는 말 · k 바로 갈 메뉴 · h 본문 */
 const AGD={

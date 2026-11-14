@@ -1,4 +1,4 @@
-/* build: 20261115-013644 */
+/* build: 20261115-014436 */
 /* 공통 화면 라이브러리 — 원본은 gas/common/UiLib.html 하나. 고칠 때는 원본만 고치고 python3 -I gas/common/sync.py 로 각 앱 폴더에 복사
  * 캠프 · 회원관리 화면이 같이 씀. 페이지에서 먼저 var UI_KEY='camp' 처럼 저장 이름 앞글자를 정함
  * 4) 프로그램표 UI.grid · 칸 팝업 UI.gridDet  5) 이름 · 비밀번호 기억하기 svBox · svSet · svId · svPw
@@ -57,6 +57,22 @@ new MutationObserver(()=>{clearTimeout(tblEnhance.t);tblEnhance.t=setTimeout(tbl
 /* 프로그램표(.ttg) 칸 너비: 엑셀처럼 장소 칸 오른쪽 끝을 끌어서 (높이 끌기는 뺌). 두 번 누르면 원래대로. 이 브라우저에 기억
  * 만드는 쪽: <div class="ttg" data-r="줄 수"> 안에 <div class="ttgh" data-col="장소 이름"> 머리 칸, <div class="ttgt"> 시간 칸(30분 = 3줄)
  * 너비 · 높이는 UI.gridW(이름) · UI.gridH() 로 읽어서 grid-template 을 만들면 됨 */
+
+/* 이메일 칸 나누기 (11-15 사용자: 모든 신청서 이메일 = 아이디 @ 주소 고르기 · 직접 입력). <input data-esplit> 를 그대로 두고(숨김) 옆에 칸을 만들어 값을 맞춰 줌 → 원래 코드는 .value 를 그대로 읽으면 됨 */
+const UI_DOMAINS=['naver.com','gmail.com','daum.net','hanmail.net','kakao.com','nate.com','icloud.com','hotmail.com'];
+function uiEsplit(el){if(el.dataset.esdone)return;el.dataset.esdone='1';const D=UI_DOMAINS,w=document.createElement('span');w.className='esplit';
+  w.style.cssText='display:flex;flex-wrap:wrap;gap:6px;align-items:center;width:100%';
+  w.innerHTML='<input type="text" class="esU" placeholder="아이디" autocomplete="username" autocapitalize="off" spellcheck="false" aria-label="이메일 아이디" style="flex:1 1 40%;min-width:90px;width:auto"><span style="color:inherit;opacity:.6">@</span><select class="esD" aria-label="이메일 주소" style="flex:1 1 40%;min-width:110px;width:auto"><option value="-">선택하기</option>'+D.map(x=>'<option>'+x+'</option>').join('')+'<option value="">직접 입력</option></select><input type="text" class="esX" placeholder="예: school.ac.kr" autocapitalize="off" spellcheck="false" aria-label="이메일 주소 직접 입력" hidden style="flex:1 1 100%;width:auto">';
+  el.after(w);el.hidden=true;el.style.display='none';const U=w.querySelector('.esU'),S=w.querySelector('.esD'),X=w.querySelector('.esX');
+  const proto=Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value');
+  const show=v=>{v=String(v||'');const at=v.indexOf('@'),u=at>=0?v.slice(0,at):v,d=at>=0?v.slice(at+1):'',k=D.includes(d);U.value=u;S.value=!d?'-':k?d:'';X.value=k?'':d;X.hidden=!(d&&!k)&&S.value!==''};
+  const pull=()=>{const u=U.value.trim(),dv=S.value,d=dv==='-'?'':(dv||X.value.trim());const v=u.includes('@')?u:(u&&d?u+'@'+d.replace(/^@/,''):u);proto.set.call(el,v.toLowerCase());el.dispatchEvent(new Event('input',{bubbles:true}))};
+  Object.defineProperty(el,'value',{configurable:true,get(){return proto.get.call(el)},set(v){proto.set.call(el,v);show(v)}});
+  show(proto.get.call(el));U.addEventListener('input',pull);X.addEventListener('input',pull);S.addEventListener('change',()=>{X.hidden=S.value!=='';if(S.value==='')X.focus();pull()});
+  U.addEventListener('keydown',e=>{if(e.key==='Enter'){pull();el.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}))}})}
+function uiEsplitAll(){document.querySelectorAll('input[data-esplit]:not([data-esdone])').forEach(uiEsplit)}
+new MutationObserver(()=>{clearTimeout(uiEsplitAll.t);uiEsplitAll.t=setTimeout(uiEsplitAll,20)}).observe(document.documentElement,{childList:true,subtree:true});
+try{uiEsplitAll()}catch(e){}
 const GRID_KEY=(window.UI_KEY||'ui')+'Grid';
 const UI=window.UI||(window.UI={});
 UI.gridGet=()=>{try{return JSON.parse(localStorage.getItem(GRID_KEY)||'{}')||{}}catch(e){return {}}};

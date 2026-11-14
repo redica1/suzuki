@@ -1,4 +1,4 @@
-<!doctype html><!-- build: 20261115-013644 --><html lang="ko"><head><meta charset="utf-8"><link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"><meta name="viewport" content="width=device-width,initial-scale=1">
+<!doctype html><!-- build: 20261115-014436 --><html lang="ko"><head><meta charset="utf-8"><link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
 <style>
 /* 학부모 신청 (11-15): 학원 다니는 학생의 보호자가 회원가입 없이 「간다 / 안 간다」와 같이 가는 가족 이름만 학원 선생님께 보냄 */
@@ -46,6 +46,7 @@ details .b{white-space:pre-wrap;color:var(--muted);margin-top:6px}
 .pt{width:100%;border-collapse:collapse;font-size:15px}.pt td{padding:8px 6px;border-bottom:1px solid var(--line);vertical-align:top}.pt td.r{text-align:right;font-variant-numeric:tabular-nums}.pt tr.cur td{background:var(--soft)}
 .bank{display:flex;gap:10px;align-items:center;justify-content:space-between;border:1.5px solid var(--accent);border-radius:12px;padding:12px 14px;background:var(--soft)}.pill.ok{background:var(--oksoft);color:var(--ok)}.pill.bad{background:#f8e4e2;color:var(--bad)}.cp{margin-top:4px;min-height:30px}
 .ph{display:flex;align-items:center;gap:8px}.ph .pre{font-weight:700;font-size:17px;white-space:nowrap}.ph input{flex:1}.card.who{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 16px}.mine .pt td:first-child{color:var(--muted);width:40%}
+.esplit select{font:inherit;font-size:16px;border:1.5px solid var(--line);border-radius:10px;padding:9px 10px;min-height:46px;background:var(--surface);color:inherit}
 .ck{display:flex;gap:10px;align-items:flex-start;font-weight:700}.ck input{width:22px;height:22px;flex:none;margin-top:2px}
 @media (prefers-color-scheme:dark){:root{--ink:#e4f2f1;--muted:#9fbcba;--faint:#6f8c8a;--line:#24403e;--bg:#0c1918;--surface:#132423;--accent:#2fb3ae;--soft:#163634;--warn:#3a3218;--oksoft:#173326}}
 </style></head><body>
@@ -63,6 +64,7 @@ function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return
 function toast(m){var t=document.getElementById('toast');t.textContent=m;t.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(function(){t.hidden=true},2800)}
 function busy(on){document.getElementById('busy').hidden=!on}
 function run(fn,args,ok){busy(true);google.script.run.withSuccessHandler(function(r){busy(false);if(r&&r.ok===false){S.err=r.msg||'';render();toast(r.msg||'다시 해 주세요');return}ok(r)}).withFailureHandler(function(e){busy(false);var m=(e&&e.message)||String(e);S.err=m;render();toast(m)})[fn].apply(null,args)}
+function fdt(v){var m=String(v||'').match(/^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2}))?/);return m?m[1]+'년 '+(+m[2])+'월 '+(+m[3])+'일'+(m[4]?' '+m[4]+':'+m[5]:''):String(v||'')}
 function md(d){d=String(d||'');return /^\d{4}-\d{2}-\d{2}/.test(d)?(+d.slice(5,7))+'월 '+(+d.slice(8,10))+'일':''}
 function refundText(R){if(!R||!R.rules)return '';var p=null,L=R.rules.map(function(r){var w=p?'~'+md(r.until):md(r.until)+'까지';p=r.until;var a=+r.rate||0,b=r.drate!=null&&r.drate!==''?+r.drate:a;return '- '+w+': 참가비 '+a+'% 환불'+(b!==a?' (전염병 · 팔/손 골절 진단서 제출 시 '+b+'%)':'')});
   var A=R.after||{};if(p)L.push('- 그 뒤: '+(A.allow===false?'취소 불가':(+A.rate||0)+'% 환불'+((A.drate!=null&&A.drate!==''&&+A.drate!==+A.rate)?' (진단서 제출 시 '+A.drate+'%)':'')));return '취소하는 날에 따라 환불해요.\n'+L.join('\n')}
@@ -71,7 +73,7 @@ function seg(attr,i,val,opts,sm){return '<div class="seg'+(sm?' sm':'')+'" role=
 function stNote(){var r=S.req;if(!r)return '';var sub=r.sub,reps=((r.m||{}).reps||[]).filter(function(x){return x.st!=='반려'}),paid=reps.reduce(function(t,x){return t+x.amt},0);
   if(sub){var ex=sub.ppl.reduce(function(t,p){return t+p.lesson},0),due=sub.total-paid;return '<p class="note '+(due>0?'warn':'ok')+'"><b>학원이 접수했어요 (접수번호 '+esc(sub.no)+').</b> 확정 금액 <b>'+won(sub.total)+'</b>'+(ex?' (추가레슨 · 마스터클래스 '+won(ex)+' 포함)':'')+(due>0?' · <b>더 보낼 금액 '+won(due)+'</b> — 아래 「입금 · 입금 신고」에서 보내고 신고해 주세요.':due<0?' · 더 낸 금액 '+won(-due):' · 다 냈어요.')+'</p>'}
   if(r.st==='담음')return '<p class="note ok"><b>학원 선생님이 접수에 담았어요.</b> 바꿀 게 있으면 고쳐서 다시 보내 주세요. 선생님께 「바뀜」으로 알려져요.</p>';
-  return '<p class="note ok"><b>학원 선생님께 보냈어요</b> ('+esc(String(r.at).slice(5,16))+'). 고칠 게 있으면 고쳐서 다시 보내면 돼요.</p>'}
+  return '<p class="note ok"><b>학원 선생님께 보냈어요</b> ('+esc(fdt(r.at))+'). 고칠 게 있으면 고쳐서 다시 보내면 돼요.</p>'}
 function vForm(){var I=S.I,d=S.d;if(!I.open)return '<div class="card"><h2>지금은 신청을 받지 않아요</h2><p class="hint">다니는 학원 선생님께 여쭤 주세요.</p></div>';
   var kids=d.kids.map(function(k,i){return '<div class="kid"><div class="top"><span class="pill">학생 '+(i+1)+'</span>'+(d.kids.length>1?'<span style="flex:1"></span><button class="x" type="button" data-kdel="'+i+'">빼기</button>':'')+'</div>'+
     '<input type="text" data-k="'+i+'|name" value="'+esc(k.name)+'" maxlength="20" placeholder="학생 이름 (꼭)" aria-label="학생 이름">'+
@@ -87,7 +89,7 @@ function vForm(){var I=S.I,d=S.d;if(!I.open)return '<div class="card"><h2>지금
   '<div class="card"><h3><span class="no">4</span>같이 가는 가족</h3>'+
     '<div class="row" style="margin-bottom:10px"><span style="font-weight:700;font-size:15px">보호자(나)도</span>'+seg('data-mego',0,d.me.go?'y':'n',[['y','같이 가요'],['n','안 가요']])+'</div>'+
     (fam||'')+'<div class="row"><button class="btn small" type="button" data-fadd="동반가족">＋ 동반가족 (악기 안 함)</button><button class="btn small" type="button" data-fadd="15개월 미만">＋ 15개월 미만 아기</button></div><p class="hint" style="margin-bottom:0">이름만 넣어도 돼요. 성별 · 출생연도는 선택이에요.</p></div>'+
-  '<div class="card"><h3>방 · 한마디 <span class="opt">선택</span></h3><label class="ck"><input type="checkbox" id="rfam" '+(d.room.fam?'checked':'')+'><span>가족방을 원해요 <span class="opt">가족끼리 한 방 · '+(I.roomCap||4)+'명 기준이고 빈 자리는 추가 비용이 있어요</span></span></label>'+
+  '<div class="card"><h3>방 · 한마디 <span class="opt">선택</span></h3><label class="ck"><input type="checkbox" id="rfam" '+(d.room.fam?'checked':'')+'><span>가족방을 원해요 <span id="rfamp">'+famTxt()+'</span></span></label>'+
     '<label class="f" style="margin-top:12px">방 요청 사항<textarea id="rnote" maxlength="300" placeholder="예) ○○학원 친구와 같은 층으로 · 침대방 꼭">'+esc(d.room.note)+'</textarea></label>'+
     '<label class="f" style="margin:0">선생님께 한마디<textarea id="memo" maxlength="300" placeholder="예) 둘째는 아직 고민 중이에요">'+esc(d.memo)+'</textarea></label></div>'+
   vPrice()+vMoney()+
@@ -97,13 +99,25 @@ function vForm(){var I=S.I,d=S.d;if(!I.open)return '<div class="card"><h2>지금
   (S.err?'<p class="err">'+esc(S.err)+'</p>':'')}
 function won(n){return (+n||0).toLocaleString('ko-KR')+'원'}
 /* 예상 참가비: 지금 넣은 사람으로 차수마다 합계. 회비 · 추가레슨 · 마스터클래스는 따로 · 실제 금액은 학원이 접수하고 협회가 확인한 입금일 차수로 정해짐 */
+/* 취소하는 날별 환불 금액 (11-15 사용자: 시간별 환불 금액을 계산해서) — 환불 규정 × 낸 돈(회비는 규정에 따라 뺌) */
+function refundTbl(base,dues,paid){var R=S.I.refund;if(!R||!R.rules||!R.rules.length||!base)return '';var td=today(),p=null,cur=-1,L=[];
+  R.rules.forEach(function(r){L.push({w:(p?md(nextDay(p))+' ~ ':'~ ')+md(r.until),a:+r.rate||0,b:r.drate!=null&&r.drate!==''?+r.drate:null,on:false,till:r.until});p=r.until});
+  var A=R.after||{};L.push({w:md(nextDay(p))+' 부터',a:A.allow===false?null:+A.rate||0,b:A.allow===false?null:(A.drate!=null&&A.drate!==''?+A.drate:null)});
+  for(var i=0;i<L.length;i++){if(i===L.length-1||td<=L[i].till){L[i].on=true;cur=i;break}}
+  var keep=R.duesRefund?0:(+dues||0),fee=Math.max(0,base-keep),amt=function(x){return x==null?'취소 불가':won(Math.round(fee*x/100))};
+  var c=L[cur]||{},any=L.some(function(x){return x.b!=null&&x.b!==x.a});
+  return '<p class="note" style="margin:0 0 8px"><b>오늘('+md(td)+') 취소하면 '+(c.a==null?'취소할 수 없어요':'환불 '+amt(c.a))+'</b>'+(c.a!=null&&c.b!=null&&c.b!==c.a?' · 진단서를 내면 '+amt(c.b):'')+'</p>'+
+    '<table class="pt"><tbody><tr><td><small class="opt">취소하는 날</small></td><td class="r"><small class="opt">환불</small></td>'+(any?'<td class="r"><small class="opt">진단서 제출 시</small></td>':'')+'</tr>'+
+    L.map(function(x){return '<tr'+(x.on?' class="cur"':'')+'><td>'+esc(x.w)+(x.on?' <span class="pill">오늘</span>':'')+'<br><small class="opt">'+(x.a==null?'':x.a+'%')+'</small></td><td class="r"><b>'+amt(x.a)+'</b></td>'+(any?'<td class="r">'+(x.b!=null&&x.b!==x.a?amt(x.b)+'<br><small class="opt">'+x.b+'%</small>':'<span class="opt">-</span>')+'</td>':'')+'</tr>'}).join('')+'</tbody></table>'+
+    '<p class="hint" style="margin:6px 0 0">'+(paid?'낸 돈 '+won(base):'지금 예상 금액 '+won(base)+'을 냈을 때')+' 기준'+(keep?' · 회비 '+won(keep)+'은 환불하지 않아요':'')+'. 학원이 확인한 뒤 학원 통장에서 돌려줘요.</p>'}
+function nextDay(d){var t=new Date(String(d).slice(0,10)+'T00:00:00');t.setDate(t.getDate()+1);var z=function(n){return (n<10?'0':'')+n};return t.getFullYear()+'-'+z(t.getMonth()+1)+'-'+z(t.getDate())}
 function curTotal(){var P=S.I.price;if(!P)return 0;var d=S.d,F=P.fees,i=P.ri;var nk=d.kids.filter(function(k){return k.name.trim()}).length,ng=d.me.go?1:0,nf=d.fam.filter(function(f){return f.type==='동반가족'}).length,nb=d.fam.filter(function(f){return f.type==='15개월 미만'}).length;
   var ppl=nk+ng+nf+nb,cap=S.I.roomCap||4,room=d.room.fam?Math.max(0,cap-ppl)*(P.empty||0):0;return nk*(+(F['학생']||[])[i]||0)+ng*(+(F['회원의 첫번째 보호자']||[])[i]||0)+nf*(+(F['회원의 그외 악기 안하는 동반가족']||[])[i]||0)+nb*(+(F['동반가족 중 15개월 미만']||[])[i]||0)+room}
 /* 입금 · 취소 (11-15): 보낸 뒤에만. 학원 통장 · 복사 · 입금 신고 · 신고 목록 · 취소/환불 요청 */
 var RST={'신고':['확인 중',''],'확인':['학원이 확인','ok'],'반려':['반려','bad']};
 function today(){var d=new Date(),z=function(n){return (n<10?'0':'')+n};return d.getFullYear()+'-'+z(d.getMonth()+1)+'-'+z(d.getDate())}
 function vMoney(){var r=S.req;if(!r||!r.id)return '';var m=r.m||{},b=r.bank,reps=m.reps||[],cx=m.cx,P=S.I.price||{};
-  if(cx&&cx.st==='취소')return '<div class="card"><h3>취소했어요</h3><p class="hint" style="margin:0">'+esc(cx.at.slice(5,16))+' · '+esc(cx.why)+(cx.amt?' · 환불 '+won(cx.amt):'')+(cx.note?' · '+esc(cx.note):'')+'</p><p class="hint">다시 참가하려면 위 내용을 고쳐 다시 보내 주세요.</p></div>';
+  if(cx&&cx.st==='취소')return '<div class="card"><h3>취소했어요</h3><p class="hint" style="margin:0">'+esc(fdt(cx.at))+' · '+esc(cx.why)+(cx.amt?' · 환불 '+won(cx.amt):'')+(cx.note?' · '+esc(cx.note):'')+'</p><p class="hint">다시 참가하려면 위 내용을 고쳐 다시 보내 주세요.</p></div>';
   var bank=b?'<div class="bank"><div><b>'+esc(b.bank)+' '+esc(b.acct)+'</b><br><span class="opt">예금주 '+esc(b.holder)+'</span></div><button class="btn small" type="button" data-copy="'+esc(b.bank+' '+b.acct)+'">계좌 복사</button></div>':'<p class="note warn">학원이 아직 입금받을 통장을 넣지 않았어요. 학원 선생님께 여쭤 주세요.</p>';
   var sub=r.sub,cur=sub?sub.total:curTotal(),okSum=reps.filter(function(x){return x.st==='확인'}).reduce(function(t,x){return t+x.amt},0),repSum=reps.filter(function(x){return x.st!=='반려'}).reduce(function(t,x){return t+x.amt},0);
   var subv=sub?'<div class="card"><h3>학원이 접수했어요 <span class="opt">접수번호 '+esc(sub.no)+'</span></h3><p class="hint" style="margin-top:0">추가 개인레슨 · 마스터클래스는 학원 선생님이 넣어요. 넣으면 여기 금액에 더해져요.</p><table class="pt"><tbody>'+
@@ -111,24 +125,32 @@ function vMoney(){var r=S.req;if(!r||!r.id)return '';var m=r.m||{},b=r.bank,reps
       return '<tr><td>'+esc(p.name)+' <small class="opt">'+esc(p.type)+'</small>'+(ex.length?'<br><small class="opt">+ '+esc(ex.join(' · '))+'</small>':'')+'</td><td class="r">'+won(p.fee+p.lesson+p.dues+p.room)+'</td></tr>'}).join('')+
     '<tr class="cur"><td><b>합계</b></td><td class="r"><b>'+won(sub.total)+'</b></td></tr></tbody></table>'+
     (repSum?'<p class="hint">학원에 신고한 금액 '+won(repSum)+(okSum!==repSum?' (확인 '+won(okSum)+')':'')+(sub.total-repSum>0?' · <b style="color:var(--bad)">더 낼 금액 '+won(sub.total-repSum)+'</b>':sub.total-repSum<0?' · 더 낸 금액 '+won(repSum-sub.total):' · 다 냈어요')+'</p>':'')+'</div>':'';
-  var list=reps.length?'<table class="pt" style="margin-top:8px"><tbody>'+reps.map(function(x){var s=RST[x.st]||RST['신고'];return '<tr><td>'+esc(x.date.slice(5).replace('-','/'))+' · '+esc(x.nm)+'<br><small class="opt">'+esc(x.at.slice(5,16))+' 신고'+(x.why?' · '+esc(x.why):'')+'</small></td><td class="r">'+won(x.amt)+'<br><span class="pill '+s[1]+'">'+s[0]+'</span></td></tr>'}).join('')+'</tbody></table>':'';
+  var list=reps.length?'<table class="pt" style="margin-top:8px"><tbody>'+reps.map(function(x){var s=RST[x.st]||RST['신고'];return '<tr><td>'+esc(fdt(x.date))+' · '+esc(x.nm)+'<br><small class="opt">'+esc(fdt(x.at))+' 신고'+(x.why?' · '+esc(x.why):'')+'</small></td><td class="r">'+won(x.amt)+'<br><span class="pill '+s[1]+'">'+s[0]+'</span></td></tr>'}).join('')+'</tbody></table>':'';
   var pay='<div class="card"><h3>입금 · 입금 신고</h3><p class="hint" style="margin-top:0">참가비는 <b>학원 통장</b>으로 보내고, 보낸 뒤 아래에서 입금 신고를 해 주세요. 학원 선생님이 확인해요.</p>'+bank+
     '<div class="row" style="margin:10px 0"><span>'+(sub?'학원이 접수한 금액':'지금('+esc(((P.rounds||[])[P.ri]||{}).n||'')+') 예상 금액')+' <b>'+won(cur)+'</b>'+(sub&&repSum&&sub.total>repSum?' · 더 낼 금액 <b>'+won(sub.total-repSum)+'</b>':'')+'</span><button class="btn small ghost" type="button" data-copy="'+cur+'">금액 복사</button></div>'+
     '<div class="two"><label class="f">입금자명<input type="text" id="pyN" value="'+esc(S.nm)+'" maxlength="20"></label><label class="f">입금일<input type="date" id="pyD" value="'+today()+'"></label></div>'+
     '<label class="f" style="margin-top:10px">금액<input type="text" id="pyA" inputmode="numeric" value="'+(cur-repSum>0?(cur-repSum).toLocaleString('ko-KR'):'')+'"></label><button class="btn primary" type="button" id="paygo">입금 신고</button>'+list+'</div>';
   var paid=reps.some(function(x){return x.st!=='반려'});
-  var cxv=cx?'<p class="note '+(cx.st==='반려'?'warn':'')+'"><b>'+(cx.st==='요청'?'취소 · 환불 요청을 보냈어요':cx.st==='처리'?'학원이 처리했어요':'학원이 요청을 반려했어요')+'</b> ('+esc(cx.at.slice(5,16))+') · '+esc(cx.why)+(cx.amt?' · 환불 '+won(cx.amt):'')+(cx.note?' · '+esc(cx.note):'')+'</p>'+(cx.st==='요청'?'<button class="btn small ghost" type="button" id="cxundo">요청 거두기</button>':''):
-    S.cxOpen?'<label class="f">취소 사유<textarea id="cxW" maxlength="200" placeholder="예) 아이가 아파서 못 가요"></textarea></label>'+(paid?'<p class="hint" style="margin:0 0 8px">돈을 냈으면 환불 받을 계좌를 넣어 주세요. 환불 금액은 학원이 규정에 따라 정해요.</p><div class="two"><label class="f">은행<input type="text" id="cxB" maxlength="20"></label><label class="f">예금주<input type="text" id="cxH" maxlength="20" value="'+esc(S.nm)+'"></label></div><label class="f" style="margin-top:10px">계좌번호<input type="text" id="cxA" inputmode="numeric" maxlength="30"></label>':'')+
+  var cxv=cx?'<p class="note '+(cx.st==='반려'?'warn':'')+'"><b>'+(cx.st==='요청'?'취소 · 환불 요청을 보냈어요':cx.st==='처리'?'학원이 처리했어요':'학원이 요청을 반려했어요')+'</b> ('+esc(fdt(cx.at))+') · '+esc(cx.why)+(cx.amt?' · 환불 '+won(cx.amt):'')+(cx.note?' · '+esc(cx.note):'')+'</p>'+(cx.st==='요청'?'<button class="btn small ghost" type="button" id="cxundo">요청 거두기</button>':''):
+    S.cxOpen?'<label class="f">취소 사유<textarea id="cxW" maxlength="200" placeholder="예) 아이가 아파서 못 가요"></textarea></label>'+(paid?'<p class="hint" style="margin:0 0 8px"><b>환불 받을 계좌</b>를 넣어 주세요.</p><div class="two"><label class="f">은행<input type="text" id="cxB" maxlength="20"></label><label class="f">예금주<input type="text" id="cxH" maxlength="20" value="'+esc(S.nm)+'"></label></div><label class="f" style="margin-top:10px">계좌번호<input type="text" id="cxA" inputmode="numeric" maxlength="30"></label>':'')+
       '<div class="row"><button class="btn primary" type="button" id="cxgo">'+(paid||r.st!=='보냄'?'취소 · 환불 요청 보내기':'신청 취소하기')+'</button><button class="btn ghost" type="button" id="cxclose">닫기</button></div>':
     '<button class="btn small" type="button" id="cxopen">참가 취소 · 환불 요청</button>';
-  return subv+pay+'<div class="card"><h3>취소 · 환불</h3>'+cxv+'</div>'}
+  var dues=sub?sub.ppl.reduce(function(t,p){return t+p.dues},0):0,rt=(!cx||cx.st==='반려')?refundTbl(paid?repSum:cur,dues,paid):'';
+  var cxh=!cx&&!S.cxOpen?'<p class="hint" style="margin-top:0">'+(paid?'입금 신고를 했으니 취소하면 환불 받을 계좌를 넣어요.':'아직 입금 전이면 계좌 없이 바로 취소돼요.')+'</p>':'';
+  return subv+pay+'<div class="card"><h3>취소 · 환불</h3>'+cxh+rt+cxv+'</div>'}
+/* 가족방 값 (11-15 사용자: 인원 따라 정확한 가격) — 서버 계산과 같음: (정원 − 학생 · 보호자 · 가족 수) × 빈 자리 금액 */
+function famN(){var d=S.d;return d.kids.filter(function(k){return k.name.trim()}).length+(d.me.go?1:0)+d.fam.length}
+function famTxt(){var P=S.I.price||{},cap=S.I.roomCap||4,e=+P.empty||0,n=famN(),L=[];
+  for(var i=1;i<=cap;i++)L.push((i===n?'<b>':'')+i+'인 '+(i<cap?'+'+won((cap-i)*e):'추가 없음')+(i===n?'</b>':''));
+  var now=n>cap?'<b style="color:#b91c1c">지금 '+n+'명이라 한 방('+cap+'명)을 넘어요</b>':n?'<b>지금 '+n+'명 → 가족방 '+n+'인 사용 '+(n<cap?'+'+won((cap-n)*e):'추가 비용 없음')+'</b>':'';
+  return '<span class="opt" style="display:block">'+cap+'인 1실 기준 · 비는 자리 하나에 '+won(e)+'</span>'+(now?'<span style="display:block;font-size:14px">'+now+'</span>':'')+'<span class="opt" style="display:block">'+L.join(' · ')+'</span>'}
 function vPrice(){var P=S.I.price;if(!P||!P.rounds||!P.rounds.length)return '';var d=S.d,F=P.fees;
   var nk=d.kids.filter(function(k){return k.name.trim()}).length,ng=d.me.go?1:0,nf=d.fam.filter(function(f){return f.type==='동반가족'}).length,nb=d.fam.filter(function(f){return f.type==='15개월 미만'}).length;
   if(!nk)return '<div class="card"><h3>예상 참가비</h3><p class="hint" style="margin:0">학생을 넣으면 예상 참가비가 나와요.</p></div>';
   var L=[['학생',nk,'학생'],['첫 번째 보호자',ng,'회원의 첫번째 보호자'],['동반가족',nf,'회원의 그외 악기 안하는 동반가족'],['15개월 미만',nb,'동반가족 중 15개월 미만']].filter(function(x){return x[1]});
   var ppl=nk+ng+nf+nb,cap=S.I.roomCap||4,room=d.room.fam?Math.max(0,cap-ppl)*(P.empty||0):0;
   var rows=P.rounds.map(function(r,i){var t=L.reduce(function(s,x){return s+x[1]*(+(F[x[2]]||[])[i]||0)},0)+room;return '<tr'+(i===P.ri?' class="cur"':'')+'><td>'+esc(r.n)+(i===P.ri?' <span class="pill">지금</span>':'')+'<br><small class="opt">'+md(r.from)+' ~ '+md(r.to)+' 입금</small></td><td class="r"><b>'+won(t)+'</b><br><button class="btn small ghost cp" type="button" data-copy="'+t+'">금액 복사</button></td></tr>'}).join('');
-  return '<div class="card price"><h3>예상 참가비</h3><p class="hint" style="margin-top:0">'+L.map(function(x){return esc(x[0])+' '+x[1]+'명 ('+won((F[x[2]]||[])[P.ri])+')'}).join(' · ')+(room?' · 가족방 빈 자리 '+(cap-ppl)+'개 ('+won(room)+')':'')+'</p>'+
+  return '<div class="card price"><h3>예상 참가비</h3><p class="hint" style="margin-top:0">'+L.map(function(x){return esc(x[0])+' '+x[1]+'명 ('+won((F[x[2]]||[])[P.ri])+')'}).join(' · ')+(d.room.fam?' · 가족방 '+ppl+'인 사용 ('+(room?won(room):'추가 없음')+')':'')+'</p>'+
     '<table class="pt"><tbody>'+rows+'</tbody></table>'+
     '<ul class="hint" style="margin:8px 0 0;padding-left:18px"><li><b>입금한 날짜</b>로 차수가 정해져요. 학원에 내면 학원이 모아서 협회에 내요.</li><li>학생 회비를 아직 안 냈으면 학생마다 '+won(P.dues)+'이 더해져요.</li><li><b>추가 개인레슨(30분 '+won(P.lesson)+') · 마스터클래스는 학원 선생님이 넣어요.</b> 넣으면 비용이 더해져요.</li><li>학원이 접수하면 이 화면에 <b>확정 금액</b>이 나와요.</li></ul></div>'}
 function phoneTxt(){var p=String(S.ph||'');return p.length===11?p.replace(/(\d{3})(\d{4})(\d{4})/,'$1-$2-$3'):p}
@@ -137,7 +159,7 @@ function vStep1(){var I=S.I;if(!I.open)return '<div class="card"><h2>지금은 �
   return '<div class="card"><h3><span class="no">1</span>보호자 확인</h3><p class="hint" style="margin-top:0">입력하는 분이 첫 번째 보호자예요. 회원가입은 필요 없어요. 처음이면 비밀번호 4자리를 지금 정하고, 전에 보냈으면 그때 정한 번호를 넣어요.</p>'+
     '<label class="f">이름<input type="text" id="pn" value="'+esc(S.nm)+'" autocomplete="name" maxlength="20"></label>'+
     '<label class="f">휴대전화<span class="ph"><span class="pre">010 -</span><input type="tel" id="pp" value="'+esc(p8.replace(/(\d{4})(\d{1,4})/,'$1-$2'))+'" inputmode="numeric" autocomplete="tel-national" maxlength="9" placeholder="0000-0000" aria-label="휴대전화 010 뒤 8자리"></span></label>'+
-    '<label class="f">이메일 <span class="opt">신청 · 금액 · 입금 · 취소 소식을 메일로 보내 드려요</span><input type="email" id="pe" value="'+esc(S.em)+'" autocomplete="email" inputmode="email" maxlength="80"></label>'+
+    '<label class="f">이메일 <span class="opt">신청 · 금액 · 입금 · 취소 소식을 메일로 보내 드려요</span><input type="email" id="pe" data-esplit value="'+esc(S.em)+'" autocomplete="email" inputmode="email" maxlength="80"></label>'+
     '<label class="f">비밀번호 숫자 4자리<input type="password" id="pw" value="'+esc(S.pw)+'" inputmode="numeric" maxlength="4" autocomplete="off" style="max-width:160px;letter-spacing:.3em"></label>'+
     '<label class="ck" style="margin:4px 0 14px"><input type="checkbox" id="sv" '+(S.sv?'checked':'')+'><span>이 기기에 저장 <span class="opt">내 휴대폰이면 다음에 바로 들어와요 · 같이 쓰는 기기면 끄세요</span></span></label>'+
     (S.err?'<p class="err">'+esc(S.err)+'</p>':'')+'<button class="btn primary wide" type="button" id="go1">확인</button></div>'}
@@ -145,7 +167,7 @@ function mineCard(){var r=S.req;if(!r||!r.id)return '<p class="note">처음 신�
   var st=r.st==='취소'?'취소함':r.sub?'학원이 접수함 ('+r.sub.no+')':r.st==='담음'?'학원이 담는 중':'학원에 보냄';
   return '<div class="card mine"><h3>내 신청</h3><table class="pt"><tbody><tr><td>상태</td><td class="r"><b>'+esc(st)+'</b></td></tr><tr><td>학원</td><td class="r">'+esc(r.acad)+'</td></tr><tr><td>학생</td><td class="r">'+esc((d.kids||[]).map(function(k){return k.name}).join(', '))+'</td></tr><tr><td>같이 가는 가족</td><td class="r">'+esc([(d.me||{}).go===false?'':r.name].concat((d.fam||[]).map(function(f){return f.name})).filter(Boolean).join(', ')||'-')+'</td></tr>'+
     (r.sub?'<tr><td>확정 금액</td><td class="r"><b>'+won(r.sub.total)+'</b>'+(m.prevTotal!=null&&m.prevTotal!==r.sub.total?'<br><small class="opt">'+won(m.prevTotal)+'에서 바뀜</small>':'')+'</td></tr>':'')+
-    '<tr><td>마지막으로 보낸 때</td><td class="r">'+esc(String(r.at).slice(5,16))+'</td></tr></tbody></table><p class="hint" style="margin:8px 0 0">고칠 게 있으면 아래에서 고쳐 다시 보내요. 입금 · 취소는 아래 「입금 · 입금 신고」 · 「취소 · 환불」에서.</p></div>'}
+    '<tr><td>마지막으로 보낸 때</td><td class="r">'+esc(fdt(r.at))+'</td></tr></tbody></table><p class="hint" style="margin:8px 0 0">고칠 게 있으면 아래에서 고쳐 다시 보내요. 입금 · 취소는 아래 「입금 · 입금 신고」 · 「취소 · 환불」에서.</p></div>'}
 function saveLogin(){try{if(S.sv)localStorage.setItem('pqLogin',JSON.stringify({nm:S.nm,ph:S.ph,em:S.em,pw:S.pw}));else localStorage.removeItem('pqLogin')}catch(x){}}
 function go1(){S.nm=document.getElementById('pn').value.trim();var p8=document.getElementById('pp').value.replace(/\D/g,'');S.em=document.getElementById('pe').value.trim();S.pw=document.getElementById('pw').value.replace(/\D/g,'');S.sv=document.getElementById('sv').checked;
   if(S.nm.length<2){S.err='보호자 이름을 넣어 주세요.';render();return}if(p8.length!==8){S.err='휴대전화 010 뒤 8자리를 넣어 주세요.';render();return}S.ph='010'+p8;
@@ -159,7 +181,7 @@ function who(){var pa=document.getElementById('pa');if(pa)S.ac=pa.value.trim();
   if(!S.nm||!S.ph){return '처음 화면에서 보호자 정보를 넣어 주세요.'}if(!S.ac)return '다니는 학원을 골라 주세요.';if(S.I.acads.indexOf(S.ac)<0)return '학원을 목록에서 골라 주세요. 목록에 없으면 학원 선생님께 여쭤 주세요.';if(!/^\d{4}$/.test(S.pw))return '비밀번호 숫자 4자리를 넣어 주세요.';return ''}
 document.addEventListener('input',function(e){var t=e.target,d=S.d;if(t.id==='pp'){var v8=t.value.replace(/\D/g,'').slice(0,8);t.value=v8.length>4?v8.slice(0,4)+'-'+v8.slice(4):v8;return}if(!d)return;
   if(t.id==='pp'){var v8=t.value.replace(/\D/g,'').slice(0,8);t.value=v8.length>4?v8.slice(0,4)+'-'+v8.slice(4):v8;return}if(t.id==='pn'||t.id==='pe'||t.id==='pw')return;if(t.id==='pa'){S.ac=t.value;return}if(t.id==='pw'){S.pw=t.value.replace(/\D/g,'').slice(0,4);return}if(t.dataset&&t.dataset.m!==undefined)return;S.dirty=true;
-  if(t.dataset.k||t.dataset.f){setTimeout(function(){var c=document.querySelector('.card.price');if(c){var w=document.createElement('div');w.innerHTML=vPrice();if(w.firstChild)c.replaceWith(w.firstChild)}},0)}
+  if(t.dataset.k||t.dataset.f){setTimeout(function(){var c=document.querySelector('.card.price');if(c){var w=document.createElement('div');w.innerHTML=vPrice();if(w.firstChild)c.replaceWith(w.firstChild)}var fp=document.getElementById('rfamp');if(fp)fp.innerHTML=famTxt()},0)}
   if(t.dataset.k){var a=t.dataset.k.split('|'),kk=d.kids[+a[0]];kk[a[1]]=t.value;if(a[1]==='age'){kk.by='';var ys=document.getElementById('yr_'+a[0]);if(ys)ys.innerHTML=yrOpts(kk)}return}
   if(t.dataset.f){var b=t.dataset.f.split('|');d.fam[+b[0]][b[1]]=t.value;return}
   if(t.id==='rnote')d.room.note=t.value;if(t.id==='memo')d.memo=t.value});
@@ -190,6 +212,21 @@ document.addEventListener('click',function(e){var b=e.target.closest('button');i
     var c={};S.I.consent.forEach(function(x){c[x.id]=true});
     run('parentSubmit',[S.nm,S.ph,S.ac,c,d,S.pw,S.em],function(r){S.err='';setReq(r.req);render();window.scrollTo(0,0);toast('학원 선생님께 보냈어요')});return}});
 document.addEventListener('keydown',function(e){if(e.key==='Enter'&&S.step!==2&&e.target&&e.target.tagName==='INPUT'){e.preventDefault();go1()}});
+/* 이메일 아이디 @ 주소 고르기 (UiLib 과 같은 코드) */
+const UI_DOMAINS=['naver.com','gmail.com','daum.net','hanmail.net','kakao.com','nate.com','icloud.com','hotmail.com'];
+function uiEsplit(el){if(el.dataset.esdone)return;el.dataset.esdone='1';const D=UI_DOMAINS,w=document.createElement('span');w.className='esplit';
+  w.style.cssText='display:flex;flex-wrap:wrap;gap:6px;align-items:center;width:100%';
+  w.innerHTML='<input type="text" class="esU" placeholder="아이디" autocomplete="username" autocapitalize="off" spellcheck="false" aria-label="이메일 아이디" style="flex:1 1 40%;min-width:90px;width:auto"><span style="color:inherit;opacity:.6">@</span><select class="esD" aria-label="이메일 주소" style="flex:1 1 40%;min-width:110px;width:auto"><option value="-">선택하기</option>'+D.map(x=>'<option>'+x+'</option>').join('')+'<option value="">직접 입력</option></select><input type="text" class="esX" placeholder="예: school.ac.kr" autocapitalize="off" spellcheck="false" aria-label="이메일 주소 직접 입력" hidden style="flex:1 1 100%;width:auto">';
+  el.after(w);el.hidden=true;el.style.display='none';const U=w.querySelector('.esU'),S=w.querySelector('.esD'),X=w.querySelector('.esX');
+  const proto=Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value');
+  const show=v=>{v=String(v||'');const at=v.indexOf('@'),u=at>=0?v.slice(0,at):v,d=at>=0?v.slice(at+1):'',k=D.includes(d);U.value=u;S.value=!d?'-':k?d:'';X.value=k?'':d;X.hidden=!(d&&!k)&&S.value!==''};
+  const pull=()=>{const u=U.value.trim(),dv=S.value,d=dv==='-'?'':(dv||X.value.trim());const v=u.includes('@')?u:(u&&d?u+'@'+d.replace(/^@/,''):u);proto.set.call(el,v.toLowerCase());el.dispatchEvent(new Event('input',{bubbles:true}))};
+  Object.defineProperty(el,'value',{configurable:true,get(){return proto.get.call(el)},set(v){proto.set.call(el,v);show(v)}});
+  show(proto.get.call(el));U.addEventListener('input',pull);X.addEventListener('input',pull);S.addEventListener('change',()=>{X.hidden=S.value!=='';if(S.value==='')X.focus();pull()});
+  U.addEventListener('keydown',e=>{if(e.key==='Enter'){pull();el.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}))}})}
+function uiEsplitAll(){document.querySelectorAll('input[data-esplit]:not([data-esdone])').forEach(uiEsplit)}
+new MutationObserver(()=>{clearTimeout(uiEsplitAll.t);uiEsplitAll.t=setTimeout(uiEsplitAll,20)}).observe(document.documentElement,{childList:true,subtree:true});
+try{uiEsplitAll()}catch(e){}
 window.addEventListener('beforeunload',function(e){if(S.dirty){e.preventDefault();e.returnValue=''}});
 google.script.run.withSuccessHandler(function(r){S.I=r;setReq(null);var sv=null;try{sv=JSON.parse(localStorage.getItem('pqLogin')||'null')}catch(x){}if(sv&&sv.nm&&sv.ph&&sv.pw){S.nm=sv.nm;S.ph=sv.ph;S.em=sv.em||'';S.pw=sv.pw;setTimeout(function(){render();if(document.getElementById('go1'))go1()},0)}if(r.camp){document.getElementById('ttl').textContent=(r.camp.name||'캠프')+' · 학부모 신청';var c=r.camp;document.getElementById('sub').textContent=(c.start?md(c.start)+' ~ '+md(c.end)+' · ':'')+'학원에 다니는 학생의 캠프 참가를 학원 선생님께 알려요'}render()}).withFailureHandler(function(e){document.getElementById('app').innerHTML='<div class="card err">'+esc((e&&e.message)||e)+'</div>'}).parentInit();
 </script></body></html>

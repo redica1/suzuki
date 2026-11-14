@@ -41,14 +41,16 @@ function tblApply(t,st){const tb=t.tBodies[0];if(!tb)return;const rows=[...tb.ro
     
     const r=(x.n!=null&&y.n!=null)?x.n-y.n:(x.n!=null?-1:y.n!=null?1:String(x.s).localeCompare(String(y.s),'ko',{numeric:true}));return d*r});rows.forEach(r=>tb.appendChild(r))}
   const q=String(st.q||'').replace(/\s+/g,'').toLowerCase();let n=0;rows.forEach(r=>{const ok=!q||rval(r).replace(/\s+/g,'').toLowerCase().includes(q);r.style.display=ok?'':'none';if(ok)n++});
-  const c=(t.closest('.mtblw'+(window.UI_DOCK?','+window.UI_DOCK:''))||t).previousElementSibling;if(c&&c.classList.contains('tfind')){const m=c.querySelector('.tfn');if(m)m.textContent=q?n+'건':''}
+  const c0=(t.closest('.mtblw'+(window.UI_DOCK?','+window.UI_DOCK:''))||t).previousElementSibling,c=c0&&(c0.classList.contains('tfind')?c0:c0.querySelector('.tfindslot>.tfind'));if(c){const m=c.querySelector('.tfn');if(m)m.textContent=q?n+'건':''}
   t.querySelectorAll('thead th').forEach((th,j)=>{const a=th.querySelector('.sarr');if(a)a.textContent=st.s&&st.s.i===j?(st.s.d>0?' ▲':' ▼'):''})}
 function tblEnhance(){document.querySelectorAll(UI_SEL.split(',').map(x=>x.trim()+':not(.nosort):not([data-enh])').join(',')).forEach((t,_)=>{t.dataset.enh='1';
   const all=[...document.querySelectorAll(UI_SEL.split(',').map(x=>x.trim()+':not(.nosort)').join(','))],k=tkey(t,all.indexOf(t)),st=TBLS[k]||(TBLS[k]={q:'',s:null});
   t.querySelectorAll('thead th').forEach((th,j)=>{if(th.querySelector('input')||!th.textContent.trim())return;th.dataset.lb=th.dataset.lb||th.textContent.trim();th.classList.add('sortable');th.insertAdjacentHTML('beforeend','<span class="sarr"></span>');
     th.addEventListener('click',e=>{if(e.target.closest('.colrz'))return;st.s=st.s&&st.s.i===j?(st.s.d>0?{i:j,d:-1}:null):{i:j,d:1};tblApply(t,st)})});
   const w=t.closest('.mtblw'+(window.UI_DOCK?','+window.UI_DOCK:''))||t;if((t.tBodies[0]||{rows:[]}).rows.length>=3){const f=document.createElement('div');f.className='tfind';f.innerHTML='<input type="search" placeholder="표에서 찾기 (이름 · 학원 · 악기 …)" aria-label="표에서 찾기"><span class="tfn hint"></span>';
-    const inp=f.querySelector('input');inp.value=st.q||'';inp.addEventListener('input',()=>{st.q=inp.value;tblApply(t,st)});w.parentNode.insertBefore(f,w)}
+    const inp=f.querySelector('input');inp.value=st.q||'';inp.addEventListener('input',()=>{st.q=inp.value;tblApply(t,st)});
+    /* 표 바로 위 줄에 .tfindslot 이 있으면 찾기칸을 그 자리에 (버튼 · 필터와 한 줄로) */
+    const pv=w.previousElementSibling,sl=pv&&pv.querySelector('.tfindslot');if(sl){sl.innerHTML='';sl.appendChild(f)}else w.parentNode.insertBefore(f,w)}
   if(st.q||st.s)tblApply(t,st)})}
 new MutationObserver(()=>{clearTimeout(tblEnhance.t);tblEnhance.t=setTimeout(tblEnhance,40)}).observe(document.body,{childList:true,subtree:true});
 /* 프로그램표(.ttg) 칸 너비: 엑셀처럼 장소 칸 오른쪽 끝을 끌어서 (높이 끌기는 뺌). 두 번 누르면 원래대로. 이 브라우저에 기억

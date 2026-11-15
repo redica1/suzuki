@@ -95,6 +95,9 @@
   var EXTRA = (/[?&]board\b/.test(location.search) ? 'board=1' : /[?&]guide\b/.test(location.search) ? 'guide=1' : /[?&]aud\b/.test(location.search) ? 'aud=1' : '');   /* ?board = 게시판 바로 · ?guide = 접수 안내 창 */
   if (AS) { APP += '?as=' + AS; document.getElementById('direct').href = APP; }
   if (EXTRA) { APP += (APP.indexOf('?') < 0 ? '?' : '&') + EXTRA; document.getElementById('direct').href = APP; }
+  /* STG 시험 체크에서 오면 ?test&tl=시험 선생님&go=화면 → 그 선생님으로 바로 들어가 그 화면으로 (11-15) */
+  if (/[?&]test\b/i.test(location.search)) { var TL = (location.search.match(/[?&]tl=([^&#]*)/) || [])[1], GO = (location.search.match(/[?&]go=([a-z]+)/) || [])[1];
+    if (TL || GO) { APP += (APP.indexOf('?') < 0 ? '?' : '&') + [TL ? 'tl=' + TL : '', GO ? 'go=' + GO : ''].filter(Boolean).join('&'); document.getElementById('direct').href = APP; } }
   app.src = APP; app.hidden = false;
   // 10초가 지나도 안 뜨면 앱 주소로 바로 여는 링크 (회사·학교 와이파이가 막는 경우 대비)
   setTimeout(function () { document.getElementById('slow').hidden = false; }, 10000);

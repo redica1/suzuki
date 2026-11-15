@@ -1,4 +1,4 @@
-/* build: 20261115-141759 */
+/* build: 20261115-153837 */
 function vAuthPick(){const off=!!CAMP.pre;return gdBtn()+apDoor()+`<section class="sec"><h2>접수 시작</h2>
   ${off?`<p class="note warn" style="margin:6px 0 12px"><b>${+CAMP.pre.slice(5,7)}월 ${+CAMP.pre.slice(8,10)}일에 접수가 열려요.</b> 그 전에 아래에서 회원가입을 마쳐 두세요.</p>`:'<p class="lede">어떻게 접수하시나요?</p>'}
   <div class="pick2${off?' pickoff':''}"${off?' aria-disabled="true"':''}>
@@ -88,9 +88,9 @@ function doMemberLogin(nm,ph){busy(true,'들어가고 있어요…');google.scri
       S.token=r.token;S.today=r.today;S.myAcct=r.myAcct||null;loadFromServer(r);login({...r.teacher,acads:r.teacher.acads});
       if(!MY_SUBS.length&&r.teacher.acads.length===1){const a=r.teacher.acads[0];S.acad=a;S.rq='';S.sel={};S.ptab='교사';S.picked={};S.extra=[];S.fam=[];S.info={};S.room={};S.rreq={};S.rnote="";S.preqTaken=[];ensureRoster(a);S.verified=true;render()}})
       .withFailureHandler(e=>{busy(false);S.verr='연결이 잠시 안 돼요. 다시 눌러 주세요. ('+((e&&e.message)||e)+')';render()}).login(nm,ph,S.cons||{})}
-function doTestLogin(nm){busy(true,'들어가고 있어요…');google.script.run.withSuccessHandler(r=>{busy(false);if(!r.ok){S.verr=r.msg;render();return}
+function doTestLogin(nm,after){busy(true,'들어가고 있어요…');google.script.run.withSuccessHandler(r=>{busy(false);if(!r.ok){S.verr=r.msg;render();return}
       S.token=r.token;S.today=r.today;S.myAcct=r.myAcct||null;loadFromServer(r);login({...r.teacher,acads:r.teacher.acads});
-      if(!MY_SUBS.length&&r.teacher.acads.length===1){const a=r.teacher.acads[0];S.acad=a;S.rq='';S.sel={};S.ptab='교사';S.picked={};S.extra=[];S.fam=[];S.info={};S.room={};S.rreq={};S.rnote="";S.preqTaken=[];ensureRoster(a);S.verified=true;render()}})
+      if(!MY_SUBS.length&&r.teacher.acads.length===1){const a=r.teacher.acads[0];S.acad=a;S.rq='';S.sel={};S.ptab='교사';S.picked={};S.extra=[];S.fam=[];S.info={};S.room={};S.rreq={};S.rnote="";S.preqTaken=[];ensureRoster(a);S.verified=true;render()}if(after)setTimeout(after,0)})
       .withFailureHandler(e=>{busy(false);S.verr='연결이 잠시 안 돼요. 다시 눌러 주세요. ('+((e&&e.message)||e)+')';render()}).testLogin(nm,S.cons||{})}
 function doMemberLoginPw(em,pw){busy(true,'들어가고 있어요…');google.script.run.withSuccessHandler(r=>{busy(false);if(!r.ok){S.verr=r.msg;if(S.auth==='consent'&&!/동의/.test(r.msg))S.auth='login';render();return}
       S.token=r.token;S.today=r.today;S.myAcct=r.myAcct||null;loadFromServer(r);login({...r.teacher,acads:r.teacher.acads});

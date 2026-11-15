@@ -1,4 +1,4 @@
-/* build: 20261115-141759 */
+/* build: 20261115-153837 */
     ps.forEach(p=>{p.pay='신고';p.rep=rep;delete S.rpRow[p.id]});S.afterSave=()=>repDone(ps.map(p=>p.id));subSave();S.rp=null;S.rpOpen=false;S.rpMemo=undefined;render();toast(`${ps.length}명 입금 신고를 보냈어요 · 운영진이 확인하면 「입금 확인」으로 바뀌어요`);return}
   if(b.id==='rpFill'){const n=document.getElementById('rpAllN').value.trim(),dd=document.getElementById('rpAllD').value;S.rpAllN=n;S.rpAllD=dd;const sel=S.rp||[];
     if(!n&&!dd){toast('적용할 입금자명이나 입금일을 적어 주세요');return}unpaidPpl().filter(x=>sel.includes(x.p.id)).forEach(({p})=>{const v=rpv(p);if(n)v.n=n;if(dd)v.d=dd});render();toast(`선택한 ${sel.length}명에게 적용했어요`);return}
@@ -292,7 +292,7 @@ document.addEventListener('click',e=>{const t=e.target;if(!t||!t.closest)return;
   if(t.closest('#gdAsk')){e.preventDefault();gdClose();openQ()}},true);
 document.addEventListener('keydown',e=>{if(e.key==='Escape')gdClose()});
 /* 회원관리 「행사 참여」에서 ?as=staff|member 로 오면 그 로그인 화면부터 */
-try{google.script.url.getLocation(l=>{const pr=(l&&l.parameter)||{};if('board' in pr){setTimeout(openQ,0);return}if('aud' in pr&&!S.user){setTimeout(()=>{const d=document.getElementById('apDoor');if(d)d.click()},0);return}if('guide' in pr)setTimeout(()=>gdOpen(pr.guide||'first'),0);const a=pr.as||'';if(['staff','member','guest'].includes(a)&&!S.user&&!S.chk){S.mode=a;S.lgAlt=false;S.cons={};S.chk=null;S.verr='';S.auth=a==='guest'?'guest':'login';render()}})}catch(e){}
+try{google.script.url.getLocation(l=>{const pr=(l&&l.parameter)||{};if(pr.tl||pr.go){setTimeout(()=>qaEnter(String(pr.tl||''),String(pr.go||'')),0);return}if('board' in pr){setTimeout(openQ,0);return}if('aud' in pr&&!S.user){setTimeout(()=>{const d=document.getElementById('apDoor');if(d)d.click()},0);return}if('guide' in pr)setTimeout(()=>gdOpen(pr.guide||'first'),0);const a=pr.as||'';if(['staff','member','guest'].includes(a)&&!S.user&&!S.chk){S.mode=a;S.lgAlt=false;S.cons={};S.chk=null;S.verr='';S.auth=a==='guest'?'guest':'login';render()}})}catch(e){}
 /* 처음 화면: 로그인부터 */
 render();
 /* 소속 고르기 (학원 · 겸임 학원 · 내 클래스) */
@@ -530,3 +530,19 @@ function pqTodo(){if(!S.user||isGuest()||!pqPilot().length)return '';const mine=
 function pqGo(k){if(k==='take'){S.view='form';S.editNo=null;S.editOnly=null;if(S.step!==1){resetForm();S.acad='';S.verified=false;S.step=1}render();window.scrollTo({top:0});toast('학원을 고르고 다음으로 가면 「참가자 선택」 위에 학부모가 보낸 신청이 있어요 · 「접수에 담기」를 눌러요');return}
   S.view='mine';S.mscope='mine';render();setTimeout(()=>{const p=document.querySelector('details.preq');if(p){p.open=true;p.scrollIntoView({block:'start',behavior:'smooth'})}},60)}
 (function(){const c=document.createElement('style');c.textContent='.pqTodo{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0 0 12px;padding:10px 12px;border:1.5px solid #f0b46a;background:#fff8ec;border-radius:12px;font-size:15px}.pqTodo.ok{border-color:#cfe5e4;background:#f3faf9}.pqT{border:1px solid #d7c4a3;background:#fff;border-radius:999px;padding:5px 12px;font:inherit;font-size:14.5px;cursor:pointer;color:#16292b}.pqT b{color:#0f8a86;margin-left:2px}.pqT.warn b{color:#b45309}.pqT:hover{border-color:#0f8a86}';document.head.appendChild(c)})();
+/* STG 시험 체크 → 바로 그 화면 (11-15 사용자: 시험 목록 항목을 STG 메뉴로) — ?tl=시험 선생님&go=화면 */
+const QA_GO={new:'새 접수',mine:'내 접수',pay:'내 접수 › 입금 현황',room:'내 접수 › 가족방 현황',acad:'우리 학원 전체',les:'내 접수 › 레슨',grp:'내 접수 › 그룹레슨',mc:'내 접수 › 마스터클래스',con:'내 접수 › 음악회',info:'내 접수 › 학생 진도',guide:'캠프 접수 안내',cs:'상담하기',board:'게시판',preq:'학부모 신청',guest:'비회원 접수',staff:'관계자 접수',aud:'음원 먼저 내기'};
+function qaGo(k){
+  if(k==='guide'){gdOpen('first');return}if(k==='board'){openQ();return}
+  if(k==='cs'){const f=document.getElementById('csFab');if(f)f.click();return}
+  if(k==='guest'||k==='staff'){if(!S.user){S.mode=k;S.lgAlt=false;S.cons={};S.chk=null;S.verr='';S.auth=k==='guest'?'guest':'login';render()}return}
+  if(k==='aud'){if(!S.user){const d=document.getElementById('apDoor');if(d)d.click()}return}
+  if(!S.user)return;
+  if(k==='new'){S.view='form';S.editNo=null;S.editOnly=null;if(S.step!==1&&S.step!==2){resetForm();S.acad='';S.verified=false;S.step=1}const A=(S.user.acads||[]).filter(a=>a!==GUEST_ACAD&&a!==STAFF_ACAD);if(A.length===1&&S.step===1&&!S.acad){S.acad=A[0];ensureRoster(A[0]);S.verified=true}render();window.scrollTo({top:0});return}
+  if(k==='preq'){pqGo('pay');return}
+  const MV={pay:['pay','pay'],room:['pay','room'],les:['les','les'],grp:['les','grp'],mc:['les','mc'],con:['con',''],info:['info','']};
+  S.view='mine';S.mscope=k==='acad'?'acad':'mine';if(MV[k]){S.mview=MV[k][0];if(MV[k][1])S.msub=MV[k][1]}render();window.scrollTo({top:0});
+}
+function qaEnter(tl,go){const nm=tl.trim();const known=typeof TEST_LOGIN==='string'&&TEST_LOGIN&&typeof TEST_NAMES==='string'&&TEST_NAMES.split(/[,\n]/).map(x=>x.trim()).includes(nm);
+  if(nm&&known&&!S.user){S.mode='member';S.cons={};consItems().forEach(x=>S.cons[x.id]=true);doTestLogin(nm,()=>{if(go){qaGo(go);toast(nm+' 선생님 · '+(QA_GO[go]||'첫 화면')+'으로 왔어요')}});return}
+  if(go)qaGo(go);}

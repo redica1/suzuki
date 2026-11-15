@@ -1,4 +1,4 @@
-<!doctype html><!-- build: 20261115-141759 --><html lang="ko"><head><meta charset="utf-8"><link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"><meta name="viewport" content="width=device-width,initial-scale=1">
+<!doctype html><!-- build: 20261115-153837 --><html lang="ko"><head><meta charset="utf-8"><link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
 <style>
 :root{--ink:#18232b;--muted:#5b6b73;--line:#d5e6e6;--bg:#f2f8f8;--surface:#fff;--accent:#0f8a86;--soft:#e3f3f2;--ok:#1e7f4f;--okbg:#e5f5ec;--bad:#c0392b;--badbg:#fdecea}
@@ -44,6 +44,7 @@ textarea{display:block;width:calc(100% - 48px);margin:8px 0 0 48px;font:inherit;
 .mx td.l,.mx th.l{text-align:left;white-space:normal;min-width:180px}
 .mx td.g{background:#f7fbfb;font-weight:800;text-align:left;color:var(--accent)}
 .o{color:var(--ok);font-weight:800}.x{color:var(--bad);font-weight:800}
+.golinks{display:flex;gap:6px;flex-wrap:wrap;margin:-4px 0 10px 48px}.golinks .go{font-size:14px;font-weight:700;color:#fff;background:var(--accent);border-radius:999px;padding:5px 12px;text-decoration:none}.golinks .go+.go{background:var(--surface);color:var(--accent);border:1px solid var(--line)}@media (max-width:560px){.golinks{margin-left:0}}
 .pill{display:inline-block;font-size:12.5px;font-weight:700;border-radius:999px;padding:1px 8px}
 .pill.ok{background:var(--okbg);color:var(--ok)}.pill.bad{background:var(--badbg);color:var(--bad)}
 .err{color:var(--bad);font-weight:700}
@@ -52,7 +53,7 @@ textarea{display:block;width:calc(100% - 48px);margin:8px 0 0 48px;font:inherit;
 @media (max-width:560px){.reply,.rbox{margin-left:0}}
 @media (max-width:560px){.how,.row,.meta,.save,.others{margin-left:0}textarea{width:100%;margin-left:0}}
 </style></head><body>
-<div class="band"><h1>[STG] 캠프 접수 시험 체크</h1><p>할 일 52개를 한 사람씩 모두 해 봐요. 해 본 뒤 「잘 됨」 또는 「문제 있음」을 누르고, 이상한 점은 메모에 적어 주세요. 실제 접수가 아니에요.</p></div>
+<div class="band"><h1>[STG] 캠프 접수 시험 체크</h1><p>할 일 52개를 한 사람씩 모두 해 봐요. 할 일마다 <b>「○○ 열기 →」</b>를 누르면 내 이름(시험 선생님)으로 STG에 바로 들어가 그 화면이 열려요. 해 본 뒤 「잘 됨」 또는 「문제 있음」을 누르고, 이상한 점은 메모에 적어 주세요. 실제 접수가 아니에요.</p></div>
 <main class="wrap">
   <div class="me"><label for="me"><b>내 이름</b></label><input id="me" maxlength="20" placeholder="예) 김민지"><span class="hint" id="myProg">이름을 적으면 내 결과만 따로 남아요</span></div>
   <div class="links"><a href="https://app.suzukimusickorea.org/camp/?test" target="_blank" rel="noopener">STG 접수 화면 열기</a><a href="https://app.suzukimusickorea.org/camp/admin.html?test" target="_blank" rel="noopener">STG 관리자</a><a href="https://app.suzukimusickorea.org/camp/find.html?test" target="_blank" rel="noopener">STG 일정 찾기</a></div>
@@ -61,6 +62,22 @@ textarea{display:block;width:calc(100% - 48px);margin:8px 0 0 48px;font:inherit;
 </main>
 <script>
 var TASKS=[],RES=[],TAB=null,DIRTY={},DRAFT={},RDRAFT={};
+/* 할 일마다 STG 화면으로 바로 (11-15) — 내 이름이 시험 선생님이면 그 선생님으로 들어가 그 메뉴를 엶 */
+var STG='https:\/\/app.suzukimusickorea.org/camp/';
+var GO={'1-01':['',''],'1-02':['new'],'1-03':['new'],'1-04':['new'],'1-05':['new'],'1-06':['new'],'1-07':['new'],'1-08':['mine'],'1-09':['new'],
+ '2-01':['new'],'2-02':['new'],'2-03':['new'],'2-04':['new'],'2-05':['new'],'2-06':['room'],'2-07':['room'],'2-08':['pay'],'2-09':['room'],'2-10':['new'],
+ '3-01':['pay'],'3-02':['pay'],'3-03':['pay','admin'],'3-04':['pay'],'3-05':['pay'],'3-06':['pay'],'3-07':['pay','admin'],'3-08':['pay'],'3-09':['pay'],
+ '4-01':['',''],'4-02':['acad'],'4-03':['acad'],'4-04':['acad'],'4-05':['acad'],'4-06':['mine'],'4-07':['mine'],'4-08':['les'],
+ '5-01':['new'],'5-02':['new'],'5-03':['new'],'5-04':['new'],'5-05':['aud','',1],'5-06':['aud','',1],'5-07':['con'],'5-08':['new'],
+ '6-01':['guest','',1],'6-02':['guest','',1],'6-03':['staff','',1],'6-04':['','intl'],'6-05':['guide'],'6-06':['cs'],'6-07':['board','find'],'6-08':['','']};
+var GONM={new:'새 접수',mine:'내 접수',pay:'내 접수 › 입금',room:'내 접수 › 가족방 현황',acad:'우리 학원 전체',les:'내 접수 › 레슨',con:'내 접수 › 음악회',guide:'캠프 접수 안내',cs:'상담하기',board:'게시판',guest:'비회원 접수',staff:'관계자 접수',aud:'음원 먼저 내기'};
+function goLinks(t){var g=GO[t.id]||['mine'],k=g[0]||'',ex=g[1]||'',nol=g[2],n=me(),L=[];
+  var u=STG+'?test'+(n&&!nol?'&tl='+encodeURIComponent(n):'')+(k?'&go='+k:'');
+  L.push('<a class="go" href="'+u+'" target="stgApp" rel="noopener">'+(k?esc(GONM[k]||k)+' 열기':'STG 접수 화면 열기')+' →</a>');
+  if(ex==='admin')L.push('<a class="go" href="'+STG+'admin.html?test" target="stgAdmin" rel="noopener">STG 관리자 →</a>');
+  if(ex==='intl')L.push('<a class="go" href="'+STG+'intl.html?test" target="stgIntl" rel="noopener">STG 영어 화면 →</a>');
+  if(ex==='find')L.push('<a class="go" href="'+STG+'find.html?test" target="stgFind" rel="noopener">STG 일정 찾기 →</a>');
+  return '<div class="golinks">'+L.join('')+'</div>'}
 function $(id){return document.getElementById(id)}
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
 function ls(k,v){try{if(v===undefined)return localStorage.getItem(k)||'';localStorage.setItem(k,v)}catch(e){return ''}}
@@ -77,7 +94,7 @@ function drawTabs(){var G=groups(),n=me();
   var d=n?done(TASKS,n):0;$('myProg').innerHTML=n?'<span class="bar" style="display:inline-block;width:120px;vertical-align:middle"><i style="width:'+Math.round(d/Math.max(1,TASKS.length)*100)+'%"></i></span> 내가 한 것 <b>'+d+' / '+TASKS.length+'</b>':'이름을 적으면 내 결과만 따로 남아요'}
 function card(t){var r=mine(t.id),k=r.res==='잘 됨'?'ok':r.res==='문제 있음'?'bad':'',
   oth=RES.filter(function(x){return x.id===t.id&&x.by!==me()&&(x.res||x.memo)});
-  return '<div class="card '+k+'"><div class="hd"><span class="no">'+esc(t.id)+'</span><h3>'+esc(t.task)+'</h3></div><p class="how">'+esc(t.how)+'</p>'+
+  return '<div class="card '+k+'"><div class="hd"><span class="no">'+esc(t.id)+'</span><h3>'+esc(t.task)+'</h3></div><p class="how">'+esc(t.how)+'</p>'+goLinks(t)+
   '<div class="row">'+[['잘 됨','k1'],['문제 있음','k2'],['','k0']].map(function(x){return '<button type="button" class="st '+x[1]+'" data-res="'+esc(x[0])+'" data-id="'+esc(t.id)+'" aria-pressed="'+(r.res===x[0])+'">'+(x[0]||'아직 안 함')+'</button>'}).join('')+'</div>'+
   '<textarea data-memo="'+esc(t.id)+'" placeholder="메모 · 어느 화면에서 무엇이 이상했는지 (휴대폰이면 기종도)" aria-label="'+esc(t.id)+' 메모">'+esc(DIRTY[t.id]?DRAFT[t.id]:r.memo)+'</textarea>'+
   '<button type="button" class="save" data-save="'+esc(t.id)+'"'+(DIRTY[t.id]?'':' disabled')+'>메모 저장</button>'+

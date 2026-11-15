@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head>
-<!-- build: 20261115-204556 -->
+<!-- build: 20261115-204830 -->
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <base target="_top">
 <title>Suzuki Winter Music Camp · Overseas Registration</title>
@@ -29,6 +29,7 @@ table{width:100%;border-collapse:collapse;font-size:15px}th,td{text-align:left;p
 .toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:15px;z-index:9}
 .busy{position:fixed;inset:0;background:rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center;z-index:10;color:#fff;font-weight:700}
 .mcbox{grid-column:1/-1;display:grid;gap:6px;padding:8px 10px;border:1px dashed #cfe0de;border-radius:10px}.mcl{display:flex;gap:8px;align-items:center;font-weight:500}.mcl input{width:20px;height:20px}
+.addbot{display:grid;gap:8px;margin-top:12px;padding:12px;border:1.5px dashed #9fd3cf;border-radius:12px;background:#f3faf9}.addrow{flex-wrap:wrap;gap:6px}
 </style></head>
 <body>
 <header><div class="wrap"><small>Korea Suzuki Music Association</small><h1 id="ttl">Suzuki Winter Music Camp</h1><p id="when">Overseas group registration</p></div></header>
@@ -38,6 +39,7 @@ table{width:100%;border-collapse:collapse;font-size:15px}th,td{text-align:left;p
 var S={tok:'',D:null,list:[],dirty:false,err:'',rep:{cur:'USD'}};
 var TYPES=[['해외 학생','Student (plays an instrument)'],['해외 교사','Teacher'],['해외 보호자','Parent / guardian'],['해외 동반가족','Accompanying family member (no instrument)'],['해외 15개월 미만','Infant (under 15 months)']];
 var TL={};TYPES.forEach(function(t){TL[t[0]]=t[1]});
+var CONEN={'오후':'Afternoon','트와일라잇':'Twilight','이브닝':'Evening'};
 var INST=[['바이올린','Violin'],['첼로','Cello'],['비올라','Viola'],['플루트','Flute'],['피아노','Piano']];var IL={};INST.forEach(function(t){IL[t[0]]=t[1]});
 var BOOK=[['Pre-Twinkle','Pre-Twinkle'],['1권','Book 1'],['2권','Book 2'],['3권','Book 3'],['4권','Book 4'],['5권','Book 5'],['6권','Book 6'],['7권','Book 7'],['8권','Book 8'],['9권','Book 9'],['10권','Book 10'],['10권 이상','Above Book 10']];
 var BL={};BOOK.forEach(function(t){BL[t[0]]=t[1]});
@@ -47,7 +49,7 @@ function opt(L,v,ph){return (ph?'<option value="">'+ph+'</option>':'')+L.map(fun
 function toast(m){var t=document.getElementById('toast');t.textContent=m;t.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(function(){t.hidden=true},2600)}
 function busy(on,m){var b=document.getElementById('busy');b.textContent=m||'Saving…';b.hidden=!on}
 function run(fn,args,ok){busy(true);google.script.run.withSuccessHandler(function(r){busy(false);if(r&&r.ok===false){S.err=r.msg;render();toast(r.msg);return}ok(r)}).withFailureHandler(function(e){busy(false);var m=(e&&e.message)||String(e);S.err=m;render();toast(m)})[fn].apply(null,args)}
-function setD(r){S.D=r;S.list=(r.ppl||[]).map(function(p){return {key:p.key,first:p.first,last:p.last,type:p.type,gender:p.gender,by:p.by,inst:p.inst,prog:p.prog,note:p.note,room:p.room||'',lessons:+p.lessons||0,mc:p.mc||[],fee:p.fee,paid:p.paid,pay:p.pay}});S.dirty=false;S.err='';
+function setD(r){S.D=r;S.list=(r.ppl||[]).map(function(p){return {key:p.key,first:p.first,last:p.last,type:p.type,gender:p.gender,by:p.by,inst:p.inst,prog:p.prog,note:p.note,room:p.room||'',lessons:+p.lessons||0,mc:p.mc||[],concert:p.concert||'없음',song:p.song||'',video:p.video||'',fee:p.fee,paid:p.paid,pay:p.pay}});S.dirty=false;S.err='';
   var c=r.camp||{};document.getElementById('ttl').textContent=(c.name?c.name.replace('스즈키 겨울 음악제','Suzuki Winter Music Camp'):'Suzuki Winter Music Camp');
   document.getElementById('when').textContent=(c.start||'')+' ~ '+(c.end||'')+' · Overseas group registration · '+r.group.name}
 function agBox(){return '<label style="display:flex;gap:10px;align-items:flex-start;font-weight:400"><input type="checkbox" id="ag" style="width:22px;min-height:22px;margin-top:3px"><span>I agree that the association collects and uses the participants’ names, gender, birth year, instrument and level to run the camp (room assignment, lessons, name tags), and shares names and gender with the camp hotel. I confirm that guardians of participants under 14 have agreed. The data is deleted after the camp settlement.</span></label>'}
@@ -91,6 +93,8 @@ function vPerson(p,i){var plays=p.type==='해외 학생'||p.type==='해외 교�
   (plays?'<label>Instrument *<select data-f="inst" data-i="'+i+'">'+opt(INST,p.inst,'Choose')+'</select></label>':'')+
   (p.type==='해외 학생'?'<label>Current book *<select data-f="prog" data-i="'+i+'">'+opt(BOOK,p.prog,'Choose')+'</select></label>':'')+
   (plays?'<label>Extra private lessons <span class="hint">(30 min · '+won(S.D.lessonUsd||45)+' each)</span><select data-f="lessons" data-i="'+i+'">'+opt([0,1,2,3,4,5].slice(0,(S.D.lessonMax||5)+1).map(function(n){return [String(n),n?n+' × '+won(S.D.lessonUsd||45)+' = '+won(n*(S.D.lessonUsd||45)):'None']}),String(p.lessons||0))+'</select></label>':'')+
+  (plays?'<label>Concert <span class="hint">(to perform)</span><select data-f="concert" data-i="'+i+'">'+opt([['없음','Not performing']].concat((S.D.cons||[]).map(function(c){return [c,(CONEN[c]||c)+' concert']})),p.concert||'없음')+'</select></label>'+
+    (p.concert&&p.concert!=='없음'?'<label>Piece (composer · title) *<input data-f="song" data-i="'+i+'" value="'+esc(p.song||'')+'" maxlength="120" placeholder="e.g. Vivaldi · Concerto in A minor, 1st mvt."></label><label>Video link <span class="hint">(YouTube, optional'+(/이브닝/.test(p.concert)?', needed for audition':'')+')</span><input data-f="video" data-i="'+i+'" value="'+esc(p.video||'')+'" placeholder="https:\/\/"></label>':''):'')+
   (plays?'<div class="mcbox"><b>Masterclass</b> <span class="hint">(optional · several allowed)</span>'+(!p.inst?'<p class="hint" style="margin:4px 0 0">Choose the instrument first.</p>':mcFor(p).length?mcFor(p).map(function(m){return '<label class="mcl"><input type="checkbox" data-mc="'+i+'" value="'+esc(m.n)+'"'+((p.mc||[]).indexOf(m.n)>=0?' checked':'')+'> '+esc(m.en||m.n)+(m.en&&m.en!==m.n?' <span class="hint">('+esc(m.n)+')</span>':'')+' <span class="hint">'+m.min+' min · '+won(m.usd)+'</span></label>'}).join(''):'<p class="hint" style="margin:4px 0 0">No masterclass for this instrument yet.</p>')+'</div>':'')+
   '<label>Family room<input data-f="room" data-i="'+i+'" value="'+esc(p.room)+'" placeholder="e.g. Dela Cruz family" list="roomNames"></label>'+
   '<label>Note<input data-f="note" data-i="'+i+'" value="'+esc(p.note)+'" placeholder="allergy, etc."></label></div></div>'}
@@ -106,9 +110,9 @@ function vMain(){var D=S.D,s=sum();
     '<datalist id="roomNames">'+rk.map(function(t){return '<option value="'+esc(S.list[RR[t].first].room)+'">'}).join('')+'</datalist></div>';
   return (S.newCode?'<div class="note" style="margin-bottom:16px"><b>Your group is ready.</b> Your access code is <b style="font-size:20px;letter-spacing:.08em">'+esc(S.newCode)+'</b>. Please keep it: you need your email and this code to sign in again. We also emailed it to '+esc(D.group.email)+'.</div>':'')+'<div class="card"><div class="spread"><div><h2>'+esc(D.group.name)+'</h2><span class="hint">'+esc(D.group.country)+(D.group.lead?' · leader '+esc(D.group.lead):'')+' · '+esc(D.group.email)+(D.no?' · registration '+esc(D.no):'')+'</span></div><button class="btn small ghost" type="button" id="out">Sign out</button></div>'+
     '<p class="hint" style="margin-top:8px">Camp: '+esc(D.camp.start)+' ~ '+esc(D.camp.end)+(D.camp.place&&D.camp.place!=='추후 안내'?' · '+esc(D.camp.place):'')+'. Fees include the camp program, room and meals. No membership fee for overseas participants.</p>'+fee+'</div>'+
-    '<div class="card"><div class="spread"><h2>Participants</h2><div class="row"><button class="btn small" type="button" data-add="해외 학생">+ Student</button><button class="btn small" type="button" data-add="해외 교사">+ Teacher</button><button class="btn small" type="button" data-add="해외 보호자">+ Parent</button><button class="btn small" type="button" data-add="해외 동반가족">+ Family</button><button class="btn small" type="button" data-add="해외 15개월 미만">+ Infant</button></div></div>'+
+    '<div class="card"><div class="spread"><h2>Participants</h2>'+(S.list.length?'':'<div class="row addrow"><button class="btn small" type="button" data-add="해외 학생">+ Student</button><button class="btn small" type="button" data-add="해외 교사">+ Teacher</button><button class="btn small" type="button" data-add="해외 보호자">+ Parent</button><button class="btn small" type="button" data-add="해외 동반가족">+ Family</button><button class="btn small" type="button" data-add="해외 15개월 미만">+ Infant</button></div>')+'</div>'+
     '<p class="hint">Enter every person who will come. Names in English as in the passport. You can come back later to add or change people. People whose payment is confirmed cannot be removed here.</p>'+
-    (S.list.length?S.list.map(vPerson).join(''):'<p class="hint">No one yet. Use the buttons above to add people.</p>')+'</div>'+
+    (S.list.length?S.list.map(vPerson).join('')+'<div class="addbot"><b>Add another person</b>'+'<div class="row addrow"><button class="btn small" type="button" data-add="해외 학생">+ Student</button><button class="btn small" type="button" data-add="해외 교사">+ Teacher</button><button class="btn small" type="button" data-add="해외 보호자">+ Parent</button><button class="btn small" type="button" data-add="해외 동반가족">+ Family</button><button class="btn small" type="button" data-add="해외 15개월 미만">+ Infant</button></div>'+'</div>':'<p class="hint">No one yet. Use the buttons above to add people.</p>')+'</div>'+
     roomBox+
     /* 11-15 사용자: 해외 단체는 이체 없이 신청만 → 입금 · 이체 신고 칸을 뺌, 금액은 참고로만 */
     '<div class="card"><h2>Fees</h2><p class="hint"><b>Registration only.</b> You do not need to send money or report a transfer on this page. The camp office will contact you by email about payment.</p>'+
@@ -132,9 +136,9 @@ document.addEventListener('click',function(e){var b=e.target.closest('button');i
     run('intlSignup',[{name:v('ng'),country:v('nc'),lead:v('nl'),email:v('ne')},true],function(r){S.tok=r.token;S.newCode=r.code||'';S.mode='';setD(r);render()});return}
   if(b.id==='tgo'){run('intlTestLogin',[],function(r){S.tok=r.token;setD(r);render()});return}
   if(b.id==='out'){if(S.dirty&&!confirm('You have unsaved changes. Sign out anyway?'))return;S.tok='';S.D=null;S.err='';S.newCode='';render();return}
-  if(d.add){S.list.push({key:'',first:'',last:'',type:d.add,gender:'',by:'',inst:'',prog:'',note:'',lessons:0,mc:[],paid:0});S.dirty=true;render();var L=document.querySelectorAll('[data-f="first"]');if(L.length)L[L.length-1].focus();return}
+  if(d.add){S.list.push({key:'',first:'',last:'',type:d.add,gender:'',by:'',inst:'',prog:'',note:'',lessons:0,mc:[],concert:'없음',song:'',video:'',paid:0});S.dirty=true;render();var L=document.querySelectorAll('[data-f="first"]');if(L.length)L[L.length-1].focus();return}
   if(d.rm!==undefined){var p=S.list[+d.rm];if(p.key&&!confirm('Remove '+((p.first||'')+' '+(p.last||'')).trim()+'?'))return;S.list.splice(+d.rm,1);S.dirty=true;render();return}
-  if(b.id==='save'){run('intlSave',[S.tok,S.list.map(function(p){return {key:p.key,first:p.first,last:p.last,type:p.type,gender:p.gender,by:p.by,inst:p.inst,prog:p.prog,note:p.note,room:p.room,lessons:+p.lessons||0,mc:(p.mc||[]).filter(function(n){return mcFor(p).some(function(m){return m.n===n})})}})],function(r){setD(r);render();toast('Saved · '+r.ppl.length+' people')});return}
+  if(b.id==='save'){run('intlSave',[S.tok,S.list.map(function(p){return {key:p.key,first:p.first,last:p.last,type:p.type,gender:p.gender,by:p.by,inst:p.inst,prog:p.prog,note:p.note,room:p.room,concert:p.concert||'없음',song:p.song||'',video:p.video||'',lessons:+p.lessons||0,mc:(p.mc||[]).filter(function(n){return mcFor(p).some(function(m){return m.n===n})})}})],function(r){setD(r);render();toast('Saved · '+r.ppl.length+' people')});return}
   if(b.id==='rep'){S.rep={date:document.getElementById('rd').value,cur:document.getElementById('rc').value,amt:document.getElementById('ra').value,name:document.getElementById('rn').value};
     if(!S.rep.date||!S.rep.amt){toast('Please enter the date and amount.');return}
     run('intlReport',[S.tok,S.rep],function(r){S.rep={cur:S.rep.cur};var keep=S.dirty?S.list:null;setD(r);if(keep){S.list=keep;S.dirty=true}render();toast('Transfer reported. Thank you!')});return}});

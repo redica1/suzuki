@@ -1,4 +1,4 @@
-<!doctype html><!-- build: 20261115-204556 --><html lang="ko"><head><meta charset="utf-8"><link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"><meta name="viewport" content="width=device-width,initial-scale=1">
+<!doctype html><!-- build: 20261115-204830 --><html lang="ko"><head><meta charset="utf-8"><link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
 <style>
 :root{--ink:#18232b;--muted:#5b6b73;--faint:#93a1a8;--line:#d5e6e6;--bg:#f2f8f8;--surface:#fff;--accent:#0f8a86;--soft:#e3f3f2}
@@ -64,6 +64,7 @@ textarea{width:100%;font:inherit;font-size:16px;padding:10px 12px;border:1.5px s
 .st.wait{background:#fff4d6;color:#9a6a00}
 .reply{background:var(--soft);border-radius:10px;padding:8px 10px;margin-top:6px;font-size:14.5px}
 .menus{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}.menu{border:1px solid var(--line);border-radius:12px;padding:10px 12px}.menu .mh{display:flex;justify-content:space-between;gap:8px;align-items:baseline;margin-bottom:4px}.menu .mh b{font-size:16px}.menu .mh .t{color:var(--muted);font-size:13px}.menu ul{margin:0;padding-left:18px;line-height:1.7}
+.gnote{margin:6px 0 0;padding:8px 10px;border-radius:10px;background:#eef8f7;font-size:14.5px;line-height:1.5}
 </style></head><body>
 <div class="band"><h1 id="title">캠프 페이지</h1><p>공지 · 학생 시간표 · 수업표 · 교사 · 방 찾기 · 음악회 · 식사 · 분실물 · 문의</p></div>
 <div class="wrap">
@@ -176,7 +177,7 @@ function roomsHTML(acad,R){return '<div class="sec"><h3>'+esc(acad)+' 방</h3>'+
 function people(r){var out=$('out');if(!gate(r,out))return;var K=[],T=r.staff||[],A=[];
   if(!K.length&&!T.length&&!A.length){out.innerHTML='<p class="hint">그 이름의 선생님 · 교수님을 찾지 못했어요. 학생은 「학생 시간표 찾기」에서 찾아요.</p>';return}
   var h=(K.length+T.length>1?'<p class="hint">'+(K.length+T.length)+'명이 나왔어요. 학원 · 악기로 맞는 사람을 찾아 주세요.</p>':'');
-  h+=K.map(function(k){var g=(k.grp||[]).map(function(x){return item('',esc(x.time),'<b>'+esc(x.sub||'그룹레슨')+'</b> · '+esc(x.room||'장소 미정'),esc(x.days.join(', ')))}).join('')||'<p class="none">아직 정해지지 않았어요</p>';
+  h+=K.map(function(k){var g=(k.grp||[]).map(function(x){return item('',esc(x.time),'<b>'+esc(x.sub||'그룹레슨')+'</b> · '+esc(x.room||'장소 미정'),esc(x.days.join(', ')))}).join('')||'<p class="none">아직 정해지지 않았어요</p>';if((k.grp||[]).length)g+='<p class="gnote">그룹레슨 일정은 <b>지금 진도(권)</b>에 맞는 반만 보여요. 원하면 <b>다른 권 그룹레슨에도 참여할 수 있어요</b>.</p>';
     var l=(k.les||[]).map(function(x){return item('',esc(x.day)+'<br>'+esc(x.t),'<b>'+esc(x.pr)+'</b> 교수 · '+esc(x.room||'레슨실 미정'),'')}).join('');
     var m=(k.mc||[]).map(function(x){return (x.at||[]).map(function(a){return item('',esc(a.day)+'<br>'+esc(a.t),'<b>'+esc(x.pr)+'</b> 마스터클래스 · '+esc(a.room||''),'')}).join('')}).join('');
     return '<div class="card"><h2>'+esc(k.name)+'<span class="tag">학생</span></h2><div class="who">'+esc(k.acad)+(k.inst?' · '+esc(k.inst):'')+(k.teacher?' · 담당 '+esc(k.teacher)+' 선생님':'')+'</div><div class="sec"><h3>그룹레슨</h3>'+g+'</div>'+(l?'<div class="sec"><h3>개인레슨</h3>'+l+'</div>':'')+(m?'<div class="sec"><h3>마스터클래스</h3>'+m+'</div>':'')+(k.concert?'<div class="sec"><h3>음악회</h3>'+item('','','<b>'+esc(k.concert)+' 음악회</b>','')+'</div>':'')+roomsHTML(k.acad,k.rooms)+'</div>'}).join('');
@@ -259,5 +260,5 @@ document.addEventListener('click',function(e){var t=e.target.closest('[data-tab]
   if(t.hasAttribute('data-ev')){var id=t.getAttribute('data-ev');SEL=id;board();if(!EV[id])run('campEventPeople',id,function(r){EV[id]=r||{ok:false};if(SEL===id)board()},null)}});
 document.addEventListener('keydown',function(e){if(e.key==='Escape'&&SEL){SEL=null;board()}});
 </script>
-<div id="bldMark" hidden>빌드표시 20261115-204556 </div>
+<div id="bldMark" hidden>빌드표시 20261115-204830 </div>
 </body></html>

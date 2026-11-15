@@ -1,4 +1,4 @@
-/* build: 20261115-234418 */
+/* build: 20261116-000411 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -3247,6 +3247,26 @@ function submitIssue(token, d) {
   return { ok: true, no, mine: u ? myIssues_(u) : [] };
 }
 function myIssues_(u) { return issues_().filter(x => x.tid && u.tid ? x.tid === u.tid : x.name === u.name)   /* 교사ID 있으면 교사ID로, 예전 글 · 비회원은 이름으로 */.reverse().map(x => ({ no: x.no, at: x.at, where: x.where, text: x.text, pic: !!x.pic, state: x.state, reply: x.reply, done: x.done })); }
+/** 내 접수 내역 메일로 받기 (11-16 사용자): 내가 낸 접수 전체를 한 통으로. 하루 5번까지 */
+function mineMail(token, email) {
+  const u = who_(token); email = String(email || '').trim().toLowerCase().slice(0, 80);
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) throw new Error('받을 이메일을 확인해 주세요.');
+  const C = CacheService.getScriptCache(), ck = 'mm_' + (u.tid || u.name), k = +(C.get(ck) || 0);
+  if (k >= 5) throw new Error('오늘은 5번까지 보낼 수 있어요. 내일 다시 눌러 주세요.');
+  const L = loadSubs_().filter(sb => sb.owner === u.name && !sb.fake && (!u.acads || !u.acads.length || u.acads.includes(sb.acad)));
+  if (!L.length) throw new Error('아직 낸 접수가 없어요.');
+  const W = n => (+n || 0).toLocaleString('ko-KR') + '원', cam = camp_().base.name;
+  let bill = 0, paid = 0, n = 0; const cx = [];
+  const st = p => { const a = amt_(p), pd = +p.paidAmt || 0; return pd >= a && a > 0 ? '입금 확인' : pd > 0 ? '입금 ' + W(pd) + ' (남은 ' + W(a - pd) + ')' : p.pay === '신고' ? '입금 신고 · 확인 중' : '입금 필요'; };
+  const parts = L.map(sb => { const live = sb.ppl.filter(p => p.status === '정상'); sb.ppl.filter(p => p.status !== '정상').forEach(p => cx.push('- ' + p.name + ' (' + p.status + ')'));
+    live.forEach(p => { bill += amt_(p); paid += +p.paidAmt || 0; n++; });
+    return '[' + sb.acad + ' · ' + String(sb.createdAt || sb.date || '').slice(0, 16) + ' 접수 · ' + live.length + '명]\n' + live.map(p => '- ' + p.name + ' (' + p.type + (p.inst ? ' · ' + p.inst : '') + ') ' + W(amt_(p)) + [p.lesson ? '레슨' : '', p.dues ? '연회비' : '', p.room ? '가족방' : ''].filter(Boolean).map((x, i) => (i ? ' · ' : ' — ') + x).join('') + (p.lesson || p.dues || p.room ? ' 포함' : '') + ' · ' + st(p)).join('\n'); });
+  const body = u.name + ' 선생님,\n\n' + cam + ' 접수 내역이에요. (' + stamp_().slice(0, 16) + ' 기준)\n\n인원: ' + n + '명\n청구 합계: ' + W(bill) + '\n입금 확인: ' + W(paid) + '\n남은 금액: ' + W(Math.max(0, bill - paid)) + '\n\n' + parts.join('\n\n') +
+    (cx.length ? '\n\n[취소 · 취소 요청]\n' + cx.join('\n') : '') + '\n\n고치거나 입금 신고는 접수 화면 「내 접수」에서 해 주세요.\n한국스즈키음악협회';
+  const r = sendMail_({ kind: '내 접수 내역', to: email, subject: '[' + cam + '] ' + u.name + ' 선생님 접수 내역 (' + n + '명)', body, name: '한국스즈키음악협회' });
+  C.put(ck, String(k + 1), 21600); log_(u.name, '내 접수 메일', n + '명');
+  return { ok: true, n, sent: !!r };
+}
 function myIssues(token) { const u = who_(token); return { ok: true, mine: myIssues_(u) }; }
 /* ---- 해외 게시판 (11-15 사용자: 외국인 전용 · 이름과 이메일만 적어도 글 쓰기) — 「문의」 시트에 화면 「해외 게시판」으로 쌓임, 답하면 그 이메일로 영어 메일 ---- */
 const intlMail = e => String(e || '').trim().toLowerCase();

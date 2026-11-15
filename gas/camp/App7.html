@@ -1,4 +1,4 @@
-/* build: 20261115-193452 */
+/* build: 20261115-193852 */
     ps.forEach(p=>{p.pay='신고';p.rep=rep;delete S.rpRow[p.id]});S.afterSave=()=>repDone(ps.map(p=>p.id));subSave();S.rp=null;S.rpOpen=false;S.rpMemo=undefined;render();toast(`${ps.length}명 입금 신고를 보냈어요 · 운영진이 확인하면 「입금 확인」으로 바뀌어요`);return}
   if(b.id==='rpFill'){const n=document.getElementById('rpAllN').value.trim(),dd=document.getElementById('rpAllD').value;S.rpAllN=n;S.rpAllD=dd;const sel=S.rp||[];
     if(!n&&!dd){toast('적용할 입금자명이나 입금일을 적어 주세요');return}unpaidPpl().filter(x=>sel.includes(x.p.id)).forEach(({p})=>{const v=rpv(p);if(n)v.n=n;if(dd)v.d=dd});render();toast(`선택한 ${sel.length}명에게 적용했어요`);return}
@@ -554,7 +554,7 @@ function famEdit(no,k){const sb=MY_SUBS.find(x=>x.no===no);if(!sb){toast('그 �
 function famEditBox(subs){const O=[];(subs||[]).filter(canEditSub).forEach(sb=>{const f=sb.form||{},room=f.room||{},join=f.join||{},fam=f.fam||[];
     sb.ppl.filter(p=>p.status==='정상'&&(p.kind==='학생'||p.kind==='교사')).forEach(p=>{const k=p.id.slice(sb.no.length+1);if(join[k])return;const heads=[k,...Object.keys(join).filter(j=>join[j]===k)];
       const nf=fam.filter(x=>heads.includes(x.link)).filter(x=>{const q=sb.ppl.find(y=>y.id===sb.no+'_'+x.id);return q&&q.status!=='취소'}).length;
-      O.push({v:sb.no+'|'+k,t:p.name+(heads.length>1?' 외 형제 '+(heads.length-1):'')+' · 가족 '+nf+'명 · '+(room[k]?'가족방 신청':'가족방 안 함')+' ('+sb.no+')',on:!!room[k]})})});
+      O.push({v:sb.no+'|'+k,t:p.name+(heads.length>1?' 외 형제 '+(heads.length-1):'')+' · 가족 '+nf+'명 · '+(room[k]?'가족방 신청':'가족방 안 함'),on:!!room[k]})})});
   if(!O.length)return '';O.sort((a,b)=>(b.on-a.on)||a.t.localeCompare(b.t,'ko'));
   return `<div class="panel famed"><b>가족 · 가족방 수정</b> <span class="hint">가족(보호자 · 동반가족 · 15개월 미만)을 넣거나 빼고, 가족방을 신청 · 해제해요</span>
     <div class="row" style="gap:8px;margin-top:8px;flex-wrap:wrap"><select id="famEdSel" style="min-width:260px;flex:1"><option value="">학생 고르기</option>${O.map(o=>`<option value="${esc(o.v)}">${esc(o.t)}</option>`).join('')}</select><button class="btn primary" type="button" id="famEdGo">가족 · 가족방 수정</button></div></div>`}

@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261115-225203 -->
+<!-- build: 20261115-230033 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -1779,12 +1779,20 @@ function bkPanel(){if(!S.bkA){if(!S.bkAL){S.bkAL=1;setTimeout(()=>call('campBank
   return `<div class="panel"><b>입금 안내 통장</b> <span class="hint">선생님 · 보호자 접수 화면과 접수 확인 메일에 보이는 계좌예요. 회원관리 › 통장 › 설정에 등록한 통장에서 골라요.</span>
   <div class="row" style="gap:8px;margin-top:8px;flex-wrap:wrap;align-items:center"><select id="bkSel" style="min-width:320px">${A.list.length?'':'<option value="">회원관리에 등록한 통장이 없어요</option>'}${A.list.map(x=>`<option value="${esc(x.id)}" ${sel&&sel.id===x.id?'selected':''}>${esc(x.name)} · ${esc(x.bank)} ${esc(x.acct)} · ${esc(x.holder)}</option>`).join('')}</select><button class="btn small primary" type="button" id="bkSave" ${A.list.length?'':'disabled'}>이 통장으로 안내</button></div>
   <p class="hint" style="margin:6px 0 0">지금 안내: ${c.acct?`<b>${esc(c.bank)} ${esc(c.acct)} · ${esc(c.holder)}</b>${c.auto?' (따로 고르지 않아 회원관리 첫 통장을 씀)':''}`:'<b style="color:#c0392b">없음 — 꼭 골라 주세요</b>'}</p></div>`}
-/* 음악회 곡 목록 (11-15 사용자): 학생이 신청서에서 고르는 곡 — 악기마다 한 줄에 한 곡 · 「V04-04 곡명 (작곡가)」 꼴이면 권 검사에도 씀 */
-function songPanel(){const P=(S.D&&S.D.camp&&S.D.camp.songs)||null,Df=(S.D&&S.D.songsDef)||{},I=['바이올린','첼로','비올라','플루트'];const L=S.songEd||(S.songEd={});
-  I.forEach(k=>{if(L[k]===undefined)L[k]=((P?P[k]:Df[k])||[]).join('\n')});
-  return `<div class="panel" id="songPanel"><div class="spread"><h3>음악회 곡 목록 <span class="hint">학생 카드 「연주곡」에서 고르는 목록 · 한 줄에 한 곡</span></h3><button class="btn small primary" type="button" id="songSave">곡 목록 저장</button></div>
-    <p class="hint" style="margin:0 0 8px">${P?'지금 신청서는 <b>이 목록</b>을 써요.':'아직 저장한 목록이 없어서 신청서에 <b>처음부터 들어 있는 목록</b>을 써요. 저장하면 이 목록으로 바뀌어요.'} 「V04-04 협주곡 가단조 1악장 (비발디)」처럼 앞에 악기 · 권 · 번호를 붙이면 책자 「곡 · 권 검사」에도 쓰여요. 목록에 없는 곡은 학생 카드에서 직접 적을 수 있어요.</p>
-    <div class="grid2" style="gap:10px">${I.map(k=>`<label class="f">${k} <span class="hint">${String(L[k]||'').split('\n').filter(x=>x.trim()).length}곡</span><textarea data-song="${k}" rows="10" style="font-size:14px;line-height:1.5">${esc(L[k]||'')}</textarea></label>`).join('')}</div></div>`}
+/* 음악회 곡 목록 (11-15 사용자): 학생이 신청서에서 고르는 곡 — 악기 탭 › 권마다 한 곡씩 (곡명 · 작곡가) · 추가 · 빼기 · 위아래
+   저장 꼴 「V04-04 협주곡 가단조 1악장 (비발디)」 = 바이올린 4권 4번 → 책자 「곡 · 권 검사」에도 씀. 번호 없는 곡은 「기타」 */
+const SONG_I=[['바이올린','V'],['첼로','C'],['비올라','A'],['플루트','F']];
+function songParse(x){const m=String(x).match(/^([A-Z])(\d\d)-(\d\d) (.+?)(?: \(([^()]*)\))?$/);return m?{code:m[1]+m[2]+'-'+m[3],bk:+m[2],no:+m[3],title:m[4],comp:m[5]||''}:{code:'',bk:0,no:0,title:String(x).replace(/ \(([^()]*)\)$/,''),comp:(String(x).match(/ \(([^()]*)\)$/)||[])[1]||''}}
+function songStr(o){const t=String(o.title||'').trim();if(!t)return '';return (o.code?o.code+' ':'')+t+(String(o.comp||'').trim()?' ('+String(o.comp).trim()+')':'')}
+function songLoad(){const P=(S.D&&S.D.camp&&S.D.camp.songs)||null,Df=(S.D&&S.D.songsDef)||{},E={};SONG_I.forEach(([k])=>{E[k]=((P?P[k]:Df[k])||[]).map(songParse)});return E}
+function songPanel(){if(!S.songEd){S.songEd=songLoad();S.songDirty=false}const E=S.songEd,P=(S.D&&S.D.camp&&S.D.camp.songs)||null,cur=S.songI||'바이올린',L=E[cur]||[];
+  const bks=[...new Set([1,2,3,4,5,6,7,8,9,10,...L.map(o=>o.bk)])].sort((a,b)=>(a||99)-(b||99));
+  const row=(o)=>{const ix=L.indexOf(o);return `<div class="sgrow"><span class="sgcode">${esc(o.code||'-')}</span><input type="text" data-sg="${ix}|title" value="${esc(o.title)}" placeholder="곡명" maxlength="80"><input type="text" data-sg="${ix}|comp" value="${esc(o.comp)}" placeholder="작곡가" maxlength="30" class="sgcomp"><span class="sgbtn"><button class="btn small ghost" type="button" data-sgmv="${ix}|-1" aria-label="위로">↑</button><button class="btn small ghost" type="button" data-sgmv="${ix}|1" aria-label="아래로">↓</button><button class="btn small ghost" type="button" data-sgdel="${ix}" style="color:var(--bad)">빼기</button></span></div>`};
+  return `<div class="panel" id="songPanel"><div class="spread"><h3>음악회 곡 목록 <span class="hint">학생 카드 「연주곡」에서 고르는 목록</span></h3><span class="row" style="gap:6px">${S.songDirty?'<span class="pill due">저장 안 함</span>':''}<button class="btn small" type="button" id="songReset">처음 목록으로</button><button class="btn small primary" type="button" id="songSave" ${S.songDirty?'':'disabled'}>곡 목록 저장</button></span></div>
+    <p class="hint" style="margin:0 0 8px">${P?'지금 신청서는 <b>저장한 목록</b>을 써요.':'아직 저장한 적이 없어서 신청서에 <b>처음부터 들어 있는 목록</b>을 써요.'} 권마다 곡을 넣고 빼요. 번호(V04-04 = 바이올린 4권 4번)는 저절로 붙고 책자 「곡 · 권 검사」에도 쓰여요. 목록에 없는 곡은 학생 카드에서 직접 적을 수 있어요.</p>
+    <div class="seg" role="tablist" style="margin:0 0 10px">${SONG_I.map(([k])=>`<button type="button" role="tab" data-sgi="${k}" aria-pressed="${k===cur}">${k} ${(E[k]||[]).filter(o=>o.title).length}</button>`).join('')}</div>
+    ${bks.map(b=>{const R=L.filter(o=>o.bk===b);return `<div class="sgbk"><div class="spread"><b>${b?b+'권':'기타 (번호 없음)'} <span class="hint">${R.length}곡</span></b><button class="btn small" type="button" data-sgadd="${b}">+ ${b?b+'권':'기타'}에 곡 추가</button></div>${R.map(row).join('')||'<p class="hint" style="margin:4px 0 0">아직 곡이 없어요.</p>'}</div>`}).join('')}
+    <div class="row" style="gap:6px;margin-top:8px"><input type="number" id="sgNewBk" min="11" max="20" placeholder="11" style="width:80px"><button class="btn small" type="button" id="sgNewBkGo">권 더하기</button></div></div>`}
 function vCamp(){if(!S.cc){S.cc=ccCopy();try{if(S.cc.doc&&S.cc.fees&&S.cc.rounds)feeAuto(S.cc)}catch(x){}}const c=S.cc;if(!c.base)return '<div class="panel hint">캠프 설정을 불러오지 못했어요. 「새로 불러오기」를 눌러 주세요.</div>';
   const b=c.base,R=c.rounds,o=c.opt,rf=c.refund;
   const inp=(p,type,extra)=>{const v=ccGet(p);return type==='check'?`<input type="checkbox" data-cc="${p}" ${v?'checked':''}>`:`<input type="${type==='num'?'text':type}" ${type==='num'?'inputmode="numeric" class="num"':''} data-cc="${p}" data-cct="${type}" value="${esc(type==='num'?(+v||0).toLocaleString('ko-KR'):v==null?'':v)}" ${extra||''}>`};
@@ -4482,7 +4490,7 @@ document.addEventListener('click',e=>{if(S.tab!=='book')return;const b=e.target.
   if(b.id==='ebSetSave'){const n=Object.assign(ebSet(),S.ebSetW||{});n.per=Math.max(1,Math.min(10,Math.round(+n.per||5)));n.fs=Math.max(5,Math.min(10,+n.fs||6.6));['en','sub','org'].forEach(k=>n[k]=String(n[k]||'').trim().slice(0,120));
     ebSend([],[],n,()=>{S.ebSetW=null;toast('책자 설정을 저장했어요')});return}},true);
 </script>
-<div id="bldMark" hidden>빌드표시 20261115-225203 </div>
+<div id="bldMark" hidden>빌드표시 20261115-230033 </div>
 <script>
 /* 관리자 상담 (11-15): 관리자 매뉴얼 글에서만 찾아 답함 (AI 아님 · 없는 답은 지어내지 않음). 장마다 t 제목 · q 찾는 말 · k 바로 갈 메뉴 · h 본문 */
 const AGD={
@@ -4513,6 +4521,7 @@ const AGD={
  staff:{t:'담당자 · 권한',k:'staff',q:['담당자','권한','편집 권한','보기 권한','담당 선생님 추가'],h:'<ul><li>총관리자만. 교사 회원 중에서 골라 메뉴마다 편집 / 보기 / 없음을 정해요. 「모두 보기 · 모두 없음」으로 한 번에.</li><li>담당자는 관리자 화면 「담당 선생님」에서 회원관리 이메일 · 비밀번호로 들어와요. 권한은 다음에 무엇을 누를 때부터 바로 적용.</li><li>휴대전화 · 계좌 같은 개인정보는 해당 메뉴 권한이 있을 때만 쓰세요.</li></ul>'},
  parent:{t:'학부모 신청 (시범)',k:'',q:['학부모 신청','학부모가 보낸','부모 신청','시범 학원','학부모 신청 학원','학부모 링크','학원 통장','할 일 띠','학부모 취소','학부모 입금'],h:'<ul><li>학원 다니는 학생의 학부모가 <b>회원가입 없이</b> 캠프 참가 학생(이름 · 전공 · 나이)과 같이 가는 가족 이름을 학원에 보내는 <b>선택 기능</b>이에요. 주소 /camp/parent.html (STG 는 ?test).</li><li><b>쓰는 학원 정하기</b>: 시트 「설정」의 <b>「학부모 신청 학원」</b>에 학원 이름을 쉼표로 적어요(예: 마포스즈키, 가상스즈키). 「전체」면 모든 학원, <b>비우면 아무 학원도 안 써요</b>(첫 화면 학부모 카드도 숨음). 이번 캠프는 일부 학원만 시범이에요. 설정은 몇 분 뒤 반영돼요.</li><li>적은 학원만: 학부모 화면 학원 목록에 나오고, 그 학원 선생님 화면에 「학부모가 보낸 신청」 칸과 <b>「학부모 신청 · 할 일」 띠</b>(담기 전 · 입금 확인 · 취소 요청 · 협회 접수 취소 남음 · 학원 통장 넣기)가 보여요.</li><li>학부모 ↔ 학원 입금 신고 · 확인 · 취소 · 환불은 그 학원 원장 · 선생님이 처리해요(<b>협회 관리자 일 아님</b>). 학원은 지금처럼 모아서 협회에 입금 신고해요. 학원 통장은 원장이 넣고 시트 「학원 통장」에 있어요.</li><li>학부모가 학생마다 <b>추가 개인레슨 횟수 · 마스터클래스(교수)</b>를 골라요. 「접수에 담기」 하면 학생별 정보에 미리 들어가고 선생님이 확인 · 수정해요. 마스터클래스 목록 · 금액은 「교수진」에서 와요.</li><li>학원이 학부모 취소를 「취소 처리」하면 바로 그 접수의 「취소」 칸으로 넘어가서 <b>협회 접수 취소</b>를 이어서 해요. 안 하면 띠에 「협회 접수 취소 남음」이 남아요. 협회 쪽 취소 · 환불은 지금처럼 운영진 「취소 · 환불」 화면으로 와요.</li><li>모든 신청은 시트 「학부모 신청」(상태: 보냄 · 담음 · 바뀜 · 취소, 「돈」 칸에 입금 신고 · 취소 기록, 「비번」은 암호로 바꿔 저장)에 있어요. 학부모가 비밀번호를 잊으면 그 줄의 「비번」 칸을 지우면 다음에 들어올 때 새로 정해요.</li><li>STG 시험: 가상스즈키 학부모 신청 P0901 ~ P0904 (휴대전화 010-9000-0901 ~ 0904, 비밀번호 1234), 선생님은 테스트 로그인(가상스즈키).</li></ul>'},
  mail:{t:'메일 (자동 발신)',k:'',q:['메일','이메일','메일 안 감','메일이 안 와요','하루 100','1500','못 보낸 메일','다시 보내기','대신 보내기','Workspace','noreply'],h:'<ul><li>앱이 자동으로 보내는 메일: 접수 완료(접수한 선생님) · 학부모 신청 소식(신청 · 금액 바뀜 · 입금 확인 · 취소) · 해외 단체 접속 코드.</li><li><b>하루 보낼 수 있는 수</b>(받는 사람 기준, 첫 메일부터 24시간): 일반 Gmail 계정 <b>100명</b>, 협회 Google Workspace 계정 <b>1,500명</b>.</li><li>한눈에 맨 위 <b>「메일」</b> 칸에 보내는 곳 · 오늘 남은 수 · 못 보낸 메일 수가 보여요. 남은 수가 다 떨어지면 접수 · 신청은 그대로 되고 메일만 시트 <b>「못 보낸 메일」</b>에 쌓여요. 다음 날 <b>「못 보낸 메일 다시 보내기」</b>를 눌러요.</li><li><b>협회 계정으로 보내기</b>: 협회 Workspace 계정에 「협회 메일 보내기」 스크립트(GitHub gas/camp/MailRelay.gs.txt 맨 위 순서대로)를 웹앱으로 놓고, 캠프 스크립트 속성에 MAIL_RELAY_URL · MAIL_RELAY_KEY 를 넣으면 그 계정 이름으로 하루 1,500명까지 보내요. 키는 GitHub · 채팅에 올리지 않아요. 대신 보내기가 안 되면 원래 계정으로 보내요.</li></ul>'},
+ songs:{t:'음악회 곡 목록',k:'camp',q:['곡 목록','연주곡 목록','곡 추가','곡 빼기','곡목록','음악회 곡','참가곡 목록','권별 곡'],h:'<ul><li>「캠프 설정」 › <b>「음악회 곡 목록」</b>: 학생 카드 「연주곡」에서 고르는 목록이에요.</li><li>악기 탭(바이올린 · 첼로 · 비올라 · 플루트) › <b>권마다</b> 곡이 한 줄씩 있어요. 곡명 · 작곡가를 고치고, <b>「+ n권에 곡 추가」</b>로 넣고, <b>「빼기」</b>로 빼고, ↑ ↓로 순서를 바꿔요. 11권 이상은 아래 「권 더하기」.</li><li>번호(V04-04 = 바이올린 4권 4번)는 저절로 붙고 책자 「곡 · 권 검사」에도 쓰여요.</li><li>다 고친 뒤 <b>「곡 목록 저장」</b>을 눌러야 신청서에 바뀌어요. 「처음 목록으로」는 처음부터 들어 있던 목록으로 되돌려요(저장해야 적용). 시트 「곡목록」에도 남아요.</li><li>목록에 없는 곡은 학생 카드에서 「목록에 없는 곡」을 골라 직접 적어요.</li></ul>'},
  intlq:{t:'해외 게시판 (외국인 문의)',k:'',q:['해외 게시판','외국인 게시판','외국인 문의','영어 문의','intl question','이메일로 답','해외 문의'],h:'<ul><li>해외(외국인)는 영어 화면 /camp/intl.html 맨 아래 <b>「Questions? › Ask a question」</b>에서 <b>로그인 없이 이름 · 이메일만</b> 넣고 글을 써요. 한 이메일은 1분에 1번, 하루 10번까지.</li><li>글은 다른 게시판 글과 같은 곳(관리자 「게시판」 · 시트 「문의」)에 <b>학원 「해외」 · 화면 「해외 게시판」</b>으로 쌓이고, 이름 옆에 이메일이 보여요.</li><li>답을 적고 상태를 저장하면 <b>그 이메일로 영어 답장 메일</b>이 자동으로 가요(답 내용이 바뀌었을 때만). 메일은 「메일 (자동 발신)」 한도를 같이 써요.</li><li>쓴 사람은 같은 이름 · 이메일로 「My questions」를 누르면 자기 글과 답을 볼 수 있어요. 다른 사람 글은 안 보여요.</li></ul>'},
  ver:{t:'STG · 메인 반영',k:'',q:['STG','메인','반영','빌드','버전','테스트','적용'],h:'<ul><li>고친 코드는 먼저 <b>STG</b>(테스트)에 올라가요. 화면 맨 아래 「빌드 26.11.15 00:48」 같은 번호로 버전을 봐요.</li><li>메인은 도우미 「STG 지금 적용」 화면 아래 <b>「체크한 것 메인에 반영」</b>으로만 바뀌어요(메인 시트 백업 후). 문제가 있으면 「되돌리기」.</li><li>STG 버전이 200개로 꽉 차면 STG 앱스크립트 › 프로젝트 기록에서 옛 버전을 지워요.</li></ul>'}
 };
@@ -4551,9 +4560,20 @@ try{acMount()}catch(x){}
 document.addEventListener('click',e=>{const b=e.target&&e.target.closest&&e.target.closest('#mailRetry');if(!b)return;call('mailRetry',[],r=>{if(r&&r.mail&&S.D)S.D.mail=r.mail;render();toast(r.sent?r.sent+'통 보냈어요'+(r.left?' · '+r.left+'통은 아직 못 보냄':''):'아직 보낼 수 없어요 · 내일 다시 눌러 주세요')},'메일을 보내고 있어요…')});
 </script>
 <script>
-/* 음악회 곡 목록 저장 (11-15) */
-document.addEventListener('input',e=>{const t=e.target;if(t&&t.dataset&&t.dataset.song!==undefined){(S.songEd||(S.songEd={}))[t.dataset.song]=t.value}});
-document.addEventListener('click',e=>{const b=e.target&&e.target.closest&&e.target.closest('#songSave');if(!b)return;const L=S.songEd||{},o={};Object.keys(L).forEach(k=>{o[k]=String(L[k]||'').split('\n').map(x=>x.trim()).filter(Boolean)});
-  call('songsSave',[o],r=>{if(S.D&&S.D.camp)S.D.camp.songs=r.songs;S.songEd=null;render();toast('곡 목록을 저장했어요 · '+r.n+'곡 · 신청서에 바로 나와요')},'곡 목록을 저장하고 있어요…')});
+/* 음악회 곡 목록 고치기 · 저장 (11-15) */
+function songSet(){S.songDirty=true}
+function songNextCode(inst,bk){const pre=(SONG_I.find(x=>x[0]===inst)||[])[1]||'X';if(!bk)return '';const L=S.songEd[inst]||[];const mx=L.filter(o=>o.bk===bk).reduce((m,o)=>Math.max(m,o.no||0),0);return pre+String(bk).padStart(2,'0')+'-'+String(Math.min(99,mx+1)).padStart(2,'0')}
+document.addEventListener('input',e=>{const t=e.target;if(!t||!t.dataset||t.dataset.sg===undefined)return;const [ix,f]=t.dataset.sg.split('|'),L=S.songEd[S.songI||'바이올린'];if(L&&L[+ix]){L[+ix][f]=t.value;if(!S.songDirty){songSet();const b=document.getElementById('songSave');if(b)b.disabled=false}}});
+document.addEventListener('click',e=>{const b=e.target&&e.target.closest&&e.target.closest('button');if(!b||!document.getElementById('songPanel')||!b.closest('#songPanel'))return;const d=b.dataset,cur=S.songI||'바이올린',L=S.songEd&&S.songEd[cur];
+  if(d.sgi){S.songI=d.sgi;render();return}
+  if(d.sgadd!==undefined){const bk=+d.sgadd;L.push({code:songNextCode(cur,bk),bk,no:0,title:'',comp:''});const o=L[L.length-1];o.no=+(o.code.slice(-2))||0;songSet();render();setTimeout(()=>{const ins=document.querySelectorAll('#songPanel [data-sg$="|title"]');const x=[...ins].find(z=>z.dataset.sg===L.indexOf(o)+'|title');if(x)x.focus()},30);return}
+  if(d.sgdel!==undefined){const o=L[+d.sgdel];if(o&&(!o.title||confirm('「'+o.title+'」을(를) 목록에서 뺄까요?'))){L.splice(+d.sgdel,1);songSet();render()}return}
+  if(d.sgmv){const [ix,dir]=d.sgmv.split('|').map(Number),o=L[ix],sib=L.filter(x=>x.bk===o.bk),k=sib.indexOf(o),t=sib[k+dir];if(!t)return;const a=L.indexOf(o),c=L.indexOf(t);L[a]=t;L[c]=o;
+    if(o.code&&t.code){const oc=o.code,on=o.no;o.code=t.code;o.no=t.no;t.code=oc;t.no=on}songSet();render();return}
+  if(b.id==='sgNewBkGo'){const n=+(document.getElementById('sgNewBk')||{}).value;if(!(n>=11&&n<=20)){toast('11~20 사이 권을 적어 주세요');return}L.push({code:songNextCode(cur,n),bk:n,no:1,title:'',comp:''});songSet();render();return}
+  if(b.id==='songReset'){if(!confirm('처음 목록(신청서에 들어 있던 기본 목록)으로 되돌릴까요? 저장해야 바뀌어요.'))return;const Df=(S.D&&S.D.songsDef)||{};SONG_I.forEach(([k])=>{S.songEd[k]=(Df[k]||[]).map(songParse)});songSet();render();return}
+  if(b.id==='songSave'){const o={};SONG_I.forEach(([k])=>{o[k]=(S.songEd[k]||[]).map(songStr).filter(Boolean)});
+    call('songsSave',[o],r=>{if(S.D&&S.D.camp)S.D.camp.songs=r.songs;S.songEd=null;S.songDirty=false;render();toast('곡 목록을 저장했어요 · '+r.n+'곡 · 신청서에 바로 나와요')},'곡 목록을 저장하고 있어요…');return}});
+(function(){const c=document.createElement('style');c.textContent='.sgbk{border-top:1px dashed var(--line);padding:8px 0}.sgrow{display:grid;grid-template-columns:64px minmax(0,1fr) 150px auto;gap:6px;align-items:center;margin-top:6px}.sgcode{font-size:12.5px;color:var(--faint);font-variant-numeric:tabular-nums}.sgbtn{display:flex;gap:4px}@media (max-width:700px){.sgrow{grid-template-columns:52px minmax(0,1fr)}.sgrow .sgcomp{grid-column:2}.sgrow .sgbtn{grid-column:2}}';document.head.appendChild(c)})();
 </script>
 </body></html>

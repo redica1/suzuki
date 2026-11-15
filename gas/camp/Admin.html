@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261115-213015 -->
+<!-- build: 20261115-213244 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -1779,6 +1779,12 @@ function bkPanel(){if(!S.bkA){if(!S.bkAL){S.bkAL=1;setTimeout(()=>call('campBank
   return `<div class="panel"><b>입금 안내 통장</b> <span class="hint">선생님 · 보호자 접수 화면과 접수 확인 메일에 보이는 계좌예요. 회원관리 › 통장 › 설정에 등록한 통장에서 골라요.</span>
   <div class="row" style="gap:8px;margin-top:8px;flex-wrap:wrap;align-items:center"><select id="bkSel" style="min-width:320px">${A.list.length?'':'<option value="">회원관리에 등록한 통장이 없어요</option>'}${A.list.map(x=>`<option value="${esc(x.id)}" ${sel&&sel.id===x.id?'selected':''}>${esc(x.name)} · ${esc(x.bank)} ${esc(x.acct)} · ${esc(x.holder)}</option>`).join('')}</select><button class="btn small primary" type="button" id="bkSave" ${A.list.length?'':'disabled'}>이 통장으로 안내</button></div>
   <p class="hint" style="margin:6px 0 0">지금 안내: ${c.acct?`<b>${esc(c.bank)} ${esc(c.acct)} · ${esc(c.holder)}</b>${c.auto?' (따로 고르지 않아 회원관리 첫 통장을 씀)':''}`:'<b style="color:#c0392b">없음 — 꼭 골라 주세요</b>'}</p></div>`}
+/* 음악회 곡 목록 (11-15 사용자): 학생이 신청서에서 고르는 곡 — 악기마다 한 줄에 한 곡 · 「V04-04 곡명 (작곡가)」 꼴이면 권 검사에도 씀 */
+function songPanel(){const P=(S.D&&S.D.camp&&S.D.camp.songs)||null,Df=(S.D&&S.D.songsDef)||{},I=['바이올린','첼로','비올라','플루트'];const L=S.songEd||(S.songEd={});
+  I.forEach(k=>{if(L[k]===undefined)L[k]=((P?P[k]:Df[k])||[]).join('\n')});
+  return `<div class="panel" id="songPanel"><div class="spread"><h3>음악회 곡 목록 <span class="hint">학생 카드 「연주곡」에서 고르는 목록 · 한 줄에 한 곡</span></h3><button class="btn small primary" type="button" id="songSave">곡 목록 저장</button></div>
+    <p class="hint" style="margin:0 0 8px">${P?'지금 신청서는 <b>이 목록</b>을 써요.':'아직 저장한 목록이 없어서 신청서에 <b>처음부터 들어 있는 목록</b>을 써요. 저장하면 이 목록으로 바뀌어요.'} 「V04-04 협주곡 가단조 1악장 (비발디)」처럼 앞에 악기 · 권 · 번호를 붙이면 책자 「곡 · 권 검사」에도 쓰여요. 목록에 없는 곡은 학생 카드에서 직접 적을 수 있어요.</p>
+    <div class="grid2" style="gap:10px">${I.map(k=>`<label class="f">${k} <span class="hint">${String(L[k]||'').split('\n').filter(x=>x.trim()).length}곡</span><textarea data-song="${k}" rows="10" style="font-size:14px;line-height:1.5">${esc(L[k]||'')}</textarea></label>`).join('')}</div></div>`}
 function vCamp(){if(!S.cc){S.cc=ccCopy();try{if(S.cc.doc&&S.cc.fees&&S.cc.rounds)feeAuto(S.cc)}catch(x){}}const c=S.cc;if(!c.base)return '<div class="panel hint">캠프 설정을 불러오지 못했어요. 「새로 불러오기」를 눌러 주세요.</div>';
   const b=c.base,R=c.rounds,o=c.opt,rf=c.refund;
   const inp=(p,type,extra)=>{const v=ccGet(p);return type==='check'?`<input type="checkbox" data-cc="${p}" ${v?'checked':''}>`:`<input type="${type==='num'?'text':type}" ${type==='num'?'inputmode="numeric" class="num"':''} data-cc="${p}" data-cct="${type}" value="${esc(type==='num'?(+v||0).toLocaleString('ko-KR'):v==null?'':v)}" ${extra||''}>`};
@@ -1815,6 +1821,7 @@ function vCamp(){if(!S.cc){S.cc=ccCopy();try{if(S.cc.doc&&S.cc.fees&&S.cc.rounds
     <table class="pft cct" style="width:auto"><thead><tr><th>음악회</th><th class="c">음원 받기</th><th class="c">접수 전에도<br><span class="hint">「음원 먼저 내기」</span></th><th>마감일</th><th></th></tr></thead><tbody>${(Array.isArray(c.cons)?c.cons:(c.cons=['오후','트와일라잇','이브닝'].slice())).map(k=>{c.aud=c.aud||{};c.aud[k]=c.aud[k]||{on:false,due:''};return `<tr class="${(c.aud[k]||{}).on?'':'off'}"><td><b>${esc(k)}</b></td><td class="c">${inp('aud.'+k+'.on','check')}</td><td class="c">${inp('aud.'+k+'.pre','check')}</td><td>${inp('aud.'+k+'.due','date')}</td><td><button class="btn small ghost" type="button" data-condel="${esc(k)}" ${c.cons.length<=1?'disabled':''}>빼기</button></td></tr>`}).join('')}</tbody></table>
     <div class="row" style="gap:6px;margin-top:8px;align-items:center"><input type="text" id="conNew" maxlength="12" placeholder="새 음악회 이름 (예: 갈라)" style="width:200px"><button class="btn small" type="button" id="conAdd" ${c.cons.length>=8?'disabled':''}>＋ 음악회 추가</button><span class="hint">음악회는 8개까지 · 이름은 12자까지 · 빼도 이미 그 음악회를 고른 접수는 그대로 남아요(다시 같은 이름으로 넣으면 이어져요) · 「저장」을 눌러야 반영</span></div>
     <p class="hint">심사 · 결과 공개는 「스케줄관리 › 음원 심사」에서 해요.</p></div>`:''}
+  ${songPanel()}
   <div class="panel"><div class="spread"><h3>취소 · 환불 규정 <span class="hint">공문처럼 「이 날부터 취소 수수료 n%」</span></h3><span class="row" style="gap:6px"><button class="btn small" type="button" data-dbd="def">시작일 기준 기본값</button><button class="btn small" type="button" data-dbd="add">＋ 구간 추가</button></span></div>
     ${dBandsHtml(c,true)}
     <div class="row" style="gap:16px;margin-top:6px;flex-wrap:wrap"><label class="row" style="gap:6px">${inp('refund.after.allow','check')} 캠프 시작 뒤에도 취소 요청 받기</label><label class="row" style="gap:6px">${inp('refund.duesRefund','check')} 연회비도 환불</label></div>
@@ -4475,7 +4482,7 @@ document.addEventListener('click',e=>{if(S.tab!=='book')return;const b=e.target.
   if(b.id==='ebSetSave'){const n=Object.assign(ebSet(),S.ebSetW||{});n.per=Math.max(1,Math.min(10,Math.round(+n.per||5)));n.fs=Math.max(5,Math.min(10,+n.fs||6.6));['en','sub','org'].forEach(k=>n[k]=String(n[k]||'').trim().slice(0,120));
     ebSend([],[],n,()=>{S.ebSetW=null;toast('책자 설정을 저장했어요')});return}},true);
 </script>
-<div id="bldMark" hidden>빌드표시 20261115-213015 </div>
+<div id="bldMark" hidden>빌드표시 20261115-213244 </div>
 <script>
 /* 관리자 상담 (11-15): 관리자 매뉴얼 글에서만 찾아 답함 (AI 아님 · 없는 답은 지어내지 않음). 장마다 t 제목 · q 찾는 말 · k 바로 갈 메뉴 · h 본문 */
 const AGD={
@@ -4542,5 +4549,11 @@ try{acMount()}catch(x){}
 <script>
 /* 못 보낸 메일 다시 보내기 (11-15) */
 document.addEventListener('click',e=>{const b=e.target&&e.target.closest&&e.target.closest('#mailRetry');if(!b)return;call('mailRetry',[],r=>{if(r&&r.mail&&S.D)S.D.mail=r.mail;render();toast(r.sent?r.sent+'통 보냈어요'+(r.left?' · '+r.left+'통은 아직 못 보냄':''):'아직 보낼 수 없어요 · 내일 다시 눌러 주세요')},'메일을 보내고 있어요…')});
+</script>
+<script>
+/* 음악회 곡 목록 저장 (11-15) */
+document.addEventListener('input',e=>{const t=e.target;if(t&&t.dataset&&t.dataset.song!==undefined){(S.songEd||(S.songEd={}))[t.dataset.song]=t.value}});
+document.addEventListener('click',e=>{const b=e.target&&e.target.closest&&e.target.closest('#songSave');if(!b)return;const L=S.songEd||{},o={};Object.keys(L).forEach(k=>{o[k]=String(L[k]||'').split('\n').map(x=>x.trim()).filter(Boolean)});
+  call('songsSave',[o],r=>{if(S.D&&S.D.camp)S.D.camp.songs=r.songs;S.songEd=null;render();toast('곡 목록을 저장했어요 · '+r.n+'곡 · 신청서에 바로 나와요')},'곡 목록을 저장하고 있어요…')});
 </script>
 </body></html>

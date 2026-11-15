@@ -1,4 +1,4 @@
-/* build: 20261115-213015 */
+/* build: 20261115-213244 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -1611,7 +1611,30 @@ function curRound_(c) {
 /** 접수 시작 전이면 시작일(yyyy-mm-dd), 아니면 ''. 시작일 = 캠프 설정 「접수 시작」, 없으면 1차 시작일. STG(설정 「테스트 로그인」 있음)는 언제나 열림 */
 function regPre_(c) { c = c || camp_(); try { if (String(setting_('테스트 로그인') || '').trim()) return ''; } catch (e) { } const o = String(c.base.open || (c.rounds[0] || {}).from || ''); return /^\d{4}-\d{2}-\d{2}$/.test(o) && today_() < o ? o : ''; }
 function regGate_() { const o = regPre_(); if (o) throw new Error('접수는 ' + (+o.slice(5, 7)) + '월 ' + (+o.slice(8, 10)) + '일부터 받아요. 그때 다시 와 주세요.'); }
-function campPublic_() { const c = camp_(), pp = parentPilot_(); return Object.assign({}, c, { ri: curRound_(c), pre: regPre_(c), pq: pp === null || pp.length > 0 }); }
+function campPublic_() { const c = camp_(), pp = parentPilot_(); return Object.assign({}, c, { ri: curRound_(c), pre: regPre_(c), pq: pp === null || pp.length > 0, songs: songList_() }); }
+/* ---- 음악회 곡 목록 (11-15 사용자: 학생이 고르는 곡 목록을 관리자가 직접) — 시트 「곡목록」 (악기 · 곡 · 순서). 비어 있으면 신청서에 들어 있는 기본 목록을 씀 ---- */
+const SONG_SH = '곡목록';
+function songList_() {
+  try { const j = CacheService.getScriptCache().get('songsJ'); if (j) return JSON.parse(j); } catch (e) {}
+  const sh = SpreadsheetApp.getActive().getSheetByName(SONG_SH); let o = null;
+  if (sh && sh.getLastRow() > 1) { o = {}; sh.getRange(2, 1, sh.getLastRow() - 1, 3).getValues().filter(r => String(r[0]).trim() && String(r[1]).trim()).sort((a, b) => (+a[2] || 0) - (+b[2] || 0)).forEach(r => { const k = String(r[0]).trim(); (o[k] = o[k] || []).push(String(r[1]).trim()); }); }
+  try { CacheService.getScriptCache().put('songsJ', JSON.stringify(o), 300); } catch (e) {}
+  return o;
+}
+function songDef_() { try { const h = HtmlService.createHtmlOutputFromFile('App1').getContent(), i = h.indexOf('const SONGS_DEF = {'), j = h.indexOf('};', i); if (i < 0 || j < 0) return {}; return (new Function('return ' + h.slice(i + 18, j + 1)))(); } catch (e) { return {}; } }
+function songsSave(token, o) {
+  const a = adm_(token); needSup_(a);
+  if (!o || typeof o !== 'object') throw new Error('저장할 곡 목록이 없어요.');
+  const rows = []; let n = 0;
+  Object.keys(o).slice(0, 10).forEach(k => { const inst = String(k).trim().slice(0, 10); if (!inst) return;
+    (Array.isArray(o[k]) ? o[k] : []).map(x => String(x || '').trim().slice(0, 120)).filter(Boolean).filter((x, i, A) => A.indexOf(x) === i).slice(0, 300).forEach(x => rows.push([inst, x, ++n])); });
+  const lock = lock_();
+  try { const ss = SpreadsheetApp.getActive(); let sh = ss.getSheetByName(SONG_SH); if (!sh) { sh = ss.insertSheet(SONG_SH); }
+    sh.clearContents(); sh.getRange(1, 1, 1, 3).setValues([['악기', '곡', '순서']]).setFontWeight('bold'); sh.setFrozenRows(1); if (rows.length) sh.getRange(2, 1, rows.length, 3).setValues(rows);
+    CacheService.getScriptCache().remove('songsJ'); campCacheClear_(); } finally { lock.releaseLock(); }
+  log_('관리자 ' + a.name, '곡 목록 저장', rows.length + '곡');
+  return { ok: true, n: rows.length, songs: songList_() };
+}
 function campGet(token) { const a = adm_(token); needSup_(a); return { camp: campPublic_(), subs: rows_(SH.SUB).filter(r => r['접수번호']).length }; }
 /** 공문 값 정리 (캠프 설정 저장 때) — 글자 수를 자르고, 한 칸(5만 자) 안에 들어가는지 확인 */
 function docClean_(d, nr) {
@@ -2170,6 +2193,7 @@ function bookCheckData(token) {
   const F = profs_().map(f => [f.name, f.org, f.inst]);
   // 곡 → 권: 신청서(App1) 곡 목록 「V04-04 협주곡 가단조 1악장 (비발디)」 = 바이올린 4권
   let G = []; try { const h = HtmlService.createHtmlOutputFromFile('App1').getContent(); const rx = /'([VC])(\d\d)-(\d\d) ([^']{2,80})'/g; let m; while ((m = rx.exec(h))) G.push([m[1], +m[2], m[4]]); } catch (x) {}
+  try { const so = songList_() || {}; Object.keys(so).forEach(k => so[k].forEach(x => { const m = String(x).match(/^([VCFA])(\d\d)-(\d\d) (.{2,80})$/); if (m && !G.some(g => g[0] === m[1] && g[1] === +m[2] && g[2] === m[4])) G.push([m[1], +m[2], m[4]]); })); } catch (x) {}   /* 관리자가 고친 곡 목록도 (11-15) */
   const C = camp_(); return { ok: true, year: +String(C.base.start || '').slice(0, 4) || new Date().getFullYear(), P, T, F, G };
 }
 /* ---------------- 책자 ↔ 구글 시트 (11-05) ----------------
@@ -2920,7 +2944,8 @@ function adminData(token) {
   const inst = {}; teachers_().forEach(t => inst['t_' + t.id] = t.inst); rows_(SH.S).forEach(r => inst[String(r['ID'])] = String(r['악기'] || ''));
   subs.forEach(sb => sb.ppl.forEach(p => { if (!p.inst) { const k = p.id.slice(sb.no.length + 1), i = (sb.form && sb.form.info && sb.form.info[k]) || {}; p.inst = i.inst || inst[k] || ''; } }));
   let mail = null; try { mail = mailStatus_(); } catch (e) {}
-  return { today: today_(), subs, admin, cx, teams: teams_(subs), issues: issues_(), profs: profs_(), me: me_(me), camp: campPublic_(), scholar: scholTiers_(), mail };
+  let songsDef = {}; try { songsDef = songDef_(); } catch (e) {}
+  return { today: today_(), subs, admin, cx, teams: teams_(subs), issues: issues_(), profs: profs_(), me: me_(me), camp: campPublic_(), scholar: scholTiers_(), mail, songsDef };
 }
 function setAdminCols_(pid, vals) {
   const sh = SpreadsheetApp.getActive().getSheetByName(SH.P);

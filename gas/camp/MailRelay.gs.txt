@@ -1,0 +1,39 @@
+/**
+ * 한국스즈키음악협회 메일 대신 보내기 (11-15)
+ *
+ * 무엇: 캠프 · 회원관리 앱이 보내는 메일을 협회 Google Workspace 계정(예: noreply@suzukimusickorea.org)
+ *       이름으로 대신 보내 주는 작은 스크립트. Workspace 계정은 하루 1,500명까지 보낼 수 있음.
+ *
+ * 놓는 법 (협회 Workspace 계정으로 로그인해서 한 번만):
+ *  1. script.google.com → 새 프로젝트 → 이름 「협회 메일 보내기」 → 이 파일 내용을 Code.gs 에 붙여 넣기 · 저장
+ *  2. 프로젝트 설정(톱니) → 스크립트 속성 → 추가: KEY = 아무도 모를 긴 글자 (예: 비밀번호 생성기로 40자)
+ *  3. 편집기에서 함수 「test」 를 한 번 실행 → 권한 허용 (내 메일로 시험 메일이 옴)
+ *  4. 배포 → 새 배포 → 유형 「웹 앱」 · 실행: 나 · 액세스: 모든 사용자 → 배포 → 웹 앱 URL 복사
+ *  5. 캠프 STG 스크립트 → 프로젝트 설정 → 스크립트 속성:
+ *       MAIL_RELAY_URL = 4번 URL,  MAIL_RELAY_KEY = 2번 KEY 와 같은 글자
+ *     (메인 캠프 스크립트에도 같은 두 줄. KEY 는 GitHub 이나 채팅에 올리지 않기)
+ *  6. 캠프 관리자 → 한눈에 → 「메일」 칸에 「noreply@… (대신 보내기)」 와 남은 수가 보이면 끝
+ */
+function doPost(e) {
+  let p = {};
+  try { p = JSON.parse((e && e.postData && e.postData.contents) || '{}'); } catch (x) { return out_({ ok: false, msg: 'bad json' }); }
+  const key = PropertiesService.getScriptProperties().getProperty('KEY');
+  if (!key || p.key !== key) return out_({ ok: false, msg: 'key' });
+  const from = Session.getEffectiveUser().getEmail();
+  if (p.op === 'quota') return out_({ ok: true, left: MailApp.getRemainingDailyQuota(), from });
+  const m = p.mail || {};
+  const to = String(m.to || '').split(',').map(s => s.trim()).filter(Boolean);
+  if (!to.length || to.length > 5) return out_({ ok: false, msg: 'to' });
+  if (MailApp.getRemainingDailyQuota() < to.length) return out_({ ok: false, msg: 'quota', left: MailApp.getRemainingDailyQuota(), from });
+  try {
+    MailApp.sendEmail({ to: to.join(','), subject: String(m.subject || '').slice(0, 250), body: String(m.body || ''), name: String(m.name || '한국스즈키음악협회') });
+  } catch (x) { return out_({ ok: false, msg: x.message, from }); }
+  return out_({ ok: true, left: MailApp.getRemainingDailyQuota(), from });
+}
+function doGet() { return out_({ ok: true, msg: 'POST only' }); }
+function out_(o) { return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON); }
+function test() {
+  const me = Session.getEffectiveUser().getEmail();
+  MailApp.sendEmail({ to: me, subject: '[협회 메일 보내기] 시험', body: '잘 됩니다. 오늘 남은 수: ' + MailApp.getRemainingDailyQuota(), name: '한국스즈키음악협회' });
+  Logger.log('보냄 · 남은 수 ' + MailApp.getRemainingDailyQuota());
+}

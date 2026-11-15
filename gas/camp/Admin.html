@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261115-104925 -->
+<!-- build: 20261115-141524 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -413,7 +413,9 @@ function vHome(){const st=stats();const t=(k,v,s,w,cls)=>`<div class="tile ${w?'
   const ins=[...new Set([...T,...Sx].map(x=>x.inst||'미정'))].sort(instSort);
   const live=people().filter(x=>x.p.status==='정상');const rp=live.filter(x=>x.p.pay==='신고');const rpAmt=rp.reduce((s,x)=>s+((repRow(x.p)||{}).a||0),0);
   const CX=(S.D.cx||[]).filter(c=>c.why!=='차액 환불'||true),sumCx=k=>CX.filter(c=>c.state===k).reduce((s,c)=>s+(+c.amt||0),0),nCx=k=>CX.filter(c=>c.state===k).length;
-  return `<div class="hsec"><h3>인원 <span class="hint">취소한 사람 빼고 · 통계와 같은 기준</span></h3><div class="tiles">
+  const ML=S.D.mail;const mlv=ML?`<div class="hsec mailst"><div class="spread"><h3>메일 <span class="hint">하루 보낼 수 있는 수 · 일반 Gmail 100명 · 협회 Workspace 1,500명</span></h3>${ML.fail?`<button class="btn small primary" type="button" id="mailRetry">못 보낸 메일 다시 보내기 (${ML.fail})</button>`:''}</div>
+    <p style="margin:4px 0 0">보내는 곳: <b>${esc(ML.via)}</b> · 오늘 남은 수 <b class="${ML.left!=null&&ML.left<20?'bad':''}">${ML.left==null?'-':ML.left}</b>${ML.fail?` · <b class="bad">못 보낸 메일 ${ML.fail}통</b> <span class="hint">(시트 「못 보낸 메일」)</span>`:' · 못 보낸 메일 없음'}</p></div>`:'';
+  return mlv+`<div class="hsec"><h3>인원 <span class="hint">취소한 사람 빼고 · 통계와 같은 기준</span></h3><div class="tiles">
     ${t('총 참가 인원',L.length+'명',`교사 ${T.length} · 학생 ${Sx.length}${fam?` · 가족 ${fam}`:''}`)}
     ${t('교사 인원',T.length+'명','교사 · 연수생 · 소속없는 중급연수생')}
     ${t('학생 인원',Sx.length+'명','학생 + 악기하는 교사자녀 + 비회원 학생')}
@@ -4473,7 +4475,7 @@ document.addEventListener('click',e=>{if(S.tab!=='book')return;const b=e.target.
   if(b.id==='ebSetSave'){const n=Object.assign(ebSet(),S.ebSetW||{});n.per=Math.max(1,Math.min(10,Math.round(+n.per||5)));n.fs=Math.max(5,Math.min(10,+n.fs||6.6));['en','sub','org'].forEach(k=>n[k]=String(n[k]||'').trim().slice(0,120));
     ebSend([],[],n,()=>{S.ebSetW=null;toast('책자 설정을 저장했어요')});return}},true);
 </script>
-<div id="bldMark" hidden>빌드표시 20261115-104925 </div>
+<div id="bldMark" hidden>빌드표시 20261115-141524 </div>
 <script>
 /* 관리자 상담 (11-15): 관리자 매뉴얼 글에서만 찾아 답함 (AI 아님 · 없는 답은 지어내지 않음). 장마다 t 제목 · q 찾는 말 · k 바로 갈 메뉴 · h 본문 */
 const AGD={
@@ -4535,4 +4537,8 @@ document.addEventListener('submit',e=>{if(e.target&&e.target.id==='acForm'){e.pr
 try{acMount()}catch(x){}
 </script>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();</script>
+<script>
+/* 못 보낸 메일 다시 보내기 (11-15) */
+document.addEventListener('click',e=>{const b=e.target&&e.target.closest&&e.target.closest('#mailRetry');if(!b)return;call('mailRetry',[],r=>{if(r&&r.mail&&S.D)S.D.mail=r.mail;render();toast(r.sent?r.sent+'통 보냈어요'+(r.left?' · '+r.left+'통은 아직 못 보냄':''):'아직 보낼 수 없어요 · 내일 다시 눌러 주세요')},'메일을 보내고 있어요…')});
+</script>
 </body></html>

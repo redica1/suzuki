@@ -1,4 +1,4 @@
-/* build: 20261115-104925 */
+/* build: 20261115-141524 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -384,7 +384,7 @@ function intlLogin(email, code, agree) {
 }
 /** 코드 없이 새 단체 만들기 (11-15): 대표가 단체 이름 · 나라 · 이름 · 이메일만 넣으면 단체가 만들어지고 바로 들어감.
  *  접속 코드는 화면에 한 번 보여 주고 그 이메일로도 보냄(다음에 들어올 때 씀). 이미 있는 이메일이면 단체를 새로 만들지 않고 코드를 그 이메일로 다시 보냄 */
-function intlMail_(g, why) { try { MailApp.sendEmail(g.email, '[' + camp_().base.name.replace('스즈키 겨울 음악제', 'Suzuki Winter Music Camp') + '] Your access code', 'Group: ' + g.name + '\nAccess code: ' + g.code + '\n\nSign in again at https:\/\/app.suzukimusickorea.org/camp/intl.html with this email and code.\n(' + why + ')'); return true; } catch (e) { return false; } }
+function intlMail_(g, why) { return sendMail_({ to: g.email, subject: '[' + camp_().base.name.replace('스즈키 겨울 음악제', 'Suzuki Winter Music Camp') + '] Your access code', name: 'Suzuki Association of Korea', body: 'Group: ' + g.name + '\nAccess code: ' + g.code + '\n\nSign in again at https:\/\/app.suzukimusickorea.org/camp/intl.html with this email and code.\n(' + why + ')', kind: '해외 코드' }); }
 function intlSignup(o, agree) {
   const C = camp_(); if (C.base.intl === false) return { ok: false, msg: 'Overseas registration is closed. Please contact the association.' };
   o = o || {}; const name = String(o.name || '').trim().replace(/\s+/g, ' ').replace(/[·|,]/g, ' ').slice(0, 40), email = String(o.email || '').trim().toLowerCase(), lead = String(o.lead || '').trim().slice(0, 40), country = String(o.country || '').trim().slice(0, 30);
@@ -831,7 +831,7 @@ function parentLookup(name, phone, pin) {
 function parentMail_(r, title, lines) {
   if (!r || !r.email) return false;
   try { const C = camp_(), url = 'https:\/\/app.suzukimusickorea.org/camp/parent.html' + (String(setting_('테스트 로그인') || '').trim() ? '?test' : '');
-    MailApp.sendEmail({ to: r.email, subject: '[' + C.base.name + '] ' + title, name: '한국스즈키음악협회', body: r.name + '님,\n\n' + title + '.\n\n' + lines.join('\n') + '\n\n내 신청 보기 · 입금 신고 · 취소: ' + url + '\n(이름 · 휴대전화 · 비밀번호 4자리로 들어와요)\n\n궁금한 점은 다니는 학원 선생님께 여쭤 주세요.' }); return true; } catch (e) { try { log_('시스템', '학부모 메일 실패', String(e)); } catch (x) {} return false; }
+    return sendMail_({ kind: '학부모', to: r.email, subject: '[' + C.base.name + '] ' + title, name: '한국스즈키음악협회', body: r.name + '님,\n\n' + title + '.\n\n' + lines.join('\n') + '\n\n내 신청 보기 · 입금 신고 · 취소: ' + url + '\n(이름 · 휴대전화 · 비밀번호 4자리로 들어와요)\n\n궁금한 점은 다니는 학원 선생님께 여쭤 주세요.' }); return true; } catch (e) { try { log_('시스템', '학부모 메일 실패', String(e)); } catch (x) {} return false; }
 }
 /* 학원이 학부모 신청을 담아 접수를 저장하면: 확정 금액이 바뀌었을 때만 메일 (추가레슨 · 마스터클래스 넣거나 바꿨을 때 포함) */
 function parentNotifySubs_(nos) {
@@ -2892,7 +2892,8 @@ function adminData(token) {
   // 통계용: 예전 접수라 사람마다 악기가 비어 있으면 명단에서 채워서 보냄 (시트에는 안 씀)
   const inst = {}; teachers_().forEach(t => inst['t_' + t.id] = t.inst); rows_(SH.S).forEach(r => inst[String(r['ID'])] = String(r['악기'] || ''));
   subs.forEach(sb => sb.ppl.forEach(p => { if (!p.inst) { const k = p.id.slice(sb.no.length + 1), i = (sb.form && sb.form.info && sb.form.info[k]) || {}; p.inst = i.inst || inst[k] || ''; } }));
-  return { today: today_(), subs, admin, cx, teams: teams_(subs), issues: issues_(), profs: profs_(), me: me_(me), camp: campPublic_(), scholar: scholTiers_() };
+  let mail = null; try { mail = mailStatus_(); } catch (e) {}
+  return { today: today_(), subs, admin, cx, teams: teams_(subs), issues: issues_(), profs: profs_(), me: me_(me), camp: campPublic_(), scholar: scholTiers_(), mail };
 }
 function setAdminCols_(pid, vals) {
   const sh = SpreadsheetApp.getActive().getSheetByName(SH.P);
@@ -3064,6 +3065,44 @@ function adminRefund(token, row, action, date, memo, amt) {
   return adminData(token);
 }
 
+/* ---------------- 메일 보내기 (11-15) ----------------
+ * 하루 보낼 수 있는 수: 일반 Gmail 100명 · Google Workspace 1,500명 (받는 사람 기준, 첫 메일부터 24시간).
+ * 협회 Workspace 계정이 생기면 그 계정의 「메일 보내기」 스크립트(gas/camp/MailRelay.gs.txt)를 웹앱으로 배포하고,
+ * 이 스크립트 속성에 MAIL_RELAY_URL · MAIL_RELAY_KEY 를 넣으면 그 계정으로 보냄(키는 GitHub 에 두지 않음).
+ * 둘 다 못 보내면 시트 「못 보낸 메일」에 남김 → 관리자 한눈에서 다시 보내기. */
+function mailProps_() { const P = PropertiesService.getScriptProperties(); return { url: String(P.getProperty('MAIL_RELAY_URL') || '').trim(), key: String(P.getProperty('MAIL_RELAY_KEY') || '').trim() }; }
+function relaySend_(m) {
+  const R = mailProps_(); if (!R.url || !R.key) return { ok: false, msg: 'no relay' };
+  try { const res = UrlFetchApp.fetch(R.url, { method: 'post', contentType: 'application/json', muteHttpExceptions: true, followRedirects: true, payload: JSON.stringify({ key: R.key, op: m ? 'send' : 'quota', mail: m || null }) });
+    const o = JSON.parse(res.getContentText() || '{}'); return o && typeof o === 'object' ? o : { ok: false, msg: 'bad reply' }; } catch (e) { return { ok: false, msg: e.message }; }
+}
+function mailFailSheet_() { const ss = SpreadsheetApp.getActive(); let sh = ss.getSheetByName('못 보낸 메일'); if (!sh) { sh = ss.insertSheet('못 보낸 메일'); sh.appendRow(['때', '종류', '받는 사람', '제목', '내용', '보내는 이름', '까닭', '다시 보낸 때']); sh.setFrozenRows(1); } return sh; }
+function sendMail_(m) {
+  const to = String(m.to || '').trim(); if (!to) return false;
+  const mail = { to, subject: String(m.subject || '').slice(0, 250), body: String(m.body || ''), name: m.name || '한국스즈키음악협회' };
+  let why = '';
+  const r = relaySend_(mail); if (r.ok) return true; if (r.msg !== 'no relay') why = '대신 보내기: ' + r.msg + ' · ';
+  try { if (MailApp.getRemainingDailyQuota() > 0) { MailApp.sendEmail(mail); return true; } why += '오늘 보낼 수 있는 수를 다 씀'; } catch (e) { why += e.message; }
+  try { mailFailSheet_().appendRow([stamp_(), m.kind || '', to, mail.subject, mail.body, mail.name, why, '']); } catch (e) {}
+  return false;
+}
+/** 관리자 한눈에: 오늘 남은 수 · 보내는 계정 · 못 보낸 메일 */
+function mailStatus_() {
+  let left = null, via = 'Apps Script 계정', rl = null;
+  const R = mailProps_(); if (R.url && R.key) { rl = relaySend_(null); if (rl.ok) { via = rl.from ? rl.from + ' (대신 보내기)' : '협회 계정 (대신 보내기)'; left = rl.left; } else via = '대신 보내기 안 됨: ' + rl.msg + ' → Apps Script 계정'; }
+  let own = null; try { own = MailApp.getRemainingDailyQuota(); } catch (e) {}
+  let fail = 0; try { const sh = SpreadsheetApp.getActive().getSheetByName('못 보낸 메일'); if (sh && sh.getLastRow() > 1) fail = sh.getRange(2, 8, sh.getLastRow() - 1, 1).getValues().filter(v => !String(v[0]).trim()).length; } catch (e) {}
+  return { via, left: left != null ? left : own, own, fail, relay: !!(R.url && R.key) };
+}
+/** 못 보낸 메일 다시 보내기 (관리자) */
+function mailRetry(token) {
+  adm_(token); const sh = SpreadsheetApp.getActive().getSheetByName('못 보낸 메일'); if (!sh || sh.getLastRow() < 2) return { ok: true, sent: 0, left: 0, mail: mailStatus_() };
+  const V = sh.getRange(2, 1, sh.getLastRow() - 1, 8).getValues(); let sent = 0, left = 0;
+  V.forEach((r, i) => { if (String(r[7]).trim()) return; const mail = { to: String(r[2]), subject: String(r[3]), body: String(r[4]), name: String(r[5] || '한국스즈키음악협회') };
+    let ok = relaySend_(mail).ok; if (!ok) { try { if (MailApp.getRemainingDailyQuota() > 0) { MailApp.sendEmail(mail); ok = true; } } catch (e) {} }
+    if (ok) { sh.getRange(i + 2, 8).setValue(stamp_()); sent++; } else left++; });
+  return { ok: true, sent, left, mail: mailStatus_() };
+}
 /* ---------------- 알림·기록 ---------------- */
 function mail_(sb, u) {
   try {
@@ -3072,8 +3111,8 @@ function mail_(sb, u) {
     const body = `${camp_().base.name} 접수가 완료되었어요.\n\n접수번호: ${sb.no}\n학원: ${sb.acad}\n접수 교사: ${u.name}\n차수: ${sb.round}\n인원: ${live.length}명\n입금하실 금액: ${bill.toLocaleString('ko-KR')}원\n\n` +
       live.map(p => `- ${p.name} (${p.type}) ${((+p.fee || 0) + (+p.lesson || 0) + (+p.dues || 0) + (+p.room || 0)).toLocaleString('ko-KR')}원`).join('\n') +
       `\n\n입금한 뒤 접수 화면의 「내 접수」에서 사람별로 입금 신고를 해 주세요.`;
-    if (sb.email) MailApp.sendEmail(sb.email, `[${camp_().base.name}] 접수 완료 ${sb.no}`, body);
-    if (ADMIN_EMAIL) MailApp.sendEmail(ADMIN_EMAIL, `[캠프 접수] ${sb.acad} ${sb.no} · ${live.length}명`, body);
+    if (sb.email) sendMail_({ kind: '접수 완료', to: sb.email, subject: `[${camp_().base.name}] 접수 완료 ${sb.no}`, body, name: '한국스즈키음악협회' });
+    if (ADMIN_EMAIL) sendMail_({ kind: '관리자 알림', to: ADMIN_EMAIL, subject: `[캠프 접수] ${sb.acad} ${sb.no} · ${live.length}명`, body, name: '한국스즈키음악협회' });
   } catch (e) { log_('시스템', '메일 실패', String(e)); }
 }
 /* ---------------- 게시판 게시판 (「문의」 시트) ----------------

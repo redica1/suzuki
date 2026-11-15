@@ -1,4 +1,4 @@
-/* build: 20261115-213244 */
+/* build: 20261115-222549 */
     ps.forEach(p=>{p.pay='신고';p.rep=rep;delete S.rpRow[p.id]});S.afterSave=()=>repDone(ps.map(p=>p.id));subSave();S.rp=null;S.rpOpen=false;S.rpMemo=undefined;render();toast(`${ps.length}명 입금 신고를 보냈어요 · 운영진이 확인하면 「입금 확인」으로 바뀌어요`);return}
   if(b.id==='rpFill'){const n=document.getElementById('rpAllN').value.trim(),dd=document.getElementById('rpAllD').value;S.rpAllN=n;S.rpAllD=dd;const sel=S.rp||[];
     if(!n&&!dd){toast('적용할 입금자명이나 입금일을 적어 주세요');return}unpaidPpl().filter(x=>sel.includes(x.p.id)).forEach(({p})=>{const v=rpv(p);if(n)v.n=n;if(dd)v.d=dd});render();toast(`선택한 ${sel.length}명에게 적용했어요`);return}
@@ -245,7 +245,7 @@ const GD={
  consent:{t:'개인정보 동의',q:['개인정보','동의','14세','보호자 동의','제3자','숙소에 제공'],h:'<ul><li>접수 전에 동의를 받아요: <b>개인정보 수집 · 이용</b> · <b>제3자 제공</b>(숙소에 이름 · 성별 · 학원만, 객실 배정용) · <b>만 14세 미만 보호자 동의</b> · <b>취소 · 환불 규정 확인</b></li><li>선생님이 접수할 때는 만 14세 미만 학생의 보호자에게 알리고 동의를 받았다는 뜻이에요.</li></ul>'},
  login:{t:'로그인 · 가입',q:['로그인이 안','비밀번호','비번','아이디','이메일','가입','계정','승인','인증','들어가지','안 열려'],h:'<ul><li>회원 선생님은 <b>회원관리 이메일 · 비밀번호</b>로 들어와요. 캠프용 계정이 따로 없어요.</li><li>비밀번호를 잊었으면 회원관리에서 「비밀번호 찾기」를 해요.</li><li>계정이 없으면 「선생님 가입하기」에서 이름 · 휴대전화로 본인 확인을 하고 계정을 만들어요. 협회가 승인하면 이메일로 알려 드리고, 그때부터 로그인할 수 있어요.</li><li>회원관리에서 직급(원장 등)이 바뀌었으면 로그아웃 후 다시 로그인해요.</li><li>비회원 보호자는 계정 없이 이름 · 휴대전화로 들어와요.</li></ul>'},
  intl:{t:'해외 참가',q:['해외','외국','overseas','english','영어','달러','usd','international'],h:'<ul><li>해외 단체는 첫 화면의 <b>「Overseas participants · 해외 참가」</b> 카드로 들어가요. 영어 화면이에요.</li><li>해외 단체 담당자가 단체 명단을 한꺼번에 넣어요.</li><li>국내 학원 학생 · 선생님은 이 카드를 쓰지 않아요.</li></ul>'},
- ask:{t:'문의 · 게시판',q:['문의','질문','게시판','연락','전화','카톡','카카오톡','메일','운영진','협회에 묻','답이 없'],h:'<ul><li>궁금한 점은 <b>캠프 게시판</b>에 남겨 주세요. 운영진이 게시판에서 답해요.</li><li>공문 안내: 카카오톡 <b>suzukimusickorea</b> 또는 메일 suzukimusickorea1995@gmail.com</li><li>캠프 중 아이 안전 같은 급한 일만 운영실로 전화해 주세요.</li></ul>'}
+ ask:{t:'문의 · 게시판',q:['메뉴','햄버거','내 글 보기','내 글','요청사항 보기','방 요청 보기','로그아웃 어디','문의','질문','게시판','연락','전화','카톡','카카오톡','메일','운영진','협회에 묻','답이 없'],h:'<ul><li>로그인하면 위 오른쪽에 <b>「내 접수」</b>와 <b>☰ 메뉴</b>(내 이름)가 있어요. 메뉴 안에 시간표 · 게시판 · <b>내 글 보기</b> · 분실물 · 로그아웃이 있어요.</li><li><b>내 글 보기</b>: 내가 올린 게시판 글과 운영진 답, 그리고 <b>접수 때 남긴 요청</b>(방 요청 · 가족방 요청 · 운영진에게 남길 말)을 한곳에서 봐요. 새 답이 오면 메뉴에 빨간 점이 떠요.</li><li>궁금한 점은 <b>캠프 게시판</b>에 남겨 주세요. 운영진이 게시판에서 답해요.</li><li>공문 안내: 카카오톡 <b>suzukimusickorea</b> 또는 메일 suzukimusickorea1995@gmail.com</li><li>캠프 중 아이 안전 같은 급한 일만 운영실로 전화해 주세요.</li></ul>'}
 };
 const GD_ORDER=['first','when','who','login','mem','type','fee','dues','birth','steps','taken','lesson','concert','audio','ens','room','head','guest','staff','parent','parentT','intl','consent','pay','refund','cancel','mine','meal','camp','ask'];let GD_CUR='first',GD_LAST=null;
 const gdH=x=>typeof x.h==='function'?x.h():x.h;
@@ -580,3 +580,14 @@ document.addEventListener('click',e=>{const nb=e.target&&e.target.closest&&e.tar
 window.addEventListener('scroll',()=>{clearTimeout(nextGate.t);nextGate.t=setTimeout(nextGate,60)},{passive:true});window.addEventListener('resize',()=>setTimeout(nextGate,60));
 new MutationObserver(()=>{clearTimeout(nextGate.m);nextGate.m=setTimeout(nextGate,80)}).observe(document.getElementById('app')||document.body,{childList:true,subtree:true});
 (function(){const c=document.createElement('style');c.textContent='.gated{opacity:.85}.doneBig{width:100%;min-height:54px;font-size:18px;margin-top:12px}';document.head.appendChild(c)})();
+/* 햄버거 메뉴 (11-15) — 열고 닫기 · 메뉴 안 버튼은 원래 처리(App6 click)가 하고 메뉴만 닫음 */
+function hdMenuSet(open){const d=document.getElementById('hdDrop'),b=document.getElementById('hdMenu');if(!d||!b)return;d.hidden=!open;b.setAttribute('aria-expanded',String(!!open));if(open){const f=d.querySelector('.hdi:not([hidden])');if(f)f.focus({preventScroll:true})}}
+document.addEventListener('click',e=>{const t=e.target;const mb=t.closest&&t.closest('#hdMenu');if(mb){const d=document.getElementById('hdDrop');hdMenuSet(d&&d.hidden);return}
+  const it=t.closest&&t.closest('#hdDrop .hdi');if(it){hdMenuSet(false);if(it.id==='hdQ'){openQ();return}if(it.id==='hdMyQ'){S.qSeen=Object.assign(S.qSeen||{},Object.fromEntries((S.qMine||[]).filter(x=>x.reply).map(x=>[x.no,1])));openQ();setTimeout(()=>{const m=document.getElementById('qMineBox');if(m)m.scrollIntoView({block:'start',behavior:'smooth'})},250);return}return}
+  if(!(t.closest&&t.closest('#hdDrop')))hdMenuSet(false)});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){const d=document.getElementById('hdDrop');if(d&&!d.hidden){hdMenuSet(false);const b=document.getElementById('hdMenu');if(b)b.focus()}}});
+/* 내 글 보기에 「접수 때 남긴 요청」 (11-15 사용자) — 내 접수의 방 요청 · 가족방 요청 · 운영진에게 남길 말. 고치기는 「내 접수 › 보기」에서 (접수번호는 안 보여 줌) */
+function myReqBox(){const L=[];(MY_SUBS||[]).filter(sb=>sb.owner===(S.user&&S.user.name)&&sb.ppl.some(p=>p.status!=='취소')).forEach(sb=>{const f=sb.form||{},d=sb.date||'',P=k=>sb.ppl.find(q=>q.id===sb.no+'_'+k);
+    if(f.note)L.push({d,k:'운영진에게 남길 말',t:f.note,a:sb.acad});if(f.rnote)L.push({d,k:'방 요청',t:f.rnote,a:sb.acad});
+    Object.keys(f.rreq||{}).forEach(k=>{const p=P(k);if(f.rreq[k]&&p&&p.status!=='취소')L.push({d,k:'가족방 요청 · '+p.name,t:f.rreq[k],a:sb.acad})})});
+  return `<div class="panel" id="qReqBox" style="display:grid;gap:8px"><b>접수 때 남긴 요청 ${L.length}</b>${L.length?L.map(x=>`<div class="qitem"><div class="spread"><span><b>${esc(x.k)}</b> · ${esc(x.a)}</span><small class="hint">${esc(x.d?kday(x.d):'')}</small></div><div style="white-space:pre-wrap">${esc(x.t)}</div></div>`).join('')+'<p class="hint" style="margin:0">고치려면 「내 접수」에서 그 사람 「보기」를 눌러요. 운영진 답은 게시판 글로 와요.</p>':'<p class="hint" style="margin:0">접수할 때 남긴 방 요청 · 가족방 요청 · 운영진에게 남길 말이 없어요.</p>'}</div>`}

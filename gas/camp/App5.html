@@ -1,4 +1,4 @@
-/* build: 20261115-213244 */
+/* build: 20261115-222549 */
   if(!open.length) return MY_SUBS.length?`<div class="panel rp">${bankHTML()}<span class="hint">지금 입금할 금액이 없어요.</span></div>`:'';
   /* 평소엔 한 줄로 접어 둠: 「입금 신고하기」를 누르면 펼침 (11-03) */
   if(!S.rpOpen){const due=open.reduce((t,x)=>t+dueOf(x.p),0);return `<div class="panel rp">${bankHTML()}<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><span><b>입금 필요 ${open.length}명</b> · <b class="num">${won(due)}</b> <span class="hint">입금한 뒤 알려 주세요</span></span><button class="btn primary" type="button" data-rpopen="1">입금 신고하기</button></div></div>`}
@@ -234,7 +234,7 @@ function vQ(){const mine=S.qMine||[];const login=!!S.user;
     <label class="f" for="qPic">화면 사진 <span class="hint">있으면 · 5MB까지</span><input type="file" id="qPic" accept="image/\x2a"></label>
     <div class="row" style="justify-content:flex-end"><span class="err" id="qErr" style="margin-right:auto"></span><button class="btn primary" type="button" id="qSend">올리기</button></div>
   </div>
-  ${login?`<div class="panel" style="display:grid;gap:8px"><b>내가 올린 글 ${mine.length}</b>${mine.length?mine.map(x=>`<div class="qitem"><div class="spread"><span><b class="num">${esc(x.no)}</b> · ${esc(String(x.at).slice(5,16))} · ${esc(x.where)}</span>${qPill(x.state)}</div><div style="white-space:pre-wrap">${esc(x.text)}</div>${x.pic?'<small class="hint">사진 첨부함</small>':''}${x.reply?`<div class="reply"><b>운영진 답변</b>${x.done?` <small class="hint">${kday(x.done)}</small>`:''}<div style="white-space:pre-wrap">${esc(x.reply)}</div></div>`:''}</div>`).join(''):'<p class="hint" style="margin:0">아직 올린 글이 없어요.</p>'}</div>`:`<p class="hint">로그인하면 내가 올린 글과 운영진 답변을 여기서 볼 수 있어요.</p>`}
+  ${login?`<div class="panel" id="qMineBox" style="display:grid;gap:8px"><b>내가 올린 글 ${mine.length}</b>${mine.length?mine.map(x=>`<div class="qitem"><div class="spread"><span><b class="num">${esc(x.no)}</b> · ${esc(String(x.at).slice(5,16))} · ${esc(x.where)}</span>${qPill(x.state)}</div><div style="white-space:pre-wrap">${esc(x.text)}</div>${x.pic?'<small class="hint">사진 첨부함</small>':''}${x.reply?`<div class="reply"><b>운영진 답변</b>${x.done?` <small class="hint">${kday(x.done)}</small>`:''}<div style="white-space:pre-wrap">${esc(x.reply)}</div></div>`:''}</div>`).join(''):'<p class="hint" style="margin:0">아직 올린 글이 없어요.</p>'}</div>${myReqBox()}`:`<p class="hint">로그인하면 내가 올린 글과 운영진 답변을 여기서 볼 수 있어요.</p>`}
   </section>`}
 /* ---------- 내 시간표 (운영진이 「시간표 공개」를 켜면) ---------- */
 const tmin=t=>{const [h,m]=String(t).split(':').map(Number);return h*60+m};

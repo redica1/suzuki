@@ -1,4 +1,4 @@
-/* build: 20261115-213244 */
+/* build: 20261115-222549 */
   if(S.ttDay==null){const td=ttToday(days);S.ttDay=td!=null?td:(mine.length?Math.min(...mine.map(x=>x.d)):0)}
   if(tab==='me')return head+seg+(T.prof?`<p class="hint" style="margin:0 0 6px">교수 · 레슨실 <b>${esc(T.prof.room||'미정')}</b></p>`:'')+ttMineList(T,days,mine)+'</section>';
   const AC=S.user.acads||[];if(S.ttAcad&&!AC.includes(S.ttAcad))S.ttAcad='';
@@ -26,7 +26,14 @@ function fillAcct_(){const m=S.myAcct;if(!m||!m.acct)return;ACCT_SETS.forEach(([
 try{new MutationObserver(fillAcct).observe(document.documentElement,{childList:true,subtree:true})}catch(e){}
 function fillBanks(){const d=document.getElementById('bankList');if(d&&!d.children.length)d.innerHTML=BANKS.map(b=>`<option value="${b}">`).join('')}
 /* 머리 버튼: 로그인 전 「로그인」 · 뒤 「내 접수 · 로그아웃」 (모든 화면에서) */
-function hdSync(){['hdMine','hdOut'].forEach(id=>{const x=document.getElementById(id);if(x)x.hidden=!S.user});const x=document.getElementById('hdIn');if(x)x.hidden=!!S.user;const m=document.getElementById('hdMine');if(m)m.hidden=!S.user||S.view==='mine';const t=document.getElementById('hdTT');if(t)t.hidden=!S.user||S.user.guest||S.view==='tt';const l=document.getElementById('hdLost');if(l)l.hidden=!S.user||S.view==='lost';const py=document.getElementById('hdPay');if(py)py.hidden=!S.user||!S.myPay||S.view==='pay'}
+function hdSync(){const u=!!S.user,$=id=>document.getElementById(id);
+  if($('hdIn'))$('hdIn').hidden=u;if($('hdMine'))$('hdMine').hidden=!u||S.view==='mine';if($('qBtn'))$('qBtn').hidden=u;if($('hdMenu'))$('hdMenu').hidden=!u;if(!u&&$('hdDrop'))$('hdDrop').hidden=true;
+  if($('hdWho'))$('hdWho').textContent=u?(S.user.name?S.user.name+(S.user.guest?'':' 선생님'):'메뉴'):'메뉴';
+  const on=(id,c)=>{const e=$(id);if(e)e.classList.toggle('on',!!c)};on('hdMine',S.view==='mine');on('hdTT',S.view==='tt');on('hdQ',S.view==='q');on('hdLost',S.view==='lost');on('hdPay',S.view==='pay');
+  if($('hdTT'))$('hdTT').hidden=!u||!!(S.user&&S.user.guest);if($('hdPay'))$('hdPay').hidden=!u||!S.myPay;
+  const nw=(S.qMine||[]).some(x=>x.reply&&!(S.qSeen||{})[x.no]);if($('hdDot'))$('hdDot').hidden=!nw;if($('hdDot2'))$('hdDot2').hidden=!nw;
+  if(u&&S.token&&S.qMine===undefined&&!S.qMineL){S.qMineL=1;try{google.script.run.withSuccessHandler(r=>{S.qMine=(r&&r.mine)||[];hdSync()}).withFailureHandler(()=>{}).myIssues(S.token)}catch(e){}}   /* 내 글 답 빨간 점용 */
+  if(!u){S.qMine=undefined;S.qMineL=0}}
 function render(){fillBanks();hdSync();
   {const st=document.getElementById('steps');if(st)st.hidden=S.view==='audpre'||S.view==='mine'||S.view==='q'||!!(S.editNo&&S.quickEdit)}
   if(S.view==='pay'){const L=S.myPay||[],tx=x=>{const g=+x.g||0,f=v=>Math.floor(v/10)*10,it=x.rate==='3.3'?f(g*0.03):x.rate==='8.8'?f(g*0.4*0.2):0,lt=f(it*0.1);return {it,lt,net:g-it-lt}},W=v=>(+v||0).toLocaleString('ko-KR')+'원';

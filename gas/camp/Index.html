@@ -1,4 +1,4 @@
-<!doctype html><!-- build: 20261115-213244 --><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}
+<!doctype html><!-- build: 20261115-222549 --><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}
 /* 내 접수 표 (11-01): 관리자 표처럼 한 줄씩 */
 .mtbl{width:100%;border-collapse:collapse;font-size:15px;letter-spacing:-.02em;white-space:nowrap}
 .mtbl th{font-size:14px;font-weight:700;color:var(--ink);background:var(--sunk);text-align:center;padding:6px 8px;border-bottom:1px solid var(--line)}
@@ -55,6 +55,10 @@
 .num,.tile .v,input.num{font-variant-numeric:tabular-nums}/*mono*/
 .mtbl td.nm label{display:inline-grid;justify-items:start;gap:1px;line-height:1.25}.mtbl td.nm .kind{font-size:11px;padding:0 6px;line-height:1.5}.mtbl td.nm b{white-space:nowrap}.mtbl.colfix td.nm{overflow:visible;text-overflow:clip}   /* 11-15: 이름은 무조건 다 보이게 · 구분 태그는 이름 왼쪽 위 */
 .baseLes{display:grid;gap:2px;padding:8px 10px;border:1px dashed var(--line,#cfe5e4);border-radius:10px;margin:0 0 8px}
+.hdtools{position:relative}.hdMenuBtn{display:inline-flex;align-items:center;gap:7px}.hdMenuBtn .hb{display:inline-grid;gap:3px;width:16px}.hdMenuBtn .hb i{display:block;height:2px;border-radius:2px;background:currentColor}
+.hdDrop{position:absolute;right:0;top:calc(100% + 6px);z-index:80;min-width:200px;background:#fff;color:#16292b;border-radius:14px;box-shadow:0 12px 32px rgba(0,0,0,.18);padding:6px;display:grid}.hdDrop[hidden]{display:none}
+.hdDrop .hdi{all:unset;cursor:pointer;display:flex;align-items:center;gap:8px;padding:11px 14px;border-radius:10px;font-size:16px;font-weight:600}.hdDrop .hdi:hover,.hdDrop .hdi:focus-visible{background:#eef8f7}.hdDrop .hdi[hidden]{display:none}.hdDrop .hdi.on{color:#0f8a86}.hdDrop .hdi.out{border-top:1px solid #e3eeed;margin-top:4px;color:#b91c1c}
+.hdDot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#ef4444;margin-left:2px}.hdDot[hidden]{display:none}
 </style></head><body>
 <base target="_top">
 <script>/* 화면이 하얗게 될 때 원인을 화면에 보여 주는 진단 — STG(설정 「테스트 로그인」이 있을 때)만 보임, 메인에서는 조용히 (10-31) */
@@ -459,12 +463,18 @@ h1,h2,h3,.band h1,.sec>h2,.card h2{font-weight:800;letter-spacing:0}
   <div class="wrap">
     <div class="hdtools">
       <button class="qbtn" id="qBtn" type="button">게시판</button>
-      <button class="qbtn hdu" id="hdMine" type="button" hidden>내 접수</button>
-      <button class="qbtn hdu" id="hdTT" type="button" hidden>시간표</button>
-      <button class="qbtn hdu" id="hdLost" type="button" hidden>분실물</button>
-      <button class="qbtn hdu" id="hdPay" type="button" hidden>내 수당</button>
-      <button class="qbtn hdu" id="hdOut" type="button" hidden>로그아웃</button>
       <button class="qbtn hdu" id="hdIn" type="button">로그인</button>
+      <!-- 11-15 사용자: 로그인 뒤에는 「내 접수」 + 햄버거 메뉴(시간표 · 게시판 · 내 글 보기 · 분실물 · 로그아웃) -->
+      <button class="qbtn hdu" id="hdMine" type="button" hidden>내 접수</button>
+      <button class="qbtn hdu hdMenuBtn" id="hdMenu" type="button" hidden aria-haspopup="true" aria-expanded="false" aria-controls="hdDrop"><span class="hb" aria-hidden="true"><i></i><i></i><i></i></span><span id="hdWho">메뉴</span><b class="hdDot" id="hdDot" hidden></b></button>
+      <div class="hdDrop" id="hdDrop" role="menu" hidden>
+        <button class="hdi" id="hdTT" type="button" role="menuitem">시간표</button>
+        <button class="hdi" id="hdQ" type="button" role="menuitem">게시판</button>
+        <button class="hdi" id="hdMyQ" type="button" role="menuitem">내 글 보기 <b class="hdDot" id="hdDot2" hidden></b></button>
+        <button class="hdi" id="hdLost" type="button" role="menuitem">분실물</button>
+        <button class="hdi" id="hdPay" type="button" role="menuitem" hidden>내 수당</button>
+        <button class="hdi out" id="hdOut" type="button" role="menuitem">로그아웃</button>
+      </div>
     </div>
     <div class="proto"><span id="protoTxt" style="display:contents"><b>시험 접수</b> 테스트용 화면이에요. 접수 내용은 협회 접수 DB(테스트 시트)에 저장돼요.</span><span id="roundSeg" hidden></span></div><script>if(!TEST_LOGIN){var _pt=document.getElementById('protoTxt');if(_pt)_pt.remove()}</script>
     <h1 id="campTitle">2027 스즈키 겨울 음악제 접수</h1>
@@ -509,6 +519,6 @@ var UI_KEY='camp';
 </script>
 
 <script>try{window.top.postMessage('suzuki-ready','*')}catch(e){}</script>
-<div id="bldMark" hidden>빌드표시 20261115-213244 </div>
+<div id="bldMark" hidden>빌드표시 20261115-222549 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 96px';document.body.appendChild(p)})();</script>
 </body></html>

@@ -1,4 +1,4 @@
-/* build: 20261115-020314 */
+/* build: 20261115-104925 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -721,7 +721,9 @@ function parentAcads_() {
 function parentInit() {
   const C = camp_();
   const pa = parentAcads_();
-  return { ok: true, open: C.base.member !== false && pa.length > 0, acads: pa, camp: { name: C.base.name, start: C.base.start, end: C.base.end, place: C.base.place }, consent: (C.consent.items || []).filter(x => x.on), refund: C.refund, roomCap: (C.opt || {}).roomCap || 4,
+  /* 11-15 사용자: 학부모가 추가레슨 횟수 · 마스터클래스를 고름 → 교수진의 마스터클래스(악기 · 시간 · 금액) */
+  const mcs = profPublic_().filter((p, i, a) => p.mc && a.findIndex(q => q.mc && q.n === p.n && q.i === p.i) === i).map(p => ({ n: p.n, i: p.i, min: +p.min || 45, fee: +p.fee || 0 }));
+  return { ok: true, open: C.base.member !== false && pa.length > 0, acads: pa, mcs, lessonMax: OPT.lessonMax, camp: { name: C.base.name, start: C.base.start, end: C.base.end, place: C.base.place }, consent: (C.consent.items || []).filter(x => x.on), refund: C.refund, roomCap: (C.opt || {}).roomCap || 4,
     /* 예상 참가비 (11-15): 학생 · 첫 보호자 · 동반가족 · 15개월 미만 × 차수, 지금 차수, 학생 회비 · 가족방 빈 자리 · 추가레슨 */
     price: { fees: ['학생', '회원의 첫번째 보호자', '회원의 그외 악기 안하는 동반가족', '동반가족 중 15개월 미만'].reduce((o, k) => { o[k] = C.fees[k] || []; return o; }, {}), rounds: C.rounds.map(r => ({ n: r.n, from: r.from, to: r.to })), ri: curRound_(C), dues: +(C.opt || {}).studentDues || 0, empty: +(C.opt || {}).roomEmptyFee || 0, lesson: +(C.opt || {}).lessonFee || 0 } };
 }
@@ -757,7 +759,7 @@ function parentClean_(d) {
   d = d || {}; const t = (v, n) => String(v == null ? '' : v).replace(/[\r|]/g, ' ').trim().slice(0, n);
   const yr = v => { const y = String(v || '').replace(/\D/g, '').slice(0, 6); return y; };
   const g = v => (v === '남' || v === '여') ? v : '';
-  const kids = (Array.isArray(d.kids) ? d.kids : []).slice(0, 8).map(x => { const a = parseInt(String(x.age == null ? '' : x.age).replace(/\D/g, ''), 10); const by = String(x.by || '').replace(/\D/g, '').slice(0, 4); return { name: t(x.name, 20), inst: t(x.inst, 10), age: a >= 0 && a <= 30 ? a : '', by: /^(19|20)\d\d$/.test(by) ? by : '', go: ['간다', '안 간다', '모름'].includes(x.go) ? x.go : '간다' }; }).filter(x => x.name);
+  const kids = (Array.isArray(d.kids) ? d.kids : []).slice(0, 8).map(x => { const a = parseInt(String(x.age == null ? '' : x.age).replace(/\D/g, ''), 10); const by = String(x.by || '').replace(/\D/g, '').slice(0, 4); return { name: t(x.name, 20), inst: t(x.inst, 10), age: a >= 0 && a <= 30 ? a : '', by: /^(19|20)\d\d$/.test(by) ? by : '', go: ['간다', '안 간다', '모름'].includes(x.go) ? x.go : '간다', lessons: Math.max(0, Math.min(OPT.lessonMax, parseInt(x.lessons, 10) || 0)), mc: (Array.isArray(x.mc) ? x.mc : []).map(n => t(n, 30)).filter((n, i, a) => n && a.indexOf(n) === i && mcList_().some(m => m.n === n)).slice(0, 6) }; }).filter(x => x.name);
   const fam = (Array.isArray(d.fam) ? d.fam : []).slice(0, 12).map(x => ({ type: x.type === '15개월 미만' ? '15개월 미만' : '동반가족', name: t(x.name, 20), gender: g(x.gender), by: yr(x.by) })).filter(x => x.name);
   return { kids, fam, me: { gender: g((d.me || {}).gender), by: yr((d.me || {}).by), go: (d.me || {}).go === false ? false : true }, room: { fam: !!(d.room || {}).fam, note: t((d.room || {}).note, 300) }, memo: t(d.memo, 300) };
 }

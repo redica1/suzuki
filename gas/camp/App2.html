@@ -1,4 +1,4 @@
-/* build: 20261115-192838 */
+/* build: 20261115-193126 */
 function vAuthPick(){const off=!!CAMP.pre;return gdBtn()+apDoor()+`<section class="sec"><h2>접수 시작</h2>
   ${off?`<p class="note warn" style="margin:6px 0 12px"><b>${+CAMP.pre.slice(5,7)}월 ${+CAMP.pre.slice(8,10)}일에 접수가 열려요.</b> 그 전에 아래에서 회원가입을 마쳐 두세요.</p>`:'<p class="lede">어떻게 접수하시나요?</p>'}
   <div class="pick2${off?' pickoff':''}"${off?' aria-disabled="true"':''}>
@@ -105,7 +105,9 @@ function renderSteps(){
     document.getElementById('steps').innerHTML=PRE.map((t,i)=>`<li class="${i+1===cur?'on':i+1<cur?'done':''}"><button type="button" disabled aria-current="${i+1===cur?'step':'false'}"><span class="bar"></span>${i+1}. ${t}</button></li>`).join('');return}
   document.getElementById('steps').innerHTML = (isGuest()?['보호자 확인','참가 아이','참가 정보','(앙상블 없음)','신청 확인','접수 완료']:STEPS).map((t,i)=>{
     const n=i+1, cls=n===S.step?'on':(n<S.step?'done':''); const can = n<S.step && S.step<6;
-    return `<li class="${cls}"><button type="button" ${can?`data-go="${n}"`:'disabled'} aria-current="${n===S.step?'step':'false'}"><span class="bar"></span>${n}. ${t}</button></li>`}).join('');
+    /* 11-15 박정연 선생님: 4. 앙상블에서 위 「5. 신청 확인」을 눌러도 안 넘어감 → 바로 다음 단계는 위에서도 눌러짐(「다음」과 같음 · 빠진 칸 검사) · 접수하기(6)는 아래 버튼으로만 */
+    const fwd = n===S.step+1 && S.step>=1 && S.step<5 && !(S.editNo&&S.quickEdit);
+    return `<li class="${cls}${fwd?' nextok':''}"><button type="button" ${can?`data-go="${n}"`:fwd?'data-gonext="1"':'disabled'} aria-current="${n===S.step?'step':'false'}"><span class="bar"></span>${n}. ${t}</button></li>`}).join('');
 }
 function login(t){S.user=t;S.who=t.name;S.phone=t.p4?`010-****-${t.p4}`:String(t.phone||'').replace(/(\d{3})(\d{4})(\d{4})/,'$1-$2-$3');S.email=t.email||S.lgId||'';S.mailEd=false;S.verr='';S.auth='in'; loadMine(); if(MY_SUBS.length)S.view='mine'; if(S.apGo){S.apGo=false;S.view='audpre';S.AP=null} render();}
 function findT(ph){ph=String(ph).replace(/\D/g,'');return TEACHER_DB.find(t=>t.phone===ph)}

@@ -1,4 +1,4 @@
-/* build: 20261115-192838 */
+/* build: 20261115-193126 */
   if(S.ttDay==null){const td=ttToday(days);S.ttDay=td!=null?td:(mine.length?Math.min(...mine.map(x=>x.d)):0)}
   if(tab==='me')return head+seg+(T.prof?`<p class="hint" style="margin:0 0 6px">교수 · 레슨실 <b>${esc(T.prof.room||'미정')}</b></p>`:'')+ttMineList(T,days,mine)+'</section>';
   const AC=S.user.acads||[];if(S.ttAcad&&!AC.includes(S.ttAcad))S.ttAcad='';
@@ -111,6 +111,7 @@ document.addEventListener('click',e=>{
   const b=e.target.closest('button,[data-pick],[data-mc],[data-other],[data-ens],[data-roomck],[data-ensmem]'); if(!b) return;
   const d=b.dataset;
   if(d.go){go(+d.go);return}
+  if(d.gonext){const nb=document.getElementById('nextBtn');if(nb)nb.click();return}
   if(d.round!==undefined){CAMP.ri=+d.round;render();toast(`${ROUNDS[CAMP.ri][0]} 금액으로 계산해요`);return}
   if(d.clsacad){const a=d.clsacad;askBox(`${esc(a)}로 접수할까요?`,'학원 학생이 아니라 <b>학원 없이 개인 레슨하는 학생</b>만 이 클래스로 접수해요. 학원 학생은 학원 버튼으로 접수해 주세요.','네, 클래스로 접수',()=>pickAcad(a));return}
   if(d.acad){pickAcad(d.acad);return}

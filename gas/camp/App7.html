@@ -1,4 +1,4 @@
-/* build: 20261115-230033 */
+/* build: 20261115-230410 */
     ps.forEach(p=>{p.pay='신고';p.rep=rep;delete S.rpRow[p.id]});S.afterSave=()=>repDone(ps.map(p=>p.id));subSave();S.rp=null;S.rpOpen=false;S.rpMemo=undefined;render();toast(`${ps.length}명 입금 신고를 보냈어요 · 운영진이 확인하면 「입금 확인」으로 바뀌어요`);return}
   if(b.id==='rpFill'){const n=document.getElementById('rpAllN').value.trim(),dd=document.getElementById('rpAllD').value;S.rpAllN=n;S.rpAllD=dd;const sel=S.rp||[];
     if(!n&&!dd){toast('적용할 입금자명이나 입금일을 적어 주세요');return}unpaidPpl().filter(x=>sel.includes(x.p.id)).forEach(({p})=>{const v=rpv(p);if(n)v.n=n;if(dd)v.d=dd});render();toast(`선택한 ${sel.length}명에게 적용했어요`);return}
@@ -39,10 +39,10 @@
   if(d.ptab){S.ptab=d.ptab;S.rq='';render();return}
   if(d.cartold){S.cartOld=!S.cartOld;render();return}
   if(d.add1){const id=d.add1;S.picked[id]=true;if(!S.cartAt[id])S.cartAt[id]=nowStamp();delete S.sel[id];const y=window.scrollY;render();window.scrollTo(0,y);toast('신청 명단에 추가했어요');return}
-  if(b.id==='addCart'||b.id==='addSel'){const L=selIds();const at=nowStamp();L.forEach(id=>{S.picked[id]=true;if(!S.cartAt[id])S.cartAt[id]=at});S.sel={};render();toast(`${L.length}명을 신청 명단에 추가했어요`);return}
+  if(b.id==='addCart'||b.id==='addCartT'||b.id==='addSel'){const L=selIds();const at=nowStamp();L.forEach(id=>{S.picked[id]=true;if(!S.cartAt[id])S.cartAt[id]=at});S.sel={};render();toast(`${L.length}명을 신청 명단에 추가했어요`);return}
   if(d.uncart){const id=d.uncart;S.picked[id]=false;delete S.cartAt[id];delete S.sel[id];delete S.room[id];delete S.join[id];Object.keys(S.join).forEach(j=>{if(S.join[j]===id)delete S.join[j]});const n=S.fam.filter(f=>f.link===id).length;S.fam=S.fam.filter(f=>f.link!==id);render();toast(n?`명단에서 뺐어요 · 가족 ${n}명도 함께`:'명단에서 뺐어요');return}
   if(d.pick==='__all'){rosterView().filter(o=>pickable(o.x)).forEach(o=>{S.sel[o.x.id]=b.checked});const y=window.scrollY;render();window.scrollTo(0,y);return}
-  if(d.pick){if(S.picked[d.pick]){render();return} S.sel[d.pick]=b.checked; const ab=document.getElementById('addCart'); if(ab) ab.outerHTML=addBtn(); const as=document.getElementById('addSel'); if(as) as.disabled=!selIds().length; return}
+  if(d.pick){if(S.picked[d.pick]){render();return} S.sel[d.pick]=b.checked; ['addCart','addCartT'].forEach(k=>{const ab=document.getElementById(k); if(ab) ab.outerHTML=addBtn(k)}); const as=document.getElementById('addSel'); if(as) as.disabled=!selIds().length; return}
   if(false){S.picked[d.pick]=b.checked; if(!b.checked){delete S.room[d.pick];delete S.join[d.pick];Object.keys(S.join).forEach(j=>{if(S.join[j]===d.pick)delete S.join[j]});const n=S.fam.filter(f=>f.link===d.pick).length; S.fam=S.fam.filter(f=>f.link!==d.pick); if(n)toast(`가족 ${n}명도 함께 뺐어요`)} render();return}
   if(d.ext){const [k,v]=d.ext.split('|');const i=S.info[k];i.ext=v==='1';if(!i.ext){i.lessons=0;i.mc=[];i.p1='';i.p2=''}render();return}
   if(d.gender){const [k,g]=d.gender.split('|');S.info[k].gender=g;render();return}
@@ -276,7 +276,7 @@ function csDraw(){const p=document.getElementById('csPanel');if(!p)return;p.hidd
   const lg=document.getElementById('csLog');lg.innerHTML='<div class="csMsg bot">안녕하세요. 캠프 접수 안내에서 답을 찾아 드려요. 궁금한 것을 적거나 아래에서 골라 주세요.</div><div class="csChips">'+CS_CHIPS.map(c=>'<button type="button" data-csq="'+esc(c)+'">'+esc(c)+'</button>').join('')+'</div>'+
     CS.log.map(m=>'<div class="csMsg '+m.w+'">'+m.h+'</div>').join('');const me=lg.querySelectorAll('.csMsg.me');lg.scrollTop=me.length?me[me.length-1].offsetTop-8:0}
 function csAsk(q){q=String(q||'').trim();if(!q)return;CS.log.push({w:'me',h:esc(q)});CS.log.push({w:'bot',h:csAnswer(q)});if(CS.log.length>30)CS.log=CS.log.slice(-30);csDraw();const i=document.getElementById('csIn');if(i){i.value='';i.focus()}}
-function csMount(){if(document.getElementById('csFab'))return;const f=document.createElement('button');f.type='button';f.id='csFab';f.className='csFab';f.setAttribute('aria-controls','csPanel');f.setAttribute('aria-expanded','false');
+function csMount(){if(document.getElementById('csFab'))return;const f=document.createElement('button');f.type='button';f.id='csFab';f.className='csFab';f.setAttribute('aria-controls','csPanel');f.setAttribute('aria-expanded','false');f.setAttribute('aria-label','상담하기');f.title='상담하기';
   f.innerHTML='<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg><span>상담하기</span>';document.body.appendChild(f);
   const p=document.createElement('div');p.id='csPanel';p.className='csPanel';p.hidden=true;p.setAttribute('role','dialog');p.setAttribute('aria-label','자동 상담');
   p.innerHTML='<div class="csHd"><b>자동 상담</b><span class="csMan"><button type="button" data-gd="first">안내 전체 보기</button></span><button type="button" class="gdX" id="csX" aria-label="닫기">닫기</button></div><div class="csLog" id="csLog"></div><form class="csForm" id="csForm"><input type="text" id="csIn" placeholder="예) 가족방은 몇 명까지?" autocomplete="off" maxlength="100" aria-label="궁금한 것"><button type="submit" class="btn small primary">묻기</button></form>';document.body.appendChild(p)}

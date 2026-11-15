@@ -1,4 +1,4 @@
-<!doctype html><!-- build: 20261115-230033 --><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}
+<!doctype html><!-- build: 20261115-230410 --><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}
 /* 내 접수 표 (11-01): 관리자 표처럼 한 줄씩 */
 .mtbl{width:100%;border-collapse:collapse;font-size:15px;letter-spacing:-.02em;white-space:nowrap}
 .mtbl th{font-size:14px;font-weight:700;color:var(--ink);background:var(--sunk);text-align:center;padding:6px 8px;border-bottom:1px solid var(--line)}
@@ -51,6 +51,7 @@
 .csAns{display:grid;grid-template-columns:minmax(0,1fr);gap:6px;padding:6px 0;border-bottom:1px dashed var(--line)}.csAns:last-of-type{border-bottom:0}.csAns>b{font-size:13.5px;color:var(--accent)}.csTx{font-size:14px;min-width:0}.csTx table td,.csTx table th{white-space:normal;word-break:keep-all;overflow-wrap:anywhere}.csAns .btn{justify-self:start}.linkish{all:unset;color:var(--accent);font-weight:700;cursor:pointer;text-decoration:underline}
 .csForm{display:flex;gap:6px;padding:10px;border-top:1px solid var(--line)}.csForm input{flex:1;min-width:0}
 @media print{.csFab,.csPanel{display:none!important}}
+@media (max-width:640px){.csFab{right:10px;bottom:140px;padding:0;width:44px;height:44px;justify-content:center;box-shadow:0 4px 12px rgba(26,115,232,.3)}.csFab span{display:none}.csFab svg{width:20px;height:20px}}   /* 11-15: 모바일은 글씨 없이 작은 채팅 아이콘 · 오른쪽 조금 위 */
 .gdBox{border-radius:12px;padding:11px 14px;background:#e8f0fe;color:#16233a}.gdBox a{color:#0b4fb3;font-weight:700}
 .num,.tile .v,input.num{font-variant-numeric:tabular-nums}/*mono*/
 .mtbl td.nm label{display:inline-grid;justify-items:start;gap:1px;line-height:1.25}.mtbl td.nm .kind{font-size:11px;padding:0 6px;line-height:1.5}.mtbl td.nm b{white-space:nowrap}.mtbl.colfix td.nm{overflow:visible;text-overflow:clip}   /* 11-15: 이름은 무조건 다 보이게 · 구분 태그는 이름 왼쪽 위 */
@@ -64,6 +65,7 @@
   .rtbl th:nth-child(3){width:40px}.rtbl th:nth-last-child(2){width:72px}.rtbl th:last-child{width:54px}
   .rtbl td:nth-child(2) label,.rtbl td:nth-child(2){line-height:1.25}.rtbl td:nth-child(2) .kind{display:inline-block;font-size:10.5px;padding:0 5px;margin-bottom:1px}
   .rtbl td:nth-child(2) b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}}
+.mtbl .pill .l2{display:block}.mineT td.tsc .tsl{display:block;font-size:12px;color:var(--muted,#6b7a80)}.mineT td:first-child,.mineT th:first-child{width:26px;padding-right:0;padding-left:6px}.mineT td.tsc{padding-left:4px;white-space:nowrap}   /* 11-15: 입금/필요 · 명단/추가 두 줄 · 체크와 날짜 사이 좁게 · 시간은 날짜 밑 */
 .rtbl td.nmc{text-align:left}.rtbl th:nth-child(2){text-align:left}.rtbl td:first-child,.rtbl th:first-child{padding-right:2px}   /* 11-15: 체크와 이름 사이 여백 줄임 · 이름 왼쪽 */
 .rtbl .bkc small{display:inline-grid;justify-items:start;text-align:left}.rtbl .bkd{display:block;white-space:nowrap}   /* 11-15: 「접수 26.11.15 21:20」 · 「○○ 교사」 두 줄로 나란히 */
 </style></head><body>
@@ -291,6 +293,7 @@ select{appearance:auto}
 .roster li.incart{background:var(--accent-soft)}
 .addcart{width:100%;justify-content:center;display:flex}
 .addcart:not([disabled]){position:sticky;bottom:calc(84px + env(safe-area-inset-bottom,0px));z-index:5;box-shadow:0 6px 18px rgb(0 0 0 / .18)}
+#addCartT{position:static;box-shadow:none;margin:8px 0}   /* 11-15: 표 위 버튼은 고정 안 함 (아래 버튼만 따라옴) */
 .cart{border-color:var(--accent)}
 .cart .grp-h{display:block;padding-top:6px}
 .cgrp{display:grid;gap:4px}
@@ -526,6 +529,6 @@ var UI_KEY='camp';
 </script>
 
 <script>try{window.top.postMessage('suzuki-ready','*')}catch(e){}</script>
-<div id="bldMark" hidden>빌드표시 20261115-230033 </div>
+<div id="bldMark" hidden>빌드표시 20261115-230410 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 96px';document.body.appendChild(p)})();</script>
 </body></html>

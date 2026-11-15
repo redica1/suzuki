@@ -1,4 +1,4 @@
-/* build: 20261115-230033 */
+/* build: 20261115-230410 */
 function vAuthPick(){const off=!!CAMP.pre;return gdBtn()+apDoor()+`<section class="sec"><h2>접수 시작</h2>
   ${off?`<p class="note warn" style="margin:6px 0 12px"><b>${+CAMP.pre.slice(5,7)}월 ${+CAMP.pre.slice(8,10)}일에 접수가 열려요.</b> 그 전에 아래에서 회원가입을 마쳐 두세요.</p>`:'<p class="lede">어떻게 접수하시나요?</p>'}
   <div class="pick2${off?' pickoff':''}"${off?' aria-disabled="true"':''}>
@@ -187,7 +187,7 @@ function editTag(id){if(!S.editNo)return '';const sb=ALL_SUBS.find(x=>x.no===S.e
 const ymdShort=x=>{if(!x)return '';const [d,t]=String(x).split(' ');const p=d.split('-');return p.length<3?String(x):`${p[0].slice(2)}.${p[1].padStart(2,'0')}.${p[2].padStart(2,'0')}${t?' '+t.slice(0,5):''}`};
 function rosterRow(x,kind){
   const bk=bookedOf(x), booked=x.booked||bk, on=!!S.picked[x.id], sel=!!S.sel[x.id];
-  const pd=String(x.paidDate||''), pill = on?`<span class="pill new">명단에 추가됨</span>`: isStaffAcad()?'<span class="pill ok">관계자 · 연회비 없음</span>':(x.paid&&/^\d{4}-\d{2}-\d{2}/.test(pd))?`<span class="pill ok">회비납부<br><small>${esc(pd.slice(2,10).replace(/-/g,'.'))}</small></span>`:(x.paid&&/확인/.test(pd))?'<span class="pill due" title="원장님이 회원관리에 회비 입금 신고 · 협회 확인 전">미납</span>':(x.paid&&pd)?`<span class="pill ok">회비 ${esc(pd)}</span>`:x.paid?'<span class="pill ok">회비납부</span>':booked?'<span class="pill info">함께 청구</span>':`<span class="pill due">미납</span>`;
+  const pd=String(x.paidDate||''), pill = on?`<span class="pill new"><span class="l2">명단</span><span class="l2">추가</span></span>`: isStaffAcad()?'<span class="pill ok">관계자 · 연회비 없음</span>':(x.paid&&/^\d{4}-\d{2}-\d{2}/.test(pd))?`<span class="pill ok">회비납부<br><small>${esc(pd.slice(2,10).replace(/-/g,'.'))}</small></span>`:(x.paid&&/확인/.test(pd))?'<span class="pill due" title="원장님이 회원관리에 회비 입금 신고 · 협회 확인 전">미납</span>':(x.paid&&pd)?`<span class="pill ok">회비 ${esc(pd)}</span>`:x.paid?'<span class="pill ok">회비납부</span>':booked?'<span class="pill info">함께 청구</span>':`<span class="pill due">미납</span>`;
   const btxt = booked&&!on?(bk?`${bk.cx?'<b style="color:var(--rosin,#b45309)">취소 요청 중</b> ':''}<span class="bkd">접수 ${esc(ymdShort(bk.at))}</span>${bk.by!==(S.user||{}).name?'<span class="bkd">'+esc(bk.by)+' 교사</span>':''}`:`<span class="bkd">접수 ${esc(x.bookedRound||'')}</span>${x.bookedBy?'<span class="bkd">'+esc(x.bookedBy)+' 교사</span>':''}`):'';
   const nm=`<label for="pk_${x.id}">${kBadge(kind==='t'?(isStaffAcad()?'관계자':'교사'):'학생')} <b>${esc(x.name)}</b>${dtag(x)}</label>${btxt?`<small class="rtm"><br>${btxt}</small>`:''}`;
   const cells=kind==='t'?`<td>${esc(x.role||'-')}</td><td>${esc(x.inst||'-')}</td>`:`<td class="num">${x.birth?age(x.birth)+'세':'<span class="hint">-</span>'}</td><td>${esc(x.inst||'-')}</td><td class="rtd">${x.teacher?esc(x.teacher):'<span class="hint">-</span>'}</td>`;
@@ -240,8 +240,8 @@ const selIds=()=>Object.keys(S.sel).filter(k=>S.sel[k]&&!S.picked[k]);
 function ptabList(){const r=roster(),me=S.user?S.user.name:'';
   return PTABS.map(t=>{const L=t==='교사'?r.teachers:r.students.filter(x=>x.inst===t);const k=L.filter(x=>!S.picked[x.id]&&!(x.booked||bookedOf(x))).length;   /* 접수 가능 = 아직 접수 · 담기 전 */
     return {t,n:L.length,k}}).filter(x=>x.t==='교사'||(!isStaffAcad()&&(x.t==='바이올린'||x.t==='첼로'||x.n)))}
-function addBtn(){const n=selIds().length;
-  return `<button class="btn primary addcart" type="button" id="addCart" ${n?'':'disabled'}>${n?`선택한 ${n}명 신청 명단에 추가`:`${isStaffAcad()?'본인을':S.ptab==='교사'?'선생님을':'학생을'} 체크하고 신청 명단에 추가해요`}</button>`}
+function addBtn(id){const n=selIds().length;   /* 11-15: 명단 표 위(addCartT) · 아래(addCart) 두 군데 */
+  return `<button class="btn primary addcart" type="button" id="${id||'addCart'}" ${n?'':'disabled'}>${n?`선택한 ${n}명 신청 명단에 추가`:`${isStaffAcad()?'본인을':S.ptab==='교사'?'선생님을':'학생을'} 체크하고 신청 명단에 추가해요`}</button>`}
 function cartPanel(){
   const r=roster();const ts=r.teachers.filter(x=>S.picked[x.id]);const ss=r.students.filter(x=>S.picked[x.id]);
   if(!ts.length&&!ss.length) return `<div class="panel cart"><h3>신청 명단</h3><p class="hint" style="margin:0">아직 비어 있어요. 아래 탭에서 체크하고 「신청 명단에 추가」를 눌러 주세요. 다른 탭으로 옮겨 가며 계속 추가할 수 있어요.</p></div>`;
@@ -289,6 +289,7 @@ function vStep2(){
     <div class="spread"><div class="legend" ${isStaffAcad()?'hidden':''}><span><span class="pill ok">회비 납부</span> 바로 접수</span><span><span class="pill due">미납</span> 연회비 함께 입금</span><span>흐린 줄 = 이미 접수한 사람</span></div>
       <div class="row" ${S.ptab==='교사'?'hidden':''}><label class="mine" for="mine"><input type="checkbox" id="mine" ${S.mine?'checked':''}>내 학생만 보기 (담당 ${esc(me)})</label></div></div>
     <input type="search" id="rq" value="${esc(S.rq||'')}" placeholder="이름으로 찾기 (학생·교사)" autocomplete="off" aria-label="이름으로 찾기">
+    ${S.ptab==='가족'?'':addBtn('addCartT')}
     <div id="rosterList">${S.ptab==='가족'?'':rosterList()}</div>
-    ${addBtn()}
+    ${S.ptab==='가족'?'':addBtn()}
     ${!isStaffAcad()?`

@@ -1,4 +1,4 @@
-/* build: 20261115-230410 */
+/* build: 20261115-233929 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -155,7 +155,7 @@ function doPost(e) {
     try {
       no = subNoNext_();
       const at = stamp_(), info = {}, picked = {}, ppl = [];
-      [['t_ld' + t0 + i, '교사'], ['ld1', '학생'], ['ld2', '학생'], ['ld3', '학생']].forEach(([k, ty], j) => { picked[k] = true; info[k] = ty === '교사' ? { type: '교사', gender: '여', concert: '없음' } : { type: '학생', gender: '여', by: '2016', teacher: '몰림' + i, prog: '2권A 요정의 춤 ~', lessons: 0, concert: '없음' };
+      [['t_ld' + t0 + i, '교사'], ['ld1', '학생'], ['ld2', '학생'], ['ld3', '학생']].forEach(([k, ty], j) => { picked[k] = true; info[k] = ty === '교사' ? { type: '교사', gender: '여', concert: '없음' } : { type: '학생', gender: '여', by: '2016', teacher: '몰림' + i, prog: '2권A ~ 헨델 부레', lessons: 0, concert: '없음' };
         ppl.push({ id: no + '_' + k, name: '몰림' + i + '-' + j, kind: ty, type: ty, inst: '바이올린', status: '정상', addAt: at, batch: 1, pay: '전', paidAmt: 0 }); });
       const sb = { no, acad, owner: '몰림' + i, fake: true, load: true, createdAt: at, date: at.slice(0, 10), email: '', rev: 1, reqId: 'ld' + t0 + '_' + i, form: { ri: 0, picked, info, extra: [], fam: [], room: {}, join: {}, ens: { on: false } }, ppl };
       recalc_(sb); sb.ppl.forEach(p => p.dues = 0); checkEns_(sb, all); teacherDup_(all, sb);
@@ -2634,7 +2634,7 @@ function devFakeSubs(token, nT, nS) {
   const SUR = '김이박최정강조윤장임한오서신권황안송류전홍고문양손배'.split(''), G = '가나다라마바사아자서민지수현준윤하은도예시유채소연태주우진건희아린결온솔별빛봄'.split('');
   const used = {}; const nm = () => { for (let i = 0; i < 500; i++) { const n = pick(SUR) + pick(G) + pick(G); if (!used[n]) { used[n] = 1; return n; } } return '가상' + Date.now(); };
   const INST = ['바이올린', '바이올린', '바이올린', '첼로', '플루트'];
-  const PROG = { 바이올린: ['Pre-Twinkle', '1권A 작은별 변주곡 ~ 무궁동', '1권B 알레그레토 ~', '2권A 요정의 춤 ~', '2권B 미뇽의 가보트 ~', '3권', '4권A ~ 자이츠 5번 3악장', '4권B 비발디 협주곡 가단조 ~', '5권', '6권', '7권', '8권 전체', '9권', '10권 이상'], 첼로: ['1권', '2권', '3권', '4권', '5권', '6권 이상'], 플루트: ['1권', '2권', '3권', '4권 이상'] };
+  const PROG = { 바이올린: ['Pre-Twinkle', '1권A 작은별 변주곡 ~ 무궁동', '1권B 알레그레토 ~', '2권A ~ 헨델 부레', '2권B 두 사람의 척탄병 ~', '3권', '4권A ~ 자이츠 5번 3악장', '4권B 비발디 협주곡 가단조 ~', '5권', '6권', '7권', '8권 전체', '9권', '10권 이상'], 첼로: ['1권', '2권', '3권', '4권', '5권', '6권 이상'], 플루트: ['1권', '2권', '3권', '4권 이상'] };
   const prof = profs_().filter(p => p.on && p.lesson);
   const lock = lock_(); const made = [];
   try {
@@ -2710,7 +2710,7 @@ function devSummer(token) {
   let seed = 20260704; const rnd = () => (seed = (seed * 48271) % 2147483647) / 2147483647, pick = L => L[Math.floor(rnd() * L.length)];
   const SUR = '김이박최정강조윤장임한오서신권황안송류전홍고문양손배'.split(''), G = '가나다라마바사아자서민지수현준윤하은도예시유채소연태주우진건희아린결온솔별빛봄'.split('');
   const used = {}; const nm = () => { for (let i = 0; i < 800; i++) { const n = pick(SUR) + pick(G) + pick(G); if (!used[n]) { used[n] = 1; return n; } } return '가상' + Math.floor(rnd() * 1e6); };
-  const PROG = { 바이올린: ['Pre-Twinkle', '1권A 작은별 변주곡 ~ 무궁동', '1권B 알레그레토 ~', '2권A 요정의 춤 ~', '2권B 미뇽의 가보트 ~', '3권', '4권A ~ 자이츠 5번 3악장', '4권B 비발디 협주곡 가단조 ~', '4권A ~ 자이츠 5번 3악장', '5권', '6권', '7권', '8권 전체', '10권 이상'], 첼로: ['1권', '2권', '3권', '4권', '5권', '6권'], 플루트: ['1권', '2권', '3권', '4권'] };
+  const PROG = { 바이올린: ['Pre-Twinkle', '1권A 작은별 변주곡 ~ 무궁동', '1권B 알레그레토 ~', '2권A ~ 헨델 부레', '2권B 두 사람의 척탄병 ~', '3권', '4권A ~ 자이츠 5번 3악장', '4권B 비발디 협주곡 가단조 ~', '4권A ~ 자이츠 5번 3악장', '5권', '6권', '7권', '8권 전체', '10권 이상'], 첼로: ['1권', '2권', '3권', '4권', '5권', '6권'], 플루트: ['1권', '2권', '3권', '4권'] };
   const instOf = () => { const r = rnd(); return r < .8 ? '바이올린' : r < .95 ? '첼로' : '플루트'; };
   const prof = profs_().filter(p => p.on && p.lesson), mcs = mcList_(), C = camp_(), nR = (C.rounds || []).length || 1;
   const days = ['2026-10-0', '2026-10-1', '2026-10-2'], dt = () => { const d = 1 + Math.floor(rnd() * 31); return d <= 31 ? '2026-10-' + String(d).padStart(2, '0') : '2026-11-01'; };
@@ -2778,7 +2778,7 @@ function devScenario(token) {
   if (T.length < 6 || ST.length < 60) throw new Error('캠프 명단에 가상스즈키가 아직 없어요 (교사 ' + T.length + ' · 학생 ' + ST.length + '). 회원관리 STG 「설정 › 가상스즈키 만들기」 뒤 「회원 명단 › 회원관리에서 지금 가져오기」를 눌러 주세요.');
   if (loadSubs_().some(sb => sb.vscen)) throw new Error('가상스즈키 연습 접수가 이미 있어요. 「가상 접수 모두 지우기」 뒤 다시 만들어 주세요.');
   const ok = setting_('접수 가능 학원'); if (ok !== '전체' && ok.split(',').map(s => s.trim()).indexOf(VACAD) < 0) { const sh = SpreadsheetApp.getActive().getSheetByName('설정'), r = rows_('설정').find(x => String(x['항목']) === '접수 가능 학원'); if (r) sh.getRange(r._row, 2).setValues([[ok ? ok + ', ' + VACAD : VACAD]]); }
-  const PROG = { 바이올린: ['1권A 작은별 변주곡 ~ 무궁동', '2권A 요정의 춤 ~', '3권', '4권A ~ 자이츠 5번 3악장', '5권'], 첼로: ['1권', '2권', '3권'], 플루트: ['1권', '2권', '3권'] };
+  const PROG = { 바이올린: ['1권A 작은별 변주곡 ~ 무궁동', '2권A ~ 헨델 부레', '3권', '4권A ~ 자이츠 5번 3악장', '5권'], 첼로: ['1권', '2권', '3권'], 플루트: ['1권', '2권', '3권'] };
   const prof = profs_().filter(p => p.on && p.lesson), mcs = mcList_();
   const at = stamp_(), C = camp_(), ri = curRound_(C), bank = [], made = [], conf = [];
   const tN = i => String(T[i]['이름']), tid = i => 't_' + String(T[i]['ID']);

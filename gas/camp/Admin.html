@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261115-230410 -->
+<!-- build: 20261115-233929 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -2076,8 +2076,8 @@ function stTeacher(L){const S2=L.filter(x=>T_PLAY.includes(x.type));const ins=[.
 function stRound(L){const R=[...new Set(L.map(x=>x.round))].sort(),Ty=cnt(L,x=>x.type).map(x=>x[0]);
   return ST(['참가 구분',...R,'합계'],Ty.map(t=>[esc(t),...R.map(r=>L.filter(x=>x.type===t&&x.round===r).length||''),L.filter(x=>x.type===t).length]),['합계',...R.map(r=>L.filter(x=>x.round===r).length),L.length])}
 const PROG_LIST = {
-  '바이올린':['Pre-Twinkle','1권A 작은별 변주곡 ~ 무궁동','1권B 알레그레토 ~','2권A 요정의 춤 ~','2권B 미뇽의 가보트 ~','3권A ~ 유모레스크','3권B 베커 가보트 ~','4권A ~ 자이츠 5번 3악장','4권B 비발디 협주곡 가단조 ~','5권A ~ 비발디 협주곡 사단조','5권B 독일춤곡 ~','6권A ~ 피오코 알레그로','6권B 라모 가보트 ~','7권A ~ 헨델 소나타 1번','7권B 바흐 협주곡 가단조 ~','8권 전체','9권 모차르트 협주곡 5번','10권 모차르트 협주곡 4번','10권 이상 멘델스존 협주곡 3악장','10권 이상 기타 곡'],
-  '첼로':['Pre-Twinkle','1권A 작은별 ~ 무궁동','1권B 그 옛날에 ~','2권','3권','4권','5권','6권','7권','8권','9권','10권','10권 이상'],
+  '바이올린':['Pre-Twinkle','1권A 작은별 변주곡 ~ 무궁동','1권B 알레그레토 ~','2권A ~ 헨델 부레','2권B 두 사람의 척탄병 ~','3권A ~ 유모레스크','3권B 베커 가보트 ~','4권A ~ 자이츠 5번 3악장','4권B 비발디 협주곡 가단조 ~','5권A ~ 비발디 협주곡 사단조','5권B 독일춤곡 ~','6권A ~ 피오코 알레그로','6권B 라모 가보트 ~','7권A ~ 헨델 소나타 1번','7권B 바흐 협주곡 가단조 ~','8권 전체','9권 모차르트 협주곡 5번','10권 모차르트 협주곡 4번','10권 이상 멘델스존 협주곡 3악장','10권 이상 기타 곡'],
+  '첼로':['Pre-Twinkle','1권A 작은별 ~ 무궁동','1권B 그 옛날에 ~','2권','3권','4권','5권','6권','7권','8권','9권','10권 보케리니 협주곡','10권 이상 기타 곡'],
   '기타':['1권','2권','3권','4권','5권','6권','7권','8권','9권','10권','10권 이상']};
 /* 진도 → 권수 (1권A·1권B → 1권, 10권 이상은 따로) */
 const bookOf=g=>{g=String(g||'');if(/pre/i.test(g))return 'Pre-Twinkle';if(/10권\s*이상/.test(g))return '10권 이상';const m=g.match(/^(\d+)권/);return m?m[1]+'권':(g||'미입력')};
@@ -4490,7 +4490,7 @@ document.addEventListener('click',e=>{if(S.tab!=='book')return;const b=e.target.
   if(b.id==='ebSetSave'){const n=Object.assign(ebSet(),S.ebSetW||{});n.per=Math.max(1,Math.min(10,Math.round(+n.per||5)));n.fs=Math.max(5,Math.min(10,+n.fs||6.6));['en','sub','org'].forEach(k=>n[k]=String(n[k]||'').trim().slice(0,120));
     ebSend([],[],n,()=>{S.ebSetW=null;toast('책자 설정을 저장했어요')});return}},true);
 </script>
-<div id="bldMark" hidden>빌드표시 20261115-230410 </div>
+<div id="bldMark" hidden>빌드표시 20261115-233929 </div>
 <script>
 /* 관리자 상담 (11-15): 관리자 매뉴얼 글에서만 찾아 답함 (AI 아님 · 없는 답은 지어내지 않음). 장마다 t 제목 · q 찾는 말 · k 바로 갈 메뉴 · h 본문 */
 const AGD={

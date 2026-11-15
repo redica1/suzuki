@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261116-000411 -->
+<!-- build: 20261116-004706 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -620,7 +620,7 @@ function vEns(){const T=S.D.teams||[];
   return `<div class="panel"><span class="hint">팀 줄을 누르면 자세한 내용이 열려요. 운영진은 여기서 바로 고칠 수 있어요 (선생님 화면에도 바뀐 내용이 보여요).</span></div>
   <div class="panel tbl"><table><thead><tr><th></th><th>팀 이름</th><th>대표 학원</th><th>신청 선생님</th><th>함께하는 학원</th><th>곡</th><th>연주시간</th></tr></thead><tbody>
   ${T.map(t=>{const sb=S.D.subs.find(x=>x.no===t.no),e=sb&&sb.form&&sb.form.ens||{},on=S.ensOpen===t.no;
-    return `<tr class="ensrow" data-ensopen="${esc(t.no)}" style="cursor:pointer${on?';background:var(--soft,#eef3ff)':''}"><td>${on?'▾':'▸'}</td><td><b>${esc(t.name)}</b><br><small class="faint">${esc(t.no)}</small>${e.adminEdited?'<br><small class="faint">운영진 수정</small>':''}</td><td>${esc(t.rep)}</td><td>${esc(t.by||'')}</td><td>${t.acads.map(esc).join(', ')||'-'}</td><td>${[1,2].map(n=>songA(e,n)).filter(x=>x.trim()).join('<br>')||'-'}</td><td>${e.tm||e.ts?`${+e.tm||0}분 ${+e.ts||0}초`:'-'}</td></tr>
+    return `<tr class="ensrow" data-ensopen="${esc(t.no)}" style="cursor:pointer${on?';background:var(--soft,#eef3ff)':''}"><td>${on?'▾':'▸'}</td><td><b>${esc(t.name)}</b>${e.adminEdited?'<br><small class="faint">운영진 수정</small>':''}</td><td>${esc(t.rep)}</td><td>${esc(t.by||'')}</td><td>${t.acads.map(esc).join(', ')||'-'}</td><td>${[1,2].map(n=>songA(e,n)).filter(x=>x.trim()).join('<br>')||'-'}</td><td>${e.tm||e.ts?`${+e.tm||0}분 ${+e.ts||0}초`:'-'}</td></tr>
     ${on?`<tr><td colspan="7" style="background:var(--soft,#f6f8ff)">${ensDetail(t,sb,e)}</td></tr>`:''}`}).join('')||'<tr><td colspan="7" class="hint">신청된 팀이 없어요.</td></tr>'}
   </tbody></table></div>`}
 const songA=(e,n)=>{const x=[e['acc'+n]&&'반주',e['video'+n]&&'영상'].filter(Boolean);return [e['k'+n],e['c'+n]].filter(Boolean).map(esc).join(' · ')+(x.length?` <small class="faint">(${x.join(' · ')})</small>`:'')};
@@ -629,8 +629,8 @@ function ensDetail(t,sb,e){const joined=(t.mem||[]);const live=sb?sb.ppl.filter(
   const chk=k=>`<label class="row" style="gap:4px;flex-wrap:nowrap"><input type="checkbox" id="ee_${k}" ${e[k]?'checked':''}>${k.startsWith('acc')?'반주자 필요':'영상 사용'}</label>`;
   const song=n=>`<div style="display:grid;gap:6px;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));align-items:end"><label class="fl"><span>곡 ${n} · 작곡가</span>${inp('k'+n)}</label><label class="fl"><span>곡명</span>${inp('c'+n)}</label><label class="fl"><span>곡명 · 원어</span>${inp('o'+n)}</label><div class="row" style="gap:10px">${chk('acc'+n)}${chk('video'+n)}</div></div>`;
   return `<div style="display:grid;gap:12px;padding:6px 2px">
-    <div class="row" style="gap:18px;flex-wrap:wrap"><span>접수번호 <b class="num">${esc(t.no)}</b></span><span>대표 학원 <b>${esc(t.rep)}</b></span><span>신청 선생님 <b>${esc(t.by||'')}</b></span><span>그 접수 참가 인원 <b>${live}명</b></span>${e.adminEdited?`<span class="faint">마지막 운영진 수정 ${esc(e.adminEdited)}</span>`:''}</div>
-    ${joined.length?`<div class="hint">직접 「대표가 이미 있어요」로 함께 신청한 학원: ${joined.map(m=>`<b>${esc(m.acad)}</b> (${esc(m.by)} 선생님 · ${esc(m.no)})`).join(', ')} <span class="faint">— 그 학원 접수에서 나오는 거라 여기서 빼지 않아요</span></div>`:''}
+    <div class="row" style="gap:18px;flex-wrap:wrap"><span>대표 학원 <b>${esc(t.rep)}</b></span><span>신청 선생님 <b>${esc(t.by||'')}</b></span><span>그 접수 참가 인원 <b>${live}명</b></span>${e.adminEdited?`<span class="faint">마지막 운영진 수정 ${esc(e.adminEdited)}</span>`:''}</div>
+    ${joined.length?`<div class="hint">직접 「대표가 이미 있어요」로 함께 신청한 학원: ${joined.map(m=>`<b>${esc(m.acad)}</b> (${esc(m.by)} 선생님)`).join(', ')} <span class="faint">— 그 학원 접수에서 나오는 거라 여기서 빼지 않아요</span></div>`:''}
     <label class="fl"><span>팀 이름 *</span>${inp('group','','100%')}</label>
     <label class="fl"><span>대표가 넣은 함께하는 학원 <small class="faint">쉼표(,)로 나눠서</small></span><input type="text" id="ee_acads" value="${esc((e.acads||[]).join(', '))}" placeholder="예: 미사스즈키, 강남스즈키"></label>
     ${song(1)}${song(2)}
@@ -4500,7 +4500,7 @@ document.addEventListener('click',e=>{if(S.tab!=='book')return;const b=e.target.
   if(b.id==='ebSetSave'){const n=Object.assign(ebSet(),S.ebSetW||{});n.per=Math.max(1,Math.min(10,Math.round(+n.per||5)));n.fs=Math.max(5,Math.min(10,+n.fs||6.6));['en','sub','org'].forEach(k=>n[k]=String(n[k]||'').trim().slice(0,120));
     ebSend([],[],n,()=>{S.ebSetW=null;toast('책자 설정을 저장했어요')});return}},true);
 </script>
-<div id="bldMark" hidden>빌드표시 20261116-000411 </div>
+<div id="bldMark" hidden>빌드표시 20261116-004706 </div>
 <script>
 /* 관리자 상담 (11-15): 관리자 매뉴얼 글에서만 찾아 답함 (AI 아님 · 없는 답은 지어내지 않음). 장마다 t 제목 · q 찾는 말 · k 바로 갈 메뉴 · h 본문 */
 const AGD={

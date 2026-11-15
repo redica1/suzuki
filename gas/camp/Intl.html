@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head>
-<!-- build: 20261115-204830 -->
+<!-- build: 20261115-210049 -->
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <base target="_top">
 <title>Suzuki Winter Music Camp · Overseas Registration</title>
@@ -70,13 +70,15 @@ function vAsk(){var Q=S.ask||(S.ask={});var mine=Q.mine;
   (S.err?'<p class="err">'+esc(S.err)+'</p>':'')+
   '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" type="button" id="asksend">Send question</button><button class="btn" type="button" id="askmine">My questions</button></div></div>'+
   (mine?'<h3 style="margin:18px 0 6px">My questions ('+mine.length+')</h3>'+(mine.length?mine.map(function(x){return '<div class="note" style="margin:8px 0;display:grid;gap:6px"><div><b>'+esc(x.no)+'</b> <span class="hint">'+esc(String(x.at).slice(0,16))+'</span> · '+(x.reply?'<b style="color:#0f766e">Answered</b>':'<span class="hint">Waiting for reply</span>')+'</div><div style="white-space:pre-wrap">'+esc(x.text)+'</div>'+(x.reply?'<div style="white-space:pre-wrap;border-left:3px solid #0f766e;padding-left:10px"><b>Reply</b><br>'+esc(x.reply)+'</div>':'')+'</div>'}).join(''):'<p class="hint">No questions yet with this name and email.</p>'):'')+'</div>'}
-function vLogin(){if(S.mode==='new')return vNew();if(S.mode==='ask')return vAsk();return '<div class="card" style="max-width:520px"><h2>Group leader sign in</h2>'+
-  '<p class="hint">Sign in with the email address and the access code sent to you by the Korea Suzuki Music Association. One leader registers everyone in the group: students, teachers, parents and family.</p>'+
-  '<div style="display:grid;gap:12px;margin-top:10px"><label>Email<input type="email" id="em" autocomplete="username" inputmode="email"></label>'+
-  '<label>Access code<input type="text" id="cd" placeholder="XXXX-XXXX" autocomplete="one-time-code" style="text-transform:uppercase"></label>'+
+function vLogin(){if(S.mode==='ask')return vAsk();var E=S.ent||(S.ent={});
+  return '<div class="card" style="max-width:520px"><h2>Group registration</h2>'+
+  '<p class="hint">One leader registers everyone in the group: students, teachers, parents and family. No access code is needed. Use the same email and group name to come back later and add or change people.</p>'+
+  '<div style="display:grid;gap:12px;margin-top:10px"><label>Email<input type="email" id="em" autocomplete="email" inputmode="email" value="'+esc(E.email||'')+'"></label>'+
+  '<label>Group (school / studio) name<input type="text" id="gn" maxlength="40" value="'+esc(E.name||'')+'" placeholder="e.g. Manila Suzuki Studio"></label>'+
+  (S.needNew?'<div class="note">New group: please add these too.</div><label>Country<input type="text" id="gc" maxlength="30" value="'+esc(E.country||'')+'"></label><label>Leader name<input type="text" id="gl" maxlength="40" value="'+esc(E.lead||'')+'"></label>':'')+
   agBox()+
-  (S.err?'<p class="err">'+esc(S.err)+'</p>':'')+'<button class="btn primary" type="button" id="go">Sign in</button>'+
-  '<div class="note" style="margin-top:4px"><b>No access code?</b> You can register without one. <button class="btn small primary" type="button" id="tonew" style="margin-left:6px">Register a new group</button></div>'+(S.test?'<button class="btn" type="button" id="tgo" style="border-style:dashed">STG 시험: 시험 단체로 바로 로그인</button>':'')+'</div></div>'+askCard()}
+  (S.err?'<p class="err">'+esc(S.err)+'</p>':'')+'<button class="btn primary" type="button" id="enter">'+(S.needNew?'Create group and continue':'Continue')+'</button>'+
+  (S.test?'<button class="btn" type="button" id="tgo" style="border-style:dashed">STG 시험: 시험 단체로 바로 로그인</button>':'')+'</div></div>'+askCard()}
 function rooms(){var g={};S.list.forEach(function(p,i){var t=String(p.room||'').trim().toLowerCase();if(t)(g[t]=g[t]||[]).push(i)});return g}
 function roomFeeOf(){var g=rooms(),out={},cap=S.D.roomCap||4;Object.keys(g).forEach(function(t){out[t]={n:g[t].length,fee:Math.max(0,cap-g[t].length)*(S.D.roomEmptyUsd||0),over:g[t].length>(S.D.roomMax||6),first:g[t][0]}});return out}
 function mcFor(p){var M=(S.D.mcs||[]).filter(function(m){return m.i===p.inst});return M}
@@ -131,6 +133,9 @@ document.addEventListener('click',function(e){var b=e.target.closest('button');i
     if(b.id==='askmine'){run('intlMine',[Q.name,Q.email],function(r){Q.mine=r.mine;render()});return}
     if(Q.text.trim().length<2){S.err='Please write your question.';render();return}
     run('intlAsk',[{name:Q.name,email:Q.email,text:Q.text,hp:document.getElementById('qhp').value,env:navigator.userAgent.slice(0,120)}],function(r){Q.text='';Q.mine=r.mine;render();toast('Sent. We will reply by email.')});return}
+  if(b.id==='enter'){var E=S.ent||(S.ent={}),g=function(id){var x=document.getElementById(id);return x?x.value.trim():''};E.email=g('em');E.name=g('gn');if(S.needNew){E.country=g('gc');E.lead=g('gl')}var ag=document.getElementById('ag').checked;
+    if(!E.email||!E.name){S.err='Please enter your email and group name.';render();return}if(!ag){S.err='Please agree to the collection and use of personal information.';render();return}S.err='';
+    busy(true);google.script.run.withSuccessHandler(function(r){busy(false);if(r&&r.ok===false){if(r.need)S.needNew=true;S.err=r.msg;render();return}S.needNew=false;S.tok=r.token;setD(r);render()}).withFailureHandler(function(e){busy(false);S.err=(e&&e.message)||String(e);render()}).intlEnter({email:E.email,name:E.name,country:E.country||'',lead:E.lead||''},true);return}
   if(b.id==='tonew'||b.id==='tosign'){S.mode=b.id==='tonew'?'new':'';S.err='';render();return}
   if(b.id==='ngo'){var v=function(id){return document.getElementById(id).value.trim()},ag=document.getElementById('ag').checked;if(!ag){S.err='Please agree to the collection and use of personal information.';render();return}
     run('intlSignup',[{name:v('ng'),country:v('nc'),lead:v('nl'),email:v('ne')},true],function(r){S.tok=r.token;S.newCode=r.code||'';S.mode='';setD(r);render()});return}

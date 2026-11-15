@@ -18,10 +18,13 @@ function colwApply(){document.querySelectorAll(UI_SEL).forEach(t=>{const ths=[..
 /* 저장한 열 너비를 다시 쓸 때 (11-15 사용자: 넓이 맞추기 · 합계는 무조건 보이게): 금액 · 숫자 칸(.num · .r)과 합계 줄은 글자가 잘리지 않게 넓히고, 표가 상자보다 넓으면 다른 칸을 줄여 상자에 맞춤 */
 function colFit(t,ths,W){const n=W.length,need=W.map(()=>36),hard=W.map(()=>false);
   /* 11-15 사용자: 접수 시간 · 체크 · 보기 칸이 너무 넓고 이름 · 악기는 잘림 → 칸마다 글 너비(need)를 재서, 남는 칸은 글 너비+16 까지 줄이고 잘린 글 칸에 나눠 줌 · 금액(.num · .r) · 합계 칸은 절대 안 자름 */
-  const meas=td=>{const cs=getComputedStyle(td),rg=document.createRange();rg.selectNodeContents(td);let w=rg.getBoundingClientRect().width;td.querySelectorAll('button,select,input,.pill,.cchip2,.kind').forEach(x=>{w=Math.max(w,x.getBoundingClientRect().width)});return Math.ceil(w+parseFloat(cs.paddingLeft)+parseFloat(cs.paddingRight)+4)};
-  t.querySelectorAll('thead tr:first-child,tbody tr,tfoot tr').forEach(tr=>{if(tr.offsetParent===null)return;let c=0;[...tr.children].forEach(td=>{const sp=+td.colSpan||1,foot=!!td.closest('tfoot'),head=!!td.closest('thead');
-    if(sp===1&&c<n){if(!head&&(foot||td.classList.contains('num')||td.classList.contains('r')||td.querySelector('.num,button,input[type=checkbox]')))hard[c]=true;need[c]=Math.max(need[c],Math.min(head?160:420,meas(td)))}c+=sp})});
-  const V=W.map((w,i)=>hard[i]?Math.max(need[i],Math.min(w,need[i]+16)):Math.min(w,need[i]+16));
+  /* 칸마다 글이 다 들어가는 너비(need) = 잠깐 max-content 로 펼쳐서 머리줄 칸 너비를 잼 (버튼 줄 · 태그도 정확) */
+  const keep={c:t.classList.contains('colfix'),w:t.style.width,tw:ths.map(th=>th.style.width)};t.classList.remove('colfix');t.style.width='max-content';ths.forEach(th=>th.style.width='');
+  ths.forEach((th,i)=>{need[i]=Math.max(36,Math.ceil(th.getBoundingClientRect().width))});
+  if(keep.c)t.classList.add('colfix');t.style.width=keep.w;ths.forEach((th,i)=>th.style.width=keep.tw[i]);
+  t.querySelectorAll('tbody tr,tfoot tr').forEach(tr=>{if(tr.offsetParent===null)return;let c=0;[...tr.children].forEach(td=>{const sp=+td.colSpan||1,foot=!!td.closest('tfoot');
+    if(sp===1&&c<n&&(foot||td.classList.contains('num')||td.classList.contains('r')||td.classList.contains('nm')||td.querySelector('.num,button,input[type=checkbox]')))hard[c]=true;c+=sp})});   /* .nm = 이름 칸: 무조건 다 보이게 (11-15) */
+  const V=W.map((w,i)=>hard[i]?Math.max(need[i],Math.min(w,need[i]+8)):Math.min(w,need[i]+8));
   const box=t.closest('.mtblw')||t.parentElement,cw=box?box.clientWidth:0;let tot=V.reduce((a,b)=>a+b,0);
   if(cw>200&&tot<cw){let room=cw-tot;const gap=V.map((v,i)=>Math.max(0,need[i]-v)),G=gap.reduce((a,b)=>a+b,0);if(G>0){const k=Math.min(1,room/G);for(let i=0;i<n;i++)if(gap[i])V[i]=Math.round(V[i]+gap[i]*k)}}
   tot=V.reduce((a,b)=>a+b,0);

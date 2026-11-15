@@ -1,4 +1,4 @@
-/* build: 20261115-204830 */
+/* build: 20261115-210049 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -403,6 +403,7 @@ function intlSignup(o, agree) {
   let g;
   try {
     const sh = intlSheet_(), L = intlGroups_(), had = L.find(x => x.email === email);
+    if (had && o.quiet) return { ok: false, msg: 'This email is already registered. Please enter the group name you used before.' };
     if (had) { const sent = intlMail_(had, 'requested again'); return { ok: false, msg: 'This email already has a group (' + had.name + '). ' + (sent ? 'We sent the access code to that email. Please sign in with it.' : 'Please sign in with the access code, or contact the association.') }; }
     let nm = name; for (let i = 2; L.some(x => x.name === nm); i++) nm = name.slice(0, 36) + ' ' + i;
     const id = 'G' + String(L.reduce((m, x) => Math.max(m, +x.id.slice(1) || 0), 0) + 1).padStart(3, '0');
@@ -410,8 +411,26 @@ function intlSignup(o, agree) {
     g = intlGroups_().find(x => x.id === id);
   } finally { lock.releaseLock(); }
   log_('해외 ' + g.name, '직접 만들기', email);
-  intlMail_(g, 'new group');
+  if (!o.quiet) intlMail_(g, 'new group');
   return Object.assign(intlLogin(g.email, g.code, true), { code: g.code });
+}
+/** 해외 들어가기 (11-15 사용자: 접속 코드 필요 없음) — 이메일 + 단체 이름. 그 이메일 단체가 있으면 단체 이름이 같을 때 들어가고, 없으면 나라 · 대표 이름으로 새 단체를 만들어 바로 들어감 */
+const intlNm_ = s => String(s || '').toLowerCase().replace(/[^a-z0-9가-힣]/g, '');
+function intlEnter(o, agree) {
+  const C = camp_(); if (C.base.intl === false) return { ok: false, msg: 'Overseas registration is closed. Please contact the association.' };
+  o = o || {}; const email = String(o.email || '').trim().toLowerCase(), name = String(o.name || '').trim();
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return { ok: false, msg: 'Please check the email address.' };
+  if (name.length < 2) return { ok: false, msg: 'Please enter your group name.' };
+  if (agree !== true) return { ok: false, msg: 'Please agree to the collection and use of personal information.' };
+  const Ca = CacheService.getScriptCache(), k = 'intle_' + email, n = +(Ca.get(k) || 0);
+  if (n >= 10) return { ok: false, msg: 'Too many attempts. Please try again in 15 minutes.' };
+  const g = intlGroups_().find(x => x.email === email);
+  if (g) {
+    if (intlNm_(g.name).indexOf(intlNm_(name)) !== 0 && intlNm_(name).indexOf(intlNm_(g.name).replace(/\d+$/, '')) !== 0) { Ca.put(k, String(n + 1), 900); Utilities.sleep(400); return { ok: false, msg: 'This email is already registered with a different group name. Please enter the group name you used before, or contact the association.' }; }
+    Ca.remove(k); return intlLogin(g.email, g.code, true);
+  }
+  if (!String(o.country || '').trim() || !String(o.lead || '').trim()) return { ok: false, need: true, msg: 'New group: please also enter your country and the leader name.' };
+  return intlSignup({ name, email, country: o.country, lead: o.lead, quiet: true }, true);
 }
 function intlData_(gid) {
   const g = intlGroups_().find(x => x.id === gid); if (!g) throw new Error('Group not found.');

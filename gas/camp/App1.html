@@ -1,4 +1,4 @@
-/* build: 20261115-194029 */
+/* build: 20261115-194151 */
 /* ---------- 캠프 설정 (관리자 화면에서 입력되는 값) ---------- */
 const ROOM = { cap:4, emptyFee:140000 }; // 가족방: 4인 기준, 빈 자리 1개당 추가 비용
 const CAMP = { id:'27W', ri:0, lessonFee:60000, lessonMax:5, mcFee:150000,
@@ -165,9 +165,13 @@ function songOk(i){return !i.concert||i.concert==='없음'||(i.other?!!String(i.
 /* 만 나이 → 출생연도 (11-14): 올해 생일이 지났다고 보고 채움 · 아직이면 1년 빼서 고치게 안내 */
 const thisYear=()=>+String(S.today||new Date().toISOString()).slice(0,4)||2026;
 function manToYear(a){a=+a;return a>=0&&a<=99?thisYear()-a:''}
+/* 출생연도 칸 (11-15 사용자: 만 나이를 넣으면 「2018 (생일 지남) / 2017 (생일 전)」 셀렉트로) — 만 나이가 없으면 연도 직접 입력 */
+function byField(p,i){const k=p.key,m=String(i.man||'');if(m!==''&&/^\d{1,2}$/.test(m)){const y=thisYear()-(+m);const L=[[y,'생일 지남'],[y-1,'생일 전']];if(i.by&&!L.some(x=>String(x[0])===String(i.by)))L.push([+i.by,'직접']);
+    return `<select id="ag_${k}" data-f="by" data-k="${k}" class="bysel${i.by?'':' empty'}" aria-label="${esc(p.name)} 출생연도">${i.by?'':'<option value="">고르기</option>'}${L.map(([yy,l])=>`<option value="${yy}" ${String(i.by)===String(yy)?'selected':''}>${yy} (${l})</option>`).join('')}</select>`}
+  return `<input type="text" id="ag_${k}" data-f="by" data-k="${k}" inputmode="numeric" maxlength="4" value="${esc(i.by)}" placeholder="출생연도" ${yearBad(p,i.by)?'class="empty"':''}>`}
 function ageHint(p,v,fromMan){if(!okYear(v))return fromMan?'<span style="color:var(--bad)">만 나이를 숫자로 넣어 주세요</span>':'';const m=thisYear()-(+v),odd=p&&p.kind==='student'&&(m<2||m>25);
   /* 만 나이로 넣으면 생일 지남 / 생일 전 두 해 중에서 고름 (11-15) */
-  const k=p&&p.key,base=fromMan?`<span class="bdseg" role="group" aria-label="올해 생일">${[[+v,'생일 지남'],[(+v)-1,'생일 전']].map(([y,l])=>`<button type="button" data-bday="${esc(k)}|${y}" aria-pressed="${String(info(p).by)===String(y)}">${y}년생 <small>${l}</small></button>`).join('')}</span>`:`지금 만 ${Math.max(0,m-1)}~${m}세`;
+  const base=fromMan?'<span class="hint">올해 생일이 지났는지 옆에서 골라요</span>':`지금 만 ${Math.max(0,m-1)}~${m}세`;
   return odd?`<span style="color:var(--bad);font-weight:700">${base} · 학생 나이가 맞는지 확인해 주세요</span>`:base}
 function missingSong(){ return people().filter(p=>p.kind==='student'&&PLAYS.has(info(p).type)&&!songOk(info(p))) }
 function missingPref(){ return people().filter(p=>p.kind!=='family'&&PLAYS.has(info(p).type)&&+info(p).lessons>0&&(PROF[p.inst]||[]).length&&!info(p).p1) }

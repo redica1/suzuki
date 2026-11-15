@@ -1,4 +1,4 @@
-/* build: 20261115-203131 */
+/* build: 20261115-204022 */
 function vAuthPick(){const off=!!CAMP.pre;return gdBtn()+apDoor()+`<section class="sec"><h2>접수 시작</h2>
   ${off?`<p class="note warn" style="margin:6px 0 12px"><b>${+CAMP.pre.slice(5,7)}월 ${+CAMP.pre.slice(8,10)}일에 접수가 열려요.</b> 그 전에 아래에서 회원가입을 마쳐 두세요.</p>`:'<p class="lede">어떻게 접수하시나요?</p>'}
   <div class="pick2${off?' pickoff':''}"${off?' aria-disabled="true"':''}>
@@ -210,10 +210,10 @@ function roomRow(key,name){
   const isT=(byKey[key]||{}).kind==='teacher';
   return `${sibs.length?`<div class="chips"><span class="hint" style="align-self:center">${isT?'자녀':'형제'}</span>${sibs.map(k=>`<span class="cchip">${esc(byKey[k].name)}<button type="button" data-unsib="${k}" aria-label="${esc(byKey[k].name)} 형제 연결 풀기">×</button></span>`).join('')}</div>`:''}
   <label class="roomck" for="rm_${key}"><input type="checkbox" id="rm_${key}" data-roomck="${key}" ${S.room[key]?'checked':''}>
-    <span><b>가족방 신청</b> · ${n}명${sibs.length?` (${isT?'자녀':'형제'} ${sibs.length}명 포함)`:''}${n>ROOM.cap?` <span style="color:var(--bad)">(한 방은 ${ROOM.cap}명까지)</span>`:''}</span>
+    <span><b>가족방 신청</b> · ${n}명${sibs.length?` (${isT?'자녀':'형제'} ${sibs.length}명 포함)`:''}${n>ROOM.max?` <span style="color:var(--bad)">(한 방은 최대 ${ROOM.max}명이에요)</span>`:''}</span>
     <span class="num">${!fee?'추가 비용 없음':S.room[key]?`<span class="pill ok">청구에 +${won(fee)}</span>`:`신청하면 +${won(fee)}`}</span></label>
   ${S.room[key]?`<label class="f" for="rq_${key}" style="margin:6px 0 0">가족방 요청 사항 <span class="opt">선택</span><textarea id="rq_${key}" data-rreq="${key}" maxlength="300" rows="2" placeholder="예) ○○학원 가족과 가까운 방 · 침대방 꼭 · 낮은 층 · 아기 침대 필요">${esc((S.rreq||{})[key]||'')}</textarea><small class="hint">「꼭 · 반드시」라고 쓰면 꼭 지킬 요청으로 봐요. 다 들어드리지 못할 수 있어요.</small></label>`:''}
-  <p class="hint" style="margin:0">가족방은 ${ROOM.cap}명 한 방 기준이에요. 빈 자리 1개마다 ${won(ROOM.emptyFee)}이 더해져요 (${ROOM.cap}명이면 추가 비용 없음).</p>`;
+  <p class="hint" style="margin:0">가족방은 <b>${ROOM.cap}명 이상</b> 기준이에요. ${ROOM.cap}명보다 적으면 빈 자리 1개마다 ${won(ROOM.emptyFee)}이 더해져요 (${ROOM.cap}명 이상이면 추가 비용 없음 · 숙소 1실은 5~6인이 쓸 수 있어요).</p>`;
 }
 /* 가족 추가 버튼 + 형제 고르기 (형제는 같은 학원, 먼저 신청 명단에 추가되어 있어야 함) */
 function famChips(key,owner,name){

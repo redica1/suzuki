@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head>
-<!-- build: 20261115-203131 -->
+<!-- build: 20261115-204022 -->
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <base target="_top">
 <title>Suzuki Winter Music Camp · Overseas Registration</title>
@@ -35,7 +35,7 @@ table{width:100%;border-collapse:collapse;font-size:15px}th,td{text-align:left;p
 <div class="toast" id="toast" hidden></div><div class="busy" id="busy" hidden>Saving…</div>
 <script>
 var S={tok:'',D:null,list:[],dirty:false,err:'',rep:{cur:'USD'}};
-var TYPES=[['해외 학생','Student (plays an instrument)'],['해외 교사','Teacher'],['해외 보호자','Parent / guardian'],['해외 동반가족','Accompanying family (does not play)'],['해외 15개월 미만','Infant (under 15 months)']];
+var TYPES=[['해외 학생','Student (plays an instrument)'],['해외 교사','Teacher'],['해외 보호자','Parent / guardian'],['해외 동반가족','Accompanying family member (no instrument)'],['해외 15개월 미만','Infant (under 15 months)']];
 var TL={};TYPES.forEach(function(t){TL[t[0]]=t[1]});
 var INST=[['바이올린','Violin'],['첼로','Cello'],['비올라','Viola'],['플루트','Flute'],['피아노','Piano']];var IL={};INST.forEach(function(t){IL[t[0]]=t[1]});
 var BOOK=[['Pre-Twinkle','Pre-Twinkle'],['1권','Book 1'],['2권','Book 2'],['3권','Book 3'],['4권','Book 4'],['5권','Book 5'],['6권','Book 6'],['7권','Book 7'],['8권','Book 8'],['9권','Book 9'],['10권','Book 10'],['10권 이상','Above Book 10']];
@@ -75,7 +75,7 @@ function vLogin(){if(S.mode==='new')return vNew();if(S.mode==='ask')return vAsk(
   (S.err?'<p class="err">'+esc(S.err)+'</p>':'')+'<button class="btn primary" type="button" id="go">Sign in</button>'+
   '<div class="note" style="margin-top:4px"><b>No access code?</b> You can register without one. <button class="btn small primary" type="button" id="tonew" style="margin-left:6px">Register a new group</button></div>'+(S.test?'<button class="btn" type="button" id="tgo" style="border-style:dashed">STG 시험: 시험 단체로 바로 로그인</button>':'')+'</div></div>'+askCard()}
 function rooms(){var g={};S.list.forEach(function(p,i){var t=String(p.room||'').trim().toLowerCase();if(t)(g[t]=g[t]||[]).push(i)});return g}
-function roomFeeOf(){var g=rooms(),out={},cap=S.D.roomCap||4;Object.keys(g).forEach(function(t){out[t]={n:g[t].length,fee:Math.max(0,cap-g[t].length)*(S.D.roomEmptyUsd||0),over:g[t].length>cap,first:g[t][0]}});return out}
+function roomFeeOf(){var g=rooms(),out={},cap=S.D.roomCap||4;Object.keys(g).forEach(function(t){out[t]={n:g[t].length,fee:Math.max(0,cap-g[t].length)*(S.D.roomEmptyUsd||0),over:g[t].length>6,first:g[t][0]}});return out}
 function sum(){var L=S.list,by={},tot=0,paid=0,room=0;L.forEach(function(p){by[p.type]=(by[p.type]||0)+1;var f=S.D.fees[p.type]||0;tot+=f;paid+=+p.paid||0});var R=roomFeeOf();Object.keys(R).forEach(function(t){room+=R[t].fee});return {by:by,tot:tot+room,paid:paid,room:room,rooms:R}}
 function vPerson(p,i){var plays=p.type==='해외 학생'||p.type==='해외 교사';
   return '<div class="person'+(p.key?'':' new')+'"><div class="spread"><b>'+(i+1)+'. '+esc((p.first||'')+' '+(p.last||'')).trim()+(p.key?'':' <span class="pill">new</span>')+'</b><div class="row">'+(p.paid>0?'<span class="pill ok">paid '+won(p.paid)+'</span>':'')+'<span class="num">'+won(S.D.fees[p.type]||0)+'</span>'+(p.paid>0?'':'<button class="btn small ghost" type="button" data-rm="'+i+'">Remove</button>')+'</div></div>'+

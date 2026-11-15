@@ -1,4 +1,4 @@
-/* build: 20261115-203131 */
+/* build: 20261115-204022 */
   if(S.ttDay==null){const td=ttToday(days);S.ttDay=td!=null?td:(mine.length?Math.min(...mine.map(x=>x.d)):0)}
   if(tab==='me')return head+seg+(T.prof?`<p class="hint" style="margin:0 0 6px">교수 · 레슨실 <b>${esc(T.prof.room||'미정')}</b></p>`:'')+ttMineList(T,days,mine)+'</section>';
   const AC=S.user.acads||[];if(S.ttAcad&&!AC.includes(S.ttAcad))S.ttAcad='';
@@ -85,7 +85,7 @@ function missWhat(){const t=totals(),L=[],el=[],Q=x=>{const e=typeof x==='string
       if(missingPref().some(x=>x.key===p.key)){m.push('선호 교수 1');Q('#p1_'+p.key)}
       if(m.length)L.push(`${p.name}: ${m.join('·')}`)});
     S.fam.filter(f=>!f.name.trim()).forEach(f=>{L.push(`${FAM_SHORT[f.type]||'가족'} 이름`);Q('#fn_'+f.id)});
-    if(t.teams.some(x=>x.over))L.push(`가족방은 한 방에 ${ROOM.cap}명까지예요`)}
+    if(t.teams.some(x=>x.over))L.push(`가족방은 한 방에 최대 ${ROOM.max}명이에요 (숙소 1실 5~6인)`)}
   else if(S.step===4){if(S.ens.on&&!(S.ens.group||'').trim()){L.push('앙상블 팀 이름');Q('#enG')}
     if(S.ens.member&&!S.ens.joinNo&&!(S.ens.joinRep||'').trim()){L.push('함께할 팀을 고르거나 대표 학원 이름을 적어 주세요');Q('#enTq')}}
   else if(S.step===5&&!S.agree){L.push('안내 사항 동의에 체크해 주세요');{const a=document.getElementById('agree');if(a)Q(a.closest('label')||a)}}

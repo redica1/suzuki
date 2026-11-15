@@ -1,4 +1,4 @@
-/* build: 20261115-194408 */
+/* build: 20261115-203131 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -3118,19 +3118,19 @@ function mail_(sb, u) {
 /* ---------------- 게시판 게시판 (「문의」 시트) ----------------
    글은 시트 한 줄(칸 13개)이라 용량 걱정 없음. 사진은 드라이브 「캠프 문의 사진」 폴더에(5MB까지). */
 const ISS = '문의';
-const ISS_HEAD = ['번호', '일시', '이름', '연락처 뒤4자리', '학원', '화면', '내용', '사진', '상태', '답변', '처리일', '처리자', '환경', '교사ID'];   // 교사ID (11-11): 회원 계정으로 로그인해 쓴 글 → 회원관리 문의와 연결
+const ISS_HEAD = ['번호', '일시', '이름', '연락처 뒤4자리', '학원', '화면', '내용', '사진', '상태', '답변', '처리일', '처리자', '환경', '교사ID', '이메일'];   // 이메일 (11-15): 해외 게시판(로그인 없이 이름 · 이메일)   // 교사ID (11-11): 회원 계정으로 로그인해 쓴 글 → 회원관리 문의와 연결
 const ISS_STATES = ['미해결', '해결 중', '해결'];
 function issSheet_() {
   const ss = SpreadsheetApp.getActive(); let sh = ss.getSheetByName(ISS);
   if (!sh) { sh = ss.insertSheet(ISS); sh.appendRow(ISS_HEAD); sh.setFrozenRows(1); sh.getRange('A:A').setNumberFormat('@'); }
-  else { const h = sh.getRange(1, 1, 1, Math.max(1, sh.getLastColumn())).getValues()[0].map(String); if (h.indexOf('교사ID') < 0) sh.getRange(1, h.filter(String).length + 1).setValue('교사ID'); }
+  else { const h = sh.getRange(1, 1, 1, Math.max(1, sh.getLastColumn())).getValues()[0].map(String); let n = h.filter(String).length; ['교사ID', '이메일'].forEach(k => { if (h.indexOf(k) < 0) sh.getRange(1, ++n).setValue(k); }); }
   return sh;
 }
 function issues_() {
   issSheet_();
-  return rows_(ISS).filter(r => r['번호']).map(r => ({ row: r._row, no: String(r['번호']), at: String(r['일시']), name: String(r['이름']), p4: String(r['연락처 뒤4자리'] || ''), acad: String(r['학원'] || ''),
+  return rows_(ISS).filter(r => r['번호']).map(r => ({ row: r._row, no: String(r['번호']), at: pdt_(r['일시']), name: String(r['이름']), p4: String(r['연락처 뒤4자리'] || ''), acad: String(r['학원'] || ''),
     where: String(r['화면'] || ''), text: String(r['내용'] || ''), pic: String(r['사진'] || ''), state: String(r['상태'] || '미해결'), reply: String(r['답변'] || ''),
-    done: dstr_(r['처리일']), by: String(r['처리자'] || ''), env: String(r['환경'] || ''), tid: String(r['교사ID'] || '') }));
+    done: dstr_(r['처리일']), by: String(r['처리자'] || ''), env: String(r['환경'] || ''), tid: String(r['교사ID'] || ''), email: String(r['이메일'] || '') }));
 }
 /** 선생님: 글 쓰기 — 로그인한 사람만 (11-11 사용자 결정. 로그인이 안 되는 경우는 카카오톡 채널로) */
 function submitIssue(token, d) {
@@ -3172,6 +3172,29 @@ function submitIssue(token, d) {
 }
 function myIssues_(u) { return issues_().filter(x => x.tid && u.tid ? x.tid === u.tid : x.name === u.name)   /* 교사ID 있으면 교사ID로, 예전 글 · 비회원은 이름으로 */.reverse().map(x => ({ no: x.no, at: x.at, where: x.where, text: x.text, pic: !!x.pic, state: x.state, reply: x.reply, done: x.done })); }
 function myIssues(token) { const u = who_(token); return { ok: true, mine: myIssues_(u) }; }
+/* ---- 해외 게시판 (11-15 사용자: 외국인 전용 · 이름과 이메일만 적어도 글 쓰기) — 「문의」 시트에 화면 「해외 게시판」으로 쌓임, 답하면 그 이메일로 영어 메일 ---- */
+const intlMail = e => String(e || '').trim().toLowerCase();
+function intlMine_(name, email) { const n = String(name || '').trim().toLowerCase(), m = intlMail(email); if (!n || !m) return [];
+  return issues_().filter(x => intlMail(x.email) === m && x.name.trim().toLowerCase() === n).reverse().map(x => ({ no: x.no, at: x.at, text: x.text, state: x.state, reply: x.reply, done: x.done })); }
+function intlAsk(d) {
+  d = d || {}; if (String(d.hp || '')) return { ok: true, mine: [] };   // 로봇 칸
+  const name = String(d.name || '').trim().replace(/\s+/g, ' ').slice(0, 40), email = intlMail(d.email), text = String(d.text || '').trim();
+  if (name.length < 2) return { ok: false, msg: 'Please enter your name.' };
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email) || email.length > 80) return { ok: false, msg: 'Please check your email address.' };
+  if (text.length < 2) return { ok: false, msg: 'Please write your question.' };
+  if (text.length > 2000) return { ok: false, msg: 'Up to 2,000 characters, please.' };
+  const Cc = CacheService.getScriptCache(), k1 = 'iqa1_' + email, k2 = 'iqad_' + email + '_' + today_();
+  if (Cc.get(k1)) return { ok: false, msg: 'You just posted. Please wait a minute.' };
+  const nday = +(Cc.get(k2) || 0); if (nday >= 10) return { ok: false, msg: 'Too many posts today. Please email us instead.' };
+  const lock = lock_(); let no;
+  try { const sh = issSheet_(); const n = rows_(ISS).reduce((m, r) => Math.max(m, +String(r['번호']).replace(/\D/g, '') || 0), 0) + 1; no = 'Q' + String(n).padStart(3, '0');
+    const H = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0].map(String), row = new Array(H.length).fill(''); const put = (k, v) => { const j = H.indexOf(k); if (j >= 0) row[j] = v; };
+    put('번호', no); put('일시', stamp_()); put('이름', name); put('학원', '해외'); put('화면', '해외 게시판'); put('내용', text); put('상태', '미해결'); put('환경', String(d.env || '').slice(0, 120)); put('이메일', email);
+    sh.appendRow(row); Cc.put(k1, '1', 60); Cc.put(k2, String(nday + 1), 21600); } finally { lock.releaseLock(); }
+  log_(name, '해외 게시판', no);
+  return { ok: true, no, mine: intlMine_(name, email) };
+}
+function intlMine(name, email) { return { ok: true, mine: intlMine_(name, email) }; }
 /** 관리자: 상태·답변 */
 function adminSetIssue(token, row, state, reply) {
   const a = adm_(token); need_(a, ['q', 'room']);   // 가족방 요청 글은 방 배정 담당도 답할 수 있음
@@ -3183,6 +3206,10 @@ function adminSetIssue(token, row, state, reply) {
     const set = (k, v) => sh.getRange(row, h.indexOf(k) + 1).setValues([[v]]);
     set('상태', state); set('답변', String(reply || '').slice(0, 2000)); set('처리일', state === '미해결' ? '' : today_()); set('처리자', a.name);
     log_('관리자 ' + a.name, '문의 ' + state, String(r['번호']));
+    /* 해외 게시판 글에 답하면 그 이메일로 알림 (답이 바뀌었을 때만) */
+    const em = intlMail(r['이메일']), rp = String(reply || '').trim();
+    if (em && rp && rp !== String(r['답변'] || '').trim()) sendMail_({ kind: '해외 게시판 답', to: em, name: 'Suzuki Association of Korea', subject: '[Suzuki Winter Music Camp] Reply to your question ' + r['번호'],
+      body: 'Dear ' + r['이름'] + ',\n\nYour question:\n' + String(r['내용'] || '') + '\n\nOur reply:\n' + rp + '\n\nYou can also see it at https:\/\/app.suzukimusickorea.org/camp/intl.html (Questions › My questions) with the same name and email.\n\nKorea Suzuki Music Association' });
   } finally { lock.releaseLock(); }
   return adminData(token);
 }

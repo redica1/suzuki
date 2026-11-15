@@ -14,6 +14,8 @@ function colwSave(o){try{localStorage.setItem(COLW_KEY,JSON.stringify(o))}catch(
 const tblKey=t=>[...t.querySelectorAll('thead th')].map(th=>th.dataset.lb||th.textContent.replace(/[▲▼]/g,'').trim()).join('|');
 function colwApply(){document.querySelectorAll(UI_SEL).forEach(t=>{const ths=[...t.querySelectorAll('thead tr:first-child th')];if(!ths.length)return;t.classList.add('uix');
   ths.forEach((th,i)=>{if(!th.querySelector('.colrz')){if(getComputedStyle(th).position==='static')th.style.position='relative';const h=document.createElement('span');h.className='colrz';h.dataset.ci=i;h.setAttribute('aria-hidden','true');th.appendChild(h)}});
+  /* 11-15: 휴대폰(760px 미만)에서는 저장한 열 너비를 쓰지 않음 — 큰 화면에서 끈 너비 · 맞춤 계산이 휴대폰 표(이름 한 글자씩 · …)를 망가뜨리던 것 */
+  if(window.innerWidth<760){if(t.classList.contains('colfix')){t.classList.remove('colfix');t.style.width='';ths.forEach(th=>th.style.width='')}return}
   const W=colwAll()[tblKey(t)];if(W&&W.length===ths.length){t.classList.add('colfix');const set=V=>{t.style.width=V.reduce((a,b)=>a+b,0)+'px';ths.forEach((th,i)=>{th.style.width=V[i]+'px'})};set(W);const F=colFit(t,ths,W.slice());if(F)set(F)}})}
 /* 저장한 열 너비를 다시 쓸 때 (11-15 사용자: 넓이 맞추기 · 합계는 무조건 보이게): 금액 · 숫자 칸(.num · .r)과 합계 줄은 글자가 잘리지 않게 넓히고, 표가 상자보다 넓으면 다른 칸을 줄여 상자에 맞춤 */
 function colFit(t,ths,W){const n=W.length,need=W.map(()=>36),hard=W.map(()=>false);

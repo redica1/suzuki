@@ -1,4 +1,4 @@
-/* build: 20261115-193852 */
+/* build: 20261115-194029 */
 function vAuthPick(){const off=!!CAMP.pre;return gdBtn()+apDoor()+`<section class="sec"><h2>접수 시작</h2>
   ${off?`<p class="note warn" style="margin:6px 0 12px"><b>${+CAMP.pre.slice(5,7)}월 ${+CAMP.pre.slice(8,10)}일에 접수가 열려요.</b> 그 전에 아래에서 회원가입을 마쳐 두세요.</p>`:'<p class="lede">어떻게 접수하시나요?</p>'}
   <div class="pick2${off?' pickoff':''}"${off?' aria-disabled="true"':''}>
@@ -218,7 +218,7 @@ function roomRow(key,name){
 /* 가족 추가 버튼 + 형제 고르기 (형제는 같은 학원, 먼저 신청 명단에 추가되어 있어야 함) */
 function famChips(key,owner,name){
   const FC=isGuest()?[['비회원 보호자','보호자'],['비회원 동반가족','동반가족'],['비회원 15개월 미만','15개월 미만']]:FAM_CHIPS[owner];
-  const chips=`<div class="chips"><b class="famLbl">${esc(name)} 가족 추가</b>${!S.join[key]&&!isStaffAcad()?`<button class="chip" type="button" data-sibpick="${key}">+ ${owner==='teacher'?'자녀 (참가 학생)':'형제'}</button>`:''}${FC.map(([t,l])=>`<button class="chip" type="button" data-addfam="${key}|${t}">+ ${l}</button>`).join('')}</div>`;
+  const chips=`<div class="chips"><b class="famLbl">${esc(name)} 가족 추가</b>${!S.join[key]&&!isStaffAcad()?`<button class="chip" type="button" data-sibpick="${key}">+ ${owner==='teacher'?'자녀 (참가 학생)':'형제'}</button>`:''}${FC.map(([t,l])=>`<button class="chip" type="button" data-addfam="${key}|${t}">+ ${l}</button>`).join('')}</div><p class="famMust sm"><b>가족 · 가족방은 반드시 지금 이 ${owner==='teacher'?'교사와':'학생과'} 같은 접수에서 함께 신청해 주세요.</b> 나중에 가족만 따로 접수하면 같은 방으로 묶이지 않아요.</p>`;
   if(S.sibOpen!==key) return chips;
   const cands=people().filter(p=>p.kind==='student'&&p.key!==key&&!S.join[p.key]&&!sibsOf(p.key).length);
   return chips+`<div class="sibpick"><b>${owner==='teacher'?`${esc(name)} 선생님의 자녀를 선택하세요`:`${esc(name)}의 형제를 선택하세요`}</b> <span class="hint">${owner==='teacher'?'악기를 하는 자녀는 학생으로 먼저 신청 명단에 추가해 주세요 · 「악기하는 교사자녀」 참가비로 바뀌어요 · 악기를 안 하는 자녀는 「+ 동반가족」':'같은 학원 · 신청 명단에 먼저 추가된 학생만 나와요'}</span>
@@ -284,7 +284,7 @@ function vStep2(){
   ${cartPanel()}
   <div class="panel">
     <div class="itabs" role="tablist" aria-label="교사·악기">${ptabList().map(o=>`<button type="button" role="tab" data-ptab="${o.t}" aria-pressed="${S.ptab===o.t}">${o.t==='교사'&&isStaffAcad()?'관계자':o.t}<small>${o.k}/${o.n}</small></button>`).join('')}<button type="button" role="tab" data-ptab="가족" aria-pressed="${S.ptab==='가족'}">가족<small>다음 단계</small></button></div>
-    ${S.ptab==='가족'?`<div class="note info famguide"><b>가족(보호자 · 동반가족 · 15개월 미만)은 여기서 넣지 않아요.</b><br>먼저 악기를 하는 교사 · 학생을 신청 명단에 담고 「다음」을 누르면, <b>3. 참가 정보</b>에서 <b>학생 카드 아래 「가족 추가」</b>(+ 보호자 · + 동반가족 · + 15개월 미만)로 넣어요. 이름만 넣으면 되고 악기 · 권수는 묻지 않아요. 악기별 인원에도 들어가지 않아요.<br><span class="hint">악기를 하는 교사 자녀는 학생으로 담고, 3단계에서 「+ 자녀」로 이어 줘요.</span>${totals().n?`<div class="row" style="margin-top:8px"><button class="btn primary" type="button" data-gonext="1">다음 단계에서 가족 넣기 →</button></div>`:'<p class="hint" style="margin:8px 0 0">아직 담은 사람이 없어요. 교사 · 악기 탭에서 먼저 담아 주세요.</p>'}</div>`:''}
+    ${S.ptab==='가족'?`<div class="note info famguide"><b>가족(보호자 · 동반가족 · 15개월 미만)은 여기서 넣지 않아요.</b><br><span class="famMust"><b>가족방은 반드시 그 교사 · 학생을 신청할 때 같은 접수에서 가족과 함께 신청해 주세요.</b> 지금 그 교사 · 학생을 담고, 다음 단계에서 가족 · 가족방을 함께 넣어요.</span><br>먼저 악기를 하는 교사 · 학생을 신청 명단에 담고 「다음」을 누르면, <b>3. 참가 정보</b>에서 <b>학생 카드 아래 「가족 추가」</b>(+ 보호자 · + 동반가족 · + 15개월 미만)로 넣어요. 이름만 넣으면 되고 악기 · 권수는 묻지 않아요. 악기별 인원에도 들어가지 않아요.<br><span class="hint">악기를 하는 교사 자녀는 학생으로 담고, 3단계에서 「+ 자녀」로 이어 줘요.</span>${totals().n?`<div class="row" style="margin-top:8px"><button class="btn primary" type="button" data-gonext="1">다음 단계에서 가족 넣기 →</button></div>`:'<p class="hint" style="margin:8px 0 0">아직 담은 사람이 없어요. 교사 · 악기 탭에서 먼저 담아 주세요.</p>'}</div>`:''}
     ${isStaffAcad()?'':'<p class="hint" style="margin:0">접수 가능한 사람 먼저 · 가나다순 · 탭 숫자는 「접수 가능/전체」</p>'}
     <div class="spread"><div class="legend" ${isStaffAcad()?'hidden':''}><span><span class="pill ok">회비 납부</span> 바로 접수</span><span><span class="pill due">회비 미납</span> 연회비 함께 입금</span><span>흐린 줄 = 이미 접수한 사람</span></div>
       <div class="row" ${S.ptab==='교사'?'hidden':''}><label class="mine" for="mine"><input type="checkbox" id="mine" ${S.mine?'checked':''}>내 학생만 보기 (담당 ${esc(me)})</label></div></div>

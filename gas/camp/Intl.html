@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head>
-<!-- build: 20261115-204022 -->
+<!-- build: 20261115-204106 -->
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <base target="_top">
 <title>Suzuki Winter Music Camp · Overseas Registration</title>
@@ -91,11 +91,11 @@ function vPerson(p,i){var plays=p.type==='해외 학생'||p.type==='해외 교�
   '<label>Note<input data-f="note" data-i="'+i+'" value="'+esc(p.note)+'" placeholder="allergy, etc."></label></div></div>'}
 function vMain(){var D=S.D,s=sum();
   var fee='<table><thead><tr><th>Participant type</th><th class="r">Fee ('+esc(String(D.round).replace(/(\d+)\s*차/,'round $1'))+')</th><th class="r">People</th></tr></thead><tbody>'+TYPES.map(function(t){return '<tr><td>'+esc(t[1])+'</td><td class="r num">'+won(D.fees[t[0]]||0)+'</td><td class="r num">'+(s.by[t[0]]||0)+'</td></tr>'}).join('')+
-    (s.room?'<tr><td>Family room empty beds</td><td class="r num">'+won(s.room)+'</td><td></td></tr>':'')+
+    (s.room?'<tr><td>Family room empty bed spots</td><td class="r num">'+won(s.room)+'</td><td></td></tr>':'')+
     '<tr><td><b>Total</b></td><td class="r num"><b>'+won(s.tot)+'</b></td><td class="r num"><b>'+S.list.length+'</b></td></tr></tbody></table>';
   var RR=s.rooms,rk=Object.keys(RR),cap=D.roomCap||4;
-  var roomBox='<div class="card"><h2>Family rooms</h2><p class="hint">A family room is for one family, up to '+cap+' people. Type the same family room name (for example “Dela Cruz family”) for everyone who will share the room. If fewer than '+cap+' people stay, each empty bed costs '+won(D.roomEmptyUsd||0)+'. Leave it blank for people who stay in the group rooms.</p>'+
-    (rk.length?'<table><thead><tr><th>Family room</th><th class="r">People</th><th class="r">Empty beds</th></tr></thead><tbody>'+rk.map(function(t){var x=RR[t];return '<tr><td>'+esc(S.list[x.first].room)+(x.over?' <span class="pill due">max '+cap+'</span>':'')+'</td><td class="r num">'+x.n+'</td><td class="r num">'+won(x.fee)+'</td></tr>'}).join('')+'</tbody></table>':'<p class="hint">No family rooms yet.</p>')+
+  var roomBox='<div class="card"><h2>Family rooms</h2><p class="hint">A family room is for one family of '+cap+' or more people (each room sleeps 5 to 6; up to 6 per family room). Type the same family room name (for example “Dela Cruz family”) for everyone who will share the room. If fewer than '+cap+' people stay, each empty bed spot costs '+won(D.roomEmptyUsd||0)+'. Leave it blank for people who stay in the group rooms (usually 5 per room).</p>'+
+    (rk.length?'<table><thead><tr><th>Family room</th><th class="r">People</th><th class="r">Empty bed spots</th></tr></thead><tbody>'+rk.map(function(t){var x=RR[t];return '<tr><td>'+esc(S.list[x.first].room)+(x.over?' <span class="pill due">max 6</span>':'')+'</td><td class="r num">'+x.n+'</td><td class="r num">'+won(x.fee)+'</td></tr>'}).join('')+'</tbody></table>':'<p class="hint">No family rooms yet.</p>')+
     '<datalist id="roomNames">'+rk.map(function(t){return '<option value="'+esc(S.list[RR[t].first].room)+'">'}).join('')+'</datalist></div>';
   return (S.newCode?'<div class="note" style="margin-bottom:16px"><b>Your group is ready.</b> Your access code is <b style="font-size:20px;letter-spacing:.08em">'+esc(S.newCode)+'</b>. Please keep it: you need your email and this code to sign in again. We also emailed it to '+esc(D.group.email)+'.</div>':'')+'<div class="card"><div class="spread"><div><h2>'+esc(D.group.name)+'</h2><span class="hint">'+esc(D.group.country)+(D.group.lead?' · leader '+esc(D.group.lead):'')+' · '+esc(D.group.email)+(D.no?' · registration '+esc(D.no):'')+'</span></div><button class="btn small ghost" type="button" id="out">Sign out</button></div>'+
     '<p class="hint" style="margin-top:8px">Camp: '+esc(D.camp.start)+' ~ '+esc(D.camp.end)+(D.camp.place&&D.camp.place!=='추후 안내'?' · '+esc(D.camp.place):'')+'. Fees include the camp program, room and meals. No membership fee for overseas participants.</p>'+fee+'</div>'+
@@ -103,12 +103,9 @@ function vMain(){var D=S.D,s=sum();
     '<p class="hint">Enter every person who will come. Names in English as in the passport. You can come back later to add or change people. People whose payment is confirmed cannot be removed here.</p>'+
     (S.list.length?S.list.map(vPerson).join(''):'<p class="hint">No one yet. Use the buttons above to add people.</p>')+'</div>'+
     roomBox+
-    '<div class="card"><h2>Payment</h2><p class="hint">Please send the total for the whole group in one transfer, then report it below. The association confirms each person after the money arrives.</p>'+
-    (D.remit?'<div class="note" style="white-space:pre-wrap">'+esc(D.remit)+'</div>':'<div class="note">Bank details will be sent by the association.</div>')+
-    '<div class="spread" style="margin-top:10px"><b>Total '+won(s.tot)+'</b><span>Confirmed '+won(s.paid)+'</span>'+(s.tot-s.paid>0?'<span class="pill due">Balance '+won(s.tot-s.paid)+'</span>':'<span class="pill ok">Fully paid</span>')+'</div>'+
-    (D.reps.length?'<table style="margin-top:10px"><thead><tr><th>Reported</th><th>Date sent</th><th class="r">Amount</th><th>Sender</th></tr></thead><tbody>'+D.reps.map(function(r){return '<tr><td class="num">'+esc(String(r.at).slice(0,16))+'</td><td class="num">'+esc(r.date)+'</td><td class="r num">'+esc(r.cur)+' '+Number(r.amt).toLocaleString('en-US')+'</td><td>'+esc(r.name)+'</td></tr>'}).join('')+'</tbody></table>':'')+
-    '<h3 style="margin-top:14px">Report a transfer</h3><div class="grid"><label>Date sent<input type="date" id="rd" value="'+esc(S.rep.date||'')+'" max="'+esc(D.today)+'"></label><label>Currency<select id="rc">'+opt([['USD','USD'],['PHP','PHP'],['KRW','KRW'],['JPY','JPY'],['EUR','EUR']],S.rep.cur)+'</select></label>'+
-    '<label>Amount<input id="ra" inputmode="decimal" value="'+esc(S.rep.amt||'')+'"></label><label>Sender name<input id="rn" value="'+esc(S.rep.name||'')+'"></label></div><div class="row" style="margin-top:10px"><button class="btn" type="button" id="rep" '+(D.no?'':'disabled')+'>Report transfer</button>'+(D.no?'':'<span class="hint">Save the participant list first.</span>')+'</div></div>'+
+    /* 11-15 사용자: 해외 단체는 이체 없이 신청만 → 입금 · 이체 신고 칸을 뺌, 금액은 참고로만 */
+    '<div class="card"><h2>Fees</h2><p class="hint"><b>Registration only.</b> You do not need to send money or report a transfer on this page. The camp office will contact you by email about payment.</p>'+
+    '<div class="spread" style="margin-top:10px"><b>Estimated total '+won(s.tot)+'</b><span class="hint">'+S.list.length+' people'+(s.room?' · incl. family room empty bed spots '+won(s.room):'')+'</span></div></div>'+
     '<div class="sticky"><div class="spread wrap" style="padding:0"><span>'+S.list.length+' people · <b>'+won(s.tot)+'</b>'+(S.dirty?' · <span class="err">not saved</span>':'')+'</span><button class="btn primary" type="button" id="save"'+(S.dirty?'':' disabled')+'>Save list</button></div>'+(S.err?'<p class="err" style="margin:6px 0 0">'+esc(S.err)+'</p>':'')+'</div>'}
 function render(){document.getElementById('app').innerHTML=S.D?vMain():vLogin()}
 document.addEventListener('input',function(e){var t=e.target;if(t.dataset&&t.dataset.f!==undefined){var p=S.list[+t.dataset.i];p[t.dataset.f]=t.value;S.dirty=true;var b=document.getElementById('save');if(b)b.disabled=false}});

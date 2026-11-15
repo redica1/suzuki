@@ -1,4 +1,4 @@
-/* build: 20261115-210049 */
+/* build: 20261115-211653 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -1051,7 +1051,7 @@ function writePeople_(sb, isNew) {
     const vals = {
       '참가자ID': p.id, '접수번호': sb.no, '차수': p.rndN || sb.round, '학원': sb.acad, '접수 교사': sb.owner, '들어온 차례': (p.batch || 1) === 1 ? '처음 접수' : '추가 ' + ((p.batch || 1) - 1),
       '추가 일시': p.addAt || '', '이름': p.name, '구분': p.kind, '참가 구분': p.type, '악기': p.inst || i.inst || '', '담당 교사': i.teacher || '', '출생연도': i.by || '', '성별': i.gender || '',
-      '현재 진도': i.prog || '', '선호 교수1': i.p1 || '', '선호 교수2': i.p2 || '', '추가 레슨': i.lessons || '', '마스터클래스': (i.mc || []).join(', '),
+      '현재 진도': i.prog || '', '선호 교수1': i.p1 || '', '선호 교수2': i.p2 || '', '기본 레슨': ['학생', '회원의 악기하는 자녀', '비회원 학생'].includes(i.type) ? (i.noBase ? '안 받음' : '1회') : '', '추가 레슨': i.lessons || '', '마스터클래스': (i.mc || []).join(', '),
       '음악회': i.concert && i.concert !== '없음' ? i.concert : '', '음악회 곡': i.other ? (String(i.oc || '') + ' ' + String(i.ot || '')).trim() : (i.song || ''),
       '가족방': p.room ? '대표(빈 자리 요금)' : (f.room && f.room[key] ? '대표' : ''), '참가비': p.fee, '레슨·MC': p.lesson, '연회비': p.dues, '가족방비': p.room || 0,
       '청구액': (+p.fee || 0) + (+p.lesson || 0) + (+p.dues || 0) + (+p.room || 0), '상태': p.status, '입금 상태': p.pay,
@@ -3599,7 +3599,7 @@ function myTimetable(token) {
     const mineSub = s.sb.owner === u.name, myPupil = nm(s.i.teacher) === nm(u.name) && u.acads.includes(s.sb.acad), sameAcad = u.acads.includes(s.sb.acad);
     if (!mineSub && !myPupil && !sameAcad) return;
     const inst = s.p.inst || s.i.inst || '';
-    stu.push({ name: s.p.name, acad: s.sb.acad, inst, teacher: s.i.teacher || '', req: +s.i.lessons || 0, mine: mineSub || myPupil, prog: s.i.prog || '', mc: Array.isArray(s.i.mc) ? s.i.mc : (s.i.mc ? [String(s.i.mc)] : []), grp: groupsOf(inst, s.i.prog), lessons: L.filter(x => x.pid === id).map(x => ({ d: x.d, t: x.t, pr: x.pr, room: roomOf(x.pr) })) }); });
+    stu.push({ name: s.p.name, acad: s.sb.acad, inst, teacher: s.i.teacher || '', req: (['학생', '회원의 악기하는 자녀', '비회원 학생'].includes(s.i.type) && !s.i.noBase ? 1 : 0) + (+s.i.lessons || 0), mine: mineSub || myPupil, prog: s.i.prog || '', mc: Array.isArray(s.i.mc) ? s.i.mc : (s.i.mc ? [String(s.i.mc)] : []), grp: groupsOf(inst, s.i.prog), lessons: L.filter(x => x.pid === id).map(x => ({ d: x.d, t: x.t, pr: x.pr, room: roomOf(x.pr) })) }); });
   stu.sort((a, b) => a.acad.localeCompare(b.acad) || a.name.localeCompare(b.name));
   /* 마스터클래스 일정 (11-03): 교사 일정 종류 「마스터클래스」, 교수 = 그 일정 사람 · 세부 이름 */
   const mcs = actEvents_().filter(e => e.title === '마스터클래스').map(e => ({ who: [e.sub].concat(e.ppl.map(p => pn(p.n))).filter(Boolean), d: e.d, s: e.s, e: e.e, room: e.room }));

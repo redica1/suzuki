@@ -1,4 +1,4 @@
-/* build: 20261115-210049 */
+/* build: 20261115-211653 */
   if(!open.length) return MY_SUBS.length?`<div class="panel rp">${bankHTML()}<span class="hint">지금 입금할 금액이 없어요.</span></div>`:'';
   /* 평소엔 한 줄로 접어 둠: 「입금 신고하기」를 누르면 펼침 (11-03) */
   if(!S.rpOpen){const due=open.reduce((t,x)=>t+dueOf(x.p),0);return `<div class="panel rp">${bankHTML()}<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><span><b>입금 필요 ${open.length}명</b> · <b class="num">${won(due)}</b> <span class="hint">입금한 뒤 알려 주세요</span></span><button class="btn primary" type="button" data-rpopen="1">입금 신고하기</button></div></div>`}
@@ -23,7 +23,7 @@ const catOf=(sb,p)=>p.kind==='교사'?'교사':p.kind==='가족'?'가족':(instO
 /* 내 접수 탭: 전체 · 교사 · 바이올린 · 첼로 … · 가족 */
 /* 지금 탭에 들어가는 사람인지 (칩 숫자도 이 기준) */
 function viewOk(sb,p){const mv=S.mview||'pay';if(mv==='pay')return true;if(p.kind==='가족')return false;const i=pInfo(sb,p),sub=curSub();
-  if(mv==='les')return sub==='grp'?p.kind==='학생':sub==='les'?+i.lessons>0:(i.mc||[]).length>0;if(mv==='con')return i.concert===sub;return p.kind==='학생'}
+  if(mv==='les')return sub==='grp'?p.kind==='학생':sub==='les'?((p.kind==='학생'&&!i.noBase)||+i.lessons>0):(i.mc||[]).length>0;if(mv==='con')return i.concert===sub;return p.kind==='학생'}
 function mineTabs(list,noFam){const iv=(S.mview||'pay')!=='pay',C={};(list||MY_SUBS).forEach(sb=>sb.ppl.filter(p=>p.status==='정상'&&!((noFam||iv)&&p.kind==='가족')&&viewOk(sb,p)).forEach(p=>{const c=iv?catOf2(sb,p):catOf(sb,p);C[c]=(C[c]||0)+1}));
   const ins=Object.keys(C).filter(k=>k!=='교사'&&k!=='가족').sort((a,b)=>C[b]-C[a]);const T=[['전체',Object.values(C).reduce((a,b)=>a+b,0)]].concat(C['교사']?[['교사',C['교사']]]:[],ins.map(k=>[k,C[k]]),C['가족']?[['가족',C['가족']]]:[]);   /* 11-15: 「가족 n」 칩을 끝에 (악기 칩 합 + 가족 = 전체) · 악기 칩 숫자에는 가족이 안 들어감 */
   if(!T.some(x=>x[0]===S.mtab))S.mtab='전체';
@@ -86,10 +86,12 @@ function curSub(){const L=MSUBS[S.mview||'pay']||[];return L.some(x=>x[0]===S.ms
 const famTab=()=>(S.mview||'pay')==='pay'&&curSub()==='room';
 function mvSeg(){const v=S.mview||'pay',L=MSUBS[v]||[],c=curSub();return `<div class="itabs" role="tablist" aria-label="보기" style="margin:4px 0 8px">${MVIEWS.map(([k,l])=>`<button type="button" role="tab" data-mview="${k}" aria-pressed="${v===k}">${l}</button>`).join('')}</div>${L.length?`<div class="row" role="group" style="gap:6px;margin:0 0 10px;flex-wrap:wrap">${L.map(([k,l])=>`<button class="btn small ${c===k?'primary':'ghost'}" type="button" data-msub="${k}" aria-pressed="${c===k}">${l}</button>`).join('')}</div>`:''}`}
 function pInfo(sb,p){const k=p.id.slice(sb.no.length+1);return ((sb.form||{}).info||{})[k]||{}}
+/* 개인레슨 횟수 (11-15 사용자): 학생은 기본 1회가 참가비에 들어 있음 → 추가 0이어도 「1회」, 추가 2면 「3회 (기본 1 + 추가 2)」 */
+function lesTxt(p,i){const b=p.kind==='학생'&&!i.noBase?1:0,a=+i.lessons||0;return (b+a)+'회'+(b&&a?` (기본 1 + 추가 ${a})`:b?' (기본)':' (추가)')}
 function infoTable(R,RM,showOwner,canEdit){const mv=S.mview||'pay',v=mv==='les'?curSub():mv,NO='<span class="nil">신청 없음</span>',DASH='<span class="hint">-</span>';
   const PL=new Set(['학생','회원의 악기하는 자녀','비회원 학생']);
-  /* 탭마다 해당하는 사람만: 그룹레슨 · 학생 진도 = 학생, 개인레슨 = 추가 레슨 신청자, 마스터클래스 = 신청자 */
-  const ok={grp:x=>x.p.kind==='학생',info:x=>x.p.kind==='학생',les:x=>+pInfo(x.sb,x.p).lessons>0,mc:x=>(pInfo(x.sb,x.p).mc||[]).length>0}[v];
+  /* 탭마다 해당하는 사람만: 그룹레슨 · 학생 진도 = 학생, 개인레슨 = 학생 전원(기본 1회) + 추가 레슨 신청자, 마스터클래스 = 신청자 */
+  const ok={grp:x=>x.p.kind==='학생',info:x=>x.p.kind==='학생',les:x=>(x.p.kind==='학생'&&!pInfo(x.sb,x.p).noBase)||+pInfo(x.sb,x.p).lessons>0,mc:x=>(pInfo(x.sb,x.p).mc||[]).length>0}[v];
   if(ok)R=R.filter(ok);
   if(!R.length)return `<p class="hint">${{grp:'학생이 없어요.',info:'학생이 없어요.',les:'개인레슨을 신청한 사람이 없어요.',mc:'마스터클래스를 신청한 사람이 없어요.'}[v]||'해당하는 사람이 없어요.'}</p>`;
   if((v==='les'||v==='grp'||v==='mc')&&S.tt===undefined){S.tt=null;api('myTimetable',[],r=>{S.tt=r;render()},()=>{S.tt={open:false};render()},'')}
@@ -109,7 +111,7 @@ function infoTable(R,RM,showOwner,canEdit){const mv=S.mview||'pay',v=mv==='les'?
   const whenCell=(sb,p)=>{const Z=slots(sb,p);return Z.length?Z.map(z=>`<div style="margin:2px 0">${z.w?esc(z.w):'<span class="nil">배정 전</span>'}</div>`).join(''):'<span class="nil">배정 전</span>'};
   const cells=(sb,p)=>{const i=pInfo(sb,p);
     if(v==='grp')return `<td style="text-align:left">${i.prog?esc(i.prog):DASH}</td><td>${i.teacher?esc(i.teacher):DASH}</td><td style="white-space:normal">${grpOf(sb,p)}</td>`;
-    if(v==='les'||v==='mc'){const Z=slots(sb,p);if(v==='les'&&!Z.length)return `<td colspan="2"><small class="hint">${esc(i.lessons)}회 신청</small></td>`;
+    if(v==='les'||v==='mc'){const Z=slots(sb,p);if(v==='les'&&!Z.length)return `<td colspan="2"><small class="hint">${lesTxt(p,i)}</small></td>`;
       const col=f=>`<td style="white-space:normal">${Z.map(z=>`<div style="margin:2px 0">${f(z)}</div>`).join('')}</td>`;return col(z=>`<b>${esc(z.pr)}</b>`)+col(z=>z.room?esc(z.room):'<span class="hint">-</span>')}
     if(v==='con')return `<td><b>${esc(i.concert||'')}</b></td><td style="white-space:normal">${i.other?esc(`${i.oc||''} ${i.ot||''}`.trim()||'곡명 미입력'):esc(i.song||'곡 미선택')}</td>${audOn(curSub())?`<td style="white-space:normal;text-align:left;min-width:220px">${audCell(sb,p,canEdit)}</td>`:''}`;
     return `<td>${esc(TSHORT[p.type]||p.type||'-')}</td><td class="num">${i.by?esc(i.by):DASH}</td><td>${i.gender?esc(i.gender):DASH}</td><td style="text-align:left">${i.prog?esc(i.prog):DASH}</td><td>${i.teacher?esc(i.teacher):DASH}</td>`};

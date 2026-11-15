@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261115-210049 -->
+<!-- build: 20261115-211653 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -1157,7 +1157,7 @@ function load(){LOADING=true;ERR='';run('lessonData',[],r=>{LOADING=false;L=r;if
 const profs=()=>(S.D.profs||[]).filter(p=>p.on&&p.lesson).slice().sort((a,b)=>(IO.indexOf(a.inst)+1||9)-(IO.indexOf(b.inst)+1||9));
 let GONE={};
 function students(){const out=[];GONE={};(S.D.subs||[]).forEach(sb=>sb.ppl.forEach(p=>{if(p.status==='취소'){GONE[p.id]={name:p.name,acad:sb.acad};return}const k=p.id.slice(sb.no.length+1),i=(sb.form&&sb.form.info&&sb.form.info[k])||{};const type=p.type||i.type||'';
-  if(!['학생','회원의 악기하는 자녀','비회원 학생'].includes(type))return;out.push({id:p.id,name:p.name,acad:sb.acad,no:sb.no,inst:p.inst||i.inst||'',teacher:i.teacher||'',prog:i.prog||'',req:+i.lessons||0,p1:i.p1||'',p2:i.p2||'',round:sb.round||''})}));return out}
+  if(!['학생','회원의 악기하는 자녀','비회원 학생'].includes(type))return;out.push({id:p.id,name:p.name,acad:sb.acad,no:sb.no,inst:p.inst||i.inst||'',teacher:i.teacher||'',prog:i.prog||'',req:(i.noBase?0:1)+(+i.lessons||0),base:!i.noBase,p1:i.p1||'',p2:i.p2||'',round:sb.round||''})}));return out}
 let SB={};const stuOf=id=>SB[id];
 const sh0=a=>String(a||'').replace(/스즈키$/,'');
 const at=(d,t,pr)=>L.rows.find(x=>x.d===d&&x.t===t&&x.pr===pr);
@@ -4475,7 +4475,7 @@ document.addEventListener('click',e=>{if(S.tab!=='book')return;const b=e.target.
   if(b.id==='ebSetSave'){const n=Object.assign(ebSet(),S.ebSetW||{});n.per=Math.max(1,Math.min(10,Math.round(+n.per||5)));n.fs=Math.max(5,Math.min(10,+n.fs||6.6));['en','sub','org'].forEach(k=>n[k]=String(n[k]||'').trim().slice(0,120));
     ebSend([],[],n,()=>{S.ebSetW=null;toast('책자 설정을 저장했어요')});return}},true);
 </script>
-<div id="bldMark" hidden>빌드표시 20261115-210049 </div>
+<div id="bldMark" hidden>빌드표시 20261115-211653 </div>
 <script>
 /* 관리자 상담 (11-15): 관리자 매뉴얼 글에서만 찾아 답함 (AI 아님 · 없는 답은 지어내지 않음). 장마다 t 제목 · q 찾는 말 · k 바로 갈 메뉴 · h 본문 */
 const AGD={

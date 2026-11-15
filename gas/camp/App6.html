@@ -1,4 +1,4 @@
-/* build: 20261115-210049 */
+/* build: 20261115-211653 */
   if(S.ttDay==null){const td=ttToday(days);S.ttDay=td!=null?td:(mine.length?Math.min(...mine.map(x=>x.d)):0)}
   if(tab==='me')return head+seg+(T.prof?`<p class="hint" style="margin:0 0 6px">교수 · 레슨실 <b>${esc(T.prof.room||'미정')}</b></p>`:'')+ttMineList(T,days,mine)+'</section>';
   const AC=S.user.acads||[];if(S.ttAcad&&!AC.includes(S.ttAcad))S.ttAcad='';
@@ -52,7 +52,7 @@ function render(){fillBanks();hdSync();
   if(S.editNo&&S.step>1&&S.step<6){const D=editDiff();if(D)document.getElementById('dockLabel').textContent=D.diff?`고친 내용: ${won(D.before)} → ${won(D.after)} (${sgn(D.diff)})`:(S.quickEdit?'신청 내용 보기 · 금액 그대로':'고치는 중 · 금액 그대로')}
   back.hidden = S.step===1||S.step===6;
   next.hidden = S.step===6||!S.user;
-  next.textContent = S.step===5?(S.editNo?'수정 내용 저장':'접수하기'):(S.step===4&&S.editNo&&S.ensEdit?'앙상블 저장':S.step===3&&S.editNo&&S.quickEdit?'저장':'다음');
+  next.textContent = S.step===5?(S.editNo?'수정 내용 저장':'접수 완료하기'):(S.step===4&&S.editNo&&S.ensEdit?'앙상블 저장':S.step===3&&S.editNo&&S.quickEdit?'저장':'다음');
   next.disabled = false; next.classList.toggle('dim', blocked());
   if(S.editNo&&S.quickEdit&&S.step===3&&(S.quickKeys||[]).every(k=>lockedP(k)))next.hidden=true;
   lockCards();
@@ -111,7 +111,7 @@ document.addEventListener('click',e=>{
   const b=e.target.closest('button,[data-pick],[data-mc],[data-other],[data-ens],[data-roomck],[data-ensmem]'); if(!b) return;
   const d=b.dataset;
   if(d.go){go(+d.go);return}
-  if(d.gonext){const nb=document.getElementById('nextBtn');if(nb)nb.click();return}
+  if(d.gonext){const nb=document.getElementById('nextBtn');if(nb){nb.dataset.force='1';nb.click()}return}
   if(d.round!==undefined){CAMP.ri=+d.round;render();toast(`${ROUNDS[CAMP.ri][0]} 금액으로 계산해요`);return}
   if(d.clsacad){const a=d.clsacad;askBox(`${esc(a)}로 접수할까요?`,'학원 학생이 아니라 <b>학원 없이 개인 레슨하는 학생</b>만 이 클래스로 접수해요. 학원 학생은 학원 버튼으로 접수해 주세요.','네, 클래스로 접수',()=>pickAcad(a));return}
   if(d.acad){pickAcad(d.acad);return}
@@ -180,7 +180,7 @@ document.addEventListener('click',e=>{
   if(b.dataset&&b.dataset.tttab){S.ttTab=b.dataset.tttab;render();return}
   if(b.dataset&&b.dataset.qw){S.qWhere=b.dataset.qw;document.querySelectorAll('[data-qw]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));const h=document.getElementById('qWhere');if(h)h.value=S.qWhere;const p=document.getElementById('qHint');if(p)p.textContent=Q_HINT[S.qWhere]||'';return}
   if(b.id==='qBack'){const v=S.qBack||{view:'form'};S.view=v.view==='q'?'form':v.view;render();window.scrollTo({top:0});return}
-  if(b.id==='ensSaveBtn'){document.getElementById('nextBtn').click();return}
+  if(b.id==='ensSaveBtn'){const nb=document.getElementById('nextBtn');nb.dataset.force='1';nb.click();return}
   if(b.id==='nextBtn'&&blocked()){warnMissing();return}
   if(b.id==='nextBtn'&&S.step===4&&S.editNo&&S.ensEdit){S.step=5;S.agree=true}
   if(b.id==='nextBtn'&&S.step===3&&S.editNo&&S.quickEdit){S.step=5;S.agree=true}

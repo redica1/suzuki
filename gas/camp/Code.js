@@ -1,4 +1,4 @@
-/* build: 20261115-233929 */
+/* build: 20261115-234418 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -1611,7 +1611,7 @@ function curRound_(c) {
 /** 접수 시작 전이면 시작일(yyyy-mm-dd), 아니면 ''. 시작일 = 캠프 설정 「접수 시작」, 없으면 1차 시작일. STG(설정 「테스트 로그인」 있음)는 언제나 열림 */
 function regPre_(c) { c = c || camp_(); try { if (String(setting_('테스트 로그인') || '').trim()) return ''; } catch (e) { } const o = String(c.base.open || (c.rounds[0] || {}).from || ''); return /^\d{4}-\d{2}-\d{2}$/.test(o) && today_() < o ? o : ''; }
 function regGate_() { const o = regPre_(); if (o) throw new Error('접수는 ' + (+o.slice(5, 7)) + '월 ' + (+o.slice(8, 10)) + '일부터 받아요. 그때 다시 와 주세요.'); }
-function campPublic_() { const c = camp_(), pp = parentPilot_(); return Object.assign({}, c, { ri: curRound_(c), pre: regPre_(c), pq: pp === null || pp.length > 0, songs: songList_() }); }
+function campPublic_() { const c = camp_(), pp = parentPilot_(); return Object.assign({}, c, { ri: curRound_(c), pre: regPre_(c), pq: pp === null || pp.length > 0, songs: songList_(), progs: progList_() }); }
 /* ---- 음악회 곡 목록 (11-15 사용자: 학생이 고르는 곡 목록을 관리자가 직접) — 시트 「곡목록」 (악기 · 곡 · 순서). 비어 있으면 신청서에 들어 있는 기본 목록을 씀 ---- */
 const SONG_SH = '곡목록';
 function songList_() {
@@ -1634,6 +1634,30 @@ function songsSave(token, o) {
     CacheService.getScriptCache().remove('songsJ'); campCacheClear_(); } finally { lock.releaseLock(); }
   log_('관리자 ' + a.name, '곡 목록 저장', rows.length + '곡');
   return { ok: true, n: rows.length, songs: songList_() };
+}
+/* ---- 권수 (현재 진도) 목록 (11-15 사용자: 관리자가 직접) — 시트 「권수목록」 (악기 · 권수 · 순서). 비어 있으면 신청서 기본 PROGRESS ---- */
+const PROG_SH = '권수목록';
+function progList_() {
+  try { const j = CacheService.getScriptCache().get('progsJ'); if (j) return JSON.parse(j); } catch (e) {}
+  const sh = SpreadsheetApp.getActive().getSheetByName(PROG_SH); let o = null;
+  if (sh && sh.getLastRow() > 1) { o = {}; sh.getRange(2, 1, sh.getLastRow() - 1, 3).getValues().filter(r => String(r[0]).trim() && String(r[1]).trim()).sort((a, b) => (+a[2] || 0) - (+b[2] || 0)).forEach(r => { const k = String(r[0]).trim(); (o[k] = o[k] || []).push(String(r[1]).trim()); }); }
+  try { CacheService.getScriptCache().put('progsJ', JSON.stringify(o), 300); } catch (e) {}
+  return o;
+}
+function progDef_() { try { const h = HtmlService.createHtmlOutputFromFile('App1').getContent(), i = h.indexOf('const PROGRESS = {'), j = h.indexOf('};', i); if (i < 0 || j < 0) return {}; return (new Function('return ' + h.slice(i + 17, j + 1)))(); } catch (e) { return {}; } }
+function progsSave(token, o) {
+  const a = adm_(token); needSup_(a);
+  if (!o || typeof o !== 'object') throw new Error('저장할 권수 목록이 없어요.');
+  const rows = []; let n = 0;
+  Object.keys(o).slice(0, 10).forEach(k => { const inst = String(k).trim().slice(0, 10); if (!inst) return;
+    (Array.isArray(o[k]) ? o[k] : []).map(x => String(x || '').trim().slice(0, 60)).filter(Boolean).filter((x, i, A) => A.indexOf(x) === i).slice(0, 60).forEach(x => rows.push([inst, x, ++n])); });
+  if (!rows.length) throw new Error('권수가 하나도 없어요.');
+  const lock = lock_();
+  try { const ss = SpreadsheetApp.getActive(); let sh = ss.getSheetByName(PROG_SH); if (!sh) { sh = ss.insertSheet(PROG_SH); }
+    sh.clearContents(); sh.getRange(1, 1, 1, 3).setValues([['악기', '권수', '순서']]).setFontWeight('bold'); sh.setFrozenRows(1); sh.getRange(2, 1, rows.length, 3).setValues(rows);
+    CacheService.getScriptCache().remove('progsJ'); campCacheClear_(); } finally { lock.releaseLock(); }
+  log_('관리자 ' + a.name, '권수 목록 저장', rows.length + '개');
+  return { ok: true, n: rows.length, progs: progList_() };
 }
 function campGet(token) { const a = adm_(token); needSup_(a); return { camp: campPublic_(), subs: rows_(SH.SUB).filter(r => r['접수번호']).length }; }
 /** 공문 값 정리 (캠프 설정 저장 때) — 글자 수를 자르고, 한 칸(5만 자) 안에 들어가는지 확인 */
@@ -2944,8 +2968,8 @@ function adminData(token) {
   const inst = {}; teachers_().forEach(t => inst['t_' + t.id] = t.inst); rows_(SH.S).forEach(r => inst[String(r['ID'])] = String(r['악기'] || ''));
   subs.forEach(sb => sb.ppl.forEach(p => { if (!p.inst) { const k = p.id.slice(sb.no.length + 1), i = (sb.form && sb.form.info && sb.form.info[k]) || {}; p.inst = i.inst || inst[k] || ''; } }));
   let mail = null; try { mail = mailStatus_(); } catch (e) {}
-  let songsDef = {}; try { songsDef = songDef_(); } catch (e) {}
-  return { today: today_(), subs, admin, cx, teams: teams_(subs), issues: issues_(), profs: profs_(), me: me_(me), camp: campPublic_(), scholar: scholTiers_(), mail, songsDef };
+  let songsDef = {}, progsDef = {}; try { songsDef = songDef_(); progsDef = progDef_(); } catch (e) {}
+  return { today: today_(), subs, admin, cx, teams: teams_(subs), issues: issues_(), profs: profs_(), me: me_(me), camp: campPublic_(), scholar: scholTiers_(), mail, songsDef, progsDef };
 }
 function setAdminCols_(pid, vals) {
   const sh = SpreadsheetApp.getActive().getSheetByName(SH.P);

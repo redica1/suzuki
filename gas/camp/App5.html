@@ -23,7 +23,7 @@ const catOf=(sb,p)=>p.kind==='교사'?'교사':p.kind==='가족'?'가족':(instO
 /* 내 접수 탭: 전체 · 교사 · 바이올린 · 첼로 … · 가족 */
 /* 지금 탭에 들어가는 사람인지 (칩 숫자도 이 기준) */
 function viewOk(sb,p){const mv=S.mview||'pay';if(mv==='pay')return true;if(p.kind==='가족')return false;const i=pInfo(sb,p),sub=curSub();
-  if(mv==='les')return sub==='grp'?p.kind==='학생':sub==='les'?((p.kind==='학생'&&!i.noBase)||+i.lessons>0):(i.mc||[]).length>0;if(mv==='con')return i.concert===sub;return p.kind==='학생'}
+  if(mv==='les')return sub==='grp'?p.kind==='학생':sub==='les'?((p.kind==='학생'&&!i.noBase)||+i.lessons>0):(i.mc||[]).length>0;if(mv==='con')return conList(i).some(o=>o.con===sub);return p.kind==='학생'}
 function mineTabs(list,noFam){const iv=(S.mview||'pay')!=='pay',C={};(list||MY_SUBS).forEach(sb=>sb.ppl.filter(p=>p.status==='정상'&&!((noFam||iv)&&p.kind==='가족')&&viewOk(sb,p)).forEach(p=>{const c=iv?catOf2(sb,p):catOf(sb,p);C[c]=(C[c]||0)+1}));
   const ins=Object.keys(C).filter(k=>k!=='교사'&&k!=='가족').sort((a,b)=>C[b]-C[a]);const T=[['전체',Object.values(C).reduce((a,b)=>a+b,0)]].concat(C['교사']?[['교사',C['교사']]]:[],ins.map(k=>[k,C[k]]),C['가족']?[['가족',C['가족']]]:[]);   /* 11-15: 「가족 n」 칩을 끝에 (악기 칩 합 + 가족 = 전체) · 악기 칩 숫자에는 가족이 안 들어감 */
   if(!T.some(x=>x[0]===S.mtab))S.mtab='전체';
@@ -50,7 +50,7 @@ function vAcad(){const A=acadSubs(),AF=()=>S.aOwner?A.filter(sb=>sb.owner===S.aO
   ${!isHeadU()&&A.length?mvSeg()+(famTab()?'':mineTabs(AF())):''}
   ${isHeadU()?'':(()=>{const RM=roomMark(AF());const R=famAfter(AF().flatMap(sb=>sb.ppl.filter(p=>mineOk(sb,p)).map(p=>({sb,p}))).sort((a,b)=>String(b.p.addAt||b.sb.date).localeCompare(String(a.p.addAt||a.sb.date))));
     if(famTab())return famEditBox(AF())+famRoomsHTML(AF(),true);
-    if((S.mview||'pay')==='con'){const c=curSub(),C=R.filter(({sb,p})=>pInfo(sb,p).concert===c);return C.length?infoTable(C,RM,true,false):`<p class="hint">${esc(c)} 음악회를 신청한 사람이 없어요.</p>`}
+    if((S.mview||'pay')==='con'){const c=curSub(),C=R.filter(({sb,p})=>conList(pInfo(sb,p)).some(o=>o.con===c));return C.length?infoTable(C,RM,true,false):`<p class="hint">${esc(c)} 음악회를 신청한 사람이 없어요.</p>`}
     if((S.mview||'pay')!=='pay'&&R.length)return infoTable(R,RM,true,false);
     if(!R.length)return A.length?`<p class="hint">「${esc(S.mtab)}」에 해당하는 사람이 없어요.</p>`:'<p class="hint">아직 접수가 없어요.</p>';
     return payTbl(R);})()}
@@ -113,7 +113,7 @@ function infoTable(R,RM,showOwner,canEdit){const mv=S.mview||'pay',v=mv==='les'?
     if(v==='grp')return `<td style="text-align:left">${i.prog?esc(i.prog):DASH}</td><td>${i.teacher?esc(i.teacher):DASH}</td><td style="white-space:normal">${grpOf(sb,p)}</td>`;
     if(v==='les'||v==='mc'){const Z=slots(sb,p);if(v==='les'&&!Z.length)return `<td colspan="2"><small class="hint">${lesTxt(p,i)}</small></td>`;
       const col=f=>`<td style="white-space:normal">${Z.map(z=>`<div style="margin:2px 0">${f(z)}</div>`).join('')}</td>`;return col(z=>`<b>${esc(z.pr)}</b>`)+col(z=>z.room?esc(z.room):'<span class="hint">-</span>')}
-    if(v==='con')return `<td><b>${esc(i.concert||'')}</b></td><td style="white-space:normal">${i.other?esc(`${i.oc||''} ${i.ot||''}`.trim()||'곡명 미입력'):esc(i.song||'곡 미선택')}</td>${audOn(curSub())?`<td style="white-space:normal;text-align:left;min-width:220px">${audCell(sb,p,canEdit)}</td>`:''}`;
+    if(v==='con'){const o=conList(i).find(x=>x.con===curSub())||{};return `<td><b>${esc(o.con||'')}</b></td><td style="white-space:normal">${esc(o.song||'곡 미선택')}</td>${audOn(curSub())?`<td style="white-space:normal;text-align:left;min-width:220px">${audCell(sb,p,canEdit)}</td>`:''}`}
     return `<td>${esc(TSHORT[p.type]||p.type||'-')}</td><td class="num">${i.by?esc(i.by):DASH}</td><td>${i.gender?esc(i.gender):DASH}</td><td style="text-align:left">${i.prog?esc(i.prog):DASH}</td><td>${i.teacher?esc(i.teacher):DASH}</td>`};
   /* 그룹레슨 반별: 반(교실 · 시간)마다 우리 학생 이름 — 선생님이 데려갈 아이 */
   const byCls=v!=='grp'||!T.open?'':(()=>{const M={},none=[];R.forEach(({sb,p})=>{const st=(T.students||[]).find(x=>x.name===p.name&&x.acad===sb.acad);const G=st?st.grp||[]:[];if(!G.length){none.push(p.name);return}
@@ -170,7 +170,7 @@ function vMineCore(L,head){
   ${L.length?mvSeg()+(famTab()?'':mineTabs()):''}
   ${(()=>{const RM=roomMark(L);const R=famAfter(L.flatMap(sb=>sb.ppl.filter(p=>mineOk(sb,p)).map(p=>({sb,p}))).sort((a,b)=>String(b.p.addAt||b.sb.date).localeCompare(String(a.p.addAt||a.sb.date))));
     if(famTab())return famEditBox(L)+famRoomsHTML(L,true);
-    if((S.mview||'pay')==='con'){const c=curSub(),C=R.filter(({sb,p})=>pInfo(sb,p).concert===c);return C.length?infoTable(C,RM,isHeadU(),true):`<p class="hint">${esc(c)} 음악회를 신청한 사람이 없어요.</p>`}
+    if((S.mview||'pay')==='con'){const c=curSub(),C=R.filter(({sb,p})=>conList(pInfo(sb,p)).some(o=>o.con===c));return C.length?infoTable(C,RM,isHeadU(),true):`<p class="hint">${esc(c)} 음악회를 신청한 사람이 없어요.</p>`}
     if((S.mview||'pay')!=='pay')return R.length?infoTable(R,RM,isHeadU(),true):'';if(!R.length)return '';
     const aj=L.some(sb=>sb.ppl.some(p=>p.adj&&p.status==='정상')),N=L.map(sb=>sb.form&&sb.form.note).filter(Boolean),live=R.filter(x=>x.p.status==='정상'),allOn=live.length&&live.every(x=>(S.cx[x.sb.no]||[]).includes(x.p.id));
     const SEL=L.map(sb=>{const sel=S.cx[sb.no]||[];return {sb,sel,selCx:sel.filter(id=>{const p=sb.ppl.find(q=>q.id===id);return p&&canCxP(p)})}}).filter(x=>x.sel.length),nSel=SEL.reduce((t,x)=>t+x.sel.length,0);

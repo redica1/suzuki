@@ -1528,17 +1528,25 @@ const conList=()=>{const c=(S.cc&&Array.isArray(S.cc.cons)&&S.cc.cons)||(S.D&&S.
 const CAMP_YEAR=2027, CAMP_DAY='01-11';   /* 캠프 첫날 기준 만 나이 (생일을 모르면 출생연도로: 캠프가 1월이라 대부분 생일 전 → 캠프 해 − 출생연도 − 1) */
 const manAge=by=>{by=String(by||'').trim();if(!/^\d{4}/.test(by))return '';const y=+by.slice(0,4);const md=by.length>=10?by.slice(5,10):'';return CAMP_YEAR-y-(md&&md<=CAMP_DAY?0:1)};
 const bookNo=g=>{g=String(g||'');if(/pre/i.test(g))return 0;const m=g.match(/(\d+)권/);return m?+m[1]+(/B/.test(g.slice(m.index,m.index+4))?.5:0)+(/이상/.test(g)?.6:0):99};
-function conRows(){const L=[];(S.D.subs||[]).forEach(sb=>sb.ppl.forEach(p=>{if(p.status==='취소')return;const k=p.id.slice(sb.no.length+1),i=(sb.form&&sb.form.info&&sb.form.info[k])||{};
+/* 음악회 둘로 (11-16): 한 사람이 오후 + 오디션(트와일라잇 · 이브닝) 둘 다 신청할 수 있음 → 신청 목록은 음악회마다 한 줄. pm = 오후 쪽만 (연주 순서 · 프로그램북) */
+const isPMA=c=>/오후/.test(String(c||''));
+const audA=c=>{if(isPMA(c))return false;const a=S.D&&S.D.camp&&S.D.camp.aud;return a?!!(a[c]||{}).on:true};   /* 오후 음악회는 음원 없음 (11-16) */
+function conListA(i){i=i||{};const L=[],c=i.concert&&i.concert!=='없음'?i.concert:'';
+  if(i.pm)L.push({con:i.pm,song:i.pmOther?'':(i.pmSong||''),oc:i.pmOther?(i.pmOc||''):'',ot:i.pmOther?(i.pmOt||''):'',aud:false,pm:true});
+  if(c)L.push({con:c,pm:isPMA(c),song:i.other?'':(i.song||''),oc:i.other?(i.oc||''):'',ot:i.other?(i.ot||''):'',aud:audA(c)});return L}
+function conRows(pm){const L=[];(S.D.subs||[]).forEach(sb=>sb.ppl.forEach(p=>{if(p.status==='취소')return;const k=p.id.slice(sb.no.length+1),i=(sb.form&&sb.form.info&&sb.form.info[k])||{};
   const type=p.type||i.type||'';if(!['학생','회원의 악기하는 자녀','비회원 학생','교사','연수생','소속없는 중급연수생'].includes(type))return;
-  L.push({id:p.id,key:p.name+'('+String(sb.acad).replace(/스즈키$/,'')+')',at:String(p.addAt||sb.createdAt||''),round:sb.round||'',acad:sb.acad,owner:sb.owner||'',name:p.name,inst:p.inst||i.inst||'',by:i.by||'',age:manAge(i.by),type,prog:i.prog||'',con:i.concert||'없음',
-    song:i.other?'':(i.song||''),oc:i.other?(i.oc||''):'',ot:i.other?(i.ot||''):'',video:i.concert==='이브닝'?(i.video||''):'',status:p.status})}));return L}
+  const base={id:p.id,key:p.name+'('+String(sb.acad).replace(/스즈키$/,'')+')',at:String(p.addAt||sb.createdAt||''),round:sb.round||'',acad:sb.acad,owner:sb.owner||'',name:p.name,inst:p.inst||i.inst||'',by:i.by||'',age:manAge(i.by),type,prog:i.prog||'',status:p.status};
+  let E=conListA(i);if(pm)E=E.filter(o=>o.pm);
+  if(!E.length){if(!pm)L.push(Object.assign({con:'없음',song:'',oc:'',ot:'',video:''},base));return}
+  E.forEach(o=>L.push(Object.assign({con:o.con,song:o.song,oc:o.oc,ot:o.ot,video:o.aud?(i.video||''):''},base)))}));return L}
 function conAll(){const m={};(S.D.subs||[]).forEach(sb=>sb.ppl.forEach(p=>{m[p.id]={name:p.name,acad:sb.acad,status:p.status}}));return m}
 function vCon(){const sv=S.consv||'list';
   const tabs=`<div class="row" style="gap:6px;margin-bottom:10px">${[['list','신청 목록'],['ord','연주 순서 · 리허설'],['book','프로그램북 (B5 인쇄)']].map(([k,l])=>`<button class="btn small ${sv===k?'primary':''}" type="button" data-consv="${k}">${l}</button>`).join('')}</div>`;
   return tabs+(sv==='ord'?CORD.view():sv==='book'?vConBook():vConList())}
 function vConList(){const f=S.conf||'오후',ins=S.coni||'',q=(S.conq||'').trim();const all=conRows();
   const L=all.filter(x=>(f==='all'||x.con===f)&&(!ins||x.inst===ins)&&(!q||[x.name,x.acad,x.owner,x.song,x.oc,x.ot].some(v=>String(v).includes(q))));
-  const cnt=k=>all.filter(x=>x.con===k).length;const INS=[...new Set(all.map(x=>x.inst).filter(Boolean))];
+  const cnt=k=>k==='없음'?all.filter(x=>x.con===k).length:new Set(all.filter(x=>x.con===k).map(x=>x.id)).size;const INS=[...new Set(all.map(x=>x.inst).filter(Boolean))];
   const H=['이름(학원)','접수 일시','학원','접수 교사','참가자','악기','만 나이','진도','음악회','곡명 (목록)','작곡가 (그외 곡)','곡명 (원어)','오디션 영상'];
   const rows=L.map(x=>[x.key,x.at.slice(0,16),x.acad,x.owner,x.name+(x.status==='취소요청'?' (취소 요청)':''),x.inst,x.age,x.prog,x.con,x.song,x.oc,x.ot,x.video]);
   S.conTSV=[H,...rows].map(r=>r.map(v=>String(v==null?'':v).replace(/[\t\n]/g,' ')).join('\t')).join('\n');
@@ -1564,9 +1572,9 @@ function stat(m){const el=document.getElementById('co_stat');if(!el)return;el.cl
 const sortBy={age:(a,b)=>(a.age===''?99:a.age)-(b.age===''?99:b.age)||bookNo(a.prog)-bookNo(b.prog)||a.name.localeCompare(b.name,'ko'),book:(a,b)=>bookNo(a.prog)-bookNo(b.prog)||(a.age===''?99:a.age)-(b.age===''?99:b.age)||a.name.localeCompare(b.name,'ko')};
 function view(){
   if(!C){if(!LOADING&&!ERR)load();return `<div class="panel">${ERR?`<span class="err">불러오지 못했어요 · ${esc(ERR)}</span> <button class="btn small" type="button" id="co_retry">다시</button>`:'연주 순서를 불러오고 있어요…'}</div>`}
-  const R=conRows(),RB={};R.forEach(x=>RB[x.id]=x);const ALL=conAll();
+  const R=conRows(1),RB={};R.forEach(x=>RB[x.id]=x);const ALL=conAll();
   const in_=new Set(Object.values(C.order).flat());
-  const pool=R.filter(x=>x.con==='오후'&&!in_.has(x.id)).sort(sortBy.age);
+  const pool=R.filter(x=>isPMA(x.con)&&!in_.has(x.id)).sort(sortBy.age);
   const days=C.days||[];
   const cHead=`<div class="panel"><div class="spread"><div><b>공연</b> <span class="hint">교사 일정의 「오후음악회」 칸에서 가져왔어요 · 이름·날짜·공연 시작·리허설 시작·장소·1인 리허설(분)을 고치면 1초 뒤 저장 (시트 「음악회순서」에도 정리돼요)</span></div><span class="pill ok" id="co_stat">시트와 같음</span></div>
     <div class="tbl"><table class="cotbl"><thead><tr><th>공연</th><th>날짜</th><th>공연 시작</th><th>리허설 시작</th><th>리허설 장소</th><th>1인 (분)</th><th>인원</th><th></th></tr></thead><tbody>
@@ -1589,7 +1597,7 @@ function view(){
       <td><select data-coput="${esc(r.id)}"><option value="">공연에 넣기</option>${C.concerts.map(y=>`<option value="${esc(y.id)}">${esc(y.name)}</option>`).join('')}</select></td></tr>`).join('')}</tbody></table></div>`:'<p class="hint" style="margin:0">모두 넣었어요.</p>'}</div>`;
   setTimeout(()=>stat());
   return cHead+concerts+poolH}
-function tsv(){const R={};conRows().forEach(x=>R[x.id]=x);const days=C.days||[];const H=['공연','날짜','공연 시작','순서','리허설','리허설 장소','이름(학원)','만 나이','악기','진도','곡'];const out=[H];
+function tsv(){const R={};conRows(1).forEach(x=>R[x.id]=x);const days=C.days||[];const H=['공연','날짜','공연 시작','순서','리허설','리허설 장소','이름(학원)','만 나이','악기','진도','곡'];const out=[H];
   C.concerts.forEach(x=>{let k=0;(C.order[x.id]||[]).forEach((pid,i)=>{const r=R[pid];if(!r)return;out.push([x.name,days[x.d]||'',x.cs,i+1,x.rs?fmt(hm(x.rs)+(k++)*(+x.min||5)):'',x.room,r.key,r.age,r.inst,r.prog,r.song||[r.oc,r.ot].filter(Boolean).join(' · ')])})});
   return out.map(r=>r.map(v=>String(v==null?'':v).replace(/[\t\n]/g,' ')).join('\t')).join('\n')}
 function copy(t){const done=()=>toast('표를 복사했어요 · 구글 시트 칸에 붙여넣기 하세요');const fb=()=>{const x=document.createElement('textarea');x.value=t;document.body.appendChild(x);x.select();try{document.execCommand('copy');done()}catch(e){toast('복사하지 못했어요')}x.remove()};
@@ -1599,7 +1607,7 @@ document.addEventListener('click',ev=>{if(S.tab!=='con'||(S.consv||'list')!=='or
   if(!C)return;
   if(b.id==='co_add'){C.concerts.push({id:'c'+Date.now().toString(36),name:'오후음악회 '+String.fromCharCode(65+C.concerts.length),d:0,cs:'13:20',rs:'',room:'',min:5});C.order[C.concerts[C.concerts.length-1].id]=[];save();render();return}
   if(d.codel!==undefined){const x=C.concerts[+d.codel];const n=(C.order[x.id]||[]).length;ask('「'+esc(x.name)+'」 공연을 뺄까요?',n?n+'명이 들어 있어요. 빼면 그 사람들은 「아직 안 넣은 사람」으로 돌아가요.':'',()=>{C.concerts.splice(+d.codel,1);delete C.order[x.id];save();render()},'빼기');return}
-  if(b.id==='co_auto'){const R=conRows(),inn=new Set(Object.values(C.order).flat());const pool=R.filter(x=>x.con==='오후'&&!inn.has(x.id)).sort(sortBy.age);
+  if(b.id==='co_auto'){const R=conRows(1),inn=new Set(Object.values(C.order).flat());const pool=R.filter(x=>isPMA(x.con)&&!inn.has(x.id)).sort(sortBy.age);
     const n=C.concerts.length,cur=C.concerts.map(x=>(C.order[x.id]||[]).length),total=cur.reduce((t,v)=>t+v,0)+pool.length,per=Math.ceil(total/n);let ci=0;
     pool.forEach(r=>{while(ci<n-1&&C.order[C.concerts[ci].id].length>=per)ci++;C.order[C.concerts[ci].id].push(r.id)});
     C.concerts.forEach(x=>{const RB={};R.forEach(r=>RB[r.id]=r);C.order[x.id].sort((a,b)=>RB[a]&&RB[b]?sortBy.age(RB[a],RB[b]):0)});
@@ -1835,7 +1843,7 @@ function vCamp(){if(!S.cc){S.cc=ccCopy();try{if(S.cc.doc&&S.cc.fees&&S.cc.rounds
   <div class="panel"><h3>추가 금액 · 가족방</h3><div class="ccg">${OPT_F.map(([k,l,u])=>`<label>${l}<span class="row" style="gap:4px;flex-wrap:nowrap">${inp('opt.'+k,'num','style="width:120px"')}<small class="faint">${u}</small></span></label>`).join('')}</div>
     <p class="hint">마스터클래스 금액은 교수마다 「교수진」 탭에서 정해요.</p></div>
   ${c.aud?`<div class="panel"><h3>음악회 음원 제출 <span class="hint">켠 음악회만 신청서 · 「내 접수」에 음원 칸이 나와요 · 마감일을 비우면 캠프 시작 전날까지</span></h3>
-    <table class="pft cct" style="width:auto"><thead><tr><th>음악회</th><th class="c">음원 받기</th><th class="c">접수 전에도<br><span class="hint">「음원 먼저 내기」</span></th><th>마감일</th><th></th></tr></thead><tbody>${(Array.isArray(c.cons)?c.cons:(c.cons=['오후','트와일라잇','이브닝'].slice())).map(k=>{c.aud=c.aud||{};c.aud[k]=c.aud[k]||{on:false,due:''};return `<tr class="${(c.aud[k]||{}).on?'':'off'}"><td><b>${esc(k)}</b></td><td class="c">${inp('aud.'+k+'.on','check')}</td><td class="c">${inp('aud.'+k+'.pre','check')}</td><td>${inp('aud.'+k+'.due','date')}</td><td><button class="btn small ghost" type="button" data-condel="${esc(k)}" ${c.cons.length<=1?'disabled':''}>빼기</button></td></tr>`}).join('')}</tbody></table>
+    <table class="pft cct" style="width:auto"><thead><tr><th>음악회</th><th class="c">음원 받기</th><th class="c">접수 전에도<br><span class="hint">「음원 먼저 내기」</span></th><th>마감일</th><th></th></tr></thead><tbody>${(Array.isArray(c.cons)?c.cons:(c.cons=['오후','트와일라잇','이브닝'].slice())).map(k=>{c.aud=c.aud||{};c.aud[k]=c.aud[k]||{on:false,due:''};return `<tr class="${(c.aud[k]||{}).on?'':'off'}"><td><b>${esc(k)}</b></td>${isPMA(k)?'<td class="c" colspan="3"><span class="hint">오후 음악회는 음원을 받지 않아요</span></td>':`<td class="c">${inp('aud.'+k+'.on','check')}</td><td class="c">${inp('aud.'+k+'.pre','check')}</td><td>${inp('aud.'+k+'.due','date')}</td>`}<td><button class="btn small ghost" type="button" data-condel="${esc(k)}" ${c.cons.length<=1?'disabled':''}>빼기</button></td></tr>`}).join('')}</tbody></table>
     <div class="row" style="gap:6px;margin-top:8px;align-items:center"><input type="text" id="conNew" maxlength="12" placeholder="새 음악회 이름 (예: 갈라)" style="width:200px"><button class="btn small" type="button" id="conAdd" ${c.cons.length>=8?'disabled':''}>＋ 음악회 추가</button><span class="hint">음악회는 8개까지 · 이름은 12자까지 · 빼도 이미 그 음악회를 고른 접수는 그대로 남아요(다시 같은 이름으로 넣으면 이어져요) · 「저장」을 눌러야 반영</span></div>
     <p class="hint">심사 · 결과 공개는 「스케줄관리 › 음원 심사」에서 해요.</p></div>`:''}
   ${songPanel()}
@@ -1999,7 +2007,7 @@ function sfClick(b,d){if(S.tab!=='staff')return false;
   return false}
 /* ---------- 통계 (실제 접수 · 취소 뺌) ---------- */
 function statRows(){const L=[];(S.D.subs||[]).forEach(sb=>sb.ppl.filter(p=>p.status!=='취소').forEach(p=>{const k=p.id.slice(sb.no.length+1),i=(sb.form&&sb.form.info&&sb.form.info[k])||{};
-  L.push({sb,p,i,acad:sb.acad,round:sb.round||'-',kind:p.kind,type:p.type||i.type||'',inst:p.inst||i.inst||'',prog:i.prog||'',lessons:+i.lessons||0,mc:i.mc||[],concert:i.concert&&i.concert!=='없음'?i.concert:'',song:i.other?[i.oc,i.ot].filter(Boolean).join(' · '):(i.song||''),p1:i.p1||'',p2:i.p2||'',room:!!(sb.form&&sb.form.room&&sb.form.room[k]),bill:pAmt(p),paid:+p.paidAmt||0})}));return L}
+  L.push({sb,p,i,acad:sb.acad,round:sb.round||'-',kind:p.kind,type:p.type||i.type||'',inst:p.inst||i.inst||'',prog:i.prog||'',lessons:+i.lessons||0,mc:i.mc||[],cons:conListA(i).map(o=>({con:o.con,song:o.song||[o.oc,o.ot].filter(Boolean).join(' · ')})),p1:i.p1||'',p2:i.p2||'',room:!!(sb.form&&sb.form.room&&sb.form.room[k]),bill:pAmt(p),paid:+p.paidAmt||0})}));return L}
 const cnt=(L,f)=>{const m=new Map();L.forEach(x=>{const k=f(x);m.set(k,(m.get(k)||0)+1)});return [...m].sort((a,b)=>b[1]-a[1])};
 const SVIEW=[['acad','학원별'],['type','전체 참가자격별'],['tch','교사별'],['ptch','참가교사'],['inst','악기·진도·권수'],['badge','명찰']];
 function vStat(){Object.keys(POP).forEach(k=>delete POP[k]);const L=statRows(),v=S.sv||'acad';
@@ -2137,7 +2145,7 @@ function stLes(L){const LS=L.filter(x=>x.lessons>0);const M=L.filter(x=>x.mc.len
     +ST(['선호 교수 1','신청자','레슨 횟수','선호 교수 2로 고른 사람'],cnt(LS,x=>x.p1||'(안 고름)').map(([k,n])=>[esc(k),n,LS.filter(x=>(x.p1||'(안 고름)')===k).reduce((t,x)=>t+x.lessons,0),LS.filter(x=>x.p2===k).length||'']))
     +`<div class="panel"><b>마스터클래스</b> <span class="hint">${M.length}명</span></div>`
     +ST(['교수','신청자','이름'],[...new Set(M.flatMap(x=>x.mc))].map(m=>{const Q=M.filter(x=>x.mc.includes(m));return [esc(m),Q.length,Q.map(x=>esc(x.p.name)+' <small class="faint">'+esc(x.acad)+'</small>').join(', ')]}))}
-function stCon(L){const C=L.filter(x=>x.concert);return conList().map(c=>{const Q=C.filter(x=>x.concert===c);return `<div class="panel tbl"><b>${c} 음악회 ${Q.length}명</b>${Q.length?`<table style="margin-top:6px"><thead><tr><th>이름</th><th>학원</th><th>악기</th><th>곡</th></tr></thead><tbody>${Q.map(x=>`<tr><td>${esc(x.p.name)}</td><td>${esc(x.acad)}</td><td>${esc(x.inst)}</td><td>${esc(x.song)}</td></tr>`).join('')}</tbody></table>`:''}</div>`}).join('')}
+function stCon(L){return conList().map(c=>{const Q=L.filter(x=>x.cons.some(o=>o.con===c)).map(x=>Object.assign({},x,{song:x.cons.find(o=>o.con===c).song}));return `<div class="panel tbl"><b>${c} 음악회 ${Q.length}명</b>${Q.length?`<table style="margin-top:6px"><thead><tr><th>이름</th><th>학원</th><th>악기</th><th>곡</th></tr></thead><tbody>${Q.map(x=>`<tr><td>${esc(x.p.name)}</td><td>${esc(x.acad)}</td><td>${esc(x.inst)}</td><td>${esc(x.song)}</td></tr>`).join('')}</tbody></table>`:''}</div>`}).join('')}
 function stRoom(L){const R=L.filter(x=>x.room);return ST(['학원','가족방 수','대표'],[...new Set(R.map(x=>x.acad))].map(a=>{const Q=R.filter(x=>x.acad===a);return [esc(a),Q.length,Q.map(x=>esc(x.p.name)).join(', ')]}),['합계',R.length,''])}
 
 /* ================= 예산 · 결산 =================

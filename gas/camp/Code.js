@@ -1052,7 +1052,7 @@ function writePeople_(sb, isNew) {
       '참가자ID': p.id, '접수번호': sb.no, '차수': p.rndN || sb.round, '학원': sb.acad, '접수 교사': sb.owner, '들어온 차례': (p.batch || 1) === 1 ? '처음 접수' : '추가 ' + ((p.batch || 1) - 1),
       '추가 일시': p.addAt || '', '이름': p.name, '구분': p.kind, '참가 구분': p.type, '악기': p.inst || i.inst || '', '담당 교사': i.teacher || '', '출생연도': i.by || '', '성별': i.gender || '',
       '현재 진도': i.prog || '', '선호 교수1': i.p1 || '', '선호 교수2': i.p2 || '', '기본 레슨': ['학생', '회원의 악기하는 자녀', '비회원 학생'].includes(i.type) ? (i.noBase ? '안 받음' : '1회') : '', '추가 레슨': i.lessons || '', '마스터클래스': (i.mc || []).join(', '),
-      '음악회': i.concert && i.concert !== '없음' ? i.concert : '', '음악회 곡': i.other ? (String(i.oc || '') + ' ' + String(i.ot || '')).trim() : (i.song || ''),
+      '음악회': conList_(i).map(o => o.con).join(', '), '음악회 곡': conList_(i).map((o, j, A) => (A.length > 1 ? o.con + ': ' : '') + o.song).join(' / '),
       '가족방': p.room ? '대표(빈 자리 요금)' : (f.room && f.room[key] ? '대표' : ''), '참가비': p.fee, '레슨·MC': p.lesson, '연회비': p.dues, '가족방비': p.room || 0,
       '청구액': (+p.fee || 0) + (+p.lesson || 0) + (+p.dues || 0) + (+p.room || 0), '상태': p.status, '입금 상태': p.pay,
       '신고 입금자명': r.name || '', '신고 입금일': r.date || '', '신고 금액': r.a || '', '신고 메모': p.rep && p.rep.memo || ''
@@ -2034,12 +2034,21 @@ function progBuild_(opt) {
  *  곡 이름: 목록 곡 「V01-14 미뉴에트 2번 (바흐)」 → 「바흐 미뉴에트 2번」, 직접 입력은 작곡가 + 곡명 · 영어 곡명은 설정 songEn(관리자가 미리보기에서 입력) */
 const INST_PF = { 바이올린: 'Vln.', 첼로: 'Vc.', 플루트: 'Fl.', 비올라: 'Vla.', 피아노: 'Pf.' };
 /** 곡 이름을 [작곡가, 곡명]으로 (여름 모양 「작곡가 - 곡명」, 11-05) — 목록 곡 「V01-14 미뉴에트 2번 (바흐)」 → ['바흐', '미뉴에트 2번'] */
+/* 음악회 둘로 (11-16): 오후 음악회 = i.pm · pmSong / pmOther / pmOc / pmOt,  오디션(트와일라잇 · 이브닝) = i.concert · song / other / oc / ot / video.
+   예전 접수는 concert 하나 (오후면 오후 쪽). pmI_ = 오후 곡을 예전 꼴({song, other, oc, ot})로 · conList_ = 신청한 음악회 전부 */
+const isPM_ = c => /오후/.test(String(c || ''));
+const audOnS_ = c => { if (isPM_(c)) return false; try { const a = audCfg_()[c]; return a ? !!a.on : c !== '오후'; } catch (e) { return c !== '오후'; } };
+function pmI_(i) { i = i || {}; return i.pm ? { song: i.pmSong || '', other: !!i.pmOther, oc: i.pmOc || '', ot: i.pmOt || '', inst: i.inst } : i; }
+function conList_(i) { i = i || {}; const L = [], c = i.concert && i.concert !== '없음' ? String(i.concert) : '', sg = o => o.other ? (String(o.oc || '') + ' ' + String(o.ot || '')).trim() : String(o.song || '');
+  if (i.pm) L.push({ con: String(i.pm), song: sg(pmI_(i)), aud: false }); if (c) L.push({ con: c, song: sg(i), aud: audOnS_(c) }); return L; }
 function songKoParts_(i) {
+  i = pmI_(i);
   if (i.other) return [String(i.oc || '').trim(), String(i.ot || '').trim()];
   const m = String(i.song || '').replace(/^[A-Z]\d+-\d+\s*/, '').match(/^(.*?)\s*\(([^()]*)\)\s*$/);
   return m ? [m[2] || '스즈키', m[1]] : ['', String(i.song || '').replace(/^[A-Z]\d+-\d+\s*/, '')];
 }
 function songKo_(i) {
+  i = pmI_(i);
   if (i.other) return [i.oc, i.ot].map(x => String(x || '').trim()).filter(Boolean).join(' ');
   const m = String(i.song || '').replace(/^[A-Z]\d+-\d+\s*/, '').match(/^(.*?)\s*\(([^()]*)\)\s*$/);
   return m ? (m[2] && m[2] !== '스즈키' ? m[2] + ' ' : '스즈키 ') + m[1] : String(i.song || '').replace(/^[A-Z]\d+-\d+\s*/, '');
@@ -3527,7 +3536,7 @@ function acadRooms_(acad) {
 function findStudents_() { const all = [];
   loadSubs_().forEach(sb => sb.ppl.forEach(p => { if (p.status === '취소') return; const k = p.id.slice(sb.no.length + 1), i = (sb.form && sb.form.info && sb.form.info[k]) || {};
     const type = p.type || i.type || ''; if (!['학생', '회원의 악기하는 자녀', '비회원 학생', '해외 학생'].includes(type)) return;
-    all.push({ id: p.id, name: p.name, acad: sb.acad, owner: String(sb.owner || ''), by: String(i.by || ''), mc: Array.isArray(i.mc) ? i.mc : [], inst: p.inst || i.inst || '', teacher: i.teacher || '', prog: i.prog || '', concert: i.concert && i.concert !== '없음' ? i.concert : '' }); }));
+    all.push({ id: p.id, name: p.name, acad: sb.acad, owner: String(sb.owner || ''), by: String(i.by || ''), mc: Array.isArray(i.mc) ? i.mc : [], inst: p.inst || i.inst || '', teacher: i.teacher || '', prog: i.prog || '', concert: conList_(i).map(o => o.con).join(' · '), cons: conList_(i).map(o => o.con) }); }));
   return all; }
 /* 학생 한 명의 캠프 일정 카드 (일정 찾기 · 우리 아이 공통): 그룹레슨 · 개인레슨 · 마스터클래스 · 음악회 · 학원 방 */
 function kidCtx_() { const c = actCfg_(), days = c.days || [], P = profs_(), evs = actEvents_(); const pn = id => ((c.people || []).find(p => p.id === id) || { n: String(id).replace(/^[CP]:/, '') }).n;
@@ -3562,7 +3571,7 @@ function campHome(tok) {
   const evs = actEvents_(), linked = (Array.isArray(c.kinds) ? c.kinds : ACT_KINDS).filter(k => k.link).map(k => k.n);
   const concerts = Array.isArray(c.concerts) ? c.concerts : evs.filter(e => e.type === '오후음악회' || (linked.includes(e.title) && (!e.stage || e.stage === '본공연'))).map(e => ({ id: 'c' + e.id, name: evName_(e), d: e.d, cs: e.s, room: e.room }));
   const order0 = c.conorder || {}, needInf = concerts.some(x => (order0[x.id] || []).length);
-  const inf = {}; if (needInf) loadSubs_().forEach(sb => sb.ppl.forEach(p => { const k = p.id.slice(sb.no.length + 1), i = (sb.form && sb.form.info && sb.form.info[k]) || {}; inf[p.id] = { name: p.name, acad: sb.acad, inst: p.inst || i.inst || '', song: i.other ? String((i.oc || '') + ' ' + (i.ot || '')).trim() : String(i.song || ''), x: p.status === '취소' }; }));
+  const inf = {}; if (needInf) loadSubs_().forEach(sb => sb.ppl.forEach(p => { const k = p.id.slice(sb.no.length + 1), i = (sb.form && sb.form.info && sb.form.info[k]) || {}; const q = pmI_(i); inf[p.id] = { name: p.name, acad: sb.acad, inst: p.inst || i.inst || '', song: q.other ? String((q.oc || '') + ' ' + (q.ot || '')).trim() : String(q.song || ''), x: p.status === '취소' }; }));
   const order = c.conorder || {};
   /* 공지사항: 시트 「공지사항」(날짜 · 제목 · 내용 · 맨 위) — 운영진이 줄을 더하면 바로 보임, 최근 것 먼저 */
   let notices = []; try { ntcSheet_();
@@ -3629,7 +3638,7 @@ function campEventPeople_(id) {
   const staff = e.ppl.map(x => ({ name: pn(x.n), role: x.r || '' }));
   let students = [];
   const ck = camp_().cons.find(n => String(e.title).indexOf(n) >= 0) || (/afternoon|오후/i.test(e.title) ? '오후' : /twilight|트와일라잇/i.test(e.title) ? '트와일라잇' : /evening|이브닝/i.test(e.title) ? '이브닝' : '');
-  if (ck && (!e.stage || e.stage === '본공연')) students = all.filter(s => s.concert === ck).map(s => ({ name: s.name, acad: s.acad, note: s.inst })).sort((a, b) => a.acad.localeCompare(b.acad) || a.name.localeCompare(b.name));
+  if (ck && (!e.stage || e.stage === '본공연')) students = all.filter(s => (s.cons || []).includes(ck)).map(s => ({ name: s.name, acad: s.acad, note: s.inst })).sort((a, b) => a.acad.localeCompare(b.acad) || a.name.localeCompare(b.name));
   if (e.title === '그룹레슨') { const groupsOf = grpMatch_(); students = all.filter(s => groupsOf(s.inst, s.prog).some(g => g.id === e.id)).map(s => ({ name: s.name, acad: s.acad, note: s.inst })).sort((a, b) => a.acad.localeCompare(b.acad) || a.name.localeCompare(b.name)); }
   return { ok: true, open: true, staff, students };
 }
@@ -3934,7 +3943,7 @@ const audUrlOk_ = u => /^https?:\/\/\S{4,}$/i.test(u) && u.length <= 500;
 function audCfg_() {
   const c = camp_(), A = c.aud || {}, pub = String(setting_('음원 결과 공개') || '').split(',').map(x => x.trim()).filter(Boolean), o = {};
   const lastDay = c.base && c.base.start ? (() => { const d = new Date(c.base.start + 'T00:00:00'); d.setDate(d.getDate() - 1); return Utilities.formatDate(d, TZ, 'yyyy-MM-dd'); })() : '';
-  camp_().cons.forEach(k => { const x = A[k] || {}; o[k] = { on: !!x.on, pre: !!x.on && !!x.pre, due: x.due || '', end: x.due || lastDay, pub: pub.includes(k) }; });
+  camp_().cons.forEach(k => { const x = /오후/.test(k) ? {} : (A[k] || {}); o[k] = { on: !!x.on, pre: !!x.on && !!x.pre, due: x.due || '', end: x.due || lastDay, pub: pub.includes(k) }; });
   return o;
 }
 function audRows_() {
@@ -4197,7 +4206,7 @@ function conSave(token, b) {
     const fmt = n => String(Math.floor(n / 60)).padStart(2, '0') + ':' + String(n % 60).padStart(2, '0');
     const rows = [];
     concerts.forEach(x => { let k = 0; order[x.id].forEach((pid, idx) => { const s = info[pid]; const gone = !s || s.p.status === '취소';
-      rows.push([x.name, days[x.d] || '', "'" + (x.cs || ''), idx + 1, gone ? '(취소)' : (x.rs ? "'" + fmt(hm(x.rs) + (k++) * x.min) : ''), x.room, pid, s ? s.p.name : '', s ? s.sb.acad : '', s ? (s.p.inst || s.i.inst || '') : '', s ? s.i.prog || '' : '', s ? (s.i.other ? [s.i.oc, s.i.ot].filter(Boolean).join(' · ') : s.i.song || '') : '']); }); });
+      rows.push([x.name, days[x.d] || '', "'" + (x.cs || ''), idx + 1, gone ? '(취소)' : (x.rs ? "'" + fmt(hm(x.rs) + (k++) * x.min) : ''), x.room, pid, s ? s.p.name : '', s ? s.sb.acad : '', s ? (s.p.inst || s.i.inst || '') : '', s ? s.i.prog || '' : '', s ? (q => q.other ? [q.oc, q.ot].filter(Boolean).join(' · ') : q.song || '')(pmI_(s.i)) : '']); }); });
     const last = cs.getLastRow(); if (last > 1) cs.getRange(2, 1, last - 1, CON_HEAD.length).clearContent();
     if (rows.length) cs.getRange(2, 1, rows.length, CON_HEAD.length).setValues(rows);
     log_('관리자 ' + a.name, '음악회 순서 저장', concerts.length + '개 공연 · ' + rows.length + '명');

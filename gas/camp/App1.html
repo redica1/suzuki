@@ -158,12 +158,21 @@ const yearBad=(p,v)=>p.kind==='student'?!okYear(v):(String(v||'').trim()!==''&&!
 function missingBasic(){ return people().filter(p=>{const i=info(p);return yearBad(p,i.by)||!i.gender||staffNoRole(p)}) }
 const staffNoRole=p=>isStaffAcad()&&p.kind==='teacher'&&!STAFF_TYPES.includes(info(p).type);
 /* 음원 (11-04): 음악회마다 관리자가 「음원 받기」를 켬. 접수 때는 선택, 「내 접수」에서 마감일까지 추가 */
-const audOn=con=>CAMP.aud?!!(CAMP.aud[con]||{}).on:con==='이브닝';
+const audOn=con=>/오후/.test(String(con||''))?false:CAMP.aud?!!(CAMP.aud[con]||{}).on:con!=='없음';   /* 오후 음악회는 음원 없음 (11-16) */
 const videoOk=i=>!String(i.video||'').trim()||/^https?:\S{6,}$/i.test(String(i.video||'').trim());
 function missingVideo(){ return people().filter(p=>p.kind==='student'&&PLAYS.has(info(p).type)&&!videoOk(info(p))) }
 function missingProg(){ return people().filter(p=>p.kind==='student'&&PLAYS.has(info(p).type)&&!info(p).prog) }
 /* 음악회를 신청하면 곡 필수 (11-14): 목록 곡 또는 「목록에 없는 곡」이면 곡명 */
-function songOk(i){return !i.concert||i.concert==='없음'||(i.other?!!String(i.ot||'').trim():!!i.song)}
+function songOk(i){return (!i.concert||i.concert==='없음'||(i.other?!!String(i.ot||'').trim():!!i.song))&&(!i.pm||(i.pmOther?!!String(i.pmOt||'').trim():!!i.pmSong))}
+/* 음악회 둘로 나눔 (11-16): 오후 음악회(음원 안 받음) 와 오디션 음악회(트와일라잇 · 이브닝 · 음원 받음)를 따로 신청.
+   i.pm = 오후 쪽 이름 · pmSong / pmOther / pmOc / pmOt,  i.concert = 오디션 쪽 이름 · song / other / oc / ot / video (음원은 그대로).
+   예전 접수(concert 하나에 오후가 들어 있음)는 conList · info() 가 알아서 오후 쪽으로 읽음 */
+const conAll=()=>CAMP.cons||['오후','트와일라잇','이브닝'];
+const isPM=c=>/오후/.test(String(c||''));   /* 이름에 「오후」가 들어가면 오후 쪽 (음원 없음) · 나머지는 오디션 쪽 */
+const conPM=()=>conAll().filter(isPM), conEV=()=>conAll().filter(c=>!isPM(c));
+const conSong=(i,pm)=>pm?(i.pmOther?`${i.pmOc||''} ${i.pmOt||''}`.trim():(i.pmSong||'')):(i.other?`${i.oc||''} ${i.ot||''}`.trim():(i.song||''));
+function conList(i){i=i||{};const L=[],c=i.concert&&i.concert!=='없음'?i.concert:'';if(i.pm)L.push({con:i.pm,song:conSong(i,true),aud:false});if(c)L.push({con:c,song:conSong(i,false),aud:audOn(c)});return L}
+function conMigrate(i){if(i&&i.concert&&i.concert!=='없음'&&isPM(i.concert)&&!i.pm){i.pm=i.concert;i.pmSong=i.song||'';i.pmOther=!!i.other;i.pmOc=i.oc||'';i.pmOt=i.ot||'';i.concert='없음';i.song='';i.other=false;i.oc='';i.ot=''}return i}
 /* 출생연도 옆 「캠프 때 n세」 · 학생이 너무 어리거나 많으면 확인 부탁 (대충 넣은 연도 잡기) */
 /* 만 나이 → 출생연도 (11-14): 올해 생일이 지났다고 보고 채움 · 아직이면 1년 빼서 고치게 안내 */
 const thisYear=()=>+String(S.today||new Date().toISOString()).slice(0,4)||2026;
@@ -226,7 +235,8 @@ function people(){ // 선택된 사람들 (명단 + 신고 학생 + 가족)
   const res=[]; out.forEach(p=>{ res.push(p); S.fam.filter(f=>f.link===p.key).forEach(f=>res.push({key:f.id,kind:'family',name:f.name||'(이름 미입력)',inst:'',sub:`${FAM_SHORT[f.type]} · ${p.name} 가족`,paid:true,defType:f.type,link:f.link})) });
   return res;
 }
-function info(p){ if(!S.info[p.key]){ S.info[p.key]={by:p.birth?String(p.birth):'',gender:'',teacher:p.teacher||'',type:p.defType,prog:'',pref:false,p1:'',p2:'',lessons:0,mc:[],concert:'없음',song:'',other:false,oc:'',ot:''}; if(S.pqLes&&S.pqLes[p.key]){Object.assign(S.info[p.key],S.pqLes[p.key]);delete S.pqLes[p.key]} } {const a=(window.AUDPRE||{})[p.key]||(window.AUDPRE||{})['N:'+p.name],i=S.info[p.key];if(a&&i.concert==='없음'&&!i._ap){i._ap=1;i.concert=a.con;i.other=true;i.oc=a.comp||'';i.ot=a.title||'';i.video=a.url||''}} {const i=S.info[p.key],m=p.inst==='첼로'?{'10권':'10권 보케리니 협주곡','10권 이상':'10권 이상 기타 곡'}:{'2권A 요정의 춤 ~':'2권A ~ 헨델 부레','2권B 미뇽의 가보트 ~':'2권B 두 사람의 척탄병 ~'};if(m[i.prog])i.prog=m[i.prog]}   /* 11-15: 바뀐 권수 이름 옛 값 → 새 값 */
+function info(p){ if(!S.info[p.key]){ S.info[p.key]={by:p.birth?String(p.birth):'',gender:'',teacher:p.teacher||'',type:p.defType,prog:'',pref:false,p1:'',p2:'',lessons:0,mc:[],concert:'없음',song:'',other:false,oc:'',ot:'',pm:'',pmSong:'',pmOther:false,pmOc:'',pmOt:''}; if(S.pqLes&&S.pqLes[p.key]){Object.assign(S.info[p.key],S.pqLes[p.key]);delete S.pqLes[p.key]} } {const a=(window.AUDPRE||{})[p.key]||(window.AUDPRE||{})['N:'+p.name],i=S.info[p.key];if(a&&i.concert==='없음'&&!i._ap){i._ap=1;i.concert=a.con;i.other=true;i.oc=a.comp||'';i.ot=a.title||'';i.video=a.url||''}} {const i=S.info[p.key],m=p.inst==='첼로'?{'10권':'10권 보케리니 협주곡','10권 이상':'10권 이상 기타 곡'}:{'2권A 요정의 춤 ~':'2권A ~ 헨델 부레','2권B 미뇽의 가보트 ~':'2권B 두 사람의 척탄병 ~'};if(m[i.prog])i.prog=m[i.prog]}   /* 11-15: 바뀐 권수 이름 옛 값 → 새 값 */
+  conMigrate(S.info[p.key]);
   return S.info[p.key] }
 /* 사람별 차수 (11-04 · 입금해야 그 차수): 새 사람 = 지금 차수 · 고치는 접수의 사람 = 입금(또는 신고)했으면 그 차수, 아니면 지금 차수 — 서버 recalc_ 와 같은 규칙 */
 function pRi(key){const cur=S.editNo&&S.riBack!==undefined?S.riBack:CAMP.ri;if(!S.editNo)return cur;const sb=(typeof MY_SUBS!=='undefined'?MY_SUBS:[]).find(x=>x.no===S.editNo),p=sb&&sb.ppl.find(q=>q.id===sb.no+'_'+key);if(!p)return cur;

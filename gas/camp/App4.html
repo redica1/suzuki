@@ -23,7 +23,7 @@ function applyTable(ps,tab){
       pref:pl?[i.p1,i.p2].filter(Boolean).join(', '):'',
       les:pl&&i.lessons?`${i.lessons}회`:'',
       mc:pl&&i.mc&&i.mc.length?i.mc.join(', '):'',
-      con:pl&&p.kind!=='teacher'&&i.concert&&i.concert!=='없음'?`${i.concert}${(i.other?`${i.oc} ${i.ot}`.trim():i.song)?' · '+(i.other?`${i.oc} ${i.ot}`.trim():i.song):''}${audOn(i.concert)?' · 음원 '+(i.video?'제출':'없음'):''}`:'',
+      con:pl&&p.kind!=='teacher'?conList(i).map(o=>`${o.con}${o.song?' · '+o.song:''}${o.aud?' · 음원 '+(i.video?'제출':'없음'):''}`).join(' / '):'',
       room:(()=>{const tm=teams().find(x=>x.members.some(m=>m.key===p.key));return tm?`${tm.rep.name} 가족방 · ${tm.n}명`:''})(),
       note:[!p.paid?(p.isNew?'신규 · 회비확인대기':'회비확인대기'):'',p.isNew&&p.paid?'신규':''].filter(Boolean).join(' · ')}});
   const ALWAYS=new Set(['les','mc','room']);
@@ -43,7 +43,7 @@ function detailRows(p){
     rows.push(['선호 교수',[i.p1,i.p2].filter(Boolean).join(', ')||'없음']);
     rows.push(['추가 개인레슨',i.lessons?`${i.lessons}회`:'신청 안 함']);
     if(mcOf(p.inst).length) rows.push(['마스터클래스',i.mc.length?i.mc.join(', '):'신청 안 함']);
-    if(p.kind!=='teacher') rows.push(['음악회',i.concert==='없음'?'참가 안 함':`${i.concert} · ${i.other?`${i.oc} ${i.ot}`.trim()||'곡명 미입력':(i.song||'곡 미선택')}`]);
+    if(p.kind!=='teacher'){if(conPM().length)rows.push(['오후 음악회',!i.pm?'참가 안 함':`${i.pm} · ${conSong(i,true)||(i.pmOther?'곡명 미입력':'곡 미선택')}`]);if(conEV().length)rows.push(['오디션 음악회',!i.concert||i.concert==='없음'?'참가 안 함':`${i.concert} · ${conSong(i,false)||(i.other?'곡명 미입력':'곡 미선택')}`])}
     if(audOn(i.concert)) rows.push(['음원 주소',i.video||'나중에 「내 접수」에서']);
   }
   if(!p.paid) rows.push(['연회비',p.isNew?'신규 추가 · 회비확인대기':'미납 · 회비확인대기']);

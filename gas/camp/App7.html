@@ -1,4 +1,4 @@
-/* build: 20261116-155115 */
+/* build: 20261116-155205 */
     ps.forEach(p=>{p.pay='신고';p.rep=rep;delete S.rpRow[p.id]});S.afterSave=()=>repDone(ps.map(p=>p.id));subSave();S.rp=null;S.rpOpen=false;S.rpMemo=undefined;render();toast(`${ps.length}명 입금 신고를 보냈어요 · 운영진이 확인하면 「입금 확인」으로 바뀌어요`);return}
   if(b.id==='rpFill'){const n=document.getElementById('rpAllN').value.trim(),dd=document.getElementById('rpAllD').value;S.rpAllN=n;S.rpAllD=dd;const sel=S.rp||[];
     if(!n&&!dd){toast('적용할 입금자명이나 입금일을 적어 주세요');return}unpaidPpl().filter(x=>sel.includes(x.p.id)).forEach(({p})=>{const v=rpv(p);if(n)v.n=n;if(dd)v.d=dd});render();toast(`선택한 ${sel.length}명에게 적용했어요`);return}
@@ -633,9 +633,9 @@ function myReqBox(){const L=[];(MY_SUBS||[]).filter(sb=>sb.owner===(S.user&&S.us
   return `<div class="panel" id="qReqBox" style="display:grid;gap:8px"><b>접수 때 남긴 요청 ${L.length}</b>${L.length?L.map(x=>`<div class="qitem"><div class="spread"><span><b>${esc(x.k)}</b> · ${esc(x.a)}</span><small class="hint">${esc(x.d?kday(x.d):'')}</small></div><div style="white-space:pre-wrap">${esc(x.t)}</div></div>`).join('')+'<p class="hint" style="margin:0">고치려면 「내 접수」에서 그 사람 「보기」를 눌러요. 운영진 답은 게시판 글로 와요.</p>':'<p class="hint" style="margin:0">접수할 때 남긴 방 요청 · 가족방 요청 · 운영진에게 남길 말이 없어요.</p>'}</div>`}
 /* 내 접수 내역 메일로 받기 (11-16 사용자): 내가 낸 접수 전체를 한 통으로 */
 function mmBox(){const em=S.mmEm!==undefined?S.mmEm:(S.email||(S.user&&S.user.email)||'');
-  return S.mmOpen?`<div class="panel mmbox"><b>내 접수 내역 메일로 받기</b> <span class="hint">지금까지 낸 접수 전체 · 사람별 금액 · 입금 상태를 한 통으로 보내요 (하루 5번까지)</span>
+  return S.mmOpen?`<div class="mmbox"><b>내 접수 내역 메일로 받기</b> <span class="hint">지금까지 낸 접수 전체 · 사람별 금액 · 입금 상태를 한 통으로 보내요 (하루 5번까지)</span>
     <div class="row" style="gap:6px;margin-top:8px;flex-wrap:wrap"><input type="email" id="mmEm" value="${esc(em)}" placeholder="받을 이메일" autocomplete="email" style="flex:1;min-width:200px"><button class="btn primary" type="button" id="mmGo">보내기</button><button class="btn ghost" type="button" id="mmX">닫기</button></div>${S.mmMsg?`<p class="hint" style="margin:6px 0 0">${esc(S.mmMsg)}</p>`:''}</div>`
-  :`<div class="row" style="margin:0 0 10px"><button class="btn small" type="button" id="mmOpen">내 접수 내역 메일로 받기</button></div>`}
+  :`<button class="btn small mmBtn" type="button" id="mmOpen">내 접수 내역 메일로 받기</button>`}
 document.addEventListener('input',e=>{if(e.target&&e.target.id==='mmEm')S.mmEm=e.target.value});
 document.addEventListener('click',e=>{const b=e.target&&e.target.closest&&e.target.closest('button');if(!b)return;
   if(b.id==='mmOpen'){S.mmOpen=true;S.mmMsg='';render();return}

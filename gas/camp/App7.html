@@ -1,4 +1,4 @@
-/* build: 20261116-150141 */
+/* build: 20261116-150157 */
     ps.forEach(p=>{p.pay='신고';p.rep=rep;delete S.rpRow[p.id]});S.afterSave=()=>repDone(ps.map(p=>p.id));subSave();S.rp=null;S.rpOpen=false;S.rpMemo=undefined;render();toast(`${ps.length}명 입금 신고를 보냈어요 · 운영진이 확인하면 「입금 확인」으로 바뀌어요`);return}
   if(b.id==='rpFill'){const n=document.getElementById('rpAllN').value.trim(),dd=document.getElementById('rpAllD').value;S.rpAllN=n;S.rpAllD=dd;const sel=S.rp||[];
     if(!n&&!dd){toast('적용할 입금자명이나 입금일을 적어 주세요');return}unpaidPpl().filter(x=>sel.includes(x.p.id)).forEach(({p})=>{const v=rpv(p);if(n)v.n=n;if(dd)v.d=dd});render();toast(`선택한 ${sel.length}명에게 적용했어요`);return}
@@ -280,7 +280,7 @@ function csRepHTML(){const M=(S.qMine||[]).slice(0,3),pill=st=>st==='해결'?'<s
   return '<div class="csRep">'+(ok?'<div class="note ok" style="margin:0">'+esc(CS.msg.slice(3))+'번으로 보냈어요. 운영진이 확인하고 답을 달면 ☰ › 내 글 보기에 빨간 점이 떠요.</div>':'')+
     '<p class="hint" style="margin:0">지금 안 되는 것을 짧게 적어 주세요. 이름 · 학원 · 어느 화면이었는지는 저절로 함께 가요.</p>'+
     '<textarea id="csRT" rows="4" maxlength="1000" placeholder="예) 2단계에서 학생을 체크했는데 「추가」가 안 눌려요">'+esc(CS.draft)+'</textarea>'+
-    '<label class="csPic"><input type="file" id="csRP" accept="image\/*"> 화면 사진 <span class="hint">(선택 · 5MB까지)</span></label>'+
+    '<label class="csPic"><input type="file" id="csRP" accept="image\/png,image\/jpeg,image\/webp,image\/gif,image\/heic,image\/heif"> 화면 사진 <span class="hint">(선택 · 5MB까지)</span></label>'+
     (CS.msg&&!ok?'<p class="err" style="margin:0;color:var(--bad)">'+esc(CS.msg)+'</p>':'')+
     '<button type="button" class="btn primary" id="csRS" '+(CS.busy?'disabled':'')+'>'+(CS.busy?'보내고 있어요…':'보내기')+'</button>'+
     (M.length?'<div class="csMy"><b>내가 보낸 것</b>'+M.map(x=>'<div class="csMyI">'+pill(x.state)+' <span>'+esc(String(x.text).slice(0,40))+(String(x.text).length>40?'…':'')+'</span>'+(x.reply?'<div class="csMyR">답: '+esc(String(x.reply).slice(0,120))+'</div>':'')+'</div>').join('')+'<button type="button" class="linkish" data-csmine="1">내 글 모두 보기</button></div>':'')+'</div>'}

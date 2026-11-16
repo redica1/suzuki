@@ -1,4 +1,4 @@
-/* build: 20261116-233347 */
+/* build: 20261116-233429 */
   /* 11-16: 입금 신고 상자 — 「총 n명 중 신고 m명 · 확인 k명」, 할 게 없으면 「입금 신고할 내역이 없어요」 · 계좌는 펼쳤을 때만 */
   const allP=[];MY_SUBS.forEach(sb=>sb.ppl.forEach(p=>{if(p.status==='정상')allP.push(p)}));const nRep=allP.filter(p=>p.pay==='신고').length,nOk=allP.filter(p=>isPaid(p)).length;
   const cnt=allP.length?`<span class="hint">총 ${allP.length}명 중 신고 ${nRep}명 · 확인 ${nOk}명</span>`:'';
@@ -115,11 +115,11 @@ function infoTable(R,RM,showOwner,canEdit){const mv=S.mview||'pay',v=mv==='les'?
     const nz=x=>String(x||'').replace(/\s+/g,'');return (i.mc||[]).flatMap(m=>{const E=T.open?(T.mcs||[]).filter(e=>e.who.some(w=>nz(w).includes(nz(m))||nz(m).includes(nz(w)))):[];return E.length?E.map(e=>({w:dl(e.d)+' '+e.s+(e.e?'~'+e.e:''),pr:m,room:e.room||'미정'})):[{w:'',pr:m,room:''}]})};
   const whenCell=(sb,p)=>{const Z=slots(sb,p);return Z.length?Z.map(z=>`<div style="margin:2px 0">${z.w?esc(z.w):'<span class="nil">배정 전</span>'}</div>`).join(''):'<span class="nil">배정 전</span>'};
   const cells=(sb,p)=>{const i=pInfo(sb,p);
-    if(v==='grp')return `<td style="text-align:left">${i.prog?esc(i.prog):DASH}</td><td>${i.teacher?esc(i.teacher):DASH}</td><td style="white-space:normal">${grpOf(sb,p)}</td>`;
+    if(v==='grp')return `<td style="text-align:left;font-size:12.5px">${i.prog?esc(i.prog):DASH}</td><td>${i.teacher?esc(i.teacher):DASH}</td><td style="white-space:normal">${grpOf(sb,p)}</td>`;
     if(v==='les'||v==='mc'){const Z=slots(sb,p);if(v==='les'&&!Z.length)return `<td colspan="2"><small class="hint">${lesTxt(p,i)}</small></td>`;
       const col=f=>`<td style="white-space:normal">${Z.map(z=>`<div style="margin:0;line-height:1.35">${f(z)}</div>`).join('')}</td>`;return col(z=>`<b>${esc(z.pr)}</b>`)+col(z=>z.room?esc(z.room):'<span class="hint">-</span>')}
     if(v==='con')return `<td><b>${esc(i.concert||'')}</b></td><td style="white-space:normal">${i.other?esc(`${i.oc||''} ${i.ot||''}`.trim()||'곡명 미입력'):(i.song?songBr(i.song):'곡 미선택')}</td>${audOn(curSub())?`<td style="white-space:normal;text-align:left;min-width:220px">${audCell(sb,p,canEdit)}</td>`:''}`;
-    return `<td>${esc(TSHORT[p.type]||p.type||'-')}</td><td class="num" title="${esc(i.by||'')}">${/^\d{4}/.test(String(i.by||''))?(age(+String(i.by).slice(0,4))-1):DASH}</td><td>${i.gender?esc(i.gender):DASH}</td><td style="text-align:left">${i.prog?esc(i.prog):DASH}</td><td>${i.teacher?esc(i.teacher):DASH}</td>`};
+    return `<td>${esc(TSHORT[p.type]||p.type||'-')}</td><td class="num" title="${esc(i.by||'')}">${/^\d{4}/.test(String(i.by||''))?(age(+String(i.by).slice(0,4))-1):DASH}</td><td>${i.gender?esc(i.gender):DASH}</td><td style="text-align:left;font-size:12.5px">${i.prog?esc(i.prog):DASH}</td><td>${i.teacher?esc(i.teacher):DASH}</td>`};
   /* 그룹레슨 반별: 반(교실 · 시간)마다 우리 학생 이름 — 선생님이 데려갈 아이 */
   const byCls=v!=='grp'||!T.open?'':(()=>{const M={},none=[];R.forEach(({sb,p})=>{const st=(T.students||[]).find(x=>x.name===p.name&&x.acad===sb.acad);const G=st?st.grp||[]:[];if(!G.length){none.push(p.name);return}
       G.forEach(g=>{const k=g.sub+'|'+g.room+'|'+g.s+'|'+g.e;const o=M[k]||(M[k]={g,d:new Set(),ppl:new Set()});o.d.add(g.d);o.ppl.add(p.name)})});

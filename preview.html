@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>모바일 미리보기</title>
+<style>
+  :root{--bg:#eef1f5;--panel:#fff;--line:#d7dde5;--ink:#1d2430;--sub:#6b7584;--accent:#2f6fde}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;background:var(--bg);color:var(--ink)}
+  header{position:sticky;top:0;z-index:10;background:var(--panel);border-bottom:1px solid var(--line);padding:10px 16px;display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center}
+  header h1{font-size:16px;margin:0 6px 0 0;white-space:nowrap}
+  .row{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+  input[type=text]{width:380px;max-width:60vw;padding:7px 10px;border:1px solid var(--line);border-radius:8px;font-size:14px}
+  button{padding:7px 12px;border:1px solid var(--line);background:#fff;border-radius:8px;font-size:13px;cursor:pointer;color:var(--ink)}
+  button:hover{border-color:var(--accent);color:var(--accent)}
+  button.main{background:var(--accent);border-color:var(--accent);color:#fff}
+  button.main:hover{filter:brightness(1.08);color:#fff}
+  .chip{font-size:12px;padding:5px 9px}
+  label.dev{display:flex;align-items:center;gap:4px;font-size:13px;padding:4px 8px;border:1px solid var(--line);border-radius:999px;cursor:pointer;user-select:none}
+  label.dev input{margin:0}
+  .sub{font-size:12px;color:var(--sub)}
+  #stage{display:flex;gap:28px;padding:24px 20px 40px;overflow-x:auto;align-items:flex-start}
+  .dev-col{flex:none;display:flex;flex-direction:column;align-items:center;gap:8px}
+  .dev-head{text-align:center;line-height:1.35}
+  .dev-head b{font-size:14px}
+  .dev-tools{display:flex;gap:4px}
+  .dev-tools button{font-size:11px;padding:3px 8px}
+  .holder{position:relative}
+  .phone{position:absolute;top:0;left:0;transform-origin:top left;background:#111;padding:12px;border-radius:58px;box-shadow:0 10px 30px rgba(0,0,0,.18),inset 0 0 0 2px #333}
+  .phone.galaxy{border-radius:40px;padding:10px}
+  .screen{position:relative;background:#fff;border-radius:46px;overflow:hidden;display:flex;flex-direction:column}
+  .phone.galaxy .screen{border-radius:30px}
+  .bar{flex:none;display:flex;align-items:center;justify-content:space-between;font-size:15px;font-weight:600;padding:0 30px;background:#f7f7f8;color:#111}
+  .phone.galaxy .bar{font-size:13px;padding:0 20px}
+  .island{position:absolute;top:11px;left:50%;transform:translateX(-50%);width:124px;height:36px;background:#000;border-radius:20px;z-index:3}
+  .punch{position:absolute;top:10px;left:50%;transform:translateX(-50%);width:13px;height:13px;background:#000;border-radius:50%;z-index:3}
+  .addr{flex:none;display:flex;align-items:center;padding:0 12px;background:#f7f7f8}
+  .addr span{flex:1;background:#e7e8eb;border-radius:20px;padding:8px 14px;font-size:13px;color:#555;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  iframe{flex:1;border:0;width:100%;background:#fff;display:block}
+  .bottom{flex:none;background:#f7f7f8;display:flex;align-items:flex-end;justify-content:center;padding-bottom:8px}
+  .homebar{width:140px;height:5px;border-radius:3px;background:#111}
+  .empty{color:var(--sub);font-size:14px;padding:60px 20px;text-align:center;width:100%}
+  #tip{font-size:12px;color:var(--sub);padding:0 20px}
+  #codeBox{display:none;padding:0 16px 10px;background:var(--panel);border-bottom:1px solid var(--line)}
+  #codeBox textarea{width:100%;height:140px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;border:1px solid var(--line);border-radius:8px;padding:8px}
+</style>
+</head>
+<body>
+<header>
+  <h1>📱 모바일 미리보기</h1>
+  <div class="row">
+    <input id="url" type="text" placeholder="주소 입력 (예: app.suzukimusickorea.org/camp/)">
+    <button class="main" id="go">열기</button>
+    <button id="reload" title="모든 화면 새로고침">↻ 전체 새로고침</button>
+    <button id="codeToggle">코드 붙여넣기 / 파일</button>
+  </div>
+  <div class="row" id="quick"></div>
+  <div class="row" id="devs"></div>
+  <div class="row">
+    <span class="sub">크기</span>
+    <input id="zoom" type="range" min="35" max="100" value="60">
+    <span class="sub" id="zoomVal">60%</span>
+    <button class="chip" id="fit">화면에 맞춤</button>
+    <label class="dev" title="휴대폰 위쪽 상태바와 브라우저 주소창을 함께 그림 (높이는 대략값)"><input type="checkbox" id="chrome" checked> 브라우저 바 포함</label>
+  </div>
+</header>
+<div id="codeBox">
+  <p class="sub" style="margin:8px 0">HTML 코드를 붙여넣거나 .html 파일을 고르면 5대 화면에 바로 보입니다 (인터넷에 올리기 전 확인용).</p>
+  <textarea id="code" placeholder="<!DOCTYPE html> ..."></textarea>
+  <div class="row" style="margin-top:6px">
+    <button class="main" id="showCode">코드로 보기</button>
+    <input type="file" id="file" accept=".html,.htm">
+  </div>
+</div>
+<div id="stage"></div>
+<p id="tip">※ 크기는 각 기종 브라우저의 실제 CSS 화면 폭·높이(px) 기준입니다. 상태바·주소창 높이는 대략값이라 몇 px 정도 차이가 날 수 있어요. 일부 사이트(네이버·구글 등)는 다른 사이트 안에 넣어 보는 것을 막아 두어서 빈 화면으로 나옵니다.</p>
+
+<script>
+// 기종: CSS 화면 크기(px). top = 상태바, addr = 위쪽 주소창, bottom = 아래쪽 바 (대략값)
+const DEVICES = [
+  {id:'ip17pm', name:'iPhone 17 Pro Max', w:440, h:956, os:'ios', top:62, addr:0, bottom:86},
+  {id:'ip17',   name:'iPhone 17 · 17 Pro', w:402, h:874, os:'ios', top:62, addr:0, bottom:86},
+  {id:'ip16e',  name:'iPhone 16e',         w:390, h:844, os:'ios', top:47, addr:0, bottom:86, notch:true},
+  {id:'s26u',   name:'Galaxy S26 Ultra · S26+', w:412, h:891, os:'and', top:30, addr:56, bottom:24},
+  {id:'s26',    name:'Galaxy S26',         w:360, h:780, os:'and', top:28, addr:56, bottom:24},
+];
+const QUICK = [
+  ['홈','https://app.suzukimusickorea.org/home/'],
+  ['캠프','https://app.suzukimusickorea.org/camp/'],
+  ['회원관리','https://app.suzukimusickorea.org/member/'],
+];
+
+const $ = s => document.querySelector(s);
+const store = {
+  get(k,d){ try{ const v = localStorage.getItem('mp_'+k); return v===null?d:JSON.parse(v);}catch(e){return d;} },
+  set(k,v){ try{ localStorage.setItem('mp_'+k, JSON.stringify(v)); }catch(e){} }
+};
+
+let state = {
+  url: store.get('url',''),
+  on: store.get('on', DEVICES.map(d=>d.id)),
+  zoom: store.get('zoom', 60),
+  chrome: store.get('chrome', true),
+  code: null
+};
+
+function normUrl(u){
+  u = (u||'').trim();
+  if(!u) return '';
+  if(!/^https?:\/\//i.test(u) && !/^file:/i.test(u)) u = 'https://' + u;
+  return u;
+}
+
+// 빠른 버튼
+QUICK.forEach(([label,u])=>{
+  const b = document.createElement('button'); b.className='chip'; b.textContent=label;
+  b.onclick=()=>{ $('#url').value=u; open(); };
+  $('#quick').appendChild(b);
+});
+{
+  const lb = document.createElement('label'); lb.className='dev'; lb.title='주소 끝에 ?test 붙이기 (STG)';
+  lb.innerHTML='<input type="checkbox" id="stg"> ?test';
+  $('#quick').appendChild(lb);
+}
+
+// 기종 고르기
+DEVICES.forEach(d=>{
+  const lb = document.createElement('label'); lb.className='dev';
+  lb.innerHTML = `<input type="checkbox" value="${d.id}" ${state.on.includes(d.id)?'checked':''}> ${d.name}`;
+  lb.querySelector('input').onchange = e=>{
+    state.on = [...document.querySelectorAll('#devs input:checked')].map(i=>i.value);
+    store.set('on', state.on); render();
+  };
+  $('#devs').appendChild(lb);
+});
+
+function withStg(u){
+  if(!$('#stg').checked || !u) return u;
+  if(/[?&]test(\b|=)/.test(u)) return u;
+  const [base, hash] = u.split('#');
+  return base + (base.includes('?')?'&':'?') + 'test' + (hash!==undefined?'#'+hash:'');
+}
+
+function render(){
+  const stage = $('#stage'); stage.innerHTML='';
+  const list = DEVICES.filter(d=>state.on.includes(d.id));
+  const src = withStg(state.url);
+  if(!list.length){ stage.innerHTML='<div class="empty">위에서 기종을 하나 이상 골라 주세요.</div>'; return; }
+  if(!src && !state.code){ stage.innerHTML='<div class="empty">주소를 넣고 「열기」를 누르거나, 위의 홈 · 캠프 · 회원관리 버튼을 눌러 보세요.</div>'; }
+  const z = state.zoom/100;
+  list.forEach(d=>{
+    const col = document.createElement('div'); col.className='dev-col';
+    const pad = d.os==='ios'?12:10;
+    const fw = d.w + pad*2, fh = d.h + pad*2;
+    col.innerHTML = `
+      <div class="dev-head"><b>${d.name}</b><br><span class="sub">${d.w} × ${d.h}</span></div>
+      <div class="dev-tools">
+        <button data-a="reload">↻</button>
+        ${src?`<a href="${src}" target="_blank" rel="noopener"><button>새 창</button></a>`:''}
+      </div>
+      <div class="holder" style="width:${fw*z}px;height:${fh*z}px">
+        <div class="phone ${d.os==='ios'?'':'galaxy'}" style="transform:scale(${z})">
+          <div class="screen" style="width:${d.w}px;height:${d.h}px">
+            ${d.os==='ios' ? (d.notch?'':'<div class="island"></div>') : '<div class="punch"></div>'}
+            ${state.chrome ? `<div class="bar" style="height:${d.top}px"><span>9:41</span><span>${d.os==='ios'?'📶 🔋':'📶 🔋 100%'}</span></div>` : ''}
+            ${state.chrome && d.addr ? `<div class="addr" style="height:${d.addr}px"><span>${src?src.replace(/^https?:\/\//,''):'미리보기'}</span></div>` : ''}
+            <iframe ${state.code!==null && !src ? '' : `src="${src||'about:blank'}"`} loading="lazy"></iframe>
+            ${state.chrome ? (d.os==='ios'
+              ? `<div class="bottom" style="height:${d.bottom}px;flex-direction:column;align-items:center;justify-content:space-between;padding:8px 14px 8px"><div class="addr" style="height:40px;width:100%;padding:0;background:transparent"><span>${src?src.replace(/^https?:\/\//,''):'미리보기'}</span></div><div class="homebar"></div></div>`
+              : `<div class="bottom" style="height:${d.bottom}px"><div class="homebar" style="width:110px;height:4px"></div></div>`) : ''}
+          </div>
+        </div>
+      </div>`;
+    const ifr = col.querySelector('iframe');
+    if(state.code!==null && !src) ifr.srcdoc = state.code;
+    col.querySelector('[data-a=reload]').onclick=()=>{
+      if(state.code!==null && !src){ ifr.srcdoc = state.code; } else { ifr.src = src||'about:blank'; }
+    };
+    stage.appendChild(col);
+  });
+}
+
+function open(){
+  state.url = normUrl($('#url').value);
+  $('#url').value = state.url;
+  state.code = null;
+  store.set('url', state.url);
+  render();
+}
+
+function fit(){
+  const list = DEVICES.filter(d=>state.on.includes(d.id));
+  if(!list.length) return;
+  const availH = window.innerHeight - $('header').offsetHeight - 170;
+  const maxH = Math.max(...list.map(d=>d.h+24));
+  const availW = window.innerWidth - 40 - 28*(list.length-1);
+  const sumW = list.reduce((s,d)=>s+d.w+24,0);
+  const z = Math.max(35, Math.min(100, Math.floor(Math.min(availH/maxH, availW/sumW)*100)));
+  setZoom(z);
+}
+function setZoom(z){
+  state.zoom = z; $('#zoom').value = z; $('#zoomVal').textContent = z+'%';
+  store.set('zoom', z); render();
+}
+
+$('#go').onclick = open;
+$('#url').addEventListener('keydown', e=>{ if(e.key==='Enter') open(); });
+$('#reload').onclick = render;
+$('#zoom').oninput = e=> setZoom(+e.target.value);
+$('#fit').onclick = fit;
+$('#chrome').checked = state.chrome;
+$('#chrome').onchange = e=>{ state.chrome = e.target.checked; store.set('chrome', state.chrome); render(); };
+$('#stg').onchange = render;
+$('#codeToggle').onclick = ()=>{ const b=$('#codeBox'); b.style.display = b.style.display==='block'?'none':'block'; };
+$('#showCode').onclick = ()=>{ state.code = $('#code').value; state.url=''; $('#url').value=''; render(); };
+$('#file').onchange = e=>{
+  const f = e.target.files[0]; if(!f) return;
+  const r = new FileReader();
+  r.onload = ()=>{ $('#code').value = r.result; state.code = r.result; state.url=''; $('#url').value=''; render(); };
+  r.readAsText(f, 'utf-8');
+};
+
+$('#url').value = state.url;
+$('#zoom').value = state.zoom; $('#zoomVal').textContent = state.zoom+'%';
+render();
+if(!store.get('fitted', false)){ store.set('fitted', true); fit(); }
+</script>
+</body>
+</html>

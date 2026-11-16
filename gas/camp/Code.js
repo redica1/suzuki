@@ -1,4 +1,4 @@
-/* build: 20261116-135811 */
+/* build: 20261116-140135 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -3194,19 +3194,30 @@ function mail_(sb, u) {
 /* ---------------- 게시판 게시판 (「문의」 시트) ----------------
    글은 시트 한 줄(칸 13개)이라 용량 걱정 없음. 사진은 드라이브 「캠프 문의 사진」 폴더에(5MB까지). */
 const ISS = '문의';
-const ISS_HEAD = ['번호', '일시', '이름', '연락처 뒤4자리', '학원', '화면', '내용', '사진', '상태', '답변', '처리일', '처리자', '환경', '교사ID', '이메일'];   // 이메일 (11-15): 해외 게시판(로그인 없이 이름 · 이메일)   // 교사ID (11-11): 회원 계정으로 로그인해 쓴 글 → 회원관리 문의와 연결
+const ISS_HEAD = ['번호', '일시', '이름', '연락처 뒤4자리', '학원', '화면', '내용', '사진', '상태', '답변', '처리일', '처리자', '환경', '교사ID', '이메일', '분류'];   // 이메일 (11-15): 해외 게시판(로그인 없이 이름 · 이메일)   // 교사ID (11-11): 회원 계정으로 로그인해 쓴 글 → 회원관리 문의와 연결
 const ISS_STATES = ['미해결', '해결 중', '해결'];
 function issSheet_() {
   const ss = SpreadsheetApp.getActive(); let sh = ss.getSheetByName(ISS);
   if (!sh) { sh = ss.insertSheet(ISS); sh.appendRow(ISS_HEAD); sh.setFrozenRows(1); sh.getRange('A:A').setNumberFormat('@'); }
-  else { const h = sh.getRange(1, 1, 1, Math.max(1, sh.getLastColumn())).getValues()[0].map(String); let n = h.filter(String).length; ['교사ID', '이메일'].forEach(k => { if (h.indexOf(k) < 0) sh.getRange(1, ++n).setValue(k); }); }
+  else { const h = sh.getRange(1, 1, 1, Math.max(1, sh.getLastColumn())).getValues()[0].map(String); let n = h.filter(String).length; ['교사ID', '이메일', '분류'].forEach(k => { if (h.indexOf(k) < 0) sh.getRange(1, ++n).setValue(k); }); }
   return sh;
 }
 function issues_() {
   issSheet_();
   return rows_(ISS).filter(r => r['번호']).map(r => ({ row: r._row, no: String(r['번호']), at: pdt_(r['일시']), name: String(r['이름']), p4: String(r['연락처 뒤4자리'] || ''), acad: String(r['학원'] || ''),
     where: String(r['화면'] || ''), text: String(r['내용'] || ''), pic: String(r['사진'] || ''), state: String(r['상태'] || '미해결'), reply: String(r['답변'] || ''),
-    done: dstr_(r['처리일']), by: String(r['처리자'] || ''), env: String(r['환경'] || ''), tid: String(r['교사ID'] || ''), email: String(r['이메일'] || '') }));
+    done: dstr_(r['처리일']), by: String(r['처리자'] || ''), env: String(r['환경'] || ''), tid: String(r['교사ID'] || ''), email: String(r['이메일'] || ''), cat: String(r['분류'] || '') || issCat_(r['내용'], r['화면'], r['환경']) }));
+}
+/* 안 되는 것 알리기 · 게시판 글 저절로 분류 (11-16 사용자). 낱말 + 화면 기준 · 관리자가 바꿀 수 있음 */
+const ISS_CATS = ['로그인', '명단 · 학생', '가족방 · 숙소', '레슨', '음악회 · 곡', '입금 · 금액', '화면 오류', '기타'];
+function issCat_(text, where, env) {
+  const t = String(text || '') + ' ' + String(where || ''), e = String(env || '');
+  const R = [['로그인', /로그인|비번|비밀번호|인증|PIN|핀번호|가입|아이디/i], ['가족방 · 숙소', /가족방|숙소|방 ?배정|방 ?요청|객실|침대/], ['레슨', /레슨|마스터 ?클래스|그룹 ?수업|시간표/],
+    ['음악회 · 곡', /음악회|연주곡|곡 |곡을|곡이|음원|오디션|트와일|이브닝|앙상블/], ['입금 · 금액', /입금|금액|참가비|환불|취소|계좌|영수증|원이|만원|할인|연회비/],
+    ['명단 · 학생', /명단|학생|자녀|보호자|동반|가족|나이|생년|권수|진도|이름/], ['화면 오류', /버튼|화면|안 ?눌|멈|오류|에러|느려|로딩|하얗|깨져|안 ?떠|안 ?보여|넘어가지|안 ?넘어/]];
+  for (const [k, re] of R) if (re.test(t)) return k;
+  const m = /화면 form\/(\d)/.exec(e); if (m) return { 1: '로그인', 2: '명단 · 학생', 3: '명단 · 학생', 4: '음악회 · 곡', 5: '입금 · 금액' }[m[1]] || '기타';
+  return '기타';
 }
 /** 선생님: 글 쓰기 — 로그인한 사람만 (11-11 사용자 결정. 로그인이 안 되는 경우는 카카오톡 채널로) */
 function submitIssue(token, d) {
@@ -3239,14 +3250,14 @@ function submitIssue(token, d) {
     const acad = u ? (u.acads || []).join(', ') : String(d.acad || '').slice(0, 40);
     const H = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0].map(String), row = new Array(H.length).fill('');
     const put = (k, v) => { const j = H.indexOf(k); if (j >= 0) row[j] = v; };
-    put('번호', no); put('일시', stamp_()); put('이름', name); put('연락처 뒤4자리', p4 ? "'" + p4 : ''); put('학원', acad); put('화면', String(d.where || '').slice(0, 40)); put('내용', text); put('사진', pic); put('상태', '미해결'); put('환경', String(d.env || '').slice(0, 300)); put('교사ID', u && u.tid ? u.tid : '');
+    put('번호', no); put('일시', stamp_()); put('이름', name); put('연락처 뒤4자리', p4 ? "'" + p4 : ''); put('학원', acad); put('화면', String(d.where || '').slice(0, 40)); put('내용', text); put('사진', pic); put('상태', '미해결'); put('환경', String(d.env || '').slice(0, 300)); put('교사ID', u && u.tid ? u.tid : ''); put('분류', issCat_(text, d.where, d.env));
     sh.appendRow(row);
     C.put(k, '1', 60);
   } finally { lock.releaseLock(); }
   log_(name, '문의', no);
   return { ok: true, no, mine: u ? myIssues_(u) : [] };
 }
-function myIssues_(u) { return issues_().filter(x => x.tid && u.tid ? x.tid === u.tid : x.name === u.name)   /* 교사ID 있으면 교사ID로, 예전 글 · 비회원은 이름으로 */.reverse().map(x => ({ no: x.no, at: x.at, where: x.where, text: x.text, pic: !!x.pic, state: x.state, reply: x.reply, done: x.done })); }
+function myIssues_(u) { return issues_().filter(x => x.tid && u.tid ? x.tid === u.tid : x.name === u.name)   /* 교사ID 있으면 교사ID로, 예전 글 · 비회원은 이름으로 */.reverse().map(x => ({ no: x.no, at: x.at, where: x.where, text: x.text, pic: !!x.pic, state: x.state, reply: x.reply, done: x.done, cat: x.cat })); }
 /** 내 접수 내역 메일로 받기 (11-16 사용자): 내가 낸 접수 전체를 한 통으로. 하루 5번까지 */
 function mineMail(token, email) {
   const u = who_(token); email = String(email || '').trim().toLowerCase().slice(0, 80);
@@ -3292,7 +3303,7 @@ function intlAsk(d) {
 }
 function intlMine(name, email) { return { ok: true, mine: intlMine_(name, email) }; }
 /** 관리자: 상태·답변 */
-function adminSetIssue(token, row, state, reply) {
+function adminSetIssue(token, row, state, reply, cat) {
   const a = adm_(token); need_(a, ['q', 'room']);   // 가족방 요청 글은 방 배정 담당도 답할 수 있음
   if (!ISS_STATES.includes(state)) throw new Error('상태를 골라 주세요.');
   const lock = lock_();
@@ -3300,6 +3311,7 @@ function adminSetIssue(token, row, state, reply) {
     const sh = issSheet_(), h = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0];
     const r = rows_(ISS).find(x => x._row === row); if (!r) throw new Error('글을 찾지 못했어요. 새로 불러와 주세요.');
     const set = (k, v) => sh.getRange(row, h.indexOf(k) + 1).setValues([[v]]);
+    if (cat !== undefined && ISS_CATS.includes(cat) && h.indexOf('분류') >= 0) set('분류', cat);
     set('상태', state); set('답변', String(reply || '').slice(0, 2000)); set('처리일', state === '미해결' ? '' : today_()); set('처리자', a.name);
     log_('관리자 ' + a.name, '문의 ' + state, String(r['번호']));
     /* 해외 게시판 글에 답하면 그 이메일로 알림 (답이 바뀌었을 때만) */

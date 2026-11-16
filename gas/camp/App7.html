@@ -1,4 +1,4 @@
-/* build: 20261116-135811 */
+/* build: 20261116-140135 */
     ps.forEach(p=>{p.pay='신고';p.rep=rep;delete S.rpRow[p.id]});S.afterSave=()=>repDone(ps.map(p=>p.id));subSave();S.rp=null;S.rpOpen=false;S.rpMemo=undefined;render();toast(`${ps.length}명 입금 신고를 보냈어요 · 운영진이 확인하면 「입금 확인」으로 바뀌어요`);return}
   if(b.id==='rpFill'){const n=document.getElementById('rpAllN').value.trim(),dd=document.getElementById('rpAllD').value;S.rpAllN=n;S.rpAllD=dd;const sel=S.rp||[];
     if(!n&&!dd){toast('적용할 입금자명이나 입금일을 적어 주세요');return}unpaidPpl().filter(x=>sel.includes(x.p.id)).forEach(({p})=>{const v=rpv(p);if(n)v.n=n;if(dd)v.d=dd});render();toast(`선택한 ${sel.length}명에게 적용했어요`);return}
@@ -245,7 +245,7 @@ const GD={
  consent:{t:'개인정보 동의',q:['개인정보','동의','14세','보호자 동의','제3자','숙소에 제공'],h:'<ul><li>접수 전에 동의를 받아요: <b>개인정보 수집 · 이용</b> · <b>제3자 제공</b>(숙소에 이름 · 성별 · 학원만, 객실 배정용) · <b>만 14세 미만 보호자 동의</b> · <b>취소 · 환불 규정 확인</b></li><li>선생님이 접수할 때는 만 14세 미만 학생의 보호자에게 알리고 동의를 받았다는 뜻이에요.</li></ul>'},
  login:{t:'로그인 · 가입',q:['로그인이 안','비밀번호','비번','아이디','이메일','가입','계정','승인','인증','들어가지','안 열려'],h:'<ul><li>회원 선생님은 <b>회원관리 이메일 · 비밀번호</b>로 들어와요. 캠프용 계정이 따로 없어요.</li><li>비밀번호를 잊었으면 회원관리에서 「비밀번호 찾기」를 해요.</li><li>계정이 없으면 「선생님 가입하기」에서 이름 · 휴대전화로 본인 확인을 하고 계정을 만들어요. 협회가 승인하면 이메일로 알려 드리고, 그때부터 로그인할 수 있어요.</li><li>회원관리에서 직급(원장 등)이 바뀌었으면 로그아웃 후 다시 로그인해요.</li><li>비회원 보호자는 계정 없이 이름 · 휴대전화로 들어와요.</li></ul>'},
  intl:{t:'해외 참가',q:['해외','외국','overseas','english','영어','달러','usd','international'],h:'<ul><li>해외 단체는 첫 화면의 <b>「Overseas participants · 해외 참가」</b> 카드로 들어가요. 영어 화면이에요.</li><li>해외 단체 담당자가 단체 명단을 한꺼번에 넣어요.</li><li>국내 학원 학생 · 선생님은 이 카드를 쓰지 않아요.</li></ul>'},
- ask:{t:'문의 · 게시판',q:['메뉴','햄버거','내 글 보기','내 글','요청사항 보기','방 요청 보기','로그아웃 어디','문의','질문','게시판','연락','전화','카톡','카카오톡','메일','운영진','협회에 묻','답이 없'],h:'<ul><li>로그인하면 위 오른쪽에 <b>「내 접수」</b>와 <b>☰ 메뉴</b>(내 이름)가 있어요. 메뉴 안에 시간표 · 게시판 · <b>내 글 보기</b> · 분실물 · 로그아웃이 있어요.</li><li><b>내 글 보기</b>: 내가 올린 게시판 글과 운영진 답, 그리고 <b>접수 때 남긴 요청</b>(방 요청 · 가족방 요청 · 운영진에게 남길 말)을 한곳에서 봐요. 새 답이 오면 메뉴에 빨간 점이 떠요.</li><li>궁금한 점은 <b>캠프 게시판</b>에 남겨 주세요. 운영진이 게시판에서 답해요.</li><li>공문 안내: 카카오톡 <b>suzukimusickorea</b> 또는 메일 suzukimusickorea1995@gmail.com</li><li>캠프 중 아이 안전 같은 급한 일만 운영실로 전화해 주세요.</li></ul>'}
+ ask:{t:'문의 · 게시판',q:['안 되는 것','안돼요','오류 알리기','바로 알리기','동그란 버튼','메뉴','햄버거','내 글 보기','내 글','요청사항 보기','방 요청 보기','로그아웃 어디','문의','질문','게시판','연락','전화','카톡','카카오톡','메일','운영진','협회에 묻','답이 없'],h:'<ul><li><b>안 되는 것 알리기</b>: 오른쪽 아래 동그란 버튼 → 안 되는 것을 짧게 적고 「보내기」(화면 사진은 선택). 이름 · 학원 · 어느 화면이었는지는 저절로 함께 가요. 운영진이 확인해 「해결 중 · 해결」과 답을 달면 ☰ › 내 글 보기에 빨간 점이 떠요. 같은 창의 「자주 묻는 것」은 자동 상담이에요.</li><li>로그인하면 위 오른쪽에 <b>「내 접수」</b>와 <b>☰ 메뉴</b>(내 이름)가 있어요. 메뉴 안에 시간표 · 게시판 · <b>내 글 보기</b> · 분실물 · 로그아웃이 있어요.</li><li><b>내 글 보기</b>: 내가 올린 게시판 글과 운영진 답, 그리고 <b>접수 때 남긴 요청</b>(방 요청 · 가족방 요청 · 운영진에게 남길 말)을 한곳에서 봐요. 새 답이 오면 메뉴에 빨간 점이 떠요.</li><li>궁금한 점은 <b>캠프 게시판</b>에 남겨 주세요. 운영진이 게시판에서 답해요.</li><li>공문 안내: 카카오톡 <b>suzukimusickorea</b> 또는 메일 suzukimusickorea1995@gmail.com</li><li>캠프 중 아이 안전 같은 급한 일만 운영실로 전화해 주세요.</li></ul>'}
 };
 const GD_ORDER=['first','when','who','login','mem','type','fee','dues','birth','steps','taken','lesson','concert','audio','ens','room','head','guest','staff','parent','parentT','intl','consent','pay','refund','cancel','mine','meal','camp','ask'];let GD_CUR='first',GD_LAST=null;
 const gdH=x=>typeof x.h==='function'?x.h():x.h;
@@ -259,7 +259,7 @@ function gdOpen(k,from){let g=document.getElementById('gdBg');if(!g){g=document.
   g.innerHTML='<div class="gdSheet"><div class="gdHd"><b id="gdT">캠프 접수 안내</b><button type="button" class="gdX" id="gdX">닫기</button></div><div class="gdTabs" role="tablist" id="gdTabs"></div><div class="gdBody" id="gdBody"></div></div>';document.body.appendChild(g)}
   GD_CUR=GD[k]?k:'first';GD_LAST=from||null;gdDraw();g.hidden=false;document.getElementById('gdX').focus()}
 /* 자동 상담 (11-13): 회원관리처럼 오른쪽 아래 「상담하기」 · AI가 아니라 위 매뉴얼 글에서만 찾아 답함 (매뉴얼에 없는 건 지어내지 않음) */
-const CS={open:false,log:[]};
+const CS={open:false,log:[],mode:'',draft:'',msg:'',busy:false};
 const csNorm=x=>String(x||'').toLowerCase().replace(/[\s·.,?!~「」()\-]/g,'');
 const csText=h=>{const d=document.createElement('div');d.innerHTML=String(h).replace(/<\/(li|p|tr|td|th|h3)>/g,' $&');return (d.textContent||'').replace(/\s+/g,' ').trim()};
 function csFind(q){const nq=csNorm(q),toks=String(q).split(/[\s,.?!]+/).filter(t=>t.length>=2),out=[];
@@ -272,16 +272,43 @@ const CS_CHIPS=['접수는 언제부터예요?','참가비표','명단에 없는
 function csAnswer(q){const R=csFind(q);
   if(!R.length)return '<p>안내에서 맞는 답을 찾지 못했어요. 아래 주제에서 골라 보거나, 다르게 물어보거나, 게시판에 남겨 주세요. 운영진이 답해요.</p><div class="csChips">'+GD_ORDER.map(k=>'<button type="button" data-gd="'+k+'">'+esc(GD[k].t)+'</button>').join('')+'</div><button type="button" class="btn small primary" data-csask="1" style="margin-top:6px">게시판에 묻기</button>';
   return R.map((r,i)=>{const x=GD[r.k],h=gdH(x);return '<div class="csAns"><b>'+(i?'':'이 안내가 맞을 것 같아요 · ')+esc(x.t)+'</b><div class="csTx">'+(i?esc(csText(h).slice(0,90))+'…':h)+'</div><button type="button" class="btn small" data-gd="'+r.k+'">안내 창에서 보기</button></div>'}).join('')+'<p class="hint" style="margin:6px 0 0">답이 안 되면 <button type="button" class="linkish" data-csask="1">게시판에 묻기</button></p>'}
-function csDraw(){const p=document.getElementById('csPanel');if(!p)return;p.hidden=!CS.open;document.getElementById('csFab').setAttribute('aria-expanded',String(CS.open));if(!CS.open)return;
+/* 오른쪽 아래 동그란 버튼 (11-16 사용자): 로그인한 선생님은 「안 되는 것 알리기」가 먼저 — 짧게 적어 보내면 게시판(문의)에 저절로 분류돼 쌓이고, 관리자가 상태 · 답을 달아요. 자주 묻는 것(자동 상담)은 창 안에서 바꿔 볼 수 있어요 */
+const csRepOK=()=>!!(S.user&&S.token);
+function csFabSync(){const f=document.getElementById('csFab');if(!f)return;const t=csRepOK()?'안 되는 것 알리기':'상담하기',sp=f.querySelector('span');if(sp&&sp.textContent!==t)sp.textContent=t;f.setAttribute('aria-label',t);f.title=t}
+function csRepHTML(){const M=(S.qMine||[]).slice(0,3),pill=st=>st==='해결'?'<span class="pill ok">해결</span>':st==='해결 중'?'<span class="pill new">해결 중</span>':'<span class="pill due">미해결</span>';
+  const ok=/^ok:/.test(CS.msg);
+  return '<div class="csRep">'+(ok?'<div class="note ok" style="margin:0">'+esc(CS.msg.slice(3))+'번으로 보냈어요. 운영진이 확인하고 답을 달면 ☰ › 내 글 보기에 빨간 점이 떠요.</div>':'')+
+    '<p class="hint" style="margin:0">지금 안 되는 것을 짧게 적어 주세요. 이름 · 학원 · 어느 화면이었는지는 저절로 함께 가요.</p>'+
+    '<textarea id="csRT" rows="4" maxlength="1000" placeholder="예) 2단계에서 학생을 체크했는데 「추가」가 안 눌려요">'+esc(CS.draft)+'</textarea>'+
+    '<label class="csPic"><input type="file" id="csRP" accept="image/*"> 화면 사진 <span class="hint">(선택 · 5MB까지)</span></label>'+
+    (CS.msg&&!ok?'<p class="err" style="margin:0;color:var(--bad)">'+esc(CS.msg)+'</p>':'')+
+    '<button type="button" class="btn primary" id="csRS" '+(CS.busy?'disabled':'')+'>'+(CS.busy?'보내고 있어요…':'보내기')+'</button>'+
+    (M.length?'<div class="csMy"><b>내가 보낸 것</b>'+M.map(x=>'<div class="csMyI">'+pill(x.state)+' <span>'+esc(String(x.text).slice(0,40))+(String(x.text).length>40?'…':'')+'</span>'+(x.reply?'<div class="csMyR">답: '+esc(String(x.reply).slice(0,120))+'</div>':'')+'</div>').join('')+'<button type="button" class="linkish" data-csmine="1">내 글 모두 보기</button></div>':'')+'</div>'}
+function csDraw(){const p=document.getElementById('csPanel');if(!p)return;csFabSync();p.hidden=!CS.open;document.getElementById('csFab').setAttribute('aria-expanded',String(CS.open));if(!CS.open)return;
+  if(!CS.mode||(CS.mode==='rep'&&!csRepOK()))CS.mode=csRepOK()?'rep':'faq';const rep=CS.mode==='rep';
+  document.getElementById('csTitle').textContent=rep?'안 되는 것 알리기':'자동 상담';
+  document.getElementById('csSw').innerHTML=rep?'<button type="button" data-csmode="faq">자주 묻는 것</button>':(csRepOK()?'<button type="button" data-csmode="rep">안 되는 것 알리기</button>':'<button type="button" data-gd="first">안내 전체 보기</button>');
+  const body=document.getElementById('csBody');
+  if(rep){body.innerHTML=csRepHTML();return}
+  if(!document.getElementById('csLog'))body.innerHTML='<div class="csLog" id="csLog"></div><form class="csForm" id="csForm"><input type="text" id="csIn" placeholder="예) 가족방은 몇 명까지?" autocomplete="off" maxlength="100" aria-label="궁금한 것"><button type="submit" class="btn small primary">묻기</button></form>';
   const lg=document.getElementById('csLog');lg.innerHTML='<div class="csMsg bot">안녕하세요. 캠프 접수 안내에서 답을 찾아 드려요. 궁금한 것을 적거나 아래에서 골라 주세요.</div><div class="csChips">'+CS_CHIPS.map(c=>'<button type="button" data-csq="'+esc(c)+'">'+esc(c)+'</button>').join('')+'</div>'+
     CS.log.map(m=>'<div class="csMsg '+m.w+'">'+m.h+'</div>').join('');const me=lg.querySelectorAll('.csMsg.me');lg.scrollTop=me.length?me[me.length-1].offsetTop-8:0}
+function csSend(){const t=String(CS.draft||'').trim();if(t.length<2){CS.msg='어떤 게 안 되는지 적어 주세요.';csDraw();return}if(CS.busy)return;
+  const d={text:t,where:'바로 알리기',env:'화면 '+S.view+'/'+S.step+' · 바로 알리기 · '+(S.editNo?'수정 중 · ':'')+(S.acad?S.acad+' · ':'')+window.innerWidth+'px · '+navigator.userAgent.slice(0,160)};
+  const go=file=>{if(file)d.file=file;CS.busy=true;CS.msg='';csDraw();
+    google.script.run.withSuccessHandler(r=>{CS.busy=false;CS.draft='';CS.msg='ok:'+r.no;if(r.mine)S.qMine=r.mine;try{hdSync()}catch(e){}csDraw()}).withFailureHandler(e=>{CS.busy=false;CS.msg=(e&&e.message)||String(e);csDraw()}).submitIssue(S.token,d)};
+  const f=document.getElementById('csRP');if(f&&f.files&&f.files[0]){const fl=f.files[0];if(fl.size>5*1024*1024){CS.msg='사진은 5MB까지예요.';csDraw();return}const rd=new FileReader();rd.onload=()=>go({name:fl.name,type:fl.type,data:String(rd.result).split(',')[1]});rd.readAsDataURL(fl)}else go(null)}
+document.addEventListener('input',e=>{if(e.target&&e.target.id==='csRT'){CS.draft=e.target.value;if(CS.msg&&!/^ok:/.test(CS.msg))CS.msg=''}});
 function csAsk(q){q=String(q||'').trim();if(!q)return;CS.log.push({w:'me',h:esc(q)});CS.log.push({w:'bot',h:csAnswer(q)});if(CS.log.length>30)CS.log=CS.log.slice(-30);csDraw();const i=document.getElementById('csIn');if(i){i.value='';i.focus()}}
 function csMount(){if(document.getElementById('csFab'))return;const f=document.createElement('button');f.type='button';f.id='csFab';f.className='csFab';f.setAttribute('aria-controls','csPanel');f.setAttribute('aria-expanded','false');f.setAttribute('aria-label','상담하기');f.title='상담하기';
   f.innerHTML='<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg><span>상담하기</span>';document.body.appendChild(f);
   const p=document.createElement('div');p.id='csPanel';p.className='csPanel';p.hidden=true;p.setAttribute('role','dialog');p.setAttribute('aria-label','자동 상담');
-  p.innerHTML='<div class="csHd"><b>자동 상담</b><span class="csMan"><button type="button" data-gd="first">안내 전체 보기</button></span><button type="button" class="gdX" id="csX" aria-label="닫기">닫기</button></div><div class="csLog" id="csLog"></div><form class="csForm" id="csForm"><input type="text" id="csIn" placeholder="예) 가족방은 몇 명까지?" autocomplete="off" maxlength="100" aria-label="궁금한 것"><button type="submit" class="btn small primary">묻기</button></form>';document.body.appendChild(p)}
+  p.innerHTML='<div class="csHd"><b id="csTitle">자동 상담</b><span class="csMan" id="csSw"></span><button type="button" class="gdX" id="csX" aria-label="닫기">닫기</button></div><div class="csBody" id="csBody"></div>';document.body.appendChild(p)}
 document.addEventListener('click',e=>{const t=e.target;if(!t||!t.closest)return;
-  if(t.closest('#csFab')){CS.open=!CS.open;csDraw();if(CS.open){const i=document.getElementById('csIn');if(i)i.focus()}return}
+  if(t.closest('#csFab')){CS.open=!CS.open;if(CS.open&&/^ok:/.test(CS.msg))CS.msg='';csDraw();if(CS.open){const i=document.getElementById(CS.mode==='rep'?'csRT':'csIn');if(i)i.focus()}return}
+  const sw=t.closest('[data-csmode]');if(sw){CS.mode=sw.getAttribute('data-csmode');csDraw();const i=document.getElementById(CS.mode==='rep'?'csRT':'csIn');if(i)i.focus();return}
+  if(t.closest('#csRS')){csSend();return}
+  if(t.closest('[data-csmine]')){CS.open=false;csDraw();const m=document.getElementById('hdMyQ');if(m)m.click();return}
   if(t.closest('#csX')){CS.open=false;csDraw();return}
   const q=t.closest('[data-csq]');if(q){csAsk(q.getAttribute('data-csq'));return}
   if(t.closest('[data-csask]')){CS.open=false;csDraw();openQ();return}});
@@ -605,7 +632,7 @@ document.addEventListener('click',e=>{const b=e.target&&e.target.closest&&e.targ
 
 /* 휴대폰 아래 메뉴 (11-16 사용자): 로그인한 선생님만. 접수 1단계(처음) · 내 접수 · 시간표 · 게시판 · 완료 화면 = 아이콘 탭 (1단계는 「다음」도 탭 위에),
    접수 2~5단계 · 고치기 = 아래 막대에 뒤로 · 다음만 (금액 · 내 접수 · 처음 빼기, 금액은 4단계 확인 화면 · 내 접수에서) */
-function tabSync(){const B=document.body,tb=document.getElementById('tabbar');if(!tb)return;
+function tabSync(){try{csFabSync()}catch(e){}const B=document.body,tb=document.getElementById('tabbar');if(!tb)return;
   const on=!!(S.user&&S.token),step=on&&S.view==='form'&&((S.step>=2&&S.step<=5)||!!S.editNo);
   B.classList.toggle('tbStep',step);B.classList.toggle('tbOn',on&&!step);B.classList.toggle('tbNext',on&&!step&&S.view==='form'&&S.step===1);tb.hidden=!(on&&!step);
   if(!on||step)return;const cur=S.view==='mine'?'mine':S.view==='tt'?'tt':S.view==='q'?'q':S.view==='form'&&S.step===1?'home':'';

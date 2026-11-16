@@ -1,4 +1,4 @@
-/* build: 20261116-182154 */
+/* build: 20261116-231030 */
 function vAuthPick(){const off=!!CAMP.pre;return gdBtn()+apDoor()+`<section class="sec"><h2>접수 시작</h2>
   ${off?`<p class="note warn" style="margin:6px 0 12px"><b>${+CAMP.pre.slice(5,7)}월 ${+CAMP.pre.slice(8,10)}일에 접수가 열려요.</b> 그 전에 아래에서 회원가입을 마쳐 두세요.</p>`:'<p class="lede">어떻게 접수하시나요?</p>'}
   <div class="pick2${off?' pickoff':''}"${off?' aria-disabled="true"':''}>
@@ -261,7 +261,7 @@ function cartPanel(){
     </tbody></table></div></div>`;
 }
 /* 지금 탭 · 찾기에 보이는 사람 (전체 선택에도 씀) */
-function rosterView(){const r=roster(), me=S.user?S.user.name:'', q=(S.rq||'').trim(), T=S.ptab==='교사';
+function rosterView(){if(S.ptab==='가족')S.ptab='교사';const r=roster(), me=S.user?S.user.name:'', q=(S.rq||'').trim(), T=S.ptab==='교사';
   return (T?r.teachers.map(x=>({x,k:'t'})):r.students.filter(x=>x.inst===S.ptab&&(!S.mine||x.teacher===me)).map(x=>({x,k:'s'}))).filter(o=>!q||o.x.name.includes(q))}
 const pickable=x=>!S.picked[x.id]&&!(x.booked||bookedOf(x));
 function rosterList(){
@@ -283,10 +283,9 @@ function vStep2(){
   ${preqPanel()}
   ${cartPanel()}
   <div class="panel">
-    <div class="itabs" role="tablist" aria-label="교사·악기">${ptabList().map(o=>`<button type="button" role="tab" data-ptab="${o.t}" aria-pressed="${S.ptab===o.t}">${o.t==='교사'&&isStaffAcad()?'관계자':o.t}<small>${o.k}/${o.n}</small></button>`).join('')}<button type="button" role="tab" data-ptab="가족" aria-pressed="${S.ptab==='가족'}">가족<small>다음 단계</small></button></div>
+    <div class="itabs" role="tablist" aria-label="교사·악기">${ptabList().map(o=>`<button type="button" role="tab" data-ptab="${o.t}" aria-pressed="${S.ptab===o.t}">${o.t==='교사'&&isStaffAcad()?'관계자':o.t}<small>${o.k}/${o.n}</small></button>`).join('')}</div>
     ${S.ptab==='가족'?`<div class="note info famguide"><b>가족(보호자 · 동반가족 · 15개월 미만)은 여기서 넣지 않아요.</b><br><span class="famMust"><b>가족 · 가족방은 교사나 학생과 함께만 신청할 수 있어요.</b> 따로는 접수할 수 없고, 추가 · 빼기는 언제든 할 수 있어요. 지금 그 교사 · 학생을 추가하고, 다음 단계에서 가족을 넣어요.</span>${totals().n?`<div class="row" style="margin-top:8px"><button class="btn primary" type="button" data-gonext="1">다음 단계에서 가족 넣기 →</button></div>`:'<p class="hint" style="margin:8px 0 0">아직 담은 사람이 없어요. 교사 · 악기 탭에서 먼저 담아 주세요.</p>'}</div>`:''}
-    ${isStaffAcad()?'':'<p class="hint" style="margin:0">접수 가능한 사람 먼저 · 가나다순 · 탭 숫자는 「접수 가능/전체」</p>'}
-    <div class="spread"><div class="legend" ${isStaffAcad()?'hidden':''}><span><span class="pill ok">회비 납부</span> 바로 접수</span><span><span class="pill due">미납</span> 연회비 함께 입금</span><span>흐린 줄 = 이미 접수한 사람</span></div>
+    <div class="spread"><div></div>
       <div class="row" ${S.ptab==='교사'?'hidden':''}><label class="mine" for="mine"><input type="checkbox" id="mine" ${S.mine?'checked':''}>내 학생만 보기 (담당 ${esc(me)})</label></div></div>
     <input type="search" id="rq" value="${esc(S.rq||'')}" placeholder="이름으로 찾기 (학생·교사)" autocomplete="off" aria-label="이름으로 찾기">
     ${S.ptab==='가족'?'':addBtn('addCartT')}

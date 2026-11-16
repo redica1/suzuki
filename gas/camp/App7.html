@@ -1,4 +1,4 @@
-/* build: 20261116-154904 */
+/* build: 20261116-155023 */
     ps.forEach(p=>{p.pay='신고';p.rep=rep;delete S.rpRow[p.id]});S.afterSave=()=>repDone(ps.map(p=>p.id));subSave();S.rp=null;S.rpOpen=false;S.rpMemo=undefined;render();toast(`${ps.length}명 입금 신고를 보냈어요 · 운영진이 확인하면 「입금 확인」으로 바뀌어요`);return}
   if(b.id==='rpFill'){const n=document.getElementById('rpAllN').value.trim(),dd=document.getElementById('rpAllD').value;S.rpAllN=n;S.rpAllD=dd;const sel=S.rp||[];
     if(!n&&!dd){toast('적용할 입금자명이나 입금일을 적어 주세요');return}unpaidPpl().filter(x=>sel.includes(x.p.id)).forEach(({p})=>{const v=rpv(p);if(n)v.n=n;if(dd)v.d=dd});render();toast(`선택한 ${sel.length}명에게 적용했어요`);return}
@@ -510,7 +510,7 @@ function preqPanel(mine){if(isGuest()||(!mine&&isStaffAcad()))return '';const L=
     return h};
   if(!n&&!S.pqAll)return '';   /* 11-16: 새로 온 것(할 일)이 있을 때만 · 다 처리하면 위 띠 「할 일 없음」 + 「지난 신청 보기」 */
   return `<details class="preq preqB" ${S.pqAll&&!n?'open':''}><summary class="preqBtn"><span>학부모가 보낸 신청 <b>${L.length}건</b></span>${n?` <span class="preqN">확인할 것 ${n}</span>`:''}<span class="preqArr" aria-hidden="true">›</span></summary><div class="panel preqBody"><p class="hint" style="margin:0">${mine?'입금 신고 확인 · 취소 처리를 여기서 해요. 접수에 담기는 「＋ 새 접수」 › 참가자 선택에서':'「접수에 담기」를 누르면 학생 · 보호자 · 가족 · 방 요청이 채워져요. 권수 · 곡은 다음 단계에서 넣고, 학부모가 고른 추가레슨 · 마스터클래스는 미리 들어가요(바꿀 수 있어요)'}</p>
-  <div class="row" style="gap:6px;margin:8px 0"><button class="btn small" type="button" data-pqurl="1">학부모 신청 주소 복사 (카톡으로 보내기)</button></div>${banks}
+  <div class="row" style="gap:6px;margin:8px 0"><button class="btn small" type="button" data-pqurl="1">학부모 신청 주소 복사</button></div>${banks}
   <div class="preqL">${L.map(r=>{const d=r.d||{},st=r.st==='취소'?['취소','due']:(PQ_ST[r.st]||PQ_ST.보냄),fam=(d.fam||[]);
     return `<div class="preqR"><div class="preqH"><b>${esc(r.name)}</b> <small class="faint">${esc(r.phone)} · ${esc(r.acad)}</small> <span class="pill ${st[1]}">${st[0]}</span> <small class="faint">${esc(pqDt(r.at))}${r.by?` · ${esc(r.by)} 선생님이 담음`:''}</small></div>
       <div class="preqB"><span>학생: ${(d.kids||[]).map(kid).join(' · ')}</span><span>보호자: ${d.me&&d.me.go===false?'<small class="faint">안 가요</small>':esc(r.name)}${fam.length?` · 가족: ${fam.map(f=>esc(f.name)+` <small class="faint">${esc(f.type)}</small>`).join(' · ')}`:''}</span>${d.room&&(d.room.fam||d.room.note)?`<span>방: ${d.room.fam?'<b>가족방 원함</b>':''}${d.room.note?' · '+esc(d.room.note):''}</span>`:''}${d.memo?`<span>한마디: ${esc(d.memo)}</span>`:''}${money(r)}</div>

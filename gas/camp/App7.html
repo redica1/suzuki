@@ -1,4 +1,4 @@
-/* build: 20261116-152057 */
+/* build: 20261116-152448 */
     ps.forEach(p=>{p.pay='신고';p.rep=rep;delete S.rpRow[p.id]});S.afterSave=()=>repDone(ps.map(p=>p.id));subSave();S.rp=null;S.rpOpen=false;S.rpMemo=undefined;render();toast(`${ps.length}명 입금 신고를 보냈어요 · 운영진이 확인하면 「입금 확인」으로 바뀌어요`);return}
   if(b.id==='rpFill'){const n=document.getElementById('rpAllN').value.trim(),dd=document.getElementById('rpAllD').value;S.rpAllN=n;S.rpAllD=dd;const sel=S.rp||[];
     if(!n&&!dd){toast('적용할 입금자명이나 입금일을 적어 주세요');return}unpaidPpl().filter(x=>sel.includes(x.p.id)).forEach(({p})=>{const v=rpv(p);if(n)v.n=n;if(dd)v.d=dd});render();toast(`선택한 ${sel.length}명에게 적용했어요`);return}
@@ -595,7 +595,7 @@ function famEditBox(subs){const O=[];(subs||[]).filter(canEditSub).forEach(sb=>{
       O.push({v:sb.no+'|'+k,t:p.name+(heads.length>1?' 외 형제 '+(heads.length-1):'')+' · 가족 '+nf+'명 · '+(room[k]?'가족방 신청':'가족방 안 함'),on:!!room[k]})})});
   if(!O.length)return '';O.sort((a,b)=>(b.on-a.on)||a.t.localeCompare(b.t,'ko'));
   return `<div class="panel famed"><b>가족 · 가족방 수정</b> <span class="hint">가족(보호자 · 동반가족 · 15개월 미만)을 넣거나 빼고, 가족방을 신청 · 해제해요</span>
-    <p class="famMust" style="margin:8px 0 0"><b>가족방은 반드시 그 교사 · 학생을 신청할 때 같은 접수에서 가족과 함께 신청해 주세요.</b> 나중에 넣을 때도 새 접수가 아니라 여기서 그 학생을 골라 같은 접수에 넣어요.</p>
+    <p class="famMust" style="margin:8px 0 0"><b>가족 · 가족방은 교사나 학생과 함께만 신청할 수 있어요.</b> 따로는 접수할 수 없고, 추가 · 빼기는 여기서 언제든 할 수 있어요.</p>
     <div class="row" style="gap:8px;margin-top:8px;flex-wrap:wrap"><select id="famEdSel" style="min-width:260px;flex:1"><option value="">학생 고르기</option>${O.map(o=>`<option value="${esc(o.v)}">${esc(o.t)}</option>`).join('')}</select><button class="btn primary" type="button" id="famEdGo">가족 · 가족방 수정</button></div></div>`}
 /* 접수 내역의 가족방 카드 (11-15 사용자: 앙상블처럼 가족방도 「수정」 크게) */
 function famRoomCards(L){const R=roomsOf(L),ty=p=>{const t=String(p.type||'');return /15개월/.test(t)?'15개월 미만':/보호자/.test(t)?'보호자':/동반/.test(t)?'동반가족':p.kind==='교사'?'교사':p.kind==='학생'?'학생':'가족'};

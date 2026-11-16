@@ -1,4 +1,4 @@
-/* build: 20261116-151722 */
+/* build: 20261116-152016 */
     ps.forEach(p=>{p.pay='신고';p.rep=rep;delete S.rpRow[p.id]});S.afterSave=()=>repDone(ps.map(p=>p.id));subSave();S.rp=null;S.rpOpen=false;S.rpMemo=undefined;render();toast(`${ps.length}명 입금 신고를 보냈어요 · 운영진이 확인하면 「입금 확인」으로 바뀌어요`);return}
   if(b.id==='rpFill'){const n=document.getElementById('rpAllN').value.trim(),dd=document.getElementById('rpAllD').value;S.rpAllN=n;S.rpAllD=dd;const sel=S.rp||[];
     if(!n&&!dd){toast('적용할 입금자명이나 입금일을 적어 주세요');return}unpaidPpl().filter(x=>sel.includes(x.p.id)).forEach(({p})=>{const v=rpv(p);if(n)v.n=n;if(dd)v.d=dd});render();toast(`선택한 ${sel.length}명에게 적용했어요`);return}
@@ -274,7 +274,16 @@ function csAnswer(q){const R=csFind(q);
   return R.map((r,i)=>{const x=GD[r.k],h=gdH(x);return '<div class="csAns"><b>'+(i?'':'이 안내가 맞을 것 같아요 · ')+esc(x.t)+'</b><div class="csTx">'+(i?esc(csText(h).slice(0,90))+'…':h)+'</div><button type="button" class="btn small" data-gd="'+r.k+'">안내 창에서 보기</button></div>'}).join('')+'<p class="hint" style="margin:6px 0 0">답이 안 되면 <button type="button" class="linkish" data-csask="1">게시판에 묻기</button></p>'}
 /* 오른쪽 아래 동그란 버튼 (11-16 사용자): 로그인한 선생님은 「안 되는 것 알리기」가 먼저 — 짧게 적어 보내면 게시판(문의)에 저절로 분류돼 쌓이고, 관리자가 상태 · 답을 달아요. 자주 묻는 것(자동 상담)은 창 안에서 바꿔 볼 수 있어요 */
 const csRepOK=()=>!!(S.user&&S.token);
-function csFabSync(){const f=document.getElementById('csFab');if(!f)return;const t=csRepOK()?'안 되는 것 알리기':'상담하기',sp=f.querySelector('span');if(sp&&sp.textContent!==t)sp.textContent=t;f.setAttribute('aria-label',t);f.title=t}
+function csFabSync(){const f=document.getElementById('csFab');if(!f)return;const t=csRepOK()?'HELP · 안 되는 것 알리기':'HELP · 자동 상담',sp=f.querySelector('span');if(sp&&sp.textContent!=='HELP')sp.textContent='HELP';f.setAttribute('aria-label',t);f.title=t;csTipSync()}
+/* HELP 옆 흐르는 말풍선 (11-16 사용자): 로그인한 선생님 · 창을 한 번 열거나 × 누르면 이 기기에서 안 보임 */
+const CS_TIP='하다가 막히면 HELP를 눌러 적어 주세요 · 운영진이 바로 확인해요';
+function csTipSync(){const f=document.getElementById('csFab');if(!f)return;let t=document.getElementById('csTip');let off=false;try{off=localStorage.getItem('csTipX')==='1'}catch(e){}
+  const show=csRepOK()&&!CS.open&&!off&&getComputedStyle(f).display!=='none';
+  if(!show){if(t)t.hidden=true;return}
+  if(!t){t=document.createElement('div');t.id='csTip';t.className='csTip';t.innerHTML='<span class="csTipW"><span class="mq">'+CS_TIP+'</span></span><button type="button" class="csTipX" aria-label="말풍선 닫기">×</button>';document.body.appendChild(t)}
+  t.hidden=false;const r=f.getBoundingClientRect();t.style.bottom=Math.max(8,window.innerHeight-r.bottom+(r.height-34)/2)+'px';t.style.right=(window.innerWidth-r.left+8)+'px'}
+function csTipOff(){try{localStorage.setItem('csTipX','1')}catch(e){}const t=document.getElementById('csTip');if(t)t.hidden=true}
+window.addEventListener('resize',()=>{try{csTipSync()}catch(e){}});
 function csRepHTML(){const M=(S.qMine||[]).slice(0,3),pill=st=>st==='해결'?'<span class="pill ok">해결</span>':st==='해결 중'?'<span class="pill new">해결 중</span>':'<span class="pill due">미해결</span>';
   const ok=/^ok:/.test(CS.msg);
   return '<div class="csRep">'+(ok?'<div class="note ok" style="margin:0">'+esc(CS.msg.slice(3))+'번으로 보냈어요. 운영진이 확인하고 답을 달면 ☰ › 내 글 보기에 빨간 점이 떠요.</div>':'')+
@@ -305,7 +314,9 @@ function csMount(){if(document.getElementById('csFab'))return;const f=document.c
   const p=document.createElement('div');p.id='csPanel';p.className='csPanel';p.hidden=true;p.setAttribute('role','dialog');p.setAttribute('aria-label','자동 상담');
   p.innerHTML='<div class="csHd"><b id="csTitle">자동 상담</b><span class="csMan" id="csSw"></span><button type="button" class="gdX" id="csX" aria-label="닫기">닫기</button></div><div class="csBody" id="csBody"></div>';document.body.appendChild(p)}
 document.addEventListener('click',e=>{const t=e.target;if(!t||!t.closest)return;
-  if(t.closest('#csFab')){CS.open=!CS.open;if(CS.open&&/^ok:/.test(CS.msg))CS.msg='';csDraw();if(CS.open){const i=document.getElementById(CS.mode==='rep'?'csRT':'csIn');if(i)i.focus()}return}
+  if(t.closest('.csTipX')){csTipOff();return}
+  if(t.closest('.csTipW')){CS.open=true;csTipOff();csDraw();return}
+  if(t.closest('#csFab')){csTipOff();CS.open=!CS.open;if(CS.open&&/^ok:/.test(CS.msg))CS.msg='';csDraw();if(CS.open){const i=document.getElementById(CS.mode==='rep'?'csRT':'csIn');if(i)i.focus()}return}
   const sw=t.closest('[data-csmode]');if(sw){CS.mode=sw.getAttribute('data-csmode');csDraw();const i=document.getElementById(CS.mode==='rep'?'csRT':'csIn');if(i)i.focus();return}
   if(t.closest('#csRS')){csSend();return}
   if(t.closest('[data-csmine]')){CS.open=false;csDraw();const m=document.getElementById('hdMyQ');if(m)m.click();return}
@@ -632,7 +643,7 @@ document.addEventListener('click',e=>{const b=e.target&&e.target.closest&&e.targ
 
 /* 휴대폰 아래 메뉴 (11-16 사용자): 로그인한 선생님만. 접수 1단계(처음) · 내 접수 · 시간표 · 게시판 · 완료 화면 = 아이콘 탭 (1단계는 「다음」도 탭 위에),
    접수 2~5단계 · 고치기 = 아래 막대에 뒤로 · 다음만 (금액 · 내 접수 · 처음 빼기, 금액은 4단계 확인 화면 · 내 접수에서) */
-function tabSync(){try{csFabSync()}catch(e){}const B=document.body,tb=document.getElementById('tabbar');if(!tb)return;
+function tabSync(){setTimeout(()=>{try{csFabSync()}catch(e){}},0);const B=document.body,tb=document.getElementById('tabbar');if(!tb)return;
   const on=!!(S.user&&S.token),step=on&&S.view==='form'&&((S.step>=2&&S.step<=5)||!!S.editNo);
   B.classList.toggle('tbStep',step);B.classList.toggle('tbOn',on&&!step);B.classList.toggle('tbNext',on&&!step&&S.view==='form'&&S.step===1);tb.hidden=!(on&&!step);
   if(!on||step)return;const cur=S.view==='mine'?'mine':S.view==='tt'?'tt':S.view==='q'?'q':S.view==='form'&&S.step===1?'home':'';

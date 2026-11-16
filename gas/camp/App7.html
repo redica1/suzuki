@@ -1,4 +1,4 @@
-/* build: 20261116-160056 */
+/* build: 20261116-160337 */
     ps.forEach(p=>{p.pay='신고';p.rep=rep;delete S.rpRow[p.id]});S.afterSave=()=>repDone(ps.map(p=>p.id));subSave();S.rp=null;S.rpOpen=false;S.rpMemo=undefined;render();toast(`${ps.length}명 입금 신고를 보냈어요 · 운영진이 확인하면 「입금 확인」으로 바뀌어요`);return}
   if(b.id==='rpFill'){const n=document.getElementById('rpAllN').value.trim(),dd=document.getElementById('rpAllD').value;S.rpAllN=n;S.rpAllD=dd;const sel=S.rp||[];
     if(!n&&!dd){toast('적용할 입금자명이나 입금일을 적어 주세요');return}unpaidPpl().filter(x=>sel.includes(x.p.id)).forEach(({p})=>{const v=rpv(p);if(n)v.n=n;if(dd)v.d=dd});render();toast(`선택한 ${sel.length}명에게 적용했어요`);return}
@@ -508,8 +508,9 @@ function preqPanel(mine){if(isGuest()||(!mine&&isStaffAcad()))return '';const L=
     const sb=r.sub;if(sb){const paid=(R.filter(x=>x.st==='확인')).reduce((t,x)=>t+x.amt,0),ex=sb.ppl.reduce((t,p)=>t+p.lesson,0),due=sb.total-paid;
       h+=`<span>접수 ${esc(sb.no)} · 확정 금액 <b>${won(sb.total)}</b>${ex?` <small class="faint">(추가레슨 · 마스터클래스 ${won(ex)})</small>`:''} · 학부모 입금 확인 ${won(paid)} · ${due>0?`<b style="color:var(--bad)">더 받을 금액 ${won(due)}</b>`:due<0?`더 받은 금액 ${won(-due)}`:'다 받음'} <button class="btn small" type="button" data-pqmsg="${esc(r.id)}">학부모 안내 문자 복사</button></span>`}
     return h};
-  if(!n&&!S.pqAll)return '';   /* 11-16: 새로 온 것(할 일)이 있을 때만 · 다 처리하면 위 띠 「할 일 없음」 + 「지난 신청 보기」 */
-  return `<details class="preq preqB" ${S.pqAll&&!n?'open':''}><summary class="preqBtn"><span>학부모가 보낸 신청 <b>${L.length}건</b></span>${n?` <span class="preqN">확인할 것 ${n}</span>`:''}<span class="preqArr" aria-hidden="true">›</span></summary><div class="panel preqBody"><p class="hint" style="margin:0">${mine?'입금 신고 확인 · 취소 처리를 여기서 해요. 접수에 담기는 「＋ 새 접수」 › 참가자 선택에서':'「접수에 담기」를 누르면 학생 · 보호자 · 가족 · 방 요청이 채워져요. 권수 · 곡은 다음 단계에서 넣고, 학부모가 고른 추가레슨 · 마스터클래스는 미리 들어가요(바꿀 수 있어요)'}</p>
+  const pqAllOn=S.pqAll===S.view+'/'+S.step;   /* 「지난 신청 보기」는 누른 화면에서만 (다른 화면으로 가면 다시 접힘) */
+  if(!n&&!pqAllOn)return '';   /* 11-16: 새로 온 것(할 일)이 있을 때만 · 다 처리하면 위 띠 「할 일 없음」 + 「지난 신청 보기」 */
+  return `<details class="preq preqB" ${pqAllOn&&!n?'open':''}><summary class="preqBtn"><span>학부모가 보낸 신청 <b>${L.length}건</b></span>${n?` <span class="preqN">확인할 것 ${n}</span>`:''}<span class="preqArr" aria-hidden="true">›</span></summary><div class="panel preqBody"><p class="hint" style="margin:0">${mine?'입금 신고 확인 · 취소 처리를 여기서 해요. 접수에 담기는 「＋ 새 접수」 › 참가자 선택에서':'「접수에 담기」를 누르면 학생 · 보호자 · 가족 · 방 요청이 채워져요. 권수 · 곡은 다음 단계에서 넣고, 학부모가 고른 추가레슨 · 마스터클래스는 미리 들어가요(바꿀 수 있어요)'}</p>
   ${banks}
   <div class="preqL">${L.map(r=>{const d=r.d||{},st=r.st==='취소'?['취소','due']:(PQ_ST[r.st]||PQ_ST.보냄),fam=(d.fam||[]);
     return `<div class="preqR"><div class="preqH"><b>${esc(r.name)}</b> <small class="faint">${esc(r.phone)} · ${esc(r.acad)}</small> <span class="pill ${st[1]}">${st[0]}</span> <small class="faint">${esc(pqDt(r.at))}${r.by?` · ${esc(r.by)} 선생님이 담음`:''}</small></div>
@@ -566,7 +567,7 @@ function pqTodo(){if(!S.user||isGuest()||!pqPilot().length)return '';const mine=
   const it=[];if(take)it.push(`<button type="button" class="pqT" data-pqgo="take">담기 전 <b>${take}</b></button>`);if(pay)it.push(`<button type="button" class="pqT" data-pqgo="pay">입금 확인 <b>${pay}</b></button>`);
   if(cx)it.push(`<button type="button" class="pqT warn" data-pqgo="pay">취소 요청 <b>${cx}</b></button>`);if(sub)it.push(`<button type="button" class="pqT warn" data-pqgo="pay">협회 접수 취소 남음 <b>${sub}</b></button>`);
   if(nob.length)it.push(`<button type="button" class="pqT warn" data-pqgo="pay">학원 통장 넣기 <b>${nob.map(esc).join(', ')}</b></button>`);
-  if(!it.length)return `<div class="pqTodo ok"><b>학부모 신청</b> <span class="hint">할 일 없음 · ${L.length}건 모두 처리했어요</span>${L.length?`<button type="button" class="pqT" data-pqall="1">${S.pqAll?'목록 닫기':'지난 신청 보기'}</button>`:''}</div>`;
+  if(!it.length)return `<div class="pqTodo ok"><b>학부모 신청</b> <span class="hint">할 일 없음 · ${L.length}건 모두 처리했어요</span>${L.length?`<button type="button" class="pqT" data-pqall="1">${S.pqAll===S.view+'/'+S.step?'목록 닫기':'지난 신청 보기'}</button>`:''}</div>`;
   if(S.view==='mine'||(S.view==='form'&&S.step===2))return '';   /* 11-16: 할 일이 있으면 아래 초록 「학부모가 보낸 신청」 버튼 하나만 (두 개 겹치지 않게) */
   return `<div class="pqTodo"><b>학부모 신청 · 할 일</b>${it.join('')}</div>`}
 function pqGo(k){if(k==='take'){S.view='form';S.editNo=null;S.editOnly=null;if(S.step!==1){resetForm();S.acad='';S.verified=false;S.step=1}render();window.scrollTo({top:0});toast('학원을 고르고 다음으로 가면 「참가자 선택」 위에 학부모가 보낸 신청이 있어요 · 「접수에 담기」를 눌러요');return}
@@ -670,4 +671,4 @@ function inabRun(root,chips){if(!root||!root.querySelectorAll)return;
   if(chips)root.querySelectorAll('button:not([data-ab])').forEach(b=>{b.setAttribute('data-ab','1');const w=document.createTreeWalker(b,NodeFilter.SHOW_TEXT);let x;while((x=w.nextNode())){const s=x.nodeValue,m=INAB_RE.exec(s.replace(/^\s+/,''));if(m){const pre=s.match(/^\s*/)[0],sp=document.createElement('span');sp.innerHTML=inabH(m[1]);x.nodeValue=pre+s.replace(/^\s+/,'').slice(m[1].length);x.parentNode.insertBefore(sp.firstChild,x);break}}})}
 {const go=()=>{try{const a=document.getElementById('app');inabRun(a,S.view!=='form')}catch(e){}};const mo=new MutationObserver(()=>{clearTimeout(window.__inabT);window.__inabT=setTimeout(go,30)});const a=document.getElementById('app');if(a)mo.observe(a,{childList:true,subtree:true});go()}
 
-document.addEventListener('click',e=>{const b=e.target&&e.target.closest&&e.target.closest('[data-pqall]');if(!b)return;S.pqAll=!S.pqAll;render();if(S.pqAll)setTimeout(()=>{const p=document.querySelector('details.preq');if(p)p.scrollIntoView({block:'start',behavior:'smooth'})},60)});
+document.addEventListener('click',e=>{const b=e.target&&e.target.closest&&e.target.closest('[data-pqall]');if(!b)return;const k=S.view+'/'+S.step;S.pqAll=S.pqAll===k?'':k;render();if(S.pqAll)setTimeout(()=>{const p=document.querySelector('details.preq');if(p)p.scrollIntoView({block:'start',behavior:'smooth'})},60)});

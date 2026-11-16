@@ -1,4 +1,4 @@
-<!doctype html><!-- build: 20261116-010315 --><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}
+<!doctype html><!-- build: 20261116-135503 --><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}
 /* 내 접수 표 (11-01): 관리자 표처럼 한 줄씩 */
 .mtbl{width:100%;border-collapse:collapse;font-size:15px;letter-spacing:-.02em;white-space:nowrap}
 .mtbl th{font-size:14px;font-weight:700;color:var(--ink);background:var(--sunk);text-align:center;padding:6px 8px;border-bottom:1px solid var(--line)}
@@ -427,6 +427,29 @@ tfoot td{font-weight:700;border-bottom:0}
 .dock .sum b{font-size:21px}
 .dock .row{flex-wrap:nowrap}
 .dock .btn.mine{border-color:var(--accent,#2c46c9);color:var(--accent,#2c46c9);font-weight:700}
+.famReq{color:var(--bad,#d93025);font-weight:700}
+.tabbar{display:none}
+/* 11-16 휴대폰 아래 메뉴 (앱처럼): 접수 중(1~5단계 · 고치기)은 아래 막대에 뒤로 · 다음만, 그 밖 화면은 아이콘 탭 5개 */
+@media (max-width:640px){
+ body.tbOn .tabbar{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:9;background:var(--surface);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px)}
+ .tabbar button{all:unset;flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:7px 0 6px;font-size:11.5px;color:var(--muted,#6b7a80);position:relative;cursor:pointer}
+ .tabbar svg{width:23px;height:23px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+ .tabbar button[aria-current=page]{color:var(--accent,#0f8a85);font-weight:700}
+ .tabbar .tbn{position:absolute;top:3px;left:calc(50% + 8px);font-style:normal;font-size:10.5px;min-width:16px;height:16px;line-height:16px;border-radius:8px;background:var(--accent,#0f8a85);color:#fff;text-align:center;padding:0 4px}
+ .tabbar .tbd{position:absolute;top:5px;left:calc(50% + 9px);width:8px;height:8px;border-radius:50%;background:#e5484d}
+ body.tbOn{padding-bottom:calc(64px + env(safe-area-inset-bottom,0px))}
+ body.tbOn .dock{display:none}
+ body.tbOn.tbNext .dock{display:block;bottom:calc(58px + env(safe-area-inset-bottom,0px));padding-bottom:0}
+ body.tbOn.tbNext{padding-bottom:calc(130px + env(safe-area-inset-bottom,0px))}
+ body.tbStep .dock .sum,body.tbStep #mineBtn,body.tbStep #homeBtn,body.tbNext .dock .sum,body.tbNext #mineBtn,body.tbNext #homeBtn,body.tbNext #backBtn{display:none!important}
+ body.tbStep .dock .wrap,body.tbNext .dock .wrap{padding-block:10px}
+ body.tbStep .dock .row,body.tbNext .dock .row{width:100%}
+ body.tbStep #nextBtn,body.tbNext #nextBtn{flex:1;justify-content:center}
+ body.tbOn #hdMine{display:none!important}
+ body.tbOn .csFab{bottom:calc(76px + env(safe-area-inset-bottom,0px))}
+ body.tbNext .csFab,body.tbStep .csFab{bottom:calc(84px + env(safe-area-inset-bottom,0px))}
+ body.tbNext .csFab{bottom:calc(140px + env(safe-area-inset-bottom,0px))}
+}
 @media (max-width:440px){.dock .wrap{gap:8px}.dock .btn{padding-inline:10px}.dock .sum b{font-size:18px}}
 
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:8px;font-size:16px;z-index:9}
@@ -514,6 +537,13 @@ h1,h2,h3,.band h1,.sec>h2,.card h2{font-weight:800;letter-spacing:0}
     </div>
   </div>
 </div>
+<nav class="tabbar" id="tabbar" hidden aria-label="아래 메뉴">
+  <button type="button" data-tb="home"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg><span>처음</span></button>
+  <button type="button" data-tb="new"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span>접수하기</span></button>
+  <button type="button" data-tb="mine"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h8l1 2h2v15H5V6h2zM9 11h6M9 15h6"/></svg><span>내 접수</span><i class="tbn" id="tbMineN" hidden></i></button>
+  <button type="button" data-tb="tt"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16v14H4zM4 10h16M9 3v4M15 3v4"/></svg><span>시간표</span></button>
+  <button type="button" data-tb="q"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg><span>게시판</span><i class="tbd" id="tbDot" hidden></i></button>
+</nav>
 <div class="toast" id="toast" hidden></div>
 
 <script>
@@ -530,6 +560,6 @@ var UI_KEY='camp';
 </script>
 
 <script>try{window.top.postMessage('suzuki-ready','*')}catch(e){}</script>
-<div id="bldMark" hidden>빌드표시 20261116-010315 </div>
+<div id="bldMark" hidden>빌드표시 20261116-135503 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 96px';document.body.appendChild(p)})();</script>
 </body></html>

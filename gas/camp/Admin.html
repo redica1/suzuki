@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261116-135811 -->
+<!-- build: 20261116-140135 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -661,14 +661,18 @@ function vNtc(){if(!S.ntc){if(!S.ntcLoading){S.ntcLoading=true;call('adminNotice
     <label class="row" style="gap:6px;align-items:center"><input type="checkbox" id="ntTop" ${E&&E.top?'checked':''}> 중요 (맨 위에 노란 카드로)</label>
     <div class="row" style="gap:8px"><button class="btn primary" type="button" id="ntSave">${E?'고친 것 저장':'올리기'}</button>${E?'<button class="btn" type="button" id="ntCancel">그만 고치기</button>':''}</div></div>
   <div class="panel"><h3 style="margin:0 0 6px">올린 공지 ${N.list.length}개</h3>${N.list.length?N.list.map(x=>`<div style="padding:10px 0;border-top:1px solid var(--line)"><div class="spread"><span>${x.top?'<span class="pill due">중요</span> ':''}<b>${esc(x.title||'(제목 없음)')}</b> <small class="faint">${esc(String(x.at).slice(0,16))}${x.by?' · '+esc(x.by):''}</small></span><span class="row" style="gap:6px"><button class="btn small" type="button" data-ntedit="${x.row}">고치기</button><button class="btn small" type="button" data-ntdel="${x.row}">지우기</button></span></div>${x.body?`<div style="white-space:pre-wrap;margin-top:4px">${esc(x.body)}</div>`:''}</div>`).join(''):'<p class="hint">아직 공지가 없어요.</p>'}</div>`}
-function vQ(){const L=(S.D.issues||[]).slice().reverse(),f=S.qf||'open';const F=[['open','안 끝난 것'],['all','전체'],['미해결','미해결'],['해결 중','해결 중'],['해결','해결']];
-  const show=L.filter(x=>f==='all'||(f==='open'?x.state!=='해결':x.state===f));
+const ISS_CATS_A=['로그인','명단 · 학생','가족방 · 숙소','레슨','음악회 · 곡','입금 · 금액','화면 오류','기타'];   /* 11-16: 글 저절로 분류 (서버 issCat_) · 여기서 바꿀 수 있음 */
+function vQ(){const L0=(S.D.issues||[]).slice().reverse(),f=S.qf||'open',cf=S.qcf||'';const F=[['open','안 끝난 것'],['all','전체'],['미해결','미해결'],['해결 중','해결 중'],['해결','해결']];
+  const byS=x=>f==='all'||(f==='open'?x.state!=='해결':x.state===f),L=L0.filter(byS);
+  const show=L.filter(x=>!cf||(x.cat||'기타')===cf);
+  const cc=k=>L.filter(x=>(x.cat||'기타')===k).length;
   const pill=st=>st==='해결'?'<span class="pill ok">해결</span>':st==='해결 중'?'<span class="pill new">해결 중</span>':'<span class="pill due">미해결</span>';
   return `<div class="panel"><div class="spread"><div class="row" style="gap:6px">${F.map(([k,l])=>`<button class="btn small ${f===k?'primary':''}" type="button" data-qf="${k}">${l}</button>`).join('')}</div><button class="btn small" type="button" id="reload">새로 불러오기</button></div>
-    <span class="hint">선생님이 접수 화면 위 「게시판」로 올린 글이에요. 상태를 바꾸고 답을 적어 「저장」하면 선생님 화면(내가 올린 글)에 보여요. 시트 「문의」 탭에도 남아요.</span></div>
-  ${show.map(x=>`<div class="panel" style="display:grid;gap:8px"><div class="spread"><span><b class="num">${esc(x.no)}</b> · ${esc(String(x.at).slice(5,16))} · <b>${esc(x.name)}</b>${x.p4?` <small class="faint">(…${esc(x.p4)})</small>`:''}${x.email?` <small class="faint">${esc(x.email)}</small>`:''} · ${esc(x.acad)} · <span class="faint">${esc(x.where)}</span></span>${pill(x.state)}</div>
+    <div class="conchips" style="margin:8px 0 6px"><button class="cchip sm" type="button" data-qcf="" aria-pressed="${!cf}">분류 전체 <small>${L.length}</small></button>${ISS_CATS_A.filter(k=>cc(k)).map(k=>`<button class="cchip sm" type="button" data-qcf="${esc(k)}" aria-pressed="${cf===k}">${esc(k)} <small>${cc(k)}</small></button>`).join('')}</div>
+    <span class="hint">선생님이 접수 화면 오른쪽 아래 동그란 버튼(안 되는 것 알리기)이나 「게시판」로 올린 글이에요. 분류는 글 내용 · 화면을 보고 저절로 붙어요(틀리면 고르고 저장). 상태를 바꾸고 답을 적어 「저장」하면 선생님 화면(내가 올린 글)에 보여요. 시트 「문의」 탭에도 남아요.</span></div>
+  ${show.map(x=>`<div class="panel" style="display:grid;gap:8px"><div class="spread"><span><b class="num">${esc(x.no)}</b> · ${esc(String(x.at).slice(5,16))} · <b>${esc(x.name)}</b>${x.p4?` <small class="faint">(…${esc(x.p4)})</small>`:''}${x.email?` <small class="faint">${esc(x.email)}</small>`:''} · ${esc(x.acad)} · <span class="faint">${esc(x.where)}</span> · <span class="pill info">${esc(x.cat||'기타')}</span></span>${pill(x.state)}</div>
     <div style="white-space:pre-wrap">${esc(x.text)}</div>${x.pic?`<a href="${esc(x.pic)}" target="_blank" rel="noopener">사진 보기</a>`:''}<small class="faint">${esc(x.env)}</small>
-    <div class="row" style="gap:8px;align-items:flex-start;flex-wrap:wrap"><select id="qs_${x.row}">${['미해결','해결 중','해결'].map(o=>`<option ${o===x.state?'selected':''}>${o}</option>`).join('')}</select>
+    <div class="row" style="gap:8px;align-items:flex-start;flex-wrap:wrap"><select id="qs_${x.row}">${['미해결','해결 중','해결'].map(o=>`<option ${o===x.state?'selected':''}>${o}</option>`).join('')}</select><select id="qc_${x.row}" title="분류">${ISS_CATS_A.map(o=>`<option ${o===(x.cat||'기타')?'selected':''}>${o}</option>`).join('')}</select>
       <textarea id="qr_${x.row}" rows="2" style="flex:1;min-width:220px" placeholder="선생님께 보일 답변">${esc(x.reply)}</textarea><button class="btn small primary" type="button" data-qsave="${x.row}">저장</button></div>
     ${x.by?`<small class="faint">${esc(x.by)}${x.done?' · '+kday(x.done):''}</small>`:''}</div>`).join('')||'<div class="panel hint">해당하는 글이 없어요.</div>'}`}
 
@@ -2484,7 +2488,8 @@ document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)r
   if(d.cxf){S.cxf=d.cxf;render();return}
   if(d.ntedit){S.ntcEdit=+d.ntedit;render();window.scrollTo({top:0});return}
   if(d.ntdel){const x=(S.ntc.list||[]).find(y=>y.row===+d.ntdel);if(!confirm('「'+((x&&x.title)||'공지')+'」를 지울까요?'))return;call('adminNoticeSave',[{row:+d.ntdel,del:true,title:x&&x.title}],r=>{S.ntc=r;S.ntcEdit=null;render();toast('지웠어요')});return}
-  if(d.qsave){const row=+d.qsave;call('adminSetIssue',[row,val('qs_'+row),(document.getElementById('qr_'+row)||{}).value||''],r=>{setData(r);toast('저장했어요')});return}
+  if(d.qcf!==undefined){S.qcf=d.qcf;render();return}
+  if(d.qsave){const row=+d.qsave;const qc=document.getElementById('qc_'+row);call('adminSetIssue',[row,val('qs_'+row),(document.getElementById('qr_'+row)||{}).value||''].concat(qc?[qc.value]:[]),r=>{setData(r);toast('저장했어요')});return}
   if(d.ensopen){S.ensOpen=S.ensOpen===d.ensopen?'':d.ensopen;render();return}
   if(d.enssave){const g=k=>val('ee_'+k),c=k=>!!(document.getElementById('ee_'+k)||{}).checked;
     const p={group:g('group'),acads:g('acads').split(/[,，]/).map(x=>x.trim()).filter(Boolean),k1:g('k1'),c1:g('c1'),o1:g('o1'),acc1:c('acc1'),video1:c('video1'),k2:g('k2'),c2:g('c2'),o2:g('o2'),acc2:c('acc2'),video2:c('video2'),tm:g('tm').replace(/\D/g,''),ts:g('ts').replace(/\D/g,''),adminMemo:g('adminMemo')};
@@ -4507,7 +4512,7 @@ document.addEventListener('click',e=>{if(S.tab!=='book')return;const b=e.target.
   if(b.id==='ebSetSave'){const n=Object.assign(ebSet(),S.ebSetW||{});n.per=Math.max(1,Math.min(10,Math.round(+n.per||5)));n.fs=Math.max(5,Math.min(10,+n.fs||6.6));['en','sub','org'].forEach(k=>n[k]=String(n[k]||'').trim().slice(0,120));
     ebSend([],[],n,()=>{S.ebSetW=null;toast('책자 설정을 저장했어요')});return}},true);
 </script>
-<div id="bldMark" hidden>빌드표시 20261116-135811 </div>
+<div id="bldMark" hidden>빌드표시 20261116-140135 </div>
 <script>
 /* 관리자 상담 (11-15): 관리자 매뉴얼 글에서만 찾아 답함 (AI 아님 · 없는 답은 지어내지 않음). 장마다 t 제목 · q 찾는 말 · k 바로 갈 메뉴 · h 본문 */
 const AGD={
@@ -4517,7 +4522,7 @@ const AGD={
  rp:{t:'입금 신고 확인 · 반려',k:'rp',q:['입금 신고','신고 확인','반려','입금자명','통장 맞추','통장 다시','신고일'],h:'<ul><li>선생님 · 보호자가 「입금 신고」한 것을 통장과 입금자명 · 날짜 · 금액으로 맞춰 보고, <b>통장 입금일을 골라 「확인」</b>해요.</li><li>통장에 맞는 입금이 있으면 날짜가 미리 채워지고, 확인할 때 그 통장 입금에 사람별로 저절로 이어져요.</li><li>맞지 않으면 <b>「반려」</b> — 사유가 선생님 화면에 보여요.</li><li>여러 명은 선택해서 「신고일 넣기 / 날짜 넣기」 후 선택 확인 · 선택 반려.</li><li>통장이 안 보이면 「통장 다시 읽기」.</li></ul>'},
  cx:{t:'취소 · 환불',k:'cx',q:['취소','환불','환불 접수','환불 완료','송금','차액 환불','과납','철회','진단서','위약금'],h:'<ol><li><b>환불 접수</b>: 요청을 확인하고 환불액을 정해 「환불 접수」 → 그 사람은 「취소 · 환불 예정」 (환불액 0원이면 바로 「취소 확정」).</li><li><b>송금</b>: 실제로 돈을 보낸 뒤 보낸 날을 골라 「환불 완료」.</li></ol><ul><li><b>차액 환불</b>은 취소가 아니라 입금확인액만 줄어요(더 낸 돈 돌려주기).</li><li><b>반려</b>하면 참가 상태로 돌아가요. <b>철회</b>는 선생님이 요청을 거둔 것.</li><li>입금 전 취소는 운영진 처리가 없어요.</li><li>환불 규정 · 진단서 비율은 「설정 › 캠프 설정 › 취소 · 환불 규정」. 위 표에 기간별 합계가 나와요.</li></ul>'},
  schol:{t:'장학금',k:'schol',q:['장학금','학원별 지급','지급일'],h:'<ul><li>학원별 학생 수(학생 + 악기하는 교사자녀, 취소 뺌, 비회원 제외)로 기준 금액이 정해져요.</li><li>「인원별 기준」에 「＋ 구간 추가」 (예: 10명 이상 400,000원). 큰 인원부터 처음 맞는 구간을 써요.</li><li>학원마다 조정 금액 · 상태 · 지급일 · 메모를 넣고 저장. 통계 › 학원별 표에도 장학금 칸이 생겨요.</li></ul>'},
- q:{t:'게시판 답하기',k:'q',q:['게시판','문의','답 달','답하기','질문 답','방 요청 글'],h:'<ul><li>선생님이 접수 화면 위 「게시판」으로 올린 글이에요.</li><li>상태를 바꾸고 답을 적어 <b>「저장」</b>하면 선생님 화면(내가 올린 글)에 보여요. 시트 「문의」 탭에도 남아요.</li></ul>'},
+ q:{t:'게시판 답하기',k:'q',q:['게시판','문의','답 달','답하기','질문 답','방 요청 글','안 되는 것','바로 알리기','분류'],h:'<ul><li>선생님 접수 화면 오른쪽 아래 동그란 버튼 「안 되는 것 알리기」로 보낸 글도 여기 쌓여요(화면 칸 「바로 알리기」). 글마다 <b>분류</b>(로그인 · 명단/학생 · 가족방/숙소 · 레슨 · 음악회/곡 · 입금/금액 · 화면 오류 · 기타)가 내용 · 화면을 보고 저절로 붙어요. 위 분류 칩으로 모아 보고, 틀리면 글의 분류 칸에서 고르고 「저장」.</li><li>선생님이 접수 화면 위 「게시판」으로 올린 글이에요.</li><li>상태를 바꾸고 답을 적어 <b>「저장」</b>하면 선생님 화면(내가 올린 글)에 보여요. 시트 「문의」 탭에도 남아요.</li></ul>'},
  ntc:{t:'공지사항 · 식단표',k:'ntc',q:['공지','공지사항','맨 위 띠','노란','식단','식단표','메뉴'],h:'<ul><li><b>맨 위 띠(한 줄)</b>: 캠프 페이지 첫 화면 맨 위에 노랗게 떠요. 비우면 안 보여요.</li><li>공지 글은 「중요」를 켜면 맨 위에 노란 카드로 나와요.</li><li><b>식단표</b>: 날짜를 고르고 끼니마다 메뉴(한 줄에 하나) · 메모(원산지 등) → 「식단표 저장」 → 캠프 페이지 「식사 · 장소」. 「앞날 식단 그대로 가져오기」도 있어요. 캠프 날짜는 교사 일정 › 날짜 · 장소에서.</li></ul>'},
  meal:{t:'식권',k:'meal',q:['식권','QR','스캐너','바코드','인쇄 식권','중복 스캔'],h:'<ul><li>식권 만들기: 캠프 설정 「식사 시간」 × 교사 일정 날짜로 줄이 생겨요. 매수는 지금 참가 인원 + 교수진이 기본, 스태프 · 여분을 생각해 고쳐요.</li><li>인쇄는 A4 · <b>배율 100%(실제 크기)</b>, 「용지에 맞춤」 끄기. 한 장에 12장. 같은 묶음은 몇 번 인쇄해도 같은 번호예요.</li><li>스캐너: 식당 입구 휴대폰(크롬) + 바코드건. 「주소 복사 · 스캐너 열기」. 처음 한 번 화면을 눌러야 소리가 나요.</li><li>「중복 스캔」은 같은 번호를 두 번 이상 낸 횟수. 인쇄해서 나눠 준 묶음은 지우지 마세요.</li></ul>'},
  act:{t:'교사 일정 · 날짜 · 장소',k:'act',q:['교사 일정','프로그램표','날짜 · 장소','날짜 장소','장소 추가','일정 넣기','교사별'],h:'<ul><li>캠프 날짜 · 장소 · 사람 · 못 오는 날은 <b>「교사 일정 › 날짜 · 장소」</b>에서 먼저 넣어요. 식단 · 식권 · 개인레슨이 이 날짜를 써요.</li><li>프로그램표 · 교사별 횟수 · 교사별 일정이 있어요. 일정마다 구분(공연 · 레슨 · 업무) → 종류 → 사람 역할, 대상(악기별 권수 칩 예: 1 · 1A · 4B+ · 7+).</li><li>다른 화면에서 먼저 고쳤으면 「최신 내용으로 다시 불러왔어요」가 떠요.</li></ul>'},

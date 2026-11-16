@@ -1,4 +1,4 @@
-/* build: 20261116-140657 */
+/* build: 20261116-143834 */
 /* ---------- 캠프 설정 (관리자 화면에서 입력되는 값) ---------- */
 const ROOM = { cap:4, emptyFee:140000, max:6 }; // 가족방: 4명 이상 기준(4명보다 적으면 빈 자리 1개당 추가 비용) · 숙소 1실은 5~6인이라 한 방 최대 6명 (11-15 사용자: 「4명까지」가 아니라 「4명 이상」)
 const CAMP = { id:'27W', ri:0, lessonFee:60000, lessonMax:5, mcFee:150000,
@@ -158,7 +158,7 @@ const yearBad=(p,v)=>p.kind==='student'?!okYear(v):(String(v||'').trim()!==''&&!
 function missingBasic(){ return people().filter(p=>{const i=info(p);return yearBad(p,i.by)||!i.gender||staffNoRole(p)}) }
 const staffNoRole=p=>isStaffAcad()&&p.kind==='teacher'&&!STAFF_TYPES.includes(info(p).type);
 /* 음원 (11-04): 음악회마다 관리자가 「음원 받기」를 켬. 접수 때는 선택, 「내 접수」에서 마감일까지 추가 */
-const audOn=con=>CAMP.aud?!!(CAMP.aud[con]||{}).on:con==='이브닝';
+const audOn=con=>/오후/.test(String(con||''))?false:CAMP.aud?!!(CAMP.aud[con]||{}).on:con==='이브닝';   /* 11-16: 오후 음악회는 음원 없음 */
 const videoOk=i=>!String(i.video||'').trim()||/^https?:\S{6,}$/i.test(String(i.video||'').trim());
 function missingVideo(){ return people().filter(p=>p.kind==='student'&&PLAYS.has(info(p).type)&&!videoOk(info(p))) }
 function missingProg(){ return people().filter(p=>p.kind==='student'&&PLAYS.has(info(p).type)&&!info(p).prog) }

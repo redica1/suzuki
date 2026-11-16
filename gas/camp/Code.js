@@ -1,4 +1,4 @@
-/* build: 20261116-140657 */
+/* build: 20261116-143834 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -3946,7 +3946,7 @@ const audUrlOk_ = u => /^https?:\/\/\S{4,}$/i.test(u) && u.length <= 500;
 function audCfg_() {
   const c = camp_(), A = c.aud || {}, pub = String(setting_('음원 결과 공개') || '').split(',').map(x => x.trim()).filter(Boolean), o = {};
   const lastDay = c.base && c.base.start ? (() => { const d = new Date(c.base.start + 'T00:00:00'); d.setDate(d.getDate() - 1); return Utilities.formatDate(d, TZ, 'yyyy-MM-dd'); })() : '';
-  camp_().cons.forEach(k => { const x = A[k] || {}; o[k] = { on: !!x.on, pre: !!x.on && !!x.pre, due: x.due || '', end: x.due || lastDay, pub: pub.includes(k) }; });
+  camp_().cons.forEach(k => { const x = /오후/.test(k) ? {} : (A[k] || {}); o[k] = { on: !!x.on,   /* 오후 음악회는 음원 없음 (11-16) */ pre: !!x.on && !!x.pre, due: x.due || '', end: x.due || lastDay, pub: pub.includes(k) }; });
   return o;
 }
 function audRows_() {

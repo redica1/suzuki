@@ -1,4 +1,4 @@
-/* build: 20261116-181555 */
+/* build: 20261116-181652 */
   /* 11-16: 입금 신고 상자 — 「총 n명 중 신고 m명 · 확인 k명」, 할 게 없으면 「입금 신고할 내역이 없어요」 · 계좌는 펼쳤을 때만 */
   const allP=[];MY_SUBS.forEach(sb=>sb.ppl.forEach(p=>{if(p.status==='정상')allP.push(p)}));const nRep=allP.filter(p=>p.pay==='신고').length,nOk=allP.filter(p=>isPaid(p)).length;
   const cnt=allP.length?`<span class="hint">총 ${allP.length}명 중 신고 ${nRep}명 · 확인 ${nOk}명</span>`:'';
@@ -170,18 +170,6 @@ function vMineCore(L,head){
 `:'<section class="sec">'}
   ${!head?"":L.length?`<div class="panel mmwrap">${S.mscope!=='acad'?mmBox():''}<dl class="kv"><dt>접수</dt><dd>${L.length}건</dd><dt>인원수</dt><dd>${all.length}명<br><span class="compo">${compoTxt(L)}</span></dd><dt>청구 합계</dt><dd class="num">${won(allAmt)}</dd><dt>입금 확인</dt><dd class="num">${won(okAmt)}</dd><dt>남은 금액</dt><dd class="num"><b>${won(Math.max(0,allAmt-okAmt))}</b>${okAmt>allAmt?` <span class="hint">${won(okAmt-allAmt)} 더 냄 · 운영진이 정리해요</span>`:''}</dd></dl></div>`:'<div class="note">접수 내역이 없어요. 「접수하기」에서 접수하면 여기에 쌓여요.</div>'}${head?addBar(L):''}${head?payReport():''}
   ${done}
-  ${famRoomCards(L)}
-  <h3 style="margin:18px 0 6px;font-size:18px">앙상블</h3>
-  ${L.filter(sb=>sb.form&&sb.form.ens&&sb.form.ens.on&&sb.ppl.some(p=>p.status==='정상')).map(sb=>{const e=sb.form.ens;const songs=[1,2].map(n=>songTxt(e,n)).filter(Boolean);
-    return `<div class="panel enscard"><div class="spread"><div><span class="pill new">앙상블</span> <b style="font-size:19px">${esc(e.group||'(팀 이름 없음)')}</b> <span class="hint">대표 ${esc(sb.acad)}</span></div><button class="btn primary" type="button" data-ensedit="${sb.no}">앙상블 수정</button></div>
-      <dl class="kv"><dt>함께하는 학원</dt><dd>${esc(sb.acad)} (대표)${(e.acads||[]).length?', '+e.acads.map(esc).join(', '):''}</dd><dt>곡</dt><dd>${songs.join('<br>')||'<span class="hint">아직 없음</span>'}</dd><dt>연주시간</dt><dd>${e.tm||e.ts?`${+e.tm||0}분 ${+e.ts||0}초`:'-'}</dd></dl></div>`}).join('')}
-  ${(()=>{const has=L.some(sb=>sb.form&&sb.form.ens&&sb.form.ens.on&&sb.ppl.some(p=>p.status==='정상'));const last=[...L].reverse().find(sb=>sb.form&&sb.ppl.some(p=>p.status==='정상'));
-    if(has||!last)return '';const t=teamOf(last.acad);const mb=last.form.ens&&last.form.ens.member;
-    if(t&&t.rep===last.acad)return `<div class="panel enscard"><span class="pill new">앙상블</span> <b>${esc(last.acad)}</b>은(는) 「<b>${esc(t.name)}</b>」 팀 대표로 신청돼 있어요 · ${esc(t.by||'')} 선생님 신청<br><span class="hint">팀 정보는 ${esc(t.by||'신청한')} 선생님이 고쳐요.</span></div>`;
-    if(t){const my=L.find(sb=>(t.mem||[]).some(m=>m.no===sb.no));
-      return `<div class="panel enscard spread"><div><span class="pill new">앙상블 · 함께하는 학원</span> 「<b>${esc(t.name)}</b>」 팀 (대표 학원 ${esc(t.rep)}${byTxt(t)})에 함께해요.<br><span class="hint">곡·시간 같은 팀 정보는 대표 학원이 넣어요.</span></div>${my?`<button class="btn" type="button" data-ensedit="${my.no}">앙상블 수정</button>`:''}</div>`}
-    return mb?`<div class="panel enscard spread"><div><span class="pill new">앙상블 · 함께하는 학원</span> 대표 <b>${esc(last.form.ens.joinRep||'')}</b> 팀에 함께해요 · 대표 학원 신청 전<br><span class="hint">곡·시간 같은 팀 정보는 대표 학원이 넣어요.</span></div><button class="btn" type="button" data-ensedit="${last.no}">앙상블 수정</button></div>`
-      :`<div class="panel enscard spread"><div><span class="pill new">앙상블</span> <b style="font-size:18px">앙상블은 아직 신청하지 않았어요</b><br><span class="hint">여러 학원이 한 팀으로 나가요. 우리 학원이 대표로 신청할 수 있어요.</span></div><button class="btn primary" type="button" data-ensnew="${last.no}">＋ 앙상블 신청하기</button></div>`})()}
   ${L.length?mvSeg()+(famTab()?'':mineTabs()):''}
   ${(()=>{const RM=roomMark(L);const R=famAfter(L.flatMap(sb=>sb.ppl.filter(p=>mineOk(sb,p)).map(p=>({sb,p}))).sort((a,b)=>String(b.p.addAt||b.sb.date).localeCompare(String(a.p.addAt||a.sb.date))));
     if(famTab())return famEditBox(L)+famRoomsHTML(L,true);
@@ -194,6 +182,18 @@ function vMineCore(L,head){
     ${nSel?`<div class="spread" style="margin-top:6px;border-top:1px dashed var(--line);padding-top:6px"><span class="hint">${nSel}명 선택</span><span class="row"><button class="btn small primary" type="button" id="selEditAll">선택한 ${nSel}명 정보 수정</button><button class="btn small" type="button" id="cxOpenAll" ${SEL.reduce((t,x)=>t+x.selCx.length,0)?'':'disabled'}>선택한 ${SEL.reduce((t,x)=>t+x.selCx.length,0)}명 취소</button></span></div>`:''}
     ${SEL.map(({sb,sel,selCx})=>`    ${sel.length&&selCx.length<sel.length?`<p class="hint" style="margin:0">${sel.filter(id=>!selCx.includes(id)).map(id=>esc((sb.ppl.find(p=>p.id===id)||{}).name)).join(', ')}은(는) ${unpaidCancelOk()?'입금 신고 확인 중이라':'캠프가 시작돼서'} 지금 취소할 수 없어요.${unpaidCancelOk()?' 그 사람 줄의 「신고 수정 › 신고 취소」로 신고를 거두면 바로 취소할 수 있어요.':''}</p>`:''}
     ${(S.cxOpen===sb.no||S.cxOpen==='*')&&selCx.length?cxPanel(sb,selCx):''}`).join('')}</div>`})()}
+  ${famRoomCards(L)}
+  <h3 style="margin:18px 0 6px;font-size:18px">앙상블</h3>
+  ${L.filter(sb=>sb.form&&sb.form.ens&&sb.form.ens.on&&sb.ppl.some(p=>p.status==='정상')).map(sb=>{const e=sb.form.ens;const songs=[1,2].map(n=>songTxt(e,n)).filter(Boolean);
+    return `<div class="panel enscard"><div class="spread"><div><span class="pill new">앙상블</span> <b style="font-size:19px">${esc(e.group||'(팀 이름 없음)')}</b> <span class="hint">대표 ${esc(sb.acad)}</span></div><button class="btn primary" type="button" data-ensedit="${sb.no}">앙상블 수정</button></div>
+      <dl class="kv"><dt>함께하는 학원</dt><dd>${esc(sb.acad)} (대표)${(e.acads||[]).length?', '+e.acads.map(esc).join(', '):''}</dd><dt>곡</dt><dd>${songs.join('<br>')||'<span class="hint">아직 없음</span>'}</dd><dt>연주시간</dt><dd>${e.tm||e.ts?`${+e.tm||0}분 ${+e.ts||0}초`:'-'}</dd></dl></div>`}).join('')}
+  ${(()=>{const has=L.some(sb=>sb.form&&sb.form.ens&&sb.form.ens.on&&sb.ppl.some(p=>p.status==='정상'));const last=[...L].reverse().find(sb=>sb.form&&sb.ppl.some(p=>p.status==='정상'));
+    if(has||!last)return '';const t=teamOf(last.acad);const mb=last.form.ens&&last.form.ens.member;
+    if(t&&t.rep===last.acad)return `<div class="panel enscard"><span class="pill new">앙상블</span> <b>${esc(last.acad)}</b>은(는) 「<b>${esc(t.name)}</b>」 팀 대표로 신청돼 있어요 · ${esc(t.by||'')} 선생님 신청<br><span class="hint">팀 정보는 ${esc(t.by||'신청한')} 선생님이 고쳐요.</span></div>`;
+    if(t){const my=L.find(sb=>(t.mem||[]).some(m=>m.no===sb.no));
+      return `<div class="panel enscard spread"><div><span class="pill new">앙상블 · 함께하는 학원</span> 「<b>${esc(t.name)}</b>」 팀 (대표 학원 ${esc(t.rep)}${byTxt(t)})에 함께해요.<br><span class="hint">곡·시간 같은 팀 정보는 대표 학원이 넣어요.</span></div>${my?`<button class="btn" type="button" data-ensedit="${my.no}">앙상블 수정</button>`:''}</div>`}
+    return mb?`<div class="panel enscard spread"><div><span class="pill new">앙상블 · 함께하는 학원</span> 대표 <b>${esc(last.form.ens.joinRep||'')}</b> 팀에 함께해요 · 대표 학원 신청 전<br><span class="hint">곡·시간 같은 팀 정보는 대표 학원이 넣어요.</span></div><button class="btn" type="button" data-ensedit="${last.no}">앙상블 수정</button></div>`
+      :`<div class="panel enscard spread"><div><span class="pill new">앙상블</span> <b style="font-size:18px">앙상블은 아직 신청하지 않았어요</b><br><span class="hint">여러 학원이 한 팀으로 나가요. 우리 학원이 대표로 신청할 수 있어요.</span></div><button class="btn primary" type="button" data-ensnew="${last.no}">＋ 앙상블 신청하기</button></div>`})()}
   <details class="panel" ${S.ruleOpen?'open':''} id="ruleBox"><summary><b>취소·환불 규정</b> <span class="hint">오늘(${kday(S.today)}) 취소하면: 진단서 미제출 ${rateTxt(r.rate)}${hasDoc(r)?` · 전염병 · 팔·손 골절 진단서 제출 ${rateTxt(docRate(r))}`:''}${r.doc?' · 진단서 필요':''}${r.allow===false?' · 취소 불가':''}</span></summary>
     <div class="mtblw">${rulesTxt}</div><p class="hint">${REFUND.duesRefund?'':'연회비는 환불되지 않아요. '}환불 금액은 입금이 확인된 사람의 참가비·레슨비 기준이에요. 입금 전인 사람은 수수료가 없는 기간(전액 환불 기간)에는 바로 취소되고, 수수료가 생기는 날부터는 입금이 확인된 사람만 취소 요청할 수 있어요.</p>
     </details>

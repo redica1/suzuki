@@ -1,4 +1,4 @@
-/* build: 20261116-155205 */
+/* build: 20261116-155420 */
   if(!open.length) return MY_SUBS.length?`<div class="panel rp">${bankHTML()}<span class="hint">지금 입금할 금액이 없어요.</span></div>`:'';
   /* 평소엔 한 줄로 접어 둠: 「입금 신고하기」를 누르면 펼침 (11-03) */
   if(!S.rpOpen){const due=open.reduce((t,x)=>t+dueOf(x.p),0);return `<div class="panel rp">${bankHTML()}<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><span><b>입금 필요 ${open.length}명</b> · <b class="num">${won(due)}</b> <span class="hint">입금한 뒤 알려 주세요</span></span><button class="btn primary" type="button" data-rpopen="1">입금 신고하기</button></div></div>`}
@@ -179,6 +179,7 @@ function vMineCore(L,head){
     ${nSel?`<div class="spread" style="margin-top:6px;border-top:1px dashed var(--line);padding-top:6px"><span class="hint">${nSel}명 선택</span><span class="row"><button class="btn small primary" type="button" id="selEditAll">선택한 ${nSel}명 정보 수정</button><button class="btn small" type="button" id="cxOpenAll" ${SEL.reduce((t,x)=>t+x.selCx.length,0)?'':'disabled'}>선택한 ${SEL.reduce((t,x)=>t+x.selCx.length,0)}명 취소</button></span></div>`:''}
     ${SEL.map(({sb,sel,selCx})=>`    ${sel.length&&selCx.length<sel.length?`<p class="hint" style="margin:0">${sel.filter(id=>!selCx.includes(id)).map(id=>esc((sb.ppl.find(p=>p.id===id)||{}).name)).join(', ')}은(는) ${unpaidCancelOk()?'입금 신고 확인 중이라':'캠프가 시작돼서'} 지금 취소할 수 없어요.${unpaidCancelOk()?' 그 사람 줄의 「신고 수정 › 신고 취소」로 신고를 거두면 바로 취소할 수 있어요.':''}</p>`:''}
     ${(S.cxOpen===sb.no||S.cxOpen==='*')&&selCx.length?cxPanel(sb,selCx):''}`).join('')}</div>`})()}
+  ${!head||famTab()?'':(()=>{const last=[...L].reverse().find(sb=>sb.form);return last?`<button class="btn primary bigadd" type="button" data-subedit="${last.no}" style="margin-top:12px">＋ 인원 추가 <small>(${last.round} 금액 적용 중)</small></button>`:''})()}
   ${famRoomCards(L)}
   <h3 style="margin:18px 0 6px;font-size:18px">앙상블</h3>
   ${L.filter(sb=>sb.form&&sb.form.ens&&sb.form.ens.on&&sb.ppl.some(p=>p.status==='정상')).map(sb=>{const e=sb.form.ens;const songs=[1,2].map(n=>songTxt(e,n)).filter(Boolean);

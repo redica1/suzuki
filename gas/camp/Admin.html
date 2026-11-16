@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261116-151040 -->
+<!-- build: 20261116-151323 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -158,7 +158,7 @@ tr.off td{opacity:.5}
 .act table.pv .pvmeal{text-align:center}
 .act table.pvo,.act table.pvc{min-width:0}
 .act .seg.pvtabs{flex-wrap:wrap}
-.conchips{display:flex;flex-wrap:wrap;gap:6px}.cchip{all:unset;cursor:pointer;border:1px solid var(--line);border-radius:999px;padding:6px 14px;font-size:15px;background:var(--surface)}.cchip small{color:var(--muted);margin-left:2px}.cchip[aria-pressed=true]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600}.cchip[aria-pressed=true] small{color:inherit}.cchip.sm{padding:3px 10px;font-size:13.5px}.conflt{padding-top:10px;padding-bottom:10px}.contbl td{white-space:nowrap}.stt td.num,.stt th{text-align:center}.stt td.l{text-align:left}.stt tfoot td{background:var(--sunk,#eef5f4);border-top:2px solid var(--line)}.act .seg.pvtabs button{white-space:nowrap}.act .seg.pvtabs button{white-space:nowrap}
+.conchips{display:flex;flex-wrap:wrap;gap:6px}.cchip{all:unset;cursor:pointer;border:1px solid var(--line);border-radius:999px;padding:6px 14px;font-size:15px;background:var(--surface)}.cchip small{color:var(--muted);margin-left:2px}.cchip[aria-pressed=true]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600}.cchip[aria-pressed=true] small{color:inherit}.cchip.sm{padding:3px 10px;font-size:13.5px}.conflt{padding-top:10px;padding-bottom:10px}.contbl td{white-space:nowrap}.stt td.num,.stt th{text-align:center}.stt td.l{text-align:left!important;white-space:nowrap}.stt th{white-space:normal!important;word-break:keep-all!important;overflow-wrap:normal!important;line-height:1.3;vertical-align:bottom;min-width:3em}.stt td{padding:6px 8px}.stt tfoot td{background:var(--sunk,#eef5f4);border-top:2px solid var(--line)}.act .seg.pvtabs button{white-space:nowrap}.act .seg.pvtabs button{white-space:nowrap}
 .act table.pvo td,.act table.pvo th{min-width:80px}
 .act table.pvc td{border:0;min-width:0;max-width:none;padding:2px 10px}
 .act table.pvc td.pvn{width:36px;text-align:right}
@@ -2010,7 +2010,7 @@ function vStat(){Object.keys(POP).forEach(k=>delete POP[k]);const L=statRows(),v
     <div class="row" style="gap:6px;margin-top:8px;flex-wrap:wrap">${SVIEW.map(([k,l])=>`<button class="btn small ${v===k?'primary':''}" type="button" data-sv="${k}">${l}</button>`).join('')}</div></div>`;
   if(!L.length)return head+'<div class="panel hint">아직 접수가 없어요.</div>';
   return '<div class="statv">'+head+(({acad:stAcad,type:stType,tch:stTeacher,ptch:stPTch,inst:stInst,badge:stBadge}[v]||stAcad))(L)+'</div>'}
-const ST=(h,rows,foot,nl)=>`<div class="panel tbl"><div class="mtblw"><table class="mtbl stt"><thead><tr>${h.map(x=>`<th>${x}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr>${r.map((x,i)=>`<td class="${i<(nl||1)?'l':'num'}">${x===''||x==null?'<span class="hint">-</span>':x}</td>`).join('')}</tr>`).join('')}</tbody>${foot?`<tfoot><tr>${foot.map((x,i)=>`<td class="${i<(nl||1)?'l':'num'}"><b>${x}</b></td>`).join('')}</tr></tfoot>`:''}</table></div></div>`;   /* 11-16: 통계 표 = 공통 표(정렬 · 찾기 · 너비 · 표 위 고정) · 숫자 가운데 · 합계는 tfoot */
+const ST=(h,rows,foot,nl)=>`<div class="panel"><div class="mtblw"><table class="mtbl stt"><thead><tr>${h.map(x=>`<th>${x}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr>${r.map((x,i)=>`<td class="${i<(nl||1)?'l':'num'}">${x===''||x==null?'<span class="hint">-</span>':x}</td>`).join('')}</tr>`).join('')}</tbody>${foot?`<tfoot><tr>${foot.map((x,i)=>`<td class="${i<(nl||1)?'l':'num'}"><b>${x}</b></td>`).join('')}</tr></tfoot>`:''}</table></div></div>`;   /* 11-16: 통계 표 = 공통 표(정렬 · 찾기 · 너비 · 표 위 고정) · 숫자 가운데 · 합계는 tfoot */
 /* 장학금: 학원별 신청 인원에 따른 금액. 기준은 나중에 정함 → 여기 채우면 학원별 표에 칸이 생김
    예) 2026 여름 시트: 학생 30명 이상 1,200,000 · 20명 이상 800,000 · 10명 이상 400,000 (확정 아님) */
 const SCHOLAR=[]; /* [[최소 인원, 금액], …] 큰 인원부터 */
@@ -2028,11 +2028,11 @@ function acadPay(){const R={};(S.D.subs||[]).forEach(sb=>sb.ppl.forEach(p=>{cons
   const A=Object.values(R).sort((p,q)=>q.n-p.n||p.a.localeCompare(q.a,'ko')),T=k=>A.reduce((t,x)=>t+x[k],0),op=S.payOpen||{};
   const bal=v=>v>0?`<b class="num" style="color:#c0392b">+${won(v)}</b>`:v<0?`<b class="num" style="color:#b26a00">−${won(-v)}</b>`:'<span class="faint">0</span>',m=v=>v?won(v):'<span class="faint">-</span>';
   const st=y=>y.cx?(y.rq&&y.done<y.rq?'<span class="pill due">취소 · 환불 전</span>':'<span class="pill">취소</span>'):!y.paid?'<span class="pill due">미납</span>':y.paid-y.done<y.b?'<span class="pill due">일부 미납</span>':y.paid-y.done>y.b?'<span class="pill bad">과납</span>':'<span class="pill ok">입금</span>';
-  const row=(lab,cnt,b,pd,rq,dn,cls,attr,tm)=>`<tr class="${cls}"${attr||''}><td class="r">${tm||''}</td><td style="text-align:left">${lab}</td><td class="r">${cnt}</td><td class="r num">${m(b)}</td><td class="r num">${m(pd)}</td><td class="r num">${m(rq)}</td><td class="r num">${m(dn)}</td><td class="r">${bal(pd-b-dn)}</td></tr>`;
-  return `<style>.apay td,.apay th{padding:6px 10px}.apay tr.ah{cursor:pointer}.apay tr.ah:hover td{background:#f3f8f8}.apay tr.ap td{background:#fafcfc;font-size:13px}.apay .r{text-align:right}.apay tr.ap.cx td{color:#8a969c}</style><div class="panel tbl"><table class="apay" style="width:100%"><thead><tr><th>접수 시간</th><th>학원 · 이름</th><th class="r">인원</th><th class="r">신청 금액</th><th class="r">입금액</th><th class="r">환불 요청액</th><th class="r">환불 완료액</th><th class="r">과납(+) / 미납(−)</th></tr></thead><tbody>
+  const row=(lab,cnt,b,pd,rq,dn,cls,attr,tm)=>`<tr class="${cls}"${attr||''}><td class="num">${tm||''}</td><td class="l">${lab}</td><td class="num">${cnt}</td><td class="num">${m(b)}</td><td class="num">${m(pd)}</td><td class="num">${m(rq)}</td><td class="num">${m(dn)}</td><td class="num">${bal(pd-b-dn)}</td></tr>`;
+  return `<style>.apay td,.apay th{padding:6px 10px}.apay tr.ah{cursor:pointer}.apay tr.ah:hover td{background:#f3f8f8}.apay tr.ap td{background:#fafcfc;font-size:13px}.apay tr.ap.cx td{color:#8a969c}</style><div class="panel"><div class="mtblw"><table class="mtbl apay stt" style="width:100%"><thead><tr><th>접수 시간</th><th>학원 · 이름</th><th>인원</th><th>신청 금액</th><th>입금액</th><th>환불 요청액</th><th>환불 완료액</th><th>과납(+) / 미납(−)</th></tr></thead><tbody>
   ${A.map(x=>{const o=op[x.a];return row(`<b>${o?'▾':'▸'} ${esc(x.a)}</b>`,x.n+'명',x.bill,x.paid,x.rq,x.dn,'ah',` data-apo="${esc(x.a)}"`)+
     (o?x.L.map(y=>Object.assign(y,{at:String(y.p.addAt||y.sb.createdAt||'')})).sort((p,q)=>(p.cx-q.cx)||p.at.localeCompare(q.at)).map(y=>row(`<span style="padding-left:18px">${esc(y.p.name)}</span> <span class="faint">· ${esc(y.p.type||'')}</span>`,st(y),y.b,y.paid,y.rq,y.done,'ap'+(y.cx?' cx':''),'',esc(y.at.slice(2,16).replace(/-/g,'.')))).join('')+`<tr class="ap"><td colspan="8" style="text-align:right"><a href="#" data-gopay="${esc(x.a)}">이 학원 입금 확인하러 가기 →</a></td></tr>`:'')}).join('')}
-  ${row('<b>총계</b>','<b>'+A.reduce((t,x)=>t+x.n,0)+'명</b>',T('bill'),T('paid'),T('rq'),T('dn'),'foot')}</tbody></table></div>
+  </tbody><tfoot>${row('<b>총계</b>','<b>'+A.reduce((t,x)=>t+x.n,0)+'명</b>',T('bill'),T('paid'),T('rq'),T('dn'),'foot')}</tfoot></table></div></div>
   <div class="panel hint">학원 줄을 누르면 사람별로 펼쳐져요. <b>과납/미납 = 입금액 − 신청 금액 − 환불 완료액</b> (예전 「학원별입금현황」 시트와 같은 셈). 입금액은 운영진이 「입금 확인」한 금액이고, 취소한 사람이 낸 돈도 들어가요. 취소한 사람의 신청 금액은 돌려주지 않는 몫(위약금)만 잡혀서, 환불을 마치면 0이 돼요. + 는 돌려줄 돈(과납 · 환불 전), − 는 아직 덜 들어온 돈이에요.</div>`}
 document.addEventListener('click',e=>{if(e.target.id==='cffClr'){S.cf={};render()}});
 document.addEventListener('click',e=>{if(e.target.id!=='bkSave')return;const id=val('bkSel');if(!id)return;call('adminSetBankAcct',[id],r=>{S.bkA=r;render();toast('입금 안내 통장을 바꿨어요')})});
@@ -4504,7 +4504,7 @@ document.addEventListener('click',e=>{if(S.tab!=='book')return;const b=e.target.
   if(b.id==='ebSetSave'){const n=Object.assign(ebSet(),S.ebSetW||{});n.per=Math.max(1,Math.min(10,Math.round(+n.per||5)));n.fs=Math.max(5,Math.min(10,+n.fs||6.6));['en','sub','org'].forEach(k=>n[k]=String(n[k]||'').trim().slice(0,120));
     ebSend([],[],n,()=>{S.ebSetW=null;toast('책자 설정을 저장했어요')});return}},true);
 </script>
-<div id="bldMark" hidden>빌드표시 20261116-151040 </div>
+<div id="bldMark" hidden>빌드표시 20261116-151323 </div>
 <script>
 /* 관리자 상담 (11-15): 관리자 매뉴얼 글에서만 찾아 답함 (AI 아님 · 없는 답은 지어내지 않음). 장마다 t 제목 · q 찾는 말 · k 바로 갈 메뉴 · h 본문 */
 const AGD={

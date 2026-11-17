@@ -1,4 +1,4 @@
-/* build: 20261117-221917 */
+/* build: 20261117-222415 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -3892,6 +3892,30 @@ function layoutImport(token, tab) {
     log_('관리자 ' + a.name, '도면 불러오기', name + ' · 방 ' + nos.length + (added.length ? ' · 새 방 ' + added.join(',') : ''));
   } finally { lock.releaseLock(); }
   return { ok: true, tab: name, rooms: nos.length, added, missing, borders: L.borders };
+}
+/** 방 타입 색 바꾸기 (11-17): from 색 방번호 칸을 모두 to 색으로 — 불러온 도면 · 타입 이름 · (되면) 원본 도면 시트 칸도 같이 */
+function layoutRecolor(token, from, to) {
+  const a = adm_(token); need_(a, 'room');
+  const f = String(from || '').toLowerCase(), t = String(to || '').toLowerCase();
+  if (!/^#[0-9a-f]{6}$/.test(f) || !/^#[0-9a-f]{6}$/.test(t)) throw new Error('색을 확인해 주세요.');
+  if (f === t) return roomData(token);
+  const lock = lock_(); let n = 0, sheetOk = true;
+  try {
+    const ls = SpreadsheetApp.getActive().getSheetByName(LAYOUT_SH); if (!ls) throw new Error('먼저 도면을 불러와 주세요.');
+    const srcKey = layoutSrcId_() || 'here'; let src = null; try { src = layoutSS_(); } catch (x) { sheetOk = false; }
+    rows_(LAYOUT_SH).filter(r => r['탭'] && String(r['원본'] || 'here') === srcKey).forEach(r => {
+      let L; try { L = JSON.parse(String(r['도면'])); } catch (x) { return; }
+      const hit = [];
+      Object.values(L.rooms || {}).forEach(v => { const c = (L.cells || []).find(x => x[0] === v[0] && x[1] === v[1]); if (c && String(c[5] || '').toLowerCase() === f) { c[5] = t; hit.push(c); } });
+      if (!hit.length) return; n += hit.length;
+      ls.getRange(r._row, 4).setValue(JSON.stringify(L));
+      if (src && sheetOk) { try { const sh = src.getSheetByName(String(r['탭'])); if (sh) hit.forEach(c => sh.getRange(c[0] + 1, c[1] + 1, c[2] || 1, c[3] || 1).setBackground(t)); } catch (x) { sheetOk = false; } }
+    });
+    const sh = SpreadsheetApp.getActive().getSheetByName('설정'), rr = rows_('설정').find(x => String(x['항목']) === '방 타입 색');
+    if (rr) { let o = {}; try { o = JSON.parse(String(rr['값'] || '{}')); } catch (x) {} if (o[f] && !o[t]) { o[t] = o[f]; } delete o[f]; sh.getRange(rr._row, 2).setValue(JSON.stringify(o)); }
+    log_('관리자 ' + a.name, '방 타입 색 바꿈', f + ' → ' + t + ' · 방 ' + n + (sheetOk ? '' : ' (원본 시트는 못 바꿈)'));
+  } finally { lock.releaseLock(); }
+  return Object.assign(roomData(token), { recolored: n, sheetOk });
 }
 /** 방번호를 바꿨을 때: from 방의 배정을 to(빈 방)로 옮김 */
 function roomMove(token, from, to) {

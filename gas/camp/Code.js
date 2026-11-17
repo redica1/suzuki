@@ -1,4 +1,4 @@
-/* build: 20261117-222631 */
+/* build: 20261117-223452 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -3775,7 +3775,8 @@ function roomCfg_() {
   let colors = {}; try { colors = JSON.parse(setting_('방 색') || '{}') || {}; } catch (x) {}
   let tcol = {}; try { tcol = JSON.parse(setting_('방 타입 색') || '{}') || {}; } catch (x) {}
   let types = []; try { types = JSON.parse(setting_('방 타입 목록') || '[]') || []; } catch (x) {} if (!Array.isArray(types)) types = [];
-  return { types, typeColors: tcol, layoutSrc: String(setting_('배치도 시트') || ''), pubAll: setting_('방 공개') === '예', pubAt: String(setting_('방 공개 시각') || '').replace(/^'/, ''), names, colors: { mode: colors.mode === 'main' ? 'main' : 'kind', kind: colors.kind || {}, main: colors.main || {} } };
+  let pos = {}; try { pos = JSON.parse(setting_('방 도면 자리') || '{}') || {}; } catch (x) {}
+  return { types, pos, typeColors: tcol, layoutSrc: String(setting_('배치도 시트') || ''), pubAll: setting_('방 공개') === '예', pubAt: String(setting_('방 공개 시각') || '').replace(/^'/, ''), names, colors: { mode: colors.mode === 'main' ? 'main' : 'kind', kind: colors.kind || {}, main: colors.main || {} } };
 }
 function roomPubNow_(cfg) { if (!cfg.pubAll) return false; if (!cfg.pubAt) return true; const t = new Date(cfg.pubAt.replace(' ', 'T') + ':00+09:00'); return isNaN(t) ? true : Date.now() >= t.getTime(); }
 function roomCfgSave(token, b) {
@@ -3791,6 +3792,8 @@ function roomCfgSave(token, b) {
     put('배치도 시트', v, '방배정 도면을 그린 구글 시트 주소 (비우면 이 시트 · 주소에 gid가 있으면 그 탭 하나만)'); try { CacheService.getScriptCache().remove('lytabs_' + (layoutSrcId_() || 'here') + '_' + layoutGid_()); } catch (x) {} }
   if (b && Array.isArray(b.types)) { const seen = {}; const L = b.types.slice(0, 40).map(x => ({ no: String(x && x.no || '').trim().slice(0, 10), desc: String(x && x.desc || '').trim().slice(0, 60), color: /^#[0-9a-f]{6}$/i.test(String(x && x.color || '')) ? String(x.color).toLowerCase() : '' })).filter(x => x.no && !seen[x.no] && (seen[x.no] = 1));
     put('방 타입 목록', JSON.stringify(L), '관리자가 넣은 방 타입: 타입번호 · 구성 · 색 (방마다 타입을 고르면 도면 방번호 칸이 그 색)'); }
+  if (b && b.pos && typeof b.pos === 'object') { const o = {}; Object.keys(b.pos).slice(0, 800).forEach(k => { const v = b.pos[k]; if (/^[A-Z]{0,2}\d{3,4}$/.test(k) && Array.isArray(v) && v.length === 2 && v.every(n => Number.isInteger(+n) && +n >= 1 && +n <= 40)) o[k] = [+v[0], +v[1]]; });
+    put('방 도면 자리', JSON.stringify(o), '간단 도면에서 관리자가 옮긴 방 자리 {방번호: [열, 줄]}'); }
   if (b && b.typeColors) { const o = {}; Object.keys(b.typeColors).slice(0, 40).forEach(k => { if (/^#[0-9a-f]{6}$/i.test(k)) { const v = String(b.typeColors[k] || '').trim().slice(0, 40); if (v) o[k.toLowerCase()] = v; } });
     put('방 타입 색', JSON.stringify(o), '도면 방번호 칸 색 → 방 타입 이름 (배치도 위 범례)'); }
   if (b && b.colors) { const hx = v => /^#[0-9a-f]{6}$/i.test(String(v)) ? String(v) : ''; const cl = o => { const r = {}; Object.keys(o || {}).slice(0, 200).forEach(k => { const v = hx(o[k]); if (v) r[String(k).slice(0, 40)] = v; }); return r; };
@@ -3820,7 +3823,7 @@ function layoutSrcId_() { const v = String(setting_('배치도 시트') || '').t
 function layoutGids_() { return [...String(setting_('배치도 시트') || '').matchAll(/[#&?]gid=(\d+)/g)].map(m => m[1]).filter((v, i, a) => a.indexOf(v) === i); }   /* 11-17: 층마다 주소 한 줄 (줄마다 gid) */
 function layoutGid_() { return layoutGids_().join(','); }
 function layoutSS_() { const id = layoutSrcId_(); return id ? SpreadsheetApp.openById(id) : SpreadsheetApp.getActive(); }
-const isLayoutTab_ = n => n !== LAYOUT_SH && (/배치도/.test(n) || /(stay|flex|스테이|플렉스)\s*\d+\s*(f|층)/i.test(n));
+const isLayoutTab_ = n => n !== LAYOUT_SH && (/배치도/.test(n) || /(stay|flex|plex|스테이|플렉스)\s*\d+\s*(f|층)/i.test(n));
 function layoutTabs_(fresh) {
   const C = CacheService.getScriptCache(), key = 'lytabs_' + (layoutSrcId_() || 'here') + '_' + layoutGid_();
   if (!fresh) { const v = C.get(key); if (v) try { return JSON.parse(v); } catch (x) {} }
@@ -3919,6 +3922,22 @@ function layoutRecolor(token, from, to) {
     log_('관리자 ' + a.name, '방 타입 색 바꿈', f + ' → ' + t + ' · 방 ' + n + (sheetOk ? '' : ' (원본 시트는 못 바꿈)'));
   } finally { lock.releaseLock(); }
   return Object.assign(roomData(token), { recolored: n, sheetOk });
+}
+/** 방 호수 직접 넣기 (11-17): 건물 · 층 · 호수 여럿 → 방배정 시트에 줄 더함 (이미 있으면 건너뜀) */
+function roomAddMany(token, bld, fl, nos) {
+  const a = adm_(token); need_(a, 'room');
+  const B = String(bld || '').trim().slice(0, 30), F = String(fl || '').trim().slice(0, 6);
+  if (!B || !F) throw new Error('건물과 층을 넣어 주세요.');
+  const L = [...new Set((Array.isArray(nos) ? nos : []).map(x => String(x || '').trim().toUpperCase()).filter(Boolean))].slice(0, 80);
+  const bad = L.filter(x => !/^[A-Z]{0,2}\d{3,4}$/.test(x)); if (bad.length) throw new Error('호수 모양을 확인해 주세요: ' + bad.join(', ') + ' (예: S401)');
+  const lock = lock_(); let added = [];
+  try {
+    const rs = roomSheet_(), have = rooms_().map(r => r.no), H = ROOM_HEAD.length;
+    added = L.filter(n => !have.includes(n));
+    if (added.length) rs.getRange(rs.getLastRow() + 1, 1, added.length, H).setValues(added.map(n => [n, B, F, '', 5].concat(Array(H - 5).fill(''))));
+    log_('관리자 ' + a.name, '방 호수 넣기', B + ' ' + F + ' · ' + added.join(','));
+  } finally { lock.releaseLock(); }
+  return Object.assign(roomData(token), { added: added.length, skipped: L.length - added.length });
 }
 /** 방번호를 바꿨을 때: from 방의 배정을 to(빈 방)로 옮김 */
 function roomMove(token, from, to) {

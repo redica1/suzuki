@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261117-223452 -->
+<!-- build: 20261117-223902 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -1260,7 +1260,7 @@ const ROOM_REQ=['가족방 요청','방 요청'];
 const famReqOpen=()=>(S.D&&S.D.issues||[]).filter(x=>ROOM_REQ.includes(x.where)&&x.state!=='해결').length;
 const ROOM=(()=>{
 let R=null,LOADING=false,ERR='';
-const A={v:'plan',bld:'Stay Tower',fl:'',sel:'',ed:null,lyF:0};
+const A={v:'plan',bld:'Stay',fl:'',sel:'',ed:null,lyF:0};
 document.addEventListener('change',e=>{const t=e.target;if(!t.classList||!t.classList.contains('lycol'))return;const f=t.dataset.from,v=t.value;if(!f||!v||f.toLowerCase()===v.toLowerCase())return;
   run('layoutRecolor',[f,v],r=>{R=r;render();toast(r.recolored?`방 ${r.recolored}곳 색을 바꿨어요`+(r.sheetOk?'':' · 원본 도면 시트는 못 바꿨어요(편집 권한)'):'바꿀 방이 없어요')},m=>{t.value=f;toast('바꾸지 못했어요 · '+m)})});   /* 11-17: 타입 색 한 번에 */
 const lySrcRows=fromDom=>{if(fromDom){const dom=[...document.querySelectorAll('[data-lysrc]')].map(x=>x.value.trim());if(dom.length)return dom}if(A.lySrcs)return A.lySrcs;const v=String((R&&R.cfg||{}).layoutSrc||'').split(/\n+/).map(x=>x.trim()).filter(Boolean);return v.length?v:['']};   /* 11-17: 층마다 탭 주소 한 줄 */
@@ -1405,10 +1405,10 @@ function vFreq(head){const all=(S.D.issues||[]).filter(x=>ROOM_REQ.includes(x.wh
    배정 칸 색 = 방마다 따로 정한 색 → 색 기준(방종류별 / 메인별)의 색 */
 function builtinFloors(){const LY=ROOM_LAYOUT,st=LY.starts;return st.map((r0,i)=>{const r1=i+1<st.length?st[i+1]:LY.rh.length;const f=LY.fl[r0];
   const rooms={};Object.entries(LY.rooms).forEach(([no,[r,c,lab]])=>{if(r>=r0&&r<r1)rooms[no]=[r-r0,c,lab?[lab[0]-r0,lab[1]]:null]});
-  return {name:f?'Stay '+f.split(' ')[0]:'Flex Tower',bld:f?'Stay Tower':'Flex Tower',fl:f?f.split(' ')[0]:'',cw:LY.cw,rh:LY.rh.slice(r0,r1),cells:LY.cells.filter(x=>x[0]>=r0&&x[0]<r1).map(x=>[x[0]-r0,...x.slice(1)]),rooms,builtin:true}})}
+  return {name:f?'Stay '+f.split(' ')[0]:'Plex',bld:f?'Stay':'Plex',fl:f?f.split(' ')[0]:'',cw:LY.cw,rh:LY.rh.slice(r0,r1),cells:LY.cells.filter(x=>x[0]>=r0&&x[0]<r1).map(x=>[x[0]-r0,...x.slice(1)]),rooms,builtin:true}})}
 function floors(){const B=builtinFloors(),I=(R.layout||[]).map(f=>Object.assign({},f,{name:f.tab.replace(/^배치도\s*/,'')}));
   if((R.cfg||{}).layoutSrc&&I.length)return I; /* 도면 시트 주소를 넣고 불러왔으면 그 시트의 층만 */
-  const out=B.map(b=>I.find(f=>f.bld===b.bld&&(f.fl===b.fl||(!b.fl&&b.bld==='Flex Tower')))||b);I.forEach(f=>{if(!out.includes(f))out.push(f)});
+  const out=B.map(b=>I.find(f=>f.bld===b.bld&&(f.fl===b.fl||(!b.fl&&b.bld==='Plex')))||b);I.forEach(f=>{if(!out.includes(f))out.push(f)});
   return out.filter((f,i)=>out.indexOf(f)===i)}
 const PAL=['#ffd27a','#bfe3c0','#c9d8ff','#f6c1d6','#d8c8ff','#ffe9b0','#b7e4ea','#f3d1a8','#d6ecef','#e4f0b5','#ffc9b9','#cfd8dc','#e1c6f5','#b9d9ff','#f5e1a4','#c8e6c9'];
 function mainsUsed(){return [...new Set(R.rooms.filter(used).map(r=>r.occ[0].v))].sort((a,b)=>a.localeCompare(b,'ko'))}
@@ -1460,7 +1460,7 @@ function vGrid(){const blds=[...new Set(R.rooms.map(r=>r.bld||'건물'))];if(!bl
   ${roomAddBox()}${editor()}`}
 const gInk=hex=>{const m=/^#(..)(..)(..)$/.exec(hex||'');if(!m)return 'inherit';const [a,b,c]=m.slice(1).map(x=>parseInt(x,16));return (a*299+b*587+c*114)/1000>140?'#16292b':'#ffffff'};
 function roomAddBox(){return `<details class="panel"><summary><b>방 호수 넣기</b> <span class="hint">건물 · 층을 고르고 호수를 한 번만 넣어요</span></summary>
-  <div class="row" style="gap:6px;margin-top:8px;flex-wrap:wrap"><input type="text" id="g_addB" value="${esc(A.gb||'Stay Tower')}" placeholder="건물 (예: Stay Tower)" style="width:150px"><input type="text" id="g_addF" value="${A.gf?A.gf+'F':''}" placeholder="층 (예: 4F)" style="width:70px"></div>
+  <div class="row" style="gap:6px;margin-top:8px;flex-wrap:wrap"><input type="text" id="g_addB" value="${esc(A.gb||'Stay')}" placeholder="건물 (예: Stay · Plex)" style="width:150px"><input type="text" id="g_addF" value="${A.gf?A.gf+'F':''}" placeholder="층 (예: 4F)" style="width:70px"></div>
   <textarea id="g_addN" rows="2" style="width:100%;margin-top:6px" placeholder="호수를 쉼표나 띄어쓰기로 (예: S401 S402 S403)"></textarea>
   <div class="row" style="gap:6px;margin-top:6px"><button class="btn small primary" type="button" id="g_add">방 넣기</button><span class="hint">이미 있는 호수는 건너뛰어요</span></div></details>`}
 function gMoveTo(no,c,r){const L=R.rooms.filter(x=>(x.bld||'건물')===A.gb&&flNum(x)===A.gf);A.pos=A.pos||{};
@@ -4587,7 +4587,7 @@ document.addEventListener('click',e=>{if(S.tab!=='book')return;const b=e.target.
   if(b.id==='ebSetSave'){const n=Object.assign(ebSet(),S.ebSetW||{});n.per=Math.max(1,Math.min(10,Math.round(+n.per||5)));n.fs=Math.max(5,Math.min(10,+n.fs||6.6));['en','sub','org'].forEach(k=>n[k]=String(n[k]||'').trim().slice(0,120));
     ebSend([],[],n,()=>{S.ebSetW=null;toast('책자 설정을 저장했어요')});return}},true);
 </script>
-<div id="bldMark" hidden>빌드표시 20261117-223452 </div>
+<div id="bldMark" hidden>빌드표시 20261117-223902 </div>
 <script>
 /* 관리자 상담 (11-15): 관리자 매뉴얼 글에서만 찾아 답함 (AI 아님 · 없는 답은 지어내지 않음). 장마다 t 제목 · q 찾는 말 · k 바로 갈 메뉴 · h 본문 */
 const AGD={

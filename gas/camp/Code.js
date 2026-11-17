@@ -1,4 +1,4 @@
-/* build: 20261117-223452 */
+/* build: 20261117-223902 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -3731,7 +3731,7 @@ function adminSetBankAcct(token, id) {
 function adminGetSetting(token, key) { adm_(token); return { val: setting_(key) }; }
 
 /* ================= 방 배정 =================
- * 「방배정」: 한 줄 = 방 하나. 처음 열 때 겨울 숙소 객실 목록(Stay Tower S · Flex Tower P, 406실)으로 채움
+ * 「방배정」: 한 줄 = 방 하나. 처음 열 때 겨울 숙소 객실 목록(Stay S · Plex P, 406실)으로 채움
  * 정원 기본: 18평 3명 · 23평 4명 · 27평 5명 · 표시 없음 5명 (방마다 고칠 수 있음) */
 const ROOM_HEAD = ['방번호', '건물', '층', '타입', '정원', '방종류', '메인학원', '메인 인원', '보조학원', '보조 인원', '비번 수신자', '교수', '메모', '고친 일시', '관리자', '배정', '사용 날짜', '공개', '색', '평수', '침대', '방 특징'];
 /* 배정(JSON) = 방을 쓰는 묶음 목록 [{k, v, n, a, days, tm, no}] — 맨 앞이 메인
@@ -3746,7 +3746,7 @@ function roomSheet_() {
   if (!sh) {
     sh = ss.insertSheet(SH.ROOM); sh.appendRow(ROOM_HEAD);
     const cap = { '18': 3, '23': 4, '27': 5 };
-    const rows = ROOM_INV.split(';').filter(Boolean).map(x => { const [no, type] = x.split(':'); return [no, no[0] === 'S' ? 'Stay Tower' : 'Flex Tower', no.slice(1, -2) + 'F', type || '', cap[String(type || '').slice(0, 2)] || 5, '', '', '', '', '', '', '', '', '', '']; });
+    const rows = ROOM_INV.split(';').filter(Boolean).map(x => { const [no, type] = x.split(':'); return [no, no[0] === 'S' ? 'Stay' : 'Plex', no.slice(1, -2) + 'F', type || '', cap[String(type || '').slice(0, 2)] || 5, '', '', '', '', '', '', '', '', '', '']; });
     sh.getRange(2, 1, rows.length, ROOM_HEAD.length).setValues(rows.map(r => r.concat(Array(ROOM_HEAD.length).fill('')).slice(0, ROOM_HEAD.length)));
   } else ensureHead_(SH.ROOM, ROOM_HEAD);
   return sh;
@@ -3762,7 +3762,7 @@ function roomOcc_(r) {
 }
 function rooms_() {
   roomSheet_();
-  return rows_(SH.ROOM).filter(r => String(r['방번호'] || '')).map(r => ({ no: String(r['방번호']), bld: String(r['건물'] || ''), fl: String(r['층'] || ''), type: String(r['타입'] || ''), cap: +r['정원'] || 0,
+  return rows_(SH.ROOM).filter(r => String(r['방번호'] || '')).map(r => ({ no: String(r['방번호']), bld: bldName_(r['건물']), fl: String(r['층'] || ''), type: String(r['타입'] || ''), cap: +r['정원'] || 0,
     kind: String(r['방종류'] || '').replace(/^\d인가족방$/, '가족방'), main: String(r['메인학원'] || ''), mn: +r['메인 인원'] || 0, sub: String(r['보조학원'] || ''), sn: +r['보조 인원'] || 0, pw: String(r['비번 수신자'] || ''), prof: String(r['교수'] || ''), memo: String(r['메모'] || ''), _row: r._row,
     occ: (() => { try { const o = JSON.parse(String(r['배정'] || '[]')); return Array.isArray(o) ? o : []; } catch (x) { return []; } })(),
     days: String(r['사용 날짜'] == null ? '' : r['사용 날짜']).split(',').map(x => x.trim()).filter(x => /^\d+$/.test(x)).map(Number), pub: String(r['공개'] || '') === '예', color: /^#[0-9a-f]{6}$/i.test(String(r['색'] || '')) ? String(r['색']) : '', size: String(r['평수'] || ''), beds: r['침대'] === '' || r['침대'] == null ? '' : +r['침대'], feat: String(r['방 특징'] || '') }))
@@ -3834,13 +3834,15 @@ function layoutTabs_(fresh) {
 function layout_() {
   const sh = SpreadsheetApp.getActive().getSheetByName(LAYOUT_SH); if (!sh) return [];
   const T = layoutTabs_(), tabs = Array.isArray(T) ? T : [], src = layoutSrcId_() || 'here';
-  return rows_(LAYOUT_SH).filter(r => r['탭'] && String(r['원본'] || 'here') === src && (!Array.isArray(T) || tabs.includes(String(r['탭'])))).map(r => { try { return Object.assign(JSON.parse(String(r['도면'])), { tab: String(r['탭']), bld: String(r['건물']), fl: String(r['층']), at: String(r['불러온 일시'] || '') }); } catch (x) { return null; } })
+  return rows_(LAYOUT_SH).filter(r => r['탭'] && String(r['원본'] || 'here') === src && (!Array.isArray(T) || tabs.includes(String(r['탭'])))).map(r => { try { return Object.assign(JSON.parse(String(r['도면'])), { tab: String(r['탭']), bld: bldName_(r['건물']), fl: String(r['층']), at: String(r['불러온 일시'] || '') }); } catch (x) { return null; } })
     .filter(Boolean).sort((a, b) => tabs.indexOf(a.tab) - tabs.indexOf(b.tab));
 }
+/** 건물 정식 이름 (11-17): Stay · Plex */
+function bldName_(b) { const v = String(b || '').trim(); return /stay|스테이/i.test(v) ? 'Stay' : /flex|plex|플렉스/i.test(v) ? 'Plex' : v; }
 function bldOf_(tab, nos) { const t = tab.replace(/^.*배치도\s*/, '').replace(/\s*\d+\s*F\b.*$/i, '').trim();
-  if (/^stay/i.test(t) || /스테이/.test(tab)) return 'Stay Tower'; if (/^flex/i.test(t) || /플렉스/.test(tab)) return 'Flex Tower';
+  if (/^stay/i.test(t) || /스테이/.test(tab)) return 'Stay'; if (/^(flex|plex)/i.test(t) || /플렉스/.test(tab)) return 'Plex';
   const p = (nos || []).map(n => n[0]); const S_ = p.filter(x => x === 'S').length, P_ = p.filter(x => x === 'P').length;
-  return S_ || P_ ? (S_ >= P_ ? 'Stay Tower' : 'Flex Tower') : (t || '건물'); }
+  return S_ || P_ ? (S_ >= P_ ? 'Stay' : 'Plex') : (t || '건물'); }
 /** 탭 하나 읽기 → { cw, rh, cells: [[r, c, rs, cs, 글, 바탕, 글자색, 굵게, 크기, 테두리(위오아왼 0/1/2/3), 가로, 세로]], rooms: {방번호: [r, c, [아래 칸 r, c]]} } */
 function layoutRead_(sh) {
   const lr = Math.min(Math.max(sh.getLastRow(), 1), 120), lc = Math.min(Math.max(sh.getLastColumn(), 1), 80);
@@ -3926,7 +3928,7 @@ function layoutRecolor(token, from, to) {
 /** 방 호수 직접 넣기 (11-17): 건물 · 층 · 호수 여럿 → 방배정 시트에 줄 더함 (이미 있으면 건너뜀) */
 function roomAddMany(token, bld, fl, nos) {
   const a = adm_(token); need_(a, 'room');
-  const B = String(bld || '').trim().slice(0, 30), F = String(fl || '').trim().slice(0, 6);
+  const B = bldName_(String(bld || '').trim().slice(0, 30)), F = String(fl || '').trim().slice(0, 6);
   if (!B || !F) throw new Error('건물과 층을 넣어 주세요.');
   const L = [...new Set((Array.isArray(nos) ? nos : []).map(x => String(x || '').trim().toUpperCase()).filter(Boolean))].slice(0, 80);
   const bad = L.filter(x => !/^[A-Z]{0,2}\d{3,4}$/.test(x)); if (bad.length) throw new Error('호수 모양을 확인해 주세요: ' + bad.join(', ') + ' (예: S401)');

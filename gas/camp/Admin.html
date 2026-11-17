@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261117-224859 -->
+<!-- build: 20261117-225036 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -1460,7 +1460,7 @@ function vGrid(setup){A.gTy=!!setup&&!A.gMove;if(!setup)A.gMove=false;if(setup&&
       :`<div class="gcell groom${A.sel===q.no?' on':''}${tyM?' tym':''}" style="grid-column:${c};grid-row:${r}" title="${tip}">${tyM?`<button type="button" class="ghd${bgx?'':' gun'}" data-gty="${esc(q.no)}" style="${hst}" aria-label="${esc(q.no)} 타입 칠하기">${hd}</button>`:`<span class="ghd${bgx?'':' gun'}" style="${hst}">${hd}</span>`}${tyM?`<span class="gbd">${body}</span>`:`<button type="button" class="gbd" data-rroom="${esc(q.no)}" aria-label="${esc(q.no)} 숙박 인원 배정">${body||'<span class="gadd">＋</span>'}</button>`}</div>`)});
   const dirty=A.pos&&Object.keys(A.pos).length;
   return `${setup?typePanel():''}<div class="panel"><div class="spread"><div class="row" style="gap:6px;flex-wrap:wrap">${blds.map(b=>`<button class="btn small ${A.gb===b?'primary':''}" type="button" data-gb="${esc(b)}">${esc(b)}</button>`).join('')}</div>
-    <div class="row" style="gap:6px">${setup?`<button class="btn small ${mv?'primary':''}" type="button" id="g_move">${mv?'자리 옮기기 끝':'방 자리 옮기기'}</button>`:''}${dirty?`<button class="btn small primary" type="button" id="g_posSave">자리 저장 (${Object.keys(A.pos).length})</button><button class="btn small ghost" type="button" id="g_posUndo">되돌리기</button>`:''}${setup?'<button class="btn small ghost" type="button" data-glymode="sheet">시트 도면 보기</button>':''}</div></div>
+    <div class="row" style="gap:6px">${setup?`<button class="btn small ${mv?'primary':''}" type="button" id="g_move">${mv?'자리 옮기기 끝':'방 자리 옮기기'}</button>`:''}${dirty?`<button class="btn small primary" type="button" id="g_posSave">자리 저장 (${Object.keys(A.pos).length})</button><button class="btn small ghost" type="button" id="g_posUndo">되돌리기</button>`:''}</div></div>
     <div class="row" style="gap:6px;margin-top:8px;flex-wrap:wrap">${fls.map(f=>`<button class="btn small ${A.gf===f?'primary':''}" type="button" data-gf="${f}">${f}F <small>${inB.filter(r=>flNum(r)===f).length}</small></button>`).join('')}</div>
     ${A.gTy?`<div class="gbrush"><span class="hint">칠할 타입을 고른 뒤 방 호수 칸을 누르세요</span>${rTypes().map(t=>`<button type="button" class="gbr${A.brush===t.no?' on':''}" data-gbr="${esc(t.no)}"><span class="sw" style="background:${esc(t.color||'#fff')}"></span>${esc(t.no)}</button>`).join('')}<button type="button" class="gbr${A.brush===''?' on':''}" data-gbr="">타입 없음</button>${A.tyPend&&Object.keys(A.tyPend).length?`<button class="btn small primary" type="button" id="g_tySave">타입 일괄 저장 (${Object.keys(A.tyPend).length})</button><button class="btn small ghost" type="button" id="g_tyUndo">되돌리기</button>`:''}</div>${rTypes().length?'':'<p class="hint" style="margin:6px 0 0;color:#b00020">먼저 위 「방 타입」에서 타입을 만들어 주세요.</p>'}`:''}
     ${mv?'<p class="hint" style="margin:8px 0 0">옮길 방을 누른 뒤 빈 칸(점선)을 누르세요. 방끼리 누르면 두 방 자리가 바뀌어요. 마우스로 끌어다 놓아도 돼요.</p>':A.gTy?'':'<p class="hint" style="margin:8px 0 0">방 칸을 누르면 숙박 인원을 배정해요. 호수 칸 색 = 방 타입 (「방 타입 · 도면」에서 정해요).</p>'}
@@ -1531,7 +1531,7 @@ function view(){
   if(A.v==='fam')return vFam(head);
   if(A.v==='freq')return vFreq(head);
   if(A.v==='plan')return `<div class="act">${head}${vGrid(false)}</div>`;
-  if(A.v==='setup')return `<div class="act">${head}${A.lyMode==='sheet'?vPlan():vGrid(true)}</div>`;
+  if(A.v==='setup')return `<div class="act">${head}${vGrid(true)}</div>`;   /* 11-17: 시트 도면(vPlan)은 안 씀 */
   if(A.v==='acad'){const L=AL.slice().sort((x,y)=>(got(x.a)-x.n)-(got(y.a)-y.n)||x.a.localeCompare(y.a,'ko'));
     return `<div class="act">${head}<div class="panel tbl"><table><thead><tr><th style="text-align:left">학원</th><th style="text-align:center">신청(참가)</th><th style="text-align:center">교사</th><th style="text-align:center">학생</th><th style="text-align:center">가족</th><th style="text-align:center">방 배정 인원</th><th style="text-align:center">차이</th><th style="text-align:left">방</th></tr></thead><tbody>
     ${L.map(x=>{const g=got(x.a),rs=R.rooms.filter(r=>(r.occ||[]).some(o=>(o.a||o.v)===x.a&&o.k!=='grp'));return `<tr><td style="text-align:left"><b>${esc(x.a)}</b></td><td class="num" style="text-align:center">${x.n}</td><td class="num" style="text-align:center">${x.t||''}</td><td class="num" style="text-align:center">${x.s||''}</td><td class="num" style="text-align:center">${x.f||''}</td><td class="num" style="text-align:center">${g}</td><td class="num" style="text-align:center">${g<x.n?`<span class="pill due">-${x.n-g}</span>`:g>x.n?`<span class="pill info">+${g-x.n}</span>`:'<span class="pill ok">0</span>'}</td>
@@ -4600,7 +4600,7 @@ document.addEventListener('click',e=>{if(S.tab!=='book')return;const b=e.target.
   if(b.id==='ebSetSave'){const n=Object.assign(ebSet(),S.ebSetW||{});n.per=Math.max(1,Math.min(10,Math.round(+n.per||5)));n.fs=Math.max(5,Math.min(10,+n.fs||6.6));['en','sub','org'].forEach(k=>n[k]=String(n[k]||'').trim().slice(0,120));
     ebSend([],[],n,()=>{S.ebSetW=null;toast('책자 설정을 저장했어요')});return}},true);
 </script>
-<div id="bldMark" hidden>빌드표시 20261117-224859 </div>
+<div id="bldMark" hidden>빌드표시 20261117-225036 </div>
 <script>
 /* 관리자 상담 (11-15): 관리자 매뉴얼 글에서만 찾아 답함 (AI 아님 · 없는 답은 지어내지 않음). 장마다 t 제목 · q 찾는 말 · k 바로 갈 메뉴 · h 본문 */
 const AGD={

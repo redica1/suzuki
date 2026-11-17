@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261117-234827 -->
+<!-- build: 20261117-234856 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -1544,8 +1544,7 @@ function view(){
   if(A.v==='acad'){const L=AL.slice().sort((x,y)=>(got(x.a)-x.n)-(got(y.a)-y.n)||x.a.localeCompare(y.a,'ko'));
     return `<div class="act">${head}<div class="panel tbl"><table><thead><tr><th style="text-align:left">학원</th><th style="text-align:center">신청(참가)</th><th style="text-align:center">교사</th><th style="text-align:center">학생</th><th style="text-align:center">가족</th><th style="text-align:center">방 배정 인원</th><th style="text-align:center">차이</th><th style="text-align:left">방</th></tr></thead><tbody>
     ${L.map(x=>{const g=got(x.a),rs=R.rooms.filter(r=>(r.occ||[]).some(o=>(o.a||o.v)===x.a&&o.k!=='grp'));return `<tr><td style="text-align:left"><b>${esc(x.a)}</b></td><td class="num" style="text-align:center">${x.n}</td><td class="num" style="text-align:center">${x.t||''}</td><td class="num" style="text-align:center">${x.s||''}</td><td class="num" style="text-align:center">${x.f||''}</td><td class="num" style="text-align:center">${g}</td><td class="num" style="text-align:center">${g<x.n?`<span class="pill due">-${x.n-g}</span>`:g>x.n?`<span class="pill info">+${g-x.n}</span>`:'<span class="pill ok">0</span>'}</td>
-      <td style="white-space:normal;text-align:left">${rs.map(r=>{const n=(r.occ||[]).filter(o=>(o.a||o.v)===x.a&&o.k!=='grp').reduce((t,o)=>t+(+o.n||0),0);return `<button class="btn small" type="button" data-rgo="${esc(r.no)}">${esc(r.no)} ${esc(r.kind||'')} ${n}명${r.occ[0]&&(r.occ[0].a||r.occ[0].v)!==x.a?' (함께)':''}</button>`}).join(' ')||'<span class="hint">아직 없음</span>'}</td></tr>`}).join('')||'<tr><td colspan="8" class="hint">접수된 학원이 없어요.</td></tr>'}</tbody></table></div>
-    <p class="hint">신청 = 그 학원에 접수한 사람(취소 뺌). 방 배정 인원 = 방마다 그 학원으로 넣은 인원 + 그 학원 사람 · 가족을 넣은 인원.</p></div>`}
+      <td style="white-space:normal;text-align:left">${rs.map(r=>{const n=(r.occ||[]).filter(o=>(o.a||o.v)===x.a&&o.k!=='grp').reduce((t,o)=>t+(+o.n||0),0);return `<button class="btn small" type="button" data-rgo="${esc(r.no)}">${esc(r.no)} ${esc(r.kind||'')} ${n}명${r.occ[0]&&(r.occ[0].a||r.occ[0].v)!==x.a?' (함께)':''}</button>`}).join(' ')||'<span class="hint">아직 없음</span>'}</td></tr>`}).join('')||'<tr><td colspan="8" class="hint">접수된 학원이 없어요.</td></tr>'}</tbody>${L.length?(()=>{const T=k=>L.reduce((t,x)=>t+(+x[k]||0),0),N=T('n'),G=L.reduce((t,x)=>t+got(x.a),0);return `<tfoot><tr style="background:var(--sunk);font-weight:700;border-top:2px solid var(--line)"><td style="text-align:left">합계 <small class="faint">${L.length}곳</small></td><td class="num" style="text-align:center">${N}</td><td class="num" style="text-align:center">${T('t')}</td><td class="num" style="text-align:center">${T('s')}</td><td class="num" style="text-align:center">${T('f')}</td><td class="num" style="text-align:center">${G}</td><td class="num" style="text-align:center">${G<N?`<span class="pill due">-${N-G}</span>`:G>N?`<span class="pill info">+${G-N}</span>`:'<span class="pill ok">0</span>'}</td><td></td></tr></tfoot>`})():''}</table></div></div>`}
   const blds=[...new Set(R.rooms.map(r=>r.bld))];if(!blds.includes(A.bld))A.bld=blds[0];
   const fls=[...new Set(R.rooms.filter(r=>r.bld===A.bld).map(r=>r.fl))];
   const L=R.rooms.filter(r=>r.bld===A.bld&&(!A.fl||r.fl===A.fl));
@@ -4612,7 +4611,7 @@ document.addEventListener('click',e=>{if(S.tab!=='book')return;const b=e.target.
   if(b.id==='ebSetSave'){const n=Object.assign(ebSet(),S.ebSetW||{});n.per=Math.max(1,Math.min(10,Math.round(+n.per||5)));n.fs=Math.max(5,Math.min(10,+n.fs||6.6));['en','sub','org'].forEach(k=>n[k]=String(n[k]||'').trim().slice(0,120));
     ebSend([],[],n,()=>{S.ebSetW=null;toast('책자 설정을 저장했어요')});return}},true);
 </script>
-<div id="bldMark" hidden>빌드표시 20261117-234827 </div>
+<div id="bldMark" hidden>빌드표시 20261117-234856 </div>
 <script>
 /* 관리자 상담 (11-15): 관리자 매뉴얼 글에서만 찾아 답함 (AI 아님 · 없는 답은 지어내지 않음). 장마다 t 제목 · q 찾는 말 · k 바로 갈 메뉴 · h 본문 */
 const AGD={

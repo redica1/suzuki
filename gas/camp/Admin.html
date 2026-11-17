@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261118-000821 -->
+<!-- build: 20261118-000905 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -257,7 +257,7 @@ tr.off td{opacity:.5}
 .bud .pft select,.bud .pft input:not([type=checkbox]),.bud .row select{font-family:inherit;font-size:14px;line-height:1.35;height:auto;min-height:32px;color:var(--ink);letter-spacing:0;transform:none}
 .bud .pft select{min-width:150px}
 .onoff{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--card,#fff);border-radius:999px;padding:4px 10px 4px 12px;font:inherit;font-size:13px;cursor:pointer;color:inherit}.onoff i{position:relative;width:34px;height:20px;border-radius:999px;background:#c9d1d0;transition:background .15s}.onoff i b{position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.25);transition:left .15s}.onoff em{font-style:normal;font-weight:700;font-size:12px;min-width:26px;color:#8a9493}.onoff.on i{background:var(--accent)}.onoff.on i b{left:16px}.onoff.on em{color:var(--accent)}
-.act .panel{display:grid;gap:12px}.act .panel .cap{font-size:14.5px;color:var(--faint);margin:-6px 0 0}.act h2{font-family:var(--display);font-size:22px;margin:0}.act .pill.mute{background:var(--sunk);color:var(--muted)}.act .pill.info{background:var(--accent-soft);color:var(--accent)}.act input[type=text],.act input[type=search],.act input[type=number],.act select{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:6px 9px;min-width:0;font:inherit;color:inherit}.act .tbl table{border-collapse:collapse;width:100%;font-size:15.5px}.act .tbl th,.act .tbl td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);white-space:nowrap}.act .tbl th{font-size:14px;color:var(--muted);background:var(--sunk)}.act td.r,.act th.r{text-align:right}.act .err{color:var(--bad)}
+.act .panel{display:grid;gap:12px}.act .panel .cap{font-size:14.5px;color:var(--faint);margin:-6px 0 0}.act h2{font-family:var(--display);font-size:22px;margin:0}.act .pill.mute{background:var(--sunk);color:var(--muted)}.act .pill.info{background:var(--accent-soft);color:var(--accent)}.act input[type=text],.act input[type=search],.act input[type=number],.act select{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:6px 9px;min-width:0;font:inherit;color:inherit}.act .tbl table{border-collapse:collapse;width:100%;font-size:15.5px}.act .tbl th,.act .tbl td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);white-space:nowrap}.act .tbl.ensT table{font-size:17px}.tbl.ensT th{font-size:15.5px!important}.ensT input[type=text],.ensT input:not([type]),.ensT .fl span,.ensT .hint,.ensT label{font-size:16px}.tbl th{font-size:14px;color:var(--muted);background:var(--sunk)}.act td.r,.act th.r{text-align:right}.act .err{color:var(--bad)}
 .act > *{margin-bottom:14px}
 .act .floor{display:grid;gap:6px}.act .floor .flab{font-size:14.5px;font-weight:600;color:var(--muted)}
 .act .rgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:6px}
@@ -624,7 +624,7 @@ function vCx(){const cf=S.cxf||'all';const ord={'요청':0,'환불 예정':1};co
   </tbody></table></div>`}
 function vEns(){const T=S.D.teams||[];
   return `<div class="panel"><span class="hint">팀 줄을 누르면 자세한 내용이 열려요. 운영진은 여기서 바로 고칠 수 있어요 (선생님 화면에도 바뀐 내용이 보여요).</span></div>
-  <div class="panel tbl"><table><thead><tr><th></th><th>팀 이름</th><th>대표 학원</th><th>신청 선생님</th><th>함께하는 학원</th><th>곡</th><th>연주시간</th></tr></thead><tbody>
+  <div class="panel tbl ensT"><table><thead><tr><th></th><th>팀 이름</th><th>대표 학원</th><th>신청 선생님</th><th>함께하는 학원</th><th>곡</th><th>연주시간</th></tr></thead><tbody>
   ${T.map(t=>{const sb=S.D.subs.find(x=>x.no===t.no),e=sb&&sb.form&&sb.form.ens||{},on=S.ensOpen===t.no;
     return `<tr class="ensrow" data-ensopen="${esc(t.no)}" style="cursor:pointer${on?';background:var(--soft,#eef3ff)':''}"><td>${on?'▾':'▸'}</td><td><b>${esc(t.name)}</b>${e.adminEdited?'<br><small class="faint">운영진 수정</small>':''}</td><td>${esc(t.rep)}</td><td>${esc(t.by||'')}</td><td>${t.acads.map(esc).join(', ')||'-'}</td><td>${[1,2].map(n=>songA(e,n)).filter(x=>x.trim()).join('<br>')||'-'}</td><td>${e.tm||e.ts?`${+e.tm||0}분 ${+e.ts||0}초`:'-'}</td></tr>
     ${on?`<tr><td colspan="7" style="background:var(--soft,#f6f8ff)">${ensDetail(t,sb,e)}</td></tr>`:''}`}).join('')||'<tr><td colspan="7" class="hint">신청된 팀이 없어요.</td></tr>'}
@@ -4622,7 +4622,7 @@ document.addEventListener('click',e=>{if(S.tab!=='book')return;const b=e.target.
   if(b.id==='ebSetSave'){const n=Object.assign(ebSet(),S.ebSetW||{});n.per=Math.max(1,Math.min(10,Math.round(+n.per||5)));n.fs=Math.max(5,Math.min(10,+n.fs||6.6));['en','sub','org'].forEach(k=>n[k]=String(n[k]||'').trim().slice(0,120));
     ebSend([],[],n,()=>{S.ebSetW=null;toast('책자 설정을 저장했어요')});return}},true);
 </script>
-<div id="bldMark" hidden>빌드표시 20261118-000821 </div>
+<div id="bldMark" hidden>빌드표시 20261118-000905 </div>
 <script>
 /* 관리자 상담 (11-15): 관리자 매뉴얼 글에서만 찾아 답함 (AI 아님 · 없는 답은 지어내지 않음). 장마다 t 제목 · q 찾는 말 · k 바로 갈 메뉴 · h 본문 */
 const AGD={

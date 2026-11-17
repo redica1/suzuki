@@ -1,4 +1,4 @@
-${''/* build: 20261117-212717 */}
+${''/* build: 20261117-212805 */}
     <div class="song3"><b class="sh">곡 2 <span class="hint">있으면</span></b>
       <label class="f" for="enK2">작곡가<input type="text" id="enK2" data-ens="k2" value="${esc(E.k2||'')}" placeholder=""></label>
       <label class="f" for="enC2">곡명<input type="text" id="enC2" data-ens="c2" value="${esc(E.c2||'')}" placeholder=""></label>
@@ -138,7 +138,7 @@ function stepsOf(p){if(p.status!=='정상'||(+p.paidAmt||0)>0||p.pay==='신고'|
   for(let j=r;j<ROUNDS.length;j++){const f=(FEES[p.type]||[])[j];if(f==null)break;out.push({to:j<ROUNDS.length-1?ROUNDS[j][2]:'',amt:base+(+f||0),last:j===ROUNDS.length-1})}
   return out.length>1&&out.some(x=>x.amt!==out[0].amt)?out:[]}
 const md=d=>{const m=String(d||'').match(/^\d{4}-(\d{2})-(\d{2})/);return m?(+m[1])+'/'+(+m[2]):''};
-function stepsHtml(p){const L=stepsOf(p),n=v=>(+v||0).toLocaleString('ko-KR');return L.length?`<br><small class="hint pts" style="color:#b45309" title="${esc(L.map(x=>x.last?`그 뒤 입금하면 ${won(x.amt)}`:`${md(x.to)}까지 입금하면 ${won(x.amt)}`).join(' · '))}">${L.map(x=>`<span class="ptd">${x.last?'이후':md(x.to)+'까지'}</span> ${n(x.amt)}`).join('<br>')}</small>`:''}   /* 11-16: 「12/7 550,000」처럼 짧게 (마우스 올리면 풀어서) */
+function stepsHtml(p){const L=stepsOf(p),n=v=>(+v||0).toLocaleString('ko-KR');return L.length?`<br><small class="hint pts" style="color:#b45309" title="${esc(L.map(x=>x.last?`그 뒤 입금하면 ${won(x.amt)}`:`${md(x.to)}까지 입금하면 ${won(x.amt)}`).join(' · '))}">${L.slice(0,1).map(x=>`<span class="ptd">${x.last?'이후':md(x.to)+'까지'}</span> ${n(x.amt)}`).join('')}${L.length>1?` <span class="ptm">외 ${L.length-1}</span>`:''}</small>`:''}   /* 11-16: 「12/7 550,000」처럼 짧게 (마우스 올리면 풀어서) */
 function subTotal(sb,ids){return sb.ppl.filter(p=>!ids||ids.includes(p.id)).reduce((t,p)=>t+pAmt(p),0)}
 /* 가족방과 취소 (11-11): 고른 사람이 든 가족방마다 남는 사람 · 새 대표 후보(교사 · 학생만) · 빈 자리로 늘어나는 금액 */
 const pKey=(sb,p)=>p.id.slice(sb.no.length+1);

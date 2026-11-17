@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261117-235445 -->
+<!-- build: 20261117-235605 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -2118,9 +2118,9 @@ const ST=(h,rows,foot,nl)=>`<div class="panel"><div class="mtblw"><table class="
    예) 2026 여름 시트: 학생 30명 이상 1,200,000 · 20명 이상 800,000 · 10명 이상 400,000 (확정 아님) */
 const SCHOLAR=[]; /* [[최소 인원, 금액], …] 큰 인원부터 */
 const scholarOf=n=>{const t=SCHOLAR.find(([m])=>n>=m);return t?t[1]:0};
-function stAcad(L,home){const v=S.sv2||'inst';
-  const sub=`<div class="panel subtabs"><div class="row" style="gap:6px">${[['inst','전공별'],['type','참가자격별'],['pay','입금 현황']].map(([k,l])=>`<button class="btn small ${v===k?'primary':''}" type="button" data-sv2="${k}">${l}</button>`).join('')}<span class="hint" style="margin-left:6px">${v==='inst'?'학원 × 악기 · 학생 통계와 교사 통계':v==='pay'?'학원마다 신청 금액 · 입금액 · 환불 · 과납/미납 (예전 학원별입금현황 시트 A~F와 같은 셈). 학원을 누르면 사람별로 펼쳐져요':'참가자격별 인원 · 총계 = 그 학원 참가 인원'}</span></div></div>`;
-  return sub+(v==='inst'?`<h4 class="sth">학생 통계 <span class="hint">학생 · 악기하는 교사자녀 · 비회원 · 해외 학생</span></h4>`+acadInst(L,home)+`<h4 class="sth">교사 통계 <span class="hint">교사 · 연수생 · 해외 교사</span></h4>`+acadInstT(L):v==='pay'?acadPay():acadType(L))}
+function stAcad(L,home){let v=S.sv2||'sinst';if(v==='inst')v='sinst';   /* 11-17: 학생 전공별 · 교사 전공별 · 학원별 · 입금 현황 */
+  const sub=`<div class="panel subtabs"><div class="row" style="gap:6px">${[['sinst','학생 전공별'],['tinst','교사 전공별'],['type','학원별'],['pay','입금 현황']].map(([k,l])=>`<button class="btn small ${v===k?'primary':''}" type="button" data-sv2="${k}">${l}</button>`).join('')}</div></div>`;
+  return sub+(v==='sinst'?acadInst(L,home):v==='tinst'?acadInstT(L):v==='pay'?acadPay():acadType(L))}
 /* 학원별 입금 현황 (예전 시트 「학원별입금현황」 A~F와 같은 셈):
    신청 금액 = 참가비(취소한 사람은 위약금만) · 입금액 = 확인한 입금(취소한 사람이 낸 돈 포함) · 환불 요청액 · 환불 완료액
    과납/미납 = 입금액 − 신청 금액 − 환불 완료액 (+ 과납 · 돌려줄 돈 / − 미납). 학원 줄을 누르면 사람별로 펼침 */
@@ -4614,7 +4614,7 @@ document.addEventListener('click',e=>{if(S.tab!=='book')return;const b=e.target.
   if(b.id==='ebSetSave'){const n=Object.assign(ebSet(),S.ebSetW||{});n.per=Math.max(1,Math.min(10,Math.round(+n.per||5)));n.fs=Math.max(5,Math.min(10,+n.fs||6.6));['en','sub','org'].forEach(k=>n[k]=String(n[k]||'').trim().slice(0,120));
     ebSend([],[],n,()=>{S.ebSetW=null;toast('책자 설정을 저장했어요')});return}},true);
 </script>
-<div id="bldMark" hidden>빌드표시 20261117-235445 </div>
+<div id="bldMark" hidden>빌드표시 20261117-235605 </div>
 <script>
 /* 관리자 상담 (11-15): 관리자 매뉴얼 글에서만 찾아 답함 (AI 아님 · 없는 답은 지어내지 않음). 장마다 t 제목 · q 찾는 말 · k 바로 갈 메뉴 · h 본문 */
 const AGD={

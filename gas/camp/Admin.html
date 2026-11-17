@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261117-220835 -->
+<!-- build: 20261117-221213 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -402,12 +402,13 @@ function svSet(k,id,pw){var c=document.getElementById('svPw_'+k);if(!c)return;tr
 function svBox(k){return '<label class="svpw" style="display:flex;align-items:center;gap:6px;font-size:14px;margin:2px 0 10px;cursor:pointer;font-weight:500"><input type="checkbox" id="svPw_'+k+'" '+(svGet(k)?'checked':'')+' style="width:18px;height:18px;margin:0;flex:none"> 비밀번호 저장하기 <span style="color:var(--muted);font-size:12.5px;font-weight:400">이 기기에만 · 공용 PC는 체크하지 마세요</span></label>'}
 function svId(k,d){var s=svGet(k);return s&&s.id?s.id:(d||'')}
 function svPw(k){var s=svGet(k);return s&&s.pw?s.pw:''}
+function stfTestBox(){if(S.stfTest===undefined){S.stfTest=null;try{google.script.run.withSuccessHandler(r=>{S.stfTest=r||[];if(!S.tok)render()}).withFailureHandler(()=>{S.stfTest=[]}).staffTestNames()}catch(e){}}const L=S.stfTest||[];return L.length?`<div class="stft" style="border:1px dashed var(--line);border-radius:10px;padding:8px 10px;margin:10px 0 0"><b style="font-size:13px">STG 시험 담당자</b> <span class="hint" style="font-size:12px">이름을 누르면 바로 들어가요</span><div class="row" style="gap:6px;flex-wrap:wrap;margin-top:6px">${L.map(n=>`<button class="btn small" type="button" data-stft="${esc(n)}">${esc(n)}</button>`).join('')}</div></div>`:''}   /* 11-17: STG에서만 */
 function vLogin(){const m=S.lmode||'sup';return `<div class="panel login"><h2 style="font-family:var(--display);font-size:21px;margin:0 0 10px">관리자 로그인</h2>
   <div class="row lmode" role="tablist" style="gap:6px;margin-bottom:10px"><button class="btn small ${m==='sup'?'primary':''}" type="button" data-lmode="sup" aria-pressed="${m==='sup'}">총관리자</button><button class="btn small ${m==='stf'?'primary':''}" type="button" data-lmode="stf" aria-pressed="${m==='stf'}">담당 선생님</button></div>
   ${m==='sup'?`<label>아이디<input type="text" id="lid" autocomplete="username" value="${esc(svId('ca','admin'))}"></label>
   <label>비밀번호<input type="password" id="lpw" autocomplete="current-password" value="${esc(svPw('ca'))}"></label>${svBox('ca')}`:!S.lalt?`<label>이메일<input type="email" id="lem" data-esplit autocomplete="username" inputmode="email" placeholder="회원관리 선생님 회원 이메일" value="${esc(svId('cs'))}"></label>
   <label>비밀번호<input type="password" id="lpw2" autocomplete="current-password" value="${esc(svPw('cs'))}"></label>${svBox('cs')}
-  <button class="btn ghost small" type="button" id="lalt">회원 가입 전이에요 · 이름과 휴대전화로</button>`:`<label>이름<input type="text" id="lnm" autocomplete="name" placeholder="회원 명단의 이름"></label>
+  <button class="btn ghost small" type="button" id="lalt">회원 가입 전이에요 · 이름과 휴대전화로</button>${stfTestBox()}`:`<label>이름<input type="text" id="lnm" autocomplete="name" placeholder="회원 명단의 이름"></label>
   <label>휴대전화<input type="tel" id="lph" inputmode="tel" autocomplete="tel" placeholder="010-0000-0000"></label>
   <button class="btn ghost small" type="button" id="lalt">← 이메일 · 비밀번호로</button>`}
   <p class="err" id="lerr"></p><button class="btn primary" type="button" id="doLogin" style="width:100%;justify-content:center">들어가기</button>
@@ -2501,6 +2502,7 @@ document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)r
     const go=()=>call('adminSaveEns',[d.enssave,p],r=>{setData(r);toast('앙상블 「'+p.group+'」 팀을 고쳤어요')});
     if(other.length)ask('다른 팀에도 들어 있는 학원이 있어요','<b>'+other.map(esc).join(', ')+'</b>은(는) 다른 팀에도 있어요. 그래도 저장할까요?',go,'그래도 저장');else go();return}
   if(b.id==='lalt'){S.lalt=!S.lalt;render();return}
+  if(d.stft){busy(true,'들어가고 있어요…');google.script.run.withSuccessHandler(r=>{busy(false);if(!r.ok){document.getElementById('lerr').textContent=r.msg;return}S.tok=r.token;try{sessionStorage.setItem('campAdmTok',r.token);sessionStorage.removeItem('campAdmId')}catch(x){}setData(r)}).withFailureHandler(x=>{busy(false);document.getElementById('lerr').textContent=(x&&x.message)||String(x)}).staffTestLogin(d.stft);return}
   if(b.id==='doLogin'&&S.lmode==='stf'){const nm=S.lalt?val('lnm'):val('lem'),ph=S.lalt?val('lph'):document.getElementById('lpw2').value;if(!S.lalt)svSet('cs',nm,ph);busy(true,'확인하고 있어요…');
     google.script.run.withSuccessHandler(r=>{busy(false);if(!r.ok){document.getElementById('lerr').textContent=r.msg;return}S.tok=r.token;try{sessionStorage.setItem('campAdmTok',r.token);sessionStorage.removeItem('campAdmId')}catch(x){}setData(r)}).withFailureHandler(x=>{busy(false);document.getElementById('lerr').textContent=(x&&x.message)||String(x)}).staffLogin(nm,ph);return}
   if(b.id==='doLogin'){const id=val('lid'),pw=document.getElementById('lpw').value;svSet('ca',id,pw);busy(true,'확인하고 있어요…');
@@ -4514,7 +4516,7 @@ document.addEventListener('click',e=>{if(S.tab!=='book')return;const b=e.target.
   if(b.id==='ebSetSave'){const n=Object.assign(ebSet(),S.ebSetW||{});n.per=Math.max(1,Math.min(10,Math.round(+n.per||5)));n.fs=Math.max(5,Math.min(10,+n.fs||6.6));['en','sub','org'].forEach(k=>n[k]=String(n[k]||'').trim().slice(0,120));
     ebSend([],[],n,()=>{S.ebSetW=null;toast('책자 설정을 저장했어요')});return}},true);
 </script>
-<div id="bldMark" hidden>빌드표시 20261117-220835 </div>
+<div id="bldMark" hidden>빌드표시 20261117-221213 </div>
 <script>
 /* 관리자 상담 (11-15): 관리자 매뉴얼 글에서만 찾아 답함 (AI 아님 · 없는 답은 지어내지 않음). 장마다 t 제목 · q 찾는 말 · k 바로 갈 메뉴 · h 본문 */
 const AGD={

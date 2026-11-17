@@ -1,4 +1,4 @@
-/* build: 20261117-220835 */
+/* build: 20261117-221213 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -2508,6 +2508,24 @@ function staffLogin(name, phone) {
   const token = Utilities.getUuid();
   C.put('adm_' + token, JSON.stringify({ name: t.name, staff: true, tid: t.id }), 21600);
   log_('담당자 ' + t.name, '관리자 화면 로그인', '');
+  return Object.assign({ ok: true, token }, adminData(token));
+}
+/** STG 시험 (11-17): 「테스트 로그인」이 있는 STG에서 「테스트 선생님」이면서 담당자로 켜 둔 선생님은 이름만 눌러 관리자 화면에 들어감 */
+function staffTestNames_() {
+  let tl = '', tn = ''; try { tl = String(setting_('테스트 로그인') || '').trim(); tn = String(setting_('테스트 선생님') || ''); } catch (e) {}
+  if (!tl) return [];
+  const T = teachers_(), on = staff_().filter(x => x.on), names = tn.split(/[,\n]/).map(bare_).filter(Boolean);
+  const tlName = bare_(tl.split('/')[0]); if (tlName && !names.includes(tlName)) names.push(tlName);
+  return names.filter(n => { const t = T.find(x => bare_(x.name) === n); return t && on.some(s => s.tid === t.id); });
+}
+function staffTestNames() { return staffTestNames_(); }
+function staffTestLogin(name) {
+  const nm = bare_(name);
+  if (!staffTestNames_().includes(nm)) return { ok: false, msg: 'STG 시험 담당자가 아니에요.' };
+  const t = teachers_().find(x => bare_(x.name) === nm);
+  const token = Utilities.getUuid();
+  CacheService.getScriptCache().put('adm_' + token, JSON.stringify({ name: t.name, staff: true, tid: t.id }), 21600);
+  log_('담당자 ' + t.name, '관리자 화면 로그인 (STG 시험)', '');
   return Object.assign({ ok: true, token }, adminData(token));
 }
 function me_(a) { return { name: a.name, sup: !!a.sup, perms: a.perms }; }

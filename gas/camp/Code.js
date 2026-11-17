@@ -1,4 +1,4 @@
-/* build: 20261117-225249 */
+/* build: 20261117-230048 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -3805,7 +3805,7 @@ function roomData(token) {
   adm_(token); let open = false; try { open = setting_('시간표 공개') === '예'; } catch (x) {}
   let days = []; try { days = actCfg_().days || []; } catch (x) {}
   const cfg = roomCfg_();
-  return { rooms: rooms_().map(r => { const o = Object.assign({}, r); delete o._row; return o; }), kinds: ROOM_KINDS, open, days, cfg: Object.assign({}, cfg, { live: roomPubNow_(cfg) }), layout: layout_(), layoutTabs: (() => { const T = layoutTabs_(); return Array.isArray(T) ? T : []; })(), layoutErr: (() => { const T = layoutTabs_(); return Array.isArray(T) ? '' : T.err; })() };
+  return { rooms: rooms_().map(r => { const o = Object.assign({}, r); delete o._row; return o; }), kinds: ROOM_KINDS, open, days, cfg: Object.assign({}, cfg, { live: roomPubNow_(cfg) }), layout: [], layoutTabs: [], layoutErr: '' };   /* 11-17: 시트 도면은 안 씀 → 다른 구글 시트를 여는 일(느림)을 뺌 */
 }
 
 /* ---------------- 객실배치도 (도면) ----------------

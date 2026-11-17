@@ -1,4 +1,4 @@
-/* build: 20261117-233359 */
+/* build: 20261117-234356 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -3740,6 +3740,10 @@ const ROOM_HEAD = ['방번호', '건물', '층', '타입', '정원', '방종류'
  * 사용 날짜 = 방을 쓰는 날짜 번호(교사 일정 날짜), 빈 값 = 모든 날짜 · 공개 = 예면 일괄 공개 전이라도 그 방은 선생님 화면에 보임
  * 메인학원 · 메인 인원 · 보조학원 · 보조 인원 · 교수 칸은 시트에서 보기 쉽게 배정에서 다시 채움 */
 const ROOM_KINDS = ['클래스방', '가족방', '교수방', '여교사방', '남교사방', '레슨방', '본부방'];
+const ROOM_KINDS_FIXED = ['가족방', '교수방'];   /* 넣을 수 있는 사람이 정해진 종류 · 지우지 못함 */
+/** 방종류 목록 (11-17): 설정 「방종류 목록」(관리자가 추가 · 삭제) · 비면 기본 7개 */
+function roomKinds_() { let L = []; try { L = JSON.parse(setting_('방종류 목록') || '[]'); } catch (x) {} if (!Array.isArray(L) || !L.length) L = ROOM_KINDS.slice();
+  L = L.map(x => String(x || '').trim().slice(0, 20)).filter(Boolean); ROOM_KINDS_FIXED.forEach(k => { if (!L.includes(k)) L.push(k); }); return [...new Set(L)]; }
 const ROOM_INV = 'S101:;S102:;S103:;S105:;S106:;S107:;S108:;S109:;S117:;S118:;S119:;S121:;S122:;S123:;S125:;S126:;S127:;S128:;S129:;S130:;S201:;S202:;S203:;S205:;S206:;S207:;S208:;S209:;S210:;S211:;S212:;S213:;S215:;S216:;S217:;S218:;S219:;S220:;S221:;S222:;S223:;S225:;S226:;S227:;S228:;S229:;S230:;S231:;S232:;S233:;S236:;S237:;S238:;S239:;S240:;S241:;S301:;S302:;S303:;S305:;S306:;S307:;S308:;S309:;S310:23C;S311:23C;S312:23C;S313:23C;S315:23C;S316:23C;S317:23C;S318:23C;S319:23C;S320:;S321:;S322:;S323:;S325:;S326:;S327:;S328:;S329:;S330:;S331:;S332:;S333:;S336:;S338:;S339:;S340:;S341:;S401:;S402:;S403:;S405:;S406:;S407:;S408:;S409:;S410:;S411:;S412:;S413:;S415:;S416:;S417:;S418:;S419:;S420:;S421:;S422:;S423:;S425:;S426:;S427:;S428:;S429:;S430:;S431:;S432:;S433:;S435:;S501:27H;S502:27H;S503:27H;S505:27H;S506:27H;S507:27H;S508:27H;S509:18C;S510:;S511:;S512:;S513:;S515:;S516:;S517:;S518:;S519:;S520:27H;S521:18C;S522:;S523:;S525:27H;S526:27H;S527:27H;S528:27H;S529:27H;S530:27H;S531:27H;S532:27H;S533:27H;S535:;S601:27H;S602:27H;S603:27H;S605:27H;S606:27H;S607:27H;S608:27H;S609:18H;S610:;S611:;S612:;S613:;S615:;S616:;S617:;S618:;S619:;S620:27H;S621:18H;S622:18H;S623:18H;S625:;S626:;S627:;S628:;S629:;S630:;S631:;S632:;S633:;S635:;S701:27H;S702:27H;S703:27H;S705:27H;S706:27H;S707:27H;S708:27H;S709:18T;S710:27H;S711:27H;S712:27H;S713:27H;S715:27H;S716:27H;S717:27H;S718:27H;S719:27H;S720:27H;S721:18T;S722:18T;S723:18T;S725:27H;S726:27H;S727:27H;S728:27H;S729:27H;S730:27H;S731:27H;S732:27H;S733:27H;S735:;S801:23H;S802:23H;S803:;S805:;S806:;S807:;S808:;S809:18H;S810:;S811:;S812:;S813:;S815:23H;S816:23H;S817:23H;S818:23H;S819:23H;S820:27H;S821:18H;S822:18H;S823:18H;S825:23H;S826:23H;S827:23H;S828:23H;S829:23H;S830:23H;S831:27H;S833:;S901:23T;S902:23T;S903:23T;S905:23T;S906:23T;S907:23T;S908:23T;S909:18T;S910:23T;S911:23T;S912:23T;S913:23T;S915:23T;S916:23T;S917:23T;S918:23T;S919:23T;S920:27H;S921:18T;S922:18T;S923:18T;S925:23T;S926:23T;S927:23T;S928:23T;S929:23T;S930:23T;S931:27H;P201:;P202:;P203:;P205:;P206:;P207:;P208:;P209:;P210:;P211:;P212:;P213:;P215:;P216:;P217:;P218:;P219:;P301:;P302:;P303:;P305:;P306:;P307:;P308:;P309:;P310:;P311:;P312:;P313:;P315:;P316:;P317:;P318:;P319:;P320:;P321:;P322:;P323:;P325:;P326:;P327:;P401:;P402:;P403:;P405:;P406:;P407:;P408:;P409:;P410:;P411:;P412:;P413:;P415:;P416:;P417:;P418:;P419:;P420:;P421:;P422:;P423:;P425:;P426:;P427:;P501:;P502:;P503:;P505:;P506:;P507:;P508:;P509:;P510:;P511:;P512:;P513:;P515:;P516:;P517:;P518:;P519:;P520:;P601:;P602:;P603:;P605:;P606:;P607:;P608:;P609:;P610:;P611:;P612:;P613:;P615:;P616:;P617:;P618:;P619:;P620:;P701:;P702:;P703:;P705:;P706:;P707:;P708:;P709:;P710:;P711:;P712:;P713:;P715:;P716:;P717:;P718:;P719:;P720:;P801:;P802:;P803:;P805:;P806:;P807:;P808:;P809:;P810:;P811:;P812:;P813:;P815:;P816:;P817:';
 function roomSheet_() {
   const ss = SpreadsheetApp.getActive(); let sh = ss.getSheetByName(SH.ROOM);
@@ -3790,6 +3794,8 @@ function roomCfgSave(token, b) {
   put('방 이름 목록', JSON.stringify(names), '방배정 메인에 학원 대신 고를 수 있는 이름');
   if (b && b.layoutSrc !== undefined) { const v = String(b.layoutSrc || '').split(/\s*\n\s*/).map(x => x.trim()).filter(Boolean).join('\n'); const ids = v.split('\n').filter(Boolean).map(x => { if (!/\/d\/[a-zA-Z0-9_-]{20,}|^[a-zA-Z0-9_-]{20,}$/.test(x)) throw new Error('구글 시트 주소를 그대로 붙여 넣어 주세요 (https://docs.google.com/spreadsheets/d/…).'); return (x.match(/\/d\/([a-zA-Z0-9_-]{20,})/) || x.match(/^([a-zA-Z0-9_-]{20,})$/))[1]; }); if (ids.some(x => x !== ids[0])) throw new Error('층 주소는 모두 같은 구글 시트의 탭이어야 해요. 한 시트에 층마다 탭을 만들어 주세요.');
     put('배치도 시트', v, '방배정 도면을 그린 구글 시트 주소 (비우면 이 시트 · 주소에 gid가 있으면 그 탭 하나만)'); try { CacheService.getScriptCache().remove('lytabs_' + (layoutSrcId_() || 'here') + '_' + layoutGid_()); } catch (x) {} }
+  if (b && Array.isArray(b.kinds)) { const L = [...new Set(b.kinds.slice(0, 30).map(x => String(x || '').trim().slice(0, 20)).filter(Boolean))]; ROOM_KINDS_FIXED.forEach(k => { if (!L.includes(k)) L.push(k); });
+    put('방종류 목록', JSON.stringify(L), '방배정 방종류 (관리자가 추가 · 삭제 · 가족방 · 교수방은 늘 있음)'); }
   if (b && Array.isArray(b.types)) { const seen = {}; const L = b.types.slice(0, 40).map(x => ({ no: String(x && x.no || '').trim().slice(0, 10), desc: String(x && x.desc || '').trim().slice(0, 60), color: /^#[0-9a-f]{6}$/i.test(String(x && x.color || '')) ? String(x.color).toLowerCase() : '' })).filter(x => x.no && !seen[x.no] && (seen[x.no] = 1));
     put('방 타입 목록', JSON.stringify(L), '관리자가 넣은 방 타입: 타입번호 · 구성 · 색 (방마다 타입을 고르면 도면 방번호 칸이 그 색)'); }
   if (b && b.pos && typeof b.pos === 'object') { const o = {}; Object.keys(b.pos).slice(0, 800).forEach(k => { const v = b.pos[k]; if (/^[A-Z]{0,2}\d{3,4}$/.test(k) && Array.isArray(v) && v.length === 2 && v.every(n => Number.isInteger(+n) && +n >= 1 && +n <= 40)) o[k] = [+v[0], +v[1]]; });
@@ -3805,7 +3811,7 @@ function roomData(token) {
   adm_(token); let open = false; try { open = setting_('시간표 공개') === '예'; } catch (x) {}
   let days = []; try { days = actCfg_().days || []; } catch (x) {}
   const cfg = roomCfg_();
-  return { rooms: rooms_().map(r => { const o = Object.assign({}, r); delete o._row; return o; }), kinds: ROOM_KINDS, open, days, cfg: Object.assign({}, cfg, { live: roomPubNow_(cfg) }), layout: [], layoutTabs: [], layoutErr: '' };   /* 11-17: 시트 도면은 안 씀 → 다른 구글 시트를 여는 일(느림)을 뺌 */
+  return { rooms: rooms_().map(r => { const o = Object.assign({}, r); delete o._row; return o; }), kinds: roomKinds_(), kindsFixed: ROOM_KINDS_FIXED, open, days, cfg: Object.assign({}, cfg, { live: roomPubNow_(cfg) }), layout: [], layoutTabs: [], layoutErr: '' };   /* 11-17: 시트 도면은 안 씀 → 다른 구글 시트를 여는 일(느림)을 뺌 */
 }
 
 /* ---------------- 객실배치도 (도면) ----------------
@@ -3981,7 +3987,7 @@ function roomSave(token, x) {
   try {
     const sh = roomSheet_(); const r = rooms_().find(y => y.no === t(x.no, 10));
     if (!r) throw new Error('방을 찾지 못했어요: ' + x.no);
-    let kind = t(x.kind, 20).replace(/^\d인가족방$/, '가족방'); if (kind && !ROOM_KINDS.includes(kind)) throw new Error('방종류를 골라 주세요.');
+    let kind = t(x.kind, 20).replace(/^\d인가족방$/, '가족방'); if (kind && !roomKinds_().includes(kind)) throw new Error('방종류를 골라 주세요.');
     let nd = 0; try { nd = (actCfg_().days || []).length; } catch (e) {}
     const dl = L => [...new Set((Array.isArray(L) ? L : []).map(Number).filter(d => d >= 0 && d < Math.max(nd, 1) && Number.isInteger(d)))].sort((p, q) => p - q);
     if ((!Array.isArray(x.occ) || !x.occ.length) && (x.main || x.prof || x.sub)) x.occ = roomOcc_({ main: t(x.main, 40), mn: +x.mn || 0, sub: t(x.sub, 40), sn: +x.sn || 0, prof: t(x.prof, 40) });   // 예전 방식(메인 · 보조 · 교수)으로 보낸 것

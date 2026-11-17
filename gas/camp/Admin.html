@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261117-233359 -->
+<!-- build: 20261117-234356 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -1322,7 +1322,7 @@ function editor(){const e=A.ed,r=R.rooms.find(x=>x.no===A.sel);if(!e||!r)return 
       <label>정원 <input type="number" id="r_cap" min="1" max="30" value="${e.cap}" style="width:56px"> 명</label>
       <label>방 메모 <input type="text" id="r_feat" value="${esc(e.feat||'')}" maxlength="40" placeholder="예: 온돌 · 거실 · 이불 2채 추가" style="width:200px"></label></div>
     <div class="row" style="gap:8px;flex-wrap:wrap"><b>사용 날짜</b>${D.map(d=>`<label class="row" style="gap:3px"><input type="checkbox" data-rday="${d}" ${rd.includes(d)?'checked':''}>${esc(dayLab(d))}</label>`).join('')}<span class="cap" style="margin:0">체크를 풀면 그날은 사용 안 함</span></div>
-    <div class="row" style="gap:10px;flex-wrap:wrap">${hasFam?`<span class="row" style="gap:6px"><b>방종류</b><span class="pill info">가족방</span><span class="cap" style="margin:0">가족을 넣으면 자동</span><input type="hidden" id="r_kind" value="가족방"></span>`:`<label class="row" style="gap:6px"><b>방종류 <span style="color:#d33">*</span></b><select id="r_kind" required>${['',...R.kinds].map(k=>`<option value="${esc(k)}" ${k===e.kind?'selected':''}>${k||'선택'}</option>`).join('')}</select></label>`}
+    <div class="row" style="gap:10px;flex-wrap:wrap">${hasFam?`<span class="row" style="gap:6px"><b>방종류</b><span class="pill info">가족방</span><span class="cap" style="margin:0">가족을 넣으면 자동</span><input type="hidden" id="r_kind" value="가족방"></span>`:`<label class="row" style="gap:6px"><b>방종류 <span style="color:#d33">*</span></b><select id="r_kind" required>${['',...R.kinds,...(e.kind&&!R.kinds.includes(e.kind)?[e.kind]:[])].map(k=>`<option value="${esc(k)}" ${k===e.kind?'selected':''}>${k||'선택'}</option>`).join('')}</select></label>`}
       <span class="pill ${tot>e.cap?'bad':tot?'info':'mute'}">숙박 ${tot} / 정원 ${e.cap}명</span>${rd.length>1&&loads.some(x=>x.n!==tot)?loads.map(x=>`<span class="pill ${x.n>e.cap?'bad':'mute'}">${esc(dayLab(x.d))} ${x.n}</span>`).join(''):''}</div>
     <div class="occs">${e.occ.length?e.occ.map((o,i)=>occRow(e,o,i,rd,M,AL,inOcc,i===0)).join(''):''}</div>
     ${(()=>{const k=e.kind;A.dl={};
@@ -1420,6 +1420,11 @@ let NC=null,NCR=null;
 function numColor(no,sheetOnly){if(!sheetOnly){const ty=rTyOf(no);if(ty&&ty.color)return ty.color}if(NCR!==R||!NC){NC={};NCR=R;floors().forEach(f=>Object.entries(f.rooms).forEach(([n,v])=>{const c=f.cells.find(x=>x[0]===v[0]&&x[1]===v[1]);if(c&&c[5]&&!NC[n])NC[n]=String(c[5]).toLowerCase()}))}return NC[no]||''}
 const rTypes=()=>(R&&R.cfg&&R.cfg.types)||[];const rTyOf=no=>{const q=(R.rooms||[]).find(x=>x.no===no);return q&&q.type?rTypes().find(t=>t.no===q.type):null};   /* 11-17: 관리자가 넣은 방 타입 */
 function rType(no){const ty=rTyOf(no);if(ty)return ty.no+(ty.desc?' · '+ty.desc:'');const c=numColor(no,1),T=(R.cfg&&R.cfg.typeColors)||{};return c&&T[c]||''}
+function kindPanel(){const L=A.kdEd||R.kinds||[],F=R.kindsFixed||['가족방','교수방'],cnt=k=>(R.rooms||[]).filter(r=>r.kind===k).length;
+  return `<details class="panel kdPanel" ${A.kdEd||A.kdOpen?'open':''}><summary><b>방종류 목록</b> <span class="hint">${L.map(esc).join(' · ')}</span></summary>
+  <div class="row" style="gap:6px;flex-wrap:wrap;margin-top:8px">${L.map((k,i)=>`<span class="pill" style="display:inline-flex;gap:6px;align-items:center;padding:4px 10px">${esc(k)} <small class="faint">${cnt(k)}</small>${F.includes(k)?'':`<button class="btn small ghost" type="button" data-kddel="${i}" aria-label="${esc(k)} 빼기" style="padding:0 6px">×</button>`}</span>`).join('')}</div>
+  <div class="row" style="gap:6px;margin-top:8px"><input type="text" id="kdNew" maxlength="20" placeholder="새 방종류 (예: 반주자방)" style="width:180px"><button class="btn small" type="button" id="kdAdd">＋ 추가</button>${A.kdEd?'<button class="btn small primary" type="button" id="kdSave">방종류 저장</button><button class="btn small ghost" type="button" id="kdUndo">되돌리기</button>':''}</div>
+  <p class="hint" style="margin:6px 0 0">가족방 · 교수방은 넣을 수 있는 사람이 정해져 있어 뺄 수 없어요. 이미 방에 쓴 종류를 빼도 그 방은 그대로예요.</p></details>`}
 function typePanel(){const L=A.tyEd||rTypes().map(t=>Object.assign({},t));A.tyEd=A.tyEd||null;const cnt=no=>(R.rooms||[]).filter(r=>r.type===no).length;
   return `<details class="panel tyPanel" ${!rTypes().length||A.tyEd||A.tyOpen?'open':''}><summary><b>방 타입 목록</b> <span class="hint">${rTypes().length?rTypes().map(t=>`<span class="sw" style="display:inline-block;width:12px;height:10px;border-radius:2px;background:${esc(t.color||'#fff')};border:1px solid rgba(0,0,0,.25);margin:0 3px 0 8px"></span>${esc(t.no)}`).join(''):'· 처음 한 번 만들어요'}</span></summary>
   <div class="mtblw"><table class="mtbl nosort" style="margin-top:6px"><thead><tr><th>타입번호</th><th>구성</th><th>색</th><th>방 수</th><th></th></tr></thead><tbody>${L.map((t,i)=>`<tr><td><input type="text" data-ty="${i}|no" value="${esc(t.no)}" maxlength="10" placeholder="예: A" style="width:80px"></td><td class="l"><input type="text" data-ty="${i}|desc" value="${esc(t.desc||'')}" maxlength="60" placeholder="예: 침대 2 · 온돌 · 5인" style="width:100%;min-width:180px"></td><td><input type="color" data-ty="${i}|color" value="${esc(t.color||'#cfe8ff')}" style="width:40px;height:28px;padding:0"></td><td class="num">${t.no?cnt(t.no):'-'}</td><td><button class="btn small ghost" type="button" data-tydel="${i}" aria-label="타입 빼기">×</button></td></tr>`).join('')||'<tr><td colspan="5" class="hint">아직 타입이 없어요. 「＋ 타입 추가」를 눌러 주세요.</td></tr>'}</tbody></table></div>
@@ -1461,7 +1466,7 @@ function vGrid(setup){A.gMove=false;A.pos=null;A.gTy=!!setup;   /* 11-17: 방 �
       :`<div class="gcell groom${A.sel===q.no?' on':''}${tyM?' tym':''}" style="grid-column:${c};grid-row:${r}" title="${tip}">${tyM?`<button type="button" class="ghd${bgx?'':' gun'}" data-gty="${esc(q.no)}" style="${hst}" aria-label="${esc(q.no)} 타입 칠하기">${hd}</button>`:`<span class="ghd${bgx?'':' gun'}" style="${hst}">${hd}</span>`}${tyM?`<span class="gbd">${body}</span>`:`<button type="button" class="gbd" data-rroom="${esc(q.no)}" aria-label="${esc(q.no)} 숙박 인원 배정">${body||'<span class="gadd">＋</span>'}</button>`}</div>`)});
   const dirty=A.pos&&Object.keys(A.pos).length;
   setTimeout(()=>{const h=document.querySelector('.rhead');if(h)document.documentElement.style.setProperty('--rheadH',h.offsetHeight+'px')},0);
-  return `${setup?typePanel():''}<div class="panel"><div class="gsel"><div class="spread"><div class="row" style="gap:6px;flex-wrap:wrap">${blds.map(b=>`<button class="btn small ${A.gb===b?'primary':''}" type="button" data-gb="${esc(b)}">${esc(b)}</button>`).join('')}</div>
+  return `${setup?kindPanel()+typePanel():''}<div class="panel"><div class="gsel"><div class="spread"><div class="row" style="gap:6px;flex-wrap:wrap">${blds.map(b=>`<button class="btn small ${A.gb===b?'primary':''}" type="button" data-gb="${esc(b)}">${esc(b)}</button>`).join('')}</div>
     <div class="row" style="gap:6px">${dirty?`<button class="btn small primary" type="button" id="g_posSave">자리 저장 (${Object.keys(A.pos).length})</button><button class="btn small ghost" type="button" id="g_posUndo">되돌리기</button>`:''}</div></div>
     <div class="row" style="gap:6px;margin-top:8px;flex-wrap:wrap">${fls.map(f=>`<button class="btn small ${A.gf===f?'primary':''}" type="button" data-gf="${f}">${f}F <small>${inB.filter(r=>flNum(r)===f).length}</small></button>`).join('')}</div>
     ${A.gTy?`<div class="gbrush"><span class="hint">칠할 타입을 고른 뒤 방 호수 칸을 누르세요</span>${rTypes().map(t=>`<button type="button" class="gbr${A.brush===t.no?' on':''}" data-gbr="${esc(t.no)}"><span class="sw" style="background:${esc(t.color||'#fff')}"></span>${esc(t.no)}</button>`).join('')}<button type="button" class="gbr${A.brush===''?' on':''}" data-gbr="">타입 없음</button>${A.tyPend&&Object.keys(A.tyPend).length?`<button class="btn small primary" type="button" id="g_tySave">타입 일괄 저장 (${Object.keys(A.tyPend).length})</button><button class="btn small ghost" type="button" id="g_tyUndo">되돌리기</button>`:''}</div>${rTypes().length?'':'<p class="hint" style="margin:6px 0 0;color:#b00020">먼저 위 「방 타입」에서 타입을 만들어 주세요.</p>'}`:''}
@@ -1477,7 +1482,7 @@ function gMoveTo(no,c,r){const L=R.rooms.filter(x=>(x.bld||'건물')===A.gb&&flN
   const other=L.find(x=>{if(x.no===no)return false;const p=A.pos[x.no]||gPosShown(x.no);return p&&p[0]===c&&p[1]===r});
   const mine=A.pos[no]||gPosShown(no);if(other&&mine)A.pos[other.no]=mine.slice();A.pos[no]=[c,r]}
 function gPosShown(no){const el=document.querySelector(`[data-gpick="${CSS.escape(no)}"]`);if(!el)return null;const c=parseInt(el.style.gridColumnStart||el.style.gridColumn),r=parseInt(el.style.gridRowStart||el.style.gridRow);return [c,r]}
-document.addEventListener('toggle',e=>{const t=e.target;if(t&&t.classList&&t.classList.contains('pubdd'))A.pubOpen=t.open;if(t&&t.classList&&t.classList.contains('tyPanel'))A.tyOpen=t.open},true);
+document.addEventListener('toggle',e=>{const t=e.target;if(t&&t.classList&&t.classList.contains('pubdd'))A.pubOpen=t.open;if(t&&t.classList&&t.classList.contains('tyPanel'))A.tyOpen=t.open;if(t&&t.classList&&t.classList.contains('kdPanel'))A.kdOpen=t.open},true);
 document.addEventListener('mousedown',e=>{if(e.target&&e.target.id==='rmodal'){A.sel='';A.ed=null;render()}});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.getElementById('rmodal')){A.sel='';A.ed=null;render()}});
 try{const h0=document.getElementById('hdr');if(h0&&window.ResizeObserver)new ResizeObserver(()=>document.documentElement.style.setProperty('--hdrH',h0.offsetHeight+'px')).observe(h0)}catch(x){}   /* 11-17: 방배정 위 메뉴 고정 */
@@ -1599,6 +1604,10 @@ document.addEventListener('click',ev=>{if(S.tab!=='room')return;const b=ev.targe
   if(b.id==='r_close'){A.sel='';A.ed=null;render();return}
   if(b.id==='r_tcolSave'){const tc={};document.querySelectorAll('.r_tcol').forEach(x=>{if(x.value.trim())tc[x.dataset.c]=x.value.trim()});const c=R.cfg||{};b.disabled=true;
     run('roomCfgSave',[{pubAll:!!c.pubAll,pubAt:c.pubAt||'',names:c.names||[],typeColors:tc}],r=>{R=r;render();toast('방 타입 이름을 저장했어요')},m=>{b.disabled=false;toast('저장하지 못했어요 · '+m)});return}
+  if(b.id==='kdAdd'){const v=val('kdNew').trim().slice(0,20);const L=(A.kdEd||R.kinds||[]).slice();if(!v){toast('방종류 이름을 넣어 주세요');return}if(L.includes(v)){toast('이미 있는 방종류예요');return}L.push(v);A.kdEd=L;render();return}
+  if(d.kddel!==undefined){const L=(A.kdEd||R.kinds||[]).slice();L.splice(+d.kddel,1);A.kdEd=L;render();return}
+  if(b.id==='kdUndo'){A.kdEd=null;render();return}
+  if(b.id==='kdSave'){const c=R.cfg||{};b.disabled=true;run('roomCfgSave',[{pubAll:!!c.pubAll,pubAt:c.pubAt||'',names:c.names||[],kinds:A.kdEd}],x=>{R=x;A.kdEd=null;render();toast('방종류를 저장했어요')},m=>{b.disabled=false;toast('저장하지 못했어요 · '+m)});return}
   if(b.id==='r_tyAdd'){A.tyEd=tyRead().concat([{no:'',desc:'',color:'#cfe8ff'}]);render();return}
   if(b.dataset.tydel!==undefined){const L=tyRead();L.splice(+b.dataset.tydel,1);A.tyEd=L;render();return}
   if(b.id==='r_tySave'){const L=tyRead().filter(t=>t.no);const d=L.map(t=>t.no).find((n,i,a)=>a.indexOf(n)!==i);if(d){toast('타입번호 「'+d+'」가 두 번 있어요');return}const c=R.cfg||{};b.disabled=true;
@@ -4605,7 +4614,7 @@ document.addEventListener('click',e=>{if(S.tab!=='book')return;const b=e.target.
   if(b.id==='ebSetSave'){const n=Object.assign(ebSet(),S.ebSetW||{});n.per=Math.max(1,Math.min(10,Math.round(+n.per||5)));n.fs=Math.max(5,Math.min(10,+n.fs||6.6));['en','sub','org'].forEach(k=>n[k]=String(n[k]||'').trim().slice(0,120));
     ebSend([],[],n,()=>{S.ebSetW=null;toast('책자 설정을 저장했어요')});return}},true);
 </script>
-<div id="bldMark" hidden>빌드표시 20261117-233359 </div>
+<div id="bldMark" hidden>빌드표시 20261117-234356 </div>
 <script>
 /* 관리자 상담 (11-15): 관리자 매뉴얼 글에서만 찾아 답함 (AI 아님 · 없는 답은 지어내지 않음). 장마다 t 제목 · q 찾는 말 · k 바로 갈 메뉴 · h 본문 */
 const AGD={

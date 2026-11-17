@@ -1,4 +1,4 @@
-/* build: 20261117-213516 */
+/* build: 20261117-213558 */
   /* 11-16: 입금 신고 상자 — 「총 n명 중 신고 m명 · 확인 k명」, 할 게 없으면 「입금 신고할 내역이 없어요」 · 계좌는 펼쳤을 때만 */
   const allP=[];MY_SUBS.forEach(sb=>sb.ppl.forEach(p=>{if(p.status==='정상')allP.push(p)}));const nRep=allP.filter(p=>p.pay==='신고').length,nOk=allP.filter(p=>isPaid(p)).length;
   const cnt=allP.length?`<span class="hint">총 ${allP.length}명 중 신고 ${nRep}명 · 확인 ${nOk}명</span>`:'';
@@ -234,7 +234,7 @@ function vQ(){const mine=S.qMine||[];const login=!!S.user;
   ${login?'':`<div class="panel" style="display:grid;gap:6px"><b>로그인한 뒤 글을 남길 수 있어요</b><span class="hint">누가 남겼는지 알고 답을 드리려고 로그인한 분만 받아요. 로그인이 안 되면 카카오톡 채널 「suzukimusickorea」로 알려 주세요.</span></div>`}
   <div class="panel" style="display:grid;gap:10px" ${login?'':'hidden'}>
     ${login?`<div class="hint">${esc(S.user.name)} 선생님 · ${esc((S.user.acads||[]).join(', '))}</div>`:`<div class="grid2"><label class="f" for="qName"><span>이름 <span class="req">*</span></span><input type="text" id="qName" value="${esc(S.qName||'')}"></label><label class="f" for="qPhone"><span>휴대전화 <span class="req">*</span></span><input type="tel" id="qPhone" inputmode="numeric" value="${esc(S.qPhone||'010-')}"></label></div><label class="f" for="qAcad">학원<input type="text" id="qAcad" value="${esc(S.qAcad||'')}"></label>`}
-    <div class="f"><span>어떤 글인가요? <span class="req">*</span></span><div class="seg" role="group" style="flex-wrap:wrap">${Q_WHERE.map(x=>`<button type="button" data-qw="${esc(x)}" aria-pressed="${x===S.qWhere}">${esc(x)}</button>`).join('')}</div><p class="hint" id="qHint" style="margin:4px 0 0">${esc(Q_HINT[S.qWhere]||'')}</p><input type="hidden" id="qWhere" value="${esc(S.qWhere||'')}"></div>
+    <div class="f"><span>어떤 글인가요? <span class="req">*</span></span><div class="qchips" role="group">${Q_WHERE.map(x=>`<button type="button" data-qw="${esc(x)}" aria-pressed="${x===S.qWhere}">${esc(x)}</button>`).join('')}</div><p class="hint" id="qHint" style="margin:4px 0 0">${esc(Q_HINT[S.qWhere]||'')}</p><input type="hidden" id="qWhere" value="${esc(S.qWhere||'')}"></div>
     <label class="f" for="qText"><span>무슨 일이 있었나요? <span class="req">*</span></span><textarea id="qText" rows="5" maxlength="2000" placeholder="무엇을 누르니 어떻게 됐는지 적어 주시면 빨리 고칠 수 있어요.">${esc(S.qText||'')}</textarea></label>
     <label class="f" for="qPic">화면 사진 <span class="hint">있으면 · 5MB까지</span><input type="file" id="qPic" accept="image/\x2a"></label>
     <div class="row" style="justify-content:flex-end"><span class="err" id="qErr" style="margin-right:auto"></span><button class="btn primary" type="button" id="qSend">올리기</button></div>

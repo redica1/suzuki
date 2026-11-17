@@ -43,6 +43,7 @@
   var PROD = 'https://script.google.com/macros/s/AKfycbzrzYgEsPnHVcBIjobN9xB6nGBcZ7nPYMX7hDtx3OoI7WYokszGDLhcO0lHWYz9rWAt7w/exec';   // 메인 (실제 접수)
   var STG  = 'https://script.google.com/macros/s/AKfycby2WK6m-LkmOgUM3V2P_yA0f2kobvlfJw7qmNE36Tzxg6xvj6dQPKJuVFmT68zP7_55/exec';   // 테스트 (STG)
   var APP = (/[?&]test\b/i.test(location.search) ? STG : PROD) + '?page=admin';
+  var tab0 = (location.hash || '').slice(1); if (/^[a-z]{2,12}$/.test(tab0)) APP += '&tab=' + tab0;   // 11-17: 메뉴별 주소 (#room 등)
   var ua = navigator.userAgent || '', here = location.href.split('#')[0];
   var android = /Android/i.test(ua);
   var kakao = /KAKAOTALK/i.test(ua), line = / Line\//i.test(ua);
@@ -69,6 +70,15 @@
   document.getElementById('wait').hidden = false;
   document.getElementById('direct').href = APP;
   app.src = APP; app.hidden = false;
+  // 11-17: 메뉴를 옮기면 주소 끝(#메뉴)이 바뀌고, 뒤로가기 · 앞으로가기로 메뉴를 오감
+  function bc(w, m, d) { try { w.postMessage(m, '*'); } catch (x) {} if (d > 3) return; try { for (var i = 0; i < w.frames.length; i++) bc(w.frames[i], m, d + 1); } catch (x) {} }
+  window.addEventListener('message', function (e) {
+    if (!/(\.googleusercontent\.com|script\.google\.com)$/.test(String(e.origin || ''))) return;
+    var d = e.data; if (!d || !d.campAdm || !/^[a-z]{2,12}$/.test(d.tab || '')) return;
+    if (location.hash.slice(1) === d.tab) return;
+    if (!location.hash) history.replaceState(null, '', '#' + d.tab); else history.pushState(null, '', '#' + d.tab);
+  });
+  window.addEventListener('popstate', function () { var t = location.hash.slice(1); if (t) bc(app.contentWindow, { campAdmGo: t }, 0); });
   setTimeout(function () { document.getElementById('slow').hidden = false; }, 10000);
 })();
 </script>

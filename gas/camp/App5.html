@@ -1,4 +1,4 @@
-/* build: 20261117-235605 */
+/* build: 20261117-235917 */
   /* 11-16: 입금 신고 상자 — 「총 n명 중 신고 m명 · 확인 k명」, 할 게 없으면 「입금 신고할 내역이 없어요」 · 계좌는 펼쳤을 때만 */
   const allP=[];MY_SUBS.forEach(sb=>sb.ppl.forEach(p=>{if(p.status==='정상')allP.push(p)}));const nRep=allP.filter(p=>p.pay==='신고').length,nOk=allP.filter(p=>isPaid(p)).length;
   const cnt=allP.length?`<span class="hint">총 ${allP.length}명 중 신고 ${nRep}명 · 확인 ${nOk}명</span>`:'';

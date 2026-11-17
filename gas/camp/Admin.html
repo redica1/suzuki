@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261117-235605 -->
+<!-- build: 20261117-235917 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -1808,6 +1808,13 @@ const SUP_TABS=[['doc','공문'],['camp','캠프 설정'],['cons','동의서'],[
 const ME=()=>(S.D&&S.D.me)||{sup:true,perms:{}};
 const permOf=k=>{const m=ME();if(m.sup)return '편집';if(k==='camp'||k==='staff'||k==='cons'||k==='doc')return '';return (m.perms||{})[k]||''};
 const visTabs=()=>TABS.concat(SUP_TABS).filter(([k])=>permOf(k));
+/* 11-17: 메뉴별 주소 — 겉 페이지(app.suzukimusickorea.org/camp/admin.html)에 지금 메뉴를 알리고, 뒤로가기 · 처음 주소(#메뉴)로 그 메뉴를 염 */
+(function(){const okT=t=>S.D&&visTabs().some(([k])=>k===t);
+  const post=()=>{try{if(S.D&&S.tab&&S.tab!==S._pt){S._pt=S.tab;window.top.postMessage({campAdm:1,tab:S.tab},'*')}}catch(e){}};
+  const _r=render;render=function(){if(S.D&&S.urlTab&&S.tab===S.urlTab&&!okT(S.tab)){S.urlTab='';S.tab=(visTabs()[0]||[])[0]||S.tab}const x=_r.apply(this,arguments);post();return x};
+  window.addEventListener('message',e=>{const d=e.data;if(!d||!d.campAdmGo||!/suzukimusickorea\.org$/.test(String(e.origin||'')))return;S._pt=d.campAdmGo;if(okT(d.campAdmGo)&&d.campAdmGo!==S.tab)goTab(d.campAdmGo)});
+  try{google.script.url.getLocation(l=>{const t=((l&&l.parameter)||{}).tab;if(!t||!/^[a-z]{2,12}$/.test(t))return;if(S.D){if(okT(t))goTab(t)}else{S.urlTab=t;S.goAfter=t}})}catch(e){}
+})();
 const RO=()=>permOf(S.tab)==='보기';
 const WRITE_FN=/^(audEdit|audDel|devAud|devAudClear|audSet|audPub|devSummer|adminNoticeSave|adminMenuSave|scholSave|adminConfirm|adminAdjust|adminSetBankAcct|ogSave|ogToken|adminRejectReport|adminSaveEns|adminSaveProfs|adminRefund|adminSetIssue|schedSave|lessonSet|adminSetSetting|roomSave|conSave|campSave|staffSave|songEnSave|pvHideSave|roomCfgSave|layoutImport|roomMove|budSave|mealIssue|mealDel|bookSave|bookImgPut|bookSheetPut|songEnSave|mcSave)$/;
 const roBlock=fn=>WRITE_FN.test(fn)&&permOf(S.tab)!=='편집';
@@ -4614,7 +4621,7 @@ document.addEventListener('click',e=>{if(S.tab!=='book')return;const b=e.target.
   if(b.id==='ebSetSave'){const n=Object.assign(ebSet(),S.ebSetW||{});n.per=Math.max(1,Math.min(10,Math.round(+n.per||5)));n.fs=Math.max(5,Math.min(10,+n.fs||6.6));['en','sub','org'].forEach(k=>n[k]=String(n[k]||'').trim().slice(0,120));
     ebSend([],[],n,()=>{S.ebSetW=null;toast('책자 설정을 저장했어요')});return}},true);
 </script>
-<div id="bldMark" hidden>빌드표시 20261117-235605 </div>
+<div id="bldMark" hidden>빌드표시 20261117-235917 </div>
 <script>
 /* 관리자 상담 (11-15): 관리자 매뉴얼 글에서만 찾아 답함 (AI 아님 · 없는 답은 지어내지 않음). 장마다 t 제목 · q 찾는 말 · k 바로 갈 메뉴 · h 본문 */
 const AGD={

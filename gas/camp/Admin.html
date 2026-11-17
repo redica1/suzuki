@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261118-001213 -->
+<!-- build: 20261118-001258 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -1687,13 +1687,13 @@ function view(){
   const concerts=C.concerts.map(x=>{const L=rowsOf(x);
     return `<div class="panel"><div class="spread"><div><b>${esc(x.name)}</b> <span class="hint">${esc(days[x.d]||'')} · 공연 ${esc(x.cs||'-')} · 리허설 ${esc(x.rs||'시작 시각 미정')} ${esc(x.room||'')} · 1인 ${x.min||5}분 · ${L.filter(z=>!z.g).length}명${x.rs&&L.length?' · 리허설 끝 '+fmt(hm(x.rs)+L.filter(z=>!z.g).length*(+x.min||5)):''}</span></div>
       <div class="row" style="gap:6px"><button class="btn small" type="button" data-cosort="${esc(x.id)}|age">만 나이순</button><button class="btn small" type="button" data-cosort="${esc(x.id)}|book">진도순</button></div></div>
-      <div class="tbl"><table class="cotbl"><thead><tr><th class="r">순서</th><th>리허설</th><th>이름(학원)</th><th class="r">만 나이</th><th>악기</th><th>진도</th><th>곡</th><th></th></tr></thead><tbody>
-      ${L.map(z=>z.g?`<tr class="cogone"><td class="r num">${z.idx+1}</td><td>-</td><td>${esc((ALL[z.pid]||{name:'(없음)'}).name)} (취소)</td><td colspan="4" class="hint">접수를 취소했어요 · 빼 주세요</td><td><button class="btn small ghost" type="button" data-corm="${esc(x.id)}|${z.idx}">빼기</button></td></tr>`
-        :`<tr><td class="r num">${z.idx+1}</td><td class="num">${z.t||'-'}</td><td><b>${esc(z.r.key)}</b>${z.r.status==='취소요청'?' <span class="pill due">취소 요청</span>':''}</td><td class="r num">${z.r.age}</td><td>${esc(z.r.inst)}</td><td>${esc(z.r.prog)}</td><td style="white-space:normal">${esc(z.r.song||[z.r.oc,z.r.ot].filter(Boolean).join(' · '))}</td>
+      <div class="tbl"><table class="cotbl"><thead><tr><th class="r">순서</th><th>리허설</th><th>학원</th><th>이름</th><th class="r">만 나이</th><th>악기</th><th>진도</th><th>곡</th><th></th></tr></thead><tbody>
+      ${L.map(z=>z.g?`<tr class="cogone"><td class="r num">${z.idx+1}</td><td>-</td><td>${esc((ALL[z.pid]||{}).acad||'')}</td><td>${esc((ALL[z.pid]||{name:'(없음)'}).name)} (취소)</td><td colspan="4" class="hint">접수를 취소했어요 · 빼 주세요</td><td><button class="btn small ghost" type="button" data-corm="${esc(x.id)}|${z.idx}">빼기</button></td></tr>`
+        :`<tr><td class="r num">${z.idx+1}</td><td class="num">${z.t||'-'}</td><td>${esc(z.r.acad)}</td><td><b>${esc(z.r.name)}</b>${z.r.status==='취소요청'?' <span class="pill due">취소 요청</span>':''}</td><td class="r num">${z.r.age}</td><td>${esc(z.r.inst)}</td><td>${esc(z.r.prog)}</td><td style="white-space:normal">${esc(z.r.song||[z.r.oc,z.r.ot].filter(Boolean).join(' · '))}</td>
         <td><div class="row" style="gap:3px;flex-wrap:nowrap"><button class="btn small ghost" type="button" data-comv="${esc(x.id)}|${z.idx}|-1" ${z.idx?'':'disabled'} aria-label="위로">▲</button><button class="btn small ghost" type="button" data-comv="${esc(x.id)}|${z.idx}|1" ${z.idx<L.length-1?'':'disabled'} aria-label="아래로">▼</button>
           <select data-cogo="${esc(x.id)}|${z.idx}" aria-label="다른 공연으로"><option value="">옮기기</option>${C.concerts.filter(y=>y.id!==x.id).map(y=>`<option value="${esc(y.id)}">${esc(y.name)}</option>`).join('')}</select><button class="btn small ghost" type="button" data-corm="${esc(x.id)}|${z.idx}">빼기</button></div></td></tr>`).join('')||'<tr><td colspan="8" class="hint">아직 아무도 없어요.</td></tr>'}</tbody></table></div></div>`}).join('');
   const poolH=`<div class="panel"><b>아직 공연에 안 넣은 「오후」 신청 ${pool.length}명</b> <span class="hint">만 나이순</span>
-    ${pool.length?`<div class="tbl"><table class="cotbl"><thead><tr><th>이름(학원)</th><th class="r">만 나이</th><th>악기</th><th>진도</th><th>곡</th><th></th></tr></thead><tbody>${pool.map(r=>`<tr><td>${esc(r.key)}</td><td class="r num">${r.age}</td><td>${esc(r.inst)}</td><td>${esc(r.prog)}</td><td style="white-space:normal">${esc(r.song||[r.oc,r.ot].filter(Boolean).join(' · '))}</td>
+    ${pool.length?`<div class="tbl"><table class="cotbl"><thead><tr><th>학원</th><th>이름</th><th class="r">만 나이</th><th>악기</th><th>진도</th><th>곡</th><th></th></tr></thead><tbody>${pool.map(r=>`<tr><td>${esc(r.acad)}</td><td>${esc(r.name)}</td><td class="r num">${r.age}</td><td>${esc(r.inst)}</td><td>${esc(r.prog)}</td><td style="white-space:normal">${esc(r.song||[r.oc,r.ot].filter(Boolean).join(' · '))}</td>
       <td><select data-coput="${esc(r.id)}"><option value="">공연에 넣기</option>${C.concerts.map(y=>`<option value="${esc(y.id)}">${esc(y.name)}</option>`).join('')}</select></td></tr>`).join('')}</tbody></table></div>`:'<p class="hint" style="margin:0">모두 넣었어요.</p>'}</div>`;
   setTimeout(()=>stat());
   return cHead+concerts+poolH}
@@ -4621,7 +4621,7 @@ document.addEventListener('click',e=>{if(S.tab!=='book')return;const b=e.target.
   if(b.id==='ebSetSave'){const n=Object.assign(ebSet(),S.ebSetW||{});n.per=Math.max(1,Math.min(10,Math.round(+n.per||5)));n.fs=Math.max(5,Math.min(10,+n.fs||6.6));['en','sub','org'].forEach(k=>n[k]=String(n[k]||'').trim().slice(0,120));
     ebSend([],[],n,()=>{S.ebSetW=null;toast('책자 설정을 저장했어요')});return}},true);
 </script>
-<div id="bldMark" hidden>빌드표시 20261118-001213 </div>
+<div id="bldMark" hidden>빌드표시 20261118-001258 </div>
 <script>
 /* 관리자 상담 (11-15): 관리자 매뉴얼 글에서만 찾아 답함 (AI 아님 · 없는 답은 지어내지 않음). 장마다 t 제목 · q 찾는 말 · k 바로 갈 메뉴 · h 본문 */
 const AGD={

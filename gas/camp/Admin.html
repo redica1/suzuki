@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261117-234856 -->
+<!-- build: 20261117-235007 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -1368,7 +1368,7 @@ function vFam(head){const L=famRooms(),q=(A.fq||'').trim(),cap=(S.D.camp&&S.D.ca
       <input type="search" id="r_fq" value="${esc(A.fq||'')}" placeholder="학원·이름" style="margin-left:auto;width:min(200px,100%)"></div></div>
   <div class="panel tbl"><table><thead><tr><th>학원</th><th>신청자</th><th>대표</th><th>함께 쓰는 사람</th><th class="r">인원</th><th class="r">빈 자리 요금</th><th>입금</th><th>방</th><th>요청 글</th></tr></thead><tbody>
   ${show.map(x=>`<tr><td><b>${esc(x.sb.acad)}</b></td><td>${esc(x.sb.owner)}${x.sb.contact?`<br><small class="faint">${esc(x.sb.contact)}</small>`:''}</td><td><b>${esc(x.rep.name)}</b></td>
-    <td style="white-space:normal">${x.mem.map(m=>`${esc(m.name)} <small class="faint">${m.t}</small>`).join(', ')}</td><td class="r num"${x.n>cap?' style="color:var(--bad)"':''}>${x.n}</td><td class="r num">${x.fee?won(x.fee):'-'}</td>
+    <td style="white-space:normal">${x.mem.map(m=>m.t==='대표'?`<b>${esc(m.name)}</b>`:`<span title="${esc(m.t)}">${esc(m.name)}</span>`).join(', ')}</td><td class="r num"${x.n>cap?' style="color:var(--bad)"':''}>${x.n}</td><td class="r num">${x.fee?won(x.fee):'-'}</td>
     <td>${x.paid?'<span class="pill ok">입금 확인</span>':`<span class="pill due">남은 ${won(x.due)}</span>`}</td>
     <td>${x.rs.map(r=>`<button class="btn small" type="button" data-rgo="${esc(r.no)}">${esc(r.no)} ${esc(r.kind)}</button>`).join(' ')||'<span class="hint">미정</span>'}</td>
     <td>${x.rq?`<div style="white-space:normal;max-width:260px;text-align:left">${reqChips(x.rq)} <small>${esc(x.rq)}</small></div>`:''}${x.req?`<button class="btn small" type="button" data-rv="freq">게시판 ${x.req}건</button>`:''}</td></tr>`).join('')||'<tr><td colspan="9" class="hint">해당하는 가족방 신청이 없어요.</td></tr>'}
@@ -4611,7 +4611,7 @@ document.addEventListener('click',e=>{if(S.tab!=='book')return;const b=e.target.
   if(b.id==='ebSetSave'){const n=Object.assign(ebSet(),S.ebSetW||{});n.per=Math.max(1,Math.min(10,Math.round(+n.per||5)));n.fs=Math.max(5,Math.min(10,+n.fs||6.6));['en','sub','org'].forEach(k=>n[k]=String(n[k]||'').trim().slice(0,120));
     ebSend([],[],n,()=>{S.ebSetW=null;toast('책자 설정을 저장했어요')});return}},true);
 </script>
-<div id="bldMark" hidden>빌드표시 20261117-234856 </div>
+<div id="bldMark" hidden>빌드표시 20261117-235007 </div>
 <script>
 /* 관리자 상담 (11-15): 관리자 매뉴얼 글에서만 찾아 답함 (AI 아님 · 없는 답은 지어내지 않음). 장마다 t 제목 · q 찾는 말 · k 바로 갈 메뉴 · h 본문 */
 const AGD={

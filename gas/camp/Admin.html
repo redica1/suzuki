@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261117-230048 -->
+<!-- build: 20261117-230230 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -1266,7 +1266,7 @@ document.addEventListener('change',e=>{const t=e.target;if(!t.classList||!t.clas
 const lySrcRows=fromDom=>{if(fromDom){const dom=[...document.querySelectorAll('[data-lysrc]')].map(x=>x.value.trim());if(dom.length)return dom}if(A.lySrcs)return A.lySrcs;const v=String((R&&R.cfg||{}).layoutSrc||'').split(/\n+/).map(x=>x.trim()).filter(Boolean);return v.length?v:['']};   /* 11-17: 층마다 탭 주소 한 줄 */
 document.addEventListener('input',e=>{if(e.target.id==='r_fq'){A.fq=e.target.value;render();keepFocus('r_fq')}});
 function run(fn,args,ok,fail){if(roBlock(fn)){fail&&fail(RO_MSG);return}google.script.run.withSuccessHandler(ok).withFailureHandler(e=>{const m=(e&&e.message)||String(e);fail&&fail(m)})[fn](S.tok,...args)}
-function load(){LOADING=true;ERR='';run('roomData',[],r=>{LOADING=false;R=r;render()},m=>{LOADING=false;ERR=m;render()})}
+function load(n){LOADING=true;ERR='';run('roomData',[],r=>{LOADING=false;R=r;render()},m=>{if(!n&&/DEADLINE|스토리지|storage|timed? ?out|시간/i.test(String(m))){setTimeout(()=>load(1),2500);return}LOADING=false;ERR=m;render()})}   /* 11-17: 구글 쪽 일시 오류면 한 번 더 */
 const kcls=k=>!k?'':k.includes('가족')?'fam':k==='교수방'?'prof':k==='클래스방'?'cls':'etc';
 const KCOL={'클래스방':'#d6ecef','가족방':'#ffd27a','교수방':'#f3d1e6','여교사방':'#e3dcff','남교사방':'#cfe0ff','레슨방':'#e6e6e6','본부방':'#e6e6e6'};
 const sh=a=>String(a||'').replace(/스즈키$/,'');
@@ -4601,7 +4601,7 @@ document.addEventListener('click',e=>{if(S.tab!=='book')return;const b=e.target.
   if(b.id==='ebSetSave'){const n=Object.assign(ebSet(),S.ebSetW||{});n.per=Math.max(1,Math.min(10,Math.round(+n.per||5)));n.fs=Math.max(5,Math.min(10,+n.fs||6.6));['en','sub','org'].forEach(k=>n[k]=String(n[k]||'').trim().slice(0,120));
     ebSend([],[],n,()=>{S.ebSetW=null;toast('책자 설정을 저장했어요')});return}},true);
 </script>
-<div id="bldMark" hidden>빌드표시 20261117-230048 </div>
+<div id="bldMark" hidden>빌드표시 20261117-230230 </div>
 <script>
 /* 관리자 상담 (11-15): 관리자 매뉴얼 글에서만 찾아 답함 (AI 아님 · 없는 답은 지어내지 않음). 장마다 t 제목 · q 찾는 말 · k 바로 갈 메뉴 · h 본문 */
 const AGD={

@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261118-000905 -->
+<!-- build: 20261118-001007 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -1649,15 +1649,15 @@ function vCon(){const sv=S.consv||'list';
 function vConList(){const CL=conList();const f=CL.includes(S.conf)||S.conf==='없음'||S.conf==='all'?S.conf:CL[0],ins=S.coni||'';const all=conRows();   /* 11-16: 「음악회 신청」 — 캠프 설정 음악회 종류가 칩 · 표는 공통 표(정렬 · 찾기 · 너비) + 표 위 고정 */
   const L=all.filter(x=>(f==='all'||x.con===f)&&(!ins||x.inst===ins));
   const cnt=k=>k==='없음'?all.filter(x=>x.con===k).length:new Set(all.filter(x=>x.con===k).map(x=>x.id)).size;const INS=[...new Set(all.filter(x=>f==='all'||x.con===f).map(x=>x.inst).filter(Boolean))];
-  const H=['이름(학원)','접수 일시','학원','접수 교사','참가자','악기','만 나이','진도','음악회','곡명 (목록)','작곡가 (그외 곡)','곡명 (원어)','오디션 영상'];
-  const rows=L.map(x=>[x.key,x.at.slice(0,16),x.acad,x.owner,x.name+(x.status==='취소요청'?' (취소 요청)':''),x.inst,x.age,x.prog,x.con,x.song,x.oc,x.ot,x.video]);
-  S.conAllRows=[H,...all.filter(x=>x.con!=='없음').sort((a,b)=>CL.indexOf(a.con)-CL.indexOf(b.con)||a.acad.localeCompare(b.acad,'ko')||a.name.localeCompare(b.name,'ko')).map(x=>[x.key,x.at.slice(0,16),x.acad,x.owner,x.name+(x.status==='취소요청'?' (취소 요청)':''),x.inst,x.age,x.prog,x.con,x.song,x.oc,x.ot,x.video])];
+  const H=['음악회','접수 일시','학원','접수 교사','참가자','악기','만 나이','진도','곡명 (목록)','작곡가 (그외 곡)','곡명 (원어)','오디션 영상'];
+  const rows=L.map(x=>[x.con,x.at.slice(0,16),x.acad,x.owner,x.name+(x.status==='취소요청'?' (취소 요청)':''),x.inst,x.age,x.prog,x.song,x.oc,x.ot,x.video]);
+  S.conAllRows=[H,...all.filter(x=>x.con!=='없음').sort((a,b)=>CL.indexOf(a.con)-CL.indexOf(b.con)||a.acad.localeCompare(b.acad,'ko')||a.name.localeCompare(b.name,'ko')).map(x=>[x.con,x.at.slice(0,16),x.acad,x.owner,x.name+(x.status==='취소요청'?' (취소 요청)':''),x.inst,x.age,x.prog,x.song,x.oc,x.ot,x.video])];
   S.conTSV=[H,...rows].map(r=>r.map(v=>String(v==null?'':v).replace(/[\t\n]/g,' ')).join('\t')).join('\n');
-  const L_=new Set([0,2,3,4,9,10,11,12]);
+  const L_=new Set([2,3,4,8,9,10,11]);
   return `<p class="hint" style="margin:0 0 8px">음악회 종류는 「캠프 설정 › 음악회」에서 넣은 대로 · 한 사람이 여러 음악회를 신청하면 음악회마다 한 줄 · 취소한 사람은 빠짐 · 만 나이는 캠프 첫날(${CAMP_YEAR}-${CAMP_DAY}) 기준</p>
   <div class="panel conflt"><div class="spread" style="margin-bottom:8px"><b>음악회 신청</b><span class="row" style="gap:6px"><button class="btn small primary" type="button" id="conXls">엑셀로 받기 (모든 음악회)</button><button class="btn small" type="button" id="conCopy">표 복사 (시트에 붙여넣기)</button><button class="btn small" type="button" id="reload">새로 불러오기</button></span></div><div class="conchips" role="tablist">${[...CL,'없음','all'].map(k=>`<button class="cchip" type="button" role="tab" data-conf="${esc(k)}" aria-pressed="${f===k}">${k==='all'?'전체':k==='없음'?'신청 안 함':esc(k)} <small>${k==='all'?all.length:cnt(k)}</small></button>`).join('')}</div>
     ${INS.length>1?`<div class="conchips" style="margin-top:8px">${['',...INS].map(k=>`<button class="cchip sm" type="button" data-coni="${esc(k)}" aria-pressed="${ins===k}">${k?esc(k)+' '+all.filter(x=>(f==='all'||x.con===f)&&x.inst===k).length:'악기 전체'}</button>`).join('')}</div>`:''}</div>
-  ${L.length?`<div class="mtblw"><table class="mtbl contbl"><thead><tr>${H.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr>${r.map((v,j)=>`<td${L_.has(j)?' class="l"':j===1||j===6?' class="num"':''}>${j===1&&/^\d{4}-\d\d-\d\d/.test(String(v))?`${esc(String(v).slice(2,10).replace(/-/g,'.'))}<br><small class="hint">${esc(String(v).slice(11,16))}</small>`:j===12&&/^https?:/i.test(String(v))?`<a href="${esc(v)}" target="_blank" rel="noopener">영상 열기</a>`:v===''||v==null?'<span class="hint">-</span>':esc(v)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`:'<div class="panel hint">해당하는 신청이 없어요.</div>'}`}
+  ${L.length?`<div class="mtblw"><table class="mtbl contbl"><thead><tr>${H.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr>${r.map((v,j)=>`<td${L_.has(j)?' class="l"':j===1||j===6?' class="num"':''}>${j===1&&/^\d{4}-\d\d-\d\d/.test(String(v))?`${esc(String(v).slice(2,10).replace(/-/g,'.'))}<br><small class="hint">${esc(String(v).slice(11,16))}</small>`:j===11&&/^https?:/i.test(String(v))?`<a href="${esc(v)}" target="_blank" rel="noopener">영상 열기</a>`:v===''||v==null?'<span class="hint">-</span>':esc(v)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`:'<div class="panel hint">해당하는 신청이 없어요.</div>'}`}
 /* ---------- 연주 순서 · 리허설 ---------- */
 const CORD=(()=>{
 let C=null,LOADING=false,ERR='',TIMER=null,DIRTY=false,SAVING=false,CHG=0;
@@ -4622,7 +4622,7 @@ document.addEventListener('click',e=>{if(S.tab!=='book')return;const b=e.target.
   if(b.id==='ebSetSave'){const n=Object.assign(ebSet(),S.ebSetW||{});n.per=Math.max(1,Math.min(10,Math.round(+n.per||5)));n.fs=Math.max(5,Math.min(10,+n.fs||6.6));['en','sub','org'].forEach(k=>n[k]=String(n[k]||'').trim().slice(0,120));
     ebSend([],[],n,()=>{S.ebSetW=null;toast('책자 설정을 저장했어요')});return}},true);
 </script>
-<div id="bldMark" hidden>빌드표시 20261118-000905 </div>
+<div id="bldMark" hidden>빌드표시 20261118-001007 </div>
 <script>
 /* 관리자 상담 (11-15): 관리자 매뉴얼 글에서만 찾아 답함 (AI 아님 · 없는 답은 지어내지 않음). 장마다 t 제목 · q 찾는 말 · k 바로 갈 메뉴 · h 본문 */
 const AGD={

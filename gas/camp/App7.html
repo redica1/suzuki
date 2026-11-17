@@ -1,4 +1,4 @@
-/* build: 20261117-212208 */
+/* build: 20261117-212359 */
     ps.forEach(p=>{p.pay='신고';p.rep=rep;delete S.rpRow[p.id]});S.afterSave=()=>repDone(ps.map(p=>p.id));subSave();S.rp=null;S.rpOpen=false;S.rpMemo=undefined;render();toast(`${ps.length}명 입금 신고를 보냈어요 · 운영진이 확인하면 「입금 확인」으로 바뀌어요`);return}
   if(b.id==='rpFill'){const n=document.getElementById('rpAllN').value.trim(),dd=document.getElementById('rpAllD').value;S.rpAllN=n;S.rpAllD=dd;const sel=S.rp||[];
     if(!n&&!dd){toast('적용할 입금자명이나 입금일을 적어 주세요');return}unpaidPpl().filter(x=>sel.includes(x.p.id)).forEach(({p})=>{const v=rpv(p);if(n)v.n=n;if(dd)v.d=dd});render();toast(`선택한 ${sel.length}명에게 적용했어요`);return}
@@ -648,7 +648,7 @@ document.addEventListener('click',e=>{const b=e.target&&e.target.closest&&e.targ
    접수 2~5단계 · 고치기 = 아래 막대에 뒤로 · 다음만 (금액 · 내 접수 · 처음 빼기, 금액은 4단계 확인 화면 · 내 접수에서) */
 function tabSync(){setTimeout(()=>{try{csFabSync()}catch(e){}},0);const B=document.body,tb=document.getElementById('tabbar');if(!tb)return;
   const on=!!(S.user&&S.token),step=on&&S.view==='form'&&((S.step>=2&&S.step<=5)||!!S.editNo);
-  B.classList.toggle('tbStep',step);B.classList.toggle('tbOn',on&&!step);B.classList.toggle('tbNext',on&&!step&&S.view==='form'&&S.step===1);tb.hidden=!(on&&!step);
+  B.classList.toggle('noDock',!on&&S.view==='form'&&S.step===1);B.classList.toggle('tbStep',step);B.classList.toggle('tbOn',on&&!step);B.classList.toggle('tbNext',on&&!step&&S.view==='form'&&S.step===1);tb.hidden=!(on&&!step);
   if(!on||step)return;const cur=S.view==='mine'?'mine':S.view==='tt'?'tt':S.view==='q'?'q':S.view==='form'&&S.step===1?'home':'';
   tb.querySelectorAll('[data-tb]').forEach(b=>{if(b.dataset.tb===cur)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current')});
   const n=document.getElementById('tbMineN');if(n){n.hidden=!MY_SUBS.length;n.textContent=MY_SUBS.length}

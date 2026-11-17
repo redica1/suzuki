@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261117-234356 -->
+<!-- build: 20261117-234453 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -1337,7 +1337,7 @@ function editor(){const e=A.ed,r=R.rooms.find(x=>x.no===A.sel);if(!e||!r)return 
     <div class="g3">
       <label class="f">비번 수신자<input type="text" id="r_pw" list="r_names" value="${esc(e.pw)}"></label>
       <label class="f">메모<input type="text" id="r_memo" value="${esc(e.memo)}"></label>
-      <label class="f">공개 · 색<span class="row" style="gap:8px"><label class="row" style="gap:4px"><input type="checkbox" id="r_pub" ${e.pub?'checked':''}> 이 방 공개</label><label class="row" style="gap:4px"><input type="checkbox" id="r_colOn" ${e.color?'checked':''}> 이 방 색 <input type="color" id="r_col" value="${esc(e.color||'#ffd27a')}"></label></span></label></div>
+      <label class="f">공개<span class="row" style="gap:8px"><label class="row" style="gap:4px"><input type="checkbox" id="r_pub" ${e.pub?'checked':''}> 이 방 공개</label></span></label></div>
     <datalist id="r_names">${pwNames.map(n=>`<option value="${esc(n)}">`).join('')}</datalist></div>`}
 /* 정원에서 남은 자리 (skip = 그 줄은 빼고 셈) · 날짜마다 따져 가장 적은 값 */
 function roomLeft(skip){const e=A.ed,rd=e.days.length?e.days:allDays();return Math.min(...rd.map(d=>e.cap-e.occ.filter((o,i)=>i!==skip&&(o.days.length?o.days:rd).includes(d)).reduce((t,o)=>t+(+o.n||0),0)))}
@@ -1529,14 +1529,12 @@ function pubPanel(){const c=R.cfg||{},np=R.rooms.filter(r=>r.pub&&used(r)).lengt
     <div class="row" style="gap:10px;flex-wrap:wrap;margin-top:8px;align-items:center"><label class="row" style="gap:4px"><input type="checkbox" id="rc_all" ${c.pubAll?'checked':''}> 배정한 방을 모두 공개</label>
       <label class="row" style="gap:4px">공개 시각 <input type="datetime-local" id="rc_at" value="${esc(String(c.pubAt||'').replace(' ','T'))}"></label>
       <button class="btn small primary" type="button" id="rc_pubSave">공개 시각 저장</button></div></div>
-  <details class="panel" ${A.cfgOpen?'open':''}><summary><b>방 색</b> <span class="hint">「방 목록」에서 방 칸 색 (도면 색은 방 타입)</span></summary>
-    ${colorBox()}
-    <div class="row" style="gap:6px;margin-top:8px"><button class="btn small primary" type="button" id="rc_save">색 저장</button><button class="btn small" type="button" id="rc_pubSel" ${A.ed?'':'disabled'}>지금 고른 방만 공개 ↔ 숨김</button></div></details>`}
+`}
 function view(){
   if(!R){if(!LOADING&&!ERR)load();return `<div class="panel">${ERR?`<span class="err">방 배정을 불러오지 못했어요 · ${esc(ERR)}</span> <button class="btn small" type="button" id="r_retry">다시</button>`:'방 배정을 불러오고 있어요…'}</div>`}
   if(A.v==='prof')A.v='list';
   const M=acads(),AL=Object.values(M),nUsed=R.rooms.filter(used).length,short=AL.filter(x=>got(x.a)<x.n),over=R.rooms.filter(r=>peak(r)>r.cap).length;
-  const head=`<div class="panel rhead"><div class="spread"><div class="row" style="gap:6px">${[['plan','숙박 배정'],['setup','방 타입 · 도면'],['list','방 목록'],['acad','학원별'],['fam','가족방 신청'],['freq','방 요청 글']].map(([k,l])=>`<button class="btn small ${A.v===k?'primary':''}" type="button" data-rv="${k}">${l}${k==='freq'&&famReqOpen()?` <span class="pill due">${famReqOpen()}</span>`:''}</button>`).join('')}</div><span class="row" style="gap:6px">${(()=>{const c=R.cfg||{},stt=c.pubAll?(c.live?'공개 중':'공개 예약'):'비공개';return `<details class="pubdd" ${A.pubOpen?'open':''}><summary class="btn small"><span class="pill ${c.pubAll?(c.live?'ok':'due'):''}" style="padding:0 6px">${stt}</span> 방 공개 · 색 ▾</summary><div class="pubpop">${pubPanel()}</div></details>`})()}<button class="btn small" type="button" id="r_reload">새로 불러오기</button></span></div>
+  const head=`<div class="panel rhead"><div class="spread"><div class="row" style="gap:6px">${[['plan','숙박 배정'],['setup','방 타입 · 도면'],['list','방 목록'],['acad','학원별'],['fam','가족방 신청'],['freq','방 요청 글']].map(([k,l])=>`<button class="btn small ${A.v===k?'primary':''}" type="button" data-rv="${k}">${l}${k==='freq'&&famReqOpen()?` <span class="pill due">${famReqOpen()}</span>`:''}</button>`).join('')}</div><span class="row" style="gap:6px">${(()=>{const c=R.cfg||{},stt=c.pubAll?(c.live?'공개 중':'공개 예약'):'비공개';return `<details class="pubdd" ${A.pubOpen?'open':''}><summary class="btn small"><span class="pill ${c.pubAll?(c.live?'ok':'due'):''}" style="padding:0 6px">${stt}</span> 방 공개 ▾</summary><div class="pubpop">${pubPanel()}</div></details>`})()}<button class="btn small" type="button" id="r_reload">새로 불러오기</button></span></div>
     <div class="row" style="gap:6px;margin-top:8px"><span class="pill info">배정된 방 ${nUsed} / ${R.rooms.length}</span>${short.length?`<span class="pill due">방이 모자란 학원 ${short.length}</span>`:AL.length?'<span class="pill ok">학원 인원 모두 배정</span>':''}${over?`<span class="pill bad">정원 넘친 방 ${over}</span>`:''}</div></div>`;
   if(A.v==='fam')return vFam(head);
   if(A.v==='freq')return vFreq(head);
@@ -4614,7 +4612,7 @@ document.addEventListener('click',e=>{if(S.tab!=='book')return;const b=e.target.
   if(b.id==='ebSetSave'){const n=Object.assign(ebSet(),S.ebSetW||{});n.per=Math.max(1,Math.min(10,Math.round(+n.per||5)));n.fs=Math.max(5,Math.min(10,+n.fs||6.6));['en','sub','org'].forEach(k=>n[k]=String(n[k]||'').trim().slice(0,120));
     ebSend([],[],n,()=>{S.ebSetW=null;toast('책자 설정을 저장했어요')});return}},true);
 </script>
-<div id="bldMark" hidden>빌드표시 20261117-234356 </div>
+<div id="bldMark" hidden>빌드표시 20261117-234453 </div>
 <script>
 /* 관리자 상담 (11-15): 관리자 매뉴얼 글에서만 찾아 답함 (AI 아님 · 없는 답은 지어내지 않음). 장마다 t 제목 · q 찾는 말 · k 바로 갈 메뉴 · h 본문 */
 const AGD={

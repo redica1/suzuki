@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261117-232709 -->
+<!-- build: 20261117-232914 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -1463,7 +1463,7 @@ function vGrid(setup){A.gMove=false;A.pos=null;A.gTy=!!setup;   /* 11-17: 방 �
     <div class="row" style="gap:6px">${dirty?`<button class="btn small primary" type="button" id="g_posSave">자리 저장 (${Object.keys(A.pos).length})</button><button class="btn small ghost" type="button" id="g_posUndo">되돌리기</button>`:''}</div></div>
     <div class="row" style="gap:6px;margin-top:8px;flex-wrap:wrap">${fls.map(f=>`<button class="btn small ${A.gf===f?'primary':''}" type="button" data-gf="${f}">${f}F <small>${inB.filter(r=>flNum(r)===f).length}</small></button>`).join('')}</div>
     ${A.gTy?`<div class="gbrush"><span class="hint">칠할 타입을 고른 뒤 방 호수 칸을 누르세요</span>${rTypes().map(t=>`<button type="button" class="gbr${A.brush===t.no?' on':''}" data-gbr="${esc(t.no)}"><span class="sw" style="background:${esc(t.color||'#fff')}"></span>${esc(t.no)}</button>`).join('')}<button type="button" class="gbr${A.brush===''?' on':''}" data-gbr="">타입 없음</button>${A.tyPend&&Object.keys(A.tyPend).length?`<button class="btn small primary" type="button" id="g_tySave">타입 일괄 저장 (${Object.keys(A.tyPend).length})</button><button class="btn small ghost" type="button" id="g_tyUndo">되돌리기</button>`:''}</div>${rTypes().length?'':'<p class="hint" style="margin:6px 0 0;color:#b00020">먼저 위 「방 타입」에서 타입을 만들어 주세요.</p>'}`:''}
-    ${mv?'<p class="hint" style="margin:8px 0 0">옮길 방을 누른 뒤 빈 칸(점선)을 누르세요. 방끼리 누르면 두 방 자리가 바뀌어요. 마우스로 끌어다 놓아도 돼요.</p>':A.gTy?'':'<p class="hint" style="margin:8px 0 0">방 칸을 누르면 숙박 인원을 배정해요. 호수 칸 색 = 방 타입 (「방 타입 · 도면」에서 정해요).</p>'}
+    ${mv?'<p class="hint" style="margin:8px 0 0">옮길 방을 누른 뒤 빈 칸(점선)을 누르세요. 방끼리 누르면 두 방 자리가 바뀌어요. 마우스로 끌어다 놓아도 돼요.</p>':''}
     <div class="gscroll"><div class="gplan" style="grid-template-columns:repeat(${cols},minmax(48px,1fr));${gKind(A.gb)?'grid-template-rows:minmax(84px,auto) 26px;':''}min-width:${cols*52}px">${cells.join('')}</div></div></div>
   ${setup?roomAddBox():editor()}`}
 const gInk=hex=>{const m=/^#(..)(..)(..)$/.exec(hex||'');if(!m)return 'inherit';const [a,b,c]=m.slice(1).map(x=>parseInt(x,16));return (a*299+b*587+c*114)/1000>140?'#16292b':'#ffffff'};
@@ -1519,8 +1519,7 @@ function pubPanel(){const c=R.cfg||{},np=R.rooms.filter(r=>r.pub&&used(r)).lengt
   return `<div class="panel"><div class="spread" style="flex-wrap:wrap;gap:8px"><div><b>사용자에게 방 공개</b> ${st} <span class="hint">· 방마다 따로 공개 ${np}/${nu}</span></div></div>
     <div class="row" style="gap:10px;flex-wrap:wrap;margin-top:8px;align-items:center"><label class="row" style="gap:4px"><input type="checkbox" id="rc_all" ${c.pubAll?'checked':''}> 배정한 방을 모두 공개</label>
       <label class="row" style="gap:4px">공개 시각 <input type="datetime-local" id="rc_at" value="${esc(String(c.pubAt||'').replace(' ','T'))}"></label>
-      <button class="btn small primary" type="button" id="rc_pubSave">공개 시각 저장</button></div>
-    <p class="cap" style="margin:6px 0 0">방 배정은 언제든 저장하세요. <b>공개 시각 전에는</b> 선생님 화면(시간표 › 우리 방) · 캠프 페이지(방 찾기 · 학생 시간표)에 <b>보이지 않고</b>, 그 시각이 되면 자동으로 보여요. 시각을 비우면 저장하자마자 공개돼요.</p></div>
+      <button class="btn small primary" type="button" id="rc_pubSave">공개 시각 저장</button></div></div>
   <details class="panel" ${A.cfgOpen?'open':''}><summary><b>방 색</b> <span class="hint">「방 목록」에서 방 칸 색 (도면 색은 방 타입)</span></summary>
     ${colorBox()}
     <div class="row" style="gap:6px;margin-top:8px"><button class="btn small primary" type="button" id="rc_save">색 저장</button><button class="btn small" type="button" id="rc_pubSel" ${A.ed?'':'disabled'}>지금 고른 방만 공개 ↔ 숨김</button></div></details>`}
@@ -1529,7 +1528,7 @@ function view(){
   if(A.v==='prof')A.v='list';
   const M=acads(),AL=Object.values(M),nUsed=R.rooms.filter(used).length,short=AL.filter(x=>got(x.a)<x.n),over=R.rooms.filter(r=>peak(r)>r.cap).length;
   const head=`<div class="panel rhead"><div class="spread"><div class="row" style="gap:6px">${[['plan','숙박 배정'],['setup','방 타입 · 도면'],['list','방 목록'],['acad','학원별'],['fam','가족방 신청'],['freq','방 요청 글']].map(([k,l])=>`<button class="btn small ${A.v===k?'primary':''}" type="button" data-rv="${k}">${l}${k==='freq'&&famReqOpen()?` <span class="pill due">${famReqOpen()}</span>`:''}</button>`).join('')}</div><span class="row" style="gap:6px">${(()=>{const c=R.cfg||{},stt=c.pubAll?(c.live?'공개 중':'공개 예약'):'비공개';return `<details class="pubdd" ${A.pubOpen?'open':''}><summary class="btn small"><span class="pill ${c.pubAll?(c.live?'ok':'due'):''}" style="padding:0 6px">${stt}</span> 방 공개 · 색 ▾</summary><div class="pubpop">${pubPanel()}</div></details>`})()}<button class="btn small" type="button" id="r_reload">새로 불러오기</button></span></div>
-    <div class="row" style="gap:6px;margin-top:8px"><span class="pill info">배정된 방 ${nUsed} / ${R.rooms.length}</span>${short.length?`<span class="pill due">방이 모자란 학원 ${short.length}</span>`:AL.length?'<span class="pill ok">학원 인원 모두 배정</span>':''}${over?`<span class="pill bad">정원 넘친 방 ${over}</span>`:''}<span class="hint">방을 누르면 메인 · 함께 쓰는 학원 · 사람 · 가족, 날짜, 인원을 정해요 · 저장하면 시트 「방배정」에</span></div></div>`;
+    <div class="row" style="gap:6px;margin-top:8px"><span class="pill info">배정된 방 ${nUsed} / ${R.rooms.length}</span>${short.length?`<span class="pill due">방이 모자란 학원 ${short.length}</span>`:AL.length?'<span class="pill ok">학원 인원 모두 배정</span>':''}${over?`<span class="pill bad">정원 넘친 방 ${over}</span>`:''}</div></div>`;
   if(A.v==='fam')return vFam(head);
   if(A.v==='freq')return vFreq(head);
   if(A.v==='plan')return `<div class="act">${head}${vGrid(false)}</div>`;
@@ -4602,7 +4601,7 @@ document.addEventListener('click',e=>{if(S.tab!=='book')return;const b=e.target.
   if(b.id==='ebSetSave'){const n=Object.assign(ebSet(),S.ebSetW||{});n.per=Math.max(1,Math.min(10,Math.round(+n.per||5)));n.fs=Math.max(5,Math.min(10,+n.fs||6.6));['en','sub','org'].forEach(k=>n[k]=String(n[k]||'').trim().slice(0,120));
     ebSend([],[],n,()=>{S.ebSetW=null;toast('책자 설정을 저장했어요')});return}},true);
 </script>
-<div id="bldMark" hidden>빌드표시 20261117-232709 </div>
+<div id="bldMark" hidden>빌드표시 20261117-232914 </div>
 <script>
 /* 관리자 상담 (11-15): 관리자 매뉴얼 글에서만 찾아 답함 (AI 아님 · 없는 답은 지어내지 않음). 장마다 t 제목 · q 찾는 말 · k 바로 갈 메뉴 · h 본문 */
 const AGD={

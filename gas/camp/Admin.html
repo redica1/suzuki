@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261118-000224 -->
+<!-- build: 20261118-000821 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -222,7 +222,7 @@ tr.off td{opacity:.5}
 .act .ev .evh b{font-size:14.5px;line-height:1.3}
 .act .ev .tm{font-size:12.5px;color:var(--faint);white-space:nowrap}
 .act .ev small{color:var(--muted);font-size:13px;line-height:1.3}
-.act .lstg{align-items:start}.act .lstcol{display:grid;gap:14px}.act .lsth{font-size:18px}.act .lstbox{display:grid;gap:6px}.act table.lst td{padding:3px 4px}.act table.lst input[type=text]{width:100%;min-width:90px}.act table.lst .a_le,.act table.lst .a_ls{margin-top:3px;font-size:14px;color:var(--muted)}
+.act .lstg{align-items:start}.act .lstcol{display:grid;gap:14px}.act .lsth{font-size:18px}.act .lstbox{display:grid;gap:6px}.act table.lst td{padding:3px 4px}.act .bdko{display:block;font-size:13.5px;padding:2px 2px 0}.act table.lst input[type=text]{width:100%;min-width:90px}.act table.lst .a_le,.act table.lst .a_ls{margin-top:3px;font-size:14px;color:var(--muted)}
 .act .addbox{display:grid;gap:8px;padding:10px;border:1px dashed var(--line);border-radius:8px;background:var(--bg)}.act .ckl li label{display:flex;gap:8px;align-items:center;padding:6px 8px;cursor:pointer;border-radius:6px}.act .ckl li label:hover{background:var(--sunk)}.act .ckl li label.warn{opacity:.75}.act .ckl{max-height:320px;overflow:auto}
 .act .linkbox{display:grid;gap:6px;padding:10px;border:1px dashed var(--rosin);border-radius:8px;background:var(--rosin-soft)}
 .act .ev.stg2{border-left-style:dashed;background:var(--sunk)}.act .stg{font-size:13px;font-weight:600;padding:0 5px;border-radius:4px;background:var(--rosin-soft);color:var(--rosin)}
@@ -708,6 +708,9 @@ function tgTxt(tg){if(!tg)return '';return TG_INST.filter(k=>tg[k]&&((tg[k].b||[
 function tgChips(k,t){const L=tgNorm(t.b);const by={};L.forEach(x=>{const o=tkP(x);by[o.bk]=o});
   return TG_BK.map(bk=>{const o=by[bk];const on=!!o;
     return `<span class="tgb ${on?'on':''}"><button type="button" class="tgc ${on?'on':''}" data-atgb="${k}|${bk}" aria-pressed="${on}" title="${bk==='Pre'?'Pre-Twinkle':bk+'권'}">${bk}</button>${on?`${TG_AB[k]&&bk!=='Pre'?['A','B'].map(p=>`<button type="button" class="tgs ${o.pt===p?'on':''}" data-atgp="${k}|${bk}|${p}" aria-pressed="${o.pt===p}" title="${bk}권${p}만">${p}</button>`).join(''):''}<button type="button" class="tgs up ${o.up?'on':''}" data-atgu="${k}|${bk}" aria-pressed="${o.up}" title="${bk}${o.pt||''} 이상 참가 가능">이상</button>`:''}</span>`}).join('')}
+/* 권 설명 한글 = 캠프 설정 「권수 목록」에서 (11-18 사용자: 합치기) — 서버 bookDescEff_ 와 같은 규칙 */
+function bdKo(k,t){const I={Vn:'바이올린',Vc:'첼로',Fl:'플루트'}[k];const P=(S.D&&S.D.camp&&S.D.camp.progs)||{},Df=(S.D&&S.D.progsDef)||{},L=(P[I]&&P[I].length?P[I]:Df[I])||[];if(t==='Pre')return L.some(x=>/^Pre/i.test(x))?'프리 트윙클':'';const m=String(t).match(/^(\d+)([AB]?)$/);if(!m)return '';const re=new RegExp('^'+m[1]+'권'+m[2]+'(\\s|$)');const x=L.find(v=>re.test(v)),r=x?x.replace(re,'').trim():'';return /^(이상|전체)/.test(r)?'':r}
+function bdKeys(k){const I={Vn:'바이올린',Vc:'첼로',Fl:'플루트'}[k];const P=(S.D&&S.D.camp&&S.D.camp.progs)||{},Df=(S.D&&S.D.progsDef)||{},L=(P[I]&&P[I].length?P[I]:Df[I])||[];const K=['Pre'];L.forEach(v=>{const m=String(v).match(/^(\d+)권([AB]?)(\s|$)/);if(m&&!/^\d+권[AB]?\s*이상/.test(v)&&!K.includes(m[1]+m[2]))K.push(m[1]+m[2])});Object.keys((D.bookDesc||{})[k]||{}).forEach(t=>{if(!K.includes(t))K.push(t)});return K}
 /* 행사 구분 (공연 · 레슨 · 업무) → 종류 → (공연) 단계 → 사람 역할 — 목록은 모두 관리자가 「날짜 · 장소」에서 고침 */
 const CATS=['공연','레슨','업무'];
 const DEF_KINDS=[['Orch A','공연'],['Orch B','공연'],['Orch C','공연'],['Orch D','공연'],['Welcome Concert','공연'],['Ensemble Concert','공연'],['Evening Concert','공연',1],['Afternoon Concert','공연',1],['Twilight Concert','공연',1],['그룹레슨','레슨'],['교사연수','레슨'],['마스터클래스','레슨'],['식당','업무']].map(([n,c,l])=>({n,c,link:!!l}));
@@ -1037,8 +1040,8 @@ function vSet(){return `<div class="sec-h"><div><h2>날짜 · 장소</h2><p>캠�
   <div class="g2">${D.days.map((x,i)=>`<div class="panel"><b>${esc(x)}</b><label class="f">안내 글<textarea class="a_note" data-i="${i}" rows="2" style="width:100%;font:inherit;padding:6px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)" placeholder="예: 모든 교사는 참관하시는 수업에서 적극적으로 보조해 주세요.">${esc((D.dayNotes||[])[i]||'')}</textarea></label>
     <label class="f">식사 줄<textarea class="a_meal" data-i="${i}" rows="${Math.max(2,D.meals.filter(m=>m.d===i).length+1)}" style="width:100%;font:inherit;padding:6px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)">${esc(D.meals.filter(m=>m.d===i).map(m=>m.s+'-'+m.e+' | '+m.t).join('\n'))}</textarea></label></div>`).join('')}</div>
   <div class="row"><button class="btn small primary" type="button" id="a_noteSave">안내 글 · 식사 줄 저장</button><button class="btn small" type="button" id="a_mealCamp" title="캠프 설정 › 식사 시간을 모든 날짜에 다시 넣어요 (그 밖에 따로 넣은 줄은 그대로)">캠프 설정 식사 시간 다시 넣기</button></div>
-  <div class="sec-h"><div><h2>권 설명 (한 · 영) <span class="cap" style="margin:0">구글 시트로 보낼 때 씀</span></h2><p>대상이 권 하나일 때 「Vn 4B(비발디 가단조 ~)」와 영어 줄 「Vivaldi in A minor ~」로 나가요. 비워 두면 권만 나가요.</p></div></div>
-  <div class="g3 lstg">${TG_INST.map(k=>`<div class="panel lstcol"><b class="lsth">${k}</b><table class="pft lst"><tbody>${(k==='Vn'?['Pre','1A','1B','2A','2B','3A','3B','4A','4B','5','6','7','8','9','10']:['Pre','1','2','3','4','5','6','7','8','9','10']).map(t=>{const v=(D.bookDesc[k]||{})[t]||['',''];return `<tr><td class="num" style="white-space:nowrap">${t}</td><td><input type="text" class="a_bd" data-k="${k}" data-t="${t}" data-l="0" value="${esc(v[0]||'')}" placeholder="한글" maxlength="60"><input type="text" class="a_bd" data-k="${k}" data-t="${t}" data-l="1" value="${esc(v[1]||'')}" placeholder="English" maxlength="80" style="margin-top:3px;font-size:14px"></td></tr>`}).join('')}</tbody></table></div>`).join('')}</div>
+  <div class="sec-h"><div><h2>권 설명 영어 <span class="cap" style="margin:0">구글 시트로 보낼 때 씀 · 한글은 캠프 설정 「권수 목록」에서</span></h2></div></div>
+  <div class="g3 lstg">${TG_INST.map(k=>`<div class="panel lstcol"><b class="lsth">${k}</b><table class="pft lst"><tbody>${bdKeys(k).map(t=>{const v=(D.bookDesc[k]||{})[t]||['',''];return `<tr><td class="num" style="white-space:nowrap">${t}</td><td><span class="bdko">${esc(bdKo(k,t))||'<span class="cap">-</span>'}</span><input type="text" class="a_bd" data-k="${k}" data-t="${t}" data-l="1" value="${esc(v[1]||'')}" placeholder="English" maxlength="80" style="margin-top:3px;font-size:14px"></td></tr>`}).join('')}</tbody></table></div>`).join('')}</div>
   <div class="row"><button class="btn small primary" type="button" id="a_bdSave">권 설명 저장</button></div>
   <div class="sec-h"><div><h2>대상 곡 · 클래스 (전공별)</h2><p>일정 「대상」에서 악기마다 고르는 곡 · 클래스 목록이에요. 예: 멘델스존 3악장, 두 대의 바이올린, 테크닉클래스, Tonalization.</p></div></div>
   <div class="g3 lstg">${TG_INST.map(k=>`<div class="panel lstcol">${lstPanel('s:'+k,k+' 곡 · 클래스','')}</div>`).join('')}</div>
@@ -4619,7 +4622,7 @@ document.addEventListener('click',e=>{if(S.tab!=='book')return;const b=e.target.
   if(b.id==='ebSetSave'){const n=Object.assign(ebSet(),S.ebSetW||{});n.per=Math.max(1,Math.min(10,Math.round(+n.per||5)));n.fs=Math.max(5,Math.min(10,+n.fs||6.6));['en','sub','org'].forEach(k=>n[k]=String(n[k]||'').trim().slice(0,120));
     ebSend([],[],n,()=>{S.ebSetW=null;toast('책자 설정을 저장했어요')});return}},true);
 </script>
-<div id="bldMark" hidden>빌드표시 20261118-000224 </div>
+<div id="bldMark" hidden>빌드표시 20261118-000821 </div>
 <script>
 /* 관리자 상담 (11-15): 관리자 매뉴얼 글에서만 찾아 답함 (AI 아님 · 없는 답은 지어내지 않음). 장마다 t 제목 · q 찾는 말 · k 바로 갈 메뉴 · h 본문 */
 const AGD={

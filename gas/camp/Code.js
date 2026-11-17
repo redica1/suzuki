@@ -1,4 +1,4 @@
-/* build: 20261118-000224 */
+/* build: 20261118-000821 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -1891,6 +1891,25 @@ function consentData(token) {
 
 /* ---------------- 프로그램표 → 구글 시트 (교사 일정 › 「구글 시트로 보내기」) ----------------
  * 따로 만든 스프레드시트(설정 「프로그램표 시트」에 ID)에 날짜마다 탭 하나 + 「참가교사」 탭. 보낼 때마다 덮어씀 */
+/* 권 설명 (11-18 사용자: 권수 목록과 합치기) — 한글 = 「권수 목록」 그 권 줄의 곡 부분, 영어 = 날짜 · 장소 「권 설명 영어」 */
+function bookDescEff_(c) {
+  const src = c.bookDesc || ACT_BOOKDESC, out = {}, IN = { Vn: '바이올린', Vc: '첼로', Fl: '플루트' };
+  let P = null; try { P = progList_(); } catch (e) {} let Df = null;
+  Object.keys(IN).forEach(k => {
+    let L = P && P[IN[k]] && P[IN[k]].length ? P[IN[k]] : null;
+    if (!L) { if (!Df) { try { Df = progDef_(); } catch (e) { Df = PROG_DEFAULT_; } } L = (Df && Df[IN[k]]) || []; }
+    const S0 = src[k] || {}, o = out[k] = {};
+    const keys = new Set(Object.keys(S0)); L.forEach(v => { const m = String(v).match(/^(\d+)권([AB]?)(\s|$)/); if (m && !/^\d+권[AB]?\s*이상/.test(v)) keys.add(m[1] + m[2]); else if (/^Pre/i.test(v)) keys.add('Pre'); });
+    keys.forEach(t => {
+      let ko = '';
+      if (t === 'Pre') ko = L.some(v => /^Pre/i.test(v)) ? '프리 트윙클' : '';
+      else { const m = String(t).match(/^(\d+)([AB]?)$/); if (m) { const re = new RegExp('^' + m[1] + '권' + m[2] + '(\\s|$)'), x = L.find(v => re.test(v)); ko = x ? String(x).replace(re, '').trim() : ''; if (/^(이상|전체)/.test(ko)) ko = ''; } }
+      const en = (S0[t] || [])[1] || '';
+      if (ko || en) o[t] = [ko, en];
+    });
+  });
+  return out;
+}
 const ACT_BOOKDESC = { Vn: { 'Pre': ['프리 트윙클', 'Pre-Twinkle'], '1A': ['~ 무궁동', '~ Perpetual Motion'], '1B': ['알레그레토 ~', 'Allegretto ~'], '2A': ['~ 헨델 부레', '~ Handel Bourrée'], '2B': ['두 사람의 척탄병 ~', 'Two Grenadiers ~'], '3A': ['~ 유모레스크', '~ Humoresque'], '3B': ['베커 가보트 ~', 'Becker Gavotte ~'], '4A': ['~ 자이츠 5번 3악장', "~ Seitz No.5 3rd mov't"], '4B': ['비발디 가단조 ~', 'Vivaldi in A minor ~'] }, Vc: { 'Pre': ['프리 트윙클', 'Pre-Twinkle'] }, Fl: { 'Pre': ['프리 트윙클', 'Pre-Twinkle'] } };
 const ACT_EN = { '공연': 'Concert', '레슨': 'Lesson', '업무': 'Duty', '본공연': '', '리허설': 'Rehearsal', '무대 세팅': 'Stage Setting', '그룹레슨': 'Group Lesson', '교사연수': 'Teacher Training', '마스터클래스': 'Master Class', '식당': 'Dining' };
 const WD_EN = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'], MON_EN = ['Jan.', 'Feb.', 'Mar.', 'Apr.', 'May', 'Jun.', 'Jul.', 'Aug.', 'Sep.', 'Oct.', 'Nov.', 'Dec.'];
@@ -1908,7 +1927,7 @@ function tgTok_(L) {
 /** 미리보기 · 시트에서 숨길 것 (일정설정 pvHide): f = 칸 안 항목(en 영어 · tg 대상 · sub 세부 · desc 설명 · note 안내 글 · meal 식사 줄) · r = 「구분:역할」 · t = 탭(t 참가교사 · o 오케 명단 · c 음악회) */
 const pvHide_ = c => { const h = c.pvHide || {}; return { f: new Set(h.f || []), r: new Set(h.r || []), t: new Set(h.t || []) }; };
 function progCell_(e, c, nameOf) {
-  const H = pvHide_(c), en = H.f.has('en') ? {} : Object.assign({}, ACT_EN, c.en || {}), BD = c.bookDesc || ACT_BOOKDESC, short = c.roleShort || {};
+  const H = pvHide_(c), en = H.f.has('en') ? {} : Object.assign({}, ACT_EN, c.en || {}), BD = bookDescEff_(c), short = c.roleShort || {};
   const L = [], tg = H.f.has('tg') ? {} : (e.tg || {}), insts = ['Vn', 'Vc', 'Fl'].filter(k => tg[k] && ((tg[k].b || []).length || (tg[k].x || []).length || (tg[k].s || []).length || tg[k].m));
   const stage = e.stage && e.stage !== '본공연' ? e.stage : '';
   if (insts.length) {
@@ -1936,7 +1955,7 @@ function progCell_(e, c, nameOf) {
 }
 /** 책자 시간표 칸 하나를 항목으로 (11-05): t 시각(시간대와 다를 때만) · h 반 · 행사 이름 · b 내용 줄 · l 담당 · a 보조 · en 영문 · k 종류 */
 function progCellS_(e, c, nameOf, t0, e0) {
-  const H = pvHide_(c), en = H.f.has('en') ? {} : Object.assign({}, ACT_EN, c.en || {}), BD = c.bookDesc || ACT_BOOKDESC;
+  const H = pvHide_(c), en = H.f.has('en') ? {} : Object.assign({}, ACT_EN, c.en || {}), BD = bookDescEff_(c);
   const tg = H.f.has('tg') ? {} : (e.tg || {}), insts = ['Vn', 'Vc', 'Fl'].filter(k => tg[k] && ((tg[k].b || []).length || (tg[k].x || []).length || (tg[k].s || []).length || tg[k].m));
   const stage = e.stage && e.stage !== '본공연' ? e.stage : '', ttl = e.title + (stage ? ' ' + stage : '');
   const o = { k: e.cat || '', t: (e.s !== t0 || e.e !== e0) ? e.s + '~' + e.e : '', h: [], b: [], l: '', a: [], en: '' }, EN = [];

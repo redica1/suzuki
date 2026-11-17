@@ -1,4 +1,4 @@
-${''/* build: 20261117-220025 */}
+${''/* build: 20261117-220113 */}
     <div class="song3"><b class="sh">곡 2 <span class="hint">있으면</span></b>
       <label class="f" for="enK2">작곡가<input type="text" id="enK2" data-ens="k2" value="${esc(E.k2||'')}" placeholder=""></label>
       <label class="f" for="enC2">곡명<input type="text" id="enC2" data-ens="c2" value="${esc(E.c2||'')}" placeholder=""></label>
@@ -187,7 +187,7 @@ function ovBox(no,ids){const sb=MY_SUBS.find(x=>x.no===no);if(!sb)return;const L
   bg.innerHTML=`<div class="askbox" role="dialog" aria-modal="true" aria-labelledby="askT"><h3 id="askT">더 낸 ${won(sum)}을 돌려드려요</h3>
     <div class="tbl"><table><thead><tr><th>이름</th><th class="r">입금 확인</th><th class="r">지금 청구액</th><th class="r">돌려받을 금액</th></tr></thead><tbody>${L.map(p=>`<tr><td><b>${esc(p.name)}</b></td><td class="r num">${won(p.paidAmt||0)}</td><td class="r num">${won(pAmt(p))}</td><td class="r num"><b>${won(overOf(p))}</b></td></tr>`).join('')}</tbody></table></div>
     <p class="hint" style="margin:8px 0">돌려받을 계좌를 적으면 운영진에게 「차액 환불」로 바로 올라가요. 참가는 그대로예요 (취소가 아니에요).</p>
-    <div class="rpf">${bankInp('ovB')}<input type="text" id="ovA" inputmode="numeric" placeholder="계좌번호"><input type="text" id="ovH" placeholder="예금주" value="${esc(S.user&&S.user.name||'')}"></div>
+    <div class="rpf bkf">${bankInp('ovB')}<input type="text" id="ovA" inputmode="numeric" placeholder="계좌번호"><input type="text" id="ovH" placeholder="예금주" value="${esc(S.user&&S.user.name||'')}"></div>
     <span class="err" id="ovErr"></span>
     <div class="row"><button class="btn ghost" type="button" id="askNo">나중에</button><button class="btn primary" type="button" id="ovGo">돌려받기 요청</button></div></div>`;
   document.body.appendChild(bg);
@@ -204,7 +204,7 @@ function prpForm(p,sb){const ed=p.pay==='신고'&&p.rep;const r0=ed&&(p.rep.rows
   const over=(+v.a||0)>dueOf(p);
   return `<div class="prpf">${ed?'':bankHTML()}<div class="rpf"><label class="fl" for="prpN"><span>입금자명</span><input type="text" id="prpN" value="${esc(v.n)}" placeholder="입금자명"></label><label class="fl" for="prpD"><span>입금일 <b class="req">*</b></span><input type="${v.d?'date':'text'}" class="dph" placeholder="입금일" id="prpD" value="${v.d}" max="${S.today}" min="${(S.bank||{}).from||''}"></label><label class="fl" for="prpA"><span>입금 금액</span><input type="text" class="num" id="prpA" inputmode="numeric" value="${v.a?(+v.a).toLocaleString('ko-KR'):''}" data-due="${dueOf(p)}"></label></div>
     <div class="rfbox" id="prpRf" ${over?'':'hidden'}><span class="hint"><b>청구액(${won(dueOf(p))})보다 많아요.</b> 더 낸 금액을 돌려받을 계좌를 적어 주세요.</span>
-      <div class="rpf">${bankInp('prpRfB')}<input type="text" id="prpRfA" inputmode="numeric" placeholder="계좌번호"><input type="text" id="prpRfH" placeholder="예금주"></div></div>
+      <div class="rpf bkf">${bankInp('prpRfB')}<input type="text" id="prpRfA" inputmode="numeric" placeholder="계좌번호"><input type="text" id="prpRfH" placeholder="예금주"></div></div>
     <label class="fl" for="prpM"><span>메모</span><input type="text" id="prpM" placeholder="금액이 청구액 ${won(dueOf(p))}과 다르면 적어 주세요"></label>
     <div class="row" style="justify-content:flex-end"><span class="err" id="prpErr" style="margin-right:auto"></span><button class="btn small ghost" type="button" data-prp="${p.id}">닫기</button>${ed?`<button class="btn small" type="button" data-prpdel="${sb.no}|${p.id}">신고 취소</button><button class="btn small primary" type="button" data-prpgo="${sb.no}|${p.id}">수정 내용 저장</button>`:`<button class="btn small primary" type="button" data-prpgo="${sb.no}|${p.id}">입금 신고하기</button>`}</div>
     ${ed?`<p class="hint" style="margin:0">운영진이 확인하기 전까지 고칠 수 있어요. 확인된 뒤에는 운영진에게 연락해 주세요.${p.rep.ids.length>1?` 이 신고는 ${p.rep.ids.length}명이 함께예요 · 이 사람 줄만 바뀌어요.`:''}</p>`:''}</div>`}

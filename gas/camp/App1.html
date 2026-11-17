@@ -1,4 +1,4 @@
-/* build: 20261117-214538 */
+/* build: 20261117-215731 */
 /* ---------- 캠프 설정 (관리자 화면에서 입력되는 값) ---------- */
 const ROOM = { cap:4, emptyFee:140000, max:6 }; // 가족방: 4명 이상 기준(4명보다 적으면 빈 자리 1개당 추가 비용) · 숙소 1실은 5~6인이라 한 방 최대 6명 (11-15 사용자: 「4명까지」가 아니라 「4명 이상」)
 const CAMP = { id:'27W', ri:0, lessonFee:60000, lessonMax:5, mcFee:150000,
@@ -66,7 +66,7 @@ function roomsOf(subs){const R=[];(subs||[]).forEach(sb=>{const f=sb.form||{},ro
     Object.keys(room).filter(k=>room[k]).forEach(k=>{const rep=P(k);if(!rep||rep.status==='취소')return;const heads=[k,...Object.keys(join).filter(j=>join[j]===k)];
       const keys=[...heads,...fam.filter(x=>heads.includes(x.link)).map(x=>x.id)];const mem=keys.map(P).filter(x=>x&&x.status!=='취소').map(p=>({sb,p}));
       R.push({sb,rep,mem,fee:mem.reduce((t,x)=>t+(+x.p.room||0),0)})})});return R}
-const roomMark=subs=>{const m={};roomsOf(subs).forEach(r=>r.mem.forEach(x=>m[x.p.id]={rep:r.rep.name,isRep:x.p.id===r.rep.id,n:r.mem.length}));return m};
+const roomMark=subs=>{const m={};roomsOf(subs).forEach((r,ri)=>r.mem.forEach(x=>m[x.p.id]={rep:r.rep.name,isRep:x.p.id===r.rep.id,n:r.mem.length,ci:ri%6}));return m};   /* ci (11-17): 가족방마다 옅은 색 */
 const roomChip=()=>'';
 /* 가족방 칸: 대표는 「대표 · 4명」, 함께 쓰는 사람은 「바하린 방」 */
 const roomTag=(M,p)=>{const o=M[p.id];return o?`<span class="rmtag${o.isRep?' rep':''}">${o.isRep?`가족방 대표 ${o.n}명`:`${esc(o.rep)} 방`}</span>`:''};   /* 11-17: 가족방 칸 대신 접수 시간 위 한 줄 */

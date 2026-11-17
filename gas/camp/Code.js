@@ -1,4 +1,4 @@
-/* build: 20261117-224406 */
+/* build: 20261117-224806 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -3924,6 +3924,18 @@ function layoutRecolor(token, from, to) {
     log_('관리자 ' + a.name, '방 타입 색 바꿈', f + ' → ' + t + ' · 방 ' + n + (sheetOk ? '' : ' (원본 시트는 못 바꿈)'));
   } finally { lock.releaseLock(); }
   return Object.assign(roomData(token), { recolored: n, sheetOk });
+}
+/** 방 타입 일괄 저장 (11-17): {방번호: 타입번호('' = 없음)} */
+function roomTypesSave(token, map) {
+  const a = adm_(token); need_(a, 'room');
+  const M = map && typeof map === 'object' ? map : {}, keys = Object.keys(M).slice(0, 600);
+  const lock = lock_(); let n = 0;
+  try {
+    const sh = roomSheet_(), L = rooms_(), col = ROOM_HEAD.indexOf('타입') + 1;
+    keys.forEach(k => { const r = L.find(x => x.no === k); if (!r) return; sh.getRange(r._row, col).setValue(String(M[k] || '').trim().slice(0, 10)); n++; });
+    log_('관리자 ' + a.name, '방 타입 일괄 저장', n + '곳');
+  } finally { lock.releaseLock(); }
+  return roomData(token);
 }
 /** 방 호수 직접 넣기 (11-17): 건물 · 층 · 호수 여럿 → 방배정 시트에 줄 더함 (이미 있으면 건너뜀) */
 function roomAddMany(token, bld, fl, nos) {

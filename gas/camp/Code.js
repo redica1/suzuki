@@ -1,4 +1,4 @@
-/* build: 20261117-222415 */
+/* build: 20261117-222631 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -3774,7 +3774,8 @@ function roomCfg_() {
   if (!Array.isArray(names) || !names.length) names = ['본부방', '교수진'];
   let colors = {}; try { colors = JSON.parse(setting_('방 색') || '{}') || {}; } catch (x) {}
   let tcol = {}; try { tcol = JSON.parse(setting_('방 타입 색') || '{}') || {}; } catch (x) {}
-  return { typeColors: tcol, layoutSrc: String(setting_('배치도 시트') || ''), pubAll: setting_('방 공개') === '예', pubAt: String(setting_('방 공개 시각') || '').replace(/^'/, ''), names, colors: { mode: colors.mode === 'main' ? 'main' : 'kind', kind: colors.kind || {}, main: colors.main || {} } };
+  let types = []; try { types = JSON.parse(setting_('방 타입 목록') || '[]') || []; } catch (x) {} if (!Array.isArray(types)) types = [];
+  return { types, typeColors: tcol, layoutSrc: String(setting_('배치도 시트') || ''), pubAll: setting_('방 공개') === '예', pubAt: String(setting_('방 공개 시각') || '').replace(/^'/, ''), names, colors: { mode: colors.mode === 'main' ? 'main' : 'kind', kind: colors.kind || {}, main: colors.main || {} } };
 }
 function roomPubNow_(cfg) { if (!cfg.pubAll) return false; if (!cfg.pubAt) return true; const t = new Date(cfg.pubAt.replace(' ', 'T') + ':00+09:00'); return isNaN(t) ? true : Date.now() >= t.getTime(); }
 function roomCfgSave(token, b) {
@@ -3788,6 +3789,8 @@ function roomCfgSave(token, b) {
   put('방 이름 목록', JSON.stringify(names), '방배정 메인에 학원 대신 고를 수 있는 이름');
   if (b && b.layoutSrc !== undefined) { const v = String(b.layoutSrc || '').split(/\s*\n\s*/).map(x => x.trim()).filter(Boolean).join('\n'); const ids = v.split('\n').filter(Boolean).map(x => { if (!/\/d\/[a-zA-Z0-9_-]{20,}|^[a-zA-Z0-9_-]{20,}$/.test(x)) throw new Error('구글 시트 주소를 그대로 붙여 넣어 주세요 (https://docs.google.com/spreadsheets/d/…).'); return (x.match(/\/d\/([a-zA-Z0-9_-]{20,})/) || x.match(/^([a-zA-Z0-9_-]{20,})$/))[1]; }); if (ids.some(x => x !== ids[0])) throw new Error('층 주소는 모두 같은 구글 시트의 탭이어야 해요. 한 시트에 층마다 탭을 만들어 주세요.');
     put('배치도 시트', v, '방배정 도면을 그린 구글 시트 주소 (비우면 이 시트 · 주소에 gid가 있으면 그 탭 하나만)'); try { CacheService.getScriptCache().remove('lytabs_' + (layoutSrcId_() || 'here') + '_' + layoutGid_()); } catch (x) {} }
+  if (b && Array.isArray(b.types)) { const seen = {}; const L = b.types.slice(0, 40).map(x => ({ no: String(x && x.no || '').trim().slice(0, 10), desc: String(x && x.desc || '').trim().slice(0, 60), color: /^#[0-9a-f]{6}$/i.test(String(x && x.color || '')) ? String(x.color).toLowerCase() : '' })).filter(x => x.no && !seen[x.no] && (seen[x.no] = 1));
+    put('방 타입 목록', JSON.stringify(L), '관리자가 넣은 방 타입: 타입번호 · 구성 · 색 (방마다 타입을 고르면 도면 방번호 칸이 그 색)'); }
   if (b && b.typeColors) { const o = {}; Object.keys(b.typeColors).slice(0, 40).forEach(k => { if (/^#[0-9a-f]{6}$/i.test(k)) { const v = String(b.typeColors[k] || '').trim().slice(0, 40); if (v) o[k.toLowerCase()] = v; } });
     put('방 타입 색', JSON.stringify(o), '도면 방번호 칸 색 → 방 타입 이름 (배치도 위 범례)'); }
   if (b && b.colors) { const hx = v => /^#[0-9a-f]{6}$/i.test(String(v)) ? String(v) : ''; const cl = o => { const r = {}; Object.keys(o || {}).slice(0, 200).forEach(k => { const v = hx(o[k]); if (v) r[String(k).slice(0, 40)] = v; }); return r; };
@@ -3953,7 +3956,7 @@ function roomSave(token, x) {
     const all = nd ? [...Array(nd).keys()] : [0], use = days.length ? days : all;
     use.forEach(d => { const sum = occ.filter(o => !o.days.length || o.days.includes(d)).reduce((s2, o) => s2 + o.n, 0); if (sum > cap) throw new Error(`${r.no} 방: ${d + 1}번째 날 인원 ${sum}명이 정원 ${cap}명보다 많아요.`); });
     const m = occ[0] || {}, sub = occ.slice(1).find(o => o.k === 'acad' || o.k === 'grp'), pr = occ.find(o => o.k === 'name' && kind === '교수방');
-    const row = [r.no, r.bld, r.fl, t(x.type, 10) || r.type, cap, clear ? '' : kind, clear ? '' : (m.v || ''), clear ? '' : m.n, clear ? '' : (sub ? sub.v : ''), clear ? '' : (sub ? sub.n : ''), clear ? '' : t(x.pw, 40), clear ? '' : (pr ? pr.v : ''), t(x.memo, 200), stamp_(), a.name,
+    const row = [r.no, r.bld, r.fl, x.type !== undefined ? t(x.type, 10) : r.type, cap, clear ? '' : kind, clear ? '' : (m.v || ''), clear ? '' : m.n, clear ? '' : (sub ? sub.v : ''), clear ? '' : (sub ? sub.n : ''), clear ? '' : t(x.pw, 40), clear ? '' : (pr ? pr.v : ''), t(x.memo, 200), stamp_(), a.name,
       clear ? '' : JSON.stringify(occ), days.length && days.length < all.length ? days.join(',') : '', x.pub && !clear ? '예' : '', /^#[0-9a-f]{6}$/i.test(String(x.color || '')) && !clear ? String(x.color) : '', t(x.size, 12), x.beds === '' || x.beds == null ? '' : n(x.beds), t(x.feat, 40)];
     sh.getRange(r._row, 1, 1, ROOM_HEAD.length).setValues([row]);
     log_('관리자 ' + a.name, clear ? '방 비움' : '방 배정', r.no + (clear ? '' : ' · ' + occ.map(o => o.v + ' ' + o.n).join(', ') + ' ' + kind));

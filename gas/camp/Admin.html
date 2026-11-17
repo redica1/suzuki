@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261117-222415 -->
+<!-- build: 20261117-222631 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -1315,7 +1315,7 @@ function editor(){const e=A.ed,r=R.rooms.find(x=>x.no===A.sel);if(!e||!r)return 
   const typ=rType(r.no)||r.type||'',hasFam=e.occ.some(o=>o.k==='fam');
   return `<div class="picker roomed"><div class="sec-h"><div><b class="num" style="font-size:20px">${esc(r.no)}</b> <span class="cap" style="margin:0">${esc(r.bld)} ${esc(r.fl)}</span></div>
     <div class="row"><button class="btn small primary" type="button" id="r_save">저장</button><button class="btn small" type="button" id="r_clear">비우기</button><button class="btn small" type="button" id="r_close">닫기</button></div></div>
-    <div class="rinfo">${numColor(r.no)?`<span class="lysw" style="background:${esc(numColor(r.no))}"></span>`:''}<b>${esc(typ||'타입 미정')}</b>
+    <div class="rinfo">${numColor(r.no)?`<span class="lysw" style="background:${esc(numColor(r.no))}"></span>`:''}${rTypes().length?`<label>타입 <select id="r_type"><option value="">타입 미정</option>${rTypes().map(t=>`<option value="${esc(t.no)}" ${(e.type!==undefined?e.type:r.type)===t.no?'selected':''}>${esc(t.no)}${t.desc?' · '+esc(t.desc):''}</option>`).join('')}</select></label>`:`<b>${esc(typ||'타입 미정')}</b>`}
       <label>평수 <input type="text" id="r_size" value="${esc(e.size||'')}" maxlength="12" placeholder="예: 33평" style="width:76px"></label>
       <label>침대 <input type="number" id="r_beds" min="0" max="10" value="${e.beds===''||e.beds==null?'':e.beds}" style="width:56px"> 개</label>
       <label>정원 <input type="number" id="r_cap" min="1" max="30" value="${e.cap}" style="width:56px"> 명</label>
@@ -1341,7 +1341,7 @@ function editor(){const e=A.ed,r=R.rooms.find(x=>x.no===A.sel);if(!e||!r)return 
 /* 정원에서 남은 자리 (skip = 그 줄은 빼고 셈) · 날짜마다 따져 가장 적은 값 */
 function roomLeft(skip){const e=A.ed,rd=e.days.length?e.days:allDays();return Math.min(...rd.map(d=>e.cap-e.occ.filter((o,i)=>i!==skip&&(o.days.length?o.days:rd).includes(d)).reduce((t,o)=>t+(+o.n||0),0)))}
 function overCap(){const e=A.ed,rd=e.days.length?e.days:allDays();return rd.some(d=>e.occ.filter(o=>(o.days.length?o.days:rd).includes(d)).reduce((t,o)=>t+(+o.n||0),0)>e.cap)}
-function edRead(){const e=A.ed;if(!e)return;const g=id=>document.getElementById(id);if(!g('r_kind'))return;e.kind=g('r_kind').value;e.cap=+g('r_cap').value||e.cap;if(g('r_size')){e.size=g('r_size').value.trim();e.beds=g('r_beds').value===''?'':+g('r_beds').value;e.feat=g('r_feat').value.trim()}e.pub=g('r_pub').checked;e.pw=g('r_pw').value.trim();e.memo=g('r_memo').value.trim();e.color=g('r_colOn')&&g('r_colOn').checked?g('r_col').value:''}
+function edRead(){const e=A.ed;if(!e)return;const g=id=>document.getElementById(id);if(!g('r_kind'))return;e.kind=g('r_kind').value;e.cap=+g('r_cap').value||e.cap;if(g('r_size')){e.size=g('r_size').value.trim();e.beds=g('r_beds').value===''?'':+g('r_beds').value;e.feat=g('r_feat').value.trim()}e.pub=g('r_pub').checked;e.pw=g('r_pw').value.trim();e.memo=g('r_memo').value.trim();if(g('r_type'))e.type=g('r_type').value;e.color=g('r_colOn')&&g('r_colOn').checked?g('r_col').value:''}
 document.addEventListener('change',ev=>{if(S.tab==='room'&&ev.target.name==='rc_mode'){A.cMode=ev.target.value;A.cfgOpen=true;['kind','main'].forEach(k=>{const el=document.getElementById('rc_'+k);if(el)el.style.display=k===A.cMode?'':'none'});return}if(S.tab!=='room'||!A.ed)return;const el=ev.target,d=el.dataset;
   if(d.rday!==undefined){edRead();const D=allDays();let rd=A.ed.days.length?A.ed.days.slice():D.slice();const x=+d.rday;rd=el.checked?[...new Set([...rd,x])].sort((a,b)=>a-b):rd.filter(y=>y!==x);A.ed.days=rd.length===D.length?[]:rd;A.ed.occ.forEach(o=>{o.days=o.days.filter(y=>rd.includes(y));if(o.days.length===rd.length)o.days=[]});render();return}
   if(d.rod){edRead();const [i,x]=d.rod.split('|').map(Number);const o=A.ed.occ[i];const rd=A.ed.days.length?A.ed.days:allDays();let od=o.days.length?o.days.slice():rd.slice();const prev=o.days.slice();od=el.checked?[...new Set([...od,x])].sort((a,b)=>a-b):od.filter(y=>y!==x);o.days=od.length===rd.length?[]:od;if(overCap()){o.days=prev;toast(`${dayLab(x)}에는 자리가 없어요 (정원 ${A.ed.cap}명)`)}render();return}
@@ -1416,8 +1416,14 @@ function roomColor(q){if(q.color)return q.color;const C=(R.cfg&&R.cfg.colors)||{
   return (C.kind&&C.kind[q.kind])||KCOL[q.kind]||'#eeeeee'}
 /* 방번호 칸 색 → 방 타입 (도면 위 범례에서 이름을 붙임) */
 let NC=null,NCR=null;
-function numColor(no){if(NCR!==R||!NC){NC={};NCR=R;floors().forEach(f=>Object.entries(f.rooms).forEach(([n,v])=>{const c=f.cells.find(x=>x[0]===v[0]&&x[1]===v[1]);if(c&&c[5]&&!NC[n])NC[n]=String(c[5]).toLowerCase()}))}return NC[no]||''}
-function rType(no){const c=numColor(no),T=(R.cfg&&R.cfg.typeColors)||{};return c&&T[c]||''}
+function numColor(no,sheetOnly){if(!sheetOnly){const ty=rTyOf(no);if(ty&&ty.color)return ty.color}if(NCR!==R||!NC){NC={};NCR=R;floors().forEach(f=>Object.entries(f.rooms).forEach(([n,v])=>{const c=f.cells.find(x=>x[0]===v[0]&&x[1]===v[1]);if(c&&c[5]&&!NC[n])NC[n]=String(c[5]).toLowerCase()}))}return NC[no]||''}
+const rTypes=()=>(R&&R.cfg&&R.cfg.types)||[];const rTyOf=no=>{const q=(R.rooms||[]).find(x=>x.no===no);return q&&q.type?rTypes().find(t=>t.no===q.type):null};   /* 11-17: 관리자가 넣은 방 타입 */
+function rType(no){const ty=rTyOf(no);if(ty)return ty.no+(ty.desc?' · '+ty.desc:'');const c=numColor(no,1),T=(R.cfg&&R.cfg.typeColors)||{};return c&&T[c]||''}
+function typePanel(){const L=A.tyEd||rTypes().map(t=>Object.assign({},t));A.tyEd=A.tyEd||null;const cnt=no=>(R.rooms||[]).filter(r=>r.type===no).length;
+  return `<div class="panel tyPanel"><div class="spread"><b>방 타입</b><span class="hint">타입을 만들고, 방을 눌러 타입을 고르면 도면 방번호 칸이 그 색으로 바뀌어요</span></div>
+  <div class="mtblw"><table class="mtbl nosort" style="margin-top:6px"><thead><tr><th>타입번호</th><th>구성</th><th>색</th><th>방 수</th><th></th></tr></thead><tbody>${L.map((t,i)=>`<tr><td><input type="text" data-ty="${i}|no" value="${esc(t.no)}" maxlength="10" placeholder="예: A" style="width:80px"></td><td class="l"><input type="text" data-ty="${i}|desc" value="${esc(t.desc||'')}" maxlength="60" placeholder="예: 침대 2 · 온돌 · 5인" style="width:100%;min-width:180px"></td><td><input type="color" data-ty="${i}|color" value="${esc(t.color||'#cfe8ff')}" style="width:40px;height:28px;padding:0"></td><td class="num">${t.no?cnt(t.no):'-'}</td><td><button class="btn small ghost" type="button" data-tydel="${i}" aria-label="타입 빼기">×</button></td></tr>`).join('')||'<tr><td colspan="5" class="hint">아직 타입이 없어요. 「＋ 타입 추가」를 눌러 주세요.</td></tr>'}</tbody></table></div>
+  <div class="row" style="gap:6px;margin-top:8px"><button class="btn small" type="button" id="r_tyAdd">＋ 타입 추가</button><button class="btn small primary" type="button" id="r_tySave">타입 저장</button></div></div>`}
+function tyRead(){return [...document.querySelectorAll('[data-ty]')].reduce((L,el)=>{const [i,k]=el.dataset.ty.split('|');(L[+i]=L[+i]||{})[k]=el.value.trim();return L},[]).filter(Boolean)}
 function legendBox(F){const cnt={};F.forEach(f=>Object.entries(f.rooms).forEach(([no,v])=>{const c=f.cells.find(x=>x[0]===v[0]&&x[1]===v[1]);const k=c&&c[5]?String(c[5]).toLowerCase():'';if(k)(cnt[k]=cnt[k]||{n:0,here:0}).n++}));
   const Fl=F[A.lyF];Object.entries(Fl.rooms).forEach(([no,v])=>{const c=Fl.cells.find(x=>x[0]===v[0]&&x[1]===v[1]);const k=c&&c[5]?String(c[5]).toLowerCase():'';if(k&&cnt[k])cnt[k].here++});
   const T=(R.cfg&&R.cfg.typeColors)||{},ks=Object.keys(cnt).filter(k=>cnt[k].here||T[k]).sort((a,b)=>cnt[b].here-cnt[a].here||cnt[b].n-cnt[a].n);if(!ks.length)return '';
@@ -1432,14 +1438,14 @@ function vPlan(){const F=floors();if(A.lyF>=F.length)A.lyF=0;const Fl=F[A.lyF];
       const [,,rs0,cs0,t,bg,fg,b,fs,bd,ha,va]=x;const rs=Math.min(rs0,Fl.rh.length-r),cs=Math.min(cs0,Fl.cw.length-c);
       for(let rr=r;rr<r+rs;rr++)for(let cc=c;cc<c+cs;cc++)if(rr!==r||cc!==c)cover.add(rr+','+cc);
       const bs=[...String(bd||'0000')].map(n=>n==='0'?'none':`${n==='3'?3:n==='2'?2:1}px solid #333`);let text=t,bgc=bg,cls='',attr='';
-      const rno=roomAt[r+','+c],lno=labelAt[r+','+c];
+      const rno=roomAt[r+','+c],lno=labelAt[r+','+c];if(rno){const ty=rTyOf(rno);if(ty&&ty.color)bgc=ty.color}
       if(rno){const q=byNo[rno];if(q&&q.pub)text=t+' *';if(!Fl.rooms[rno][2]){cls='lyroom'+(A.sel===rno?' on':'');attr=` data-rroom="${rno}" title="${rno} 방 편집"`}}
       let rich='';if(lno){const q=byNo[lno];if(q&&used(q)){rich=[q.kind?`<b>${esc(q.kind)}</b>`:'',q.occ.map(o=>esc(oLab(o)+(o.n?' '+o.n:''))).join('<br>'),`${peak(q)}/${q.cap}`,q.days&&q.days.length&&q.days.length<allDays().length?esc(q.days.map(dayLab).join(',')):''].filter(Boolean).join('<br>');text='';bgc=roomColor(q)}else if(!Fl.builtin&&t){}else{text='';bgc=Fl.builtin?'':bg}cls+=' lylab'+(A.sel===lno?' on':'');attr+=` data-rroom="${lno}" title="${lno} 방 배정 넣기 · 고치기"`}
       const style=`${bgc?`background:${bgc};`:''}${fg&&!/^#0{6}$/.test(fg)?`color:${fg};`:''}${b?'font-weight:700;':''}font-size:${Math.round((+fs||10)*1.1)}px;border-top:${bs[0]};border-right:${bs[1]};border-bottom:${bs[2]};border-left:${bs[3]};text-align:${ha==='C'?'center':ha==='R'?'right':'left'};vertical-align:${va==='T'?'top':va==='B'?'bottom':'middle'}`;
       row+=`<td${rs>1?` rowspan="${rs}"`:''}${cs>1?` colspan="${cs}"`:''} class="${cls}"${attr} style="${style}">${rich||esc(text).replace(/\n/g,'<br>')}</td>`}
     html+=`<tr style="height:${Fl.rh[r]}px">${row}</tr>`}
   const tabs=R.layoutTabs||[],res=A.lyRes;
-  return `${legendBox(F)}<div class="row"><div class="seg" role="group" aria-label="층">${F.map((f,k)=>`<button type="button" data-rlyf="${k}" aria-pressed="${A.lyF===k}">${esc(f.name)}${f.builtin?'':' ·'}</button>`).join('')}</div></div>
+  return `${typePanel()}${rTypes().length?'':legendBox(F)}<div class="row"><div class="seg" role="group" aria-label="층">${F.map((f,k)=>`<button type="button" data-rlyf="${k}" aria-pressed="${A.lyF===k}">${esc(f.name)}${f.builtin?'':' ·'}</button>`).join('')}</div></div>
   <div class="panel"><div class="spread"><div><b>도면</b> <span class="hint">${Fl.builtin?'지금 층: 기본 도면(2026 겨울 객실배치도)':`지금 층: 시트 「${esc(Fl.tab)}」에서 불러옴 · ${esc(String(Fl.at||'').slice(0,16))}${Fl.borders==='guess'?' · 테두리는 추정':''}`} · 층 이름 옆 · = 시트에서 불러온 층</span></div>
     <div class="row" style="gap:6px"><button class="btn small primary" type="button" id="r_lyImp" ${tabs.length?'':'disabled'}>도면 불러오기 (${tabs.length}탭)</button></div></div>
     <div class="lysrcs" style="margin-top:8px">${lySrcRows().map((u,i)=>`<div class="row" style="gap:6px;margin-top:6px;flex-wrap:nowrap"><label class="cap" for="r_lySrc${i}" style="margin:0;white-space:nowrap;min-width:3.5em">${i+1}층 탭</label><input type="url" id="r_lySrc${i}" data-lysrc="${i}" value="${esc(u)}" placeholder="그 층 탭을 연 채로 주소창 주소 붙여넣기 (…#gid=숫자)" style="flex:1;min-width:0"><button class="btn small ghost" type="button" data-lysrcdel="${i}" aria-label="${i+1}번째 주소 빼기">×</button></div>`).join('')}
@@ -1489,7 +1495,7 @@ function view(){
     ${editor()}
     ${[...new Set(L.map(r=>r.fl))].map(f=>`<div class="floor"><span class="flab">${esc(A.bld)} ${esc(f)} · ${L.filter(r=>r.fl===f&&used(r)).length}/${L.filter(r=>r.fl===f).length}</span><div class="rgrid">${L.filter(r=>r.fl===f).map(tile).join('')}</div></div>`).join('')}</div>`}
 function save(clear){const e=A.ed;if(!e)return;edRead();
-  const x=clear?{no:e.no,occ:[],cap:e.cap,memo:e.memo,size:e.size,beds:e.beds,feat:e.feat}:{no:e.no,kind:e.kind,cap:e.cap,pw:e.pw,memo:e.memo,pub:e.pub,days:e.days,occ:e.occ,color:e.color,size:e.size,beds:e.beds,feat:e.feat};
+  const x=clear?{no:e.no,occ:[],cap:e.cap,memo:e.memo,size:e.size,beds:e.beds,feat:e.feat}:{no:e.no,type:e.type,kind:e.kind,cap:e.cap,pw:e.pw,memo:e.memo,pub:e.pub,days:e.days,occ:e.occ,color:e.color,size:e.size,beds:e.beds,feat:e.feat};
   if(!clear&&!e.kind){toast('방종류를 골라 주세요 (필수)');const k=document.getElementById('r_kind');if(k){k.focus();k.style.outline='2px solid #d33'}return}
   if(!clear){const rd=e.days.length?e.days:allDays();const bad=rd.find(d=>e.occ.filter(o=>(o.days.length?o.days:rd).includes(d)).reduce((t,o)=>t+(+o.n||0),0)>e.cap);if(bad!=null){toast(dayLab(bad)+' 인원이 정원보다 많아요 · 정원을 고치거나 인원 · 날짜를 줄여 주세요');return}}
   run('roomSave',[x],d=>{R=d;A.sel='';A.ed=null;render();toast(clear?e.no+' 방을 비웠어요':e.no+' 방을 저장했어요')},m=>toast('저장하지 못했어요 · '+m))}
@@ -1521,6 +1527,10 @@ document.addEventListener('click',ev=>{if(S.tab!=='room')return;const b=ev.targe
   if(b.id==='r_close'){A.sel='';A.ed=null;render();return}
   if(b.id==='r_tcolSave'){const tc={};document.querySelectorAll('.r_tcol').forEach(x=>{if(x.value.trim())tc[x.dataset.c]=x.value.trim()});const c=R.cfg||{};b.disabled=true;
     run('roomCfgSave',[{pubAll:!!c.pubAll,pubAt:c.pubAt||'',names:c.names||[],typeColors:tc}],r=>{R=r;render();toast('방 타입 이름을 저장했어요')},m=>{b.disabled=false;toast('저장하지 못했어요 · '+m)});return}
+  if(b.id==='r_tyAdd'){A.tyEd=tyRead().concat([{no:'',desc:'',color:'#cfe8ff'}]);render();return}
+  if(b.dataset.tydel!==undefined){const L=tyRead();L.splice(+b.dataset.tydel,1);A.tyEd=L;render();return}
+  if(b.id==='r_tySave'){const L=tyRead().filter(t=>t.no);const d=L.map(t=>t.no).find((n,i,a)=>a.indexOf(n)!==i);if(d){toast('타입번호 「'+d+'」가 두 번 있어요');return}const c=R.cfg||{};b.disabled=true;
+    run('roomCfgSave',[{pubAll:!!c.pubAll,pubAt:c.pubAt||'',names:c.names||[],types:L}],r=>{R=r;A.tyEd=null;NC=null;render();toast('방 타입 '+L.length+'개를 저장했어요')},m=>{b.disabled=false;toast('저장하지 못했어요 · '+m)});return}
   if(b.id==='r_lySrcAdd'){A.lySrcs=lySrcRows(1).concat(['']);render();setTimeout(()=>{const x=document.getElementById('r_lySrc'+(A.lySrcs.length-1));if(x)x.focus()},0);return}
   if(b.dataset.lysrcdel!==undefined){const L=lySrcRows(1).slice();L.splice(+b.dataset.lysrcdel,1);A.lySrcs=L.length?L:[''];render();return}
   if(b.id==='r_lySrcSave'){const v=[...document.querySelectorAll('[data-lysrc]')].map(x=>x.value.trim()).filter(Boolean).join('\n');A.lySrcs=null;const c=R.cfg||{};b.disabled=true;
@@ -4523,7 +4533,7 @@ document.addEventListener('click',e=>{if(S.tab!=='book')return;const b=e.target.
   if(b.id==='ebSetSave'){const n=Object.assign(ebSet(),S.ebSetW||{});n.per=Math.max(1,Math.min(10,Math.round(+n.per||5)));n.fs=Math.max(5,Math.min(10,+n.fs||6.6));['en','sub','org'].forEach(k=>n[k]=String(n[k]||'').trim().slice(0,120));
     ebSend([],[],n,()=>{S.ebSetW=null;toast('책자 설정을 저장했어요')});return}},true);
 </script>
-<div id="bldMark" hidden>빌드표시 20261117-222415 </div>
+<div id="bldMark" hidden>빌드표시 20261117-222631 </div>
 <script>
 /* 관리자 상담 (11-15): 관리자 매뉴얼 글에서만 찾아 답함 (AI 아님 · 없는 답은 지어내지 않음). 장마다 t 제목 · q 찾는 말 · k 바로 갈 메뉴 · h 본문 */
 const AGD={

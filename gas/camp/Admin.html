@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261117-223902 -->
+<!-- build: 20261117-224143 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -8,7 +8,7 @@
 <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nanum+Gothic:wght@400;700;800&display=swap">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&display=swap">
-<style>.gscroll{overflow-x:auto;margin-top:10px;padding-bottom:4px}.gplan{display:grid;grid-auto-rows:62px;gap:4px}.gcell{border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:12px;text-align:center;line-height:1.15;min-width:0;overflow:hidden}.gfac{background:#eef4f3;border:1px dashed #9fb6b5;color:#6b7a80}.ghall{background:repeating-linear-gradient(90deg,#eef4f3 0 10px,transparent 10px 20px);color:#6b7a80;font-size:11px;letter-spacing:.2em}.groom{font:inherit;border:1.5px solid rgba(0,0,0,.2);cursor:pointer;padding:2px;color:#16292b;background:#fff}.groom.gun{background:#fff;color:#6b7a80;border-color:#9fb6b5}.groom .gno{font-weight:700;font-size:14px;font-variant-numeric:tabular-nums}.groom .gty{font-size:11px;font-weight:700;opacity:.85}.groom .gocc{font-size:10.5px;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.groom.on{outline:3px solid #16292b;outline-offset:1px}.groom.pick{outline:3px dashed #0e8a86;outline-offset:2px}.gslot{border:1.5px dashed #b9cfce;background:transparent;cursor:pointer}.gslot:hover{background:#e6f2f1}
+<style>.gscroll{overflow-x:auto;margin-top:10px;padding-bottom:4px}.gplan{display:grid;grid-auto-rows:minmax(84px,auto);gap:4px}.gcell{border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:12px;text-align:center;line-height:1.15;min-width:0;overflow:hidden}.gfac{background:#eef4f3;border:1px dashed #9fb6b5;color:#6b7a80}.ghall{background:repeating-linear-gradient(90deg,#eef4f3 0 10px,transparent 10px 20px);color:#6b7a80;font-size:11px;letter-spacing:.2em}.groom{font:inherit;border:1px solid #9fb6b5;cursor:pointer;padding:0;color:#16292b;background:#fff;justify-content:flex-start;align-items:stretch;border-radius:4px}.groom .ghd{display:flex;flex-direction:column;align-items:center;padding:3px 2px;border-bottom:1px solid rgba(0,0,0,.15);font-variant-numeric:tabular-nums}.groom .ghd b{font-size:13px}.groom .ghd small{font-size:10px;font-weight:700;opacity:.8;min-height:12px}.groom .ghd.gun{background:#f3f6f6;color:#6b7a80}.groom .gbd{flex:1;display:flex;flex-direction:column;justify-content:center;padding:3px 2px;font-size:11.5px;font-weight:700;line-height:1.25;word-break:keep-all}.groom .gn{font-weight:600}.groom .gn.over{color:#b00020}.groom .gm{font-weight:500;font-size:10.5px;color:#5f7176}.groom.on{outline:3px solid #16292b;outline-offset:1px}.groom.pick{outline:3px dashed #0e8a86;outline-offset:2px}.gslot{border:1.5px dashed #b9cfce;background:transparent;cursor:pointer}.gslot:hover{background:#e6f2f1}
 .mct td{padding-top:7px!important;padding-bottom:7px!important;vertical-align:middle}.mct input,.mct select{height:auto!important;padding:6px 8px!important;line-height:1.4}.mcs{margin-top:12px}.mcs>.row:first-child{margin-bottom:12px}.mcs .mct{margin-bottom:12px}table.stt td.c{text-align:center}.sth{margin:14px 0 6px;font-size:16px}
 :root{
   --bg:#f3f6f7; --surface:#ffffff; --sunk:#e9eef0; --line:#d5dee2;
@@ -1449,14 +1449,15 @@ function vGrid(){const blds=[...new Set(R.rooms.map(r=>r.bld||'건물'))];if(!bl
   if(gKind(A.gb)&&rows>=2)cells.push(`<div class="gcell ghall" style="grid-column:1/${cols+1};grid-row:2">복도</div>`);
   g.fac.forEach(([c,r,t])=>{if(!taken[c+','+r]&&r<=rows)cells.push(`<div class="gcell gfac" style="grid-column:${c};grid-row:${r}">${t}</div>`)});
   if(mv)for(let r=1;r<=rows;r++)for(let c=1;c<=cols;c++)if(!taken[c+','+r]&&!(gKind(A.gb)&&r===2))cells.push(`<button type="button" class="gcell gslot" data-gslot="${c},${r}" aria-label="빈 자리 ${c}열 ${r}줄"></button>`);
-  L.forEach(q=>{const [c,r]=pos[q.no],ty=rTyOf(q.no),bg=ty&&ty.color?ty.color:'',u=used(q);
-    cells.push(`<button type="button" class="gcell groom${bg?'':' gun'}${A.sel===q.no?' on':''}${A.gPick===q.no?' pick':''}" ${mv?`data-gpick="${esc(q.no)}" draggable="true"`:`data-rroom="${esc(q.no)}"`} style="grid-column:${c};grid-row:${r};${bg?`background:${bg};color:${gInk(bg)}`:''}" title="${esc(q.no)}${ty?' · '+esc(ty.no)+(ty.desc?' · '+esc(ty.desc):''):''}${u?' · '+esc(q.occ.map(o=>oLab(o)+(o.n?' '+o.n:'')).join(', ')):''}"><span class="gno">${esc(String(q.no).replace(/^[A-Z]+/,''))}</span><span class="gty">${ty?esc(ty.no):'—'}</span>${u?`<span class="gocc">${esc(oLab(q.occ[0]))}${q.occ.length>1?' 외':''}</span>`:''}</button>`)});
+  L.forEach(q=>{const [c,r]=pos[q.no],ty=rTyOf(q.no),bg=ty&&ty.color?ty.color:'',u=used(q),n=peak(q);
+    const body=u?[...q.occ.slice(0,3).map(o=>esc(oLab(o))),q.occ.length>3?'+'+(q.occ.length-3):'',q.kind==='가족방'?'가족방':'',`<span class="gn${n>q.cap?' over':''}">${n}인</span>`,q.memo?`<span class="gm">${esc(String(q.memo).split('\n')[0].slice(0,14))}</span>`:''].filter(Boolean).join('<br>'):'';
+    cells.push(`<button type="button" class="gcell groom${A.sel===q.no?' on':''}${A.gPick===q.no?' pick':''}" ${mv?`data-gpick="${esc(q.no)}" draggable="true"`:`data-rroom="${esc(q.no)}"`} style="grid-column:${c};grid-row:${r}" title="${esc(q.no)}${ty?' · '+esc(ty.no)+(ty.desc?' · '+esc(ty.desc):''):''}${u?' · '+esc(q.occ.map(o=>oLab(o)+(o.n?' '+o.n:'')).join(', ')):''}"><span class="ghd${bg?'':' gun'}" style="${bg?`background:${bg};color:${gInk(bg)}`:''}"><b>${esc(q.no)}</b><small>${ty?esc(ty.no):''}</small></span><span class="gbd">${body}</span></button>`)});
   const dirty=A.pos&&Object.keys(A.pos).length;
   return `${typePanel()}<div class="panel"><div class="spread"><div class="row" style="gap:6px;flex-wrap:wrap">${blds.map(b=>`<button class="btn small ${A.gb===b?'primary':''}" type="button" data-gb="${esc(b)}">${esc(b)}</button>`).join('')}</div>
     <div class="row" style="gap:6px"><button class="btn small ${mv?'primary':''}" type="button" id="g_move">${mv?'자리 옮기기 끝':'방 자리 옮기기'}</button>${dirty?`<button class="btn small primary" type="button" id="g_posSave">자리 저장 (${Object.keys(A.pos).length})</button><button class="btn small ghost" type="button" id="g_posUndo">되돌리기</button>`:''}<button class="btn small ghost" type="button" data-glymode="sheet">시트 도면 보기</button></div></div>
     <div class="row" style="gap:6px;margin-top:8px;flex-wrap:wrap">${fls.map(f=>`<button class="btn small ${A.gf===f?'primary':''}" type="button" data-gf="${f}">${f}F <small>${inB.filter(r=>flNum(r)===f).length}</small></button>`).join('')}</div>
     ${mv?'<p class="hint" style="margin:8px 0 0">옮길 방을 누른 뒤 빈 칸(점선)을 누르세요. 방끼리 누르면 두 방 자리가 바뀌어요. 마우스로 끌어다 놓아도 돼요.</p>':'<p class="hint" style="margin:8px 0 0">방을 누르면 배정 · 타입을 고쳐요. 색 = 방 타입 (위 「방 타입」에서 색을 바꾸면 그 타입 방이 모두 바뀌어요).</p>'}
-    <div class="gscroll"><div class="gplan" style="grid-template-columns:repeat(${cols},minmax(48px,1fr));min-width:${cols*52}px">${cells.join('')}</div></div></div>
+    <div class="gscroll"><div class="gplan" style="grid-template-columns:repeat(${cols},minmax(48px,1fr));${gKind(A.gb)?'grid-template-rows:minmax(84px,auto) 26px;':''}min-width:${cols*52}px">${cells.join('')}</div></div></div>
   ${roomAddBox()}${editor()}`}
 const gInk=hex=>{const m=/^#(..)(..)(..)$/.exec(hex||'');if(!m)return 'inherit';const [a,b,c]=m.slice(1).map(x=>parseInt(x,16));return (a*299+b*587+c*114)/1000>140?'#16292b':'#ffffff'};
 function roomAddBox(){return `<details class="panel"><summary><b>방 호수 넣기</b> <span class="hint">건물 · 층을 고르고 호수를 한 번만 넣어요</span></summary>
@@ -4587,7 +4588,7 @@ document.addEventListener('click',e=>{if(S.tab!=='book')return;const b=e.target.
   if(b.id==='ebSetSave'){const n=Object.assign(ebSet(),S.ebSetW||{});n.per=Math.max(1,Math.min(10,Math.round(+n.per||5)));n.fs=Math.max(5,Math.min(10,+n.fs||6.6));['en','sub','org'].forEach(k=>n[k]=String(n[k]||'').trim().slice(0,120));
     ebSend([],[],n,()=>{S.ebSetW=null;toast('책자 설정을 저장했어요')});return}},true);
 </script>
-<div id="bldMark" hidden>빌드표시 20261117-223902 </div>
+<div id="bldMark" hidden>빌드표시 20261117-224143 </div>
 <script>
 /* 관리자 상담 (11-15): 관리자 매뉴얼 글에서만 찾아 답함 (AI 아님 · 없는 답은 지어내지 않음). 장마다 t 제목 · q 찾는 말 · k 바로 갈 메뉴 · h 본문 */
 const AGD={

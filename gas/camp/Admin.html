@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261117-230512 -->
+<!-- build: 20261117-231313 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -1445,15 +1445,15 @@ function vGrid(setup){A.gTy=!!setup&&!A.gMove;if(!setup)A.gMove=false;if(setup&&
   /* 자리: 틀 · 저장된 자리 · 없으면 맨 아래 줄부터 차례로 */
   const taken={},pos={};let maxR=1,cols=g.cols;L.forEach(r=>{const p=gPos(r);if(p&&!taken[p[0]+','+p[1]]){pos[r.no]=p;taken[p[0]+','+p[1]]=1;cols=Math.max(cols,p[0]);maxR=Math.max(maxR,p[1])}});
   let fr=maxR+2,fc=1;L.filter(r=>!pos[r.no]).sort((a,b)=>a.no.localeCompare(b.no)).forEach(r=>{while(taken[fc+','+fr]){fc++;if(fc>cols){fc=1;fr++}}pos[r.no]=[fc,fr];taken[fc+','+fr]=1;maxR=Math.max(maxR,fr)});
-  const mv=!!A.gMove,rows=maxR+(mv?1:0),cells=[];
+  const mv=!!A.gMove,rows=maxR+(mv?2:0),cells=[];if(mv)cols+=1;
   if(gKind(A.gb)&&rows>=2)cells.push(`<div class="gcell ghall" style="grid-column:1/${cols+1};grid-row:2">복도</div>`);
-  if(g.vhall&&rows>=3&&L.some(x=>(pos[x.no]||[])[1]>3))cells.push(`<div class="gcell ghall gv" style="grid-column:${g.vhall};grid-row:3/${rows+1}">복<br>도</div>`);
-  if(gKind(A.gb)==='stay'&&L.some(x=>{const p=pos[x.no];return p&&p[0]===12&&p[1]>=4}))cells.push(`<div class="gcell ghall gv" style="grid-column:13;grid-row:4/${rows+1}">복<br>도</div>`);
+  if(!mv&&g.vhall&&rows>=3&&L.some(x=>(pos[x.no]||[])[1]>3))cells.push(`<div class="gcell ghall gv" style="grid-column:${g.vhall};grid-row:3/${rows+1}">복<br>도</div>`);
+  if(!mv&&gKind(A.gb)==='stay'&&L.some(x=>{const p=pos[x.no];return p&&p[0]===12&&p[1]>=4}))cells.push(`<div class="gcell ghall gv" style="grid-column:13;grid-row:4/${rows+1}">복<br>도</div>`);
   g.fac.forEach(([c,r,t])=>{if(!taken[c+','+r]&&r<=rows)cells.push(`<div class="gcell gfac" style="grid-column:${c};grid-row:${r}">${t}</div>`)});
-  if(mv)for(let r=1;r<=rows;r++)for(let c=1;c<=cols;c++)if(!taken[c+','+r]&&!(gKind(A.gb)&&r===2)&&!(g.vhall===c&&r>=3))cells.push(`<button type="button" class="gcell gslot" data-gslot="${c},${r}" aria-label="빈 자리 ${c}열 ${r}줄"></button>`);
+  if(mv)for(let r=1;r<=rows;r++)for(let c=1;c<=cols;c++)if(!taken[c+','+r]&&!(gKind(A.gb)&&r===2))cells.push(`<button type="button" class="gcell gslot" data-gslot="${c},${r}" aria-label="빈 자리 ${c}열 ${r}줄"></button>`);
   L.forEach(q=>{const [c,r]=pos[q.no],ty=rTyOf(q.no),bg=ty&&ty.color?ty.color:'',u=used(q),n=peak(q);
     const body=u?[...q.occ.slice(0,3).map(o=>esc(oLab(o))),q.occ.length>3?'+'+(q.occ.length-3):'',q.kind==='가족방'?'가족방':'',`<span class="gn${n>q.cap?' over':''}">${n}인</span>`,q.memo?`<span class="gm">${esc(String(q.memo).split('\n')[0].slice(0,14))}</span>`:''].filter(Boolean).join('<br>'):'';
-    const tyM=!!A.gTy,pend=tyM&&A.tyPend&&A.tyPend[q.no]!==undefined,tyx=pend?rTypes().find(t=>t.no===A.tyPend[q.no]):ty,bgx=tyx&&tyx.color?tyx.color:'';
+    const tyM=!!A.gTy,pend=!!(A.v==='setup'&&A.tyPend&&A.tyPend[q.no]!==undefined),tyx=pend?rTypes().find(t=>t.no===A.tyPend[q.no]):ty,bgx=tyx&&tyx.color?tyx.color:'';
     const hd=`<b>${esc(q.no)}</b><small>${tyx?esc(tyx.no):''}${pend?' *':''}</small>`,hst=bgx?`background:${bgx};color:${gInk(bgx)}`:'';
     const tip=`${esc(q.no)}${tyx?' · '+esc(tyx.no)+(tyx.desc?' · '+esc(tyx.desc):''):''}${u?' · '+esc(q.occ.map(o=>oLab(o)+(o.n?' '+o.n:'')).join(', ')):''}`;
     cells.push(mv?`<button type="button" class="gcell groom${A.gPick===q.no?' pick':''}" data-gpick="${esc(q.no)}" draggable="true" style="grid-column:${c};grid-row:${r}" title="${tip}"><span class="ghd${bgx?'':' gun'}" style="${hst}">${hd}</span><span class="gbd">${body}</span></button>`
@@ -1568,7 +1568,7 @@ document.addEventListener('click',ev=>{if(S.tab!=='room')return;const b=ev.targe
   if(d.gty){if(A.brush===undefined){toast('칠할 타입을 먼저 고르세요');return}A.tyPend=A.tyPend||{};const cur=(R.rooms.find(x=>x.no===d.gty)||{}).type||'';if(A.brush===cur)delete A.tyPend[d.gty];else A.tyPend[d.gty]=A.brush;render();return}
   if(b.id==='g_tyUndo'){A.tyPend=null;render();return}
   if(b.id==='g_tySave'){const M=A.tyPend||{};b.disabled=true;run('roomTypesSave',[M],x=>{R=x;A.tyPend=null;NC=null;render();toast('방 '+Object.keys(M).length+'곳 타입을 저장했어요')},m=>{b.disabled=false;toast('저장하지 못했어요 · '+m)});return}
-  if(b.id==='g_move'){A.gMove=!A.gMove;A.gPick='';A.sel='';A.ed=null;render();return}
+  if(b.id==='g_move'){if(!A.gMove&&A.tyPend&&Object.keys(A.tyPend).length){toast('칠한 타입을 먼저 「타입 일괄 저장」해 주세요');return}A.gMove=!A.gMove;A.gPick='';A.sel='';A.ed=null;render();return}
   if(b.id==='g_posUndo'){A.pos=null;A.gPick='';render();return}
   if(d.gpick){if(!A.gPick){A.gPick=d.gpick;render();return}if(A.gPick===d.gpick){A.gPick='';render();return}const p=gPosShown(d.gpick);if(p)gMoveTo(A.gPick,p[0],p[1]);A.gPick='';render();return}
   if(d.gslot){if(!A.gPick){toast('먼저 옮길 방을 누르세요');return}const [c,r2]=d.gslot.split(',').map(Number);gMoveTo(A.gPick,c,r2);A.gPick='';render();return}
@@ -4602,7 +4602,7 @@ document.addEventListener('click',e=>{if(S.tab!=='book')return;const b=e.target.
   if(b.id==='ebSetSave'){const n=Object.assign(ebSet(),S.ebSetW||{});n.per=Math.max(1,Math.min(10,Math.round(+n.per||5)));n.fs=Math.max(5,Math.min(10,+n.fs||6.6));['en','sub','org'].forEach(k=>n[k]=String(n[k]||'').trim().slice(0,120));
     ebSend([],[],n,()=>{S.ebSetW=null;toast('책자 설정을 저장했어요')});return}},true);
 </script>
-<div id="bldMark" hidden>빌드표시 20261117-230512 </div>
+<div id="bldMark" hidden>빌드표시 20261117-231313 </div>
 <script>
 /* 관리자 상담 (11-15): 관리자 매뉴얼 글에서만 찾아 답함 (AI 아님 · 없는 답은 지어내지 않음). 장마다 t 제목 · q 찾는 말 · k 바로 갈 메뉴 · h 본문 */
 const AGD={

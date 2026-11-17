@@ -1,4 +1,4 @@
-/* build: 20261117-230512 */
+/* build: 20261117-231313 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -3932,7 +3932,10 @@ function roomTypesSave(token, map) {
   const lock = lock_(); let n = 0;
   try {
     const sh = roomSheet_(), L = rooms_(), col = ROOM_HEAD.indexOf('타입') + 1;
-    keys.forEach(k => { const r = L.find(x => x.no === k); if (!r) return; sh.getRange(r._row, col).setValue(String(M[k] || '').trim().slice(0, 10)); n++; });
+    const last = sh.getLastRow(); if (last < 2) return roomData(token);
+    const rg = sh.getRange(2, col, last - 1, 1), V = rg.getValues();   /* 한 번에 읽고 한 번에 씀 (방마다 쓰면 느려서 시간 초과) */
+    keys.forEach(k => { const r = L.find(x => x.no === k); if (!r || r._row < 2 || r._row > last) return; V[r._row - 2][0] = String(M[k] || '').trim().slice(0, 10); n++; });
+    rg.setValues(V);
     log_('관리자 ' + a.name, '방 타입 일괄 저장', n + '곳');
   } finally { lock.releaseLock(); }
   return roomData(token);

@@ -1,4 +1,4 @@
-/* build: 20261117-212805 */
+/* build: 20261117-212916 */
   /* 11-16: 입금 신고 상자 — 「총 n명 중 신고 m명 · 확인 k명」, 할 게 없으면 「입금 신고할 내역이 없어요」 · 계좌는 펼쳤을 때만 */
   const allP=[];MY_SUBS.forEach(sb=>sb.ppl.forEach(p=>{if(p.status==='정상')allP.push(p)}));const nRep=allP.filter(p=>p.pay==='신고').length,nOk=allP.filter(p=>isPaid(p)).length;
   const cnt=allP.length?`<span class="hint">총 ${allP.length}명 중 신고 ${nRep}명 · 확인 ${nOk}명</span>`:'';
@@ -134,7 +134,7 @@ function compoTxt(subs){let T=0,R=0,F=0,Sn=0;const I={};subs.forEach(sb=>sb.ppl.
   const nR=roomsOf(subs).length;
   return [T?`<b>교사 ${T}명</b>`:'',R?`<b>관계자 ${R}명</b>`:'',Sn?`<b>학생 ${Sn}명</b>${ins?` <span style="color:var(--ink);font-weight:400">(${ins})</span>`:''}`:'',nR?`<b>가족방 ${nR}개</b>`:''].filter(Boolean).join('<br>')}
 const tsCell=x=>{const t=tsFmt(x),i=t.indexOf(' ');return i<0?esc(t):`${esc(t.slice(0,i))}<span class="tsl">${esc(t.slice(i+1))}</span>`};   /* 11-15: 날짜 밑에 시간 */
-const tsFmt=x=>{const m=String(x||'').match(/^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}:\d{2}))?/);return m?`${m[1]}.${+m[2]}.${+m[3]}${m[4]?' '+m[4]:''}`:String(x||'')};
+const tsFmt=x=>{const m=String(x||'').match(/^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}:\d{2}))?/);return m?`${m[1].slice(2)}.${m[2]}.${m[3]}${m[4]?' '+m[4]:''}`:String(x||'')};   /* 11-17: 26.11.15 (20 빼고) */
 const TSHORT={'회원의 첫번째 보호자':'보호자','회원의 그외 악기 안하는 동반가족':'동반가족','동반가족 중 15개월 미만':'15개월 미만'};
 const sdFmt=x=>{const m=String(x||'').match(/^(\d{4})-(\d{2})-(\d{2})/);return m?`${m[1].slice(2)}.${+m[2]}.${+m[3]}`:String(x||'')};
 /* 표 안 상태: 날짜를 아랫줄에 26.10.5 꼴로 */

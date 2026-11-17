@@ -1,4 +1,4 @@
-/* build: 20261117-235917 */
+/* build: 20261118-000005 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -1644,7 +1644,8 @@ function progList_() {
   try { CacheService.getScriptCache().put('progsJ', JSON.stringify(o), 300); } catch (e) {}
   return o;
 }
-function progDef_() { try { const h = HtmlService.createHtmlOutputFromFile('App1').getContent(), i = h.indexOf('const PROGRESS = {'), j = h.indexOf('};', i); if (i < 0 || j < 0) return {}; return (new Function('return ' + h.slice(i + 17, j + 1)))(); } catch (e) { return {}; } }
+const PROG_DEFAULT_ = {"바이올린":["Pre-Twinkle","1권A 작은별 변주곡 ~ 무궁동","1권B 알레그레토 ~","2권A ~ 헨델 부레","2권B 두 사람의 척탄병 ~","3권A ~ 유모레스크","3권B 베커 가보트 ~","4권A ~ 자이츠 5번 3악장","4권B 비발디 협주곡 가단조 ~","5권A ~ 비발디 협주곡 사단조","5권B 독일춤곡 ~","6권A ~ 피오코 알레그로","6권B 라모 가보트 ~","7권A ~ 헨델 소나타 1번","7권B 바흐 협주곡 가단조 ~","8권 전체","9권 모차르트 협주곡 5번","10권 모차르트 협주곡 4번","10권 이상 멘델스존 협주곡 3악장","10권 이상 기타 곡"],"첼로":["Pre-Twinkle","1권A 작은별 ~ 무궁동","1권B 그 옛날에 ~","2권","3권","4권","5권","6권","7권","8권","9권","10권 보케리니 협주곡","10권 이상 기타 곡"],"비올라":["Pre-Twinkle","1권","2권","3권","4권","5권","6권","7권","8권","9권","10권","10권 이상"],"플루트":["Pre-Twinkle","1권","2권","3권","4권","5권","6권","7권","8권","9권","10권","10권 이상","11권 이상"],"기타":["1권","2권","3권","4권","5권","6권","7권","8권","9권","10권","10권 이상"]};   /* 11-17: App1 PROGRESS 를 못 읽을 때 쓰는 처음 목록 */
+function progDef_() { try { const h = HtmlService.createHtmlOutputFromFile('App1').getContent(), i = h.indexOf('const PROGRESS = {'), j = h.indexOf('};', i); if (i < 0 || j < 0) return PROG_DEFAULT_; const o = (new Function('return ' + h.slice(i + 17, j + 1)))(); return o && Object.keys(o).length ? o : PROG_DEFAULT_; } catch (e) { return PROG_DEFAULT_; } }
 function progsSave(token, o) {
   const a = adm_(token); needSup_(a);
   if (!o || typeof o !== 'object') throw new Error('저장할 권수 목록이 없어요.');

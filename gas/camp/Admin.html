@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261117-235917 -->
+<!-- build: 20261118-000005 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -345,7 +345,7 @@ document.addEventListener('compositionend',e=>{const t=e.target;if(t.matches&&t.
 function whoTxt(){const m=S.D&&S.D.me,w=document.getElementById('who');if(!m||!w)return;w.textContent=m.sup?(/자동/.test(m.name)?'관리자 '+m.name.replace('(자동)','')+' (테스트 자동 로그인)':'총관리자 '+m.name):'담당자 '+m.name+' 선생님'}
 function hdrH(){const h=document.getElementById('hdr');if(h)document.documentElement.style.setProperty('--hdrH',h.offsetHeight+'px')}
 window.addEventListener('resize',hdrH);
-function setData(d){if(Array.isArray(d.scholar)&&typeof SCHOLAR!=='undefined'){SCHOLAR.length=0;d.scholar.forEach(t=>SCHOLAR.push(t))}if(S.D){if(!d.me&&S.D.me)d.me=S.D.me;if(!d.camp&&S.D.camp)d.camp=S.D.camp}S.D=d;applyCampAdm(d.camp);whoTxt();document.getElementById('sync').textContent='불러온 시각 '+new Date().toTimeString().slice(0,5);if(S.goAfter){const g=S.goAfter;S.goAfter=null;goTab(g);return}render()}
+function setData(d){if(Array.isArray(d.scholar)&&typeof SCHOLAR!=='undefined'){SCHOLAR.length=0;d.scholar.forEach(t=>SCHOLAR.push(t))}if(S.D){if(!d.me&&S.D.me)d.me=S.D.me;if(!d.camp&&S.D.camp)d.camp=S.D.camp;['progsDef','songsDef'].forEach(k=>{if((!d[k]||!Object.keys(d[k]).length)&&S.D[k])d[k]=S.D[k]})}S.D=d;applyCampAdm(d.camp);whoTxt();document.getElementById('sync').textContent='불러온 시각 '+new Date().toTimeString().slice(0,5);if(S.goAfter){const g=S.goAfter;S.goAfter=null;goTab(g);return}render()}
 function ask(title,body,ok,okLabel,input){const bg=document.createElement('div');bg.className='askbg';
   bg.innerHTML=`<div class="askbox" role="dialog" aria-modal="true"><b style="font-size:18px">${title}</b><div>${body}</div>${input?`<input type="text" id="askIn" placeholder="${esc(input)}">`:''}<div class="row" style="justify-content:flex-end"><button class="btn ghost" type="button" data-x>취소</button><button class="btn primary" type="button" data-ok>${okLabel||'확인'}</button></div></div>`;
   document.body.appendChild(bg);bg.addEventListener('click',e=>{if(e.target===bg||e.target.dataset.x!==undefined)bg.remove();else if(e.target.dataset.ok!==undefined){const v=input?document.getElementById('askIn').value.trim():'';bg.remove();ok(v)}});}
@@ -4621,7 +4621,7 @@ document.addEventListener('click',e=>{if(S.tab!=='book')return;const b=e.target.
   if(b.id==='ebSetSave'){const n=Object.assign(ebSet(),S.ebSetW||{});n.per=Math.max(1,Math.min(10,Math.round(+n.per||5)));n.fs=Math.max(5,Math.min(10,+n.fs||6.6));['en','sub','org'].forEach(k=>n[k]=String(n[k]||'').trim().slice(0,120));
     ebSend([],[],n,()=>{S.ebSetW=null;toast('책자 설정을 저장했어요')});return}},true);
 </script>
-<div id="bldMark" hidden>빌드표시 20261117-235917 </div>
+<div id="bldMark" hidden>빌드표시 20261118-000005 </div>
 <script>
 /* 관리자 상담 (11-15): 관리자 매뉴얼 글에서만 찾아 답함 (AI 아님 · 없는 답은 지어내지 않음). 장마다 t 제목 · q 찾는 말 · k 바로 갈 메뉴 · h 본문 */
 const AGD={

@@ -1,11 +1,11 @@
-/* build: 20261117-212359 */
+/* build: 20261117-212607 */
   /* 11-16: 입금 신고 상자 — 「총 n명 중 신고 m명 · 확인 k명」, 할 게 없으면 「입금 신고할 내역이 없어요」 · 계좌는 펼쳤을 때만 */
   const allP=[];MY_SUBS.forEach(sb=>sb.ppl.forEach(p=>{if(p.status==='정상')allP.push(p)}));const nRep=allP.filter(p=>p.pay==='신고').length,nOk=allP.filter(p=>isPaid(p)).length;
   const cnt=allP.length?`<span class="hint">총 ${allP.length}명 중 신고 ${nRep}명 · 확인 ${nOk}명</span>`:'';
   if(!MY_SUBS.length)return '';
   if(!open.length) return `<div class="panel rp"><div class="spread"><span><b>입금 신고</b> <span class="hint">입금 신고할 내역이 없어요</span></span>${cnt}</div></div>`;
   /* 평소엔 한 줄로 접어 둠: 「입금 신고하기」를 누르면 펼침 (11-03) */
-  if(!S.rpOpen){const due=open.reduce((t,x)=>t+dueOf(x.p),0);return `<div class="panel rp"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><span><b>입금 신고</b> · 입금 필요 <b>${open.length}명</b> · <b class="num">${won(due)}</b><br>${cnt}</span><button class="btn primary" type="button" data-rpopen="1">입금 신고하기</button></div></div>`}
+  if(!S.rpOpen){const due=open.reduce((t,x)=>t+dueOf(x.p),0);return `<div class="panel rp rpS"><span>입금 필요 <b class="num">${won(due)}</b><br><small class="hint">${open.length}명 · 신고 ${nRep}명 · 확인 ${nOk}명</small></span><button class="btn primary" type="button" data-rpopen="1">입금 신고하기</button></div>`}
   /* 신고한 사람은 아래 사람별 줄에 「입금 확인 중 · 날짜 금액」으로 보여서 여기서는 안 보여 줌 */
   const sel=S.rp||(S.rp=open.map(x=>x.p.id)); const sum=open.filter(x=>sel.includes(x.p.id)).reduce((t,x)=>t+dueOf(x.p),0);
   const nameOf=id=>{for(const sb of MY_SUBS){const p=sb.ppl.find(q=>q.id===id);if(p)return p.name}return ''};

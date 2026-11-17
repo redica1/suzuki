@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261117-232417 -->
+<!-- build: 20261117-232709 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -1438,7 +1438,7 @@ const GT={stay:(()=>{const m={};[[1,'20'],[2,'21'],[3,'22'],[4,'23'],[5,'25'],[6
   flex:(()=>{const m={};['20','19','18','17','16','15','13','12','11','10','09','08','07','06','05','03','02','01'].forEach((n,i)=>m[n]=[i+1,3]);[['21',11],['22',12],['23',13],['25',14],['26',15],['27',16]].forEach(([n,c])=>m[n]=[c,1]);return {cols:18,m,fac:[]}})()};
 const gKind=b=>/stay|스테이/i.test(b)?'stay':/flex|plex|플렉스/i.test(b)?'flex':'';
 const flNum=r=>{const m=String(r.fl||'').match(/\d+/);return m?+m[0]:+(String(r.no).replace(/^[A-Z]+/,'').slice(0,-2))||0};
-function gPos(r){const P=(R.cfg&&R.cfg.pos)||{},A2=A.pos||{};if(A2[r.no])return A2[r.no];if(P[r.no])return P[r.no];const g=GT[gKind(r.bld)];const t=String(r.no).slice(-2);return g&&g.m[t]?g.m[t].slice():null}
+function gPos(r){   /* 11-17: 자리 옮기기를 뺐으니 저장된 자리는 안 씀 · 늘 건물 틀 자리 */const g=GT[gKind(r.bld)];const t=String(r.no).slice(-2);return g&&g.m[t]?g.m[t].slice():null}
 function vGrid(setup){A.gMove=false;A.pos=null;A.gTy=!!setup;   /* 11-17: 방 자리 옮기기는 뺌 */if(setup&&A.brush===undefined)A.brush=(rTypes()[0]||{}).no;const blds=[...new Set(R.rooms.map(r=>r.bld||'건물'))];if(!blds.includes(A.gb))A.gb=blds[0]||'';
   const inB=R.rooms.filter(r=>(r.bld||'건물')===A.gb),fls=[...new Set(inB.map(flNum))].sort((a,b)=>a-b);if(!fls.includes(A.gf))A.gf=fls[0];
   const L=inB.filter(r=>flNum(r)===A.gf),g=GT[gKind(A.gb)]||{cols:12,m:{},fac:[]};
@@ -4602,7 +4602,7 @@ document.addEventListener('click',e=>{if(S.tab!=='book')return;const b=e.target.
   if(b.id==='ebSetSave'){const n=Object.assign(ebSet(),S.ebSetW||{});n.per=Math.max(1,Math.min(10,Math.round(+n.per||5)));n.fs=Math.max(5,Math.min(10,+n.fs||6.6));['en','sub','org'].forEach(k=>n[k]=String(n[k]||'').trim().slice(0,120));
     ebSend([],[],n,()=>{S.ebSetW=null;toast('책자 설정을 저장했어요')});return}},true);
 </script>
-<div id="bldMark" hidden>빌드표시 20261117-232417 </div>
+<div id="bldMark" hidden>빌드표시 20261117-232709 </div>
 <script>
 /* 관리자 상담 (11-15): 관리자 매뉴얼 글에서만 찾아 답함 (AI 아님 · 없는 답은 지어내지 않음). 장마다 t 제목 · q 찾는 말 · k 바로 갈 메뉴 · h 본문 */
 const AGD={

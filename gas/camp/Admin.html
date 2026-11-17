@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261117-225156 -->
+<!-- build: 20261117-225249 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -1421,9 +1421,9 @@ function numColor(no,sheetOnly){if(!sheetOnly){const ty=rTyOf(no);if(ty&&ty.colo
 const rTypes=()=>(R&&R.cfg&&R.cfg.types)||[];const rTyOf=no=>{const q=(R.rooms||[]).find(x=>x.no===no);return q&&q.type?rTypes().find(t=>t.no===q.type):null};   /* 11-17: 관리자가 넣은 방 타입 */
 function rType(no){const ty=rTyOf(no);if(ty)return ty.no+(ty.desc?' · '+ty.desc:'');const c=numColor(no,1),T=(R.cfg&&R.cfg.typeColors)||{};return c&&T[c]||''}
 function typePanel(){const L=A.tyEd||rTypes().map(t=>Object.assign({},t));A.tyEd=A.tyEd||null;const cnt=no=>(R.rooms||[]).filter(r=>r.type===no).length;
-  return `<div class="panel tyPanel"><div class="spread"><b>방 타입</b><span class="hint">타입을 만들고, 방을 눌러 타입을 고르면 도면 방번호 칸이 그 색으로 바뀌어요</span></div>
+  return `<details class="panel tyPanel" ${!rTypes().length||A.tyEd||A.tyOpen?'open':''}><summary><b>방 타입 목록</b> <span class="hint">${rTypes().length?rTypes().map(t=>`<span class="sw" style="display:inline-block;width:12px;height:10px;border-radius:2px;background:${esc(t.color||'#fff')};border:1px solid rgba(0,0,0,.25);margin:0 3px 0 8px"></span>${esc(t.no)}`).join(''):'· 처음 한 번 만들어요'}</span></summary>
   <div class="mtblw"><table class="mtbl nosort" style="margin-top:6px"><thead><tr><th>타입번호</th><th>구성</th><th>색</th><th>방 수</th><th></th></tr></thead><tbody>${L.map((t,i)=>`<tr><td><input type="text" data-ty="${i}|no" value="${esc(t.no)}" maxlength="10" placeholder="예: A" style="width:80px"></td><td class="l"><input type="text" data-ty="${i}|desc" value="${esc(t.desc||'')}" maxlength="60" placeholder="예: 침대 2 · 온돌 · 5인" style="width:100%;min-width:180px"></td><td><input type="color" data-ty="${i}|color" value="${esc(t.color||'#cfe8ff')}" style="width:40px;height:28px;padding:0"></td><td class="num">${t.no?cnt(t.no):'-'}</td><td><button class="btn small ghost" type="button" data-tydel="${i}" aria-label="타입 빼기">×</button></td></tr>`).join('')||'<tr><td colspan="5" class="hint">아직 타입이 없어요. 「＋ 타입 추가」를 눌러 주세요.</td></tr>'}</tbody></table></div>
-  <div class="row" style="gap:6px;margin-top:8px"><button class="btn small" type="button" id="r_tyAdd">＋ 타입 추가</button><button class="btn small primary" type="button" id="r_tySave">타입 저장</button></div></div>`}
+  <div class="row" style="gap:6px;margin-top:8px"><button class="btn small" type="button" id="r_tyAdd">＋ 타입 추가</button><button class="btn small primary" type="button" id="r_tySave">타입 저장</button></div></details>`}
 function tyRead(){return [...document.querySelectorAll('[data-ty]')].reduce((L,el)=>{const [i,k]=el.dataset.ty.split('|');(L[+i]=L[+i]||{})[k]=el.value.trim();return L},[]).filter(Boolean)}
 function legendBox(F){const cnt={};F.forEach(f=>Object.entries(f.rooms).forEach(([no,v])=>{const c=f.cells.find(x=>x[0]===v[0]&&x[1]===v[1]);const k=c&&c[5]?String(c[5]).toLowerCase():'';if(k)(cnt[k]=cnt[k]||{n:0,here:0}).n++}));
   const Fl=F[A.lyF];Object.entries(Fl.rooms).forEach(([no,v])=>{const c=Fl.cells.find(x=>x[0]===v[0]&&x[1]===v[1]);const k=c&&c[5]?String(c[5]).toLowerCase():'';if(k&&cnt[k])cnt[k].here++});
@@ -1475,7 +1475,7 @@ function gMoveTo(no,c,r){const L=R.rooms.filter(x=>(x.bld||'건물')===A.gb&&flN
   const other=L.find(x=>{if(x.no===no)return false;const p=A.pos[x.no]||gPosShown(x.no);return p&&p[0]===c&&p[1]===r});
   const mine=A.pos[no]||gPosShown(no);if(other&&mine)A.pos[other.no]=mine.slice();A.pos[no]=[c,r]}
 function gPosShown(no){const el=document.querySelector(`[data-gpick="${CSS.escape(no)}"]`);if(!el)return null;const c=parseInt(el.style.gridColumnStart||el.style.gridColumn),r=parseInt(el.style.gridRowStart||el.style.gridRow);return [c,r]}
-document.addEventListener('toggle',e=>{const t=e.target;if(t&&t.classList&&t.classList.contains('pubdd'))A.pubOpen=t.open},true);
+document.addEventListener('toggle',e=>{const t=e.target;if(t&&t.classList&&t.classList.contains('pubdd'))A.pubOpen=t.open;if(t&&t.classList&&t.classList.contains('tyPanel'))A.tyOpen=t.open},true);
 document.addEventListener('dragstart',e=>{const t=e.target.closest&&e.target.closest('[data-gpick]');if(!t)return;A.gPick=t.dataset.gpick;try{e.dataTransfer.setData('text/plain',A.gPick)}catch(x){}});
 document.addEventListener('dragover',e=>{if(e.target.closest&&e.target.closest('[data-gslot],[data-gpick]'))e.preventDefault()});
 document.addEventListener('drop',e=>{const t=e.target.closest&&e.target.closest('[data-gslot],[data-gpick]');if(!t||!A.gPick)return;e.preventDefault();
@@ -4601,7 +4601,7 @@ document.addEventListener('click',e=>{if(S.tab!=='book')return;const b=e.target.
   if(b.id==='ebSetSave'){const n=Object.assign(ebSet(),S.ebSetW||{});n.per=Math.max(1,Math.min(10,Math.round(+n.per||5)));n.fs=Math.max(5,Math.min(10,+n.fs||6.6));['en','sub','org'].forEach(k=>n[k]=String(n[k]||'').trim().slice(0,120));
     ebSend([],[],n,()=>{S.ebSetW=null;toast('책자 설정을 저장했어요')});return}},true);
 </script>
-<div id="bldMark" hidden>빌드표시 20261117-225156 </div>
+<div id="bldMark" hidden>빌드표시 20261117-225249 </div>
 <script>
 /* 관리자 상담 (11-15): 관리자 매뉴얼 글에서만 찾아 답함 (AI 아님 · 없는 답은 지어내지 않음). 장마다 t 제목 · q 찾는 말 · k 바로 갈 메뉴 · h 본문 */
 const AGD={

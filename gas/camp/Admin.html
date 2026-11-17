@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261118-000005 -->
+<!-- build: 20261118-000224 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -1902,8 +1902,7 @@ function songPanel(){if(!S.songEd){S.songEd=songLoad();S.songDirty=false}const E
   const bks=[...new Set([1,2,3,4,5,6,7,8,9,10,...L.map(o=>o.bk)])].sort((a,b)=>(a||99)-(b||99));
   const row=(o)=>{const ix=L.indexOf(o);return `<div class="sgrow"><span class="sgcode">${esc(o.code||'-')}</span><input type="text" data-sg="${ix}|title" value="${esc(o.title)}" placeholder="곡명" maxlength="80"><input type="text" data-sg="${ix}|comp" value="${esc(o.comp)}" placeholder="작곡가" maxlength="30" class="sgcomp"><span class="sgbtn"><button class="btn small ghost" type="button" data-sgmv="${ix}|-1" aria-label="위로">↑</button><button class="btn small ghost" type="button" data-sgmv="${ix}|1" aria-label="아래로">↓</button><button class="btn small ghost" type="button" data-sgdel="${ix}" style="color:var(--bad)">빼기</button></span></div>`};
   return `<div class="panel" id="songPanel"><div class="spread"><h3>음악회 곡 목록 <span class="hint">학생 카드 「연주곡」에서 고르는 목록</span></h3><span class="row" style="gap:6px">${S.songDirty?'<span class="pill due">저장 안 함</span>':''}<button class="btn small" type="button" id="songReset">처음 목록으로</button><button class="btn small primary" type="button" id="songSave" ${S.songDirty?'':'disabled'}>곡 목록 저장</button></span></div>
-    <p class="hint" style="margin:0 0 8px">${P?'지금 신청서는 <b>저장한 목록</b>을 써요.':'아직 저장한 적이 없어서 신청서에 <b>처음부터 들어 있는 목록</b>을 써요.'} 권마다 곡을 넣고 빼요. 번호(V04-04 = 바이올린 4권 4번)는 저절로 붙고 책자 「곡 · 권 검사」에도 쓰여요. 목록에 없는 곡은 학생 카드에서 직접 적을 수 있어요.</p>
-    <div class="seg" role="tablist" style="margin:0 0 10px">${SONG_I.map(([k])=>`<button type="button" role="tab" data-sgi="${k}" aria-pressed="${k===cur}">${k} ${(E[k]||[]).filter(o=>o.title).length}</button>`).join('')}</div>
+    <div class="conchips" role="tablist" style="margin:0 0 10px">${SONG_I.map(([k])=>`<button type="button" class="cchip" role="tab" data-sgi="${k}" aria-pressed="${k===cur}">${k} <small>${(E[k]||[]).filter(o=>o.title).length}</small></button>`).join('')}</div>
     ${bks.map(b=>{const R=L.filter(o=>o.bk===b);return `<div class="sgbk"><div class="spread"><b>${b?b+'권':'기타 (번호 없음)'} <span class="hint">${R.length}곡</span></b><button class="btn small" type="button" data-sgadd="${b}">+ ${b?b+'권':'기타'}에 곡 추가</button></div>${R.map(row).join('')||'<p class="hint" style="margin:4px 0 0">아직 곡이 없어요.</p>'}</div>`}).join('')}
     <div class="row" style="gap:6px;margin-top:8px"><input type="number" id="sgNewBk" min="11" max="20" placeholder="11" style="width:80px"><button class="btn small" type="button" id="sgNewBkGo">권 더하기</button></div></div>`}
 /* 권수 (현재 진도) 목록 (11-15 사용자): 악기 탭 › 한 줄에 하나 · 고치기 · 추가 · 빼기 · 위아래 */
@@ -1911,8 +1910,7 @@ const PRG_I=['바이올린','첼로','비올라','플루트','기타'];
 function prgLoad(){const P=(S.D&&S.D.camp&&S.D.camp.progs)||{},Df=(S.D&&S.D.progsDef)||{},E={};PRG_I.forEach(k=>{E[k]=((P[k]&&P[k].length?P[k]:Df[k])||[]).slice()});return E}
 function prgPanel(){if(!S.prgEd){S.prgEd=prgLoad();S.prgDirty=false}const E=S.prgEd,P=(S.D&&S.D.camp&&S.D.camp.progs)||null,cur=S.prgI||'바이올린',L=E[cur]||[];
   return `<div class="panel" id="prgPanel"><div class="spread"><h3>권수 목록 <span class="hint">학생 · 교사 카드 「권수 (현재 진도)」에서 고르는 목록</span></h3><span class="row" style="gap:6px">${S.prgDirty?'<span class="pill due">저장 안 함</span>':''}<button class="btn small" type="button" id="prgReset">처음 목록으로</button><button class="btn small primary" type="button" id="prgSave" ${S.prgDirty?'':'disabled'}>권수 목록 저장</button></span></div>
-    <p class="hint" style="margin:0 0 8px">${P?'지금 신청서는 <b>저장한 목록</b>을 써요.':'아직 저장한 적이 없어서 신청서에 <b>처음부터 들어 있는 목록</b>을 써요.'} 위에서 아래 순서대로 나와요. 이름은 「2권A ~ 헨델 부레」처럼 <b>숫자+권</b>으로 시작해야 통계에서 권별로 묶여요. 이미 접수한 사람의 권수는 바꾼 이름으로 저절로 바뀌지 않아요.</p>
-    <div class="seg" role="tablist" style="margin:0 0 10px">${PRG_I.map(k=>`<button type="button" role="tab" data-pgi="${k}" aria-pressed="${k===cur}">${k} ${(E[k]||[]).filter(Boolean).length}</button>`).join('')}</div>
+    <div class="conchips" role="tablist" style="margin:0 0 10px">${PRG_I.map(k=>`<button type="button" class="cchip" role="tab" data-pgi="${k}" aria-pressed="${k===cur}">${k} <small>${(E[k]||[]).filter(Boolean).length}</small></button>`).join('')}</div>
     ${L.map((v,ix)=>`<div class="pgrow"><span class="sgcode">${ix+1}</span><input type="text" data-pg="${ix}" value="${esc(v)}" placeholder="예) 2권A ~ 헨델 부레" maxlength="60"><span class="sgbtn"><button class="btn small ghost" type="button" data-pgmv="${ix}|-1" aria-label="위로">↑</button><button class="btn small ghost" type="button" data-pgmv="${ix}|1" aria-label="아래로">↓</button><button class="btn small ghost" type="button" data-pgdel="${ix}" style="color:var(--bad)">빼기</button></span></div>`).join('')||'<p class="hint">아직 없어요.</p>'}
     <div class="row" style="margin-top:8px"><button class="btn small" type="button" id="prgAdd">+ ${esc(cur)} 권수 추가</button></div></div>`}
 function vCamp(){if(!S.cc){S.cc=ccCopy();try{if(S.cc.doc&&S.cc.fees&&S.cc.rounds)feeAuto(S.cc)}catch(x){}}const c=S.cc;if(!c.base)return '<div class="panel hint">캠프 설정을 불러오지 못했어요. 「새로 불러오기」를 눌러 주세요.</div>';
@@ -4621,7 +4619,7 @@ document.addEventListener('click',e=>{if(S.tab!=='book')return;const b=e.target.
   if(b.id==='ebSetSave'){const n=Object.assign(ebSet(),S.ebSetW||{});n.per=Math.max(1,Math.min(10,Math.round(+n.per||5)));n.fs=Math.max(5,Math.min(10,+n.fs||6.6));['en','sub','org'].forEach(k=>n[k]=String(n[k]||'').trim().slice(0,120));
     ebSend([],[],n,()=>{S.ebSetW=null;toast('책자 설정을 저장했어요')});return}},true);
 </script>
-<div id="bldMark" hidden>빌드표시 20261118-000005 </div>
+<div id="bldMark" hidden>빌드표시 20261118-000224 </div>
 <script>
 /* 관리자 상담 (11-15): 관리자 매뉴얼 글에서만 찾아 답함 (AI 아님 · 없는 답은 지어내지 않음). 장마다 t 제목 · q 찾는 말 · k 바로 갈 메뉴 · h 본문 */
 const AGD={

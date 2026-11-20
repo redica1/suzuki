@@ -1,4 +1,4 @@
-/* build: 20261121-002954 */
+/* build: 20261121-003920 */
 /* ---------- 캠프 설정 (관리자 화면에서 입력되는 값) ---------- */
 const ROOM = { cap:4, emptyFee:140000, max:6 }; // 가족방: 4명 이상 기준(4명보다 적으면 빈 자리 1개당 추가 비용) · 숙소 1실은 5~6인이라 한 방 최대 6명 (11-15 사용자: 「4명까지」가 아니라 「4명 이상」)
 const CAMP = { id:'27W', ri:0, lessonFee:60000, lessonMax:5, mcFee:150000,
@@ -221,11 +221,13 @@ function people(){ // 선택된 사람들 (명단 + 신고 학생 + 가족)
   const r = roster(), out=[];
   r.teachers.forEach(t=>{ if(S.picked[t.id]) out.push({key:t.id,dtag:t.dtag,kind:'teacher',name:t.name,inst:t.inst,sub:isStaffAcad()?'관계자':t.role,paid:isStaffAcad()?true:t.paid,defType:isStaffAcad()?'':'교사'}) });
   r.students.forEach(s=>{ if(S.picked[s.id]) out.push({key:s.id,dtag:s.dtag,uid:s.uid,kind:'student',name:s.name,inst:s.inst,birth:s.birth,sub:s.birth?age(s.birth)+'세':'출생연도 없음',paid:s.paid,defType:'학생',teacher:s.teacher}) });
-  S.extra.filter(s=>s.on!==false).forEach(s=>out.push({key:s.id,kind:'student',name:s.name,inst:s.inst,birth:s.birth,sub:age(s.birth)+(isGuest()?'세 · 비회원':'세 · 신규 추가'),paid:isGuest(),isNew:!isGuest(),defType:isGuest()?'비회원 학생':'학생',teacher:s.teacher}));
+  S.extra.filter(s=>s.on!==false&&s.t).forEach(s=>out.push({key:s.id,kind:'teacher',name:s.name,inst:s.inst,birth:s.birth,sub:'신규 교사',paid:false,isNew:true,defType:'교사'}));   /* 11-21 새 접수: 명단에 없는 교사 직접 입력 · 신규 교사 회비 */
+  S.extra.filter(s=>s.on!==false&&!s.t).forEach(s=>out.push({key:s.id,kind:'student',name:s.name,inst:s.inst,birth:s.birth,sub:age(s.birth)+(isGuest()?'세 · 비회원':'세 · 신규 추가'),paid:isGuest(),isNew:!isGuest(),defType:isGuest()?'비회원 학생':'학생',teacher:s.teacher}));
   /* 최근에 담은 사람이 위: 이번에 담은 사람(담은 시각 최근순) → 이미 접수된 사람(접수 시각 최근순) */
   {const sb=S.editNo?ALL_SUBS.find(x=>x.no===S.editNo):null;const key=p=>{const q=sb&&sb.ppl.find(z=>z.id===sb.no+'_'+p.key&&z.status!=='취소');return q?'0'+(q.addAt||sb.date):'1'+(S.cartAt[p.key]||'')};
    out.forEach((p,i)=>p._o=i);out.sort((a,b)=>{const ka=key(a),kb=key(b);return ka>kb?-1:ka<kb?1:a._o-b._o})}
   const res=[]; out.forEach(p=>{ res.push(p); S.fam.filter(f=>f.link===p.key).forEach(f=>res.push({key:f.id,kind:'family',name:f.name||'(이름 미입력)',inst:'',sub:`${FAM_SHORT[f.type]} · ${p.name} 가족`,paid:true,defType:f.type,link:f.link})) });
+  S.fam.filter(f=>!f.link||!out.some(p=>p.key===f.link)).forEach(f=>res.push({key:f.id,kind:'family',name:f.name||'(이름 미입력)',inst:'',sub:`${FAM_SHORT[f.type]||f.type} · 개별 접수`,paid:true,defType:f.type,link:''}));   /* 11-21 새 접수: 가족도 개별 접수 (묶기는 가족방 신청에서) */
   return res;
 }
 function info(p){ if(!S.info[p.key]){ S.info[p.key]={by:p.birth?String(p.birth):'',gender:'',teacher:p.teacher||'',type:p.defType,prog:'',pref:false,p1:'',p2:'',lessons:0,mc:[],concert:'없음',song:'',other:false,oc:'',ot:''}; if(S.pqLes&&S.pqLes[p.key]){Object.assign(S.info[p.key],S.pqLes[p.key]);delete S.pqLes[p.key]} } {const a=(window.AUDPRE||{})[p.key]||(window.AUDPRE||{})['N:'+p.name],i=S.info[p.key];if(a&&i.concert==='없음'&&!i._ap){i._ap=1;i.concert=a.con;i.other=true;i.oc=a.comp||'';i.ot=a.title||'';i.video=a.url||''}} {const i=S.info[p.key],m=p.inst==='첼로'?{'10권':'10권 보케리니 협주곡','10권 이상':'10권 이상 기타 곡'}:{'2권A 요정의 춤 ~':'2권A ~ 헨델 부레','2권B 미뇽의 가보트 ~':'2권B 두 사람의 척탄병 ~'};if(m[i.prog])i.prog=m[i.prog]}   /* 11-15: 바뀐 권수 이름 옛 값 → 새 값 */

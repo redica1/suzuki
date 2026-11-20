@@ -1,4 +1,4 @@
-/* build: 20261121-002954 */
+/* build: 20261121-003920 */
     ps.forEach(p=>{p.pay='신고';p.rep=rep;delete S.rpRow[p.id]});S.afterSave=()=>repDone(ps.map(p=>p.id));subSave();S.rp=null;S.rpOpen=false;S.rpMemo=undefined;render();toast(`${ps.length}명 입금 신고를 보냈어요 · 운영진이 확인하면 「입금 확인」으로 바뀌어요`);return}
   if(b.id==='rpFill'){const n=document.getElementById('rpAllN').value.trim(),dd=document.getElementById('rpAllD').value;S.rpAllN=n;S.rpAllD=dd;const sel=S.rp||[];
     if(!n&&!dd){toast('적용할 입금자명이나 입금일을 적어 주세요');return}unpaidPpl().filter(x=>sel.includes(x.p.id)).forEach(({p})=>{const v=rpv(p);if(n)v.n=n;if(dd)v.d=dd});render();toast(`선택한 ${sel.length}명에게 적용했어요`);return}
@@ -58,9 +58,16 @@
   if(d.addfam){const [k,t]=d.addfam.split('|');const id='f'+Date.now();S.fam.push({id,name:'',type:t,link:k});render();const n=document.getElementById('fn_'+id)||document.getElementById('fc_'+id);n&&n.focus();toast(`${FAM_SHORT[t]}를 추가했어요. 이름을 넣어 주세요`);return}
   if(b.id==='allPaid'){const r=roster(),me=S.user.name;[...r.students.filter(x=>!S.mine||x.teacher===me),...(S.mine?[]:r.teachers)].forEach(x=>{if(x.paid&&!x.booked&&!S.picked[x.id])S.sel[x.id]=true});render();toast('회비 납부한 사람을 모두 선택했어요');return}
   if(b.id==='openNew'){S.showNew=true;render();const e=document.getElementById('nf_n')||document.getElementById('nN');e&&e.focus();return}
-  if(d.nk){const F=S.nf||(S.nf={});['n','a'].forEach(k=>{const e=document.getElementById('nf_'+k);if(e)F[k]=e.value});F.k=d.nk;render();return}
-  if(d.nfg){const F=S.nf||(S.nf={});['n','a'].forEach(k=>{const e=document.getElementById('nf_'+k);if(e)F[k]=e.value});F.g=d.nfg;render();return}
+  if(d.nk){const F=S.nf||(S.nf={});['n','a','i'].forEach(k=>{const e=document.getElementById('nf_'+k);if(e)F[k]=e.value});F.k=d.nk;if(NEWUI&&!nkInst(F.k))F.i='';render();return}
+  if(d.nfg){const F=S.nf||(S.nf={});['n','a','i'].forEach(k=>{const e=document.getElementById('nf_'+k);if(e)F[k]=e.value});F.g=d.nfg;render();return}
   if(b.id==='cancelNew'){S.showNew=false;render();return}
+  if(b.id==='addNew'&&NEWUI&&!isGuest()){const F=S.nf||{};['n','a','i'].forEach(k=>{const e=document.getElementById('nf_'+k);if(e)F[k]=e.value});const n=String(F.n||'').trim(),er=m=>{const x=document.getElementById('nErr');if(x)x.textContent=m};
+    if(!F.k)return er('구분을 골라 주세요.');if(!n)return er('이름을 넣어 주세요.');if(!F.g)return er('성별을 골라 주세요.');if(nkInst(F.k)&&!F.i)return er('전공을 골라 주세요.');
+    const y=F.a!==''?manToYear(F.a):'';if(nkPlay(F.k)&&!y)return er('나이를 숫자로 넣어 주세요.');if(F.a!==''&&!y)return er('나이를 숫자로 넣어 주세요.');
+    let id;if(nkInst(F.k)){id=(F.k==='교사'?'t_n':'x')+Date.now();S.cartAt[id]=nowStamp();S.extra.push({id,name:n,birth:y,inst:F.i,start:'-',teacher:'',t:F.k==='교사'?1:undefined})}
+    else{if(famClosed())return er('가족 신청이 마감됐어요. 운영진에게 문의해 주세요.');id='f'+Date.now();S.fam.push({id,name:n,type:F.k,link:''})}
+    const p=people().find(q=>q.key===id);if(p){const i=info(p);i.gender=F.g;i.type=F.k;if(y){i.man=String(F.a);i.by=String(y)}}
+    S.nf={k:'',n:'',g:'',a:'',i:''};render();toast(n+' · 추가했어요');return}
   if(b.id==='addNew'&&!isGuest()){const F=S.nf||{},er=m=>{document.getElementById('nErr').textContent=m};const n=String(F.n||'').trim(),P=nkPlay(F.k);
     if(!n)return er('이름을 넣어 주세요.');if(!F.g)return er('성별을 골라 주세요.');
     const y=F.a!==''?manToYear(F.a):'';if(P&&!y)return er('만 나이를 숫자로 넣어 주세요.');if(F.a!==''&&!y)return er('만 나이를 숫자로 넣어 주세요.');
@@ -69,8 +76,7 @@
       const p=people().find(q=>q.key===xid);if(p){const i=info(p);i.gender=F.g;i.man=String(F.a);i.by=String(y);i.prog=F.pg;i.type=F.k}
       S.nf=null;S.showNew=false;render();toast(`${n} ${F.k==='학생'?'학생을 추가했어요 · 연회비 3만 원 추가':'(악기하는 교사자녀)을 추가했어요'}`);return}
     if(famClosed())return er('가족 신청이 마감됐어요. 운영진에게 문의해 주세요.');
-    if(!F.lk&&NEWUI){const h0=people().find(q=>q.kind!=='family');if(h0)F.lk=h0.key}   /* 새 접수: 가족 묶기는 「가족방 신청」에서 · 여기서는 첫 사람에게 붙여 둠 */
-    if(!F.lk)return er('누구의 가족인지 골라 주세요.');
+    if(!F.lk&&!NEWUI)return er('누구의 가족인지 골라 주세요.');   /* 새 접수: 가족도 개별 접수 · 묶기는 「가족방 신청」에서 */
     {const id='f'+Date.now();S.fam.push({id,name:n,type:F.k,link:F.lk});const p=people().find(q=>q.key===id);if(p){const i=info(p);i.gender=F.g;if(y){i.man=String(F.a);i.by=String(y)}}
      const h=people().find(q=>q.key===F.lk);S.nf=null;S.showNew=false;render();toast(`${n}(${FAM_SHORT[F.k]})을 ${h?h.name+'의 ':''}가족으로 담았어요`)}return}
   if(b.id==='addNew'){
@@ -79,7 +85,7 @@
     if(!n||!(y>1990&&y<=2026)||(!G&&(!tc||!ins||!st))){document.getElementById('nErr').textContent=G?'아이 이름과 출생연도(4자리)를 넣어 주세요.':'이름, 출생연도(4자리), 전공, 시작 연월(연도·월), 담당 교사를 모두 넣어 주세요.';return}
     if(G&&S.extra.some(x=>x.name===n&&+x.birth===y)){document.getElementById('nErr').textContent='이미 넣은 아이예요.';return}
     {const xid='x'+Date.now();S.cartAt[xid]=nowStamp();S.extra.push({id:xid,name:n,birth:y,inst:ins,start:st||'-',teacher:tc})}S.showNew=false;render();toast(G?`${n}을(를) 넣었어요`:`${n} 학생을 추가했어요 · 연회비 3만 원 추가`);return}
-  if(d.rmx){delete S.room[d.rmx];delete S.join[d.rmx];S.extra=S.extra.filter(x=>x.id!==d.rmx);S.fam=S.fam.filter(f=>f.link!==d.rmx);delete S.info[d.rmx];render();return}
+  if(d.rmx){delete S.room[d.rmx];delete S.join[d.rmx];S.extra=S.extra.filter(x=>x.id!==d.rmx);S.fam=S.fam.filter(f=>f.link!==d.rmx&&f.id!==d.rmx);delete S.info[d.rmx];render();return}
   if(b.id==='openFam'){S.showFam=true;render();return}
   if(b.id==='cancelFam'){S.showFam=false;render();return}
   if(b.id==='addFam'){
@@ -190,7 +196,7 @@ document.addEventListener('change',e=>{if(e.target.id==='nI'){const n=document.g
 const ensQ=e=>{if(e.target.id==='enTq'&&e.target.value!==S.ens.tq){S.ens.tq=e.target.value;const pos=e.target.selectionStart;if(!e.isComposing){render();const n=document.getElementById('enTq');if(n){n.focus();n.setSelectionRange(pos,pos)}}return}if(e.target.id==='enAq'&&e.target.value!==S.ens.aq){S.ens.aq=e.target.value;const box=document.getElementById('ensCands');if(box)box.innerHTML=ensCandsHTML()}};
 document.addEventListener('input',ensQ);
 /* 명단에 없는 사람 추가 칸 (11-20) */
-function nfEv(e){const t=e.target;if(!t.dataset||!t.dataset.nf)return;const F=S.nf||(S.nf={});F[t.dataset.nf]=t.value;if(t.dataset.nf==='a'){const h=document.getElementById('nf_ah');if(h)h.textContent=t.value!==''&&manToYear(t.value)!==''?manToYear(t.value)+'년생으로 넣어요':''}if(e.type==='change'&&t.dataset.nfr){F.pg='';F.t='';['n','a'].forEach(k=>{const x=document.getElementById('nf_'+k);if(x)F[k]=x.value});render()}}
+function nfEv(e){const t=e.target;if(!t.dataset||!t.dataset.nf)return;const F=S.nf||(S.nf={});F[t.dataset.nf]=t.value;if(t.dataset.nf==='a'){const h=document.getElementById('nf_ah');if(h)h.textContent=t.value!==''&&manToYear(t.value)!==''?manToYear(t.value)+'년생으로 넣어요':''}if(NEWUI){const df=document.getElementById('dfee');if(df){const w=document.createElement('div');w.innerHTML=nfFeeHTML(F);df.firstElementChild.replaceWith(w.firstElementChild);const ab=df.querySelector('#addNew');if(ab)ab.disabled=!nfOk(F)}}if(e.type==='change'&&t.dataset.nfr){F.pg='';F.t='';['n','a'].forEach(k=>{const x=document.getElementById('nf_'+k);if(x)F[k]=x.value});render()}}
 document.addEventListener('input',nfEv);document.addEventListener('change',nfEv);document.addEventListener('compositionend',ensQ);
 document.addEventListener('focusin',e=>{if(e.target.id==='acQ'&&!S.acOpen){S.acOpen=true;S.acQ='';render();const n=document.getElementById('acQ');n.focus()}});
 document.addEventListener('compositionend',e=>{if(e.target.id==='acQ'){S.acQ=e.target.value;S.acOpen=true;render();const n=document.getElementById('acQ');n.focus();n.setSelectionRange(n.value.length,n.value.length)}});
@@ -744,7 +750,7 @@ if(typeof NEWUI!=='undefined'&&NEWUI){
   /* 3단계 사람마다 「저장」 (11-21): 저장하면 카드가 한 줄로 접히고 다음 사람으로 · 모두 저장해야 「접수하기」 */
   S.nsv=S.nsv||{};
   const nMiss=k=>{const L=[];const h=f=>f().some(p=>p.key===k);if(h(missingBasic))L.push('성별 · 학생 만 나이');if(h(missingTeacher))L.push('담당 교사');if(h(missingProg))L.push('권수');if(h(missingPref))L.push('선호 교수 1');if(h(missingSong))L.push('음악회 곡');if(h(missingVideo))L.push('음원 주소(https)');return L};
-  const nCards=()=>{if(S.view!=='form'||S.step!==3||S.editNo)return;people().filter(p=>p.kind!=='family').forEach(p=>{const el=document.getElementById('card_'+p.key);if(!el)return;
+  const nCards=()=>{if(S.view!=='form'||S.step!==3||S.editNo)return;people().filter(p=>p.kind!=='family'||!p.link).forEach(p=>{const el=document.getElementById('card_'+p.key);if(!el)return;
       if(S.nsv[p.key]){const i=info(p),h=el.querySelector('header');el.classList.add('nsaved');el.innerHTML=`<div class="nsrow"><span><b>${esc(p.name)}</b> <small class="hint">${[i.gender,p.inst,i.prog?String(i.prog).split(' ')[0]:'',i.concert&&i.concert!=='없음'?i.concert+' 음악회':'',+i.lessons>0?'추가 레슨 '+i.lessons+'회':''].filter(Boolean).map(esc).join(' · ')}</small></span><span class="row" style="gap:6px"><span class="pill ok">저장됨</span><button class="btn small" type="button" data-nedit="${p.key}">고치기</button></span></div>`;return}
       if(!el.querySelector('.nsfoot')){const er=(S.nser||{})[p.key];el.insertAdjacentHTML('beforeend',`<div class="nsfoot">${er?`<span class="nserr">${esc(er)}</span>`:''}<button class="btn primary" type="button" data-nsave="${p.key}">저장</button></div>`)}})};
   {const _r3=render;render=function(){const x=_r3.apply(this,arguments);try{nCards()}catch(e){}return x}}
@@ -753,8 +759,8 @@ if(typeof NEWUI!=='undefined'&&NEWUI){
     const k=b.dataset.nsave,p=people().find(q=>q.key===k);if(!p)return;const L=nMiss(k);S.nser=S.nser||{};
     if(L.length){S.nser[k]=L.join(' · ')+'을(를) 넣어 주세요.';render();toast(p.name+' · '+S.nser[k]+' (저장 안 됨)',true);const el=document.getElementById('card_'+k);if(el)el.scrollIntoView({block:'start'});return}
     delete S.nser[k];S.nsv[k]=true;render();toast(p.name+' · 저장되었습니다',true);
-    const rest=people().filter(q=>q.kind!=='family'&&!S.nsv[q.key]);const nx=rest.length?document.getElementById('card_'+rest[0].key):document.getElementById('nextBtn');if(nx)nx.scrollIntoView({block:rest.length?'start':'center',behavior:'smooth'})},true);
-  document.addEventListener('click',e=>{const b=e.target&&e.target.closest&&e.target.closest('#nextBtn');if(!b||S.view!=='form'||S.step!==3||S.editNo)return;const rest=people().filter(q=>q.kind!=='family'&&!S.nsv[q.key]);if(rest.length){e.stopImmediatePropagation();toast('저장 안 한 사람이 있어요 · '+rest.map(q=>q.name).join(', '),true);const el=document.getElementById('card_'+rest[0].key);if(el)el.scrollIntoView({block:'start'})}},true);
+    const rest=people().filter(q=>(q.kind!=='family'||!q.link)&&!S.nsv[q.key]);const nx=rest.length?document.getElementById('card_'+rest[0].key):document.getElementById('nextBtn');if(nx)nx.scrollIntoView({block:rest.length?'start':'center',behavior:'smooth'})},true);
+  document.addEventListener('click',e=>{const b=e.target&&e.target.closest&&e.target.closest('#nextBtn');if(!b||S.view!=='form'||S.step!==3||S.editNo)return;const rest=people().filter(q=>(q.kind!=='family'||!q.link)&&!S.nsv[q.key]);if(rest.length){e.stopImmediatePropagation();toast('저장 안 한 사람이 있어요 · '+rest.map(q=>q.name).join(', '),true);const el=document.getElementById('card_'+rest[0].key);if(el)el.scrollIntoView({block:'start'})}},true);
   /* 3단계 「접수하기」 = 앙상블 · 신청 확인 단계 없이 바로 접수 (앙상블은 홈 「앙상블 신청」에서 따로) */
   document.addEventListener('click',e=>{const b=e.target&&e.target.closest&&e.target.closest('#nextBtn');if(!b||S.view!=='form'||S.step!==3||S.editNo||blocked())return;S.ens=S.ens&&(S.ens.on||S.ens.member)?S.ens:{on:false};S.step=5;S.agree=true},true);
   document.addEventListener('click',e=>{const h=e.target&&e.target.closest&&e.target.closest('[data-nh],[data-tb="home"]');if(!h||!S.user)return;

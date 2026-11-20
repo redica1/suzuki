@@ -1,8 +1,8 @@
-${''/* build: 20261121-002954 */}
-    ${S.extra.length?`<div class="xhead">명단에 없어 추가한 학생 ${S.extra.length}명 <span class="hint">체크한 학생만 접수돼요 · 연회비 30,000원이 함께 청구돼요 · 「빼기」는 목록에서 지워요</span></div><ul class="roster">${S.extra.map(s=>`<li><input type="checkbox" id="xk_${s.id}" ${s.on!==false?'checked':''} data-xon="${s.id}" aria-label="${esc(s.name)} 선택"><label class="who" for="xk_${s.id}"><b>${esc(s.name)} <span class="kind ks">학생</span></b><small>${age(s.birth)}세 · ${s.inst} · 담당 ${esc(s.teacher)}</small></label><span class="row" style="flex-wrap:nowrap"><span class="pill new">신규 추가</span><button class="btn small ghost" type="button" data-rmx="${s.id}">빼기</button></span></li>`).join('')}</ul>`:''}
-    ${S.showNew?newAdder():`<button class="btn ghost" type="button" id="openNew">+ 명단에 없는 사람 추가</button>`}`:''}
+${''/* build: 20261121-003920 */}
+    ${S.extra.length&&!NEWUI?`<div class="xhead">명단에 없어 추가한 ${NEWUI?'사람':'학생'} ${S.extra.length}명 <span class="hint">체크한 사람만 접수돼요 · 회비가 함께 청구돼요 · 「빼기」는 목록에서 지워요</span></div><ul class="roster">${S.extra.map(s=>`<li><input type="checkbox" id="xk_${s.id}" ${s.on!==false?'checked':''} data-xon="${s.id}" aria-label="${esc(s.name)} 선택"><label class="who" for="xk_${s.id}"><b>${esc(s.name)} <span class="kind ks">${s.t?'교사':'학생'}</span></b><small>${age(s.birth)}세 · ${s.inst} · 담당 ${esc(s.teacher)}</small></label><span class="row" style="flex-wrap:nowrap"><span class="pill new">신규 추가</span><button class="btn small ghost" type="button" data-rmx="${s.id}">빼기</button></span></li>`).join('')}</ul>`:''}
+    ${S.showNew?(NEWUI?newAdderN():newAdder()):`<button class="btn ghost" type="button" id="openNew">+ 명단에 없는 사람 추가</button>`}`:''}
   </div>
-  ${S.ptab!=='가족'&&people().some(p=>p.kind!=='family')?`<div class="cartBot">${cartPanel()}</div>`:''}
+  ${!NEWUI&&S.ptab!=='가족'&&people().some(p=>p.kind!=='family')?`<div class="cartBot">${cartPanel()}</div>`:''}
   ${unpaidPicked.length?`<div class="note"><b>회비확인대기 ${unpaidPicked.length}명</b> · ${unpaidPicked.map(p=>esc(p.name)).join(', ')}<br>연회비를 캠프비와 같은 계좌로 함께 입금해 주세요. 운영진이 입금을 확인하면 정식 접수로 바뀌어요.</div>`:''}
   </section>`;
 }
@@ -13,7 +13,7 @@ function newAdder(){const F=S.nf||(S.nf={k:'학생',n:'',g:'',a:'',i:'',pg:'',sy
   const heads=people().filter(p=>p.kind!=='family');
   return `<div class="adder"><b>명단에 없는 사람 추가</b>
   <div class="f"><span>구분<span class="req">*</span></span><div class="seg nkseg" role="group" aria-label="구분">${NK.map(([v,l])=>`<button type="button" data-nk="${v}" aria-pressed="${F.k===v}" ${!nkPlay(v)&&fc?'disabled title="가족 신청이 마감됐어요"':''}>${l}</button>`).join('')}</div></div>
-  ${P?`<p class="hint" style="margin:0">${F.k==='학생'?'늦게 들어온 학생은 연회비 30,000원을 캠프비와 함께 입금해 주세요. 운영진이 확인하면 정식 접수돼요.':'회원 선생님의 악기를 하는 자녀예요. 참가비는 「회원의 악기하는 자녀」 금액이에요.'}</p>`:`<p class="hint" style="margin:0">악기를 안 하는 가족이에요. 보호자가 두 명 이상이면 두 번째부터는 「동반가족」으로 넣어요. ${heads.length?(NEWUI?'':'누구의 가족인지 골라 주세요.'):'<b>먼저 교사나 학생을 신청 명단에 담아 주세요.</b>'}</p>`}
+  ${P?`<p class="hint" style="margin:0">${F.k==='학생'?'늦게 들어온 학생은 연회비 30,000원을 캠프비와 함께 입금해 주세요. 운영진이 확인하면 정식 접수돼요.':'회원 선생님의 악기를 하는 자녀예요. 참가비는 「회원의 악기하는 자녀」 금액이에요.'}</p>`:`<p class="hint" style="margin:0">악기를 안 하는 가족이에요. 보호자가 두 명 이상이면 두 번째부터는 「동반가족」으로 넣어요. ${NEWUI?'':heads.length?'누구의 가족인지 골라 주세요.':'<b>먼저 교사나 학생을 신청 명단에 담아 주세요.</b>'}</p>`}
   <div class="grid2"><label class="f" for="nf_n"><span>이름<span class="req">*</span></span><input type="text" id="nf_n" data-nf="n" value="${esc(F.n)}" autocomplete="off"></label>
   <div class="f" style="display:grid;gap:4px;justify-items:start"><span>성별<span class="req">*</span></span><div class="seg" role="group" aria-label="성별" style="width:max-content">${['남','여'].map(g=>`<button type="button" data-nfg="${g}" aria-pressed="${F.g===g}">${g==='남'?'남성':'여성'}</button>`).join('')}</div></div>
   <label class="f" for="nf_a"><span>만 나이${P?'<span class="req">*</span>':'<span class="opt">(선택 · 대략)</span>'}</span><input type="text" id="nf_a" data-nf="a" inputmode="numeric" maxlength="2" value="${esc(F.a)}" placeholder="예: 12"><small class="hint" id="nf_ah">${F.a!==''&&manToYear(F.a)!==''?manToYear(F.a)+'년생으로 넣어요':''}</small></label>
@@ -24,6 +24,21 @@ function newAdder(){const F=S.nf||(S.nf={k:'학생',n:'',g:'',a:'',i:'',pg:'',sy
   :NEWUI?'':`<label class="f" for="nf_lk"><span>누구의 가족<span class="req">*</span></span><select id="nf_lk" data-nf="lk" ${heads.length?'':'disabled'}>${`<option value="">선택</option>`+heads.map(h=>`<option value="${h.key}" ${h.key===F.lk?'selected':''}>${esc(h.name)} (${h.kind==='teacher'?'교사':'학생'})</option>`).join('')}</select></label>`}
   </div>
   <div class="row"><button class="btn primary small" type="button" id="addNew">담기</button><button class="btn small ghost" type="button" id="cancelNew">닫기</button><span class="err" id="nErr"></span></div></div>`}
+/* 새 접수 직접 입력 (11-21 미리보기와 같게): 구분 칩 → 이름 · 전공 · 성별 · 나이 한 줄 → 금액 + 오른쪽 「추가」 */
+const NKN=[['교사','교사'],['학생','학생'],['회원의 악기하는 자녀','교사 자녀 (악기)'],['회원의 첫번째 보호자','첫번째 보호자'],['회원의 그외 악기 안하는 동반가족','동반가족'],['동반가족 중 15개월 미만','15개월 미만']];
+const nkInst=k=>k==='교사'||nkPlay(k);
+function nfOk(F){return !!(F.k&&String(F.n||'').trim()&&F.g&&(!nkInst(F.k)||F.i)&&(!nkPlay(F.k)||(F.a!==''&&manToYear(F.a)!=='')))}
+function nfFeeHTML(F){const ok=nfOk(F),b=(FEES[F.k]||[])[CAMP.ri]||0,du=F.k==='교사'?CAMP.teacherDues:nkPlay(F.k)?CAMP.studentDues:0;
+  return `<span class="${ok?'':'hint'}">${ok?`<b>${esc(String(F.n).trim())}</b> · ${esc((NKN.find(x=>x[0]===F.k)||[])[1]||F.k)} · 참가비 <b>${won(b)}</b>${du?` + ${F.k==='교사'?'회비':'연회비'} <b>${won(du)}</b> = <b>${won(b+du)}</b>`:''}`:F.k?'필수 칸을 채우면 금액이 나와요.':'구분을 먼저 골라요.'}${F.a!==''&&manToYear(F.a)!==''?` <small class="hint">· 만 ${esc(F.a)}세 → ${manToYear(F.a)}년생</small>`:''}</span><button class="btn primary small" type="button" id="addNew" ${ok?'':'disabled'}>추가</button>`}
+function newAdderN(){const F=S.nf||(S.nf={k:'',n:'',g:'',a:'',i:''});const fc=famClosed(),I=nkInst(F.k);
+  return `<div class="adder nadder"><b>명단에 없는 사람 직접 입력</b><p class="hint" style="margin:0">성별은 꼭, 교사 · 학생 · 교사 자녀는 전공도 꼭, 학생 · 교사 자녀는 나이도 꼭 넣어요.</p>
+  <div class="kchips" role="group" aria-label="구분">${NKN.map(([v,l])=>`<button type="button" data-nk="${v}" aria-pressed="${F.k===v}" ${!nkInst(v)&&fc?'disabled title="가족 신청이 마감됐어요"':''}>${l}</button>`).join('')}</div>
+  <div class="drow"><input type="text" id="nf_n" data-nf="n" value="${esc(F.n)}" placeholder="이름 *" aria-label="이름" autocomplete="off">
+  ${I?`<select id="nf_i" data-nf="i" aria-label="전공"><option value="">전공 *</option>${['바이올린','비올라','첼로','플루트'].map(x=>`<option ${x===F.i?'selected':''}>${x}</option>`).join('')}</select>`:''}
+  <div class="kchips" role="group" aria-label="성별">${['여','남'].map(g=>`<button type="button" data-nfg="${g}" aria-pressed="${F.g===g}">${g==='남'?'남성':'여성'}</button>`).join('')}</div>
+  <input type="text" id="nf_a" data-nf="a" inputmode="numeric" maxlength="2" value="${esc(F.a)}" placeholder="${nkPlay(F.k)?'나이 *':'나이 (선택)'}" aria-label="만 나이" style="width:96px"></div>
+  <div class="dfee" id="dfee">${nfFeeHTML(F)}</div><span class="err" id="nErr"></span>
+  <div class="row"><button class="btn small ghost" type="button" id="cancelNew">닫기</button></div></div>`}
 /* 담당 교사: 학생 악기와 같은 전공의 교사만 (없으면 전체) */
 function teachersFor(inst,cur){const all=roster().teachers;const L=all.filter(t=>t.inst===inst);const out=(L.length?L:all).map(t=>t.name);if(cur&&!out.includes(cur))out.push(cur);return out}
 function opts(list,val,ph){ return `<option value="">${ph}</option>`+list.map(x=>`<option ${x===val?'selected':''}>${esc(x)}</option>`).join('') }
@@ -33,6 +48,9 @@ function duesTxt(p){const r=roster();const x=(p.kind==='teacher'?r.teachers:r.st
 function lockedP(key){if(!S.editNo)return false;const sb=ALL_SUBS.find(x=>x.no===S.editNo);const o=sb&&sb.ppl.find(q=>q.id===S.editNo+'_'+key);return !!(o&&o.status==='정상'&&o.pay==='신고')}
 function lockCards(){if(!S.editNo)return;document.querySelectorAll('.pcard').forEach(c=>{const key=c.id.slice(5);if(!lockedP(key))return;
   c.querySelectorAll('input,select,textarea,button').forEach(el=>{if(el.closest('.pcard')!==c)return;if([...el.attributes].some(a=>a.name.startsWith('data-')&&(a.value===key||a.value.startsWith(key+'|')))||el.id.endsWith('_'+key))el.disabled=true})})}
+/* 만 나이 칸 (11-21 새 접수): 회원 정보에 출생연도가 있으면 자동 계산해서 보여 주기만 · 없는 사람만 넣게 */
+function ageField(p,i){if(NEWUI&&p.birth&&okYear(String(p.birth))&&String(i.by)===String(p.birth))return `<div class="f"><span>만 나이</span><div class="agefix"><b>만 ${thisYear()-(+p.birth)}세</b> <span class="hint">${esc(p.birth)}년생${p.isNew?'':' · 회원 정보'}</span></div></div>`;
+  return `<label class="f" for="ag_${p.key}"><span>만 나이${p.kind==='student'?'<span class="req">*</span>':'<span class="opt">(선택)</span>'}</span><span class="manrow"><span class="manbox"><input type="text" id="mn_${p.key}" data-man="${p.key}" inputmode="numeric" maxlength="2" value="${esc(i.man||'')}" placeholder="만 나이" aria-label="${esc(p.name)} 만 나이 (넣으면 출생연도가 채워져요)"><em>세 →</em></span>${byField(p,i)}</span><small class="hint" id="agh_${p.key}">${i.man!==undefined&&i.man!==''&&manToYear(i.man)!==''?ageHint(p,String(manToYear(i.man)),true):ageHint(p,i.by)}</small></label>`}
 function pCard(p){
   const i=info(p), f=feeOf(p), plays=PLAYS.has(i.type);
   const instKey = PROGRESS[p.inst]?p.inst:'기타';
@@ -47,9 +65,9 @@ function pCard(p){
     <div class="f"><span>참가자 구분</span>${p.kind==='family'?`<select id="ty_${p.key}" data-f="type" data-k="${p.key}">${types.map(x=>`<option ${x===i.type?'selected':''}>${x}</option>`).join('')}</select>`:typeSeg(p.key,p.kind==='teacher'?'teacher':'student')}</div>
     ${p.kind==='family'?`<div class="row" style="justify-content:flex-end"><button class="btn small ghost" type="button" data-rmf="${p.key}">이 가족 빼기</button></div><label class="f" for="fc_${p.key}">가족 이름<input type="text" id="fc_${p.key}" data-famname="${p.key}" value="${esc(S.fam.find(x=>x.id===p.key)?.name||'')}" placeholder="이름을 넣어 주세요"></label>`:''}
     ${p.kind==='student'?`<div class="pair">${isGuest()?`<label class="f" for="tc_${p.key}"><span>다니는 곳·선생님 <span class="hint">(있으면)</span></span><input type="text" id="tc_${p.key}" data-f="teacher" data-k="${p.key}" maxlength="40" value="${esc(i.teacher)}" placeholder="예: OO음악학원 김OO 선생님"></label>`:`<label class="f" for="tc_${p.key}"><span>담당 교사<span class="req">*</span></span><select id="tc_${p.key}" data-f="teacher" data-k="${p.key}" ${i.teacher?'':'style="border-color:var(--rosin)"'}>${opts(teachersFor(p.inst,i.teacher),i.teacher,roster().teachers.some(t=>t.inst===p.inst)?`${p.inst} 선생님 중에서 선택해 주세요`:'담당 교사를 선택해 주세요')}</select></label>`}
-      <label class="f" for="ag_${p.key}"><span>만 나이${p.kind==='student'?'<span class="req">*</span>':'<span class="opt">(선택)</span>'}</span><span class="manrow"><span class="manbox"><input type="text" id="mn_${p.key}" data-man="${p.key}" inputmode="numeric" maxlength="2" value="${esc(i.man||'')}" placeholder="만 나이" aria-label="${esc(p.name)} 만 나이 (넣으면 출생연도가 채워져요)"><em>세 →</em></span>${byField(p,i)}</span><small class="hint" id="agh_${p.key}">${i.man!==undefined&&i.man!==''&&manToYear(i.man)!==''?ageHint(p,String(manToYear(i.man)),true):ageHint(p,i.by)}</small></label></div>
+      ${ageField(p,i)}</div>
     <div class="pair gp"><div class="f" style="display:grid;gap:4px;justify-items:start"><span>성별<span class="req">*</span></span><div class="seg" role="group" aria-label="${esc(p.name)} 성별" style="width:max-content">${['남','여'].map(g=>`<button type="button" data-gender="${p.key}|${g}" aria-pressed="${i.gender===g}">${g==='남'?'남성':'여성'}</button>`).join('')}</div></div>
-      ${plays?`<label class="f" for="pg_${p.key}"><span>권수 (현재 진도)<span class="req">*</span></span><select id="pg_${p.key}" data-f="prog" data-k="${p.key}" ${i.prog?'':'class="empty"'}>${opts(PROGRESS[instKey],i.prog,'권수를 선택해 주세요')}</select></label>`:''}</div>`:`<div class="pair"><label class="f" for="ag_${p.key}"><span>만 나이${p.kind==='student'?'<span class="req">*</span>':'<span class="opt">(선택)</span>'}</span><span class="manrow"><span class="manbox"><input type="text" id="mn_${p.key}" data-man="${p.key}" inputmode="numeric" maxlength="2" value="${esc(i.man||'')}" placeholder="만 나이" aria-label="${esc(p.name)} 만 나이 (넣으면 출생연도가 채워져요)"><em>세 →</em></span>${byField(p,i)}</span><small class="hint" id="agh_${p.key}">${i.man!==undefined&&i.man!==''&&manToYear(i.man)!==''?ageHint(p,String(manToYear(i.man)),true):ageHint(p,i.by)}</small></label>
+      ${plays?`<label class="f" for="pg_${p.key}"><span>권수 (현재 진도)<span class="req">*</span></span><select id="pg_${p.key}" data-f="prog" data-k="${p.key}" ${i.prog?'':'class="empty"'}>${opts(PROGRESS[instKey],i.prog,'권수를 선택해 주세요')}</select></label>`:''}</div>`:`<div class="pair">${ageField(p,i)}
       <div class="f" style="display:grid;gap:4px;justify-items:start"><span>성별<span class="req">*</span></span><div class="seg" role="group" aria-label="${esc(p.name)} 성별" style="width:max-content">${['남','여'].map(g=>`<button type="button" data-gender="${p.key}|${g}" aria-pressed="${i.gender===g}">${g==='남'?'남성':'여성'}</button>`).join('')}</div></div></div>`}
     ${plays?(p.kind==='teacher'?`
     <div class="lesBox${lesOpen(p,i)?' on':''}"><label class="lesQ"><input type="checkbox" data-tnoles="${p.key}" ${lesOpen(p,i)?'':'checked'} ${lesHas(i)?'disabled title="고른 레슨 · 마스터클래스를 모두 빼면 다시 체크할 수 있어요"':''}> 개인레슨 안 받아요 <span class="hint">(교사는 기본 레슨 없음 · 필요할 때만 체크 해제)</span></label>
@@ -70,8 +88,8 @@ function pCard(p){
     </div>`:''}
     </div>
 
-`):`<p class="hint">${p.kind==='family'?`${esc(people().find(x=>x.key===p.link)?.name||'')}의 가족으로 접수돼요.`:'이 구분은 레슨·음악회 신청이 없어요.'}</p>`}
-    ${p.kind!=='family'?(()=>{const fs=people().filter(x=>x.kind==='family'&&x.link===p.key),own=p.kind==='teacher'?'teacher':'student',has=fs.length||S.join[p.key]||(S.room||{})[p.key]||sibsOf(p.key).length,on=has||(S.famOn||{})[p.key];   /* 11-16: 가족 추가 = 별도 상자 · 「가족을 추가할까요?」 체크하면 열림 · 빨간 안내는 늘 보임 */
+`):`<p class="hint">${p.kind==='family'?(NEWUI||!p.link?'가족방은 「가족방 신청」에서 묶어요.':`${esc(people().find(x=>x.key===p.link)?.name||'')}의 가족으로 접수돼요.`):'이 구분은 레슨·음악회 신청이 없어요.'}</p>`}
+    ${p.kind!=='family'&&!NEWUI?(()=>{const fs=people().filter(x=>x.kind==='family'&&x.link===p.key),own=p.kind==='teacher'?'teacher':'student',has=fs.length||S.join[p.key]||(S.room||{})[p.key]||sibsOf(p.key).length,on=has||(S.famOn||{})[p.key];   /* 11-16: 가족 추가 = 별도 상자 · 「가족을 추가할까요?」 체크하면 열림 · 빨간 안내는 늘 보임 */
       return `<div class="famadd famBox${on?' on':''}"><label class="famQ"><input type="checkbox" data-famon="${p.key}" ${on?'checked':''} ${has?'disabled title="가족을 모두 빼면 끌 수 있어요"':''}> <b>${esc(p.name)} ${own==='teacher'?'선생님':''} ${isGuest()||isStaffAcad()?'가족 추가':'가족 · 가족방'}</b> <span class="hint">${isGuest()||isStaffAcad()?`보호자 · 동반가족 · 15개월 미만 · ${own==='teacher'?'자녀':'형제'}`:`${own==='teacher'?'자녀':'형제'} 묶기 · 가족방 신청`}</span></label>${isGuest()||isStaffAcad()?famMustP(own):''}
       ${on?`${fs.length?`<div class="famnest"><div class="grp-h">${esc(p.name)}의 가족 ${fs.length}명</div>${fs.map(pCard).join('')}</div>`:''}${(S.editNo&&S.quickEdit&&lockedP(p.key)?'':famChips(p.key,own,p.name,true))}${roomRow(p.key,p.name)}`:''}</div>`})():''}
     <div class="fee-line"><span>${ROUNDS[pRi(p.key)][0]} ${esc(i.type==='회원의 악기하는 자녀'?'악기하는 교사자녀':i.type)}${(()=>{const tm=teams().find(x=>x.rep.key===p.key);return f.les||f.mc||f.dues||(tm&&tm.fee)?' '+won(f.base):''})()}${f.les?` + 레슨 ${won(f.les)}`:''}${f.mc?` + 마스터클래스 ${won(f.mc)}`:''}${f.dues?` + 연회비 ${won(f.dues)}`:''}${(()=>{const tm=teams().find(x=>x.rep.key===p.key);return tm?` + 가족방(${tm.n}명) ${won(tm.fee)}`:''})()}</span><b class="num">${won(f.total+((teams().find(x=>x.rep.key===p.key)||{}).fee||0))}</b></div>
@@ -90,7 +108,7 @@ function vStep3(){
   ${S.fam.some(f=>!f.name.trim())?`<div class="note">가족 이름을 넣어 주세요: ${S.fam.filter(f=>!f.name.trim()).map(f=>{const o=people().find(p=>p.key===f.link);return `${esc(o?o.name:'')}의 ${FAM_SHORT[f.type]}`}).join(', ')}</div>`:''}
   ${teams().some(x=>x.over)?`<div class="note">한 방은 최대 ${ROOM.max}명이에요 (숙소 1실 5~6인): ${teams().filter(x=>x.over).map(x=>`${esc(x.rep.name)} 가족 ${x.n}명`).join(', ')}</div>`:''}
   ${S.editOnly?`<div class="note info spread"><span><b>${S.editOnly.length}명만 고치는 중</b> · ${ps.filter(p=>S.editOnly.includes(p.key)).map(p=>esc(p.name)).join(', ')}</span><button class="btn small ghost" type="button" id="showAllCards">모두 보기</button></div>`:''}
-  ${ps.filter(p=>p.kind!=='family'&&(!S.editOnly||S.editOnly.includes(p.key))).map(pCard).join('')}
+  ${ps.filter(p=>(p.kind!=='family'||!p.link)&&(!S.editOnly||S.editOnly.includes(p.key))).map(pCard).join('')}
   ${isStaffAcad()?redBox():rnoteBox()}
   </section>`;
 }

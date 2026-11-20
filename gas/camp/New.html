@@ -21,6 +21,7 @@ body{background:var(--bg);color:var(--ink);font:16px/1.6 var(--font);margin:0}
 .mineT .actc{display:flex;flex-direction:column;align-items:flex-end;gap:4px}.mineT input[type=checkbox]{width:16px;height:16px}
 .fr0>td{background:#fff4e0}.fr1>td{background:#e8f1ff}.fr2>td{background:#f1e9ff}.fr3>td{background:#e6f7ec}.fr4>td{background:#ffe9ef}.fr5>td{background:#e9f7f7}
 .tabs[hidden]{display:none}
+.fchips{display:flex;gap:8px;flex-wrap:wrap;margin:2px 0 4px}.fchips button{font:inherit;font-size:15px;font-weight:700;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:7px 16px;cursor:pointer}.fchips button span{font-weight:500;color:var(--muted)}.fchips button[aria-pressed=true]{background:var(--accentD);border-color:var(--accentD);color:#fff}.fchips button[aria-pressed=true] span{color:#fff}
 
 .tabs button{font:inherit;font-size:15px;font-weight:700;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:7px 14px;cursor:pointer}
 .tabs button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--surface)}
@@ -208,7 +209,13 @@ const IAB={'바이올린':'Vn','비올라':'Va','첼로':'Vc','플루트':'Fl','
 const nowTs=()=>{const d=new Date(),z=n=>String(n).padStart(2,'0');return String(d.getFullYear()).slice(2)+'.'+z(d.getMonth()+1)+'.'+z(d.getDate())+' '+z(d.getHours())+':'+z(d.getMinutes())};
 function vMine(){let sum=0;const fam={};S.list.forEach((x,fi)=>(x.names||[]).forEach(n=>fam[n]={fi,rep:x.rep,n:x.n,amt:x.amt||0,isRep:n===x.rep}));
  const md=(()=>{const d=new Date();return (d.getMonth()+1)+'/'+d.getDate()})();
- const rows=P.picked.map((x,ix)=>{if(!x.at)x.at=nowTs();const f=inf(x),np=NOPLAY(x.k),fee=feeOf(x),F=fam[x.n],rm=F&&F.isRep?F.amt:0,amt=fee+rm;sum+=amt;const [dt,tm]=x.at.split(' ');
+ const grp=x=>NOPLAY(x.k)?'가족':x.k==='교사'?'교사':'학생',ins=x=>NOPLAY(x.k)?'':(IAB[instOf(x)]||instOf(x)),mf=S.mf||'전체';
+ const keep=x=>mf==='전체'||grp(x)===mf||ins(x)===mf;
+ const cnt=k=>P.picked.filter(x=>k==='전체'||grp(x)===k||ins(x)===k).length;
+ const keys=['전체','학생','교사',...Object.values(IAB).filter(a=>P.picked.some(x=>ins(x)===a)),'가족'].filter(k=>k==='전체'||cnt(k));
+ const chips=`<div class="fchips" role="group" aria-label="분류">${keys.map(k=>`<button type="button" data-mf="${k}" aria-pressed="${k===mf}">${k} <span>${cnt(k)}</span></button>`).join('')}</div>`;
+ let shown=0,ssum=0;
+ const rows=P.picked.map((x,ix)=>{if(!x.at)x.at=nowTs();if(!keep(x)){const F0=fam[x.n];sum+=feeOf(x)+(F0&&F0.isRep?F0.amt:0);return ''}shown++;const f=inf(x),np=NOPLAY(x.k),fee=feeOf(x),F=fam[x.n],rm=F&&F.isRep?F.amt:0,amt=fee+rm;sum+=amt;ssum+=amt;const [dt,tm]=x.at.split(' ');
   const inc=[(!np&&f.add)?'레슨':'',rm?'가족방':''].filter(Boolean);const ck=!!(S.mck&&S.mck[ix]);
   return `<tr class="${F?'fr'+(F.fi%6):''}"><td><input type="checkbox" data-mck="${ix}" ${ck?'checked':''} aria-label="${esc(x.n)} 선택"></td>
   <td class="tsc">${F?`<span class="rmtag${F.isRep?' rep':''}">${F.isRep?`가족방 대표 ${F.n}명`:`${esc(F.rep)} 방`}</span>`:''}${dt}<span class="tsl">${tm}</span></td>
@@ -219,8 +226,8 @@ function vMine(){let sum=0;const fam={};S.list.forEach((x,fi)=>(x.names||[]).for
  const all=P.picked.length&&P.picked.every((x,i)=>S.mck&&S.mck[i]);
  return `<div class="panel"><div class="spread"><h2>내 신청 내역</h2><span class="pill ${S.paid?'ok':'wait'}">${S.paid?'입금 확인 중':'입금 전'}</span></div>
  <p class="hint">미사스즈키 · ${esc(WHO)} 원장님 · 1차 (12월 1일 ~ 7일) · 7일까지 입금하면 1차 금액이에요.</p>
- ${P.picked.length?`<div class="tbl"><table class="mineT"><thead><tr><th></th><th>접수 시간</th><th>이름</th><th>악기</th><th class="r">청구</th><th></th></tr></thead><tbody>${rows}</tbody>
- <tfoot><tr><td colspan="4" style="text-align:left"><button class="btn sm" type="button" data-act="mckAll">${all?'전체 해제':'전체 선택'}</button> <b style="margin-left:8px">${P.picked.length}명</b></td><td class="r"><b style="font-size:17px">${won(sum)}</b></td><td></td></tr></tfoot></table></div>`:'<p class="hint">아직 신청한 사람이 없어요. 「캠프 신청하기」에서 시작해요.</p>'}</div>
+ ${P.picked.length?chips+`<div class="tbl"><table class="mineT"><thead><tr><th></th><th>접수 시간</th><th>이름</th><th>악기</th><th class="r">청구</th><th></th></tr></thead><tbody>${rows}</tbody>
+ <tfoot><tr><td colspan="4" style="text-align:left"><button class="btn sm" type="button" data-act="mckAll">${all?'전체 해제':'전체 선택'}</button> <b style="margin-left:8px">${mf==='전체'?P.picked.length+'명':mf+' '+shown+'명 · 전체 '+P.picked.length+'명'}</b></td><td class="r"><b style="font-size:17px">${won(ssum)}</b></td><td></td></tr></tfoot></table></div>`:'<p class="hint">아직 신청한 사람이 없어요. 「캠프 신청하기」에서 시작해요.</p>'}</div>
  <div class="panel"><div class="spread"><b>입금하실 금액</b><b class="num" style="font-size:20px">${won(sum)}</b></div>
  <p class="hint">가족방 금액은 대표 줄에 들어가요. 입금하고 「입금 신고」를 눌러 주세요.</p>
  <div class="row" style="justify-content:space-between"><span class="row"><button class="btn" type="button" data-tab="pick">사람 추가</button><button class="btn" type="button" data-act="cxReq" ${S.mck&&Object.values(S.mck).some(Boolean)?'':'disabled'}>체크한 사람 취소 요청</button></span><button class="btn pri" type="button" data-act="payRep">입금 신고</button></div>
@@ -264,6 +271,7 @@ document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)r
  if(d.eteam){S.ens.team=d.eteam;render();return}
  if(d.act==='ensSave'){const E=S.ens;E.err=!E.name.trim()?'팀 이름을 넣어 주세요.':!E.n.trim()?'인원을 넣어 주세요.':!E.song.trim()||!E.comp.trim()?'곡명 · 작곡가를 넣어 주세요.':'';if(!E.err)E.done=true;render();return}
  if(d.act==='payRep'){S.paid=true;render();return}
+ if(d.mf){S.mf=d.mf;render();return}
  if(d.act==='mckAll'){const on=!(P.picked.length&&P.picked.every((x,i)=>S.mck&&S.mck[i]));S.mck={};if(on)P.picked.forEach((x,i)=>S.mck[i]=true);render();return}
  if(d.act==='cxReq'){S.cxMsg=true;render();return}
  if(d.radd){const m=REGA().find(x=>x.n===d.radd&&x.a===d.ra);if(m&&!S.mem.some(x=>x.n===m.n))S.mem.push({k:m.k,n:m.n,sub:m.a+(m.i?' · '+m.i:'')+(m.t?' · '+m.t+' 선생님 접수':' · 내 접수'),st:'ok'});S.q.n='';render();return}

@@ -325,13 +325,13 @@ function loadLive(r){if(!r)return;LIVE=true;WHO=r.head||WHO;const A='미사스�
  S.others=null;P.picked=[];Object.keys(I).forEach(k=>delete I[k]);S.mem=[];S.list=[];S.rep='';P.q='';P.hit=null}
 function vLogin(){const B='https://app.suzukimusickorea.org/camp/';const card=(k,t,d,href)=>href?`<a class="pickcard" href="${href}" target="_blank" rel="noopener"><b>${t}</b><span>${d}</span><small class="hint">기존 STG 화면으로 열려요 ↗</small></a>`:`<button type="button" class="pickcard${S.mode===k?' on':''}" data-mode="${k}"><b>${t}</b><span>${d}</span></button>`;
  return `<div class="panel"><h2 style="margin:0">접수 시작</h2><p class="hint" style="margin:0">어떻게 접수하시나요?</p>
- <div class="pick2">${card('member','회원 선생님','협회 회원 선생님이 학원 학생들을 접수해요. 회원 이메일 · 비밀번호로 로그인해요.')}
- ${card('parent','학부모 (학원 다니는 학생)','학생이 캠프에 가는지와 같이 가는 가족 이름만 학원 선생님께 알려요. 접수는 선생님이 해요. 회원가입 없이 이름 · 휴대전화로.',B+'parent.html?test')}
- ${card('guest','비회원 (학부모)','회원 학원에 다니지 않는 아이를 보호자가 직접 접수해요. 보호자 이름과 휴대전화만 있으면 돼요.',B+'index.html?test')}
- ${card('staff','관계자','초빙교수 · 반주자 · 지휘자 · 통역 · 초청강사 · 스태프. 협회 회원관리에 「관계자」로 가입한 이메일 · 비밀번호로 로그인해요.',B+'index.html?test')}
- ${card('intl','Overseas participants <small style="font-weight:500">· 해외 참가</small>','<span lang="en">For groups from other countries. Registration is in English and fees are in USD.</span>',B+'intl.html?test')}</div>
- <p class="hint" style="margin:0">새 화면 미리보기는 「회원 선생님」만 있어요. 나머지는 지금 STG 화면이 열려요.</p></div>
- ${S.mode==='member'?`<div class="panel login"><h3 style="margin:0">회원 선생님 로그인</h3><p class="hint" style="margin:0">미리보기에서는 미사스즈키 원장님으로 들어가요. STG 명단(선생님 · 학생 · 교수진)을 불러와요. 여기서 고른 것은 저장되지 않아요.</p>
+ <div class="pick2">${card('member','회원 신청하기','협회 회원 선생님이 학원 학생들을 접수해요. 회원 이메일 · 비밀번호로 로그인해요.')}
+ ${card('guest','비회원 신청하기','회원 학원에 다니지 않는 아이를 보호자가 직접 접수해요. 보호자 이름과 휴대전화만 있으면 돼요.',B+'index.html?test')}
+ ${card('staff','관계자 신청하기','초빙교수 · 반주자 · 지휘자 · 통역 · 초청강사 · 스태프. 협회 회원관리에 「관계자」로 가입한 이메일 · 비밀번호로 로그인해요.',B+'index.html?test')}
+ ${card('intl','Overseas participants <small style="font-weight:500">· 해외 신청하기</small>','<span lang="en">For groups from other countries. Registration is in English and fees are in USD.</span>',B+'intl.html?test')}
+ ${card('parent','학부모 신청하기','학생이 캠프에 가는지와 같이 가는 가족 이름만 학원 선생님께 알려요. 접수는 선생님이 해요. 회원가입 없이 이름 · 휴대전화로.',B+'parent.html?test')}</div>
+ <p class="hint" style="margin:0">새 화면 미리보기는 「회원 신청하기」만 있어요. 나머지는 지금 STG 화면이 열려요.</p></div>
+ ${S.mode==='member'?`<div class="panel login"><h3 style="margin:0">회원 신청하기 · 로그인</h3><p class="hint" style="margin:0">미리보기에서는 미사스즈키 원장님으로 들어가요. STG 명단(선생님 · 학생 · 교수진)을 불러와요. 여기서 고른 것은 저장되지 않아요.</p>
  <button class="btn pri" type="button" data-act="login" ${S.loading?'disabled':''}>${S.loading?'명단 불러오는 중…':'미사스즈키 원장으로 들어가기'}</button>${S.lerr?`<p class="hint" style="color:var(--warn);font-weight:700;margin:0">${esc(S.lerr)}</p>`:''}</div>`:''}`}
 function vHome(){let sum=0;P.picked.forEach(x=>sum+=feeOf(x));const rm=S.list.filter(x=>x.room).length,E=S.ens;
  const box=(t,no,b,d,st)=>`<button type="button" class="hbox" data-tab="${t}"><span class="no">${no}</span><b>${b}</b><p>${d}</p><span class="st">${st}</span></button>`;

@@ -1,4 +1,4 @@
-/* build: 20261121-002625 */
+/* build: 20261121-002715 */
 function vAuthPick(){const off=!!CAMP.pre;return gdBtn()+apDoor()+`<section class="sec"><h2>접수 시작</h2>
   ${off?`<p class="note warn" style="margin:6px 0 12px"><b>${+CAMP.pre.slice(5,7)}월 ${+CAMP.pre.slice(8,10)}일에 접수가 열려요.</b> 그 전에 아래에서 회원가입을 마쳐 두세요.</p>`:'<p class="lede">어떻게 접수하시나요?</p>'}
   <div class="pick2${off?' pickoff':''}"${off?' aria-disabled="true"':''}>
@@ -281,7 +281,7 @@ function vStep2(){
   const unpaidPicked = people().filter(p=>!p.paid && p.kind!=='family');
   const studentsForLink = people().filter(p=>p.kind==='student');
   return `<section class="sec"><h2>${esc(S.acad)} 참가자 선택</h2>
-  <p class="lede">${isStaffAcad()?'본인을 체크하고 「신청 명단에 추가」를 눌러요. 함께 오는 가족은 다음 단계에서 넣어요.':'탭에서 교사·학생을 체크하고 「신청 명단에 추가」를 눌러요. <b class="famReq">가족은 교사와 학생을 선택해야 추가할 수 있어요.</b>'}</p>
+  <p class="lede">${isStaffAcad()?'본인을 체크하고 「신청 명단에 추가」를 눌러요. 함께 오는 가족은 다음 단계에서 넣어요.':'탭에서 교사·학생을 체크하고 「신청 명단에 추가」를 눌러요.<br><b class="famReq">가족은 교사와 학생을 선택해야 추가할 수 있어요.</b>'}</p>
   ${preqPanel()}
   ${cartPanel()}
   <div class="panel">

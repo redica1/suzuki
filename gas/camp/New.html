@@ -21,6 +21,7 @@ body{background:var(--bg);color:var(--ink);font:16px/1.6 var(--font);margin:0}
 .mineT .actc{display:flex;flex-direction:column;align-items:flex-end;gap:4px}.mineT input[type=checkbox]{width:16px;height:16px}
 .fr0>td{background:#fff4e0}.fr1>td{background:#e8f1ff}.fr2>td{background:#f1e9ff}.fr3>td{background:#e6f7ec}.fr4>td{background:#ffe9ef}.fr5>td{background:#e9f7f7}
 .tabs[hidden]{display:none}
+.lg2{max-width:440px;margin:0 auto 18px}.lg2 .lbl{font-weight:700;font-size:15px;margin-bottom:-4px}.lg2 input,.lg2 select{padding:12px;border-radius:10px}.lg2 label.sw{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.lg2 label.sw input{width:18px;height:18px;padding:0;flex:none}.lg2 a.btn{text-decoration:none}.joinbox{display:grid;gap:10px;background:var(--soft);border-left:4px solid var(--accentD);border-radius:10px;padding:14px 16px}
 .pick2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}@media (max-width:560px){.pick2{grid-template-columns:1fr}}.pickcard{display:grid;gap:8px;align-content:start;text-align:left;font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;cursor:pointer;text-decoration:none}.pickcard b{font-size:18px}.pickcard>span{color:var(--muted);font-size:14.5px;line-height:1.55}.pickcard:hover,.pickcard.on{border-color:var(--accentD)}.pickcard.on{box-shadow:0 0 0 2px var(--soft)}
 .rosT{width:100%}.rosT th{background:var(--soft);font-size:14px;white-space:nowrap}.rosT td{padding:8px 6px}.rosT td.nmc{white-space:nowrap}.rosT td.nmc .kind{margin-right:8px}.rosT tr.onr>td{background:#eef7f5}.rosT input[type=checkbox]{width:17px;height:17px}
 .dpill{display:inline-block;border-radius:8px;padding:2px 8px;font-size:12.5px;font-weight:700;line-height:1.25}.dpill.ok{background:#e3f3e8;color:#1e7f4f}.dpill.no{background:#fff1dc;color:#b26a00}.dpill.new{background:#e3f3f2;color:var(--accentD)}
@@ -324,15 +325,22 @@ function loadLive(r){if(!r)return;LIVE=true;WHO=r.head||WHO;const A='미사스�
  if(r.profs&&r.profs.length){PF.length=0;r.profs.forEach(q=>PF.push([q.n,q.i,!!q.mc]))}
  S.others=null;P.picked=[];Object.keys(I).forEach(k=>delete I[k]);S.mem=[];S.list=[];S.rep='';P.q='';P.hit=null}
 function vLogin(){const B='https://app.suzukimusickorea.org/camp/';const card=(k,t,d,href)=>href?`<a class="pickcard" href="${href}" target="_blank" rel="noopener"><b>${t}</b><span>${d}</span><small class="hint">기존 STG 화면으로 열려요 ↗</small></a>`:`<button type="button" class="pickcard${S.mode===k?' on':''}" data-mode="${k}"><b>${t}</b><span>${d}</span></button>`;
- return `<div class="panel"><h2 style="margin:0">접수 시작</h2><p class="hint" style="margin:0">어떻게 접수하시나요?</p>
+ return `${S.mode==='member'?'':`<div class="panel"><h2 style="margin:0">접수 시작</h2><p class="hint" style="margin:0">어떻게 접수하시나요?</p>
  <div class="pick2">${card('member','회원 신청하기','협회 회원 선생님이 학원 학생들을 접수해요. 회원 이메일 · 비밀번호로 로그인해요.')}
  ${card('guest','비회원 신청하기','회원 학원에 다니지 않는 아이를 보호자가 직접 접수해요. 보호자 이름과 휴대전화만 있으면 돼요.',B+'index.html?test')}
  ${card('staff','관계자 신청하기','초빙교수 · 반주자 · 지휘자 · 통역 · 초청강사 · 스태프. 협회 회원관리에 「관계자」로 가입한 이메일 · 비밀번호로 로그인해요.',B+'index.html?test')}
  ${card('intl','Overseas participants <small style="font-weight:500">· 해외 신청하기</small>','<span lang="en">For groups from other countries. Registration is in English and fees are in USD.</span>',B+'intl.html?test')}
  ${card('parent','학부모 신청하기','학생이 캠프에 가는지와 같이 가는 가족 이름만 학원 선생님께 알려요. 접수는 선생님이 해요. 회원가입 없이 이름 · 휴대전화로.',B+'parent.html?test')}</div>
- <p class="hint" style="margin:0">새 화면 미리보기는 「회원 신청하기」만 있어요. 나머지는 지금 STG 화면이 열려요.</p></div>
- ${S.mode==='member'?`<div class="panel login"><h3 style="margin:0">회원 신청하기 · 로그인</h3><p class="hint" style="margin:0">미리보기에서는 미사스즈키 원장님으로 들어가요. STG 명단(선생님 · 학생 · 교수진)을 불러와요. 여기서 고른 것은 저장되지 않아요.</p>
- <button class="btn pri" type="button" data-act="login" ${S.loading?'disabled':''}>${S.loading?'명단 불러오는 중…':'미사스즈키 원장으로 들어가기'}</button>${S.lerr?`<p class="hint" style="color:var(--warn);font-weight:700;margin:0">${esc(S.lerr)}</p>`:''}</div>`:''}`}
+ <p class="hint" style="margin:0">새 화면 미리보기는 「회원 신청하기」만 있어요. 나머지는 지금 STG 화면이 열려요.</p></div>`}
+ ${S.mode==='member'?`<div class="panel login lg2"><h2 style="margin:0">회원 신청하기</h2><label class="lbl">이메일</label><div class="row" style="gap:8px;flex-wrap:nowrap"><input id="lgId" placeholder="아이디" autocomplete="off" style="flex:1;min-width:0"><span class="hint">@</span><select id="lgDom" style="flex:1.2;min-width:0"><option value="">선택하기</option>${['naver.com','gmail.com','daum.net','hanmail.net','kakao.com','nate.com','직접 입력'].map(d=>`<option>${d}</option>`).join('')}</select></div>
+ <label class="lbl">비밀번호</label><input type="password" id="lgPw" autocomplete="off">
+ <label class="sw" style="font-weight:700"><input type="checkbox"> 비밀번호 저장하기 <span class="hint" style="font-weight:400">이 기기에만 · 공용 PC는 체크하지 마세요</span></label>
+ <p class="hint" style="color:var(--warn);margin:0">STG(시험) 화면이에요. <b>회원관리 STG</b> 계정 비밀번호로 들어가요. 메인 회원관리 계정과는 따로예요.</p>
+ <p class="hint" style="margin:0">미리보기: 입력한 값은 쓰지 않아요. 「로그인」을 누르면 미사스즈키 원장님으로 들어가요.</p>
+ <button class="btn pri wide" type="button" data-act="login" ${S.loading?'disabled':''}>${S.loading?'명단 불러오는 중…':'로그인'}</button>${S.lerr?`<p class="hint" style="color:var(--warn);font-weight:700;margin:0">${esc(S.lerr)}</p>`:''}
+ <div class="row" style="justify-content:space-between"><button class="btn sm" type="button" data-mode="">← 처음으로</button><a class="btn sm" href="https://app.suzukimusickorea.org/member/index.html?test" target="_blank" rel="noopener" style="color:#1a3ad6">비밀번호를 잊었어요 ↗</a></div>
+ <div class="joinbox"><b>아직 회원 가입을 안 하셨나요?</b><p class="hint" style="margin:0">협회 선생님 회원에서 이름과 휴대전화로 확인한 뒤 이메일 · 비밀번호를 만들어요. 가입이 끝나면 같은 이메일 · 비밀번호로 여기에 들어올 수 있어요.</p>
+ <a class="btn pri" href="https://app.suzukimusickorea.org/member/index.html?test" target="_blank" rel="noopener" style="justify-self:start">선생님 회원 가입하기 ↗</a><p class="hint" style="margin:0">이번 겨울 캠프는 가입 전이어도 접수할 수 있어요.</p><button class="btn sm" type="button" data-act="login" style="justify-self:start">가입 전이에요 · 이름과 휴대전화로 들어가기</button></div></div>`:''}`}
 function vHome(){let sum=0;P.picked.forEach(x=>sum+=feeOf(x));const rm=S.list.filter(x=>x.room).length,E=S.ens;
  const box=(t,no,b,d,st)=>`<button type="button" class="hbox" data-tab="${t}"><span class="no">${no}</span><b>${b}</b><p>${d}</p><span class="st">${st}</span></button>`;
  return `<div class="panel" style="margin-bottom:14px"><h2 style="margin:0">${esc(WHO)} 원장님, 안녕하세요</h2><p class="hint" style="margin:4px 0 0">미사스즈키 · 1차 접수 12월 1일 ~ 7일 · 하고 싶은 일을 골라요.</p></div>
@@ -365,7 +373,7 @@ document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)r
  if(d.act==='ensSave'){const E=S.ens;E.err=!E.name.trim()?'팀 이름을 넣어 주세요.':!E.n.trim()?'인원을 넣어 주세요.':!E.song.trim()||!E.comp.trim()?'곡명 · 작곡가를 넣어 주세요.':'';if(!E.err)E.done=true;render();return}
  if(d.act==='payRep'){S.paid=true;render();return}
  if(d.mf){S.mf=d.mf;render();return}
- if(d.mode){S.mode=d.mode;render();return}
+ if(d.mode!==undefined){S.mode=d.mode;render();return}
  if(d.act==='mailMe'){S.mailed=true;render();return}
  if(d.act==='submitAll'){const t=nowTs();P.picked.forEach(x=>{if(!x.done){x.done=true;x.at=t}});S.tab='mine';S.mv='pay';render();scrollTo(0,0);return}
  if(d.act==='rvAll'){const n=(document.getElementById('rvAllN')||{}).value||'',dt=(document.getElementById('rvAllD')||{}).value||'';S.rvN=n;S.rvD=dt;S.rv=S.rv||{};Object.keys(S.rck||{}).filter(k=>S.rck[k]).forEach(k=>S.rv[k]={payer:n,date:dt});render();return}

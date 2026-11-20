@@ -96,7 +96,7 @@ function vFlow(){return `<div class="panel"><h2>접수를 둘로 나눠요</h2>
  <div class="note">다른 학원 · 다른 선생님이 접수한 형제도 <b>학원 → 정확한 이름</b>으로 찾아 한 가족으로 묶어요. 직접 입력은 없어요. 캠프에 먼저 접수된 사람만 골라요.</div></div>`}
 function vNew(){const T=total();
  if(S.done)return `<div class="panel"><h2>가족 신청을 받았어요</h2><p class="hint">${S.mem.map(m=>esc(m.n)).join(' · ')} · ${S.mem.length}명${S.room?' · 가족방':''} · 입금하실 금액 <b>${won(T.all)}</b></p><p class="hint">「내 접수 › 입금 신고」에서 함께 신고해요.</p><div class="row"><button class="btn pri" type="button" data-act="toList">내 가족 목록</button><button class="btn" type="button" data-act="again">가족 하나 더</button></div></div>`;
- const sw=`<div class="panel"><label class="sw" for="room" style="font-size:17px;font-weight:700"><input type="checkbox" id="room" ${S.room?'checked':''}> 가족방 신청합니다</label><p class="hint" style="margin:6px 0 0 28px">${S.room?`가족방은 ${CAP}인 기준이에요. 빈자리 1자리마다 ${won(ROOM_EMPTY)}.`:'체크하면 접수한 사람 목록이 펼쳐져요.'}</p></div>`;
+ const sw=`<div class="panel"><label class="sw" for="room" style="font-size:17px;font-weight:700"><input type="checkbox" id="room" ${S.room?'checked':''}> ${S.list.length?'가족방 하나 더 신청합니다':'가족방 신청합니다'}</label><p class="hint" style="margin:6px 0 0 28px">${S.room?`가족방은 ${CAP}인 기준이에요. 빈자리 1자리마다 ${won(ROOM_EMPTY)}.`:'체크하면 접수한 사람 목록이 펼쳐져요.'}</p></div>`;
  if(!S.room)return sw;
  const inMem=n=>S.mem.some(m=>m.n===n),qa=S.q.a||'미사스즈키',qn=S.q.n||'',cand=REGA().filter(m=>m.a===qa&&!inMem(m.n)&&qn&&m.n.includes(qn));
  return sw+`<div class="panel"><div class="step"><b class="n">1</b><div><h3>대표 고르기</h3><p class="hint">대표는 꼭 <b>학생</b> 또는 <b>교사</b>여야 해요.</p></div></div>
@@ -113,7 +113,7 @@ function vNew(){const T=total();
  <tr><td class="l">참가비 (각자 접수에서)</td><td>${S.mem.length}</td><td class="hint">-</td></tr>
  </tbody><tfoot><tr><td class="l">이 가족 신청 금액</td><td>${S.mem.length}</td><td>${won(T.all)}</td></tr></tfoot></table></div>
  <div class="row" style="justify-content:flex-end"><button class="btn pri" type="button" data-act="submit" ${S.mem.length<2?'disabled':''}>가족방 신청하기</button></div></div>`}
-function vList(){return `<div class="panel"><div class="spread"><h2>내 가족 목록</h2><button class="btn pri sm" type="button" data-act="again">+ 가족 신청</button></div>
+function vList(){if(!S.list.length)return '';return `<div class="panel"><div class="spread"><h2>신청한 가족방 ${S.list.length}</h2>${S.done?'<button class="btn pri sm" type="button" data-act="again">+ 가족 하나 더</button>':''}</div>
  <div class="tbl"><table><thead><tr><th class="l">대표</th><th class="l">가족</th><th>인원</th><th>가족방</th><th>금액</th><th>상태</th></tr></thead><tbody>${S.list.map(x=>`<tr><td class="l"><b>${esc(x.rep)}</b></td><td class="l">${(x.names||[]).map(esc).join(' · ')}</td><td>${x.n}</td><td>${x.room?'신청':'-'}</td><td>${won(x.amt)}</td><td><span class="pill ${x.st==='입금 전'?'wait':'ok'}">${x.st}</span></td></tr>`).join('')}</tbody>
  <tfoot><tr><td class="l">합계</td><td></td><td>${S.list.reduce((s,x)=>s+x.n,0)}</td><td>${S.list.filter(x=>x.room).length}</td><td>${won(S.list.reduce((s,x)=>s+x.amt,0))}</td><td></td></tr></tfoot></table></div>
  <p class="hint">가족을 고치거나 빼는 것도 여기서 해요. 방 배정이 시작되면 닫혀요.</p></div>`}
@@ -208,10 +208,8 @@ function vMine(){let sum=0;const rows=P.picked.map((x,ix)=>{const f=inf(x),np=NO
  <p class="hint">미사스즈키 · ${esc(WHO)} 원장님 · 1차 (12월 1일 ~ 7일) · 7일까지 입금하면 1차 금액이에요.</p>
  <div class="tbl"><table><thead><tr><th>구분</th><th class="l">이름</th><th>개인레슨</th><th>마스터클래스</th><th>음악회</th><th>금액</th></tr></thead><tbody>${rows}</tbody>
  <tfoot><tr><td></td><td class="l">참가 합계 ${P.picked.length}명</td><td></td><td></td><td></td><td class="num">${won(sum)}</td></tr></tfoot></table></div></div>
- <div class="panel"><div class="spread"><h3>가족방</h3><button class="btn sm" type="button" data-tab="list">내 가족 목록</button></div>
- ${rm.length?`<div class="tbl"><table><thead><tr><th class="l">가족</th><th>인원</th><th>빈자리 금액</th></tr></thead><tbody>${rm.map(x=>`<tr><td class="l">${(x.names||[x.rep]).map(esc).join(' · ')}</td><td>${x.n}</td><td class="num">${won(x.amt||0)}</td></tr>`).join('')}</tbody></table></div>`:'<p class="hint">신청한 가족방이 없어요.</p>'}</div>
  <div class="panel"><div class="spread"><b>입금하실 금액</b><b class="num" style="font-size:20px">${won(sum+rmAmt)}</b></div>
- <p class="hint">참가 ${won(sum)}${rmAmt?' + 가족방 '+won(rmAmt):''}. 입금하고 「입금 신고」를 눌러 주세요.</p>
+ <p class="hint">참가 ${won(sum)}${rmAmt?' + 가족방 '+won(rmAmt):''}${rm.length?' (가족방 내역은 「가족방 신청」에서)':''}. 입금하고 「입금 신고」를 눌러 주세요.</p>
  <div class="row" style="justify-content:space-between"><span class="row"><button class="btn" type="button" data-tab="info">고치기</button><button class="btn" type="button" data-act="cxReq">취소 요청</button></span><button class="btn pri" type="button" data-act="payRep">입금 신고</button></div>
  ${S.paid?'<p class="hint" style="color:var(--accentD);font-weight:700">입금 신고를 받았어요. 협회가 통장과 맞춰 보고 「입금 확인」으로 바꿔요.</p>':''}</div>`}
 function loadLive(r){if(!r)return;LIVE=true;WHO=r.head||WHO;const A='미사스즈키';
@@ -243,7 +241,7 @@ function vEns(){const E=S.ens,seg=(v,t)=>`<button type="button" data-eon="${v}" 
   <div class="row" style="justify-content:flex-end;margin-top:10px">${E.done?'<span class="pill ok">신청됨</span>':''}<button class="btn pri" type="button" data-act="ensSave">${E.done?'고친 내용 저장':'앙상블 신청하기'}</button></div>${E.err?`<p class="hint" style="color:var(--warn);font-weight:700">${esc(E.err)}</p>`:''}</div>`
  :E.on==='mem'?`<div class="panel"><p class="hint" style="margin-top:0">우리 학원이 들어갈 팀을 골라요. 곡 · 인원은 대표 학원이 넣어요.</p>${TEAMS.map(t=>`<div class="mem"><span class="who"><b>${esc(t.name)}</b><small>대표 ${esc(t.rep)}${t.mates.length?' · '+t.mates.map(esc).join(' · '):''}</small></span>${E.team===t.name?'<span class="pill ok">함께해요</span>':`<button class="btn sm" type="button" data-eteam="${esc(t.name)}">이 팀에 함께</button>`}</div>`).join('')}<p class="hint">찾는 팀이 없으면 대표 학원이 먼저 신청해야 해요.</p></div>`
  :'<div class="panel"><p class="hint" style="margin:0">앙상블에 나가지 않아요.</p></div>'}`}
-function render(){document.querySelectorAll('[data-tab]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.tab===S.tab)));document.getElementById('view').innerHTML=S.tab==='info'?vInfo():S.tab==='pick'?vPick():S.tab==='flow'?vFlow():S.tab==='list'?vList():S.tab==='mine'?vMine():S.tab==='login'?vLogin():S.tab==='home'?vHome():S.tab==='ens'?vEns():vNew();document.getElementById('nav').hidden=S.tab==='login';document.getElementById('who').textContent=S.tab==='login'?'로그인 · 미리보기 (가상 데이터)':WHO+' 원장님 · 미사스즈키 · 미리보기'+(LIVE?' (STG 명단)':' (가상 데이터)')}
+function render(){document.querySelectorAll('[data-tab]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.tab===S.tab)));document.getElementById('view').innerHTML=S.tab==='info'?vInfo():S.tab==='pick'?vPick():S.tab==='flow'?vFlow():S.tab==='list'||S.tab==='new'?vList()+(S.tab==='new'?vNew():''):S.tab==='mine'?vMine():S.tab==='login'?vLogin():S.tab==='home'?vHome():S.tab==='ens'?vEns():vNew();document.getElementById('nav').hidden=S.tab==='login';document.getElementById('who').textContent=S.tab==='login'?'로그인 · 미리보기 (가상 데이터)':WHO+' 원장님 · 미사스즈키 · 미리보기'+(LIVE?' (STG 명단)':' (가상 데이터)')}
 document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const d=b.dataset;
  if(d.tab){S.tab=d.tab;render();scrollTo(0,0);return}
  if(d.act==='login'){const go=()=>{S.loading=false;S.tab='home';render()};if(!(window.google&&google.script&&google.script.run)){go();return}S.loading=true;S.lerr='';render();google.script.run.withSuccessHandler(r=>{loadLive(r);go()}).withFailureHandler(er=>{S.loading=false;S.lerr='명단을 못 불러왔어요: '+(er&&er.message||er)+' · 가상 데이터로 들어가려면 다시 눌러요.';render();window.google=undefined}).newPreview();return}

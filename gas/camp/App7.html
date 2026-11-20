@@ -1,4 +1,4 @@
-/* build: 20261121-002906 */
+/* build: 20261121-002954 */
     ps.forEach(p=>{p.pay='신고';p.rep=rep;delete S.rpRow[p.id]});S.afterSave=()=>repDone(ps.map(p=>p.id));subSave();S.rp=null;S.rpOpen=false;S.rpMemo=undefined;render();toast(`${ps.length}명 입금 신고를 보냈어요 · 운영진이 확인하면 「입금 확인」으로 바뀌어요`);return}
   if(b.id==='rpFill'){const n=document.getElementById('rpAllN').value.trim(),dd=document.getElementById('rpAllD').value;S.rpAllN=n;S.rpAllD=dd;const sel=S.rp||[];
     if(!n&&!dd){toast('적용할 입금자명이나 입금일을 적어 주세요');return}unpaidPpl().filter(x=>sel.includes(x.p.id)).forEach(({p})=>{const v=rpv(p);if(n)v.n=n;if(dd)v.d=dd});render();toast(`선택한 ${sel.length}명에게 적용했어요`);return}
@@ -69,6 +69,7 @@
       const p=people().find(q=>q.key===xid);if(p){const i=info(p);i.gender=F.g;i.man=String(F.a);i.by=String(y);i.prog=F.pg;i.type=F.k}
       S.nf=null;S.showNew=false;render();toast(`${n} ${F.k==='학생'?'학생을 추가했어요 · 연회비 3만 원 추가':'(악기하는 교사자녀)을 추가했어요'}`);return}
     if(famClosed())return er('가족 신청이 마감됐어요. 운영진에게 문의해 주세요.');
+    if(!F.lk&&NEWUI){const h0=people().find(q=>q.kind!=='family');if(h0)F.lk=h0.key}   /* 새 접수: 가족 묶기는 「가족방 신청」에서 · 여기서는 첫 사람에게 붙여 둠 */
     if(!F.lk)return er('누구의 가족인지 골라 주세요.');
     {const id='f'+Date.now();S.fam.push({id,name:n,type:F.k,link:F.lk});const p=people().find(q=>q.key===id);if(p){const i=info(p);i.gender=F.g;if(y){i.man=String(F.a);i.by=String(y)}}
      const h=people().find(q=>q.key===F.lk);S.nf=null;S.showNew=false;render();toast(`${n}(${FAM_SHORT[F.k]})을 ${h?h.name+'의 ':''}가족으로 담았어요`)}return}

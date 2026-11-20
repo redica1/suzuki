@@ -15,6 +15,13 @@ body{background:var(--bg);color:var(--ink);font:16px/1.6 var(--font);margin:0}
 .band p{margin:4px 0 0;font-size:14px;opacity:.9}
 .wrap{max-width:760px;margin:0 auto;padding-block:16px 60px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:14px}
 .tabs{display:flex;gap:6px;flex-wrap:wrap}
+.mineT td,.mineT th{white-space:nowrap;padding:8px}.mineT td.nm{white-space:normal}.mineT td.nm .kind{display:table;margin:0 auto 3px}.mineT td.nm b{display:block;font-size:16px}
+.mineT td.tsc{text-align:left;font-size:12.5px;color:var(--muted);line-height:1.35}.mineT .tsl{display:block}.mineT .rmtag{display:block;font-size:12px;font-weight:500;color:var(--ink)}.mineT .rmtag.rep{color:var(--accent);font-weight:700}
+.mineT td.r,.mineT th.r{text-align:right}.amtL{display:inline-flex;align-items:center;gap:6px}.udot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#c0392b}.udot.or{background:#e67e22}.uamt{color:#c0392b;font-weight:500}.amt2{font-size:12px;color:var(--muted)}
+.mineT .actc{display:flex;flex-direction:column;align-items:flex-end;gap:4px}.mineT input[type=checkbox]{width:16px;height:16px}
+.fr0>td{background:#fff4e0}.fr1>td{background:#e8f1ff}.fr2>td{background:#f1e9ff}.fr3>td{background:#e6f7ec}.fr4>td{background:#ffe9ef}.fr5>td{background:#e9f7f7}
+.tabs[hidden]{display:none}
+
 .tabs button{font:inherit;font-size:15px;font-weight:700;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:7px 14px;cursor:pointer}
 .tabs button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--surface)}
 .panel{margin:0 0 18px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;display:grid;gap:12px;min-width:0}
@@ -159,7 +166,7 @@ document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)r
  if(d.ag!==undefined){P.sex=d.ag;P.age=(document.getElementById('ay')||{}).value||P.age;P.inst=(document.getElementById('ainst')||{}).value||P.inst;P.dn=(document.getElementById('an')||{}).value||P.dn;render();return}
  if(d.fo!==undefined){inf(P.picked[+d.fo]).open=true;render();return}
  if(d.fc!==undefined){const f=inf(P.picked[+d.fc]);if(f.cons[d.c])f.cons={};else f.cons={[d.c]:{}};render();return}});
-document.addEventListener('change',e=>{const t=e.target;if(t.dataset&&t.dataset.fm!==undefined){inf(P.picked[+t.dataset.fm]).mcS[t.dataset.q]=t.value;return}if(t.dataset&&t.dataset.fs!==undefined){const f=inf(P.picked[+t.dataset.fs]);(f.cons[t.dataset.c]||(f.cons[t.dataset.c]={}))[t.dataset.k]=t.type==='checkbox'?t.checked:t.value;if(t.type==='checkbox')render();return}if(t.dataset&&t.dataset.fi!==undefined){const f=inf(P.picked[+t.dataset.fi]);f[t.dataset.ff]=t.type==='checkbox'?t.checked:t.dataset.ff==='add'?+t.value:t.value;if(t.dataset.ff==='con'&&!t.checked)f.cons={};if(t.dataset.ff==='no'&&t.checked)f.add=0;if(t.dataset.ff==='p1'&&(!t.value||t.value===f.p2))f.p2='';if(t.dataset.ff==='open')f.add=t.checked?1:0;if(t.type==='checkbox'||t.tagName==='SELECT')render()}});
+document.addEventListener('change',e=>{const t=e.target;if(t.dataset&&t.dataset.mck!==undefined){S.mck=S.mck||{};S.mck[t.dataset.mck]=t.checked;render();return}if(t.dataset&&t.dataset.fm!==undefined){inf(P.picked[+t.dataset.fm]).mcS[t.dataset.q]=t.value;return}if(t.dataset&&t.dataset.fs!==undefined){const f=inf(P.picked[+t.dataset.fs]);(f.cons[t.dataset.c]||(f.cons[t.dataset.c]={}))[t.dataset.k]=t.type==='checkbox'?t.checked:t.value;if(t.type==='checkbox')render();return}if(t.dataset&&t.dataset.fi!==undefined){const f=inf(P.picked[+t.dataset.fi]);f[t.dataset.ff]=t.type==='checkbox'?t.checked:t.dataset.ff==='add'?+t.value:t.value;if(t.dataset.ff==='con'&&!t.checked)f.cons={};if(t.dataset.ff==='no'&&t.checked)f.add=0;if(t.dataset.ff==='p1'&&(!t.value||t.value===f.p2))f.p2='';if(t.dataset.ff==='open')f.add=t.checked?1:0;if(t.type==='checkbox'||t.tagName==='SELECT')render()}});
 /* ---------- ① 접수 2단계: 찾기 → 회원이면 선택 · 아니면 추가 ---------- */
 const MEMBERS=[{n:'김스즈',k:'교사',y:1985,i:'바이올린',a:'미사스즈키'},...MY.map(m=>({...m,k:'학생'})),{n:'한유진',k:'학생',y:2013,i:'플루트',a:'미사스즈키'},{n:'이두리',k:'학생',y:2013,i:'첼로',a:'마포스즈키'},{n:'김하나',k:'학생',y:2015,i:'바이올린',a:'마포스즈키'},{n:'김하나',k:'교사',y:1990,i:'첼로',a:'수지스즈키'}];
 const KINDS=['학생','교사 자녀 (악기)','교사','첫번째 보호자','동반가족','15개월 미만'];const STUK=k=>k==='학생'||k==='교사 자녀 (악기)';const byYear=a=>a?String(2027-(+a)-1):'';const INSTS=['바이올린','비올라','첼로','플루트','기타'];
@@ -197,20 +204,26 @@ document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)r
 });
 document.addEventListener('change',e=>{if(e.target.dataset&&e.target.dataset.rc!==undefined){P.chk[e.target.dataset.rc]=e.target.checked}if(e.target.id==='ay'){P.age=e.target.value;render()}if(e.target.id==='apg'){P.prog=e.target.value}});
 function feeOf(x){const f=inf(x),np=NOPLAY(x.k);return (FEE1[x.k==='학생'&&/직접 추가/.test(x.sub)?'학생(비회원)':x.k]||0)+(np?0:f.add)*LES+(f.mc?f.mcP.length*MCFEE:0)}
-function vMine(){let sum=0;const rows=P.picked.map((x,ix)=>{const f=inf(x),np=NOPLAY(x.k),stu=STU3(x.k),fee=feeOf(x);sum+=fee;const les=np?0:(stu&&!f.no?1:0)+f.add;const cs=Object.keys(f.cons);const c=cs[0],o=c?f.cons[c]:null;
- return `<tr><td><span class="kind ${np?'p':''}">${esc(x.k)}</span></td><td class="l"><b>${esc(x.n)}</b>${f.sex?` <small class="hint">${f.sex}</small>`:''}${stu&&f.prog?`<br><small class="hint">${esc(f.prog)}</small>`:''}</td>
- <td>${les?les+'회':'-'}${les&&f.p1?`<br><small class="hint">${esc(f.p1.split(' · ')[0])}${f.p2?' · '+esc(f.p2.split(' · ')[0]):''}</small>`:''}</td>
- <td>${f.mc&&f.mcP.length?f.mcP.map(q=>esc(q.split(' · ')[0])).join('<br>'):'-'}</td>
- <td>${x.k==='교사'?'<span class="hint">-</span>':c?`${c}${o&&(o.song||o.title)?`<br><small class="hint">${esc(o.nl?(o.title||'')+(o.comp?' ('+o.comp+')':''):o.song)}</small>`:''}${c!=='오후'?`<br><small class="hint">${o&&o.url?'음원 받음':'음원 아직'}</small>`:''}`:'-'}</td>
- <td class="num">${won(fee)}</td></tr>`}).join('');
- const rm=S.list.filter(x=>x.room),rmAmt=rm.reduce((a,x)=>a+(x.amt||0),0);
- return `<div class="panel"><div class="spread"><h2>내 접수</h2><span class="pill wait">입금 전</span></div>
+const IAB={'바이올린':'Vn','비올라':'Va','첼로':'Vc','플루트':'Fl','기타':'Gt','피아노':'Pf'};
+const nowTs=()=>{const d=new Date(),z=n=>String(n).padStart(2,'0');return String(d.getFullYear()).slice(2)+'.'+z(d.getMonth()+1)+'.'+z(d.getDate())+' '+z(d.getHours())+':'+z(d.getMinutes())};
+function vMine(){let sum=0;const fam={};S.list.forEach((x,fi)=>(x.names||[]).forEach(n=>fam[n]={fi,rep:x.rep,n:x.n,amt:x.amt||0,isRep:n===x.rep}));
+ const md=(()=>{const d=new Date();return (d.getMonth()+1)+'/'+d.getDate()})();
+ const rows=P.picked.map((x,ix)=>{if(!x.at)x.at=nowTs();const f=inf(x),np=NOPLAY(x.k),fee=feeOf(x),F=fam[x.n],rm=F&&F.isRep?F.amt:0,amt=fee+rm;sum+=amt;const [dt,tm]=x.at.split(' ');
+  const inc=[(!np&&f.add)?'레슨':'',rm?'가족방':''].filter(Boolean);const ck=!!(S.mck&&S.mck[ix]);
+  return `<tr class="${F?'fr'+(F.fi%6):''}"><td><input type="checkbox" data-mck="${ix}" ${ck?'checked':''} aria-label="${esc(x.n)} 선택"></td>
+  <td class="tsc">${F?`<span class="rmtag${F.isRep?' rep':''}">${F.isRep?`가족방 대표 ${F.n}명`:`${esc(F.rep)} 방`}</span>`:''}${dt}<span class="tsl">${tm}</span></td>
+  <td class="nm"><span class="kind ${np?'p':''}">${esc(x.k)}</span><b>${esc(x.n)}</b></td>
+  <td>${np?'<span class="hint">-</span>':esc(IAB[instOf(x)]||instOf(x))}</td>
+  <td class="r">${S.paid?`<span class="amtL"><span class="udot or"></span><b>${won(amt)}</b></span><br><small class="amt2">신고 ${md}</small>`:`<span class="amtL"><span class="udot"></span><b class="uamt">${won(amt)}</b></span><br><small class="amt2">12/7까지</small>`}${inc.length?`<br><small class="amt2">${inc.join(' · ')} 포함</small>`:''}</td>
+  <td><span class="actc">${S.paid?'<button class="btn sm" type="button" data-act="payRep">신고 수정</button>':''}<button class="btn sm" type="button" data-tab="info">보기</button></span></td></tr>`}).join('');
+ const all=P.picked.length&&P.picked.every((x,i)=>S.mck&&S.mck[i]);
+ return `<div class="panel"><div class="spread"><h2>내 신청 내역</h2><span class="pill ${S.paid?'ok':'wait'}">${S.paid?'입금 확인 중':'입금 전'}</span></div>
  <p class="hint">미사스즈키 · ${esc(WHO)} 원장님 · 1차 (12월 1일 ~ 7일) · 7일까지 입금하면 1차 금액이에요.</p>
- <div class="tbl"><table><thead><tr><th>구분</th><th class="l">이름</th><th>개인레슨</th><th>마스터클래스</th><th>음악회</th><th>금액</th></tr></thead><tbody>${rows}</tbody>
- <tfoot><tr><td></td><td class="l">참가 합계 ${P.picked.length}명</td><td></td><td></td><td></td><td class="num">${won(sum)}</td></tr></tfoot></table></div></div>
- <div class="panel"><div class="spread"><b>입금하실 금액</b><b class="num" style="font-size:20px">${won(sum+rmAmt)}</b></div>
- <p class="hint">참가 ${won(sum)}${rmAmt?' + 가족방 '+won(rmAmt):''}${rm.length?' (가족방 내역은 「가족방 신청」에서)':''}. 입금하고 「입금 신고」를 눌러 주세요.</p>
- <div class="row" style="justify-content:space-between"><span class="row"><button class="btn" type="button" data-tab="info">고치기</button><button class="btn" type="button" data-act="cxReq">취소 요청</button></span><button class="btn pri" type="button" data-act="payRep">입금 신고</button></div>
+ ${P.picked.length?`<div class="tbl"><table class="mineT"><thead><tr><th></th><th>접수 시간</th><th>이름</th><th>악기</th><th class="r">청구</th><th></th></tr></thead><tbody>${rows}</tbody>
+ <tfoot><tr><td colspan="4" style="text-align:left"><button class="btn sm" type="button" data-act="mckAll">${all?'전체 해제':'전체 선택'}</button> <b style="margin-left:8px">${P.picked.length}명</b></td><td class="r"><b style="font-size:17px">${won(sum)}</b></td><td></td></tr></tfoot></table></div>`:'<p class="hint">아직 신청한 사람이 없어요. 「캠프 신청하기」에서 시작해요.</p>'}</div>
+ <div class="panel"><div class="spread"><b>입금하실 금액</b><b class="num" style="font-size:20px">${won(sum)}</b></div>
+ <p class="hint">가족방 금액은 대표 줄에 들어가요. 입금하고 「입금 신고」를 눌러 주세요.</p>
+ <div class="row" style="justify-content:space-between"><span class="row"><button class="btn" type="button" data-tab="pick">사람 추가</button><button class="btn" type="button" data-act="cxReq" ${S.mck&&Object.values(S.mck).some(Boolean)?'':'disabled'}>체크한 사람 취소 요청</button></span><button class="btn pri" type="button" data-act="payRep">입금 신고</button></div>
  ${S.paid?'<p class="hint" style="color:var(--accentD);font-weight:700">입금 신고를 받았어요. 협회가 통장과 맞춰 보고 「입금 확인」으로 바꿔요.</p>':''}</div>`}
 function loadLive(r){if(!r)return;LIVE=true;WHO=r.head||WHO;const A='미사스즈키';
  MY.length=0;r.students.forEach(x=>MY.push({n:x.n,y:+x.y||'',i:x.i||'바이올린',a:A,g:x.g,t:x.t}));
@@ -251,6 +264,8 @@ document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)r
  if(d.eteam){S.ens.team=d.eteam;render();return}
  if(d.act==='ensSave'){const E=S.ens;E.err=!E.name.trim()?'팀 이름을 넣어 주세요.':!E.n.trim()?'인원을 넣어 주세요.':!E.song.trim()||!E.comp.trim()?'곡명 · 작곡가를 넣어 주세요.':'';if(!E.err)E.done=true;render();return}
  if(d.act==='payRep'){S.paid=true;render();return}
+ if(d.act==='mckAll'){const on=!(P.picked.length&&P.picked.every((x,i)=>S.mck&&S.mck[i]));S.mck={};if(on)P.picked.forEach((x,i)=>S.mck[i]=true);render();return}
+ if(d.act==='cxReq'){S.cxMsg=true;render();return}
  if(d.radd){const m=REGA().find(x=>x.n===d.radd&&x.a===d.ra);if(m&&!S.mem.some(x=>x.n===m.n))S.mem.push({k:m.k,n:m.n,sub:m.a+(m.i?' · '+m.i:'')+(m.t?' · '+m.t+' 선생님 접수':' · 내 접수'),st:'ok'});S.q.n='';render();return}
  if(d.rm){S.mem.splice(+d.rm,1);render();return}
  const v=id=>(document.getElementById(id)||{}).value||'';

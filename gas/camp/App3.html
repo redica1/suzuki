@@ -1,4 +1,4 @@
-${''/* build: 20261120-143022 */}
+${''/* build: 20261120-144723 */}
     ${S.extra.length?`<div class="xhead">명단에 없어 추가한 학생 ${S.extra.length}명 <span class="hint">체크한 학생만 접수돼요 · 연회비 30,000원이 함께 청구돼요 · 「빼기」는 목록에서 지워요</span></div><ul class="roster">${S.extra.map(s=>`<li><input type="checkbox" id="xk_${s.id}" ${s.on!==false?'checked':''} data-xon="${s.id}" aria-label="${esc(s.name)} 선택"><label class="who" for="xk_${s.id}"><b>${esc(s.name)} <span class="kind ks">학생</span></b><small>${age(s.birth)}세 · ${s.inst} · 담당 ${esc(s.teacher)}</small></label><span class="row" style="flex-wrap:nowrap"><span class="pill new">신규 추가</span><button class="btn small ghost" type="button" data-rmx="${s.id}">빼기</button></span></li>`).join('')}</ul>`:''}
     ${S.showNew?newAdder():`<button class="btn ghost" type="button" id="openNew">+ 명단에 없는 사람 추가</button>`}`:''}
   </div>
@@ -7,13 +7,13 @@ ${''/* build: 20261120-143022 */}
   </section>`;
 }
 /* 명단에 없는 사람 추가 (11-20 사용자): 구분 · 이름 · 성별 · 만 나이(→ 출생연도) · 학생이면 전공 · 권수 · 시작 연월 · 담당 교사, 가족이면 누구의 가족인지 */
-const NK=[['학생','학생'],['회원의 악기하는 자녀','악기하는 교사자녀'],['회원의 첫번째 보호자','보호자'],['회원의 그외 악기 안하는 동반가족','동반가족'],['동반가족 중 15개월 미만','15개월 미만']];
+const NK=[['학생','학생'],['회원의 악기하는 자녀','악기하는 교사자녀'],['회원의 첫번째 보호자','첫번째 보호자'],['회원의 그외 악기 안하는 동반가족','동반가족'],['동반가족 중 15개월 미만','15개월 미만']];
 const nkPlay=k=>k==='학생'||k==='회원의 악기하는 자녀';
 function newAdder(){const F=S.nf||(S.nf={k:'학생',n:'',g:'',a:'',i:'',pg:'',sy:'',sm:'',t:'',lk:''});const P=nkPlay(F.k),fc=famClosed();
   const heads=people().filter(p=>p.kind!=='family');
   return `<div class="adder"><b>명단에 없는 사람 추가</b>
   <div class="f"><span>구분<span class="req">*</span></span><div class="seg nkseg" role="group" aria-label="구분">${NK.map(([v,l])=>`<button type="button" data-nk="${v}" aria-pressed="${F.k===v}" ${!nkPlay(v)&&fc?'disabled title="가족 신청이 마감됐어요"':''}>${l}</button>`).join('')}</div></div>
-  ${P?`<p class="hint" style="margin:0">${F.k==='학생'?'늦게 들어온 학생은 연회비 30,000원을 캠프비와 함께 입금해 주세요. 운영진이 확인하면 정식 접수돼요.':'회원 선생님의 악기를 하는 자녀예요. 참가비는 「회원의 악기하는 자녀」 금액이에요.'}</p>`:`<p class="hint" style="margin:0">악기를 안 하는 가족이에요. ${heads.length?'누구의 가족인지 골라 주세요.':'<b>먼저 교사나 학생을 신청 명단에 담아 주세요.</b>'}</p>`}
+  ${P?`<p class="hint" style="margin:0">${F.k==='학생'?'늦게 들어온 학생은 연회비 30,000원을 캠프비와 함께 입금해 주세요. 운영진이 확인하면 정식 접수돼요.':'회원 선생님의 악기를 하는 자녀예요. 참가비는 「회원의 악기하는 자녀」 금액이에요.'}</p>`:`<p class="hint" style="margin:0">악기를 안 하는 가족이에요. 보호자가 두 명 이상이면 두 번째부터는 「동반가족」으로 넣어요. ${heads.length?'누구의 가족인지 골라 주세요.':'<b>먼저 교사나 학생을 신청 명단에 담아 주세요.</b>'}</p>`}
   <div class="grid2"><label class="f" for="nf_n"><span>이름<span class="req">*</span></span><input type="text" id="nf_n" data-nf="n" value="${esc(F.n)}" autocomplete="off"></label>
   <div class="f" style="display:grid;gap:4px;justify-items:start"><span>성별<span class="req">*</span></span><div class="seg" role="group" aria-label="성별" style="width:max-content">${['남','여'].map(g=>`<button type="button" data-nfg="${g}" aria-pressed="${F.g===g}">${g==='남'?'남성':'여성'}</button>`).join('')}</div></div>
   <label class="f" for="nf_a"><span>만 나이${P?'<span class="req">*</span>':'<span class="opt">(선택 · 대략)</span>'}</span><input type="text" id="nf_a" data-nf="a" inputmode="numeric" maxlength="2" value="${esc(F.a)}" placeholder="예: 12"><small class="hint" id="nf_ah">${F.a!==''&&manToYear(F.a)!==''?manToYear(F.a)+'년생으로 넣어요':''}</small></label>

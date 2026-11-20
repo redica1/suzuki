@@ -1,4 +1,4 @@
-/* build: 20261120-144723 */
+/* build: 20261120-165738 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -109,6 +109,7 @@ function doGet(e) {
   const intl = e && e.parameter && e.parameter.page === 'intl';
   if (e && e.parameter && e.parameter.page === 'meal') return HtmlService.createHtmlOutputFromFile('Meal').setTitle(cname + ' · 식권 스캐너').addMetaTag('viewport', 'width=device-width, initial-scale=1, user-scalable=no').setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);   // 식권 스캐너 (11-04)
   if (e && e.parameter && e.parameter.page === 'qa') return qaOn_() ? HtmlService.createHtmlOutputFromFile('QA').setTitle('[STG] 캠프 접수 시험 체크').addMetaTag('viewport', 'width=device-width, initial-scale=1').setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL) : HtmlService.createHtmlOutput('STG에서만 열려요.');
+  if (e && e.parameter && e.parameter.page === 'new') return qaOn_() ? HtmlService.createHtmlOutputFromFile('New').setTitle('[STG] 새 접수 화면 미리보기').addMetaTag('viewport', 'width=device-width, initial-scale=1').setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL) : HtmlService.createHtmlOutput('STG에서만 열려요.');   /* 새 접수 · 가족방 화면 미리보기 (11-20, STG만 · 기존 접수와 따로) */
   if (e && e.parameter && e.parameter.page === 'parent') return HtmlService.createHtmlOutputFromFile('Parent').setTitle(cname + ' · 학부모 신청').addMetaTag('viewport', 'width=device-width, initial-scale=1').setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
   if (e && e.parameter && e.parameter.page === 'find') return HtmlService.createTemplateFromFile('Find').evaluate().setTitle(cname + ' · 일정 찾기').addMetaTag('viewport', 'width=device-width, initial-scale=1').setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
   if (admin) page = HtmlService.createTemplateFromFile('Admin').evaluate();

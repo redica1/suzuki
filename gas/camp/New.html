@@ -21,6 +21,8 @@ body{background:var(--bg);color:var(--ink);font:16px/1.6 var(--font);margin:0}
 .mineT .actc{display:flex;flex-direction:column;align-items:flex-end;gap:4px}.mineT input[type=checkbox]{width:16px;height:16px}
 .fr0>td{background:#fff4e0}.fr1>td{background:#e8f1ff}.fr2>td{background:#f1e9ff}.fr3>td{background:#e6f7ec}.fr4>td{background:#ffe9ef}.fr5>td{background:#e9f7f7}
 .tabs[hidden]{display:none}
+.itabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin:0 0 12px}.itabs button{font:inherit;font-size:16px;font-weight:700;background:none;border:0;border-bottom:2.5px solid transparent;color:var(--muted);padding:10px 14px;cursor:pointer;margin-bottom:-1px}.itabs button[aria-pressed=true]{color:var(--ink);border-bottom-color:var(--accentD)}
+.mvT td.l{text-align:left}
 .fchips{display:flex;gap:8px;flex-wrap:wrap;margin:2px 0 4px}.fchips button{font:inherit;font-size:15px;font-weight:700;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:7px 16px;cursor:pointer}.fchips button span{font-weight:500;color:var(--muted)}.fchips button[aria-pressed=true]{background:var(--accentD);border-color:var(--accentD);color:#fff}.fchips button[aria-pressed=true] span{color:#fff}
 
 .tabs button{font:inherit;font-size:15px;font-weight:700;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:7px 14px;cursor:pointer}
@@ -207,13 +209,37 @@ document.addEventListener('change',e=>{if(e.target.dataset&&e.target.dataset.rc!
 function feeOf(x){const f=inf(x),np=NOPLAY(x.k);return (FEE1[x.k==='학생'&&/직접 추가/.test(x.sub)?'학생(비회원)':x.k]||0)+(np?0:f.add)*LES+(f.mc?f.mcP.length*MCFEE:0)}
 const IAB={'바이올린':'Vn','비올라':'Va','첼로':'Vc','플루트':'Fl','기타':'Gt','피아노':'Pf'};
 const nowTs=()=>{const d=new Date(),z=n=>String(n).padStart(2,'0');return String(d.getFullYear()).slice(2)+'.'+z(d.getMonth()+1)+'.'+z(d.getDate())+' '+z(d.getHours())+':'+z(d.getMinutes())};
-function vMine(){let sum=0;const fam={};S.list.forEach((x,fi)=>(x.names||[]).forEach(n=>fam[n]={fi,rep:x.rep,n:x.n,amt:x.amt||0,isRep:n===x.rep}));
+const MV=[['pay','접수'],['les','레슨'],['con','음악회'],['info','학생 진도']],MS={les:[['grp','그룹레슨'],['les','개인레슨'],['mc','마스터클래스']],con:[['오후','오후 음악회'],['트와일라잇','트와일라잇 음악회'],['이브닝','이브닝 음악회']]};
+function mOf(x){return MEMBERS.find(m=>m.n===x.n&&m.k===x.k)||MEMBERS.find(m=>m.n===x.n)||{}}
+function vMine(){const v=S.mv||'pay',L=MS[v]||[],sub=L.some(q=>q[0]===S.ms)?S.ms:(L[0]||[])[0];
+ const top=`<div class="itabs" role="tablist" aria-label="보기">${MV.map(([k,l])=>`<button type="button" role="tab" data-mv="${k}" aria-pressed="${v===k}">${l}</button>`).join('')}</div>${L.length?`<div class="row" role="group" style="gap:6px;margin:0 0 12px">${L.map(([k,l])=>`<button class="btn sm ${sub===k?'pri':''}" type="button" data-ms="${k}" aria-pressed="${sub===k}">${l}</button>`).join('')}</div>`:''}`;
+ if(v==='pay')return top+vMinePay();
+ const ins=x=>IAB[instOf(x)]||instOf(x),D='<span class="hint">-</span>',NIL='<span class="hint" style="color:#b0b8bd">배정 전</span>';
+ let R=P.picked.map((x,ix)=>({x,ix,f:inf(x)})).filter(({x})=>!NOPLAY(x.k));
+ const ok={grp:o=>STU3(o.x.k),info:o=>STU3(o.x.k),les:o=>(STU3(o.x.k)&&!o.f.no)||o.f.add>0,mc:o=>o.f.mc&&o.f.mcP.length>0}[v==='les'?sub:v]||(o=>!!o.f.cons[sub]);
+ R=R.filter(ok);
+ const mf=S.mf2||'전체',keys=['전체',...Object.values(IAB).filter(a=>R.some(o=>ins(o.x)===a))],cnt=k=>R.filter(o=>k==='전체'||ins(o.x)===k).length;
+ const chips=`<div class="fchips" role="group" aria-label="악기">${keys.map(k=>`<button type="button" data-mf2="${k}" aria-pressed="${k===mf}">${k} <span>${cnt(k)}</span></button>`).join('')}</div>`;
+ const RR=R.filter(o=>mf==='전체'||ins(o.x)===mf);
+ const empty={grp:'학생이 없어요.',info:'학생이 없어요.',les:'개인레슨을 신청한 사람이 없어요.',mc:'마스터클래스를 신청한 사람이 없어요.'}[v==='les'?sub:v]||`${sub} 음악회를 신청한 사람이 없어요.`;
+ if(!R.length)return top+`<div class="panel"><p class="hint" style="margin:0">${empty}</p></div>`;
+ const w=v==='les'?sub:v,aud=v==='con'&&sub!=='오후';
+ const H={grp:['권수 (진도)','담당 교사','그룹레슨'],les:['횟수','선호 교수','배정'],mc:['마스터클래스','배정'],con:['음악회','곡',...(aud?['음원']:[])],info:['구분','나이','성별','권수 (진도)','담당 교사']}[w];
+ const cells=({x,f})=>{const m=mOf(x),t=m.t||'',y=m.y||(f.age?new Date().getFullYear()-1-+f.age:'');
+  if(w==='grp')return `<td class="l" style="font-size:12.5px">${f.prog?esc(f.prog):D}</td><td>${t?esc(t):D}</td><td>${NIL}</td>`;
+  if(w==='les'){const b=STU3(x.k)&&!f.no?1:0,a=f.add;return `<td><small class="hint">${b+a}회<br>${b&&a?`(기본 1 + 추가 ${a})`:b?'(기본)':'(추가)'}</small></td><td>${f.p1?esc(f.p1.split(' · ')[0])+(f.p2?'<br><small class="hint">'+esc(f.p2.split(' · ')[0])+'</small>':''):D}</td><td>${NIL}</td>`}
+  if(w==='mc')return `<td>${f.mcP.map(q=>'<b>'+esc(q.split(' · ')[0])+'</b>').join('<br>')}</td><td>${NIL}</td>`;
+  if(w==='con'){const o=f.cons[sub]||{};return `<td><b>${esc(sub)}</b></td><td class="l" style="white-space:normal">${o.nl?esc(((o.title||'')+' '+(o.comp?'('+o.comp+')':'')).trim()||'곡명 미입력'):o.song?esc(o.song):'<span class="hint">곡 미선택</span>'}</td>${aud?`<td>${o.url?'<span class="pill ok">받음</span>':'<span class="pill wait">아직</span>'}</td>`:''}`}
+  return `<td>${esc(x.k)}</td><td>${y?new Date().getFullYear()-y-1:D}</td><td>${f.sex?esc(f.sex.replace('성','')):D}</td><td class="l" style="font-size:12.5px">${f.prog?esc(f.prog):D}</td><td>${t?esc(t):D}</td>`};
+ return top+chips+`<div class="panel"><div class="tbl"><table class="mineT mvT"><thead><tr><th>이름</th><th>악기</th>${H.map(h=>`<th>${h}</th>`).join('')}<th></th></tr></thead><tbody>${RR.map(o=>`<tr><td class="nm"><span class="kind">${o.x.k==='교사'?'교사':'학생'}</span><b>${esc(o.x.n)}</b></td><td>${esc(ins(o.x))}</td>${cells(o)}<td><button class="btn sm" type="button" data-tab="info">보기</button></td></tr>`).join('')}</tbody></table></div></div>`}
+function vMinePay(){let sum=0;const fam={};S.list.forEach((x,fi)=>(x.names||[]).forEach(n=>fam[n]={fi,rep:x.rep,n:x.n,amt:x.amt||0,isRep:n===x.rep}));
  const md=(()=>{const d=new Date();return (d.getMonth()+1)+'/'+d.getDate()})();
  const grp=x=>NOPLAY(x.k)?'가족':x.k==='교사'?'교사':'학생',ins=x=>NOPLAY(x.k)?'':(IAB[instOf(x)]||instOf(x)),mf=S.mf||'전체';
  const keep=x=>mf==='전체'||grp(x)===mf||ins(x)===mf;
  const cnt=k=>P.picked.filter(x=>k==='전체'||grp(x)===k||ins(x)===k).length;
- const keys=['전체','학생','교사',...Object.values(IAB).filter(a=>P.picked.some(x=>ins(x)===a)),'가족'].filter(k=>k==='전체'||cnt(k));
- const chips=`<div class="fchips" role="group" aria-label="분류">${keys.map(k=>`<button type="button" data-mf="${k}" aria-pressed="${k===mf}">${k} <span>${cnt(k)}</span></button>`).join('')}</div>`;
+ const k1=['전체','교사','학생','가족'].filter(k=>k==='전체'||cnt(k)),k2=Object.values(IAB).filter(a=>P.picked.some(x=>ins(x)===a));
+ const cb=k=>`<button type="button" data-mf="${k}" aria-pressed="${k===mf}">${k} <span>${cnt(k)}</span></button>`;
+ const chips=`<div class="fchips" role="group" aria-label="구분">${k1.map(cb).join('')}</div>${k2.length?`<div class="fchips" role="group" aria-label="악기">${k2.map(cb).join('')}</div>`:''}`;
  let shown=0,ssum=0;
  const rows=P.picked.map((x,ix)=>{if(!x.at)x.at=nowTs();if(!keep(x)){const F0=fam[x.n];sum+=feeOf(x)+(F0&&F0.isRep?F0.amt:0);return ''}shown++;const f=inf(x),np=NOPLAY(x.k),fee=feeOf(x),F=fam[x.n],rm=F&&F.isRep?F.amt:0,amt=fee+rm;sum+=amt;ssum+=amt;const [dt,tm]=x.at.split(' ');
   const inc=[(!np&&f.add)?'레슨':'',rm?'가족방':''].filter(Boolean);const ck=!!(S.mck&&S.mck[ix]);
@@ -272,6 +298,9 @@ document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)r
  if(d.act==='ensSave'){const E=S.ens;E.err=!E.name.trim()?'팀 이름을 넣어 주세요.':!E.n.trim()?'인원을 넣어 주세요.':!E.song.trim()||!E.comp.trim()?'곡명 · 작곡가를 넣어 주세요.':'';if(!E.err)E.done=true;render();return}
  if(d.act==='payRep'){S.paid=true;render();return}
  if(d.mf){S.mf=d.mf;render();return}
+ if(d.mf2){S.mf2=d.mf2;render();return}
+ if(d.mv){S.mv=d.mv;S.ms='';S.mf2='전체';render();return}
+ if(d.ms){S.ms=d.ms;render();return}
  if(d.act==='mckAll'){const on=!(P.picked.length&&P.picked.every((x,i)=>S.mck&&S.mck[i]));S.mck={};if(on)P.picked.forEach((x,i)=>S.mck[i]=true);render();return}
  if(d.act==='cxReq'){S.cxMsg=true;render();return}
  if(d.radd){const m=REGA().find(x=>x.n===d.radd&&x.a===d.ra);if(m&&!S.mem.some(x=>x.n===m.n))S.mem.push({k:m.k,n:m.n,sub:m.a+(m.i?' · '+m.i:'')+(m.t?' · '+m.t+' 선생님 접수':' · 내 접수'),st:'ok'});S.q.n='';render();return}

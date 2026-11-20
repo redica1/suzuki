@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261120-143255 -->
+<!-- build: 20261113-135529 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -674,14 +674,8 @@ function hBack(v){var need={email:1,code:1,confirm:1};
 function stickCols(){document.querySelectorAll('table[data-stick]').forEach(function(t){var n=+t.dataset.stick,hr=t.tHead&&t.tHead.rows[0];if(!hr)return;var off=[],x=0;for(var k=0;k<n&&k<hr.cells.length;k++){off.push(x);x+=hr.cells[k].getBoundingClientRect().width}
   [].forEach.call(t.rows,function(row){for(var k=0;k<n&&k<row.cells.length;k++){if(row.cells[k].colSpan>1)break;var c=row.cells[k];c.classList.add('sk');c.style.left=off[k]+'px';c.classList.toggle('skl',k===n-1)}})})}
 window.addEventListener('resize',function(){stickCols()});
-/* 관리자가 만든 계정: 처음 로그인 때 개인정보 동의부터 (11-20) */
-function vAgreeFirst(){return '<div class="card"><h2>'+esc(S.me.name||'')+' 선생님, 환영해요</h2><p class="lede">협회 관리자가 교사 회원 계정을 만들어 드렸어요. 쓰기 전에 아래 안내를 읽고 동의해 주세요.</p>'+
-  '<label class="agree" for="agr1"><input type="checkbox" id="agr1"><div><b>[필수] 개인정보 수집·이용 동의</b><details open><summary>자세히</summary>수집 항목: 이름, 휴대전화, 이메일, 소속 학원, 직급, 악기, 회원 구분, 자격, 집 주소, 우편물 받을 주소, 계좌(은행·계좌번호·예금주). 목적: 회원 관리, 캠프·졸업연주·연수 등 행사 신청과 안내, 참가 이력 관리, 공문·포스터 발송, 강사료·환불 지급. 보유 기간: 회원 탈퇴 시까지(법령에 정한 기간이 있으면 그 기간).</details></div></label>'+
-  '<p class="err" id="agrErr" hidden>동의에 체크해 주세요.</p><div class="two"><button class="btn" type="button" id="logout">로그아웃</button><button class="btn primary" type="button" id="agreeGo">동의하고 시작</button></div>'+
-  '<p class="hint" style="margin-top:10px">동의한 뒤 「내 정보」에서 임시 비밀번호를 원하는 비밀번호로 바꿔 주세요.</p></div>'}
 function render(){var h;
   document.getElementById('testband').hidden=!S.test;
-  if(S.sess&&S.me&&S.me.needAgree&&['me','pay','ask','mine','events','myacad','mystu'].indexOf(S.v)>=0){document.getElementById('app').innerHTML=vAgreeFirst();return}
   h=({home:vHome,find:vFind,email:vEmail,code:vCode,confirm:vConfirm,done:vDone,login:vLogin,me:vMe,pay:vPay,ask:vAsk,mine:vMine,events:vEvents,myacad:vMyAcad,mystu:vMyStu})[S.v]();
   document.getElementById('app').innerHTML=h;
   try{stickCols()}catch(e){}
@@ -776,7 +770,6 @@ document.addEventListener('click',function(e){if(e.target.id==='sdClose2'){S.stu
   if(b.id==='pwGo'){var p0=v('pc0'),p1=v('pc1'),p2=v('pc2');if(!p0||!p1){S.pwMsg='비밀번호를 넣어 주세요.';render();return}if(p1.length<8){S.pwMsg='새 비밀번호는 8자 이상이에요.';render();return}if(p1!==p2){S.pwMsg='새 비밀번호 두 칸이 달라요.';render();return}
     b.disabled=true;call('tPwChange',[S.sess,p0,p1]).then(function(r){b.disabled=false;if(!r.ok){S.pwMsg=r.msg;render();return}S.pwEd=false;S.pwMsg='';render();toast('비밀번호를 바꿨어요. 다음 로그인부터 새 비밀번호로 들어가요.')});return}
   if(b.id==='doReset'){var rc=v('rc').trim(),rp=v('rp');run(function(){return call('tReset',[S.fp.email,rc,rp]).then(function(r){if(!r.ok){S.msg=r.msg;return}S.email=S.fp.email;S.fp=null;toast('비밀번호를 바꿨어요. 새 비밀번호로 로그인해 주세요.')})});return}
-  if(b.id==='agreeGo'){var ck=document.getElementById('agr1');if(!ck||!ck.checked){document.getElementById('agrErr').hidden=false;return}b.disabled=true;call('tAgree',[S.sess]).then(function(r){b.disabled=false;if(!r.ok){toast(r.msg);return}S.me.needAgree=false;render();toast('고마워요. 「내 정보」에서 비밀번호를 바꿔 주세요')});return}
   if(b.id==='logout'){call('tLogout',[S.sess]);S.sess='';S.me=null;try{sessionStorage.removeItem('tm-sess')}catch(x){}S.hist=[];go('home',true);return}
   if(d.ped){var pp=(S.me&&S.me.pay)||{},sm=!pp.addr||(pp.addr===pp.haddr&&pp.addr2===pp.haddr2&&pp.zip===pp.hzip);
     S.pay={eng:S.me.eng||'',hzip:pp.hzip||'',haddr:pp.haddr||'',haddr2:pp.haddr2||'',same:sm,zip:pp.zip||'',addr:pp.addr||'',addr2:pp.addr2||'',bank:pp.bank||'',acct:'',holder:pp.holder||S.me.name||''};
@@ -1100,6 +1093,6 @@ csMount();
   try{google.script.url.getLocation(function(l){var pr=l&&l.parameter||{},a=pr.as;if(a)setSess(a);if('ask' in pr||pr.v==='ask'){S.v0='ask'}if(pr.guide!==undefined)S.gd0=pr.guide||'why';go0()})}catch(x){go0()}})();
 </script>
 <script>try{window.top.postMessage('suzuki-ready','*')}catch(e){}</script>
-<div id="bldMark" hidden>빌드표시 20261120-143255 </div>
+<div id="bldMark" hidden>빌드표시 20261113-135529 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();</script>
 </body></html>

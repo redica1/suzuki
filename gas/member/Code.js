@@ -1,4 +1,4 @@
-/* build: 20261120-143255 */
+/* build: 20261113-135529 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -108,8 +108,8 @@ function doGet(e) {
 function include(n) { return HtmlService.createTemplateFromFile(n).getRawContent(); }   // 공통 라이브러리(UiLib)처럼 자바스크립트 파일을 그대로 붙임
 
 function api(name, args) {
-  const open = { login, hello, tHello, tEvents, tLookup, tStart, tResend, tVerify, tCreate, tLogin, tForgot, tReset, tPwChange, tMe, tAgree, tSavePay, tSavePart, tSaveInfo, tSavePhoto, tAcad, tSaveAcad, tDocUp, tDocGet, tSaveStu, tSaveStus, tStuDetail, tStuSave, tStuTutor, tStuTutorDel, tStuState, tStuStateDel, tMyStu, tMyStuDetail, tMyStuPay, tTchSaves, tTchEnd, tTchEvent, tTchAssign, tTchStart, tSaveRrn, tSaveInc, tAddWork, tClassCreate, tEndWork, tMainWork, tLogout, bPost, bMine, bReply };
-  const fns = { printEvents, printEvSave, printData, printSet, printCopy, printExport, ogGet, ogSave, ogToken, boot, saveRow, setCheck, logs, importRoster, saveDues, delDues, reqs, reqDo, delAcad, payView, payAddrSet, bulkSet, saveWorks, importPastDues, importPayInfo, gmList, gmGet, gmSave, gmIssue, gmCopy, gmDel, bList, bSet, bComment, bCat, photoGet, photoDel, fillRegions, saveRates, docList, docUp, docGet, docDel, payList, payOk, payOkMany, payNo, memView, rosterNow, inputStatus, inboxDone, acctReset, acctMake, classFromStudents, delStus, asTeacher, bankImport, bankList: bankListTop, bankSet, bankDues, bankFromSheet, bankMeta, bankSplitSave, bankPay, bankCamp, bankCampPay, bankPayList, gmProjects, gmCamp, gmNewCamp, gmCampSync, devVirtual };
+  const open = { login, hello, tHello, tEvents, tLookup, tStart, tResend, tVerify, tCreate, tLogin, tForgot, tReset, tPwChange, tMe, tSavePay, tSavePart, tSaveInfo, tSavePhoto, tAcad, tSaveAcad, tDocUp, tDocGet, tSaveStu, tSaveStus, tStuDetail, tStuSave, tStuTutor, tStuTutorDel, tStuState, tStuStateDel, tMyStu, tMyStuDetail, tMyStuPay, tTchSaves, tTchEnd, tTchEvent, tTchAssign, tTchStart, tSaveRrn, tSaveInc, tAddWork, tClassCreate, tEndWork, tMainWork, tLogout, bPost, bMine, bReply };
+  const fns = { printEvents, printEvSave, printData, printSet, printCopy, printExport, ogGet, ogSave, ogToken, boot, saveRow, setCheck, logs, importRoster, saveDues, delDues, reqs, reqDo, delAcad, payView, payAddrSet, bulkSet, saveWorks, importPastDues, importPayInfo, gmList, gmGet, gmSave, gmIssue, gmCopy, gmDel, bList, bSet, bComment, bCat, photoGet, photoDel, fillRegions, saveRates, docList, docUp, docGet, docDel, payList, payOk, payOkMany, payNo, memView, rosterNow, inputStatus, inboxDone, acctReset, classFromStudents, delStus, asTeacher, bankImport, bankList: bankListTop, bankSet, bankDues, bankFromSheet, bankMeta, bankSplitSave, bankPay, bankCamp, bankCampPay, bankPayList, gmProjects, gmCamp, gmNewCamp, gmCampSync, devVirtual };
   try {
     if (open[name]) return Object.assign({ ok: true }, open[name].apply(null, args || []));
     if (!fns[name]) throw new UserError('알 수 없는 요청이에요.');
@@ -1124,8 +1124,7 @@ function tMe(sess) {
   const dues = tbl_('연회비').v.filter(d => d[0] === '교사' && d[1] === u.tid).map(d => ({ year: d[2], due: +d[3] || 0, paid: +d[4] || 0, date: d[5], way: d[6] })).sort((a, b) => String(b.year).localeCompare(String(a.year)));
   let events = tbl_('참가이력').v.filter(e => e[1] === '교사' && e[2] === u.tid).map(e => ({ name: e[3], year: e[4], period: e[5], role: e[6], state: e[7] })).sort((a, b) => String(b.year).localeCompare(String(a.year)));
   if (!events.length && settings_()['테스트 표시'] === '예') events = [{ sample: true, name: '2026 여름 스즈키 음악캠프', year: '2026', period: '2026.07.27 ~ 07.31', role: '교사', state: '참가' }];   // STG 예시 (더미)
-  let needAgree = false; try { const AA = tbl_('계정'), ai = AA.v.findIndex(x => String(x[0]).toLowerCase() === String(u.email || '').toLowerCase() && String(x[1]) === String(u.tid)); needAgree = ai >= 0 && /동의 전/.test(String(AA.v[ai][5] || '')); } catch (e) {}
-  return { me: { tid: u.tid, needAgree, works, dues, events, duesWay: g('회비납부방법'), duesFree: g('회비구분') === '면제', ext: g('회원구분') === '외부인', sex: g('성별'), name: g('이름'), phone: g('휴대전화'), email: u.email, acads: [g('학원1'), g('학원2'), g('학원3')].filter(Boolean).map(id => an[id] || id), role: g('직급'), inst: g('전공'), kind: g('회원구분'), certs: g('본인자격') || g('명단자격'), eng: g('영문이름'), photo: photoOf_(u.tid), heads,
+  return { me: { tid: u.tid, works, dues, events, duesWay: g('회비납부방법'), duesFree: g('회비구분') === '면제', ext: g('회원구분') === '외부인', sex: g('성별'), name: g('이름'), phone: g('휴대전화'), email: u.email, acads: [g('학원1'), g('학원2'), g('학원3')].filter(Boolean).map(id => an[id] || id), role: g('직급'), inst: g('전공'), kind: g('회원구분'), certs: g('본인자격') || g('명단자격'), eng: g('영문이름'), photo: photoOf_(u.tid), heads,
     payee: g('강사료대상') === '예',
     pay: p ? { bank: p['은행'], acct: maskAcct_(p['계좌번호']), holder: p['예금주'], zip: p['우편번호'], addr: p['주소'], addr2: p['상세주소'], hzip: p['집우편번호'], haddr: p['집주소'], haddr2: p['집상세주소'], rrn: p['주민번호표시'] || '', rrnAt: p['주민번호동의일'] || '', inc: p['소득구분'] || '' } : null, reqs } };
 }
@@ -2129,40 +2128,6 @@ function saveWorks(who, tid, rows) {
 
 /* ---------- 계정 도우미 ---------- */
 /** 관리자: 선생님(관계자 포함) 비밀번호를 임시 비밀번호로 바꿈 (10-31). 관리자 화면에 한 번 보여 주고, 선생님 이메일로도 보냄. 로그인 뒤 「비밀번호를 잊었어요」나 내 정보에서 바꾸게 안내 */
-/** 관리자: 가입 안 한 선생님 계정을 대신 만들기 (11-20). 교사정보의 이메일로 계정 + 임시 비밀번호(화면에 한 번 · 메일로도).
- * 개인정보 동의는 받지 않은 상태라 경로에 「동의 전」 → 선생님이 처음 로그인하면 동의 화면부터 (tMe needAgree · tAgree) */
-function acctMake(who, tid, mail) {
-  tid = String(tid || ''); const T = tbl_('교사'), k = T.find('교사ID', tid); if (k < 0) fail('그 선생님을 찾지 못했어요.');
-  const c = col_(T), r = T.v[k];
-  if (String(r[c['상태']]) === '탈퇴') fail('탈퇴한 선생님이에요.');
-  const email = String(r[c['이메일']] || '').trim().toLowerCase();
-  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) fail('교사정보에 이메일을 먼저 넣고 「저장」해 주세요.');
-  const all = acctAll_();
-  if (all.some(a => String(a.tid) === tid && a.state === '사용')) fail('이미 계정이 있어요. 「임시 비밀번호 만들기」를 써 주세요.');
-  if (all.some(a => a.email === email && a.state !== '반려')) fail('이 이메일로 이미 만든 계정이 있어요. 이메일을 확인해 주세요.');
-  const A = 'abcdefghjkmnpqrstuvwxyz23456789'; let pw = ''; for (let i = 0; i < 10; i++) pw += A[Math.floor(Math.random() * A.length)];
-  pw = pw.slice(0, 5) + '-' + pw.slice(5);
-  const salt = Utilities.getUuid(), lock = LockService.getScriptLock(); lock.waitLock(20000);
-  try { tbl_('계정').append({ '이메일': email, '교사ID': tid, '비번해시': hash_(pw, salt), '솔트': salt, '상태': '사용', '경로': '관리자가 만듦 · 동의 전', '만든날': now_(), '처리일': now_(), '메모': '임시 비밀번호 ' + now_() + ' ' + who.name }); }
-  finally { lock.releaseLock(); }
-  log_(who.name, '계정', tid, '관리자가 계정 만듦', maskEmail_(email));
-  let sent = false;
-  if (mail !== false) { try { const base = 'https:' + '//app.suzukimusickorea.org/member/' + (settings_()['테스트 표시'] === '예' ? '?test' : '');
-    mail_(email, '[스즈키] 교사 회원 계정을 만들어 드렸어요',
-      '<p>' + esc_(String(r[c['이름']] || '')) + ' 선생님, 안녕하세요.</p><p>한국스즈키음악협회 관리자가 교사 회원 사이트 계정을 만들어 드렸어요.</p>' +
-      '<p>로그인 이메일: <b>' + esc_(email) + '</b><br>임시 비밀번호: <b style="font-size:18px;letter-spacing:.05em">' + esc_(pw) + '</b></p>' +
-      '<p><a href="' + esc_(base) + '">' + esc_(base) + '</a> 에서 로그인한 뒤, 개인정보 수집·이용 안내에 동의하고 「내 정보」에서 비밀번호를 바꿔 주세요.</p>');
-    sent = true; } catch (e) { sent = false; } }
-  return { pw, email, sent };
-}
-/** 관리자가 만든 계정: 처음 로그인 때 개인정보 수집·이용 동의 */
-function tAgree(sess) {
-  const u = tsess_(sess), A = tbl_('계정'), i = A.v.findIndex(x => String(x[0]).toLowerCase() === String(u.email || '').toLowerCase() && String(x[1]) === String(u.tid));
-  if (i < 0) fail('계정을 찾지 못했어요.');
-  A.set(i, { '경로': String(A.v[i][5] || '').replace('동의 전', '동의 ' + now_()) });
-  log_(String(u.email || ''), '계정', u.tid, '개인정보 동의 (관리자가 만든 계정)', '');
-  return { ok: true };
-}
 function acctReset(who, tid, mail) {
   tid = String(tid || ''); const L = acctAll_().filter(a => String(a.tid) === tid && a.state === '사용');
   if (!L.length) fail('이 선생님은 쓰는 계정이 없어요(가입 전이거나 확인 대기).');

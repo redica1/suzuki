@@ -1,4 +1,4 @@
-/* build: 20261120-230012 */
+/* build: 20261120-230427 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -4748,9 +4748,9 @@ function newPreview() {
   if (!qaOn_()) throw new Error('STG에서만 열려요.');
   const A = '미사스즈키', ts = teachers_().filter(t => t.acads.includes(A));
   const head = ts.find(t => t.role === '원장') || ts[0];
-  const st = rows_(SH.S).filter(r => String(r['학원']) === A && r['ID']).map(r => ({ n: String(r['이름']), i: String(r['악기'] || ''), y: String(r['출생연도'] || ''), t: String(r['담당 교사'] || ''), g: String(r['성별'] || '') }));
+  const st = rows_(SH.S).filter(r => String(r['학원']) === A && r['ID']).map(r => ({ n: String(r['이름']), i: String(r['악기'] || ''), y: String(r['출생연도'] || ''), t: String(r['담당 교사'] || ''), g: String(r['성별'] || ''), p: dstr_(r['회비 납부일']) || '' }));
   let profs = []; try { profs = profPublic_().map(p => ({ n: p.n, i: p.i, mc: !!p.mc })); } catch (x) {}
-  return { head: head ? head.name : '', teachers: ts.map(t => ({ n: t.name, r: t.role, i: t.inst })), students: st, profs };
+  return { head: head ? head.name : '', teachers: ts.map(t => ({ n: t.name, r: t.role, i: t.inst, p: t.paidDate || '' })), students: st, profs };
 }
 function qaOn_() { try { return !!String(setting_('테스트 로그인') || '').trim(); } catch (e) { return false; } }
 function qaSheet_() {

@@ -21,6 +21,9 @@ body{background:var(--bg);color:var(--ink);font:16px/1.6 var(--font);margin:0}
 .mineT .actc{display:flex;flex-direction:column;align-items:flex-end;gap:4px}.mineT input[type=checkbox]{width:16px;height:16px}
 .fr0>td{background:#fff4e0}.fr1>td{background:#e8f1ff}.fr2>td{background:#f1e9ff}.fr3>td{background:#e6f7ec}.fr4>td{background:#ffe9ef}.fr5>td{background:#e9f7f7}
 .tabs[hidden]{display:none}
+.rosT{width:100%}.rosT th{background:var(--soft);font-size:14px;white-space:nowrap}.rosT td{padding:8px 6px}.rosT td.nmc{white-space:nowrap}.rosT td.nmc .kind{margin-right:8px}.rosT tr.onr>td{background:#eef7f5}.rosT input[type=checkbox]{width:17px;height:17px}
+.dpill{display:inline-block;border-radius:8px;padding:2px 8px;font-size:12.5px;font-weight:700;line-height:1.25}.dpill.ok{background:#e3f3e8;color:#1e7f4f}.dpill.no{background:#fff1dc;color:#b26a00}.dpill.new{background:#e3f3f2;color:var(--accentD)}
+.btn.wide{width:100%;justify-content:center;padding:12px}.btn:disabled{opacity:.55;cursor:default}
 .sbox{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;border:1px solid var(--line);border-radius:12px;padding:14px 16px;flex-wrap:wrap}.panel>.sbox{border:0;padding:0}.sgrid{display:grid;grid-template-columns:auto 1fr;gap:8px 22px;font-size:15px}.sgrid>span{color:var(--muted)}.sl{margin-top:6px;font-size:14px}
 .bkc{white-space:normal!important;font-size:12.5px;color:var(--muted);line-height:1.6}.bk{display:inline-block;margin-right:10px}.bk b{font-weight:600;color:var(--ink)}.repT input[type=date]{padding:6px}.repT td.nm b{white-space:nowrap}
 .cxr{display:block}.cxr summary{cursor:pointer;font-size:16px;list-style:none}.cxr summary::-webkit-details-marker{display:none}.cxr summary::before{content:'▶ ';font-size:13px}.cxr[open] summary::before{content:'▼ '}.cxr[open] summary{margin-bottom:12px}.cxr .tbl{margin-bottom:8px}
@@ -198,9 +201,7 @@ function vPick(){const ros=MEMBERS.filter(m=>m.a==='미사스즈키');
  <button class="btn pri" type="button" data-act="padd2">추가</button></div>
  ${P.age?`<p class="hint" style="margin:0">만 ${esc(P.age)}세 → ${byYear(P.age)}년생으로 저장</p>`:''}${P.err?`<p class="hint" style="margin:0;color:var(--warn);font-weight:700">${esc(P.err)}</p>`:''}
  <p class="hint">참가비는 이 구분으로 정해져요.${NOPLAY(P.kind)?' 나이는 대략 적어도 되고 비워도 돼요.':(P.kind==='교사 자녀 (악기)'?' 회원 교사의 악기하는 자녀 금액이에요.':P.kind==='학생'?' 회원이 아니라 비회원 금액이에요.':'')}</p></div>`}</div>
- <div class="panel"><div class="step"><div><h3>우리 학원 명단에서 한꺼번에</h3><p class="hint">학생이 많을 때는 체크해서 한 번에 담아요.</p></div></div>
- <div class="ros">${ros.map((m,i)=>{const on=has(m.n,m.a);return `<label for="r${i}"><input type="checkbox" id="r${i}" data-rc="${i}" ${on?'checked disabled':P.chk[i]?'checked':''}><span><b>${esc(m.n)}</b> <span class="hint">${m.k}${m.y?' · '+m.y+'년생':''}${m.i?' · '+esc(m.i):''}</span></span>${on?((P.picked.find(x=>x.n===m.n)||{}).done?'<span class="pill ok">접수 완료</span>':'<span class="pill wait">이번에 신청</span>'):''}</label>`}).join('')}</div>
- <div class="row" style="justify-content:flex-end"><button class="btn pri" type="button" data-act="rosAdd">체크한 사람 담기</button></div></div>
+ ${rosTables(ros)}
  <div class="row" style="justify-content:flex-end"><button class="btn pri" type="button" data-tab="info">다음 → 3단계 참가 정보</button></div>`}
 document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const d=b.dataset,v=id=>(document.getElementById(id)||{}).value||'';
  if(d.act==='pfind'){P.q=v('pq').trim();if(!P.q)return;P.hit=MEMBERS.filter(m=>m.a==='미사스즈키'&&m.n.includes(P.q));P.add=false;render();return}
@@ -209,9 +210,10 @@ document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)r
  if(d.pk){P.kind=d.pk;P.prog='';P.age=(document.getElementById('ay')||{}).value||P.age;render();return}
  if(d.act==='padd2'){const n=v('an').trim();P.dn=n;P.age=v('ay').trim();P.inst=v('ainst')||P.inst;P.err=!n?'이름을 넣어 주세요.':!P.sex?'성별을 골라 주세요.':(!NOPLAY(P.kind)&&!P.inst)?'전공을 골라 주세요.':(!NOPLAY(P.kind)&&!P.age)?'나이를 넣어 주세요.':'';if(P.err){render();return}const ag=P.age,pg='';P.err='';P.dn='';P.picked.push({n,k:P.kind,i:NOPLAY(P.kind)?'':P.inst,sub:'미사스즈키 · 직접 추가'+(NOPLAY(P.kind)?'':' · '+P.inst)+(ag?' · 만 '+ag+'세':''),sex:P.sex,age:ag,prog:pg});P.sex='';P.inst='';P.age='';P.prog='';P.add=false;P.hit=null;P.q='';render();return}
  if(d.prm!==undefined){P.picked.splice(+d.prm,1);render();return}
- if(d.act==='rosAdd'){const ros=MEMBERS.filter(m=>m.a==='미사스즈키');Object.keys(P.chk).forEach(i=>{if(P.chk[i]){const m=ros[i];if(!has(m.n,m.a))P.picked.push({n:m.n,k:m.k,i:m.i,sex:/^여/.test(m.g||'')?'여성':/^남/.test(m.g||'')?'남성':'',sub:m.a+' · 회원'})}});P.chk={};render();return}
+ if(d.r1!==undefined){const m=MEMBERS.filter(x=>x.a==='미사스즈키')[+d.r1];if(m&&!has(m.n,m.a))P.picked.push({n:m.n,k:m.k,i:m.i,sex:/^여/.test(m.g||'')?'여성':/^남/.test(m.g||'')?'남성':'',sub:m.a+' · 회원'});render();return}
+if(d.act==='rosAdd'){const ros=MEMBERS.filter(m=>m.a==='미사스즈키');Object.keys(P.chk).forEach(i=>{if(P.chk[i]){const m=ros[i];if(!has(m.n,m.a))P.picked.push({n:m.n,k:m.k,i:m.i,sex:/^여/.test(m.g||'')?'여성':/^남/.test(m.g||'')?'남성':'',sub:m.a+' · 회원'})}});P.chk={};render();return}
 });
-document.addEventListener('change',e=>{if(e.target.dataset&&e.target.dataset.rc!==undefined){P.chk[e.target.dataset.rc]=e.target.checked}if(e.target.id==='ay'){P.age=e.target.value;render()}if(e.target.id==='apg'){P.prog=e.target.value}});
+document.addEventListener('change',e=>{if(e.target.dataset&&e.target.dataset.rc!==undefined){P.chk[e.target.dataset.rc]=e.target.checked;render();return}if(e.target.dataset&&e.target.dataset.rall){const ros=MEMBERS.filter(m=>m.a==='미사스즈키'),stu=e.target.dataset.rall==='s',on=e.target.checked;ros.forEach((m,i)=>{if((m.k!=='교사')===stu&&!has(m.n,m.a))P.chk[i]=on});render();return}if(e.target.id==='ay'){P.age=e.target.value;render()}if(e.target.id==='apg'){P.prog=e.target.value}});
 const DUES=30000;const pkey=x=>x.n+'|'+x.k;const repOf=x=>(S.prep||{})[pkey(x)];
 function brk(x){const f=inf(x),np=NOPLAY(x.k),kk=f.kind||x.k;const L=[['참가비',FEE1[kk==='학생'&&/직접 추가/.test(x.sub)?'학생(비회원)':kk]||0]];if(kk==='학생'&&!/직접 추가/.test(x.sub))L.push(['연회비',DUES]);if(!np&&f.add)L.push(['개인레슨 '+f.add+'회',f.add*LES]);if(f.mc&&f.mcP.length)L.push(['마스터클래스 '+f.mcP.length,f.mcP.length*MCFEE]);
  S.list.forEach(r=>{if(r.room&&r.rep===x.n&&r.amt)L.push(['가족방',r.amt])});return L}
@@ -225,6 +227,18 @@ function cxRule(){const d=new Date(),m=d.getMonth()+1,dd=d.getDate();const i=m>=
  return `<details class="panel cxr" ${S.cxOpen?'open':''}><summary><b>취소·환불 규정</b> <span class="hint">오늘(${m}월 ${dd}일) 취소하면: 진단서 미제출 참가비 ${T[i][1].replace(/<[^>]+>/g,'')}</span></summary>
  <div class="tbl"><table><thead><tr><th>취소한 날</th><th>진단서 미제출</th><th>전염병 · 팔·손 골절 진단서 제출</th></tr></thead><tbody>${T.map((r,k)=>`<tr${k===i?' style="background:var(--soft)"':''}><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join('')}</tbody></table></div>
  <p class="hint" style="margin:0">연회비는 환불되지 않아요. 환불 금액은 입금이 확인된 사람의 참가비·레슨비 기준이에요. 입금 전인 사람은 수수료가 없는 기간(전액 환불 기간)에는 바로 취소되고, 수수료가 생기는 날부터는 입금이 확인된 사람만 취소 요청할 수 있어요.</p></details>`}
+function rosTables(ros){const st=x=>(P.picked.find(q=>q.n===x.n)||null),D='<span class="hint">-</span>';
+ const dues=m=>{const p=st(m);if(p&&!p.done)return '<span class="dpill new">명단<br>추가</span>';return m.p?`<span class="dpill ok">회비납부<br>${esc(m.p)}</span>`:'<span class="dpill no">미납</span>'};
+ const rcpt=m=>{const p=st(m);return p&&p.done?'<span class="pill ok">완료</span>':D};
+ const pf=(S.pf||'').trim(),T=ros.map((m,i)=>({m,i})).filter(o=>o.m.k==='교사'),U=ros.map((m,i)=>({m,i})).filter(o=>o.m.k!=='교사'&&(!pf||(o.m.n+(o.m.i||'')+(o.m.t||'')).includes(pf)));
+ const row=(o,stu)=>{const m=o.m,on=has(m.n,m.a);return `<tr class="${on?'onr':''}"><td><input type="checkbox" data-rc="${o.i}" ${on?'checked disabled':P.chk[o.i]?'checked':''} aria-label="${esc(m.n)} 선택"></td><td class="l nmc"><span class="kind ${stu?'ks':''}">${stu?'학생':'교사'}</span><b>${esc(m.n)}</b></td>
+  ${stu?`<td>${m.y?2027-1-m.y:D}</td><td>${esc(IAB[m.i]||m.i||'-')}</td><td>${m.t?esc(m.t):D}</td>`:`<td>${esc(m.r||'강사')}</td><td>${esc(IAB[m.i]||m.i||'-')}</td>`}<td>${rcpt(m)}</td><td>${dues(m)}</td><td>${on?'':`<button class="btn sm" type="button" data-r1="${o.i}">추가</button>`}</td></tr>`};
+ const nck=Object.keys(P.chk).filter(k=>P.chk[k]).length,allOn=L=>L.length&&L.every(o=>has(o.m.n,o.m.a)||P.chk[o.i]);
+ const head=(L,stu)=>`<tr><th><input type="checkbox" data-rall="${stu?'s':'t'}" ${allOn(L)?'checked':''} aria-label="전체 선택"></th><th class="l">이름</th>${stu?'<th>나이</th><th>전공</th><th>담당</th>':'<th>직급</th><th>전공</th>'}<th>접수</th><th>회비</th><th><button class="btn sm pri" type="button" data-act="rosAdd" ${nck?'':'disabled'}>선택 추가</button></th></tr>`;
+ return `<div class="panel"><h3 style="margin:0">선생님 ${T.length}명</h3><div class="tbl"><table class="rosT"><thead>${head(T,false)}</thead><tbody>${T.map(o=>row(o,false)).join('')}</tbody></table></div></div>
+ <div class="panel"><h3 style="margin:0">학생 ${ros.filter(m=>m.k!=='교사').length}명</h3><button class="btn pri wide" type="button" data-act="rosAdd" ${nck?'':'disabled'}>${nck?`체크한 ${nck}명 신청 명단에 추가`:'학생을 체크하고 신청 명단에 추가해요'}</button>
+ <input id="pf" placeholder="표에서 찾기 (이름 · 악기 · 담당 …)" value="${esc(pf)}" style="max-width:320px">
+ <div class="tbl"><table class="rosT"><thead>${head(U,true)}</thead><tbody>${U.map(o=>row(o,true)).join('')||'<tr><td colspan="8" class="hint">찾는 학생이 없어요.</td></tr>'}</tbody></table></div></div>`}
 function sumBox(){const D=P.picked.filter(x=>x.done);if(!D.length)return '';const g=k=>D.filter(x=>k(x));const T=g(x=>x.k==='교사'),St=g(x=>STU3(x.k)),F=g(x=>NOPLAY(x.k));
  const byI={};St.forEach(x=>{const i=instOf(x);byI[i]=(byI[i]||0)+1});const rooms=S.list.filter(r=>r.room).length;
  const tot=D.reduce((a,x)=>a+brk(x).reduce((b,q)=>b+q[1],0),0),ok=D.filter(x=>{const r=repOf(x);return r&&r.ok}).reduce((a,x)=>a+brk(x).reduce((b,q)=>b+q[1],0),0);
@@ -302,9 +316,9 @@ function vMineRep(){const isHead=(S.role||'head')==='head',scope=S.scope||'mine'
  :`<td>${esc(r.payer)}</td><td>${esc(r.date)}</td><td><span class="actc"><button class="btn sm" type="button" data-redit="${esc(k)}">신고 수정</button><button class="btn sm" type="button" data-repx="${esc(k)}">신고 취소</button><button class="btn sm adm" type="button" data-adm="${esc(k)}">관리자 확인 (미리보기)</button></span></td>`}</tr>`}).join('')}</tbody></table></div><p class="hint" style="margin:0">협회가 통장과 맞춰 보고 「입금 확인」으로 바꿔요. 그 전에는 「신고 수정」으로 입금자 · 입금일을 고치거나, 「신고 취소」로 신고를 없앨 수 있어요. 취소하면 접수 내역에서 다시 고칠 수 있어요.</p></div>`:''}
  ${R2.length?`<div class="panel"><h3 style="margin:0">입금 확인 ${R2.length}명</h3><div class="tbl"><table class="mineT repT"><thead><tr><th>이름</th><th class="l">금액 내역</th><th class="r">금액</th><th>입금자</th><th>입금일</th><th>확인</th></tr></thead><tbody>${R2.map(x=>{const r=repOf(x);return `<tr><td class="nm"><span class="kind">${esc(x.k)}</span><b>${esc(x.n)}</b></td><td class="l bkc">${line(x)}</td><td class="r"><b>${won(amtOf(x))}</b></td><td>${esc(r.payer)}</td><td>${esc(r.date)}</td><td><span class="pill ok">입금 확인 ${esc(r.okd)}</span>${S.adminMode?`<br><button class="btn sm adm" type="button" data-admx="${esc(pkey(x))}" style="margin-top:4px">확인 되돌리기 (미리보기)</button>`:''}</td></tr>`}).join('')}</tbody></table></div><p class="hint" style="margin:0">입금이 확인된 사람은 신고 수정 · 취소를 할 수 없어요. 바꿀 것이 있으면 협회에 연락해요.</p></div>`:''}`}
 function loadLive(r){if(!r)return;LIVE=true;WHO=r.head||WHO;const A='미사스즈키';
- MY.length=0;r.students.forEach(x=>MY.push({n:x.n,y:+x.y||'',i:x.i||'바이올린',a:A,g:x.g,t:x.t}));
+ MY.length=0;const pd=v=>{const m=String(v||'').match(/(\d{4})-(\d{2})-(\d{2})/);return m?m[1].slice(2)+'.'+m[2]+'.'+m[3]:''};r.students.forEach(x=>MY.push({n:x.n,y:+x.y||'',i:x.i||'바이올린',a:A,g:x.g,t:x.t,p:pd(x.p)}));
  for(let k=MEMBERS.length-1;k>=0;k--)if(MEMBERS[k].a===A)MEMBERS.splice(k,1);
- r.teachers.forEach(t=>MEMBERS.push({n:t.n,k:'교사',i:t.i||'',a:A,r:t.r}));MY.forEach(m=>MEMBERS.push({...m,k:'학생'}));
+ r.teachers.forEach(t=>MEMBERS.push({n:t.n,k:'교사',i:t.i||'',a:A,r:t.r,p:pd(t.p)}));MY.forEach(m=>MEMBERS.push({...m,k:'학생'}));
  if(r.profs&&r.profs.length){PF.length=0;r.profs.forEach(q=>PF.push([q.n,q.i,!!q.mc]))}
  S.others=null;P.picked=[];Object.keys(I).forEach(k=>delete I[k]);S.mem=[];S.list=[];S.rep='';P.q='';P.hit=null}
 function vLogin(){return `<div class="panel login"><h2 style="margin:0">캠프 접수 미리보기</h2><p class="hint" style="margin:0">미사스즈키 원장님으로 들어가요. STG 명단(선생님 · 학생 · 교수진)을 불러와요. 여기서 고른 것은 저장되지 않아요.</p>
@@ -376,7 +390,7 @@ document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)r
  if(d.act==='toList'){S.tab='list';render();return}
  if(d.act==='again'){S.tab='new';reset();render();return}
 });
-document.addEventListener('input',e=>{if(e.target.id==='rq'){S.rq=e.target.value.trim();const c=e.target.selectionStart;render();const q=document.getElementById('rq');if(q){q.focus();q.setSelectionRange(c,c)}return}if(e.target.dataset&&e.target.dataset.en){S.ens[e.target.dataset.en]=e.target.value;return}if(e.target.id==='enAq'){S.ens.aq=e.target.value.trim();const c=e.target.selectionStart;render();const q=document.getElementById('enAq');if(q){q.focus();q.setSelectionRange(c,c)}return}if(e.target.id==='qn'){S.q.n=e.target.value.trim();const c=e.target.selectionStart;render();const q=document.getElementById('qn');if(q){q.focus();q.setSelectionRange(c,c)}}});
+document.addEventListener('input',e=>{if(e.target.id==='pf'){S.pf=e.target.value;const c=e.target.selectionStart;render();const q=document.getElementById('pf');if(q){q.focus();q.setSelectionRange(c,c)}return}if(e.target.id==='rq'){S.rq=e.target.value.trim();const c=e.target.selectionStart;render();const q=document.getElementById('rq');if(q){q.focus();q.setSelectionRange(c,c)}return}if(e.target.dataset&&e.target.dataset.en){S.ens[e.target.dataset.en]=e.target.value;return}if(e.target.id==='enAq'){S.ens.aq=e.target.value.trim();const c=e.target.selectionStart;render();const q=document.getElementById('enAq');if(q){q.focus();q.setSelectionRange(c,c)}return}if(e.target.id==='qn'){S.q.n=e.target.value.trim();const c=e.target.selectionStart;render();const q=document.getElementById('qn');if(q){q.focus();q.setSelectionRange(c,c)}}});
 document.addEventListener('change',e=>{if(e.target.id==='qa'){S.q.a=e.target.value;render();return}if(e.target.id==='rep'){S.rep=e.target.value;reset();render()}if(e.target.id==='room'){S.room=e.target.checked;render()}});
 /* 처음 화면: 예시로 형제 · 보호자가 들어간 상태 */
 S.mem.push({k:'학생',n:'박두리',sub:'미사스즈키 · 바이올린 · 내 접수',st:'ok'},{k:'첫번째 보호자',n:'김엄마',sub:'미사스즈키 · 내 접수',st:'ok'});S.rep='박두리';

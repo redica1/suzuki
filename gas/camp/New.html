@@ -228,15 +228,16 @@ function cxRule(){const d=new Date(),m=d.getMonth()+1,dd=d.getDate();const i=m>=
  <div class="tbl"><table><thead><tr><th>취소한 날</th><th>진단서 미제출</th><th>전염병 · 팔·손 골절 진단서 제출</th></tr></thead><tbody>${T.map((r,k)=>`<tr${k===i?' style="background:var(--soft)"':''}><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join('')}</tbody></table></div>
  <p class="hint" style="margin:0">연회비는 환불되지 않아요. 환불 금액은 입금이 확인된 사람의 참가비·레슨비 기준이에요. 입금 전인 사람은 수수료가 없는 기간(전액 환불 기간)에는 바로 취소되고, 수수료가 생기는 날부터는 입금이 확인된 사람만 취소 요청할 수 있어요.</p></details>`}
 function rosTables(ros){const st=x=>(P.picked.find(q=>q.n===x.n)||null),D='<span class="hint">-</span>';
- const dues=m=>{const p=st(m);if(p&&!p.done)return '<span class="dpill new">명단<br>추가</span>';return m.p?`<span class="dpill ok">회비납부<br>${esc(m.p)}</span>`:`<span class="dpill no">미납<br>+${m.k==='교사'?'32':'3'}만</span>`};
- const rcpt=m=>{const p=st(m);return p&&p.done?'<span class="pill ok">완료</span>':D};
- const pf=(S.pf||'').trim(),T=ros.map((m,i)=>({m,i})).filter(o=>o.m.k==='교사'),U=ros.map((m,i)=>({m,i})).filter(o=>o.m.k!=='교사'&&(!pf||(o.m.n+(o.m.i||'')+(o.m.t||'')).includes(pf)));
+ const dues=m=>{return m.p?`<span class="dpill ok">회비납부<br>${esc(m.p)}</span>`:`<span class="dpill no">미납<br>+${m.k==='교사'?'32':'3'}만</span>`};
+ const rcpt=m=>{const p=st(m);return p&&!p.done?'<span class="pill wait">이번에 신청</span>':D};
+ const othN=new Set((S.others||[]).map(x=>x.n)),gone=m=>{const p=st(m);return (p&&p.done)||othN.has(m.n)},nGone=ros.filter(gone).length;
+ const pf=(S.pf||'').trim(),T=ros.map((m,i)=>({m,i})).filter(o=>o.m.k==='교사'&&!gone(o.m)),U=ros.map((m,i)=>({m,i})).filter(o=>o.m.k!=='교사'&&!gone(o.m)&&(!pf||(o.m.n+(o.m.i||'')+(o.m.t||'')).includes(pf)));
  const row=(o,stu)=>{const m=o.m,on=has(m.n,m.a);return `<tr class="${on?'onr':''}"><td><input type="checkbox" data-rc="${o.i}" ${on?'checked disabled':P.chk[o.i]?'checked':''} aria-label="${esc(m.n)} 선택"></td><td class="l nmc"><span class="kind ${stu?'ks':''}">${stu?'학생':'교사'}</span><b>${esc(m.n)}</b></td>
   ${stu?`<td>${m.y?2027-1-m.y:D}</td><td>${esc(IAB[m.i]||m.i||'-')}</td><td>${m.t?esc(m.t):D}</td>`:`<td>${esc(m.r||'강사')}</td><td>${esc(IAB[m.i]||m.i||'-')}</td>`}<td>${rcpt(m)}</td><td>${dues(m)}</td><td>${on?'':`<button class="btn sm" type="button" data-r1="${o.i}">추가</button>`}</td></tr>`};
  const nck=Object.keys(P.chk).filter(k=>P.chk[k]).length,allOn=L=>L.length&&L.every(o=>has(o.m.n,o.m.a)||P.chk[o.i]);
  const head=(L,stu)=>`<tr><th><input type="checkbox" data-rall="${stu?'s':'t'}" ${allOn(L)?'checked':''} aria-label="전체 선택"></th><th class="l">이름</th>${stu?'<th>나이</th><th>전공</th><th>담당</th>':'<th>직급</th><th>전공</th>'}<th>접수</th><th>회비</th><th><button class="btn sm pri" type="button" data-act="rosAdd" ${nck?'':'disabled'}>선택 추가</button></th></tr>`;
- return `<div class="panel"><h3 style="margin:0">선생님 ${T.length}명</h3><div class="tbl"><table class="rosT"><thead>${head(T,false)}</thead><tbody>${T.map(o=>row(o,false)).join('')}</tbody></table></div></div>
- <div class="panel"><h3 style="margin:0">학생 ${ros.filter(m=>m.k!=='교사').length}명</h3><button class="btn pri wide" type="button" data-act="rosAdd" ${nck?'':'disabled'}>${nck?`체크한 ${nck}명 신청 명단에 추가`:'학생을 체크하고 신청 명단에 추가해요'}</button>
+ return `${nGone?`<p class="hint" style="margin:0 0 10px">이미 접수했거나 입금 신고한 ${nGone}명은 명단에서 빠져요. 「내 신청 내역」에서 봐요.</p>`:''}<div class="panel"><h3 style="margin:0">선생님 ${T.length}명</h3><div class="tbl"><table class="rosT"><thead>${head(T,false)}</thead><tbody>${T.map(o=>row(o,false)).join('')||'<tr><td colspan="8" class="hint">새로 신청할 선생님이 없어요.</td></tr>'}</tbody></table></div></div>
+ <div class="panel"><h3 style="margin:0">학생 ${ros.filter(m=>m.k!=='교사'&&!gone(m)).length}명</h3><button class="btn pri wide" type="button" data-act="rosAdd" ${nck?'':'disabled'}>${nck?`체크한 ${nck}명 신청 명단에 추가`:'학생을 체크하고 신청 명단에 추가해요'}</button>
  <input id="pf" placeholder="표에서 찾기 (이름 · 악기 · 담당 …)" value="${esc(pf)}" style="max-width:320px">
  <div class="tbl"><table class="rosT"><thead>${head(U,true)}</thead><tbody>${U.map(o=>row(o,true)).join('')||'<tr><td colspan="8" class="hint">찾는 학생이 없어요.</td></tr>'}</tbody></table></div></div>`}
 function sumBox(){const D=P.picked.filter(x=>x.done);if(!D.length)return '';const g=k=>D.filter(x=>k(x));const T=g(x=>x.k==='교사'),St=g(x=>STU3(x.k)),F=g(x=>NOPLAY(x.k));

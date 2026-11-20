@@ -1,4 +1,4 @@
-/* build: 20261120-231420 */
+/* build: 20261120-231640 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -4751,6 +4751,13 @@ function newPreview() {
   const st = rows_(SH.S).filter(r => String(r['학원']) === A && r['ID']).map(r => ({ n: String(r['이름']), i: String(r['악기'] || ''), y: String(r['출생연도'] || ''), t: String(r['담당 교사'] || ''), g: String(r['성별'] || ''), p: dstr_(r['회비 납부일']) || '' }));
   let profs = []; try { profs = profPublic_().map(p => ({ n: p.n, i: p.i, mc: !!p.mc })); } catch (x) {}
   return { head: head ? head.name : '', teachers: ts.map(t => ({ n: t.name, r: t.role, i: t.inst, p: t.paidDate || '' })), students: st, profs };
+}
+/** 새 접수 미리보기: STG 「테스트 선생님」 이름과 학원 (명단은 화면이 가상으로 만듦) */
+function newTestList() {
+  if (!qaOn_()) throw new Error('STG에서만 열려요.');
+  let names = []; try { names = String(setting_('테스트 선생님') || '').split(/[,\n]/).map(x => x.trim()).filter(Boolean).slice(0, 6); } catch (x) {}
+  const ts = teachers_();
+  return names.map(n => { const t = ts.find(x => x.name === n); return [n, t && t.acads[0] || '미사스즈키']; });
 }
 function qaOn_() { try { return !!String(setting_('테스트 로그인') || '').trim(); } catch (e) { return false; } }
 function qaSheet_() {

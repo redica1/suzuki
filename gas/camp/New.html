@@ -162,7 +162,7 @@ function vInfo(){let sum=0;const cards=P.picked.map((x,ix)=>{const f=inf(x),np=N
  </div>`}).join('');
  return `<div class="panel"><div class="spread"><h2>참가 정보</h2><span class="pill ok">3단계</span></div><p class="hint">2단계에서 담은 ${P.picked.length}명이에요. 구분에 따라 넣는 칸이 달라요.</p></div>${cards}
  <div class="panel"><div class="spread"><b>이 접수 합계 (1차)</b><b class="num">${won(sum)}</b></div><p class="hint">추가 레슨 1회 ${won(LES)}. 가족방은 접수가 끝난 뒤 「② 가족 신청」에서 묶어요.</p>
- <div class="row" style="justify-content:space-between"><button class="btn" type="button" data-tab="pick">← 2단계</button><button class="btn pri" type="button" data-tab="new">접수 뒤 → ② 가족 신청</button></div></div>`}
+ <div class="row" style="justify-content:space-between"><button class="btn" type="button" data-tab="pick">← 2단계</button>${P.picked.some(x=>!x.done)?`<button class="btn pri" type="button" data-act="submitAll">${P.picked.filter(x=>!x.done).length}명 접수하기</button>`:'<button class="btn pri" type="button" data-tab="mine">저장 · 내 신청 내역으로</button>'}</div></div>`}
 document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const d=b.dataset;
  if(d.fa!==undefined){const x=P.picked[+d.fa],f=inf(x);f.add=Math.max(0,Math.min(5,f.add+(+d.d)));render();return}
  if(d.fmp!==undefined){const f=inf(P.picked[+d.fmp]);f.mcP=f.mcP.includes(d.q)?f.mcP.filter(q=>q!==d.q):f.mcP.concat(d.q);render();return}
@@ -177,16 +177,16 @@ document.addEventListener('change',e=>{const t=e.target;if(t.dataset&&t.dataset.
 /* ---------- ① 접수 2단계: 찾기 → 회원이면 선택 · 아니면 추가 ---------- */
 const MEMBERS=[{n:'김스즈',k:'교사',y:1985,i:'바이올린',a:'미사스즈키'},...MY.map(m=>({...m,k:'학생'})),{n:'한유진',k:'학생',y:2013,i:'플루트',a:'미사스즈키'},{n:'이두리',k:'학생',y:2013,i:'첼로',a:'마포스즈키'},{n:'김하나',k:'학생',y:2015,i:'바이올린',a:'마포스즈키'},{n:'김하나',k:'교사',y:1990,i:'첼로',a:'수지스즈키'}];
 const KINDS=['학생','교사 자녀 (악기)','교사','첫번째 보호자','동반가족','15개월 미만'];const STUK=k=>k==='학생'||k==='교사 자녀 (악기)';const byYear=a=>a?String(2027-(+a)-1):'';const INSTS=['바이올린','비올라','첼로','플루트','기타'];
-const P={q:'',hit:null,add:false,kind:'학생',inst:'',sex:'',picked:[{n:'김스즈',k:'교사',sub:'미사스즈키 · 회원'},{n:'이하나',k:'학생',sub:'미사스즈키 · 회원'},{n:'김엄마',k:'첫번째 보호자',sub:'미사스즈키 · 직접 추가',sex:'여성',age:'40'}],chk:{}};
+const P0=1;const P={q:'',hit:null,add:false,kind:'학생',inst:'',sex:'',picked:[{n:'김스즈',k:'교사',sub:'미사스즈키 · 회원'},{n:'이하나',k:'학생',sub:'미사스즈키 · 회원'},{n:'김엄마',k:'첫번째 보호자',sub:'미사스즈키 · 직접 추가',sex:'여성',age:'40'}],chk:{}};
 function has(n,a){return P.picked.some(x=>x.n===n&&x.sub.indexOf(a)===0)}
 function vPick(){const ros=MEMBERS.filter(m=>m.a==='미사스즈키');
  return `<div class="panel"><div class="spread"><h2>미사스즈키 참가자 선택</h2><span class="pill ok">2단계</span></div>
- <div><b>신청 명단 ${P.picked.length}명</b></div>
- <div class="picked">${P.picked.map((x,i)=>`<span class="chipP"><span class="kind ${x.k==='학생'||x.k==='교사'?'':'p'}">${esc(x.k)}</span>${esc(x.n)} <small class="hint">${esc(x.sub)}</small><button type="button" data-prm="${i}" aria-label="${esc(x.n)} 빼기">×</button></span>`).join('')}</div></div>
+ <div><b>접수 완료 ${P.picked.filter(x=>x.done).length}명</b>${P.picked.some(x=>!x.done)?` · <b style="color:var(--warn)">이번에 신청 ${P.picked.filter(x=>!x.done).length}명</b> <span class="hint">3단계에서 「접수하기」를 눌러야 접수돼요</span>`:''}</div>
+ <div class="picked">${P.picked.map((x,i)=>`<span class="chipP"><span class="kind ${x.k==='학생'||x.k==='교사'?'':'p'}">${esc(x.k)}</span>${esc(x.n)} ${x.done?'<small class="pill ok" style="font-size:11.5px;padding:1px 7px">접수 완료</small>':`<small class="hint">이번에 신청</small><button type="button" data-prm="${i}" aria-label="${esc(x.n)} 빼기">×</button>`}</span>`).join('')}</div></div>
  <div class="panel"><div class="seg2" role="tablist" aria-label="넣는 방법"><button type="button" role="tab" data-pmode="find" aria-pressed="${(P.mode||'find')==='find'}">이름 찾기</button><button type="button" role="tab" data-pmode="direct" aria-pressed="${P.mode==='direct'}">직접 입력</button></div>
  ${(P.mode||'find')==='find'?`<div style="display:grid;gap:12px"><div class="step"><div><h3 hidden>이름으로 찾기</h3><p class="hint">우리 학원(미사스즈키) 회원 명단에서만 찾아요.</p></div></div>
  <div class="row"><input id="pq" placeholder="이름 (예: 한유진)" value="${esc(P.q)}" style="flex:1;min-width:140px"><button class="btn" type="button" data-act="pfind">찾기</button></div>
- ${P.hit===null?'':P.hit.length?`<div class="res">${P.hit.map((m,i)=>`<div class="it"><span><span class="kind">${m.k}</span> <b>${esc(m.n)}</b> <span class="hint">${m.y?m.y+'년생 · ':''}${esc(m.i||'')} · ${esc(m.a)}</span></span>${has(m.n,m.a)?'<span class="pill ok">담음</span>':`<button class="btn pri sm" type="button" data-psel="${i}">선택</button>`}</div>`).join('')}</div>`:`<div class="none"><b>우리 학원 회원 명단에 「${esc(P.q)}」이 없어요</b><span class="hint">회원이 아니면 위 「직접 입력」을 눌러 넣어요.</span></div>`}
+ ${P.hit===null?'':P.hit.length?`<div class="res">${P.hit.map((m,i)=>`<div class="it"><span><span class="kind">${m.k}</span> <b>${esc(m.n)}</b> <span class="hint">${m.y?m.y+'년생 · ':''}${esc(m.i||'')} · ${esc(m.a)}</span></span>${has(m.n,m.a)?(P.picked.find(x=>x.n===m.n)||{}).done?'<span class="pill ok">접수 완료</span>':'<span class="pill wait">이번에 신청</span>':`<button class="btn pri sm" type="button" data-psel="${i}">선택</button>`}</div>`).join('')}</div>`:`<div class="none"><b>우리 학원 회원 명단에 「${esc(P.q)}」이 없어요</b><span class="hint">회원이 아니면 위 「직접 입력」을 눌러 넣어요.</span></div>`}
  
  </div>`:`<div style="display:grid;gap:12px"><div class="step"><div><h3 hidden>직접 입력</h3><p class="hint">회원 명단에 없는 사람이에요. 구분을 고르고 넣어요.</p></div></div><div class="kchips" role="group" aria-label="구분">${KINDS.map(k=>`<button type="button" data-pk="${k}" aria-pressed="${k===P.kind}">${k}</button>`).join('')}</div>
  <div class="drow"><input id="an" placeholder="이름 *" value="${esc(P.dn||'')}" aria-label="이름">
@@ -197,7 +197,7 @@ function vPick(){const ros=MEMBERS.filter(m=>m.a==='미사스즈키');
  ${P.age?`<p class="hint" style="margin:0">만 ${esc(P.age)}세 → ${byYear(P.age)}년생으로 저장</p>`:''}${P.err?`<p class="hint" style="margin:0;color:var(--warn);font-weight:700">${esc(P.err)}</p>`:''}
  <p class="hint">참가비는 이 구분으로 정해져요.${NOPLAY(P.kind)?' 나이는 대략 적어도 되고 비워도 돼요.':(P.kind==='교사 자녀 (악기)'?' 회원 교사의 악기하는 자녀 금액이에요.':P.kind==='학생'?' 회원이 아니라 비회원 금액이에요.':'')}</p></div>`}</div>
  <div class="panel"><div class="step"><div><h3>우리 학원 명단에서 한꺼번에</h3><p class="hint">학생이 많을 때는 체크해서 한 번에 담아요.</p></div></div>
- <div class="ros">${ros.map((m,i)=>{const on=has(m.n,m.a);return `<label for="r${i}"><input type="checkbox" id="r${i}" data-rc="${i}" ${on?'checked disabled':P.chk[i]?'checked':''}><span><b>${esc(m.n)}</b> <span class="hint">${m.k}${m.y?' · '+m.y+'년생':''}${m.i?' · '+esc(m.i):''}</span></span>${on?'<span class="pill ok">담음</span>':''}</label>`}).join('')}</div>
+ <div class="ros">${ros.map((m,i)=>{const on=has(m.n,m.a);return `<label for="r${i}"><input type="checkbox" id="r${i}" data-rc="${i}" ${on?'checked disabled':P.chk[i]?'checked':''}><span><b>${esc(m.n)}</b> <span class="hint">${m.k}${m.y?' · '+m.y+'년생':''}${m.i?' · '+esc(m.i):''}</span></span>${on?((P.picked.find(x=>x.n===m.n)||{}).done?'<span class="pill ok">접수 완료</span>':'<span class="pill wait">이번에 신청</span>'):''}</label>`}).join('')}</div>
  <div class="row" style="justify-content:flex-end"><button class="btn pri" type="button" data-act="rosAdd">체크한 사람 담기</button></div></div>
  <div class="row" style="justify-content:flex-end"><button class="btn pri" type="button" data-tab="info">다음 → 3단계 참가 정보</button></div>`}
 document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const d=b.dataset,v=id=>(document.getElementById(id)||{}).value||'';
@@ -334,6 +334,7 @@ document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)r
  if(d.act==='ensSave'){const E=S.ens;E.err=!E.name.trim()?'팀 이름을 넣어 주세요.':!E.n.trim()?'인원을 넣어 주세요.':!E.song.trim()||!E.comp.trim()?'곡명 · 작곡가를 넣어 주세요.':'';if(!E.err)E.done=true;render();return}
  if(d.act==='payRep'){S.paid=true;render();return}
  if(d.mf){S.mf=d.mf;render();return}
+ if(d.act==='submitAll'){const t=nowTs();P.picked.forEach(x=>{if(!x.done){x.done=true;x.at=t}});S.tab='mine';S.mv='pay';render();scrollTo(0,0);return}
  if(d.act==='rvAll'){const n=(document.getElementById('rvAllN')||{}).value||'',dt=(document.getElementById('rvAllD')||{}).value||'';S.rvN=n;S.rvD=dt;S.rv=S.rv||{};Object.keys(S.rck||{}).filter(k=>S.rck[k]).forEach(k=>S.rv[k]={payer:n,date:dt});render();return}
  if(d.act==='repGo'){S.rv=S.rv||{};const ks=Object.keys(S.rck||{}).filter(k=>S.rck[k]);const bad=ks.filter(k=>!(S.rv[k]&&S.rv[k].payer&&S.rv[k].date));if(bad.length){S.rerr='입금자와 입금일을 넣어 주세요: '+bad.map(k=>k.split('|')[0]).join(', ');render();return}S.rerr='';S.prep=S.prep||{};ks.forEach(k=>S.prep[k]=S.rv[k]);S.rck={};render();return}
  if(d.adm){const r=S.prep[d.adm];if(r){const t=new Date();r.ok=true;r.okd=(t.getMonth()+1)+'/'+t.getDate();S.adminMode=true}render();return}
@@ -369,6 +370,6 @@ document.addEventListener('input',e=>{if(e.target.dataset&&e.target.dataset.en){
 document.addEventListener('change',e=>{if(e.target.id==='qa'){S.q.a=e.target.value;render();return}if(e.target.id==='rep'){S.rep=e.target.value;reset();render()}if(e.target.id==='room'){S.room=e.target.checked;render()}});
 /* 처음 화면: 예시로 형제 · 보호자가 들어간 상태 */
 S.mem.push({k:'학생',n:'박두리',sub:'미사스즈키 · 바이올린 · 내 접수',st:'ok'},{k:'첫번째 보호자',n:'김엄마',sub:'미사스즈키 · 내 접수',st:'ok'});S.rep='박두리';
-S.tab='login';
+P.picked.forEach(x=>x.done=true);S.tab='login';
 render();
 </script>

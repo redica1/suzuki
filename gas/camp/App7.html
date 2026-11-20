@@ -1,4 +1,4 @@
-/* build: 20261121-000055 */
+/* build: 20261121-001139 */
     ps.forEach(p=>{p.pay='신고';p.rep=rep;delete S.rpRow[p.id]});S.afterSave=()=>repDone(ps.map(p=>p.id));subSave();S.rp=null;S.rpOpen=false;S.rpMemo=undefined;render();toast(`${ps.length}명 입금 신고를 보냈어요 · 운영진이 확인하면 「입금 확인」으로 바뀌어요`);return}
   if(b.id==='rpFill'){const n=document.getElementById('rpAllN').value.trim(),dd=document.getElementById('rpAllD').value;S.rpAllN=n;S.rpAllD=dd;const sel=S.rp||[];
     if(!n&&!dd){toast('적용할 입금자명이나 입금일을 적어 주세요');return}unpaidPpl().filter(x=>sel.includes(x.p.id)).forEach(({p})=>{const v=rpv(p);if(n)v.n=n;if(dd)v.d=dd});render();toast(`선택한 ${sel.length}명에게 적용했어요`);return}
@@ -731,15 +731,18 @@ if(typeof NEWUI!=='undefined'&&NEWUI){
     if(S.view==='home'&&S.user){const app=document.getElementById('app');app.innerHTML=nHome();['backBtn','nextBtn'].forEach(id=>{const x=document.getElementById(id);if(x)x.hidden=true});const st=document.getElementById('steps');if(st)st.hidden=true;const dl=document.getElementById('dockLabel');if(dl)dl.textContent='처음';const dt=document.getElementById('dockTotal');if(dt)dt.textContent='';try{hdSync()}catch(e){}try{tabSync()}catch(e){}
       const tb=document.getElementById('tabbar');if(tb){tb.hidden=false;document.body.classList.add('tbOn');tb.querySelectorAll('[data-tb]').forEach(b=>b.dataset.tb==='home'?b.setAttribute('aria-current','page'):b.removeAttribute('aria-current'))}return}
     const x=_r2.apply(this,arguments);
+    if(S.view==='form'&&S.user&&S.step<6){const tb=document.getElementById('tabbar');if(tb)tb.hidden=true;document.body.classList.remove('tbOn','tbNext');const st=document.getElementById('steps');if(st&&!S.editNo)st.hidden=true;const nb=document.getElementById('nextBtn');if(nb&&S.step===3&&!S.editNo)nb.textContent='접수하기'}   /* 접수 중에는 아래 메뉴 대신 뒤로 · 다음 막대 */
     const pk=document.querySelector('.pick2');if(pk&&!S.user&&!pk.dataset.nui){pk.dataset.nui='1';const T={member:'회원 신청하기',guest:'비회원 신청하기',staff:'관계자 신청하기'};const cards=[...pk.children];const by=f=>cards.find(f);
       const M=by(c=>c.dataset.mode==='member'),G=by(c=>c.dataset.mode==='guest'),St=by(c=>c.dataset.mode==='staff'),I=by(c=>/intl/.test(c.getAttribute('href')||'')),Pa=by(c=>/parent/.test(c.getAttribute('href')||''));
       [M,G,St].forEach(c=>{if(c){const b=c.querySelector('b');if(b)b.textContent=T[c.dataset.mode]}});if(I){const b=I.querySelector('b');if(b)b.innerHTML='Overseas participants <small style="font-weight:500">· 해외 신청하기</small>'}if(Pa){const b=Pa.querySelector('b');if(b)b.textContent='학부모 신청하기'}
       [M,G,St,I,Pa].filter(Boolean).forEach(c=>pk.appendChild(c))}
     return x}}
+  /* 3단계 「접수하기」 = 앙상블 · 신청 확인 단계 없이 바로 접수 (앙상블은 홈 「앙상블 신청」에서 따로) */
+  document.addEventListener('click',e=>{const b=e.target&&e.target.closest&&e.target.closest('#nextBtn');if(!b||S.view!=='form'||S.step!==3||S.editNo||blocked())return;S.ens=S.ens&&(S.ens.on||S.ens.member)?S.ens:{on:false};S.step=5;S.agree=true},true);
   document.addEventListener('click',e=>{const h=e.target&&e.target.closest&&e.target.closest('[data-nh],[data-tb="home"]');if(!h||!S.user)return;
     const k=h.dataset.nh||'home';e.stopImmediatePropagation();e.preventDefault();
     if(k==='home'){if(S.editNo)return;S.view='home';render();window.scrollTo({top:0});return}
-    if(k==='new'){S.view='form';S.editNo=null;S.editOnly=null;resetForm();S.acad='';S.verified=false;S.step=1;render();window.scrollTo({top:0});return}
+    if(k==='new'){S.view='form';S.editNo=null;S.editOnly=null;resetForm();S.acad='';S.verified=false;S.step=1;const A=(S.user.acads||[]);if(A.length===1){pickAcad(A[0]);go(2)}else render();window.scrollTo({top:0});return}
     if(k==='mine'){S.view='mine';S.mview='pay';S.msub='pay';render();window.scrollTo({top:0});return}
     if(k==='room'){S.view='mine';S.mview='pay';S.msub='room';render();window.scrollTo({top:0});return}
     if(k==='ens'){const sb=MY_SUBS.find(x=>x.status!=='취소')||MY_SUBS[0];if(!sb){toast('먼저 「캠프 신청하기」로 접수해 주세요',true);return}startEdit(sb.no,'ens');window.scrollTo({top:0});return}},true);

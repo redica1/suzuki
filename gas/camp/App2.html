@@ -1,4 +1,4 @@
-/* build: 20261121-002715 */
+/* build: 20261121-002731 */
 function vAuthPick(){const off=!!CAMP.pre;return gdBtn()+apDoor()+`<section class="sec"><h2>접수 시작</h2>
   ${off?`<p class="note warn" style="margin:6px 0 12px"><b>${+CAMP.pre.slice(5,7)}월 ${+CAMP.pre.slice(8,10)}일에 접수가 열려요.</b> 그 전에 아래에서 회원가입을 마쳐 두세요.</p>`:'<p class="lede">어떻게 접수하시나요?</p>'}
   <div class="pick2${off?' pickoff':''}"${off?' aria-disabled="true"':''}>
@@ -247,7 +247,7 @@ function addBtn(id){const n=selIds().length;   /* 11-15: 명단 표 위(addCartT
   return `<button class="btn primary addcart" type="button" id="${id||'addCart'}" ${n?'':'disabled'}>${n?`선택한 ${n}명 신청 명단에 추가`:`${isStaffAcad()?'본인을':S.ptab==='교사'?'선생님을':'학생을'} 체크하고 신청 명단에 추가해요`}</button>`}
 function cartPanel(){
   const r=roster();const ts=r.teachers.filter(x=>S.picked[x.id]);const ss=r.students.filter(x=>S.picked[x.id]);
-  if(!ts.length&&!ss.length) return `<div class="panel cart"><h3>신청 명단</h3><p class="hint" style="margin:0">아직 비어 있어요. 아래 탭에서 체크하고 「신청 명단에 추가」를 눌러 주세요. 다른 탭으로 옮겨 가며 계속 추가할 수 있어요.</p></div>`;
+  if(!ts.length&&!ss.length) return `<div class="panel cart"><h3>신청 명단</h3><p class="hint" style="margin:0">아직 비어 있어요. 아래 탭에서 체크하고 「신청 명단에 추가」를 눌러 주세요.</p></div>`;
   /* 사람마다 접수 일시: 이미 접수된 사람 = 그 접수 시각, 이번에 담은 사람 = 담은 시각 (아직 접수 전) */
   const sb=S.editNo?ALL_SUBS.find(x=>x.no===S.editNo):null;
   const rows=[...ts.map(x=>({x,k:isStaffAcad()?'관계자':'교사'})),...ss.map(x=>({x,k:x.inst||'기타'}))].map(o=>{const p=sb&&sb.ppl.find(q=>q.id===sb.no+'_'+o.x.id&&q.status!=='취소');

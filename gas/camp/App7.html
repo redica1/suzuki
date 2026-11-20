@@ -1,4 +1,4 @@
-/* build: 20261121-001139 */
+/* build: 20261121-001907 */
     ps.forEach(p=>{p.pay='신고';p.rep=rep;delete S.rpRow[p.id]});S.afterSave=()=>repDone(ps.map(p=>p.id));subSave();S.rp=null;S.rpOpen=false;S.rpMemo=undefined;render();toast(`${ps.length}명 입금 신고를 보냈어요 · 운영진이 확인하면 「입금 확인」으로 바뀌어요`);return}
   if(b.id==='rpFill'){const n=document.getElementById('rpAllN').value.trim(),dd=document.getElementById('rpAllD').value;S.rpAllN=n;S.rpAllD=dd;const sel=S.rp||[];
     if(!n&&!dd){toast('적용할 입금자명이나 입금일을 적어 주세요');return}unpaidPpl().filter(x=>sel.includes(x.p.id)).forEach(({p})=>{const v=rpv(p);if(n)v.n=n;if(dd)v.d=dd});render();toast(`선택한 ${sel.length}명에게 적용했어요`);return}
@@ -153,7 +153,7 @@ document.addEventListener('input',e=>{if(e.target.type==='checkbox'&&(e.target.i
   if(e.target.id==='prpA'){const box=document.getElementById('prpRf');if(box)box.hidden=!((+e.target.value.replace(/\D/g,'')||0)>(+e.target.dataset.due||0))}
   if(e.target.dataset&&e.target.dataset.rpf){const [id,k]=e.target.dataset.rpf.split('|');const r=S.rpRow[id]||(S.rpRow[id]={n:'',d:'',a:''});r[k]=k==='a'?e.target.value.replace(/\D/g,''):e.target.value;return}
   if(e.target.id==='nB'){e.target.value=e.target.value.replace(/\D/g,'').slice(0,4);return}
-  if(e.target.id==='rq'){S.rq=e.target.value;const l=document.getElementById('rosterList');if(l)l.innerHTML=rosterList();return}
+  if(e.target.id==='rq'){S.rq=e.target.value;const l=document.getElementById('rosterList');if(l){const y=window.scrollY;if(S.rq&&!l.style.minHeight)l.style.minHeight=l.offsetHeight+'px';if(!S.rq)l.style.minHeight='';l.innerHTML=rosterList();if(Math.abs(window.scrollY-y)>2)window.scrollTo(0,y)}return}   /* 11-21: 찾는 동안 목록 높이를 지켜 화면이 안 움직이게 */
   const el=e.target, d=el.dataset;
   if(el.id==='fName'){S.fName=el.value;return}
   if(el.id==='fPhone'){S.fPhone=el.value;return}
@@ -726,6 +726,7 @@ if(typeof NEWUI!=='undefined'&&NEWUI){
     ${box('mine','2','내 신청 내역','신청한 사람 · 금액을 보고, 고치기 · 입금 신고 · 취소 요청을 해요.',L.length?(paid?'입금 확인 '+paid+'명 · ':'')+(rep?'신고 '+rep+'명 · ':'')+won(tot):'신청 전')}
     ${box('room','3','가족방 신청','캠프에 신청한 사람끼리 가족으로 묶어 한 방을 써요.',rm?rm+'가족 신청됨':'신청 안 함')}
     ${box('ens','4','앙상블 신청','여러 학원이 한 팀이 돼요. 대표 학원 한 곳에서만 신청해요.',tm.length?'「'+esc(tm[0].name||'')+'」 팀':'신청 안 함')}</div></section>`};
+  {const _ts=tabSync;tabSync=function(){if(S.view==='form'&&S.user&&S.step<6){const tb=document.getElementById('tabbar');if(tb)tb.hidden=true;document.body.classList.remove('tbOn','tbNext','tbStep');try{csFabSync()}catch(e){}return}return _ts.apply(this,arguments)}}
   {const _lg=login;login=function(t){_lg(t);if(S.view!=='audpre'){S.view='home';render()}}}
   {const _r2=render;render=function(){
     if(S.view==='home'&&S.user){const app=document.getElementById('app');app.innerHTML=nHome();['backBtn','nextBtn'].forEach(id=>{const x=document.getElementById(id);if(x)x.hidden=true});const st=document.getElementById('steps');if(st)st.hidden=true;const dl=document.getElementById('dockLabel');if(dl)dl.textContent='처음';const dt=document.getElementById('dockTotal');if(dt)dt.textContent='';try{hdSync()}catch(e){}try{tabSync()}catch(e){}

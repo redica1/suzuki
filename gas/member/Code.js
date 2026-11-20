@@ -1,4 +1,4 @@
-/* build: 20261113-135529 */
+/* build: 20261120-143654 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -2129,11 +2129,25 @@ function saveWorks(who, tid, rows) {
 /* ---------- 계정 도우미 ---------- */
 /** 관리자: 선생님(관계자 포함) 비밀번호를 임시 비밀번호로 바꿈 (10-31). 관리자 화면에 한 번 보여 주고, 선생님 이메일로도 보냄. 로그인 뒤 「비밀번호를 잊었어요」나 내 정보에서 바꾸게 안내 */
 function acctReset(who, tid, mail) {
-  tid = String(tid || ''); const L = acctAll_().filter(a => String(a.tid) === tid && a.state === '사용');
-  if (!L.length) fail('이 선생님은 쓰는 계정이 없어요(가입 전이거나 확인 대기).');
+  tid = String(tid || ''); let L = acctAll_().filter(a => String(a.tid) === tid && a.state === '사용');
   const A = 'abcdefghjkmnpqrstuvwxyz23456789'; let pw = ''; for (let i = 0; i < 10; i++) pw += A[Math.floor(Math.random() * A.length)];
   pw = pw.slice(0, 5) + '-' + pw.slice(5);
   const T = tbl_('계정'), lock = LockService.getScriptLock(); lock.waitLock(20000);
+  /* 11-20: 아직 가입 안 한 선생님(교사 DB에만 있음)도 교사정보 이메일로 계정을 만들고 임시 비밀번호를 보냄 */
+  if (!L.length) { try {
+      const TT = tbl_('교사'), k = TT.find('교사ID', tid); if (k < 0) fail('그 선생님을 찾지 못했어요.');
+      const c = col_(TT), email = String(TT.v[k][c['이메일']] || '').trim().toLowerCase();
+      if (String(TT.v[k][c['상태']]) === '탈퇴') fail('탈퇴한 선생님이에요.');
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) fail('교사정보에 이메일을 먼저 넣고 「저장」해 주세요.');
+      if (acctAll_().some(a => a.email === email && a.state !== '반려')) fail('이 이메일로 이미 다른 계정이 있어요. 이메일을 확인해 주세요.');
+      const salt = Utilities.getUuid();
+      T.append({ '이메일': email, '교사ID': tid, '비번해시': hash_(pw, salt), '솔트': salt, '상태': '사용', '경로': '관리자 임시 비밀번호', '만든날': now_(), '처리일': now_(), '메모': '임시 비밀번호 ' + now_() + ' ' + who.name });
+      log_(who.name, '계정', tid, '임시 비밀번호로 계정 만듦', maskEmail_(email));
+    } finally { lock.releaseLock(); }
+    L = []; const a2 = acctAll_().find(a => String(a.tid) === tid && a.state === '사용');
+    let sent = false; if (mail !== false && a2) { try { mail_(a2.email, '[스즈키] 임시 비밀번호를 보내 드려요', tmpPwMail_(a2.email, pw)); sent = true; } catch (e) {} }
+    return { pw, emails: a2 ? [a2.email] : [], sent, made: true };
+  }
   try { L.forEach(a => { const salt = Utilities.getUuid(); T.set(a.i, { '솔트': salt, '비번해시': hash_(pw, salt), '메모': ('임시 비밀번호 ' + now_() + ' ' + who.name + ' · ' + String(a.memo || '')).slice(0, 200) }); }); }
   finally { lock.releaseLock(); }
   log_(who.name, '계정', tid, '비밀번호 초기화', L.map(a => maskEmail_(a.email)).join(', '));
@@ -2142,6 +2156,8 @@ function acctReset(who, tid, mail) {
     '<p>협회 관리자가 교사 회원 비밀번호를 새로 만들었어요.</p><p>임시 비밀번호: <b style="font-size:18px;letter-spacing:.05em">' + esc_(pw) + '</b></p><p>이 비밀번호로 로그인한 뒤, 로그인 화면의 「비밀번호를 잊었어요」에서 원하는 비밀번호로 바꿔 주세요.</p><p>직접 요청하지 않았다면 협회에 알려 주세요.</p>')); sent = true; } catch (e) { } }
   return { pw, emails: L.map(a => a.email), sent };
 }
+function tmpPwMail_(email, pw) { const base = 'https:' + '//app.suzukimusickorea.org/member/' + (settings_()['테스트 표시'] === '예' ? '?test' : '');
+  return '<p>협회 관리자가 교사 회원 비밀번호를 만들어 드렸어요.</p><p>로그인 이메일: <b>' + esc_(email) + '</b><br>임시 비밀번호: <b style="font-size:18px;letter-spacing:.05em">' + esc_(pw) + '</b></p><p><a href="' + esc_(base) + '">' + esc_(base) + '</a> 에서 로그인한 뒤 「내 정보」에서 원하는 비밀번호로 바꿔 주세요.</p>'; }
 function acctAll_() { const T = tbl_('계정'); return T.v.map((r, i) => ({ i, email: String(r[0]).toLowerCase(), tid: r[1], hash: r[2], salt: r[3], state: r[4], memo: r[9] })); }
 /* 명단에 없는 사람(새 회원 · 외부인)의 교사 기록 만들기 (11-11): 가입 때 바로 열 때와 예전 신청을 승인할 때 같이 씀. chk = 「확인」(승인) · 「확인 필요」(가입 때 바로) */
 function mkTch_(kind, info, name, phone, email, src, by, chk) {

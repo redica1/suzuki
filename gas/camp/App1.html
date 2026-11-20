@@ -1,4 +1,4 @@
-/* build: 20261119-004629 */
+/* build: 20261120-142848 */
 /* ---------- 캠프 설정 (관리자 화면에서 입력되는 값) ---------- */
 const ROOM = { cap:4, emptyFee:140000, max:6 }; // 가족방: 4명 이상 기준(4명보다 적으면 빈 자리 1개당 추가 비용) · 숙소 1실은 5~6인이라 한 방 최대 6명 (11-15 사용자: 「4명까지」가 아니라 「4명 이상」)
 const CAMP = { id:'27W', ri:0, lessonFee:60000, lessonMax:5, mcFee:150000,
@@ -94,7 +94,7 @@ const FEES = { // 참가자격 × 차수 (관리자 참가비표에서 입력, 2
 const WD='일월화수목금토';
 const dOf=d=>{const [y,m,dd]=d.split('-').map(Number);return new Date(Date.UTC(y,m-1,dd))};
 const kdw=d=>{const x=dOf(d);return `${x.getUTCMonth()+1}. ${x.getUTCDate()}.(${WD[x.getUTCDay()]})`};
-function applyCamp(c){if(!c||!c.base||!Array.isArray(c.rounds)||!c.rounds.length)return;CAMP.pre=c.pre||'';CAMP.aud=c.aud?Object.fromEntries(Object.entries(c.aud).map(([k,v])=>[k,/오후/.test(k)?Object.assign({},v,{on:false,pre:false}):v])):null;CAMP.cons=Array.isArray(c.cons)&&c.cons.length?c.cons:null;CAMP.meals=Array.isArray(c.meals)?c.meals:null;const b=c.base,o=c.opt||{};
+function applyCamp(c){if(!c||!c.base||!Array.isArray(c.rounds)||!c.rounds.length)return;CAMP.pre=c.pre||'';CAMP.famClose=(c.base&&c.base.famClose)||'';CAMP.aud=c.aud?Object.fromEntries(Object.entries(c.aud).map(([k,v])=>[k,/오후/.test(k)?Object.assign({},v,{on:false,pre:false}):v])):null;CAMP.cons=Array.isArray(c.cons)&&c.cons.length?c.cons:null;CAMP.meals=Array.isArray(c.meals)?c.meals:null;const b=c.base,o=c.opt||{};
   const keepRi=S&&S.editNo&&S.riBack!==undefined;
   CAMP.id=b.id;['lessonFee','lessonMax','mcFee','studentDues','teacherDues'].forEach(k=>{if(o[k]!==undefined)CAMP[k]=+o[k]});
   if(o.roomCap)ROOM.cap=+o.roomCap;if(o.roomEmptyFee!==undefined)ROOM.emptyFee=+o.roomEmptyFee;
@@ -168,6 +168,7 @@ function songOk(i){return !i.concert||i.concert==='없음'||(i.other?!!String(i.
 /* 출생연도 옆 「캠프 때 n세」 · 학생이 너무 어리거나 많으면 확인 부탁 (대충 넣은 연도 잡기) */
 /* 만 나이 → 출생연도 (11-14): 올해 생일이 지났다고 보고 채움 · 아직이면 1년 빼서 고치게 안내 */
 const thisYear=()=>+String(S.today||new Date().toISOString()).slice(0,4)||2026;
+const famClosed=()=>!!CAMP.famClose&&new Date().toLocaleDateString('sv-SE',{timeZone:'Asia/Seoul'})>CAMP.famClose;
 function manToYear(a){a=+a;return a>=0&&a<=99?thisYear()-a:''}
 /* 출생연도 칸 (11-15 사용자: 만 나이를 넣으면 「2018 (생일 지남) / 2017 (생일 전)」 셀렉트로) — 만 나이가 없으면 연도 직접 입력 */
 function byField(p,i){const k=p.key,m=String(i.man||'');if(m!==''&&/^\d{1,2}$/.test(m)){const y=thisYear()-(+m);const L=[[y,'생일 지남'],[y-1,'생일 전']];if(i.by&&!L.some(x=>String(x[0])===String(i.by)))L.push([+i.by,'직접']);

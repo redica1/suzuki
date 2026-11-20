@@ -1,4 +1,4 @@
-/* build: 20261119-004629 */
+/* build: 20261120-142848 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -1237,6 +1237,7 @@ function submitNew(token, sb) {
   if (sb.reqId) { const d = C.get('req_' + sb.reqId); if (d) return Object.assign({ ok: true, no: d, again: true }, bundle_(u.acads, u.name)); }
   const all = loadSubs_();
   if (sb.reqId) { const done = all.find(x => x.reqId === sb.reqId); if (done) return Object.assign({ ok: true, no: done.no, again: true }, bundle_(u.acads, u.name)); }
+  famGate_(null, sb);
   stuDup_(all, sb, null);
   const tmp = sb.no;
   sb.owner = u.name;
@@ -1300,6 +1301,19 @@ function roomCredit_(cur, sb) {
 }
 
 /** 내 접수 저장 (인원 추가·정보 수정·입금 신고·신고 수정·취소) — 내가 낸 접수만 */
+/* 가족 · 가족방 신청 마감 (11-20 사용자): 캠프 설정 base.famClose 가 지나면 가족(보호자 · 동반가족 · 15개월 미만) · 형제 연결 · 가족방을 새로 넣지 못함 (빼기는 됨) */
+function famGate_(cur, sb) {
+  let fc = ''; try { fc = String((camp_().base || {}).famClose || ''); } catch (e) {}
+  if (!fc) return;
+  const today = Utilities.formatDate(new Date(), 'Asia/Seoul', 'yyyy-MM-dd');
+  if (today <= fc) return;
+  const f0 = (cur && cur.form) || {}, f1 = sb.form || {};
+  const oldFam = (f0.fam || []).map(x => x.id), oldRoom = Object.keys(f0.room || {}).filter(k => f0.room[k]), oldJoin = f0.join || {};
+  const addFam = (f1.fam || []).some(x => !oldFam.includes(x.id));
+  const addRoom = Object.keys(f1.room || {}).some(k => f1.room[k] && !oldRoom.includes(k));
+  const addJoin = Object.keys(f1.join || {}).some(k => f1.join[k] && oldJoin[k] !== f1.join[k]);
+  if (addFam || addRoom || addJoin) throw new Error('가족 · 가족방 신청은 ' + fc.slice(5).replace('-', '월 ') + '일에 마감했어요. 더 넣으려면 운영진에게 문의해 주세요.');
+}
 function saveSubs(token, subs) {
   const u = who_(token);
   const lock = lock_();
@@ -1313,6 +1327,7 @@ function saveSubs(token, subs) {
       if (!cur) throw new Error(sb.no + ' 접수를 찾지 못했어요.');
       if (!canEdit_(u, cur)) throw new Error(sb.no + '는 ' + cur.owner + ' 선생님이 낸 접수라 고칠 수 없어요.');
       sb.acad = cur.acad; sb.owner = cur.owner; if (cur.contact) sb.contact = cur.contact; else delete sb.contact; sb.createdAt = cur.createdAt; sb.no = cur.no; sb.reqId = cur.reqId; sb.rev = (+cur.rev || 0) + 1;
+      famGate_(cur, sb);
       roomPen_(cur, sb); roomCredit_(cur, sb);
       recalc_(sb);
       teacherDup_(all, sb, sb.ppl.filter(p => !cur.ppl.some(c => c.id === p.id)).map(p => p.id));
@@ -1734,7 +1749,7 @@ function campSave(token, c, rev) {
   let linkMsg = '';
   const cons = c.cons ? consClean_(c.cons) : consClean_(prev.cons);
   const aud = {}; cons.forEach(k => { const x = c.aud ? ((c.aud[k]) || {}) : ((prev.aud || {})[k] || {}); aud[k] = { on: !!x.on, pre: !!x.on && !!x.pre, due: /^\d{4}-\d{2}-\d{2}$/.test(x.due || '') ? x.due : '' }; });
-  const nc = { meals, base: { id: String(b.id).trim(), name: String(b.name).trim(), start: b.start, end: b.end, place: String(b.place || '').trim(), open: b.open, close: b.close, cur, guest: b.guest !== false, staff: b.staff !== false, member: b.member !== false, intl: b.intl !== false }, rounds, fees, opt, refund, consent, doc, aud, cons };
+  const nc = { meals, base: { id: String(b.id).trim(), name: String(b.name).trim(), start: b.start, end: b.end, place: String(b.place || '').trim(), open: b.open, close: b.close, famClose: /^\d{4}-\d{2}-\d{2}$/.test(b.famClose || '') ? b.famClose : '', cur, guest: b.guest !== false, staff: b.staff !== false, member: b.member !== false, intl: b.intl !== false }, rounds, fees, opt, refund, consent, doc, aud, cons };
   const lock = lock_();
   try {
     const ss = SpreadsheetApp.getActive(); let sh = ss.getSheetByName(CAMPCFG);

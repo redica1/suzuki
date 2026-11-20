@@ -1,4 +1,4 @@
-/* build: 20261119-004629 */
+/* build: 20261120-142848 */
 function vAuthPick(){const off=!!CAMP.pre;return gdBtn()+apDoor()+`<section class="sec"><h2>접수 시작</h2>
   ${off?`<p class="note warn" style="margin:6px 0 12px"><b>${+CAMP.pre.slice(5,7)}월 ${+CAMP.pre.slice(8,10)}일에 접수가 열려요.</b> 그 전에 아래에서 회원가입을 마쳐 두세요.</p>`:'<p class="lede">어떻게 접수하시나요?</p>'}
   <div class="pick2${off?' pickoff':''}"${off?' aria-disabled="true"':''}>
@@ -209,7 +209,7 @@ function roomRow(key,name){
   const fee=Math.max(0,ROOM.cap-n)*ROOM.emptyFee;
   const isT=(byKey[key]||{}).kind==='teacher';
   return `${sibs.length?`<div class="chips"><span class="hint" style="align-self:center">${isT?'자녀':'형제'}</span>${sibs.map(k=>`<span class="cchip">${esc(byKey[k].name)}<button type="button" data-unsib="${k}" aria-label="${esc(byKey[k].name)} 형제 연결 풀기">×</button></span>`).join('')}</div>`:''}
-  <label class="roomck" for="rm_${key}"><input type="checkbox" id="rm_${key}" data-roomck="${key}" ${S.room[key]?'checked':''}>
+  <label class="roomck" for="rm_${key}"><input type="checkbox" id="rm_${key}" data-roomck="${key}" ${S.room[key]?'checked':''} ${famClosed()&&!S.room[key]?'disabled title="가족방 신청이 마감됐어요"':''}>
     <span><b>가족방 신청</b> · ${n}명${sibs.length?` (${isT?'자녀':'형제'} ${sibs.length}명 포함)`:''}${n>ROOM.max?` <span style="color:var(--bad)">(한 방은 최대 ${ROOM.max}명이에요)</span>`:''}</span>
     <span class="num">${!fee?'추가 비용 없음':S.room[key]?`<span class="pill ok">청구에 +${won(fee)}</span>`:`신청하면 +${won(fee)}`}</span></label>
   ${S.room[key]&&(S.rreq||{})[key]?`<p class="hint" style="margin:6px 0 0">예전에 남긴 가족방 요청: ${esc(S.rreq[key])}</p>`:''}
@@ -219,7 +219,9 @@ function roomRow(key,name){
 function famMustP(owner){return `<p class="famMust sm"><b>가족 · 가족방은 이 ${owner==='teacher'?'교사와':'학생과'} 함께만 신청할 수 있어요.</b> 따로는 접수할 수 없고, 추가 · 빼기는 언제든 할 수 있어요.</p>`}
 function famChips(key,owner,name,noMust){
   const FC=isGuest()?[['비회원 보호자','보호자'],['비회원 동반가족','동반가족'],['비회원 15개월 미만','15개월 미만']]:FAM_CHIPS[owner];
-  const chips=`<div class="chips"><b class="famLbl">${esc(name)} 가족 추가</b>${!S.join[key]&&!isStaffAcad()?`<button class="chip" type="button" data-sibpick="${key}">+ ${owner==='teacher'?'자녀 (참가 학생)':'형제'}</button>`:''}${FC.map(([t,l])=>`<button class="chip" type="button" data-addfam="${key}|${t}">+ ${l}</button>`).join('')}</div>${noMust?'':famMustP(owner)}`;
+  const G=isGuest()||isStaffAcad(),fc=famClosed();   /* 11-20: 회원 선생님은 보호자 · 동반가족을 2단계 「명단에 없는 사람 추가」에서 넣고, 여기서는 형제 · 자녀만 묶음 */
+  if(fc)return `<p class="hint" style="margin:4px 0 0">가족 · 가족방 신청은 ${esc(String(CAMP.famClose).slice(5).replace('-','월 '))}일에 마감했어요. 더 넣으려면 운영진에게 문의해 주세요.</p>`;
+  const chips=`<div class="chips"><b class="famLbl">${esc(name)} 가족</b>${!S.join[key]&&!isStaffAcad()?`<button class="chip" type="button" data-sibpick="${key}">+ ${owner==='teacher'?'자녀 (참가 학생)':'형제'} 묶기</button>`:''}${G?FC.map(([t,l])=>`<button class="chip" type="button" data-addfam="${key}|${t}">+ ${l}</button>`).join(''):''}</div>${G?(noMust?'':famMustP(owner)):'<p class="hint sm" style="margin:2px 0 0">보호자 · 동반가족 · 15개월 미만은 2단계 「+ 명단에 없는 사람 추가」에서 이 사람의 가족으로 넣어요.</p>'}`;
   if(S.sibOpen!==key) return chips;
   const cands=people().filter(p=>p.kind==='student'&&p.key!==key&&!S.join[p.key]&&!sibsOf(p.key).length);
   return chips+`<div class="sibpick"><b>${owner==='teacher'?`${esc(name)} 선생님의 자녀를 선택하세요`:`${esc(name)}의 형제를 선택하세요`}</b> <span class="hint">${owner==='teacher'?'악기를 하는 자녀는 학생으로 먼저 신청 명단에 추가해 주세요 · 「악기하는 교사자녀」 참가비로 바뀌어요 · 악기를 안 하는 자녀는 「+ 동반가족」':'같은 학원 · 신청 명단에 먼저 추가된 학생만 나와요'}</span>
@@ -284,7 +286,7 @@ function vStep2(){
   ${cartPanel()}
   <div class="panel">
     <div class="itabs" role="tablist" aria-label="교사·악기">${ptabList().map(o=>`<button type="button" role="tab" data-ptab="${o.t}" aria-pressed="${S.ptab===o.t}">${o.t==='교사'&&isStaffAcad()?'관계자':o.t}<small>${o.k}/${o.n}</small></button>`).join('')}</div>
-    ${S.ptab==='가족'?`<div class="note info famguide"><b>가족(보호자 · 동반가족 · 15개월 미만)은 여기서 넣지 않아요.</b><br><span class="famMust"><b>가족 · 가족방은 교사나 학생과 함께만 신청할 수 있어요.</b> 따로는 접수할 수 없고, 추가 · 빼기는 언제든 할 수 있어요. 지금 그 교사 · 학생을 추가하고, 다음 단계에서 가족을 넣어요.</span>${totals().n?`<div class="row" style="margin-top:8px"><button class="btn primary" type="button" data-gonext="1">다음 단계에서 가족 넣기 →</button></div>`:'<p class="hint" style="margin:8px 0 0">아직 담은 사람이 없어요. 교사 · 악기 탭에서 먼저 담아 주세요.</p>'}</div>`:''}
+    ${S.ptab==='가족'?`<div class="note info famguide"><b>가족(보호자 · 동반가족 · 15개월 미만)은 아래 「+ 명단에 없는 사람 추가」에서 넣어요.</b><br><span class="famMust"><b>가족 · 가족방은 교사나 학생과 함께만 신청할 수 있어요.</b> 따로는 접수할 수 없고, 추가 · 빼기는 언제든 할 수 있어요. 지금 그 교사 · 학생을 추가하고, 다음 단계에서 가족을 넣어요.</span>${totals().n?`<div class="row" style="margin-top:8px"><button class="btn primary" type="button" data-gonext="1">다음 단계에서 가족 넣기 →</button></div>`:'<p class="hint" style="margin:8px 0 0">아직 담은 사람이 없어요. 교사 · 악기 탭에서 먼저 담아 주세요.</p>'}</div>`:''}
     <div class="spread"><div></div>
       <div class="row" ${S.ptab==='교사'?'hidden':''}><label class="mine" for="mine"><input type="checkbox" id="mine" ${S.mine?'checked':''}>내 학생만 보기 (담당 ${esc(me)})</label></div></div>
     <input type="search" id="rq" value="${esc(S.rq||'')}" placeholder="이름으로 찾기 (학생·교사)" autocomplete="off" aria-label="이름으로 찾기">

@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261120-235908 -->
+<!-- build: 20261121-000055 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -2101,19 +2101,20 @@ function vStaff(){if(!S.SF){if(!S.sfLoading)setTimeout(stLoad,0);return '<div cl
   const have=new Set(L.map(s=>s.tid));
   const cand=q?S.SF.teachers.filter(t=>!have.has(t.id)&&(t.name.replace(/\s/g,'').includes(q)||(t.acad||'').replace(/\s/g,'').includes(q))).slice(0,12):[];
   return `<div class="panel sfwrap"><div class="row sfbar"><span class="tfindslot"></span><input type="search" id="sfq" placeholder="＋ 담당자 추가: 교사 이름이나 학원" value="${esc(S.sfq||'')}" title="교사 회원 중에서 골라 메뉴마다 「편집 / 보기 / 없음」을 정해요 · 담당자는 관리자 화면 「담당 선생님」에서 회원관리 이메일 · 비밀번호로 들어와요"><span style="flex:1"></span><span id="sfDirty" class="row" style="gap:6px">${sfPill()}</span><button class="btn small primary" type="button" data-sfsave="1">저장</button><div id="sfCand" style="flex-basis:100%">${sfCandHTML()}</div></div>
-    <div class="mtblw"><table class="pft sft mtbl"><thead><tr><th class="sk">담당자</th><th>사용</th>${T.map(([k,l])=>`<th class="c">${esc(l)}</th>`).join('')}<th>한 번에</th><th>메모</th><th></th></tr></thead><tbody>
-  ${L.map((s,i)=>`<tr class="${s.on?'':'off'}"><td class="sk"><b>${esc(s.name)}</b><br><small class="faint">${esc(s.acad||'')}</small></td><td class="c"><button type="button" class="onoff ${s.on?'on':''}" role="switch" aria-checked="${s.on}" data-sfon="${i}" aria-label="사용"><i><b></b></i><em>${s.on?'ON':'OFF'}</em></button></td>
+    <div class="mtblw"><table class="pft sft mtbl"><thead><tr><th class="sk">담당자</th><th>사용</th><th>총관리자와 같게</th>${T.map(([k,l])=>`<th class="c">${esc(l)}</th>`).join('')}<th>한 번에</th><th>메모</th><th></th></tr></thead><tbody>
+  ${L.map((s,i)=>`<tr class="${s.on?'':'off'}"><td class="sk"><b>${esc(s.name)}</b><br><small class="faint">${esc(s.acad||'')}</small></td><td class="c"><button type="button" class="onoff ${s.on?'on':''}" role="switch" aria-checked="${s.on}" data-sfon="${i}" aria-label="사용"><i><b></b></i><em>${s.on?'ON':'OFF'}</em></button></td><td class="c"><button type="button" class="onoff ${s.perms.sup==='예'?'on':''}" role="switch" aria-checked="${s.perms.sup==='예'}" data-sfsup="${i}" aria-label="총관리자와 같은 권한"><i><b></b></i><em>${s.perms.sup==='예'?'ON':'OFF'}</em></button></td>
     ${T.map(([k,l])=>`<td><select data-sf="${i}|p|${k}" aria-label="${esc(l)}" class="pv${s.perms[k]==='편집'?' e':s.perms[k]==='보기'?' v':''}">${PERM_V.map(([v,t])=>`<option value="${v}" ${(s.perms[k]||'')===v?'selected':''}>${t}</option>`).join('')}</select></td>`).join('')}
     <td><div class="row" style="gap:4px;flex-wrap:nowrap"><button class="btn small ghost" type="button" data-sfall="${i}|보기">모두 보기</button><button class="btn small ghost" type="button" data-sfall="${i}|">모두 없음</button></div></td>
     <td><input type="text" data-sf="${i}|memo" value="${esc(s.memo||'')}" maxlength="200" placeholder="예: 교사 일정 담당"></td>
-    <td><button class="btn small ghost" type="button" data-sfdel="${i}">빼기</button></td></tr>`).join('')||`<tr><td colspan="${T.length+5}" class="hint">아직 담당자가 없어요. 위 칸에 교사 이름을 넣어 추가해 주세요.</td></tr>`}
+    <td><button class="btn small ghost" type="button" data-sfdel="${i}">빼기</button></td></tr>`).join('')||`<tr><td colspan="${T.length+6}" class="hint">아직 담당자가 없어요. 위 칸에 교사 이름을 넣어 추가해 주세요.</td></tr>`}
   </tbody></table></div></div>
-  <div class="panel hint">· 교사 회원 중에서 골라 메뉴마다 「편집 / 보기 / 없음」을 정해요. 담당자는 관리자 화면 「담당 선생님」에서 회원관리 이메일 · 비밀번호로 들어와요.<br>· <b>편집</b> = 보고 바꿀 수 있음 · <b>보기</b> = 볼 수만 있음 (저장은 서버가 막아요) · <b>없음</b> = 메뉴가 안 보임<br>· 「캠프 설정」·「담당자」는 총관리자(아이디·비밀번호)만 써요. 권한을 바꾸면 담당자가 다음에 무엇을 누를 때부터 바로 적용돼요.<br>· 모든 메뉴에서 접수 명단(이름·학원)은 보여요. 휴대전화·계좌 같은 개인정보는 해당 메뉴(취소 · 환불 등)에 권한이 있을 때만 쓰세요.</div>`}
+  <div class="panel hint">· 교사 회원 중에서 골라 메뉴마다 「편집 / 보기 / 없음」을 정해요. 담당자는 관리자 화면 「담당 선생님」에서 회원관리 이메일 · 비밀번호로 들어와요.<br>· <b>편집</b> = 보고 바꿀 수 있음 · <b>보기</b> = 볼 수만 있음 (저장은 서버가 막아요) · <b>없음</b> = 메뉴가 안 보임<br>· 「캠프 설정」·「담당자」는 총관리자(아이디·비밀번호)만 써요. 「총관리자와 같게」를 켠 담당자는 모든 메뉴 · 캠프 설정 · 담당자까지 총관리자와 똑같이 써요. 권한을 바꾸면 담당자가 다음에 무엇을 누를 때부터 바로 적용돼요.<br>· 모든 메뉴에서 접수 명단(이름·학원)은 보여요. 휴대전화·계좌 같은 개인정보는 해당 메뉴(취소 · 환불 등)에 권한이 있을 때만 쓰세요.</div>`}
 document.addEventListener('input',e=>{const t=e.target;if(t.id==='sfq'){S.sfq=t.value;const c=document.getElementById('sfCand');if(c)c.innerHTML=sfCandHTML();return}
   if(!t.dataset||!t.dataset.sf||!S.sf)return;const [i,k,tab]=t.dataset.sf.split('|');const s=S.sf[+i];if(!s)return;
   if(k==='on'){s.on=t.checked;render()}else if(k==='memo'){s.memo=t.value;const p=document.getElementById('sfDirty');if(p)p.innerHTML=sfPill()}else if(k==='p'){if(t.value)s.perms[tab]=t.value;else delete s.perms[tab];render()}});
 document.addEventListener('change',e=>{const t=e.target;if(t.dataset&&t.dataset.sf&&t.tagName==='SELECT'&&S.sf){const [i,k,tab]=t.dataset.sf.split('|');const s=S.sf[+i];if(s&&k==='p'){if(t.value)s.perms[tab]=t.value;else delete s.perms[tab];render()}}});
 function sfClick(b,d){if(S.tab!=='staff')return false;
+  if(d.sfsup!==undefined&&S.sf){const s=S.sf[+d.sfsup];if(s){if(s.perms.sup==='예')delete s.perms.sup;else s.perms.sup='예'}render();return true}
   if(d.sfon!==undefined&&S.sf){const s=S.sf[+d.sfon];if(s){s.on=!s.on;render()}return true}
   if(d.sfreset){S.sf=JSON.parse(JSON.stringify(S.SF.staff));render();return true}
   if(d.sfadd){const t=S.SF.teachers.find(x=>x.id===d.sfadd);if(t){S.sf.push({tid:t.id,name:t.name,acad:t.acad,perms:{home:'보기'},on:true,memo:''});S.sfq=''}render();return true}
@@ -4632,7 +4633,7 @@ document.addEventListener('click',e=>{if(S.tab!=='book')return;const b=e.target.
   if(b.id==='ebSetSave'){const n=Object.assign(ebSet(),S.ebSetW||{});n.per=Math.max(1,Math.min(10,Math.round(+n.per||5)));n.fs=Math.max(5,Math.min(10,+n.fs||6.6));['en','sub','org'].forEach(k=>n[k]=String(n[k]||'').trim().slice(0,120));
     ebSend([],[],n,()=>{S.ebSetW=null;toast('책자 설정을 저장했어요')});return}},true);
 </script>
-<div id="bldMark" hidden>빌드표시 20261120-235908 </div>
+<div id="bldMark" hidden>빌드표시 20261121-000055 </div>
 <script>
 /* 관리자 상담 (11-15): 관리자 매뉴얼 글에서만 찾아 답함 (AI 아님 · 없는 답은 지어내지 않음). 장마다 t 제목 · q 찾는 말 · k 바로 갈 메뉴 · h 본문 */
 const AGD={

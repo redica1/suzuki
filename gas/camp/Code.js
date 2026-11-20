@@ -1,4 +1,4 @@
-/* build: 20261120-235908 */
+/* build: 20261121-000055 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -1545,6 +1545,7 @@ function adm_(token) {
   if (!a.staff) { a.sup = true; a.perms = {}; ADMIN_TABS.forEach(t => a.perms[t[0]] = '편집'); return a; }
   const s = staff_().find(x => x.tid === a.tid && x.on);
   if (!s) throw new Error('담당자 권한이 없어졌어요. 총관리자에게 문의해 주세요.');
+  if (s.perms && s.perms.sup === '예') { a.sup = true; a.perms = {}; ADMIN_TABS.forEach(t => a.perms[t[0]] = '편집'); return a; }   /* 11-21: 「총관리자와 같은 권한」 담당자 */
   a.sup = false; a.perms = s.perms; return a;
 }
 /* ---------------- 캠프 설정 (「캠프설정」 시트 · 총관리자만 바꿈) ----------------
@@ -2574,7 +2575,7 @@ function staffSave(token, list) {
   const ts = {}; teachers_().forEach(t => ts[t.id] = t);
   const keys = ADMIN_TABS.map(t => t[0]), seen = {};
   const rows = (list || []).filter(s => s && ts[s.tid] && !seen[s.tid] && (seen[s.tid] = 1)).map(s => {
-    const p = {}; keys.forEach(k => { const v = (s.perms || {})[k]; if (v === '편집' || v === '보기') p[k] = v; });
+    const p = {}; keys.forEach(k => { const v = (s.perms || {})[k]; if (v === '편집' || v === '보기') p[k] = v; }); if ((s.perms || {}).sup === '예') p.sup = '예';
     return [s.tid, ts[s.tid].name, ts[s.tid].acads.join(', '), JSON.stringify(p), s.on === false ? '아니오' : '예', String(s.memo || '').slice(0, 200), today_()];
   });
   const lock = lock_();

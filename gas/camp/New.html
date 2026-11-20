@@ -21,6 +21,7 @@ body{background:var(--bg);color:var(--ink);font:16px/1.6 var(--font);margin:0}
 .mineT .actc{display:flex;flex-direction:column;align-items:flex-end;gap:4px}.mineT input[type=checkbox]{width:16px;height:16px}
 .fr0>td{background:#fff4e0}.fr1>td{background:#e8f1ff}.fr2>td{background:#f1e9ff}.fr3>td{background:#e6f7ec}.fr4>td{background:#ffe9ef}.fr5>td{background:#e9f7f7}
 .tabs[hidden]{display:none}
+.cxr{display:block}.cxr summary{cursor:pointer;font-size:16px;list-style:none}.cxr summary::-webkit-details-marker{display:none}.cxr summary::before{content:'▶ ';font-size:13px}.cxr[open] summary::before{content:'▼ '}.cxr[open] summary{margin-bottom:12px}.cxr .tbl{margin-bottom:8px}
 .itabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin:0 0 12px}.itabs button{font:inherit;font-size:16px;font-weight:700;background:none;border:0;border-bottom:2.5px solid transparent;color:var(--muted);padding:10px 14px;cursor:pointer;margin-bottom:-1px}.itabs button[aria-pressed=true]{color:var(--ink);border-bottom-color:var(--accentD)}
 .mvT td.l{text-align:left}
 .fchips{display:flex;gap:8px;flex-wrap:wrap;margin:2px 0 4px}.fchips button{font:inherit;font-size:15px;font-weight:700;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:7px 16px;cursor:pointer}.fchips button span{font-weight:500;color:var(--muted)}.fchips button[aria-pressed=true]{background:var(--accentD);border-color:var(--accentD);color:#fff}.fchips button[aria-pressed=true] span{color:#fff}
@@ -169,6 +170,7 @@ document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)r
  if(d.ag!==undefined){P.sex=d.ag;P.age=(document.getElementById('ay')||{}).value||P.age;P.inst=(document.getElementById('ainst')||{}).value||P.inst;P.dn=(document.getElementById('an')||{}).value||P.dn;render();return}
  if(d.fo!==undefined){inf(P.picked[+d.fo]).open=true;render();return}
  if(d.fc!==undefined){const f=inf(P.picked[+d.fc]);if(f.cons[d.c])f.cons={};else f.cons={[d.c]:{}};render();return}});
+document.addEventListener('toggle',e=>{if(e.target.classList&&e.target.classList.contains('cxr'))S.cxOpen=e.target.open},true);
 document.addEventListener('change',e=>{const t=e.target;if(t.dataset&&t.dataset.mck!==undefined){S.mck=S.mck||{};S.mck[t.dataset.mck]=t.checked;render();return}if(t.dataset&&t.dataset.fm!==undefined){inf(P.picked[+t.dataset.fm]).mcS[t.dataset.q]=t.value;return}if(t.dataset&&t.dataset.fs!==undefined){const f=inf(P.picked[+t.dataset.fs]);(f.cons[t.dataset.c]||(f.cons[t.dataset.c]={}))[t.dataset.k]=t.type==='checkbox'?t.checked:t.value;if(t.type==='checkbox')render();return}if(t.dataset&&t.dataset.fi!==undefined){const f=inf(P.picked[+t.dataset.fi]);f[t.dataset.ff]=t.type==='checkbox'?t.checked:t.dataset.ff==='add'?+t.value:t.value;if(t.dataset.ff==='con'&&!t.checked)f.cons={};if(t.dataset.ff==='no'&&t.checked)f.add=0;if(t.dataset.ff==='p1'&&(!t.value||t.value===f.p2))f.p2='';if(t.dataset.ff==='open')f.add=t.checked?1:0;if(t.type==='checkbox'||t.tagName==='SELECT')render()}});
 /* ---------- ① 접수 2단계: 찾기 → 회원이면 선택 · 아니면 추가 ---------- */
 const MEMBERS=[{n:'김스즈',k:'교사',y:1985,i:'바이올린',a:'미사스즈키'},...MY.map(m=>({...m,k:'학생'})),{n:'한유진',k:'학생',y:2013,i:'플루트',a:'미사스즈키'},{n:'이두리',k:'학생',y:2013,i:'첼로',a:'마포스즈키'},{n:'김하나',k:'학생',y:2015,i:'바이올린',a:'마포스즈키'},{n:'김하나',k:'교사',y:1990,i:'첼로',a:'수지스즈키'}];
@@ -211,7 +213,12 @@ const IAB={'바이올린':'Vn','비올라':'Va','첼로':'Vc','플루트':'Fl','
 const nowTs=()=>{const d=new Date(),z=n=>String(n).padStart(2,'0');return String(d.getFullYear()).slice(2)+'.'+z(d.getMonth()+1)+'.'+z(d.getDate())+' '+z(d.getHours())+':'+z(d.getMinutes())};
 const MV=[['pay','접수'],['les','레슨'],['con','음악회'],['info','학생 진도']],MS={les:[['grp','그룹레슨'],['les','개인레슨'],['mc','마스터클래스']],con:[['오후','오후 음악회'],['트와일라잇','트와일라잇 음악회'],['이브닝','이브닝 음악회']]};
 function mOf(x){return MEMBERS.find(m=>m.n===x.n&&m.k===x.k)||MEMBERS.find(m=>m.n===x.n)||{}}
-function vMine(){const v=S.mv||'pay',L=MS[v]||[],sub=L.some(q=>q[0]===S.ms)?S.ms:(L[0]||[])[0];
+function cxRule(){const d=new Date(),m=d.getMonth()+1,dd=d.getDate();const i=m>=11?0:m===1?(dd<=4?1:dd<=8?2:3):3;const T=[['12월 31일까지','100% 환불','100% 환불'],['1월 1일 ~ 1월 4일','90% 환불','100% 환불'],['1월 5일 ~ 1월 8일','80% 환불','90% 환불'],['1월 9일부터','<b>환불 없음</b>','50% 환불']];
+ return `<details class="panel cxr" ${S.cxOpen?'open':''}><summary><b>취소·환불 규정</b> <span class="hint">오늘(${m}월 ${dd}일) 취소하면: 진단서 미제출 참가비 ${T[i][1].replace(/<[^>]+>/g,'')}</span></summary>
+ <div class="tbl"><table><thead><tr><th>취소한 날</th><th>진단서 미제출</th><th>전염병 · 팔·손 골절 진단서 제출</th></tr></thead><tbody>${T.map((r,k)=>`<tr${k===i?' style="background:var(--soft)"':''}><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join('')}</tbody></table></div>
+ <p class="hint" style="margin:0">연회비는 환불되지 않아요. 환불 금액은 입금이 확인된 사람의 참가비·레슨비 기준이에요. 입금 전인 사람은 수수료가 없는 기간(전액 환불 기간)에는 바로 취소되고, 수수료가 생기는 날부터는 입금이 확인된 사람만 취소 요청할 수 있어요.</p></details>`}
+function vMine(){return vMine0()+cxRule()}
+function vMine0(){const v=S.mv||'pay',L=MS[v]||[],sub=L.some(q=>q[0]===S.ms)?S.ms:(L[0]||[])[0];
  const top=`<div class="itabs" role="tablist" aria-label="보기">${MV.map(([k,l])=>`<button type="button" role="tab" data-mv="${k}" aria-pressed="${v===k}">${l}</button>`).join('')}</div>${L.length?`<div class="row" role="group" style="gap:6px;margin:0 0 12px">${L.map(([k,l])=>`<button class="btn sm ${sub===k?'pri':''}" type="button" data-ms="${k}" aria-pressed="${sub===k}">${l}</button>`).join('')}</div>`:''}`;
  if(v==='pay')return top+vMinePay();
  const ins=x=>IAB[instOf(x)]||instOf(x),D='<span class="hint">-</span>',NIL='<span class="hint" style="color:#b0b8bd">배정 전</span>';

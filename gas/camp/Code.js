@@ -1,4 +1,4 @@
-/* build: 20261120-231640 */
+/* build: 20261120-235650 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -109,12 +109,12 @@ function doGet(e) {
   const intl = e && e.parameter && e.parameter.page === 'intl';
   if (e && e.parameter && e.parameter.page === 'meal') return HtmlService.createHtmlOutputFromFile('Meal').setTitle(cname + ' · 식권 스캐너').addMetaTag('viewport', 'width=device-width, initial-scale=1, user-scalable=no').setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);   // 식권 스캐너 (11-04)
   if (e && e.parameter && e.parameter.page === 'qa') return qaOn_() ? HtmlService.createHtmlOutputFromFile('QA').setTitle('[STG] 캠프 접수 시험 체크').addMetaTag('viewport', 'width=device-width, initial-scale=1').setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL) : HtmlService.createHtmlOutput('STG에서만 열려요.');
-  if (e && e.parameter && e.parameter.page === 'new') return qaOn_() ? HtmlService.createHtmlOutputFromFile('New').setTitle('[STG] 새 접수 화면 미리보기').addMetaTag('viewport', 'width=device-width, initial-scale=1').setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL) : HtmlService.createHtmlOutput('STG에서만 열려요.');   /* 새 접수 · 가족방 화면 미리보기 (11-20, STG만 · 기존 접수와 따로) */
+  if (e && e.parameter && e.parameter.page === 'newmock') return qaOn_() ? HtmlService.createHtmlOutputFromFile('New').setTitle('[STG] 새 접수 화면 미리보기').addMetaTag('viewport', 'width=device-width, initial-scale=1').setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL) : HtmlService.createHtmlOutput('STG에서만 열려요.');   /* 새 접수 · 가족방 화면 미리보기 (11-20, STG만 · 기존 접수와 따로) */
   if (e && e.parameter && e.parameter.page === 'parent') return HtmlService.createHtmlOutputFromFile('Parent').setTitle(cname + ' · 학부모 신청').addMetaTag('viewport', 'width=device-width, initial-scale=1').setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
   if (e && e.parameter && e.parameter.page === 'find') return HtmlService.createTemplateFromFile('Find').evaluate().setTitle(cname + ' · 일정 찾기').addMetaTag('viewport', 'width=device-width, initial-scale=1').setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
   if (admin) page = HtmlService.createTemplateFromFile('Admin').evaluate();
   else if (intl) page = HtmlService.createHtmlOutputFromFile('Intl');
-  else { const t = HtmlService.createTemplateFromFile('Index'); let share = ''; let tl = ''; try { ensureSettingsLazy_(); share = setting_('공유주소'); tl = setting_('테스트 로그인'); } catch (x) {} t.shareUrl = share; t.testLogin = tl; try { t.testNames = tl ? setting_('테스트 선생님') : ''; } catch (x) { t.testNames = ''; } t.campJson = cj; try { t.loginPw = { pw: '1', both: '2' }[loginMode_()] || ''; t.memberUrl = setting_('회원관리 주소'); } catch (x) { t.loginPw = ''; t.memberUrl = ''; } /* 테스트 로그인: STG 「설정」에만 (이름/휴대전화) — 로그인 칸을 미리 채움 · campJson: 「캠프설정」 시트 값 (날짜·장소·차수·참가비) */ page = t.evaluate(); }
+  else { const t = HtmlService.createTemplateFromFile('Index'); t.newUi = !!(e && e.parameter && e.parameter.page === 'new' && qaOn_()); let share = ''; let tl = ''; try { ensureSettingsLazy_(); share = setting_('공유주소'); tl = setting_('테스트 로그인'); } catch (x) {} t.shareUrl = share; t.testLogin = tl; try { t.testNames = tl ? setting_('테스트 선생님') : ''; } catch (x) { t.testNames = ''; } t.campJson = cj; try { t.loginPw = { pw: '1', both: '2' }[loginMode_()] || ''; t.memberUrl = setting_('회원관리 주소'); } catch (x) { t.loginPw = ''; t.memberUrl = ''; } /* 테스트 로그인: STG 「설정」에만 (이름/휴대전화) — 로그인 칸을 미리 채움 · campJson: 「캠프설정」 시트 값 (날짜·장소·차수·참가비) */ page = t.evaluate(); }
   return page
     .setTitle(intl ? 'Suzuki Winter Music Camp · Overseas Registration' : cname + (admin ? ' 접수 관리' : ' 접수'))
     .addMetaTag('viewport', 'width=device-width, initial-scale=1')

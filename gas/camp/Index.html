@@ -1,4 +1,4 @@
-<!doctype html><!-- build: 20261120-231640 --><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}
+<!doctype html><!-- build: 20261120-235650 --><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}
 /* 내 접수 표 (11-01): 관리자 표처럼 한 줄씩 */
 .mtbl{width:100%;border-collapse:collapse;font-size:15px;letter-spacing:-.02em;white-space:nowrap}
 .mtbl th{font-size:14px;font-weight:700;color:var(--ink);background:var(--sunk);text-align:center;padding:6px 8px;border-bottom:1px solid var(--line)}
@@ -83,6 +83,12 @@
 @media (prefers-reduced-motion:reduce){.csTip .mq{animation:none;padding-left:0}.csTipW{text-overflow:ellipsis}}
 @media print{.csTip{display:none!important}}
 @media (max-width:640px){.csTip{max-width:210px}}
+/* 11-21 새 접수 (?page=new): 홈 4칸 · 아래 메뉴는 PC에서도 */
+body.nui.tbOn .tabbar{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:9;background:var(--surface);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px);justify-content:center}
+body.nui .tabbar button{all:unset;flex:1;max-width:150px;display:flex;flex-direction:column;align-items:center;gap:2px;padding:7px 0 6px;font-size:12px;color:var(--muted,#6b7a80);position:relative;cursor:pointer}body.nui .tabbar svg{width:23px;height:23px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}body.nui .tabbar button[aria-current=page]{color:var(--accent,#0f8a85);font-weight:700}body.nui .tabbar .tbn{position:absolute;top:3px;left:calc(50% + 8px);font-style:normal;font-size:10.5px;min-width:16px;height:16px;line-height:16px;border-radius:8px;background:var(--accent,#0f8a85);color:#fff;text-align:center;padding:0 4px}body.nui .tabbar .tbd{position:absolute;top:5px;left:calc(50% + 9px);width:8px;height:8px;border-radius:50%;background:#e5484d}body.nui.tbOn{padding-bottom:calc(64px + env(safe-area-inset-bottom,0px))}body.nui.tbOn .dock{display:none}
+.nhome{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}@media (max-width:560px){.nhome{grid-template-columns:1fr}}
+.nhbox{all:unset;box-sizing:border-box;display:grid;gap:8px;align-content:start;background:var(--surface);border:1.5px solid var(--line);border-radius:18px;padding:22px 22px 18px;cursor:pointer;min-height:150px}
+.nhbox:hover,.nhbox:focus-visible{border-color:var(--accent)}.nhbox .no{font-size:13px;font-weight:700;color:var(--accent)}.nhbox b{font-size:21px}.nhbox p{margin:0;color:var(--muted);font-size:14.5px;line-height:1.5}.nhbox .st{margin-top:auto;font-size:14px;font-weight:700;color:var(--accent)}
 </style></head><body>
 <base target="_top">
 <script>/* 화면이 하얗게 될 때 원인을 화면에 보여 주는 진단 — STG(설정 「테스트 로그인」이 있을 때)만 보임, 메인에서는 조용히 (10-31) */
@@ -94,6 +100,7 @@ var d=document.createElement('pre');d.style.cssText='white-space:pre-wrap;word-b
 d.textContent='[진단] '+e.message+' · 줄 '+n+' 칸 '+e.colno+'\n'+out.join('\n');(document.body||document.documentElement).appendChild(d)}catch(x){}});</script>
 <script>var SHARE_URL=<?!= JSON.stringify(typeof shareUrl==='undefined'?'':shareUrl).replace(/\//g,'\\/') ?>;</script>
 <script>var LOGIN_PW=<?!= JSON.stringify(typeof loginPw==='undefined'?'':loginPw) ?>;var MEMBER_URL=<?!= JSON.stringify(typeof memberUrl==='undefined'?'':memberUrl).replace(/\//g,'\\/') ?>;</script>
+<script>var NEWUI=<?!= JSON.stringify(typeof newUi!=='undefined'&&!!newUi) ?>;</script>
 <script>var TEST_NAMES=<?!= JSON.stringify(typeof testNames==='undefined'?'':testNames) ?>;</script>
 <script>var TEST_LOGIN=<?!= JSON.stringify(typeof testLogin==='undefined'?'':testLogin).replace(/\//g,'\\/') ?>;</script>
 <script>var CAMP_CFG=<?!= (typeof campJson==='undefined'||!campJson?'null':campJson).replace(/\//g,'\\/').replace(/</g,'\\u003c') ?>;</script>
@@ -594,6 +601,6 @@ var UI_KEY='camp';
 </script>
 
 <script>try{window.top.postMessage('suzuki-ready','*')}catch(e){}</script>
-<div id="bldMark" hidden>빌드표시 20261120-231640 </div>
+<div id="bldMark" hidden>빌드표시 20261120-235650 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 96px';document.body.appendChild(p)})();</script>
 </body></html>

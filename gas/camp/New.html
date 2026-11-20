@@ -24,7 +24,7 @@ body{background:var(--bg);color:var(--ink);font:16px/1.6 var(--font);margin:0}
 .cxr{display:block}.cxr summary{cursor:pointer;font-size:16px;list-style:none}.cxr summary::-webkit-details-marker{display:none}.cxr summary::before{content:'▶ ';font-size:13px}.cxr[open] summary::before{content:'▼ '}.cxr[open] summary{margin-bottom:12px}.cxr .tbl{margin-bottom:8px}
 .itabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin:0 0 12px}.itabs button{font:inherit;font-size:16px;font-weight:700;background:none;border:0;border-bottom:2.5px solid transparent;color:var(--muted);padding:10px 14px;cursor:pointer;margin-bottom:-1px}.itabs button[aria-pressed=true]{color:var(--ink);border-bottom-color:var(--accentD)}
 .mvT td.l{text-align:left}
-.fchips{display:flex;gap:8px;flex-wrap:wrap;margin:2px 0 4px}.fchips button{font:inherit;font-size:15px;font-weight:700;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:7px 16px;cursor:pointer}.fchips button span{font-weight:500;color:var(--muted)}.fchips button[aria-pressed=true]{background:var(--accentD);border-color:var(--accentD);color:#fff}.fchips button[aria-pressed=true] span{color:#fff}
+.fchips{display:flex;gap:8px;flex-wrap:wrap;margin:2px 0 4px}.fchips button{font:inherit;font-size:15px;font-weight:700;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:7px 16px;cursor:pointer}.fchips button span{font-weight:500;color:var(--muted)}.fchips button[aria-pressed=true]{background:var(--accentD);border-color:var(--accentD);color:#fff}.fchips button[aria-pressed=true] span{color:#fff}.fchips button:disabled{opacity:.4;cursor:default}.fchips .clr{font-weight:500;color:var(--muted);border-style:dashed}
 
 .tabs button{font:inherit;font-size:15px;font-weight:700;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:7px 14px;cursor:pointer}
 .tabs button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--surface)}
@@ -241,12 +241,13 @@ function vMine0(){const v=S.mv||'pay',L=MS[v]||[],sub=L.some(q=>q[0]===S.ms)?S.m
  return top+chips+`<div class="panel"><div class="tbl"><table class="mineT mvT"><thead><tr><th>이름</th><th>악기</th>${H.map(h=>`<th>${h}</th>`).join('')}<th></th></tr></thead><tbody>${RR.map(o=>`<tr><td class="nm"><span class="kind">${o.x.k==='교사'?'교사':'학생'}</span><b>${esc(o.x.n)}</b></td><td>${esc(ins(o.x))}</td>${cells(o)}<td><button class="btn sm" type="button" data-tab="info">보기</button></td></tr>`).join('')}</tbody></table></div></div>`}
 function vMinePay(){let sum=0;const fam={};S.list.forEach((x,fi)=>(x.names||[]).forEach(n=>fam[n]={fi,rep:x.rep,n:x.n,amt:x.amt||0,isRep:n===x.rep}));
  const md=(()=>{const d=new Date();return (d.getMonth()+1)+'/'+d.getDate()})();
- const grp=x=>NOPLAY(x.k)?'가족':x.k==='교사'?'교사':'학생',ins=x=>NOPLAY(x.k)?'':(IAB[instOf(x)]||instOf(x)),mf=S.mf||'전체';
- const keep=x=>mf==='전체'||grp(x)===mf||ins(x)===mf;
- const cnt=k=>P.picked.filter(x=>k==='전체'||grp(x)===k||ins(x)===k).length;
+ const grp=x=>NOPLAY(x.k)?'가족':x.k==='교사'?'교사':'학생',ins=x=>NOPLAY(x.k)?'':(IAB[instOf(x)]||instOf(x)),mf=S.mf||'전체',mi=mf==='가족'?'':(S.mfi||'');
+ const okG=(x,g)=>g==='전체'||grp(x)===g,okI=(x,i)=>!i||ins(x)===i;
+ const keep=x=>okG(x,mf)&&okI(x,mi);
+ const cnt=k=>P.picked.filter(x=>okG(x,k)&&okI(x,k==='가족'?'':mi)).length,cntI=i=>P.picked.filter(x=>okG(x,mf)&&ins(x)===i).length;
  const k1=['전체','교사','학생','가족'].filter(k=>k==='전체'||cnt(k)),k2=Object.values(IAB).filter(a=>P.picked.some(x=>ins(x)===a));
- const cb=k=>`<button type="button" data-mf="${k}" aria-pressed="${k===mf}">${k} <span>${cnt(k)}</span></button>`;
- const chips=`<div class="fchips" role="group" aria-label="구분">${k1.map(cb).join('')}</div>${k2.length?`<div class="fchips" role="group" aria-label="악기">${k2.map(cb).join('')}</div>`:''}`;
+ const cb=k=>`<button type="button" data-mf="${k}" aria-pressed="${k===mf}">${k} <span>${cnt(k)}</span></button>`,ci=k=>`<button type="button" data-mfi="${k}" aria-pressed="${k===mi}" ${mf==='가족'?'disabled':''}>${k} <span>${mf==='가족'?0:cntI(k)}</span></button>`;
+ const chips=`<div class="fchips" role="group" aria-label="구분">${k1.map(cb).join('')}</div>${k2.length?`<div class="fchips" role="group" aria-label="악기">${k2.map(ci).join('')}${mi?'<button type="button" data-mfi="" class="clr">악기 해제</button>':''}</div>`:''}`;
  let shown=0,ssum=0;
  const rows=P.picked.map((x,ix)=>{if(!x.at)x.at=nowTs();if(!keep(x)){const F0=fam[x.n];sum+=feeOf(x)+(F0&&F0.isRep?F0.amt:0);return ''}shown++;const f=inf(x),np=NOPLAY(x.k),fee=feeOf(x),F=fam[x.n],rm=F&&F.isRep?F.amt:0,amt=fee+rm;sum+=amt;ssum+=amt;const [dt,tm]=x.at.split(' ');
   const inc=[(!np&&f.add)?'레슨':'',rm?'가족방':''].filter(Boolean);const ck=!!(S.mck&&S.mck[ix]);
@@ -260,7 +261,7 @@ function vMinePay(){let sum=0;const fam={};S.list.forEach((x,fi)=>(x.names||[]).
  return `<div class="panel"><div class="spread"><h2>내 신청 내역</h2><span class="pill ${S.paid?'ok':'wait'}">${S.paid?'입금 확인 중':'입금 전'}</span></div>
  <p class="hint">미사스즈키 · ${esc(WHO)} 원장님 · 1차 (12월 1일 ~ 7일) · 7일까지 입금하면 1차 금액이에요.</p>
  ${P.picked.length?chips+`<div class="tbl"><table class="mineT"><thead><tr><th></th><th>접수 시간</th><th>이름</th><th>악기</th><th class="r">청구</th><th></th></tr></thead><tbody>${rows}</tbody>
- <tfoot><tr><td colspan="4" style="text-align:left"><button class="btn sm" type="button" data-act="mckAll">${all?'전체 해제':'전체 선택'}</button> <b style="margin-left:8px">${mf==='전체'?P.picked.length+'명':mf+' '+shown+'명 · 전체 '+P.picked.length+'명'}</b></td><td class="r"><b style="font-size:17px">${won(ssum)}</b></td><td></td></tr></tfoot></table></div>`:'<p class="hint">아직 신청한 사람이 없어요. 「캠프 신청하기」에서 시작해요.</p>'}</div>
+ <tfoot><tr><td colspan="4" style="text-align:left"><button class="btn sm" type="button" data-act="mckAll">${all?'전체 해제':'전체 선택'}</button> <b style="margin-left:8px">${mf==='전체'&&!mi?P.picked.length+'명':[mf==='전체'?'':mf,mi].filter(Boolean).join(' · ')+' '+shown+'명 · 전체 '+P.picked.length+'명'}</b></td><td class="r"><b style="font-size:17px">${won(ssum)}</b></td><td></td></tr></tfoot></table></div>`:'<p class="hint">아직 신청한 사람이 없어요. 「캠프 신청하기」에서 시작해요.</p>'}</div>
  <div class="panel"><div class="spread"><b>입금하실 금액</b><b class="num" style="font-size:20px">${won(sum)}</b></div>
  <p class="hint">가족방 금액은 대표 줄에 들어가요. 입금하고 「입금 신고」를 눌러 주세요.</p>
  <div class="row" style="justify-content:space-between"><span class="row"><button class="btn" type="button" data-tab="pick">사람 추가</button><button class="btn" type="button" data-act="cxReq" ${S.mck&&Object.values(S.mck).some(Boolean)?'':'disabled'}>체크한 사람 취소 요청</button></span><button class="btn pri" type="button" data-act="payRep">입금 신고</button></div>
@@ -305,6 +306,7 @@ document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)r
  if(d.act==='ensSave'){const E=S.ens;E.err=!E.name.trim()?'팀 이름을 넣어 주세요.':!E.n.trim()?'인원을 넣어 주세요.':!E.song.trim()||!E.comp.trim()?'곡명 · 작곡가를 넣어 주세요.':'';if(!E.err)E.done=true;render();return}
  if(d.act==='payRep'){S.paid=true;render();return}
  if(d.mf){S.mf=d.mf;render();return}
+ if(d.mfi!==undefined){S.mfi=S.mfi===d.mfi?'':d.mfi;render();return}
  if(d.mf2){S.mf2=d.mf2;render();return}
  if(d.mv){S.mv=d.mv;S.ms='';S.mf2='전체';render();return}
  if(d.ms){S.ms=d.ms;render();return}

@@ -224,7 +224,8 @@ tr.off td{opacity:.5}
 .act .ev .evh b{font-size:14.5px;line-height:1.3}
 .act .ev .tm{font-size:12.5px;color:var(--faint);white-space:nowrap}
 .act .ev small{color:var(--muted);font-size:13px;line-height:1.3}
-.act .lstg{align-items:start}.act .lstcol{display:grid;gap:14px}.act .lsth{font-size:18px}.act .lstbox{display:grid;gap:6px}.act table.lst td{padding:3px 4px}.act .bdko{display:block;font-size:13.5px;padding:2px 2px 0}.act table.lst input[type=text]{width:100%;min-width:90px}.act table.lst .a_le,.act table.lst .a_ls,.act table.lst .a_lk{margin-top:3px;font-size:14px;color:var(--muted)}.act table.lst .a_lk{border-color:var(--rosin-soft)}
+.act .lstg{align-items:start}.act .lstcol{display:grid;gap:14px}.act .lsth{font-size:18px}.act .lstbox{display:grid;gap:6px}.act table.lst td{padding:3px 4px}.act .bdko{display:block;font-size:13.5px;padding:2px 2px 0}.act table.lst input[type=text]{width:100%;min-width:90px}.lstrow{border-left:5px solid var(--line);margin-bottom:12px}.lstrow>.lsth{display:block;font-size:17px;margin:0 0 8px}.lstcols{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;align-items:start}.lstrow.t-con{border-left-color:var(--rosin)}.lstrow.t-les{border-left-color:var(--bar)}.lstrow.t-orc{border-left-color:#5B4BB7}.lstrow.t-reh{border-left-color:var(--faint)}
+.act table.lst .a_le,.act table.lst .a_ls,.act table.lst .a_lk{margin-top:3px;font-size:14px;color:var(--muted)}.act table.lst .a_lk{border-color:var(--rosin-soft)}
 .act .addbox{display:grid;gap:8px;padding:10px;border:1px dashed var(--line);border-radius:8px;background:var(--bg)}.act .ckl li label{display:flex;gap:8px;align-items:center;padding:6px 8px;cursor:pointer;border-radius:6px}.act .ckl li label:hover{background:var(--sunk)}.act .ckl li label.warn{opacity:.75}.act .ckl{max-height:320px;overflow:auto}
 .act .linkbox{display:grid;gap:6px;padding:10px;border:1px dashed var(--rosin);border-radius:8px;background:var(--rosin-soft)}
 .act .ev.stg2{border-left-style:dashed;background:var(--sunk)}.act .stg{font-size:13px;font-weight:600;padding:0 5px;border-radius:4px;background:var(--rosin-soft);color:var(--rosin)}
@@ -1126,7 +1127,7 @@ function vSet(){return `<div class="sec-h"><div><h2>날짜 · 장소</h2><p>캠�
   <tbody>${rtRows().map((r,k)=>`<tr><td><input class="a_rtin" data-r="${k}" data-f="n" value="${esc(r.n)}" placeholder="장소 이름"></td><td><input class="a_rtin" data-r="${k}" data-f="l" value="${esc(r.l)}" placeholder="위치"></td><td><input class="a_rtin" data-r="${k}" data-f="c" value="${esc(r.c)}" inputmode="numeric" style="width:70px"></td><td><input class="a_rtin" data-r="${k}" data-f="e" value="${esc(r.e)}" placeholder="English"></td>${D.days.map((x,d)=>`<td style="text-align:center"><input type="checkbox" class="a_rtck" data-r="${k}" data-d="${d}" ${r.on[d]?'checked':''} aria-label="${esc(r.n)} ${esc(x)} 사용"></td>`).join('')}<td><button class="btn small ghost" type="button" data-rtdel="${k}">빼기</button></td></tr>`).join('')}</tbody></table></div>
   <div class="row" style="margin-top:8px"><button class="btn small" type="button" id="a_rtAdd">＋ 장소 추가</button></div></div>
   <div class="row"><button class="btn small primary" type="button" id="a_setSave">날짜·장소 저장</button><span class="cap" style="margin:0">일정이 있는 장소를 빼면 그 일정은 표에서 안 보이니 먼저 옮겨 주세요.</span></div>
-  <div class="sec-h"><div><h2>행사 구분 · 종류 · 단계 · 역할</h2><p>구분은 공연 · 레슨 · 업무 세 가지예요. 종류 · 공연 단계 · 역할 목록은 여기서 추가 · 이름 변경 · 순서 · 빼기를 해요. 이름을 바꾸면 그 이름을 쓰던 일정 · 사람도 같이 바뀌어요.</p></div></div>
+  <div class="sec-h"><div><h2>행사 구분 · 종류 · 단계 · 역할</h2><p>구분은 공연 · 레슨 · Orch 수업 · 업무 네 가지예요. 종류 · 공연 단계 · 역할 목록은 여기서 추가 · 이름 변경 · 순서 · 빼기를 해요. 이름을 바꾸면 그 이름을 쓰던 일정 · 사람도 같이 바뀌어요.</p></div></div>
   <div class="g3 lstg" style="grid-template-columns:repeat(auto-fit,minmax(230px,1fr))">${CATS.map(c=>`<div class="panel lstcol"><b class="lsth">${c}</b>
     ${lstPanel('k:'+c,c+' 종류',c==='공연'?'「학생 연주」는 오후음악회 탭(연주 순서 · 리허설)과 이어져요':c==='Orch 수업'?'오케 수업(Orch A~D) · 오케스트라 탭 단추 · 선생님 · 악보 기준. 폐회 음악회 무대 · 리허설은 공연에서':'')}
     ${c==='공연'?lstPanel('stage','공연 단계','본공연 · 리허설 · 무대 세팅 등'):''}
@@ -1151,11 +1152,11 @@ function setPart(k){if(!D){if(!LOADING&&!ERR)load();return `<div class="panel">$
   <div class="row" style="margin-top:8px"><button class="btn small" type="button" id="a_rtAdd">＋ 장소 추가</button></div></div>
   <div class="row"><button class="btn small primary" type="button" id="a_setSave">날짜·장소 저장</button><span class="cap" style="margin:0">일정이 있는 장소를 빼면 그 일정은 표에서 안 보이니 먼저 옮겨 주세요.</span></div>
 `;
-  if(k==='role')return `  <div class="sec-h"><div><h2>행사 구분 · 종류 · 단계 · 역할</h2><p>구분은 공연 · 레슨 · 업무 세 가지예요. 종류 · 공연 단계 · 역할 목록은 여기서 추가 · 이름 변경 · 순서 · 빼기를 해요. 이름을 바꾸면 그 이름을 쓰던 일정 · 사람도 같이 바뀌어요.</p></div></div>
-  <div class="g3 lstg" style="grid-template-columns:repeat(auto-fit,minmax(230px,1fr))">${CATS.map(c=>`<div class="panel lstcol"><b class="lsth">${c}</b>
-    ${lstPanel('k:'+c,c+' 종류',c==='공연'?'「이번 캠프」를 사용 안 함으로 두면 일정을 넣을 때 고르는 목록에서 빠져요. 이름 · 일정은 그대로 남아요.':c==='Orch 수업'?'오케 수업(Orch A~D) · 오케스트라 탭 단추 · 선생님 · 악보 기준. 폐회 음악회 무대 · 리허설 · 대기는 공연에 둬요.':'')}
+  if(k==='role')return `  <div class="sec-h"><div><h2>행사 구분 · 종류 · 단계 · 역할</h2><p>구분은 공연 · 레슨 · Orch 수업 · 업무 네 가지예요. 종류 · 공연 단계 · 역할 목록은 여기서 추가 · 이름 변경 · 순서 · 빼기를 해요. 이름을 바꾸면 그 이름을 쓰던 일정 · 사람도 같이 바뀌어요.</p></div></div>
+  ${['공연','레슨','Orch 수업','업무'].map(c=>`<div class="panel lstrow ${TCLS_C[c]||''}"><b class="lsth">${c}</b><div class="lstcols">
+    ${lstPanel('k:'+c,(c==='Orch 수업'?'Orch':c)+' 종류',c==='공연'?'「이번 캠프」를 사용 안 함으로 두면 일정을 넣을 때 고르는 목록에서 빠져요. 이름 · 일정은 그대로 남아요.':c==='Orch 수업'?'오케 수업(Orch A~D) · 오케스트라 탭 단추 · 선생님 · 악보 기준. 폐회 음악회 무대 · 리허설 · 대기는 공연에 둬요.':'')}
     ${c==='공연'?lstPanel('stage','공연 단계','본공연 · 리허설 · 무대 세팅 등'):''}
-    ${lstPanel('r:'+c,c+' 역할','사람을 넣을 때 고르는 역할 · 처음 넣는 사람은 첫 번째, 그다음은 두 번째 역할')}</div>`).join('')}</div>
+    ${lstPanel('r:'+c,(c==='Orch 수업'?'Orch':c)+' 역할','사람을 넣을 때 고르는 역할 · 처음 넣는 사람은 첫 번째, 그다음은 두 번째 역할')}</div></div>`).join('')}
 `;
   if(k==='note')return `  <div class="panel"><b>날마다 안내 글</b><p class="cap" style="margin:4px 0 8px">그날 표 맨 위 빨간 줄이에요. 구글 시트로 보낼 때 써요.</p><div class="tblw"><table class="pft"><tbody>${D.days.map((x,i)=>`<tr><th style="width:110px;text-align:left">${esc(x)}</th><td><input type="text" class="a_note" data-i="${i}" value="${esc((D.dayNotes||[])[i]||'')}" placeholder="예: 모든 교사는 참관하시는 수업에서 적극적으로 보조해 주세요." style="width:100%"></td></tr>`).join('')}</tbody></table></div>
   <div class="row" style="margin-top:8px"><button class="btn small primary" type="button" id="a_noteSave">안내 글 저장</button><button class="btn small" type="button" id="a_mealCamp" title="위 식사 시간 표를 교사 일정 모든 날짜에 다시 넣어요">식사 시간 교사 일정에 다시 넣기</button></div></div>`;

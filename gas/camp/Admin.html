@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261121-163447 -->
+<!-- build: 20261121-163542 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -796,7 +796,7 @@ function stats(){
   D.events.forEach(e=>e.ppl.forEach(p=>{if(gone(p.n))return;const x=get(p.n);x.days[e.d]=(x.days[e.d]||0)+1;x.roles[p.r]=(x.roles[p.r]||0)+1;x.cats[e.cat]=(x.cats[e.cat]||0)+1;x.total++;x.items.push({e,r:p.r})}));
   const clash=new Set(); /* eid|name */
   Object.values(st).forEach(x=>{for(let i=0;i<x.items.length;i++)for(let j=i+1;j<x.items.length;j++){const a=x.items[i].e,b=x.items[j].e;
-    if(a.d===b.d&&mins(a.s)<mins(b.e)&&mins(b.s)<mins(a.e)){clash.add(a.id+'|'+x.n);clash.add(b.id+'|'+x.n);x.clash=(x.clash||0)+1}}});
+    if(a.d===b.d&&!ASST(x.items[i].r)&&!ASST(x.items[j].r)&&mins(a.s)<mins(b.e)&&mins(b.s)<mins(a.e)){clash.add(a.id+'|'+x.n);clash.add(b.id+'|'+x.n);x.clash=(x.clash||0)+1}}});
   const off=new Set(); Object.values(st).forEach(x=>x.items.forEach(({e})=>{if((A.unav[x.n]||[]).includes(e.d)){off.add(e.id+'|'+x.n);x.off=(x.off||0)+1}}));
   return {st,clash,off};
 }
@@ -848,8 +848,9 @@ function roomClash(d){const L=D.events.filter(e=>e.d===d&&e.room).slice().sort((
   L.forEach((a,i)=>L.slice(i+1).forEach(b=>{if(a.room===b.room&&mins(b.s)<mins(a.e)&&mins(a.s)<mins(b.e))out.push([a,b])}));return out}
 const clashTxt=([a,b])=>`${a.room} · 「${a.title}」 ${a.s}~${a.e} ↔ 「${b.title}」 ${b.s}~${b.e}`;
 /* 겹침 막기: 같은 날 시간이 겹치는 다른 일정에 이미 있거나, 못 오는 날이면 넣을 수 없음 → 이유 글 (괜찮으면 '') */
-function confOf(e,id,skip,at){const d=at?at.d:e.d,s1=at?at.s:e.s,e1=at?at.e:e.e;skip=skip||[];
-  const o=D.events.find(o=>o.id!==e.id&&!skip.includes(o.id)&&o.d===d&&o.ppl.some(z=>z.n===id)&&mins(o.s)<mins(e1)&&mins(s1)<mins(o.e));
+const ASST=r=>/보조/.test(String(r||''));
+function confOf(e,id,skip,at,role){const d=at?at.d:e.d,s1=at?at.s:e.s,e1=at?at.e:e.e;skip=skip||[];if(role===undefined){const me=(e.ppl||[]).find(z=>z.n===id);role=me?me.r:''}
+  const o=ASST(role)?null:D.events.find(o=>o.id!==e.id&&!skip.includes(o.id)&&o.d===d&&o.ppl.some(z=>z.n===id&&!ASST(z.r))&&mins(o.s)<mins(e1)&&mins(s1)<mins(o.e));   /* 11-21: 보조 교사는 시간이 겹쳐도 됨 */
   if(o)return `같은 시간 「${o.title}」 ${o.s}~${o.e} ${o.room}`;if((A.unav[id]||[]).includes(d))return '못 오는 날';
   const ls=lesAt(id,d,s1,e1);if(ls)return `같은 시간 개인레슨 ${ls.t}~`;return ''}
 /* 교수님 개인레슨(30분 칸)과 겹치는지 */
@@ -867,7 +868,7 @@ function addBox(e){const RL=roleList(e.cat);if(!A.addR||!RL.includes(A.addR))A.a
     <span class="row" style="gap:4px;flex-wrap:nowrap;margin-left:auto">${busy?'<span class="pill bad">이 시간 다른 일정</span>':''}${off?'<span class="pill bad">못 오는 날</span>':''}<span class="pill ${x.total?'mute':'due'}">${x.total?cnt3(x):'아직 0회'}</span></span></label></li>`).join('')||'<li class="cap" style="padding:8px">찾는 사람이 없어요.</li>'}</ul></div>`}
 /* 이름 → 사람: 띄어쓰기·대소문자 무시, 같은 이름이 여럿이면 고르게 */
 function addPeople(e,ids,role){const have=new Set(e.ppl.map(p=>p.n));let n=0;const warn=[];
-  ids.forEach(id=>{if(have.has(id))return;const c=confOf(e,id);if(c){warn.push(LB(id)+' — '+c);return}e.ppl.push({n:id,r:role});have.add(id);n++});
+  ids.forEach(id=>{if(have.has(id))return;const c=confOf(e,id,null,null,role);if(c){warn.push(LB(id)+' — '+c);return}e.ppl.push({n:id,r:role});have.add(id);n++});
   if(n)logIt(`넣음 (${role}): ${ids.map(LB).join(', ')} → ${D.days[e.d]} ${e.s} ${e.room} 「${e.title}」`);return {n,warn}}
 function editor(){
   const e=A.sel&&evById(A.sel); if(!e) return '';
@@ -952,7 +953,7 @@ function vLog(){return `<div class="sec-h"><div><h2>바꾼 기록</h2><p>시트 
 document.addEventListener('change',ev=>{if(!ACTON()||ev.target.id!=='a_edK')return;const o=ev.target.selectedOptions[0],y=document.getElementById('a_edY');if(o&&y&&o.dataset.t)y.value=o.dataset.t});
 function readEditor(e){const g=id=>document.getElementById(id);if(!g('a_edT'))return;
   e.title=g('a_edK').value||e.title;e.sub=g('a_edT').value.trim();e.stage=e.cat==='공연'&&g('a_edG')?g('a_edG').value:'';TG_INST.forEach(k=>{const m=g('a_tgm_'+k);if(!m)return;e.tg=e.tg||{};const t=e.tg[k]=e.tg[k]||{b:[],x:[],m:''};t.m=m.value.trim()});e.type=e.cat;e.room=g('a_edR').value;e.desc=g('a_edD').value.split('\n').map(x=>x.trim()).filter(Boolean);
-  const s=hmVal('a_edS'),en=hmVal('a_edE'); if(s&&en&&mins(en)>mins(s)){if(s!==e.s||en!==e.e){const bad=e.ppl.map(p=>[p,confOf(e,p.n,[],{d:e.d,s,e:en})]).filter(x=>x[1]);if(bad.length){toast('시간을 바꿀 수 없어요 · '+bad.map(([p,c])=>LB(p.n)+': '+c).join(' / '));return}}e.s=s;e.e=en}else if(s&&en)toast('끝나는 시간이 시작보다 늦어야 해요');
+  const s=hmVal('a_edS'),en=hmVal('a_edE'); if(s&&en&&mins(en)>mins(s)){if(s!==e.s||en!==e.e){const bad=e.ppl.map(p=>[p,confOf(e,p.n,[],{d:e.d,s,e:en},p.r)]).filter(x=>x[1]);if(bad.length){toast('시간을 바꿀 수 없어요 · '+bad.map(([p,c])=>LB(p.n)+': '+c).join(' / '));return}}e.s=s;e.e=en}else if(s&&en)toast('끝나는 시간이 시작보다 늦어야 해요');
   const rc=e.room?D.events.find(o=>o.id!==e.id&&o.d===e.d&&o.room===e.room&&mins(o.s)<mins(e.e)&&mins(e.s)<mins(o.e)):null;if(rc)toast(`${e.room}에 「${rc.title}」 ${rc.s}~${rc.e}가 이미 있어요 · 같은 시간에 겹쳐요`);}
 
 document.addEventListener('click',ev=>{if(!ACTON()||!D)return;
@@ -966,7 +967,7 @@ document.addEventListener('click',ev=>{if(!ACTON()||!D)return;
   if(d.aday!==undefined){A.day=+d.aday;A.sel=null;render();return}
   if(d.achip){const [eid,i]=d.achip.split('|');
     if(A.swap){const a=evById(A.swap.eid),bb=evById(eid);if(a.id===bb.id&&A.swap.i===+i){A.swap=null;render();return}
-      const pa=a.ppl[A.swap.i],pb=bb.ppl[+i];{const c1=a.id===bb.id?'':confOf(a,pb.n,[bb.id]),c2=a.id===bb.id?'':confOf(bb,pa.n,[a.id]);if(c1||c2){toast(`맞바꿀 수 없어요 · ${c1?LB(pb.n)+': '+c1:''}${c1&&c2?' / ':''}${c2?LB(pa.n)+': '+c2:''}`);return}}[pa.n,pb.n]=[pb.n,pa.n];
+      const pa=a.ppl[A.swap.i],pb=bb.ppl[+i];{const c1=a.id===bb.id?'':confOf(a,pb.n,[bb.id],null,pa.r),c2=a.id===bb.id?'':confOf(bb,pa.n,[a.id],null,pb.r);if(c1||c2){toast(`맞바꿀 수 없어요 · ${c1?LB(pb.n)+': '+c1:''}${c1&&c2?' / ':''}${c2?LB(pa.n)+': '+c2:''}`);return}}[pa.n,pb.n]=[pb.n,pa.n];
       logIt(`맞바꿈: ${D.days[a.d]} ${a.s} ${a.room} 「${a.title}」 ${pa.r} ↔ ${D.days[bb.d]} ${bb.s} ${bb.room} 「${bb.title}」 ${pb.r} · 이제 ${LB(pa.n)} / ${LB(pb.n)}`);
       A.swap=null;refresh();toast(`${LB(pb.n)} ↔ ${LB(pa.n)} 맞바꿨어요`);return}
     A.sel=eid;A.cp=null;A.pq='';A.pqOpen=false;A.addR='';A.names='';A.namesMsg='';A.pck={};render();return}
@@ -986,11 +987,11 @@ document.addEventListener('click',ev=>{if(!ACTON()||!D)return;
     if(!s1||!e1||mins(e1)<=mins(s1)){toast('끝나는 시간이 시작보다 늦어야 해요');return}
     if(dd===e.d&&s1===e.s&&room===e.room){toast('같은 날짜 · 시간 · 장소예요. 하나는 바꿔 주세요');return}
     const clash=D.events.find(o=>o.d===dd&&o.room===room&&mins(o.s)<mins(e1)&&mins(s1)<mins(o.e));
-    const id='n'+Date.now();const blk=[];const ne={...JSON.parse(JSON.stringify(e)),id,d:dd,s:s1,e:e1,room,ppl:[]};if(withP)ne.ppl=JSON.parse(JSON.stringify(e.ppl)).filter(p=>{const c=confOf(ne,p.n);if(c)blk.push(LB(p.n)+' — '+c);return !c});delete ne.main;if(e.main)ne.main=e.main;
+    const id='n'+Date.now();const blk=[];const ne={...JSON.parse(JSON.stringify(e)),id,d:dd,s:s1,e:e1,room,ppl:[]};if(withP)ne.ppl=JSON.parse(JSON.stringify(e.ppl)).filter(p=>{const c=confOf(ne,p.n,null,null,p.r);if(c)blk.push(LB(p.n)+' — '+c);return !c});delete ne.main;if(e.main)ne.main=e.main;
     D.events.push(ne);A.cp=null;A.sel=id;A.day=dd;logIt(`복사: 「${e.title}」 ${D.days[e.d]} ${e.s} ${e.room} → ${D.days[dd]} ${s1} ${room}${withP?` (사람 ${ne.ppl.length}명)`:' (사람 빼고)'}`);refresh();
     toast(`${D.days[dd]} ${s1} ${room}에 복사했어요`+(clash?` · 같은 장소에 「${clash.title}」 ${clash.s}와 시간이 겹쳐요`:'')+(blk.length?` · 겹쳐서 뺀 사람: ${blk.join(', ')}`:''));return}
   if(b.id==='a_mainCopy'){const e=evById(A.sel);readEditor(e);const o=evById(document.getElementById('a_main').value);if(!o)return;
-    e.title=o.title;e.sub=o.sub||'';e.tg=JSON.parse(JSON.stringify(o.tg||{}));const blk=[];e.ppl=JSON.parse(JSON.stringify(o.ppl||[])).filter(p=>{const c=confOf(e,p.n);if(c)blk.push(LB(p.n)+' — '+c);return !c});if(!e.desc.length)e.desc=(o.desc||[]).slice();e.main=o.id;
+    e.title=o.title;e.sub=o.sub||'';e.tg=JSON.parse(JSON.stringify(o.tg||{}));const blk=[];e.ppl=JSON.parse(JSON.stringify(o.ppl||[])).filter(p=>{const c=confOf(e,p.n,null,null,p.r);if(c)blk.push(LB(p.n)+' — '+c);return !c});if(!e.desc.length)e.desc=(o.desc||[]).slice();e.main=o.id;
     logIt(`가져옴: ${o.stage} ${D.days[o.d]} ${o.s} 「${o.title}」 → 본공연 ${D.days[e.d]} ${e.s} ${e.room} (${e.ppl.length}명)`);refresh();
     toast(`리허설 내용을 가져왔어요 · ${e.ppl.length}명`+(blk.length?` · 겹쳐서 뺀 사람: ${blk.join(', ')}`:''));return}
   if(d.acat){const e=evById(A.sel);readEditor(e);if(e.cat!==d.acat){e.cat=e.type=d.acat;const K=kindsOf(d.acat);if(!K.some(k=>k.n===e.title))e.title=(K[0]||{n:e.title}).n;e.stage=d.acat==='공연'?(D.stages[0]||'본공연'):'';refresh()}return}

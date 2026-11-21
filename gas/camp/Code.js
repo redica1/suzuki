@@ -2054,11 +2054,11 @@ const ord_ = n => n + (n % 10 === 1 && n !== 11 ? 'st' : n % 10 === 2 && n !== 1
 /** 대상 토큰 → 글: 1 · 1A · 4B+ · 7+ (이어진 권 전체 3개 이상은 1~3) */
 function tgTok_(L) {
   const BK = ['Pre', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10'];
-  const P = (L || []).map(t => { const m = String(t).match(/^(Pre|\d+)([AB]*)(\+?)$/); return m ? { bk: m[1], pt: m[2], up: !!m[3] } : null; }).filter(Boolean).sort((a, b) => BK.indexOf(a.bk) - BK.indexOf(b.bk));
-  const lab = o => o.bk + (o.pt || '') + (o.up ? ' 이상' : '');
+  const P = (L || []).map(t => { const m = String(t).match(/^(Pre|\d+)([AB]*)([+-]?)$/); return m ? { bk: m[1], pt: m[2], up: m[3] === '+', dn: m[3] === '-' } : null; }).filter(Boolean).sort((a, b) => BK.indexOf(a.bk) - BK.indexOf(b.bk));
+  const lab = o => o.bk + (o.pt || '') + (o.up ? ' 이상' : o.dn ? ' 이하' : '');
   const out = []; let run = [];
   const flush = () => { if (run.length > 2) out.push(run[0].bk + '~' + run[run.length - 1].bk); else run.forEach(o => out.push(lab(o))); run = []; };
-  P.forEach(o => { const plain = !o.pt && !o.up && o.bk !== 'Pre'; if (plain && run.length && +o.bk === +run[run.length - 1].bk + 1) run.push(o); else { flush(); if (plain) run.push(o); else out.push(lab(o)); } });
+  P.forEach(o => { const plain = !o.pt && !o.up && !o.dn && o.bk !== 'Pre'; if (plain && run.length && +o.bk === +run[run.length - 1].bk + 1) run.push(o); else { flush(); if (plain) run.push(o); else out.push(lab(o)); } });
   flush(); return { txt: out.join(', '), one: P.length === 1 ? P[0] : null };
 }
 /** 미리보기 · 시트에서 숨길 것 (일정설정 pvHide): f = 칸 안 항목(en 영어 · tg 대상 · sub 세부 · desc 설명 · note 안내 글 · meal 식사 줄) · r = 「구분:역할」 · t = 탭(t 참가교사 · o 오케 명단 · c 음악회) */
@@ -3520,7 +3520,7 @@ const ACT_KINDS = [['Orch A', '공연'], ['Orch B', '공연'], ['Orch C', '공�
 const ACT_STAGES = ['본공연', '리허설', '대기', '무대 세팅'];   // 대기 (11-05): 오케 · 그룹 리허설 전 대기 자리 — 책자 「리허설 대기 및 진행」
 const ACT_ROLESETS = { '공연': ['지휘', '악장', 'Vln 1', 'Vln 2', 'Vla', 'Vc', 'D.B', '악보계', '반주자', '통역', '객석정리', '무대', '연주', '세팅', '진행', '사회'], '레슨': ['수업', '보조', '통역'], '업무': ['문지기', '배식', '안내'] };
 /** 대상 칩 { Vn:{b:[권], x:[지정학생…], m:메모}, Vc, Fl } → 시트에는 JSON (빈 악기는 뺌) */
-function tgClean_(tg) { const o = {}; ['Vn', 'Vc', 'Fl'].forEach(k => { const v = (tg || {})[k]; if (!v) return; const b = (v.b || []).map(x => String(x).slice(0, 6)).filter(x => /^(Pre|\d{1,2})[AB]{0,2}\+?$/.test(x)).slice(0, 20), x = (v.x || []).map(y => String(y).slice(0, 10)).slice(0, 6), m = String(v.m || '').slice(0, 60), sg = (v.s || []).map(y => String(y).slice(0, 40)).slice(0, 12); if (b.length || x.length || m || sg.length) o[k] = { b, x, m, s: sg }; }); return Object.keys(o).length ? JSON.stringify(o) : ''; }
+function tgClean_(tg) { const o = {}; ['Vn', 'Vc', 'Fl'].forEach(k => { const v = (tg || {})[k]; if (!v) return; const b = (v.b || []).map(x => String(x).slice(0, 6)).filter(x => /^(Pre|\d{1,2})[AB]{0,2}[+-]?$/.test(x)).slice(0, 20), x = (v.x || []).map(y => String(y).slice(0, 10)).slice(0, 6), m = String(v.m || '').slice(0, 60), sg = (v.s || []).map(y => String(y).slice(0, 40)).slice(0, 12); if (b.length || x.length || m || sg.length) o[k] = { b, x, m, s: sg }; }); return Object.keys(o).length ? JSON.stringify(o) : ''; }
 const evName_ = e => e.title + (e.stage && e.stage !== '본공연' ? ' ' + e.stage : '') + (e.sub ? ' · ' + e.sub : '');
 const ACT_KEYS = ['days', 'rooms', 'meals', 'rows', 'people', 'unav', 'req', 'target', 'kinds', 'stages', 'roleSets', 'tgSongs', 'en', 'bookDesc', 'dayNotes', 'roleShort', 'orchParts', 'rev'];
 function actSheets_() {
@@ -3666,7 +3666,8 @@ const GL = actEvents_().filter(e => e.title === '그룹레슨');
 const INS = { '바이올린': 'Vn', '첼로': 'Vc', '플루트': 'Fl' };
 const ordOf = (bk, pt) => (bk === 'Pre' ? 0 : +bk * 2 - 1) + (pt === 'B' ? 1 : 0);
 const stuBk = prog => { const g = String(prog || ''); if (/^pre/i.test(g)) return { bk: 'Pre', pt: '' }; const m = g.match(/(\d+)\s*권\s*([AB])?/); return m ? { bk: String(Math.min(10, +m[1])), pt: m[2] || '' } : null; };
-const hit = (tok, sbk) => { const m = String(tok).match(/^(Pre|\d+)([AB]*)(\+?)$/); if (!m) return false;
+const hit = (tok, sbk) => { const m = String(tok).match(/^(Pre|\d+)([AB]*)([+-]?)$/); if (!m) return false;
+  if (m[3] === '-') return ordOf(sbk.bk, sbk.pt || 'A') <= ordOf(m[1], m[2] === 'A' ? 'A' : 'B');
   if (m[3]) return ordOf(sbk.bk, sbk.pt || 'A') >= ordOf(m[1], m[2] === 'B' ? 'B' : 'A') || (m[1] === sbk.bk && !m[2]);
   return m[1] === sbk.bk && (!m[2] || !sbk.pt || m[2].includes(sbk.pt)); };
 const groupsOf = (inst, prog) => { const k = INS[inst], sbk = stuBk(prog); if (!k || !sbk) return [];

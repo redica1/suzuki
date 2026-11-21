@@ -1,4 +1,4 @@
-/* build: 20261121-162604 */
+/* build: 20261121-162833 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -1648,6 +1648,7 @@ const FEE_TYPES = ['교사', '연수생', '소속없는 중급연수생', '학�
   '초빙교수', '반주자', '지휘자', '통역', '초청강사', '스태프', '기타 관계자',
   '해외 학생', '해외 교사', '해외 보호자', '해외 동반가족', '해외 15개월 미만'];
 const CAMP_DEF = {
+  menu: {},   /* 식사 메뉴 (11-21): { '날짜번호|식사': '메뉴' } */
   base: { id: CAMP_ID, name: CAMP_NAME, start: '2027-01-11', end: '2027-01-15', place: '추후 안내', open: '2026-12-01', close: '2026-12-28', cur: 'auto', guest: true, staff: true, member: true, intl: true },
   rounds: [{ n: '1차', from: '2026-12-01', to: '2026-12-10' }, { n: '2차', from: '2026-12-11', to: '2026-12-20' }, { n: '3차', from: '2026-12-21', to: '2026-12-28' }],
   fees: FEES,
@@ -1685,7 +1686,7 @@ const CAMP_DEF = {
     { id: 'photo', title: '사진·영상 촬영과 홍보 활용 동의 (선택)', req: false, on: false, body: '캠프 중 찍은 사진·영상(참가자 모습 포함)을 협회 홈페이지, SNS, 소식지 같은 홍보에 쓸 수 있어요.\n보유 기간: 게시물을 내려 달라고 요청할 때까지\n\n동의하지 않아도 접수할 수 있어요. 동의하지 않으면 홍보물에 쓰지 않아요.' }
   ] },
 };
-const CAMP_KEYS = [['base', '기본'], ['rounds', '차수'], ['fees', '참가비'], ['opt', '옵션'], ['refund', '환불'], ['consent', '동의'], ['meals', '식사'], ['doc', '공문'], ['aud', '음원'], ['cons', '음악회']];
+const CAMP_KEYS = [['base', '기본'], ['rounds', '차수'], ['fees', '참가비'], ['opt', '옵션'], ['refund', '환불'], ['consent', '동의'], ['meals', '식사'], ['doc', '공문'], ['aud', '음원'], ['cons', '음악회'], ['menu', '식사메뉴']];
 const CON_DEF = ['오후', '트와일라잇', '이브닝'];
 function consClean_(a) { const o = []; (Array.isArray(a) ? a : []).forEach(x => { const n = String(x == null ? '' : x).replace(/[|,]/g, ' ').trim().slice(0, 12); if (n && n !== '없음' && o.indexOf(n) < 0 && o.length < 8) o.push(n); }); return o.length ? o : CON_DEF.slice(); }
 let CAMP_CACHE = null;
@@ -1844,7 +1845,8 @@ function campSave(token, c, rev) {
   let linkMsg = '';
   const cons = c.cons ? consClean_(c.cons) : consClean_(prev.cons);
   const aud = {}; cons.forEach(k => { const x = c.aud ? ((c.aud[k]) || {}) : ((prev.aud || {})[k] || {}); aud[k] = { on: !!x.on, pre: !!x.on && !!x.pre, due: /^\d{4}-\d{2}-\d{2}$/.test(x.due || '') ? x.due : '' }; });
-  const nc = { meals, base: { id: String(b.id).trim(), name: String(b.name).trim(), start: b.start, end: b.end, place: String(b.place || '').trim(), open: b.open, close: b.close, famClose: /^\d{4}-\d{2}-\d{2}$/.test(b.famClose || '') ? b.famClose : '', cur, guest: b.guest !== false, staff: b.staff !== false, member: b.member !== false, intl: b.intl !== false }, rounds, fees, opt, refund, consent, doc, aud, cons };
+  const menu = c.menu && typeof c.menu === 'object' ? Object.keys(c.menu).slice(0, 120).reduce((o, k) => { const v = String(c.menu[k] || '').trim().slice(0, 200); if (v && /^\d{1,2}\|.{1,10}$/.test(k)) o[k] = v; return o; }, {}) : (camp_().menu || {});
+  const nc = { menu, meals, base: { id: String(b.id).trim(), name: String(b.name).trim(), start: b.start, end: b.end, place: String(b.place || '').trim(), open: b.open, close: b.close, famClose: /^\d{4}-\d{2}-\d{2}$/.test(b.famClose || '') ? b.famClose : '', cur, guest: b.guest !== false, staff: b.staff !== false, member: b.member !== false, intl: b.intl !== false }, rounds, fees, opt, refund, consent, doc, aud, cons };
   const lock = lock_();
   try {
     const ss = SpreadsheetApp.getActive(); let sh = ss.getSheetByName(CAMPCFG);
@@ -1853,7 +1855,7 @@ function campSave(token, c, rev) {
     if ((+rev || 0) !== (old.rev || 0)) throw new Error('다른 분이 먼저 캠프 설정을 바꿨어요. 새로 고친 뒤 다시 해 주세요.');
     /* 저장이 확실할 때(번호 확인 뒤)만 공문 대장에 올림 — 저장 실패로 대장 줄만 늘어나지 않게 */
     try { const g = campDocLink_(nc.base, nc.doc, a.name); if (g) nc.doc.gm = g; else linkMsg = '회원관리 시트(설정 「회원관리 시트」)나 그 시트의 「공문」 탭을 찾지 못해 공문 대장에 올리지 못했어요.'; } catch (e) { linkMsg = '공문 대장에 올리지 못했어요: ' + e.message; }
-    const desc = { base: '캠프 코드 · 이름 · 날짜 · 장소 · 접수 기간 · 비회원 접수', rounds: '차수 이름과 기간', fees: '참가자격 × 차수 참가비', opt: '추가 레슨 · 마스터클래스 · 회비 · 가족방', refund: '취소·환불 규정', cons: '음악회 이름 목록 (설정에서 추가 · 빼기)', meals: '식사 시간 (교사 일정 모든 날짜의 식사 줄)', doc: '캠프 안내 공문 (문서 정보 · 머리말 · 항목별 글)', aud: '음악회별 음원 제출 받기 · 마감일', consent: '개인정보 동의 문구 (바꾸면 버전 날짜가 바뀜)' };
+    const desc = { menu: '날짜 · 식사마다 식사 메뉴', base: '캠프 코드 · 이름 · 날짜 · 장소 · 접수 기간 · 비회원 접수', rounds: '차수 이름과 기간', fees: '참가자격 × 차수 참가비', opt: '추가 레슨 · 마스터클래스 · 회비 · 가족방', refund: '취소·환불 규정', cons: '음악회 이름 목록 (설정에서 추가 · 빼기)', meals: '식사 시간 (교사 일정 모든 날짜의 식사 줄)', doc: '캠프 안내 공문 (문서 정보 · 머리말 · 항목별 글)', aud: '음악회별 음원 제출 받기 · 마감일', consent: '개인정보 동의 문구 (바꾸면 버전 날짜가 바뀜)' };
     const ex = rows_(CAMPCFG).reduce((o, r) => { o[String(r['항목'])] = String(r['값'] || ''); return o; }, {});
     const vals = CAMP_KEYS.map(k => [k[1], JSON.stringify(nc[k[0]]), desc[k[0]]]).concat([['rev', String((old.rev || 0) + 1), '바꾼 횟수 (건드리지 마세요)'],
       ['공문HTML', c.docHtml != null ? String(c.docHtml).slice(0, 48000) : (ex['공문HTML'] || ''), '회원관리 공문 대장이 읽는 공문 그림 (저장할 때 저절로)'], ['공문CSS', c.docCss != null ? String(c.docCss).slice(0, 20000) : (ex['공문CSS'] || ''), '공문 그림 모양']]);

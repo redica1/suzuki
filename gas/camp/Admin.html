@@ -826,7 +826,7 @@ function logIt(t){A.log.unshift({at:new Date().toLocaleString('ko-KR',{month:'nu
 
 /* ---------- 11-21 오케스트라: Orch A~D 수업 전부에 같은 선생님 · 역할 · 악보 ---------- */
 const ORCH_RE=/^orch/i;
-function orTitles(){return [...new Set(D.events.filter(e=>ORCH_RE.test(e.title||'')).map(e=>e.title))].sort((x,y)=>x.localeCompare(y))}
+function orTitles(){return [...new Set((D.kinds||[]).filter(k=>!k.off&&ORCH_RE.test(k.n||'')).map(k=>k.n).concat(D.events.filter(e=>ORCH_RE.test(e.title||'')).map(e=>e.title)))].sort((x,y)=>x.localeCompare(y))}   /* 11-21: 역할 설정 종류(Orch A~D)도 · 수업이 아직 없어도 단추는 보임 */
 function orRoster(t){const ev=D.events.filter(e=>e.title===t),M={};ev.forEach(e=>e.ppl.forEach(p=>{const x=M[p.n]||(M[p.n]={n:p.n,r:{},c:0});x.r[p.r]=(x.r[p.r]||0)+1;x.c++}));
   return Object.values(M).map(x=>({n:x.n,r:Object.keys(x.r).sort((a,b)=>x.r[b]-x.r[a])[0],c:x.c,all:x.c>=ev.length})).sort((a,b)=>NAME(a.n).localeCompare(NAME(b.n)))}
 function orRoles(){return [...new Set([].concat(D.roleSets['레슨']||[],D.roleSets['공연']||[],['Orch 보조','지휘']))]}
@@ -835,6 +835,7 @@ function vOrchT(){const T=orTitles();if(!T.length)return '<div class="panel">이
   const cand=D.people.filter(p=>!inR.has(p.id)&&!gone(p.id)&&(!q||(p.n+(p.acad||'')).includes(q))).slice(0,40),roles=orRoles();
   if(!A.orF&&!A.orFL){A.orFL=1;call('orchFiles',[],r=>{A.orF=r||[];A.orFL=0;render()})}
   const F=(A.orF||[]).filter(f=>f.o===t);
+  if(!ev.length)return `<div class="panel"><div class="row" style="gap:6px">${T.map(x=>`<button class="btn small ${x===t?'primary':''}" type="button" data-ort="${esc(x)}">${esc(x)} <small>${orRoster(x).length}</small></button>`).join('')}</div><p class="hint" style="margin:10px 0 0">「${esc(t)}」 수업이 프로그램표에 아직 없어요. 「프로그램표」에서 ${esc(t)} 칸을 먼저 넣으면 여기서 선생님을 넣고 악보를 올릴 수 있어요.</p></div>`;
   return `<div class="panel"><div class="row" style="gap:6px">${T.map(x=>`<button class="btn small ${x===t?'primary':''}" type="button" data-ort="${esc(x)}">${esc(x)} <small>${orRoster(x).length}</small></button>`).join('')}</div>
   <p class="hint" style="margin:8px 0 0">수업 ${ev.length}회 · ${ev.map(e=>esc(D.days[e.d]+' '+e.s+' '+(e.room||''))).join(' · ')}<br>여기서 넣고 빼면 「${esc(t)}」 수업 ${ev.length}회 모두에 같이 바뀌어요. 「Orch 보조」는 시간이 겹쳐도 넣어져요.</p></div>
   <div class="g2"><div class="panel"><b>선생님 · 역할 ${R.length}명</b><div class="tblw" style="margin-top:6px"><table class="pft"><thead><tr><th style="text-align:left">이름</th><th>역할</th><th>수업</th><th></th></tr></thead><tbody>

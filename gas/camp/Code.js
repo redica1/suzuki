@@ -1715,6 +1715,17 @@ const CAMP_DEF = {
 const CAMP_KEYS = [['base', '기본'], ['rounds', '차수'], ['fees', '참가비'], ['opt', '옵션'], ['refund', '환불'], ['consent', '동의'], ['meals', '식사'], ['doc', '공문'], ['aud', '음원'], ['cons', '음악회']];
 const CON_DEF = ['오후', '트와일라잇', '이브닝'];
 function consClean_(a) { const o = []; (Array.isArray(a) ? a : []).forEach(x => { const n = String(x == null ? '' : x).replace(/[|,]/g, ' ').trim().slice(0, 12); if (n && n !== '없음' && o.indexOf(n) < 0 && o.length < 8) o.push(n); }); return o.length ? o : CON_DEF.slice(); }
+/* 음악회 목록 = 역할 설정 「공연」 중 신청서 이름(ko)이 있고 「사용」인 것 (11-21). 예전 자료(ko 없음 · link)는 지금 이름에서 짐작 */
+function conKo_(n, cons) { const s = String(n || ''); return (cons || []).find(x => s.indexOf(x) >= 0) || (/afternoon|오후/i.test(s) ? '오후' : /twilight|트와일라잇/i.test(s) ? '트와일라잇' : /evening|이브닝/i.test(s) ? '이브닝' : ''); }
+function consFromKinds_(kinds, cons) { return consClean_((kinds || []).filter(k => k.c === '공연' && !k.off && (k.ko || k.link)).map(k => k.ko || conKo_(k.n, cons) || k.n)); }
+function consSync_(kinds) {
+  if (!(kinds || []).some(k => k.c === '공연' && (k.ko || k.link))) return;
+  const sh = SpreadsheetApp.getActive().getSheetByName(CAMPCFG); if (!sh) return;
+  CAMP_CACHE = null; CAMP_NOCC = true; campCacheClear_(); const L = consFromKinds_(kinds, camp_().cons); CAMP_CACHE = null;
+  const r = rows_(CAMPCFG).find(x => String(x['항목']) === '음악회'), v = JSON.stringify(L);
+  if (r) { if (String(r['값']) !== v) sh.getRange(r._row, 2).setValue(v); } else sh.appendRow(['음악회', v, '음악회 이름 목록 (역할 설정 공연에서)']);
+  campCacheClear_(); CAMP_CACHE = null;
+}
 let CAMP_CACHE = null;
 /* 참가 구분 이름 바뀜 (11-11): 「돌전아기」 → 「15개월 미만」 · 예전에 저장된 접수 · 캠프설정도 읽을 때 새 이름으로 */
 function retype_(s) { return String(s).replace(/돌전아기/g, '15개월 미만'); }
@@ -3597,13 +3608,14 @@ function schedSave(token, b) {
     sh.ev.getRange(1, 1, 1, ACT_HEAD.length).setValues([ACT_HEAD]);   // 머리줄 (「세부」 칸이 없던 시트도 맞춤)
     if (last > 1) sh.ev.getRange(2, 1, last - 1, ACT_HEAD.length).clearContent();
     if (rows.length) sh.ev.getRange(2, 1, rows.length, ACT_HEAD.length).setValues(rows);
-    const val = { days: b.days.map(x => t(x, 30)), rooms: b.rooms || {}, meals: b.meals || [], rows: b.rows || {}, people: (b.people || []).map(p => ({ id: t(p.id, 40), n: t(p.n, 60), acad: t(p.acad, 120), inst: t(p.inst, 20), kind: t(p.kind, 10), tid: p.tid ? t(p.tid, 20) : undefined })), unav: b.unav || {}, req: b.req || {}, target: b.target || { min: 2, max: 6 }, en: (() => { const o = {}; Object.keys(b.en || {}).slice(0, 300).forEach(k => { o[t(k, 40)] = t(b.en[k], 80); }); return o; })(), bookDesc: (() => { const o = {}; ['Vn', 'Vc', 'Fl'].forEach(k => { o[k] = {}; Object.keys((b.bookDesc || {})[k] || {}).slice(0, 40).forEach(x => { const v = b.bookDesc[k][x]; if (Array.isArray(v)) o[k][t(x, 6)] = [t(v[0], 60), t(v[1], 80)]; }); }); return o; })(), dayNotes: (b.dayNotes || []).map(x => t(x, 300)).slice(0, 20), roleShort: (() => { const o = {}; Object.keys(b.roleShort || {}).slice(0, 100).forEach(k => { const v = t(b.roleShort[k], 6).trim(); if (v) o[t(k, 12)] = v; }); return o; })(), meals: (b.meals || []).map(m => Object.assign({ d: +m.d || 0, s: t(m.s, 5), e: t(m.e, 5), t: t(m.t, 200) }, m.k ? { k: t(m.k, 10) } : {})).filter(m => /^\d{2}:\d{2}$/.test(m.s)).slice(0, 80), tgSongs: (() => { const o = {}; ['Vn', 'Vc', 'Fl'].forEach(k => { const L = (b.tgSongs || {})[k]; o[k] = (Array.isArray(L) ? L : []).map(x => t(x, 40).trim()).filter(Boolean).slice(0, 40); }); return o; })(), stages: (Array.isArray(b.stages) && b.stages.length ? b.stages : ACT_STAGES).map(x => t(x, 20).trim()).filter(Boolean).slice(0, 20), roleSets: (() => { const o = {}; ACT_CATS.forEach(c => { const L = ((b.roleSets || {})[c] || ACT_ROLESETS[c]); o[c] = (Array.isArray(L) ? L : []).map(x => t(x, 12).trim()).filter(Boolean).slice(0, 40); }); return o; })(), kinds: (Array.isArray(b.kinds) ? b.kinds : ACT_KINDS).map(k => ({ n: t(k.n, 40).trim(), c: ACT_CATS.includes(k.c) ? k.c : '레슨', link: !!k.link, off: !!k.off })).filter(k => k.n).slice(0, 80), orchParts: 1, rev: (+c.rev || 0) + 1 };
+    const val = { days: b.days.map(x => t(x, 30)), rooms: b.rooms || {}, meals: b.meals || [], rows: b.rows || {}, people: (b.people || []).map(p => ({ id: t(p.id, 40), n: t(p.n, 60), acad: t(p.acad, 120), inst: t(p.inst, 20), kind: t(p.kind, 10), tid: p.tid ? t(p.tid, 20) : undefined })), unav: b.unav || {}, req: b.req || {}, target: b.target || { min: 2, max: 6 }, en: (() => { const o = {}; Object.keys(b.en || {}).slice(0, 300).forEach(k => { o[t(k, 40)] = t(b.en[k], 80); }); return o; })(), bookDesc: (() => { const o = {}; ['Vn', 'Vc', 'Fl'].forEach(k => { o[k] = {}; Object.keys((b.bookDesc || {})[k] || {}).slice(0, 40).forEach(x => { const v = b.bookDesc[k][x]; if (Array.isArray(v)) o[k][t(x, 6)] = [t(v[0], 60), t(v[1], 80)]; }); }); return o; })(), dayNotes: (b.dayNotes || []).map(x => t(x, 300)).slice(0, 20), roleShort: (() => { const o = {}; Object.keys(b.roleShort || {}).slice(0, 100).forEach(k => { const v = t(b.roleShort[k], 6).trim(); if (v) o[t(k, 12)] = v; }); return o; })(), meals: (b.meals || []).map(m => Object.assign({ d: +m.d || 0, s: t(m.s, 5), e: t(m.e, 5), t: t(m.t, 200) }, m.k ? { k: t(m.k, 10) } : {})).filter(m => /^\d{2}:\d{2}$/.test(m.s)).slice(0, 80), tgSongs: (() => { const o = {}; ['Vn', 'Vc', 'Fl'].forEach(k => { const L = (b.tgSongs || {})[k]; o[k] = (Array.isArray(L) ? L : []).map(x => t(x, 40).trim()).filter(Boolean).slice(0, 40); }); return o; })(), stages: (Array.isArray(b.stages) && b.stages.length ? b.stages : ACT_STAGES).map(x => t(x, 20).trim()).filter(Boolean).slice(0, 20), roleSets: (() => { const o = {}; ACT_CATS.forEach(c => { const L = ((b.roleSets || {})[c] || ACT_ROLESETS[c]); o[c] = (Array.isArray(L) ? L : []).map(x => t(x, 12).trim()).filter(Boolean).slice(0, 40); }); return o; })(), kinds: (Array.isArray(b.kinds) ? b.kinds : ACT_KINDS).map(k => Object.assign({ n: t(k.n, 40).trim(), c: ACT_CATS.includes(k.c) ? k.c : '레슨', link: !!k.link, off: !!k.off }, k.ko ? { ko: t(k.ko, 12).replace(/[|,]/g, ' ').trim() } : {})).filter(k => k.n).slice(0, 80), orchParts: 1, rev: (+c.rev || 0) + 1 };
     const cur = rows_(SH.ACTCFG);
     ACT_KEYS.forEach(k => {
       const s = JSON.stringify(val[k]); if (s.length > 45000) throw new Error(k + ' 내용이 너무 길어요.');
       const r = cur.find(x => String(x['항목']) === k);
       if (r) sh.cfg.getRange(r._row, 2).setValues([[s]]); else sh.cfg.appendRow([k, s]);
     });
+    try { consSync_(val.kinds); } catch (e) {}
     (b.log || []).slice(0, 50).forEach(x => sh.log.appendRow([stamp_(), a.name, t(x, 300)]));
     return { ok: true, rev: val.rev };
   } finally { try { lock.releaseLock(); } catch (x) {} }

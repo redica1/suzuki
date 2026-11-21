@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261121-165544 -->
+<!-- build: 20261121-165809 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -819,6 +819,30 @@ const evById=id=>D.events.find(e=>e.id===id);
 const short=n=>n.length>14?n.split(/[ ,]+/).filter(Boolean).slice(-1)[0]:n;
 function logIt(t){A.log.unshift({at:new Date().toLocaleString('ko-KR',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}),t});A.log=A.log.slice(0,300);PEND.push(t);save()}
 
+
+/* ---------- 11-21 오케스트라: Orch A~D 수업 전부에 같은 선생님 · 역할 · 악보 ---------- */
+const ORCH_RE=/^orch/i;
+function orTitles(){return [...new Set(D.events.filter(e=>ORCH_RE.test(e.title||'')).map(e=>e.title))].sort((x,y)=>x.localeCompare(y))}
+function orRoster(t){const ev=D.events.filter(e=>e.title===t),M={};ev.forEach(e=>e.ppl.forEach(p=>{const x=M[p.n]||(M[p.n]={n:p.n,r:{},c:0});x.r[p.r]=(x.r[p.r]||0)+1;x.c++}));
+  return Object.values(M).map(x=>({n:x.n,r:Object.keys(x.r).sort((a,b)=>x.r[b]-x.r[a])[0],c:x.c,all:x.c>=ev.length})).sort((a,b)=>NAME(a.n).localeCompare(NAME(b.n)))}
+function orRoles(){return [...new Set([].concat(D.roleSets['레슨']||[],D.roleSets['공연']||[],['Orch 보조','지휘']))]}
+function vOrchT(){const T=orTitles();if(!T.length)return '<div class="panel">이름이 「Orch」로 시작하는 일정이 없어요. 프로그램표에 「Orch A」 같은 수업을 먼저 넣어 주세요.</div>';
+  if(!T.includes(A.orT))A.orT=T[0];const t=A.orT,ev=D.events.filter(e=>e.title===t).sort((a,b)=>a.d-b.d||mins(a.s)-mins(b.s)),R=orRoster(t),inR=new Set(R.map(x=>x.n)),q=(A.orQ||'').trim();
+  const cand=D.people.filter(p=>!inR.has(p.id)&&!gone(p.id)&&(!q||(p.n+(p.acad||'')).includes(q))).slice(0,40),roles=orRoles();
+  if(!A.orF&&!A.orFL){A.orFL=1;call('orchFiles',[],r=>{A.orF=r||[];A.orFL=0;render()})}
+  const F=(A.orF||[]).filter(f=>f.o===t);
+  return `<div class="panel"><div class="row" style="gap:6px">${T.map(x=>`<button class="btn small ${x===t?'primary':''}" type="button" data-ort="${esc(x)}">${esc(x)} <small>${orRoster(x).length}</small></button>`).join('')}</div>
+  <p class="hint" style="margin:8px 0 0">수업 ${ev.length}회 · ${ev.map(e=>esc(D.days[e.d]+' '+e.s+' '+(e.room||''))).join(' · ')}<br>여기서 넣고 빼면 「${esc(t)}」 수업 ${ev.length}회 모두에 같이 바뀌어요. 「Orch 보조」는 시간이 겹쳐도 넣어져요.</p></div>
+  <div class="g2"><div class="panel"><b>선생님 · 역할 ${R.length}명</b><div class="tblw" style="margin-top:6px"><table class="pft"><thead><tr><th style="text-align:left">이름</th><th>역할</th><th>수업</th><th></th></tr></thead><tbody>
+  ${R.map(x=>`<tr><td style="text-align:left"><b>${esc(LB(x.n))}</b></td><td><select data-orr="${esc(x.n)}">${[...new Set(roles.concat(x.r))].map(r=>`<option ${r===x.r?'selected':''}>${esc(r)}</option>`).join('')}</select></td><td>${x.all?'모두':`<span class="pill due">${x.c}/${ev.length}</span>`}</td><td><button class="btn small ghost" type="button" data-orx="${esc(x.n)}">빼기</button></td></tr>`).join('')||'<tr><td colspan="4" class="hint">아직 없어요.</td></tr>'}</tbody></table></div></div>
+  <div class="panel"><b>선생님 넣기</b><div class="row" style="gap:6px;margin-top:6px"><span class="cap" style="margin:0">역할</span><select id="a_orRole">${roles.map(r=>`<option ${r===(A.orRole||'Orch 보조')?'selected':''}>${esc(r)}</option>`).join('')}</select></div>
+  <textarea id="a_orPaste" rows="2" placeholder="이름을 한꺼번에 붙여 넣기 (예: 강선주 김기쁨 이준현)" style="width:100%;margin-top:6px"></textarea><div class="row" style="justify-content:flex-end"><button class="btn small primary" type="button" id="a_orPasteGo">이름으로 넣기</button></div>${A.orMsg?`<p class="hint" style="color:#b3261e">${esc(A.orMsg)}</p>`:''}
+  <input type="text" id="a_orQ" value="${esc(q)}" placeholder="또는 이름 · 학원으로 찾기" style="width:100%;margin-top:6px"><div style="max-height:260px;overflow:auto;margin-top:6px">${cand.map(p=>`<div class="spread" style="padding:4px 0;border-bottom:1px solid var(--line)"><span>${esc(LB(p.id))} <small class="faint">${esc(p.acad||'')}</small></span><button class="btn small" type="button" data-ora="${esc(p.id)}">+ 넣기</button></div>`).join('')}</div></div></div>
+  <div class="panel"><div class="spread"><b>${esc(t)} 악보 ${F.length}</b><span class="hint">PDF · 이미지 · 한 파일 15MB까지 · 이 오케스트라 선생님이 새 접수 화면에서 받아요</span></div>
+  <div class="row" style="gap:6px;margin-top:8px"><select id="a_orPart">${['전체','바이올린','비올라','첼로','플루트'].map(x=>`<option>${x}</option>`).join('')}</select><input type="file" id="a_orFile" accept=".pdf,image/*"><button class="btn small primary" type="button" id="a_orUp">올리기</button></div>
+  ${F.map(f=>`<div class="spread" style="padding:6px 0;border-bottom:1px solid var(--line)"><span><b>${esc(f.name)}</b> <small class="faint">${esc(f.part)} · ${esc(f.size)} · ${esc(f.at)} · ${esc(f.by)}</small></span><span class="row" style="gap:6px"><a class="btn small" href="${esc(f.url)}" target="_blank" rel="noopener">열기</a><button class="btn small ghost" type="button" data-orfx="${esc(f.id)}">빼기</button></span></div>`).join('')||'<p class="hint">아직 올린 악보가 없어요.</p>'}</div>`}
+function orAdd(ids,role){const t=A.orT,ev=D.events.filter(e=>e.title===t),miss=[];ids.forEach(id=>ev.forEach(e=>{if(e.ppl.some(p=>p.n===id))return;const c=confOf(e,id,null,null,role);if(c){miss.push(LB(id)+' '+D.days[e.d]+' — '+c);return}e.ppl.push({n:id,r:role})}));
+  A.orMsg=miss.length?'겹쳐서 못 넣은 수업: '+miss.slice(0,6).join(' / ')+(miss.length>6?' …':''):'';refresh()}
 /* ---------- 계산: 횟수 · 겹침 · 못 오는 날 ---------- */
 function stats(){
   const st={};const get=n=>st[n]||(st[n]={n,days:D.days.map(()=>0),roles:{},cats:{},total:0,items:[]});
@@ -1169,11 +1193,20 @@ document.addEventListener('click',ev=>{if(!ACTON()||!D)return;const b=ev.target.
     else if(key[0]==='k'){const c=key.slice(2);D.kinds=CATS.flatMap(cc=>cc===c?keep.map(x=>({n:x.n,c,link:!!x.link,off:!!x.off})):kindsOf(cc))}
     else D.roleSets[key.slice(2)]=keep.map(x=>x.n);
     if(A.lst)delete A.lst[key];logIt(`목록 고침 (${key==='stage'?'공연 단계':key[0]==='s'?key.slice(2)+' 곡 · 클래스':key[0]==='k'?key.slice(2)+' 종류':key.slice(2)+' 역할'}): ${keep.map(x=>x.n).join(', ')}`);refresh();toast('저장했어요'+(ren?` · ${ren}곳 이름도 바꿈`:''));return}});
+document.addEventListener('change',ev=>{if(!ACTON()||!D)return;const t=ev.target;if(t.dataset&&t.dataset.orr){D.events.filter(e=>e.title===A.orT).forEach(e=>e.ppl.forEach(p=>{if(p.n===t.dataset.orr)p.r=t.value}));refresh();return}if(t.id==='a_orRole')A.orRole=t.value});
+document.addEventListener('input',ev=>{if(!ACTON()||!D)return;const t=ev.target;if(t.id==='a_orQ'&&!ev.isComposing){A.orQ=t.value;const c=t.selectionStart;render();const q=document.getElementById('a_orQ');if(q){q.focus();q.setSelectionRange(c,c)}}});
+document.addEventListener('compositionend',ev=>{if(ev.target.id==='a_orQ')ev.target.dispatchEvent(new Event('input',{bubbles:true}))});
 document.addEventListener('click',ev=>{if(!ACTON()||!D)return;const b=ev.target.closest('button');if(!b)return;
   if(b.id==='a_rtAdd'){rtSync();rtRows().push({n:'',l:'',c:'',e:'',on:D.days.map(()=>true)});render();const L=document.querySelectorAll('.a_rtin[data-f=n]');if(L.length)L[L.length-1].focus();return}
   if(b.dataset&&b.dataset.rtdel!==undefined){rtSync();RT.splice(+b.dataset.rtdel,1);render();return}
   if(b.id==='a_dayAdd'){rtSync();if(RT)RT.forEach(r=>r.on.push(r.on[r.on.length-1]||false));D.days.push((D.days.length+1)+'일째');D.rooms[D.days.length-1]=JSON.parse(JSON.stringify(D.rooms[D.days.length-2]||[]));logIt('날짜 추가: '+D.days[D.days.length-1]);refresh();return}
   if(b.id==='a_dayDel'){const i=D.days.length-1;if(D.events.some(e=>e.d===i)){toast('그날 일정이 있어요. 일정을 먼저 지워 주세요');return}rtSync();if(RT)RT.forEach(r=>r.on.pop());D.days.pop();delete D.rooms[i];logIt('날짜 빼기');refresh();return}
+  {const d=b.dataset||{};if(d.ort){A.orT=d.ort;A.orMsg='';render();return}
+  if(d.ora){orAdd([d.ora],(document.getElementById('a_orRole')||{}).value||'Orch 보조');return}
+  if(d.orx){D.events.filter(e=>e.title===A.orT).forEach(e=>{e.ppl=e.ppl.filter(p=>p.n!==d.orx)});refresh();return}
+  if(b.id==='a_orPasteGo'){const names=((document.getElementById('a_orPaste')||{}).value||'').split(/[\s,]+/).filter(Boolean),ids=[],bad=[];names.forEach(n=>{const L=D.people.filter(p=>p.n===n&&!gone(p.id));if(L.length===1)ids.push(L[0].id);else bad.push(n+(L.length>1?'(같은 이름 '+L.length+'명)':''))});orAdd(ids,(document.getElementById('a_orRole')||{}).value||'Orch 보조');if(bad.length)A.orMsg=(A.orMsg?A.orMsg+' · ':'')+'못 찾은 이름: '+bad.join(', ');render();return}
+  if(b.id==='a_orUp'){const f=(document.getElementById('a_orFile')||{}).files;if(!f||!f[0]){toast('파일을 골라 주세요');return}const x=f[0];if(x.size>15*1024*1024){toast('15MB까지 올릴 수 있어요');return}const part=document.getElementById('a_orPart').value;const rd=new FileReader();rd.onload=()=>{const b64=String(rd.result).split(',')[1];call('orchUpload',[A.orT,part,x.name,x.type||'application/pdf',b64],r=>{A.orF=r;render();toast('악보를 올렸어요')},'악보를 올리고 있어요…')};rd.readAsDataURL(x);return}
+  if(d.orfx){call('orchFileDel',[d.orfx],r=>{A.orF=r;render();toast('악보를 뺐어요')});return}}
   if(b.id==='a_setSave'){document.querySelectorAll('.a_dayin').forEach(el=>{const v=el.value.trim();if(v)D.days[+el.dataset.i]=v});
     rtSync();if(RT){const nm=RT.map(r=>r.n).filter(Boolean);if(new Set(nm).size!==nm.length){toast('같은 장소 이름이 두 번 있어요');return}D.days.forEach((x,d)=>{D.rooms[d]=RT.filter(r=>r.n&&r.on[d]).map(r=>{const c=+String(r.c||'').replace(/[^\d]/g,'');const o=[r.n,r.l||''];if(c||r.e)o.push(c||'');if(r.e)o.push(r.e);return o})});RT=null}
     logIt('날짜·장소 고침');refresh();toast('날짜·장소를 저장했어요');return}});
@@ -1221,14 +1254,14 @@ function vPrev(){
   ${pvHideBox(P)}
   <div class="row"><div class="seg pvtabs" role="group" aria-label="미리보기 탭">${tabs.map(([k,l])=>`<button type="button" data-apv="${k}" aria-pressed="${String(t)===String(k)}">${esc(l)}</button>`).join('')}</div></div>
   ${body}`}
-const TABS=[['grid','프로그램표'],['prev','미리보기 · 시트 보내기'],['count','교사별 횟수'],['who','교사별 일정'],['set','날짜 · 장소'],['log','바꾼 기록']];
+const TABS=[['grid','프로그램표'],['orch','오케스트라'],['prev','미리보기 · 시트 보내기'],['count','교사별 횟수'],['who','교사별 일정'],['set','날짜 · 장소'],['log','바꾼 기록']];
 function view(){
   if(!D){if(!LOADING&&!ERR)load();return `<div class="panel">${ERR?`<span class="err">교사 일정을 불러오지 못했어요 · ${esc(ERR)}</span> <button class="btn small" type="button" id="a_retry">다시</button>`:'교사 일정을 불러오고 있어요…'}</div>`}
   const zero=P().filter(p=>p.kind!=='연수생'&&!ST.st[p.id]).length, cl=Object.values(ST.st).filter(x=>x.clash||x.off).length;
   const tabs=`<div class="panel"><div class="spread"><div class="row" style="gap:6px">${TABS.filter(t=>t[0]!=='set'||!ME().sup).map(([k,l])=>`<button class="btn small ${A.tab===k?'primary':''}" type="button" data-atab="${k}">${l}${k==='count'&&(zero+cl)?` <span class="pill due">${zero+cl}</span>`:''}</button>`).join('')}</div>
     <div class="row" style="gap:6px"><span class="pill ok" id="a_stat">시트와 같음</span><span class="hint">고치면 1~2초 뒤 시트 「교사일정」에 저장돼요</span></div></div></div>`;
   if(!D.days.length&&A.tab!=='set')A.tab='set';if(A.tab==='set'&&ME().sup){if(!D.days.length)return `<div class="act">${tabs}<div class="panel">날짜가 없어요. 「설정 › 캠프 설정 › 홀 설정」에서 캠프 날짜를 넣어 주세요.</div></div>`;A.tab='grid'}
-  const body={grid:vGrid,prev:vPrev,count:vCount,who:vWho,set:vSet,log:vLog}[A.tab]();
+  const body={grid:vGrid,orch:vOrchT,prev:vPrev,count:vCount,who:vWho,set:vSet,log:vLog}[A.tab]();
   setTimeout(()=>stat());
   return `<div class="act">${tabs}${body}</div>`}
 document.addEventListener('click',ev=>{if(!ACTON())return;const b=ev.target.closest('button');if(b&&b.id==='a_retry'){ERR='';load();render()}});
@@ -1906,7 +1939,7 @@ const visTabs=()=>TABS.concat(SUP_TABS).filter(([k])=>permOf(k));
   try{google.script.url.getLocation(l=>{const t=((l&&l.parameter)||{}).tab;if(!t||!/^[a-z]{2,12}$/.test(t))return;if(S.D){if(okT(t))goTab(t)}else{S.urlTab=t;S.goAfter=t}})}catch(e){}
 })();
 const RO=()=>permOf(S.tab)==='보기';
-const WRITE_FN=/^(adminFamOk|adminFamCancel|adminLate|audEdit|audDel|devAud|devAudClear|audSet|audPub|devSummer|adminNoticeSave|adminMenuSave|scholSave|adminConfirm|adminAdjust|adminSetBankAcct|ogSave|ogToken|adminRejectReport|adminSaveEns|adminSaveProfs|adminRefund|adminSetIssue|schedSave|lessonSet|adminSetSetting|roomSave|conSave|campSave|staffSave|songEnSave|pvHideSave|roomCfgSave|layoutImport|roomMove|budSave|mealIssue|mealDel|bookSave|bookImgPut|bookSheetPut|songEnSave|mcSave)$/;
+const WRITE_FN=/^(orchUpload|orchFileDel|adminFamOk|adminFamCancel|adminLate|audEdit|audDel|devAud|devAudClear|audSet|audPub|devSummer|adminNoticeSave|adminMenuSave|scholSave|adminConfirm|adminAdjust|adminSetBankAcct|ogSave|ogToken|adminRejectReport|adminSaveEns|adminSaveProfs|adminRefund|adminSetIssue|schedSave|lessonSet|adminSetSetting|roomSave|conSave|campSave|staffSave|songEnSave|pvHideSave|roomCfgSave|layoutImport|roomMove|budSave|mealIssue|mealDel|bookSave|bookImgPut|bookSheetPut|songEnSave|mcSave)$/;
 const roBlock=fn=>WRITE_FN.test(fn)&&permOf(S.tab)!=='편집';
 const RO_MSG='보기만 할 수 있는 메뉴예요. 바꾸려면 총관리자에게 「편집」 권한을 받아 주세요.';
 

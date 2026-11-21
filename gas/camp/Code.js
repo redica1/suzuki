@@ -1,4 +1,4 @@
-/* build: 20261121-165544 */
+/* build: 20261121-165809 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -1200,6 +1200,33 @@ function adminAdjust(token, pid, fee, room, memo) {
 }
 
 
+
+/* ================= 오케스트라 악보 (11-21) =================
+ * 시트 「악보」 · 파일은 드라이브 「캠프 악보 (캠프코드)」 폴더 · 링크가 있는 사람 보기(로그인한 선생님 화면에만 링크를 보여 줌) */
+const ORF_SH = '악보', ORF_HEAD = ['ID', '오케', '악기', '이름', '파일ID', '크기', '올린 때', '올린 사람'];
+function orfSheet_() { const ss = SpreadsheetApp.getActive(); let sh = ss.getSheetByName(ORF_SH); if (!sh) { sh = ss.insertSheet(ORF_SH); sh.appendRow(ORF_HEAD); sh.setFrozenRows(1); } return sh; }
+function orfList_() { orfSheet_(); return rows_(ORF_SH).filter(r => r['ID']).map(r => ({ id: String(r['ID']), o: String(r['오케']), part: String(r['악기'] || '전체'), name: String(r['이름']), fid: String(r['파일ID']), size: String(r['크기'] || ''), at: String(r['올린 때'] || '').slice(0, 16), by: String(r['올린 사람'] || ''), url: 'https://drive.google.com/file/d/' + String(r['파일ID']) + '/view', _row: r._row })); }
+function orfFolder_() { const P = PropertiesService.getScriptProperties(); let id = P.getProperty('orchFolder');
+  if (id) { try { return DriveApp.getFolderById(id); } catch (e) {} }
+  const f = DriveApp.createFolder('캠프 악보 ' + ((camp_().base || {}).id || '')); P.setProperty('orchFolder', f.getId()); return f; }
+function orchFiles(token) { adm_(token); return orfList_().map(x => { delete x._row; return x; }); }
+function orchUpload(token, o, part, name, mime, b64) {
+  const a = adm_(token); need_(a, 'act');
+  o = String(o || '').slice(0, 40); part = ['전체', '바이올린', '비올라', '첼로', '플루트'].includes(part) ? part : '전체'; name = String(name || '악보').slice(0, 120);
+  if (!/^(application\/pdf|image\/(png|jpeg|gif|webp))$/.test(String(mime))) throw new Error('PDF나 그림 파일만 올릴 수 있어요.');
+  const bytes = Utilities.base64Decode(String(b64 || '')); if (bytes.length > 15 * 1024 * 1024) throw new Error('15MB까지 올릴 수 있어요.');
+  const file = orfFolder_().createFile(Utilities.newBlob(bytes, mime, name)); try { file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW); } catch (e) {}
+  const kb = bytes.length / 1024, size = kb > 1024 ? (kb / 1024).toFixed(1) + 'MB' : Math.round(kb) + 'KB';
+  orfSheet_().appendRow(['M' + Date.now().toString(36), o, part, name, file.getId(), size, stamp_(), a.name]);
+  log_('관리자 ' + a.name, '악보 올림', o + ' · ' + part + ' · ' + name);
+  return orchFiles(token);
+}
+function orchFileDel(token, id) { const a = adm_(token); need_(a, 'act'); const r = orfList_().find(x => x.id === id); if (r) { try { DriveApp.getFileById(r.fid).setTrashed(true); } catch (e) {} orfSheet_().deleteRow(r._row); log_('관리자 ' + a.name, '악보 뺌', r.o + ' · ' + r.name); } return orchFiles(token); }
+/** 새 접수 화면: 내가 들어간 오케스트라(교사 일정 「Orch …」) · 역할 · 수업 · 악보 (전체 + 내 악기) */
+function orchMine(token) { const u = who_(token); if (!u.tid) return [];
+  const pid = 'C:t_' + u.tid, c = actCfg_(), days = c.days || [], me = teachers_().find(t => t.id === u.tid) || {}, F = orfList_(), G = {};
+  actEvents_().filter(e => /^orch/i.test(e.title) && e.ppl.some(p => p.n === pid)).sort((a, b) => a.d - b.d || String(a.s).localeCompare(String(b.s))).forEach(e => { const g = G[e.title] || (G[e.title] = { o: e.title, roles: {}, times: [] }); const p = e.ppl.find(x => x.n === pid); g.roles[p.r] = 1; g.times.push((days[e.d] || '') + ' ' + e.s + '~' + e.e + (e.room ? ' · ' + e.room : '')); });
+  return Object.values(G).map(g => ({ o: g.o, role: Object.keys(g.roles).join(' · '), times: g.times, files: F.filter(f => f.o === g.o && (f.part === '전체' || f.part === me.inst)).map(f => ({ name: f.name, part: f.part, size: f.size, url: f.url })) })); }
 /* ================= 가족방 신청 (11-21 새 접수) =================
  * 캠프 신청한 사람끼리 따로 묶는 가족방. 다른 학원 형제도 함께. 대표는 학생 · 교사.
  * 빈자리 금액(정원 - 인원) × 빈자리 금액은 사람 참가비와 따로 한 줄로 입금 신고 · 확인 */

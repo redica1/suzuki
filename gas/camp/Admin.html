@@ -741,7 +741,7 @@ const TG_INST=['Vn','Vc','Fl'];
 /* 대상 권수: 토큰 = 권(Pre·1~10) + 파트(A·B, Vn만 · 비우면 그 권 전체) + 「+」(그 권 이상)  예) 1 · 1A · 4B+ · 7+ */
 const TG_BK=['Pre','1','2','3','4','5','6','7','8','9','10'];
 const TG_AB={Vn:true,Vc:false,Fl:false};
-const TG_SPECIAL=['지정학생','초급교사','연수교사','전체교사'];
+const TG_SPECIAL=['전체학생','지정학생','초급교사','연수교사','전체교사'];
 const tkP=t=>{const m=String(t).match(/^(Pre|\d+)([AB]*)(\+?)$/);return m?{bk:m[1],pt:m[2],up:!!m[3]}:null};
 const tkS=o=>o.bk+(o.pt==='A'||o.pt==='B'?o.pt:'')+(o.up?'+':'');
 /* 예전 자료(1A·1B 따로, 10+)도 같은 권은 하나로 */

@@ -287,7 +287,7 @@ function rosTables(ros){const st=x=>(P.picked.find(q=>q.n===x.n)||null),D='<span
  ins.forEach(n=>G.push({k:'i_'+n,l:n,L:A.filter(o=>o.m.k!=='교사'&&(o.m.i||'기타')===n)}));
  const GG=G.filter(g=>g.L.length);
  const row=o=>{const m=o.m,stu=m.k!=='교사',on=has(m.n,m.a),G=o.g;return `<tr class="${G?'gone':on?'onr':''}" data-s="${esc(m.n)}"><td><input type="checkbox" data-rc="${o.i}" ${G?'disabled':on?'checked disabled':P.chk[o.i]?'checked':''} aria-label="${esc(m.n)} 선택"></td><td class="l nmc"><span class="kind ${stu?'ks':''}">${stu?'학생':'교사'}</span><b>${esc(m.n)}</b></td>
-  <td>${stu&&m.y?2027-1-m.y:D}</td><td>${esc(IAB[m.i]||m.i||'-')}</td><td>${stu&&m.t?esc(m.t):D}</td><td>${G?`<span class="gdone">${esc(String(G.at||'').slice(3,8).replace('.','/').replace(/^0/,''))}</span>`:rcpt(m)}</td><td>${dues(m)}</td><td>${G||on?'':`<button class="btn sm" type="button" data-r1="${o.i}">추가</button>`}</td></tr>`};
+  <td>${stu&&m.y?2027-1-m.y:D}</td><td>${esc(IAB[m.i]||m.i||'-')}</td><td>${stu&&m.t?esc(m.t):D}</td><td>${G?`<span class="gdone">${esc(String(G.at||'').slice(3,8).replace('.','/').replace(/^0/,''))}${G.owner||WHO?`<br><small>${esc(G.owner||WHO)}</small>`:''}</span>`:rcpt(m)}</td><td>${dues(m)}</td><td>${G||on?'':`<button class="btn sm" type="button" data-r1="${o.i}">추가</button>`}</td></tr>`};
  const nck=Object.keys(P.chk).filter(k=>P.chk[k]).length,allOn=L=>{L=L.filter(o=>!o.g);return L.length&&L.every(o=>has(o.m.n,o.m.a)||P.chk[o.i])};
  const cur=S.rg&&GG.some(g=>g.k===S.rg)?S.rg:'';
  return `<div class="panel rosP">

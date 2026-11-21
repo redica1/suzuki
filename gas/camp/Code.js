@@ -1,4 +1,4 @@
-/* build: 20261121-163837 */
+/* build: 20261121-165544 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -2056,7 +2056,7 @@ function progCell_(e, c, nameOf) {
     if (E) L.push(E);
   }
   if (e.sub && !H.f.has('sub')) L.push(e.sub);
-  if (!H.f.has('desc')) (e.desc || []).forEach(x => L.push(x));
+  if (!H.f.has('desc')) { const D = e.desc || []; if (D.includes('[별지]')) L.push('(별지 참조)'); else D.forEach(x => L.push(x)); }   /* 11-21 묶음 일정: [별지] = 세부 순서는 별지로 */
   const ppl = e.ppl.filter(p => !H.r.has(e.cat + ':' + p.r));
   const order = ((c.roleSets || {})[e.cat] || []).slice(); ppl.forEach(p => { if (!order.includes(p.r)) order.push(p.r); });
   const G = order.map(r => ({ r, n: ppl.filter(p => p.r === r).map(p => nameOf(p.n)) })).filter(g => g.n.length);
@@ -2076,7 +2076,7 @@ function progCellS_(e, c, nameOf, t0, e0) {
     if (e.cat !== '레슨' || (e.title && e.title !== '그룹레슨')) { o.b.unshift(ttl); if (en[e.title]) EN.unshift(en[e.title] + (stage && en[stage] ? ' ' + en[stage] : '')); }
   } else { o.h.push(ttl); const E = [en[e.title] || '', stage ? (en[stage] || '') : ''].filter(Boolean).join(' '); if (E) EN.push(E); }
   if (e.sub && !H.f.has('sub')) o.b.push(e.sub);
-  if (!H.f.has('desc')) (e.desc || []).forEach(x => o.b.push(x));
+  if (!H.f.has('desc')) { const D = e.desc || []; if (D.includes('[별지]')) o.b.push('(별지 참조)'); else D.forEach(x => o.b.push(x)); }
   const ppl = e.ppl.filter(p => !H.r.has(e.cat + ':' + p.r)), order = ((c.roleSets || {})[e.cat] || []).slice(); ppl.forEach(p => { if (!order.includes(p.r)) order.push(p.r); });
   const G = order.map(r => ({ r, n: ppl.filter(p => p.r === r).map(p => nameOf(p.n)) })).filter(g => g.n.length);
   if (G.length) { o.l = G[0].n.join(', '); G.slice(1).forEach(g => o.a.push(...g.n)); }
@@ -2606,7 +2606,7 @@ function exportProgram(token) {
  * 담당자 = 교사 회원 중에서 골라 메뉴마다 편집 / 보기 / 없음 → 관리자 화면에 이름 + 휴대전화로 로그인 */
 const STAFF = '담당자';
 const STAFF_HEAD = ['교사ID', '이름', '학원', '권한', '사용', '메모', '바꾼 날'];
-const ADMIN_TABS = [['home', '한눈에'], ['subs', '접수 · 입금 확인'], ['rp', '입금 신고'], ['fam', '가족방'], ['cx', '취소 · 환불'], ['ens', '앙상블'], ['aud', '음원 심사'], ['prof', '교수진'], ['act', '교사 일정'], ['tt', '개인레슨'], ['room', '방 배정'], ['con', '오후음악회'], ['mcs', '마스터클래스'], ['meal', '식권'], ['book', '행사 책자'], ['stat', '통계'], ['q', '게시판'], ['ntc', '공지사항'], ['schol', '장학금'], ['mem', '회원 명단'], ['bplan', '예산 계획'], ['bset', '결산'], ['camp', '캠프 설정']];
+const ADMIN_TABS = [['home', '한눈에'], ['subs', '접수 · 입금 확인'], ['rp', '입금 신고'], ['fam', '가족방'], ['cx', '취소 · 환불'], ['ens', '앙상블'], ['aud', '음원 심사'], ['prof', '교수진'], ['act', '교사 일정'], ['tt', '개인레슨'], ['room', '방 배정'], ['con', '오후음악회'], ['mcs', '마스터클래스'], ['meal', '식권'], ['book', '행사 책자'], ['stat', '통계'], ['q', '게시판'], ['ntc', '공지사항'], ['schol', '장학금'], ['mem', '회원 명단'], ['bplan', '예산 계획'], ['bset', '결산'], ['camp', '캠프 설정'], ['pmod', '모듈별 인쇄']];
 function staff_() {
   return rows_(STAFF).filter(r => r['교사ID']).map(r => { let p = {}; try { p = JSON.parse(String(r['권한'] || '{}')); } catch (x) {}
     return { tid: String(r['교사ID']), name: String(r['이름']), acad: String(r['학원'] || ''), perms: p, on: String(r['사용'] || '예') !== '아니오', memo: String(r['메모'] || '') }; });

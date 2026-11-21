@@ -1,4 +1,4 @@
-/* build: 20261121-161427 */
+/* build: 20261121-162323 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -715,7 +715,8 @@ function bundle_(acads, owner) {
   try { cxAmt_(all.filter(sb => acads.includes(sb.acad))); } catch (x) {}
   /* 보이는 접수 (11-14 사용자 지시): 내가 낸 접수 + 원장이면 내 학원 접수 전부. 원장이 아닌 선생님에게 다른 사람 접수(관리자 · 원장이 낸 것 포함)는 보내지 않음 */
   let heads = []; try { teachers_().filter(t => t.name === owner && t.role === '원장').forEach(t => (t.acads || []).forEach(a => heads.push(a))); } catch (x) {}
-  const vis = all.filter(sb => acads.includes(sb.acad) && (sb.owner === owner || (heads.includes(sb.acad) && sb.acad !== GUEST_ACAD && sb.acad !== STAFF_ACAD && sb.acad !== NOACAD)));
+  /* 11-21 사용자 지시: 선생님도 우리 학원 접수는 모두 봄 (고치기는 canEdit_ = 낸 사람 · 원장만) */
+  const vis = all.filter(sb => acads.includes(sb.acad) && (sb.owner === owner || (sb.acad !== GUEST_ACAD && sb.acad !== STAFF_ACAD && sb.acad !== NOACAD)));
   let aud = null; try { aud = audMine_(vis); } catch (x) {}
   let audPre = {}; try { audPre = audPreMap_(acads); } catch (x) {}
   /* 중복 접수 막기용: 남의 접수 내용은 보내지 않고 「이미 접수된 사람」 번호만 (학생 = 내 학원들, 선생님 = 모든 학원) */
@@ -1160,9 +1161,9 @@ function recalc_(sb) {
     p.type = i.type; p.fee = FEES[i.type][pr];
     if (intl) { p.usd = +FEES[i.type][pr] || 0; p.fee = Math.round(p.usd * (+OPT.usdRate || 1450)); }   /* 해외: 참가비표 값 = USD, 원화 청구액 = USD × 환율 */ const mcU = intl && plays ? (i.mc || []).reduce((t, n) => { const m = mcList_().find(x => x.n === n); return t + (m ? intlMcUsd_(OPT, m.fee) : 0); }, 0) : 0;
     p.lesson = intl ? Math.round((les * INTL_USD(OPT).lesson + mcU) * (+OPT.usdRate || 1450)) : les * OPT.lessonFee + mc; if (intl) { p.lessonUsd = les * INTL_USD(OPT).lesson; p.mcUsd = mcU; }
-    p.dues = paid ? 0 : (isT ? OPT.teacherDues : OPT.studentDues);
+    { const lt = !paid && isT && !!(ADJ[p.id] && ADJ[p.id].late); p.dues = paid ? 0 : (isT ? OPT.teacherDues + (lt ? LATE_FEE : 0) : OPT.studentDues); if (lt) p.late = true; else delete p.late; }   /* 늦게 낸 교사 +2만 (11-21) */
     p.room = roomBy[k] !== undefined ? Math.max(0, roomBy[k] - (+(((f.roomCredit || {})[k]) || {}).amt || 0)) : ((f.room || {})[k] ? 0 : (+((f.roomPen || {})[k]) || 0));   /* 넘겨받은 가족방 금액만큼 덜 냄 (11-11) */   /* 가족방만 취소한 대표: 남은 취소 수수료 (11-11) */
-    const aj = ADJ[p.id]; if (aj) { if (aj.fee !== '') p.fee = +aj.fee; if (aj.room !== '') p.room = +aj.room; p.adj = aj.memo || '운영진 조정'; } else delete p.adj;   /* 운영진 청구 조정 (11-01) */
+    const aj = ADJ[p.id]; if (aj && (aj.fee !== '' || aj.room !== '')) { if (aj.fee !== '') p.fee = +aj.fee; if (aj.room !== '') p.room = +aj.room; p.adj = aj.memo || '운영진 조정'; } else delete p.adj;   /* 운영진 청구 조정 (11-01) */
   });
   return sb;
 }
@@ -1178,8 +1179,8 @@ function repriceTick_(force) {
   return { n, more };
 }
 /* ---------- 운영진 청구 조정 (11-01): 사람마다 참가비 · 가족방비를 직접 정함 (관계자 가족 무료 등 그때그때) ---------- */
-const ADJ_SH = '청구조정', ADJ_HEAD = ['참가자ID', '참가비', '가족방비', '메모', '수정일', '수정자'];
-function adjMap_() { const m = {}; rows_(ADJ_SH).forEach(r => { const id = String(r['참가자ID'] || ''); if (id) m[id] = { fee: String(r['참가비'] === '' || r['참가비'] == null ? '' : r['참가비']), room: String(r['가족방비'] === '' || r['가족방비'] == null ? '' : r['가족방비']), memo: String(r['메모'] || '') }; }); return m; }
+const ADJ_SH = '청구조정', ADJ_HEAD = ['참가자ID', '참가비', '가족방비', '메모', '수정일', '수정자', '늦은회비'];
+function adjMap_() { const m = {}; rows_(ADJ_SH).forEach(r => { const id = String(r['참가자ID'] || ''); if (id) m[id] = { fee: String(r['참가비'] === '' || r['참가비'] == null ? '' : r['참가비']), room: String(r['가족방비'] === '' || r['가족방비'] == null ? '' : r['가족방비']), memo: String(r['메모'] || ''), late: String(r['늦은회비'] || '') === '예' }; }); return m; }
 function adminAdjust(token, pid, fee, room, memo) {
   const a = adm_(token); need_(a, ['subs']); pid = String(pid || '');
   const num = v => v === '' || v == null ? '' : Math.max(0, +String(v).replace(/[^\d]/g, '') || 0);
@@ -1187,8 +1188,9 @@ function adminAdjust(token, pid, fee, room, memo) {
   try {
     const ss = SpreadsheetApp.getActive(); let sh = ss.getSheetByName(ADJ_SH);
     if (!sh) { sh = ss.insertSheet(ADJ_SH); sh.getRange(1, 1, 1, ADJ_HEAD.length).setValues([ADJ_HEAD]).setFontWeight('bold'); sh.setFrozenRows(1); }
-    const row = [pid, num(fee), num(room), String(memo || '').slice(0, 100), stamp_(), a.name], clear = row[1] === '' && row[2] === '';
-    const r = rows_(ADJ_SH).find(x => String(x['참가자ID']) === pid);
+    if (sh.getLastColumn() < ADJ_HEAD.length) sh.getRange(1, 1, 1, ADJ_HEAD.length).setValues([ADJ_HEAD]).setFontWeight('bold');
+    const r = rows_(ADJ_SH).find(x => String(x['참가자ID']) === pid), lt = r && String(r['늦은회비'] || '') === '예' ? '예' : '';
+    const row = [pid, num(fee), num(room), String(memo || '').slice(0, 100), stamp_(), a.name, lt], clear = row[1] === '' && row[2] === '' && !lt;
     if (r) { if (clear) sh.deleteRow(r._row); else sh.getRange(r._row, 1, 1, ADJ_HEAD.length).setValues([row]); } else if (!clear) sh.appendRow(row);
     const sb = loadSubs_().find(x => x.ppl.some(p => p.id === pid)); if (!sb) throw new Error('참가자를 찾지 못했어요.');
     recalc_(sb); writeSub_(sb);
@@ -1197,6 +1199,97 @@ function adminAdjust(token, pid, fee, room, memo) {
   return adminData(token);
 }
 
+
+/* ================= 가족방 신청 (11-21 새 접수) =================
+ * 캠프 신청한 사람끼리 따로 묶는 가족방. 다른 학원 형제도 함께. 대표는 학생 · 교사.
+ * 빈자리 금액(정원 - 인원) × 빈자리 금액은 사람 참가비와 따로 한 줄로 입금 신고 · 확인 */
+const FAMR_SH = '가족방신청', FAMR_HEAD = ['ID', '대표ID', '대표', '학원', '낸 사람', '가족', '인원', '빈자리', '금액', '상태', '입금', '입금자', '입금일', '확인액', '확인일', '만든 때', '고친 때'];
+function famSheet_() { const ss = SpreadsheetApp.getActive(); let sh = ss.getSheetByName(FAMR_SH); if (!sh) { sh = ss.insertSheet(FAMR_SH); sh.getRange(1, 1, 1, FAMR_HEAD.length).setValues([FAMR_HEAD]).setFontWeight('bold'); sh.setFrozenRows(1); sh.getRange(2, 1, 1000, FAMR_HEAD.length).setNumberFormat('@'); } return sh; }
+function famRooms_() {
+  return rows_(FAMR_SH).filter(r => r['ID']).map(r => { let mem = []; try { mem = JSON.parse(String(r['가족'] || '[]')); } catch (e) {}
+    return { id: String(r['ID']), rep: String(r['대표ID'] || ''), repName: String(r['대표'] || ''), acad: String(r['학원'] || ''), owner: String(r['낸 사람'] || ''), mem, n: +r['인원'] || mem.length, empty: +r['빈자리'] || 0, amt: +r['금액'] || 0,
+      st: String(r['상태'] || '정상'), pay: String(r['입금'] || '전'), payer: String(r['입금자'] || ''), payDate: dstr_(r['입금일']), ok: +r['확인액'] || 0, okDate: dstr_(r['확인일']), at: String(r['만든 때'] || ''), up: String(r['고친 때'] || ''), _row: r._row }; });
+}
+function famWrite_(sh, r) { const row = [r.id, r.rep, r.repName, r.acad, r.owner, JSON.stringify(r.mem), r.mem.length, r.empty, r.amt, r.st, r.pay, r.payer || '', r.payDate || '', r.ok || '', r.okDate || '', r.at, stamp_()];
+  if (r._row) sh.getRange(r._row, 1, 1, row.length).setValues([row]); else sh.appendRow(row); }
+function famVis_(u, rooms) { return rooms.filter(r => r.st !== '취소' && (u.acads.includes(r.acad) || r.mem.some(m => u.acads.includes(m.acad)))); }
+function famPeople_(subs) { const m = {}; subs.forEach(sb => sb.ppl.forEach(p => { if (p.status === '정상' || p.status === '취소요청') m[p.id] = { id: p.id, name: p.name, acad: sb.acad, kind: p.kind, inst: p.inst || '', owner: sb.owner }; })); return m; }
+/** 새 화면이 처음 · 저장 뒤마다 부름: 보이는 가족방 + 학원 이름 목록 */
+function famList(token) { const u = who_(token); const ts = teachers_(); const acads = [...new Set([].concat(...ts.map(t => t.acads || [])))].filter(Boolean).sort();
+  return { ok: true, rooms: famVis_(u, famRooms_()).map(r => { const o = Object.assign({}, r); delete o._row; return o; }), acads, cap: +camp_().opt.roomCap || 4, emptyFee: +camp_().opt.roomEmptyFee || 0 }; }
+/** 다른 학원 형제 찾기: 그 학원에 캠프 신청한 사람 이름만 (2글자 이상 · 개인정보 없이) */
+function famFind(token, acad, q) { const u = who_(token); q = String(q || '').trim(); acad = String(acad || '');
+  const P = famPeople_(loadSubs_()); return Object.values(P).filter(p => p.acad === acad && (!q || p.name.indexOf(q) >= 0)).slice(0, 60).map(p => ({ id: p.id, name: p.name, acad: p.acad, kind: p.kind, inst: p.inst })); }
+function famSave(token, room) {
+  const u = who_(token); regGate_();
+  const lock = lock_();
+  try {
+    const sh = famSheet_(), all = famRooms_(), subs = loadSubs_(), P = famPeople_(subs), C = camp_().opt, cap = +C.roomCap || 4, fee = +C.roomEmptyFee || 0;
+    const cur = room.id ? all.find(r => r.id === room.id) : null;
+    if (room.id && !cur) throw new Error('가족방을 찾지 못했어요. 새로 고쳐 주세요.');
+    if (cur && !(cur.owner === u.name || (u.heads || []).includes(cur.acad))) throw new Error(cur.owner + ' 선생님이 신청한 가족방이라 고칠 수 없어요.');
+    if (cur && cur.pay !== '전') throw new Error('입금 신고한 가족방은 고칠 수 없어요. 먼저 신고를 취소해 주세요.');
+    const rep = P[room.rep]; if (!rep) throw new Error('대표를 캠프 신청한 사람 중에서 골라 주세요.');
+    if (!u.acads.includes(rep.acad)) throw new Error('대표는 우리 학원 사람이어야 해요.');
+    if (!['학생', '교사'].includes(rep.kind)) throw new Error('대표는 학생 또는 교사여야 해요.');
+    const ids = [...new Set([room.rep].concat(room.mem || []))];
+    const mem = ids.map(id => { const p = P[id]; if (!p) throw new Error('캠프 신청한 사람만 넣을 수 있어요. 새로 고쳐 주세요.'); return { id, name: p.name, acad: p.acad, kind: p.kind }; });
+    if (mem.length < 2) throw new Error('가족방은 2명 이상이에요.');
+    if (mem.length > (+C.roomMax || 6)) throw new Error('가족방은 ' + (+C.roomMax || 6) + '명까지예요.');
+    const busy = all.filter(r => r.st !== '취소' && (!cur || r.id !== cur.id)); mem.forEach(m => { const o = busy.find(r => r.mem.some(x => x.id === m.id)); if (o) throw new Error(m.name + '은(는) 이미 ' + o.repName + ' 가족방에 있어요.'); });
+    const empty = Math.max(0, cap - mem.length);
+    const r = cur || { id: 'F' + Date.now().toString(36).toUpperCase(), owner: u.name, at: stamp_(), st: '정상', pay: '전' };
+    Object.assign(r, { rep: room.rep, repName: rep.name, acad: rep.acad, mem, empty, amt: empty * fee });
+    famWrite_(sh, r); log_(u.name, cur ? '가족방 고침' : '가족방 신청', r.id + ' · ' + rep.name + ' · ' + mem.length + '명');
+  } finally { lock.releaseLock(); }
+  return famList(token);
+}
+function famDel(token, id) { const u = who_(token); const lock = lock_();
+  try { const sh = famSheet_(), r = famRooms_().find(x => x.id === id); if (!r) throw new Error('가족방을 찾지 못했어요.');
+    if (!(r.owner === u.name || (u.heads || []).includes(r.acad))) throw new Error('신청한 선생님만 취소할 수 있어요.');
+    if (r.pay !== '전') throw new Error('입금 신고한 가족방은 운영진에게 취소를 요청해 주세요.');
+    r.st = '취소'; famWrite_(sh, r); log_(u.name, '가족방 취소', r.id + ' · ' + r.repName);
+  } finally { lock.releaseLock(); } return famList(token); }
+/** 가족방 빈자리 금액 입금 신고 · 수정 (name/date) · 취소 (name 빈칸) */
+function famPay(token, ids, name, date) { const u = who_(token); name = String(name || '').trim().slice(0, 40); date = String(date || '').slice(0, 10);
+  if (name && !/^\d{4}-\d{2}-\d{2}$/.test(date)) throw new Error('입금일을 골라 주세요.');
+  const lock = lock_();
+  try { const sh = famSheet_(), all = famRooms_();
+    [].concat(ids || []).forEach(id => { const r = all.find(x => x.id === id); if (!r || r.st === '취소') return;
+      if (!(r.owner === u.name || (u.heads || []).includes(r.acad))) throw new Error(r.repName + ' 가족방은 신청한 선생님만 신고할 수 있어요.');
+      if (r.pay === '확인') throw new Error(r.repName + ' 가족방은 입금 확인이 끝났어요.');
+      if (name) { r.pay = '신고'; r.payer = name; r.payDate = date; } else { r.pay = '전'; r.payer = ''; r.payDate = ''; }
+      famWrite_(sh, r); log_(u.name, name ? '가족방 입금 신고' : '가족방 신고 취소', r.id + ' · ' + r.amt); });
+  } finally { lock.releaseLock(); } return famList(token); }
+/** 관리자: 가족방 목록 · 입금 확인 (amt 0 이면 되돌리기) · 취소 */
+function adminFam(token) { const a = adm_(token); return famRooms_().map(r => { const o = Object.assign({}, r); delete o._row; return o; }); }
+function adminFamOk(token, id, amt, date) { const a = adm_(token); need_(a, ['fam', 'subs']); const lock = lock_();
+  try { const sh = famSheet_(), r = famRooms_().find(x => x.id === id); if (!r) throw new Error('가족방을 찾지 못했어요.');
+    amt = Math.max(0, +String(amt || '').replace(/[^\d]/g, '') || 0);
+    if (amt > 0) { r.ok = amt; r.okDate = String(date || today_()).slice(0, 10); r.pay = '확인'; } else { r.ok = 0; r.okDate = ''; r.pay = r.payer ? '신고' : '전'; }
+    famWrite_(sh, r); log_('관리자 ' + a.name, amt ? '가족방 입금 확인' : '가족방 확인 되돌림', r.id + ' · ' + amt);
+  } finally { lock.releaseLock(); } return adminFam(token); }
+function adminFamCancel(token, id) { const a = adm_(token); need_(a, ['fam', 'subs']); const lock = lock_();
+  try { const sh = famSheet_(), r = famRooms_().find(x => x.id === id); if (!r) throw new Error('가족방을 찾지 못했어요.'); r.st = r.st === '취소' ? '정상' : '취소'; famWrite_(sh, r); log_('관리자 ' + a.name, r.st === '취소' ? '가족방 취소' : '가족방 되살림', r.id); }
+  finally { lock.releaseLock(); } return adminFam(token); }
+/** 늦게 낸 교사 회비 (11-21): 관리자가 체크하면 교사 회비에 2만 원을 더함 (신규 교사 회비 30만 원 + 2만) */
+const LATE_FEE = 20000;
+function adminLate(token, pid, on) {
+  const a = adm_(token); need_(a, ['subs']); pid = String(pid || '');
+  const lock = lock_();
+  try {
+    const ss = SpreadsheetApp.getActive(); let sh = ss.getSheetByName(ADJ_SH);
+    if (!sh) { sh = ss.insertSheet(ADJ_SH); sh.setFrozenRows(1); }
+    if (sh.getLastColumn() < ADJ_HEAD.length) sh.getRange(1, 1, 1, ADJ_HEAD.length).setValues([ADJ_HEAD]).setFontWeight('bold');
+    const r = rows_(ADJ_SH).find(x => String(x['참가자ID']) === pid);
+    if (r) { const fee = r['참가비'], room = r['가족방비']; if (!on && (fee === '' || fee == null) && (room === '' || room == null)) sh.deleteRow(r._row); else sh.getRange(r._row, 5, 1, 3).setValues([[stamp_(), a.name, on ? '예' : '']]); }
+    else if (on) sh.appendRow([pid, '', '', '', stamp_(), a.name, '예']);
+    const sb = loadSubs_().find(x => x.ppl.some(p => p.id === pid)); if (!sb) throw new Error('참가자를 찾지 못했어요.');
+    recalc_(sb); writeSub_(sb);
+    log_('관리자 ' + a.name, '늦은 교사 회비', pid + (on ? ' · +' + LATE_FEE : ' · 뺌'));
+  } finally { lock.releaseLock(); }
+  return adminData(token);
+}
 /** 입금 신고 검사: 날짜(오늘까지 · 입금 시작일 이후) · 금액 · 입금자명 */
 function checkRep_(p) {
   const r = p.rep && p.rep.rows && p.rep.rows[p.id];
@@ -2513,7 +2606,7 @@ function exportProgram(token) {
  * 담당자 = 교사 회원 중에서 골라 메뉴마다 편집 / 보기 / 없음 → 관리자 화면에 이름 + 휴대전화로 로그인 */
 const STAFF = '담당자';
 const STAFF_HEAD = ['교사ID', '이름', '학원', '권한', '사용', '메모', '바꾼 날'];
-const ADMIN_TABS = [['home', '한눈에'], ['subs', '접수 · 입금 확인'], ['rp', '입금 신고'], ['cx', '취소 · 환불'], ['ens', '앙상블'], ['aud', '음원 심사'], ['prof', '교수진'], ['act', '교사 일정'], ['tt', '개인레슨'], ['room', '방 배정'], ['con', '오후음악회'], ['mcs', '마스터클래스'], ['meal', '식권'], ['book', '행사 책자'], ['stat', '통계'], ['q', '게시판'], ['ntc', '공지사항'], ['schol', '장학금'], ['mem', '회원 명단'], ['bplan', '예산 계획'], ['bset', '결산']];
+const ADMIN_TABS = [['home', '한눈에'], ['subs', '접수 · 입금 확인'], ['rp', '입금 신고'], ['fam', '가족방'], ['cx', '취소 · 환불'], ['ens', '앙상블'], ['aud', '음원 심사'], ['prof', '교수진'], ['act', '교사 일정'], ['tt', '개인레슨'], ['room', '방 배정'], ['con', '오후음악회'], ['mcs', '마스터클래스'], ['meal', '식권'], ['book', '행사 책자'], ['stat', '통계'], ['q', '게시판'], ['ntc', '공지사항'], ['schol', '장학금'], ['mem', '회원 명단'], ['bplan', '예산 계획'], ['bset', '결산']];
 function staff_() {
   return rows_(STAFF).filter(r => r['교사ID']).map(r => { let p = {}; try { p = JSON.parse(String(r['권한'] || '{}')); } catch (x) {}
     return { tid: String(r['교사ID']), name: String(r['이름']), acad: String(r['학원'] || ''), perms: p, on: String(r['사용'] || '예') !== '아니오', memo: String(r['메모'] || '') }; });

@@ -2098,7 +2098,9 @@ function progCell_(e, c, nameOf) {
   const ppl = e.ppl.filter(p => !H.r.has(e.cat + ':' + p.r));
   const order = ((c.roleSets || {})[e.cat] || []).slice(); ppl.forEach(p => { if (!order.includes(p.r)) order.push(p.r); });
   const G = order.map(r => ({ r, n: ppl.filter(p => p.r === r).map(p => nameOf(p.n)) })).filter(g => g.n.length);
-  G.forEach((g, i) => { if (i === 0 && (e.cat === '레슨')) g.n.forEach(n => L.push(n)); else L.push((short[g.r] || g.r) + ': ' + g.n.join(', ')); });
+  const PM = e.pm || {};
+  G.forEach((g, i) => { if (PM[g.r]) L.push(PM[g.r]); else if (i === 0 && (e.cat === '레슨')) g.n.forEach(n => L.push(n)); else L.push((short[g.r] || g.r) + ': ' + g.n.join(', ')); });
+  Object.keys(PM).filter(r => PM[r] && !G.some(g => g.r === r) && !H.r.has(e.cat + ':' + r)).forEach(r => L.push(PM[r]));
   return L.join('\n');
 }
 /** 책자 시간표 칸 하나를 항목으로 (11-05): t 시각(시간대와 다를 때만) · h 반 · 행사 이름 · b 내용 줄 · l 담당 · a 보조 · en 영문 · k 종류 */
@@ -2117,7 +2119,9 @@ function progCellS_(e, c, nameOf, t0, e0) {
   if (!H.f.has('desc')) { const D = e.desc || []; if (D.includes('[별지]')) o.b.push('(별지 참조)'); else D.forEach(x => o.b.push(x)); }
   const ppl = e.ppl.filter(p => !H.r.has(e.cat + ':' + p.r)), order = ((c.roleSets || {})[e.cat] || []).slice(); ppl.forEach(p => { if (!order.includes(p.r)) order.push(p.r); });
   const G = order.map(r => ({ r, n: ppl.filter(p => p.r === r).map(p => nameOf(p.n)) })).filter(g => g.n.length);
-  if (G.length) { o.l = G[0].n.join(', '); G.slice(1).forEach(g => o.a.push(...g.n)); }
+  const PM = e.pm || {}; o.m = [];   /* 인쇄 메모 (11-21): 그 역할 이름들 대신 글 */
+  G.forEach((g, i) => { if (PM[g.r]) o.m.push(PM[g.r]); else if (i === 0) o.l = g.n.join(', '); else o.a.push(...g.n); });
+  order.concat(Object.keys(PM)).filter((r, i, A) => A.indexOf(r) === i && PM[r] && !G.some(g => g.r === r) && !H.r.has(e.cat + ':' + r)).forEach(r => o.m.push(PM[r]));
   if (!H.f.has('en')) o.en = EN.join(' / ');
   return o;
 }
@@ -3522,7 +3526,7 @@ const MAPO = { acad: "마포스즈키", teachers: [], students: [], paid: {} }; 
  * 「교사일정」: 한 줄 = 일정 하나 (ID · 날짜(0부터) · 시작 · 끝 · 장소 · 이름 · 종류 · 설명 · 사람(JSON) · 사람(이름, 보기용))
  * 「일정설정」: 항목 · 값(JSON) — days · rooms · meals · rows · people · unav · req · target · rev
  * 「일정기록」: 일시 · 관리자 · 내용 */
-const ACT_HEAD = ['ID', '날짜', '시작', '끝', '장소', '이름', '종류', '설명', '사람', '사람(이름)', '세부', '대상', '단계', '가져온 일정ID'];   // 본공연이 어느 리허설에서 가져왔는지   // 이름 = 행사 종류(관리자 목록), 세부 = 반 이름 등
+const ACT_HEAD = ['ID', '날짜', '시작', '끝', '장소', '이름', '종류', '설명', '사람', '사람(이름)', '세부', '대상', '단계', '가져온 일정ID', '역할메모'];   // 본공연이 어느 리허설에서 가져왔는지   // 이름 = 행사 종류(관리자 목록), 세부 = 반 이름 등
 /** 행사 구분 = 공연 · 레슨 · 업무 (고정) → 종류(관리자 입력) → 공연은 단계(본공연·리허설·무대 세팅 …, 관리자 입력) → 사람마다 역할(구분별 목록, 관리자 입력)
  *  link = 학생이 연주하는 음악회 → 오후음악회 탭(연주 순서·리허설)에 이어짐 */
 const ACT_CATS = ['공연', '레슨', '업무'];
@@ -3550,7 +3554,7 @@ function actEvents_() {
   return rows_(SH.ACT).filter(r => String(r['ID'] || '')).map(r => {
     let ppl = []; try { ppl = JSON.parse(String(r['사람'] || '[]')); } catch (x) {}
     return { id: String(r['ID']), d: +r['날짜'] || 0, s: hm_(r['시작']), e: hm_(r['끝']), room: String(r['장소'] || ''), title: String(r['이름'] || ''), sub: String(r['세부'] || ''), stage: String(r['단계'] || ''), main: String(r['가져온 일정ID'] || r['본공연ID'] || ''), tg: (() => { try { return JSON.parse(String(r['대상'] || '{}')) || {}; } catch (x) { return {}; } })(), type: String(r['종류'] || '레슨'),
-      desc: String(r['설명'] || '').split('\n').map(x => x.trim()).filter(Boolean), ppl: Array.isArray(ppl) ? ppl : [] };
+      desc: String(r['설명'] || '').split('\n').map(x => x.trim()).filter(Boolean), ppl: Array.isArray(ppl) ? ppl : [], pm: (() => { try { const o = JSON.parse(String(r['역할메모'] || '{}')); return o && typeof o === 'object' ? o : {}; } catch (x) { return {}; } })() };
   });
 }
 /** 일정에 넣을 수 있는 사람 = 캠프에 접수한 교사(교사·연수생·소속없는 중급연수생) + 교수진(사용 중)
@@ -3602,7 +3606,7 @@ function schedSave(token, b) {
     const rows = b.events.map(e => {
       if (!okT(e.s) || !okT(e.e)) throw new Error('시간 형식이 잘못된 일정이 있어요: ' + t(e.title, 30));
       const ppl = (e.ppl || []).map(p => ({ n: t(p.n, 40), r: t(p.r, 12) })).filter(p => p.n);
-      return [t(e.id, 40), +e.d || 0, "'" + e.s, "'" + e.e, t(e.room, 60), t(e.title, 120), t(e.type, 20), (e.desc || []).map(x => t(x, 200)).join('\n'), JSON.stringify(ppl), ppl.map(p => ((P[p.n] || {}).n || p.n) + '(' + p.r + ')').join(', '), t(e.sub, 120), tgClean_(e.tg), t(e.stage, 20), t(e.main, 40)];
+      return [t(e.id, 40), +e.d || 0, "'" + e.s, "'" + e.e, t(e.room, 60), t(e.title, 120), t(e.type, 20), (e.desc || []).map(x => t(x, 200)).join('\n'), JSON.stringify(ppl), ppl.map(p => ((P[p.n] || {}).n || p.n) + '(' + p.r + ')').join(', '), t(e.sub, 120), tgClean_(e.tg), t(e.stage, 20), t(e.main, 40), (() => { const o = {}; Object.keys(e.pm || {}).slice(0, 12).forEach(k => { const v = t(e.pm[k], 40).trim(); if (v) o[t(k, 12)] = v; }); return Object.keys(o).length ? JSON.stringify(o) : ''; })()];
     });
     const last = sh.ev.getLastRow();
     sh.ev.getRange(1, 1, 1, ACT_HEAD.length).setValues([ACT_HEAD]);   // 머리줄 (「세부」 칸이 없던 시트도 맞춤)

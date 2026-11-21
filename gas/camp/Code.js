@@ -1,4 +1,4 @@
-/* build: 20261121-163319 */
+/* build: 20261121-163429 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -1733,7 +1733,7 @@ function songList_() {
 }
 function songDef_() { try { const h = HtmlService.createHtmlOutputFromFile('App1').getContent(), i = h.indexOf('const SONGS_DEF = {'), j = h.indexOf('};', i); if (i < 0 || j < 0) return {}; return (new Function('return ' + h.slice(i + 18, j + 1)))(); } catch (e) { return {}; } }
 function songsSave(token, o) {
-  const a = adm_(token); needSup_(a);
+  const a = adm_(token); needCamp_(a);
   if (!o || typeof o !== 'object') throw new Error('저장할 곡 목록이 없어요.');
   const rows = []; let n = 0;
   Object.keys(o).slice(0, 10).forEach(k => { const inst = String(k).trim().slice(0, 10); if (!inst) return;
@@ -1757,7 +1757,7 @@ function progList_() {
 const PROG_DEFAULT_ = {"바이올린":["Pre-Twinkle","1권A 작은별 변주곡 ~ 무궁동","1권B 알레그레토 ~","2권A ~ 헨델 부레","2권B 두 사람의 척탄병 ~","3권A ~ 유모레스크","3권B 베커 가보트 ~","4권A ~ 자이츠 5번 3악장","4권B 비발디 협주곡 가단조 ~","5권A ~ 비발디 협주곡 사단조","5권B 독일춤곡 ~","6권A ~ 피오코 알레그로","6권B 라모 가보트 ~","7권A ~ 헨델 소나타 1번","7권B 바흐 협주곡 가단조 ~","8권 전체","9권 모차르트 협주곡 5번","10권 모차르트 협주곡 4번","10권 이상 멘델스존 협주곡 3악장","10권 이상 기타 곡"],"첼로":["Pre-Twinkle","1권A 작은별 ~ 무궁동","1권B 그 옛날에 ~","2권","3권","4권","5권","6권","7권","8권","9권","10권 보케리니 협주곡","10권 이상 기타 곡"],"비올라":["Pre-Twinkle","1권","2권","3권","4권","5권","6권","7권","8권","9권","10권","10권 이상"],"플루트":["Pre-Twinkle","1권","2권","3권","4권","5권","6권","7권","8권","9권","10권","10권 이상","11권 이상"],"기타":["1권","2권","3권","4권","5권","6권","7권","8권","9권","10권","10권 이상"]};   /* 11-17: App1 PROGRESS 를 못 읽을 때 쓰는 처음 목록 */
 function progDef_() { try { const h = HtmlService.createHtmlOutputFromFile('App1').getContent(), i = h.indexOf('const PROGRESS = {'), j = h.indexOf('};', i); if (i < 0 || j < 0) return PROG_DEFAULT_; const o = (new Function('return ' + h.slice(i + 17, j + 1)))(); return o && Object.keys(o).length ? o : PROG_DEFAULT_; } catch (e) { return PROG_DEFAULT_; } }
 function progsSave(token, o) {
-  const a = adm_(token); needSup_(a);
+  const a = adm_(token); needCamp_(a);
   if (!o || typeof o !== 'object') throw new Error('저장할 권수 목록이 없어요.');
   const rows = []; let n = 0;
   Object.keys(o).slice(0, 10).forEach(k => { const inst = String(k).trim().slice(0, 10); if (!inst) return;
@@ -1770,7 +1770,7 @@ function progsSave(token, o) {
   log_('관리자 ' + a.name, '권수 목록 저장', rows.length + '개');
   return { ok: true, n: rows.length, progs: progList_() };
 }
-function campGet(token) { const a = adm_(token); needSup_(a); return { camp: campPublic_(), subs: rows_(SH.SUB).filter(r => r['접수번호']).length }; }
+function campGet(token) { const a = adm_(token); needCamp_(a, 1); return { camp: campPublic_(), subs: rows_(SH.SUB).filter(r => r['접수번호']).length }; }
 /** 공문 값 정리 (캠프 설정 저장 때) — 글자 수를 자르고, 한 칸(5만 자) 안에 들어가는지 확인 */
 function docClean_(d, nr) {
   d = d || {}; const t = (v, n) => String(v == null ? '' : v).replace(/\r/g, '').slice(0, n), D = CAMP_DEF.doc;
@@ -1812,7 +1812,7 @@ function campDocLink_(b, doc, who) {
   return id;
 }
 function campSave(token, c, rev) {
-  const a = adm_(token); needSup_(a);
+  const a = adm_(token); needCamp_(a);
   const ok = /^\d{4}-\d{2}-\d{2}$/, num = v => Math.max(0, Math.round(+v || 0));
   const b = c.base || {};
   if (!/^[0-9A-Za-z]{2,8}$/.test(String(b.id || ''))) throw new Error('캠프 코드는 영문·숫자 2~8자로 적어 주세요 (예: 27W).');
@@ -2606,12 +2606,14 @@ function exportProgram(token) {
  * 담당자 = 교사 회원 중에서 골라 메뉴마다 편집 / 보기 / 없음 → 관리자 화면에 이름 + 휴대전화로 로그인 */
 const STAFF = '담당자';
 const STAFF_HEAD = ['교사ID', '이름', '학원', '권한', '사용', '메모', '바꾼 날'];
-const ADMIN_TABS = [['home', '한눈에'], ['subs', '접수 · 입금 확인'], ['rp', '입금 신고'], ['fam', '가족방'], ['cx', '취소 · 환불'], ['ens', '앙상블'], ['aud', '음원 심사'], ['prof', '교수진'], ['act', '교사 일정'], ['tt', '개인레슨'], ['room', '방 배정'], ['con', '오후음악회'], ['mcs', '마스터클래스'], ['meal', '식권'], ['book', '행사 책자'], ['stat', '통계'], ['q', '게시판'], ['ntc', '공지사항'], ['schol', '장학금'], ['mem', '회원 명단'], ['bplan', '예산 계획'], ['bset', '결산']];
+const ADMIN_TABS = [['home', '한눈에'], ['subs', '접수 · 입금 확인'], ['rp', '입금 신고'], ['fam', '가족방'], ['cx', '취소 · 환불'], ['ens', '앙상블'], ['aud', '음원 심사'], ['prof', '교수진'], ['act', '교사 일정'], ['tt', '개인레슨'], ['room', '방 배정'], ['con', '오후음악회'], ['mcs', '마스터클래스'], ['meal', '식권'], ['book', '행사 책자'], ['stat', '통계'], ['q', '게시판'], ['ntc', '공지사항'], ['schol', '장학금'], ['mem', '회원 명단'], ['bplan', '예산 계획'], ['bset', '결산'], ['camp', '캠프 설정']];
 function staff_() {
   return rows_(STAFF).filter(r => r['교사ID']).map(r => { let p = {}; try { p = JSON.parse(String(r['권한'] || '{}')); } catch (x) {}
     return { tid: String(r['교사ID']), name: String(r['이름']), acad: String(r['학원'] || ''), perms: p, on: String(r['사용'] || '예') !== '아니오', memo: String(r['메모'] || '') }; });
 }
 function needSup_(a) { if (!a.sup) throw new Error('총관리자만 할 수 있어요.'); }
+/* 11-21: 캠프 설정은 담당자 권한 「캠프 설정」으로도 (편집 = 저장, 보기 = 읽기) */
+function needCamp_(a, read) { if (a.sup) return; const v = (a.perms || {}).camp; if (v === '편집' || (read && v === '보기')) return; throw new Error(read ? '캠프 설정 권한이 없어요.' : '캠프 설정은 보기만 할 수 있어요. 총관리자에게 「편집」 권한을 받아 주세요.'); }
 /** 그 메뉴를 「편집」할 수 있는지 (여러 메뉴 중 하나라도 되면 통과) */
 function need_(a, tabs) {
   if (a.sup) return;
@@ -3851,7 +3853,7 @@ function campBankAccts(token) {
   const b = bankInfo_(); return { list, cur: { bank: b.bank, acct: b.acct, holder: b.holder, auto: !setting_('입금 계좌번호') } };
 }
 function adminSetBankAcct(token, id) {
-  const a = adm_(token); needSup_(a);
+  const a = adm_(token); needCamp_(a);
   const x = campBankAccts(token).list.find(y => y.id === id); if (!x) throw new Error('통장을 찾지 못했어요. 회원관리 › 통장 › 설정을 확인해 주세요.');
   ensureSettings_(); const sh = SpreadsheetApp.getActive().getSheetByName('설정');
   [['입금 은행', x.bank], ['입금 계좌번호', x.acct], ['예금주', x.holder]].forEach(([k, v]) => { const r = rows_('설정').find(q => String(q['항목']) === k); if (r) sh.getRange(r._row, 2).setNumberFormat('@').setValue(String(v)); else sh.appendRow([k, String(v), '']); });
@@ -4602,7 +4604,7 @@ function ogSet_(html, attr, key, val, after) {
 }
 function ogPage_(key) { const p = OG_PAGES[key]; if (!p) throw new Error('고칠 수 없는 페이지예요.'); return p; }
 function ogGet(token, key) {
-  const a = adm_(token); if (typeof needSup_ === 'function') needSup_(a);
+  const a = adm_(token); needCamp_(a, 1);
   const path = ogPage_(key), has = !!ogTok_();
   let html = '';
   try { if (has) { const f = ogGh_('get', path); html = f ? Utilities.newBlob(Utilities.base64Decode(f.content.replace(/\n/g, ''))).getDataAsString('UTF-8') : ''; }
@@ -4611,7 +4613,7 @@ function ogGet(token, key) {
   return { ok: true, hasToken: has, url: OG_BASE + path.replace(/index\.html$/, ''), title: ogMeta_(html, 'property', 'og:title'), desc: ogMeta_(html, 'property', 'og:description'), image: ogMeta_(html, 'property', 'og:image') };
 }
 function ogToken(token, tok) {
-  const a = adm_(token); if (typeof needSup_ === 'function') needSup_(a);
+  const a = adm_(token); needCamp_(a);
   tok = String(tok || '').trim(); if (!/^(github_pat_|ghp_)[A-Za-z0-9_]{20,}$/.test(tok)) throw new Error('깃허브 토큰 모양이 아니에요 (github_pat_… 로 시작).');
   const r = UrlFetchApp.fetch('https://api.github.com/repos/' + OG_REPO, { headers: { Authorization: 'Bearer ' + tok, Accept: 'application/vnd.github+json' }, muteHttpExceptions: true });
   if (r.getResponseCode() !== 200) throw new Error('이 토큰으로 ' + OG_REPO + ' 저장소를 열 수 없어요 (' + r.getResponseCode() + ').');
@@ -4620,7 +4622,7 @@ function ogToken(token, tok) {
   return { ok: true };
 }
 function ogSave(token, key, d) {
-  const a = adm_(token); if (typeof needSup_ === 'function') needSup_(a); d = d || {};
+  const a = adm_(token); needCamp_(a); d = d || {};
   const path = ogPage_(key), dir = path.replace(/[^/]*$/, ''), title = String(d.title || '').trim().slice(0, 90), desc = String(d.desc || '').trim().slice(0, 200);
   if (!title) throw new Error('제목을 넣어 주세요.');
   const lock = LockService.getScriptLock(); lock.waitLock(30000);

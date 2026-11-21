@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261121-162323 -->
+<!-- build: 20261121-162604 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -1974,7 +1974,7 @@ function prgPanel(){if(!S.prgEd){S.prgEd=prgLoad();S.prgDirty=false}const E=S.pr
     ${L.map((v,ix)=>`<div class="pgrow"><span class="sgcode">${ix+1}</span><input type="text" data-pg="${ix}" value="${esc(v)}" placeholder="예) 2권A ~ 헨델 부레" maxlength="60"><span class="sgbtn"><button class="btn small ghost" type="button" data-pgmv="${ix}|-1" aria-label="위로">↑</button><button class="btn small ghost" type="button" data-pgmv="${ix}|1" aria-label="아래로">↓</button><button class="btn small ghost" type="button" data-pgdel="${ix}" style="color:var(--bad)">빼기</button></span></div>`).join('')||'<p class="hint">아직 없어요.</p>'}
     <div class="row" style="margin-top:8px"><button class="btn small" type="button" id="prgAdd">+ ${esc(cur)} 권수 추가</button></div></div>`}
 /* 11-21: 캠프 설정 아래 탭 (기본 · 홀 · 역할 · 식사 · 권수 · 대상곡 · 음악회) */
-const CC_TABS=[['base','기본 설정'],['hall','홀 설정'],['role','역할 설정'],['meal','식사시간 설정'],['prog','권수 목록'],['song','전공별 대상곡'],['con','음악회 곡목록']];
+const CC_TABS=[['base','기본 설정'],['hall','홀 설정'],['role','역할 설정'],['meal','식사시간 설정'],['prog','권수 목록'],['song','전공별 대상곡'],['con','음악회 곡목록'],['og','미리보기 설정'],['bank','통장 설정']];
 function ccTabs(){return `<div class="cctabs" role="tablist">${CC_TABS.map(([k,l])=>`<button type="button" data-cctab="${k}" aria-pressed="${S.ccTab===k}">${l}</button>`).join('')}</div>`}
 document.addEventListener('click',e=>{const b=e.target.closest('[data-cctab]');if(!b||S.tab!=='camp')return;S.ccTab=b.dataset.cctab;render();window.scrollTo(0,0)});
 function vCamp(){if(!S.cc){S.cc=ccCopy();try{if(S.cc.doc&&S.cc.fees&&S.cc.rounds)feeAuto(S.cc)}catch(x){}}const c=S.cc,T=S.ccTab||(S.ccTab='base');if(!c.base)return '<div class="panel hint">캠프 설정을 불러오지 못했어요. 「새로 불러오기」를 눌러 주세요.</div>';
@@ -1982,10 +1982,10 @@ function vCamp(){if(!S.cc){S.cc=ccCopy();try{if(S.cc.doc&&S.cc.fees&&S.cc.rounds
   const inp=(p,type,extra)=>{const v=ccGet(p);return type==='check'?`<input type="checkbox" data-cc="${p}" ${v?'checked':''}>`:`<input type="${type==='num'?'text':type}" ${type==='num'?'inputmode="numeric" class="num"':''} data-cc="${p}" data-cct="${type}" value="${esc(type==='num'?(+v||0).toLocaleString('ko-KR'):v==null?'':v)}" ${extra||''}>`};
   const days=b.start&&b.end?Math.round((Date.parse(b.end)-Date.parse(b.start))/864e5):0;
   const curOpts=[['auto','자동 (오늘 날짜로)'],...R.map((r,i)=>[String(i),r.n+' 로 고정'])];
-  return `<div class="cc">${bkPanel()}${ogPanel()}
+  return `<div class="cc">
   <div class="panel"><div class="spread"><div><b>캠프 설정</b> <span class="hint">총관리자만 보여요 · 저장하면 선생님 접수 화면(날짜·장소·차수·참가비·환불 규정)이 바로 바뀌어요 · 시트 「캠프설정」 탭</span></div>
     <div class="row" style="gap:6px"><span id="ccDirty" class="row" style="gap:6px">${ccPill()}</span><button class="btn small primary" type="button" data-ccsave="1">저장</button></div></div></div>
-  ${ccTabs()}<div class="cctb" ${T==='base'?'':'hidden'}>  <div class="panel"><h3>기본</h3><div class="ccg">
+  ${ccTabs()}${T==='bank'?bkPanel():''}${T==='og'?ogPanel():''}<div class="cctb" ${T==='base'?'':'hidden'}>  <div class="panel"><h3>기본</h3><div class="ccg">
     <label>캠프 코드<span class="hint">접수번호 앞자리 (예: 27W-001)</span>${inp('base.id','text','maxlength="8" style="width:90px"')}</label>
     <label class="w2">캠프 이름${inp('base.name','text','maxlength="60"')}</label>
     <label>시작일 <small class="faint">${dw(b.start)}</small>${inp('base.start','date')}</label>

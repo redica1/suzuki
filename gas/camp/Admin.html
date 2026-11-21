@@ -216,7 +216,7 @@ tr.off td{opacity:.5}
 .act .pgrid td{vertical-align:top;padding:3px!important;min-width:150px;max-width:190px;background:var(--surface)}
 .act .pgrid th.tcol{position:sticky;left:0;z-index:1;background:var(--sunk);padding:4px 8px;font-family:var(--mono);font-weight:500;color:var(--muted);vertical-align:top}
 .act .pgrid td.cont{background:var(--bg)}
-.act .pgrid tr.meal td{background:var(--sunk);color:var(--muted);text-align:left;padding:5px 10px!important;font-size:14px}
+.act .pgrid tr.meal td{background:var(--sunk);color:var(--muted);text-align:left;padding:5px 10px!important;font-size:14px}.act .pgrid tr.meal.nt td{background:var(--surface);color:var(--ink);font-weight:700}
 .act .ev{display:grid;gap:3px;border:1px solid var(--line);border-left:4px solid var(--line);border-radius:6px;padding:5px 6px;cursor:pointer;background:var(--surface);white-space:normal}
 .act .ev:hover{border-color:var(--accent)}
 .act .ev.on{outline:2px solid var(--accent);outline-offset:1px}
@@ -891,7 +891,7 @@ function vGrid(){
   ${editor()}
   <div class="row"><span class="cap" style="margin:0">시간 줄 추가</span>${hmIn('a_rowT',A.rowT||'09:00','추가할 시간')}<button class="btn small" type="button" id="a_rowAdd">+ 이 시간 줄 넣기</button><span class="cap" style="margin:0">줄을 넣으면 그 시간에 장소마다 빈 칸(+)이 생겨요</span></div>
   <div class="tt pgrid"><table><thead><tr><th class="tcol">시간</th>${rooms.map(([r,l])=>`<th>${esc(r)}<small>${esc(l)}${capOf(d,r)?' · '+capOf(d,r)+'명':''}</small></th>`).join('')}</tr></thead><tbody>
-  ${starts.map(t=>{const ml=meals.filter(m=>m.s===t).map(m=>`<tr class="meal"><th class="tcol num">${t}</th><td colspan="${rooms.length}">${esc(m.t)} <span class="cap" style="margin:0">${m.s}~${m.e}</span></td></tr>`).join('');
+  ${starts.map(t=>{const ml=meals.filter(m=>m.s===t).map(m=>`<tr class="meal${m.k||/아침|점심|저녁|breakfast|lunch|dinner/i.test(m.t||'')?'':' nt'}"><th class="tcol num">${t}</th><td colspan="${rooms.length}">${esc(m.t)} <span class="cap" style="margin:0">${m.s}~${m.e}</span></td></tr>`).join('');
     if(!evs.some(e=>e.s===t)&&!extra.includes(t)) return ml;
     return ml+`<tr><th class="tcol num">${t}${extra.includes(t)&&!evs.some(e=>e.s===t)?`<br><button type="button" class="btn small ghost" data-arowdel="${t}" aria-label="${t} 줄 빼기" style="padding:0 6px;font-size:13px">줄 빼기</button>`:''}</th>${rooms.map(([r])=>{const xs=evs.filter(e=>e.room===r&&e.s===t);
       const cont=!xs.length&&evs.some(e=>e.room===r&&mins(e.s)<mins(t)&&mins(t)<mins(e.e));
@@ -1123,10 +1123,10 @@ function vSet(){return `<div class="sec-h"><div><h2>날짜 · 장소</h2><p>캠�
     ${lstPanel('k:'+c,c+' 종류',c==='공연'?'「학생 연주」는 오후음악회 탭(연주 순서 · 리허설)과 이어져요':'')}
     ${c==='공연'?lstPanel('stage','공연 단계','본공연 · 리허설 · 무대 세팅 등'):''}
     ${lstPanel('r:'+c,c+' 역할','사람을 넣을 때 고르는 역할 · 처음 넣는 사람은 첫 번째, 그다음은 두 번째 역할')}</div>`).join('')}</div>
-  <div class="sec-h"><div><h2>날마다 안내 글 · 식사 줄 <span class="cap" style="margin:0">구글 시트로 보낼 때 씀</span></h2><p>안내 글은 그날 표 맨 위 빨간 줄이에요. 식사 줄은 한 줄에 「17:30-19:20 | 저녁 식사 · 식사 장소 …」.</p></div></div>
+  <div class="sec-h"><div><h2>날마다 안내 글 · 식사 · 한 줄 안내 <span class="cap" style="margin:0">구글 시트로 보낼 때 씀</span></h2><p>안내 글은 그날 표 맨 위 빨간 줄이에요. 식사 · 한 줄 안내는 한 줄에 「17:30-19:20 | 저녁 식사 · 식사 장소 …」. 아침 · 점심 · 저녁이 아닌 줄(예: 「14:10-14:50 | * 7권 이상 학생은 교수 레슨 1회 추가」)은 그 시간 줄 전체를 덮는 흰 바탕 굵은 글씨 안내가 돼요.</p></div></div>
   <div class="g2">${D.days.map((x,i)=>`<div class="panel"><b>${esc(x)}</b><label class="f">안내 글<textarea class="a_note" data-i="${i}" rows="2" style="width:100%;font:inherit;padding:6px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)" placeholder="예: 모든 교사는 참관하시는 수업에서 적극적으로 보조해 주세요.">${esc((D.dayNotes||[])[i]||'')}</textarea></label>
-    <label class="f">식사 줄<textarea class="a_meal" data-i="${i}" rows="${Math.max(2,D.meals.filter(m=>m.d===i).length+1)}" style="width:100%;font:inherit;padding:6px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)">${esc(D.meals.filter(m=>m.d===i).map(m=>m.s+'-'+m.e+' | '+m.t).join('\n'))}</textarea></label></div>`).join('')}</div>
-  <div class="row"><button class="btn small primary" type="button" id="a_noteSave">안내 글 · 식사 줄 저장</button><button class="btn small" type="button" id="a_mealCamp" title="캠프 설정 › 식사 시간을 모든 날짜에 다시 넣어요 (그 밖에 따로 넣은 줄은 그대로)">캠프 설정 식사 시간 다시 넣기</button></div>
+    <label class="f">식사 · 한 줄 안내<textarea class="a_meal" data-i="${i}" rows="${Math.max(2,D.meals.filter(m=>m.d===i).length+1)}" style="width:100%;font:inherit;padding:6px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)">${esc(D.meals.filter(m=>m.d===i).map(m=>m.s+'-'+m.e+' | '+m.t).join('\n'))}</textarea></label></div>`).join('')}</div>
+  <div class="row"><button class="btn small primary" type="button" id="a_noteSave">안내 글 · 식사 · 한 줄 안내 저장</button><button class="btn small" type="button" id="a_mealCamp" title="캠프 설정 › 식사 시간을 모든 날짜에 다시 넣어요 (그 밖에 따로 넣은 줄은 그대로)">캠프 설정 식사 시간 다시 넣기</button></div>
   <div class="sec-h"><div><h2>권 설명 영어 <span class="cap" style="margin:0">구글 시트로 보낼 때 씀 · 한글은 캠프 설정 「권수 목록」에서</span></h2></div></div>
   <div class="g3 lstg">${TG_INST.map(k=>`<div class="panel lstcol"><b class="lsth">${k}</b><table class="pft lst"><tbody>${bdKeys(k).map(t=>{const v=(D.bookDesc[k]||{})[t]||['',''];return `<tr><td class="num" style="white-space:nowrap">${t}</td><td><span class="bdko">${esc(bdKo(k,t))||'<span class="cap">-</span>'}</span><input type="text" class="a_bd" data-k="${k}" data-t="${t}" data-l="1" value="${esc(v[1]||'')}" placeholder="English" maxlength="80" style="margin-top:3px;font-size:14px"></td></tr>`}).join('')}</tbody></table></div>`).join('')}</div>
   <div class="row"><button class="btn small primary" type="button" id="a_bdSave">권 설명 저장</button></div>
@@ -1238,7 +1238,7 @@ function pvCon(K){const EN={};K.rows.forEach((r,i)=>{if(r.k==='i'){const n=K.row
     <div class="row" style="margin-top:8px"><button class="btn small primary" type="button" id="a_senSave">영어 곡명 저장</button></div></div>`:''}
   <p class="hint">「오후음악회」 탭의 연주 순서 그대로예요. 같은 곡이 이어지면 한 번호로 묶고, 같은 학원은 이름을 쉼표로 모아요. 사회 · 진행은 교사 일정에서 그 음악회 칸의 「사회」 「진행」 역할에서 가져와요.</p>`}
 /* 보일 항목 고르기: 체크 = 보임 · 저장하면 미리보기와 구글 시트 모두에 적용 */
-const PV_F=[['tg','대상 (Vn 4B …)'],['en','영어 줄'],['sub','세부'],['desc','설명'],['note','날짜 안내 글'],['meal','식사 줄']],PV_T=[['t','참가교사 탭'],['o','오케 명단 탭'],['c','음악회 프로그램 탭']];
+const PV_F=[['tg','대상 (Vn 4B …)'],['en','영어 줄'],['sub','세부'],['desc','설명'],['note','날짜 안내 글'],['meal','식사 · 한 줄 안내']],PV_T=[['t','참가교사 탭'],['o','오케 명단 탭'],['c','음악회 프로그램 탭']];
 function pvHideBox(P){const H=P.hide||{},has=(k,v)=>(H[k]||[]).includes(v);const RS=P.roleSets||{};
   const roles=CATS.map(c=>[c,[...new Set([...(RS[c]||[]),...(P.used||[]).filter(x=>x.startsWith(c+':')).map(x=>x.slice(c.length+1))])]]);
   const n=(H.f||[]).length+(H.r||[]).length+(H.t||[]).length;
@@ -3577,7 +3577,7 @@ main.wrap:has(.ebw),main.wrap:has(.dg){max-width:1600px}
 .bls table.st thead th{background:#e8eef0;text-align:center;font-weight:800}
 .bls table.st thead tr.rsub th{font-weight:500;font-size:.9em}
 .bls table.st tbody th{font-weight:700;text-align:center;white-space:nowrap}
-.bls table.st tr.ml td{background:#f1f1f1;text-align:center;font-weight:700}
+.bls table.st tr.ml td{background:#f1f1f1;text-align:center;font-weight:700}.ml.nt td{background:#fff;text-align:left}
 .bls table.st td{text-align:center}
 .bls table.st .sp{display:block;height:1.2mm}
 .bls table.st td .sc+.sc{border-top:.5px solid #999;margin-top:.5mm;padding-top:.5mm}.bls table.st td .s1{font-weight:700;font-size:.92em}.bls table.st td .s2{font-weight:800}.bls table.st td .s4{font-weight:700}.bls table.st td .s5{font-size:.9em;color:#555}.bls table.st td .s6{font-size:.88em;color:#444}
@@ -3687,7 +3687,7 @@ function ebSched(D){const T=ebSet(),V=D.V||[],W=D.W||2,dt=ebDt(D.date),SR=D.S||n
   const cell=t=>String(t||'').split(/\n\n+/).map(ebBr).join('<span class="sp"></span>');
   return ch.map((cs,n)=>`<section class="bls sch"><div class="stt">${esc(en)}</div><div class="stk">${esc(ko)}${ch.length>1?` · ${n+1}/${ch.length}`:''}</div>${note&&n===0?`<div class="stn">${ebBr(note)}</div>`:''}
     <div class="stw" style="font-size:${+T.fs||6.6}pt"><table class="st"><thead><tr><th style="width:12mm">시간</th>${cs.map(j=>`<th>${ebBr(V[2][j])}</th>`).join('')}</tr>${hasSub?`<tr class="rsub"><th></th>${cs.map(j=>`<th>${ebBr((V[3]||[])[j]||'')}</th>`).join('')}</tr>`:''}</thead><tbody>
-    ${V.slice(4).map((r,x)=>meals.has(x+4)?`<tr class="ml"><th>${ebBr(String(r[0]||'').replace('-','~\n'))}</th><td colspan="${cs.length}">${ebBr(r[1]||'')}</td></tr>`:`<tr><th>${ebBr(String(r[0]||'').replace('-','~\n'))}</th>${SR&&SR[x+4]?ebSchRow(SR[x+4],cs,T):cs.map(j=>`<td>${cell(r[j])}</td>`).join('')}</tr>`).join('')}</tbody></table></div></section>`).join('')}
+    ${V.slice(4).map((r,x)=>meals.has(x+4)?`<tr class="ml${/아침|점심|저녁|breakfast|lunch|dinner/i.test(String(r[1]||''))?'':' nt'}"><th>${ebBr(String(r[0]||'').replace('-','~\n'))}</th><td colspan="${cs.length}">${ebBr(r[1]||'')}</td></tr>`:`<tr><th>${ebBr(String(r[0]||'').replace('-','~\n'))}</th>${SR&&SR[x+4]?ebSchRow(SR[x+4],cs,T):cs.map(j=>`<td>${cell(r[j])}</td>`).join('')}</tr>`).join('')}</tbody></table></div></section>`).join('')}
 /* 음악회 여름 모양 (11-05): 머리 왼쪽 들여 쓴 「일시 / (영어) · 장소 / (영어) · 사회」, 곡 「작곡가 - 곡명」, 줄표 점선, 번호 켜기/끄기 */
 function ebConS(b){const T=ebSet(),it=b.items||[],M=b.meta||{},dt=ebDt(M.date),WDE=['Sun.','Mon.','Tue.','Wed.','Thu.','Fri.','Sat.'];
   const pm=t=>{const m=String(t||'').match(/^(\d{1,2}):(\d{2})/);if(!m)return '';const h=+m[1];return ((h+11)%12+1)+':'+m[2]+(h<12?' AM':' PM')};

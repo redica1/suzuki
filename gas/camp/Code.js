@@ -2148,7 +2148,7 @@ function progBuild_(opt) {
     V.push([''].concat(rooms.map(r => r[1] || ''), Array(W - 1 - rooms.length).fill(''))); F.push(Array(W).fill('#e8eef0'));
     const meals = [];
     starts.forEach(t => {
-      M.filter(m => m.s === t).forEach(m => { meals.push(V.length); V.push([m.s + '-' + m.e, m.t].concat(Array(W - 2).fill(''))); F.push(Array(W).fill('#f1f1f1')); SV[V.length - 1] = null; });
+      M.filter(m => m.s === t).forEach(m => { meals.push(V.length); V.push([m.s + '-' + m.e, m.t].concat(Array(W - 2).fill(''))); F.push(Array(W).fill(m.k || MEAL_RX.test(String(m.t || '')) ? '#f1f1f1' : '#ffffff')); SV[V.length - 1] = null; });
       const here = E.filter(e => e.s === t); if (!here.length) return;
       const endMain = here.map(e => e.e).sort()[0];
       const row = [t + '-' + endMain], col = [null];
@@ -2618,7 +2618,7 @@ function exportProgram(token) {
     sh.getRange(3, 1, V.length - 2, W).setBorder(true, true, true, true, true, true, '#c9d3d7', SpreadsheetApp.BorderStyle.SOLID);
     sh.getRange(5, 1, Math.max(1, V.length - 4), 1).setFontWeight('bold');
     sh.getRange(1, 1, V.length, W).setBackgrounds(F.map(r => r.map(x => x || '#ffffff')));
-    D.meals.forEach(r => sh.getRange(r + 1, 2, 1, W - 1).merge().setHorizontalAlignment('center'));
+    D.meals.forEach(r => { const g = sh.getRange(r + 1, 2, 1, W - 1).merge(); if (MEAL_RX.test(String(V[r][1] || ''))) g.setHorizontalAlignment('center'); else g.setHorizontalAlignment('left').setFontWeight('bold'); });   /* 식사가 아닌 줄 = 한 줄 안내 (11-21) */
     sh.setColumnWidth(1, 90); for (let k = 2; k <= W; k++) sh.setColumnWidth(k, 150);
     sh.setFrozenRows(4); sh.setFrozenColumns(1);
   });
@@ -4749,7 +4749,7 @@ const MENU_SH = '식단표';
 function menuRows_() { const ss = SpreadsheetApp.getActive(); if (!ss.getSheetByName(MENU_SH)) return [];
   return rows_(MENU_SH).filter(r => String(r['식사'] || '').trim()).map(r => ({ d: +r['날짜번호'] || 0, k: String(r['식사']).trim(), items: String(r['메뉴'] || '').split('\n').map(x => x.trim()).filter(Boolean), memo: String(r['메모'] || '') })); }
 function menuCtx_() { const c = actCfg_(), days = c.days || [];
-  const meals = (Array.isArray(c.meals) ? c.meals : mealGen_(camp_().meals, days.length)).map(m => ({ d: m.d, k: String(m.k || m.t || ''), s: m.s, e: m.e })).filter(m => m.k);
+  const meals = (Array.isArray(c.meals) ? c.meals : mealGen_(camp_().meals, days.length)).filter(m => m.k || MEAL_RX.test(String(m.t || ''))).map(m => ({ d: m.d, k: String(m.k || m.t || ''), s: m.s, e: m.e })).filter(m => m.k);
   return { days, meals, menu: menuRows_() }; }
 function adminMenuSave(token, list) { const a = adm_(token); need_(a, ['ntc', 'tt']);
   const L = (list || []).slice(0, 200).map(x => [Math.max(0, Math.round(+x.d || 0)), String(x.k || '').trim().slice(0, 20), (Array.isArray(x.items) ? x.items : String(x.items || '').split('\n')).map(v => String(v).trim().slice(0, 60)).filter(Boolean).slice(0, 40).join('\n'), String(x.memo || '').trim().slice(0, 300)]).filter(r => r[1] && (r[2] || r[3]));

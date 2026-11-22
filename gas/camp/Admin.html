@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261122-165203 -->
+<!-- build: 20261122-170030 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -230,6 +230,7 @@ tr.off td{opacity:.5}
 .ebc .ebcsel{background:#cfe3ff!important;outline:1px solid #6aa0ff}
 .pmsheet .ebc:has(> section.bls.sch + section.bls.sch){flex-direction:row;flex-wrap:nowrap;align-items:flex-start;gap:0}.pmsheet .ebc:has(> section.bls.sch + section.bls.sch)>section.bls+section.bls{border-left:1px dashed #9aa}body.pmPrint .pmsheet .ebc{flex-direction:column!important}
 .pmzoom{display:flex;gap:6px;align-items:center;justify-content:flex-end;margin:0 0 6px;flex-wrap:wrap}.pmwrap.pmbig .pmlay{grid-template-columns:1fr!important}.pmwrap.pmbig .pmlist{display:none}.pmwrap .pmsheet{overflow:auto;max-width:100%;align-items:safe center}body.pmPrint .pmsheet .ebc{zoom:1!important}
+.bls[data-csp][style*="--chg"] .eh{margin-bottom:var(--chg)!important}.bls[data-csp][style*="--cig"] .cmeta{row-gap:var(--cig)!important}.bls[data-csp][style*="--cig"] .cmeta+.cmeta,.bls[data-csp][style*="--cig"] .eh~p+p{margin-top:var(--cig)!important}.bls[data-csp][style*="--ctg"] .cmeta{margin-bottom:var(--ctg)!important}.bls[data-csp][style*="--ctg"]:not(:has(.cmeta)) .it:first-of-type{margin-top:var(--ctg)!important}.bls[data-csp][style*="--cim"]:not([style*="--itg"]) .it{margin-bottom:var(--cim)!important}
 .lstrow{border-left:5px solid var(--line);margin-bottom:12px}.lstrow>.lsth{display:block;font-size:17px;margin:0 0 8px}.lstcols{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;align-items:start}.lstrow.t-con{border-left-color:var(--rosin)}.lstrow.t-les{border-left-color:var(--bar)}.lstrow.t-orc{border-left-color:#5B4BB7}.lstrow.t-reh{border-left-color:var(--faint)}
 .act table.lst .a_le,.act table.lst .a_ls,.act table.lst .a_lk{margin-top:3px;font-size:14px;color:var(--muted)}.act table.lst .a_lk{border-color:var(--rosin-soft)}
 .act .addbox{display:grid;gap:8px;padding:10px;border:1px dashed var(--line);border-radius:8px;background:var(--bg)}.act .ckl li label{display:flex;gap:8px;align-items:center;padding:6px 8px;cursor:pointer;border-radius:6px}.act .ckl li label:hover{background:var(--sunk)}.act .ckl li label.warn{opacity:.75}.act .ckl{max-height:320px;overflow:auto}
@@ -615,7 +616,7 @@ function vPmod(){const E=S.EB;if(!E){if(!S.EBL)setTimeout(ebLoad,0);return '<div
   <div style="min-width:0">${isEd?'':`<div class="panel"><div class="spread"><b style="font-size:17px">${esc(cur.t)}</b><span class="row" style="gap:6px"><button class="btn small" type="button" data-pmre="1">새로 불러오기</button><button class="btn small ${S.pmRow?'primary':''}" type="button" data-pmrow="1">${S.pmRow?'줄 숨기기 끝':'줄 숨기기'}</button><button class="btn small primary" type="button" data-pmprint="1">인쇄 · PDF</button></span></div>
   <div class="row" style="gap:6px;margin-top:8px" id="pmCols"></div>
   <p class="hint" style="margin:6px 0 0">불러오는 곳: ${esc(ebSrcName(cur.kind))} · 「줄 숨기기」를 누른 뒤 표의 줄을 누르면 인쇄에서만 빠져요(책자는 그대로) · 고른 것은 이 브라우저에 기억해요${H.c.length||H.r.length?` · <a href="#" data-pmclr="1">처음대로</a>`:''}</p></div>`}
-  ${cur.kind==='con'&&ed&&!isEd?ctPanel(cur):''}
+  ${cur.kind==='con'&&ed&&!isEd?ctPanel(cur):''}${ed&&!isEd&&ebTplK(cur)==='con'&&!ebCtOf(cur.k)?cspPanel(cur):''}
   <div class="pmzoom"><span class="hint">미리보기</span><button class="btn small" type="button" data-pmz="-" aria-label="작게">－</button><button class="btn small" type="button" data-pmz="1" title="실제 크기">${Math.round(pmZ()*100)}%</button><button class="btn small" type="button" data-pmz="+" aria-label="크게">＋</button><button class="btn small" type="button" data-pmz="fit" title="화면 폭에 맞춰 크게">폭 맞춤</button><button class="btn small ${S.pmBig?'primary':''}" type="button" data-pmz="big">${S.pmBig?'크게 보기 끝':'크게 보기'}</button></div>
   <div class="ebprev pmsheet${S.pmRow?' pmrowmode':''}"><div class="ebi" id="eb_${esc(cur.k.replace(':','_'))}">${tools}${isEd?'':ebWarnBox(cur,ed)}<div class="ebc" data-ebk="${esc(cur.k)}" style="--ebz:${pmZ()}" ${isEd?'contenteditable="true" spellcheck="false"':''}>${ebHtml(cur)}</div></div></div></div></div></div>`}
 /* 11-22 모듈별 인쇄 미리보기 확대 · 크게 보기 (이 브라우저에 기억) */
@@ -624,6 +625,12 @@ document.addEventListener('click',e=>{if(S.tab!=='pmod')return;const b=e.target.
   if(v==='big'){S.pmBig=!S.pmBig;render();return}
   let z=pmZ();if(v==='+')z=Math.min(2.5,Math.round((z+.1)*10)/10);else if(v==='-')z=Math.max(.4,Math.round((z-.1)*10)/10);else if(v==='1')z=1;else if(v==='fit'){const box=document.querySelector('.pmsheet'),sec=box&&box.querySelector('.ebc');if(sec){const w=sec.getBoundingClientRect().width/z;z=Math.max(.4,Math.min(2.5,Math.floor((box.clientWidth-40)/w*10)/10))}}
   S.pmZv=z;try{localStorage.setItem('campPmZoom',z)}catch(x){}const c=document.querySelector('.pmsheet .ebc');if(c){c.style.setProperty('--ebz',z);const zb=document.querySelector('[data-pmz="1"]');if(zb)zb.textContent=Math.round(z*100)+'%';setTimeout(()=>{try{pmMeasure()}catch(x){}},30)}else render()});
+function cspPanel(x){const o=(ebSet().csp||{})[x.k]||{},fill=/--itg/.test(x.h||x.auto||'')||ebIsSpr(x);
+  return `<div class="panel ctpan"><b>음악회 여백</b> <span class="hint">mm · 바꾸면 바로 저장 · 비우면 기본 · 이 쪽만</span>${EB_CSP.map(([k,l,d])=>`<div class="cto"><span>${l}</span><span><input type="number" min="0" max="60" step="0.5" data-csp="${k}" value="${o[k]!=null?esc(o[k]):''}" placeholder="${d}" style="width:5.5em"> mm${k==='im'&&fill?' <small class="hint">(「아래까지 채움」이 켜져 있으면 채움이 먼저예요)</small>':''}</span></div>`).join('')}
+  ${Object.keys(o).length?`<div style="margin-top:6px"><button class="btn small ghost" type="button" data-cspclr="1">여백 처음대로</button></div>`:''}</div>`}
+document.addEventListener('change',e=>{if(S.tab!=='pmod')return;const t=e.target;if(!t.dataset||!t.dataset.csp||t.tagName!=='INPUT')return;const k=S.pmK,f=t.dataset.csp,v=t.value.trim();
+  ctSave(n=>{n.csp=JSON.parse(JSON.stringify(n.csp||{}));const o=n.csp[k]=n.csp[k]||{};if(v==='')delete o[f];else o[f]=Math.max(0,Math.min(60,+v||0));if(!Object.keys(o).length)delete n.csp[k]},'여백을 저장했어요')});
+document.addEventListener('click',e=>{if(S.tab!=='pmod')return;const b=e.target.closest('[data-cspclr]');if(!b)return;ctSave(n=>{n.csp=JSON.parse(JSON.stringify(n.csp||{}));delete n.csp[S.pmK]},'여백을 처음대로 했어요')});
 function ctPanel(x){const m=ebCtOf(x.k),tp=m?m.tp:'',O=tp?ebCtOpt(tp):{};
   const seg=(k,V)=>`<span class="seg2">${V.map(([v,t])=>`<button type="button" data-cto="${k}|${v}" aria-pressed="${String(O[k]??'on')===String(v)}">${t}</button>`).join('')}</span>`;
   return `<div class="panel ctpan"><div class="spread"><b>음악회 템플릿</b><select data-ctp="${esc(x.k)}"><option value="">기본 (지금 책자 모양)</option>${Object.entries(EB_CTPL).map(([k,v])=>`<option value="${k}" ${tp===k?'selected':''}>${v[0]}</option>`).join('')}</select></div>
@@ -4064,8 +4071,13 @@ function ebToCon(k){const L=ebItems(),x=L.find(y=>y.k===k);if(!x)return;const h=
   const bk='text:'+Date.now().toString(36),nb={k:bk,kind:'text',t:'(바꾸기 전) '+x.t,ord:x.ord+.5,on:false};
   const rows=ebReorder(L.concat([nb]).sort((a,c)=>a.ord-c.ord)).map(r=>r.k===bk?Object.assign(r,{h:x.h,src:x.src||''}):r.k===k?Object.assign(r,{h,src:''}):r);
   const T=ebSet(),tabs=Object.assign({},T.tabs||{});delete tabs[k];ebSend(rows,[],Object.assign({},T,{tabs}),null,'음악회 템플릿으로 바꾸고 있어요…')}
-function ebPg(x){let h=x.h||x.auto;if(x.kind==='sched'&&ebTplK(x)==='sch')h=ebEqSched(h);if(ebIsSpr(x))return ebSpreadHtml(h,x.k);return ebFitOn(x.k)?ebFitHtml(h,x.k):h}
-function ebHtml(x){return S.ebEd===x.k&&S.ebBuf!=null?S.ebBuf:(S.ebPeek===x.k&&x.auto)?x.auto:ebIsSpr(x)||(S.ebEd!==x.k&&ebFitOn(x.k))?ebPg(x):(x.h||x.auto)}
+function ebPg(x){let h=ebCsp(x,x.h||x.auto);if(x.kind==='sched'&&ebTplK(x)==='sch')h=ebEqSched(h);if(ebIsSpr(x))return ebSpreadHtml(h,x.k);return ebFitOn(x.k)?ebFitHtml(h,x.k):h}
+function ebHtml(x){if(S.ebEd===x.k&&S.ebBuf!=null)return S.ebBuf;const h=(S.ebPeek===x.k&&x.auto)?x.auto:ebIsSpr(x)||(S.ebEd!==x.k&&ebFitOn(x.k))?ebPg(x):(x.h||x.auto);return S.ebEd===x.k?h:ebCsp(x,h)}
+/* 11-22 음악회 쪽 여백 (템플릿 안 쓴 음악회 · 글 쪽 음악회): set.csp[쪽키]={hg 제목 아래, ig 정보 줄 사이, tg 곡 순서 위, im 곡 사이} mm → 그 쪽 section 에 변수 */
+const EB_CSP=[['hg','제목 아래 여백',5],['ig','일시 · 장소 · 사회 줄 사이',.3],['tg','곡 순서 위 여백',6],['im','곡 사이',1.3]];
+function ebCsp(x,h){const o=(ebSet().csp||{})[x.k];if(!o||!h||/data-csp=/.test(h))return h;const v=EB_CSP.filter(([k])=>o[k]!=null&&o[k]!=='').map(([k])=>`--c${k}:${+o[k]}mm`).join(';');if(!v)return h;
+  return h.replace(/<section\b([^>]*\bclass="[^"]*\bbls\b[^"]*")([^>]*)>/g,(m,a,b)=>{const all=a+b;return /\bstyle="/.test(all)?`<section data-csp="1"${all.replace(/\bstyle="/,'style="'+v+';')}>`:`<section data-csp="1"${all} style="${v}">`})}
+
 /* 미리보기에서는 지금 확대 비율로 그린 그대로 재서 맞춤 (확대하면 줄바꿈이 조금 달라져서) — 같은 날 = 제목(.stt) 글이 같은 시간표 쪽들 */
 function ebEqDom(root){if(!root)return;const G={};root.querySelectorAll('section.bls.sch').forEach(sec=>{const t=sec.querySelector('.stt');if(!t)return;const c=sec.closest('.ebc'),kk=c?c.dataset.ebk||'':'';if(kk&&(ebSet().tplm||{})[kk]==='base')return;const k=kk+'|'+t.textContent;(G[k]=G[k]||[]).push(...sec.querySelectorAll('table.st'))});
   Object.values(G).forEach(T=>{const z=ebEffZ(T[0]);T.forEach(t=>[...t.rows].forEach(r=>r.style.removeProperty('height')));const H=[];

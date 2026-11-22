@@ -1,4 +1,4 @@
-/* build: 20261122-185234 */
+/* build: 20261122-190107 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -2123,7 +2123,7 @@ function progCell_(e, c, nameOf) {
 }
 /** 책자 시간표 칸 하나 (11-22): x = [종류, 글] 차례 (칸 글자 모양 · 순서 · 끄기 반영). 예전 칸(h · b · l · a · m · en)도 같이 */
 function progCellS_(e, c, nameOf, t0, e0) {
-  const o = { k: e.cat || '', t: (e.s !== t0 || e.e !== e0) ? e.s + '~' + e.e : '', h: [], b: [], l: '', a: [], m: [], en: '', x: [] };
+  const o = { id: e.id, k: e.cat || '', t: (e.s !== t0 || e.e !== e0) ? e.s + '~' + e.e : '', h: [], b: [], l: '', a: [], m: [], en: '', x: [] };
   if (o.t) o.x.push(['tm', o.t]);
   const Q = cellSeg_(e, c, nameOf), hasTg = Q.some(q => q[1] === 'tg');
   Q.forEach(q => { const [k, ty, v] = q;
@@ -3251,6 +3251,44 @@ function adminSaveEns(token, no, patch) {
 }
 /** 11-22 앙상블 › 리허설 시간: 팀마다 시각(직접) → 접수(form.ens.reh)에 저장 + 교사 일정 「앙상블 … 리허설」 칸의 세부 순서(설명)로 */
 function ensRehEvents_() { try { return actEvents_().filter(e => /앙상블|ensemble/i.test(e.title || '') && (e.stage === '리허설' || /리허설/.test(e.title || ''))).map(e => { const c = actCfg_(); return { id: e.id, label: ((c.days || [])[e.d] || '') + ' ' + e.s + '~' + e.e + ' · ' + e.title + (e.stage && e.stage !== '본공연' ? ' ' + e.stage : '') + (e.room ? ' · ' + e.room : '') }; }); } catch (x) { return []; } }
+/* 11-22 모듈별 인쇄에서 칸 항목 고르기: 그 칸(일정)의 모든 조각(끄기 · 순서 없이) · 저장 = 교사 일정 「칸설정」 칸 */
+function bookCellInfo(token, eid) {
+  const a = adm_(token); bookPerm_(a, true);
+  const c = actCfg_(), e = actEvents_().find(x => String(x.id) === String(eid)); if (!e) throw new Error('교사 일정에서 이 칸을 찾지 못했어요. 새로 불러와 주세요.');
+  const ppl = actPeople_(c.people), nm = {}; ppl.forEach(p => nm[p.id] = p.n); const nameOf = id => nm[id] || String(id).replace(/^[CP]:/, '');
+  const Q = cellSeg_(Object.assign({}, e, { po: [], pord: [] }), c, nameOf).map(q => [q[0], q[1], q[2], q[3] || '', q[4] || []]);
+  return { id: e.id, title: e.title || '', day: e.d, s: e.s, e: e.e, room: e.room || '', Q, po: e.po || [], pord: e.pord || [] };
+}
+function bookCellSave(token, eid, po, pord) {
+  const a = adm_(token); bookPerm_(a, true);
+  const t = (s, n) => String(s == null ? '' : s).slice(0, n || 200);
+  const lock = lock_();
+  try {
+    const sh = actSheets_(), head = sh.ev.getRange(1, 1, 1, sh.ev.getLastColumn()).getValues()[0], ci = head.indexOf('칸설정') + 1, ii = head.indexOf('ID') + 1;
+    if (ci < 1) throw new Error('교사 일정 시트에 「칸설정」 칸이 없어요. 스케줄관리에서 한 번 저장해 주세요.');
+    const ids = sh.ev.getLastRow() > 1 ? sh.ev.getRange(2, ii, sh.ev.getLastRow() - 1, 1).getValues().map(r => String(r[0])) : [], ri = ids.indexOf(String(eid));
+    if (ri < 0) throw new Error('교사 일정에서 이 칸을 찾지 못했어요. 새로 불러와 주세요.');
+    let old = {}; try { old = JSON.parse(String(sh.ev.getRange(ri + 2, ci).getValue() || '{}')) || {}; } catch (x) {}
+    const o = (po || []).slice(0, 40).map(x => t(x, 30)), p = (pord || []).slice(0, 40).map(x => t(x, 30)), m = t(old.m || '', 120);
+    sh.ev.getRange(ri + 2, ci).setValue(o.length || m || p.length ? JSON.stringify(Object.assign({ o, m }, p.length ? { p } : {})) : '');
+    const cur = rows_(SH.ACTCFG), r = cur.find(x => String(x['항목']) === 'rev'), nr = (+((r || {})['값']) || 0) + 1;
+    if (r) sh.cfg.getRange(r._row, 2).setValue(JSON.stringify(nr)); else sh.cfg.appendRow(['rev', JSON.stringify(nr)]);
+    sh.log.appendRow([stamp_(), a.name, '인쇄에서 칸 항목 고침: ' + eid]);
+  } finally { lock.releaseLock(); }
+  return { ok: true };
+}
+/* 칸 글자 모양(모든 칸) 저장 — 모듈별 인쇄에서 */
+function bookCellStySave(token, sty) {
+  const a = adm_(token); bookPerm_(a, true);
+  const o = {}; ['title', 'tg', 'sub', 'd', 'r', 'a', 'en'].forEach(k => { const v = (sty || {})[k]; if (v && typeof v === 'object') o[k] = { b: v.b ? 1 : 0, z: Math.max(60, Math.min(160, Math.round(+v.z || 100))) }; });
+  const lock = lock_();
+  try {
+    const sh = actSheets_(), cur = rows_(SH.ACTCFG), put = (k, v) => { const r = cur.find(x => String(x['항목']) === k); if (r) sh.cfg.getRange(r._row, 2).setValue(JSON.stringify(v)); else sh.cfg.appendRow([k, JSON.stringify(v)]); };
+    put('cellSty', o); const r = cur.find(x => String(x['항목']) === 'rev'); put('rev', (+((r || {})['값']) || 0) + 1);
+    sh.log.appendRow([stamp_(), a.name, '칸 글자 모양 고침 (인쇄)']);
+  } finally { lock.releaseLock(); }
+  return { ok: true, cellSty: o };
+}
 function adminEnsRehInfo(token) { const a = adm_(token); need_(a, 'ens'); return { events: ensRehEvents_() }; }
 function adminEnsReh(token, list, evId) {
   const a = adm_(token); need_(a, 'ens');

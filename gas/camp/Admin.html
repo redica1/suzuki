@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261122-092446 -->
+<!-- build: 20261122-093806 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -591,19 +591,21 @@ function rpBankCell(g,first){if(!S.bankTx||S.bankTx.loading)return '<span class=
 /* 행사 책자 고쳐 쓰기 도구는 책자 · 모듈별 인쇄 두 곳에서 (11-22) */
 const EBT=()=>S.tab==='book'||S.tab==='pmod';
 /* ===== 11-21 모듈별 인쇄: 행사 책자의 표를 하나씩 골라 불러와 인쇄 · 보일 칸 · 숨길 줄 ===== */
+/* 글 쪽(직접 쓴 쪽 · 이미지 쪽)은 템플릿(음악회 · 시간표 · 기본)에 따라 그 묶음에 (11-22) */
+const pmKind=x=>x.kind==='text'?({con:'con',sch:'sched'})[ebTplK(x)]||'text':x.kind;
 const PM_G=[['시간표',k=>/^(sched|open|mcp|oreh)$/.test(k)],['음악회',k=>k==='con'],['명단',k=>/^(orch|oasst|tch|fac)$/.test(k)],['앞 · 글',k=>/^(cover|text)$/.test(k)],['기타',k=>!/^(sched|open|mcp|oreh|con|orch|oasst|tch|fac|cover|text)$/.test(k)]];
 function pmHide(){try{return JSON.parse(localStorage.getItem('pmHide')||'{}')}catch(e){return {}}}
 function pmSave(H){try{localStorage.setItem('pmHide',JSON.stringify(H))}catch(e){}}
 function vPmod(){const E=S.EB;if(!E){if(!S.EBL)setTimeout(ebLoad,0);return '<div class="panel hint">표를 불러오고 있어요…</div>'}
   const L=ebItems(),ed=!!E.edit&&!RO();
   const cur=L.find(x=>x.k===S.pmK)||L.find(x=>x.k===S.ebSel)||L.find(x=>x.kind==='mcp')||L[0];
-  const top=`<div class="panel" style="margin-bottom:10px"><div class="spread"><div><b>모듈별 인쇄</b> <span class="hint">쪽(표)마다 불러와 추가 · 고치기 · 지우기 · 인쇄 · 순서와 넣고 빼기는 「행사 책자」에서</span></div><div class="row" style="gap:6px;flex-wrap:wrap">${ed?(S.ebAdd?`<span class="ebadd"><b style="font-size:13px;padding:0 4px">새 쪽</b><button class="btn small primary" type="button" id="ebPickOpen">데이터에서 불러오기</button><button class="btn small" type="button" id="ebAddTxt">글 쪽 (직접 쓰기)</button><button class="btn small" type="button" id="ebAddImg">이미지 쪽 (그림 올리기)</button><button class="btn small ghost" type="button" id="ebAddX">닫기</button></span>`:`<button class="btn small" type="button" id="ebAddOpen" title="고른 쪽 다음에 들어가요">＋ 쪽 추가</button>`):''}</div></div>${S.ebPickM&&ed?ebPickHtml():''}</div>`;
+  const top=`<div class="panel" style="margin-bottom:10px"><div class="spread"><div><b>모듈별 인쇄</b> <span class="hint">쪽(표)마다 불러와 추가 · 고치기 · 지우기 · 인쇄 · 글 쪽은 이름 옆 템플릿(음악회 · 시간표 · 기본)을 바꾸면 그 묶음으로 옮겨져요 · 순서와 넣고 빼기는 「행사 책자」에서</span></div><div class="row" style="gap:6px;flex-wrap:wrap">${ed?(S.ebAdd?`<span class="ebadd"><b style="font-size:13px;padding:0 4px">새 쪽</b><button class="btn small primary" type="button" id="ebPickOpen">데이터에서 불러오기</button><button class="btn small" type="button" id="ebAddTxt">글 쪽 (직접 쓰기)</button><button class="btn small" type="button" id="ebAddImg">이미지 쪽 (그림 올리기)</button><button class="btn small ghost" type="button" id="ebAddX">닫기</button></span>`:`<button class="btn small" type="button" id="ebAddOpen" title="고른 쪽 다음에 들어가요">＋ 쪽 추가</button>`):''}</div></div>${S.ebPickM&&ed?ebPickHtml():''}</div>`;
   if(!cur)return top+'<div class="panel hint">쪽이 없어요. 「＋ 쪽 추가」로 만들어 주세요.</div>';
   S.pmK=cur.k;S.ebSel=cur.k;const H=(pmHide()[cur.k])||{c:[],r:[]},img=ebIsImg(cur),isEd=S.ebEd===cur.k;if(isEd)S.pmRow=false;
   const [c,l]=ebState(cur);
   setTimeout(isEd?()=>{const b=document.getElementById('pmCols');if(b)b.innerHTML='<span class="hint">고쳐 쓰는 동안은 보일 칸 · 줄 숨기기를 잠시 꺼요</span>';ebLive()}:pmApply,20);
   const tools=isEd?ebToolbar(cur):`<div class="ebbar vw"><div class="v1"><b>${esc(cur.t)}</b>${ed&&!img?ebTplSel(cur):ebTplChip(cur)}<span class="ebchip ${c}">${l}</span>${cur.h&&cur.at?`<span class="epg2">· ${esc(String(cur.at).slice(5,16))} ${esc(cur.by||'')}</span>`:''}</div><div class="v2">${ebBtns(cur,ed)}</div></div>`;
-  return top+`<div class="pmwrap"><div class="pmlay"><div class="panel pmlist">${PM_G.map(([g,f])=>{const X=L.filter(x=>f(x.kind));return X.length?`<div class="pmg">${g}</div>${X.map(x=>`<button type="button" class="pmi" data-pmk="${esc(x.k)}" aria-pressed="${x.k===cur.k}">${esc(x.t)}${x.on?'':' <small>(책자에서 뺌)</small>'}${ebState(x)[0]==='chg'&&x.kind!=='text'?' <small style="color:var(--bad)">원본 바뀜</small>':''}</button>`).join('')}`:''}).join('')}</div>
+  return top+`<div class="pmwrap"><div class="pmlay"><div class="panel pmlist">${PM_G.map(([g,f])=>{const X=L.filter(x=>f(pmKind(x)));return X.length?`<div class="pmg">${g}</div>${X.map(x=>`<button type="button" class="pmi" data-pmk="${esc(x.k)}" aria-pressed="${x.k===cur.k}">${esc(x.t)}${x.on?'':' <small>(책자에서 뺌)</small>'}${ebState(x)[0]==='chg'&&x.kind!=='text'?' <small style="color:var(--bad)">원본 바뀜</small>':''}</button>`).join('')}`:''}).join('')}</div>
   <div style="min-width:0">${isEd?'':`<div class="panel"><div class="spread"><b style="font-size:17px">${esc(cur.t)}</b><span class="row" style="gap:6px"><button class="btn small" type="button" data-pmre="1">새로 불러오기</button><button class="btn small ${S.pmRow?'primary':''}" type="button" data-pmrow="1">${S.pmRow?'줄 숨기기 끝':'줄 숨기기'}</button><button class="btn small primary" type="button" data-pmprint="1">인쇄 · PDF</button></span></div>
   <div class="row" style="gap:6px;margin-top:8px" id="pmCols"></div>
   <p class="hint" style="margin:6px 0 0">불러오는 곳: ${esc(ebSrcName(cur.kind))} · 「줄 숨기기」를 누른 뒤 표의 줄을 누르면 인쇄에서만 빠져요(책자는 그대로) · 고른 것은 이 브라우저에 기억해요${H.c.length||H.r.length?` · <a href="#" data-pmclr="1">처음대로</a>`:''}</p></div>`}

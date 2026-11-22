@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261122-095610 -->
+<!-- build: 20261122-095700 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -1292,7 +1292,7 @@ function pvHideBox(P){const H=P.hide||{},has=(k,v)=>(H[k]||[]).includes(v);const
     <div style="margin-top:12px;border-top:1px dashed var(--line);padding-top:8px"><b>칸 글자 모양</b> <span class="cap" style="margin:0">모든 시간표 칸 · 행사 책자 · 모듈별 인쇄에 같이 (구글 시트는 글자 모양 없이)</span>
     <div class="tblw" style="margin-top:6px"><table class="pft nosort" style="width:auto"><thead><tr><th>항목</th><th>굵게</th><th>크기</th></tr></thead><tbody>${CELL_STY.map(([k,l,b,z])=>{const v=(D.cellSty||{})[k]||{b,z};return `<tr><td style="text-align:left">${l}</td><td><input type="checkbox" class="a_csb" data-k="${k}" ${v.b?'checked':''}></td><td><select class="a_csz" data-k="${k}">${[70,80,85,90,100,110,120,130,140].map(n=>`<option value="${n}" ${+v.z===n?'selected':''}>${n}%</option>`).join('')}</select></td></tr>`}).join('')}</tbody></table></div>
     <div class="row" style="margin-top:6px"><button class="btn small primary" type="button" id="a_cellStySave">글자 모양 저장</button></div></div></details>`}
-const CELL_STY=[['title','제목',1,100],['tg','대상',1,100],['sub','세부',0,100],['d','설명',0,100],['r','담당 (첫 역할)',1,100],['a','보조 · 다른 역할 · 메모',0,90],['en','영어 줄',0,88]];
+const CELL_STY=[['title','제목',1,120],['tg','대상',1,100],['sub','세부',0,100],['d','설명',0,100],['r','담당 (첫 역할)',1,100],['a','보조 · 다른 역할 · 메모',0,90],['en','영어 줄',0,88]];
 function vPrev(){
   if(!A.pv){if(!A.pvErr)setTimeout(pvLoad);return `<div class="panel">${A.pvErr?`<span class="err">미리보기를 만들지 못했어요 · ${esc(A.pvErr)}</span> <button class="btn small" type="button" id="a_pvReload">다시</button>`:'프로그램북 미리보기를 만드는 중…'}</div>`}
   const P=A.pv;let t=A.pvT==null?0:A.pvT;
@@ -3724,7 +3724,8 @@ function ebCover(){const E=S.EB,C=E.camp||{},T=ebSet(),a=ebDt(C.start),b=ebDt(C.
 /* 시간표 칸 규칙 (11-05): ① 시각(시간대와 다를 때) ② 반 · 행사 이름(굵게) ③ 내용 ④ 담당(굵게) ⑤ 보조(작게, 괄호) ⑥ 영문(설정) · 한 칸에 일정 둘이면 가는 선으로 나눔 · 옆 칸과 똑같으면 합침 */
 /* 11-22 칸 글자 모양: o.x = [종류, 글] · 종류마다 굵게 · 크기(교사 일정 › 미리보기 설정 「칸 글자 모양」) */
 const EB_XC={tm:'s1',title:'s2',tg:'s2',tgd:'s3',sub:'s3',d:'s3',r:'s4',a:'s5',en:'s6'};
-function ebXSty(k){const C=(S.EB&&S.EB.cellSty)||{},v=C[k==='tm'?'':k==='tgd'?'tg':k];if(!v)return '';return ` style="font-weight:${v.b?700:400};font-size:${(+v.z||100)/100}em"`}
+const EB_XDEF={title:{b:1,z:120}};   /* 칸 글자 모양 기본: 제목 굵게 120% (11-22) */
+function ebXSty(k){const C=(S.EB&&S.EB.cellSty)||{},kk=k==='tm'?'':k==='tgd'?'tg':k,v=C[kk]||EB_XDEF[kk];if(!v)return '';return ` style="font-weight:${v.b?700:400};font-size:${(+v.z||100)/100}em"`}
 function ebSchCell(L,T){return (L||[]).map(o=>Array.isArray(o.x)&&o.x.length?`<div class="sc">${o.x.filter(([k])=>k!=='en'||T.sen!==false).map(([k,v])=>`<div class="${EB_XC[k]||'s3'}"${ebXSty(k)}>${esc(v)}</div>`).join('')}</div>`:`<div class="sc">${o.t?`<div class="s1">${esc(o.t)}</div>`:''}${(o.h||[]).map(h=>`<div class="s2">${esc(h)}</div>`).join('')}${(o.b||[]).map(b=>`<div class="s3">${esc(b)}</div>`).join('')}${o.l?`<div class="s4">${esc(o.l)}</div>`:''}${(o.a||[]).length?`<div class="s5">(${o.a.map(esc).join(' / ')})</div>`:''}${(o.m||[]).map(m=>`<div class="s5">${esc(m)}</div>`).join('')}${T.sen!==false&&o.en?`<div class="s6">${esc(o.en)}</div>`:''}</div>`).join('')}
 function ebSchRow(R,cs,T){let h='';for(let k=0;k<cs.length;k++){const L=R[cs[k]]||[],key=JSON.stringify(L);let n=1;if(L.length)while(k+n<cs.length&&JSON.stringify(R[cs[k+n]]||[])===key)n++;
   h+=`<td${n>1?` colspan="${n}" class="sm"`:''}>${ebSchCell(L,T)}</td>`;k+=n-1}return h}

@@ -1,4 +1,4 @@
-/* build: 20261122-190552 */
+/* build: 20261122-190852 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -2128,7 +2128,7 @@ function progCellS_(e, c, nameOf, t0, e0) {
   const Q = cellSeg_(e, c, nameOf), hasTg = Q.some(q => q[1] === 'tg');
   Q.forEach(q => { const [k, ty, v] = q;
     if (ty === 'tg' || (ty === 'title' && !hasTg)) o.h.push(v); else if (ty === 'title') o.b.unshift(v); else if (ty === 'sub' || ty === 'd' || ty === 'tgd') o.b.push(v); else if (ty === 'r') o.l = v; else if (ty === 'en') o.en = v; else o.m.push(v);
-    o.x.push([ty, ty === 'a' && k.startsWith('r:') && v === (q[4] || []).join(', ') ? '(' + (q[4] || []).join(' / ') + ')' : v]); });
+    const st = (e.psty || {})[k]; o.x.push(st ? [ty, ty === 'a' && k.startsWith('r:') && v === (q[4] || []).join(', ') ? '(' + (q[4] || []).join(' / ') + ')' : v, st] : [ty, ty === 'a' && k.startsWith('r:') && v === (q[4] || []).join(', ') ? '(' + (q[4] || []).join(' / ') + ')' : v]); });
   return o;
 }
 /** 오케스트라 파트 역할 (지휘 · 악장 · Vln 1 …) — 이 역할이 들어간 공연은 「오케 명단」에 나옴 */
@@ -3252,14 +3252,15 @@ function adminSaveEns(token, no, patch) {
 /** 11-22 앙상블 › 리허설 시간: 팀마다 시각(직접) → 접수(form.ens.reh)에 저장 + 교사 일정 「앙상블 … 리허설」 칸의 세부 순서(설명)로 */
 function ensRehEvents_() { try { return actEvents_().filter(e => /앙상블|ensemble/i.test(e.title || '') && (e.stage === '리허설' || /리허설/.test(e.title || ''))).map(e => { const c = actCfg_(); return { id: e.id, label: ((c.days || [])[e.d] || '') + ' ' + e.s + '~' + e.e + ' · ' + e.title + (e.stage && e.stage !== '본공연' ? ' ' + e.stage : '') + (e.room ? ' · ' + e.room : '') }; }); } catch (x) { return []; } }
 /* 11-22 모듈별 인쇄에서 칸 항목 고르기: 그 칸(일정)의 모든 조각(끄기 · 순서 없이) · 저장 = 교사 일정 「칸설정」 칸 */
+const pstyClean_ = s => { const o = {}; Object.keys(s || {}).slice(0, 40).forEach(k => { const v = s[k]; if (!v || typeof v !== 'object') return; const x = {}; if (v.b === 0 || v.b === 1) x.b = v.b; if (v.z != null && v.z !== '') x.z = Math.max(60, Math.min(160, Math.round(+v.z || 100))); if (Object.keys(x).length) o[String(k).slice(0, 30)] = x; }); return o; };
 function bookCellInfo(token, eid) {
   const a = adm_(token); bookPerm_(a, true);
   const c = actCfg_(), e = actEvents_().find(x => String(x.id) === String(eid)); if (!e) throw new Error('교사 일정에서 이 칸을 찾지 못했어요. 새로 불러와 주세요.');
   const ppl = actPeople_(c.people), nm = {}; ppl.forEach(p => nm[p.id] = p.n); const nameOf = id => nm[id] || String(id).replace(/^[CP]:/, '');
   const Q = cellSeg_(Object.assign({}, e, { po: [], pord: [] }), c, nameOf).map(q => [q[0], q[1], q[2], q[3] || '', q[4] || []]);
-  return { id: e.id, title: e.title || '', day: e.d, s: e.s, e: e.e, room: e.room || '', Q, po: e.po || [], pord: e.pord || [] };
+  return { id: e.id, title: e.title || '', day: e.d, s: e.s, e: e.e, room: e.room || '', Q, po: e.po || [], pord: e.pord || [], psty: e.psty || {} };
 }
-function bookCellSave(token, eid, po, pord) {
+function bookCellSave(token, eid, po, pord, psty) {
   const a = adm_(token); bookPerm_(a, true);
   const t = (s, n) => String(s == null ? '' : s).slice(0, n || 200);
   const lock = lock_();
@@ -3269,8 +3270,8 @@ function bookCellSave(token, eid, po, pord) {
     const ids = sh.ev.getLastRow() > 1 ? sh.ev.getRange(2, ii, sh.ev.getLastRow() - 1, 1).getValues().map(r => String(r[0])) : [], ri = ids.indexOf(String(eid));
     if (ri < 0) throw new Error('교사 일정에서 이 칸을 찾지 못했어요. 새로 불러와 주세요.');
     let old = {}; try { old = JSON.parse(String(sh.ev.getRange(ri + 2, ci).getValue() || '{}')) || {}; } catch (x) {}
-    const o = (po || []).slice(0, 40).map(x => t(x, 30)), p = (pord || []).slice(0, 40).map(x => t(x, 30)), m = t(old.m || '', 120);
-    sh.ev.getRange(ri + 2, ci).setValue(o.length || m || p.length ? JSON.stringify(Object.assign({ o, m }, p.length ? { p } : {})) : '');
+    const o = (po || []).slice(0, 40).map(x => t(x, 30)), p = (pord || []).slice(0, 40).map(x => t(x, 30)), m = t(old.m || '', 120), ps = pstyClean_(psty === undefined ? old.s : psty);
+    sh.ev.getRange(ri + 2, ci).setValue(o.length || m || p.length || Object.keys(ps).length ? JSON.stringify(Object.assign({ o, m }, p.length ? { p } : {}, Object.keys(ps).length ? { s: ps } : {})) : '');
     const cur = rows_(SH.ACTCFG), r = cur.find(x => String(x['항목']) === 'rev'), nr = (+((r || {})['값']) || 0) + 1;
     if (r) sh.cfg.getRange(r._row, 2).setValue(JSON.stringify(nr)); else sh.cfg.appendRow(['rev', JSON.stringify(nr)]);
     sh.log.appendRow([stamp_(), a.name, '인쇄에서 칸 항목 고침: ' + eid]);
@@ -3624,7 +3625,7 @@ function actEvents_() {
   return rows_(SH.ACT).filter(r => String(r['ID'] || '')).map(r => {
     let ppl = []; try { ppl = JSON.parse(String(r['사람'] || '[]')); } catch (x) {}
     return { id: String(r['ID']), d: +r['날짜'] || 0, s: hm_(r['시작']), e: hm_(r['끝']), room: String(r['장소'] || ''), title: String(r['이름'] || ''), sub: String(r['세부'] || ''), stage: String(r['단계'] || ''), main: String(r['가져온 일정ID'] || r['본공연ID'] || ''), tg: (() => { try { return JSON.parse(String(r['대상'] || '{}')) || {}; } catch (x) { return {}; } })(), type: String(r['종류'] || '레슨'),
-      desc: String(r['설명'] || '').split('\n').map(x => x.trim()).filter(Boolean), ppl: Array.isArray(ppl) ? ppl : [], pm: (() => { try { const o = JSON.parse(String(r['역할메모'] || '{}')); return o && typeof o === 'object' ? o : {}; } catch (x) { return {}; } })(), ...(() => { try { const o = JSON.parse(String(r['칸설정'] || '{}')) || {}; return { po: Array.isArray(o.o) ? o.o : [], memo: String(o.m || ''), pord: Array.isArray(o.p) ? o.p : [] }; } catch (x) { return { po: [], memo: '' }; } })() };
+      desc: String(r['설명'] || '').split('\n').map(x => x.trim()).filter(Boolean), ppl: Array.isArray(ppl) ? ppl : [], pm: (() => { try { const o = JSON.parse(String(r['역할메모'] || '{}')); return o && typeof o === 'object' ? o : {}; } catch (x) { return {}; } })(), ...(() => { try { const o = JSON.parse(String(r['칸설정'] || '{}')) || {}; return { po: Array.isArray(o.o) ? o.o : [], memo: String(o.m || ''), pord: Array.isArray(o.p) ? o.p : [], psty: o.s && typeof o.s === 'object' ? o.s : {} }; } catch (x) { return { po: [], memo: '' }; } })() };
   });
 }
 /** 일정에 넣을 수 있는 사람 = 캠프에 접수한 교사(교사·연수생·소속없는 중급연수생) + 교수진(사용 중)
@@ -3676,7 +3677,7 @@ function schedSave(token, b) {
     const rows = b.events.map(e => {
       if (!okT(e.s) || !okT(e.e)) throw new Error('시간 형식이 잘못된 일정이 있어요: ' + t(e.title, 30));
       const ppl = (e.ppl || []).map(p => ({ n: t(p.n, 40), r: t(p.r, 12) })).filter(p => p.n);
-      return [t(e.id, 40), +e.d || 0, "'" + e.s, "'" + e.e, t(e.room, 60), t(e.title, 120), t(e.type, 20), (e.desc || []).map(x => t(x, 200)).join('\n'), JSON.stringify(ppl), ppl.map(p => ((P[p.n] || {}).n || p.n) + '(' + p.r + ')').join(', '), t(e.sub, 120), tgClean_(e.tg), t(e.stage, 20), t(e.main, 40), (() => { const o = {}; Object.keys(e.pm || {}).slice(0, 12).forEach(k => { const v = t(e.pm[k], 40).trim(); if (v) o[t(k, 12)] = v; }); return Object.keys(o).length ? JSON.stringify(o) : ''; })(), (() => { const o = (e.po || []).slice(0, 40).map(x => t(x, 30)), m = t(e.memo || '', 120).trim(), p = (e.pord || []).slice(0, 40).map(x => t(x, 30)); return o.length || m || p.length ? JSON.stringify(Object.assign({ o, m }, p.length ? { p } : {})) : ''; })()];
+      return [t(e.id, 40), +e.d || 0, "'" + e.s, "'" + e.e, t(e.room, 60), t(e.title, 120), t(e.type, 20), (e.desc || []).map(x => t(x, 200)).join('\n'), JSON.stringify(ppl), ppl.map(p => ((P[p.n] || {}).n || p.n) + '(' + p.r + ')').join(', '), t(e.sub, 120), tgClean_(e.tg), t(e.stage, 20), t(e.main, 40), (() => { const o = {}; Object.keys(e.pm || {}).slice(0, 12).forEach(k => { const v = t(e.pm[k], 40).trim(); if (v) o[t(k, 12)] = v; }); return Object.keys(o).length ? JSON.stringify(o) : ''; })(), (() => { const o = (e.po || []).slice(0, 40).map(x => t(x, 30)), m = t(e.memo || '', 120).trim(), p = (e.pord || []).slice(0, 40).map(x => t(x, 30)), ps = pstyClean_(e.psty); return o.length || m || p.length || Object.keys(ps).length ? JSON.stringify(Object.assign({ o, m }, p.length ? { p } : {}, Object.keys(ps).length ? { s: ps } : {})) : ''; })()];
     });
     const last = sh.ev.getLastRow();
     sh.ev.getRange(1, 1, 1, ACT_HEAD.length).setValues([ACT_HEAD]);   // 머리줄 (「세부」 칸이 없던 시트도 맞춤)

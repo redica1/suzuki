@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261122-170030 -->
+<!-- build: 20261122-170150 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -229,7 +229,8 @@ tr.off td{opacity:.5}
 .ensreh{display:grid;grid-template-columns:auto minmax(180px,1fr);gap:14px;align-items:start}.ensrpv{border:1px dashed var(--line);border-radius:10px;padding:8px 12px;font-weight:700;font-size:14px;line-height:1.7}@media (max-width:640px){.ensreh{grid-template-columns:1fr}}
 .ebc .ebcsel{background:#cfe3ff!important;outline:1px solid #6aa0ff}
 .pmsheet .ebc:has(> section.bls.sch + section.bls.sch){flex-direction:row;flex-wrap:nowrap;align-items:flex-start;gap:0}.pmsheet .ebc:has(> section.bls.sch + section.bls.sch)>section.bls+section.bls{border-left:1px dashed #9aa}body.pmPrint .pmsheet .ebc{flex-direction:column!important}
-.pmzoom{display:flex;gap:6px;align-items:center;justify-content:flex-end;margin:0 0 6px;flex-wrap:wrap}.pmwrap.pmbig .pmlay{grid-template-columns:1fr!important}.pmwrap.pmbig .pmlist{display:none}.pmwrap .pmsheet{overflow:auto;max-width:100%;align-items:safe center}body.pmPrint .pmsheet .ebc{zoom:1!important}
+.pmzoom{display:flex;gap:6px;align-items:center;justify-content:flex-end;margin:0 0 6px;flex-wrap:wrap}.pmwrap.pmbig .pmlay{grid-template-columns:1fr!important}.pmwrap.pmbig .pmlist{display:none}.pmtools{margin:0 0 8px}.pmtools .ebbar.vw{width:100%;max-width:none;margin:0}
+.pmwrap .pmsheet{overflow:auto;max-width:100%;align-items:safe center}body.pmPrint .pmsheet .ebc{zoom:1!important}
 .bls[data-csp][style*="--chg"] .eh{margin-bottom:var(--chg)!important}.bls[data-csp][style*="--cig"] .cmeta{row-gap:var(--cig)!important}.bls[data-csp][style*="--cig"] .cmeta+.cmeta,.bls[data-csp][style*="--cig"] .eh~p+p{margin-top:var(--cig)!important}.bls[data-csp][style*="--ctg"] .cmeta{margin-bottom:var(--ctg)!important}.bls[data-csp][style*="--ctg"]:not(:has(.cmeta)) .it:first-of-type{margin-top:var(--ctg)!important}.bls[data-csp][style*="--cim"]:not([style*="--itg"]) .it{margin-bottom:var(--cim)!important}
 .lstrow{border-left:5px solid var(--line);margin-bottom:12px}.lstrow>.lsth{display:block;font-size:17px;margin:0 0 8px}.lstcols{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;align-items:start}.lstrow.t-con{border-left-color:var(--rosin)}.lstrow.t-les{border-left-color:var(--bar)}.lstrow.t-orc{border-left-color:#5B4BB7}.lstrow.t-reh{border-left-color:var(--faint)}
 .act table.lst .a_le,.act table.lst .a_ls,.act table.lst .a_lk{margin-top:3px;font-size:14px;color:var(--muted)}.act table.lst .a_lk{border-color:var(--rosin-soft)}
@@ -618,7 +619,7 @@ function vPmod(){const E=S.EB;if(!E){if(!S.EBL)setTimeout(ebLoad,0);return '<div
   <p class="hint" style="margin:6px 0 0">불러오는 곳: ${esc(ebSrcName(cur.kind))} · 「줄 숨기기」를 누른 뒤 표의 줄을 누르면 인쇄에서만 빠져요(책자는 그대로) · 고른 것은 이 브라우저에 기억해요${H.c.length||H.r.length?` · <a href="#" data-pmclr="1">처음대로</a>`:''}</p></div>`}
   ${cur.kind==='con'&&ed&&!isEd?ctPanel(cur):''}${ed&&!isEd&&ebTplK(cur)==='con'&&!ebCtOf(cur.k)?cspPanel(cur):''}
   <div class="pmzoom"><span class="hint">미리보기</span><button class="btn small" type="button" data-pmz="-" aria-label="작게">－</button><button class="btn small" type="button" data-pmz="1" title="실제 크기">${Math.round(pmZ()*100)}%</button><button class="btn small" type="button" data-pmz="+" aria-label="크게">＋</button><button class="btn small" type="button" data-pmz="fit" title="화면 폭에 맞춰 크게">폭 맞춤</button><button class="btn small ${S.pmBig?'primary':''}" type="button" data-pmz="big">${S.pmBig?'크게 보기 끝':'크게 보기'}</button></div>
-  <div class="ebprev pmsheet${S.pmRow?' pmrowmode':''}"><div class="ebi" id="eb_${esc(cur.k.replace(':','_'))}">${tools}${isEd?'':ebWarnBox(cur,ed)}<div class="ebc" data-ebk="${esc(cur.k)}" style="--ebz:${pmZ()}" ${isEd?'contenteditable="true" spellcheck="false"':''}>${ebHtml(cur)}</div></div></div></div></div></div>`}
+  ${isEd?'':`<div class="pmtools">${tools}</div>`}<div class="ebprev pmsheet${S.pmRow?' pmrowmode':''}"><div class="ebi" id="eb_${esc(cur.k.replace(':','_'))}">${isEd?tools:''}${isEd?'':ebWarnBox(cur,ed)}<div class="ebc" data-ebk="${esc(cur.k)}" style="--ebz:${pmZ()}" ${isEd?'contenteditable="true" spellcheck="false"':''}>${ebHtml(cur)}</div></div></div></div></div></div>`}
 /* 11-22 모듈별 인쇄 미리보기 확대 · 크게 보기 (이 브라우저에 기억) */
 function pmZ(){if(S.pmZv==null){let v=1;try{v=+localStorage.getItem('campPmZoom')||1}catch(e){}S.pmZv=v}return S.pmZv}
 document.addEventListener('click',e=>{if(S.tab!=='pmod')return;const b=e.target.closest('[data-pmz]');if(!b)return;const v=b.dataset.pmz;

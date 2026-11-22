@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261122-094941 -->
+<!-- build: 20261122-095610 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -224,7 +224,8 @@ tr.off td{opacity:.5}
 .act .ev .evh b{font-size:14.5px;line-height:1.3}
 .act .ev .tm{font-size:12.5px;color:var(--faint);white-space:nowrap}
 .act .ev small{color:var(--muted);font-size:13px;line-height:1.3}
-.act .lstg{align-items:start}.act .lstcol{display:grid;gap:14px}.act .lsth{font-size:18px}.act .lstbox{display:grid;gap:6px}.act table.lst td{padding:3px 4px}.act .bdko{display:block;font-size:13.5px;padding:2px 2px 0}.act table.lst input[type=text]{width:100%;min-width:90px}.lstrow{border-left:5px solid var(--line);margin-bottom:12px}.lstrow>.lsth{display:block;font-size:17px;margin:0 0 8px}.lstcols{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;align-items:start}.lstrow.t-con{border-left-color:var(--rosin)}.lstrow.t-les{border-left-color:var(--bar)}.lstrow.t-orc{border-left-color:#5B4BB7}.lstrow.t-reh{border-left-color:var(--faint)}
+.act .lstg{align-items:start}.act .lstcol{display:grid;gap:14px}.act .lsth{font-size:18px}.act .lstbox{display:grid;gap:6px}.act table.lst td{padding:3px 4px}.act .bdko{display:block;font-size:13.5px;padding:2px 2px 0}.act table.lst input[type=text]{width:100%;min-width:90px}.pobox{display:grid;gap:2px}.porow{display:grid;grid-template-columns:22px 6.5em minmax(0,1fr) auto auto;gap:8px;align-items:center;font-size:14px;padding:3px 4px;border-radius:6px}.porow.off .pov{color:var(--faint);text-decoration:line-through}.porow.warn{background:#fff4d6;color:#3d2e00}.porow.warn .pol{color:#6b5200}.porow .pol{font-size:12.5px;color:var(--muted);font-weight:700}.pom button{border:1px solid var(--line);background:var(--surface);border-radius:6px;padding:0 6px;cursor:pointer;font:inherit;font-size:12px}.pom button:disabled{opacity:.35;cursor:default}.pow{font-size:12px;color:#9a6700;font-weight:700}
+.lstrow{border-left:5px solid var(--line);margin-bottom:12px}.lstrow>.lsth{display:block;font-size:17px;margin:0 0 8px}.lstcols{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;align-items:start}.lstrow.t-con{border-left-color:var(--rosin)}.lstrow.t-les{border-left-color:var(--bar)}.lstrow.t-orc{border-left-color:#5B4BB7}.lstrow.t-reh{border-left-color:var(--faint)}
 .act table.lst .a_le,.act table.lst .a_ls,.act table.lst .a_lk{margin-top:3px;font-size:14px;color:var(--muted)}.act table.lst .a_lk{border-color:var(--rosin-soft)}
 .act .addbox{display:grid;gap:8px;padding:10px;border:1px dashed var(--line);border-radius:8px;background:var(--bg)}.act .ckl li label{display:flex;gap:8px;align-items:center;padding:6px 8px;cursor:pointer;border-radius:6px}.act .ckl li label:hover{background:var(--sunk)}.act .ckl li label.warn{opacity:.75}.act .ckl{max-height:320px;overflow:auto}
 .act .linkbox{display:grid;gap:6px;padding:10px;border:1px dashed var(--rosin);border-radius:8px;background:var(--rosin-soft)}
@@ -763,6 +764,23 @@ function tgRange(inst,L){const T=tgNorm(L).map(tkP);const out=[];let run=[];
   const flush=()=>{if(run.length>2)out.push(run[0].bk+'~'+run[run.length-1].bk);else run.forEach(o=>out.push(tkLab(o)));run=[]};
   T.forEach(o=>{const plain=!o.pt&&!o.up&&!o.dn&&o.bk!=='Pre';if(plain&&run.length&&+o.bk===+run[run.length-1].bk+1)run.push(o);else{flush();if(plain)run.push(o);else out.push(tkLab(o))}});flush();
   return out.join('·')}
+document.addEventListener('change',ev=>{const t=ev.target;if(!t.classList||!(t.classList.contains('a_po')||t.id==='a_pmemo'))return;const e=evById(A.sel);if(!e)return;readEditor(e);setTimeout(refresh,0)});
+/* 11-22 칸마다 「인쇄에 나올 것」: 키 = 서버 cellSeg_ 와 같음 (t · tg · sub · d0.. · r:역할 · memo · en) · 끄기 po · 순서 pord · 전체 설정과 겹치면 경고 + 고칠 곳 */
+function poItems(e){const it=[],st=e.stage&&e.stage!=='본공연'?' '+e.stage:'',RS=(D.roleSets||{})[e.cat]||[],PM=e.pm||{};
+  it.push(['t','제목',e.title+st]);const tgt=tgTxt(e.tg);if(tgt)it.push(['tg','대상',tgt]);if(e.sub)it.push(['sub','세부',e.sub]);
+  const Ds=e.desc||[];if(Ds.includes('[별지]'))it.push(['d'+Ds.indexOf('[별지]'),'설명','(별지 참조)']);else Ds.forEach((x,i)=>it.push(['d'+i,'설명 '+(i+1),x]));
+  const order=RS.slice();e.ppl.forEach(p=>{if(!order.includes(p.r))order.push(p.r)});order.concat(Object.keys(PM)).filter((r,i,A)=>A.indexOf(r)===i&&(PM[r]||e.ppl.some(p=>p.r===r))).forEach(r=>it.push(['r:'+r,r,PM[r]?PM[r]:e.ppl.filter(p=>p.r===r).map(p=>NAME(p.n)).join(', '),PM[r]?'pm':'']));
+  if(e.memo)it.push(['memo','메모 줄',e.memo]);it.push(['en','영어 줄','(이름 · 단계의 영어)']);
+  const P=e.pord||[],pos=k=>{const i=P.indexOf(k);return i<0?1e3:i};return it.map((x,i)=>[x,i]).sort((a,b)=>(pos(a[0][0])-pos(b[0][0]))||(a[1]-b[1])).map(([x])=>x)}
+function poBox(e){const OFF=new Set(e.po||[]),H=D.pvHide||{},hf=new Set(H.f||[]),hr=new Set(H.r||[]),L=poItems(e);
+  const gh=k=>k==='tg'?hf.has('tg'):k==='sub'?hf.has('sub'):/^d\d/.test(k)?hf.has('desc'):k==='en'?hf.has('en'):k.startsWith('r:')?hr.has(e.cat+':'+k.slice(2)):false;
+  const cnt={};L.forEach(([k,l,v])=>{if(!OFF.has(k)&&v){const t=String(v).trim();cnt[t]=(cnt[t]||0)+1}});
+  const row=([k,l,v,f],i)=>{const off=OFF.has(k),g=!off&&gh(k),dup=!off&&cnt[String(v).trim()]>1,warn=g||dup;
+    return `<div class="porow${warn?' warn':''}${off?' off':''}"><input type="checkbox" class="a_po" data-k="${esc(k)}" ${off?'':'checked'} aria-label="${esc(l)} 인쇄"><span class="pol">${esc(l)}</span><span class="pov">${esc(v)}${f==='pm'?' <small class="faint">(인쇄 메모)</small>':''}</span>
+      <span class="poa">${g?`<button class="btn small" type="button" data-pvgo="1" title="교사 일정 › 미리보기 › 보일 항목 고르기">전체 설정에서 숨김 → 고치기</button>`:dup?`<span class="pow">같은 글이 두 번 나와요 · 하나를 빼세요</span>`:''}</span>
+      <span class="pom"><button type="button" data-pomv="${esc(k)}|-1" aria-label="위로" ${i?'':'disabled'}>↑</button><button type="button" data-pomv="${esc(k)}|1" aria-label="아래로" ${i<L.length-1?'':'disabled'}>↓</button></span></div>`};
+  return `<div class="f pobox"><span>인쇄에 나올 것 <span class="cap" style="margin:0">이 칸만 · 체크를 풀면 인쇄 · 책자 · 구글 시트에서 빠져요 · ↑↓ 로 칸 안 순서 · 노란 줄 = 겹침</span></span>${L.map(row).join('')}
+    <div class="porow"><span></span><span class="pol">메모 쓰기</span><input type="text" id="a_pmemo" value="${esc(e.memo||'')}" maxlength="120" placeholder="목록에 없는 글을 칸에 (예: 악기 지참) · 쓰면 위 목록에 들어가요" style="grid-column:span 3"></div>${(e.pord||[]).length||OFF.size?`<div><button class="btn small ghost" type="button" data-poreset="1">순서 · 보이기 처음대로</button></div>`:''}</div>`}
 function tgTxt(tg){if(!tg)return '';return TG_INST.filter(k=>tg[k]&&((tg[k].b||[]).length||(tg[k].x||[]).length||(tg[k].s||[]).length||tg[k].m)).map(k=>{const t=tg[k];return k+' '+[tgRange(k,t.b||[]),...(t.x||[]),...(t.s||[]),t.m||''].filter(Boolean).join(' · ')}).join(' / ')}
 function tgChips(k,t){const L=tgNorm(t.b);const by={};L.forEach(x=>{const o=tkP(x);by[o.bk]=o});
   return TG_BK.map(bk=>{const o=by[bk];const on=!!o;
@@ -788,7 +806,7 @@ const roleList=(cat,cur)=>{const L=((D.roleSets||{})[cat]||DEF_ROLESETS[cat]||[]
 function normAct(r){
   let K=Array.isArray(r.kinds)&&r.kinds.length?r.kinds:DEF_KINDS;K=K.map(k=>k.c?Object.assign({n:k.n,c:catOf(k.c),link:!!k.link,off:!!k.off},k.ko?{ko:k.ko}:{}):{n:k.n,c:catOf(k.t),link:k.t==='오후음악회'}).filter(k=>k.n);
   D.tgSongs=r.tgSongs&&typeof r.tgSongs==='object'?r.tgSongs:JSON.parse(JSON.stringify(DEF_TGSONGS));['Vn','Vc','Fl'].forEach(k=>{if(!Array.isArray(D.tgSongs[k]))D.tgSongs[k]=[]});
-  D.en=r.en&&typeof r.en==='object'?r.en:{};D.bookDesc=r.bookDesc&&typeof r.bookDesc==='object'?r.bookDesc:{};['Vn','Vc','Fl'].forEach(k=>{if(!D.bookDesc[k])D.bookDesc[k]={}});D.dayNotes=Array.isArray(r.dayNotes)?r.dayNotes:[];D.roleShort=r.roleShort&&typeof r.roleShort==='object'?r.roleShort:{};
+  D.en=r.en&&typeof r.en==='object'?r.en:{};D.bookDesc=r.bookDesc&&typeof r.bookDesc==='object'?r.bookDesc:{};['Vn','Vc','Fl'].forEach(k=>{if(!D.bookDesc[k])D.bookDesc[k]={}});D.dayNotes=Array.isArray(r.dayNotes)?r.dayNotes:[];D.cellSty=r.cellSty&&typeof r.cellSty==='object'?r.cellSty:{};D.pvHide=r.pvHide&&typeof r.pvHide==='object'?r.pvHide:{};D.roleShort=r.roleShort&&typeof r.roleShort==='object'?r.roleShort:{};
   if(!K.some(k=>k.c==='Orch 수업')){const O=K.filter(k=>k.c==='공연'&&/^orch/i.test(k.n));(O.length?O:DEF_KINDS.filter(k=>k.c==='Orch 수업')).forEach(k=>K.push({n:k.n,c:'Orch 수업',link:false,off:!!k.off}))}   /* 11-21: 예전 자료 — 공연 Orch 종류를 Orch 수업에도 (공연 쪽은 리허설 · 대기용으로 남김) */
   D.kinds=K;D.stages=Array.isArray(r.stages)&&r.stages.length?r.stages:DEF_STAGES.slice();
   D.roleSets=r.roleSets&&typeof r.roleSets==='object'?r.roleSets:JSON.parse(JSON.stringify(DEF_ROLESETS));CATS.forEach(c=>{if(!Array.isArray(D.roleSets[c]))D.roleSets[c]=DEF_ROLESETS[c].slice()});
@@ -804,7 +822,7 @@ function load(){LOADING=true;ERR='';run('schedData',[],r=>{LOADING=false;applyDa
 function applyData(r){D={days:r.days||[],rooms:r.rooms||{},meals:r.meals||[],rows:r.rows||{},events:r.events||[],people:r.people||[],lessons:r.lessons||[]};normAct(r);
   A.unav=r.unav||{};A.req=r.req||{};A.target=r.target||{min:2,max:6};A.log=r.log||[];REV=r.rev||0;DIRTY=false;PEND=[];
   if(A.day>=D.days.length)A.day=0;ST=stats()}
-function payload(){return {rev:REV,kinds:D.kinds,stages:D.stages,roleSets:D.roleSets,tgSongs:D.tgSongs,en:D.en,bookDesc:D.bookDesc,dayNotes:D.dayNotes,roleShort:D.roleShort,days:D.days,rooms:D.rooms,meals:D.meals,rows:D.rows||{},events:D.events,people:D.people,unav:A.unav,req:A.req,target:A.target,log:PEND.slice()}}
+function payload(){return {rev:REV,kinds:D.kinds,stages:D.stages,roleSets:D.roleSets,tgSongs:D.tgSongs,en:D.en,bookDesc:D.bookDesc,dayNotes:D.dayNotes,roleShort:D.roleShort,cellSty:D.cellSty||{},days:D.days,rooms:D.rooms,meals:D.meals,rows:D.rows||{},events:D.events,people:D.people,unav:A.unav,req:A.req,target:A.target,log:PEND.slice()}}
 function save(){CHG++;DIRTY=true;clearTimeout(TIMER);TIMER=setTimeout(()=>flush(),1500);stat()}
 function flush(after){if(SAVING){setTimeout(()=>flush(after),500);return}if(!DIRTY){after&&after();return}
   SAVING=true;clearTimeout(TIMER);const body=payload();const sent=body.log.length,sentChg=CHG;stat();
@@ -973,6 +991,7 @@ function editor(){
         <span class="row" style="gap:4px;margin-left:auto"><button class="btn small" type="button" data-aswap="${e.id}|${i}">바꾸기</button><button class="btn small ghost" type="button" data-aprm="${i}">빼기</button></span></div>`}).join('')||'<p class="cap" style="margin:0">아직 사람이 없어요.</p>'}
       ${addBox(e)}</div>
     ${(()=>{const PM=e.pm||{},rs=[...new Set(e.ppl.map(p=>p.r).concat(Object.keys(PM)))];return rs.length?`<div class="f" style="display:grid;gap:4px"><span>인쇄 메모 <span class="cap" style="margin:0">적으면 인쇄 · 책자 시간표에 그 역할 이름들 대신 이 글이 나와요 (배정 · 겹침 검사는 그대로)</span></span>${rs.map(r=>`<div class="row" style="gap:6px;flex-wrap:nowrap"><span class="rl r-${esc(r)}" style="min-width:5.5em">${esc(r)}</span><input type="text" class="a_pm" data-r="${esc(r)}" value="${esc(PM[r]||'')}" maxlength="40" placeholder="예: 보조교사: 10일과 동일" style="flex:1"></div>`).join('')}</div>`:''})()}
+    ${poBox(e)}
     ${A.cp===e.id?(()=>{const cd=A.cpD!=null?A.cpD:e.d,rms=D.rooms[cd]||[];const room=rms.some(r=>r[0]===A.cpR)?A.cpR:rms.some(r=>r[0]===e.room)?e.room:(rms[0]||[''])[0];
       return `<div class="linkbox cpbox"><b>일정 복사 — 새로 넣을 날짜 · 시간 · 장소</b>
       <div class="row" style="gap:8px;flex-wrap:wrap"><label class="f" for="a_cpD">날짜<select id="a_cpD">${D.days.map((x,i)=>`<option value="${i}" ${i===cd?'selected':''}>${esc(x)}</option>`).join('')}</select></label>
@@ -1028,7 +1047,7 @@ function vLog(){return `<div class="sec-h"><div><h2>바꾼 기록</h2><p>시트 
 
 document.addEventListener('change',ev=>{if(!ACTON()||ev.target.id!=='a_edK')return;const o=ev.target.selectedOptions[0],y=document.getElementById('a_edY');if(o&&y&&o.dataset.t)y.value=o.dataset.t});
 function readEditor(e){const g=id=>document.getElementById(id);if(!g('a_edT'))return;
-  e.title=g('a_edK').value||e.title;e.sub=g('a_edT').value.trim();e.stage=e.cat==='공연'&&g('a_edG')?g('a_edG').value:'';TG_INST.forEach(k=>{const m=g('a_tgm_'+k);if(!m)return;e.tg=e.tg||{};const t=e.tg[k]=e.tg[k]||{b:[],x:[],m:''};t.m=m.value.trim()});e.type=e.cat;e.room=g('a_edR').value;{const PM={};document.querySelectorAll('.a_pm').forEach(el=>{const v=el.value.trim();if(v)PM[el.dataset.r]=v});e.pm=PM}e.desc=g('a_edD').value.split('\n').map(x=>x.trim()).filter(x=>x&&x!=='[별지]').concat(g('a_edRef')&&g('a_edRef').checked?['[별지]']:[]);
+  e.title=g('a_edK').value||e.title;e.sub=g('a_edT').value.trim();e.stage=e.cat==='공연'&&g('a_edG')?g('a_edG').value:'';TG_INST.forEach(k=>{const m=g('a_tgm_'+k);if(!m)return;e.tg=e.tg||{};const t=e.tg[k]=e.tg[k]||{b:[],x:[],m:''};t.m=m.value.trim()});e.type=e.cat;e.room=g('a_edR').value;{const PM={};document.querySelectorAll('.a_pm').forEach(el=>{const v=el.value.trim();if(v)PM[el.dataset.r]=v});e.pm=PM}{const O=[];document.querySelectorAll('.a_po').forEach(el=>{if(!el.checked)O.push(el.dataset.k)});const m=document.getElementById('a_pmemo');if(document.querySelector('.a_po')){e.po=O;e.memo=m?m.value.trim():''}}e.desc=g('a_edD').value.split('\n').map(x=>x.trim()).filter(x=>x&&x!=='[별지]').concat(g('a_edRef')&&g('a_edRef').checked?['[별지]']:[]);
   const s=hmVal('a_edS'),en=hmVal('a_edE'); if(s&&en&&mins(en)>mins(s)){if(s!==e.s||en!==e.e){const bad=e.ppl.map(p=>[p,confOf(e,p.n,[],{d:e.d,s,e:en},p.r)]).filter(x=>x[1]);if(bad.length){toast('시간을 바꿀 수 없어요 · '+bad.map(([p,c])=>LB(p.n)+': '+c).join(' / '));return}}e.s=s;e.e=en}else if(s&&en)toast('끝나는 시간이 시작보다 늦어야 해요');
   const rc=e.room?D.events.find(o=>o.id!==e.id&&o.d===e.d&&o.room===e.room&&mins(o.s)<mins(e.e)&&mins(e.s)<mins(o.e)):null;if(rc)toast(`${e.room}에 「${rc.title}」 ${rc.s}~${rc.e}가 이미 있어요 · 같은 시간에 겹쳐요`);}
 
@@ -1037,8 +1056,9 @@ document.addEventListener('click',ev=>{if(!ACTON()||!D)return;
   if(d.atab){A.tab=d.atab;A.sel=null;if(d.atab==='prev'){A.pv=null;A.pvErr=''}render();return}
   if(d.apv!==undefined){A.pvT=/^\d+$/.test(d.apv)?+d.apv:d.apv;render();return}
   if(b.id==='a_pvReload'){A.pv=null;A.pvErr='';render();return}
+  if(b.id==='a_cellStySave'){const o={};CELL_STY.forEach(([k])=>{const cb=document.querySelector(`.a_csb[data-k="${k}"]`),z=document.querySelector(`.a_csz[data-k="${k}"]`);if(cb&&z)o[k]={b:cb.checked?1:0,z:+z.value}});D.cellSty=o;A.pvHideOpen=true;logIt('칸 글자 모양 바꿈');refresh();toast('칸 글자 모양을 저장했어요 · 책자는 「새로 불러오기」하면 바뀌어요');return}
   if(b.id==='a_pvHideSave'){const h={f:[],r:[],t:[]};document.querySelectorAll('.a_pvh').forEach(x=>{if(!x.checked)h[x.dataset.k].push(x.dataset.v)});b.disabled=true;A.pvHideOpen=true;
-    run('pvHideSave',[h],r=>{A.pv=r;render();toast('보일 항목을 저장했어요 · 구글 시트로 보낼 때도 그대로예요')},e=>{b.disabled=false;toast('저장하지 못했어요 · '+e)});return}
+    run('pvHideSave',[h],r=>{A.pv=r;D.pvHide=h;render();toast('보일 항목을 저장했어요 · 구글 시트로 보낼 때도 그대로예요')},e=>{b.disabled=false;toast('저장하지 못했어요 · '+e)});return}
   if(b.id==='a_senSave'){const m={};document.querySelectorAll('.a_sen').forEach(x=>m[x.dataset.k]=x.value.trim());b.disabled=true;run('songEnSave',[m],()=>{toast('영어 곡명을 저장했어요');A.pv=null;render()},e=>{b.disabled=false;toast('저장하지 못했어요 · '+e)});return}
   if(d.aday!==undefined){A.day=+d.aday;A.sel=null;render();return}
   if(d.achip){const [eid,i]=d.achip.split('|');
@@ -1067,11 +1087,14 @@ document.addEventListener('click',ev=>{if(!ACTON()||!D)return;
     D.events.push(ne);A.cp=null;A.sel=id;A.day=dd;logIt(`복사: 「${e.title}」 ${D.days[e.d]} ${e.s} ${e.room} → ${D.days[dd]} ${s1} ${room}${withP?` (사람 ${ne.ppl.length}명)`:' (사람 빼고)'}`);refresh();
     toast(`${D.days[dd]} ${s1} ${room}에 복사했어요`+(clash?` · 같은 장소에 「${clash.title}」 ${clash.s}와 시간이 겹쳐요`:'')+(blk.length?` · 겹쳐서 뺀 사람: ${blk.join(', ')}`:''));return}
   if(b.id==='a_mainCopy'){const e=evById(A.sel);readEditor(e);const o=evById(document.getElementById('a_main').value);if(!o)return;
-    e.title=o.title;e.sub=o.sub||'';e.tg=JSON.parse(JSON.stringify(o.tg||{}));e.pm=JSON.parse(JSON.stringify(o.pm||{}));const blk=[];e.ppl=JSON.parse(JSON.stringify(o.ppl||[])).filter(p=>{const c=confOf(e,p.n,null,null,p.r);if(c)blk.push(LB(p.n)+' — '+c);return !c});if(!e.desc.length)e.desc=(o.desc||[]).slice();e.main=o.id;
+    e.title=o.title;e.sub=o.sub||'';e.tg=JSON.parse(JSON.stringify(o.tg||{}));e.pm=JSON.parse(JSON.stringify(o.pm||{}));e.po=(o.po||[]).slice();e.memo=o.memo||'';const blk=[];e.ppl=JSON.parse(JSON.stringify(o.ppl||[])).filter(p=>{const c=confOf(e,p.n,null,null,p.r);if(c)blk.push(LB(p.n)+' — '+c);return !c});if(!e.desc.length)e.desc=(o.desc||[]).slice();e.main=o.id;
     logIt(`가져옴: ${o.stage} ${D.days[o.d]} ${o.s} 「${o.title}」 → 본공연 ${D.days[e.d]} ${e.s} ${e.room} (${e.ppl.length}명)`);refresh();
     toast(`리허설 내용을 가져왔어요 · ${e.ppl.length}명`+(blk.length?` · 겹쳐서 뺀 사람: ${blk.join(', ')}`:''));return}
   if(d.acat){const e=evById(A.sel);readEditor(e);if(e.cat!==d.acat){e.cat=e.type=d.acat;const K=kindsOf(d.acat);if(!K.some(k=>k.n===e.title))e.title=(K[0]||{n:e.title}).n;e.stage=d.acat==='공연'?(D.stages[0]||'본공연'):'';refresh()}return}
   if(d.atgs){const e=evById(A.sel);readEditor(e);const i=d.atgs.indexOf('|'),k=d.atgs.slice(0,i),v=d.atgs.slice(i+1);e.tg=e.tg||{};const t=e.tg[k]=e.tg[k]||{b:[],x:[],m:''};t.s=t.s||[];const j=t.s.indexOf(v);if(j>=0)t.s.splice(j,1);else{t.s.push(v);const O=D.tgSongs[k]||[];t.s.sort((a,b)=>(O.indexOf(a)+1||99)-(O.indexOf(b)+1||99))}refresh();return}
+  if(d.pomv){const e=evById(A.sel);if(!e)return;readEditor(e);const [k,dir]=d.pomv.split('|'),K=poItems(e).map(x=>x[0]),i=K.indexOf(k),j=i+(+dir);if(i<0||j<0||j>=K.length)return;[K[i],K[j]]=[K[j],K[i]];e.pord=K;refresh();return}
+  if(d.poreset){const e=evById(A.sel);if(!e)return;readEditor(e);e.pord=[];e.po=[];refresh();return}
+  if(d.pvgo){A.tab='prev';A.sel=null;A.pv=null;A.pvErr='';A.pvHideOpen=true;render();toast('「보일 항목 고르기」에서 체크해 주세요');return}
   if(d.atgb||d.atgp||d.atgu||d.atgd){const e=evById(A.sel);readEditor(e);const [k,bk,p]=(d.atgb||d.atgp||d.atgu||d.atgd).split('|');e.tg=e.tg||{};const t=e.tg[k]=e.tg[k]||{b:[],x:[],m:''};
     const L=tgNorm(t.b).map(tkP);const i=L.findIndex(o=>o.bk===bk);
     if(d.atgb){if(i>=0)L.splice(i,1);else L.push({bk,pt:'',up:false,dn:false})}
@@ -1265,7 +1288,11 @@ function pvHideBox(P){const H=P.hide||{},has=(k,v)=>(H[k]||[]).includes(v);const
     <div class="row" style="gap:12px;flex-wrap:wrap;margin-top:8px"><span class="cap" style="margin:0">칸 내용</span>${PV_F.map(([k,l])=>`<label class="row" style="gap:4px"><input type="checkbox" class="a_pvh" data-k="f" data-v="${k}" ${has('f',k)?'':'checked'}>${l}</label>`).join('')}</div>
     ${roles.map(([c,L])=>L.length?`<div class="row" style="gap:12px;flex-wrap:wrap;margin-top:6px"><span class="cap" style="margin:0">${c} 사람</span>${L.map(r=>`<label class="row" style="gap:4px"><input type="checkbox" class="a_pvh" data-k="r" data-v="${esc(c+':'+r)}" ${has('r',c+':'+r)?'':'checked'}>${esc(r)}</label>`).join('')}</div>`:'').join('')}
     <div class="row" style="gap:12px;flex-wrap:wrap;margin-top:6px"><span class="cap" style="margin:0">탭</span>${PV_T.map(([k,l])=>`<label class="row" style="gap:4px"><input type="checkbox" class="a_pvh" data-k="t" data-v="${k}" ${has('t',k)?'':'checked'}>${l}</label>`).join('')}</div>
-    <div class="row" style="margin-top:8px"><button class="btn small primary" type="button" id="a_pvHideSave">보일 항목 저장</button><span class="cap" style="margin:0">예) 공연 사람의 「연주」를 풀면 공연 칸에 연주자 이름이 안 나와요</span></div></details>`}
+    <div class="row" style="margin-top:8px"><button class="btn small primary" type="button" id="a_pvHideSave">보일 항목 저장</button><span class="cap" style="margin:0">예) 공연 사람의 「연주」를 풀면 공연 칸에 연주자 이름이 안 나와요</span></div>
+    <div style="margin-top:12px;border-top:1px dashed var(--line);padding-top:8px"><b>칸 글자 모양</b> <span class="cap" style="margin:0">모든 시간표 칸 · 행사 책자 · 모듈별 인쇄에 같이 (구글 시트는 글자 모양 없이)</span>
+    <div class="tblw" style="margin-top:6px"><table class="pft nosort" style="width:auto"><thead><tr><th>항목</th><th>굵게</th><th>크기</th></tr></thead><tbody>${CELL_STY.map(([k,l,b,z])=>{const v=(D.cellSty||{})[k]||{b,z};return `<tr><td style="text-align:left">${l}</td><td><input type="checkbox" class="a_csb" data-k="${k}" ${v.b?'checked':''}></td><td><select class="a_csz" data-k="${k}">${[70,80,85,90,100,110,120,130,140].map(n=>`<option value="${n}" ${+v.z===n?'selected':''}>${n}%</option>`).join('')}</select></td></tr>`}).join('')}</tbody></table></div>
+    <div class="row" style="margin-top:6px"><button class="btn small primary" type="button" id="a_cellStySave">글자 모양 저장</button></div></div></details>`}
+const CELL_STY=[['title','제목',1,100],['tg','대상',1,100],['sub','세부',0,100],['d','설명',0,100],['r','담당 (첫 역할)',1,100],['a','보조 · 다른 역할 · 메모',0,90],['en','영어 줄',0,88]];
 function vPrev(){
   if(!A.pv){if(!A.pvErr)setTimeout(pvLoad);return `<div class="panel">${A.pvErr?`<span class="err">미리보기를 만들지 못했어요 · ${esc(A.pvErr)}</span> <button class="btn small" type="button" id="a_pvReload">다시</button>`:'프로그램북 미리보기를 만드는 중…'}</div>`}
   const P=A.pv;let t=A.pvT==null?0:A.pvT;
@@ -3695,7 +3722,10 @@ function ebCover(){const E=S.EB,C=E.camp||{},T=ebSet(),a=ebDt(C.start),b=ebDt(C.
   const dl=a?`${a.getFullYear()}. ${a.getMonth()+1}. ${a.getDate()}(${EB_WD[a.getDay()].replace('.','')})`+(b?` – ${b.getMonth()!==a.getMonth()?(b.getMonth()+1)+'. ':''}${b.getDate()}(${EB_WD[b.getDay()].replace('.','')})`:''):'';
   return `<section class="bls cov"><div class="cv">${T.en?`<div class="cv1">${esc(T.en)}</div>`:''}<div class="cv2">${esc(C.name||'')}</div>${T.sub?`<div class="cv3">${esc(T.sub)}</div>`:''}<div class="cv4">${esc(dl)}</div><div class="cv5">${esc(C.place||'')}</div><div class="cv6">${esc(T.org||'')}</div></div></section>`}
 /* 시간표 칸 규칙 (11-05): ① 시각(시간대와 다를 때) ② 반 · 행사 이름(굵게) ③ 내용 ④ 담당(굵게) ⑤ 보조(작게, 괄호) ⑥ 영문(설정) · 한 칸에 일정 둘이면 가는 선으로 나눔 · 옆 칸과 똑같으면 합침 */
-function ebSchCell(L,T){return (L||[]).map(o=>`<div class="sc">${o.t?`<div class="s1">${esc(o.t)}</div>`:''}${(o.h||[]).map(h=>`<div class="s2">${esc(h)}</div>`).join('')}${(o.b||[]).map(b=>`<div class="s3">${esc(b)}</div>`).join('')}${o.l?`<div class="s4">${esc(o.l)}</div>`:''}${(o.a||[]).length?`<div class="s5">(${o.a.map(esc).join(' / ')})</div>`:''}${(o.m||[]).map(m=>`<div class="s5">${esc(m)}</div>`).join('')}${T.sen!==false&&o.en?`<div class="s6">${esc(o.en)}</div>`:''}</div>`).join('')}
+/* 11-22 칸 글자 모양: o.x = [종류, 글] · 종류마다 굵게 · 크기(교사 일정 › 미리보기 설정 「칸 글자 모양」) */
+const EB_XC={tm:'s1',title:'s2',tg:'s2',tgd:'s3',sub:'s3',d:'s3',r:'s4',a:'s5',en:'s6'};
+function ebXSty(k){const C=(S.EB&&S.EB.cellSty)||{},v=C[k==='tm'?'':k==='tgd'?'tg':k];if(!v)return '';return ` style="font-weight:${v.b?700:400};font-size:${(+v.z||100)/100}em"`}
+function ebSchCell(L,T){return (L||[]).map(o=>Array.isArray(o.x)&&o.x.length?`<div class="sc">${o.x.filter(([k])=>k!=='en'||T.sen!==false).map(([k,v])=>`<div class="${EB_XC[k]||'s3'}"${ebXSty(k)}>${esc(v)}</div>`).join('')}</div>`:`<div class="sc">${o.t?`<div class="s1">${esc(o.t)}</div>`:''}${(o.h||[]).map(h=>`<div class="s2">${esc(h)}</div>`).join('')}${(o.b||[]).map(b=>`<div class="s3">${esc(b)}</div>`).join('')}${o.l?`<div class="s4">${esc(o.l)}</div>`:''}${(o.a||[]).length?`<div class="s5">(${o.a.map(esc).join(' / ')})</div>`:''}${(o.m||[]).map(m=>`<div class="s5">${esc(m)}</div>`).join('')}${T.sen!==false&&o.en?`<div class="s6">${esc(o.en)}</div>`:''}</div>`).join('')}
 function ebSchRow(R,cs,T){let h='';for(let k=0;k<cs.length;k++){const L=R[cs[k]]||[],key=JSON.stringify(L);let n=1;if(L.length)while(k+n<cs.length&&JSON.stringify(R[cs[k+n]]||[])===key)n++;
   h+=`<td${n>1?` colspan="${n}" class="sm"`:''}>${ebSchCell(L,T)}</td>`;k+=n-1}return h}
 function ebSched(D){const T=ebSet(),V=D.V||[],W=D.W||2,dt=ebDt(D.date),SR=D.S||null;

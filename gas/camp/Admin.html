@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261122-093806 -->
+<!-- build: 20261122-094941 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -603,7 +603,7 @@ function vPmod(){const E=S.EB;if(!E){if(!S.EBL)setTimeout(ebLoad,0);return '<div
   if(!cur)return top+'<div class="panel hint">쪽이 없어요. 「＋ 쪽 추가」로 만들어 주세요.</div>';
   S.pmK=cur.k;S.ebSel=cur.k;const H=(pmHide()[cur.k])||{c:[],r:[]},img=ebIsImg(cur),isEd=S.ebEd===cur.k;if(isEd)S.pmRow=false;
   const [c,l]=ebState(cur);
-  setTimeout(isEd?()=>{const b=document.getElementById('pmCols');if(b)b.innerHTML='<span class="hint">고쳐 쓰는 동안은 보일 칸 · 줄 숨기기를 잠시 꺼요</span>';ebLive()}:pmApply,20);
+  setTimeout(isEd?()=>{const b=document.getElementById('pmCols');if(b)b.innerHTML='<span class="hint">고쳐 쓰는 동안은 보일 칸 · 줄 숨기기를 잠시 꺼요</span>';ebLive()}:()=>{try{ebEqDom(document.querySelector('.pmsheet'))}catch(e){}pmApply()},20);
   const tools=isEd?ebToolbar(cur):`<div class="ebbar vw"><div class="v1"><b>${esc(cur.t)}</b>${ed&&!img?ebTplSel(cur):ebTplChip(cur)}<span class="ebchip ${c}">${l}</span>${cur.h&&cur.at?`<span class="epg2">· ${esc(String(cur.at).slice(5,16))} ${esc(cur.by||'')}</span>`:''}</div><div class="v2">${ebBtns(cur,ed)}</div></div>`;
   return top+`<div class="pmwrap"><div class="pmlay"><div class="panel pmlist">${PM_G.map(([g,f])=>{const X=L.filter(x=>f(pmKind(x)));return X.length?`<div class="pmg">${g}</div>${X.map(x=>`<button type="button" class="pmi" data-pmk="${esc(x.k)}" aria-pressed="${x.k===cur.k}">${esc(x.t)}${x.on?'':' <small>(책자에서 뺌)</small>'}${ebState(x)[0]==='chg'&&x.kind!=='text'?' <small style="color:var(--bad)">원본 바뀜</small>':''}</button>`).join('')}`:''}).join('')}</div>
   <div style="min-width:0">${isEd?'':`<div class="panel"><div class="spread"><b style="font-size:17px">${esc(cur.t)}</b><span class="row" style="gap:6px"><button class="btn small" type="button" data-pmre="1">새로 불러오기</button><button class="btn small ${S.pmRow?'primary':''}" type="button" data-pmrow="1">${S.pmRow?'줄 숨기기 끝':'줄 숨기기'}</button><button class="btn small primary" type="button" data-pmprint="1">인쇄 · PDF</button></span></div>
@@ -3700,12 +3700,13 @@ function ebSchRow(R,cs,T){let h='';for(let k=0;k<cs.length;k++){const L=R[cs[k]]
   h+=`<td${n>1?` colspan="${n}" class="sm"`:''}>${ebSchCell(L,T)}</td>`;k+=n-1}return h}
 function ebSched(D){const T=ebSet(),V=D.V||[],W=D.W||2,dt=ebDt(D.date),SR=D.S||null;
   const cols=[];for(let j=1;j<W;j++)if(String((V[2]||[])[j]||'').trim())cols.push(j);if(!cols.length)cols.push(1);
-  const per=Math.max(1,Math.min(10,+T.per||5)),ch=[];for(let i=0;i<cols.length;i+=per)ch.push(cols.slice(i,i+per));
+  /* 11-22: 한 쪽 = 시간 + 홀 4곳까지 · 넘으면 쪽 수를 늘려 홀을 고루(앞쪽에 1곳 더) · 쪽마다 시간 열 · 시간 열 20% 고정 · 홀 열은 남은 폭을 그 쪽 홀 수로 꽉 */
+  const np=Math.max(1,Math.ceil(cols.length/4)),ch=[];let at=0;for(let i=0;i<np;i++){const n=Math.floor(cols.length/np)+(i<cols.length%np?1:0);ch.push(cols.slice(at,at+n));at+=n}
   const en=dt?`${EB_WD[dt.getDay()]} ${EB_MO[dt.getMonth()]} ${dt.getDate()} Schedule`:(D.label+' Schedule'),ko=dt?`${dt.getMonth()+1}월 ${dt.getDate()}일(${EB_KW[dt.getDay()]}) 일정`:D.label;
   const note=String((V[0]||[])[0]||'').trim(),meals=new Set(D.meals||[]),hasSub=cols.some(j=>String((V[3]||[])[j]||'').trim());
   const cell=t=>String(t||'').split(/\n\n+/).map(ebBr).join('<span class="sp"></span>');
-  return ch.map((cs,n)=>`<section class="bls sch"><div class="stt">${esc(en)}</div><div class="stk">${esc(ko)}${ch.length>1?` · ${n+1}/${ch.length}`:''}</div>${note&&n===0?`<div class="stn">${ebBr(note)}</div>`:''}
-    <div class="stw" style="font-size:${+T.fs||6.6}pt"><table class="st"><thead><tr><th style="width:12mm">시간</th>${cs.map(j=>`<th>${ebBr(V[2][j])}</th>`).join('')}</tr>${hasSub?`<tr class="rsub"><th></th>${cs.map(j=>`<th>${ebBr((V[3]||[])[j]||'')}</th>`).join('')}</tr>`:''}</thead><tbody>
+  return ch.map((cs,n)=>`<section class="bls sch"><div class="stt">${esc(en)}</div><div class="stk">${esc(ko)}${ch.length>1?` · ${n+1}/${ch.length}`:''}</div>${note?`<div class="stn"${n===0?'':' style="color:transparent"'}>${ebBr(note)}</div>`:''}
+    <div class="stw" style="font-size:${+T.fs||6.6}pt"><table class="st"><colgroup><col style="width:20%">${cs.map(()=>`<col style="width:${(80/cs.length).toFixed(3)}%">`).join('')}</colgroup><thead><tr><th>시간</th>${cs.map(j=>`<th>${ebBr(V[2][j])}</th>`).join('')}</tr>${hasSub?`<tr class="rsub"><th></th>${cs.map(j=>`<th>${ebBr((V[3]||[])[j]||'')}</th>`).join('')}</tr>`:''}</thead><tbody>
     ${V.slice(4).map((r,x)=>meals.has(x+4)?`<tr class="ml${/아침|점심|저녁|breakfast|lunch|dinner/i.test(String(r[1]||''))?'':' nt'}"><th>${ebBr(String(r[0]||'').replace('-','~\n'))}</th><td colspan="${cs.length}">${ebBr(r[1]||'')}</td></tr>`:`<tr><th>${ebBr(String(r[0]||'').replace('-','~\n'))}</th>${SR&&SR[x+4]?ebSchRow(SR[x+4],cs,T):cs.map(j=>`<td>${cell(r[j])}</td>`).join('')}</tr>`).join('')}</tbody></table></div></section>`).join('')}
 /* 음악회 여름 모양 (11-05): 머리 왼쪽 들여 쓴 「일시 / (영어) · 장소 / (영어) · 사회」, 곡 「작곡가 - 곡명」, 줄표 점선, 번호 켜기/끄기 */
 function ebConS(b){const T=ebSet(),it=b.items||[],M=b.meta||{},dt=ebDt(M.date),WDE=['Sun.','Mon.','Tue.','Wed.','Thu.','Fri.','Sat.'];
@@ -3841,11 +3842,15 @@ function ebState(x){if(ebIsImg(x))return ['txt','이미지 쪽'];if(x.kind==='te
 /* 재기용 숨은 칸은 미리보기와 같은 자리(관리자 화면 CSS가 같게 걸리도록)에 */
 function ebHost(){return document.querySelector('.ebprev')||document.getElementById('app')||document.body}
 /* 같은 날 시간표 (11-05): 여러 쪽으로 나뉘어도 시간대마다 줄 높이를 같게 — 쪽마다 표를 그려 보고 같은 줄의 가장 높은 값을 모든 쪽에 (머리 줄 포함) */
-function ebEqSched(html){html=String(html||'');if((html.match(/<table class="st"/g)||[]).length<2)return html;S.ebEqC=S.ebEqC||new Map();const c=S.ebEqC.get(html);if(c)return c;
+/* 11-22: 그날 시간표 표를 쪽 아래(본문 185mm)까지 꽉 — 남는 높이를 일정 줄(식사 · 안내 줄 빼고)에 고루. 쪽들이 같은 줄 높이라 같이 */
+function ebSchFill(T,z){try{const used=Math.max(...T.map(t=>{const sec=t.closest('section.bls');if(!sec)return 1e9;const r=sec.getBoundingClientRect(),cs=getComputedStyle(sec);return (t.getBoundingClientRect().bottom-r.top)/z-(parseFloat(cs.paddingTop)||0)}));
+  const avail=185*96/25.4-2,extra=avail-used;if(!(extra>2&&extra<2000))return;const body=[...T[0].rows].map((r,i)=>r.parentNode.tagName==='TBODY'&&!r.classList.contains('ml')?i:-1).filter(i=>i>=0);if(!body.length)return;const add=extra/body.length;
+  T.forEach(t=>body.forEach(i=>{const r=t.rows[i];if(r)r.style.height=(Math.floor((parseFloat(r.style.height)||r.getBoundingClientRect().height/z)*10+add*10)/10)+'px'}))}catch(e){}}
+function ebEqSched(html){html=String(html||'');if(!(html.match(/<table class="st"/g)||[]).length)return html;S.ebEqC=S.ebEqC||new Map();const c=S.ebEqC.get(html);if(c)return c;
   const d=document.createElement('div');d.className='ebc';d.style.cssText='--ebz:1;zoom:1;position:absolute;left:-14000px;top:0;pointer-events:none';d.innerHTML=html;ebHost().appendChild(d);let out=html;
   try{const T=[...d.querySelectorAll('table.st')];T.forEach(t=>[...t.rows].forEach(r=>r.style.removeProperty('height')));const H=[];
     T.forEach(t=>[...t.rows].forEach((r,i)=>{H[i]=Math.max(H[i]||0,r.getBoundingClientRect().height)}));
-    T.forEach(t=>[...t.rows].forEach((r,i)=>{r.style.height=(Math.ceil(H[i]*10)/10)+'px'}));out=d.innerHTML}catch(e){}finally{d.remove()}
+    T.forEach(t=>[...t.rows].forEach((r,i)=>{r.style.height=(Math.ceil(H[i]*10)/10)+'px'}));if(d.querySelector('section.bls.sch'))ebSchFill(T,1);out=d.innerHTML}catch(e){}finally{d.remove()}
   if(S.ebEqC.size>60)S.ebEqC.clear();S.ebEqC.set(html,out);return out}
 /* ---- 한 쪽에 맞추기 (11-05): _set.fit = [쪽 키] — ① 여백 줄이기(fit1) ② 행간 1.2(fit2) ③ 글자 비율(감싸는 div 의 zoom, 80%까지). 그날 시간표 여러 장은 같은 비율. 80%로도 안 되면 안 줄이고 알림 ---- */
 const ebEffZ=n=>{let z=1;while(n&&n.nodeType===1){const v=parseFloat(getComputedStyle(n).zoom);if(v&&v!==1)z*=v;if(n.classList&&n.classList.contains('ebc'))break;n=n.parentElement}return z};
@@ -3959,8 +3964,8 @@ function ebPg(x){let h=x.h||x.auto;if(x.kind==='sched'&&ebTplK(x)==='sch')h=ebEq
 function ebHtml(x){return S.ebEd===x.k&&S.ebBuf!=null?S.ebBuf:(S.ebPeek===x.k&&x.auto)?x.auto:ebIsSpr(x)||(S.ebEd!==x.k&&ebFitOn(x.k))?ebPg(x):(x.h||x.auto)}
 /* 미리보기에서는 지금 확대 비율로 그린 그대로 재서 맞춤 (확대하면 줄바꿈이 조금 달라져서) — 같은 날 = 제목(.stt) 글이 같은 시간표 쪽들 */
 function ebEqDom(root){if(!root)return;const G={};root.querySelectorAll('section.bls.sch').forEach(sec=>{const t=sec.querySelector('.stt');if(!t)return;const c=sec.closest('.ebc'),kk=c?c.dataset.ebk||'':'';if(kk&&(ebSet().tplm||{})[kk]==='base')return;const k=kk+'|'+t.textContent;(G[k]=G[k]||[]).push(...sec.querySelectorAll('table.st'))});
-  Object.values(G).forEach(T=>{if(T.length<2)return;const z=ebEffZ(T[0]);T.forEach(t=>[...t.rows].forEach(r=>r.style.removeProperty('height')));const H=[];
-    T.forEach(t=>[...t.rows].forEach((r,i)=>{H[i]=Math.max(H[i]||0,r.getBoundingClientRect().height)}));T.forEach(t=>[...t.rows].forEach((r,i)=>{r.style.height=(Math.ceil(H[i]/z*10)/10)+'px'}))})}
+  Object.values(G).forEach(T=>{const z=ebEffZ(T[0]);T.forEach(t=>[...t.rows].forEach(r=>r.style.removeProperty('height')));const H=[];
+    T.forEach(t=>[...t.rows].forEach((r,i)=>{H[i]=Math.max(H[i]||0,r.getBoundingClientRect().height)}));T.forEach(t=>[...t.rows].forEach((r,i)=>{r.style.height=(Math.ceil(H[i]/z*10)/10)+'px'}));ebSchFill(T,z)})}
 /* ---- 붙여 넣기 · 저장 때 HTML 다듬기: 허락한 태그 · 칸만 ---- */
 const EB_OK=new Set(['IMG','SECTION','DIV','P','SPAN','B','STRONG','I','EM','U','BR','H1','H2','H3','H4','TABLE','THEAD','TBODY','TFOOT','TR','TD','TH','UL','OL','LI','SMALL','SUP','SUB','HR','COLGROUP','COL']);
 const EB_DROP=new Set(['SCRIPT','STYLE','IFRAME','OBJECT','EMBED','LINK','META','TITLE','HEAD','svg','SVG','VIDEO','AUDIO','FORM','INPUT','BUTTON','SELECT','TEXTAREA','TEMPLATE','NOSCRIPT']);
@@ -4456,7 +4461,7 @@ function vEbk(){const E=S.EB;if(!E){if(!S.EBL)setTimeout(ebLoad,0);return '<div 
       <div class="ebset"><label>영문 행사 이름 (표지 · 음악회 머리)<input type="text" data-ebs="en" value="${esc(T.en)}" placeholder="SUZUKI MUSIC KOREA 2027 WINTER MUSIC FESTIVAL" ${ed?'':'disabled'}></label>
         <label>표지 부제<input type="text" data-ebs="sub" value="${esc(T.sub)}" placeholder="WINTER MUSIC FESTIVAL" ${ed?'':'disabled'}></label>
         <label>표지 아래 협회 이름<input type="text" data-ebs="org" value="${esc(T.org)}" ${ed?'':'disabled'}></label>
-        <label>시간표 한 쪽에 장소 몇 곳<input type="number" min="1" max="10" data-ebs="per" value="${esc(T.per)}" ${ed?'':'disabled'}></label>
+        
         <label>시간표 글씨 크기 (pt)<input type="number" min="5" max="10" step="0.2" data-ebs="fs" value="${esc(T.fs)}" ${ed?'':'disabled'}></label>
         <label style="flex-direction:row;align-items:center;gap:6px"><input type="checkbox" data-ebs="num" ${T.num?'checked':''} ${ed?'':'disabled'}> 쪽 아래 번호 (- 2 -)</label>
         <label>음악회 모양<select data-ebs="conSt" ${ed?'':'disabled'}><option value="겨울" ${T.conSt!=='여름'?'selected':''}>겨울 (가운데 머리 · 곡명 · 점선)</option><option value="여름" ${T.conSt==='여름'?'selected':''}>여름 (일시 · 장소 영어 줄 · 작곡가 - 곡명 · 줄표)</option></select></label>

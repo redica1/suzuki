@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261122-171857 -->
+<!-- build: 20261122-172343 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -229,7 +229,7 @@ tr.off td{opacity:.5}
 .ensreh{display:grid;grid-template-columns:auto minmax(180px,1fr);gap:14px;align-items:start}.ensrpv{border:1px dashed var(--line);border-radius:10px;padding:8px 12px;font-weight:700;font-size:14px;line-height:1.7}@media (max-width:640px){.ensreh{grid-template-columns:1fr}}
 .ebc .ebcsel{background:#cfe3ff!important;outline:1px solid #6aa0ff}
 .pmsheet .ebc:has(> section.bls.sch + section.bls.sch){flex-direction:row;flex-wrap:nowrap;align-items:flex-start;gap:0}.pmsheet .ebc:has(> section.bls.sch + section.bls.sch)>section.bls+section.bls{border-left:1px dashed #9aa}body.pmPrint .pmsheet .ebc{flex-direction:column!important}
-.pmzoom{display:flex;gap:6px;align-items:center;justify-content:flex-end;margin:0 0 6px;flex-wrap:wrap}.pmwrap.pmbig .pmlay{grid-template-columns:1fr!important}.pmwrap.pmbig .pmlist{display:none}.pmtools{margin:0 0 8px}.pmtools .ebbar.vw{width:100%;max-width:none;margin:0}
+.pmzoom{display:flex;gap:6px;align-items:center;justify-content:flex-end;margin:0 0 6px;flex-wrap:wrap}.pmwrap.pmbig .pmlay{grid-template-columns:1fr!important}.pmwrap.pmbig .pmlist{display:none}.pmtools{margin:0 0 8px}.pmtools .ebbar.vw{width:100%;max-width:none;margin:0;position:static}.pmtools .csppan{margin:6px 0 0}.csppan .seg{display:inline-flex;flex-wrap:wrap;border:1px solid var(--line);border-radius:10px;overflow:hidden}.csppan .seg button{border:0;border-right:1px solid var(--line);background:var(--surface,#fff);font:inherit;font-size:12.5px;font-weight:700;padding:4px 9px;cursor:pointer}.csppan .seg button:last-child{border-right:0}.csppan .seg button[aria-pressed=true]{background:var(--accent);color:#fff}
 .pmwrap .pmsheet{overflow:auto;max-width:100%;align-items:safe center}body.pmPrint .pmsheet .ebc{zoom:1!important}
 .bls[data-csp][style*="--chg"] .eh{margin-bottom:var(--chg)!important}.bls[data-csp][style*="--cig"] .cmeta{row-gap:var(--cig)!important}.bls[data-csp][style*="--cig"] .cmeta+.cmeta,.bls[data-csp][style*="--cig"] .eh~p+p{margin-top:var(--cig)!important}.bls[data-csp][style*="--ctg"] .cmeta{margin-bottom:var(--ctg)!important}.bls[data-csp][style*="--ctg"]:not(:has(.cmeta)) .it:first-of-type{margin-top:var(--ctg)!important}.bls[data-csp][style*="--cim"]:not([style*="--itg"]) .it{margin-bottom:var(--cim)!important}
 .lstrow{border-left:6px solid var(--lc,var(--line));margin-bottom:12px;--lc:#6B7A82;--ls:#ECEFF1;--li:#3e4a50}.lstrow.lc-con{--lc:#C98A2E;--ls:#FBEFDC;--li:#7a4f10}.lstrow.lc-les{--lc:#0E9F9A;--ls:#E0F4F2;--li:#0B6F6C}
@@ -622,21 +622,33 @@ function vPmod(){const E=S.EB;if(!E){if(!S.EBL)setTimeout(ebLoad,0);return '<div
   <div style="min-width:0">${isEd?'':`<div class="panel"><div class="spread"><b style="font-size:17px">${esc(cur.t)}</b><span class="row" style="gap:6px"><button class="btn small" type="button" data-pmre="1">새로 불러오기</button><button class="btn small ${S.pmRow?'primary':''}" type="button" data-pmrow="1">${S.pmRow?'줄 숨기기 끝':'줄 숨기기'}</button><button class="btn small primary" type="button" data-pmprint="1">인쇄 · PDF</button></span></div>
   <div class="row" style="gap:6px;margin-top:8px" id="pmCols"></div>
   <p class="hint" style="margin:6px 0 0">불러오는 곳: ${esc(ebSrcName(cur.kind))} · 「줄 숨기기」를 누른 뒤 표의 줄을 누르면 인쇄에서만 빠져요(책자는 그대로) · 고른 것은 이 브라우저에 기억해요${H.c.length||H.r.length?` · <a href="#" data-pmclr="1">처음대로</a>`:''}</p></div>`}
-  ${cur.kind==='con'&&ed&&!isEd?ctPanel(cur):''}${ed&&!isEd&&ebTplK(cur)==='con'&&!ebCtOf(cur.k)?cspPanel(cur):''}
+  ${cur.kind==='con'&&ed&&!isEd?ctPanel(cur):''}
   <div class="pmzoom"><span class="hint">미리보기</span><button class="btn small" type="button" data-pmz="-" aria-label="작게">－</button><button class="btn small" type="button" data-pmz="1" title="실제 크기">${Math.round(pmZ()*100)}%</button><button class="btn small" type="button" data-pmz="+" aria-label="크게">＋</button><button class="btn small" type="button" data-pmz="fit" title="화면 폭에 맞춰 크게">폭 맞춤</button><button class="btn small ${S.pmBig?'primary':''}" type="button" data-pmz="big">${S.pmBig?'크게 보기 끝':'크게 보기'}</button></div>
-  ${isEd?'':`<div class="pmtools">${tools}</div>`}<div class="ebprev pmsheet${S.pmRow?' pmrowmode':''}"><div class="ebi" id="eb_${esc(cur.k.replace(':','_'))}">${isEd?tools:''}${isEd?'':ebWarnBox(cur,ed)}<div class="ebc" data-ebk="${esc(cur.k)}" style="--ebz:${pmZ()}" ${isEd?'contenteditable="true" spellcheck="false"':''}>${ebHtml(cur)}</div></div></div></div></div></div>`}
+  ${isEd?'':`<div class="pmtools">${tools}${ed&&S.cspOpen===cur.k&&ebTplK(cur)==='con'&&!ebCtOf(cur.k)?cspPanel(cur):''}</div>`}<div class="ebprev pmsheet${S.pmRow?' pmrowmode':''}"><div class="ebi" id="eb_${esc(cur.k.replace(':','_'))}">${isEd?tools:''}${isEd?'':ebWarnBox(cur,ed)}<div class="ebc" data-ebk="${esc(cur.k)}" style="--ebz:${pmZ()}" ${isEd?'contenteditable="true" spellcheck="false"':''}>${ebHtml(cur)}</div></div></div></div></div></div>`}
 /* 11-22 모듈별 인쇄 미리보기 확대 · 크게 보기 (이 브라우저에 기억) */
 function pmZ(){if(S.pmZv==null){let v=1;try{v=+localStorage.getItem('campPmZoom')||1}catch(e){}S.pmZv=v}return S.pmZv}
 document.addEventListener('click',e=>{if(S.tab!=='pmod')return;const b=e.target.closest('[data-pmz]');if(!b)return;const v=b.dataset.pmz;
   if(v==='big'){S.pmBig=!S.pmBig;render();return}
   let z=pmZ();if(v==='+')z=Math.min(2.5,Math.round((z+.1)*10)/10);else if(v==='-')z=Math.max(.4,Math.round((z-.1)*10)/10);else if(v==='1')z=1;else if(v==='fit'){const box=document.querySelector('.pmsheet'),sec=box&&box.querySelector('.ebc');if(sec){const w=sec.getBoundingClientRect().width/z;z=Math.max(.4,Math.min(2.5,Math.floor((box.clientWidth-40)/w*10)/10))}}
   S.pmZv=z;try{localStorage.setItem('campPmZoom',z)}catch(x){}const c=document.querySelector('.pmsheet .ebc');if(c){c.style.setProperty('--ebz',z);const zb=document.querySelector('[data-pmz="1"]');if(zb)zb.textContent=Math.round(z*100)+'%';setTimeout(()=>{try{pmMeasure()}catch(x){}},30)}else render()});
-function cspPanel(x){const o=(ebSet().csp||{})[x.k]||{},fill=/--itg/.test(x.h||x.auto||'')||ebIsSpr(x);
-  return `<div class="panel ctpan"><b>음악회 여백</b> <span class="hint">mm · 바꾸면 바로 저장 · 비우면 기본 · 이 쪽만</span>${EB_CSP.map(([k,l,d])=>`<div class="cto"><span>${l}</span><span><input type="number" min="0" max="60" step="0.5" data-csp="${k}" value="${o[k]!=null?esc(o[k]):''}" placeholder="${d}" style="width:5.5em"> mm${k==='im'&&fill?' <small class="hint">(「아래까지 채움」이 켜져 있으면 채움이 먼저예요)</small>':''}</span></div>`).join('')}
-  ${Object.keys(o).length?`<div style="margin-top:6px"><button class="btn small ghost" type="button" data-cspclr="1">여백 처음대로</button></div>`:''}</div>`}
-document.addEventListener('change',e=>{if(S.tab!=='pmod')return;const t=e.target;if(!t.dataset||!t.dataset.csp||t.tagName!=='INPUT')return;const k=S.pmK,f=t.dataset.csp,v=t.value.trim();
-  ctSave(n=>{n.csp=JSON.parse(JSON.stringify(n.csp||{}));const o=n.csp[k]=n.csp[k]||{};if(v==='')delete o[f];else o[f]=Math.max(0,Math.min(60,+v||0));if(!Object.keys(o).length)delete n.csp[k]},'여백을 저장했어요')});
-document.addEventListener('click',e=>{if(S.tab!=='pmod')return;const b=e.target.closest('[data-cspclr]');if(!b)return;ctSave(n=>{n.csp=JSON.parse(JSON.stringify(n.csp||{}));delete n.csp[S.pmK]},'여백을 처음대로 했어요')});
+function ebCsFill(root){(root||document).querySelectorAll('section[data-csfill]').forEach(sec=>{try{const its=[...sec.querySelectorAll('.it')];if(its.length<2)return;its.forEach(x=>x.style.marginBottom='');const z=ebEffZ(sec)||1,r=sec.getBoundingClientRect(),cs=getComputedStyle(sec),top=r.top+(parseFloat(cs.paddingTop)||0)*z,avail=(183.5-(+sec.dataset.csfill||0))*96/25.4*z,used=its[its.length-1].getBoundingClientRect().bottom-top,extra=avail-used;if(extra<=0)return;const add=extra/(its.length-1)/z;its.slice(0,-1).forEach(x=>x.style.marginBottom=(parseFloat(getComputedStyle(x).marginBottom)/z+add).toFixed(2)+'px')}catch(e){}})}
+/* 11-22 「여백 조절」: 도구 막대 단추로 열고 · 고치기와 따로 여백만 바꿔 미리 보고 저장 (아티팩트 「간격」 묶음) */
+function cspPanel(x){const o=ebCspOf(x.k)||{},dirty=S.cspDraft&&S.cspDraft.k===x.k&&S.cspDraft.d,fill=/--itg/.test(x.h||x.auto||'');
+  const num=(k,l,d)=>`<div class="cto"><span>${l}</span><span><input type="number" min="0" max="60" step="0.5" data-csp="${k}" value="${o[k]!=null?esc(o[k]):''}" placeholder="${d}" style="width:5.5em"> mm</span></div>`;
+  return `<div class="panel ctpan csppan"><div class="spread"><b>여백 조절</b><span class="hint">이 쪽만 · 바꾸면 바로 미리 보여요 · 「여백 저장」을 눌러야 남아요 · 비우면 기본</span></div>
+  <div class="ctg">간격</div>${num('hg','제목 아래 여백',5)}${num('ig','일시 · 장소 · 사회 줄 사이',.3)}
+  <div class="cto"><span>곡 사이</span><span class="seg">${EB_CSPG.map(([k,l])=>`<button type="button" data-cspg="${k}" aria-pressed="${o.gp===k}">${l}</button>`).join('')}</span></div>
+  ${num('tg','곡 순서 위 여백',6)}${num('bg','쪽 아래 여백 (쪽 꽉일 때)',0)}
+  ${fill?'<p class="hint" style="margin:4px 0 0">「아래까지 채움」이 켜져 있어 곡 사이는 채움이 먼저예요 · 곡 사이를 고르려면 채움을 꺼 주세요</p>':''}
+  <div class="row" style="gap:6px;margin-top:8px"><button class="btn small primary" type="button" data-cspsave="1">여백 저장</button><button class="btn small ghost" type="button" data-cspclr="1">처음대로</button><button class="btn small ghost" type="button" data-cspclose="1">${dirty?'저장 안 하고 닫기':'닫기'}</button>${dirty?'<span class="pill due">저장 전</span>':''}</div></div>`}
+function cspDraft(){const k=S.pmK;if(!S.cspDraft||S.cspDraft.k!==k)S.cspDraft={k,o:JSON.parse(JSON.stringify((ebSet().csp||{})[k]||{})),d:0};return S.cspDraft}
+document.addEventListener('change',e=>{if(S.tab!=='pmod')return;const t=e.target;if(!t.dataset||!t.dataset.csp||t.tagName!=='INPUT')return;const D0=cspDraft(),v=t.value.trim();if(v==='')delete D0.o[t.dataset.csp];else D0.o[t.dataset.csp]=Math.max(0,Math.min(60,+v||0));D0.d=1;render()});
+document.addEventListener('click',e=>{if(S.tab!=='pmod')return;const b=e.target.closest('[data-cspopen],[data-cspg],[data-cspsave],[data-cspclr],[data-cspclose]');if(!b)return;const d=b.dataset,k=S.pmK;
+  if(d.cspopen){if(S.cspOpen===k){S.cspOpen=null;S.cspDraft=null}else{S.cspOpen=k;S.cspDraft=null}render();return}
+  if(d.cspclose){S.cspOpen=null;S.cspDraft=null;render();return}
+  if(d.cspg){const D0=cspDraft();if(D0.o.gp===d.cspg)delete D0.o.gp;else D0.o.gp=d.cspg;D0.d=1;render();return}
+  if(d.cspclr){const D0=cspDraft();D0.o={};D0.d=1;render();return}
+  if(d.cspsave){const D0=cspDraft(),o=D0.o;ctSave(n=>{n.csp=JSON.parse(JSON.stringify(n.csp||{}));if(Object.keys(o).length)n.csp[k]=o;else delete n.csp[k]},'여백을 저장했어요');S.cspDraft=null;return}});
 function ctPanel(x){const m=ebCtOf(x.k),tp=m?m.tp:'',O=tp?ebCtOpt(tp):{};
   const seg=(k,V)=>`<span class="seg2">${V.map(([v,t])=>`<button type="button" data-cto="${k}|${v}" aria-pressed="${String(O[k]??'on')===String(v)}">${t}</button>`).join('')}</span>`;
   return `<div class="panel ctpan"><div class="spread"><b>음악회 템플릿</b><select data-ctp="${esc(x.k)}"><option value="">기본 (지금 책자 모양)</option>${Object.entries(EB_CTPL).map(([k,v])=>`<option value="${k}" ${tp===k?'selected':''}>${v[0]}</option>`).join('')}</select></div>
@@ -3840,7 +3852,7 @@ function ebConT(b,m){const T=ebSet(),O=ebCtOpt(m.tp),M=b.meta||{},dt=ebDt(M.date
     return `<div class="cti" style="margin-bottom:${gap}mm"><div class="r1"><span class="no">${x.no}.</span><span class="l1">${esc(a)}${O.second==='inline'&&c?` <small>/ ${esc(c)}</small>`:''}</span>${lead?'<span class="ld"></span>':'<span class="sp"></span>'}<span class="pf">${esc(P[0]||'')}</span></div>${n?`<div class="rows">${rows}</div>`:''}</div>`}).join(''):'<p style="text-align:center;color:#888">(연주 순서가 아직 없어요)</p>';
   return `<section class="bls con ctp"${O.gap==='fill'?` data-ctfill="${+O.botGap||0}"`:''}>${h}</section>`}
 /* 쪽 꽉: 곡 사이를 늘려 쪽 아래(아래 여백 빼고)까지 */
-function ebCtFill(root){(root||document).querySelectorAll('section.ctp[data-ctfill]').forEach(sec=>{try{const its=[...sec.querySelectorAll('.cti')];if(its.length<2)return;its.forEach(x=>x.style.marginBottom='');const z=ebEffZ(sec)||1,r=sec.getBoundingClientRect(),cs=getComputedStyle(sec),top=r.top+(parseFloat(cs.paddingTop)||0)*z,avail=(185-(+sec.dataset.ctfill||0))*96/25.4*z,used=its[its.length-1].getBoundingClientRect().bottom-top,extra=avail-used;if(extra<=0)return;const add=extra/(its.length-1)/z;its.slice(0,-1).forEach(x=>x.style.marginBottom=(parseFloat(getComputedStyle(x).marginBottom)/z+add).toFixed(2)+'px')}catch(e){}})}
+function ebCtFill(root){ebCsFill(root);(root||document).querySelectorAll('section.ctp[data-ctfill]').forEach(sec=>{try{const its=[...sec.querySelectorAll('.cti')];if(its.length<2)return;its.forEach(x=>x.style.marginBottom='');const z=ebEffZ(sec)||1,r=sec.getBoundingClientRect(),cs=getComputedStyle(sec),top=r.top+(parseFloat(cs.paddingTop)||0)*z,avail=(185-(+sec.dataset.ctfill||0))*96/25.4*z,used=its[its.length-1].getBoundingClientRect().bottom-top,extra=avail-used;if(extra<=0)return;const add=extra/(its.length-1)/z;its.slice(0,-1).forEach(x=>x.style.marginBottom=(parseFloat(getComputedStyle(x).marginBottom)/z+add).toFixed(2)+'px')}catch(e){}})}
 function ebCon(b){const m0=ebCtOf('con:'+b.id);if(m0)return ebConT(b,m0);const T=ebSet(),it=b.items||[];if(T.conSt==='여름'&&b.meta)return ebConS(b);
   return `<section class="bls con"><div class="eh"><div class="c1">${esc(T.en||b.camp||'')}</div><div class="c2">${esc(b.name)}</div>${(b.when||[]).map(w=>`<div class="c3">${esc(w)}</div>`).join('')}</div>
     ${it.length?it.map(x=>{const L=x.lines.length?x.lines:[''];
@@ -4086,9 +4098,10 @@ function ebToCon(k){const L=ebItems(),x=L.find(y=>y.k===k);if(!x)return;const h=
 function ebPg(x){let h=ebCsp(x,x.h||x.auto);if(x.kind==='sched'&&ebTplK(x)==='sch')h=ebEqSched(h);if(ebIsSpr(x))return ebSpreadHtml(h,x.k);return ebFitOn(x.k)?ebFitHtml(h,x.k):h}
 function ebHtml(x){if(S.ebEd===x.k&&S.ebBuf!=null)return S.ebBuf;const h=(S.ebPeek===x.k&&x.auto)?x.auto:ebIsSpr(x)||(S.ebEd!==x.k&&ebFitOn(x.k))?ebPg(x):(x.h||x.auto);return S.ebEd===x.k?h:ebCsp(x,h)}
 /* 11-22 음악회 쪽 여백 (템플릿 안 쓴 음악회 · 글 쪽 음악회): set.csp[쪽키]={hg 제목 아래, ig 정보 줄 사이, tg 곡 순서 위, im 곡 사이} mm → 그 쪽 section 에 변수 */
-const EB_CSP=[['hg','제목 아래 여백',5],['ig','일시 · 장소 · 사회 줄 사이',.3],['tg','곡 순서 위 여백',6],['im','곡 사이',1.3]];
-function ebCsp(x,h){const o=(ebSet().csp||{})[x.k];if(!o||!h||/data-csp=/.test(h))return h;const v=EB_CSP.filter(([k])=>o[k]!=null&&o[k]!=='').map(([k])=>`--c${k}:${+o[k]}mm`).join(';');if(!v)return h;
-  return h.replace(/<section\b([^>]*\bclass="[^"]*\bbls\b[^"]*")([^>]*)>/g,(m,a,b)=>{const all=a+b;return /\bstyle="/.test(all)?`<section data-csp="1"${all.replace(/\bstyle="/,'style="'+v+';')}>`:`<section data-csp="1"${all} style="${v}">`})}
+const EB_CSP=[['hg','제목 아래 여백',5],['ig','일시 · 장소 · 사회 줄 사이',.3],['tg','곡 순서 위 여백',6],['bg','쪽 아래 여백',0]],EB_CSPG=[['tight','좁게',1.2],['normal','보통',3],['blank','빈 줄',5],['wide','넓게',8],['fill','쪽 꽉',0]];
+function ebCspOf(k){return S.cspDraft&&S.cspDraft.k===k?S.cspDraft.o:((ebSet().csp||{})[k]||null)}
+function ebCsp(x,h){const o=ebCspOf(x.k);if(!o||!h||/data-csp=/.test(h))return h;const V=[['hg','--chg'],['ig','--cig'],['tg','--ctg']].filter(([k])=>o[k]!=null&&o[k]!=='').map(([k,v])=>`${v}:${+o[k]}mm`);const g=EB_CSPG.find(z=>z[0]===o.gp);if(g&&g[0]!=='fill')V.push(`--cim:${g[2]}mm`);if(!V.length&&!(g&&g[0]==='fill'))return h;const v=V.join(';'),fa=g&&g[0]==='fill'?` data-csfill="${+o.bg||0}"`:'';
+  return h.replace(/<section\b([^>]*\bclass="[^"]*\bbls\b[^"]*")([^>]*)>/g,(m,a,b)=>{const all=a+b;return /\bstyle="/.test(all)?`<section data-csp="1"${fa}${all.replace(/\bstyle="/,'style="'+v+';')}>`:`<section data-csp="1"${fa}${all}${v?` style="${v}"`:''}>`})}
 
 /* 미리보기에서는 지금 확대 비율로 그린 그대로 재서 맞춤 (확대하면 줄바꿈이 조금 달라져서) — 같은 날 = 제목(.stt) 글이 같은 시간표 쪽들 */
 function ebEqDom(root){if(!root)return;const G={};root.querySelectorAll('section.bls.sch').forEach(sec=>{const t=sec.querySelector('.stt');if(!t)return;const c=sec.closest('.ebc'),kk=c?c.dataset.ebk||'':'';if(kk&&(ebSet().tplm||{})[kk]==='base')return;const k=kk+'|'+t.textContent;(G[k]=G[k]||[]).push(...sec.querySelectorAll('table.st'))});
@@ -4555,7 +4568,7 @@ function ebPick(k){const src=(S.ebSrc||[]).find(x=>x.k===k);if(!src)return;const
   const set=(T.gone||[]).includes(k)?Object.assign({},T,{gone:T.gone.filter(g=>g!==k)}):null;
   ebSend(rows,[],set,()=>{S.ebSel=k;S.pmK=k;S.ebPickM=0;toast(`「${src.t}」을 불러왔어요`);setTimeout(()=>{const el=document.getElementById('eb_'+k.replace(':','_'));if(el)el.scrollIntoView({block:'start',behavior:'smooth'})},80)},'불러오고 있어요…')}
 /* ---- 화면 ---- */
-function ebBtns(x,ed){return `
+function ebBtns(x,ed){return `${S.tab==='pmod'&&ed&&!ebIsImg(x)&&ebTplK(x)==='con'&&!ebCtOf(x.k)?`<button class="btn small${S.cspOpen===x.k?' primary':''}" type="button" data-cspopen="1" title="고치기와 따로 여백만 바꿔요">여백 조절</button>`:''}
         ${ed&&!ebIsImg(x)?`<button class="btn small" type="button" data-ebedit="${esc(x.k)}">${x.h||x.kind==='text'?'고치기':'고쳐 쓰기'}</button>`:''}
         ${ed&&ebIsImg(x)?`<button class="btn small" type="button" data-ebimgre="${esc(x.k)}">그림 바꾸기</button><button class="btn small" type="button" data-ebimgfull="${esc(x.k)}">${/imgp full/.test(x.h)?'여백 안에 넣기':'여백 없이 가득'}</button>`:''}
         ${!ebIsImg(x)&&ebTabOf(x.k)!=null?`<a class="btn small" target="_blank" rel="noopener" href="${esc(ebSheetUrl(ebTabOf(x.k)))}" title="이 쪽의 구글 시트 탭 열기">시트 탭</a>${ed?`<button class="btn small" type="button" data-ebapply1="${esc(x.k)}" title="이 쪽만 시트에서 적용">시트 적용</button>`:''}`:''}

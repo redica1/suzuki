@@ -1,4 +1,4 @@
-/* build: 20261122-174545 */
+/* build: 20261122-175550 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -871,7 +871,7 @@ function parentNotifySubs_(nos) {
       if (m.lastTotal != null) m.prevTotal = m.lastTotal; m.lastTotal = sub.total; m.totalAt = stamp_();
       if (!r.email) { parentMoneySet_(r, m); return; }
       const paid = (m.reps || []).filter(x => x.st === '확인').reduce((t, x) => t + x.amt, 0), ex = sub.ppl.reduce((t, p) => t + p.lesson, 0), bk = acadBank_(r.acad);
-      parentMail_(r, (m.prevTotal == null ? '학원이 캠프 접수를 마쳤어요' : '캠프 접수 금액이 바뀌었어요') + ' (' + sub.no + ')', (m.prevTotal != null ? ['금액이 ' + (+m.prevTotal).toLocaleString('ko-KR') + '원에서 ' + sub.total.toLocaleString('ko-KR') + '원으로 바뀌었어요.', ''] : []).concat(sub.ppl.map(p => '- ' + p.name + ' ' + (p.fee + p.lesson + p.dues + p.room).toLocaleString('ko-KR') + '원' + (p.lesson ? ' (추가레슨 · 마스터클래스 ' + p.lesson.toLocaleString('ko-KR') + '원 포함)' : '')).concat(['', '확정 금액: ' + sub.total.toLocaleString('ko-KR') + '원' + (ex ? ' (추가레슨 · 마스터클래스 ' + ex.toLocaleString('ko-KR') + '원 포함)' : ''), '입금 확인: ' + paid.toLocaleString('ko-KR') + '원', sub.total > paid ? '더 보내 주실 금액: ' + (sub.total - paid).toLocaleString('ko-KR') + '원' : '다 내셨어요.', bk ? '학원 통장: ' + bk.bank + ' ' + bk.acct + ' (' + bk.holder + ')' : ''])));
+      parentMail_(r, (m.prevTotal == null ? '학원이 캠프 접수를 마쳤어요' : '캠프 접수 금액이 바뀌었어요') + ' (' + sub.no + ')', (m.prevTotal != null ? ['금액이 ' + (+m.prevTotal).toLocaleString('ko-KR') + '원에서 ' + sub.total.toLocaleString('ko-KR') + '원으로 바뀌었어요.', ''] : []).concat(sub.ppl.map(p => '- ' + p.name + ' ' + (p.fee + p.lesson + p.dues + p.room).toLocaleString('ko-KR') + '원' + (p.lesson ? ' (추가레슨 · 마스터클래스 ' + p.lesson.toLocaleString('ko-KR') + '원 포함)' : '')).concat(['', '확정 금액: ' + sub.total.toLocaleString('ko-KR') + '원' + (ex ? ' (추가레슨 · 마스터클래스 ' + ex.toLocaleString('ko-KR') + '원 포함)' : ''), '입금 확인: ' + paid.toLocaleString('ko-KR') + '원', sub.total > paid ? '더 보내 주실 금액: ' + (sub.total - paid).toLocaleString('ko-KR') + '원' : '다 내셨어요.', bk && bk.bank ? '학원 통장: ' + bk.bank + ' ' + bk.acct + ' (' + bk.holder + ')' + (bk.due ? ' · ' + bk.due + '까지 입금' : '') : ''])));
       parentMoneySet_(r, m);
     }));
   } catch (e) { try { log_('시스템', '학부모 접수 메일 실패', String(e)); } catch (x) {} }
@@ -880,8 +880,26 @@ function parentNotifySubs_(nos) {
 /* ---------- 학부모 ↔ 학원 돈 (11-15 사용자: 학원 통장 · 입금 신고 · 취소 · 환불 요청, 처리는 그 학원 원장 · 선생님) ----------
  * 학원 통장은 원장이 선생님 화면에서 넣음(시트 「학원 통장」). 학부모 비밀번호 4자리(처음 보낼 때 정함, 해시로 저장). 돈 기록은 「학부모 신청」 시트 「돈」 칸 JSON:
  * { reps:[{at, nm(입금자명), date, amt, st:'신고'|'확인'|'반려', why, by, byAt}], cx:{at, why, bank, acct, holder, st:'요청'|'처리'|'반려'|'취소', amt, note, by, byAt} } */
-const ABANK_SH = '학원 통장', ABANK_HEAD = ['학원', '은행', '계좌번호', '예금주', '고친 사람', '고친 때'];
-function acadBank_(acad) { try { const r = rows_(ABANK_SH).find(x => String(x['학원']) === acad); return r ? { bank: String(r['은행'] || ''), acct: String(r['계좌번호'] || ''), holder: String(r['예금주'] || '') } : null; } catch (e) { return null; } }
+const ABANK_SH = '학원 통장', ABANK_HEAD = ['학원', '은행', '계좌번호', '예금주', '고친 사람', '고친 때', '입금 마감'];
+function acadBank_(acad) { try { const r = rows_(ABANK_SH).find(x => String(x['학원']) === acad); if (!r) return null; const dv = r['입금 마감'], due = dv instanceof Date ? Utilities.formatDate(dv, TZ, 'yyyy-MM-dd') : String(dv || '').slice(0, 10); return { bank: String(r['은행'] || ''), acct: String(r['계좌번호'] || ''), holder: String(r['예금주'] || ''), due }; } catch (e) { return null; } }
+/* 11-22 학원별 입금 마감일: 원장이 정함 (전체 마감 = 마지막 차수 끝날보다 늦을 수 없음 · 비우면 전체 마감) */
+function acadDueSet(token, acad, due) {
+  const u = who_(token); acad = String(acad || ''); due = String(due || '').trim();
+  let head = false; try { head = teachers_().some(t => t.name === u.name && t.role === '원장' && (t.acads || []).includes(acad)); } catch (e) {}
+  if (!head) throw new Error('입금 마감일은 그 학원 원장님만 정할 수 있어요.');
+  if (due && !/^\d{4}-\d{2}-\d{2}$/.test(due)) throw new Error('날짜를 골라 주세요.');
+  if (due) { const R = (camp_().rounds || []).map(r => String(r.to || '')).filter(x => /^\d{4}-\d{2}-\d{2}$/.test(x)).sort(), last = R[R.length - 1]; if (last && due > last) throw new Error('전체 입금 마감(' + last + ')보다 늦게 잡을 수 없어요.'); if (due < today_()) throw new Error('지난 날짜는 고를 수 없어요.'); }
+  const lock = lock_();
+  try {
+    const ss = SpreadsheetApp.getActive(); let sh = ss.getSheetByName(ABANK_SH);
+    if (!sh) { sh = ss.insertSheet(ABANK_SH); sh.setFrozenRows(1); sh.getRange('A:G').setNumberFormat('@'); }
+    sh.getRange(1, 1, 1, ABANK_HEAD.length).setValues([ABANK_HEAD]).setFontWeight('bold');
+    const r = rows_(ABANK_SH).find(x => String(x['학원']) === acad);
+    if (r) { sh.getRange(r._row, 5, 1, 3).setValues([[u.name, stamp_(), "'" + due]]); } else sh.appendRow([acad, '', '', '', u.name, stamp_(), "'" + due]);
+  } finally { lock.releaseLock(); }
+  log_(u.name, '학원 입금 마감', acad + ' ' + (due || '(전체 마감)'));
+  return { ok: true, pbank: acadBanks_(u.acads || []) };
+}
 function acadBankSet(token, acad, b) {
   const u = who_(token); acad = String(acad || '');
   let head = false; try { head = teachers_().some(t => t.name === u.name && t.role === '원장' && (t.acads || []).includes(acad)); } catch (e) {}
@@ -893,6 +911,7 @@ function acadBankSet(token, acad, b) {
   try {
     const ss = SpreadsheetApp.getActive(); let sh = ss.getSheetByName(ABANK_SH);
     if (!sh) { sh = ss.insertSheet(ABANK_SH); sh.getRange(1, 1, 1, ABANK_HEAD.length).setValues([ABANK_HEAD]).setFontWeight('bold'); sh.setFrozenRows(1); sh.getRange('A:F').setNumberFormat('@'); }
+    sh.getRange(1, 1, 1, ABANK_HEAD.length).setValues([ABANK_HEAD]).setFontWeight('bold');
     const r = rows_(ABANK_SH).find(x => String(x['학원']) === acad), row = [acad, bank, "'" + acct, holder, u.name, stamp_()];
     if (r) sh.getRange(r._row, 1, 1, row.length).setValues([row]); else sh.appendRow(row);
   } finally { lock.releaseLock(); }
@@ -2284,6 +2303,7 @@ function bookData(token) {
   return Object.assign({ ok: true, edit: a.sup || a.perms.book === '편집', exec,
     camp: { id: C.base.id, name: C.base.name, start: C.base.start, end: C.base.end, place: C.base.place }, cellSty: actCfg_().cellSty || {},
     days: P.days.map((D, i) => ({ i, label: D.label, date: ymd(i), V: D.V, W: D.W, meals: D.meals, S: D.S })),
+    ensT: (() => { try { const all = loadSubs_(); return teams_(all).map(t => { const sb = all.find(s => s.no === t.no), e = (sb && sb.form && sb.form.ens) || {}; return { n: t.name, rep: t.rep, a: t.acads, s: [[e.k1, e.c1, e.o1], [e.k2, e.c2, e.o2]].filter(x => x[0] || x[1]).map(x => x.map(y => String(y || ''))) }; }); } catch (x) { return []; } })(),
     concerts: (P.concerts || []).map(x => x.book), teachers: P.teachers || [], orch: P.orch || [], tchBook: bookTch_(), orchReh: P.orchReh || [], openReh: P.openReh || [], orchBook: P.orchBook || [], mc: (() => { try { const c = actCfg_(), A = mcApps_(), PR = profs_(); return { s: ((c.mcOrder || {}).s || []), pf: PR.filter(p => p.mc).map(p => ({ n: p.name, i: p.inst, en: p.en })), napp: Object.keys(A).reduce((o, k) => (o[k] = A[k].length, o), {}) }; } catch (x) { return { s: [], pf: [], napp: {} }; } })(), fac: profs_().map(p => ({ n: p.name, i: p.inst, b: p.book, g: p.bgrp, en: p.en, ti: p.title, bio: p.bio, o: p.bord })) }, bookPages_());
 }
 /* ---------------- 마스터클래스 순서 (11-05) ----------------
@@ -3545,7 +3565,7 @@ const ACT_CATS = ['공연', '레슨', '업무'];   // 11-22: Orch A~D 는 레슨
 const ACT_KINDS = [['Orch A', '레슨'], ['Orch B', '레슨'], ['Orch C', '레슨'], ['Orch D', '레슨'], ['Welcome Concert', '공연'], ['Ensemble Concert', '공연'], ['Evening Concert', '공연', 1], ['Afternoon Concert', '공연', 1], ['Twilight Concert', '공연', 1],
   ['그룹레슨', '레슨'], ['교사연수', '레슨'], ['마스터클래스', '레슨'], ['식당', '업무']].map(([n, c, l]) => ({ n, c, link: !!l }));
 const ACT_STAGES = ['본공연', '리허설', '대기', '무대 세팅'];   // 대기 (11-05): 오케 · 그룹 리허설 전 대기 자리 — 책자 「리허설 대기 및 진행」
-const ACT_ROLESETS = { '공연': ['지휘', '악장', 'Vln 1', 'Vln 2', 'Vla', 'Vc', 'D.B', '악보계', '반주자', '통역', '객석정리', '무대', '연주', '세팅', '진행', '사회'], '레슨': ['수업', '보조', '통역', '지휘', 'Orch 보조'], '업무': ['문지기', '배식', '안내'] };
+const ACT_ROLESETS = { '공연': ['지휘', '악장', 'Vln 1', 'Vln 2', 'Vla', 'Vc', 'D.B', '악보계', '반주자', '통역', '객석정리', '무대', '연주', '세팅', '진행', '사회'], '레슨': ['수업', '보조', '통역', '지휘', 'Orch 보조', '연수 보조교사'], '업무': ['문지기', '배식', '안내'] };
 /** 대상 칩 { Vn:{b:[권], x:[지정학생…], m:메모}, Vc, Fl } → 시트에는 JSON (빈 악기는 뺌) */
 function tgClean_(tg) { const o = {}; ['Vn', 'Vc', 'Fl'].forEach(k => { const v = (tg || {})[k]; if (!v) return; const b = (v.b || []).map(x => String(x).slice(0, 6)).filter(x => /^(Pre|\d{1,2})[AB]{0,2}[+-]?$/.test(x)).slice(0, 20), x = (v.x || []).map(y => String(y).slice(0, 10)).slice(0, 6), m = String(v.m || '').slice(0, 60), sg = (v.s || []).map(y => String(y).slice(0, 40)).slice(0, 12); if (b.length || x.length || m || sg.length) o[k] = { b, x, m, s: sg }; }); const ag = (tg || {}).ag; if (ag && typeof ag === 'object') { const lo = Math.max(0, Math.min(30, +ag.lo || 0)), hi = Math.max(0, Math.min(30, +ag.hi || 0)); if (lo || hi) o.ag = Object.assign({}, lo ? { lo } : {}, hi ? { hi } : {}); } return Object.keys(o).length ? JSON.stringify(o) : ''; }
 const evName_ = e => e.title + (e.stage && e.stage !== '본공연' ? ' ' + e.stage : '') + (e.sub ? ' · ' + e.sub : '');

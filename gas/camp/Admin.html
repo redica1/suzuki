@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261122-101757 -->
+<!-- build: 20261122-102445 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -803,11 +803,11 @@ function tgChips(k,t){const L=tgNorm(t.b);const by={};L.forEach(x=>{const o=tkP(
 function bdKo(k,t){const I={Vn:'바이올린',Vc:'첼로',Fl:'플루트'}[k];const P=(S.D&&S.D.camp&&S.D.camp.progs)||{},Df=(S.D&&S.D.progsDef)||{},L=(P[I]&&P[I].length?P[I]:Df[I])||[];if(t==='Pre')return L.some(x=>/^Pre/i.test(x))?'프리 트윙클':'';const m=String(t).match(/^(\d+)([AB]?)$/);if(!m)return '';const re=new RegExp('^'+m[1]+'권'+m[2]+'(\\s|$)');const x=L.find(v=>re.test(v)),r=x?x.replace(re,'').trim():'';return /^(이상|전체)/.test(r)?'':r}
 function bdKeys(k){const I={Vn:'바이올린',Vc:'첼로',Fl:'플루트'}[k];const P=(S.D&&S.D.camp&&S.D.camp.progs)||{},Df=(S.D&&S.D.progsDef)||{},L=(P[I]&&P[I].length?P[I]:Df[I])||[];const K=['Pre'];L.forEach(v=>{const m=String(v).match(/^(\d+)권([AB]?)(\s|$)/);if(m&&!/^\d+권[AB]?\s*이상/.test(v)&&!K.includes(m[1]+m[2]))K.push(m[1]+m[2])});Object.keys((D.bookDesc||{})[k]||{}).forEach(t=>{if(!K.includes(t))K.push(t)});return K}
 /* 행사 구분 (공연 · 레슨 · 업무) → 종류 → (공연) 단계 → 사람 역할 — 목록은 모두 관리자가 「날짜 · 장소」에서 고침 */
-const CATS=['공연','레슨','업무','Orch 수업'];   /* 11-21: Orch A~D = 수업 (공연 아님) */
-const DEF_KINDS=[['Orch A','Orch 수업'],['Orch B','Orch 수업'],['Orch C','Orch 수업'],['Orch D','Orch 수업'],['Welcome Concert','공연'],['Ensemble Concert','공연'],['Evening Concert','공연',1],['Afternoon Concert','공연',1],['Twilight Concert','공연',1],['그룹레슨','레슨'],['교사연수','레슨'],['마스터클래스','레슨'],['식당','업무']].map(([n,c,l])=>({n,c,link:!!l}));
+const CATS=['공연','레슨','업무'];   /* 11-22: Orch A~D 는 레슨(수업) 종류 · Orch ABCD 탭에서 선생님 */
+const DEF_KINDS=[['Orch A','레슨'],['Orch B','레슨'],['Orch C','레슨'],['Orch D','레슨'],['Welcome Concert','공연'],['Ensemble Concert','공연'],['Evening Concert','공연',1],['Afternoon Concert','공연',1],['Twilight Concert','공연',1],['그룹레슨','레슨'],['교사연수','레슨'],['마스터클래스','레슨'],['식당','업무']].map(([n,c,l])=>({n,c,link:!!l}));
 const DEF_STAGES=['본공연','리허설','대기','무대 세팅'];
 const DEF_TGSONGS={Vn:['멘델스존 3악장','두 대의 바이올린','테크닉클래스','Shostakovich 1&5악장'],Vc:['테크닉클래스'],Fl:['Tonalization']};
-const DEF_ROLESETS={'공연':['지휘','반주자','통역','객석정리','무대','연주','세팅','진행','사회'],'레슨':['수업','보조','통역'],'업무':['문지기','배식','안내'],'Orch 수업':['지휘','Orch 보조','악장','Vln 1','Vln 2','Vla','Vc','D.B']};
+const DEF_ROLESETS={'공연':['지휘','반주자','통역','객석정리','무대','연주','세팅','진행','사회'],'레슨':['수업','보조','통역','지휘','Orch 보조'],'업무':['문지기','배식','안내']};
 const OLD_CAT={레슨:'레슨',교사연수:'레슨',특별수업:'레슨',오케스트라:'공연',오후음악회:'공연',음악회:'공연',리허설:'공연',대기:'업무'};
 const catOf=t=>CATS.includes(t)?t:OLD_CAT[t]||'레슨';
 const kindsOf=c=>D.kinds.filter(k=>k.c===c);
@@ -821,13 +821,13 @@ function normAct(r){
   let K=Array.isArray(r.kinds)&&r.kinds.length?r.kinds:DEF_KINDS;K=K.map(k=>k.c?Object.assign({n:k.n,c:catOf(k.c),link:!!k.link,off:!!k.off},k.ko?{ko:k.ko}:{}):{n:k.n,c:catOf(k.t),link:k.t==='오후음악회'}).filter(k=>k.n);
   D.tgSongs=r.tgSongs&&typeof r.tgSongs==='object'?r.tgSongs:JSON.parse(JSON.stringify(DEF_TGSONGS));['Vn','Vc','Fl'].forEach(k=>{if(!Array.isArray(D.tgSongs[k]))D.tgSongs[k]=[]});
   D.en=r.en&&typeof r.en==='object'?r.en:{};D.bookDesc=r.bookDesc&&typeof r.bookDesc==='object'?r.bookDesc:{};['Vn','Vc','Fl'].forEach(k=>{if(!D.bookDesc[k])D.bookDesc[k]={}});D.dayNotes=Array.isArray(r.dayNotes)?r.dayNotes:[];D.cellSty=r.cellSty&&typeof r.cellSty==='object'?r.cellSty:{};D.pvHide=r.pvHide&&typeof r.pvHide==='object'?r.pvHide:{};D.roleShort=r.roleShort&&typeof r.roleShort==='object'?r.roleShort:{};
-  if(!K.some(k=>k.c==='Orch 수업')){const O=K.filter(k=>k.c==='공연'&&/^orch/i.test(k.n));(O.length?O:DEF_KINDS.filter(k=>k.c==='Orch 수업')).forEach(k=>K.push({n:k.n,c:'Orch 수업',link:false,off:!!k.off}))}   /* 11-21: 예전 자료 — 공연 Orch 종류를 Orch 수업에도 (공연 쪽은 리허설 · 대기용으로 남김) */
+  K=K.map(k=>k.c==='Orch 수업'?Object.assign({},k,{c:'레슨'}):k).filter((k,i,A)=>A.findIndex(y=>y.c===k.c&&y.n===k.n)===i);['Orch A','Orch B','Orch C','Orch D'].forEach(n=>{if(!K.some(k=>k.c==='레슨'&&k.n===n)){const o=K.find(k=>k.n===n);K.push({n,c:'레슨',link:false,off:!!(o&&o.off)})}});   /* 11-22: Orch 수업 구분 없앰 → 레슨 */
   D.kinds=K;D.stages=Array.isArray(r.stages)&&r.stages.length?r.stages:DEF_STAGES.slice();
-  D.roleSets=r.roleSets&&typeof r.roleSets==='object'?r.roleSets:JSON.parse(JSON.stringify(DEF_ROLESETS));CATS.forEach(c=>{if(!Array.isArray(D.roleSets[c]))D.roleSets[c]=DEF_ROLESETS[c].slice()});
+  D.roleSets=r.roleSets&&typeof r.roleSets==='object'?r.roleSets:JSON.parse(JSON.stringify(DEF_ROLESETS));{const O=D.roleSets['Orch 수업'];if(O){D.roleSets['레슨']=[...new Set((D.roleSets['레슨']||[]).concat(O))];delete D.roleSets['Orch 수업']}['지휘','Orch 보조'].forEach(x=>{const L=D.roleSets['레슨']||(D.roleSets['레슨']=[]);if(!L.includes(x))L.push(x)})}CATS.forEach(c=>{if(!Array.isArray(D.roleSets[c]))D.roleSets[c]=DEF_ROLESETS[c].slice()});
   D.events.forEach(e=>{const old=e.type;e.cat=catOf(old);e.type=e.cat;if(e.cat==='공연'&&!e.stage)e.stage=old==='리허설'?'리허설':'본공연';if(e.cat!=='공연')e.stage=''})}
 const TCLS_C={공연:'t-con',레슨:'t-les',업무:'t-reh','Orch 수업':'t-orc'};
 const evLabel=e=>`${esc(e.title)}${e.cat==='공연'&&e.stage&&e.stage!=='본공연'?` <span class="stg">${esc(e.stage)}</span>`:''}${e.sub?` <small>${esc(e.sub)}</small>`:''}`;
-const cnt3=x=>`레슨 ${(x.cats||{})['레슨']||0} · Orch ${(x.cats||{})['Orch 수업']||0} · 공연 ${(x.cats||{})['공연']||0} · 업무 ${(x.cats||{})['업무']||0}`;
+const cnt3=x=>`레슨 ${(x.cats||{})['레슨']||0} · 공연 ${(x.cats||{})['공연']||0} · 업무 ${(x.cats||{})['업무']||0}`;
 
 let D=null,CHG=0,REV=0,DIRTY=false,SAVING=false,TIMER=null,LOADING=false,PEND=[],LASTSAVE='',ERR='';
 const A={tab:'grid',day:0,sel:null,swap:null,q:'',pq:'',filter:'zero',who:'',unav:{},req:{},log:[],target:{min:2,max:6},newSel:null,trainee:false};
@@ -869,16 +869,16 @@ function logIt(t){A.log.unshift({at:new Date().toLocaleString('ko-KR',{month:'nu
 
 /* ---------- 11-21 오케스트라: Orch A~D 수업 전부에 같은 선생님 · 역할 · 악보 ---------- */
 const ORCH_RE=/^orch/i;
-function orTitles(){return [...new Set((D.kinds||[]).filter(k=>!k.off&&(k.c==='Orch 수업'||ORCH_RE.test(k.n||''))).map(k=>k.n).concat(D.events.filter(e=>ORCH_RE.test(e.title||'')).map(e=>e.title)))].sort((x,y)=>x.localeCompare(y))}   /* 11-21: 역할 설정 종류(Orch A~D)도 · 수업이 아직 없어도 단추는 보임 */
+function orTitles(){return ['Orch A','Orch B','Orch C','Orch D']}   /* 11-22: 레슨으로 저장된 Orch A~D 만 · 거의 안 바뀜 */
 function orRoster(t){const ev=orEvs(t),M={};ev.forEach(e=>e.ppl.forEach(p=>{const x=M[p.n]||(M[p.n]={n:p.n,r:{},c:0});x.r[p.r]=(x.r[p.r]||0)+1;x.c++}));
   return Object.values(M).map(x=>({n:x.n,r:Object.keys(x.r).sort((a,b)=>x.r[b]-x.r[a])[0],c:x.c,all:x.c>=ev.length})).sort((a,b)=>NAME(a.n).localeCompare(NAME(b.n)))}
-function orRoles(){return [...new Set([].concat(D.roleSets['Orch 수업']||[],['Orch 보조','지휘'],D.roleSets['레슨']||[],D.roleSets['공연']||[]))]}
-/* 오케 수업 일정 = 구분 「Orch 수업」 (아직 안 옮겼으면 같은 이름 일정 전체) — 폐회 음악회 리허설 · 대기(공연)는 빼고 */
-function orEvs(t){const L=D.events.filter(e=>e.title===t),C=L.filter(e=>e.cat==='Orch 수업');return C.length?C:L}
+function orRoles(){return [...new Set([].concat(['Orch 보조','지휘'],D.roleSets['레슨']||[],D.roleSets['공연']||[]))]}
+/* 오케 수업 일정 = 레슨으로 저장된 Orch A~D (없으면 같은 이름 일정 전체) — 폐회 음악회 리허설 · 대기(공연)는 빼고 */
+function orEvs(t){const L=D.events.filter(e=>e.title===t),C=L.filter(e=>e.cat==='레슨');return C.length?C:L}
 const orOld=()=>D.events.filter(e=>e.cat==='공연'&&ORCH_RE.test(e.title||'')&&(!e.stage||e.stage==='본공연'));
-function orMove(){const L=orOld();if(!L.length)return '';return `<div class="panel linkbox" style="margin-bottom:10px"><b>공연으로 들어간 Orch 수업 ${L.length}개 → 「Orch 수업」으로 옮기기</b><p class="cap" style="margin:2px 0 6px">단계가 없거나 본공연인 Orch 일정만 옮겨요. 폐회 음악회 리허설 · 대기는 공연에 그대로 남아요. 선생님 · 역할 · 대상 · 인쇄 메모는 그대로예요.</p>
+function orMove(){const L=orOld();if(!L.length)return '';return `<div class="panel linkbox" style="margin-bottom:10px"><b>공연으로 들어간 Orch 수업 ${L.length}개 → 「레슨」으로 옮기기</b><p class="cap" style="margin:2px 0 6px">단계가 없거나 본공연인 Orch 일정만 옮겨요. 폐회 음악회 리허설 · 대기는 공연에 그대로 남아요. 선생님 · 역할 · 대상 · 인쇄 메모는 그대로예요.</p>
   <div class="tblw"><table class="pft nosort" style="width:auto"><thead><tr><th>일정</th><th>날짜 · 시간</th><th>장소</th><th>사람</th></tr></thead><tbody>${L.slice().sort((a,b)=>a.d-b.d||mins(a.s)-mins(b.s)).map(e=>`<tr><td><b>${esc(e.title)}</b></td><td>${esc(D.days[e.d]||'')} ${e.s}~${e.e}</td><td>${esc(e.room||'')}</td><td class="num">${e.ppl.length}</td></tr>`).join('')}</tbody></table></div>
-  <div class="row" style="margin-top:6px"><button class="btn small primary" type="button" id="a_orMove">Orch 수업으로 옮기기 (${L.length}개)</button></div></div>`}
+  <div class="row" style="margin-top:6px"><button class="btn small primary" type="button" id="a_orMove">레슨으로 옮기기 (${L.length}개)</button></div></div>`}
 function vOrchT(){const T=orTitles();if(!T.length)return '<div class="panel">이름이 「Orch」로 시작하는 일정이 없어요. 프로그램표에 「Orch A」 같은 수업을 먼저 넣어 주세요.</div>';
   if(!T.includes(A.orT))A.orT=T[0];const t=A.orT,ev=orEvs(t).sort((a,b)=>a.d-b.d||mins(a.s)-mins(b.s)),R=orRoster(t),inR=new Set(R.map(x=>x.n)),q=(A.orQ||'').trim();
   const cand=D.people.filter(p=>!inR.has(p.id)&&!gone(p.id)&&(!q||(p.n+(p.acad||'')).includes(q))).slice(0,40),roles=orRoles();
@@ -1031,9 +1031,9 @@ function vCount(){
     <label class="checks"><label><input type="checkbox" id="a_trainee" ${A.trainee?'checked':''}>연수생도 보기</label></label>
     <input type="search" id="a_q" value="${esc(A.q)}" placeholder="이름·학원으로 찾기" style="width:min(220px,100%)"></div>
   <div class="row">${[['zero','0회'],['noles','레슨 0회'],['low','목표보다 적음'],['high','목표보다 많음'],['clash','겹침'],['off','못 오는 날 걸림'],['all','전체'],['gone','취소한 사람 (칸에 남음)']].map(([k,l])=>`<button class="btn small ${A.filter===k?'primary':''} ${k==='gone'&&G.length?'warnb':''}" type="button" data-afilter="${k}">${l} ${n(k)}</button>`).join('')}</div>
-  <div class="tbl panel" style="padding:0"><table><thead><tr><th>이름</th><th>학원</th><th>악기</th>${D.days.map(x=>`<th class="r">${x.slice(0,4)}</th>`).join('')}<th class="r">레슨</th><th class="r">Orch</th><th class="r">공연</th><th class="r">업무</th><th class="r">합계</th><th>상태</th><th>못 오는 날</th><th>요청·메모</th><th></th></tr></thead><tbody>
+  <div class="tbl panel" style="padding:0"><table><thead><tr><th>이름</th><th>학원</th><th>악기</th>${D.days.map(x=>`<th class="r">${x.slice(0,4)}</th>`).join('')}<th class="r">레슨</th><th class="r">공연</th><th class="r">업무</th><th class="r">합계</th><th>상태</th><th>못 오는 날</th><th>요청·메모</th><th></th></tr></thead><tbody>
   ${L.map(r=>{const {p,x}=r,f=flag(r),c=x.cats||{};return `<tr><td><b>${LBH(p.id)}</b>${p.kind!=='교사'?` <span class="pill mute">${p.kind}</span>`:''}</td><td>${esc(p.acad||'')}</td><td>${esc(p.inst||'')}</td>
-    ${x.days.map(v=>`<td class="r num">${v||'-'}</td>`).join('')}<td class="r num">${c['레슨']||'-'}</td><td class="r num">${c['Orch 수업']||'-'}</td><td class="r num">${c['공연']||'-'}</td><td class="r num">${c['업무']||'-'}</td><td class="r num"><b>${x.total||'-'}</b></td>
+    ${x.days.map(v=>`<td class="r num">${v||'-'}</td>`).join('')}<td class="r num">${c['레슨']||'-'}</td><td class="r num">${c['공연']||'-'}</td><td class="r num">${c['업무']||'-'}</td><td class="r num"><b>${x.total||'-'}</b></td>
     <td>${gone(p.id)?`<span class="pill bad">${goneTxt(p.id)} · ${x.total}칸에 남음</span>`:f==='clash'?`<span class="pill bad">겹침 ${x.clash}</span>`:f==='off'?'<span class="pill bad">못 오는 날 배정</span>':f==='zero'?'<span class="pill due">0회</span>':f==='low'?'<span class="pill due">적음</span>':f==='high'?'<span class="pill info">많음</span>':'<span class="pill ok">맞음</span>'}</td>
     <td><span class="row" style="gap:6px;flex-wrap:nowrap">${D.days.map((dl,i)=>`<label class="dck" title="${dl} 못 옴"><input type="checkbox" data-aunav="${p.id}|${i}" ${(A.unav[p.id]||[]).includes(i)?'checked':''}>${dl.slice(2,4).replace('(','')}</label>`).join('')}</span></td>
     <td><input type="text" data-areq="${p.id}" value="${esc(A.req[p.id]||'')}" placeholder="예: 2권 교사 바꿔 주세요" style="width:170px" aria-label="${esc(p.n)} 요청"></td>
@@ -1173,7 +1173,7 @@ function vSet(){return `<div class="sec-h"><div><h2>날짜 · 장소</h2><p>캠�
   <tbody>${rtRows().map((r,k)=>`<tr><td><input class="a_rtin" data-r="${k}" data-f="n" value="${esc(r.n)}" placeholder="장소 이름"></td><td><input class="a_rtin" data-r="${k}" data-f="l" value="${esc(r.l)}" placeholder="위치"></td><td><input class="a_rtin" data-r="${k}" data-f="c" value="${esc(r.c)}" inputmode="numeric" style="width:70px"></td><td><input class="a_rtin" data-r="${k}" data-f="e" value="${esc(r.e)}" placeholder="English"></td>${D.days.map((x,d)=>`<td style="text-align:center"><input type="checkbox" class="a_rtck" data-r="${k}" data-d="${d}" ${r.on[d]?'checked':''} aria-label="${esc(r.n)} ${esc(x)} 사용"></td>`).join('')}<td><button class="btn small ghost" type="button" data-rtdel="${k}">빼기</button></td></tr>`).join('')}</tbody></table></div>
   <div class="row" style="margin-top:8px"><button class="btn small" type="button" id="a_rtAdd">＋ 장소 추가</button></div></div>
   <div class="row"><button class="btn small primary" type="button" id="a_setSave">날짜·장소 저장</button><span class="cap" style="margin:0">일정이 있는 장소를 빼면 그 일정은 표에서 안 보이니 먼저 옮겨 주세요.</span></div>
-  <div class="sec-h"><div><h2>행사 구분 · 종류 · 단계 · 역할</h2><p>구분은 공연 · 레슨 · Orch 수업 · 업무 네 가지예요. 종류 · 공연 단계 · 역할 목록은 여기서 추가 · 이름 변경 · 순서 · 빼기를 해요. 이름을 바꾸면 그 이름을 쓰던 일정 · 사람도 같이 바뀌어요.</p></div></div>
+  <div class="sec-h"><div><h2>행사 구분 · 종류 · 단계 · 역할</h2><p>구분은 공연 · 레슨 · 업무 세 가지예요. Orch A~D 는 레슨 종류예요. 종류 · 공연 단계 · 역할 목록은 여기서 추가 · 이름 변경 · 순서 · 빼기를 해요. 이름을 바꾸면 그 이름을 쓰던 일정 · 사람도 같이 바뀌어요.</p></div></div>
   <div class="g3 lstg" style="grid-template-columns:repeat(auto-fit,minmax(230px,1fr))">${CATS.map(c=>`<div class="panel lstcol"><b class="lsth">${c}</b>
     ${lstPanel('k:'+c,c+' 종류',c==='공연'?'「학생 연주」는 오후음악회 탭(연주 순서 · 리허설)과 이어져요':c==='Orch 수업'?'오케 수업(Orch A~D) · 오케스트라 탭 단추 · 선생님 · 악보 기준. 폐회 음악회 무대 · 리허설은 공연에서':'')}
     ${c==='공연'?lstPanel('stage','공연 단계','본공연 · 리허설 · 무대 세팅 등'):''}
@@ -1198,8 +1198,8 @@ function setPart(k){if(!D){if(!LOADING&&!ERR)load();return `<div class="panel">$
   <div class="row" style="margin-top:8px"><button class="btn small" type="button" id="a_rtAdd">＋ 장소 추가</button></div></div>
   <div class="row"><button class="btn small primary" type="button" id="a_setSave">날짜·장소 저장</button><span class="cap" style="margin:0">일정이 있는 장소를 빼면 그 일정은 표에서 안 보이니 먼저 옮겨 주세요.</span></div>
 `;
-  if(k==='role')return `  <div class="sec-h"><div><h2>행사 구분 · 종류 · 단계 · 역할</h2><p>구분은 공연 · 레슨 · Orch 수업 · 업무 네 가지예요. 종류 · 공연 단계 · 역할 목록은 여기서 추가 · 이름 변경 · 순서 · 빼기를 해요. 이름을 바꾸면 그 이름을 쓰던 일정 · 사람도 같이 바뀌어요.</p></div></div>
-  ${['공연','레슨','Orch 수업','업무'].map(c=>`<div class="panel lstrow ${TCLS_C[c]||''}"><b class="lsth">${c}</b><div class="lstcols">
+  if(k==='role')return `  <div class="sec-h"><div><h2>행사 구분 · 종류 · 단계 · 역할</h2><p>구분은 공연 · 레슨 · 업무 세 가지예요. Orch A~D 는 레슨 종류예요. 종류 · 공연 단계 · 역할 목록은 여기서 추가 · 이름 변경 · 순서 · 빼기를 해요. 이름을 바꾸면 그 이름을 쓰던 일정 · 사람도 같이 바뀌어요.</p></div></div>
+  ${['공연','레슨','업무'].map(c=>`<div class="panel lstrow ${TCLS_C[c]||''}"><b class="lsth">${c}</b><div class="lstcols">
     ${lstPanel('k:'+c,(c==='Orch 수업'?'Orch':c)+' 종류',c==='공연'?'「이번 캠프」를 사용 안 함으로 두면 일정을 넣을 때 고르는 목록에서 빠져요. 이름 · 일정은 그대로 남아요.':c==='Orch 수업'?'오케 수업(Orch A~D) · 오케스트라 탭 단추 · 선생님 · 악보 기준. 폐회 음악회 무대 · 리허설 · 대기는 공연에 둬요.':'')}
     ${c==='공연'?lstPanel('stage','공연 단계','본공연 · 리허설 · 무대 세팅 등'):''}
     ${lstPanel('r:'+c,(c==='Orch 수업'?'Orch':c)+' 역할','사람을 넣을 때 고르는 역할 · 처음 넣는 사람은 첫 번째, 그다음은 두 번째 역할')}</div></div>`).join('')}
@@ -1263,7 +1263,7 @@ document.addEventListener('click',ev=>{if(!ACTON()||!D)return;const b=ev.target.
   if(b.id==='a_dayDel'){const i=D.days.length-1;if(D.events.some(e=>e.d===i)){toast('그날 일정이 있어요. 일정을 먼저 지워 주세요');return}rtSync();if(RT)RT.forEach(r=>r.on.pop());D.days.pop();delete D.rooms[i];logIt('날짜 빼기');refresh();return}
   {const d=b.dataset||{};if(d.ort){A.orT=d.ort;A.orMsg='';render();return}
   if(d.ora){orAdd([d.ora],(document.getElementById('a_orRole')||{}).value||'Orch 보조');return}
-  if(b.id==='a_orMove'){const L=orOld();L.forEach(e=>{e.cat=e.type='Orch 수업';e.stage='';e.main=''});logIt('Orch 일정 '+L.length+'개를 공연 → Orch 수업으로 옮김');refresh();toast(L.length+'개를 Orch 수업으로 옮겼어요');return}
+  if(b.id==='a_orMove'){const L=orOld();L.forEach(e=>{e.cat=e.type='레슨';e.stage='';e.main=''});logIt('Orch 일정 '+L.length+'개를 공연 → 레슨으로 옮김');refresh();toast(L.length+'개를 레슨으로 옮겼어요');return}
   if(d.orx){orEvs(A.orT).forEach(e=>{e.ppl=e.ppl.filter(p=>p.n!==d.orx)});refresh();return}
   if(b.id==='a_orPasteGo'){const names=((document.getElementById('a_orPaste')||{}).value||'').split(/[\s,]+/).filter(Boolean),ids=[],bad=[];names.forEach(n=>{const L=D.people.filter(p=>p.n===n&&!gone(p.id));if(L.length===1)ids.push(L[0].id);else bad.push(n+(L.length>1?'(같은 이름 '+L.length+'명)':''))});orAdd(ids,(document.getElementById('a_orRole')||{}).value||'Orch 보조');if(bad.length)A.orMsg=(A.orMsg?A.orMsg+' · ':'')+'못 찾은 이름: '+bad.join(', ');render();return}
   if(b.id==='a_orUp'){const f=(document.getElementById('a_orFile')||{}).files;if(!f||!f[0]){toast('파일을 골라 주세요');return}const x=f[0];if(x.size>15*1024*1024){toast('15MB까지 올릴 수 있어요');return}const part=document.getElementById('a_orPart').value;const rd=new FileReader();rd.onload=()=>{const b64=String(rd.result).split(',')[1];call('orchUpload',[A.orT,part,x.name,x.type||'application/pdf',b64],r=>{A.orF=r;render();toast('악보를 올렸어요')},'악보를 올리고 있어요…')};rd.readAsDataURL(x);return}
@@ -1319,7 +1319,7 @@ function vPrev(){
   ${pvHideBox(P)}
   <div class="row"><div class="seg pvtabs" role="group" aria-label="미리보기 탭">${tabs.map(([k,l])=>`<button type="button" data-apv="${k}" aria-pressed="${String(t)===String(k)}">${esc(l)}</button>`).join('')}</div></div>
   ${body}`}
-const TABS=[['grid','프로그램표'],['orch','오케스트라'],['prev','미리보기 · 시트 보내기'],['count','교사별 횟수'],['who','교사별 일정'],['set','날짜 · 장소'],['log','바꾼 기록']];
+const TABS=[['grid','프로그램표'],['orch','Orch ABCD'],['prev','미리보기 · 시트 보내기'],['count','교사별 횟수'],['who','교사별 일정'],['set','날짜 · 장소'],['log','바꾼 기록']];
 function view(){
   if(!D){if(!LOADING&&!ERR)load();return `<div class="panel">${ERR?`<span class="err">교사 일정을 불러오지 못했어요 · ${esc(ERR)}</span> <button class="btn small" type="button" id="a_retry">다시</button>`:'교사 일정을 불러오고 있어요…'}</div>`}
   const zero=P().filter(p=>p.kind!=='연수생'&&!ST.st[p.id]).length, cl=Object.values(ST.st).filter(x=>x.clash||x.off).length;

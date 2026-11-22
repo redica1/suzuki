@@ -1,4 +1,4 @@
-/* build: 20261122-101757 */
+/* build: 20261122-102445 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -2149,7 +2149,7 @@ function progBuild_(opt) {
   loadSubs_().forEach(sb => sb.ppl.forEach(p => { if (p.status === '취소' || !TT.includes(p.type)) return; const k = sb.acad + '|' + (p.inst || ''); (T[k] = T[k] || []).push(p.name); }));
   const teachers = [['학원', '악기', '교사']].concat(Object.keys(T).sort((x, y) => x.localeCompare(y, 'ko')).map(k => { const [ac, ins] = k.split('|'); return [ac, ({ 바이올린: 'Vn', 첼로: 'Vc', 플루트: 'Fl', 비올라: 'Va' })[ins] || ins, T[k].join(', ')]; }));
   // 오케 명단: 파트 역할(악장 · Vln 1 …)이 들어간 공연을 종류(이름)별로 → 본공연 시각 · 리허설 시각 · 역할마다 이름
-  const G = {}; evs.filter(e => e.cat === '공연' || e.cat === 'Orch 수업').forEach(e => { (G[e.title] = G[e.title] || []).push(e); });
+  const G = {}; evs.filter(e => e.cat === '공연' || /^orch/i.test(e.title || '')).forEach(e => { (G[e.title] = G[e.title] || []).push(e); });
   const when = e => (days[e.d] || (e.d + 1) + '일') + ' ' + e.s + '-' + e.e;
   const orch = [];
   Object.keys(G).filter(k => G[k].some(e => e.ppl.some(p => isPart_(p.r)))).sort((x, y) => { const f = k => Math.min(...G[k].map(e => e.d * 1440 + mm(e.s))); return f(x) - f(y); }).forEach(k => {
@@ -2158,7 +2158,7 @@ function progBuild_(opt) {
     orch.push({ k: 'h', v: [k + (main.length ? ' (' + main.map(when).join(', ') + ')' : '')] });
     if (reh.length) orch.push({ k: 'r', v: ['리허설'].concat([...new Set(reh.map(when))]) });
     const byMain = main.concat(L.filter(e => !main.includes(e)));   // 이름 순서: 본공연에 넣은 순서 먼저
-    const order = ORCH_PARTS.slice(); ((c.roleSets || {})['Orch 수업'] || []).concat((c.roleSets || {})['공연'] || []).forEach(r => { if (isPart_(r) && !order.includes(r)) order.push(r); });
+    const order = ORCH_PARTS.slice(); ((c.roleSets || {})['레슨'] || []).concat((c.roleSets || {})['공연'] || []).forEach(r => { if (isPart_(r) && !order.includes(r)) order.push(r); });
     L.forEach(e => e.ppl.forEach(p => { if (!order.includes(p.r)) order.push(p.r); }));
     order.forEach(r => { const N = []; byMain.forEach(e => e.ppl.forEach(p => { if (p.r === r) { const n = nameOf(p.n); if (!N.includes(n)) N.push(n); } })); if (N.length) orch.push({ k: 'p', v: [r].concat(N) }); });
     orch.push({ k: 'b', v: [''] });
@@ -2173,7 +2173,7 @@ function progBuild_(opt) {
   // 책자 오케스트라 명단 · 보조교사(11-05): 공연 종류마다 세부(어느 음악회) · 본공연 · 리허설(장소) · 역할별 이름 (역할 순서 = 오케 파트 순서 → 설정 → 나머지)
   const orchBook = Object.keys(G).filter(k => /^orch/i.test(k) || G[k].some(e => e.ppl.some(p => isPart_(p.r)))).map(k => {
     const L = G[k].slice().sort((x, y) => x.d * 1440 + mm(x.s) - (y.d * 1440 + mm(y.s))), main = L.filter(e => !e.stage || e.stage === '본공연'), reh = L.filter(e => e.stage === '리허설');
-    const order = ORCH_PARTS.slice(); ((c.roleSets || {})['Orch 수업'] || []).concat((c.roleSets || {})['공연'] || []).forEach(r => { if (!order.includes(r)) order.push(r); }); L.forEach(e => e.ppl.forEach(p => { if (!order.includes(p.r)) order.push(p.r); }));
+    const order = ORCH_PARTS.slice(); ((c.roleSets || {})['레슨'] || []).concat((c.roleSets || {})['공연'] || []).forEach(r => { if (!order.includes(r)) order.push(r); }); L.forEach(e => e.ppl.forEach(p => { if (!order.includes(p.r)) order.push(p.r); }));
     const by = main.concat(L.filter(e => !main.includes(e))), roles = order.map(r => { const N = []; by.forEach(e => e.ppl.forEach(p => { if (p.r === r) { const n = nameOf(p.n); if (!N.includes(n)) N.push(n); } })); return [r, N]; }).filter(x => x[1].length);
     const anyT = L.find(e => e.tg && Object.keys(e.tg).length);
     return { k, sub: ((main[0] || L[0]) || {}).sub || '', tgt: anyT ? progCellS_(anyT, c, nameOf, anyT.s, anyT.e).h.filter(h => h !== k && !/^Orch/i.test(h)).join(' · ') : '', main: main.map(e => ({ d: e.d, s: e.s, e: e.e, room: e.room })), reh: reh.map(e => ({ d: e.d, s: e.s, e: e.e, room: e.room })), roles };
@@ -3514,11 +3514,11 @@ const MAPO = { acad: "마포스즈키", teachers: [], students: [], paid: {} }; 
 const ACT_HEAD = ['ID', '날짜', '시작', '끝', '장소', '이름', '종류', '설명', '사람', '사람(이름)', '세부', '대상', '단계', '가져온 일정ID', '역할메모', '칸설정'];   // 본공연이 어느 리허설에서 가져왔는지   // 이름 = 행사 종류(관리자 목록), 세부 = 반 이름 등
 /** 행사 구분 = 공연 · 레슨 · 업무 (고정) → 종류(관리자 입력) → 공연은 단계(본공연·리허설·무대 세팅 …, 관리자 입력) → 사람마다 역할(구분별 목록, 관리자 입력)
  *  link = 학생이 연주하는 음악회 → 오후음악회 탭(연주 순서·리허설)에 이어짐 */
-const ACT_CATS = ['공연', '레슨', '업무', 'Orch 수업'];   // 11-21: Orch A~D = 수업
-const ACT_KINDS = [['Orch A', 'Orch 수업'], ['Orch B', 'Orch 수업'], ['Orch C', 'Orch 수업'], ['Orch D', 'Orch 수업'], ['Welcome Concert', '공연'], ['Ensemble Concert', '공연'], ['Evening Concert', '공연', 1], ['Afternoon Concert', '공연', 1], ['Twilight Concert', '공연', 1],
+const ACT_CATS = ['공연', '레슨', '업무'];   // 11-22: Orch A~D 는 레슨 종류 (Orch 수업 구분 없앰)
+const ACT_KINDS = [['Orch A', '레슨'], ['Orch B', '레슨'], ['Orch C', '레슨'], ['Orch D', '레슨'], ['Welcome Concert', '공연'], ['Ensemble Concert', '공연'], ['Evening Concert', '공연', 1], ['Afternoon Concert', '공연', 1], ['Twilight Concert', '공연', 1],
   ['그룹레슨', '레슨'], ['교사연수', '레슨'], ['마스터클래스', '레슨'], ['식당', '업무']].map(([n, c, l]) => ({ n, c, link: !!l }));
 const ACT_STAGES = ['본공연', '리허설', '대기', '무대 세팅'];   // 대기 (11-05): 오케 · 그룹 리허설 전 대기 자리 — 책자 「리허설 대기 및 진행」
-const ACT_ROLESETS = { '공연': ['지휘', '악장', 'Vln 1', 'Vln 2', 'Vla', 'Vc', 'D.B', '악보계', '반주자', '통역', '객석정리', '무대', '연주', '세팅', '진행', '사회'], '레슨': ['수업', '보조', '통역'], '업무': ['문지기', '배식', '안내'], 'Orch 수업': ['지휘', 'Orch 보조', '악장', 'Vln 1', 'Vln 2', 'Vla', 'Vc', 'D.B'] };
+const ACT_ROLESETS = { '공연': ['지휘', '악장', 'Vln 1', 'Vln 2', 'Vla', 'Vc', 'D.B', '악보계', '반주자', '통역', '객석정리', '무대', '연주', '세팅', '진행', '사회'], '레슨': ['수업', '보조', '통역', '지휘', 'Orch 보조'], '업무': ['문지기', '배식', '안내'] };
 /** 대상 칩 { Vn:{b:[권], x:[지정학생…], m:메모}, Vc, Fl } → 시트에는 JSON (빈 악기는 뺌) */
 function tgClean_(tg) { const o = {}; ['Vn', 'Vc', 'Fl'].forEach(k => { const v = (tg || {})[k]; if (!v) return; const b = (v.b || []).map(x => String(x).slice(0, 6)).filter(x => /^(Pre|\d{1,2})[AB]{0,2}[+-]?$/.test(x)).slice(0, 20), x = (v.x || []).map(y => String(y).slice(0, 10)).slice(0, 6), m = String(v.m || '').slice(0, 60), sg = (v.s || []).map(y => String(y).slice(0, 40)).slice(0, 12); if (b.length || x.length || m || sg.length) o[k] = { b, x, m, s: sg }; }); return Object.keys(o).length ? JSON.stringify(o) : ''; }
 const evName_ = e => e.title + (e.stage && e.stage !== '본공연' ? ' ' + e.stage : '') + (e.sub ? ' · ' + e.sub : '');
@@ -4533,7 +4533,7 @@ function payData_() {
   const cnt = {}, reh = {}, roles = {};
   evs.forEach(e => {
     if (e.title === '마스터클래스') return;   // 마스터클래스는 교수 레슨비(신청 학생 수)로
-    const cat0 = ACT_CATS.includes(e.type) ? e.type : (e.type === '리허설' ? '공연' : '레슨'), cat = cat0 === 'Orch 수업' ? '공연' : cat0;   /* 11-21: 정산 묶음(공연|악장 …)은 예전 그대로 */
+    const cat0 = ACT_CATS.includes(e.type) ? e.type : (e.type === '리허설' ? '공연' : '레슨'), cat = cat0 === 'Orch 수업' || (cat0 === '레슨' && /^orch/i.test(e.title || '')) ? '공연' : cat0;   /* 11-21: 정산 묶음(공연|악장 …)은 예전 그대로 */
     const main = cat !== '공연' || !e.stage || e.stage === '본공연';
     e.ppl.forEach(z => { if (!z || !z.n) return; const k = cat + '|' + (z.r || '수업'); roles[k] = 1; const T = main ? cnt : reh; (T[z.n] = T[z.n] || {})[k] = ((T[z.n] || {})[k] || 0) + 1; });
   });

@@ -1,4 +1,4 @@
-/* build: 20261122-174005 */
+/* build: 20261122-174545 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -2067,6 +2067,7 @@ function tgTok_(L) {
   const BK = ['Pre', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10'];
   const P = (L || []).map(t => { const m = String(t).match(/^(Pre|\d+)([AB]*)([+-]?)$/); return m ? { bk: m[1], pt: m[2], up: m[3] === '+', dn: m[3] === '-' } : null; }).filter(Boolean).sort((a, b) => BK.indexOf(a.bk) - BK.indexOf(b.bk));
   const lab = o => o.bk + (o.pt || '') + (o.up ? ' 이상' : o.dn ? ' 이하' : '');
+  if (BK.every(b => P.some(o => o.bk === b && !o.pt && !o.up && !o.dn))) return { txt: '전체', one: null };
   const out = []; let run = [];
   const flush = () => { if (run.length > 2) out.push(run[0].bk + '~' + run[run.length - 1].bk); else run.forEach(o => out.push(lab(o))); run = []; };
   P.forEach(o => { const plain = !o.pt && !o.up && !o.dn && o.bk !== 'Pre'; if (plain && run.length && +o.bk === +run[run.length - 1].bk + 1) run.push(o); else { flush(); if (plain) run.push(o); else out.push(lab(o)); } });
@@ -2084,6 +2085,7 @@ function cellSeg_(e, c, nameOf) {
   insts.forEach(k => { const x = tg[k], r = tgTok_(x.b), d = r.one ? ((BD[k] || {})[r.one.bk + r.one.pt] || null) : null;
     Q.push(['tg', 'tg', [k + (r.txt ? ' ' + r.txt : ''), ...(x.x || [])].join(' ')]); if (d && d[0]) Q.push(['tg', 'tgd', d[0]]); if (d && d[1]) EN.push(d[1]);
     if ((x.s || []).length || x.m) Q.push(['tg', 'tgd', [...(x.s || []), x.m || ''].filter(Boolean).join(', ')]); });
+  if (tg.ag && (tg.ag.lo || tg.ag.hi)) { const a = tg.ag; Q.push(['tg', insts.length ? 'tgd' : 'tg', a.lo && a.hi ? a.lo + '~' + a.hi + '세' : a.lo ? a.lo + '세 이상' : a.hi + '세 이하']); }
   if (e.sub && !H.f.has('sub')) Q.push(['sub', 'sub', e.sub]);
   if (!H.f.has('desc')) { const D = e.desc || []; if (D.includes('[별지]')) Q.push(['d' + D.indexOf('[별지]'), 'd', '(별지 참조)']); else D.forEach((x, i) => Q.push(['d' + i, 'd', x])); }
   const ppl = e.ppl.filter(p => !H.r.has(e.cat + ':' + p.r)), order = ((c.roleSets || {})[e.cat] || []).slice(); ppl.forEach(p => { if (!order.includes(p.r)) order.push(p.r); });
@@ -3545,7 +3547,7 @@ const ACT_KINDS = [['Orch A', '레슨'], ['Orch B', '레슨'], ['Orch C', '레�
 const ACT_STAGES = ['본공연', '리허설', '대기', '무대 세팅'];   // 대기 (11-05): 오케 · 그룹 리허설 전 대기 자리 — 책자 「리허설 대기 및 진행」
 const ACT_ROLESETS = { '공연': ['지휘', '악장', 'Vln 1', 'Vln 2', 'Vla', 'Vc', 'D.B', '악보계', '반주자', '통역', '객석정리', '무대', '연주', '세팅', '진행', '사회'], '레슨': ['수업', '보조', '통역', '지휘', 'Orch 보조'], '업무': ['문지기', '배식', '안내'] };
 /** 대상 칩 { Vn:{b:[권], x:[지정학생…], m:메모}, Vc, Fl } → 시트에는 JSON (빈 악기는 뺌) */
-function tgClean_(tg) { const o = {}; ['Vn', 'Vc', 'Fl'].forEach(k => { const v = (tg || {})[k]; if (!v) return; const b = (v.b || []).map(x => String(x).slice(0, 6)).filter(x => /^(Pre|\d{1,2})[AB]{0,2}[+-]?$/.test(x)).slice(0, 20), x = (v.x || []).map(y => String(y).slice(0, 10)).slice(0, 6), m = String(v.m || '').slice(0, 60), sg = (v.s || []).map(y => String(y).slice(0, 40)).slice(0, 12); if (b.length || x.length || m || sg.length) o[k] = { b, x, m, s: sg }; }); return Object.keys(o).length ? JSON.stringify(o) : ''; }
+function tgClean_(tg) { const o = {}; ['Vn', 'Vc', 'Fl'].forEach(k => { const v = (tg || {})[k]; if (!v) return; const b = (v.b || []).map(x => String(x).slice(0, 6)).filter(x => /^(Pre|\d{1,2})[AB]{0,2}[+-]?$/.test(x)).slice(0, 20), x = (v.x || []).map(y => String(y).slice(0, 10)).slice(0, 6), m = String(v.m || '').slice(0, 60), sg = (v.s || []).map(y => String(y).slice(0, 40)).slice(0, 12); if (b.length || x.length || m || sg.length) o[k] = { b, x, m, s: sg }; }); const ag = (tg || {}).ag; if (ag && typeof ag === 'object') { const lo = Math.max(0, Math.min(30, +ag.lo || 0)), hi = Math.max(0, Math.min(30, +ag.hi || 0)); if (lo || hi) o.ag = Object.assign({}, lo ? { lo } : {}, hi ? { hi } : {}); } return Object.keys(o).length ? JSON.stringify(o) : ''; }
 const evName_ = e => e.title + (e.stage && e.stage !== '본공연' ? ' ' + e.stage : '') + (e.sub ? ' · ' + e.sub : '');
 const ACT_KEYS = ['days', 'rooms', 'meals', 'rows', 'people', 'unav', 'req', 'target', 'kinds', 'stages', 'roleSets', 'tgSongs', 'en', 'bookDesc', 'dayNotes', 'roleShort', 'orchParts', 'cellSty', 'orRos', 'rev'];
 function actSheets_() {
@@ -3871,7 +3873,7 @@ function myTimetable(token) {
   const roomLoc = (d, r) => (((c.rooms || {})[d] || []).find(x => x[0] === r) || [])[1] || '';
   const mine = [];
   actEvents_().forEach(e => { const me = e.ppl.find(p => meIds.includes(p.n)); if (!me) return;
-    mine.push({ d: e.d, t: e.s, e: e.e, what: me.r, title: evName_(e), where: e.room, loc: roomLoc(e.d, e.room), tg: Object.keys(e.tg || {}).map(k => { const x = tgTok_((e.tg[k] || {}).b).txt; return x ? k + ' ' + x : ''; }).filter(Boolean).join(' · '), with: e.ppl.filter(p => !meIds.includes(p.n)).map(p => pn(p.n) + '(' + p.r + ')').join(', ') }); });
+    mine.push({ d: e.d, t: e.s, e: e.e, what: me.r, title: evName_(e), where: e.room, loc: roomLoc(e.d, e.room), tg: Object.keys(e.tg || {}).map(k => { if (k === 'ag') { const g = e.tg.ag || {}; return g.lo && g.hi ? g.lo + '~' + g.hi + '세' : g.lo ? g.lo + '세 이상' : g.hi ? g.hi + '세 이하' : ''; } const x = tgTok_((e.tg[k] || {}).b).txt; return x ? k + ' ' + x : ''; }).filter(Boolean).join(' · '), with: e.ppl.filter(p => !meIds.includes(p.n)).map(p => pn(p.n) + '(' + p.r + ')').join(', ') }); });
   const prof = profs_().find(p => p.on && p.lesson && nm(p.name) === nm(u.name));
   const subs = loadSubs_(); const byPid = {};
   subs.forEach(sb => sb.ppl.forEach(p => { if (p.status !== '취소') { const k = p.id.slice(sb.no.length + 1); byPid[p.id] = { p, sb, i: (sb.form && sb.form.info && sb.form.info[k]) || {} }; } }));

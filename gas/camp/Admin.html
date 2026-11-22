@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261122-164732 -->
+<!-- build: 20261122-164921 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -4673,7 +4673,7 @@ function ebToolbar(x){const sel=(f,ph,L)=>`<select data-ebfmt="${f}" aria-label=
       ${tb('h2','제목')}${tb('h3','소제목')}${tb('p','본문')}${tb('insertUnorderedList','• 목록')}</div>
     <div class="r2">${tb('img','그림 넣기','지금 자리에 그림을 넣어요')}${sel('iw','그림 폭',EB_IW)}<span class="sep"></span>${tb('split','여기서 쪽 나누기','글자 칸이 있는 자리에서 뒤를 새 쪽으로')}${tb('clear','모양 지우기','고른 글자의 글꼴 · 크기 · 색 등을 지워요')}<span class="sep"></span>${tb('undo','되돌리기')}${tb('redo','다시')}</div>
     <div class="r2"><b style="font-size:12.5px;color:#4a5a62">표</b>${sel('tbl','표 넣기',EB_TS)}<span class="sep"></span>${tb('rowup','↑ 줄','위에 줄 넣기')}${tb('rowdn','↓ 줄','아래에 줄 넣기')}${tb('rowdel','줄 지우기')}<span class="sep"></span>${tb('colL','← 칸','왼쪽에 칸 넣기')}${tb('colR','칸 →','오른쪽에 칸 넣기')}${tb('coldel','칸 지우기')}<span class="sep"></span>${tb('merge','합치기','끌어서 고른 칸들을 하나로')}${tb('unmerge','나누기','합친 칸을 다시 나눠요')}${tb('thead','머리 줄','첫 줄 굵게 · 옅은 바탕 켜기/끄기')}${tb('rowfit','줄 높이 맞춤','끌어서 정한 줄 높이를 지우고 글 양에 맞춰요')}${sel('tbg','칸 바탕',EB_TBG)}${sel('tbd','선',EB_TBD)}</div>
-    <div class="r2"><b style="font-size:12.5px;color:#4a5a62">글상자</b>${tb('gnew','글상자 넣기','지금 자리에 둥근 상자를 넣어요')}${sel('gbg','상자 바탕',EB_GBG)}${sel('gbd','상자 선',EB_GBD)}${sel('grd','모서리',EB_GRD)}${sel('gw','상자 폭',EB_GW)}</div>${ebTplK(x)==='con'&&/class="it\b|class="it /.test(x.h||x.auto||'')?`
+    <div class="r2"><b style="font-size:12.5px;color:#4a5a62">글상자</b>${tb('gnew','글상자 넣기','지금 자리에 둥근 상자를 넣어요')}${tb('gunwrap','상자 풀기','상자 테두리 · 바탕만 없애고 글은 남겨요')}${tb('gdel','상자 지우기','상자를 안의 글과 함께 지워요')}${sel('gbg','상자 바탕',EB_GBG)}${sel('gbd','상자 선',EB_GBD)}${sel('grd','모서리',EB_GRD)}${sel('gw','상자 폭',EB_GW)}</div>${ebTplK(x)==='con'&&/class="it\b|class="it /.test(x.h||x.auto||'')?`
     <div class="r2"><b style="font-size:12.5px;color:#4a5a62">펼침</b><button class="tb" type="button" data-ebsprtb="split" title="머리 + 앞 곡은 왼쪽 쪽, 나머지는 오른쪽 쪽 · 반반">펼침으로 나누기</button><button class="tb" type="button" data-ebsprtb="here" title="오른쪽 쪽 첫 곡으로 둘 곡 줄을 누른 뒤">이 곡부터 오른쪽 쪽으로</button><button class="tb" type="button" data-ebsprtb="half">반반으로</button></div>`:''}</div>`}
 /* ---- 표 (11-05): 넣기 · 줄/칸 넣고 빼기 · 합치기/나누기 · 머리 줄 · 칸 바탕 · 선 · 칸 폭 끌기 ----
  * 표를 칸 격자(rowspan/colspan 반영)로 읽어 고친 뒤 다시 그림 → 합친 칸이 있어도 줄 · 칸 넣기가 맞게. thead/tbody 구분과 칸 모양(style · class · th)은 그대로. */
@@ -4818,7 +4818,7 @@ function ebSplit(){const el=ebEditEl(),sel=window.getSelection();if(!el||!sel.ra
   if(blk.tagName==='TABLE'){toast('표 안에서는 나눌 수 없어요. 표 앞이나 뒤 글줄에서 눌러 주세요');return}
   const r2=document.createRange();r2.setStartBefore(blk);r2.setEndAfter(sec.lastChild);const fr=r2.extractContents();const ns=sec.cloneNode(false);ns.appendChild(fr);sec.after(ns);S.ebBuf=el.innerHTML;toast('여기서 새 쪽으로 나눴어요')}
 document.addEventListener('mousedown',e=>{if(!EBT())return;const b=e.target.closest&&e.target.closest('[data-ebcmd]');if(!b)return;e.preventDefault();const c=b.dataset.ebcmd,el=ebEditEl();if(!el)return;
-  if(c==='gnew'){ebGbx('gnew');return}
+  if(c==='gnew'){ebGbx('gnew');return}if(c==='gunwrap'||c==='gdel'){const K=ebGbxCur();if(!K)return;const b=K.box;if(c==='gdel'){if(!b.dataset.delok){b.dataset.delok='1';b.style.outline='2px solid #e5484d';toast('한 번 더 누르면 상자와 안의 글이 지워져요');setTimeout(()=>{if(b.isConnected){delete b.dataset.delok;b.style.outline=''}},3000);return}b.remove()}else{const f=document.createDocumentFragment();while(b.firstChild)f.appendChild(b.firstChild);b.replaceWith(f)}S.ebRange=null;try{ebLive()}catch(e){}toast(c==='gdel'?'글상자를 지웠어요 · 저장해야 남아요':'글상자를 풀었어요 · 글은 그대로');return}
   if(c==='rowfit'){const K=ebTblCur();if(!K)return;[...K.td.parentNode.cells].forEach(x=>x.style.removeProperty('height'));K.td.parentNode.style.removeProperty('height');ebEqDom(document.querySelector('.ebprev'));ebTblAfter(K.el);return}
   if(['rowup','rowdn','rowdel','colL','colR','coldel','merge','unmerge','thead'].includes(c)){ebTblDo(c);ebCsClear();return}
   if(c==='split'){ebSplit();return}

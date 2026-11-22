@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261122-102445 -->
+<!-- build: 20261122-103057 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -226,6 +226,7 @@ tr.off td{opacity:.5}
 .act .ev small{color:var(--muted);font-size:13px;line-height:1.3}
 .act .lstg{align-items:start}.act .lstcol{display:grid;gap:14px}.act .lsth{font-size:18px}.act .lstbox{display:grid;gap:6px}.act table.lst td{padding:3px 4px}.act .bdko{display:block;font-size:13.5px;padding:2px 2px 0}.act table.lst input[type=text]{width:100%;min-width:90px}.pobox{display:grid;gap:2px}.porow{display:grid;grid-template-columns:22px 6.5em minmax(0,1fr) auto auto;gap:8px;align-items:center;font-size:14px;padding:3px 4px;border-radius:6px}.porow.off .pov{color:var(--faint);text-decoration:line-through}.porow.warn{background:#fff4d6;color:#3d2e00}.porow.warn .pol{color:#6b5200}.porow .pol{font-size:12.5px;color:var(--muted);font-weight:700}.pom button{border:1px solid var(--line);background:var(--surface);border-radius:6px;padding:0 6px;cursor:pointer;font:inherit;font-size:12px}.pom button:disabled{opacity:.35;cursor:default}.pow{font-size:12px;color:#9a6700;font-weight:700}
 .ctpan .ctg{font-size:12.5px;font-weight:800;color:var(--muted);margin:8px 0 2px;border-top:1px dashed var(--line);padding-top:6px}.ctpan .cto{display:grid;grid-template-columns:8.5em minmax(0,1fr);gap:8px;align-items:center;font-size:13.5px;padding:2px 0}.seg2{display:inline-flex;flex-wrap:wrap;border:1px solid var(--line);border-radius:9px;overflow:hidden}.seg2 button{border:0;border-right:1px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;font-size:12.5px;font-weight:700;padding:3px 9px;cursor:pointer}.seg2 button:last-child{border-right:0}.seg2 button[aria-pressed=true]{background:var(--teal,#0B6F6C);color:#fff}
+.ensreh{display:grid;grid-template-columns:auto minmax(180px,1fr);gap:14px;align-items:start}.ensrpv{border:1px dashed var(--line);border-radius:10px;padding:8px 12px;font-weight:700;font-size:14px;line-height:1.7}@media (max-width:640px){.ensreh{grid-template-columns:1fr}}
 .lstrow{border-left:5px solid var(--line);margin-bottom:12px}.lstrow>.lsth{display:block;font-size:17px;margin:0 0 8px}.lstcols{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;align-items:start}.lstrow.t-con{border-left-color:var(--rosin)}.lstrow.t-les{border-left-color:var(--bar)}.lstrow.t-orc{border-left-color:#5B4BB7}.lstrow.t-reh{border-left-color:var(--faint)}
 .act table.lst .a_le,.act table.lst .a_ls,.act table.lst .a_lk{margin-top:3px;font-size:14px;color:var(--muted)}.act table.lst .a_lk{border-color:var(--rosin-soft)}
 .act .addbox{display:grid;gap:8px;padding:10px;border:1px dashed var(--line);border-radius:8px;background:var(--bg)}.act .ckl li label{display:flex;gap:8px;align-items:center;padding:6px 8px;cursor:pointer;border-radius:6px}.act .ckl li label:hover{background:var(--sunk)}.act .ckl li label.warn{opacity:.75}.act .ckl{max-height:320px;overflow:auto}
@@ -696,12 +697,27 @@ function vCx(){const cf=S.cxf||'all';const ord={'요청':0,'환불 예정':1};co
     <td>${c.state==='요청'?`<div class="row" style="flex-wrap:nowrap"><button class="btn small primary" type="button" data-cxacc="${c.row}">${c.amt||c.why==='차액 환불'?'환불 접수':'취소 확정'}</button><button class="btn small" type="button" data-cxno="${c.row}">반려</button></div>`:c.state==='환불 예정'?`<div class="row" style="flex-wrap:nowrap"><button class="btn small primary" type="button" data-cxok="${c.row}">환불 완료</button><button class="btn small ghost" type="button" data-cxno="${c.row}">반려</button></div>`:`<small class="faint">${esc(c.memo)}</small>`}</td></tr>`).join('')||'<tr><td colspan="14" class="hint">환불 요청이 없어요.</td></tr>'}
   </tbody></table></div>`}
 function vEns(){const T=S.D.teams||[];
-  return `<div class="panel"><span class="hint">팀 줄을 누르면 자세한 내용이 열려요. 운영진은 여기서 바로 고칠 수 있어요 (선생님 화면에도 바뀐 내용이 보여요).</span></div>
+  return ensRehBox(T)+`<div class="panel"><span class="hint">팀 줄을 누르면 자세한 내용이 열려요. 운영진은 여기서 바로 고칠 수 있어요 (선생님 화면에도 바뀐 내용이 보여요).</span></div>
   <div class="panel tbl ensT"><table><thead><tr><th></th><th>팀 이름</th><th>대표 학원</th><th>신청 선생님</th><th>함께하는 학원</th><th>곡</th><th>연주시간</th></tr></thead><tbody>
   ${T.map(t=>{const sb=S.D.subs.find(x=>x.no===t.no),e=sb&&sb.form&&sb.form.ens||{},on=S.ensOpen===t.no;
     return `<tr class="ensrow" data-ensopen="${esc(t.no)}" style="cursor:pointer${on?';background:var(--soft,#eef3ff)':''}"><td>${on?'▾':'▸'}</td><td><b>${esc(t.name)}</b>${e.adminEdited?'<br><small class="faint">운영진 수정</small>':''}</td><td>${esc(t.rep)}</td><td>${esc(t.by||'')}</td><td>${t.acads.map(esc).join(', ')||'-'}</td><td>${[1,2].map(n=>songA(e,n)).filter(x=>x.trim()).join('<br>')||'-'}</td><td>${e.tm||e.ts?`${+e.tm||0}분 ${+e.ts||0}초`:'-'}</td></tr>
     ${on?`<tr><td colspan="7" style="background:var(--soft,#f6f8ff)">${ensDetail(t,sb,e)}</td></tr>`:''}`}).join('')||'<tr><td colspan="7" class="hint">신청된 팀이 없어요.</td></tr>'}
   </tbody></table></div>`}
+/* 11-22 앙상블 › 리허설 시간 (직접 입력) → 교사 일정 「앙상블 … 리허설」 칸 세부 순서 */
+function ensRehBox(T){if(!S.ensRE&&!S.ensREL){S.ensREL=1;call('adminEnsRehInfo',[],r=>{S.ensRE=r.events||[];S.ensREL=0;if(!S.ensRev&&S.ensRE.length)S.ensRev=S.ensRE[0].id;render()},null)}
+  const E=S.ensRE||[],W=S.ensRW||{},tv=t=>W[t.no]!=null?W[t.no]:((t.e||{}).reh||'');
+  const pv=T.map(t=>({t:tv(t),n:t.name})).filter(x=>/^\d{1,2}:\d{2}$/.test(x.t)).sort((a,b)=>a.t.padStart(5,'0').localeCompare(b.t.padStart(5,'0')));
+  return `<details class="panel" ${S.ensRehOpen!==false?'open':''} id="ensRehD"><summary><b>리허설 시간</b> <span class="hint">팀마다 시각을 직접 넣어요 · 「교사 일정에 넣기」를 누르면 고른 리허설 칸의 세부 순서가 이 순서(시각 순)로 바뀌어요</span></summary>
+  <div class="row" style="gap:8px;margin:8px 0;flex-wrap:wrap"><span class="hint">넣을 칸</span>${E.length?`<select id="ensRev">${E.map(x=>`<option value="${esc(x.id)}" ${S.ensRev===x.id?'selected':''}>${esc(x.label)}</option>`).join('')}</select>`:`<span class="hint">${S.ensREL?'불러오는 중…':'교사 일정에 「앙상블 … 리허설」 칸이 없어요 · 프로그램표에서 먼저 만들어 주세요'}</span>`}</div>
+  <div class="ensreh"><div class="tblw"><table class="pft nosort" style="width:auto"><thead><tr><th>팀</th><th>대표 학원</th><th>리허설 시각</th></tr></thead><tbody>${T.map(t=>`<tr><td style="text-align:left"><b>${esc(t.name)}</b></td><td>${esc(t.rep)}</td><td><input type="text" class="ensrh" data-no="${esc(t.no)}" value="${esc(tv(t))}" placeholder="15:30" inputmode="numeric" maxlength="5" style="width:5.5em;text-align:center"></td></tr>`).join('')||'<tr><td colspan="3" class="hint">신청된 팀이 없어요.</td></tr>'}</tbody></table></div>
+  <div class="ensrpv"><div class="hint" style="margin-bottom:4px">교사 일정 칸에 들어갈 세부 순서</div>${pv.length?pv.map(x=>`<div>${esc(x.t)}~${esc(x.n)}</div>`).join(''):'<span class="hint">시각을 넣으면 여기에 나와요</span>'}</div></div>
+  <div class="row" style="gap:6px;margin-top:8px"><button class="btn small" type="button" id="ensRehSave">시각만 저장</button><button class="btn small primary" type="button" id="ensRehPut" ${E.length?'':'disabled'}>저장 · 교사 일정에 넣기</button></div></details>`}
+document.addEventListener('input',e=>{const t=e.target;if(!t.classList||!t.classList.contains('ensrh'))return;S.ensRW=S.ensRW||{};S.ensRW[t.dataset.no]=t.value.trim()});
+document.addEventListener('change',e=>{const t=e.target;if(t.id==='ensRev'){S.ensRev=t.value;return}if(t.classList&&t.classList.contains('ensrh')){let v=t.value.trim().replace(/[^\d:]/g,'');if(/^\d{3,4}$/.test(v))v=v.slice(0,-2)+':'+v.slice(-2);t.value=v;S.ensRW=S.ensRW||{};S.ensRW[t.dataset.no]=v;render()}});
+document.addEventListener('toggle',e=>{if(e.target.id==='ensRehD')S.ensRehOpen=e.target.open},true);
+document.addEventListener('click',e=>{const b=e.target.closest('#ensRehSave,#ensRehPut');if(!b)return;const list=[...document.querySelectorAll('.ensrh')].map(i=>({no:i.dataset.no,t:i.value.trim()}));
+  const bad=list.find(x=>x.t&&!/^\d{1,2}:\d{2}$/.test(x.t));if(bad){toast('시각은 15:30 처럼 넣어 주세요');return}
+  const put=b.id==='ensRehPut'?S.ensRev:null;call('adminEnsReh',[list,put],r=>{S.ensRW=null;setData(r);toast(r.ensRehMsg||'리허설 시각을 저장했어요')},'저장하고 있어요…')});
 const songA=(e,n)=>{const x=[e['acc'+n]&&'반주',e['video'+n]&&'영상'].filter(Boolean);return [e['k'+n],e['c'+n]].filter(Boolean).map(esc).join(' · ')+(x.length?` <small class="faint">(${x.join(' · ')})</small>`:'')};
 function ensDetail(t,sb,e){const joined=(t.mem||[]);const live=sb?sb.ppl.filter(p=>p.status==='정상').length:0;
   const inp=(k,ph,w)=>`<input type="text" id="ee_${k}" value="${esc(e[k]||'')}" placeholder="${ph||''}" ${w?`style="width:${w}"`:''}>`;
@@ -2004,7 +2020,7 @@ const visTabs=()=>TABS.concat(SUP_TABS).filter(([k])=>permOf(k));
   try{google.script.url.getLocation(l=>{const t=((l&&l.parameter)||{}).tab;if(!t||!/^[a-z]{2,12}$/.test(t))return;if(S.D){if(okT(t))goTab(t)}else{S.urlTab=t;S.goAfter=t}})}catch(e){}
 })();
 const RO=()=>permOf(S.tab)==='보기';
-const WRITE_FN=/^(orchUpload|orchFileDel|adminFamOk|adminFamCancel|adminLate|audEdit|audDel|devAud|devAudClear|audSet|audPub|devSummer|adminNoticeSave|adminMenuSave|scholSave|adminConfirm|adminAdjust|adminSetBankAcct|ogSave|ogToken|adminRejectReport|adminSaveEns|adminSaveProfs|adminRefund|adminSetIssue|schedSave|lessonSet|adminSetSetting|roomSave|conSave|campSave|staffSave|songEnSave|pvHideSave|roomCfgSave|layoutImport|roomMove|budSave|mealIssue|mealDel|bookSave|bookImgPut|bookSheetPut|songEnSave|mcSave)$/;
+const WRITE_FN=/^(adminEnsReh|orchUpload|orchFileDel|adminFamOk|adminFamCancel|adminLate|audEdit|audDel|devAud|devAudClear|audSet|audPub|devSummer|adminNoticeSave|adminMenuSave|scholSave|adminConfirm|adminAdjust|adminSetBankAcct|ogSave|ogToken|adminRejectReport|adminSaveEns|adminSaveProfs|adminRefund|adminSetIssue|schedSave|lessonSet|adminSetSetting|roomSave|conSave|campSave|staffSave|songEnSave|pvHideSave|roomCfgSave|layoutImport|roomMove|budSave|mealIssue|mealDel|bookSave|bookImgPut|bookSheetPut|songEnSave|mcSave)$/;
 const roBlock=fn=>WRITE_FN.test(fn)&&permOf(S.tab)!=='편집';
 const RO_MSG='보기만 할 수 있는 메뉴예요. 바꾸려면 총관리자에게 「편집」 권한을 받아 주세요.';
 

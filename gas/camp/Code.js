@@ -1,4 +1,4 @@
-/* build: 20261122-102445 */
+/* build: 20261122-103057 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -3226,6 +3226,31 @@ function adminSaveEns(token, no, patch) {
     log_('관리자 ' + a.name, '앙상블 수정', no + ' · ' + e.group);
   } finally { lock.releaseLock(); }
   return adminData(token);
+}
+/** 11-22 앙상블 › 리허설 시간: 팀마다 시각(직접) → 접수(form.ens.reh)에 저장 + 교사 일정 「앙상블 … 리허설」 칸의 세부 순서(설명)로 */
+function ensRehEvents_() { try { return actEvents_().filter(e => /앙상블|ensemble/i.test(e.title || '') && (e.stage === '리허설' || /리허설/.test(e.title || ''))).map(e => { const c = actCfg_(); return { id: e.id, label: ((c.days || [])[e.d] || '') + ' ' + e.s + '~' + e.e + ' · ' + e.title + (e.stage && e.stage !== '본공연' ? ' ' + e.stage : '') + (e.room ? ' · ' + e.room : '') }; }); } catch (x) { return []; } }
+function adminEnsRehInfo(token) { const a = adm_(token); need_(a, 'ens'); return { events: ensRehEvents_() }; }
+function adminEnsReh(token, list, evId) {
+  const a = adm_(token); need_(a, 'ens');
+  const lock = lock_(); let msg = '';
+  try {
+    const all = loadSubs_(), hm = v => { const m = String(v || '').trim().match(/^(\d{1,2}):?(\d{2})$/); return m && +m[1] < 24 && +m[2] < 60 ? ('0' + m[1]).slice(-2) + ':' + m[2] : ''; };
+    const M = {}; (list || []).forEach(x => M[String(x.no)] = hm(x.t));
+    all.forEach(sb => { const e = sb.form && sb.form.ens; if (!e || !e.on || !(sb.no in M)) return; if ((e.reh || '') === M[sb.no]) return; e.reh = M[sb.no]; sb.rev = (+sb.rev || 0) + 1; writeSub_(sb, false); });
+    if (evId) {
+      const L = all.filter(sb => sb.form && sb.form.ens && sb.form.ens.on && sb.form.ens.reh && (sb.ppl || []).some(p => p.status !== '취소')).map(sb => ({ t: sb.form.ens.reh, n: sb.form.ens.group || sb.acad })).sort((x, y) => x.t.localeCompare(y.t)).map(x => x.t + '~' + x.n);
+      const sh = actSheets_(), head = sh.ev.getRange(1, 1, 1, sh.ev.getLastColumn()).getValues()[0], ci = head.indexOf('설명') + 1, ii = head.indexOf('ID') + 1;
+      const ids = sh.ev.getLastRow() > 1 ? sh.ev.getRange(2, ii, sh.ev.getLastRow() - 1, 1).getValues().map(r => String(r[0])) : [], ri = ids.indexOf(String(evId));
+      if (ri < 0 || ci < 1) throw new Error('교사 일정에서 그 리허설 칸을 찾지 못했어요. 새로 불러와 주세요.');
+      sh.ev.getRange(ri + 2, ci).setValue(L.join('\n'));
+      const cur = rows_(SH.ACTCFG), r = cur.find(x => String(x['항목']) === 'rev'), nr = (+((r || {})['값']) || 0) + 1;
+      if (r) sh.cfg.getRange(r._row, 2).setValue(JSON.stringify(nr)); else sh.cfg.appendRow(['rev', JSON.stringify(nr)]);
+      sh.log.appendRow([stamp_(), a.name, '앙상블 리허설 시간 → 세부 순서 ' + L.length + '줄']);
+      msg = L.length + '팀을 교사 일정 리허설 칸에 넣었어요';
+    }
+    log_('관리자 ' + a.name, '앙상블 리허설 시간', (list || []).length + '팀');
+  } finally { lock.releaseLock(); }
+  return Object.assign(adminData(token), { ensRehMsg: msg });
 }
 /** 관리자: 교수진 목록 저장 (전체를 새로 씀) */
 function adminSaveProfs(token, list) {

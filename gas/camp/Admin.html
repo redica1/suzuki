@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261122-175550 -->
+<!-- build: 20261122-180215 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -977,7 +977,7 @@ function vOrchT(){const T=orTitles();if(!T.length)return '<div class="panel">이
   <textarea id="a_orPaste" rows="2" placeholder="이름을 한꺼번에 붙여 넣기 (예: 강선주 김기쁨 이준현)" style="width:100%;margin-top:6px"></textarea><div class="row" style="justify-content:flex-end"><button class="btn small primary" type="button" id="a_orPasteGo">이름으로 넣기</button></div>${A.orMsg?`<p class="hint" style="color:#b3261e">${esc(A.orMsg)}</p>`:''}
   <input type="text" id="a_orQ" value="${esc(q)}" placeholder="또는 이름 · 학원으로 찾기" style="width:100%;margin-top:6px"><div style="max-height:260px;overflow:auto;margin-top:6px">${cand.map(p=>`<div class="spread" style="padding:4px 0;border-bottom:1px solid var(--line)"><span>${esc(LB(p.id))} <small class="faint">${esc(p.acad||'')}</small></span><button class="btn small" type="button" data-ora="${esc(p.id)}">+ 넣기</button></div>`).join('')}</div></div></div>
   <div class="panel"><div class="spread"><b>${esc(t)} 악보 ${F.length}</b><span class="hint">PDF · 이미지 · 한 파일 15MB까지 · 이 오케스트라 선생님이 새 접수 화면에서 받아요</span></div>
-  <div class="row" style="gap:6px;margin-top:8px"><select id="a_orPart">${['전체','바이올린','비올라','첼로','플루트'].map(x=>`<option>${x}</option>`).join('')}</select><input type="file" id="a_orFile" accept=".pdf,image/*"><button class="btn small primary" type="button" id="a_orUp">올리기</button></div>
+  <div class="row" style="gap:6px;margin-top:8px"><select id="a_orPart">${['전체','바이올린','비올라','첼로','플루트'].map(x=>`<option>${x}</option>`).join('')}</select><input type="file" id="a_orFile" accept=".pdf,image/\x2a"><button class="btn small primary" type="button" id="a_orUp">올리기</button></div>
   ${F.map(f=>`<div class="spread" style="padding:6px 0;border-bottom:1px solid var(--line)"><span><b>${esc(f.name)}</b> <small class="faint">${esc(f.part)} · ${esc(f.size)} · ${esc(f.at)} · ${esc(f.by)}</small></span><span class="row" style="gap:6px"><a class="btn small" href="${esc(f.url)}" target="_blank" rel="noopener">열기</a><button class="btn small ghost" type="button" data-orfx="${esc(f.id)}">빼기</button></span></div>`).join('')||'<p class="hint">아직 올린 악보가 없어요.</p>'}</div>`}
 function orAdd(ids,role){const t=A.orT,ev=orEvs(t),miss=[];ids.forEach(id=>orRosSet(t,id,role));ids.forEach(id=>ev.forEach(e=>{if(e.ppl.some(p=>p.n===id))return;const c=confOf(e,id,null,null,role);if(c){miss.push(LB(id)+' '+D.days[e.d]+' — '+c);return}e.ppl.push({n:id,r:role})}));
   A.orMsg=miss.length?'겹쳐서 못 넣은 수업: '+miss.slice(0,6).join(' / ')+(miss.length>6?' …':''):'';refresh()}

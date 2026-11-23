@@ -1,4 +1,4 @@
-<!doctype html><!-- build: 20261124-003510 --><html lang="ko"><head><meta charset="utf-8"><link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"><meta name="viewport" content="width=device-width,initial-scale=1">
+<!doctype html><!-- build: 20261124-003558 --><html lang="ko"><head><meta charset="utf-8"><link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
 <style>
 /* 학부모 신청 (11-15): 학원 다니는 학생의 보호자가 회원가입 없이 「간다 / 안 간다」와 같이 가는 가족 이름만 학원 선생님께 보냄 */
@@ -205,7 +205,7 @@ function vPrice(){var P=S.I.price;if(!P||!P.rounds||!P.rounds.length)return '';v
 function phoneTxt(){var p=String(S.ph||'');return p.length===11?p.replace(/(\d{3})(\d{4})(\d{4})/,'$1-$2-$3'):p}
 function vStep1(){var I=S.I;if(!I.open)return '<div class="card"><h2>지금은 학부모 신청을 받지 않아요</h2><p class="hint">이번 캠프는 일부 학원만 학부모 신청을 받아요. 다니는 학원 선생님께 여쭤 주세요.</p></div>';
   var p8=String(S.ph||'').replace(/^010/,'');
-  return '<div class="card"><h3><span class="no">1</span>보호자 확인</h3><p class="hint" style="margin-top:0">입력하는 분이 첫 번째 보호자예요. 회원가입은 필요 없어요. 처음이면 비밀번호 4자리를 지금 정하고, 전에 보냈으면 그때 정한 번호를 넣어요.</p>'+
+  return '<div class="card"><h3><span class="no">1</span>보호자 확인</h3><p class="hint" style="margin-top:0">신청서를 쓰는 보호자 정보예요. 캠프에 같이 가는 보호자는 다음 화면에서 골라요. 회원가입은 필요 없어요. 처음이면 비밀번호 4자리를 지금 정하고, 전에 보냈으면 그때 정한 번호를 넣어요.</p>'+
     '<label class="f">이름<input type="text" id="pn" value="'+esc(S.nm)+'" autocomplete="name" maxlength="20"></label>'+
     '<label class="f">휴대전화<span class="ph"><span class="pre">010 -</span><input type="tel" id="pp" value="'+esc(p8.replace(/(\d{4})(\d{1,4})/,'$1-$2'))+'" inputmode="numeric" autocomplete="tel-national" maxlength="9" placeholder="0000-0000" aria-label="휴대전화 010 뒤 8자리"></span></label>'+
     '<label class="f">이메일 <span class="opt">신청 · 금액 · 입금 · 취소 소식을 메일로 보내 드려요</span><input type="email" id="pe" data-esplit value="'+esc(S.em)+'" autocomplete="email" inputmode="email" maxlength="80"></label>'+

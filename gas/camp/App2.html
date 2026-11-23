@@ -1,4 +1,4 @@
-/* build: 20261123-110901 */
+/* build: 20261123-112001 */
 function vAuthPick(){const off=!!CAMP.pre;return gdBtn()+apDoor()+`<section class="sec"><h2>접수 시작</h2>
   ${off?`<p class="note warn" style="margin:6px 0 12px"><b>${+CAMP.pre.slice(5,7)}월 ${+CAMP.pre.slice(8,10)}일에 접수가 열려요.</b> 그 전에 아래에서 회원가입을 마쳐 두세요.</p>`:'<p class="lede">어떻게 접수하시나요?</p>'}
   <div class="pick2${off?' pickoff':''}"${off?' aria-disabled="true"':''}>
@@ -119,7 +119,7 @@ function vStep1(){
   if(!u&&S.auth==='guest') return vGuestLogin();
   if(u&&u.guest) return vGuestStep1();
   if(!u&&S.mode==='staff') return vStaffLogin();
-  if(!u&&LOGIN_PW&&!S.lgAlt) return `<section class="sec"><h2>선생님 로그인</h2>${S.apGo?'<p class="hint" style="color:#6d28d9;font-weight:700">♪ 로그인하면 바로 이브닝 음원 제출 화면으로 가요.</p>':''}
+  if(!u&&LOGIN_PW&&!S.lgAlt) return `<section class="sec"><h2>선생님 로그인</h2>${S.apGo?'<p class="hint" style="color:#6d28d9;font-weight:700">♪ 회원 선생님으로 로그인하면 바로 「음원 먼저 내기」 화면으로 가요.</p>':''}
   <p class="lede">협회 회원관리(선생님 회원)에서 만든 <b>이메일과 비밀번호</b>로 들어가요.</p>
   <div class="panel" style="max-width:440px">
     ${emailBox('lgId',S.lgId||svId('c'))}
@@ -133,7 +133,7 @@ function vStep1(){
       <a class="btn primary" href="${esc(MEMBER_URL||SIGNUP_URL)}" target="_blank" rel="noopener" style="justify-self:start;text-decoration:none">선생님 회원 가입하기 ↗</a>
       ${LOGIN_PW==='2'?`<span class="hint">이번 겨울 캠프는 가입 전이어도 접수할 수 있어요.</span><button class="btn ghost small" type="button" id="toPhone" style="justify-self:start">가입 전이에요 · 이름과 휴대전화로 들어가기</button>`:''}</div>
   </div></section>`;
-  if(!u) return `<section class="sec"><h2>선생님 로그인</h2>${S.apGo?'<p class="hint" style="color:#6d28d9;font-weight:700">♪ 로그인하면 바로 이브닝 음원 제출 화면으로 가요.</p>':''}
+  if(!u) return `<section class="sec"><h2>선생님 로그인</h2>${S.apGo?'<p class="hint" style="color:#6d28d9;font-weight:700">♪ 회원 선생님으로 로그인하면 바로 「음원 먼저 내기」 화면으로 가요.</p>':''}
   <p class="lede">회원 명단에 있는 선생님만 접수할 수 있어요. 이름과 휴대전화로 들어가요.</p>
   <div class="panel" style="max-width:440px">
     <label class="f" for="lgNm">이름<input type="text" id="lgNm" value="${esc(S.lgNm)}" autocomplete="name" placeholder=""></label>

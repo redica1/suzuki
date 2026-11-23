@@ -1,4 +1,4 @@
-<!doctype html><!-- build: 20261124-004427 --><html lang="ko"><head><meta charset="utf-8"><link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"><meta name="viewport" content="width=device-width,initial-scale=1">
+<!doctype html><!-- build: 20261124-004715 --><html lang="ko"><head><meta charset="utf-8"><link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
 <style>
 /* 학부모 신청 (11-15): 학원 다니는 학생의 보호자가 회원가입 없이 「간다 / 안 간다」와 같이 가는 가족 이름만 학원 선생님께 보냄 */
@@ -9,7 +9,7 @@ body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 "Pretendard Va
 .band{background:var(--accent);color:#fff;padding:22px 16px 18px}.band h1{margin:0;font-size:22px;font-weight:800;line-height:1.3}.band p{margin:6px 0 0;opacity:.92;font-size:15px}
 .wrap{max-width:640px;margin:0 auto;padding:16px 16px 110px}
 .card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:14px}
-.gsel{display:grid;gap:6px;margin:6px 0 8px}.gsel button{text-align:left;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:10px;padding:10px 12px;font:inherit;cursor:pointer}.gsel button small{display:block;color:var(--muted);font-size:13px}.gsel button[aria-pressed="true"]{border-color:var(--accent);background:var(--soft);box-shadow:inset 0 0 0 1px var(--accent)}.gother{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:4px 0 8px}.gother label{display:grid;gap:4px;font-weight:700;font-size:14px}.gother input,.gother select{min-width:0}.gnote{background:var(--soft);border-radius:10px;padding:9px 12px;font-size:14px;margin:0 0 10px}.need{border-color:var(--bad)!important;box-shadow:0 0 0 2px #fbe3e0}.gnone{background:var(--bg);color:var(--muted);border-radius:10px;padding:12px;text-align:center}
+.gsel{display:grid;gap:6px;margin:6px 0 8px}.gsel button{text-align:left;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:10px;padding:10px 12px;font:inherit;cursor:pointer}.gsel button small{display:block;color:var(--muted);font-size:13px}.gsel button[aria-pressed="true"]{border-color:var(--accent);background:var(--soft);box-shadow:inset 0 0 0 1px var(--accent)}.gother{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:4px 0 8px}.gother label{display:grid;gap:4px;font-weight:700;font-size:14px}.gother input,.gother select{min-width:0}.gnote{background:var(--soft);border-radius:10px;padding:9px 12px;font-size:14px;margin:0 0 10px}.pill.gp{background:var(--accent);color:#fff}.need{border-color:var(--bad)!important;box-shadow:0 0 0 2px #fbe3e0}.gnone{background:var(--bg);color:var(--muted);border-radius:10px;padding:12px;text-align:center}
 .pqlock{display:flex;gap:10px;align-items:center;background:var(--soft);border-radius:10px;padding:10px 12px}.pqlock span{font-size:18px}.pqlock .hint{font-size:13.5px}.pqbad{background:var(--warn);color:#8a5a00;font-size:16px}.pqbad span{font-weight:500}
 h2{margin:0 0 6px;font-size:19px;font-weight:800}h3{margin:0 0 8px;font-size:17px;font-weight:800}
 .hint{color:var(--muted);font-size:14.5px;margin:4px 0 10px}
@@ -77,17 +77,30 @@ function fdt(v){var m=String(v||'').match(/^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}
 function md(d){d=String(d||'');return /^\d{4}-\d{2}-\d{2}/.test(d)?(+d.slice(5,7))+'월 '+(+d.slice(8,10))+'일':''}
 function refundText(R){if(!R||!R.rules)return '';var p=null,L=R.rules.map(function(r){var w=p?'~'+md(r.until):md(r.until)+'까지';p=r.until;var a=+r.rate||0,b=r.drate!=null&&r.drate!==''?+r.drate:a;return '- '+w+': 참가비 '+a+'% 환불'+(b!==a?' (전염병 · 팔/손 골절 진단서 제출 시 '+b+'%)':'')});
   var A=R.after||{};if(p)L.push('- 그 뒤: '+(A.allow===false?'취소 불가':(+A.rate||0)+'% 환불'+((A.drate!=null&&A.drate!==''&&+A.drate!==+A.rate)?' (진단서 제출 시 '+A.drate+'%)':'')));return '취소하는 날에 따라 환불해요.\n'+L.join('\n')}
-function blank(){return {kids:[],fam:[],me:{go:true,gender:'',by:''},room:{fam:false,note:''},memo:''}}
+function blank(){return {kids:[],fam:[],me:{go:false,gender:'',by:''},room:{fam:false,note:''},memo:''}}
 function seg(attr,i,val,opts,sm){return '<div class="seg'+(sm?' sm':'')+'" role="group">'+opts.map(function(o){return '<button type="button" '+attr+'="'+i+'|'+esc(o[0])+'" aria-pressed="'+(val===o[0])+'">'+esc(o[1])+'</button>'}).join('')+'</div>'}
 function stNote(){var r=S.req;if(!r)return '';var sub=r.sub,reps=((r.m||{}).reps||[]).filter(function(x){return x.st!=='반려'}),paid=reps.reduce(function(t,x){return t+x.amt},0);
   if(sub){var ex=sub.ppl.reduce(function(t,p){return t+p.lesson},0),due=sub.total-paid;return '<p class="note '+(due>0?'warn':'ok')+'"><b>학원이 접수했어요 (접수번호 '+esc(sub.no)+').</b> 확정 금액 <b>'+won(sub.total)+'</b>'+(ex?' (추가레슨 · 마스터클래스 '+won(ex)+' 포함)':'')+(due>0?' · <b>더 보낼 금액 '+won(due)+'</b> — 아래 「입금 · 입금 신고」에서 보내고 신고해 주세요.':due<0?' · 더 낸 금액 '+won(-due):' · 다 냈어요.')+'</p>'}
   if(r.st==='담음')return '<p class="note ok"><b>학원 선생님이 접수에 담았어요.</b> 바꿀 게 있으면 고쳐서 다시 보내 주세요. 선생님께 「바뀜」으로 알려져요.</p>';
   return '<p class="note ok"><b>학원 선생님께 보냈어요</b> ('+esc(fdt(r.at))+'). 고칠 게 있으면 고쳐서 다시 보내면 돼요.</p>'}
 /* 11-23 오가는 방법: 가는 사람마다 단체 버스 / 자차 (갈 때 · 올 때 같은 방법) */
+/* 11-24 같이 가는 가족 (사용자 안): 있나요? 없어요 = 학생만 · 있어요 = 첫 번째 보호자 1명 꼭 + 동반가족 · 15개월 미만 (내 이름도 직접) */
+function vFam(fam){var d=S.d,on=famOn(),m=d.me||{};
+  var me='';if(m.go){var nmm=(m.name||'').trim()||S.nm||'';if(m.ok)me='<div class="fam ksum"><span class="pill gp">첫 번째 보호자</span><span class="ks"><b>'+esc(nmm)+'</b> <span class="opt">'+esc(MVN[m.mv]||'')+(nmm===S.nm?' · 신청자':'')+'</span></span><button class="btn small ghost" type="button" data-meedit="1">고치기</button><button class="x" type="button" data-medel="1">빼기</button></div>';
+    else me='<div class="fam"><div class="top"><span class="pill gp">첫 번째 보호자</span><input type="text" data-me="name" value="'+esc(nmm)+'" maxlength="20" placeholder="이름" aria-label="첫 번째 보호자 이름"><button class="x" type="button" data-medel="1">빼기</button></div>'+mvRow('me',m.mv)+'<div class="row" style="justify-content:flex-end;margin-top:8px"><button class="btn small primary" type="button" data-meok="1">이 보호자 저장</button></div></div>'}
+  return '<div class="card"><h3><span class="no">4</span>같이 가는 가족</h3>'+
+  '<div class="row" style="margin-bottom:8px"><span style="font-weight:700">학생 말고 같이 가는 가족이 있나요?</span>'+seg('data-famon',0,S.famOn===true?'y':S.famOn===false?'n':'',[['n','없어요'],['y','있어요']])+'</div>'+
+  (S.famOn===undefined?'<p class="hint" style="margin:0">「없어요」면 학생만 가요. 보호자가 같이 가면 「있어요」를 눌러 주세요.</p></div>':!on?'<div class="gnone">보호자 없이 학생만 가요.</div></div>':
+  '<p class="hint" style="margin-top:0"><b>첫 번째 보호자 한 분</b>은 꼭 넣어 주세요. 신청하는 본인이 가면 본인 이름을, 다른 보호자가 가면 그분 이름을 넣어요. 그 밖에 더 가는 가족은 동반가족 · 15개월 미만으로 넣어요.</p>'+
+  '<div class="addrow"><select id="nfType" class="sel" aria-label="가족 구분">'+(m.go?'':'<option value="첫 번째 보호자">첫 번째 보호자</option>')+'<option value="동반가족">동반가족</option><option value="15개월 미만">15개월 미만 아기</option></select><input type="text" id="nfName" maxlength="20" placeholder="이름" aria-label="가족 이름" value="'+(m.go?'':esc(S.nm||''))+'"><button class="btn small primary" type="button" id="fadd2">＋ 추가</button></div>'+
+  (m.go?'':'<p class="hint" style="margin:6px 0 0">첫 번째 보호자를 고르면 신청자 이름(<b>'+esc(S.nm||'')+'</b>)이 들어가요. 다른 보호자가 가면 이름을 바꿔 주세요.</p>')+
+  ((me||fam)?'<p class="listh">같이 가는 가족 '+((m.go?1:0)+d.fam.length)+'명</p>'+me+fam:'')+
+  (!m.go&&d.fam.length?'<p class="hint" style="color:var(--bad);font-weight:700;margin:6px 0 0">첫 번째 보호자가 없어요. 보호자 한 분을 넣어 주세요.</p>':'')+
+  '<p class="hint" style="margin-bottom:0">동반가족 = 악기를 안 하는 가족(두 번째 보호자 포함). 성별 · 출생연도는 선택이에요.</p></div>')}
 /* 11-24 같이 가는 보호자: 신청하는 나 / 다른 보호자(이름 · 관계) / 안 감 · 고른 분이 「첫 번째 보호자」 */
-function famOn(){return S.famOn||(S.d&&S.d.fam&&S.d.fam.length>0)}
+function famOn(){return S.famOn===true}
 function guardWho(){var m=S.d.me||{};return m.go===false?'none':(m.who==='other'?'other':'me')}
-function guardName(){var m=S.d.me||{};return guardWho()==='other'?((m.name||'').trim()||'다른 보호자')+(m.rel?'('+m.rel+')':''):(S.nm||'신청하는 나')}
+function guardName(){var m=S.d.me||{};return (m.name||'').trim()||S.nm||'보호자'}
 function vGuard(){var d=S.d,w=guardWho(),O=[['me','신청하는 내가 가요','보호자 정보에 넣은 '+(S.nm||'나')+' 님'],['other','다른 보호자가 가요','예) 신청은 엄마, 캠프는 아빠'],['none','보호자는 안 가요','학생만 가요']];
   return '<div class="card"><h3><span class="no">4</span>같이 가는 보호자 <span class="opt">꼭 · 한 분</span></h3><p class="hint" style="margin-top:0">캠프에 같이 가는 보호자 한 분을 골라 주세요. 이 분이 「첫 번째 보호자」 요금이에요. 신청서를 쓰는 분이 아니어도 돼요.</p>'+
   '<div class="gsel">'+O.map(function(o){return '<button type="button" data-gw="'+o[0]+'" aria-pressed="'+(w===o[0])+'"><b>'+o[1]+'</b><small>'+esc(o[2])+'</small></button>'}).join('')+'</div>'+
@@ -123,11 +136,7 @@ function vForm(){var I=S.I,d=S.d;if(!I.open)return '<div class="card"><h2>지금
   '<div class="card"><h3><span class="no">2</span>다니는 학원</h3>'+(S.lockA?'<div class="pqlock"><span aria-hidden="true">🔒</span><div><b>'+esc(S.lockA)+'</b><div class="hint">이 주소는 '+esc(S.lockA)+' 전용이에요. 다른 학원이면 그 학원에서 주소를 받아 주세요.</div></div></div><datalist id="acList"></datalist>':'<input type="search" id="pa" list="acList" value="'+esc(S.ac)+'" placeholder="학원 이름을 넣어 골라 주세요" autocomplete="off" aria-label="다니는 학원"><datalist id="acList">'+I.acads.map(function(a){return '<option value="'+esc(a)+'">'}).join('')+'</datalist>')+
     '</div>'+
   '<div class="card"><h3><span class="no">3</span>캠프 참가 학생</h3><p class="hint" style="margin-top:0">가는 학생만 넣어 주세요. <b>추가 개인레슨 · 마스터클래스는 학원 선생님이 넣고, 넣으면 금액이 바뀌어요.</b> 바뀐 금액은 학원이 다시 알려 드려요'+(S.em?'(이메일로도)':'')+'.</p>'+'<div class="addrow"><input type="text" id="nkName" maxlength="20" placeholder="학생 이름 *" aria-label="새 학생 이름"><select id="nkInst" class="sel" aria-label="전공"><option value="">전공(악기) *</option>'+INSTS.map(function(x){return '<option>'+x+'</option>'}).join('')+'</select><input type="text" id="nkAge" class="age" inputmode="numeric" maxlength="2" placeholder="만 나이 *" aria-label="만 나이"><button class="btn small primary" type="button" id="kadd2">＋ 추가</button></div>'+(kids?'<p class="listh">신청할 학생 '+d.kids.length+'명</p>'+kids:'<p class="hint" style="margin-bottom:0">이름 · 전공 · 만 나이를 넣고 「＋ 추가」를 눌러 주세요. 형제 · 자매도 한 명씩 추가해요.</p>')+'</div>'+
-  vGuard()+
-  '<div class="card"><h3>더 가는 가족 <span class="opt">있으면</span></h3>'+(!d.me.go?'<div class="gnone">보호자 없이 학생만 가요. 동반가족은 보호자와 함께일 때만 넣을 수 있어요.</div></div>':
-    '<div class="row" style="margin-bottom:8px"><span style="font-weight:700">더 가는 가족이 있나요?</span>'+seg('data-famon',0,famOn()?'y':'n',[['n','없어요'],['y','있어요']])+'</div>'+(!famOn()?'<p class="hint" style="margin:0">보호자 한 분과 학생만 가요. 동생 · 아기 · 다른 보호자가 더 가면 「있어요」를 눌러 주세요.</p></div>':
-    '<div class="gnote">위에서 고른 보호자 <b>'+esc(guardName())+'</b>은(는) 다시 넣지 않아요. 그 밖에 <b>더 가는 가족</b>(동생 · 아기 · 다른 보호자 등)만 넣어 주세요.</div>'+
-    '<div class="addrow"><select id="nfType" class="sel" aria-label="가족 구분"><option>동반가족</option><option value="15개월 미만">15개월 미만 아기</option></select><input type="text" id="nfName" maxlength="20" placeholder="가족 이름" aria-label="가족 이름"><button class="btn small primary" type="button" id="fadd2">＋ 추가</button></div>'+(fam?'<p class="listh">같이 가는 가족 '+d.fam.length+'명</p>'+fam:'')+'<p class="hint" style="margin-bottom:0">악기를 안 하는 가족(동반가족) · 15개월 미만 아기를 한 명씩 추가해요. 성별 · 출생연도는 선택이에요.</p></div>'))+
+  vFam(fam)+
 
   '<div class="card"><h3>방 <span class="opt">선택</span></h3><label class="ck"><input type="checkbox" id="rfam" '+(d.room.fam?'checked':'')+'><span>가족방을 원해요 <span id="rfamp">'+famTxt()+'</span></span></label></div>'+
   vPrice()+vMoney()+
@@ -228,7 +237,7 @@ function render(){var a=document.getElementById('app');if(!S.I){a.innerHTML='<di
   if(S.badA){a.innerHTML='<div class="card pqbad"><b>'+esc(S.badA)+'는 아직 학부모 신청을 받지 않아요.</b><br><span>다니는 학원 선생님께 신청해 주세요.</span></div>';document.getElementById('dock').hidden=true;return}
   if(S.step!==2){a.innerHTML=vStep1();document.getElementById('dock').hidden=true;return}
   var y=window.scrollY;a.innerHTML=vForm();window.scrollTo(0,y);document.getElementById('dock').hidden=!S.I.open}
-function setReq(r){S.req=r;S.d=r&&r.d?JSON.parse(JSON.stringify(r.d)):blank();if(!S.d.kids.length)S.d.kids=blank().kids;if(!S.d.me)S.d.me={go:true,gender:'',by:''};if(!S.d.room)S.d.room={fam:false,note:''};(S.d.fam||[]).forEach(function(f){if(r&&r.d&&f.name)f.ok=true});S.d.kids.forEach(function(k){if(r&&r.d&&k.name)k.ok=true;if(k.inst==null)k.inst='';if(k.age==null)k.age='';if(k.by==null)k.by='';k.go='간다'});S.dirty=false}
+function setReq(r){S.req=r;S.d=r&&r.d?JSON.parse(JSON.stringify(r.d)):blank();if(!S.d.kids.length)S.d.kids=blank().kids;if(!S.d.me)S.d.me={go:true,gender:'',by:''};if(!S.d.room)S.d.room={fam:false,note:''};(S.d.fam||[]).forEach(function(f){if(r&&r.d&&f.name)f.ok=true});S.famOn=r&&r.d?!!(S.d.me.go||(S.d.fam||[]).length):undefined;if(r&&r.d&&S.d.me.go){if(!S.d.me.name)S.d.me.name=S.nm||'';S.d.me.ok=true}S.d.kids.forEach(function(k){if(r&&r.d&&k.name)k.ok=true;if(k.inst==null)k.inst='';if(k.age==null)k.age='';if(k.by==null)k.by='';k.go='간다'});S.dirty=false}
 function who(){var pa=document.getElementById('pa');if(pa)S.ac=pa.value.trim();
   if(!S.nm||!S.ph){return '처음 화면에서 보호자 정보를 넣어 주세요.'}if(!S.ac)return '다니는 학원을 골라 주세요.';if(S.I.acads.indexOf(S.ac)<0)return '학원을 목록에서 골라 주세요. 목록에 없는 학원은 이번에 학부모 신청을 받지 않아요. 학원 선생님께 여쭤 주세요.';if(!/^\d{4}$/.test(S.pw))return '비밀번호 숫자 4자리를 넣어 주세요.';return ''}
 document.addEventListener('keydown',function(e){if(e.key!=='Enter')return;var t=e.target;if(t.id==='nkName'||t.id==='nkAge'){e.preventDefault();var b=document.getElementById('kadd2');if(b)b.click()}if(t.id==='nfName'){e.preventDefault();var c=document.getElementById('fadd2');if(c)c.click()}});
@@ -238,7 +247,7 @@ document.addEventListener('input',function(e){var t=e.target,d=S.d;if(d&&t.datas
   if(t.dataset.k){var a=t.dataset.k.split('|'),kk=d.kids[+a[0]];kk[a[1]]=t.value;if(a[1]==='age'){kk.by='';var ys=document.getElementById('yr_'+a[0]);if(ys)ys.innerHTML=yrOpts(kk)}if(a[1]==='inst'){kk.mc=[];S.dirty=true;render()}if(a[1]==='lessons'){kk.lessons=+t.value||0;S.dirty=true;render()}return}
   if(t.dataset.f){var b=t.dataset.f.split('|');d.fam[+b[0]][b[1]]=t.value;return}
   if(t.id==='rnote')d.room.note=t.value;if(t.id==='memo')d.memo=t.value});
-document.addEventListener('change',function(e){var t=e.target;if(t.id==='mvStop'&&S.d){S.d.stop=t.value;S.dirty=true;return}if(t.dataset&&t.dataset.kmc!==undefined&&S.d){var kk=S.d.kids[+t.dataset.kmc];if(kk){kk.mc=(kk.mc||[]).filter(function(n){return n!==t.value});if(t.checked)kk.mc.push(t.value);S.dirty=true;render()}return}if(t.id==='ag')S.agree=t.checked;if(t.id==='rfam'&&S.d){S.d.room.fam=t.checked;S.dirty=true;render()}if(t.dataset&&t.dataset.k&&t.tagName==='SELECT'){var a=t.dataset.k.split('|');S.d.kids[+a[0]][a[1]]=t.value;S.dirty=true}});
+document.addEventListener('change',function(e){var t=e.target;if(t.id==='nfType'){var ni=document.getElementById('nfName');if(ni){if(t.value==='첫 번째 보호자'){if(!ni.value.trim())ni.value=S.nm||''}else if(ni.value.trim()===(S.nm||''))ni.value='';ni.focus()}return}if(t.id==='mvStop'&&S.d){S.d.stop=t.value;S.dirty=true;return}if(t.dataset&&t.dataset.kmc!==undefined&&S.d){var kk=S.d.kids[+t.dataset.kmc];if(kk){kk.mc=(kk.mc||[]).filter(function(n){return n!==t.value});if(t.checked)kk.mc.push(t.value);S.dirty=true;render()}return}if(t.id==='ag')S.agree=t.checked;if(t.id==='rfam'&&S.d){S.d.room.fam=t.checked;S.dirty=true;render()}if(t.dataset&&t.dataset.k&&t.tagName==='SELECT'){var a=t.dataset.k.split('|');S.d.kids[+a[0]][a[1]]=t.value;S.dirty=true}});
 document.addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;var d=S.d,v;
   if(b.dataset.mvall){moveList().forEach(function(x){x.o.mv=b.dataset.mvall});S.dirty=true;render();return}
   if(b.dataset.mv){var mp=b.dataset.mv.split('|'),mk=mp[0],mo=mk==='me'?d.me:mk[0]==='k'?d.kids[+mk.slice(1)]:d.fam[+mk.slice(1)];if(mo){mo.mv=mp[1];S.dirty=true;render()}return}
@@ -263,7 +272,7 @@ document.addEventListener('click',function(e){var b=e.target.closest('button');i
   if(b.dataset.fedit!==undefined){var fe=d.fam[+b.dataset.fedit];if(fe){fe.ok=false;render()}return}
   if(b.dataset.kedit!==undefined){var ke=d.kids[+b.dataset.kedit];if(ke){ke.ok=false;render()}return}
   if(b.id==='kadd2'){var g=function(id){return (document.getElementById(id)||{}).value||''},nn=g('nkName').trim(),na=g('nkAge').replace(/\D/g,'');var miss=!nn?['nkName','학생 이름']:!g('nkInst')?['nkInst','전공(악기)']:!na?['nkAge','만 나이']:null;if(miss){toast(miss[1]+'을(를) 넣어 주세요 · 이름 · 전공 · 나이는 꼭');var e1=document.getElementById(miss[0]);if(e1){e1.focus();e1.classList.add('need')}return}d.kids.push({name:nn,inst:g('nkInst'),age:g('nkAge').replace(/\D/g,'').slice(0,2),go:'간다',mv:''});S.dirty=true;render();toast(nn+' 학생을 추가했어요 · 아래에서 오가는 방법을 골라 주세요');var e2=document.getElementById('nkName');if(e2)e2.focus();return}
-  if(b.id==='fadd2'){var fn=((document.getElementById('nfName')||{}).value||'').trim(),ft=(document.getElementById('nfType')||{}).value||'동반가족';if(!fn){toast('가족 이름을 넣어 주세요');return}d.fam.push({type:ft,name:fn,gender:'',by:'',mv:''});S.dirty=true;render();toast(fn+' 님을 추가했어요');return}
+  if(b.id==='fadd2'){var fn=((document.getElementById('nfName')||{}).value||'').trim(),ft=(document.getElementById('nfType')||{}).value||'동반가족';if(!fn){toast('가족 이름을 넣어 주세요');return}if(ft==='첫 번째 보호자'){d.me.go=true;d.me.name=fn;d.me.who=fn===S.nm?'me':'other';d.me.ok=false;S.dirty=true;render();return}d.fam.push({type:ft,name:fn,gender:'',by:'',mv:''});S.dirty=true;render();toast(fn+' 님을 추가했어요');return}
   if(b.id==='kadd'){d.kids.push({name:'',inst:'',age:'',go:'간다'});S.dirty=true;render();var L=document.querySelectorAll('[data-k$="|name"]');if(L.length)L[L.length-1].focus();return}
   if(b.dataset.kdel!==undefined){d.kids.splice(+b.dataset.kdel,1);S.dirty=true;render();return}
   if((v=b.dataset.kgo)){var a=v.split('|');d.kids[+a[0]].go=a[1];S.dirty=true;render();return}
@@ -271,13 +280,17 @@ document.addEventListener('click',function(e){var b=e.target.closest('button');i
   if(b.dataset.fdel!==undefined){d.fam.splice(+b.dataset.fdel,1);S.dirty=true;render();return}
   if((v=b.dataset.fg)){var g=v.split('|'),f=d.fam[+g[0]];f.gender=f.gender===g[1]?'':g[1];S.dirty=true;render();return}
   if((v=b.dataset.mego)){d.me.go=v.split('|')[1]==='y';S.dirty=true;render();return}
-  if((v=b.dataset.famon)){var on=v.split('|')[1]==='y';if(!on&&d.fam.length){toast('가족 '+d.fam.length+'명을 뺐어요');d.fam=[];S.dirty=true}S.famOn=on;render();return}
+  if((v=b.dataset.famon)){var on=v.split('|')[1]==='y';if(!on){var nn=d.fam.length+(d.me.go?1:0);if(nn)toast('가족 '+nn+'명을 뺐어요');d.fam=[];d.me.go=false;d.me.ok=false}S.famOn=on;S.dirty=true;render();return}
+  if(b.dataset.meadd){d.me.go=true;d.me.name=S.nm||'';d.me.who='me';d.me.ok=false;S.dirty=true;render();return}
+  if(b.dataset.medel){d.me.go=false;d.me.ok=false;S.dirty=true;render();return}
+  if(b.dataset.meedit){d.me.ok=false;render();return}
+  if(b.dataset.meok){var mn=String(d.me.name||'').trim();if(!mn){toast('첫 번째 보호자 이름을 넣어 주세요');return}if(!d.me.mv){toast(mn+' · 오가는 방법을 골라 주세요');return}d.me.name=mn;d.me.who=mn===S.nm?'me':'other';d.me.ok=true;S.dirty=true;render();return}
   if((v=b.dataset.gw)){d.me.who=v==='other'?'other':'me';d.me.go=v!=='none';if(v==='other'&&!d.me.rel)d.me.rel='아빠';if(v==='none'&&d.fam.length){toast('보호자가 안 가서 가족 '+d.fam.length+'명을 뺐어요');d.fam=[]}S.dirty=true;render();return}
   if(b.id==='send'){var w2=who();if(w2){S.err=w2;render();toast(w2);window.scrollTo(0,0);return}
     if(!d.kids.some(function(k){return k.name.trim()})){S.err='학생 이름을 1명 이상 넣어 주세요.';render();toast(S.err);return}
     {var un=d.kids.filter(function(k){return !k.ok}).map(function(k){return k.name||'이름 없음'}).concat(d.fam.filter(function(f){return !f.ok}).map(function(f){return f.name||f.type}));if(un.length){S.err='「저장」을 누르지 않은 사람이 있어요: '+un.join(', ');render();toast(S.err);return}}
     if(d.fam.some(function(f){return !f.name.trim()})){S.err='가족 이름을 넣거나, 비어 있는 줄은 「빼기」를 눌러 주세요.';render();toast(S.err);return}
-    {if(guardWho()==='other'&&!String(d.me.name||'').trim()){S.err='같이 가는 보호자 이름을 넣어 주세요';render();toast(S.err);return}}
+    {if(S.famOn===undefined){S.err='같이 가는 가족이 있나요? 「없어요 / 있어요」를 골라 주세요';render();toast(S.err);return}if(famOn()&&!d.me.go){S.err='같이 가는 가족이 있으면 첫 번째 보호자 한 분을 넣어 주세요 (없으면 「없어요」)';render();toast(S.err);return}if(d.me.go&&!d.me.ok){S.err='첫 번째 보호자 「이 보호자 저장」을 눌러 주세요';render();toast(S.err);return}}
     {var nm=moveList().filter(function(x){return !x.o.mv}).map(function(x){return x.n});if(nm.length){S.err='오가는 방법(버스 왕복 · 갈 때만 · 올 때만 · 자차)을 골라 주세요: '+nm.join(', ');render();toast(S.err);return}}
     S.agree=document.getElementById('ag').checked;if(!S.agree){S.err='맨 아래 동의에 체크해 주세요.';render();toast(S.err);return}
     var c={};S.I.consent.forEach(function(x){c[x.id]=true});

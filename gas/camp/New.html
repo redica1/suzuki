@@ -611,7 +611,7 @@ function infoOf(x){const f=inf(x),kk=f.kind||x.k,o0=Object.keys(f.cons||{})[0],o
   concert:o0||'없음',song:o&&!o.nl?o.song||'':'',other:!!(o&&o.nl),oc:o&&o.nl?o.comp||'':'',ot:o&&o.nl?o.title||'':'',video:o&&o.url||''}}
 function nSubmit(L0){const L=L0||P.picked.filter(x=>!x.done);if(!L.length||S.busy)return;
  const own=(S.subs||[]).find(sb=>sb.owner===WHO&&sb.acad===ACAD&&(sb.ppl||[]).some(p=>p.status!=='취소'));
- const sb=own?JSON.parse(JSON.stringify(own)):{no:'N'+Date.now(),owner:WHO,acad:ACAD,round:'',date:S.today||'',ppl:[],form:{picked:{},extra:[],fam:[],info:{},room:{},join:{},ens:{},note:null,ri:(S.camp||{}).ri||0}};
+ const sb0=own?JSON.parse(JSON.stringify(own)):{no:'N'+Date.now(),owner:WHO,acad:ACAD,round:'',date:S.today||'',ppl:[],form:{picked:{},extra:[],fam:[],info:{},room:{},join:{},ens:{},note:null,ri:(S.camp||{}).ri||0}};const sb=sb0;sb.pressAt=new Date().toISOString();
  sb.form=sb.form||{};['picked','info','room','join','ens'].forEach(k=>{if(!sb.form[k])sb.form[k]={}});['extra','fam'].forEach(k=>{if(!Array.isArray(sb.form[k]))sb.form[k]=[]});
  const F=sb.form,stamp=(S.today||'')+' '+new Date().toTimeString().slice(0,8);
  L.forEach((x,ix)=>{const f=inf(x),kk=f.kind||x.k,isT=kk==='교사',np=NOPLAY(kk);let key=x.id&&!/^t_n|^x\d|^f\d/.test(x.id)?x.id:'';

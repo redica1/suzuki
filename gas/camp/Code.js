@@ -1,4 +1,4 @@
-/* build: 20261123-144539 */
+/* build: 20261123-145844 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -220,8 +220,12 @@ function lock_() { const l = LockService.getScriptLock(); if (!l.tryLock(30000))
 
 /* ---------------- 로그인 ---------------- */
 const bare_ = s => String(s || '').replace(/[A-Za-z\s]+$/, '').replace(/\s/g, '');
-const today_ = () => Utilities.formatDate(new Date(), TZ, 'yyyy-MM-dd');
-const stamp_ = () => Utilities.formatDate(new Date(), TZ, 'yyyy-MM-dd HH:mm:ss');
+/* 11-23 마감 · 차수 판정은 「누른 시각」: 접수 저장 동안 NOW_AT = 화면에서 누른 시각(서버 시각보다 늦지 않고 10분 안) → 줄 서다 자정을 넘겨도 누른 날 기준 */
+let NOW_AT = null;
+const nowD_ = () => NOW_AT || new Date();
+function pressAt_(v) { const n = new Date(), t = Date.parse(String(v || '')); NOW_AT = (t && t <= n.getTime() && n.getTime() - t < 10 * 60 * 1000) ? new Date(t) : n; }
+const today_ = () => Utilities.formatDate(nowD_(), TZ, 'yyyy-MM-dd');
+const stamp_ = () => Utilities.formatDate(nowD_(), TZ, 'yyyy-MM-dd HH:mm:ss');
 
 function rows_(name) {
   const sh = SpreadsheetApp.getActive().getSheetByName(name);
@@ -1375,6 +1379,9 @@ function takeRefundAcct_(p) {
 /* ---------------- 선생님이 부르는 기능 ---------------- */
 /** 새 접수: 접수번호는 서버가 붙임 (27W-001 …) */
 function submitNew(token, sb) {
+  pressAt_(sb && sb.pressAt); try { return submitNew0_(token, sb); } finally { NOW_AT = null; }
+}
+function submitNew0_(token, sb) {
   const u = who_(token); regGate_();
   if (!u.acads.includes(sb.acad)) throw new Error('이 학원으로 접수할 수 없어요.');
   /* 속도 (11-13 몰림 시험: 10명 동시에 4명이 BUSY): 잠그기 전에 읽고 검사 · 잠근 동안은 번호만 받고 바로 붙여 씀 · 메일은 잠금 밖 */
@@ -1394,7 +1401,7 @@ function submitNew(token, sb) {
     if (sb.reqId && C.get('req_' + sb.reqId)) { lock.releaseLock(); const d = C.get('req_' + sb.reqId); return Object.assign({ ok: true, no: d, again: true }, bundle_(u.acads, u.name)); }
     const no = subNoNext_();
     sb.no = no; sb.createdAt = stamp_();
-    sb.ppl.forEach(p => { p.id = no + p.id.slice(tmp.length); p.pay = '전'; p.paidAmt = 0; delete p.rep; });
+    sb.ppl.forEach(p => { p.id = no + p.id.slice(tmp.length); p.pay = '전'; p.paidAmt = 0; delete p.rep; p.addAt = sb.createdAt; });   /* 11-23 추가 일시 = 누른 시각 (화면 값 안 믿음) */
     recalc_(sb); checkEns_(sb, all);
     teacherDup_(all, sb);
     writeSub_(sb, 'append');
@@ -1460,6 +1467,9 @@ function famGate_(cur, sb) {
   if (addFam || addRoom || addJoin) throw new Error('가족 · 가족방 신청은 ' + fc.slice(5).replace('-', '월 ') + '일에 마감했어요. 더 넣으려면 운영진에게 문의해 주세요.');
 }
 function saveSubs(token, subs) {
+  pressAt_(Array.isArray(subs) && subs[0] && subs[0].pressAt); try { return saveSubs0_(token, subs); } finally { NOW_AT = null; }
+}
+function saveSubs0_(token, subs) {
   const u = who_(token);
   const lock = lock_();
   try {
@@ -1473,6 +1483,7 @@ function saveSubs(token, subs) {
       if (!canEdit_(u, cur)) throw new Error(sb.no + '는 ' + cur.owner + ' 선생님이 낸 접수라 고칠 수 없어요.');
       sb.acad = cur.acad; sb.owner = cur.owner; if (cur.contact) sb.contact = cur.contact; else delete sb.contact; sb.createdAt = cur.createdAt; sb.no = cur.no; sb.reqId = cur.reqId; sb.rev = (+cur.rev || 0) + 1;
       famGate_(cur, sb);
+      sb.ppl.forEach(p => { const c = cur.ppl.find(x => x.id === p.id); p.addAt = !c ? stamp_() : (c.status === '취소' && p.status !== '취소' && !(+c.paidAmt > 0)) ? stamp_() : (c.addAt || p.addAt || ''); });   /* 11-23 추가 일시 = 누른 시각 (새 사람 · 되살린 사람) · 있던 사람은 그대로 */
       roomPen_(cur, sb); roomCredit_(cur, sb);
       recalc_(sb);
       teacherDup_(all, sb, sb.ppl.filter(p => !cur.ppl.some(c => c.id === p.id)).map(p => p.id));

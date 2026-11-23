@@ -1,4 +1,4 @@
-/* build: 20261120-143654 */
+/* build: 20261123-111650 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -1079,7 +1079,7 @@ function tLogin(email, pw) {
   if (a.state !== '사용' || !a.tid) fail('사용할 수 없는 계정이에요. 협회에 문의해 주세요.');
   CacheService.getScriptCache().remove('tl:' + email);
   const A = tbl_('계정'); A.set(a.i, { '마지막로그인': now_() });
-  return { sess: newSess_({ email, tid: a.tid }) };
+  return { sess: newSess_({ email, tid: a.tid }), mustPw: /^#임시/.test(String(a.memo || '')) };   /* 11-23: 임시 비밀번호로 들어오면 새 비밀번호부터 */
 }
 /** 로그인한 선생님이 비밀번호 바꾸기 (지금 비밀번호 확인) */
 function tPwChange(sess, cur, pw) {
@@ -1088,7 +1088,8 @@ function tPwChange(sess, cur, pw) {
   const all = acctAll_().filter(a => a.email === u.email && a.state === '사용'), a = all.pop();
   if (!a) fail('계정을 찾지 못했어요.');
   if (hash_(cur, a.salt) !== a.hash) fail('지금 비밀번호가 맞지 않아요.');
-  const salt = Utilities.getUuid(); tbl_('계정').set(a.i, { '솔트': salt, '비번해시': hash_(pw, salt) });
+  if (String(pw) === String(cur)) fail('지금(임시) 비밀번호와 다른 비밀번호로 만들어 주세요.');
+  const salt = Utilities.getUuid(); tbl_('계정').set(a.i, { '솔트': salt, '비번해시': hash_(pw, salt), '메모': String(a.memo || '').replace(/^#임시\s*/, '') });
   CacheService.getScriptCache().remove('pc:' + u.email); log_(u.email, '계정', a.tid, '비밀번호 바꿈', '');
   return { done: true };
 }
@@ -1109,7 +1110,7 @@ function tReset(email, code, pw) {
   if (String(code).trim() !== r.code) { cput_('rp:' + email, r, 900); fail('코드가 맞지 않아요.'); }
   if (String(pw || '').length < 8) fail('비밀번호는 8자 이상으로 만들어 주세요.');
   const a = acctAll_().find(x => x.email === email && x.state === '사용'); if (!a) fail('계정을 찾지 못했어요.');
-  const salt = Utilities.getUuid(); tbl_('계정').set(a.i, { '솔트': salt, '비번해시': hash_(pw, salt) });
+  const salt = Utilities.getUuid(); tbl_('계정').set(a.i, { '솔트': salt, '비번해시': hash_(pw, salt), '메모': String(a.memo || '').replace(/^#임시\s*/, '') });
   CacheService.getScriptCache().remove('rp:' + email); log_(email, '계정', a.tid, '비밀번호 재설정', '');
   return { done: true };
 }
@@ -1124,7 +1125,8 @@ function tMe(sess) {
   const dues = tbl_('연회비').v.filter(d => d[0] === '교사' && d[1] === u.tid).map(d => ({ year: d[2], due: +d[3] || 0, paid: +d[4] || 0, date: d[5], way: d[6] })).sort((a, b) => String(b.year).localeCompare(String(a.year)));
   let events = tbl_('참가이력').v.filter(e => e[1] === '교사' && e[2] === u.tid).map(e => ({ name: e[3], year: e[4], period: e[5], role: e[6], state: e[7] })).sort((a, b) => String(b.year).localeCompare(String(a.year)));
   if (!events.length && settings_()['테스트 표시'] === '예') events = [{ sample: true, name: '2026 여름 스즈키 음악캠프', year: '2026', period: '2026.07.27 ~ 07.31', role: '교사', state: '참가' }];   // STG 예시 (더미)
-  return { me: { tid: u.tid, works, dues, events, duesWay: g('회비납부방법'), duesFree: g('회비구분') === '면제', ext: g('회원구분') === '외부인', sex: g('성별'), name: g('이름'), phone: g('휴대전화'), email: u.email, acads: [g('학원1'), g('학원2'), g('학원3')].filter(Boolean).map(id => an[id] || id), role: g('직급'), inst: g('전공'), kind: g('회원구분'), certs: g('본인자격') || g('명단자격'), eng: g('영문이름'), photo: photoOf_(u.tid), heads,
+  const mustPw = (() => { try { const ac = acctAll_().filter(x => x.email === u.email && x.state === '사용').pop(); return !!ac && /^#임시/.test(String(ac.memo || '')); } catch (e) { return false; } })();
+  return { mustPw, me: { tid: u.tid, works, dues, events, duesWay: g('회비납부방법'), duesFree: g('회비구분') === '면제', ext: g('회원구분') === '외부인', sex: g('성별'), name: g('이름'), phone: g('휴대전화'), email: u.email, acads: [g('학원1'), g('학원2'), g('학원3')].filter(Boolean).map(id => an[id] || id), role: g('직급'), inst: g('전공'), kind: g('회원구분'), certs: g('본인자격') || g('명단자격'), eng: g('영문이름'), photo: photoOf_(u.tid), heads,
     payee: g('강사료대상') === '예',
     pay: p ? { bank: p['은행'], acct: maskAcct_(p['계좌번호']), holder: p['예금주'], zip: p['우편번호'], addr: p['주소'], addr2: p['상세주소'], hzip: p['집우편번호'], haddr: p['집주소'], haddr2: p['집상세주소'], rrn: p['주민번호표시'] || '', rrnAt: p['주민번호동의일'] || '', inc: p['소득구분'] || '' } : null, reqs } };
 }
@@ -2141,14 +2143,14 @@ function acctReset(who, tid, mail) {
       if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) fail('교사정보에 이메일을 먼저 넣고 「저장」해 주세요.');
       if (acctAll_().some(a => a.email === email && a.state !== '반려')) fail('이 이메일로 이미 다른 계정이 있어요. 이메일을 확인해 주세요.');
       const salt = Utilities.getUuid();
-      T.append({ '이메일': email, '교사ID': tid, '비번해시': hash_(pw, salt), '솔트': salt, '상태': '사용', '경로': '관리자 임시 비밀번호', '만든날': now_(), '처리일': now_(), '메모': '임시 비밀번호 ' + now_() + ' ' + who.name });
+      T.append({ '이메일': email, '교사ID': tid, '비번해시': hash_(pw, salt), '솔트': salt, '상태': '사용', '경로': '관리자 임시 비밀번호', '만든날': now_(), '처리일': now_(), '메모': '#임시 임시 비밀번호 ' + now_() + ' ' + who.name });
       log_(who.name, '계정', tid, '임시 비밀번호로 계정 만듦', maskEmail_(email));
     } finally { lock.releaseLock(); }
     L = []; const a2 = acctAll_().find(a => String(a.tid) === tid && a.state === '사용');
     let sent = false; if (mail !== false && a2) { try { mail_(a2.email, '[스즈키] 임시 비밀번호를 보내 드려요', tmpPwMail_(a2.email, pw)); sent = true; } catch (e) {} }
     return { pw, emails: a2 ? [a2.email] : [], sent, made: true };
   }
-  try { L.forEach(a => { const salt = Utilities.getUuid(); T.set(a.i, { '솔트': salt, '비번해시': hash_(pw, salt), '메모': ('임시 비밀번호 ' + now_() + ' ' + who.name + ' · ' + String(a.memo || '')).slice(0, 200) }); }); }
+  try { L.forEach(a => { const salt = Utilities.getUuid(); T.set(a.i, { '솔트': salt, '비번해시': hash_(pw, salt), '메모': ('#임시 임시 비밀번호 ' + now_() + ' ' + who.name + ' · ' + String(a.memo || '').replace(/^#임시\s*/, '')).slice(0, 200) }); }); }
   finally { lock.releaseLock(); }
   log_(who.name, '계정', tid, '비밀번호 초기화', L.map(a => maskEmail_(a.email)).join(', '));
   let sent = false;

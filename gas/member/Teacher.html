@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261120-143654 -->
+<!-- build: 20261123-111650 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -139,6 +139,7 @@ table.tcht td,table.tcht th{white-space:nowrap}
 .msel{position:relative;min-width:150px}.msel summary{list-style:none;cursor:pointer;border:1px solid var(--line);border-radius:8px;padding:7px 26px 7px 10px;background:var(--bg);max-width:190px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:16px;position:relative}.msel summary:after{content:"\25BE";position:absolute;right:9px;top:50%;transform:translateY(-50%);color:var(--muted)}.msel summary::-webkit-details-marker{display:none}.mselp{margin-top:4px;background:#fff;border:1px solid var(--line);border-radius:8px;box-shadow:0 6px 20px rgba(0,0,0,.12);padding:8px 10px;display:grid;gap:6px;min-width:190px}.mselp label{display:flex;gap:6px;align-items:center;white-space:nowrap;cursor:pointer;font-size:16px}
 .mselp label{justify-content:flex-start;text-align:left}.mselp input[type=checkbox]{width:auto;flex:none;margin:0}
 table[data-stick] .sk{position:sticky;z-index:2;background:var(--surface)}table[data-stick] thead .sk{z-index:4}.stbl.uidock>table>thead th,.stbl.uibox>table>thead th{z-index:3;background:var(--surface);box-shadow:inset 0 -1px 0 var(--line)}table[data-stick] .skl{box-shadow:6px 0 6px -6px rgba(0,0,0,.25)}tr.dirty td.sk{background:var(--rosin-soft)}tr.past td.sk{opacity:1;color:var(--muted)}
+.mpw{position:fixed;inset:0;background:rgba(10,30,30,.5);display:grid;place-items:center;padding:16px;z-index:200}.mpwBox{background:var(--surface,#fff);color:var(--ink,#18232B);border-radius:18px;max-width:420px;width:100%;padding:20px;box-shadow:0 10px 40px rgba(0,0,0,.3);max-height:calc(100vh - 32px);overflow:auto}.mpwBox input[type=password],.mpwBox input[type=text]{width:100%;box-sizing:border-box}.mpl{display:block;font-weight:700;margin:10px 0 4px}.mpErr{color:#b3261e;font-weight:700;min-height:1.2em;margin:8px 0}
 </style>
 <style>
 /* 디자인 (10-31): 글꼴 Pretendard · 회원 파랑(#4285f4) 색 · 자간 .02em · 행간 1.75 · 낱말 단위 줄바꿈 — 위 색 정의를 덮어씀 */
@@ -674,10 +675,20 @@ function hBack(v){var need={email:1,code:1,confirm:1};
 function stickCols(){document.querySelectorAll('table[data-stick]').forEach(function(t){var n=+t.dataset.stick,hr=t.tHead&&t.tHead.rows[0];if(!hr)return;var off=[],x=0;for(var k=0;k<n&&k<hr.cells.length;k++){off.push(x);x+=hr.cells[k].getBoundingClientRect().width}
   [].forEach.call(t.rows,function(row){for(var k=0;k<n&&k<row.cells.length;k++){if(row.cells[k].colSpan>1)break;var c=row.cells[k];c.classList.add('sk');c.style.left=off[k]+'px';c.classList.toggle('skl',k===n-1)}})})}
 window.addEventListener('resize',function(){stickCols()});
+/* 11-23 임시 비밀번호로 들어오면 새 비밀번호부터 (닫을 수 없는 창) */
+function vMustPw(){return '<div class="mpw" role="dialog" aria-modal="true" aria-labelledby="mpwT"><div class="mpwBox"><h2 id="mpwT" style="margin:0 0 6px">새 비밀번호를 정해 주세요</h2><p class="hint" style="margin:0 0 6px">임시 비밀번호로 들어오셨어요. 계속하려면 선생님만 아는 비밀번호로 바꿔 주세요. 바꾸면 임시 비밀번호는 더 쓸 수 없어요.</p>'+
+  (S.tmpPw?'':'<label class="mpl" for="mp0">받은 임시 비밀번호</label><input id="mp0" type="password" autocomplete="current-password">')+
+  '<label class="mpl" for="mp1">새 비밀번호 <small class="hint">8자 이상 · 임시 비밀번호와 다르게</small></label><input id="mp1" type="password" autocomplete="new-password"><label class="mpl" for="mp2">한 번 더</label><input id="mp2" type="password" autocomplete="new-password">'+
+  '<label style="display:flex;gap:6px;align-items:center;margin-top:8px;font-weight:500"><input type="checkbox" id="mpShow" style="width:auto"> 비밀번호 보이기</label><p class="mpErr" id="mpErr">'+esc(S.mpMsg||'')+'</p><button class="btn primary" type="button" id="mpSave" style="width:100%">새 비밀번호로 바꾸기</button><p class="hint" style="text-align:center;margin:8px 0 0">이 창은 닫을 수 없어요 · 바꾼 뒤에 이어서 써요</p></div></div>'}
+document.addEventListener('click',function(e){var b=e.target&&e.target.closest&&e.target.closest('#mpSave');if(!b)return;var g=function(id){var x=document.getElementById(id);return x?x.value:''};var cur=S.tmpPw||g('mp0'),p1=g('mp1'),p2=g('mp2'),er=document.getElementById('mpErr');
+  var bad=!cur?'받은 임시 비밀번호를 넣어 주세요':p1.length<8?'새 비밀번호는 8자 이상으로 만들어 주세요':p1===cur?'임시 비밀번호와 다르게 만들어 주세요':p1!==p2?'두 칸이 달라요':'';if(bad){if(er)er.textContent=bad;return}
+  b.disabled=true;call('tPwChange',[S.sess,cur,p1]).then(function(r){b.disabled=false;if(!r.ok){if(er)er.textContent=r.msg;return}S.mustPw=false;S.tmpPw='';S.mpMsg='';render();toast('새 비밀번호로 바꿨어요. 다음부터 이 비밀번호로 로그인해요.')})});
+document.addEventListener('change',function(e){if(e.target&&e.target.id==='mpShow'){['mp0','mp1','mp2'].forEach(function(id){var x=document.getElementById(id);if(x)x.type=e.target.checked?'text':'password'})}});
 function render(){var h;
   document.getElementById('testband').hidden=!S.test;
   h=({home:vHome,find:vFind,email:vEmail,code:vCode,confirm:vConfirm,done:vDone,login:vLogin,me:vMe,pay:vPay,ask:vAsk,mine:vMine,events:vEvents,myacad:vMyAcad,mystu:vMyStu})[S.v]();
   document.getElementById('app').innerHTML=h;
+  (function(){var o=document.getElementById('mpwHost');if(S.mustPw&&S.sess){if(!o){o=document.createElement('div');o.id='mpwHost';o.innerHTML=vMustPw();document.body.appendChild(o);var f=document.getElementById(S.tmpPw?'mp1':'mp0');if(f)f.focus()}}else if(o)o.remove()})();
   try{stickCols()}catch(e){}
   document.body.classList.toggle('wide',S.v==='myacad'||S.v==='mystu');
   gnbAsk();
@@ -701,7 +712,7 @@ function vEvents(){var R=S.evs;
     (not.length?'<p class="hint" style="margin-top:12px">'+(R.ext?'회원 선생님만':'관계자만')+' 신청하는 행사: '+not.map(function(e){return esc(e.name)}).join(' · ')+'</p>':'')+'</div>'+
     '<div class="card"><h3>내 참가 기록</h3>'+(R.hist.length?'<ul class="hist">'+R.hist.map(function(h){return '<li><div class="spread"><b>'+esc(h.ev)+'</b><span class="pill'+(h.state==='참가'?' ok':'')+'">'+esc(h.state)+'</span></div><span class="hint">'+esc(h.period||h.year||'')+(h.role?' · '+esc(h.role):'')+'</span></li>'}).join('')+'</ul>':'<p class="hint">아직 기록이 없어요. 행사에 참가하면 여기에 쌓여요.</p>')+'</div>'}
 function loadMine(){return call('bMine',[S.sess]).then(function(r){if(r.ok){S.mine=r.list;if(S.v==='me'||S.v==='mine')render();else gnbAsk()}})}
-function loadMe(){loadMine();return call('tMe',[S.sess]).then(function(r){if(!r.ok){if(/LOGIN/.test(r.msg)){S.sess='';try{sessionStorage.removeItem('tm-sess')}catch(x){}S.v='login';S.msg='로그인 시간이 지났어요. 다시 로그인해 주세요.';render();return}toast(r.msg);return}S.me=r.me;render()})}
+function loadMe(){loadMine();return call('tMe',[S.sess]).then(function(r){if(!r.ok){if(/LOGIN/.test(r.msg)){S.sess='';try{sessionStorage.removeItem('tm-sess')}catch(x){}S.v='login';S.msg='로그인 시간이 지났어요. 다시 로그인해 주세요.';render();return}toast(r.msg);return}S.me=r.me;if(r.mustPw)S.mustPw=true;render()})}
 function setSess(t){S.sess=t;try{sessionStorage.setItem('tm-sess',t)}catch(x){}}
 
 document.addEventListener('click',function(e){if(e.target.id==='sdClose2'){S.stuDet=null;S.msg='';render();return}if(e.target.id==='myClose2'){S.myDet=null;S.msg='';render();return}if(e.target.id==='tdClose2'){S.tchDet=null;S.asgSel={};S.msg='';render();return}if(e.target.id==='docClose2'){S.docModal=false;render();return}if(e.target.id==='acClose2'){S.myac.ed=false;S.err={};S.msg='';S.postFor='';render();return}var b=e.target.closest('button');if(!b)return;var d=b.dataset,v=function(id){var x=document.getElementById(id);return x?x.value:''};
@@ -760,7 +771,7 @@ document.addEventListener('click',function(e){if(e.target.id==='sdClose2'){S.stu
     var info=ext?{sex:j.sex,extRole:j.extRole,extRoleText:j.extRoleText,org:j.org,inst:j.inst}:{sex:j.sex,type:j.type,course:j.course,kind:j.type==='교사회원'?'정식 교사':j.course==='중급'?'중급 연수':'초급 연수',works:j.noWork?[]:j.works,noWork:j.noWork,role:j.role,inst:j.inst,certs:Object.keys(j.certs).map(function(n){return {n:n,y:j.certs[n]}})};
     run(function(){return call('tCreate',[S.token,{pw:pw,agree:true,mode:ext?'ext':'',info:info,pay:payOut(j.pay),rrn:j.pay.rrn||'',rrnAgree:!!j.pay.rrnAg}]).then(function(r){if(!r.ok){S.msg=r.msg;return}S.state=r.state;if(r.sess){setSess(r.sess);call('tMe',[r.sess]).then(function(x){if(x.ok)S.me=x.me})}S.hist=[];S.v='done';S.pw1='';S.pw2='';S.j.pay.rrn='';S.j.pay.rrnAg=false;window.scrollTo(0,0)})});return}
   if(b.id==='doLogin'){var em=readEmail('le'),lp=v('lp');S.email=em;if(em&&em.indexOf('@')<0){S.msg='이메일 @ 뒤 주소를 골라 주세요.';render();return}svSet('t',em,lp);
-    run(function(){return call('tLogin',[em,lp]).then(function(r){if(!r.ok){S.msg=r.msg;return}setSess(r.sess);S.hist=[];S.v='me';S.me=null;loadMe()})});return}
+    run(function(){return call('tLogin',[em,lp]).then(function(r){if(!r.ok){S.msg=r.msg;return}setSess(r.sess);S.mustPw=!!r.mustPw;S.tmpPw=r.mustPw?lp:'';S.hist=[];S.v='me';S.me=null;loadMe()})});return}
   if(b.id==='forgot'){S.fp={email:readEmail('le'),sent:false};S.msg='';render();return}
   if(b.id==='fpBack'){S.fp=null;S.msg='';render();return}
   if(b.id==='sendReset'){var em2=readEmail('fe2');if(!em2){S.msg='가입한 이메일을 넣어 주세요.';render();return}if(em2.indexOf('@')<0){S.msg='이메일 @ 뒤 주소를 골라 주세요.';render();return}
@@ -1093,6 +1104,6 @@ csMount();
   try{google.script.url.getLocation(function(l){var pr=l&&l.parameter||{},a=pr.as;if(a)setSess(a);if('ask' in pr||pr.v==='ask'){S.v0='ask'}if(pr.guide!==undefined)S.gd0=pr.guide||'why';go0()})}catch(x){go0()}})();
 </script>
 <script>try{window.top.postMessage('suzuki-ready','*')}catch(e){}</script>
-<div id="bldMark" hidden>빌드표시 20261120-143654 </div>
+<div id="bldMark" hidden>빌드표시 20261123-111650 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();</script>
 </body></html>

@@ -1,4 +1,4 @@
-/* build: 20261124-000407 */
+/* build: 20261124-001256 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -785,7 +785,7 @@ function parentInit() {
   const mcs = profPublic_().filter((p, i, a) => p.mc && a.findIndex(q => q.mc && q.n === p.n && q.i === p.i) === i).map(p => ({ n: p.n, i: p.i, min: +p.min || 45, fee: +p.fee || 0 }));
   return { ok: true, open: C.base.member !== false && pa.length > 0, acads: pa, mcs, lessonMax: OPT.lessonMax, camp: { name: C.base.name, start: C.base.start, end: C.base.end, place: C.base.place }, consent: (C.consent.items || []).filter(x => x.on), refund: C.refund, roomCap: (C.opt || {}).roomCap || 4,
     /* 예상 참가비 (11-15): 학생 · 첫 보호자 · 동반가족 · 15개월 미만 × 차수, 지금 차수, 학생 회비 · 가족방 빈 자리 · 추가레슨 */
-    price: { fees: ['학생', '회원의 첫번째 보호자', '회원의 그외 악기 안하는 동반가족', '동반가족 중 15개월 미만'].reduce((o, k) => { o[k] = C.fees[k] || []; return o; }, {}), rounds: C.rounds.map(r => ({ n: r.n, from: r.from, to: r.to })), ri: curRound_(C), dues: +(C.opt || {}).studentDues || 0, empty: +(C.opt || {}).roomEmptyFee || 0, lesson: +(C.opt || {}).lessonFee || 0, bus: { r: +(C.opt || {}).busRound || 0, o: +(C.opt || {}).busOne || 0 } } };
+    price: { fees: ['학생', '회원의 첫번째 보호자', '회원의 그외 악기 안하는 동반가족', '동반가족 중 15개월 미만'].reduce((o, k) => { o[k] = C.fees[k] || []; return o; }, {}), rounds: C.rounds.map(r => ({ n: r.n, from: r.from, to: r.to })), ri: curRound_(C), dues: +(C.opt || {}).studentDues || 0, empty: +(C.opt || {}).roomEmptyFee || 0, lesson: +(C.opt || {}).lessonFee || 0, busBy: pa.reduce((o, a) => { const b = acadBank_(a); o[a] = (b && b.bus) || { r: 0, g: 0, b: 0, off: false, one: true }; return o; }, {}) } };
 }
 function parentWho_(tok) { const v = tok && CacheService.getScriptCache().get('pt_' + tok); if (!v) throw new Error('들어온 지 오래되어 끊겼어요. 처음 화면에서 다시 들어와 주세요.'); return JSON.parse(v); }
 function parentOut_(r) { return r ? { id: r.id, acad: r.acad, name: r.name, d: r.d, at: r.at, st: r.st, byAt: r.byAt, m: r.m || {}, bank: acadBank_(r.acad), sub: parentSub_(r.id) } : null; }
@@ -913,8 +913,26 @@ function parentNotifySubs_(nos) {
 /* ---------- 학부모 ↔ 학원 돈 (11-15 사용자: 학원 통장 · 입금 신고 · 취소 · 환불 요청, 처리는 그 학원 원장 · 선생님) ----------
  * 학원 통장은 원장이 선생님 화면에서 넣음(시트 「학원 통장」). 학부모 비밀번호 4자리(처음 보낼 때 정함, 해시로 저장). 돈 기록은 「학부모 신청」 시트 「돈」 칸 JSON:
  * { reps:[{at, nm(입금자명), date, amt, st:'신고'|'확인'|'반려', why, by, byAt}], cx:{at, why, bank, acct, holder, st:'요청'|'처리'|'반려'|'취소', amt, note, by, byAt} } */
-const ABANK_SH = '학원 통장', ABANK_HEAD = ['학원', '은행', '계좌번호', '예금주', '고친 사람', '고친 때', '입금 마감'];
-function acadBank_(acad) { try { const r = rows_(ABANK_SH).find(x => String(x['학원']) === acad); if (!r) return null; const dv = r['입금 마감'], due = dv instanceof Date ? Utilities.formatDate(dv, TZ, 'yyyy-MM-dd') : String(dv || '').slice(0, 10); return { bank: String(r['은행'] || ''), acct: String(r['계좌번호'] || ''), holder: String(r['예금주'] || ''), due }; } catch (e) { return null; } }
+const ABANK_SH = '학원 통장', ABANK_HEAD = ['학원', '은행', '계좌번호', '예금주', '고친 사람', '고친 때', '입금 마감', '버스 왕복', '버스 갈 때만', '버스 올 때만', '버스 없음', '편도 없음'];   /* 11-24 학원 단체 버스 1인 금액 (원장이 정함) */
+function acadBank_(acad) { try { const r = rows_(ABANK_SH).find(x => String(x['학원']) === acad); if (!r) return null; const dv = r['입금 마감'], due = dv instanceof Date ? Utilities.formatDate(dv, TZ, 'yyyy-MM-dd') : String(dv || '').slice(0, 10); return { bank: String(r['은행'] || ''), acct: String(r['계좌번호'] || ''), holder: String(r['예금주'] || ''), due, bus: busOf_(r) }; } catch (e) { return null; } }
+function busOf_(r) { const n = k => +String(r[k] == null ? '' : r[k]).replace(/[^\d]/g, '') || 0, y = k => /^(예|y|true|1)$/i.test(String(r[k] || '').trim()); return { r: n('버스 왕복'), g: n('버스 갈 때만'), b: n('버스 올 때만'), off: y('버스 없음'), one: !y('편도 없음') }; }
+/* 11-24 원장님: 우리 학원 단체 버스 금액 · 버스 없음 · 편도 없음 */
+function acadBusSet(token, acad, b) {
+  const u = who_(token); acad = String(acad || '');
+  let head = false; try { head = teachers_().some(t => t.name === u.name && t.role === '원장' && (t.acads || []).includes(acad)); } catch (e) {}
+  if (!head) throw new Error('버스 금액은 그 학원 원장님만 정할 수 있어요.');
+  b = b || {}; const n = v => Math.max(0, Math.min(1000000, +String(v == null ? '' : v).replace(/[^\d]/g, '') || 0));
+  const lock = lock_();
+  try {
+    const ss = SpreadsheetApp.getActive(); let sh = ss.getSheetByName(ABANK_SH);
+    if (!sh) { sh = ss.insertSheet(ABANK_SH); sh.setFrozenRows(1); sh.getRange('A:F').setNumberFormat('@'); }
+    sh.getRange(1, 1, 1, ABANK_HEAD.length).setValues([ABANK_HEAD]).setFontWeight('bold');
+    const r = rows_(ABANK_SH).find(x => String(x['학원']) === acad), v = [n(b.r), n(b.g), n(b.b), b.off ? '예' : '', b.one === false ? '예' : ''];
+    if (r) sh.getRange(r._row, 8, 1, 5).setValues([v]); else sh.appendRow([acad, '', '', '', u.name, stamp_(), ''].concat(v));
+  } finally { lock.releaseLock(); }
+  log_(u.name, '학원 버스 금액', acad);
+  return { ok: true, pbank: acadBanks_(u.acads || []) };
+}
 /* 11-22 학원별 입금 마감일: 원장이 정함 (전체 마감 = 마지막 차수 끝날보다 늦을 수 없음 · 비우면 전체 마감) */
 function acadDueSet(token, acad, due) {
   const u = who_(token); acad = String(acad || ''); due = String(due || '').trim();
@@ -1740,7 +1758,7 @@ const CAMP_DEF = {
   base: { id: CAMP_ID, name: CAMP_NAME, start: '2027-01-11', end: '2027-01-15', place: '추후 안내', open: '2026-12-01', close: '2026-12-28', cur: 'auto', guest: true, staff: true, member: true, intl: true },
   rounds: [{ n: '1차', from: '2026-12-01', to: '2026-12-10' }, { n: '2차', from: '2026-12-11', to: '2026-12-20' }, { n: '3차', from: '2026-12-21', to: '2026-12-28' }],
   fees: FEES,
-  opt: { lessonFee: OPT.lessonFee, lessonMax: OPT.lessonMax, mcFee: 150000, studentDues: OPT.studentDues, teacherDues: OPT.teacherDues, roomCap: OPT.roomCap, roomEmptyFee: OPT.roomEmptyFee, usdRate: 1450, busRound: 0, busOne: 0 },   /* 단체 버스 1인 왕복 · 편도 (11-23, 0 = 추후 안내) */
+  opt: { lessonFee: OPT.lessonFee, lessonMax: OPT.lessonMax, mcFee: 150000, studentDues: OPT.studentDues, teacherDues: OPT.teacherDues, roomCap: OPT.roomCap, roomEmptyFee: OPT.roomEmptyFee, usdRate: 1450 },
   /* 환불: rate = 진단서 미제출 환불 %, drate = 전염병 · 팔·손 골절 진단서 제출 시 환불 % (null = rate 와 같음) · 11-11 규정 */
   refund: { rules: [{ until: '2026-12-31', label: '수수료 없음', rate: 100, drate: null, doc: false }, { until: '2027-01-04', label: '수수료 10%', rate: 90, drate: 100, doc: false }, { until: '2027-01-08', label: '수수료 20%', rate: 80, drate: 90, doc: false }],
     after: { label: '환불 불가', rate: 0, drate: 50, doc: false, allow: true }, duesRefund: false },

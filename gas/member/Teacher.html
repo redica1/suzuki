@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261123-111650 -->
+<!-- build: 20261123-124651 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -604,9 +604,12 @@ function eventCard(m){var es=m.events||[];
     '<p class="hint">캠프·졸업연주 등 협회 행사가 끝나면 여기에 모여요.'+(es.some(function(e){return e.sample})?' 지금은 테스트용 예시예요.':'')+'</p></div>'}
 function fmYm(x){return x?String(x).replace('-','.'):'?'}
 function workCard(m){var ws=m.works||[],cur=ws.filter(function(w){return !w.end}),past=ws.filter(function(w){return w.end});
-  var li=function(w){var ending=S.endW===w.wid;return '<li class="'+(w.end?'past':'')+'"><div class="spread"><b>'+(w.main?'<span class="pill info">주 소속</span> ':'')+esc(w.name)+'</b><span class="num hint">'+fmYm(w.start)+' ~ '+(w.end?fmYm(w.end):'지금')+'</span></div>'+
-    (w.end?'':ending?'<div class="row"><span class="hint">종료</span>'+ymSel('eW','','','endW')+'<button class="btn small primary" type="button" data-endok="'+esc(w.wid)+'">종료</button><button class="btn small ghost" type="button" id="endNo">취소</button></div>'+fe('endW'):
-      '<div class="row">'+(w.main||cur.length<2?'':'<button class="btn small ghost" type="button" data-mainw="'+esc(w.wid)+'">주 소속로</button>')+'<button class="btn small" type="button" data-endw="'+esc(w.wid)+'">종료</button></div>')+'</li>'};
+  var li=function(w){var ending=S.endW===w.wid,editing=S.editW===w.wid,sp=String(w.start||'').split('-'),ep=String(w.end||'').split('-');
+    var tools='<button class="btn small ghost" type="button" data-editw="'+esc(w.wid)+'">날짜 고치기</button>'+(w.own?'<button class="btn small ghost" type="button" data-delw="'+esc(w.wid)+'" style="color:var(--bad)">지우기</button>':'');
+    if(editing)return '<li class="'+(w.end?'past':'')+'"><div class="spread"><b>'+esc(w.name)+'</b></div><div class="row"><span class="hint">근무 시작</span>'+ymSel('xS',sp[0],sp[1],'editW')+'</div>'+(w.end?'<div class="row"><span class="hint">그만둔 날짜</span>'+ymSel('xE',ep[0],ep[1],'editW')+'</div>':'')+fe('editW')+'<div class="row"><button class="btn small primary" type="button" data-editok="'+esc(w.wid)+'">저장</button><button class="btn small ghost" type="button" id="editWNo">취소</button></div></li>';
+    return '<li class="'+(w.end?'past':'')+'"><div class="spread"><b>'+(w.main?'<span class="pill info">주 소속</span> ':'')+esc(w.name)+'</b><span class="num hint">'+fmYm(w.start)+' ~ '+(w.end?fmYm(w.end):'지금')+'</span></div>'+
+    (w.end?'<div class="row">'+tools+'</div>':ending?'<div class="row"><span class="hint">종료</span>'+ymSel('eW','','','endW')+'<button class="btn small primary" type="button" data-endok="'+esc(w.wid)+'">종료</button><button class="btn small ghost" type="button" id="endNo">취소</button></div>'+fe('endW'):
+      '<div class="row">'+(w.main||cur.length<2?'':'<button class="btn small ghost" type="button" data-mainw="'+esc(w.wid)+'">주 소속로</button>')+'<button class="btn small" type="button" data-endw="'+esc(w.wid)+'">종료</button>'+tools+'</div>')+'</li>'};
   var add='';
   if(cur.length<3){if(S.addW){var a=S.addW;add='<div class="wk"><b>소속 학원 추가</b>'+(a.id||a.text?'<div class="spread"><span>'+esc(a.id?aName(a.id):a.text+' (목록에 없음)')+'</span><button class="btn small ghost" type="button" id="addWClr">다시 고르기</button></div><div class="row"><span class="hint"><b>이 학원에서 근무를 시작한 날짜</b> (년 · 월)</span>'+ymSel('aW',a.y,a.m,'addW')+'</div>'+fe('addW')+'<div class="row">'+btn('addWOk','추가','primary small')+'<button class="btn small ghost" type="button" id="addWNo">취소</button></div>':
       (S.acadTyping?'<div class="row" style="flex-wrap:nowrap"><input type="text" id="jAcT" placeholder="학원 이름을 적어 주세요"><button class="btn small" type="button" id="addText" style="flex:none">넣기</button></div>':'<input type="search" id="aq" value="'+esc(S.aq||'')+'" placeholder="학원 이름으로 찾기" autocomplete="off"><ul class="list" id="aList">'+aItems(aHits())+'</ul><div class="row"><button class="btn small ghost" type="button" id="typeAcad">목록에 없어요 · 직접 적기</button><button class="btn small ghost" type="button" id="addWNo">취소</button></div>'))+'</div>'}
@@ -749,7 +752,13 @@ document.addEventListener('click',function(e){if(e.target.id==='sdClose2'){S.stu
   if(b.id==='addWClr'){S.addW={};render();return}
   if(b.id==='addWOk'){var a=S.addW,ay=v('aWY'),am=v('aWM');a.y=ay;a.m=am;if(!ay||!am){S.err={addW:'근무 시작 년·월을 골라 주세요.'};render();return}
     run(function(){return call('tAddWork',[S.sess,{id:a.id,text:a.text,y:ay,m:am}]).then(function(r){if(!r.ok){S.err={addW:r.msg};return}S.me=r.me;S.addW=null;S.err={};toast('소속 학원를 넣었어요')})});return}
-  if(d.endw){S.endW=d.endw;S.err={};render();return}
+  if(d.endw){S.endW=d.endw;S.editW='';S.err={};render();return}
+  if(d.editw){S.editW=d.editw;S.endW='';S.err={};render();return}
+  if(b.id==='editWNo'){S.editW='';S.err={};render();return}
+  if(d.editok){var sy=v('xSY'),smo=v('xSM'),ey2=document.getElementById('xEY')?v('xEY'):'',em2=document.getElementById('xEM')?v('xEM'):'';if(!sy||!smo||(document.getElementById('xEY')&&(!ey2||!em2))){S.err={editW:'년·월을 골라 주세요.'};render();return}
+    run(function(){return call('tEditWork',[S.sess,d.editok,sy,smo,ey2,em2]).then(function(r){if(!r.ok){S.err={editW:r.msg};return}S.me=r.me;S.editW='';S.err={};toast('날짜를 고쳤어요')})});return}
+  if(d.delw){if(!confirm('이 소속 학원 기록을 지울까요? 잘못 넣은 기록만 지워 주세요. 그만둔 학원은 「종료」로 남겨 두면 돼요.'))return;
+    run(function(){return call('tDelWork',[S.sess,d.delw]).then(function(r){if(!r.ok){toast(r.msg);return}S.me=r.me;toast('지웠어요')})});return}
   if(b.id==='endNo'){S.endW='';render();return}
   if(d.endok){var ey=v('eWY'),emo=v('eWM');if(!ey||!emo){S.err={endW:'종료 년·월을 골라 주세요.'};render();return}
     run(function(){return call('tEndWork',[S.sess,d.endok,ey,emo]).then(function(r){if(!r.ok){S.err={endW:r.msg};return}S.me=r.me;S.endW='';S.err={};toast('종료했어요. 지난 소속 학원에 남아요')})});return}
@@ -1104,6 +1113,6 @@ csMount();
   try{google.script.url.getLocation(function(l){var pr=l&&l.parameter||{},a=pr.as;if(a)setSess(a);if('ask' in pr||pr.v==='ask'){S.v0='ask'}if(pr.guide!==undefined)S.gd0=pr.guide||'why';go0()})}catch(x){go0()}})();
 </script>
 <script>try{window.top.postMessage('suzuki-ready','*')}catch(e){}</script>
-<div id="bldMark" hidden>빌드표시 20261123-111650 </div>
+<div id="bldMark" hidden>빌드표시 20261123-124651 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();</script>
 </body></html>

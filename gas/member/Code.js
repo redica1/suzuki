@@ -1,4 +1,4 @@
-/* build: 20261123-111650 */
+/* build: 20261123-124651 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -108,7 +108,7 @@ function doGet(e) {
 function include(n) { return HtmlService.createTemplateFromFile(n).getRawContent(); }   // 공통 라이브러리(UiLib)처럼 자바스크립트 파일을 그대로 붙임
 
 function api(name, args) {
-  const open = { login, hello, tHello, tEvents, tLookup, tStart, tResend, tVerify, tCreate, tLogin, tForgot, tReset, tPwChange, tMe, tSavePay, tSavePart, tSaveInfo, tSavePhoto, tAcad, tSaveAcad, tDocUp, tDocGet, tSaveStu, tSaveStus, tStuDetail, tStuSave, tStuTutor, tStuTutorDel, tStuState, tStuStateDel, tMyStu, tMyStuDetail, tMyStuPay, tTchSaves, tTchEnd, tTchEvent, tTchAssign, tTchStart, tSaveRrn, tSaveInc, tAddWork, tClassCreate, tEndWork, tMainWork, tLogout, bPost, bMine, bReply };
+  const open = { login, hello, tHello, tEvents, tLookup, tStart, tResend, tVerify, tCreate, tLogin, tForgot, tReset, tPwChange, tMe, tEditWork, tDelWork, tSavePay, tSavePart, tSaveInfo, tSavePhoto, tAcad, tSaveAcad, tDocUp, tDocGet, tSaveStu, tSaveStus, tStuDetail, tStuSave, tStuTutor, tStuTutorDel, tStuState, tStuStateDel, tMyStu, tMyStuDetail, tMyStuPay, tTchSaves, tTchEnd, tTchEvent, tTchAssign, tTchStart, tSaveRrn, tSaveInc, tAddWork, tClassCreate, tEndWork, tMainWork, tLogout, bPost, bMine, bReply };
   const fns = { printEvents, printEvSave, printData, printSet, printCopy, printExport, ogGet, ogSave, ogToken, boot, saveRow, setCheck, logs, importRoster, saveDues, delDues, reqs, reqDo, delAcad, payView, payAddrSet, bulkSet, saveWorks, importPastDues, importPayInfo, gmList, gmGet, gmSave, gmIssue, gmCopy, gmDel, bList, bSet, bComment, bCat, photoGet, photoDel, fillRegions, saveRates, docList, docUp, docGet, docDel, payList, payOk, payOkMany, payNo, memView, rosterNow, inputStatus, inboxDone, acctReset, classFromStudents, delStus, asTeacher, bankImport, bankList: bankListTop, bankSet, bankDues, bankFromSheet, bankMeta, bankSplitSave, bankPay, bankCamp, bankCampPay, bankPayList, gmProjects, gmCamp, gmNewCamp, gmCampSync, devVirtual };
   try {
     if (open[name]) return Object.assign({ ok: true }, open[name].apply(null, args || []));
@@ -1121,7 +1121,7 @@ function tMe(sess) {
   const HA = tbl_('학원'), hc = col_(HA), heads = HA.v.filter(a => isHeadOf_(a[hc['원장교사ID']], a[hc['공동원장ID']], u.tid) && a[hc['상태']] !== '탈퇴').map(a => ({ id: a[0], name: a[1], kind: a[2] === '클래스' ? '클래스' : '학원' }));
   const p = payRow_(u.tid);
   const reqs = tbl_('요청').v.filter(q => q[2] === u.tid && q[7] === '대기').map(q => q[1]);
-  const works = worksOf_(u.tid).map(w => ({ wid: w['근무ID'], aid: w['학원ID'], name: w['학원ID'] ? (an[w['학원ID']] || w['학원ID']) : w['학원명'] + ' (목록에 없음)', start: w['시작'], end: w['종료'], main: w['주근무'] === '예' }));
+  const works = worksOf_(u.tid).map(w => ({ wid: w['근무ID'], aid: w['학원ID'], name: w['학원ID'] ? (an[w['학원ID']] || w['학원ID']) : w['학원명'] + ' (목록에 없음)', start: w['시작'], end: w['종료'], main: w['주근무'] === '예', own: w['출처'] === '선생님' }));
   const dues = tbl_('연회비').v.filter(d => d[0] === '교사' && d[1] === u.tid).map(d => ({ year: d[2], due: +d[3] || 0, paid: +d[4] || 0, date: d[5], way: d[6] })).sort((a, b) => String(b.year).localeCompare(String(a.year)));
   let events = tbl_('참가이력').v.filter(e => e[1] === '교사' && e[2] === u.tid).map(e => ({ name: e[3], year: e[4], period: e[5], role: e[6], state: e[7] })).sort((a, b) => String(b.year).localeCompare(String(a.year)));
   if (!events.length && settings_()['테스트 표시'] === '예') events = [{ sample: true, name: '2026 여름 스즈키 음악캠프', year: '2026', period: '2026.07.27 ~ 07.31', role: '교사', state: '참가' }];   // STG 예시 (더미)
@@ -2082,11 +2082,38 @@ function tAddWork(sess, w) {
   } finally { lock.releaseLock(); }
   return tMe(sess);
 }
+/* 선생님: 내 소속 학원 이력 날짜 고치기 · 지우기 (11-23) */
+function tEditWork(sess, wid, sy, sm, ey, em) {
+  const u = tsess_(sess);
+  const lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    const { W, list } = workObjs_(); const w = list.find(x => x['근무ID'] === wid && x['교사ID'] === u.tid); if (!w) fail('소속 학원을 찾지 못했어요.');
+    const st = ym_(sy, sm), en = w['종료'] ? ym_(ey, em) : '';
+    if (en && en < st) fail('그만둔 날짜가 시작보다 빨라요.');
+    W.set(w._i, { '시작': st, '종료': en, '수정일': now_(), '수정자': u.email });
+    syncAcads_(u.tid);
+    log_(u.email, '근무', u.tid, '소속 학원 날짜 고침', wid + ' ' + st + '~' + en);
+  } finally { lock.releaseLock(); }
+  return tMe(sess);
+}
+function tDelWork(sess, wid) {
+  const u = tsess_(sess);
+  const lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    const { W, list } = workObjs_(); const w = list.find(x => x['근무ID'] === wid && x['교사ID'] === u.tid); if (!w) fail('소속 학원을 찾지 못했어요.');
+    if (w['출처'] !== '선생님') fail('원장님이나 협회가 넣은 기록은 지울 수 없어요. 그만두셨으면 「종료」를 눌러 주세요.');
+    W.sh.deleteRow(w._i + 2);
+    if (w['주근무'] === '예') { const nx = worksOf_(u.tid).find(x => !x['종료']); if (nx) { const W2 = tbl_('근무'); W2.set(W2.find('근무ID', nx['근무ID']), { '주근무': '예' }); } }
+    syncAcads_(u.tid);
+    log_(u.email, '근무', u.tid, '소속 학원 지움', wid + ' ' + (w['학원ID'] || w['학원명']));
+  } finally { lock.releaseLock(); }
+  return tMe(sess);
+}
 function tEndWork(sess, wid, y, m) {
   const u = tsess_(sess);
   const lock = LockService.getScriptLock(); lock.waitLock(20000);
   try {
-    const { W, list } = workObjs_(); const w = list.find(x => x['근무ID'] === wid && x['교사ID'] === u.tid); if (!w) fail('소속 학원를 찾지 못했어요.');
+    const { W, list } = workObjs_(); const w = list.find(x => x['근무ID'] === wid && x['교사ID'] === u.tid); if (!w) fail('소속 학원을 찾지 못했어요.');
     if (w['종료']) fail('이미 종료한 소속 학원예요.');
     const end = ym_(y, m); if (w['시작'] && end < w['시작']) fail('종료가 시작(' + w['시작'] + ')보다 빨라요.');
     W.set(w._i, { '종료': end, '주근무': '', '수정일': now_(), '수정자': u.email });
@@ -2100,7 +2127,7 @@ function tMainWork(sess, wid) {
   const u = tsess_(sess);
   const lock = LockService.getScriptLock(); lock.waitLock(20000);
   try {
-    const { W, list } = workObjs_(); if (!list.some(x => x['근무ID'] === wid && x['교사ID'] === u.tid && !x['종료'])) fail('소속 학원를 찾지 못했어요.');
+    const { W, list } = workObjs_(); if (!list.some(x => x['근무ID'] === wid && x['교사ID'] === u.tid && !x['종료'])) fail('소속 학원을 찾지 못했어요.');
     list.filter(x => x['교사ID'] === u.tid && !x['종료']).forEach(x => W.set(x._i, { '주근무': x['근무ID'] === wid ? '예' : '' }));
     syncAcads_(u.tid);
   } finally { lock.releaseLock(); }

@@ -1,4 +1,4 @@
-/* build: 20261123-230421 */
+/* build: 20261123-231219 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -105,6 +105,7 @@ function doGet(e) {
   if (e && e.parameter && e.parameter.perf) return perf_();
   if (e && e.parameter && e.parameter.page === 'songs') { let o; try { o = songsPublic_(); } catch (x) { o = { ok: false, msg: String(x && x.message || x) }; } return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON); }   /* 속도 재기 (11-13): 시간만 보여 줌 */
   const admin = e && e.parameter && e.parameter.page === 'admin';
+  if (!admin) { const mt = maint_(); if (mt) return HtmlService.createHtmlOutput(maintHtml_(mt)).setTitle('업데이트 중').addMetaTag('viewport', 'width=device-width, initial-scale=1').setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL); }
   let page, cname = CAMP_NAME, cj = '';
   try { const c = campPublic_(); cname = c.base.name; cj = JSON.stringify(c); } catch (x) {}
   const intl = e && e.parameter && e.parameter.page === 'intl';
@@ -5042,6 +5043,11 @@ function newTestList() {
   const ts = teachers_();
   return names.map(n => { const t = ts.find(x => x.name === n); return [n, t && t.acads[0] || '미사스즈키']; });
 }
+/* 11-23 점검 중: 설정 「점검 중」 = 시각(예 23:45 → 그때까지) 또는 「예」(지울 때까지). 관리자 화면은 그대로 열림 */
+function maint_() { let v = ''; try { v = String(setting_('점검 중') || '').trim(); } catch (e) { return null; } if (!v || /^(아니오|아니요|no|0|끔)$/i.test(v)) return null;
+  const m = v.match(/(\d{1,2}):(\d{2})/); if (m) { const now = Utilities.formatDate(new Date(), TZ, 'HH:mm'), until = ('0' + m[1]).slice(-2) + ':' + m[2]; return now < until ? { until } : null; }
+  return /^(예|네|켬|on|1|yes)$/i.test(v) ? { until: '' } : null; }
+function maintHtml_(mt) { return '<!doctype html><meta charset="utf-8"><style>body{margin:0;font:16px/1.6 -apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;background:#F2F8F8;color:#18232B;display:grid;place-items:center;min-height:100vh;padding:16px;box-sizing:border-box}.b{background:#fff;border:1px solid #D5E6E6;border-radius:18px;padding:28px 24px;max-width:420px;text-align:center}h1{font-size:21px;margin:0 0 8px;color:#0B6F6C}p{margin:4px 0;color:#5B6B73}</style><div class="b"><h1>잠시 업데이트 중이에요</h1><p>더 편하게 쓰실 수 있게 고치고 있어요.</p><p><b>' + (mt.until ? mt.until + '쯤 다시 열려요.' : '조금 뒤 다시 열려요.') + '</b></p><p>그때 새로 고침해 주세요. 이미 저장한 내용은 그대로예요.</p></div>'; }
 function newUiOn_() { try { return /^(켬|켜짐|on|1|예|yes)$/i.test(String(setting_('새 접수 화면') || '').trim()); } catch (e) { return false; } }
 function newPage_(cname) {
   const t = HtmlService.createTemplateFromFile('New'); let stg = false, share = ''; try { ensureSettingsLazy_(); stg = qaOn_(); share = setting_('공유주소'); } catch (x) {}

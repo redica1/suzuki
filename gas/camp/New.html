@@ -404,8 +404,8 @@ function useTest(name,acad){ACAD=acad;ACADS[0]=acad;const r=fakeDB(name,acad);LI
  r.teachers.forEach(t=>MEMBERS.push({n:t.n,k:'교사',i:t.i,a:acad,r:t.r,p:t.p}));MY.forEach(m=>MEMBERS.push({...m,k:'학생'}));
  S.others=null;P.picked=[];Object.keys(I).forEach(k=>delete I[k]);S.mem=[];S.list=[];S.rep='';S.prep={};S.rck={};S.rv={};S.mck={};P.q='';P.hit=null;S.q.a=acad;S.tab=S.after||'home';S.after='';render();scrollTo(0,0)}
 /* 11-23 첫 화면 맨 위 보라 「음원 먼저 내기」 상자 → 누르면 로그인 → 로그인하면 바로 음원 화면 */
-function audBig(){const L=S.apOpen;if(Array.isArray(L)&&!L.length)return '';const ds=(L||[]).map(x=>x.end).filter(Boolean).sort()[0],md=v=>+v.slice(5,7)+'/'+ +v.slice(8,10);
- return `<button type="button" class="audBig" data-mode="member" data-after="audp"><span class="ico" aria-hidden="true">♪</span><span class="tx"><b>음원 먼저 내기</b><span>${L&&L.length?esc(L.map(x=>x.name).join(' · '))+' 음원을 캠프 신청 전에 먼저 받아요.':'오후 · 이브닝 음악회 음원을 캠프 신청 전에 먼저 받아요.'} 선생님 회원 로그인 후 음악회 → 학생 → 음원 주소 순서로 내요.</span></span><span class="go">${ds?md(ds)+'까지 · ':''}로그인하고 내기 →</span></button>`}
+function audBig(home){const L=home?audOpenIn():S.apOpen;if(Array.isArray(L)&&!L.length)return '';const ds=(L||[]).map(x=>x.end).filter(Boolean).sort()[0],md=v=>+v.slice(5,7)+'/'+ +v.slice(8,10);
+ return `<button type="button" class="audBig" ${home?'data-tab="audp"':'data-mode="member" data-after="audp"'}><span class="ico" aria-hidden="true">♪</span><span class="tx"><b>음원 먼저 내기</b><span>${L&&L.length?esc(L.map(x=>x.name).join(' · '))+' 음원을 캠프 신청 전에 먼저 받아요.':'오후 · 이브닝 음악회 음원을 캠프 신청 전에 먼저 받아요.'} ${home?'음악회 → 학생 → 음원 주소 순서로 내요.':'선생님 회원 로그인 후 음악회 → 학생 → 음원 주소 순서로 내요.'}</span></span><span class="go">${ds?md(ds)+'까지 · ':''}${home?'음원 내기':'로그인하고 내기'} →</span></button>`}
 function vLogin(){const B='https:\/\/app.suzukimusickorea.org/camp/';const card=(k,t,d,href)=>href?`<a class="pickcard" href="${href}" target="_blank" rel="noopener"><b>${t}</b><span>${d}</span><small class="hint">기존 STG 화면으로 열려요 ↗</small></a>`:`<button type="button" class="pickcard${S.mode===k?' on':''}" data-mode="${k}"><b>${t}</b><span>${d}</span></button>`;
  return `${S.mode==='member'?'':audBig()}${S.mode==='member'?'':`<div class="panel"><h2 style="margin:0">접수 시작</h2><p class="hint" style="margin:0">어떻게 접수하시나요?</p>
  <div class="pick2">${card('member','회원 신청하기','협회 회원 선생님이 학원 학생들을 접수해요. 회원 이메일 · 비밀번호로 로그인해요.')}
@@ -428,10 +428,11 @@ function vLogin(){const B='https:\/\/app.suzukimusickorea.org/camp/';const card=
 function vHome(){let sum=0;P.picked.forEach(x=>sum+=feeOf(x));const rm=S.list.filter(x=>x.room).length,E=S.ens;
  const box=(t,no,b,d,st)=>`<button type="button" class="hbox" data-tab="${t}"><span class="no">${no}</span><b>${b}</b><p>${d}</p><span class="st">${st}</span></button>`;
  return `<div class="panel" style="margin-bottom:14px"><h2 style="margin:0">${esc(WHO)} 원장님, 안녕하세요</h2><p class="hint" style="margin:4px 0 0">${ACAD} · 1차 접수 12월 1일 ~ 7일 · 하고 싶은 일을 골라요.</p></div>
- <div class="home">${box('pick','1','캠프 신청하기','우리 학원 학생 · 선생님 · 가족을 찾아서 신청해요.',P.picked.length?`${P.picked.filter(x=>x.done).length}명 신청함${P.picked.some(x=>!x.done)?` · ${P.picked.filter(x=>!x.done).length}명 입력 중`:''} →`:'시작하기 →')}
+ ${audBig(1)}<div class="home">${box('pick','1','캠프 신청하기','우리 학원 학생 · 선생님 · 가족을 찾아서 신청해요.',P.picked.length?`${P.picked.filter(x=>x.done).length}명 신청함${P.picked.some(x=>!x.done)?` · ${P.picked.filter(x=>!x.done).length}명 입력 중`:''} →`:'시작하기 →')}
  ${box('mine','2','내 신청 내역','신청한 사람 · 금액을 보고, 고치기 · 입금 신고 · 취소 요청을 해요.',`입금 전 · ${won(sum)} →`)}
  ${box('new','3','가족방 신청','캠프에 신청한 사람끼리 가족으로 묶어 한 방을 써요.',rm?`${rm}가족 신청됨 →`:'신청 안 함 →')}
- ${box('ens','4','앙상블 신청','여러 학원이 한 팀이 돼요. 대표 학원 한 곳에서만 신청해요.',E.on==='rep'&&E.done?`「${esc(E.name)}」 대표 →`:E.on==='mem'&&E.team?`「${esc(E.team)}」 팀에 함께 →`:'신청 안 함 →')}${audDoor()}${(S.orch||[]).length?box('orchv','5','내 오케스트라 · 악보','배정된 오케스트라 수업 시간과 악보를 받아요.',S.orch.map(o=>o.o).join(' · ')+' →'):''}</div>`}
+ ${box('ens','4','앙상블 신청','여러 학원이 한 팀이 돼요. 대표 학원 한 곳에서만 신청해요.',E.on==='rep'&&E.done?`「${esc(E.name)}」 대표 →`:E.on==='mem'&&E.team?`「${esc(E.team)}」 팀에 함께 →`:'신청 안 함 →')}${(S.orch||[]).length?box('orchv','5','내 오케스트라 · 악보','배정된 오케스트라 수업 시간과 악보를 받아요.',S.orch.map(o=>o.o).join(' · ')+' →'):''}</div>`}
+function audOpenIn(){const A=(S.camp&&S.camp.aud)||{};if(!S.camp)return S.apOpen||null;return Object.keys(A).filter(k=>A[k]&&A[k].on&&A[k].pre&&!audPast(k)).map(k=>({name:k,end:audDue(k)||''}))}
 function audDoor(){const A=(S.camp&&S.camp.aud)||{},L=Object.keys(A).filter(k=>A[k]&&A[k].on&&A[k].pre&&!audPast(k));
   return L.length?`<button type="button" class="hbox" data-tab="audp"><span class="no">♪</span><b>음원 먼저 내기</b><p>캠프 신청 전에 ${esc(L.join(' · '))} 음원만 먼저 내요. 신청 때 그 학생에게 저절로 이어져요.</p><span class="st">${mdK(L.map(k=>audDue(k)).sort()[0])}까지 →</span></button>`
    :`<div class="hbox" style="opacity:.6;cursor:default"><span class="no">♪</span><b>음원 먼저 내기</b><p>지금 먼저 받는 음악회가 없어요. 음원은 캠프 신청하기에서 학생마다 넣어요.</p><span class="st">닫힘</span></div>`}

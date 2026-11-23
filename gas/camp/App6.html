@@ -1,4 +1,4 @@
-/* build: 20261123-150123 */
+/* build: 20261123-214420 */
   if(S.ttDay==null){const td=ttToday(days);S.ttDay=td!=null?td:(mine.length?Math.min(...mine.map(x=>x.d)):0)}
   if(tab==='me')return head+seg+(T.prof?`<p class="hint" style="margin:0 0 6px">교수 · 레슨실 <b>${esc(T.prof.room||'미정')}</b></p>`:'')+ttMineList(T,days,mine)+'</section>';
   const AC=S.user.acads||[];if(S.ttAcad&&!AC.includes(S.ttAcad))S.ttAcad='';
@@ -193,7 +193,7 @@ document.addEventListener('click',e=>{
   if(b.id==='nextBtn'&&S.step===3&&S.editNo&&S.quickEdit){S.step=5;S.agree=true}
   if(b.id==='qeSaveBtn'){document.getElementById('nextBtn').click();return}
   if(b.id==='nextBtn'){const next=b;
-    if(S.step===5){S.no=`${CAMP.id}-${String(ALL_SUBS.length+1).padStart(3,'0')}`;if(S.editNo){const old=ALL_SUBS.find(x=>x.no===S.editNo);const nw=makeSub(old.no);const kept=[];
+    if(S.step===5){S.no=`${CAMP.id}-${String(ALL_SUBS.length+1).padStart(3,'0')}`;if(S.editNo){const old=ALL_SUBS.find(x=>x.no===S.editNo);if(old&&old.acad!==S.acad){toast(old.acad+' 접수에 '+S.acad+' 학생을 넣을 수 없어요. 내 접수로 돌아가 '+S.acad+'를 새로 골라 주세요.',true);return}const nw=makeSub(old.no);const kept=[];
         const nb=Math.max(1,...old.ppl.map(q=>q.batch||1))+1;let added=0;
         nw.ppl.forEach(p=>{const o=old.ppl.find(q=>q.id===p.id);if(o&&o.status==='정상'&&o.pay==='신고'){const k=p.id.slice(old.no.length+1);['fee','lesson','dues','type'].forEach(x=>p[x]=o[x]);if(old.form&&old.form.info&&old.form.info[k])nw.form.info[k]=old.form.info[k]}if(o&&o.status!=='취소'){p.pay=o.pay;p.rep=o.rep;p.paidAmt=o.paidAmt||0;p.status=o.status;p.batch=o.batch||1;p.addAt=o.addAt||old.date}else{p.batch=nb;added++}});
         old.ppl.forEach(o=>{if(!nw.ppl.some(p=>p.id===o.id)){if(o.status==='정상'&&(isPaid(o)||o.pay==='신고')){kept.push(o.name);nw.ppl.push(o)}else if(o.status!=='정상')nw.ppl.push(o)}});

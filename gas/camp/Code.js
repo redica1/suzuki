@@ -1,4 +1,4 @@
-/* build: 20261123-150123 */
+/* build: 20261123-214420 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -1481,6 +1481,7 @@ function saveSubs0_(token, subs) {
       const cur = all.find(x => x.no === sb.no);
       if (!cur) throw new Error(sb.no + ' 접수를 찾지 못했어요.');
       if (!canEdit_(u, cur)) throw new Error(sb.no + '는 ' + cur.owner + ' 선생님이 낸 접수라 고칠 수 없어요.');
+      if (sb.acad && sb.acad !== cur.acad) throw new Error(sb.no + '는 ' + cur.acad + ' 접수예요. ' + sb.acad + ' 학생은 새 접수로 신청해 주세요. (고친 내용은 저장하지 않았어요)');   /* 11-23 다른 학원 학생으로 덮어써서 원래 학생이 빠지던 것 막기 */
       sb.acad = cur.acad; sb.owner = cur.owner; if (cur.contact) sb.contact = cur.contact; else delete sb.contact; sb.createdAt = cur.createdAt; sb.no = cur.no; sb.reqId = cur.reqId; sb.rev = (+cur.rev || 0) + 1;
       famGate_(cur, sb);
       sb.ppl.forEach(p => { const c = cur.ppl.find(x => x.id === p.id); p.addAt = !c ? stamp_() : (c.status === '취소' && p.status !== '취소' && !(+c.paidAmt > 0)) ? stamp_() : (c.addAt || p.addAt || ''); });   /* 11-23 추가 일시 = 누른 시각 (새 사람 · 되살린 사람) · 있던 사람은 그대로 */

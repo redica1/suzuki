@@ -416,7 +416,7 @@ function useTest(name,acad){ACAD=acad;ACADS[0]=acad;const r=fakeDB(name,acad);LI
 function audBig(home){const L=home?audOpenIn():S.apOpen;if(Array.isArray(L)&&!L.length)return '';const ds=(L||[]).map(x=>x.end).filter(Boolean).sort()[0],md=v=>+v.slice(5,7)+'/'+ +v.slice(8,10);
  return `<button type="button" class="audBig" ${home?'data-tab="audp"':'data-mode="member" data-after="audp"'}><span class="ico" aria-hidden="true">♪</span><span class="tx"><b>음원 먼저 내기</b><span>${L&&L.length?esc(L.map(x=>x.name).join(' · '))+' 음원을 캠프 신청 전에 먼저 받아요.':'오후 · 이브닝 음악회 음원을 캠프 신청 전에 먼저 받아요.'} ${home?'음악회 → 학생 → 음원 주소 순서로 내요.':'선생님 회원 로그인 후 음악회 → 학생 → 음원 주소 순서로 내요.'}</span></span><span class="go">${ds?md(ds)+'까지 · ':''}${home?'음원 내기':'로그인하고 내기'} →</span></button>`}
 function vLogin(){const B='https:\/\/app.suzukimusickorea.org/camp/';const card=(k,t,d,href)=>href?`<a class="pickcard" href="${href}" target="_blank" rel="noopener"><b>${t}</b><span>${d}</span><small class="hint">기존 접수 화면으로 열려요 ↗</small></a>`:`<button type="button" class="pickcard${S.mode===k?' on':''}" data-mode="${k}"><b>${t}</b><span>${d}</span></button>`;
- return `${S.mode==='member'?'':audBig()}${S.mode==='member'?'':`<div class="panel"><h2 style="margin:0">접수 시작</h2><p class="hint" style="margin:0">어떻게 접수하시나요?</p>
+ return `${S.mode==='member'?'':audBig()}${S.mode==='member'?'':`<div class="panel"><h2 style="margin:0">접수 시작</h2><div class="spread"><p class="hint" style="margin:0">어떻게 접수하시나요?</p>${gdLink()}</div>
  <div class="pick2">${card('member','회원 신청하기','협회 회원 선생님이 학원 학생들을 접수해요. 회원 이메일 · 비밀번호로 로그인해요.')}
  ${card('guest','비회원 신청하기','회원 학원에 다니지 않는 아이를 보호자가 직접 접수해요. 보호자 이름과 휴대전화만 있으면 돼요.',B+'index.html?as=guest'+TA)}
  ${card('staff','관계자 신청하기','초빙교수 · 반주자 · 지휘자 · 통역 · 초청강사 · 스태프. 협회 회원관리에 「관계자」로 가입한 이메일 · 비밀번호로 로그인해요.',B+'index.html?as=staff'+TA)}
@@ -440,9 +440,11 @@ function pqHome(){const Q=S.pq||(S.token?null:{L:[{st:'보냄'},{st:'담음',m:{
  const take=L.filter(r=>(r.st==='보냄'||r.st==='바뀜')&&!(cx(r)&&cx(r).st==='취소')).length,pay=L.reduce((t,r)=>t+(((r.m&&r.m.reps)||[]).filter(x=>x.st==='신고').length),0),req=L.filter(r=>cx(r)&&cx(r).st==='요청').length;
  const it=[take&&'담기 전 '+take,pay&&'입금 확인 '+pay,req&&'취소 요청 '+req,Q.nob&&'학원 통장 넣기'].filter(Boolean);const href=(typeof TA==='string'?'https:\/\/app.suzukimusickorea.org/camp/index.html?old'+TA:'#');
  return `<a class="pqBox${it.length?' on':''}" href="${href}" target="_blank" rel="noopener"><span class="tx"><b>학부모가 보낸 신청 ${L.length}건</b><span>${it.length?'할 일: '+it.map(esc).join(' · '):'할 일 없음 · 모두 처리했어요'}</span><small>「접수에 담기」 · 학원 통장 · 입금 확인 · 취소 요청은 기존 접수 화면에서 해요 (같은 이메일 · 비밀번호로 로그인)</small></span><span class="go">기존 화면 열기 ↗</span></a>`}
+/* 11-23 접수 안내 · 자주 묻는 것: 기존 화면의 안내 창(?guide)을 새 창으로 */
+function gdLink(){const href=(typeof TA==='string'?'https:\/\/app.suzukimusickorea.org/camp/index.html?guide'+TA:'#');return `<a class="btn sm" href="${href}" target="_blank" rel="noopener">📖 접수 안내 · 자주 묻는 것 ↗</a>`}
 function vHome(){let sum=0;P.picked.forEach(x=>sum+=feeOf(x));const rm=S.list.filter(x=>x.room).length,E=S.ens;
  const box=(t,no,b,d,st)=>`<button type="button" class="hbox" data-tab="${t}"><span class="no">${no}</span><b>${b}</b><p>${d}</p><span class="st">${st}</span></button>`;
- return `<div class="panel" style="margin-bottom:14px"><h2 style="margin:0">${esc(WHO)} ${(S.me&&S.me.role&&S.me.role!=='원장')?'선생님':'원장님'}, 안녕하세요</h2><p class="hint" style="margin:4px 0 0">${ACAD} · ${roundTxt()}하고 싶은 일을 골라요.</p></div>
+ return `<div class="panel" style="margin-bottom:14px"><div class="spread"><span></span>${gdLink()}</div><h2 style="margin:0">${esc(WHO)} ${(S.me&&S.me.role&&S.me.role!=='원장')?'선생님':'원장님'}, 안녕하세요</h2><p class="hint" style="margin:4px 0 0">${ACAD} · ${roundTxt()}하고 싶은 일을 골라요.</p></div>
  ${audBig(1)}${pqHome()}<div class="home">${box('pick','1','캠프 신청하기','우리 학원 학생 · 선생님 · 가족을 찾아서 신청해요.',P.picked.length?`${P.picked.filter(x=>x.done).length}명 신청함${P.picked.some(x=>!x.done)?` · ${P.picked.filter(x=>!x.done).length}명 입력 중`:''} →`:'시작하기 →')}
  ${box('mine','2','내 신청 내역','신청한 사람 · 금액을 보고, 고치기 · 입금 신고 · 취소 요청을 해요.',`입금 전 · ${won(sum)} →`)}
  ${box('new','3','가족방 신청','캠프에 신청한 사람끼리 가족으로 묶어 한 방을 써요.',rm?`${rm}가족 신청됨 →`:'신청 안 함 →')}

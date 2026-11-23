@@ -1,4 +1,4 @@
-/* build: 20261123-124651 */
+/* build: 20261123-125850 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -201,6 +201,7 @@ function saveRow(who, table, obj, base) {
       T.set(i, Object.assign({}, o, { '수정일': stamp, '수정자': who.name }));
     }
     if (table === '교사' && '휴대전화' in o) headPhoneSync_(id, o['휴대전화'], who.name);
+    if (table === '교사') try { tState_(id, true); } catch (e) { }
     log_(who.name, table, id, i < 0 ? '추가' : '수정', diff.join(' · ').slice(0, 1000));
     if (table === '학원' || table === '교사') try { roleSyncAll_(who.name); } catch (e) { }
     const T2 = tbl_(table); return { row: T2.rowObj(T2.find(k, id)) };
@@ -1077,6 +1078,7 @@ function tLogin(email, pw) {
   if (a.state === '대기') fail('협회가 확인하는 중이에요. 확인되면 이메일로 알려 드려요.');
   if (a.state === '반려') fail('신청이 반려됐어요' + (a.memo ? ' (' + a.memo + ')' : '') + '. 협회 카카오톡 채널로 문의해 주세요.');
   if (a.state !== '사용' || !a.tid) fail('사용할 수 없는 계정이에요. 협회에 문의해 주세요.');
+  { const st = tState_(a.tid, true); if (st === '탈퇴' || st === '활동정지') fail(T_BLOCK_MSG); }
   CacheService.getScriptCache().remove('tl:' + email);
   const A = tbl_('계정'); A.set(a.i, { '마지막로그인': now_() });
   return { sess: newSess_({ email, tid: a.tid }), mustPw: /^#임시/.test(String(a.memo || '')) };   /* 11-23: 임시 비밀번호로 들어오면 새 비밀번호부터 */
@@ -2212,7 +2214,13 @@ function asTeacher(who, tid) {
   return { token, url: ScriptApp.getService().getUrl() };
 }
 function newSess_(o) { const t = Utilities.getUuid(); cput_('ts:' + t, o, 6 * 3600); return t; }
-function tsess_(t) { const v = t && cget_('ts:' + t); if (!v) fail('LOGIN 로그인 시간이 지났어요. 다시 로그인해 주세요.'); cput_('ts:' + t, v, 6 * 3600); return v; }
+function tsess_(t) { const v = t && cget_('ts:' + t); if (!v) fail('LOGIN 로그인 시간이 지났어요. 다시 로그인해 주세요.'); if (v.tid && tBlocked_(v.tid)) { CacheService.getScriptCache().remove('ts:' + t); fail('LOGIN ' + T_BLOCK_MSG); } cput_('ts:' + t, v, 6 * 3600); return v; }
+/** 11-23: 협회가 상태를 「탈퇴」 · 「활동정지」로 바꾼 교사는 로그인 · 사용을 막음 (휴직은 그대로). 상태는 10분 캐시, 관리자가 저장하면 바로 바뀜 */
+const T_BLOCK_MSG = '지금은 회원 사이트를 쓸 수 없는 상태예요. 협회에 문의해 주세요.';
+function tState_(tid, fresh) { const k = 'tst:' + tid; let st = fresh ? null : CacheService.getScriptCache().get(k);
+  if (st === null) { const T = tbl_('교사'), i = T.find('교사ID', tid); st = i < 0 ? '' : String(T.get(i, '상태') || ''); CacheService.getScriptCache().put(k, st || '-', 600); }
+  return st === '-' ? '' : st; }
+function tBlocked_(tid) { const st = tState_(tid); return st === '탈퇴' || st === '활동정지'; }
 function tok_(token) { const s = cget_('tk:' + token); if (!s) fail('시간이 지났어요. 처음부터 다시 해 주세요.'); return s; }
 function cput_(k, v, sec) { CacheService.getScriptCache().put(k, JSON.stringify(v), sec); }
 function cget_(k) { const v = CacheService.getScriptCache().get(k); return v ? JSON.parse(v) : null; }

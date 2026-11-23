@@ -1,4 +1,4 @@
-/* build: 20261123-121713 */
+/* build: 20261123-123806 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -1808,9 +1808,21 @@ function songDef_() { try { const h = HtmlService.createHtmlOutputFromFile('App1
 /** 11-23 협회 곡목 리스트(구글 시트)를 읽어 곡 목록 모양으로 — 관리자 「협회 곡목 리스트로 맞추기」
  *  탭: 「Vn 한글」 「Vc 한글」 = C열 음악회 신청곡 · D열 책자 제목 · E열 수정제목(있으면 이것) / 「Vn English」 「Vc English」 = B열 코드 · C열 영어 제목 (작곡가 괄호는 뺌) */
 const SONG_REP_SS = '1nknlb8uSMd2Kxe-HkCTFzLpPChJv0rF5ZL8m5E6FdAE';
+const songRepId_ = v => { const m = String(v || '').match(/\/d\/([a-zA-Z0-9_-]{20,})/) || String(v || '').trim().match(/^([a-zA-Z0-9_-]{20,})$/); return m ? m[1] : ''; };
+function songRepUrl(token) { adm_(token); const id = songRepId_(setting_('협회 곡목 시트')) || SONG_REP_SS; return { url: 'https://docs.google.com/spreadsheets/d/' + id + '/edit', mine: !!songRepId_(setting_('협회 곡목 시트')) }; }
+/** 11-23 협회 곡목 리스트 시트 주소 바꾸기 (설정 「협회 곡목 시트」) · 빈 값이면 처음 시트로 */
+function songRepUrlSet(token, url) {
+  const a = adm_(token); needCamp_(a);
+  const id = url ? songRepId_(url) : ''; if (url && !id) throw new Error('구글 스프레드시트 주소를 넣어 주세요. (https://docs.google.com/spreadsheets/d/…)');
+  if (id) { try { SpreadsheetApp.openById(id); } catch (e) { throw new Error('그 시트를 열 수 없어요. 이 앱 계정에 시트 보기 권한을 주세요.'); } }
+  ensureSettings_(); const sh = SpreadsheetApp.getActive().getSheetByName('설정'), r = rows_('설정').find(x => String(x['항목']) === '협회 곡목 시트');
+  if (r) sh.getRange(r._row, 2).setValues([[id]]); else sh.appendRow(['협회 곡목 시트', id, '음악회 곡목록 「협회 곡목 리스트로 맞추기」가 읽는 구글 시트']);
+  log_('관리자 ' + a.name, '설정 바꿈', '협회 곡목 시트 = ' + (id || '처음 시트')); setMemoClear_();
+  return songRepUrl(token);
+}
 function songRepRead(token) {
   adm_(token);
-  let ss; try { ss = SpreadsheetApp.openById(setting_('협회 곡목 시트') || SONG_REP_SS); } catch (e) { throw new Error('협회 곡목 리스트 시트를 열 수 없어요. 이 앱 계정에 시트 보기 권한을 주세요.'); }
+  let ss; try { ss = SpreadsheetApp.openById(songRepId_(setting_('협회 곡목 시트')) || SONG_REP_SS); } catch (e) { throw new Error('협회 곡목 리스트 시트를 열 수 없어요. 이 앱 계정에 시트 보기 권한을 주세요.'); }
   const norm = v => String(v || '').replace(/\s+/g, ' ').replace(/\s*\(/g, ' (').replace(/\(\s+/g, '(').trim();
   const out = {}, cnt = {};
   [['Vn', '바이올린'], ['Vc', '첼로']].forEach(([ab, inst]) => {

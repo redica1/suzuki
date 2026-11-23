@@ -93,6 +93,7 @@
   document.getElementById('direct').href = APP;
   var AS = (location.search.match(/[?&]as=(staff|member|guest)\b/) || [])[1];   /* 회원관리 「행사 참여」에서 오면 그 로그인 화면으로 바로 */
   var EXTRA = (/[?&]board\b/.test(location.search) ? 'board=1' : /[?&]guide\b/.test(location.search) ? 'guide=1' : /[?&]aud\b/.test(location.search) ? 'aud=1' : '');   /* ?board = 게시판 바로 · ?guide = 접수 안내 창 */
+  if (/[?&]old\b/.test(location.search)) { APP += (APP.indexOf('?') < 0 ? '?' : '&') + 'page=old'; document.getElementById('direct').href = APP; }   /* 11-23 옛 접수 화면 (새 화면 메인 전환 뒤) */
   if (AS) { APP += '?as=' + AS; document.getElementById('direct').href = APP; }
   if (EXTRA) { APP += (APP.indexOf('?') < 0 ? '?' : '&') + EXTRA; document.getElementById('direct').href = APP; }
   /* STG 시험 체크에서 오면 ?test&tl=시험 선생님&go=화면 → 그 선생님으로 바로 들어가 그 화면으로 (11-15) */

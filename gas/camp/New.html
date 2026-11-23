@@ -1,4 +1,4 @@
-<title>[STG] 새 접수</title>
+<title>스즈키 겨울 음악제 접수</title><script>var ENV=<?!= env ?>;var TQ=ENV.stg?'?test':'',TA=ENV.stg?'&test':'';</script>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap">
 <style>
@@ -105,7 +105,7 @@ a.hbox{text-decoration:none}.apStu{display:grid;grid-template-columns:repeat(aut
 .rosT tr.gone td{background:#f3f5f5;color:#9aa5a8}.rosT tr.gone .kind,.rosT tr.gone .dpill{opacity:.55}.rosT tr.gone b{color:#8a9599;font-weight:600}.gdone{display:inline-block;font-size:12px;font-weight:700;color:#6b777b;line-height:1.3}
 </style>
 
-<div class="band"><div class="in"><h1>2027 스즈키 겨울 음악제 접수</h1><p id="who">STG 시험</p></div></div>
+<div class="band"><div class="in"><h1>2027 스즈키 겨울 음악제 접수</h1><p id="who"></p></div></div>
 <main class="wrap">
   <div class="tabs" id="nav" role="group" aria-label="메뉴" hidden>
     <button type="button" data-tab="home" aria-pressed="false">홈</button>
@@ -115,7 +115,7 @@ a.hbox{text-decoration:none}.apStu{display:grid;grid-template-columns:repeat(aut
     <button type="button" data-tab="ens" aria-pressed="false">앙상블 신청</button>
   </div>
   <div id="view"></div>
-  <p class="mock">STG 새 접수 화면이에요. 로그인 · 명단 · 캠프 신청 · 가족방 · 입금 신고는 STG 실제 데이터예요. 앙상블은 아직 화면에서만 바뀌어요.</p>
+  <p class="mock" id="mockNote">STG 새 접수 화면이에요. 로그인 · 명단 · 캠프 신청 · 가족방 · 입금 신고는 STG 실제 데이터예요. 앙상블은 아직 화면에서만 바뀌어요.</p>
 </main>
 
 <nav class="tabbar" id="tabbar" hidden aria-label="아래 메뉴">
@@ -406,28 +406,29 @@ function useTest(name,acad){ACAD=acad;ACADS[0]=acad;const r=fakeDB(name,acad);LI
 /* 11-23 첫 화면 맨 위 보라 「음원 먼저 내기」 상자 → 누르면 로그인 → 로그인하면 바로 음원 화면 */
 function audBig(home){const L=home?audOpenIn():S.apOpen;if(Array.isArray(L)&&!L.length)return '';const ds=(L||[]).map(x=>x.end).filter(Boolean).sort()[0],md=v=>+v.slice(5,7)+'/'+ +v.slice(8,10);
  return `<button type="button" class="audBig" ${home?'data-tab="audp"':'data-mode="member" data-after="audp"'}><span class="ico" aria-hidden="true">♪</span><span class="tx"><b>음원 먼저 내기</b><span>${L&&L.length?esc(L.map(x=>x.name).join(' · '))+' 음원을 캠프 신청 전에 먼저 받아요.':'오후 · 이브닝 음악회 음원을 캠프 신청 전에 먼저 받아요.'} ${home?'음악회 → 학생 → 음원 주소 순서로 내요.':'선생님 회원 로그인 후 음악회 → 학생 → 음원 주소 순서로 내요.'}</span></span><span class="go">${ds?md(ds)+'까지 · ':''}${home?'음원 내기':'로그인하고 내기'} →</span></button>`}
-function vLogin(){const B='https:\/\/app.suzukimusickorea.org/camp/';const card=(k,t,d,href)=>href?`<a class="pickcard" href="${href}" target="_blank" rel="noopener"><b>${t}</b><span>${d}</span><small class="hint">기존 STG 화면으로 열려요 ↗</small></a>`:`<button type="button" class="pickcard${S.mode===k?' on':''}" data-mode="${k}"><b>${t}</b><span>${d}</span></button>`;
+function vLogin(){const B='https:\/\/app.suzukimusickorea.org/camp/';const card=(k,t,d,href)=>href?`<a class="pickcard" href="${href}" target="_blank" rel="noopener"><b>${t}</b><span>${d}</span><small class="hint">기존 접수 화면으로 열려요 ↗</small></a>`:`<button type="button" class="pickcard${S.mode===k?' on':''}" data-mode="${k}"><b>${t}</b><span>${d}</span></button>`;
  return `${S.mode==='member'?'':audBig()}${S.mode==='member'?'':`<div class="panel"><h2 style="margin:0">접수 시작</h2><p class="hint" style="margin:0">어떻게 접수하시나요?</p>
  <div class="pick2">${card('member','회원 신청하기','협회 회원 선생님이 학원 학생들을 접수해요. 회원 이메일 · 비밀번호로 로그인해요.')}
- ${card('guest','비회원 신청하기','회원 학원에 다니지 않는 아이를 보호자가 직접 접수해요. 보호자 이름과 휴대전화만 있으면 돼요.',B+'index.html?test')}
- ${card('staff','관계자 신청하기','초빙교수 · 반주자 · 지휘자 · 통역 · 초청강사 · 스태프. 협회 회원관리에 「관계자」로 가입한 이메일 · 비밀번호로 로그인해요.',B+'index.html?test')}
- ${card('intl','Overseas participants <small style="font-weight:500">· 해외 신청하기</small>','<span lang="en">For groups from other countries. Registration is in English and fees are in USD.</span>',B+'intl.html?test')}
+ ${card('guest','비회원 신청하기','회원 학원에 다니지 않는 아이를 보호자가 직접 접수해요. 보호자 이름과 휴대전화만 있으면 돼요.',B+'index.html?as=guest'+TA)}
+ ${card('staff','관계자 신청하기','초빙교수 · 반주자 · 지휘자 · 통역 · 초청강사 · 스태프. 협회 회원관리에 「관계자」로 가입한 이메일 · 비밀번호로 로그인해요.',B+'index.html?as=staff'+TA)}
+ ${card('intl','Overseas participants <small style="font-weight:500">· 해외 신청하기</small>','<span lang="en">For groups from other countries. Registration is in English and fees are in USD.</span>',B+'intl.html'+TQ)}
 </div>
- <p class="hint" style="margin:0">새 화면은 「회원 신청하기」만 있어요. 나머지는 지금 STG 화면이 열려요.</p></div>
- <div class="panel tNames"><h3 style="margin:0">STG 시험 선생님으로 바로 들어가기</h3><p class="hint" style="margin:0">STG 시트의 그 학원 명단으로 들어가요. 비밀번호 없이 들어가요.</p>
- <div class="pick2">${(S.tt||TT0).map(([n,a])=>`<button class="pickcard" type="button" data-tt="${esc(n)}" data-ta="${esc(a)}" style="border-style:dashed"><b>${esc(n)} 선생님</b><span>${esc(a)} · STG 실제 명단으로 들어가요</span></button>`).join('')}</div></div>`}
+ <p class="hint" style="margin:0">비회원 · 관계자 · 해외는 기존 접수 화면에서 해요.</p></div>
+ ${ENV.stg?`<div class="panel tNames"><h3 style="margin:0">STG 시험 선생님으로 바로 들어가기</h3><p class="hint" style="margin:0">STG 시트의 그 학원 명단으로 들어가요. 비밀번호 없이 들어가요.</p>
+ <div class="pick2">${(S.tt||TT0).map(([n,a])=>`<button class="pickcard" type="button" data-tt="${esc(n)}" data-ta="${esc(a)}" style="border-style:dashed"><b>${esc(n)} 선생님</b><span>${esc(a)} · STG 실제 명단으로 들어가요</span></button>`).join('')}</div></div>`:''}`}
  ${S.mode==='member'?`<div class="panel login lg2"><h2 style="margin:0">${S.after==='audp'?'음원 먼저 내기 · 로그인':'회원 신청하기'}</h2>${S.after==='audp'?'<p class="apNote">♪ 회원 선생님 이메일 · 비밀번호로 로그인하면 바로 「음원 먼저 내기」로 가요.</p>':''}<label class="lbl">이메일</label><div class="row" style="gap:8px;flex-wrap:nowrap"><input id="lgId" placeholder="아이디" autocomplete="off" style="flex:1;min-width:0"><span class="hint">@</span><select id="lgDom" style="flex:1.2;min-width:0"><option value="">선택하기</option>${['naver.com','gmail.com','daum.net','hanmail.net','kakao.com','nate.com','직접 입력'].map(d=>`<option>${d}</option>`).join('')}</select></div>
  <label class="lbl">비밀번호</label><input type="password" id="lgPw" autocomplete="off">
  <label class="sw" style="font-weight:700"><input type="checkbox"> 비밀번호 저장하기 <span class="hint" style="font-weight:400">이 기기에만 · 공용 PC는 체크하지 마세요</span></label>
- <p class="hint" style="color:var(--warn);margin:0">STG(시험) 화면이에요. <b>회원관리 STG</b> 계정 비밀번호로 들어가요. 메인 회원관리 계정과는 따로예요.</p>
+ ${ENV.stg?'<p class="hint" style="color:var(--warn);margin:0">STG(시험) 화면이에요. <b>회원관리 STG</b> 계정 비밀번호로 들어가요. 메인 회원관리 계정과는 따로예요.</p>':''}
  <label class="sw" style="font-weight:700"><input type="checkbox" id="lgAg" ${S.lgAg?'checked':''}> 개인정보 수집 · 이용에 동의해요 <span class="hint" style="font-weight:400">(필수 · 캠프 접수 · 연락에만 써요)</span></label>
  <button class="btn pri wide" type="button" data-act="login" ${S.loading?'disabled':''}>${S.loading?'명단 불러오는 중…':'로그인'}</button>${S.lerr?`<p class="hint" style="color:var(--warn);font-weight:700;margin:0">${esc(S.lerr)}</p>`:''}
- <div class="row" style="justify-content:space-between"><button class="btn sm" type="button" data-mode="">← 처음으로</button><a class="btn sm" href="https:\/\/app.suzukimusickorea.org/member/index.html?test" target="_blank" rel="noopener" style="color:#1a3ad6">비밀번호를 잊었어요 ↗</a></div>
+ <div class="row" style="justify-content:space-between"><button class="btn sm" type="button" data-mode="">← 처음으로</button><a class="btn sm" href="https:\/\/app.suzukimusickorea.org/member/index.html${TQ}" target="_blank" rel="noopener" style="color:#1a3ad6">비밀번호를 잊었어요 ↗</a></div>
  <div class="joinbox"><b>아직 회원 가입을 안 하셨나요?</b><p class="hint" style="margin:0">협회 선생님 회원에서 이름과 휴대전화로 확인한 뒤 이메일 · 비밀번호를 만들어요. 가입이 끝나면 같은 이메일 · 비밀번호로 여기에 들어올 수 있어요.</p>
- <a class="btn pri" href="https:\/\/app.suzukimusickorea.org/member/index.html?test" target="_blank" rel="noopener" style="justify-self:start">선생님 회원 가입하기 ↗</a><p class="hint" style="margin:0">이번 겨울 캠프는 가입 전이어도 접수할 수 있어요.</p><button class="btn sm" type="button" data-act="login" style="justify-self:start">가입 전이에요 · 이름과 휴대전화로 들어가기</button></div></div>`:''}`}
+ <a class="btn pri" href="https:\/\/app.suzukimusickorea.org/member/index.html${TQ}" target="_blank" rel="noopener" style="justify-self:start">선생님 회원 가입하기 ↗</a><p class="hint" style="margin:0">이번 겨울 캠프는 가입 전이어도 접수할 수 있어요.</p><button class="btn sm" type="button" data-act="login" style="justify-self:start">가입 전이에요 · 이름과 휴대전화로 들어가기</button></div></div>`:''}`}
+function roundTxt(){const C=S.camp;if(!C)return '1차 접수 12월 1일 ~ 7일 · ';const R=C.rounds||[],r=R[C.ri];if(!r)return '';const md=v=>v?(+String(v).slice(5,7))+'월 '+(+String(v).slice(8,10))+'일':'';return esc(r.n||'')+' 접수 '+md(r.from)+(r.to?' ~ '+md(r.to):'')+' · '}
 function vHome(){let sum=0;P.picked.forEach(x=>sum+=feeOf(x));const rm=S.list.filter(x=>x.room).length,E=S.ens;
  const box=(t,no,b,d,st)=>`<button type="button" class="hbox" data-tab="${t}"><span class="no">${no}</span><b>${b}</b><p>${d}</p><span class="st">${st}</span></button>`;
- return `<div class="panel" style="margin-bottom:14px"><h2 style="margin:0">${esc(WHO)} 원장님, 안녕하세요</h2><p class="hint" style="margin:4px 0 0">${ACAD} · 1차 접수 12월 1일 ~ 7일 · 하고 싶은 일을 골라요.</p></div>
+ return `<div class="panel" style="margin-bottom:14px"><h2 style="margin:0">${esc(WHO)} ${(S.me&&S.me.role&&S.me.role!=='원장')?'선생님':'원장님'}, 안녕하세요</h2><p class="hint" style="margin:4px 0 0">${ACAD} · ${roundTxt()}하고 싶은 일을 골라요.</p></div>
  ${audBig(1)}<div class="home">${box('pick','1','캠프 신청하기','우리 학원 학생 · 선생님 · 가족을 찾아서 신청해요.',P.picked.length?`${P.picked.filter(x=>x.done).length}명 신청함${P.picked.some(x=>!x.done)?` · ${P.picked.filter(x=>!x.done).length}명 입력 중`:''} →`:'시작하기 →')}
  ${box('mine','2','내 신청 내역','신청한 사람 · 금액을 보고, 고치기 · 입금 신고 · 취소 요청을 해요.',`입금 전 · ${won(sum)} →`)}
  ${box('new','3','가족방 신청','캠프에 신청한 사람끼리 가족으로 묶어 한 방을 써요.',rm?`${rm}가족 신청됨 →`:'신청 안 함 →')}
@@ -482,7 +483,7 @@ function vEns(){const E=S.ens,seg=(v,t)=>`<button type="button" data-eon="${v}" 
  :E.on==='mem'?`<div class="panel"><p class="hint" style="margin-top:0">우리 학원이 들어갈 팀을 골라요. 곡 · 인원은 대표 학원이 넣어요.</p>${TEAMS.map(t=>`<div class="mem"><span class="who"><b>${esc(t.name)}</b><small>대표 ${esc(t.rep)}${t.mates.length?' · '+t.mates.map(esc).join(' · '):''}</small></span>${E.team===t.name?'<span class="pill ok">함께해요</span>':`<button class="btn sm" type="button" data-eteam="${esc(t.name)}">이 팀에 함께</button>`}</div>`).join('')}<p class="hint">찾는 팀이 없으면 대표 학원이 먼저 신청해야 해요.</p></div>`
  :'<div class="panel"><p class="hint" style="margin:0">앙상블에 나가지 않아요.</p></div>'}`}
 function toast(m,bad){let t=document.getElementById('toast');if(!t){t=document.createElement('div');t.id='toast';t.setAttribute('role','status');document.body.appendChild(t)}t.textContent=m;t.classList.toggle('bad',!!bad);t.classList.add('on');clearTimeout(toast.h);toast.h=setTimeout(()=>t.classList.remove('on'),1800)}
-function render(){document.querySelectorAll('[data-tab]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.tab===S.tab)));document.getElementById('view').innerHTML=S.tab==='audp'?vAudP():S.tab==='orchv'?vOrchV():S.tab==='info'?vInfo():S.tab==='pick'?vPick():S.tab==='flow'?vFlow():S.tab==='list'||S.tab==='new'?vList()+(S.tab==='new'?vNew():''):S.tab==='mine'?vMine():S.tab==='login'?vLogin():S.tab==='home'?vHome():S.tab==='ens'?vEns():S.tab==='tt'?`<div class="panel"><h2 style="margin:0">내 시간표</h2><p class="hint" style="margin:0">그룹레슨 · 개인레슨 · 마스터클래스 · 음악회 시간은 배정이 끝나면 여기서 봐요. (미리보기: 배정 전)</p></div>`:S.tab==='q'?`<div class="panel"><h2 style="margin:0">게시판</h2><p class="hint" style="margin:0">협회에 묻고 답을 받는 곳이에요. 지금 STG 게시판과 같아요. (미리보기에는 글이 없어요)</p></div>`:vNew();document.getElementById('nav').hidden=S.tab==='login';{const tb=document.getElementById('tabbar'),on=S.tab!=='login'&&S.tab!=='pick'&&S.tab!=='info';tb.hidden=!on;document.body.classList.toggle('tbOn',on);const n=P.picked.filter(x=>x.done).length,b=document.getElementById('tbMineN');b.hidden=!n;b.textContent=n}document.getElementById('who').textContent=S.tab==='login'?'STG 시험 · 로그인':WHO+' '+((S.me&&S.me.role!=='원장')?'선생님':'원장님')+' · '+ACAD+(S.token?' · STG 실제 명단 · 캠프 신청은 STG 시트에 저장돼요':' · 가상 데이터')}
+function render(){document.querySelectorAll('[data-tab]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.tab===S.tab)));document.getElementById('view').innerHTML=S.tab==='audp'?vAudP():S.tab==='orchv'?vOrchV():S.tab==='info'?vInfo():S.tab==='pick'?vPick():S.tab==='flow'?vFlow():S.tab==='list'||S.tab==='new'?vList()+(S.tab==='new'?vNew():''):S.tab==='mine'?vMine():S.tab==='login'?vLogin():S.tab==='home'?vHome():S.tab==='ens'?vEns():S.tab==='tt'?`<div class="panel"><h2 style="margin:0">내 시간표</h2><p class="hint" style="margin:0">그룹레슨 · 개인레슨 · 마스터클래스 · 음악회 시간은 배정이 끝나면 여기서 봐요. (미리보기: 배정 전)</p></div>`:S.tab==='q'?`<div class="panel"><h2 style="margin:0">게시판</h2><p class="hint" style="margin:0">협회에 묻고 답을 받는 곳이에요. 지금 STG 게시판과 같아요. (미리보기에는 글이 없어요)</p></div>`:vNew();document.getElementById('nav').hidden=S.tab==='login';{const tb=document.getElementById('tabbar'),on=S.tab!=='login'&&S.tab!=='pick'&&S.tab!=='info';tb.hidden=!on;document.body.classList.toggle('tbOn',on);const n=P.picked.filter(x=>x.done).length,b=document.getElementById('tbMineN');b.hidden=!n;b.textContent=n}document.getElementById('who').textContent=S.tab==='login'?(ENV.stg?'STG 시험 · 로그인':'로그인'):WHO+' '+((S.me&&S.me.role!=='원장')?'선생님':'원장님')+' · '+ACAD+(ENV.stg?(S.token?' · STG 실제 명단 · 캠프 신청은 STG 시트에 저장돼요':' · 가상 데이터'):'')}
 document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const d=b.dataset;
  if(d.tab){if(d.tab==='audp'&&S.tab!=='audp'&&!S.apl){S.AP=null}S.tab=d.tab;if(d.mv)S.mv=d.mv;if(d.tab==='new'&&!S.room&&!S.done)S.room=true;render();scrollTo(0,0);return}
  if(d.act==='login'){const go=()=>{S.loading=false;S.tab='home';render()};if(!(window.google&&google.script&&google.script.run)){go();return}S.loading=true;S.lerr='';render();google.script.run.withSuccessHandler(r=>{loadLive(r);go()}).withFailureHandler(er=>{S.loading=false;S.lerr='명단을 못 불러왔어요: '+(er&&er.message||er)+' · 가상 데이터로 들어가려면 다시 눌러요.';render();window.google=undefined}).newPreview();return}
@@ -645,3 +646,5 @@ document.addEventListener('input',e=>{if(e.isComposing&&/^(enAq|qn|rq|pq)$/.test
 document.addEventListener('compositionend',e=>{if(/^(enAq|qn|rq|pq)$/.test(e.target.id||''))e.target.dispatchEvent(new Event('input',{bubbles:true}))});
 document.addEventListener('input',e=>{if(e.target.dataset&&e.target.dataset.en==='n'){const v=e.target.value.replace(/\D/g,'').slice(0,3);if(v!==e.target.value)e.target.value=v;S.ens.n=v}},true);
 </script>
+
+<script>if(!ENV.stg){var mn=document.getElementById('mockNote');if(mn)mn.hidden=true}</script>

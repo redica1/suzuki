@@ -1,4 +1,4 @@
-/* build: 20261123-123901 */
+/* build: 20261123-141431 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -110,7 +110,11 @@ function doGet(e) {
   const intl = e && e.parameter && e.parameter.page === 'intl';
   if (e && e.parameter && e.parameter.page === 'meal') return HtmlService.createHtmlOutputFromFile('Meal').setTitle(cname + ' · 식권 스캐너').addMetaTag('viewport', 'width=device-width, initial-scale=1, user-scalable=no').setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);   // 식권 스캐너 (11-04)
   if (e && e.parameter && e.parameter.page === 'qa') return qaOn_() ? HtmlService.createHtmlOutputFromFile('QA').setTitle('[STG] 캠프 접수 시험 체크').addMetaTag('viewport', 'width=device-width, initial-scale=1').setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL) : HtmlService.createHtmlOutput('STG에서만 열려요.');
-  if (e && e.parameter && (e.parameter.page === 'newmock' || e.parameter.page === 'new')) return qaOn_() ? HtmlService.createHtmlOutputFromFile('New').setTitle('[STG] 새 접수').addMetaTag('viewport', 'width=device-width, initial-scale=1').setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL) : HtmlService.createHtmlOutput('STG에서만 열려요.');   /* 새 접수 · 가족방 화면 미리보기 (11-20, STG만 · 기존 접수와 따로) */
+  /* 11-23 새 접수 화면 메인 전환: ?page=new 는 늘 새 화면 · 주소만(?page 없음)이면 설정 「새 접수 화면」 = 켬 일 때 새 화면
+   *  옛 화면이 필요한 곳(?page=old · 비회원 as=guest · 관계자 as=staff · board · guide · aud · tl · go)은 옛 화면 그대로 */
+  { const P = (e && e.parameter) || {}, pg = P.page || '';
+    const oldNeed = pg === 'old' || P.as || P.board || P.guide || P.aud || P.tl || P.go;
+    if (pg === 'new' || pg === 'newmock' || (!pg && !oldNeed && newUiOn_())) return newPage_(cname); }   /* 새 접수 · 가족방 화면 미리보기 (11-20, STG만 · 기존 접수와 따로) */
   if (e && e.parameter && e.parameter.page === 'parent') return HtmlService.createHtmlOutputFromFile('Parent').setTitle(cname + ' · 학부모 신청').addMetaTag('viewport', 'width=device-width, initial-scale=1').setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
   if (e && e.parameter && e.parameter.page === 'find') return HtmlService.createTemplateFromFile('Find').evaluate().setTitle(cname + ' · 일정 찾기').addMetaTag('viewport', 'width=device-width, initial-scale=1').setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
   if (admin) page = HtmlService.createTemplateFromFile('Admin').evaluate();
@@ -5022,6 +5026,12 @@ function newTestList() {
   let names = []; try { names = String(setting_('테스트 선생님') || '').split(/[,\n]/).map(x => x.trim()).filter(Boolean).slice(0, 6); } catch (x) {}
   const ts = teachers_();
   return names.map(n => { const t = ts.find(x => x.name === n); return [n, t && t.acads[0] || '미사스즈키']; });
+}
+function newUiOn_() { try { return /^(켬|켜짐|on|1|예|yes)$/i.test(String(setting_('새 접수 화면') || '').trim()); } catch (e) { return false; } }
+function newPage_(cname) {
+  const t = HtmlService.createTemplateFromFile('New'); let stg = false, share = ''; try { ensureSettingsLazy_(); stg = qaOn_(); share = setting_('공유주소'); } catch (x) {}
+  t.env = JSON.stringify({ stg, share }); 
+  return t.evaluate().setTitle((stg ? '[STG] ' : '') + cname + ' 접수').addMetaTag('viewport', 'width=device-width, initial-scale=1').setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
 function qaOn_() { try { return !!String(setting_('테스트 로그인') || '').trim(); } catch (e) { return false; } }
 function qaSheet_() {

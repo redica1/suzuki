@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261123-233819 -->
+<!-- build: 20261123-234833 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -2146,7 +2146,7 @@ const visTabs=()=>TABS.concat(SUP_TABS).filter(([k])=>permOf(k));
   try{google.script.url.getLocation(l=>{const t=((l&&l.parameter)||{}).tab;if(!t||!/^[a-z]{2,12}$/.test(t))return;if(S.D){if(okT(t))goTab(t)}else{S.urlTab=t;S.goAfter=t}})}catch(e){}
 })();
 const RO=()=>permOf(S.tab)==='보기';
-const WRITE_FN=/^(songRepUrlSet|bookCellSave|bookCellStySave|adminEnsReh|orchUpload|orchFileDel|adminFamOk|adminFamCancel|adminLate|audEdit|audDel|devAud|devAudClear|audSet|audPub|devSummer|adminNoticeSave|adminMenuSave|scholSave|adminConfirm|adminAdjust|adminSetBankAcct|ogSave|ogToken|adminRejectReport|adminSaveEns|adminSaveProfs|adminRefund|adminSetIssue|schedSave|lessonSet|adminSetSetting|roomSave|conSave|campSave|staffSave|songEnSave|pvHideSave|roomCfgSave|layoutImport|roomMove|budSave|mealIssue|mealDel|bookSave|bookImgPut|bookSheetPut|songEnSave|mcSave)$/;
+const WRITE_FN=/^(parentPilotSet|songRepUrlSet|bookCellSave|bookCellStySave|adminEnsReh|orchUpload|orchFileDel|adminFamOk|adminFamCancel|adminLate|audEdit|audDel|devAud|devAudClear|audSet|audPub|devSummer|adminNoticeSave|adminMenuSave|scholSave|adminConfirm|adminAdjust|adminSetBankAcct|ogSave|ogToken|adminRejectReport|adminSaveEns|adminSaveProfs|adminRefund|adminSetIssue|schedSave|lessonSet|adminSetSetting|roomSave|conSave|campSave|staffSave|songEnSave|pvHideSave|roomCfgSave|layoutImport|roomMove|budSave|mealIssue|mealDel|bookSave|bookImgPut|bookSheetPut|songEnSave|mcSave)$/;
 const roBlock=fn=>WRITE_FN.test(fn)&&permOf(S.tab)!=='편집';
 const RO_MSG='보기만 할 수 있는 메뉴예요. 바꾸려면 총관리자에게 「편집」 권한을 받아 주세요.';
 
@@ -2256,6 +2256,22 @@ document.addEventListener('click',e=>{const b=e.target.closest('[data-msub]');if
 const CC_TABS=[['base','기본 설정'],['hall','홀 설정'],['role','역할 설정'],['meal','식사 설정'],['prog','권수 목록'],['song','전공별 대상곡'],['con','음악회 곡목록'],['og','미리보기 설정'],['bank','통장 설정']];
 function ccTabs(){return `<div class="cctabs" role="tablist">${CC_TABS.map(([k,l])=>`<button type="button" data-cctab="${k}" aria-pressed="${S.ccTab===k}">${l}</button>`).join('')}</div>`}
 document.addEventListener('click',e=>{const b=e.target.closest('[data-cctab]');if(!b||S.tab!=='camp')return;S.ccTab=b.dataset.cctab;render();window.scrollTo(0,0)});
+/* 학부모 신청 학원 (11-23): 학원마다 켜고 끄기 + 신청 주소 */
+function ppPanel(){
+  if(S.PP===undefined){S.PP=null;google.script.run.withSuccessHandler(r=>{S.PP=r;if(S.tab==='camp')render()}).withFailureHandler(e=>{S.PP={err:(e&&e.message)||String(e),list:[]};if(S.tab==='camp')render()}).parentPilotData(S.tok)}
+  const P=S.PP;if(!P)return '<div class="panel"><h3>학부모 신청 학원 <span class="hint">(시범)</span></h3><p class="hint">불러오는 중…</p></div>';
+  if(P.err)return `<div class="panel"><h3>학부모 신청 학원</h3><p class="hint">${esc(P.err)}</p></div>`;
+  const L=P.list.slice().sort((x,y)=>(y.on-x.on)||x.a.localeCompare(y.a,'ko')),on=P.list.filter(x=>x.on);
+  return `<div class="panel" id="ppPanel"><div class="spread"><div><h3 style="margin:0">학부모 신청 학원 <span class="hint">(시범)</span></h3><p class="hint" style="margin:2px 0 0">켠 학원만 학부모 신청서에서 고를 수 있고, 그 학원 원장님 새 접수 화면에 신청 주소가 보여요. 스위치를 누르면 바로 저장돼요.${P.stg?' · 지금은 STG 주소(끝에 &test)':''}</p></div></div>
+  <p style="margin:8px 0 4px"><span class="hint">켠 학원 ${on.length}곳</span> ${on.map(x=>`<span class="pill">${esc(x.a)}</span>`).join(' ')}${P.all?' <span class="hint">(설정이 「전체」라 모두 켜져 있어요. 하나를 끄면 켠 학원만 남아요)</span>':''}</p>
+  <div class="tblw"><table class="mtbl"><thead><tr><th>학원</th><th>원장</th><th>학부모 신청</th><th>신청 주소</th><th></th></tr></thead><tbody>${L.map(x=>`<tr class="${x.on?'':'locked'}"><td class="l"><b>${esc(x.a)}</b></td><td>${esc(x.head)||'<span class="faint">-</span>'}</td><td><button type="button" class="onoff ${x.on?'on':''}" role="switch" aria-checked="${x.on}" data-ppon="${esc(x.a)}" aria-label="${esc(x.a)} 학부모 신청"><i><b></b></i><em>${x.on?'ON':'OFF'}</em></button></td><td class="l">${x.on?`<small style="word-break:break-all;user-select:all">${esc(decodeURIComponent(x.url))}</small>`:'<span class="faint">-</span>'}</td><td>${x.on?`<button class="btn small" type="button" data-ppcp="${esc(x.url)}">복사</button>`:''}</td></tr>`).join('')}</tbody></table></div></div>`}
+document.addEventListener('click',e=>{
+  const b=e.target.closest('[data-ppon]');
+  if(b&&S.PP){const a=b.dataset.ppon,cur=S.PP.list.filter(x=>x.on).map(x=>x.a),nx=cur.includes(a)?cur.filter(x=>x!==a):cur.concat([a]);
+    call('parentPilotSet',[nx],r=>{S.PP=r;render();toast(a+(nx.includes(a)?' 학부모 신청을 켰어요':' 학부모 신청을 껐어요'))},'저장하는 중…');return}
+  const c=e.target.closest('[data-ppcp]');
+  if(c){const u=c.dataset.ppcp;try{navigator.clipboard.writeText(u).then(()=>toast('주소를 복사했어요'),()=>toast('주소를 길게 눌러 복사해 주세요'))}catch(x){toast('주소를 길게 눌러 복사해 주세요')}}
+});
 function vCamp(){if(!S.cc){S.cc=ccCopy();try{if(S.cc.doc&&S.cc.fees&&S.cc.rounds)feeAuto(S.cc)}catch(x){}}const c=S.cc,T=S.ccTab||(S.ccTab='base');if(!c.base)return '<div class="panel hint">캠프 설정을 불러오지 못했어요. 「새로 불러오기」를 눌러 주세요.</div>';
   const b=c.base,R=c.rounds,o=c.opt,rf=c.refund;
   const inp=(p,type,extra)=>{const v=ccGet(p);return type==='check'?`<input type="checkbox" data-cc="${p}" ${v?'checked':''}>`:`<input type="${type==='num'?'text':type}" ${type==='num'?'inputmode="numeric" class="num"':''} data-cc="${p}" data-cct="${type}" value="${esc(type==='num'?(+v||0).toLocaleString('ko-KR'):v==null?'':v)}" ${extra||''}>`};
@@ -2277,7 +2293,7 @@ function vCamp(){if(!S.cc){S.cc=ccCopy();try{if(S.cc.doc&&S.cc.fees&&S.cc.rounds
     <label>해외 단체(영어) 접수<span class="hint">끄면 영어 접수 화면에서 로그인이 막혀요</span><span class="row" style="gap:6px;flex-wrap:nowrap">${inp('base.intl','check')} 받기</span></label>
     <label>관계자 접수<span class="hint">초빙교수 · 반주자 · 지휘자 · 통역 · 초청강사 · 스태프 · 끄면 「관계자」 선택이 사라져요 (운영진 대신 등록은 됨)</span><span class="row" style="gap:6px;flex-wrap:nowrap">${inp('base.staff','check')} 받기</span></label>
     <label>지금 차수<span class="hint">새 접수에 매기는 차수</span><select data-cc="base.cur">${curOpts.map(([v,l])=>`<option value="${v}" ${String(b.cur)===v?'selected':''}>${esc(l)}</option>`).join('')}</select></label>
-  </div><p class="hint">교사 일정(프로그램표)의 날짜는 「홀 설정」 탭에서 따로 맞춰요.</p></div>
+  </div><p class="hint">교사 일정(프로그램표)의 날짜는 「홀 설정」 탭에서 따로 맞춰요.</p></div>${ppPanel()}
   <div class="panel"><div class="spread"><h3>차수</h3><button class="btn small" type="button" data-ccr="add" ${R.length>=6?'disabled':''}>＋ 차수 추가</button></div>
     <table class="pft cct"><thead><tr><th>이름</th><th>시작</th><th>끝</th><th></th></tr></thead><tbody>${R.map((r,i)=>`<tr><td>${inp('rounds.'+i+'.n','text','maxlength="10" style="width:80px"')}</td><td>${inp('rounds.'+i+'.from','date')}</td><td>${inp('rounds.'+i+'.to','date')}</td><td>${R.length>1?`<button class="btn small ghost" type="button" data-ccr="del|${i}">빼기</button>`:''}</td></tr>`).join('')}</tbody></table>
     <p class="hint">차수를 늘리거나 줄이면 아래 참가비표 칸도 같이 바뀌어요. 이미 들어온 접수의 차수·금액은 그대로예요.</p></div>

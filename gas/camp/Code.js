@@ -1,4 +1,4 @@
-/* build: 20261123-233819 */
+/* build: 20261123-234833 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -733,7 +733,7 @@ function bundle_(acads, owner) {
   const taken = []; all.forEach(sb => { if (vis.includes(sb)) return; sb.ppl.forEach(p => { if (p.status !== '정상' && p.status !== '취소요청') return; const k = String(p.id).slice(String(sb.no).length + 1); if (/^t_/.test(k) || acads.includes(sb.acad)) taken.push(k); }); });
   const preq = parentFor_(acads.filter(a => a !== GUEST_ACAD && a !== STAFF_ACAD && a !== NOACAD)), pbank = acadBanks_(acads);
   const ppilot = acads.filter(a => a !== GUEST_ACAD && a !== STAFF_ACAD && a !== NOACAD && parentOk_(a));
-  return { aud, audPre, preq, pbank, ppilot, rosters, subs: vis, taken, teams: teams_(all), bank: bankInfo_(), today: today_(), profs, camp, myPay: (() => { try { const me = ts.filter(t => t.name === owner); return myPay_(me.length === 1 ? me[0].id : '', owner); } catch (x) { return null; } })() };
+  return { aud, audPre, preq, pbank, ppilot, plink: ppilot.reduce((o, x) => { o[x] = parentLink_(x); return o; }, {}), rosters, subs: vis, taken, teams: teams_(all), bank: bankInfo_(), today: today_(), profs, camp, myPay: (() => { try { const me = ts.filter(t => t.name === owner); return myPay_(me.length === 1 ? me[0].id : '', owner); } catch (x) { return null; } })() };
 }
 
 
@@ -750,6 +750,26 @@ function parentRows_() { return rows_(PARENT_SH).filter(r => r['신청ID']).map(
 /* 학부모 신청 시범 학원 (11-15 사용자: 일부 학원만 이번에 써 보기) — null = 전체, [] = 안 씀 */
 function parentPilot_() { const v = String(setting_('학부모 신청 학원') || '').trim(); if (!v) return []; if (/^전체$/.test(v)) return null; return v.split(',').map(s => s.trim()).filter(Boolean); }
 function parentOk_(a) { const p = parentPilot_(); return p === null || p.includes(a); }
+/* 학부모 신청 학원 (11-23): 관리자가 학원마다 켜고 끔 → 설정 「학부모 신청 학원」. 신청 주소 = parent.html?a=학원 (STG 는 &test) */
+function parentLink_(acad) { const stg = !!String(setting_('테스트 로그인') || '').trim(); return 'https:\/\/app.suzukimusickorea.org/camp/parent.html?a=' + encodeURIComponent(acad) + (stg ? '&test' : ''); }
+function parentPilotData(token) {
+  const a = adm_(token); needCamp_(a, true);
+  const open = acadOpen_(), set = {}, head = {};
+  rows_(SH.S).forEach(r => { const x = String(r['학원'] || '').trim(); if (x) set[x] = 1; });
+  try { teachers_().forEach(t => (t.acads || []).forEach(x => { if (!x) return; set[x] = 1; if (t.role === '원장') head[x] = (head[x] ? head[x] + ', ' : '') + t.name; })); } catch (e) {}
+  const p = parentPilot_(), all = p === null;
+  const list = Object.keys(set).filter(x => x !== GUEST_ACAD && x !== STAFF_ACAD && x !== NOACAD && (!open || open.includes(x))).sort((x, y) => x.localeCompare(y, 'ko'))
+    .map(x => ({ a: x, head: head[x] || '', on: all || p.includes(x), url: parentLink_(x) }));
+  return { ok: true, all, list, stg: !!String(setting_('테스트 로그인') || '').trim() };
+}
+function parentPilotSet(token, acads) {
+  const a = adm_(token); needCamp_(a);
+  const L = (Array.isArray(acads) ? acads : []).map(x => String(x || '').replace(/,/g, ' ').trim().slice(0, 40)).filter((x, i, o) => x && o.indexOf(x) === i).slice(0, 300);
+  ensureSettings_(); const sh = SpreadsheetApp.getActive().getSheetByName('설정'), r = rows_('설정').find(x => String(x['항목']) === '학부모 신청 학원'), v = L.join(', ');
+  if (r) sh.getRange(r._row, 2).setValues([[v]]); else sh.appendRow(['학부모 신청 학원', v, '학부모 신청을 받는 학원 (쉼표로) · 비우면 아무 학원도 안 받음 · 전체 = 모든 학원']);
+  log_('관리자 ' + a.name, '설정 바꿈', '학부모 신청 학원 = ' + (v || '(없음)')); setMemoClear_();
+  return parentPilotData(token);
+}
 function parentAcads_() {
   const open = acadOpen_(), set = {};
   rows_(SH.S).forEach(r => { const a = String(r['학원'] || '').trim(); if (a) set[a] = 1; });
@@ -1762,10 +1782,20 @@ function consSync_(kinds) {
   if (!(kinds || []).some(k => k.c === '공연' && (k.ko || k.link))) return;
   const sh = SpreadsheetApp.getActive().getSheetByName(CAMPCFG); if (!sh) return;
   CAMP_CACHE = null; CAMP_NOCC = true; campCacheClear_(); const L = consFromKinds_(kinds, camp_().cons); CAMP_CACHE = null;
-  const r = rows_(CAMPCFG).find(x => String(x['항목']) === '음악회'), v = JSON.stringify(L);
-  if (r) { if (String(r['값']) !== v) sh.getRange(r._row, 2).setValue(v); } else sh.appendRow(['음악회', v, '음악회 이름 목록 (역할 설정 공연에서)']);
+  const R = rows_(CAMPCFG), r = R.find(x => String(x['항목']) === '음악회'), v = JSON.stringify(L);
+  if (r && String(r['값']) === v) return;
+  /* 11-23: 이름이 바뀐 음악회(이브닝A → 이브닝)도 음원 받기 설정을 이어받게 · rev 를 올려 예전에 연 캠프 설정 화면이 덮어쓰지 못하게 */
+  const ra = R.find(x => String(x['항목']) === '음원'); let A0 = {}; try { A0 = JSON.parse(String((ra && ra['값']) || '{}')) || {}; } catch (e) {}
+  const A = {}; L.forEach(k => { const x = audPick_(A0, k); if (x) A[k] = x; });
+  if (r) sh.getRange(r._row, 2).setValue(v); else sh.appendRow(['음악회', v, '음악회 이름 목록 (역할 설정 공연에서)']);
+  if (ra) sh.getRange(ra._row, 2).setValue(JSON.stringify(A)); else sh.appendRow(['음원', JSON.stringify(A), '음악회별 음원 받기']);
+  const rr = R.find(x => String(x['항목']) === 'rev'); if (rr) sh.getRange(rr._row, 2).setValue(String((+rr['값'] || 0) + 1));
   campCacheClear_(); CAMP_CACHE = null;
 }
+/* 음원 받기 설정 찾기: 같은 이름 → 없으면 예전 이름 중 앞이 같은 것(이브닝A · 이브닝B → 이브닝) */
+function audPick_(A, k) { A = A || {}; if (A[k]) return A[k]; const ks = Object.keys(A).filter(o => o.indexOf(k) === 0 || k.indexOf(o) === 0); const on = ks.find(o => A[o] && A[o].on); return ks.length ? A[on || ks[0]] : null; }
+/* 역할 설정 「공연」이 음악회 목록을 정하면 그것 (캠프 설정 화면에 남은 예전 목록으로 덮어쓰지 않게, 11-23) */
+function consNow_(fallback) { try { const k = actCfg_().kinds; if (Array.isArray(k) && k.some(x => x.c === '공연' && (x.ko || x.link))) return consFromKinds_(k, fallback); } catch (e) {} return null; }
 let CAMP_CACHE = null;
 /* 참가 구분 이름 바뀜 (11-11): 「돌전아기」 → 「15개월 미만」 · 예전에 저장된 접수 · 캠프설정도 읽을 때 새 이름으로 */
 function retype_(s) { return String(s).replace(/돌전아기/g, '15개월 미만'); }
@@ -1966,8 +1996,8 @@ function campSave(token, c, rev) {
   doc.no = String((prev.doc || {}).no || ''); doc.gm = String((prev.doc || {}).gm || '');
   /* 거꾸로 (11-11): 캠프에서 공문을 저장하면 회원관리 공문 대장에 저절로 한 줄(구분 캠프 · 작성 중). 이미 있으면 제목 · 시행일 · 수신 · 참조만 맞춤 */
   let linkMsg = '';
-  const cons = c.cons ? consClean_(c.cons) : consClean_(prev.cons);
-  const aud = {}; cons.forEach(k => { const x = c.aud ? ((c.aud[k]) || {}) : ((prev.aud || {})[k] || {}); aud[k] = { on: !!x.on, pre: !!x.on && !!x.pre, due: /^\d{4}-\d{2}-\d{2}$/.test(x.due || '') ? x.due : '' }; });
+  const cons = consNow_(prev.cons) || (c.cons ? consClean_(c.cons) : consClean_(prev.cons));
+  const aud = {}; cons.forEach(k => { const x = (c.aud && c.aud[k]) || audPick_(prev.aud, k) || audPick_(c.aud, k) || {}; aud[k] = { on: !!x.on, pre: !!x.on && !!x.pre, due: /^\d{4}-\d{2}-\d{2}$/.test(x.due || '') ? x.due : '' }; });
   const nc = { meals, base: { id: String(b.id).trim(), name: String(b.name).trim(), start: b.start, end: b.end, place: String(b.place || '').trim(), open: b.open, close: b.close, famClose: /^\d{4}-\d{2}-\d{2}$/.test(b.famClose || '') ? b.famClose : '', cur, guest: b.guest !== false, staff: b.staff !== false, member: b.member !== false, intl: b.intl !== false }, rounds, fees, opt, refund, consent, doc, aud, cons };
   const lock = lock_();
   try {

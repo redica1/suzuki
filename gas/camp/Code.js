@@ -1,4 +1,4 @@
-/* build: 20261123-235729 */
+/* build: 20261123-235830 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -39,7 +39,7 @@ const ROUND_NAMES = ['1차', '2차', '3차'];
 const INTL_USD = o => ({ lesson: +((o || {}).intlLessonUsd) || 45, room: +((o || {}).intlRoomUsd) || 30, mc: +((o || {}).intlMcUsd) || 0 });   /* mc: 0 이면 교수마다 원화 금액 ÷ 환율 (반올림) */
 const intlMcUsd_ = (o, fee) => INTL_USD(o).mc || Math.round((+fee || 0) / (+(o || {}).usdRate || 1450));
 /* 오가는 방법 (11-23): 버스 왕복 · 편도(갈 때 / 올 때) · 자차 */
-const MOVES_ = { bus: '버스 왕복', go: '버스 편도(갈 때)', back: '버스 편도(올 때)', car: '자차' };
+const MOVES_ = { bus: '버스 왕복', go: '버스 갈 때만', back: '버스 올 때만', car: '자차' };
 const OPT = { lessonFee: 60000, lessonMax: 5, studentDues: 30000, teacherDues: 300000, roomCap: 4, roomEmptyFee: 140000, roomMax: 6 };   // roomCap = 가족방 기준 인원(이보다 적으면 빈 자리 요금), roomMax = 한 방 최대 (숙소 1실 5~6인, 11-15)
 const PLAYS = ['교사', '연수생', '소속없는 중급연수생', '학생', '회원의 악기하는 자녀', '비회원 학생', '해외 학생', '해외 교사'];
 const MASTER = [{ n: '안드레아 부샤츠', fee: 150000 }, { n: '이성주', fee: 150000 }];

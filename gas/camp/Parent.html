@@ -1,4 +1,4 @@
-<!doctype html><!-- build: 20261124-003558 --><html lang="ko"><head><meta charset="utf-8"><link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"><meta name="viewport" content="width=device-width,initial-scale=1">
+<!doctype html><!-- build: 20261124-003848 --><html lang="ko"><head><meta charset="utf-8"><link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
 <style>
 /* 학부모 신청 (11-15): 학원 다니는 학생의 보호자가 회원가입 없이 「간다 / 안 간다」와 같이 가는 가족 이름만 학원 선생님께 보냄 */
@@ -85,6 +85,7 @@ function stNote(){var r=S.req;if(!r)return '';var sub=r.sub,reps=((r.m||{}).reps
   return '<p class="note ok"><b>학원 선생님께 보냈어요</b> ('+esc(fdt(r.at))+'). 고칠 게 있으면 고쳐서 다시 보내면 돼요.</p>'}
 /* 11-23 오가는 방법: 가는 사람마다 단체 버스 / 자차 (갈 때 · 올 때 같은 방법) */
 /* 11-24 같이 가는 보호자: 신청하는 나 / 다른 보호자(이름 · 관계) / 안 감 · 고른 분이 「첫 번째 보호자」 */
+function famOn(){return S.famOn||(S.d&&S.d.fam&&S.d.fam.length>0)}
 function guardWho(){var m=S.d.me||{};return m.go===false?'none':(m.who==='other'?'other':'me')}
 function guardName(){var m=S.d.me||{};return guardWho()==='other'?((m.name||'').trim()||'다른 보호자')+(m.rel?'('+m.rel+')':''):(S.nm||'신청하는 나')}
 function vGuard(){var d=S.d,w=guardWho(),O=[['me','신청하는 내가 가요','보호자 정보에 넣은 '+(S.nm||'나')+' 님'],['other','다른 보호자가 가요','예) 신청은 엄마, 캠프는 아빠'],['none','보호자는 안 가요','학생만 가요']];
@@ -124,8 +125,9 @@ function vForm(){var I=S.I,d=S.d;if(!I.open)return '<div class="card"><h2>지금
   '<div class="card"><h3><span class="no">3</span>캠프 참가 학생</h3><p class="hint" style="margin-top:0">가는 학생만 넣어 주세요. <b>추가 개인레슨 · 마스터클래스는 학원 선생님이 넣고, 넣으면 금액이 바뀌어요.</b> 바뀐 금액은 학원이 다시 알려 드려요'+(S.em?'(이메일로도)':'')+'.</p>'+'<div class="addrow"><input type="text" id="nkName" maxlength="20" placeholder="학생 이름" aria-label="새 학생 이름"><select id="nkInst" class="sel" aria-label="전공"><option value="">전공(악기)</option>'+INSTS.map(function(x){return '<option>'+x+'</option>'}).join('')+'</select><input type="text" id="nkAge" class="age" inputmode="numeric" maxlength="2" placeholder="만 나이" aria-label="만 나이"><button class="btn small primary" type="button" id="kadd2">＋ 추가</button></div>'+(kids?'<p class="listh">신청할 학생 '+d.kids.length+'명</p>'+kids:'<p class="hint" style="margin-bottom:0">이름 · 전공 · 만 나이를 넣고 「＋ 추가」를 눌러 주세요. 형제 · 자매도 한 명씩 추가해요.</p>')+'</div>'+
   vGuard()+
   '<div class="card"><h3>더 가는 가족 <span class="opt">있으면</span></h3>'+(!d.me.go?'<div class="gnone">보호자 없이 학생만 가요. 동반가족은 보호자와 함께일 때만 넣을 수 있어요.</div></div>':
-    '<div class="gnote">위에서 고른 보호자 <b>'+esc(guardName())+'</b>은(는) 다시 넣지 않아요. 그 밖에 <b>더 가는 가족</b>(동생 · 다른 보호자 등)만 넣어 주세요.</div>'+
-    '<div class="addrow"><select id="nfType" class="sel" aria-label="가족 구분"><option>동반가족</option><option value="15개월 미만">15개월 미만 아기</option></select><input type="text" id="nfName" maxlength="20" placeholder="가족 이름" aria-label="가족 이름"><button class="btn small primary" type="button" id="fadd2">＋ 추가</button></div>'+(fam?'<p class="listh">같이 가는 가족 '+d.fam.length+'명</p>'+fam:'')+'<p class="hint" style="margin-bottom:0">악기를 안 하는 가족(동반가족) · 15개월 미만 아기를 한 명씩 추가해요. 성별 · 출생연도는 선택이에요.</p></div>')+
+    '<div class="row" style="margin-bottom:8px"><span style="font-weight:700">더 가는 가족이 있나요?</span>'+seg('data-famon',0,famOn()?'y':'n',[['n','없어요'],['y','있어요']])+'</div>'+(!famOn()?'<p class="hint" style="margin:0">보호자 한 분과 학생만 가요. 동생 · 아기 · 다른 보호자가 더 가면 「있어요」를 눌러 주세요.</p></div>':
+    '<div class="gnote">위에서 고른 보호자 <b>'+esc(guardName())+'</b>은(는) 다시 넣지 않아요. 그 밖에 <b>더 가는 가족</b>(동생 · 아기 · 다른 보호자 등)만 넣어 주세요.</div>'+
+    '<div class="addrow"><select id="nfType" class="sel" aria-label="가족 구분"><option>동반가족</option><option value="15개월 미만">15개월 미만 아기</option></select><input type="text" id="nfName" maxlength="20" placeholder="가족 이름" aria-label="가족 이름"><button class="btn small primary" type="button" id="fadd2">＋ 추가</button></div>'+(fam?'<p class="listh">같이 가는 가족 '+d.fam.length+'명</p>'+fam:'')+'<p class="hint" style="margin-bottom:0">악기를 안 하는 가족(동반가족) · 15개월 미만 아기를 한 명씩 추가해요. 성별 · 출생연도는 선택이에요.</p></div>'))+
 
   '<div class="card"><h3>방 <span class="opt">선택</span></h3><label class="ck"><input type="checkbox" id="rfam" '+(d.room.fam?'checked':'')+'><span>가족방을 원해요 <span id="rfamp">'+famTxt()+'</span></span></label></div>'+
   vPrice()+vMoney()+
@@ -269,6 +271,7 @@ document.addEventListener('click',function(e){var b=e.target.closest('button');i
   if(b.dataset.fdel!==undefined){d.fam.splice(+b.dataset.fdel,1);S.dirty=true;render();return}
   if((v=b.dataset.fg)){var g=v.split('|'),f=d.fam[+g[0]];f.gender=f.gender===g[1]?'':g[1];S.dirty=true;render();return}
   if((v=b.dataset.mego)){d.me.go=v.split('|')[1]==='y';S.dirty=true;render();return}
+  if((v=b.dataset.famon)){var on=v.split('|')[1]==='y';if(!on&&d.fam.length){toast('가족 '+d.fam.length+'명을 뺐어요');d.fam=[];S.dirty=true}S.famOn=on;render();return}
   if((v=b.dataset.gw)){d.me.who=v==='other'?'other':'me';d.me.go=v!=='none';if(v==='other'&&!d.me.rel)d.me.rel='아빠';if(v==='none'&&d.fam.length){toast('보호자가 안 가서 가족 '+d.fam.length+'명을 뺐어요');d.fam=[]}S.dirty=true;render();return}
   if(b.id==='send'){var w2=who();if(w2){S.err=w2;render();toast(w2);window.scrollTo(0,0);return}
     if(!d.kids.some(function(k){return k.name.trim()})){S.err='학생 이름을 1명 이상 넣어 주세요.';render();toast(S.err);return}

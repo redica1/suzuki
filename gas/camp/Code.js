@@ -1,4 +1,4 @@
-/* build: 20261123-114620 */
+/* build: 20261123-115928 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -4334,6 +4334,8 @@ function audMine_(subs) {
 function audPreMap_(acads) {
   const M = {}; audRows_().filter(r => !r.pid && r.sid && acads.includes(r.acad)).forEach(r => { M[r.sid] = { con: r.con, comp: r.comp, title: r.title, url: r.url, at: r.at }; }); return M;
 }
+/** 11-23 새 접수 첫 화면(로그인 전) 보라 「음원 먼저 내기」 상자: 지금 먼저 받는 음악회 이름 · 마감일만 (개인정보 없음) */
+function audPreOpen() { const C = audCfg_(), td = today_(); return Object.keys(C).filter(k => C[k].pre && (!C[k].end || td <= C[k].end)).map(k => ({ name: k, end: C[k].end || '' })); }
 function audPreList(token) {
   const u = who_(token), C = audCfg_(), cons = Object.keys(C).filter(k => C[k].pre), td = today_();
   const stu = rows_(SH.S).filter(r => r['ID'] && u.acads.includes(String(r['학원']))).map(r => ({ id: String(r['ID']), name: String(r['이름']), acad: String(r['학원']), inst: String(r['악기'] || ''), tag: String(r['구분 표시'] || '') }));

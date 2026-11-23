@@ -139,7 +139,9 @@ const MY=[{n:'이하나',y:2016,i:'바이올린',a:ACAD},{n:'박두리',y:2014,i
 const ALL=[...MY,{n:'이두리',y:2013,i:'첼로',a:'마포스즈키',t:'박선생',k:'학생'},{n:'이세나',y:2019,i:'바이올린',a:'수지스즈키',t:'한선생',k:'학생'},{n:'김엄마',y:1984,i:'악기 안 함',a:ACAD,k:'보호자'},{n:'이막내',y:2025,i:'악기 안 함',a:ACAD,k:'15개월 미만'}];
 const ACADS=[ACAD,'마포스즈키','수지스즈키','춘천바이첼스즈키','분당스즈키','대구스즈키'];
 const won=n=>n.toLocaleString('ko-KR')+'원';const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-let WHO='김스즈',LIVE=false;const REGL=()=>{try{return P.picked.filter(x=>!S.token||(x.done&&x.no&&(!x.owner||true))).map(x=>({n:x.n,k:x.k,i:NOPLAY(x.k)?'':instOf(x),pid:x.no?x.no+'_'+x.key:''}))}catch(e){return []}};const OTH=[{n:'이두리',k:'학생',i:'첼로',y:2013,a:'마포스즈키',t:'박선생'},{n:'김하나',k:'학생',i:'바이올린',y:2015,a:'마포스즈키',t:'박선생'},{n:'이엄마',k:'첫번째 보호자',a:'마포스즈키',t:'박선생'},{n:'최하늘',k:'학생',i:'플루트',y:2016,a:'수지스즈키',t:'정선생'}];const REGA=()=>REGL().map(m=>({...m,a:ACAD})).concat(OTH);const REPOK=k=>k==='학생'||k==='교사';
+let WHO='김스즈',LIVE=false;const REGL=()=>{try{return P.picked.filter(x=>!S.token||(x.done&&x.no)).map(x=>({n:x.n,k:x.k,i:NOPLAY(x.k)?'':instOf(x),pid:x.no?x.no+'_'+x.key:'',t:x.owner&&x.owner!==WHO?x.owner:''}))}catch(e){return []}};
+/* 11-23 동명이인: 가족방 사람은 접수 번호(pid)로 구분 · 이름만 같으면 다른 사람 */
+const KEY=m=>m.pid||((m.a||ACAD)+'|'+m.n),RN=()=>((S.mem.find(m=>KEY(m)===S.rep)||{}).n||'');const OTH=[{n:'이두리',k:'학생',i:'첼로',y:2013,a:'마포스즈키',t:'박선생'},{n:'김하나',k:'학생',i:'바이올린',y:2015,a:'마포스즈키',t:'박선생'},{n:'이엄마',k:'첫번째 보호자',a:'마포스즈키',t:'박선생'},{n:'최하늘',k:'학생',i:'플루트',y:2016,a:'수지스즈키',t:'정선생'}];const REGA=()=>REGL().map(m=>({...m,a:ACAD})).concat(OTH);const REPOK=k=>k==='학생'||k==='교사';
 let S={tab:'login',ens:{on:'',name:'',mates:[],song:'',comp:'',n:'',aq:'',team:'',err:'',lock:null,saved:''},rep:'이하나',mem:[],q:{a:ACAD,n:''},res:null,manual:false,room:false,done:false,list:[{rep:'박두리',names:['박두리','박아빠','박막내','정다온'],n:4,room:true,amt:0,st:'입금 전'}]};
 function reset(){S.mem=[];S.rep='';S.res=null;S.manual=false;S.done=false}
 reset();
@@ -159,7 +161,7 @@ function iregForm(m){const I0=S.ireg,stu=STU3(m.k),tch=MEMBERS.filter(x=>x.a===A
 function iregGo(){const I0=S.ireg,m=I0.m,stu=STU3(m.k);const g=id=>((document.getElementById(id)||{}).value||'').trim();if(stu){I0.age=g('ig_age');I0.prog=g('ig_prog');I0.t=g('ig_t')}
  I0.err=!I0.sex?'성별을 골라 주세요.':stu&&!I0.age?'만 나이를 넣어 주세요.':stu&&!I0.prog?'권수를 골라 주세요.':stu&&!I0.t?'담당교사를 골라 주세요.':'';if(I0.err){render();return}
  const x={n:m.n,k:m.k,i:m.i||'',sub:ACAD+(m.direct?' · 직접 추가':' · 회원'),id:m.id,done:true,now:true,at:nowTs()};P.picked.push(x);Object.assign(inf(x),{sex:I0.sex,age:I0.age||'',prog:I0.prog||'',t:I0.t||'',saved:true});
- const it={k:m.k,n:m.n,sub:ACAD+(m.i?' · '+m.i:'')+' · 방금 캠프 신청',st:'ok'};if(I0.rep){S.rep=m.n;S.mem=S.mem.filter(q=>q.n!==m.n);S.mem.unshift(it)}else S.mem.push(it);
+ const it={k:m.k,n:m.n,sub:ACAD+(m.i?' · '+m.i:'')+' · 방금 캠프 신청',st:'ok'};if(I0.rep){S.rep=KEY(it);S.mem=S.mem.filter(q=>KEY(q)!==S.rep);S.mem.unshift(it)}else S.mem.push(it);
  S.ireg=null;S.fdir=null;render();toast(m.n+' · 캠프 신청하고 '+(I0.rep?'대표로 골랐어요':'가족방에 넣었어요'))}
 document.addEventListener('click',e=>{const b=e.target.closest('[data-ireg],[data-ig],[data-igo],[data-igx],[data-fdk],[data-fdgo]');if(!b)return;const d=b.dataset;e.stopImmediatePropagation();
  if(d.ireg){const [n,rep]=d.ireg.split('|');const m=MEMBERS.find(x=>x.a===ACAD&&x.n===n);if(m)S.ireg={m,rep:rep==='rep',sex:/^여/.test(m.g||'')?'여성':/^남/.test(m.g||'')?'남성':'',age:m.y?String(2026-m.y):'',t:m.t||''};render();return}
@@ -172,19 +174,19 @@ function vNew(){const T=total();
  const sw=S.room?`<div class="panel"><div class="spread"><b style="font-size:17px">가족방 ${S.list.length?'하나 더 ':''}신청 중</b><button class="btn sm" type="button" data-act="roomOff">취소</button></div><p class="hint" style="margin:4px 0 0">가족방은 ${CAP}인 기준이에요. 빈자리 1자리마다 ${won(ROOM_EMPTY)}.</p></div>`
  :`<button class="roomAdd" type="button" data-act="roomOn"><span class="plus">＋</span><span><b>${S.list.length?'가족방 하나 더 추가':'가족방 추가'}</b><small>캠프 신청한 사람끼리 묶어 한 방을 써요 · ${CAP}인 기준</small></span></button>`;
  if(!S.room)return sw;
- const inMem=n=>S.mem.some(m=>m.n===n),qa=S.q.a||ACAD,qn=S.q.n||'',cand=REGA().filter(m=>m.a===qa&&!inMem(m.n)&&(!qn||m.n.includes(qn)));
- const rq=S.rq||'',repC=REGL().filter(m=>REPOK(m.k)&&(!rq||m.n.includes(rq))),hasRep=S.mem.some(m=>m.n===S.rep),regN=new Set(REGL().map(m=>m.n)),repN=[],preN=[];
- return sw+`<div class="panel famRes"><div class="spread"><h3 style="margin:0">${hasRep?`가족방 · 대표 ${esc(S.rep)}`:'가족방'}</h3><span class="pill ${S.mem.length>=2?'ok':'wait'}">${S.mem.length}명</span></div>
- ${S.mem.length?'':'<p class="hint" style="margin:0">아래 ① 대표를 고르면 여기에 나와요. 그다음 ② 가족을 추가해요.</p>'} ${S.mem.map((m,i)=>`<div class="mem"><span class="kind ${FEE[m.k]?'p':''}">${esc(m.k)}</span><span class="who"><b>${esc(m.n)}</b><small>${esc(m.sub)}</small></span>${m.n===S.rep?'<span class="pill ok">대표</span>':`<button class="btn sm" type="button" data-rm="${i}">빼기</button>`}</div>`).join('')}
+ const inMem=m=>S.mem.some(x=>KEY(x)===KEY(m)),qa=S.q.a||ACAD,qn=S.q.n||'',cand=REGA().filter(m=>m.a===qa&&!inMem(m)&&(!qn||m.n.includes(qn)));
+ const rq=S.rq||'',repC=REGL().filter(m=>REPOK(m.k)&&(!rq||m.n.includes(rq))),hasRep=S.mem.some(m=>KEY(m)===S.rep),regN=new Set(REGL().map(m=>m.n)),repN=[],preN=[];
+ return sw+`<div class="panel famRes"><div class="spread"><h3 style="margin:0">${hasRep?`가족방 · 대표 ${esc(RN())}`:'가족방'}</h3><span class="pill ${S.mem.length>=2?'ok':'wait'}">${S.mem.length}명</span></div>
+ ${S.mem.length?'':'<p class="hint" style="margin:0">아래 ① 대표를 고르면 여기에 나와요. 그다음 ② 가족을 추가해요.</p>'} ${S.mem.map((m,i)=>`<div class="mem"><span class="kind ${FEE[m.k]?'p':''}">${esc(m.k)}</span><span class="who"><b>${esc(m.n)}</b><small>${esc(m.sub)}</small></span>${KEY(m)===S.rep?'<span class="pill ok">대표</span>':`<button class="btn sm" type="button" data-rm="${i}">빼기</button>`}</div>`).join('')}
 
  ${S.mem.length?(()=>{const pf=S.mem.reduce((a,m)=>{const x=P.picked.find(q=>q.n===m.n);return a+(x?feeOf(x):0)},0);return `<div class="famSum"><span>가족방 추가 금액 <small class="hint">(빈자리 ${T.empty}자리 × ${won(ROOM_EMPTY)})</small></span><b>${won(T.room)}</b></div>`})():''}
- <div class="row" style="justify-content:flex-end"><button class="btn pri" type="button" data-act="submit" ${S.mem.length<2||!S.mem.some(m=>m.n===S.rep)?'disabled':''}>가족방 신청하기</button></div></div><div class="panel"><div class="step"><b class="n">1</b><div><h3>대표 고르기</h3><p class="hint">대표는 꼭 <b>학생</b> 또는 <b>교사</b>여야 해요. 캠프 신청한 사람 중에서 골라요.</p></div></div>
- ${hasRep?`<div class="row" style="gap:8px"><span class="hint">대표: <b style="color:var(--ink)">${esc(S.rep)}</b> (위에 나와요)</span><button class="btn sm" type="button" data-act="repChg">대표 바꾸기</button></div>`
- :`<input id="rq" placeholder="이름으로 찾기" value="${esc(rq)}" style="width:100%"><div class="memGrid">${repC.map(m=>`<div class="mem"><span class="kind">${esc(m.k)}</span><span class="who"><b>${esc(m.n)}</b><small>${ACAD}${m.i?' · '+esc(m.i):''} · 신청됨</small></span><button class="btn sm pri" type="button" data-setrep="${esc(m.n)}">대표로</button></div>`).join('')}</div>${repN.map(m=>`<div class="mem pre"><span class="kind">${esc(m.k)}</span><span class="who"><b>${esc(m.n)}</b><small>${ACAD}${m.i?' · '+esc(m.i):''} · <span style="color:#b26a00">아직 캠프 신청 전</span></small></span><button class="btn sm" type="button" data-ireg="${esc(m.n)}|rep">캠프 신청 + 대표로</button></div>${S.ireg&&S.ireg.rep&&S.ireg.m.n===m.n?iregForm(S.ireg.m):''}`).join('')}${repC.length?'':'<div class="none"><b>고를 수 있는 학생 · 교사가 없어요</b><span class="hint">먼저 「캠프 신청하기」에서 신청해 주세요.</span></div>'}`}</div>
+ <div class="row" style="justify-content:flex-end"><button class="btn pri" type="button" data-act="submit" ${S.mem.length<2||!S.mem.some(m=>KEY(m)===S.rep)?'disabled':''}>가족방 신청하기</button></div></div><div class="panel"><div class="step"><b class="n">1</b><div><h3>대표 고르기</h3><p class="hint">대표는 꼭 <b>학생</b> 또는 <b>교사</b>여야 해요. 캠프 신청한 사람 중에서 골라요.</p></div></div>
+ ${hasRep?`<div class="row" style="gap:8px"><span class="hint">대표: <b style="color:var(--ink)">${esc(RN())}</b> (위에 나와요)</span><button class="btn sm" type="button" data-act="repChg">대표 바꾸기</button></div>`
+ :`<input id="rq" placeholder="이름으로 찾기" value="${esc(rq)}" style="width:100%"><div class="memGrid">${repC.map(m=>`<div class="mem"><span class="kind">${esc(m.k)}</span><span class="who"><b>${esc(m.n)}</b><small>${ACAD}${m.i?' · '+esc(m.i):''}${m.t?' · '+esc(m.t)+' 선생님 접수':''} · 신청됨</small></span><button class="btn sm pri" type="button" data-setrep="${esc(KEY(m))}">대표로</button></div>`).join('')}</div>${repN.map(m=>`<div class="mem pre"><span class="kind">${esc(m.k)}</span><span class="who"><b>${esc(m.n)}</b><small>${ACAD}${m.i?' · '+esc(m.i):''} · <span style="color:#b26a00">아직 캠프 신청 전</span></small></span><button class="btn sm" type="button" data-ireg="${esc(m.n)}|rep">캠프 신청 + 대표로</button></div>${S.ireg&&S.ireg.rep&&S.ireg.m.n===m.n?iregForm(S.ireg.m):''}`).join('')}${repC.length?'':'<div class="none"><b>고를 수 있는 학생 · 교사가 없어요</b><span class="hint">먼저 「캠프 신청하기」에서 신청해 주세요.</span></div>'}`}</div>
  <div class="panel" ${hasRep?'':'style="opacity:.5;pointer-events:none"'}><div class="step"><b class="n">2</b><div><h3>가족 추가</h3><p class="hint">캠프 신청한 사람 중에서 「+ 추가」로 넣어요. 다른 학원 형제면 학원을 바꿔서 찾아요.${hasRep?'':' (먼저 대표를 골라요)'}</p></div></div>
  <div class="row"><select id="qa" aria-label="학원">${ACADS.map(a=>`<option ${a===qa?'selected':''}>${a}</option>`).join('')}</select><input id="qn" placeholder="이름으로 찾기" value="${esc(qn)}" style="flex:1;min-width:140px"></div>
  ${(()=>{const G=[['교사',m=>m.k==='교사'],['학생',m=>STU3(m.k)],['보호자 · 가족',m=>NOPLAY(m.k)]];const any=cand.length;
- const it=m=>`<div class="mem"><span class="kind ${FEE[m.k]?'p':''}">${esc(m.k)}</span><span class="who"><b>${esc(m.n)}</b><small>${esc(m.a)}${m.i?' · '+esc(m.i):''}${m.y?' · '+m.y+'년생':''}${m.t?' · '+esc(m.t)+' 선생님 접수':''}</small></span><button class="btn sm" type="button" data-radd="${esc(m.n)}" data-ra="${esc(m.a)}">+ 추가</button></div>`;
+ const it=m=>`<div class="mem"><span class="kind ${FEE[m.k]?'p':''}">${esc(m.k)}</span><span class="who"><b>${esc(m.n)}</b><small>${esc(m.a)}${m.i?' · '+esc(m.i):''}${m.y?' · '+m.y+'년생':''}${m.t?' · '+esc(m.t)+' 선생님 접수':''}</small></span><button class="btn sm" type="button" data-radd="${esc(KEY(m))}">+ 추가</button></div>`;
  return any?G.map(([t,f])=>{const L=cand.filter(f);return L.length?`<details class="acc" ${qn||S.accOpen===t||L.length<=4?'open':''} data-acc="${t}"><summary><b>${t}</b> <span class="hint">${L.length}명</span></summary><div class="memGrid">${L.map(it).join('')}</div></details>`:''}).join(''):qn?`<div class="none"><b>「${esc(qa)} · ${esc(qn)}」은 캠프 접수에 없어요</b><span class="hint">먼저 캠프에 접수해 주세요. 다른 선생님 학생이면 그 선생님께 접수를 부탁해 주세요.</span></div>`:`<div class="none"><b>${esc(qa)}에서 더 넣을 사람이 없어요</b></div>`})()}
  <div class="famTip">가족방에 넣을 사람은 먼저 「캠프 신청하기」에서 신청해요. 신청한 사람만 여기에 나와요. <button class="btn sm" type="button" data-tab="pick">캠프 신청하기 →</button></div>
 </div>`}
@@ -586,11 +588,11 @@ document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)r
  if(d.ms){S.ms=d.ms;render();return}
  if(d.act==='mckAll'){const LS=(S.scope==='all'?P.picked.concat(othersOf()):P.picked),ce=x=>(S.role||'head')==='head'||!x.owner||x.owner===WHO;const on=!(LS.length&&LS.every((x,i)=>!ce(x)||(S.mck&&S.mck[i])));S.mck={};if(on)LS.forEach((x,i)=>{if(ce(x))S.mck[i]=true});render();return}
  if(d.act==='cxReq'){S.cxMsg=true;render();return}
- if(d.radd){const m=REGA().find(x=>x.n===d.radd&&x.a===d.ra);if(m&&!S.mem.some(x=>x.n===m.n))S.mem.push({pid:m.pid||m.id,k:m.k,n:m.n,sub:m.a+(m.i?' · '+m.i:'')+(m.t?' · '+m.t+' 선생님 접수':' · 내 접수'),st:'ok'});S.q.n='';render();return}
- if(d.rm){const x=S.mem.splice(+d.rm,1)[0];if(x&&x.n===S.rep)S.rep='';render();return}
+ if(d.radd){const m=REGA().find(x=>KEY(x)===d.radd);if(m&&!S.mem.some(x=>KEY(x)===KEY(m)))S.mem.push({pid:m.pid||m.id,a:m.a,k:m.k,n:m.n,sub:m.a+(m.i?' · '+m.i:'')+(m.t?' · '+m.t+' 선생님 접수':' · 내 접수'),st:'ok'});S.q.n='';render();return}
+ if(d.rm){const x=S.mem.splice(+d.rm,1)[0];if(x&&KEY(x)===S.rep)S.rep='';render();return}
  if(d.fkind!==undefined){inf(P.picked[+d.fkind]).kind=d.k;render();return}
- if(d.setrep){const m=REGL().find(x=>x.n===d.setrep)||{k:'학생'};S.rep=d.setrep;S.mem=S.mem.filter(x=>x.n!==d.setrep);S.mem.unshift({pid:m.pid,k:m.k,n:d.setrep,sub:ACAD+(m.i?' · '+m.i:'')+' · 내 접수',st:'ok'});S.rq='';render();return}
- if(d.act==='repChg'){S.mem=S.mem.filter(x=>x.n!==S.rep);S.rep='';render();return}
+ if(d.setrep){const m=REGL().find(x=>KEY(x)===d.setrep);if(!m)return;S.rep=d.setrep;S.mem=S.mem.filter(x=>KEY(x)!==d.setrep);S.mem.unshift({pid:m.pid,k:m.k,n:m.n,sub:ACAD+(m.i?' · '+m.i:'')+(m.t?' · '+m.t+' 선생님 접수':' · 내 접수'),st:'ok'});S.rq='';render();return}
+ if(d.act==='repChg'){S.mem=S.mem.filter(x=>KEY(x)!==S.rep);S.rep='';render();return}
  if(d.mkrep){S.rep=d.mkrep;render();return}
  const v=id=>(document.getElementById(id)||{}).value||'';
  if(d.act==='find'){S.q={a:v('qa'),n:v('qn').trim()};if(!S.q.n)return;const r=ALL.find(x=>x.a===S.q.a&&x.n===S.q.n);S.res=r||'none';S.manual=false;render();return}
@@ -598,14 +600,14 @@ document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)r
  if(d.act==='manual'){S.manual=true;render();return}
  if(d.act==='addManual'){const n=v('mn').trim();if(!n)return;S.mem.push({k:'학생',n,sub:`${v('my')||'출생연도 -'} · ${v('mi')} · 직접 입력`,st:'wait'});S.res=null;S.manual=false;S.q.n='';render();return}
  if(d.act==='addP'){const n=v('pn').trim();if(!n)return;S.mem.push({k:v('pk'),n,sub:v('ps')+' · 캠프 같이 와요'});render();return}
- if(d.act==='submit'){const T=total();S.list.push({rep:S.rep,names:S.mem.map(m=>m.n),n:S.mem.length,room:S.room,amt:T.all,empty:T.empty,st:'입금 전'});S.done=true;render();return}
+ if(d.act==='submit'){const T=total();S.list.push({rep:RN(),names:S.mem.map(m=>m.n),n:S.mem.length,room:S.room,amt:T.all,empty:T.empty,st:'입금 전'});S.done=true;render();return}
  if(d.act==='toList'){S.tab='list';render();return}
  if(d.act==='again'){S.tab='new';reset();S.room=true;render();return}if(d.act==='roomOn'){S.room=true;render();return}if(d.act==='roomOff'){S.room=false;S.mem=[];S.rep='';render();return}
 });
 document.addEventListener('input',e=>{if(e.target.id==='an'){P.dn=e.target.value;dfeeUp();return}if(e.target.id==='ay'){P.age=e.target.value;dfeeUp();return}if(e.target.id==='pf'){S.pf=e.target.value;pfApply();return}if(e.target.id==='rq'){S.rq=e.target.value.trim();const c=e.target.selectionStart;render();const q=document.getElementById('rq');if(q){q.focus();q.setSelectionRange(c,c)}return}if(e.target.dataset&&e.target.dataset.en){S.ens[e.target.dataset.en]=e.target.value;return}if(e.target.id==='enAq'){S.ens.aq=e.target.value.trim();const c=e.target.selectionStart;render();const q=document.getElementById('enAq');if(q){q.focus();q.setSelectionRange(c,c)}return}if(e.target.id==='qn'){S.q.n=e.target.value.trim();const c=e.target.selectionStart;render();const q=document.getElementById('qn');if(q){q.focus();q.setSelectionRange(c,c)}}});
 document.addEventListener('change',e=>{if(e.target.id==='qa'){S.q.a=e.target.value;render();return}if(e.target.id==='rep'){S.rep=e.target.value;reset();render()}if(e.target.id==='room'){S.room=e.target.checked;render()}});
 /* 처음 화면: 예시로 형제 · 보호자가 들어간 상태 */
-S.mem.push({k:'학생',n:'박두리',sub:ACAD+' · 바이올린 · 내 접수',st:'ok'},{k:'첫번째 보호자',n:'김엄마',sub:ACAD+' · 내 접수',st:'ok'});S.rep='박두리';
+S.mem.push({k:'학생',n:'박두리',sub:ACAD+' · 바이올린 · 내 접수',st:'ok'},{k:'첫번째 보호자',n:'김엄마',sub:ACAD+' · 내 접수',st:'ok'});S.rep=ACAD+'|박두리';
 P.picked.forEach(x=>{x.done=true;const f=inf(x);f.saved=true;if(!f.sex)f.sex=x.k==='교사'?'여성':f.sex});S.tab='login';
 render();
 /* ── 11-21 STG 새 접수: 실제 로그인 · 실제 명단 (저장은 다음 단계) ── */
@@ -671,7 +673,7 @@ function famLoad(){google.script.run.withSuccessHandler(r=>{famIn(r);render()}).
 function famFindIn(a){if(a===ACAD){OTH.length=0;return}google.script.run.withSuccessHandler(L=>{OTH.length=0;(L||[]).forEach(p=>OTH.push({n:p.name,k:p.kind==='가족'?'첫번째 보호자':p.kind,i:p.inst,a:p.acad,pid:p.id,id:p.id}));render()}).famFind(S.token,a,'')}
 document.addEventListener('change',e=>{if(S.token&&e.target.id==='qa'){S.q.a=e.target.value;famFindIn(S.q.a)}},true);
 document.addEventListener('click',e=>{if(!S.token)return;const b=e.target.closest('[data-act="submit"]');if(!b||S.tab!=='new')return;e.stopImmediatePropagation();
- const rep=S.mem.find(m=>m.n===S.rep);if(!rep||!rep.pid){toast('대표를 골라 주세요',true);return}const mem=S.mem.filter(m=>m!==rep).map(m=>m.pid).filter(Boolean);if(!mem.length){toast('함께 갈 가족을 추가해 주세요',true);return}
+ const rep=S.mem.find(m=>KEY(m)===S.rep);if(!rep||!rep.pid){toast('대표를 골라 주세요',true);return}const mem=S.mem.filter(m=>m!==rep).map(m=>m.pid).filter(Boolean);if(!mem.length){toast('함께 갈 가족을 추가해 주세요',true);return}
  S.busy=true;toast('가족방을 보내는 중…');google.script.run.withSuccessHandler(r=>{S.busy=false;famIn(r);S.done=true;render();toast('가족방 신청을 완료했어요')}).withFailureHandler(e=>{S.busy=false;toast((e&&e.message)||String(e),true)}).famSave(S.token,{rep:rep.pid,mem})},true);
 
 function failIn(e){S.loading=false;S.lerr='연결이 잠시 안 돼요. 다시 눌러 주세요.';render();toast(S.lerr,true)}

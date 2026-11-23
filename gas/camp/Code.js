@@ -1,4 +1,4 @@
-/* build: 20261123-121420 */
+/* build: 20261123-121713 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -1805,6 +1805,25 @@ function songsPublic_() {
   return { ok: true, camp: name, songs: out, at: today_() };
 }
 function songDef_() { try { const h = HtmlService.createHtmlOutputFromFile('App1').getContent(), i = h.indexOf('const SONGS_DEF = {'), j = h.indexOf('};', i); if (i < 0 || j < 0) return {}; return (new Function('return ' + h.slice(i + 18, j + 1)))(); } catch (e) { return {}; } }
+/** 11-23 협회 곡목 리스트(구글 시트)를 읽어 곡 목록 모양으로 — 관리자 「협회 곡목 리스트로 맞추기」
+ *  탭: 「Vn 한글」 「Vc 한글」 = C열 음악회 신청곡 · D열 책자 제목 · E열 수정제목(있으면 이것) / 「Vn English」 「Vc English」 = B열 코드 · C열 영어 제목 (작곡가 괄호는 뺌) */
+const SONG_REP_SS = '1nknlb8uSMd2Kxe-HkCTFzLpPChJv0rF5ZL8m5E6FdAE';
+function songRepRead(token) {
+  adm_(token);
+  let ss; try { ss = SpreadsheetApp.openById(setting_('협회 곡목 시트') || SONG_REP_SS); } catch (e) { throw new Error('협회 곡목 리스트 시트를 열 수 없어요. 이 앱 계정에 시트 보기 권한을 주세요.'); }
+  const norm = v => String(v || '').replace(/\s+/g, ' ').replace(/\s*\(/g, ' (').replace(/\(\s+/g, '(').trim();
+  const out = {}, cnt = {};
+  [['Vn', '바이올린'], ['Vc', '첼로']].forEach(([ab, inst]) => {
+    const ko = ss.getSheetByName(ab + ' 한글'), en = ss.getSheetByName(ab + ' English'); if (!ko) return;
+    const E = {}; if (en) en.getDataRange().getDisplayValues().forEach(r => { const c = String(r[1] || '').trim(); if (/^[A-Z]\d{2}-\d{2}$/.test(c)) E[c] = String(r[2] || '').replace(/\s*\([^)]*\)/, '').replace(/\s+/g, ' ').trim(); });
+    const seen = {};
+    out[inst] = ko.getDataRange().getDisplayValues().slice(1).map(r => { const s = norm(r[2]); if (!/^[A-Z]\d{2}-\d{2}\s/.test(s) || seen[s]) return null; seen[s] = 1; const code = s.slice(0, 6);
+      return { s, bt: norm(r[4]) || norm(r[3]), en: E[code] || '' }; }).filter(Boolean);
+    cnt[inst] = out[inst].length;
+  });
+  if (!Object.keys(out).length) throw new Error('시트에서 「Vn 한글」 「Vc 한글」 탭을 찾지 못했어요.');
+  return { ok: true, songs: out, cnt };
+}
 function songsSave(token, o) {
   const a = adm_(token); needCamp_(a);
   if (!o || typeof o !== 'object') throw new Error('저장할 곡 목록이 없어요.');

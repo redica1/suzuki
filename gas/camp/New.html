@@ -221,6 +221,7 @@ function vInfo(){let sum=0;const cards=P.picked.map((x,ix)=>{if(x.done)return ''
  ${stu&&!/직접 추가/.test(x.sub)?`<div class="row"><span class="hint">참가자 구분</span><div class="kchips" role="group" aria-label="참가자 구분">${[['학생',550000],['교사 자녀 (악기)',500000]].map(([k,a])=>`<button type="button" data-fkind="${ix}" data-k="${k}" aria-pressed="${(f.kind||x.k)===k}">${k==='학생'?'학생':'악기하는 교사자녀'} <small>${won(a)}</small></button>`).join('')}</div></div>`:''}
  ${stu?`<div class="row"><label class="hint" for="${id('t')}">담당 교사 <b style="color:var(--warn)">*</b></label><select id="${id('t')}" data-fi="${ix}" data-ff="t" style="min-width:140px"><option value="">담당 교사 고르기</option>${MEMBERS.filter(m=>m.k==='교사'&&m.a===ACAD).map(m=>`<option ${m.n===f.t?'selected':''}>${esc(m.n)}</option>`).join('')}</select>${f.t?'':'<span class="pill wait">담당 교사를 골라 주세요</span>'}
  <label class="hint" for="${id('ag')}">만 나이 <b style="color:var(--warn)">*</b></label><input id="${id('ag')}" data-fi="${ix}" data-ff="age" value="${esc(f.age||'')}" placeholder="만 나이" inputmode="numeric" style="width:80px"><span class="hint">${f.age?'→ '+byYear(f.age)+'년생':'<span class="pill wait">나이를 넣어 주세요</span>'}</span></div>`:''}
+ <div class="row"><span class="hint">오가는 방법 · 왕복 <b style="color:var(--warn)">*</b></span><div class="kchips" role="group" aria-label="오가는 방법">${[['bus','단체 버스'],['car','자차']].map(([v,l])=>`<button type="button" data-fmv="${ix}" data-v="${v}" aria-pressed="${f.mv===v}">${l}</button>`).join('')}</div>${f.mv?'':'<span class="pill wait">골라 주세요</span>'}</div>
  <div class="row"><span class="hint">성별 <b style="color:var(--warn)">*</b></span><div class="kchips" role="group" aria-label="성별">${['여성','남성'].map(g=>`<button type="button" data-fg="${ix}" data-g="${g}" aria-pressed="${f.sex===g}">${g}</button>`).join('')}</div>${f.sex?'':'<span class="pill wait">성별을 골라 주세요</span>'}
  ${np?`<label class="hint" for="${id('age')}">나이 (선택)</label><input id="${id('age')}" data-fi="${ix}" data-ff="age" value="${esc(f.age)}" placeholder="예: 40" inputmode="numeric" style="width:90px">`:''}
  ${stu?`<label class="hint" for="${id('prog')}">권수 · ${esc(instOf(x))} <b style="color:var(--warn)">*</b></label><select id="${id('prog')}" data-fi="${ix}" data-ff="prog" style="flex:1;min-width:150px"><option value="">권수 고르기</option>${(PRG[instOf(x)]||[]).map(q=>`<option ${q===f.prog?'selected':''}>${esc(q)}</option>`).join('')}</select>${f.prog?'':'<span class="pill wait">권수를 골라 주세요</span>'}`:''}</div>
@@ -240,6 +241,7 @@ document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)r
  if(d.fa!==undefined){const x=P.picked[+d.fa],f=inf(x);f.add=Math.max(0,Math.min(5,f.add+(+d.d)));render();return}
  if(d.fmp!==undefined){const f=inf(P.picked[+d.fmp]);f.mcP=f.mcP.includes(d.q)?f.mcP.filter(q=>q!==d.q):f.mcP.concat(d.q);render();return}
  if(d.fg!==undefined){inf(P.picked[+d.fg]).sex=d.g;render();return}
+ if(d.fmv!==undefined){inf(P.picked[+d.fmv]).mv=d.v;render();return}
  if(d.pmode){P.mode=d.pmode;render();if(d.top){const el=document.getElementById('dirBox');if(el)el.scrollIntoView({block:'start',behavior:'smooth'})}return}
  if(d.ai!==undefined){P.inst=d.ai;P.prog='';P.age=(document.getElementById('ay')||{}).value||P.age;render();return}
  if(d.ag!==undefined){P.sex=d.ag;P.age=(document.getElementById('ay')||{}).value||P.age;P.inst=(document.getElementById('ainst')||{}).value||P.inst;P.dn=(document.getElementById('an')||{}).value||P.dn;render();return}
@@ -560,7 +562,7 @@ document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)r
  if(d.mf){S.mf=d.mf;render();return}
  if(d.fedit!==undefined){inf(P.picked[+d.fedit]).saved=false;render();const el=document.getElementById('card'+d.fedit);if(el)el.scrollIntoView({block:'start'});return}
  if(d.fsave!==undefined){const ix=+d.fsave,x=P.picked[ix],f=inf(x),np=NOPLAY(x.k),stu=STU3(x.k);const c0=Object.keys(f.cons)[0],o=c0?f.cons[c0]:null;
-  f.err=!f.sex?'성별을 골라 주세요.':stu&&!f.t?'담당 교사를 골라 주세요.':stu&&!f.age?'만 나이를 넣어 주세요.':stu&&!f.prog?'권수를 골라 주세요.':f.mc&&!f.mcP.length?'마스터클래스 교수를 골라 주세요.':o&&!(o.nl?(o.title&&o.comp):o.song)?'음악회 곡을 골라 주세요.':'';
+  f.err=!f.mv?'오가는 방법(단체 버스 · 자차)을 골라 주세요.':!f.sex?'성별을 골라 주세요.':stu&&!f.t?'담당 교사를 골라 주세요.':stu&&!f.age?'만 나이를 넣어 주세요.':stu&&!f.prog?'권수를 골라 주세요.':f.mc&&!f.mcP.length?'마스터클래스 교수를 골라 주세요.':o&&!(o.nl?(o.title&&o.comp):o.song)?'음악회 곡을 골라 주세요.':'';
   if(f.err){render();toast(x.n+' · '+f.err.replace(/\.$/,'')+' (저장 안 됨)',true);const el=document.getElementById('card'+ix);if(el)el.scrollIntoView({block:'start'});return}
   if(S.token){f.saved=true;nSubmit([x]);return}f.saved=true;x.done=true;x.now=true;x.at=nowTs();const left=P.picked.filter(y=>!y.done).length;render();toast(x.n+' · 캠프 신청했어요'+(left?'':' · 모두 신청했어요'));if(!left){scrollTo(0,0);return}const nx=P.picked.findIndex((y,k)=>k>ix&&!y.done),nx2=nx<0?P.picked.findIndex(y=>!y.done):nx;const el=document.getElementById('card'+nx2);if(el)el.scrollIntoView({block:'start'});return}
  if(d.tt){useTest(d.tt,d.ta);return}
@@ -622,7 +624,7 @@ function campIn(c){if(!c)return;const ri=+c.ri||0;Object.keys(K2T).forEach(k=>{c
 function idsIn(R){MEMBERS.forEach(m=>{if(m.a!==ACAD)return;const L=m.k==='교사'?R.teachers:R.students,h=L.find(q=>q.name===m.n);if(h)m.id=h.id})}
 function infoOf(x){const f=inf(x),kk=f.kind||x.k,o0=Object.keys(f.cons||{})[0],o=o0?f.cons[o0]:null,by=x.y?String(x.y):f.age!==''&&f.age!=null&&!isNaN(+f.age)?String(new Date().getFullYear()-(+f.age)):'';
  return {by,man:f.age||'',gender:/^여/.test(f.sex||'')?'여':/^남/.test(f.sex||'')?'남':'',teacher:f.t||'',type:K2T[kk]||kk,prog:f.prog||'',pref:!!f.p1,p1:f.p1||'',p2:f.p2||'',lessons:f.no?0:+f.add||0,noBase:!!f.no,mc:f.mc?(f.mcP||[]).map(q=>String(q).split(' · ')[0]):[],
-  concert:o0||'없음',song:o&&!o.nl?o.song||'':'',other:!!(o&&o.nl),oc:o&&o.nl?o.comp||'':'',ot:o&&o.nl?o.title||'':'',video:o&&o.url||''}}
+  move:f.mv||'',concert:o0||'없음',song:o&&!o.nl?o.song||'':'',other:!!(o&&o.nl),oc:o&&o.nl?o.comp||'':'',ot:o&&o.nl?o.title||'':'',video:o&&o.url||''}}
 function nSubmit(L0){const L=L0||P.picked.filter(x=>!x.done);if(!L.length||S.busy)return;
  const own=(S.subs||[]).find(sb=>sb.owner===WHO&&sb.acad===ACAD&&(sb.ppl||[]).some(p=>p.status!=='취소'));
  const sb0=own?JSON.parse(JSON.stringify(own)):{no:'N'+Date.now(),owner:WHO,acad:ACAD,round:'',date:S.today||'',ppl:[],form:{picked:{},extra:[],fam:[],info:{},room:{},join:{},ens:{},note:null,ri:(S.camp||{}).ri||0}};const sb=sb0;sb.pressAt=new Date().toISOString();
@@ -658,7 +660,7 @@ document.addEventListener('click',e=>{if(!S.token)return;const b=e.target.closes
 function subsIn(subs){(subs||[]).forEach(sb=>{if(sb.acad!==ACAD)return;const fm=sb.form||{},IN=fm.info||{};(sb.ppl||[]).forEach(p=>{if(p.status==='취소')return;const key=String(p.id).slice(String(sb.no).length+1),i=IN[key]||{},kk=T2K[p.type]||(p.kind==='교사'?'교사':'학생');
   if(P.picked.some(x=>x.no===sb.no&&x.key===key))return;
   const x={n:p.name,k:kk,i:p.inst||'',sub:sb.acad+' · '+(sb.owner===WHO?'내 접수':sb.owner+' 선생님 접수'),done:true,at:String(p.addAt||sb.createdAt||'').slice(2,16).replace(/-/g,'.'),no:sb.no,key,id:key,owner:sb.owner,pay:p.pay,paidAmt:+p.paidAmt||0};
-  P.picked.push(x);const f=inf(x);Object.assign(f,{saved:true,sex:i.gender==='여'?'여성':i.gender==='남'?'남성':'',age:i.man||(i.by?String(new Date().getFullYear()-(+i.by)):''),t:i.teacher||'',prog:i.prog||'',p1:i.p1||'',p2:i.p2||'',add:+i.lessons||0,no:!!i.noBase,mc:(i.mc||[]).length>0,mcP:(i.mc||[]).map(n=>{const q=PF.find(z=>z[0]===n);return q?q[0]+' · '+q[1]:n}),cons:i.concert&&i.concert!=='없음'?{[i.concert]:{song:i.song||'',nl:!!i.other,title:i.ot||'',comp:i.oc||'',url:i.video||''}}:{}});
+  P.picked.push(x);const f=inf(x);Object.assign(f,{saved:true,mv:i.move||'',sex:i.gender==='여'?'여성':i.gender==='남'?'남성':'',age:i.man||(i.by?String(new Date().getFullYear()-(+i.by)):''),t:i.teacher||'',prog:i.prog||'',p1:i.p1||'',p2:i.p2||'',add:+i.lessons||0,no:!!i.noBase,mc:(i.mc||[]).length>0,mcP:(i.mc||[]).map(n=>{const q=PF.find(z=>z[0]===n);return q?q[0]+' · '+q[1]:n}),cons:i.concert&&i.concert!=='없음'?{[i.concert]:{song:i.song||'',nl:!!i.other,title:i.ot||'',comp:i.oc||'',url:i.video||''}}:{}});
   x.srv={fee:+p.fee||0,lesson:+p.lesson||0,dues:+p.dues||0,room:+p.room||0,late:!!p.late,kind:p.kind,pd:+p.paidAmt||0};if(p.pay==='신고'||(+p.paidAmt||0)>0){const rw=(p.rep&&p.rep.rows&&p.rep.rows[p.id])||p.rep||{};S.prep=S.prep||{};S.prep[pkey(x)]={payer:rw.name||'',date:rw.date||'',ok:(+p.paidAmt||0)>0,okd:''}}})})}
 
 /* 11-21 가족방 (서버 「가족방신청」 시트) */

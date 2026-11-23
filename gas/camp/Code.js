@@ -1,4 +1,4 @@
-/* build: 20261123-215829 */
+/* build: 20261123-221602 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -96,7 +96,7 @@ const SH = {
 const SUB_HEAD = ['접수번호', '접수일시', '수정일시', '학원', '접수 교사', '차수', '인원(정상)', '청구액', '입금확인액', '남은 금액', '앙상블', 'JSON_1', 'JSON_2', 'JSON_3', 'JSON_4'];
 const P_HEAD = ['참가자ID', '접수번호', '차수', '학원', '접수 교사', '들어온 차례', '추가 일시', '이름', '구분', '참가 구분', '악기', '담당 교사', '출생연도', '성별',
   '현재 진도', '선호 교수1', '선호 교수2', '추가 레슨', '마스터클래스', '음악회', '음악회 곡', '가족방', '참가비', '레슨·MC', '연회비', '가족방비', '청구액', '상태',
-  '입금 상태', '신고 입금자명', '신고 입금일', '신고 금액', '신고 메모', '[운영진] 입금확인일', '[운영진] 입금확인액', '[운영진] 메모'];
+  '입금 상태', '신고 입금자명', '신고 입금일', '신고 금액', '신고 메모', '[운영진] 입금확인일', '[운영진] 입금확인액', '[운영진] 메모', '오가는 방법'];   /* 11-23 오가는 방법(왕복 · 단체 버스/자차)은 맨 끝 (운영진 칸 자리 그대로) */
 const ADMIN_COLS = ['[운영진] 입금확인일', '[운영진] 입금확인액', '[운영진] 메모'];
 const CX_HEAD = ['요청 일시', '접수번호', '학원', '요청 교사', '참가자', '사유', '환불 예정액', '은행', '계좌번호', '예금주', '진단서', '처리', '처리일', '메모', '참가자ID', '신청액', '입금액', '적용 규정', '접수일'];
 
@@ -796,9 +796,10 @@ function parentClean_(d) {
   d = d || {}; const t = (v, n) => String(v == null ? '' : v).replace(/[\r|]/g, ' ').trim().slice(0, n);
   const yr = v => { const y = String(v || '').replace(/\D/g, '').slice(0, 6); return y; };
   const g = v => (v === '남' || v === '여') ? v : '';
-  const kids = (Array.isArray(d.kids) ? d.kids : []).slice(0, 8).map(x => { const a = parseInt(String(x.age == null ? '' : x.age).replace(/\D/g, ''), 10); const by = String(x.by || '').replace(/\D/g, '').slice(0, 4); return { name: t(x.name, 20), inst: t(x.inst, 10), age: a >= 0 && a <= 30 ? a : '', by: /^(19|20)\d\d$/.test(by) ? by : '', go: ['간다', '안 간다', '모름'].includes(x.go) ? x.go : '간다', lessons: Math.max(0, Math.min(OPT.lessonMax, parseInt(x.lessons, 10) || 0)), mc: (Array.isArray(x.mc) ? x.mc : []).map(n => t(n, 30)).filter((n, i, a) => n && a.indexOf(n) === i && mcList_().some(m => m.n === n)).slice(0, 6) }; }).filter(x => x.name);
-  const fam = (Array.isArray(d.fam) ? d.fam : []).slice(0, 12).map(x => ({ type: x.type === '15개월 미만' ? '15개월 미만' : '동반가족', name: t(x.name, 20), gender: g(x.gender), by: yr(x.by) })).filter(x => x.name);
-  return { kids, fam, me: { gender: g((d.me || {}).gender), by: yr((d.me || {}).by), go: (d.me || {}).go === false ? false : true }, room: { fam: !!(d.room || {}).fam, note: t((d.room || {}).note, 300) }, memo: t(d.memo, 300) };
+  const mv = v => (v === 'bus' || v === 'car') ? v : '';
+  const kids = (Array.isArray(d.kids) ? d.kids : []).slice(0, 8).map(x => { const a = parseInt(String(x.age == null ? '' : x.age).replace(/\D/g, ''), 10); const by = String(x.by || '').replace(/\D/g, '').slice(0, 4); return { mv: mv(x.mv), name: t(x.name, 20), inst: t(x.inst, 10), age: a >= 0 && a <= 30 ? a : '', by: /^(19|20)\d\d$/.test(by) ? by : '', go: ['간다', '안 간다', '모름'].includes(x.go) ? x.go : '간다', lessons: Math.max(0, Math.min(OPT.lessonMax, parseInt(x.lessons, 10) || 0)), mc: (Array.isArray(x.mc) ? x.mc : []).map(n => t(n, 30)).filter((n, i, a) => n && a.indexOf(n) === i && mcList_().some(m => m.n === n)).slice(0, 6) }; }).filter(x => x.name);
+  const fam = (Array.isArray(d.fam) ? d.fam : []).slice(0, 12).map(x => ({ type: x.type === '15개월 미만' ? '15개월 미만' : '동반가족', name: t(x.name, 20), gender: g(x.gender), by: yr(x.by), mv: mv(x.mv) })).filter(x => x.name);
+  return { kids, fam, me: { gender: g((d.me || {}).gender), by: yr((d.me || {}).by), go: (d.me || {}).go === false ? false : true, mv: mv((d.me || {}).mv) }, room: { fam: !!(d.room || {}).fam, note: t((d.room || {}).note, 300) }, memo: t(d.memo, 300), car: t(d.car, 40) };
 }
 function parentSave(tok, d) {
   const u = parentWho_(tok), x = parentClean_(d);
@@ -1071,6 +1072,7 @@ function writeSubRow_(sb, isNew) {
 /** 참가자 시트: 그 접수의 줄을 다시 씀. 운영진 칸은 참가자ID 기준으로 지킴 */
 function writePeople_(sb, isNew) {
   const sh = SpreadsheetApp.getActive().getSheetByName(SH.P);
+  try { const hc = sh.getRange(1, P_HEAD.length); if (hc.getValue() !== P_HEAD[P_HEAD.length - 1]) hc.setValue(P_HEAD[P_HEAD.length - 1]).setFontWeight('bold'); } catch (e) {}
   const old = isNew === 'append' ? [] : rows_(SH.P).filter(r => String(r['접수번호']) === sb.no);
   const keep = {}; old.forEach(r => keep[String(r['참가자ID'])] = ADMIN_COLS.map(k => r[k]));
   old.map(r => r._row).sort((a, b) => b - a).forEach(r => sh.deleteRow(r));
@@ -1085,7 +1087,8 @@ function writePeople_(sb, isNew) {
       '음악회': i.concert && i.concert !== '없음' ? i.concert : '', '음악회 곡': i.other ? (String(i.oc || '') + ' ' + String(i.ot || '')).trim() : (i.song || ''),
       '가족방': p.room ? '대표(빈 자리 요금)' : (f.room && f.room[key] ? '대표' : ''), '참가비': p.fee, '레슨·MC': p.lesson, '연회비': p.dues, '가족방비': p.room || 0,
       '청구액': (+p.fee || 0) + (+p.lesson || 0) + (+p.dues || 0) + (+p.room || 0), '상태': p.status, '입금 상태': p.pay,
-      '신고 입금자명': r.name || '', '신고 입금일': r.date || '', '신고 금액': r.a || '', '신고 메모': p.rep && p.rep.memo || ''
+      '신고 입금자명': r.name || '', '신고 입금일': r.date || '', '신고 금액': r.a || '', '신고 메모': p.rep && p.rep.memo || '',
+      '오가는 방법': i.move === 'bus' ? '단체 버스' : i.move === 'car' ? '자차' : ''
     };
     const k = keep[p.id] || ['', '', ''];
     ADMIN_COLS.forEach((c, j) => vals[c] = k[j]);

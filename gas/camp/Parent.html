@@ -1,4 +1,4 @@
-<!doctype html><!-- build: 20261123-215829 --><html lang="ko"><head><meta charset="utf-8"><link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"><meta name="viewport" content="width=device-width,initial-scale=1">
+<!doctype html><!-- build: 20261123-221602 --><html lang="ko"><head><meta charset="utf-8"><link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
 <style>
 /* 학부모 신청 (11-15): 학원 다니는 학생의 보호자가 회원가입 없이 「간다 / 안 간다」와 같이 가는 가족 이름만 학원 선생님께 보냄 */
@@ -80,10 +80,9 @@ function stNote(){var r=S.req;if(!r)return '';var sub=r.sub,reps=((r.m||{}).reps
 /* 11-23 오가는 방법: 가는 사람마다 단체 버스 / 자차 (갈 때 · 올 때 같은 방법) */
 function moveList(){var d=S.d,L=[];d.kids.forEach(function(k,i){if(k.name||d.kids.length===1)L.push({o:k,k:'k'+i,n:k.name||'학생 '+(i+1),t:'학생'})});if(d.me.go)L.push({o:d.me,k:'me',n:S.nm||'보호자(나)',t:'보호자'});d.fam.forEach(function(f,i){L.push({o:f,k:'f'+i,n:f.name||f.type,t:f.type})});return L}
 function vMove(){var L=moveList(),B=(S.I&&S.I.bus)||{},nb=L.filter(function(x){return x.o.mv==='bus'}).length,nc=L.filter(function(x){return x.o.mv==='car'}).length;
-  return '<div class="card"><h3><span class="no">5</span>오가는 방법</h3><p class="hint" style="margin-top:0">가는 사람마다 골라 주세요. '+(B.note?esc(B.note):'단체 버스 출발 장소 · 시간 · 요금은 협회가 따로 알려 드려요.')+'</p>'+
+  return '<div class="card"><h3><span class="no">5</span>오가는 방법 <span class="opt">왕복 · 꼭</span></h3><p class="hint" style="margin-top:0">가는 사람마다 골라 주세요. 갈 때 · 올 때 같은 방법(왕복)이에요.</p>'+
     '<div class="row" style="margin-bottom:8px"><button class="btn small" type="button" data-mvall="bus">모두 단체 버스</button><button class="btn small" type="button" data-mvall="car">모두 자차</button><span class="opt">버스 '+nb+'명 · 자차 '+nc+'명'+(L.length-nb-nc?' · 아직 '+(L.length-nb-nc)+'명':'')+'</span></div>'+
     L.map(function(x){return '<div class="mvrow"><span><b>'+esc(x.n)+'</b> <span class="opt">'+esc(x.t)+'</span></span>'+seg('data-mv',x.k,x.o.mv||'',[['bus','단체 버스'],['car','자차']],1)+'</div>'}).join('')+
-    (nb&&B.stops&&B.stops.length?'<label class="f" style="margin-top:10px">버스 타는 곳<select id="mvStop" class="sel"><option value="">골라 주세요</option>'+B.stops.map(function(p){return '<option'+(S.d.stop===p?' selected':'')+'>'+esc(p)+'</option>'}).join('')+'</select></label>':'')+
     (nc?'<label class="f" style="margin-top:10px;margin-bottom:0">자차 대수 · 차량 번호 <span class="opt">선택 · 주차 안내용</span><input type="text" id="mvCar" maxlength="40" value="'+esc(S.d.car||'')+'" placeholder="예) 1대 · 12가 3456"></label>':'')+'</div>'}
 function vForm(){var I=S.I,d=S.d;if(!I.open)return '<div class="card"><h2>지금은 학부모 신청을 받지 않아요</h2><p class="hint">이번 캠프는 일부 학원만 학부모 신청을 받아요. 다니는 학원 선생님께 여쭤 주세요.</p></div>';
   var kids=d.kids.map(function(k,i){return '<div class="kid"><div class="top"><span class="pill">학생 '+(i+1)+'</span>'+(d.kids.length>1?'<span style="flex:1"></span><button class="x" type="button" data-kdel="'+i+'">빼기</button>':'')+'</div>'+
@@ -238,6 +237,7 @@ document.addEventListener('click',function(e){var b=e.target.closest('button');i
   if(b.id==='send'){var w2=who();if(w2){S.err=w2;render();toast(w2);window.scrollTo(0,0);return}
     if(!d.kids.some(function(k){return k.name.trim()})){S.err='학생 이름을 1명 이상 넣어 주세요.';render();toast(S.err);return}
     if(d.fam.some(function(f){return !f.name.trim()})){S.err='가족 이름을 넣거나, 비어 있는 줄은 「빼기」를 눌러 주세요.';render();toast(S.err);return}
+    {var nm=moveList().filter(function(x){return !x.o.mv}).map(function(x){return x.n});if(nm.length){S.err='오가는 방법(단체 버스 · 자차)을 골라 주세요: '+nm.join(', ');render();toast(S.err);return}}
     S.agree=document.getElementById('ag').checked;if(!S.agree){S.err='맨 아래 동의에 체크해 주세요.';render();toast(S.err);return}
     var c={};S.I.consent.forEach(function(x){c[x.id]=true});
     run('parentSubmit',[S.nm,S.ph,S.ac,c,d,S.pw,S.em],function(r){S.err='';setReq(r.req);render();window.scrollTo(0,0);toast('학원 선생님께 보냈어요')});return}});

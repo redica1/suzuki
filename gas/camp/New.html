@@ -438,12 +438,12 @@ function audDoor(){const A=(S.camp&&S.camp.aud)||{},L=Object.keys(A).filter(k=>A
    :`<div class="hbox" style="opacity:.6;cursor:default"><span class="no">♪</span><b>음원 먼저 내기</b><p>지금 먼저 받는 음악회가 없어요. 음원은 캠프 신청하기에서 학생마다 넣어요.</p><span class="st">닫힘</span></div>`}
 /* 11-23 음원 먼저 내기: 새 화면 안에서 (따로 로그인 없음 · 지금 로그인한 선생님으로) — 서버 audPreList · audPreAddMany 그대로 */
 function apLoadN(){if(S.apl)return;if(!S.token||!(window.google&&google.script&&google.script.run)){S.AP={cons:[],stu:[],rows:[],acads:[ACAD]};return}S.apl=1;google.script.run.withSuccessHandler(r=>{S.apl=0;S.AP=r;render()}).withFailureHandler(e=>{S.apl=0;toast((e&&e.message)||String(e),true)}).audPreList(S.token)}
-const instAb=v=>{v=String(v||'');const M=[['바이올린','Vn'],['비올라','Va'],['첼로','Vc'],['베이스','Cb'],['플루트','Fl'],['피아노','Pf'],['하프','Hp'],['기타','Gt']];const m=M.find(x=>v.startsWith(x[0]));return m?m[1]:v};
+const instAb=v=>{v=String(v||'');const M=[['바이올린','Vn'],['비올라','Va'],['첼로','Vc'],['플루트','Fl'],['피아노','Pf']];const m=M.find(x=>v.startsWith(x[0]));return m?m[1]:v};
 function vAudP(){const A=S.AP;if(!A){apLoadN();return '<div class="panel"><p class="hint">불러오고 있어요…</p></div>'}
   const open=(A.cons||[]).filter(c=>c.open),L=S.apSel||(S.apSel=[]),q=(S.apq||'').trim(),mine=(A.rows||[]).slice().reverse();
   if(!open.some(c=>c.name===S.apCon))S.apCon=open.length===1?open[0].name:'';const con=S.apCon;
   const md=c=>c&&c.end?` <small>~${+c.end.slice(5,7)}/${+c.end.slice(8,10)}</small>`:'';
-  const IO=['바이올린','비올라','첼로','베이스','플루트','피아노','기타','하프'],io=v=>{const k=IO.findIndex(t=>(v||'').startsWith(t));return k<0?99:k};
+  const IO=['바이올린','비올라','첼로','플루트','피아노'],io=v=>{const k=IO.findIndex(t=>(v||'').startsWith(t));return k<0?99:k};
   const stu=(A.stu||[]).filter(x=>!q||x.name.includes(q)).slice().sort((a,b)=>io(a.inst)-io(b.inst)||(a.inst||'').localeCompare(b.inst||'','ko')||a.name.localeCompare(b.name,'ko'));
   const G=[];stu.forEach(x=>{const k=x.inst||'전공 없음';let g=G.find(y=>y.k===k);if(!g)G.push(g={k:k,L:[]});g.L.push(x)});
   const key=e=>e.sid+'|'+e.con;if(S.apI&&!G.some(g=>g.k===S.apI))S.apI='';const GV=S.apI?G.filter(g=>g.k===S.apI):G;

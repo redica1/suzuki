@@ -1,4 +1,4 @@
-/* build: 20261123-234833 */
+/* build: 20261123-235729 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -38,6 +38,8 @@ const ROUND_NAMES = ['1차', '2차', '3차'];
 /* 해외(USD, 11-15 사용자): 추가 레슨 1회 45달러 · 가족방 빈 자리 1개 30달러 — 캠프설정 옵션 intlLessonUsd · intlRoomUsd 로 바꿀 수 있음 */
 const INTL_USD = o => ({ lesson: +((o || {}).intlLessonUsd) || 45, room: +((o || {}).intlRoomUsd) || 30, mc: +((o || {}).intlMcUsd) || 0 });   /* mc: 0 이면 교수마다 원화 금액 ÷ 환율 (반올림) */
 const intlMcUsd_ = (o, fee) => INTL_USD(o).mc || Math.round((+fee || 0) / (+(o || {}).usdRate || 1450));
+/* 오가는 방법 (11-23): 버스 왕복 · 편도(갈 때 / 올 때) · 자차 */
+const MOVES_ = { bus: '버스 왕복', go: '버스 편도(갈 때)', back: '버스 편도(올 때)', car: '자차' };
 const OPT = { lessonFee: 60000, lessonMax: 5, studentDues: 30000, teacherDues: 300000, roomCap: 4, roomEmptyFee: 140000, roomMax: 6 };   // roomCap = 가족방 기준 인원(이보다 적으면 빈 자리 요금), roomMax = 한 방 최대 (숙소 1실 5~6인, 11-15)
 const PLAYS = ['교사', '연수생', '소속없는 중급연수생', '학생', '회원의 악기하는 자녀', '비회원 학생', '해외 학생', '해외 교사'];
 const MASTER = [{ n: '안드레아 부샤츠', fee: 150000 }, { n: '이성주', fee: 150000 }];
@@ -783,7 +785,7 @@ function parentInit() {
   const mcs = profPublic_().filter((p, i, a) => p.mc && a.findIndex(q => q.mc && q.n === p.n && q.i === p.i) === i).map(p => ({ n: p.n, i: p.i, min: +p.min || 45, fee: +p.fee || 0 }));
   return { ok: true, open: C.base.member !== false && pa.length > 0, acads: pa, mcs, lessonMax: OPT.lessonMax, camp: { name: C.base.name, start: C.base.start, end: C.base.end, place: C.base.place }, consent: (C.consent.items || []).filter(x => x.on), refund: C.refund, roomCap: (C.opt || {}).roomCap || 4,
     /* 예상 참가비 (11-15): 학생 · 첫 보호자 · 동반가족 · 15개월 미만 × 차수, 지금 차수, 학생 회비 · 가족방 빈 자리 · 추가레슨 */
-    price: { fees: ['학생', '회원의 첫번째 보호자', '회원의 그외 악기 안하는 동반가족', '동반가족 중 15개월 미만'].reduce((o, k) => { o[k] = C.fees[k] || []; return o; }, {}), rounds: C.rounds.map(r => ({ n: r.n, from: r.from, to: r.to })), ri: curRound_(C), dues: +(C.opt || {}).studentDues || 0, empty: +(C.opt || {}).roomEmptyFee || 0, lesson: +(C.opt || {}).lessonFee || 0 } };
+    price: { fees: ['학생', '회원의 첫번째 보호자', '회원의 그외 악기 안하는 동반가족', '동반가족 중 15개월 미만'].reduce((o, k) => { o[k] = C.fees[k] || []; return o; }, {}), rounds: C.rounds.map(r => ({ n: r.n, from: r.from, to: r.to })), ri: curRound_(C), dues: +(C.opt || {}).studentDues || 0, empty: +(C.opt || {}).roomEmptyFee || 0, lesson: +(C.opt || {}).lessonFee || 0, bus: { r: +(C.opt || {}).busRound || 0, o: +(C.opt || {}).busOne || 0 } } };
 }
 function parentWho_(tok) { const v = tok && CacheService.getScriptCache().get('pt_' + tok); if (!v) throw new Error('들어온 지 오래되어 끊겼어요. 처음 화면에서 다시 들어와 주세요.'); return JSON.parse(v); }
 function parentOut_(r) { return r ? { id: r.id, acad: r.acad, name: r.name, d: r.d, at: r.at, st: r.st, byAt: r.byAt, m: r.m || {}, bank: acadBank_(r.acad), sub: parentSub_(r.id) } : null; }
@@ -817,7 +819,7 @@ function parentClean_(d) {
   d = d || {}; const t = (v, n) => String(v == null ? '' : v).replace(/[\r|]/g, ' ').trim().slice(0, n);
   const yr = v => { const y = String(v || '').replace(/\D/g, '').slice(0, 6); return y; };
   const g = v => (v === '남' || v === '여') ? v : '';
-  const mv = v => (v === 'bus' || v === 'car') ? v : '';
+  const mv = v => MOVES_[v] ? v : '';
   const kids = (Array.isArray(d.kids) ? d.kids : []).slice(0, 8).map(x => { const a = parseInt(String(x.age == null ? '' : x.age).replace(/\D/g, ''), 10); const by = String(x.by || '').replace(/\D/g, '').slice(0, 4); return { mv: mv(x.mv), name: t(x.name, 20), inst: t(x.inst, 10), age: a >= 0 && a <= 30 ? a : '', by: /^(19|20)\d\d$/.test(by) ? by : '', go: ['간다', '안 간다', '모름'].includes(x.go) ? x.go : '간다', lessons: Math.max(0, Math.min(OPT.lessonMax, parseInt(x.lessons, 10) || 0)), mc: (Array.isArray(x.mc) ? x.mc : []).map(n => t(n, 30)).filter((n, i, a) => n && a.indexOf(n) === i && mcList_().some(m => m.n === n)).slice(0, 6) }; }).filter(x => x.name);
   const fam = (Array.isArray(d.fam) ? d.fam : []).slice(0, 12).map(x => ({ type: x.type === '15개월 미만' ? '15개월 미만' : '동반가족', name: t(x.name, 20), gender: g(x.gender), by: yr(x.by), mv: mv(x.mv) })).filter(x => x.name);
   return { kids, fam, me: { gender: g((d.me || {}).gender), by: yr((d.me || {}).by), go: (d.me || {}).go === false ? false : true, mv: mv((d.me || {}).mv) }, room: { fam: !!(d.room || {}).fam, note: t((d.room || {}).note, 300) }, memo: t(d.memo, 300), car: t(d.car, 40) };
@@ -1109,7 +1111,7 @@ function writePeople_(sb, isNew) {
       '가족방': p.room ? '대표(빈 자리 요금)' : (f.room && f.room[key] ? '대표' : ''), '참가비': p.fee, '레슨·MC': p.lesson, '연회비': p.dues, '가족방비': p.room || 0,
       '청구액': (+p.fee || 0) + (+p.lesson || 0) + (+p.dues || 0) + (+p.room || 0), '상태': p.status, '입금 상태': p.pay,
       '신고 입금자명': r.name || '', '신고 입금일': r.date || '', '신고 금액': r.a || '', '신고 메모': p.rep && p.rep.memo || '',
-      '오가는 방법': i.move === 'bus' ? '단체 버스' : i.move === 'car' ? '자차' : ''
+      '오가는 방법': MOVES_[i.move] || ''
     };
     const k = keep[p.id] || ['', '', ''];
     ADMIN_COLS.forEach((c, j) => vals[c] = k[j]);
@@ -1738,7 +1740,7 @@ const CAMP_DEF = {
   base: { id: CAMP_ID, name: CAMP_NAME, start: '2027-01-11', end: '2027-01-15', place: '추후 안내', open: '2026-12-01', close: '2026-12-28', cur: 'auto', guest: true, staff: true, member: true, intl: true },
   rounds: [{ n: '1차', from: '2026-12-01', to: '2026-12-10' }, { n: '2차', from: '2026-12-11', to: '2026-12-20' }, { n: '3차', from: '2026-12-21', to: '2026-12-28' }],
   fees: FEES,
-  opt: { lessonFee: OPT.lessonFee, lessonMax: OPT.lessonMax, mcFee: 150000, studentDues: OPT.studentDues, teacherDues: OPT.teacherDues, roomCap: OPT.roomCap, roomEmptyFee: OPT.roomEmptyFee, usdRate: 1450 },
+  opt: { lessonFee: OPT.lessonFee, lessonMax: OPT.lessonMax, mcFee: 150000, studentDues: OPT.studentDues, teacherDues: OPT.teacherDues, roomCap: OPT.roomCap, roomEmptyFee: OPT.roomEmptyFee, usdRate: 1450, busRound: 0, busOne: 0 },   /* 단체 버스 1인 왕복 · 편도 (11-23, 0 = 추후 안내) */
   /* 환불: rate = 진단서 미제출 환불 %, drate = 전염병 · 팔·손 골절 진단서 제출 시 환불 % (null = rate 와 같음) · 11-11 규정 */
   refund: { rules: [{ until: '2026-12-31', label: '수수료 없음', rate: 100, drate: null, doc: false }, { until: '2027-01-04', label: '수수료 10%', rate: 90, drate: 100, doc: false }, { until: '2027-01-08', label: '수수료 20%', rate: 80, drate: 90, doc: false }],
     after: { label: '환불 불가', rate: 0, drate: 50, doc: false, allow: true }, duesRefund: false },

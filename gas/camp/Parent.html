@@ -1,4 +1,4 @@
-<!doctype html><!-- build: 20261123-234833 --><html lang="ko"><head><meta charset="utf-8"><link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"><meta name="viewport" content="width=device-width,initial-scale=1">
+<!doctype html><!-- build: 20261123-235729 --><html lang="ko"><head><meta charset="utf-8"><link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
 <style>
 /* 학부모 신청 (11-15): 학원 다니는 학생의 보호자가 회원가입 없이 「간다 / 안 간다」와 같이 가는 가족 이름만 학원 선생님께 보냄 */
@@ -82,15 +82,20 @@ function stNote(){var r=S.req;if(!r)return '';var sub=r.sub,reps=((r.m||{}).reps
   return '<p class="note ok"><b>학원 선생님께 보냈어요</b> ('+esc(fdt(r.at))+'). 고칠 게 있으면 고쳐서 다시 보내면 돼요.</p>'}
 /* 11-23 오가는 방법: 가는 사람마다 단체 버스 / 자차 (갈 때 · 올 때 같은 방법) */
 function moveList(){var d=S.d,L=[];d.kids.forEach(function(k,i){if(k.name||d.kids.length===1)L.push({o:k,k:'k'+i,n:k.name||'학생 '+(i+1),t:'학생'})});if(d.me.go)L.push({o:d.me,k:'me',n:S.nm||'보호자(나)',t:'보호자'});d.fam.forEach(function(f,i){L.push({o:f,k:'f'+i,n:f.name||f.type,t:f.type})});return L}
-function kidSum(k,i){var P=S.I.price||{},mc=(k.mc||[]).length,ls=+k.lessons||0;var t=[esc(k.inst||'전공 미정'),k.age!==''&&k.age!=null?'만 '+esc(k.age)+'세':'',k.mv==='bus'?'단체 버스':k.mv==='car'?'자차':'',ls?'추가레슨 '+ls+'회':'',mc?'마스터클래스 '+mc:''].filter(Boolean).join(' · ');
+function kidSum(k,i){var P=S.I.price||{},mc=(k.mc||[]).length,ls=+k.lessons||0;var t=[esc(k.inst||'전공 미정'),k.age!==''&&k.age!=null?'만 '+esc(k.age)+'세':'',MVN[k.mv]||'',ls?'추가레슨 '+ls+'회':'',mc?'마스터클래스 '+mc:''].filter(Boolean).join(' · ');
   return '<div class="kid ksum"><span class="pill">학생 '+(i+1)+'</span><span class="ks"><b>'+esc(k.name)+'</b> <span class="opt">'+t+'</span></span><button class="btn small ghost" type="button" data-kedit="'+i+'">고치기</button><button class="x" type="button" data-kdel="'+i+'">빼기</button></div>'}
-function famSum(f,i){var t=[f.gender,f.by?(f.type==='15개월 미만'?f.by:f.by+'년생'):'',f.mv==='bus'?'단체 버스':f.mv==='car'?'자차':''].filter(Boolean).map(esc).join(' · ');
+function famSum(f,i){var t=[f.gender,f.by?(f.type==='15개월 미만'?f.by:f.by+'년생'):'',MVN[f.mv]||''].filter(Boolean).map(esc).join(' · ');
   return '<div class="fam ksum"><span class="pill">'+esc(f.type)+'</span><span class="ks"><b>'+esc(f.name)+'</b> <span class="opt">'+t+'</span></span><button class="btn small ghost" type="button" data-fedit="'+i+'">고치기</button><button class="x" type="button" data-fdel="'+i+'">빼기</button></div>'}
-function mvRow(k,v){return '<div class="mvrow"><span class="mvl">오가는 방법 <span class="opt">왕복 · 꼭</span></span>'+seg('data-mv',k,v||'',[['bus','단체 버스'],['car','자차']],1)+'</div>'}
-function vMove(){var L=moveList(),B=(S.I&&S.I.bus)||{},nb=L.filter(function(x){return x.o.mv==='bus'}).length,nc=L.filter(function(x){return x.o.mv==='car'}).length;
-  return '<div class="card"><h3><span class="no">5</span>오가는 방법 <span class="opt">왕복 · 꼭</span></h3><p class="hint" style="margin-top:0">가는 사람마다 골라 주세요. 갈 때 · 올 때 같은 방법(왕복)이에요.</p>'+
-    '<div class="row" style="margin-bottom:8px"><button class="btn small" type="button" data-mvall="bus">모두 단체 버스</button><button class="btn small" type="button" data-mvall="car">모두 자차</button><span class="opt">버스 '+nb+'명 · 자차 '+nc+'명'+(L.length-nb-nc?' · 아직 '+(L.length-nb-nc)+'명':'')+'</span></div>'+
-    L.map(function(x){return '<div class="mvrow"><span><b>'+esc(x.n)+'</b> <span class="opt">'+esc(x.t)+'</span></span>'+seg('data-mv',x.k,x.o.mv||'',[['bus','단체 버스'],['car','자차']],1)+'</div>'}).join('')+
+/* 오가는 방법 (11-23): 버스 왕복 · 편도(갈 때 / 올 때) · 자차 · 금액은 캠프 설정 「단체 버스 왕복 · 편도」 */
+var MVN={bus:'버스 왕복',go:'버스 편도(갈 때)',back:'버스 편도(올 때)',car:'자차'};
+function busTotal(){return moveList().reduce(function(t,x){return t+(x.o.type==='15개월 미만'?0:busFee(x.o.mv))},0)}
+function busFee(v){var B=((S.I&&S.I.price)||{}).bus||{};return v==='bus'?(+B.r||0):(v==='go'||v==='back')?(+B.o||0):0}
+function mvOpts(){var B=((S.I&&S.I.price)||{}).bus||{},w=function(n){return n?won(n):'금액 추후 안내'};return [['bus','버스 왕복 · '+w(+B.r||0)],['go','편도 갈 때만 · '+w(+B.o||0)],['back','편도 올 때만 · '+w(+B.o||0)],['car','자차']]}
+function mvRow(k,v){return '<div class="mvrow"><span class="mvl">오가는 방법 <span class="opt">꼭</span></span>'+seg('data-mv',k,v||'',mvOpts(),1)+'</div>'}
+function vMove(){var L=moveList(),nb=L.filter(function(x){return x.o.mv&&x.o.mv!=='car'}).length,nc=L.filter(function(x){return x.o.mv==='car'}).length;
+  return '<div class="card"><h3><span class="no">5</span>오가는 방법 <span class="opt">꼭</span></h3><p class="hint" style="margin-top:0">가는 사람마다 골라 주세요. 단체 버스는 왕복 · 편도(갈 때만 / 올 때만)를 고를 수 있어요.</p>'+
+    '<div class="row" style="margin-bottom:8px"><button class="btn small" type="button" data-mvall="bus">모두 버스 왕복</button><button class="btn small" type="button" data-mvall="car">모두 자차</button><span class="opt">버스 '+nb+'명 · 자차 '+nc+'명'+(L.length-nb-nc?' · 아직 '+(L.length-nb-nc)+'명':'')+'</span></div>'+
+    L.map(function(x){return '<div class="mvrow"><span><b>'+esc(x.n)+'</b> <span class="opt">'+esc(x.t)+'</span></span>'+seg('data-mv',x.k,x.o.mv||'',mvOpts(),1)+'</div>'}).join('')+
     (nc?'<label class="f" style="margin-top:10px;margin-bottom:0">자차 대수 · 차량 번호 <span class="opt">선택 · 주차 안내용</span><input type="text" id="mvCar" maxlength="40" value="'+esc(S.d.car||'')+'" placeholder="예) 1대 · 12가 3456"></label>':'')+'</div>'}
 function vForm(){var I=S.I,d=S.d;if(!I.open)return '<div class="card"><h2>지금은 학부모 신청을 받지 않아요</h2><p class="hint">이번 캠프는 일부 학원만 학부모 신청을 받아요. 다니는 학원 선생님께 여쭤 주세요.</p></div>';
   var kids=d.kids.map(function(k,i){if(k.ok)return kidSum(k,i);return '<div class="kid"><div class="top"><span class="pill">학생 '+(i+1)+'</span>'+'<span style="flex:1"></span><button class="x" type="button" data-kdel="'+i+'">빼기</button>'+'</div>'+
@@ -129,7 +134,7 @@ function refundTbl(base,dues,paid){var R=S.I.refund;if(!R||!R.rules||!R.rules.le
     '<p class="hint" style="margin:6px 0 0">'+(paid?'낸 돈 '+won(base):'지금 예상 금액 '+won(base)+'을 냈을 때')+' 기준'+(keep?' · 회비 '+won(keep)+'은 환불하지 않아요':'')+'. 학원이 확인한 뒤 학원 통장에서 돌려줘요.</p>'}
 function nextDay(d){var t=new Date(String(d).slice(0,10)+'T00:00:00');t.setDate(t.getDate()+1);var z=function(n){return (n<10?'0':'')+n};return t.getFullYear()+'-'+z(t.getMonth()+1)+'-'+z(t.getDate())}
 function curTotal(){var P=S.I.price;if(!P)return 0;var d=S.d,F=P.fees,i=P.ri;var nk=d.kids.filter(function(k){return k.name.trim()}).length,ng=d.me.go?1:0,nf=d.fam.filter(function(f){return f.type==='동반가족'}).length,nb=d.fam.filter(function(f){return f.type==='15개월 미만'}).length;
-  var ppl=nk+ng+nf+nb,cap=S.I.roomCap||4,room=d.room.fam?Math.max(0,cap-ppl)*(P.empty||0):0;return nk*(+(F['학생']||[])[i]||0)+ng*(+(F['회원의 첫번째 보호자']||[])[i]||0)+nf*(+(F['회원의 그외 악기 안하는 동반가족']||[])[i]||0)+nb*(+(F['동반가족 중 15개월 미만']||[])[i]||0)+room+d.kids.filter(function(k){return k.name.trim()}).reduce(function(t,k){return t+kidExtraFee(k)},0)}
+  var ppl=nk+ng+nf+nb,cap=S.I.roomCap||4,room=d.room.fam?Math.max(0,cap-ppl)*(P.empty||0):0;return nk*(+(F['학생']||[])[i]||0)+ng*(+(F['회원의 첫번째 보호자']||[])[i]||0)+nf*(+(F['회원의 그외 악기 안하는 동반가족']||[])[i]||0)+nb*(+(F['동반가족 중 15개월 미만']||[])[i]||0)+room+busTotal()+d.kids.filter(function(k){return k.name.trim()}).reduce(function(t,k){return t+kidExtraFee(k)},0)}
 /* 입금 · 취소 (11-15): 보낸 뒤에만. 학원 통장 · 복사 · 입금 신고 · 신고 목록 · 취소/환불 요청 */
 var RST={'신고':['확인 중',''],'확인':['학원이 확인','ok'],'반려':['반려','bad']};
 function today(){var d=new Date(),z=function(n){return (n<10?'0':'')+n};return d.getFullYear()+'-'+z(d.getMonth()+1)+'-'+z(d.getDate())}
@@ -178,9 +183,9 @@ function vPrice(){var P=S.I.price;if(!P||!P.rounds||!P.rounds.length)return '';v
   if(!nk)return '<div class="card"><h3>예상 참가비</h3><p class="hint" style="margin:0">학생을 넣으면 예상 참가비가 나와요.</p></div>';
   var L=[['학생',nk,'학생'],['첫 번째 보호자',ng,'회원의 첫번째 보호자'],['동반가족',nf,'회원의 그외 악기 안하는 동반가족'],['15개월 미만',nb,'동반가족 중 15개월 미만']].filter(function(x){return x[1]});
   var ppl=nk+ng+nf+nb,cap=S.I.roomCap||4,room=d.room.fam?Math.max(0,cap-ppl)*(P.empty||0):0;
-  var KN=d.kids.filter(function(k){return k.name.trim()}),les=KN.reduce(function(t,k){return t+(+k.lessons||0)},0),mcn=KN.reduce(function(t,k){return t+(k.mc||[]).length},0),xf=KN.reduce(function(t,k){return t+kidExtraFee(k)},0);room+=xf;
-  var rows=P.rounds.map(function(r,i){var t=L.reduce(function(s,x){return s+x[1]*(+(F[x[2]]||[])[i]||0)},0)+room;return '<tr'+(i===P.ri?' class="cur"':'')+'><td>'+esc(r.n)+(i===P.ri?' <span class="pill">지금</span>':'')+'<br><small class="opt">'+md(r.from)+' ~ '+md(r.to)+' 입금</small></td><td class="r"><b>'+won(t)+'</b><br><button class="btn small ghost cp" type="button" data-copy="'+t+'">금액 복사</button></td></tr>'}).join('');
-  return '<div class="card price"><h3>예상 참가비</h3><p class="hint" style="margin-top:0">'+L.map(function(x){return esc(x[0])+' '+x[1]+'명 ('+won((F[x[2]]||[])[P.ri])+')'}).join(' · ')+(d.room.fam?' · 가족방 '+ppl+'인 사용 ('+(room-xf?won(room-xf):'추가 없음')+')':'')+(les?' · 추가레슨 '+les+'회':'')+(mcn?' · 마스터클래스 '+mcn+'개':'')+(xf?' ('+won(xf)+')':'')+'</p>'+
+  var KN=d.kids.filter(function(k){return k.name.trim()}),les=KN.reduce(function(t,k){return t+(+k.lessons||0)},0),mcn=KN.reduce(function(t,k){return t+(k.mc||[]).length},0),xf=KN.reduce(function(t,k){return t+kidExtraFee(k)},0);room+=xf;var bt=busTotal(),bn=moveList().filter(function(x){return x.o.mv&&x.o.mv!=='car'}).length;
+  var rows=P.rounds.map(function(r,i){var t=L.reduce(function(s,x){return s+x[1]*(+(F[x[2]]||[])[i]||0)},0)+room+bt;return '<tr'+(i===P.ri?' class="cur"':'')+'><td>'+esc(r.n)+(i===P.ri?' <span class="pill">지금</span>':'')+'<br><small class="opt">'+md(r.from)+' ~ '+md(r.to)+' 입금</small></td><td class="r"><b>'+won(t)+'</b><br><button class="btn small ghost cp" type="button" data-copy="'+t+'">금액 복사</button></td></tr>'}).join('');
+  return '<div class="card price"><h3>예상 참가비</h3><p class="hint" style="margin-top:0">'+L.map(function(x){return esc(x[0])+' '+x[1]+'명 ('+won((F[x[2]]||[])[P.ri])+')'}).join(' · ')+(d.room.fam?' · 가족방 '+ppl+'인 사용 ('+(room-xf?won(room-xf):'추가 없음')+')':'')+(les?' · 추가레슨 '+les+'회':'')+(mcn?' · 마스터클래스 '+mcn+'개':'')+(xf?' ('+won(xf)+')':'')+(bn?' · 단체 버스 '+bn+'명'+(bt?' ('+won(bt)+')':' (버스비 추후 안내)'):'')+'</p>'+
     '<table class="pt"><tbody>'+rows+'</tbody></table>'+
     '<ul class="hint" style="margin:8px 0 0;padding-left:18px"><li><b>입금한 날짜</b>로 차수가 정해져요. 학원에 내면 학원이 모아서 협회에 내요.</li><li>학생 회비를 아직 안 냈으면 학생마다 '+won(P.dues)+'이 더해져요.</li><li><b>추가 개인레슨 · 마스터클래스</b>는 위 학생 칸에서 고르면 이 금액에 더해져요. 학원 선생님이 확인해서 접수하고, 학원이 바꾸면 확정 금액이 달라질 수 있어요.</li><li>학원이 접수하면 이 화면에 <b>확정 금액</b>이 나와요.</li></ul></div>'}
 function phoneTxt(){var p=String(S.ph||'');return p.length===11?p.replace(/(\d{3})(\d{4})(\d{4})/,'$1-$2-$3'):p}
@@ -237,8 +242,8 @@ document.addEventListener('click',function(e){var b=e.target.closest('button');i
   if(b.id==='cxgo'){var w4=who();if(w4){S.err=w4;render();toast(w4);return}var g4=function(i){var e=document.getElementById(i);return e?e.value:''};
     run('parentCancel',[S.nm,S.ph,S.ac,S.pw,{why:g4('cxW'),bank:g4('cxB'),acct:g4('cxA'),holder:g4('cxH')}],function(r){S.err='';S.cxOpen=false;S.req=r.req;render();toast(r.req&&r.req.m&&r.req.m.cx&&r.req.m.cx.st==='취소'?'신청을 취소했어요':'취소 · 환불 요청을 학원에 보냈어요')});return}
   if(b.id==='cxundo'){var w5=who();if(w5){toast(w5);return}run('parentCancel',[S.nm,S.ph,S.ac,S.pw,{undo:true}],function(r){S.req=r.req;render();toast('요청을 거뒀어요')});return}
-  if(b.dataset.kok!==undefined){var kk=d.kids[+b.dataset.kok];if(kk){var er=!kk.name.trim()?'학생 이름을 넣어 주세요':!kk.inst?'전공(악기)을 골라 주세요':(kk.age===''||kk.age==null)?'만 나이를 넣어 주세요':!kk.mv?'오가는 방법(단체 버스 · 자차)을 골라 주세요':'';if(er){toast(kk.name+' · '+er);return}kk.ok=true;S.dirty=true;render();toast(kk.name+' 학생을 저장했어요 · 맨 아래 「학원 선생님께 보내기」로 보내요')}return}
-  if(b.dataset.fok!==undefined){var ff=d.fam[+b.dataset.fok];if(ff){var er2=!ff.name.trim()?'이름을 넣어 주세요':!ff.mv?'오가는 방법(단체 버스 · 자차)을 골라 주세요':'';if(er2){toast((ff.name||ff.type)+' · '+er2);return}ff.ok=true;S.dirty=true;render();toast(ff.name+' 님을 저장했어요')}return}
+  if(b.dataset.kok!==undefined){var kk=d.kids[+b.dataset.kok];if(kk){var er=!kk.name.trim()?'학생 이름을 넣어 주세요':!kk.inst?'전공(악기)을 골라 주세요':(kk.age===''||kk.age==null)?'만 나이를 넣어 주세요':!kk.mv?'오가는 방법(버스 왕복 · 편도 · 자차)을 골라 주세요':'';if(er){toast(kk.name+' · '+er);return}kk.ok=true;S.dirty=true;render();toast(kk.name+' 학생을 저장했어요 · 맨 아래 「학원 선생님께 보내기」로 보내요')}return}
+  if(b.dataset.fok!==undefined){var ff=d.fam[+b.dataset.fok];if(ff){var er2=!ff.name.trim()?'이름을 넣어 주세요':!ff.mv?'오가는 방법(버스 왕복 · 편도 · 자차)을 골라 주세요':'';if(er2){toast((ff.name||ff.type)+' · '+er2);return}ff.ok=true;S.dirty=true;render();toast(ff.name+' 님을 저장했어요')}return}
   if(b.dataset.fedit!==undefined){var fe=d.fam[+b.dataset.fedit];if(fe){fe.ok=false;render()}return}
   if(b.dataset.kedit!==undefined){var ke=d.kids[+b.dataset.kedit];if(ke){ke.ok=false;render()}return}
   if(b.id==='kadd2'){var g=function(id){return (document.getElementById(id)||{}).value||''},nn=g('nkName').trim();if(!nn){toast('학생 이름을 넣어 주세요');var e1=document.getElementById('nkName');if(e1)e1.focus();return}d.kids.push({name:nn,inst:g('nkInst'),age:g('nkAge').replace(/\D/g,'').slice(0,2),go:'간다',mv:''});S.dirty=true;render();toast(nn+' 학생을 추가했어요 · 아래에서 오가는 방법을 골라 주세요');var e2=document.getElementById('nkName');if(e2)e2.focus();return}
@@ -254,7 +259,7 @@ document.addEventListener('click',function(e){var b=e.target.closest('button');i
     if(!d.kids.some(function(k){return k.name.trim()})){S.err='학생 이름을 1명 이상 넣어 주세요.';render();toast(S.err);return}
     {var un=d.kids.filter(function(k){return !k.ok}).map(function(k){return k.name||'이름 없음'}).concat(d.fam.filter(function(f){return !f.ok}).map(function(f){return f.name||f.type}));if(un.length){S.err='「저장」을 누르지 않은 사람이 있어요: '+un.join(', ');render();toast(S.err);return}}
     if(d.fam.some(function(f){return !f.name.trim()})){S.err='가족 이름을 넣거나, 비어 있는 줄은 「빼기」를 눌러 주세요.';render();toast(S.err);return}
-    {var nm=moveList().filter(function(x){return !x.o.mv}).map(function(x){return x.n});if(nm.length){S.err='오가는 방법(단체 버스 · 자차)을 골라 주세요: '+nm.join(', ');render();toast(S.err);return}}
+    {var nm=moveList().filter(function(x){return !x.o.mv}).map(function(x){return x.n});if(nm.length){S.err='오가는 방법(버스 왕복 · 편도 · 자차)을 골라 주세요: '+nm.join(', ');render();toast(S.err);return}}
     S.agree=document.getElementById('ag').checked;if(!S.agree){S.err='맨 아래 동의에 체크해 주세요.';render();toast(S.err);return}
     var c={};S.I.consent.forEach(function(x){c[x.id]=true});
     run('parentSubmit',[S.nm,S.ph,S.ac,c,d,S.pw,S.em],function(r){S.err='';setReq(r.req);render();window.scrollTo(0,0);toast('학원 선생님께 보냈어요')});return}});

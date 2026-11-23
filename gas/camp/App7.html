@@ -1,4 +1,4 @@
-/* build: 20261124-003039 */
+/* build: 20261124-003305 */
     ps.forEach(p=>{p.pay='신고';p.rep=rep;delete S.rpRow[p.id]});S.afterSave=()=>repDone(ps.map(p=>p.id));subSave();S.rp=null;S.rpOpen=false;S.rpMemo=undefined;render();toast(`${ps.length}명 입금 신고를 보냈어요 · 운영진이 확인하면 「입금 확인」으로 바뀌어요`);return}
   if(b.id==='rpFill'){const n=document.getElementById('rpAllN').value.trim(),dd=document.getElementById('rpAllD').value;S.rpAllN=n;S.rpAllD=dd;const sel=S.rp||[];
     if(!n&&!dd){toast('적용할 입금자명이나 입금일을 적어 주세요');return}unpaidPpl().filter(x=>sel.includes(x.p.id)).forEach(({p})=>{const v=rpv(p);if(n)v.n=n;if(dd)v.d=dd});render();toast(`선택한 ${sel.length}명에게 적용했어요`);return}
@@ -567,7 +567,7 @@ function preqTake(id){const r=preqList().find(x=>x.id===id);if(!r)return;const d
   const at=nowStamp();got.forEach(i=>{if(S.extra.some(e=>e.id===i))return;S.picked[i]=true;if(!S.cartAt[i])S.cartAt[i]=at;delete S.sel[i]});const head=got[0];
   const T={'동반가족':'회원의 그외 악기 안하는 동반가족','15개월 미만':'동반가족 중 15개월 미만'},FI=(ty,f)=>({by:String(f.by||'').slice(0,4),gender:f.gender||'',teacher:'',type:ty,prog:'',pref:false,p1:'',p2:'',lessons:0,mc:[],concert:'없음',song:'',other:false,oc:'',ot:'',move:f.mv||''});
   const add=(name,ty,f)=>{if(S.fam.some(x=>x.link===head&&nm(x.name)===nm(name)))return 0;const fid='f'+Date.now()+Math.floor(Math.random()*1000);S.fam.push({id:fid,name,type:ty,link:head});S.info[fid]=FI(ty,f||{});return 1};
-  let nf=0;if(!(d.me&&d.me.go===false))nf+=add(r.name,'회원의 첫번째 보호자',d.me||{});(d.fam||[]).forEach(f=>{nf+=add(f.name,T[f.type]||T['동반가족'],f)});
+  let nf=0;if(!(d.me&&d.me.go===false))nf+=add(d.me&&d.me.who==='other'&&String(d.me.name||'').trim()?String(d.me.name).trim():r.name,'회원의 첫번째 보호자',d.me||{});(d.fam||[]).forEach(f=>{nf+=add(f.name,T[f.type]||T['동반가족'],f)});
   if(d.room&&d.room.fam&&nf){S.room[head]=true;got.slice(1).forEach(k=>{S.join[k]=head;delete S.room[k]});if(d.room.note){S.rreq=S.rreq||{};S.rreq[head]=d.room.note}}
   else if(d.room&&d.room.note){S.rnote=[S.rnote,`${r.name}: ${d.room.note}`].filter(Boolean).join(' / ').slice(0,300)}
   /* 학부모가 고른 추가레슨 · 마스터클래스를 학생별 정보에 미리 넣음 (선생님이 바꿀 수 있음) */

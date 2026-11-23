@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261123-144450 -->
+<!-- build: 20261123-144539 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -1686,6 +1686,10 @@ function famRooms(){const L=[];(S.D.subs||[]).forEach(sb=>{const f=sb.form||{},r
     const ids=[...heads,...fm.map(x=>x.id)].map(x=>P(x)).filter(Boolean);const due=ids.reduce((t,p)=>t+pAmt(p)-(+p.paidAmt||0),0);
     const rs=(R?R.rooms:[]).filter(r=>(r.occ||[]).some(o=>o.k==='fam'&&o.no===sb.no&&o.v.startsWith(rep.name))||(/가족방/.test(r.kind)&&(r.pw.includes(rep.name)||r.memo.includes(rep.name))));
     L.push({sb,rep,mem,rq:((f.rreq||{})[k])||'',n:mem.length,fee:+rep.room||0,paid:ids.every(p=>(+p.paidAmt||0)>0&&pAmt(p)-(+p.paidAmt||0)<=0),due,rs,req:(S.D.issues||[]).filter(x=>ROOM_REQ.includes(x.where)&&(x.name===sb.owner||x.acad===sb.acad)).length})})});
+  /* 11-23 새 접수 「가족방 신청」(시트 가족방신청)도 방배정에 · 방 = 배정에 그 가족방 ID가 든 방 */
+  if(!S.famR&&!S.famL&&S.tok){S.famL=1;google.script.run.withSuccessHandler(r=>{S.famR=r||[];S.famL=0;render()}).withFailureHandler(()=>{S.famL=0}).adminFam(S.tok)}
+  (S.famR||[]).filter(q=>q.st!=='취소').forEach(q=>{const mem=(q.mem||[]).map((m,i)=>({name:m.name||m.n||'',t:i===0?'대표':(m.kind||m.k||'가족')+(m.acad&&m.acad!==q.acad?' · '+m.acad:'')}));const rs=(R?R.rooms:[]).filter(r=>(r.occ||[]).some(o=>o.k==='fam'&&o.no===q.id));
+    L.push({sb:{no:q.id,acad:q.acad,owner:q.owner,ppl:[]},rep:{name:q.repName,room:q.amt},mem,rq:'',n:q.n||mem.length,fee:+q.amt||0,paid:q.pay==='확인'||(+q.ok||0)>=(+q.amt||0),due:Math.max(0,(+q.amt||0)-(+q.ok||0)),rs,req:(S.D.issues||[]).filter(x=>ROOM_REQ.includes(x.where)&&(x.name===q.owner||x.acad===q.acad)).length,nw:1})});
   return L.sort((a,b)=>a.sb.acad.localeCompare(b.sb.acad,'ko')||a.rep.name.localeCompare(b.rep.name,'ko'))}
 function vFam(head){const L=famRooms(),q=(A.fq||'').trim(),cap=(S.D.camp&&S.D.camp.opt&&+S.D.camp.opt.roomCap)||4;
   const show=L.filter(x=>(!q||[x.sb.acad,x.sb.owner,x.rep.name,...x.mem.map(m=>m.name)].some(v=>String(v).includes(q)))&&(A.ff!=='none'||!x.rs.length));

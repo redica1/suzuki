@@ -1,4 +1,4 @@
-/* build: 20261123-112001 */
+/* build: 20261123-114620 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -102,7 +102,8 @@ const CX_HEAD = ['요청 일시', '접수번호', '학원', '요청 교사', '�
 
 /* ---------------- 웹 앱 ---------------- */
 function doGet(e) {
-  if (e && e.parameter && e.parameter.perf) return perf_();   /* 속도 재기 (11-13): 시간만 보여 줌 */
+  if (e && e.parameter && e.parameter.perf) return perf_();
+  if (e && e.parameter && e.parameter.page === 'songs') { let o; try { o = songsPublic_(); } catch (x) { o = { ok: false, msg: String(x && x.message || x) }; } return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON); }   /* 속도 재기 (11-13): 시간만 보여 줌 */
   const admin = e && e.parameter && e.parameter.page === 'admin';
   let page, cname = CAMP_NAME, cj = '';
   try { const c = campPublic_(); cname = c.base.name; cj = JSON.stringify(c); } catch (x) {}
@@ -1778,7 +1779,7 @@ function curRound_(c) {
 /** 접수 시작 전이면 시작일(yyyy-mm-dd), 아니면 ''. 시작일 = 캠프 설정 「접수 시작」, 없으면 1차 시작일. STG(설정 「테스트 로그인」 있음)는 언제나 열림 */
 function regPre_(c) { c = c || camp_(); try { if (String(setting_('테스트 로그인') || '').trim()) return ''; } catch (e) { } const o = String(c.base.open || (c.rounds[0] || {}).from || ''); return /^\d{4}-\d{2}-\d{2}$/.test(o) && today_() < o ? o : ''; }
 function regGate_() { const o = regPre_(); if (o) throw new Error('접수는 ' + (+o.slice(5, 7)) + '월 ' + (+o.slice(8, 10)) + '일부터 받아요. 그때 다시 와 주세요.'); }
-function campPublic_() { const c = camp_(), pp = parentPilot_(); return Object.assign({}, c, { ri: curRound_(c), pre: regPre_(c), pq: pp === null || pp.length > 0, songs: songList_(), progs: progList_() }); }
+function campPublic_() { const c = camp_(), pp = parentPilot_(); return Object.assign({}, c, { ri: curRound_(c), pre: regPre_(c), pq: pp === null || pp.length > 0, songs: songList_(), songMeta: songMeta_(), progs: progList_() }); }
 /* ---- 음악회 곡 목록 (11-15 사용자: 학생이 고르는 곡 목록을 관리자가 직접) — 시트 「곡목록」 (악기 · 곡 · 순서). 비어 있으면 신청서에 들어 있는 기본 목록을 씀 ---- */
 const SONG_SH = '곡목록';
 function songList_() {
@@ -1788,19 +1789,34 @@ function songList_() {
   try { CacheService.getScriptCache().put('songsJ', JSON.stringify(o), 300); } catch (e) {}
   return o;
 }
+/* 11-23 곡마다 책자 제목 · 영어 (시트 「곡목록」 D · E 칸) — 곡 문자열 → {bt, en} */
+function songMeta_() {
+  try { const j = CacheService.getScriptCache().get('songsM'); if (j) return JSON.parse(j); } catch (e) {}
+  const sh = SpreadsheetApp.getActive().getSheetByName(SONG_SH), o = {};
+  if (sh && sh.getLastRow() > 1 && sh.getLastColumn() >= 4) sh.getRange(2, 1, sh.getLastRow() - 1, Math.min(5, sh.getLastColumn())).getValues().forEach(r => { const s = String(r[1] || '').trim(); if (!s) return; const bt = String(r[3] || '').trim(), en = String(r[4] || '').trim(); if (bt || en) o[s] = { bt, en }; });
+  try { CacheService.getScriptCache().put('songsM', JSON.stringify(o), 300); } catch (e) {}
+  return o;
+}
+/* 외부 공개 곡 목록 (11-23): app.suzukimusickorea.org/camp/songs.html 이 ?page=songs 로 읽음 — 이름 · 개인정보 없음 */
+function songsPublic_() {
+  const L = songList_() || {}, M = songMeta_(), out = {};
+  Object.keys(L).forEach(k => { out[k] = L[k].map(s => { const m = String(s).match(/^([A-Z])(\d\d)-(\d\d) (.+?)(?: \(([^()]*)\))?$/), x = M[s] || {}; return m ? { code: m[1] + m[2] + '-' + m[3], bk: +m[2], t: m[4], comp: m[5] || '', en: x.en || '' } : { code: '', bk: 0, t: String(s), comp: '', en: x.en || '' }; }); });
+  let name = CAMP_NAME; try { name = camp_().base.name; } catch (e) {}
+  return { ok: true, camp: name, songs: out, at: today_() };
+}
 function songDef_() { try { const h = HtmlService.createHtmlOutputFromFile('App1').getContent(), i = h.indexOf('const SONGS_DEF = {'), j = h.indexOf('};', i); if (i < 0 || j < 0) return {}; return (new Function('return ' + h.slice(i + 18, j + 1)))(); } catch (e) { return {}; } }
 function songsSave(token, o) {
   const a = adm_(token); needCamp_(a);
   if (!o || typeof o !== 'object') throw new Error('저장할 곡 목록이 없어요.');
   const rows = []; let n = 0;
   Object.keys(o).slice(0, 10).forEach(k => { const inst = String(k).trim().slice(0, 10); if (!inst) return;
-    (Array.isArray(o[k]) ? o[k] : []).map(x => String(x || '').trim().slice(0, 120)).filter(Boolean).filter((x, i, A) => A.indexOf(x) === i).slice(0, 300).forEach(x => rows.push([inst, x, ++n])); });
+    const seen = {}; (Array.isArray(o[k]) ? o[k] : []).map(x => x && typeof x === 'object' ? { s: String(x.s || '').trim().slice(0, 120), bt: String(x.bt || '').trim().slice(0, 120), en: String(x.en || '').trim().slice(0, 160) } : { s: String(x || '').trim().slice(0, 120), bt: '', en: '' }).filter(x => x.s && !seen[x.s] && (seen[x.s] = 1)).slice(0, 300).forEach(x => rows.push([inst, x.s, ++n, x.bt, x.en])); });
   const lock = lock_();
   try { const ss = SpreadsheetApp.getActive(); let sh = ss.getSheetByName(SONG_SH); if (!sh) { sh = ss.insertSheet(SONG_SH); }
-    sh.clearContents(); sh.getRange(1, 1, 1, 3).setValues([['악기', '곡', '순서']]).setFontWeight('bold'); sh.setFrozenRows(1); if (rows.length) sh.getRange(2, 1, rows.length, 3).setValues(rows);
-    CacheService.getScriptCache().remove('songsJ'); campCacheClear_(); } finally { lock.releaseLock(); }
+    sh.clearContents(); sh.getRange(1, 1, 1, 5).setValues([['악기', '곡', '순서', '책자 제목', '영어']]).setFontWeight('bold'); sh.setFrozenRows(1); if (rows.length) sh.getRange(2, 1, rows.length, 5).setValues(rows);
+    CacheService.getScriptCache().remove('songsJ'); CacheService.getScriptCache().remove('songsM'); campCacheClear_(); } finally { lock.releaseLock(); }
   log_('관리자 ' + a.name, '곡 목록 저장', rows.length + '곡');
-  return { ok: true, n: rows.length, songs: songList_() };
+  return { ok: true, n: rows.length, songs: songList_(), songMeta: songMeta_() };
 }
 /* ---- 권수 (현재 진도) 목록 (11-15 사용자: 관리자가 직접) — 시트 「권수목록」 (악기 · 권수 · 순서). 비어 있으면 신청서 기본 PROGRESS ---- */
 const PROG_SH = '권수목록';
@@ -2214,13 +2230,15 @@ const INST_PF = { 바이올린: 'Vln.', 첼로: 'Vc.', 플루트: 'Fl.', 비올�
 /** 곡 이름을 [작곡가, 곡명]으로 (여름 모양 「작곡가 - 곡명」, 11-05) — 목록 곡 「V01-14 미뉴에트 2번 (바흐)」 → ['바흐', '미뉴에트 2번'] */
 function songKoParts_(i) {
   if (i.other) return [String(i.oc || '').trim(), String(i.ot || '').trim()];
+  const bt = ((songMeta_()[String(i.song || '').trim()]) || {}).bt;   /* 11-23 책자 제목이 있으면 그걸로 */
   const m = String(i.song || '').replace(/^[A-Z]\d+-\d+\s*/, '').match(/^(.*?)\s*\(([^()]*)\)\s*$/);
-  return m ? [m[2] || '스즈키', m[1]] : ['', String(i.song || '').replace(/^[A-Z]\d+-\d+\s*/, '')];
+  return m ? [m[2] || '스즈키', bt || m[1]] : ['', bt || String(i.song || '').replace(/^[A-Z]\d+-\d+\s*/, '')];
 }
 function songKo_(i) {
   if (i.other) return [i.oc, i.ot].map(x => String(x || '').trim()).filter(Boolean).join(' ');
+  const bt = ((songMeta_()[String(i.song || '').trim()]) || {}).bt;
   const m = String(i.song || '').replace(/^[A-Z]\d+-\d+\s*/, '').match(/^(.*?)\s*\(([^()]*)\)\s*$/);
-  return m ? (m[2] && m[2] !== '스즈키' ? m[2] + ' ' : '스즈키 ') + m[1] : String(i.song || '').replace(/^[A-Z]\d+-\d+\s*/, '');
+  return m ? (m[2] && m[2] !== '스즈키' ? m[2] + ' ' : '스즈키 ') + (bt || m[1]) : bt || String(i.song || '').replace(/^[A-Z]\d+-\d+\s*/, '');
 }
 function progConcerts_(c, C, evs, nameOf, dayDate) {
   const linked = (Array.isArray(c.kinds) ? c.kinds : ACT_KINDS).filter(k => k.link).map(k => k.n);
@@ -2235,7 +2253,7 @@ function progConcerts_(c, C, evs, nameOf, dayDate) {
     const room = ((c.rooms || {})[x.d] || []).find(r => r[0] === x.room);
     const mc = ev ? [...new Set(ev.ppl.filter(p => /사회|진행/.test(p.r)).map(p => nameOf(p.n)))] : [];
     const L = (order[x.id] || []).map(pid => info[pid]).filter(s => s && s.p.status !== '취소');
-    const items = []; L.forEach(s => { const ko = songKo_(s.i) || '(곡 미정)'; let it = items[items.length - 1]; if (!it || it.ko !== ko) items.push(it = { ko, en: EN[ko] || '', kp: songKoParts_(s.i), P: [] }); it.P.push({ n: s.p.name, a: s.sb.acad, ins: s.p.inst || s.i.inst || '' }); });
+    const items = []; L.forEach(s => { const ko = songKo_(s.i) || '(곡 미정)'; let it = items[items.length - 1]; if (!it || it.ko !== ko) items.push(it = { ko, en: EN[ko] || (!s.i.other && (songMeta_()[String(s.i.song || '').trim()] || {}).en) || '', kp: songKoParts_(s.i), P: [] }); it.P.push({ n: s.p.name, a: s.sb.acad, ins: s.p.inst || s.i.inst || '' }); });
     const rows = [{ k: 'f', v: ['', C.base.name] }, { k: 't', v: ['', x.name] }];
     rows.push({ k: 'm', v: ['', '일시: ' + (dt ? `${dt.getFullYear()}년 ${dt.getMonth() + 1}월 ${dt.getDate()}일(${WD[dt.getDay()]}) ` : (c.days || [])[x.d] + ' ') + ampm(x.cs)] });
     rows.push({ k: 'm', v: ['', '장소: ' + (x.room || '') + (room && room[1] ? ' (' + room[1] + ')' : '')] });

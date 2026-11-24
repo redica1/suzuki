@@ -1,4 +1,4 @@
-/* build: 20261124-152529 */
+/* build: 20261124-152916 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -4871,6 +4871,7 @@ function ogSave(token, key, d) {
       ogGh_('put', ip, { message: 'OG 이미지 바꿈 · ' + key + ' (관리자 ' + a.name + ')', content: m[2], sha: old ? old.sha : undefined });
       img = OG_BASE + ip + '?v=' + Date.now().toString(36);
     }
+    if (!img && d.pick) { const pk = String(d.pick); if (!/^camp\/[\w\-\/]+\.(png|jpe?g)$/.test(pk) || /\.\./.test(pk)) throw new Error('고를 수 없는 그림이에요.'); img = OG_BASE + pk + '?v=' + Date.now().toString(36); }   /* 11-24 만들어 둔 그림 쓰기 */
     const f = ogGh_('get', path); if (!f) throw new Error('페이지 파일을 찾지 못했어요: ' + path);
     let html = Utilities.newBlob(Utilities.base64Decode(f.content.replace(/\n/g, ''))).getDataAsString('UTF-8');
     html = ogSet_(html, 'property', 'og:title', title, 'og:type');

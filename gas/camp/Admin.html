@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261124-153320 -->
+<!-- build: 20261124-154527 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -2256,7 +2256,7 @@ function mealMenuTab(){if(!S.ntc){if(!S.ntcLoading){S.ntcLoading=true;call('admi
 document.addEventListener('click',e=>{const b=e.target.closest('[data-msub]');if(!b||S.tab!=='camp')return;S.mealSub=b.dataset.msub;render()});
 
 /* 11-21: 캠프 설정 아래 탭 (기본 · 홀 · 역할 · 식사 · 권수 · 대상곡 · 음악회) */
-const CC_TABS=[['base','기본 설정'],['hall','홀 설정'],['role','역할 설정'],['meal','식사 설정'],['prog','권수 목록'],['song','전공별 대상곡'],['con','음악회 곡목록'],['og','미리보기 설정'],['bank','통장 설정']];
+const CC_TABS=[['base','기본 설정'],['hall','홀 설정'],['role','역할 설정'],['meal','식사 설정'],['prog','권수 목록'],['song','전공별 대상곡'],['con','음악회 곡목록'],['og','공유 미리보기 (OG)'],['bank','통장 설정']];
 function ccTabs(){return `<div class="cctabs" role="tablist">${CC_TABS.map(([k,l])=>`<button type="button" data-cctab="${k}" aria-pressed="${S.ccTab===k}">${l}</button>`).join('')}</div>`}
 document.addEventListener('click',e=>{const b=e.target.closest('[data-cctab]');if(!b||S.tab!=='camp')return;S.ccTab=b.dataset.cctab;render();window.scrollTo(0,0)});
 /* 학부모 신청 학원 (11-23): 학원마다 켜고 끄기 + 신청 주소 */

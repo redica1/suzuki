@@ -1,4 +1,4 @@
-/* build: 20261124-153320 */
+/* build: 20261124-154527 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -753,7 +753,9 @@ function parentRows_() { return rows_(PARENT_SH).filter(r => r['신청ID']).map(
 function parentPilot_() { const v = String(setting_('학부모 신청 학원') || '').trim(); if (!v) return []; if (/^전체$/.test(v)) return null; return v.split(',').map(s => s.trim()).filter(Boolean); }
 function parentOk_(a) { const p = parentPilot_(); return p === null || p.includes(a); }
 /* 학부모 신청 학원 (11-23): 관리자가 학원마다 켜고 끔 → 설정 「학부모 신청 학원」. 신청 주소 = parent.html?a=학원 (STG 는 &test) */
-function parentLink_(acad) { const stg = !!String(setting_('테스트 로그인') || '').trim(); return 'https:\/\/app.suzukimusickorea.org/camp/parent.html?a=' + encodeURIComponent(acad) + (stg ? '&test' : ''); }
+/* 11-24 학원별 짧은 주소 + 학원 공유 그림이 있는 학원 (camp/p/○○.html) */
+const PARENT_SLUG = { '마포스즈키': 'mapo', '미사스즈키': 'misa' };
+function parentLink_(acad) { const stg = !!String(setting_('테스트 로그인') || '').trim(), sl = PARENT_SLUG[acad]; return sl ? 'https:\/\/app.suzukimusickorea.org/camp/p/' + sl + '.html' + (stg ? '?test' : '') : 'https:\/\/app.suzukimusickorea.org/camp/parent.html?a=' + encodeURIComponent(acad) + (stg ? '&test' : ''); }
 function parentPilotData(token) {
   const a = adm_(token); needCamp_(a, true);
   const open = acadOpen_(), set = {}, head = {};

@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261124-152234 -->
+<!-- build: 20261124-152529 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -2186,7 +2186,7 @@ document.addEventListener('input',e=>{const t=e.target;if(!S.cc||!S.cc.doc||!t.d
 document.addEventListener('change',e=>{const t=e.target;if(!S.cc||!S.cc.doc||!t.dataset)return;if(t.dataset.fcadd||t.dataset.fradd){const a=fAdd(t.value);t.value=!a?'':a.pct?a.v+'%':a.v.toLocaleString('ko-KR');return}if(t.dataset.frbase){feeRule(S.cc);S.cc.doc.rbase=t.value;delete S.cc.doc.radd[t.value];feeAuto(S.cc);render()}});
 function ccGet(path){return path.split('.').reduce((o,k)=>o==null?o:o[k],S.cc)}
 function ccSet(path,v){const ks=path.split('.'),last=ks.pop();const o=ks.reduce((o,k)=>o[k],S.cc);o[last]=v}
-const OG_KEYS=[['camp','캠프 접수 (/camp/)'],['intl','해외 접수 (/camp/intl.html)']];
+const OG_KEYS=[['camp','캠프 접수 (/camp/)'],['new','새 접수 · 원장님 (/camp/new.html)'],['intl','해외 접수 (/camp/intl.html)'],['parent','학부모 신청 기본 (/camp/parent.html)'],['mapo','학부모 신청 · 마포스즈키 (/camp/p/mapo.html)'],['misa','학부모 신청 · 미사스즈키 (/camp/p/misa.html)']];
 /* 공유 미리보기(OG) 입력 (11-01): 제목 · 설명 · 이미지 → 깃허브 공유 페이지에 바로 반영 */
 function ogPanel(){const P=OG_KEYS,k=S.ogK||P[0][0],O=(S.og||{})[k];
   if(!O){if(!S.ogL){S.ogL=1;setTimeout(()=>call('ogGet',[k],r=>{S.ogL=0;S.og=S.og||{};S.og[k]=r;S.ogD={title:r.title||'',desc:r.desc||'',img:'',prev:r.image||''};render()}),0)}return '<div class="panel hint">공유 미리보기 불러오는 중…</div>'}

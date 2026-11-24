@@ -1,4 +1,4 @@
-/* build: 20261124-152234 */
+/* build: 20261124-152529 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -4815,7 +4815,7 @@ function budSave(token, plan, rev) {
 /* ---------- 공유 미리보기(OG) 11-01: 깃허브 공유 페이지(app.suzukimusickorea.org)의 og 태그 · 이미지를 관리자 화면에서 고침 ----------
  * 토큰: 스크립트 속성 GITHUB_TOKEN (관리자 화면 「깃허브 토큰 등록」, redica1/suzuki 「Contents: Read and write」만 준 fine-grained 토큰)
  * 매니페스트에 https://www.googleapis.com/auth/script.external_request 가 있어야 함 */
-const OG_PAGES = { camp: 'camp/index.html', intl: 'camp/intl.html' };
+const OG_PAGES = { camp: 'camp/index.html', intl: 'camp/intl.html', new: 'camp/new.html', parent: 'camp/parent.html', mapo: 'camp/p/mapo.html', misa: 'camp/p/misa.html' };   /* 11-24 학원별 학부모 신청 주소도 (camp/p/학원.html · 그림 camp/p/og-학원.jpg) */
 const OG_REPO = 'redica1/suzuki', OG_BASE = 'https://app.suzukimusickorea.org/';
 /** 편집기에서 한 번 실행 → 「외부 서비스에 연결」 권한 허용 창이 떠요 (OG 저장 권한 오류 고치기) */
 function ogAuth() { const r = UrlFetchApp.fetch('https://api.github.com/repos/' + OG_REPO, { muteHttpExceptions: true }); Logger.log('깃허브 연결 ' + r.getResponseCode() + ' · 이제 배포 관리 › 새 버전으로 다시 배포하세요'); }

@@ -1,4 +1,4 @@
-/* build: 20261124-183910 */
+/* build: 20261124-210126 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -787,18 +787,20 @@ function parentInit() {
   const mcs = profPublic_().filter((p, i, a) => p.mc && a.findIndex(q => q.mc && q.n === p.n && q.i === p.i) === i).map(p => ({ n: p.n, i: p.i, min: +p.min || 45, fee: +p.fee || 0 }));
   return { ok: true, open: C.base.member !== false && pa.length > 0, acads: pa, mcs, lessonMax: OPT.lessonMax, camp: { name: C.base.name, start: C.base.start, end: C.base.end, place: C.base.place }, consent: (C.consent.items || []).filter(x => x.on), refund: C.refund, roomCap: (C.opt || {}).roomCap || 4,
     /* 예상 참가비 (11-15): 학생 · 첫 보호자 · 동반가족 · 15개월 미만 × 차수, 지금 차수, 학생 회비 · 가족방 빈 자리 · 추가레슨 */
-    price: { fees: ['학생', '회원의 첫번째 보호자', '회원의 그외 악기 안하는 동반가족', '동반가족 중 15개월 미만'].reduce((o, k) => { o[k] = C.fees[k] || []; return o; }, {}), rounds: C.rounds.map(r => ({ n: r.n, from: r.from, to: r.to })), ri: curRound_(C), dues: +(C.opt || {}).studentDues || 0, empty: +(C.opt || {}).roomEmptyFee || 0, lesson: +(C.opt || {}).lessonFee || 0, busBy: pa.reduce((o, a) => { const b = acadBank_(a); o[a] = (b && b.bus) || { r: 0, g: 0, b: 0, off: false, one: true }; return o; }, {}) } };
+    price: { fees: ['학생', '회원의 첫번째 보호자', '회원의 그외 악기 안하는 동반가족', '동반가족 중 15개월 미만'].reduce((o, k) => { o[k] = C.fees[k] || []; return o; }, {}), rounds: C.rounds.map(r => ({ n: r.n, from: r.from, to: r.to })), ri: curRound_(C), dues: +(C.opt || {}).studentDues || 0, empty: +(C.opt || {}).roomEmptyFee || 0, lesson: +(C.opt || {}).lessonFee || 0, busBy: pa.reduce((o, a) => { const b = acadBank_(a); o[a] = (b && b.bus) || { r: 0, g: 0, b: 0, off: false, one: true }; return o; }, {}), roundsBy: pa.reduce((o, a) => { o[a] = acadRounds_(a, C).map(r => ({ n: r.n, from: r.from, to: r.to })); return o; }, {}) } };
 }
 function parentWho_(tok) { const v = tok && CacheService.getScriptCache().get('pt_' + tok); if (!v) throw new Error('들어온 지 오래되어 끊겼어요. 처음 화면에서 다시 들어와 주세요.'); return JSON.parse(v); }
-function parentOut_(r) { return r ? { id: r.id, acad: r.acad, name: r.name, d: r.d, at: r.at, st: r.st, byAt: r.byAt, m: r.m || {}, bank: acadBank_(r.acad), sub: parentSub_(r.id) } : null; }
+function parentOut_(r) { return r ? { id: r.id, acad: r.acad, name: r.name, d: r.d, at: r.at, st: r.st, byAt: r.byAt, m: r.m || {}, bank: acadBank_(r.acad), sub: parentSub_(r.id, null, r) } : null; }
 /* 학원이 이 신청을 담아 낸 접수 (11-15 사용자: 추가레슨 · 마스터클래스는 학원이 넣으니, 학부모에게 확정 금액 · 추가 비용을 보여 줌) */
-function parentSub_(id, all) {
+function parentSub_(id, all, pr) {
   try {
     const sb = (all || loadSubs_()).find(x => x.form && Array.isArray(x.form.preq) && x.form.preq.includes(id)); if (!sb) return null;
     const info = (sb.form && sb.form.info) || {};
-    const ppl = sb.ppl.filter(p => p.status === '정상' || p.status === '취소요청').map(p => { const k = String(p.id).slice(String(sb.no).length + 1), i = info[k] || {};
-      return { id: p.id, name: p.name, type: p.type || '', fee: +p.fee || 0, lesson: +p.lesson || 0, dues: +p.dues || 0, room: +p.room || 0, les: +i.lessons || 0, mc: Array.isArray(i.mc) ? i.mc.length : 0, st: p.status }; });
-    return { no: sb.no, round: sb.round || '', ppl, total: ppl.reduce((t, p) => t + p.fee + p.lesson + p.dues + p.room, 0) };
+    /* 11-24 학원 차수: 학부모가 학원에 처음 입금한 날(반려 빼고, 없으면 오늘)이 드는 학원 차수의 협회 금액 */
+    pr = pr || parentRows_().find(x => x.id === id); const C = camp_(), AR = acadRounds_((pr && pr.acad) || sb.acad, C), pd = (((pr && pr.m) || {}).reps || []).filter(x => x.st !== '반려' && /^\d{4}-\d{2}-\d{2}$/.test(String(x.date || ''))).map(x => x.date).sort()[0], ari = acadRi_(AR, pd);
+    const ppl = sb.ppl.filter(p => p.status === '정상' || p.status === '취소요청').map(p => { const k = String(p.id).slice(String(sb.no).length + 1), i = info[k] || {}, fa = (C.fees[i.type || p.type] || [])[ari];
+      return { id: p.id, name: p.name, type: p.type || '', fee: fa != null && p.status === '정상' ? +fa || 0 : +p.fee || 0, afee: +p.fee || 0, lesson: +p.lesson || 0, dues: +p.dues || 0, room: +p.room || 0, les: +i.lessons || 0, mc: Array.isArray(i.mc) ? i.mc.length : 0, st: p.status }; });
+    return { no: sb.no, round: sb.round || '', ari, aRound: AR[ari].n, aTo: AR[ari].to, ppl, total: ppl.reduce((t, p) => t + p.fee + p.lesson + p.dues + p.room, 0), assoc: ppl.reduce((t, p) => t + p.afee + p.lesson + p.dues + p.room, 0) };
   } catch (e) { return null; }
 }
 function parentLogin(name, phone, acad, consent) {
@@ -901,7 +903,7 @@ function parentNotifySubs_(nos) {
   try {
     const all = loadSubs_(), rows = parentRows_();
     all.filter(sb => nos.includes(sb.no) && sb.form && Array.isArray(sb.form.preq)).forEach(sb => sb.form.preq.forEach(id => {
-      const r = rows.find(x => x.id === id); if (!r) return; const sub = parentSub_(id, all); if (!sub) return;
+      const r = rows.find(x => x.id === id); if (!r) return; const sub = parentSub_(id, all, r); if (!sub) return;
       const m = r.m || {}; if (m.lastTotal === sub.total) return;
       if (m.lastTotal != null) m.prevTotal = m.lastTotal; m.lastTotal = sub.total; m.totalAt = stamp_();
       if (!r.email) { parentMoneySet_(r, m); return; }
@@ -915,8 +917,30 @@ function parentNotifySubs_(nos) {
 /* ---------- 학부모 ↔ 학원 돈 (11-15 사용자: 학원 통장 · 입금 신고 · 취소 · 환불 요청, 처리는 그 학원 원장 · 선생님) ----------
  * 학원 통장은 원장이 선생님 화면에서 넣음(시트 「학원 통장」). 학부모 비밀번호 4자리(처음 보낼 때 정함, 해시로 저장). 돈 기록은 「학부모 신청」 시트 「돈」 칸 JSON:
  * { reps:[{at, nm(입금자명), date, amt, st:'신고'|'확인'|'반려', why, by, byAt}], cx:{at, why, bank, acct, holder, st:'요청'|'처리'|'반려'|'취소', amt, note, by, byAt} } */
-const ABANK_SH = '학원 통장', ABANK_HEAD = ['학원', '은행', '계좌번호', '예금주', '고친 사람', '고친 때', '입금 마감', '버스 왕복', '버스 갈 때만', '버스 올 때만', '버스 없음', '편도 없음'];   /* 11-24 학원 단체 버스 1인 금액 (원장이 정함) */
-function acadBank_(acad) { try { const r = rows_(ABANK_SH).find(x => String(x['학원']) === acad); if (!r) return null; const dv = r['입금 마감'], due = dv instanceof Date ? Utilities.formatDate(dv, TZ, 'yyyy-MM-dd') : String(dv || '').slice(0, 10); return { bank: String(r['은행'] || ''), acct: String(r['계좌번호'] || ''), holder: String(r['예금주'] || ''), due, bus: busOf_(r) }; } catch (e) { return null; } }
+const ABANK_SH = '학원 통장', ABANK_HEAD = ['학원', '은행', '계좌번호', '예금주', '고친 사람', '고친 때', '입금 마감', '버스 왕복', '버스 갈 때만', '버스 올 때만', '버스 없음', '편도 없음', '학원 1차 마감', '학원 2차 마감', '학원 3차 마감'];   /* 11-24 학원 차수 마감 (금액은 협회 차수 금액) */   /* 11-24 학원 단체 버스 1인 금액 (원장이 정함) */
+function acadBank_(acad) { try { const r = rows_(ABANK_SH).find(x => String(x['학원']) === acad); if (!r) return null; const dv = r['입금 마감'], due = dv instanceof Date ? Utilities.formatDate(dv, TZ, 'yyyy-MM-dd') : String(dv || '').slice(0, 10); const dd = v => v instanceof Date ? Utilities.formatDate(v, TZ, 'yyyy-MM-dd') : (/^\d{4}-\d{2}-\d{2}/.test(String(v || '')) ? String(v).slice(0, 10) : ''); return { bank: String(r['은행'] || ''), acct: String(r['계좌번호'] || ''), holder: String(r['예금주'] || ''), due, bus: busOf_(r), rd: [dd(r['학원 1차 마감']), dd(r['학원 2차 마감']), dd(r['학원 3차 마감'])] }; } catch (e) { return null; } }
+/* 11-24 학원 차수: 협회 차수 이름 · 금액 그대로, 마감(to)만 학원이 정한 날 (비우면 협회 날) · from = 앞 차수 마감 다음 날 */
+function acadRounds_(acad, C, b) { C = C || camp_(); const bb = (b === undefined ? acadBank_(acad) : b) || {}, rd = (bb.rd || []).slice(); const L = C.rounds.map((r, i) => ({ n: r.n, from: r.from, to: rd[i] || r.to, ato: r.to })); L.forEach((r, i) => { if (i) { const t = new Date(L[i - 1].to + 'T00:00:00'); t.setDate(t.getDate() + 1); r.from = Utilities.formatDate(t, TZ, 'yyyy-MM-dd'); } }); return L; }
+function acadRi_(L, date) { const v = String(date || today_()).slice(0, 10), j = L.findIndex(r => v <= String(r.to || '9999')); return j < 0 ? L.length - 1 : j; }
+function acadRoundSet(token, acad, arr) {
+  const u = who_(token); acad = String(acad || '');
+  let head = false; try { head = teachers_().some(t => t.name === u.name && t.role === '원장' && (t.acads || []).includes(acad)); } catch (e) {}
+  if (!head) throw new Error('차수 마감은 그 학원 원장님만 정할 수 있어요.');
+  const C = camp_(), A = C.rounds, v = A.map((r, i) => String((arr || [])[i] || '').trim().slice(0, 10));
+  v.forEach((d, i) => { if (d && !/^\d{4}-\d{2}-\d{2}$/.test(d)) throw new Error(A[i].n + ' 날짜를 골라 주세요.'); if (d && d > String(A[i].to)) throw new Error(A[i].n + ' 마감은 협회 ' + A[i].n + ' 마감(' + A[i].to + ')보다 늦을 수 없어요.'); });
+  const E = v.map((d, i) => d || String(A[i].to)); E.forEach((d, i) => { if (i && d <= E[i - 1]) throw new Error(A[i].n + ' 마감은 ' + A[i - 1].n + ' 마감(' + E[i - 1] + ')보다 뒤여야 해요.'); });
+  const lock = lock_();
+  try {
+    const ss = SpreadsheetApp.getActive(); let sh = ss.getSheetByName(ABANK_SH);
+    if (!sh) { sh = ss.insertSheet(ABANK_SH); sh.setFrozenRows(1); sh.getRange('A:F').setNumberFormat('@'); }
+    sh.getRange(1, 1, 1, ABANK_HEAD.length).setValues([ABANK_HEAD]).setFontWeight('bold');
+    const w = [0, 1, 2].map(i => v[i] ? "'" + v[i] : ''), last = v[A.length - 1] ? "'" + v[A.length - 1] : '';
+    const r = rows_(ABANK_SH).find(x => String(x['학원']) === acad);
+    if (r) { sh.getRange(r._row, 5, 1, 3).setValues([[u.name, stamp_(), last]]); sh.getRange(r._row, 13, 1, 3).setValues([w]); } else sh.appendRow([acad, '', '', '', u.name, stamp_(), last, '', '', '', '', ''].concat(w));
+  } finally { lock.releaseLock(); }
+  log_(u.name, '학원 차수 마감', acad + ' ' + v.map((d, i) => A[i].n + ' ' + (d || '협회')).join(' · '));
+  return { ok: true, pbank: acadBanks_(u.acads || []) };
+}
 function busOf_(r) { const n = k => +String(r[k] == null ? '' : r[k]).replace(/[^\d]/g, '') || 0, y = k => /^(예|y|true|1)$/i.test(String(r[k] || '').trim()); return { r: n('버스 왕복'), g: n('버스 갈 때만'), b: n('버스 올 때만'), off: y('버스 없음'), one: !y('편도 없음') }; }
 /* 11-24 원장님: 우리 학원 단체 버스 금액 · 버스 없음 · 편도 없음 */
 function acadBusSet(token, acad, b) {
@@ -1044,13 +1068,13 @@ function parentCxDo(token, id, act, amt, note) {
   return { ok: true, preq: parentFor_(u.acads || []) };
 }
 /* 선생님 화면에 보내는 학부모 신청 (그 학원 것만, 휴대전화는 그 학원 선생님에게만) */
-function parentFor_(acads) { try { acads = acads.filter(parentOk_); if (!acads.length) return []; const L = parentRows_().filter(r => acads.includes(r.acad)); const all = L.length ? loadSubs_() : []; return L.map(r => ({ id: r.id, acad: r.acad, name: r.name, phone: r.phone.replace(/(\d{3})(\d{3,4})(\d{4})/, '$1-$2-$3'), d: r.d, at: r.at, st: r.st, by: r.by, byAt: r.byAt, m: r.m || {}, sub: parentSub_(r.id, all) })); } catch (e) { return []; } }
+function parentFor_(acads) { try { acads = acads.filter(parentOk_); if (!acads.length) return []; const L = parentRows_().filter(r => acads.includes(r.acad)); const all = L.length ? loadSubs_() : []; return L.map(r => ({ id: r.id, acad: r.acad, name: r.name, phone: r.phone.replace(/(\d{3})(\d{3,4})(\d{4})/, '$1-$2-$3'), d: r.d, at: r.at, st: r.st, by: r.by, byAt: r.byAt, m: r.m || {}, sub: parentSub_(r.id, all, r) })); } catch (e) { return []; } }
 /* 11-24 관리자: 학부모 신청 보기 (보기만 · 휴대전화는 뒤 4자리) */
 function adminParentList(token) {
   adm_(token);
   const L = parentRows_(), all = L.length ? loadSubs_() : [];
   return L.map(r => ({ id: r.id, acad: r.acad, name: r.name, ph4: r.phone.slice(-4), d: r.d, at0: r.at0, at: r.at, st: r.st, by: r.by, byAt: r.byAt,
-    reps: ((r.m || {}).reps || []).map(x => ({ st: x.st, amt: x.amt, date: x.date })), cx: (r.m || {}).cx ? { st: r.m.cx.st } : null, sub: parentSub_(r.id, all) }));
+    reps: ((r.m || {}).reps || []).map(x => ({ st: x.st, amt: x.amt, date: x.date })), cx: (r.m || {}).cx ? { st: r.m.cx.st } : null, sub: parentSub_(r.id, all, r) }));
 }
 function parentMark(token, id) {
   const u = who_(token), r = parentRows_().find(x => x.id === String(id));

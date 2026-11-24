@@ -1,4 +1,4 @@
-/* build: 20261123-125850 */
+/* build: 20261124-125311 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -349,10 +349,10 @@ const ROSTER_HEAD = {
 };
 function rosterHourly() { try { rosterBuild_(); } catch (e) { Logger.log(e.message); } }
 /** 5분마다: 바뀐 게 있으면 행사용 명단을 새로 씀 (캠프 접수 중 원장이 고친 내용이 5분 안에 반영) */
-/** 직급은 손으로 넣지 않고 자동 (11-01): 학원 · 클래스의 대표(공동대표) = 원장, 소속만 있음 = 강사, 소속 없음 = 없음. 관계자는 비움 */
+/** 직급은 손으로 넣지 않고 자동 (11-01, 11-24 고침): 스즈키 「학원」의 대표(공동대표)만 원장 · 클래스 · 협회 대표는 강사, 소속만 있음 = 강사, 소속 없음 = 없음. 관계자는 비움 */
 function roleSyncAll_(by) {
   const A = tbl_('학원'), T = tbl_('교사'), heads = {};
-  A.v.forEach((r, i) => { if (A.get(i, '상태') === '탈퇴') return; [A.get(i, '원장교사ID')].concat(String(A.get(i, '공동원장ID') || '').split(/[,\s]+/)).filter(Boolean).forEach(t => heads[t] = 1); });
+  A.v.forEach((r, i) => { if (A.get(i, '상태') === '탈퇴' || A.get(i, '구분') !== '학원') return; [A.get(i, '원장교사ID')].concat(String(A.get(i, '공동원장ID') || '').split(/[,\s]+/)).filter(Boolean).forEach(t => heads[t] = 1); });
   let n = 0;
   T.v.forEach((r, i) => {
     const id = T.get(i, '교사ID'); if (!id) return;

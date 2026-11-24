@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261123-125850 -->
+<!-- build: 20261124-125311 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -430,7 +430,7 @@ function tchEditor(){var t=S.edit.id==='new'?{'상태':'활동','회원구분':'
     certAdmin(t)+fld('e_상태','상태',t['상태'],{sel:['활동','휴직','활동정지','탈퇴'],hint:'활동정지 · 탈퇴 = 회원 사이트 로그인 막힘 · 휴직은 그대로'})+fld('e_확인','확인',t['확인'],{sel:CHECKS})+'</div>'+
     (t['교사ID']?photoBoxA(t['교사ID']):'')+(t['교사ID']&&t['회원구분']!=='외부인'?workBoxA(t['교사ID']):'')+
     '<div class="panel" style="padding:12px;border-style:dashed"><b>관리자 구분 <span class="cap">선생님 화면에는 보이지 않아요</span></b><div class="fgrid">'+
-    '<div class="f"><span>직급 <span class="cap">자동 · 대표면 원장, 소속만 있으면 강사</span></span><p style="margin:6px 0 0"><b>'+esc(t['직급']||'없음')+'</b></p></div>'+fld('e_캠프교수','캠프교수',t['캠프교수'],{sel:[['아니오','아니오'],['예','예 (캠프 때 교수)']]})+fld('e_회비구분','회비면제',t['회비구분'],{sel:[['납부','아니오 (납부 대상)'],['면제','예 (면제)']]})+fld('e_회비납부방법','회비 납부 방법',t['회비납부방법'],{sel:[['',''],'자동이체','직접입금','단체납부','면제']})+fld('e_강사료대상','강사료 대상',t['강사료대상'],{sel:[['','아니오'],['예','예 (주민번호 입력 열림)']]})+fld('e_계약체결','협회 계약 체결',t['계약체결'],{sel:[['','확인 전'],['예','예 (체결)'],['아니오','아니오']]})+'<label class="f" for="e_계약일"><span>계약일 <span class="cap">체결했으면</span></span><input type="date" id="e_계약일" value="'+esc(t['계약일'])+'"></label>'+'</div></div>'+
+    '<div class="f"><span>직급 <span class="cap">자동 · 스즈키 학원 대표면 원장, 클래스 대표 · 소속만 있으면 강사</span></span><p style="margin:6px 0 0"><b>'+esc(t['직급']||'없음')+'</b></p></div>'+fld('e_캠프교수','캠프교수',t['캠프교수'],{sel:[['아니오','아니오'],['예','예 (캠프 때 교수)']]})+fld('e_회비구분','회비면제',t['회비구분'],{sel:[['납부','아니오 (납부 대상)'],['면제','예 (면제)']]})+fld('e_회비납부방법','회비 납부 방법',t['회비납부방법'],{sel:[['',''],'자동이체','직접입금','단체납부','면제']})+fld('e_강사료대상','강사료 대상',t['강사료대상'],{sel:[['','아니오'],['예','예 (주민번호 입력 열림)']]})+fld('e_계약체결','협회 계약 체결',t['계약체결'],{sel:[['','확인 전'],['예','예 (체결)'],['아니오','아니오']]})+'<label class="f" for="e_계약일"><span>계약일 <span class="cap">체결했으면</span></span><input type="date" id="e_계약일" value="'+esc(t['계약일'])+'"></label>'+'</div></div>'+
     '<div class="fgrid">'+fld('e_확인메모','확인 메모',t['확인메모'],{wide:1})+fld('e_메모','메모',t['메모'],{wide:1,area:1})+'</div>'+
     (t['교사ID']?payBoxA(t['교사ID'])+duesBox('교사',t['교사ID'],t['회비구분']==='면제'?0:null,t['회원구분']):'')+(S.test&&t['교사ID']?'<div class="row" style="justify-content:flex-end"><span class="cap">STG 시험용 · 이 선생님 화면(원장이면 우리 학원)을 새 창으로 열어요</span><button class="btn small" type="button" data-viewas="'+t['교사ID']+'">이 선생님으로 보기</button></div>':'')+'<p class="err" id="edErr"></p></div>'}
 
@@ -1588,7 +1588,7 @@ document.addEventListener('keydown',function(e){var t=e.target;if(S.tab!=='prt'|
 </script>
 <style>table.prt th,table.prt td{text-align:left !important}table.prt th:first-child,table.prt td:first-child{text-align:center !important}table.prt th:nth-child(7),table.prt td:nth-child(7),table.prt th:nth-child(8),table.prt td:nth-child(8){text-align:center !important}table.prt td:nth-child(7) input,table.prt td:nth-child(8) input{text-align:center}table.prt tr.mutedrow td{color:var(--faint)}table.prt tr.mutedrow td b{color:var(--muted)}table.prt td{vertical-align:middle}table.prt td.padr{white-space:normal;min-width:220px;max-width:340px;line-height:1.4}</style>
 
-<div id="bldMark" hidden>빌드표시 20261123-125850 </div>
+<div id="bldMark" hidden>빌드표시 20261124-125311 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();
 /* 공문 편집: 칸을 고치면 모델만 바꾸고 미리보기만 다시 그림(글자 조합이 깨지지 않게) */
 function gmField(t){if(S.tab!=='gm'||!S.gm||S.gm['상태']==='발행')return false;var d=S.gm,c=d['내용'],ds=t.dataset||{};

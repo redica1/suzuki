@@ -1,4 +1,4 @@
-/* build: 20261124-154527 */
+/* build: 20261124-164933 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -5088,7 +5088,7 @@ function newPreview() {
   return { head: head ? head.name : '', teachers: ts.map(t => ({ n: t.name, r: t.role, i: t.inst, p: t.paidDate || '' })), students: st, profs };
 }
 /** 새 접수 (11-21): 필수 동의 항목 번호 (STG 새 화면 로그인 때 함께 보냄) */
-function newConsentIds() { if (!qaOn_()) throw new Error('STG에서만 열려요.'); return (camp_().consent.items || []).filter(x => x.on).map(x => x.id); }
+function newConsentIds() { /* 11-24 메인에서도 (STG 전용으로 막혀 있어 메인 동의가 안 넘어가던 문제) */ return (camp_().consent.items || []).filter(x => x.on).map(x => x.id); }
 /** 새 접수 미리보기: STG 「테스트 선생님」 이름과 학원 (명단은 화면이 가상으로 만듦) */
 function newTestList() {
   if (!qaOn_()) throw new Error('STG에서만 열려요.');

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261124-184625 -->
+<!-- build: 20261124-190513 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -1059,7 +1059,20 @@ var MAN={
    '<ol><li>표에서 바로 고쳐요: 이름 · 성별 · 휴대전화 · 직급 · 전공 · 회원 구분 · <b>자격</b>(여러 개 고르기, 티처트레이너 포함).</li>'+
    '<li>다 고친 뒤 위쪽 <b>「저장」</b>을 한 번 눌러요.</li>'+
    '<li>줄 끝 <b>「자세히」</b>에서: 근무 시작 날짜, <b>휴직 · 복귀 · 퇴직 · 다시 근무 시작</b>을 날짜와 함께 추가해요.</li>'+
-   '<li>같은 곳에서 <b>학생 배정</b>(체크 + 시작일), 해마다 낸 <b>교사 회비</b>, 선생님이 넣은 집 주소를 봐요.</li></ol>'},
+   '<li>같은 곳에서 <b>학생 배정</b>(체크 + 시작일), 해마다 낸 <b>교사 회비</b>, 선생님이 넣은 집 주소를 봐요.</li></ol>'+
+   '<p>선생님을 새로 들이거나 내보낼 때는 <b>「선생님 추가 · 빼기」</b>를 보세요.</p>'},
+  {k:'tadd',t:'선생님 추가 · 빼기',q:['선생님 추가','교사 추가','강사 추가','새 선생님','선생님 등록','선생님 빼기','교사 삭제','교사 빼기','선생님 삭제','그만둔','퇴사','소속','이름이 안 떠요','안 보여요'],h:
+   '<p>선생님 추가 · 빼기는 <b>회원페이지 「교사 관리」</b>에서 해요. 캠프 접수 화면에서는 할 수 없어요.</p>'+
+   '<h4>선생님 추가</h4><ol><li>「교사 관리」 표 위 <b>「＋ 선생님 추가」</b>를 눌러요.</li>'+
+   '<li><b>협회 명단에서 찾기</b> · 이미 협회 회원인 선생님(다른 학원 소속 포함)은 <b>이름과 휴대전화</b>를 넣고 「찾기」. 둘 다 맞아야 찾아져요. 근무 시작 날짜를 고르고 「우리 학원에 추가」.</li>'+
+   '<li><b>명단에 없는 새 선생님</b> · 이름 · 휴대전화 · 성별 · 전공 · 회원 구분 · 근무 시작을 넣고 「추가」. 선생님이 나중에 같은 이름 · 휴대전화로 회원가입하면 이 정보가 이어져요.</li>'+
+   '<li>소속 학원은 한 선생님당 <b>3곳까지</b>예요.</li></ol>'+
+   '<h4>선생님 빼기</h4><ol><li>선생님 줄 끝 <b>「빼기」</b> → 날짜를 고르고 <b>「빼기 확정」</b>.</li>'+
+   '<li>그날로 <b>우리 학원 근무가 끝나요</b>(퇴직). 선생님 회원 정보 · 다른 학원 소속은 그대로예요.</li>'+
+   '<li>그 선생님이 맡던 학생은 「학생 관리」에서 <b>담당 선생님을 다시 정해</b> 주세요.</li>'+
+   '<li>원장님 본인은 뺄 수 없어요.</li></ol>'+
+   '<ul><li>추가 · 빼기는 바로 반영되고, 협회에는 「확인 필요」로 표시돼 협회가 확인해요.</li>'+
+   '<li>캠프 · 졸업연주 접수 화면에는 <b>5분 안에</b> 반영돼요. 5분이 지나도 캠프 접수에 선생님 이름이 안 뜨면 협회에 알려 주세요.</li></ul>'},
   {k:'stu',t:'학생 관리 · 학생 추가',q:['학생 관리','학생 추가','학생 등록','원생','재원','휴원','퇴원','출생','성별','명단'],h:
    '<ol><li><b>「+ 학생 추가」</b> → 새 줄에 상태 · 이름 · <b>성별(필수)</b> · 출생연도 · 전공 · 담당 선생님 · 재원 시작을 넣어요.</li>'+
    '<li>아래 <b>「저장」</b>을 눌러야 반영돼요. 저장 전에는 「되돌리기」로 취소할 수 있어요.</li>'+
@@ -1110,7 +1123,7 @@ function csFind(q){var nq=csNorm(q),toks=String(q).split(/[\s,.?!]+/).filter(fun
     if(sc>=2)out.push({m:m,x:x,sc:sc+(m==='dir'&&S.me&&isDirector()?0.5:0)})})});
   return out.sort(function(a,b){return b.sc-a.sc}).slice(0,3)}
 function isDirector(){try{return !!(headInfo().hs||[]).length}catch(e){return false}}
-var CS_CHIPS=['가입은 어떻게 해요?','인증 코드가 안 와요','비밀번호를 잊었어요','학생 추가','회비 입금 신고','회원 잔여기간','담당 선생님 바꾸기','캠프 접수'];
+var CS_CHIPS=['가입은 어떻게 해요?','인증 코드가 안 와요','비밀번호를 잊었어요','학생 추가','선생님 추가 · 빼기','회비 입금 신고','회원 잔여기간','담당 선생님 바꾸기','캠프 접수'];
 function csAnswer(q){var R=csFind(q);if(!R.length)return '<p>매뉴얼에서 맞는 답을 찾지 못했어요. 다르게 물어보거나, '+(S.sess?'「내 문의」에 남겨 주세요.':'로그인한 뒤 「내 문의」에 남겨 주세요. 로그인이 안 되면 카카오톡 채널 「suzukimusickorea」로 알려 주세요.')+'</p><div class="csAct"><button type="button" class="btn small primary" data-csask="1">'+(S.sess?'문의 남기기':'로그인하고 문의 남기기')+'</button></div>';
   return R.map(function(r,i){var t=manText(r.x.h);return '<div class="csAns"><b>'+(i?'':'이 안내가 맞을 것 같아요 · ')+esc(MAN[r.m].t)+' › '+esc(r.x.t)+'</b><div class="csTx">'+(i?esc(t.slice(0,90))+'…':r.x.h)+'</div><button type="button" class="btn small" data-man="'+r.m+'|'+r.x.k+'">매뉴얼에서 보기</button></div>'}).join('')+'<p class="hint" style="margin:6px 0 0">답이 안 되면 <button type="button" class="linkish" data-csask="1">문의 남기기</button></p>'}
 function csDraw(){var p=document.getElementById('csPanel');if(!p)return;p.hidden=!CS.open;document.getElementById('csFab').setAttribute('aria-expanded',String(CS.open));if(!CS.open)return;
@@ -1140,6 +1153,6 @@ csMount();
   try{google.script.url.getLocation(function(l){var pr=l&&l.parameter||{},a=pr.as;if(a)setSess(a);if('ask' in pr||pr.v==='ask'){S.v0='ask'}if(pr.guide!==undefined)S.gd0=pr.guide||'why';go0()})}catch(x){go0()}})();
 </script>
 <script>try{window.top.postMessage('suzuki-ready','*')}catch(e){}</script>
-<div id="bldMark" hidden>빌드표시 20261124-184625 </div>
+<div id="bldMark" hidden>빌드표시 20261124-190513 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();</script>
 </body></html>

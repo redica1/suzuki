@@ -1,4 +1,4 @@
-/* build: 20261124-125311 */
+/* build: 20261124-174138 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -365,6 +365,7 @@ function roleSyncAll_(by) {
 function rosterTick() {
   try { inboxRun_(); } catch (e) { Logger.log('행사보고: ' + e.message); }
   try { roleSyncAll_('자동'); } catch (e) { Logger.log('직급: ' + e.message); }
+  classAddrSync_();
   const P = PropertiesService.getScriptProperties(), d = P.getProperty('rosterDirty'); if (!d) return;
   const lock = LockService.getScriptLock(); if (!lock.tryLock(1000)) return;
   try { P.deleteProperty('rosterDirty'); rosterBuild_(); } catch (e) { P.setProperty('rosterDirty', d); Logger.log(e.message); } finally { lock.releaseLock(); }
@@ -1153,6 +1154,24 @@ function putPay_(key, email, o) {
   if (o.acct) row['계좌번호'] = o.acct; else if (j < 0) row['계좌번호'] = '';
   if (j < 0) P.append(row); else P.set(j, row);
 }
+/** 11-24: 클래스는 따로 건물이 없으니 주소 = 대표 선생님의 집 주소(내 정보). tid를 주면 그 선생님 클래스만, 없으면 전체 */
+function classAddrSync_(tid) {
+  try {
+    const A = tbl_('학원'), mine = [];
+    A.v.forEach((r, i) => { if (A.get(i, '구분') === '클래스' && A.get(i, '상태') !== '탈퇴' && A.get(i, '원장교사ID') && (!tid || A.get(i, '원장교사ID') === tid)) mine.push(i); });
+    if (!mine.length) return 0;
+    const P = payTbl_(), pc = col_(P), pay = {}; P.v.forEach(r => pay[r[pc['교사ID']]] = r);
+    let n = 0;
+    mine.forEach(i => { const r = pay[A.get(i, '원장교사ID')]; if (!r || !String(r[pc['집주소']] || '').trim()) return;
+      const ad = String(r[pc['집주소']]).trim(), tk = ad.split(/\s+/);
+      const o = { '우편번호': digits_(r[pc['집우편번호']]).slice(0, 5), '주소': ad, '상세주소': String(r[pc['집상세주소']] || '').trim(), '시도': tk[0] || '', '시군구': tk[1] || '' };
+      if (['우편번호', '주소', '상세주소'].every(k => String(A.get(i, k) || '') === o[k])) return;
+      if (!A.get(i, '졸업연주지역') && regionOf_(o['시도'])) o['졸업연주지역'] = regionOf_(o['시도']);
+      A.set(i, o); n++; });
+    if (n) log_('자동', '학원', tid || '-', '클래스 주소 = 대표 선생님 집 주소', n + '곳');
+    return n;
+  } catch (e) { Logger.log('클래스 주소: ' + e.message); return 0; }
+}
 function tSavePay(sess, d) {
   const u = tsess_(sess); d = d || {};
   const old = payRow_(u.tid);
@@ -1161,7 +1180,7 @@ function tSavePay(sess, d) {
   const lock = LockService.getScriptLock(); lock.waitLock(20000);
   try {
     const T = tbl_('교사'), i = T.find('교사ID', u.tid); if (i >= 0) T.set(i, { '영문이름': eng });
-    putPay_(u.tid, u.email, o);
+    putPay_(u.tid, u.email, o); classAddrSync_(u.tid);
     log_(u.email, '정산', u.tid, '선생님이 수정', ['영문 이름', '집 주소', '우편물 주소'].concat(o.acct ? ['계좌'] : []).join(' · '));
   } finally { lock.releaseLock(); }
   return tMe(sess);
@@ -1284,6 +1303,9 @@ function tSaveAcad(sess, aid, d) {
     if ('교실대표번호' in o && g('대표번호원장') === '예' && o['교실대표번호'] !== g('교실대표번호')) o['대표번호원장'] = '';   /* 원장이 다른 번호를 넣으면 「원장 번호로」 해제 */
     if (o['이메일'] && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(o['이메일'])) fail('이메일 주소를 확인해 주세요.');
     if ('우편번호' in o) o['우편번호'] = digits_(o['우편번호']).slice(0, 5);
+    const isCls = g('구분') === '클래스';
+    if (isCls) ['우편번호', '주소', '상세주소', '시도', '시군구', '사업자번호', '교육청인가번호'].forEach(k => delete o[k]);   /* 11-24: 클래스 주소는 대표 선생님 집 주소에서 */
+    if (isCls && '개원일' in o && !o['개원일']) fail('클래스 개설 년·월을 넣어 주세요.');
     if (o['개원일'] && !/^\d{4}-\d{2}(-\d{2})?$/.test(o['개원일'])) fail('개원일은 2015-03 처럼 넣어 주세요.');
     if ('사업자번호' in o) o['사업자번호'] = bizNo_(o['사업자번호']);
     if ('교습과목' in o) o['교습과목'] = o['교습과목'].split(/[,，、]/).map(x => x.trim()).filter(x => INSTS_.indexOf(x) >= 0).join(', ');
@@ -1295,7 +1317,7 @@ function tSaveAcad(sess, aid, d) {
       log_(u.email, '학원', aid, '원장이 학원 정보 수정', diff.join(' · ').slice(0, 900));
     }
   } finally { lock.releaseLock(); }
-  return tAcad(sess, aid);
+  classAddrSync_(u.tid); return tAcad(sess, aid);
 }
 
 /* ---------- 학원 서류 (10-28) — 관리자 전용 드라이브 폴더에 저장 ---------- */
@@ -1707,7 +1729,7 @@ function tClassCreate(sess) {
       '교습과목': INSTS_.indexOf(g('전공')) >= 0 ? g('전공') : '', '확인': '확인 필요', '확인메모': '선생님이 직접 만든 클래스 (' + Utilities.formatDate(new Date(), 'Asia/Seoul', 'MM-dd') + ')', '원본': '선생님이 만듦', '수정일': stamp, '수정자': who });
     const W = tbl_('근무');
     W.append({ '근무ID': nextWid_(W), '교사ID': u.tid, '학원ID': id, '학원명': '', '시작': Utilities.formatDate(new Date(), 'Asia/Seoul', 'yyyy-MM-dd'), '종료': '', '주근무': cur.length ? '' : '예', '출처': '선생님', '수정일': stamp, '수정자': who });
-    syncAcads_(u.tid);
+    syncAcads_(u.tid); classAddrSync_(u.tid);
     log_(u.email, '학원', id, '선생님이 클래스 만듦', name);
   } finally { lock.releaseLock(); }
   return tMe(sess);
@@ -1822,6 +1844,7 @@ function payAddrSet(who, tid, d) {
   try { const P = payTbl_(), j = P.find('교사ID', tid);
     if (j >= 0) P.set(j, o); else P.append(Object.assign({ '교사ID': tid, '이메일': String(T.v[k][col_(T)['이메일']] || '') }, o));
   } finally { lk.releaseLock(); }
+  classAddrSync_(tid);
   log_(who.name, '정산', tid, '관리자 주소 고침', (o['집주소'] ? '집' : '') + (o['주소'] ? (o['집주소'] ? ' · ' : '') + '우편물' : ''));
   try { PropertiesService.getScriptProperties().setProperty('rosterDirty', '1'); } catch (e) {}
   return payView(who, tid);

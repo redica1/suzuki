@@ -1,4 +1,4 @@
-/* build: 20261124-174138 */
+/* build: 20261124-184625 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -108,7 +108,7 @@ function doGet(e) {
 function include(n) { return HtmlService.createTemplateFromFile(n).getRawContent(); }   // 공통 라이브러리(UiLib)처럼 자바스크립트 파일을 그대로 붙임
 
 function api(name, args) {
-  const open = { login, hello, tHello, tEvents, tLookup, tStart, tResend, tVerify, tCreate, tLogin, tForgot, tReset, tPwChange, tMe, tEditWork, tDelWork, tSavePay, tSavePart, tSaveInfo, tSavePhoto, tAcad, tSaveAcad, tDocUp, tDocGet, tSaveStu, tSaveStus, tStuDetail, tStuSave, tStuTutor, tStuTutorDel, tStuState, tStuStateDel, tMyStu, tMyStuDetail, tMyStuPay, tTchSaves, tTchEnd, tTchEvent, tTchAssign, tTchStart, tSaveRrn, tSaveInc, tAddWork, tClassCreate, tEndWork, tMainWork, tLogout, bPost, bMine, bReply };
+  const open = { login, hello, tHello, tEvents, tLookup, tStart, tResend, tVerify, tCreate, tLogin, tForgot, tReset, tPwChange, tMe, tEditWork, tDelWork, tSavePay, tSavePart, tSaveInfo, tSavePhoto, tAcad, tSaveAcad, tDocUp, tDocGet, tSaveStu, tSaveStus, tStuDetail, tStuSave, tStuTutor, tStuTutorDel, tStuState, tStuStateDel, tMyStu, tMyStuDetail, tMyStuPay, tTchSaves, tTchEnd, tTchFind, tTchAdd, tTchNew, tTchEvent, tTchAssign, tTchStart, tSaveRrn, tSaveInc, tAddWork, tClassCreate, tEndWork, tMainWork, tLogout, bPost, bMine, bReply };
   const fns = { printEvents, printEvSave, printData, printSet, printCopy, printExport, ogGet, ogSave, ogToken, boot, saveRow, setCheck, logs, importRoster, saveDues, delDues, reqs, reqDo, delAcad, payView, payAddrSet, bulkSet, saveWorks, importPastDues, importPayInfo, gmList, gmGet, gmSave, gmIssue, gmCopy, gmDel, bList, bSet, bComment, bCat, photoGet, photoDel, fillRegions, saveRates, docList, docUp, docGet, docDel, payList, payOk, payOkMany, payNo, memView, rosterNow, inputStatus, inboxDone, acctReset, classFromStudents, delStus, asTeacher, bankImport, bankList: bankListTop, bankSet, bankDues, bankFromSheet, bankMeta, bankSplitSave, bankPay, bankCamp, bankCampPay, bankPayList, gmProjects, gmCamp, gmNewCamp, gmCampSync, devVirtual };
   try {
     if (open[name]) return Object.assign({ ok: true }, open[name].apply(null, args || []));
@@ -1654,6 +1654,50 @@ function tTchEnd(sess, aid, tid, end) {
     const T = tbl_('교사'), j = T.find('교사ID', tid), md = Utilities.formatDate(new Date(), 'Asia/Seoul', 'MM-dd');
     if (j >= 0) T.set(j, { '확인': '확인 필요', '확인메모': [String(T.get(j, '확인메모') || ''), '원장이 근무 끝냄(' + aname + ' ' + end + ', ' + md + ')'].filter(Boolean).join(' · ').slice(0, 500) });
     log_(who, '근무', tid, '원장이 근무 끝냄', aid + ' ' + end);
+  } finally { lock.releaseLock(); }
+  return tAcad(sess, aid);
+}
+/* 11-24 원장: 선생님 추가 (협회 명단에서 찾기 · 새 선생님) — 바로 반영 · 협회 「확인 필요」 */
+function tTchFind(sess, aid, name, phone) {
+  const u = tsess_(sess); headOf_(u, aid);
+  name = String(name || '').trim().replace(/\s+/g, ' '); const ph = digits_(phone);
+  if (name.length < 2 || !/^01\d{8,9}$/.test(ph)) fail('이름과 휴대전화를 넣어 주세요.');
+  const T = tbl_('교사'), c = col_(T), an = acadNames_();
+  const r = T.v.find(x => String(x[c['이름']] || '').trim() === name && digits_(x[c['휴대전화']]) === ph && String(x[c['상태']] || '') !== '탈퇴');
+  if (!r) return { ok: true, none: true };
+  const tid = String(r[c['교사ID']]), cur = worksOf_(tid).filter(w => !w['종료']);
+  return { ok: true, t: { tid, name: String(r[c['이름']]), role: String(r[c['직급']] || ''), inst: String(r[c['전공']] || ''), kind: String(r[c['회원구분']] || ''),
+    acads: cur.map(w => an[w['학원ID']] || w['학원명']).filter(Boolean), here: cur.some(w => w['학원ID'] === aid), full: cur.length >= 3 } };
+}
+function tTchAdd(sess, aid, tid, date) {
+  const u = tsess_(sess), { A, i } = headOf_(u, aid), aname = A.get(i, '학원명'), who = stuWho_(u);
+  date = String(date || ''); if (!/^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/.test(date)) fail('근무 시작 날짜를 골라 주세요.');
+  const lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    const T = tbl_('교사'), j = T.find('교사ID', tid); if (j < 0) fail('선생님을 찾지 못했어요.');
+    const cur = worksOf_(tid).filter(w => !w['종료']);
+    if (cur.some(w => w['학원ID'] === aid)) fail('이미 우리 학원 선생님이에요.');
+    if (cur.length >= 3) fail('이 선생님은 이미 소속 학원이 3곳이에요. 그만둔 곳을 먼저 끝내야 해요.');
+    const W = tbl_('근무'); W.append({ '근무ID': nextWid_(W), '교사ID': tid, '학원ID': aid, '학원명': '', '시작': date, '종료': '', '주근무': cur.length ? '' : '예', '출처': '원장', '수정일': now_(), '수정자': who });
+    syncAcads_(tid);
+    const md = Utilities.formatDate(new Date(), 'Asia/Seoul', 'MM-dd');
+    T.set(j, { '확인': '확인 필요', '확인메모': [String(T.get(j, '확인메모') || ''), '원장이 근무 추가(' + aname + ' ' + date + ', ' + md + ')'].filter(Boolean).join(' · ').slice(0, 500) });
+    log_(who, '근무', tid, '원장이 선생님 추가', aid + ' ' + date);
+  } finally { lock.releaseLock(); }
+  return tAcad(sess, aid);
+}
+function tTchNew(sess, aid, d) {
+  const u = tsess_(sess), { A, i } = headOf_(u, aid), aname = A.get(i, '학원명'), who = stuWho_(u); d = d || {};
+  const name = String(d.name || '').trim().replace(/\s+/g, ' ').slice(0, 20), ph = digits_(d.phone), sex = d.sex === '남' || d.sex === '여' ? d.sex : '', inst = String(d.inst || '').slice(0, 20), kind = String(d.kind || '').slice(0, 20);
+  const date = String(d.date || '');
+  if (name.length < 2) fail('이름을 넣어 주세요.'); if (!/^01\d{8,9}$/.test(ph)) fail('휴대전화를 확인해 주세요.'); if (!sex) fail('성별을 골라 주세요.'); if (!inst) fail('전공을 골라 주세요.'); if (!kind) fail('회원 구분을 골라 주세요.');
+  if (!/^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/.test(date)) fail('근무 시작 날짜를 골라 주세요.');
+  const lock = LockService.getScriptLock(); lock.waitLock(20000); let tid;
+  try {
+    const T = tbl_('교사'), c = col_(T);
+    if (T.v.some(x => String(x[c['이름']] || '').trim() === name && digits_(x[c['휴대전화']]) === ph)) fail('이미 협회 명단에 있는 선생님이에요. 「협회 명단에서 찾기」로 추가해 주세요.');
+    tid = mkTch_('교사회원', { '악기': inst, '성별': sex, '직급': '강사', '회원 구분': kind, '가입 종류': '원장이 추가(' + aname + ')', '_근무': [{ id: aid, start: date }] }, name, ph, '', 'head', who, '확인 필요');
+    log_(who, '교사', tid, '원장이 새 선생님 추가', aid + ' ' + name + ' ' + date);
   } finally { lock.releaseLock(); }
   return tAcad(sess, aid);
 }

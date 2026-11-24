@@ -1,4 +1,4 @@
-/* build: 20261124-170005 */
+/* build: 20261124-174735 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -1045,6 +1045,13 @@ function parentCxDo(token, id, act, amt, note) {
 }
 /* 선생님 화면에 보내는 학부모 신청 (그 학원 것만, 휴대전화는 그 학원 선생님에게만) */
 function parentFor_(acads) { try { acads = acads.filter(parentOk_); if (!acads.length) return []; const L = parentRows_().filter(r => acads.includes(r.acad)); const all = L.length ? loadSubs_() : []; return L.map(r => ({ id: r.id, acad: r.acad, name: r.name, phone: r.phone.replace(/(\d{3})(\d{3,4})(\d{4})/, '$1-$2-$3'), d: r.d, at: r.at, st: r.st, by: r.by, byAt: r.byAt, m: r.m || {}, sub: parentSub_(r.id, all) })); } catch (e) { return []; } }
+/* 11-24 관리자: 학부모 신청 보기 (보기만 · 휴대전화는 뒤 4자리) */
+function adminParentList(token) {
+  adm_(token);
+  const L = parentRows_(), all = L.length ? loadSubs_() : [];
+  return L.map(r => ({ id: r.id, acad: r.acad, name: r.name, ph4: r.phone.slice(-4), d: r.d, at0: r.at0, at: r.at, st: r.st, by: r.by, byAt: r.byAt,
+    reps: ((r.m || {}).reps || []).map(x => ({ st: x.st, amt: x.amt, date: x.date })), cx: (r.m || {}).cx ? { st: r.m.cx.st } : null, sub: parentSub_(r.id, all) }));
+}
 function parentMark(token, id) {
   const u = who_(token), r = parentRows_().find(x => x.id === String(id));
   if (!r || !(u.acads || []).includes(r.acad)) throw new Error('신청을 찾지 못했어요.');

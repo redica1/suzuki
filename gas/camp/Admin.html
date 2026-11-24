@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261124-170005 -->
+<!-- build: 20261124-174735 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -383,10 +383,10 @@ function payPill(p){if(p.status==='정상'&&!pAmt(p)&&!(+p.paidAmt>0))return '<s
 
 /* ---------- 화면 ---------- */
 /* GNB: 1단(묶음) › 2단(메뉴). 권한은 2단 메뉴마다 · 아래 메뉴가 다 「없음」이면 묶음도 숨김 */
-const GROUPS=[['dash','대시보드',['home']],['ops','접수관리',['subs','rp','fam','cx','schol','q','ntc']],['sch','스케줄관리',['act','tt','ens','con','mcs','aud']],['room','방배정',['room']],['print','인쇄물',['book','pmod']],['stat','통계',['stat']],['fin','정산',['bplan','bset']],['cfg','설정',['doc','camp','mem','cons','prof','staff']]];
-const SUBL={aud:'음원 심사',doc:'공문',mem:'회원 명단',home:'대시보드',subs:'접수 · 입금 확인',rp:'입금 신고',fam:'가족방',pmod:'모듈별 인쇄',cx:'취소 · 환불',q:'게시판',act:'교사 일정',tt:'개인레슨',ens:'앙상블',con:'음악회 신청',mcs:'마스터클래스',meal:'식권',book:'행사 책자',ntc:'공지사항',room:'방배정',stat:'통계',schol:'장학금',cons:'동의서',camp:'캠프 설정',prof:'교수진',staff:'담당자',bplan:'예산 계획',bset:'결산'};
+const GROUPS=[['dash','대시보드',['home']],['ops','접수관리',['subs','rp','fam','pq','cx','schol','q','ntc']],['sch','스케줄관리',['act','tt','ens','con','mcs','aud']],['room','방배정',['room']],['print','인쇄물',['book','pmod']],['stat','통계',['stat']],['fin','정산',['bplan','bset']],['cfg','설정',['doc','camp','mem','cons','prof','staff']]];
+const SUBL={pq:'학부모 신청',aud:'음원 심사',doc:'공문',mem:'회원 명단',home:'대시보드',subs:'접수 · 입금 확인',rp:'입금 신고',fam:'가족방',pmod:'모듈별 인쇄',cx:'취소 · 환불',q:'게시판',act:'교사 일정',tt:'개인레슨',ens:'앙상블',con:'음악회 신청',mcs:'마스터클래스',meal:'식권',book:'행사 책자',ntc:'공지사항',room:'방배정',stat:'통계',schol:'장학금',cons:'동의서',camp:'캠프 설정',prof:'교수진',staff:'담당자',bplan:'예산 계획',bset:'결산'};
 const groupOf=t=>(GROUPS.find(g=>g[2].includes(t))||GROUPS[0]);
-const TABS=[['home','한눈에'],['subs','접수 · 입금 확인'],['rp','입금 신고'],['fam','가족방'],['cx','취소 · 환불'],['ens','앙상블'],['aud','음원 심사'],['prof','교수진'],['act','교사 일정'],['tt','개인레슨'],['room','방 배정'],['con','음악회 신청'],['mcs','마스터클래스'],['meal','식권'],['book','행사 책자'],['stat','통계'],['q','게시판'],['ntc','공지사항'],['schol','장학금'],['mem','회원 명단'],['bplan','예산 계획'],['bset','결산'],['camp','캠프 설정'],['pmod','모듈별 인쇄']];
+const TABS=[['home','한눈에'],['subs','접수 · 입금 확인'],['rp','입금 신고'],['fam','가족방'],['pq','학부모 신청'],['cx','취소 · 환불'],['ens','앙상블'],['aud','음원 심사'],['prof','교수진'],['act','교사 일정'],['tt','개인레슨'],['room','방 배정'],['con','음악회 신청'],['mcs','마스터클래스'],['meal','식권'],['book','행사 책자'],['stat','통계'],['q','게시판'],['ntc','공지사항'],['schol','장학금'],['mem','회원 명단'],['bplan','예산 계획'],['bset','결산'],['camp','캠프 설정'],['pmod','모듈별 인쇄']];
 function render(){if(S.tab==='doc'&&window.UI&&UI.docEd&&UI.docEd.on())return;/* 공문을 미리보기에서 고치는 동안에는 화면을 다시 그리지 않음 (불러오기 · 자동 새로 고침에 지워지지 않게) */
 
   const app=document.getElementById('app'),tabs=document.getElementById('tabs');
@@ -405,7 +405,7 @@ function render(){if(S.tab==='doc'&&window.UI&&UI.docEd&&UI.docEd.on())return;/*
   const ro=RO();app.classList.toggle('ro',ro);
   /* 다시 그려도 가로 스크롤 자리 그대로 (11-15: 담당자 표에서 고르면 맨 앞으로 가던 것) */
   const XS=S._xsTab===S.tab?[...app.querySelectorAll('.mtblw,.tbl')].map(e=>e.scrollLeft):[];
-  app.innerHTML=(ro?`<div class="robar">보기만 할 수 있는 메뉴예요 · 바꿔도 저장되지 않아요 (총관리자에게 「편집」 권한을 받으면 저장돼요)</div>`:'')+{home:vHome,subs:vSubs,rp:vRp,fam:vFam,pmod:vPmod,cx:vCx,ens:vEns,prof:vProf,act:()=>ACT.view(),tt:()=>LES.view(),room:()=>ROOM.view(),con:vCon,mcs:()=>vMcs(),meal:()=>vMeal(),book:()=>vEbk(),stat:vStat,q:vQ,ntc:vNtc,camp:vCamp,doc:vDoc,aud:vAud,staff:vStaff,cons:vCons,schol:vSchol,mem:vMem,bplan:()=>BUD.view('plan'),bset:()=>BUD.view('set')}[S.tab]();
+  app.innerHTML=(ro?`<div class="robar">보기만 할 수 있는 메뉴예요 · 바꿔도 저장되지 않아요 (총관리자에게 「편집」 권한을 받으면 저장돼요)</div>`:'')+{home:vHome,subs:vSubs,rp:vRp,fam:vFam,pq:vPq,pmod:vPmod,cx:vCx,ens:vEns,prof:vProf,act:()=>ACT.view(),tt:()=>LES.view(),room:()=>ROOM.view(),con:vCon,mcs:()=>vMcs(),meal:()=>vMeal(),book:()=>vEbk(),stat:vStat,q:vQ,ntc:vNtc,camp:vCamp,doc:vDoc,aud:vAud,staff:vStaff,cons:vCons,schol:vSchol,mem:vMem,bplan:()=>BUD.view('plan'),bset:()=>BUD.view('set')}[S.tab]();
   if(XS.some(x=>x))app.querySelectorAll('.mtblw,.tbl').forEach((e,i)=>{if(XS[i])e.scrollLeft=XS[i]});S._xsTab=S.tab;
   if(S.tab==='stat'||S.tab==='home')reSort();
   if(document.getElementById('docPrev'))setTimeout(dCut,0);
@@ -753,6 +753,30 @@ document.addEventListener('click',e=>{if(S.tab!=='pmod')return;const b=e.target.
 document.addEventListener('change',e=>{const t=e.target;if(S.tab!=='pmod'||!t.dataset||t.dataset.pmc==null)return;const A=pmHide(),H=A[S.pmK]||(A[S.pmK]={c:[],r:[]}),l=t.dataset.pmc;H.c=t.checked?H.c.filter(x=>x!==l):H.c.concat(l);pmSave(A);pmApply()});
 
 /* 11-21 가족방 신청 (새 접수): 캠프 신청한 사람끼리 묶은 방 · 빈자리 금액 입금 확인 */
+/* 11-24 학부모 신청 (보기만): 학부모가 학원에 보낸 신청 · 학원이 담았는지 · 학부모 입금 */
+const PQ_MV={bus:'왕복',go:'갈 때만',back:'올 때만',car:'자차'};
+function pqSt(r){const c=r.cx;return c&&(c.st==='취소'||c.st==='처리')?'취소':c&&c.st==='요청'?'취소 요청':r.st==='담음'?'학원이 담음':'새로 옴'}
+function pqPay(r){const L=r.reps||[];return L.some(x=>x.st==='신고')?'확인 기다림':L.some(x=>x.st==='확인')?'확인':L.length?'반려':'-'}
+function pqKids(r){return ((r.d||{}).kids||[]).filter(k=>k.go==='간다'||k.go===undefined)}
+function pqFam(r){const d=r.d||{},me=d.me||{},L=[];if(me.go===true||(me.go!==false&&me.name))L.push((me.name||r.name)+' (첫 번째 보호자)');if(me.stu)L.push(me.stu+' (학생 · 보호자 겸)');(d.fam||[]).forEach(f=>L.push((f.name||'')+' ('+(f.type||'동반가족')+')'));return L.length?L.join(' · '):'학생만'}
+function pqBus(r){const d=r.d||{},c={};pqKids(r).map(k=>k.mv).concat((d.me&&d.me.go!==false)?[d.me.mv]:[]).concat((d.fam||[]).filter(f=>f.type!=='15개월 미만').map(f=>f.mv)).forEach(v=>{const k=PQ_MV[v]||'안 고름';c[k]=(c[k]||0)+1});return Object.keys(c).map(k=>k+' '+c[k]).join(' · ')||'-'}
+function pqAmt(r){return (r.sub&&r.sub.total)||0}
+function vPq(){if(!S.pqR){if(!S.pqL){S.pqL=1;call('adminParentList',[],r=>{S.pqR=r||[];S.pqL=0;render()},'학부모 신청을 불러오고 있어요…')}return '<div class="panel hint">학부모 신청을 불러오고 있어요…</div>'}
+  const R=S.pqR,f=S.pqF||{},AC=[...new Set(R.map(r=>r.acad))].sort((a,b)=>a.localeCompare(b,'ko'));
+  const L=R.filter(r=>(!f.a||r.acad===f.a)&&(!f.s||pqSt(r)===f.s)).sort((a,b)=>String(b.at).localeCompare(String(a.at)));
+  const live=R.filter(r=>pqSt(r)!=='취소'),nk=live.reduce((t,r)=>t+pqKids(r).length,0);
+  const tile=(k,v)=>`<div class="tile"><div class="k">${k}</div><div class="v">${v}</div></div>`;
+  const C=s=>R.filter(r=>!s||pqSt(r)===s).length,lv=L.filter(r=>pqSt(r)!=='취소');
+  return `<div class="tiles" style="margin-bottom:10px">${tile('학부모 신청',R.length+'건')}${tile('새로 옴 (학원이 아직 안 담음)',C('새로 옴')+'건')}${tile('학생 (취소 빼고)',nk+'명')}${tile('학부모 입금 확인 기다림',R.filter(r=>pqPay(r)==='확인 기다림').length+'건')}</div>
+  <div class="panel"><div class="spread"><div><h3 style="margin:0">학부모 신청 <span class="hint">보기만 · 학원 접수에 담기 · 학부모 입금 확인은 원장님이 학원 관리에서 해요</span></h3></div><div class="row" style="gap:6px"><button class="btn small" type="button" id="pqRe">다시 불러오기</button><button class="btn small" type="button" id="pqCsv">엑셀로 받기</button></div></div>
+  <div class="row" style="gap:6px;margin:8px 0;flex-wrap:wrap"><select id="pqA"><option value="">학원 전체</option>${AC.map(a=>`<option ${f.a===a?'selected':''}>${esc(a)}</option>`).join('')}</select>${['','새로 옴','학원이 담음','취소 요청','취소'].map(s=>`<button class="btn small ${(f.s||'')===s?'primary':''}" type="button" data-pqs="${s}">${s||'전체'} ${C(s)}</button>`).join('')}</div>
+  <div class="mtblw"><table class="mtbl" id="pqT"><thead><tr><th>보낸 때</th><th>학원</th><th>보호자</th><th>학생</th><th>같이 가는 가족</th><th>가족방</th><th>버스</th><th>금액</th><th>상태</th><th>학부모 입금</th></tr></thead><tbody>${L.map(r=>{const st=pqSt(r),py=pqPay(r),cx=st==='취소';return `<tr class="${cx?'locked':''}"><td class="num">${esc(String(r.at||'').slice(5,16))}</td><td>${esc(r.acad)}</td><td class="l"><b>${esc(r.name)}</b><small class="hint" style="display:block">…${esc(r.ph4)}</small></td><td class="l">${pqKids(r).map(k=>esc(k.name)+' <small class="hint">'+esc(k.inst||'')+(k.age!==''&&k.age!=null?' · 만 '+esc(k.age)+'세':'')+'</small>').join('<br>')||'-'}</td><td class="l">${esc(pqFam(r))}</td><td>${(r.d||{}).room&&(r.d||{}).room.fam?'가족방':'-'}</td><td>${esc(pqBus(r))}</td><td class="num">${pqAmt(r)?won(pqAmt(r))+'<small class="hint" style="display:block">확정</small>':'-'}</td><td><span class="pill ${st==='새로 옴'||st==='취소 요청'?'due':st==='학원이 담음'?'ok':'mute'}">${st}</span></td><td>${py==='-'?'<span class="faint">-</span>':`<span class="pill ${py==='확인'?'ok':py==='확인 기다림'?'due':'mute'}">${py}</span>`}</td></tr>`}).join('')||'<tr><td colspan="10" class="hint">아직 없어요.</td></tr>'}</tbody>
+  <tfoot><tr><td class="l">합계</td><td>${lv.length}건</td><td></td><td>${lv.reduce((t,r)=>t+pqKids(r).length,0)}명</td><td></td><td>${lv.filter(r=>(r.d||{}).room&&(r.d||{}).room.fam).length}</td><td></td><td class="num">${won(lv.reduce((t,r)=>t+pqAmt(r),0))}</td><td></td><td></td></tr></tfoot></table></div></div>`}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-pqs]');if(b){S.pqF=Object.assign({},S.pqF,{s:b.dataset.pqs});render();return}
+  if(e.target.id==='pqRe'){S.pqR=null;render();return}
+  if(e.target.id==='pqCsv'){const f=S.pqF||{},L=(S.pqR||[]).filter(r=>(!f.a||r.acad===f.a)&&(!f.s||pqSt(r)===f.s));const rows=[['보낸 때','학원','보호자','학생','같이 가는 가족','가족방','버스','금액','상태','학부모 입금']].concat(L.map(r=>[r.at,r.acad,r.name,pqKids(r).map(k=>k.name+'('+(k.inst||'')+')').join(', '),pqFam(r),(r.d||{}).room&&(r.d||{}).room.fam?'가족방':'',pqBus(r),pqAmt(r)||'',pqSt(r),pqPay(r)]));
+    const csv='﻿'+rows.map(x=>x.map(v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"').join(',')).join('\r\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='학부모신청.csv';a.click();return}});
+document.addEventListener('change',e=>{if(e.target.id==='pqA'){S.pqF=Object.assign({},S.pqF,{a:e.target.value});render()}});
 function vFam(){if(!S.famR){if(!S.famL){S.famL=1;call('adminFam',[],r=>{S.famR=r;S.famL=0;render()},'가족방을 불러오고 있어요…')}return '<div class="panel hint">가족방을 불러오고 있어요…</div>'}
   const f=S.famF||'all',L=S.famR.filter(r=>f==='all'?r.st!=='취소':f==='rp'?r.st!=='취소'&&r.pay==='신고':f==='no'?r.st!=='취소'&&r.pay==='전'&&r.amt>0:f==='ok'?r.pay==='확인':r.st==='취소');
   const W=n=>(+n||0).toLocaleString('ko-KR'),cnt=k=>S.famR.filter(r=>k==='all'?r.st!=='취소':k==='rp'?r.st!=='취소'&&r.pay==='신고':k==='no'?r.st!=='취소'&&r.pay==='전'&&r.amt>0:k==='ok'?r.pay==='확인':r.st==='취소').length;
@@ -2136,7 +2160,7 @@ document.addEventListener('change',e=>{const t=e.target;if(t.dataset&&t.dataset.
 /* ---------- 권한: 총관리자(아이디·비밀번호) = 전부 · 담당자(교사 회원) = 메뉴마다 편집 / 보기 / 없음 ---------- */
 const SUP_TABS=[['doc','공문'],['camp','캠프 설정'],['cons','동의서'],['staff','담당자']];
 const ME=()=>(S.D&&S.D.me)||{sup:true,perms:{}};
-const permOf=k=>{const m=ME();if(m.sup)return '편집';if(k==='pmod')k='book';if(k==='staff'||k==='cons'||k==='doc')return '';return (m.perms||{})[k]||''};
+const permOf=k=>{const m=ME();if(m.sup)return '편집';if(k==='pmod')k='book';if(k==='pq')k='subs';if(k==='staff'||k==='cons'||k==='doc')return '';return (m.perms||{})[k]||''};
 const visTabs=()=>TABS.concat(SUP_TABS).filter(([k])=>permOf(k));
 /* 11-17: 메뉴별 주소 — 겉 페이지(app.suzukimusickorea.org/camp/admin.html)에 지금 메뉴를 알리고, 뒤로가기 · 처음 주소(#메뉴)로 그 메뉴를 염 */
 (function(){const okT=t=>S.D&&visTabs().some(([k])=>k===t);

@@ -4,10 +4,10 @@
 <meta charset="utf-8">
 <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>[STG] 새 접수 화면 미리보기</title><script>if(/[?&]test\b/i.test(location.search)&&document.title.indexOf('[STG]')<0)document.title='[STG] '+document.title</script>
+<title>2027 스즈키 겨울 음악제 · 접수</title><script>if(/[?&]test\b/i.test(location.search)&&document.title.indexOf('[STG]')<0)document.title='[STG] '+document.title</script>
 <!--
   새 접수 · 가족방 화면 미리보기 (2026-11-20) — 기존 접수 화면은 그대로, 가상 데이터만
-  · https://app.suzukimusickorea.org/camp/new.html  → STG ?page=new (메인에는 없음)
+  · https://app.suzukimusickorea.org/camp/new.html  → 메인 ?page=new · new.html?test → STG
 -->
 <meta name="robots" content="noindex, nofollow">
 <meta name="referrer" content="no-referrer">
@@ -26,19 +26,20 @@
 </style>
 </head>
 <body>
-<div class="msg" id="wait" hidden><span class="spin"></span>새 접수 미리보기를 여는 중이에요…<small id="slow" hidden>오래 걸리면 <a id="direct" target="_top">여기를 눌러 바로 열어 주세요</a></small></div>
+<div class="msg" id="wait" hidden><span class="spin"></span>접수 화면을 여는 중이에요…<small id="slow" hidden>오래 걸리면 <a id="direct" target="_top">여기를 눌러 바로 열어 주세요</a></small></div>
 <div class="msg" id="inapp" hidden>
   <b>크롬이나 사파리에서 열어 주세요</b>
   <span>카카오톡 같은 앱 안에서는 열리지 않아요.</span>
   <a class="btn" id="openOut">브라우저로 열기</a>
   <a class="sub" id="copyUrl" href="#">주소 복사</a>
 </div>
-<iframe id="app" title="새 접수 화면 미리보기" allow="camera; clipboard-write; clipboard-read; screen-wake-lock" hidden></iframe>
+<iframe id="app" title="접수 화면" allow="camera; clipboard-write; clipboard-read; screen-wake-lock" hidden></iframe>
 <script>
 (function () {
   var PROD = 'https://script.google.com/macros/s/AKfycbzrzYgEsPnHVcBIjobN9xB6nGBcZ7nPYMX7hDtx3OoI7WYokszGDLhcO0lHWYz9rWAt7w/exec';   // 메인 (실제 접수)
   var STG  = 'https://script.google.com/macros/s/AKfycby2WK6m-LkmOgUM3V2P_yA0f2kobvlfJw7qmNE36Tzxg6xvj6dQPKJuVFmT68zP7_55/exec';   // 테스트 (STG)
-  var APP = STG + '?page=new' + location.search.replace(/^\?/, '&');   /* 미리보기는 STG 에만 있음 */
+  var T = /[?&]test\b/i.test(location.search);   /* 11-24: 기본 메인 · ?test 면 STG (원장님 학원 관리를 12/1 전에 쓰려고) */
+  var APP = (T ? STG : PROD) + '?page=new' + location.search.replace(/^\?/, '&');
   var ua = navigator.userAgent || '', here = location.href.split('#')[0];
   var android = /Android/i.test(ua);
   var kakao = /KAKAOTALK/i.test(ua), line = / Line\//i.test(ua);

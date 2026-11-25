@@ -1,4 +1,4 @@
-/* build: 20261125-133903 */
+/* build: 20261125-134111 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -86,6 +86,7 @@ const SETTINGS = [['관리자 아이디', 'admin', '관리자 화면(?page=admin
   ['로그인 방식', '둘 다', '「둘 다」 = 이메일 · 비밀번호 + (회원 가입 전 선생님은) 이름 + 휴대전화 / 「회원관리 계정」 = 이메일 · 비밀번호만 / 「이름+휴대전화」 = 예전 방식'],
   ['회원관리 주소', 'https://app.suzukimusickorea.org/member/', '선생님 가입 · 비밀번호 찾기 안내에 쓰는 회원관리 주소 (STG 는 끝에 ?test)'],
   ['회원 명단 파일', '', '회원관리가 만드는 「행사용 명단」 파일 ID 또는 주소. 넣으면 명단_교사 · 명단_학생을 그 파일로 5분마다 맞춤 (비우면 지금처럼 이 시트의 명단 그대로)'],
+  ['먼저 여는 학원', '', '접수 시작일 전에 먼저 접수를 받는 학원 (쉼표로). 시작일이 되면 모두 열려서 비워도 돼요 (11-25)'],
   ['수당 공개', '아니오', '「예」면 선생님 화면에 「내 수당」(결산에서 회원관리로 보낸 정산)이 보여요. 정산을 마치기 전까지는 「아니오」'],
   ['해외 송금 안내', '', '해외 단체 영어 화면에 보이는 송금 안내 (영어로: 은행 · SWIFT · 계좌 · 예금주 · 주소 등)'],
   ['접수 가능 학원', '마포스즈키', '「전체」 또는 학원 이름을 쉼표로 (예: 마포스즈키, 미사스즈키)'],
@@ -726,7 +727,7 @@ function bundle_(acads, owner) {
     };
   });
   const all = loadSubs_();
-  let camp = null; try { camp = campPublic_(); } catch (x) {}
+  let camp = null; try { camp = campPublic_(); if (camp && camp.pre && acads.some(a => earlyAcads_().includes(a))) camp.pre = ''; } catch (x) {}   /* 11-25 먼저 여는 학원은 「접수 전」 안내 없음 */
   try { cxAmt_(all.filter(sb => acads.includes(sb.acad))); } catch (x) {}
   /* 보이는 접수 (11-14 사용자 지시): 내가 낸 접수 + 원장이면 내 학원 접수 전부. 원장이 아닌 선생님에게 다른 사람 접수(관리자 · 원장이 낸 것 포함)는 보내지 않음 */
   let heads = []; try { teachers_().filter(t => t.name === owner && t.role === '원장').forEach(t => (t.acads || []).forEach(a => heads.push(a))); } catch (x) {}
@@ -1457,7 +1458,7 @@ function famList(token) { const u = who_(token); const ts = teachers_(); const a
 function famFind(token, acad, q) { const u = who_(token); q = String(q || '').trim(); acad = String(acad || '');
   const P = famPeople_(loadSubs_()); return Object.values(P).filter(p => p.acad === acad && (!q || p.name.indexOf(q) >= 0)).slice(0, 60).map(p => ({ id: p.id, name: p.name, acad: p.acad, kind: p.kind, inst: p.inst })); }
 function famSave(token, room) {
-  const u = who_(token); regGate_();
+  const u = who_(token); { const E = earlyAcads_(); if (!(u.acads || []).some(a => E.includes(a))) regGate_(); }
   const lock = lock_();
   try {
     const sh = famSheet_(), all = famRooms_(), subs = loadSubs_(), P = famPeople_(subs), C = camp_().opt, cap = +C.roomCap || 4, fee = +C.roomEmptyFee || 0;
@@ -1563,7 +1564,7 @@ function submitNew(token, sb) {
   pressAt_(sb && sb.pressAt); try { return submitNew0_(token, sb); } finally { NOW_AT = null; }
 }
 function submitNew0_(token, sb) {
-  const u = who_(token); regGate_();
+  const u = who_(token); regGate_(sb && sb.acad);
   if (!u.acads.includes(sb.acad)) throw new Error('이 학원으로 접수할 수 없어요.');
   /* 속도 (11-13 몰림 시험: 10명 동시에 4명이 BUSY): 잠그기 전에 읽고 검사 · 잠근 동안은 번호만 받고 바로 붙여 씀 · 메일은 잠금 밖 */
   const C = CacheService.getScriptCache();
@@ -1985,7 +1986,9 @@ function curRound_(c) {
 /** 선생님 화면에 보내는 설정 (+ 지금 차수) */
 /** 접수 시작 전이면 시작일(yyyy-mm-dd), 아니면 ''. 시작일 = 캠프 설정 「접수 시작」, 없으면 1차 시작일. STG(설정 「테스트 로그인」 있음)는 언제나 열림 */
 function regPre_(c) { c = c || camp_(); try { if (String(setting_('테스트 로그인') || '').trim()) return ''; } catch (e) { } const o = String(c.base.open || (c.rounds[0] || {}).from || ''); return /^\d{4}-\d{2}-\d{2}$/.test(o) && today_() < o ? o : ''; }
-function regGate_() { const o = regPre_(); if (o) throw new Error('접수는 ' + (+o.slice(5, 7)) + '월 ' + (+o.slice(8, 10)) + '일부터 받아요. 그때 다시 와 주세요.'); }
+/* 11-25 「먼저 여는 학원」: 접수 시작일 전에도 그 학원 접수는 받음 */
+function earlyAcads_() { try { return String(setting_('먼저 여는 학원') || '').split(/[,\n]/).map(x => x.trim()).filter(Boolean); } catch (e) { return []; } }
+function regGate_(acad) { if (acad && earlyAcads_().includes(String(acad))) return; const o = regPre_(); if (o) throw new Error('접수는 ' + (+o.slice(5, 7)) + '월 ' + (+o.slice(8, 10)) + '일부터 받아요. 그때 다시 와 주세요.'); }
 function campPublic_() { const c = camp_(), pp = parentPilot_(); return Object.assign({}, c, { ri: curRound_(c), pre: regPre_(c), pq: pp === null || pp.length > 0, songs: songList_(), songMeta: songMeta_(), progs: progList_() }); }
 /* ---- 음악회 곡 목록 (11-15 사용자: 학생이 고르는 곡 목록을 관리자가 직접) — 시트 「곡목록」 (악기 · 곡 · 순서). 비어 있으면 신청서에 들어 있는 기본 목록을 씀 ---- */
 const SONG_SH = '곡목록';

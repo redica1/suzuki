@@ -345,7 +345,7 @@ function sumBox(){const D=P.picked.filter(x=>x.done);if(!D.length)return '';cons
  const nSub=new Set(D.map(x=>x.no||'_')).size;return `<div class="sbox"><div class="sgrid"><span>접수</span><b>${nSub}건</b><span>인원수</span><div><b>${D.length}명</b>${T.length?`<div class="sl"><b>교사 ${T.length}명</b></div>`:''}${St.length?`<div class="sl"><b>학생 ${St.length}명</b> <span class="hint">(${Object.entries(byI).map(([i,n])=>i+' '+n).join(' · ')})</span></div>`:''}${F.length?`<div class="sl"><b>가족 ${F.length}명</b></div>`:''}${rooms?`<div class="sl"><b>가족방 ${rooms}개</b></div>`:''}</div>
  <span>청구 합계</span><b style="font-weight:500">${won(tot)}</b><span>입금 확인</span><b style="font-weight:500">${won(ok)}</b><span>남은 금액</span><b>${won(tot-ok)}</b></div><button class="btn sm" type="button" data-act="mailMe">내 접수 내역 메일로 받기</button></div>${byOwner(D)}${S.mailed?'<p class="hint" style="margin:0">미리보기: 메일은 보내지 않았어요.</p>':''}`}
 function vMine(){const b=sumBox();return (b?`<div class="panel">${b}</div>`:'')+vMine0()+cxRule()}
-function vMine0(){const v=S.mv||'pay',L=MS[v]||[],sub=L.some(q=>q[0]===S.ms)?S.ms:(L[0]||[])[0];
+function vMine0(){const v=S.mv||'pay',L=v==='con'?SCONS().map(c=>[c,/음악회$/.test(c)?c:c+' 음악회']):MS[v]||[],sub=L.some(q=>q[0]===S.ms)?S.ms:(L[0]||[])[0];
  const top=`<div class="itabs" role="tablist" aria-label="보기">${MV.map(([k,l])=>`<button type="button" role="tab" data-mv="${k}" aria-pressed="${v===k}">${l}</button>`).join('')}</div>${L.length?`<div class="row" role="group" style="gap:6px;margin:0 0 12px">${L.map(([k,l])=>`<button class="btn sm ${sub===k?'pri':''}" type="button" data-ms="${k}" aria-pressed="${sub===k}">${l}</button>`).join('')}</div>`:''}`;
  if(v==='pay')return top+vMinePay();
  if(v==='rep')return top+vMineRep();

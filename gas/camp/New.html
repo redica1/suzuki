@@ -205,7 +205,7 @@ function vList(){if(!S.list.length)return '';return `<div class="panel"><div cla
 /* ---------- ① 접수 3단계: 사람마다 무엇을 하는지 ---------- */
 const NOPLAY=k=>['보호자','첫번째 보호자','동반가족','15개월 미만'].includes(k);const STU3=k=>k.indexOf('학생')===0||k==='교사 자녀 (악기)';
 const FEE1={'교사':550000,'학생':550000,'학생(비회원)':650000,'교사 자녀 (악기)':500000,'보호자':500000,'첫번째 보호자':500000,'동반가족':400000,'15개월 미만':300000};let LES=60000;
-const PF=[['홍교수','바이올린'],['정교수','바이올린'],['강교수','바이올린'],['한교수','비올라'],['윤교수','첼로'],['문교수','첼로'],['서교수','플루트'],['노교수','기타']];const profsOf=i=>PF.filter(q=>q[1]===i).map(q=>q[0]+' · '+q[1]);const mcOf=i=>PF.filter(q=>q[1]===i&&q[2]!==false).map(q=>q[0]+' · '+q[1]);let CONS=['오후','트와일라잇','이브닝'];
+const PF=[['홍교수','바이올린'],['정교수','바이올린'],['강교수','바이올린'],['한교수','비올라'],['윤교수','첼로'],['문교수','첼로'],['서교수','플루트'],['노교수','기타']];const profsOf=i=>PF.filter(q=>q[1]===i&&q[4]!==false).map(q=>q[0]+' · '+q[1]);const mcOf=i=>PF.filter(q=>q[1]===i&&q[2]!==false).map(q=>q[0]+' · '+q[1]);let CONS=['오후','트와일라잇','이브닝'];
 let PRG={'바이올린':['Pre-Twinkle','1권A 작은별 변주곡 ~ 무궁동','1권B 알레그레토 ~','2권A ~ 헨델 부레','2권B 두 사람의 척탄병 ~','3권A ~ 유모레스크','3권B 베커 가보트 ~','4권A ~ 자이츠 5번 3악장','4권B 비발디 협주곡 가단조 ~','5권A ~ 비발디 협주곡 사단조','5권B 독일춤곡 ~','6권 이상'],'첼로':['Pre-Twinkle','1권A 작은별 ~ 무궁동','1권B 그 옛날에 ~','2권','3권','4권','5권','6권','7권','8권 이상'],'비올라':['Pre-Twinkle','1권','2권','3권','4권','5권','6권 이상'],'플루트':['Pre-Twinkle','1권','2권','3권','4권','5권','6권 이상'],'기타':['1권','2권','3권','4권','5권','6권 이상']};
 let SNG={'바이올린':['V02-10 가보트 (륄리)','V04-02 협주곡 5번 1악장 (자이츠)','V05-33 협주곡 사단조 3악장 (비발디)','V04-08 협주곡 가단조 1악장 (비발디)'],'첼로':['C04-12 소나타 다장조 2악장 (브레발)','C03-05 미뉴에트 3번 (바흐)'],'비올라':['A03-04 가보트 (베커)'],'플루트':['F02-06 미뉴에트 (바흐)','F04-03 가보트 (고섹)'],'기타':['G02-04 미뉴에트 (바흐)']};
 const instOf=x=>x.i||(MEMBERS.find(m=>m.n===x.n&&m.k===x.k)||MEMBERS.find(m=>m.n===x.n)||{}).i||'바이올린';
@@ -437,7 +437,7 @@ function loadLive(r){if(!r)return;LIVE=true;WHO=r.head||WHO;const A=ACAD;
  MY.length=0;const pd=v=>{const m=String(v||'').match(/(\d{4})-(\d{2})-(\d{2})/);return m?m[1].slice(2)+'.'+m[2]+'.'+m[3]:''};r.students.forEach(x=>MY.push({n:x.n,y:+x.y||'',i:x.i||'바이올린',a:A,g:x.g,t:x.t,p:pd(x.p)}));
  for(let k=MEMBERS.length-1;k>=0;k--)if(MEMBERS[k].a===A)MEMBERS.splice(k,1);
  r.teachers.forEach(t=>MEMBERS.push({n:t.n,k:'교사',i:t.i||'',a:A,r:t.r,p:pd(t.p)}));MY.forEach(m=>MEMBERS.push({...m,k:'학생'}));
- if(r.profs&&r.profs.length){PF.length=0;r.profs.forEach(q=>PF.push([q.n,q.i,!!q.mc,+q.min||0]))}
+ if(r.profs&&r.profs.length){PF.length=0;r.profs.forEach(q=>PF.push([q.n,q.i,!!q.mc,+q.min||0,q.l!==false]))}
  S.others=null;P.picked=[];Object.keys(I).forEach(k=>delete I[k]);S.mem=[];S.list=[];S.rep='';P.q='';P.hit=null}
 const TT0=[['김미사','미사스즈키'],['박마포','마포스즈키'],['이수지','수지스즈키'],['정분당','분당스즈키'],['최대구','대구스즈키'],['한춘천','춘천바이첼스즈키']];
 function fakeDB(name,acad){let sd=0;for(const c of name+acad)sd=(sd*31+c.charCodeAt(0))%100000;const rnd=()=>{sd=(sd*9301+49297)%233280;return sd/233280};

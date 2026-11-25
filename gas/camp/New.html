@@ -148,6 +148,7 @@ let WHO='김스즈',LIVE=false;const REGL=()=>{try{return P.picked.filter(x=>!S.
 /* 11-23 동명이인: 가족방 사람은 접수 번호(pid)로 구분 · 이름만 같으면 다른 사람 */
 const KEY=m=>m.pid||((m.a||ACAD)+'|'+m.n),RN=()=>((S.mem.find(m=>KEY(m)===S.rep)||{}).n||'');const OTH=[{n:'이두리',k:'학생',i:'첼로',y:2013,a:'마포스즈키',t:'박선생'},{n:'김하나',k:'학생',i:'바이올린',y:2015,a:'마포스즈키',t:'박선생'},{n:'이엄마',k:'첫번째 보호자',a:'마포스즈키',t:'박선생'},{n:'최하늘',k:'학생',i:'플루트',y:2016,a:'수지스즈키',t:'정선생'}];const REGA=()=>REGL().map(m=>({...m,a:ACAD})).concat(OTH);const REPOK=k=>k==='학생'||k==='교사';
 let S={tab:'login',ens:{on:'',name:'',mates:[],song:'',comp:'',n:'',aq:'',team:'',err:'',lock:null,saved:''},rep:'이하나',mem:[],q:{a:ACAD,n:''},res:null,manual:false,room:false,done:false,list:[{rep:'박두리',names:['박두리','박아빠','박막내','정다온'],n:4,room:true,amt:0,st:'입금 전'}]};
+if(typeof ENV!=='undefined'&&ENV.as==='member')S.mode='member';
 function reset(){S.mem=[];S.rep='';S.res=null;S.manual=false;S.done=false}
 reset();
 function total(){let t=0;const empty=S.room?Math.max(0,CAP-S.mem.length):0;return {p:t,empty,room:empty*ROOM_EMPTY,all:t+empty*ROOM_EMPTY}}

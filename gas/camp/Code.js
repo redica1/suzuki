@@ -117,8 +117,8 @@ function doGet(e) {
   /* 11-23 새 접수 화면 메인 전환: ?page=new 는 늘 새 화면 · 주소만(?page 없음)이면 설정 「새 접수 화면」 = 켬 일 때 새 화면
    *  옛 화면이 필요한 곳(?page=old · 비회원 as=guest · 관계자 as=staff · board · guide · aud · tl · go)은 옛 화면 그대로 */
   { const P = (e && e.parameter) || {}, pg = P.page || '';
-    const oldNeed = pg === 'old' || P.as || P.board || P.guide || P.aud || P.tl || P.go;
-    if (pg === 'new' || pg === 'newmock' || (!pg && !oldNeed && newUiOn_())) return newPage_(cname); }   /* 새 접수 · 가족방 화면 미리보기 (11-20, STG만 · 기존 접수와 따로) */
+    const oldNeed = pg === 'old' || (P.as && P.as !== 'member') || P.board || P.guide || P.aud || P.tl || P.go;
+    if (pg === 'new' || pg === 'newmock' || (!pg && !oldNeed && newUiOn_())) return newPage_(cname, P.as === 'member' ? 'member' : ''); }   /* 새 접수 · 가족방 화면 미리보기 (11-20, STG만 · 기존 접수와 따로) */
   if (e && e.parameter && e.parameter.page === 'parent') return HtmlService.createHtmlOutputFromFile('Parent').setTitle(cname + ' · 학부모 신청').addMetaTag('viewport', 'width=device-width, initial-scale=1').setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
   if (e && e.parameter && e.parameter.page === 'find') return HtmlService.createTemplateFromFile('Find').evaluate().setTitle(cname + ' · 일정 찾기').addMetaTag('viewport', 'width=device-width, initial-scale=1').setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
   if (admin) page = HtmlService.createTemplateFromFile('Admin').evaluate();
@@ -5299,9 +5299,9 @@ function maint_() { let v = ''; try { v = String(setting_('점검 중') || '').t
   return /^(예|네|켬|on|1|yes)$/i.test(v) ? { until: '' } : null; }
 function maintHtml_(mt) { return '<!doctype html><meta charset="utf-8"><style>body{margin:0;font:16px/1.6 -apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;background:#F2F8F8;color:#18232B;display:grid;place-items:center;min-height:100vh;padding:16px;box-sizing:border-box}.b{background:#fff;border:1px solid #D5E6E6;border-radius:18px;padding:28px 24px;max-width:420px;text-align:center}h1{font-size:21px;margin:0 0 8px;color:#0B6F6C}p{margin:4px 0;color:#5B6B73}</style><div class="b"><h1>잠시 업데이트 중이에요</h1><p>더 편하게 쓰실 수 있게 고치고 있어요.</p><p><b>' + (mt.until ? mt.until + '쯤 다시 열려요.' : '조금 뒤 다시 열려요.') + '</b></p><p>그때 새로 고침해 주세요. 이미 저장한 내용은 그대로예요.</p></div>'; }
 function newUiOn_() { try { return /^(켬|켜짐|on|1|예|yes)$/i.test(String(setting_('새 접수 화면') || '').trim()); } catch (e) { return false; } }
-function newPage_(cname) {
+function newPage_(cname, as) {   /* as=member: 회원관리 「행사 참여」에서 오면 새 화면 회원 로그인 칸으로 바로 (11-26) */
   const t = HtmlService.createTemplateFromFile('New'); let stg = false, share = ''; try { ensureSettingsLazy_(); stg = qaOn_(); share = setting_('공유주소'); } catch (x) {}
-  t.env = JSON.stringify({ stg, share }); 
+  t.env = JSON.stringify({ stg, share, as: as || '' }); 
   return t.evaluate().setTitle((stg ? '[STG] ' : '') + cname + ' 접수').addMetaTag('viewport', 'width=device-width, initial-scale=1').setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
 function qaOn_() { try { return !!String(setting_('테스트 로그인') || '').trim(); } catch (e) { return false; } }

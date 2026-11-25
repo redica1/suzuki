@@ -1,4 +1,4 @@
-/* build: 20261125-130229 */
+/* build: 20261125-132039 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -609,15 +609,17 @@ function loginT_(t, consent) { memberTrigOk_();
   if (t.state === '대기') return { ok: false, msg: '승인 대기 중이에요. 협회가 확인하면 이메일로 알려 드려요.' };
   if (isStaffT_(t) && camp_().base.staff === false) return { ok: false, msg: '지금은 관계자 접수를 받지 않아요. 협회에 연락하면 운영진이 대신 접수해 드려요.' };
   if (!isStaffT_(t) && camp_().base.member === false) return { ok: false, msg: '이 행사는 회원 접수를 받지 않아요.' };
-  { const ce = consentErr_(consent); if (ce) return { ok: false, msg: ce }; }
+  /* 11-25 동의는 처음 한 번만: 지금 동의 문구 버전에 필수 항목을 모두 동의한 기록이 있으면 묻지 않음 · 없으면 동의 화면 (needConsent) */
+  const had = consentHas_(t.name, t.p4);
+  if (!had) { const ce = consentErr_(consent); if (ce) return { ok: false, needConsent: true, msg: '접수 전에 동의해 주세요.', consent: consentItems_() }; }
   if (isStaffT_(t)) {
-    consentLog_('관계자', t.name, t.p4, consent);
+    if (!had) consentLog_('관계자', t.name, t.p4, consent);
     const token = Utilities.getUuid(), acads = [STAFF_ACAD];
     CacheService.getScriptCache().put('tok_' + token, JSON.stringify({ name: t.name, acads, staff: true, tid: t.id }), 21600);
     log_(t.name, '관계자 로그인', '');
     return Object.assign({ ok: true, token, today: today_(), teacher: { id: t.id, name: t.name, role: '관계자', inst: t.inst, acads, home: acads, p4: t.p4, staff: true, email: acctEmail_(t.id) }, myAcct: myAcct_(t.name) }, bundle_(acads, t.name));
   }
-  consentLog_('회원(교사)', t.name, t.p4, consent);
+  if (!had) consentLog_('회원(교사)', t.name, t.p4, consent);
   try { ensureSettings_(); } catch (x) {}
   const open = acadOpen_();
   const own = [...new Set(loadSubs_().filter(x => x.owner === t.name).map(x => x.acad))];
@@ -2195,6 +2197,17 @@ function consentErr_(c) {
   const items = (camp_().consent.items || []).filter(x => x.on);
   const miss = items.filter(x => x.req && !(c && c[x.id] === true));
   return miss.length ? '필수 동의 항목에 동의해 주세요: ' + miss.map(x => x.title).join(', ') : '';
+}
+/* 11-25 이 선생님(관계자)이 지금 버전 필수 항목에 모두 동의했나 (동의기록 시트) */
+function consentHas_(name, p4) {
+  try { const C = camp_(), need = (C.consent.items || []).filter(x => x.on && x.req).map(x => x.title + ': 동의'), q = String(p4 || '').slice(-4);
+    return rows_(CONSENT_SH).some(r => String(r['이름']) === name && String(r['휴대전화 뒤 4자리']).replace(/\D/g, '').slice(-4) === q && String(r['동의 문구 버전']) === String(C.consent.ver) && /회원\(교사\)|관계자/.test(String(r['구분'])) && need.every(t => String(r['동의 항목']).indexOf(t) >= 0));
+  } catch (e) { return false; } }
+/* 동의 화면에 보여 줄 항목 (취소 · 환불은 규정 표를 글로) */
+function consentItems_() {
+  const C = camp_(), W = n => n == null ? '' : n + '%';
+  const rf = ((C.refund || {}).rules || []).map(r => '- ' + String(r.until || '').slice(5).replace('-', '/') + '까지: ' + (r.label || '') + ' (환불 ' + W(r.rate) + ')').join('\n');
+  return { ver: C.consent.ver, items: (C.consent.items || []).filter(x => x.on).map(x => ({ id: x.id, title: x.title, req: !!x.req, body: x.body || (x.id === 'refund' ? '취소 신청한 날에 따라 환불해요.\n' + rf + '\n그 뒤에는 환불되지 않아요. 자세한 내용은 접수 화면 도움말을 봐 주세요.' : '') })) };
 }
 function consentLog_(kind, name, ph, c) {
   try {

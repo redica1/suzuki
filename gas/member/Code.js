@@ -140,6 +140,7 @@ function login(id, pw, auto) {
   }
   const t = Utilities.getUuid();
   CacheService.getScriptCache().put('ss:' + t, JSON.stringify({ name: '관리자', at: now_() }), 6 * 3600);
+  rosterTrigOk_();
   return { sess: t };
 }
 function sess_(t) {
@@ -360,8 +361,17 @@ function roleSyncAll_(by) {
     const want = T.get(i, '회원구분') === '외부인' ? '' : heads[id] ? '원장' : (T.get(i, '학원1') || T.get(i, '학원2') || T.get(i, '학원3')) ? '강사' : '';
     if (String(T.get(i, '직급') || '') !== want) { T.set(i, { '직급': want }); n++; }
   });
+  try { const nm = {}; T.v.forEach((r, i) => { const id = T.get(i, '교사ID'); if (id) nm[id] = T.get(i, '이름'); });   /* 11-26 대표를 바꾸면 원장명 글자도 그 선생님 이름으로 */
+    let m = 0; A.v.forEach((r, i) => { const h = A.get(i, '원장교사ID'); if (h && nm[h] && String(A.get(i, '원장명') || '') !== nm[h]) { A.set(i, { '원장명': nm[h] }); m++; } });
+    if (m) { log_(by || '자동', '학원', '-', '원장명 맞춤', m + '곳'); try { PropertiesService.getScriptProperties().setProperty('rosterDirty', String(Date.now())); } catch (e) { } } } catch (e) { Logger.log('원장명: ' + e.message); }
   if (n) log_(by || '자동', '교사', '-', '직급 자동 맞춤', n + '명');
   return n;
+}
+/* 11-26 자동 실행이 꺼져 있으면 다시 켬 (STG 회원관리가 11-01부터 행사용 명단을 안 만들던 일) · 관리자 로그인 때 */
+function rosterTrigOk_() {
+  try { const H = ScriptApp.getProjectTriggers().map(t => t.getHandlerFunction());
+    if (H.indexOf('rosterTick') < 0) ScriptApp.newTrigger('rosterTick').timeBased().everyMinutes(5).create();
+    if (H.indexOf('rosterHourly') < 0) ScriptApp.newTrigger('rosterHourly').timeBased().everyHours(1).create(); } catch (e) { Logger.log('자동 실행: ' + e.message); }
 }
 function rosterTick() {
   try { inboxRun_(); } catch (e) { Logger.log('행사보고: ' + e.message); }

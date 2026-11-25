@@ -462,7 +462,10 @@ document.addEventListener('click',e=>{if(S.tab!=='consent')return;const b=e.targ
  if(d.cop){S.cop=S.cop||{};S.cop[d.cop]=!S.cop[d.cop];render();return}
  if(d.cout){S.lgCred=null;S.cons=null;S.cck={};S.tab='login';render();scrollTo(0,0);return}
  if(d.cagree&&!(window.google&&google.script&&google.script.run)){S.tab='home';render();scrollTo(0,0)}});
-function vLogin(){const B='https:\/\/app.suzukimusickorea.org/camp/';const card=(k,t,d,href)=>href?`<a class="pickcard" href="${href}" target="_blank" rel="noopener"><b>${t}</b><span>${d}</span><small class="hint">기존 접수 화면으로 열려요 ↗</small></a>`:`<button type="button" class="pickcard${S.mode===k?' on':''}" data-mode="${k}"><b>${t}</b><span>${d}</span></button>`;
+/* 11-26 STG: 회원 로그인 칸 아래 따로 「STG 시험 로그인」 (주황 점선 · 비밀번호 없이) */
+function tlBoxN(){if(!(typeof ENV!=='undefined'&&ENV.stg))return '';const L=(S.tt||TT0);return `<div class="panel" style="border:2px dashed #c2410c;margin-top:14px"><h3 style="margin:0;color:#c2410c">STG 시험 로그인</h3><p class="hint" style="margin:2px 0 8px">테스트(STG)에서만 보여요 · 위 로그인과 상관없이 비밀번호 없이 이 선생님으로 들어가요</p><div class="row" style="gap:6px;flex-wrap:wrap">${L.map(([n,a])=>`<button class="btn sm" type="button" data-tt="${esc(n)}" data-ta="${esc(a)}" style="border-style:dashed">${esc(n)} <small class="hint">${esc(a)}</small></button>`).join('')}</div></div>`}
+function vLogin(){return vLogin0()+(S.mode==='member'?tlBoxN():'')}
+function vLogin0(){const B='https:\/\/app.suzukimusickorea.org/camp/';const card=(k,t,d,href)=>href?`<a class="pickcard" href="${href}" target="_blank" rel="noopener"><b>${t}</b><span>${d}</span><small class="hint">기존 접수 화면으로 열려요 ↗</small></a>`:`<button type="button" class="pickcard${S.mode===k?' on':''}" data-mode="${k}"><b>${t}</b><span>${d}</span></button>`;
  return `${S.mode==='member'?'':audBig()}${S.mode==='member'?'':posterCard()}${S.mode==='member'?'':`<div class="panel"><h2 style="margin:0">접수 시작</h2><p class="hint" style="margin:0">어떻게 접수하시나요?</p>
  <div class="pick2">${card('member','회원 신청하기','협회 회원 선생님이 학원 학생들을 접수해요. 회원 이메일 · 비밀번호로 로그인해요.')}
  ${card('guest','비회원 신청하기','회원 학원에 다니지 않는 아이를 보호자가 직접 접수해요. 보호자 이름과 휴대전화만 있으면 돼요.',B+'index.html?as=guest'+TA)}

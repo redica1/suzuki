@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261125-140213 -->
+<!-- build: 20261126-005134 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -315,7 +315,10 @@ function vDone(){
 function vLogin(){if(S.fp)return vForgot();
   return gdBtn()+'<div class="card"><h2>로그인</h2>'+emailBox('le','이메일',S.email||svId('t'))+''+
   '<label class="f" for="lp">비밀번호<input type="password" id="lp" autocomplete="current-password" value="'+esc(svPw('t'))+'"></label>'+svBox('t')+msgBox()+btn('doLogin','로그인')+
-  '<div class="spread"><button class="btn ghost small" type="button" id="goHome">처음 화면</button><button class="btn ghost small" type="button" id="forgot">비밀번호를 잊었어요</button></div></div>'}
+  '<div class="spread"><button class="btn ghost small" type="button" id="goHome">처음 화면</button><button class="btn ghost small" type="button" id="forgot">비밀번호를 잊었어요</button></div></div>'+tlBox()}
+/* 11-26 STG 시험 로그인 (캠프 STG 와 같은 명단) */
+function tlBox(){var L=S.test?(S.testNames||[]):[];if(!L.length)return '';return '<div class="card" style="border:2px dashed #c2410c"><h3 style="margin:0 0 4px;color:#c2410c">STG 시험 로그인</h3><p class="hint" style="margin:0 0 8px">테스트(STG)에서만 보여요 · 비밀번호 없이 이 선생님으로 들어가요</p><div class="two" style="flex-wrap:wrap;gap:6px">'+L.map(function(n){return '<button class="btn small" type="button" data-tl="'+esc(n)+'">'+esc(n)+'</button>'}).join('')+'</div></div>'}
+document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('[data-tl]');if(!b)return;var nm=b.getAttribute('data-tl');run(function(){return call('tTestLogin',[nm]).then(function(r){if(!r.ok){S.msg=r.msg;return}setSess(r.sess);S.mustPw=false;S.hist=[];S.v='me';S.me=null;loadMe()})})});
 function vForgot(){var f=S.fp;return '<div class="card"><h2>비밀번호 다시 만들기</h2>'+(f.sent?'<p class="lede"><b>'+esc(f.email)+'</b> 로 가입돼 있으면 6자리 코드를 보냈어요. 15분 안에 넣어 주세요.</p>'+(f.code?'<div class="note warn">테스트(STG) 코드: <b class="num">'+esc(f.code)+'</b></div>':'')+
   '<label class="f" for="rc">재설정 코드<input type="text" id="rc" class="code" inputmode="numeric" maxlength="6"></label><label class="f" for="rp">새 비밀번호 <span class="opt">8자 이상</span><input type="password" id="rp" autocomplete="new-password"></label>'+msgBox()+btn('doReset','비밀번호 바꾸기')
   :emailBox('fe2','가입한 이메일',f.email)+msgBox()+btn('sendReset','재설정 코드 받기'))+'<button class="btn ghost small" type="button" id="fpBack">로그인으로</button></div>'}
@@ -1194,13 +1197,13 @@ document.addEventListener('submit',function(e){if(e.target&&e.target.id==='csFor
 csMount();
 
 (function start(){try{S.sess=sessionStorage.getItem('tm-sess')||''}catch(x){}
-  var go0=function(){call('tHello').then(function(h){if(h.ok){S.test=!!h.test;S.acads=h.acads||[]}
+  var go0=function(){call('tHello').then(function(h){if(h.ok){S.test=!!h.test;S.acads=h.acads||[];S.testNames=h.testNames||[]}
     if(S.v0==='ask'){S.v0='';S.ask=null;S.askDone=false;S.v='ask';render();if(S.sess)loadMe();return}
     if(S.sess){S.v='me';render();loadMe()}else render();if(S.gd0){gdOpen(S.gd0);S.gd0=''}})};
   try{google.script.url.getLocation(function(l){var pr=l&&l.parameter||{},a=pr.as;if(a)setSess(a);if('ask' in pr||pr.v==='ask'){S.v0='ask'}if(pr.guide!==undefined)S.gd0=pr.guide||'why';go0()})}catch(x){go0()}})();
 </script>
 <script>try{window.top.postMessage('suzuki-ready','*')}catch(e){}</script>
-<div id="bldMark" hidden>빌드표시 20261125-140213 </div>
+<div id="bldMark" hidden>빌드표시 20261126-005134 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();
 /* 11-25: 캠프 · 졸업연주 등 다른 접수 화면은 언제나 새 창으로 (기본 base target=_top 이라 같은 창으로 가던 것 막음) */
 document.addEventListener('click',function(e){var a=e.target&&e.target.closest&&e.target.closest('a[href]');if(!a)return;var h=a.getAttribute('href')||'';

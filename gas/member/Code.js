@@ -1,4 +1,4 @@
-/* build: 20261125-140213 */
+/* build: 20261126-005134 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -86,6 +86,7 @@ const SETTINGS = [
   ['관리자 아이디', 'admin', '관리자 화면 아이디'],
   ['관리자 비밀번호', '', '8자 이상으로 직접 적어 주세요 (노란 칸)'],
   ['테스트 표시', '아니오', 'STG 시트만 「예」 → 화면 위에 테스트 띠'],
+  ['테스트 선생님', '최서희, 박정연, 김가현, 정찬양, 최승아, 황선경', 'STG(테스트 표시 = 예)에서만: 로그인 화면에 비밀번호 없이 이 선생님으로 들어가는 버튼 (쉼표로 · 캠프 STG 와 같은 명단)'],
   ['관리자 자동 로그인', '아니오', 'STG 시험용. 「예」면 비밀번호 없이 들어감 (메인에서는 꼭 아니오)'],
   ['원본 시트', SRC_ID, '처음 불러올 연회비 명단 시트 ID'],
   ['보내는 이름', '한국스즈키음악협회', '인증·안내 메일의 보내는 사람 이름'],
@@ -108,7 +109,7 @@ function doGet(e) {
 function include(n) { return HtmlService.createTemplateFromFile(n).getRawContent(); }   // 공통 라이브러리(UiLib)처럼 자바스크립트 파일을 그대로 붙임
 
 function api(name, args) {
-  const open = { login, hello, tHello, tEvents, tLookup, tStart, tResend, tVerify, tCreate, tLogin, tForgot, tReset, tPwChange, tMe, tEditWork, tDelWork, tSavePay, tSavePart, tSaveInfo, tSavePhoto, tAcad, tSaveAcad, tDocUp, tDocGet, tSaveStu, tSaveStus, tStuDetail, tStuSave, tStuTutor, tStuTutorDel, tStuState, tStuStateDel, tMyStu, tMyStuDetail, tMyStuPay, tTchSaves, tTchEnd, tTchFind, tTchAdd, tTchNew, tTchEvent, tTchAssign, tTchStart, tSaveRrn, tSaveInc, tAddWork, tClassCreate, tEndWork, tMainWork, tLogout, bPost, bMine, bReply };
+  const open = { login, hello, tHello, tTestLogin, tEvents, tLookup, tStart, tResend, tVerify, tCreate, tLogin, tForgot, tReset, tPwChange, tMe, tEditWork, tDelWork, tSavePay, tSavePart, tSaveInfo, tSavePhoto, tAcad, tSaveAcad, tDocUp, tDocGet, tSaveStu, tSaveStus, tStuDetail, tStuSave, tStuTutor, tStuTutorDel, tStuState, tStuStateDel, tMyStu, tMyStuDetail, tMyStuPay, tTchSaves, tTchEnd, tTchFind, tTchAdd, tTchNew, tTchEvent, tTchAssign, tTchStart, tSaveRrn, tSaveInc, tAddWork, tClassCreate, tEndWork, tMainWork, tLogout, bPost, bMine, bReply };
   const fns = { printEvents, printEvSave, printData, printSet, printCopy, printExport, ogGet, ogSave, ogToken, boot, saveRow, setCheck, logs, importRoster, saveDues, delDues, reqs, reqDo, delAcad, payView, payAddrSet, bulkSet, saveWorks, importPastDues, importPayInfo, gmList, gmGet, gmSave, gmIssue, gmCopy, gmDel, bList, bSet, bComment, bCat, photoGet, photoDel, fillRegions, saveRates, docList, docUp, docGet, docDel, payList, payOk, payOkMany, payNo, memView, rosterNow, inputStatus, inboxDone, acctReset, classFromStudents, delStus, asTeacher, bankImport, bankList: bankListTop, bankSet, bankDues, bankFromSheet, bankMeta, bankSplitSave, bankPay, bankCamp, bankCampPay, bankPayList, gmProjects, gmCamp, gmNewCamp, gmCampSync, devVirtual };
   try {
     if (open[name]) return Object.assign({ ok: true }, open[name].apply(null, args || []));
@@ -905,7 +906,19 @@ const T_INSTS_ = INSTS_.concat(['지휘', '기타']);   /* 선생님 · 외부�
 function tHello() {
   const s = settings_();
   const acads = tbl_('학원').v.filter(r => r[3] !== '탈퇴' && r[1]).map(r => [r[0], r[1], r[9]]).sort((a, b) => String(a[1]).localeCompare(String(b[1]), 'ko'));
-  return { test: s['테스트 표시'] === '예', acads };
+  const test = s['테스트 표시'] === '예';
+  return { test, acads, testNames: test ? tNames_(s) : [] };
+}
+function tNames_(s) { const v = '테스트 선생님' in s ? s['테스트 선생님'] : '최서희, 박정연, 김가현, 정찬양, 최승아, 황선경'; return String(v || '').split(/[,\n]/).map(x => x.trim()).filter(Boolean); }   /* 설정 줄이 없으면 캠프 STG 와 같은 명단 */
+/** 11-26 STG 시험: 「테스트 선생님」 명단의 선생님으로 비밀번호 없이 들어감 (테스트 표시 = 예 인 시트에서만) */
+function tTestLogin(name) {
+  const s = settings_(); if (s['테스트 표시'] !== '예') fail('테스트(STG)에서만 쓸 수 있어요.');
+  name = String(name || '').trim(); const L = tNames_(s);
+  if (!L.includes(name)) fail('STG 시험 선생님이 아니에요.');
+  const T = tbl_('교사'), c = col_(T), r = T.v.find(x => normN_(x[c['이름']]) === normN_(name) && x[c['상태']] !== '탈퇴'); if (!r) fail(name + ' 선생님이 명단에 없어요.');
+  const tid = r[c['교사ID']], a = acctAll_().filter(x => x.tid === tid && x.state === '사용').pop();
+  log_(name, '교사', tid, 'STG 시험 로그인', '');
+  return { sess: newSess_({ email: a ? a.email : String(r[c['이메일']] || ''), tid, test: true }) };
 }
 function tLookup(name, phone) {
   name = String(name || '').trim(); phone = digits_(phone);

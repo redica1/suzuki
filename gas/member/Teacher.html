@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261124-190513 -->
+<!-- build: 20261125-112029 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -1153,6 +1153,11 @@ csMount();
   try{google.script.url.getLocation(function(l){var pr=l&&l.parameter||{},a=pr.as;if(a)setSess(a);if('ask' in pr||pr.v==='ask'){S.v0='ask'}if(pr.guide!==undefined)S.gd0=pr.guide||'why';go0()})}catch(x){go0()}})();
 </script>
 <script>try{window.top.postMessage('suzuki-ready','*')}catch(e){}</script>
-<div id="bldMark" hidden>빌드표시 20261124-190513 </div>
-<script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();</script>
+<div id="bldMark" hidden>빌드표시 20261125-112029 </div>
+<script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();
+/* 11-25: 캠프 · 졸업연주 등 다른 접수 화면은 언제나 새 창으로 (기본 base target=_top 이라 같은 창으로 가던 것 막음) */
+document.addEventListener('click',function(e){var a=e.target&&e.target.closest&&e.target.closest('a[href]');if(!a)return;var h=a.getAttribute('href')||'';
+  if(!/^https?:/i.test(h))return;var other=!/suzukimusickorea\.org[\/]member[\/]/i.test(h)||a.target==='_blank';if(!other)return;
+  e.preventDefault();e.stopPropagation();var w=null;try{w=window.open(h,'_blank');if(w)w.opener=null}catch(x){}if(!w){try{window.top.location.href=h}catch(x){location.href=h}}},true);
+</script>
 </body></html>

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261124-190513 -->
+<!-- build: 20261125-112029 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -1588,7 +1588,7 @@ document.addEventListener('keydown',function(e){var t=e.target;if(S.tab!=='prt'|
 </script>
 <style>table.prt th,table.prt td{text-align:left !important}table.prt th:first-child,table.prt td:first-child{text-align:center !important}table.prt th:nth-child(7),table.prt td:nth-child(7),table.prt th:nth-child(8),table.prt td:nth-child(8){text-align:center !important}table.prt td:nth-child(7) input,table.prt td:nth-child(8) input{text-align:center}table.prt tr.mutedrow td{color:var(--faint)}table.prt tr.mutedrow td b{color:var(--muted)}table.prt td{vertical-align:middle}table.prt td.padr{white-space:normal;min-width:220px;max-width:340px;line-height:1.4}</style>
 
-<div id="bldMark" hidden>빌드표시 20261124-190513 </div>
+<div id="bldMark" hidden>빌드표시 20261125-112029 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();
 /* 공문 편집: 칸을 고치면 모델만 바꾸고 미리보기만 다시 그림(글자 조합이 깨지지 않게) */
 function gmField(t){if(S.tab!=='gm'||!S.gm||S.gm['상태']==='발행')return false;var d=S.gm,c=d['내용'],ds=t.dataset||{};
@@ -1600,5 +1600,10 @@ document.addEventListener('input',function(e){gmField(e.target)});
 document.addEventListener('change',function(e){var t=e.target;if(t.type==='checkbox'||t.tagName==='SELECT')gmField(t)});
 document.addEventListener('change',function(e){var t=e.target;if(!t.dataset||!t.dataset.bcat||!t.value)return;if(S.busy)return;S.busy=true;callS('bCat',t.dataset.bcat,t.value).then(function(r){S.busy=false;if(!r.ok){toast(r.msg);return}setAsks(r.list);render();toast('분류를 바꿨어요')})});
 window.addEventListener('beforeunload',function(e){if(S.tab==='gm'&&S.gm&&S.gmDirty){e.preventDefault();e.returnValue=''}});
+
+/* 11-25: 캠프 · 졸업연주 등 다른 접수 화면은 언제나 새 창으로 (기본 base target=_top 이라 같은 창으로 가던 것 막음) */
+document.addEventListener('click',function(e){var a=e.target&&e.target.closest&&e.target.closest('a[href]');if(!a)return;var h=a.getAttribute('href')||'';
+  if(!/^https?:/i.test(h))return;var other=!/suzukimusickorea\.org[\/]member[\/]/i.test(h)||a.target==='_blank';if(!other)return;
+  e.preventDefault();e.stopPropagation();var w=null;try{w=window.open(h,'_blank');if(w)w.opener=null}catch(x){}if(!w){try{window.top.location.href=h}catch(x){location.href=h}}},true);
 </script>
 </body></html>

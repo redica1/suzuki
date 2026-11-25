@@ -1,4 +1,4 @@
-<!doctype html><!-- build: 20261126-030245 --><html lang="ko"><head><meta charset="utf-8"><link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"><meta name="viewport" content="width=device-width,initial-scale=1">
+<!doctype html><!-- build: 20261126-031401 --><html lang="ko"><head><meta charset="utf-8"><link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
 <style>
 /* 학부모 신청 (11-15): 학원 다니는 학생의 보호자가 회원가입 없이 「간다 / 안 간다」와 같이 가는 가족 이름만 학원 선생님께 보냄 */
@@ -58,6 +58,8 @@ details .b{white-space:pre-wrap;color:var(--muted);margin-top:6px}
 .ksum{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.ksum .ks{flex:1;min-width:0}
 .addrow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:0 0 10px;padding:10px;border:1px dashed var(--line,#cfdede);border-radius:12px}.addrow input[type=text]:not(.age){flex:1;min-width:120px}.listh{margin:8px 0 6px;font-weight:800;font-size:14px}.mvl{font-weight:700;font-size:14px}
 .mvrow{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--line,#e3e8ea)}.mvrow:first-of-type{border-top:0}
+.tipb{background:var(--soft);border-radius:10px;padding:8px 12px;font-size:14px;margin:8px 0 0}.ck.stuck{display:flex;gap:10px;align-items:flex-start;border:2px solid var(--line);border-radius:12px;padding:10px 12px;margin:0 0 10px;cursor:pointer}.ck.stuck input{width:20px;height:20px;margin-top:3px}
+.allbox{border:2px solid var(--accent)}.arow{display:flex;gap:10px;align-items:center;padding:9px 4px;border-bottom:1px solid var(--line);cursor:pointer}.arow input{width:22px;height:22px;flex:none}.arow .w{flex:1;min-width:0}.arow .w small{display:block;color:var(--muted);font-size:13px}.arow .a{font-variant-numeric:tabular-nums;font-weight:700;white-space:nowrap}.atot{display:flex;justify-content:space-between;align-items:baseline;border-top:2px solid var(--line);margin-top:6px;padding-top:10px}.atot b{font-size:20px}
 </style></head><body>
 <div class="band"><button type="button" id="pgHelp" class="pgHelp">이용 안내</button><h1 id="ttl" title="처음으로" style="cursor:pointer">스즈키 겨울 음악제 · 학부모 신청</h1><p id="sub">학원에 다니는 학생의 캠프 참가를 학원 선생님께 알려요</p></div>
 <div id="pgG" class="pgG" hidden><div class="pgGs" role="dialog" aria-modal="true" aria-labelledby="pgGt"><div class="pgGh"><b id="pgGt">학부모 신청 이용 안내</b><button type="button" id="pgGx" class="btn small ghost">닫기</button></div><div class="pgGb" id="pgGb"></div></div></div><main class="wrap" id="app"><div class="card hint">불러오고 있어요…</div></main>
@@ -67,7 +69,7 @@ details .b{white-space:pre-wrap;color:var(--muted);margin-top:6px}
 var INSTS=['바이올린','첼로','비올라','플루트','피아노','기타'];
 var THIS_YEAR=new Date().getFullYear();
 /* 만 나이 → 출생연도 (11-15): 생일이 지났으면 올해−나이, 아직이면 그 앞 해. 기본은 올해−나이, 고르기로 고침 */
-function yrOpts(k){var a=parseInt(k.age,10);if(isNaN(a)||a<0||a>30)return '<option value="">출생연도</option>';var y=THIS_YEAR-a,L=[y,y-1];if(!k.by||L.indexOf(+k.by)<0)k.by=String(y);return L.map(function(v){return '<option value="'+v+'"'+(String(v)===String(k.by)?' selected':'')+'>'+v+'년생'+(v===y?' (생일 지남)':' (생일 전)')+'</option>'}).join('')}
+function yrOpts(k){var a=parseInt(k.age,10);if(isNaN(a)||a<0||a>99)return '<option value="">출생연도</option>';var y=THIS_YEAR-a,L=[y,y-1];if(!k.by||L.indexOf(+k.by)<0)k.by=String(y);return L.map(function(v){return '<option value="'+v+'"'+(String(v)===String(k.by)?' selected':'')+'>'+v+'년생'+(v===y?' (생일 지남)':' (생일 전)')+'</option>'}).join('')}
 var S={I:null,req:null,d:null,err:'',agree:false,dirty:false,nm:'',ph:'',ac:'',pw:'',em:'',sv:true,step:1,cxOpen:false};
 function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
 function toast(m){var t=document.getElementById('toast');t.textContent=m;t.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(function(){t.hidden=true},2800)}
@@ -95,14 +97,29 @@ function vFam(fam){var d=S.d,on=famOn(),m=d.me||{};
   return '<div class="card'+(S.famOn===undefined&&S.famAsk?' needc':'')+'" id="famCard"><h3><span class="no">4</span>같이 가는 가족</h3>'+
   '<div class="row" style="margin-bottom:8px"><span style="font-weight:700">학생 말고 같이 가는 가족이 있나요?</span>'+seg('data-famon',0,S.famOn===true?'y':S.famOn===false?'n':'',[['n','없어요'],['y','있어요']])+'</div>'+
   (S.famOn===undefined?'<p class="hint" style="margin:0">「없어요」면 학생만 가요. 보호자가 같이 가면 「있어요」를 눌러 주세요.</p></div>':!on?'<div class="gnone">보호자 없이 학생만 가요.</div></div>':
-  '<p class="hint" style="margin-top:0"><b>첫 번째 보호자 한 분</b>은 꼭 넣어 주세요. 신청하는 본인이 가면 본인 이름을, 다른 보호자가 가면 그분 이름을 넣어요. 그 밖에 더 가는 가족은 동반가족 · 15개월 미만으로 넣어요.</p>'+
-  '<div class="addrow"><select id="nfType" class="sel" aria-label="가족 구분">'+(m.go?'':'<option value="첫 번째 보호자">첫 번째 보호자</option>')+'<option value="동반가족">동반가족</option><option value="15개월 미만">15개월 미만 아기</option></select><input type="text" id="nfName" maxlength="20" placeholder="이름" aria-label="가족 이름" value="'+(m.go?'':esc(S.nm||''))+'"><button class="btn small primary" type="button" id="fadd2">＋ 추가</button></div>'+
-  (m.go?'':'<p class="hint" style="margin:6px 0 0">첫 번째 보호자를 고르면 신청자 이름(<b>'+esc(S.nm||'')+'</b>)이 들어가요. 다른 보호자가 가면 이름을 바꿔 주세요.</p>')+
-  ((me||fam)?'<p class="listh">같이 가는 가족 '+((m.go?1:0)+d.fam.length)+'명</p>'+me+fam:'')+
-  (!m.go&&d.fam.length?'<p class="hint" style="color:var(--bad);font-weight:700;margin:6px 0 0">첫 번째 보호자가 없어요. 보호자 한 분을 넣어 주세요.</p>':'')+
+  ((adultKid()||m.stu)?'<label class="ck stuck"><input type="checkbox" id="mestu" '+(m.stu?'checked':'')+'><span><b>보호자가 학생으로 이미 들어가 있어요</b><br><span class="opt">위 학생 중 '+esc(adultKid()||'어른 학생')+' 님이 보호자예요. 첫 번째 보호자를 따로 넣지 않아도 돼요.</span></span></label>':'')+
+  (m.stu?'':'<p class="hint" style="margin-top:0"><b>첫 번째 보호자 한 분</b>은 꼭 넣어 주세요. 신청하는 본인이 가면 본인 이름을, 다른 보호자가 가면 그분 이름을 넣어요. 그 밖에 더 가는 가족은 동반가족 · 15개월 미만으로 넣어요.</p>')+
+  '<div class="addrow"><select id="nfType" class="sel" aria-label="가족 구분">'+(m.go||m.stu?'':'<option value="첫 번째 보호자">첫 번째 보호자</option>')+'<option value="동반가족">동반가족</option><option value="15개월 미만">15개월 미만 아기</option></select><input type="text" id="nfName" maxlength="20" placeholder="이름" aria-label="가족 이름" value="'+(m.go||m.stu?'':esc(S.nm||''))+'"><button class="btn small primary" type="button" id="fadd2">＋ 추가</button></div>'+
+  (m.go||m.stu?'':'<p class="hint" style="margin:6px 0 0">첫 번째 보호자를 고르면 신청자 이름(<b>'+esc(S.nm||'')+'</b>)이 들어가요. 다른 보호자가 가면 이름을 바꿔 주세요.</p>')+
+  (m.go&&m.stu&&adultKid()===((m.name||'').trim()||S.nm)?'<p class="hint" style="color:#a86a00;font-weight:700;margin:6px 0 0">'+esc(adultKid())+' 님이 학생에도 있어요. 보호자로 또 넣으면 두 번 계산돼요.</p>':'')+((me||fam)?'<p class="listh">같이 가는 가족 '+((m.go?1:0)+d.fam.length)+'명</p>'+me+fam:'')+
+  (!m.go&&!m.stu&&d.fam.length?'<p class="hint" style="color:var(--bad);font-weight:700;margin:6px 0 0">첫 번째 보호자가 없어요. 보호자 한 분을 넣어 주세요.</p>':'')+
   '<p class="hint" style="margin-bottom:0">동반가족 = 악기를 안 하는 가족(두 번째 보호자 포함). 성별 · 출생연도는 선택이에요.</p></div>')}
 /* 11-24 같이 가는 보호자: 신청하는 나 / 다른 보호자(이름 · 관계) / 안 감 · 고른 분이 「첫 번째 보호자」 */
 function famOn(){return S.famOn===true}
+/* 11-26 보호자가 학생 (엄마도 악기) · 신청자 모아 보기에서 한 명씩 체크한 뒤 보내기 */
+function adultKid(){var k=(S.d.kids||[]).find(function(k){return k.name&&(+k.age||0)>=19});return k?k.name.trim():''}
+function allPeople(){var d=S.d,P=(S.I&&S.I.price)||{},F=P.fees||{},i=pRd().ri,f=function(t){return +((F[t]||[])[i])||0},L=[];
+  d.kids.forEach(function(k){if(!k.name.trim())return;L.push({t:'학생',n:k.name.trim(),s:[k.inst,k.age!==''&&k.age!=null?'만 '+k.age+'세':'',MVN[k.mv]||''].filter(Boolean).join(' · '),a:f('학생')+kidExtraFee(k)+busFee(k.mv)})});
+  if(famOn()&&d.me.go)L.push({t:'첫 번째 보호자',n:(d.me.name||'').trim()||S.nm,s:MVN[d.me.mv]||'',a:f('회원의 첫번째 보호자')+busFee(d.me.mv)});
+  if(famOn())d.fam.forEach(function(x){if(!x.name.trim())return;var b=x.type==='15개월 미만';L.push({t:b?'15개월 미만':'동반가족',n:x.name.trim(),s:[x.by,MVN[x.mv]||''].filter(Boolean).join(' · '),a:b?f('동반가족 중 15개월 미만'):f('회원의 그외 악기 안하는 동반가족')+busFee(x.mv)})});
+  return L}
+function allKey(x){return x.t+'|'+x.n+'|'+x.s}
+function allLeft(){S.allCk=S.allCk||{};return allPeople().filter(function(x){return !S.allCk[allKey(x)]}).length}
+function allBox(){var L=allPeople();if(!L.length)return '';S.allCk=S.allCk||{};var tot=curTotal(),pp=L.reduce(function(t,x){return t+x.a},0);
+  return '<div class="card allbox" id="allBox"><h3><span class="no">5</span>신청자 모아 보기 <span class="opt" style="color:var(--bad)">꼭</span></h3><p class="hint" style="margin-top:0">이번에 신청하는 사람을 모두 모았어요. 한 사람씩 확인하고 체크해 주세요. <b>모두 체크해야</b> 보낼 수 있어요. 고칠 게 있으면 위에서 고쳐요.</p>'+
+  L.map(function(x){var k=allKey(x);return '<label class="arow"><input type="checkbox" data-allck="'+esc(k)+'" '+(S.allCk[k]?'checked':'')+'><span class="w"><span class="pill'+(x.t==='학생'?'':' gp')+'">'+esc(x.t)+'</span> <b>'+esc(x.n)+'</b><small>'+esc(x.s||'')+'</small></span><span class="a">'+(x.a?won(x.a):'무료')+'</span></label>'}).join('')+
+  (tot-pp>0?'<div class="arow"><span class="w"><b>가족방 빈자리</b></span><span class="a">'+won(tot-pp)+'</span></div>':'')+
+  '<div class="atot"><span class="hint">예상 참가비 ('+esc((pRd().L[pRd().ri]||{}).n||'')+' · 학원이 확정)</span><b>'+won(tot)+'</b></div><div style="text-align:right;margin-top:6px"><button class="btn small ghost" type="button" data-allall="1">모두 맞아요 · 전체 체크</button></div></div>'}
 function guardWho(){var m=S.d.me||{};return m.go===false?'none':(m.who==='other'?'other':'me')}
 function guardName(){var m=S.d.me||{};return (m.name||'').trim()||S.nm||'보호자'}
 function vGuard(){var d=S.d,w=guardWho(),O=[['me','신청하는 내가 가요','보호자 정보에 넣은 '+(S.nm||'나')+' 님'],['other','다른 보호자가 가요','예) 신청은 엄마, 캠프는 아빠'],['none','보호자는 안 가요','학생만 가요']];
@@ -144,11 +161,11 @@ function vForm(){var I=S.I,d=S.d;if(!I.open)return '<div class="card"><h2>지금
   return '<div class="card who"><div><b>'+esc(S.nm)+'</b> <span class="opt">'+esc(phoneTxt())+(S.em?' · '+esc(S.em):'')+'</span></div><button class="btn small ghost" type="button" id="toStep1">바꾸기</button></div>'+mineCard()+stNote()+
   '<div class="card"><h3><span class="no">2</span>다니는 학원</h3>'+(S.lockA?'<div class="pqlock"><span aria-hidden="true">🔒</span><div><b>'+esc(S.lockA)+'</b><div class="hint">이 주소는 '+esc(S.lockA)+' 전용이에요. 다른 학원이면 그 학원에서 주소를 받아 주세요.</div></div></div><datalist id="acList"></datalist>':'<input type="search" id="pa" list="acList" value="'+esc(S.ac)+'" placeholder="학원 이름을 넣어 골라 주세요" autocomplete="off" aria-label="다니는 학원"><datalist id="acList">'+I.acads.map(function(a){return '<option value="'+esc(a)+'">'}).join('')+'</datalist>')+
     '</div>'+
-  '<div class="card"><h3><span class="no">3</span>캠프 참가 학생</h3><p class="hint" style="margin-top:0">가는 학생만 넣어 주세요. <b>추가 개인레슨 · 마스터클래스는 학원 선생님이 넣고, 넣으면 금액이 바뀌어요.</b> 바뀐 금액은 학원이 다시 알려 드려요'+(S.em?'(이메일로도)':'')+'.</p>'+'<div class="addrow"><input type="text" id="nkName" maxlength="20" placeholder="학생 이름 *" aria-label="새 학생 이름"><select id="nkInst" class="sel" aria-label="전공"><option value="">전공(악기) *</option>'+INSTS.map(function(x){return '<option>'+x+'</option>'}).join('')+'</select><input type="text" id="nkAge" class="age" inputmode="numeric" maxlength="2" placeholder="만 나이 *" aria-label="만 나이"><button class="btn small primary" type="button" id="kadd2">＋ 추가</button></div>'+(kids?'<p class="listh">신청할 학생 '+d.kids.length+'명</p>'+kids:'<p class="hint" style="margin-bottom:0">이름 · 전공 · 만 나이를 넣고 「＋ 추가」를 눌러 주세요. 형제 · 자매도 한 명씩 추가해요.</p>')+'</div>'+
+  '<div class="card"><h3><span class="no">3</span>캠프 참가 학생</h3><p class="hint" style="margin-top:0">가는 학생만 넣어 주세요. <b>추가 개인레슨 · 마스터클래스는 학원 선생님이 넣고, 넣으면 금액이 바뀌어요.</b> 바뀐 금액은 학원이 다시 알려 드려요'+(S.em?'(이메일로도)':'')+'.</p>'+'<div class="addrow"><input type="text" id="nkName" maxlength="20" placeholder="학생 이름 *" aria-label="새 학생 이름"><select id="nkInst" class="sel" aria-label="전공"><option value="">전공(악기) *</option>'+INSTS.map(function(x){return '<option>'+x+'</option>'}).join('')+'</select><input type="text" id="nkAge" class="age" inputmode="numeric" maxlength="2" placeholder="만 나이 *" aria-label="만 나이"><button class="btn small primary" type="button" id="kadd2">＋ 추가</button></div>'+(kids?'<p class="listh">신청할 학생 '+d.kids.length+'명</p>'+kids+(adultKid()?'<p class="tipb">어른(만 19세 이상) 학생이 있어요. <b>보호자가 학생이면 여기에만 넣고</b>, 아래 「같이 가는 가족」에는 넣지 마세요. 두 번 계산돼요.</p>':''):'<p class="hint" style="margin-bottom:0">이름 · 전공 · 만 나이를 넣고 「＋ 추가」를 눌러 주세요. 형제 · 자매도 한 명씩 추가해요.</p>')+'</div>'+
   vFam(fam)+
 
   '<div class="card"><h3>방 <span class="opt">선택</span></h3><label class="ck"><input type="checkbox" id="rfam" '+(d.room.fam?'checked':'')+'><span>가족방을 원해요 <span id="rfamp">'+famTxt()+'</span></span></label>'+(d.me.go?'':'<p class="hint" style="margin:6px 0 0">보호자 없이 학생(형제)끼리 쓰는 가족방이에요. 학원 선생님이 확인해요.</p>')+'</div>'+
-  vPrice()+vMoney()+
+  vPrice()+vMoney()+allBox()+
   '<div class="card"><h3>동의</h3>'+I.consent.map(function(c){var b=c.id==='refund'&&!c.body?refundText(I.refund):c.body;return '<details><summary>'+esc(c.title)+(c.req?' (필수)':' (선택)')+'</summary><div class="b">'+esc(b||'')+'</div></details>'}).join('')+
     '<label class="agree"><input type="checkbox" id="ag" '+(S.agree?'checked':'')+'><span>위 내용을 읽었고 모두 동의해요. 만 14세 미만 학생의 보호자로서 동의해요.</span></label>'+
     '<p class="hint" style="margin:0">권수 · 곡 · 레슨은 학원 선생님이 넣어 접수해요. 참가비는 학원에 내면 학원이 모아서 협회에 내요.<br>학원에 다니지 않는 학생은 캠프 접수 화면의 「비회원 (학부모)」로 직접 접수해요.</p></div>'+
@@ -269,10 +286,12 @@ function render(){navSync();var a=document.getElementById('app');if(!S.I){a.inne
 /* 11-24 보낸 뒤: 고친 게 없으면 「보냈어요」(누를 수 없음) · 고치면 「고친 내용 다시 보내기」 · 취소한 신청이면 숨김 */
 ['input','change','click'].forEach(function(ev){document.addEventListener(ev,function(){setTimeout(sendBtn,0)})});
 function sendBtn(){var b=document.getElementById('send'),dk=document.getElementById('dock');if(!b)return;var r=S.req,sent=!!(r&&r.id),cx=r&&r.m&&r.m.cx&&(r.m.cx.st==='취소'||r.m.cx.st==='처리');
-  if(cx){dk.hidden=true;return}b.disabled=sent&&!S.dirty;b.textContent=!sent?'학원 선생님께 보내기':S.dirty?'고친 내용 다시 보내기':'✓ 보냈어요 · 고치면 다시 보낼 수 있어요';b.classList.toggle('sentok',sent&&!S.dirty)}
+  if(cx){dk.hidden=true;return}var lf=(!sent||S.dirty)?allLeft():0;b.disabled=(sent&&!S.dirty)||lf>0;b.textContent=lf?'「신청자 모아 보기」에서 '+lf+'명 더 체크해 주세요':!sent?'학원 선생님께 보내기 · '+allPeople().length+'명':S.dirty?'고친 내용 다시 보내기':'✓ 보냈어요 · 고치면 다시 보낼 수 있어요';b.classList.toggle('sentok',sent&&!S.dirty)}
 function setReq(r){S.req=r;S.d=r&&r.d?JSON.parse(JSON.stringify(r.d)):blank();if(!S.d.kids.length)S.d.kids=blank().kids;if(!S.d.me)S.d.me={go:true,gender:'',by:''};if(!S.d.room)S.d.room={fam:false,note:''};(S.d.fam||[]).forEach(function(f){if(r&&r.d&&f.name)f.ok=true});S.famOn=r&&r.d?!!(S.d.me.go||(S.d.fam||[]).length):false;if(r&&r.d&&S.d.me.go){if(!S.d.me.name)S.d.me.name=S.nm||'';S.d.me.ok=true}S.d.kids.forEach(function(k){if(r&&r.d&&k.name)k.ok=true;if(k.inst==null)k.inst='';if(k.age==null)k.age='';if(k.by==null)k.by='';k.go='간다'});S.dirty=false}
 function who(){var pa=document.getElementById('pa');if(pa)S.ac=pa.value.trim();
   if(!S.nm||!S.ph){return '처음 화면에서 보호자 정보를 넣어 주세요.'}if(!S.ac)return '다니는 학원을 골라 주세요.';if(S.I.acads.indexOf(S.ac)<0)return '학원을 목록에서 골라 주세요. 목록에 없는 학원은 이번에 학부모 신청을 받지 않아요. 학원 선생님께 여쭤 주세요.';if(!/^\d{4}$/.test(S.pw))return '비밀번호 숫자 4자리를 넣어 주세요.';return ''}
+document.addEventListener('change',function(e){var t=e.target;if(!S.d)return;if(t.id==='mestu'){S.d.me=S.d.me||{};S.d.me.stu=t.checked;if(t.checked&&S.d.me.go&&((S.d.me.name||'').trim()||S.nm)===adultKid())S.d.me.go=false;S.dirty=true;render();return}if(t.dataset&&t.dataset.allck!==undefined){S.allCk=S.allCk||{};S.allCk[t.dataset.allck]=t.checked;sendBtn();return}});
+document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('[data-allall]');if(!b)return;S.allCk=S.allCk||{};allPeople().forEach(function(x){S.allCk[allKey(x)]=true});render()});
 document.addEventListener('keydown',function(e){if(e.key!=='Enter')return;var t=e.target;if(t.id==='nkName'||t.id==='nkAge'){e.preventDefault();var b=document.getElementById('kadd2');if(b)b.click()}if(t.id==='nfName'){e.preventDefault();var c=document.getElementById('fadd2');if(c)c.click()}});
 document.addEventListener('input',function(e){var t=e.target,d=S.d;if(d&&t.dataset&&t.dataset.me){d.me[t.dataset.me]=t.value;S.dirty=true;var gn=document.querySelector('.gnote b');if(gn)gn.textContent=guardName();return}if(d&&t.id==='mvCar'){d.car=t.value;S.dirty=true;return}if(t.id==='pp'){var v8=t.value.replace(/\D/g,'').slice(0,8);t.value=v8.length>4?v8.slice(0,4)+'-'+v8.slice(4):v8;return}if(!d)return;
   if(t.id==='pp'){var v8=t.value.replace(/\D/g,'').slice(0,8);t.value=v8.length>4?v8.slice(0,4)+'-'+v8.slice(4):v8;return}if(t.id==='pn'||t.id==='pe'||t.id==='pw')return;if(t.id==='pa'){S.ac=t.value;return}if(t.id==='pw'){S.pw=t.value.replace(/\D/g,'').slice(0,4);return}if(t.dataset&&t.dataset.m!==undefined)return;S.dirty=true;
@@ -325,8 +344,9 @@ document.addEventListener('click',function(e){var b=e.target.closest('button');i
     if(!d.kids.some(function(k){return k.name.trim()})){S.err='학생 이름을 1명 이상 넣어 주세요.';render();toast(S.err);return}
     {var un=d.kids.filter(function(k){return !k.ok}).map(function(k){return k.name||'이름 없음'}).concat(d.fam.filter(function(f){return !f.ok}).map(function(f){return f.name||f.type}));if(un.length){S.err='「저장」을 누르지 않은 사람이 있어요: '+un.join(', ');render();toast(S.err);return}}
     if(d.fam.some(function(f){return !f.name.trim()})){S.err='가족 이름을 넣거나, 비어 있는 줄은 「빼기」를 눌러 주세요.';render();toast(S.err);return}
-    {if(S.famOn===undefined){S.err='같이 가는 가족이 있나요? 「없어요 / 있어요」를 골라 주세요';S.famAsk=1;render();toast(S.err);var fc=document.getElementById('famCard');if(fc)fc.scrollIntoView({block:'center'});return}if(famOn()&&!d.me.go){S.err='같이 가는 가족이 있으면 첫 번째 보호자 한 분을 넣어 주세요 (없으면 「없어요」)';render();toast(S.err);return}if(d.me.go&&!d.me.ok){S.err='첫 번째 보호자 「이 보호자 저장」을 눌러 주세요';render();toast(S.err);return}}
+    {if(S.famOn===undefined){S.err='같이 가는 가족이 있나요? 「없어요 / 있어요」를 골라 주세요';S.famAsk=1;render();toast(S.err);var fc=document.getElementById('famCard');if(fc)fc.scrollIntoView({block:'center'});return}if(famOn()&&!d.me.go&&!d.me.stu){S.err='같이 가는 가족이 있으면 첫 번째 보호자 한 분을 넣어 주세요 (없으면 「없어요」)';render();toast(S.err);return}if(d.me.go&&!d.me.ok){S.err='첫 번째 보호자 「이 보호자 저장」을 눌러 주세요';render();toast(S.err);return}}
     {var nm=moveList().filter(function(x){return !x.o.mv}).map(function(x){return x.n});if(nm.length){S.err='오가는 방법(버스 왕복 · 갈 때만 · 올 때만 · 자차)을 골라 주세요: '+nm.join(', ');render();toast(S.err);return}}
+    {var lf=allLeft();if(lf){S.err='「신청자 모아 보기」에서 '+lf+'명 더 체크해 주세요';render();toast(S.err);var ab=document.getElementById('allBox');if(ab)ab.scrollIntoView({block:'center'});return}}
     S.agree=document.getElementById('ag').checked;if(!S.agree){S.err='맨 아래 동의에 체크해 주세요.';render();toast(S.err);return}
     var c={};S.I.consent.forEach(function(x){c[x.id]=true});
     run('parentSubmit',[S.nm,S.ph,S.ac,c,d,S.pw,S.em],function(r){S.err='';setReq(r.req);render();window.scrollTo(0,0);toast('학원 선생님께 보냈어요')});return}});

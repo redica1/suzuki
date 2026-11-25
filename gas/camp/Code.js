@@ -1,4 +1,4 @@
-/* build: 20261126-030245 */
+/* build: 20261126-031401 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -865,9 +865,9 @@ function parentClean_(d) {
   const yr = v => { const y = String(v || '').replace(/\D/g, '').slice(0, 6); return y; };
   const g = v => (v === '남' || v === '여') ? v : '';
   const mv = v => MOVES_[v] ? v : '';
-  const kids = (Array.isArray(d.kids) ? d.kids : []).slice(0, 8).map(x => { const a = parseInt(String(x.age == null ? '' : x.age).replace(/\D/g, ''), 10); const by = String(x.by || '').replace(/\D/g, '').slice(0, 4); return { mv: mv(x.mv), name: t(x.name, 20), inst: t(x.inst, 10), age: a >= 0 && a <= 30 ? a : '', by: /^(19|20)\d\d$/.test(by) ? by : '', go: ['간다', '안 간다', '모름'].includes(x.go) ? x.go : '간다', lessons: Math.max(0, Math.min(OPT.lessonMax, parseInt(x.lessons, 10) || 0)), mc: (Array.isArray(x.mc) ? x.mc : []).map(n => t(n, 30)).filter((n, i, a) => n && a.indexOf(n) === i && mcList_().some(m => m.n === n)).slice(0, 6) }; }).filter(x => x.name);
+  const kids = (Array.isArray(d.kids) ? d.kids : []).slice(0, 8).map(x => { const a = parseInt(String(x.age == null ? '' : x.age).replace(/\D/g, ''), 10); const by = String(x.by || '').replace(/\D/g, '').slice(0, 4); return { mv: mv(x.mv), name: t(x.name, 20), inst: t(x.inst, 10), age: a >= 0 && a <= 99 ? a : '', by: /^(19|20)\d\d$/.test(by) ? by : '', go: ['간다', '안 간다', '모름'].includes(x.go) ? x.go : '간다', lessons: Math.max(0, Math.min(OPT.lessonMax, parseInt(x.lessons, 10) || 0)), mc: (Array.isArray(x.mc) ? x.mc : []).map(n => t(n, 30)).filter((n, i, a) => n && a.indexOf(n) === i && mcList_().some(m => m.n === n)).slice(0, 6) }; }).filter(x => x.name);
   const fam = (Array.isArray(d.fam) ? d.fam : []).slice(0, 12).map(x => ({ type: x.type === '15개월 미만' ? '15개월 미만' : '동반가족', name: t(x.name, 20), gender: g(x.gender), by: yr(x.by), mv: mv(x.mv) })).filter(x => x.name);
-  return { kids, fam, me: { gender: g((d.me || {}).gender), by: yr((d.me || {}).by), go: (d.me || {}).go === false ? false : true, mv: mv((d.me || {}).mv), who: (d.me || {}).who === 'other' ? 'other' : 'me', name: t((d.me || {}).name, 20), rel: t((d.me || {}).rel, 10) }, room: { fam: !!(d.room || {}).fam, note: t((d.room || {}).note, 300) }, memo: t(d.memo, 300), car: t(d.car, 40) };
+  return { kids, fam, me: { stu: !!(d.me || {}).stu, gender: g((d.me || {}).gender), by: yr((d.me || {}).by), go: (d.me || {}).go === false ? false : true, mv: mv((d.me || {}).mv), who: (d.me || {}).who === 'other' ? 'other' : 'me', name: t((d.me || {}).name, 20), rel: t((d.me || {}).rel, 10) }, room: { fam: !!(d.room || {}).fam, note: t((d.room || {}).note, 300) }, memo: t(d.memo, 300), car: t(d.car, 40) };
 }
 function parentSave(tok, d) {
   const u = parentWho_(tok), x = parentClean_(d);

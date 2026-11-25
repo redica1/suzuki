@@ -1,4 +1,4 @@
-/* build: 20261125-113954 */
+/* build: 20261125-122337 */
 /* ---------- 캠프 설정 (관리자 화면에서 입력되는 값) ---------- */
 const ROOM = { cap:4, emptyFee:140000, max:6 }; // 가족방: 4명 이상 기준(4명보다 적으면 빈 자리 1개당 추가 비용) · 숙소 1실은 5~6인이라 한 방 최대 6명 (11-15 사용자: 「4명까지」가 아니라 「4명 이상」)
 const CAMP = { id:'27W', ri:0, lessonFee:60000, lessonMax:5, mcFee:150000,
@@ -41,7 +41,8 @@ function applyBundle(d){if(Array.isArray(d.taken))window.TAKEN=d.taken;if(Array.
 /* 바뀐 접수만 보냄. 「보냈어요」 같은 알림은 서버 저장이 끝난 뒤에 띄움 (실패하면 최신 내용으로 다시 불러옴) */
 /* 고칠 수 있는 접수: 내가 낸 것 + 원장이면 내 학원 접수 전부 (11-13) */
 const isHeadU=()=>!!(S.user&&(S.user.heads||[]).length);
-const canEditSub=sb=>!!S.user&&(sb.owner===S.user.name||((S.user.heads||[]).includes(sb.acad)&&![GUEST_ACAD,STAFF_ACAD,'소속 없음'].includes(sb.acad)));
+const canEditSub=sb=>!!S.user&&(sb.owner===S.user.name||(((S.user.acads||[]).includes(sb.acad)||(S.user.heads||[]).includes(sb.acad))&&![GUEST_ACAD,STAFF_ACAD,'소속 없음'].includes(sb.acad)));   /* 11-25 우리 학원 선생님 누구나 고침 */
+const isAcadEd=()=>!!(S.user&&(S.user.acads||[]).some(a=>![GUEST_ACAD,STAFF_ACAD,'소속 없음'].includes(a)));
 function subSave(){const mine=ALL_SUBS.filter(sb=>canEditSub(sb)&&JSON.stringify(sb)!==(S.snap||{})[sb.no]);if(!mine.length)return;
   S.saving=true;S.savedMsg='';
   api('saveSubs',[JSON.parse(JSON.stringify(mine))],r=>{S.saving=false;const m=S.savedMsg,cb=S.afterSave;S.savedMsg='';S.afterSave=null;applyBundle(r);render();toast(r.ok===false?r.msg:(m||'저장했어요'),true);if(r.ok!==false&&cb)cb()},

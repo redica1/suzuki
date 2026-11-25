@@ -1,4 +1,4 @@
-/* build: 20261125-113954 */
+/* build: 20261125-122337 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -688,7 +688,8 @@ function addAcad(token, acad) {
   return Object.assign({ ok: true, acads: u.acads }, bundle_(u.acads, u.name));
 }
 /** 고칠 수 있는 접수 (11-13): 내가 낸 접수 + 원장이면 내 학원(소속 학원)에 들어온 접수 전부. 접수한 선생님(owner)은 그대로 */
-function canEdit_(u, sb) { return !!sb && !!u && (sb.owner === u.name || ((u.heads || []).indexOf(sb.acad) >= 0 && sb.acad !== GUEST_ACAD && sb.acad !== STAFF_ACAD && sb.acad !== NOACAD)); }
+/* 11-25 사용자 지시: 우리 학원 접수는 그 학원 선생님 누구나 고칠 수 있음 (예전: 낸 사람 · 원장만) */
+function canEdit_(u, sb) { return !!sb && !!u && (sb.owner === u.name || (((u.acads || []).indexOf(sb.acad) >= 0 || (u.heads || []).indexOf(sb.acad) >= 0) && sb.acad !== GUEST_ACAD && sb.acad !== STAFF_ACAD && sb.acad !== NOACAD)); }
 function who_(token) {
   const v = CacheService.getScriptCache().get('tok_' + token);
   if (!v) throw new Error('로그인이 끝났어요. 화면을 새로 고쳐 다시 로그인해 주세요.');
@@ -733,7 +734,7 @@ function bundle_(acads, owner) {
   let audPre = {}; try { audPre = audPreMap_(acads); } catch (x) {}
   /* 중복 접수 막기용: 남의 접수 내용은 보내지 않고 「이미 접수된 사람」 번호만 (학생 = 내 학원들, 선생님 = 모든 학원) */
   const taken = []; all.forEach(sb => { if (vis.includes(sb)) return; sb.ppl.forEach(p => { if (p.status !== '정상' && p.status !== '취소요청') return; const k = String(p.id).slice(String(sb.no).length + 1); if (/^t_/.test(k) || acads.includes(sb.acad)) taken.push(k); }); });
-  const preq = parentFor_(acads.filter(a => a !== GUEST_ACAD && a !== STAFF_ACAD && a !== NOACAD)), pbank = acadBanks_(acads);
+  const preq = parentFor_(heads.filter(a => acads.includes(a)).filter(a => a !== GUEST_ACAD && a !== STAFF_ACAD && a !== NOACAD)), pbank = acadBanks_(acads);
   const ppilot = acads.filter(a => a !== GUEST_ACAD && a !== STAFF_ACAD && a !== NOACAD && parentOk_(a));
   return { aud, audPre, preq, pbank, ppilot, plink: ppilot.reduce((o, x) => { o[x] = parentLink_(x); return o; }, {}), rosters, subs: vis, taken, teams: teams_(all), bank: bankInfo_(), today: today_(), profs, camp, myPay: (() => { try { const me = ts.filter(t => t.name === owner); return myPay_(me.length === 1 ? me[0].id : '', owner); } catch (x) { return null; } })() };
 }
@@ -1051,21 +1052,21 @@ function parentCancel(name, phone, acad, pin, x) {
 /* 학원(그 학원 선생님 · 원장): 입금 확인 · 반려, 취소 · 환불 처리 · 반려 */
 function parentPayDo(token, id, i, ok, why) {
   const u = who_(token), r = parentRows_().find(x => x.id === String(id));
-  if (!r || !(u.acads || []).includes(r.acad)) throw new Error('신청을 찾지 못했어요.');
+  if (!r || !(u.heads || []).includes(r.acad)) throw new Error('학부모 신청은 그 학원 원장님만 처리할 수 있어요.');   /* 11-25 원장만 */
   const lock = lock_();
   try { const m = r.m || {}, rp = (m.reps || [])[+i]; if (!rp) throw new Error('입금 신고를 찾지 못했어요.'); rp.st = ok ? '확인' : '반려'; rp.why = ok ? '' : String(why || '').slice(0, 100); rp.by = u.name; rp.byAt = stamp_(); parentMoneySet_(r, m); } finally { lock.releaseLock(); }
   try { const rp = (r.m.reps || [])[+i]; parentMail_(r, ok ? '학원이 입금을 확인했어요' : '입금 신고가 반려됐어요', [rp.date + ' · ' + rp.nm + ' · ' + (+rp.amt).toLocaleString('ko-KR') + '원', ok ? '' : '사유: ' + (rp.why || '-') + ' · 확인 후 다시 신고해 주세요.']); } catch (e) {}
   log_(u.name, ok ? '학부모 입금 확인' : '학부모 입금 반려', r.acad + ' · ' + r.name);
-  return { ok: true, preq: parentFor_(u.acads || []) };
+  return { ok: true, preq: parentFor_(u.heads || []) };
 }
 function parentCxDo(token, id, act, amt, note) {
   const u = who_(token), r = parentRows_().find(x => x.id === String(id));
-  if (!r || !(u.acads || []).includes(r.acad)) throw new Error('신청을 찾지 못했어요.');
+  if (!r || !(u.heads || []).includes(r.acad)) throw new Error('학부모 신청은 그 학원 원장님만 처리할 수 있어요.');   /* 11-25 원장만 */
   const lock = lock_();
   try { const m = r.m || {}; if (!m.cx) throw new Error('취소 요청이 없어요.'); m.cx.st = act === '처리' ? '처리' : '반려'; m.cx.amt = Math.max(0, +String(amt || '').replace(/[^\d]/g, '') || 0); m.cx.note = String(note || '').slice(0, 200); m.cx.by = u.name; m.cx.byAt = stamp_(); parentMoneySet_(r, m, act === '처리' ? '취소' : ''); } finally { lock.releaseLock(); }
   try { const cx = r.m.cx; parentMail_(r, act === '처리' ? '취소 · 환불을 처리했어요' : '취소 요청이 반려됐어요', [act === '처리' ? '환불액: ' + (+cx.amt || 0).toLocaleString('ko-KR') + '원' + (cx.acct ? ' · 받으실 계좌 ' + cx.bank + ' ****' + String(cx.acct).replace(/\D/g, '').slice(-4) : '') : '참가는 그대로예요.', cx.note ? '학원 메모: ' + cx.note : '']); } catch (e) {}
   log_(u.name, act === '처리' ? '학부모 취소 · 환불 처리' : '학부모 취소 요청 반려', r.acad + ' · ' + r.name);
-  return { ok: true, preq: parentFor_(u.acads || []) };
+  return { ok: true, preq: parentFor_(u.heads || []) };
 }
 /* 선생님 화면에 보내는 학부모 신청 (그 학원 것만, 휴대전화는 그 학원 선생님에게만) */
 function parentFor_(acads) { try { acads = acads.filter(parentOk_); if (!acads.length) return []; const L = parentRows_().filter(r => acads.includes(r.acad)); const all = L.length ? loadSubs_() : []; return L.map(r => ({ id: r.id, acad: r.acad, name: r.name, phone: r.phone.replace(/(\d{3})(\d{3,4})(\d{4})/, '$1-$2-$3'), d: r.d, at: r.at, st: r.st, by: r.by, byAt: r.byAt, m: r.m || {}, sub: parentSub_(r.id, all, r) })); } catch (e) { return []; } }
@@ -1078,10 +1079,10 @@ function adminParentList(token) {
 }
 function parentMark(token, id) {
   const u = who_(token), r = parentRows_().find(x => x.id === String(id));
-  if (!r || !(u.acads || []).includes(r.acad)) throw new Error('신청을 찾지 못했어요.');
+  if (!r || !(u.heads || []).includes(r.acad)) throw new Error('학부모 신청은 그 학원 원장님만 처리할 수 있어요.');   /* 11-25 원장만 */
   const lock = lock_();
   try { parentSheet_().getRange(r._row, 8, 1, 3).setValues([['담음', u.name, stamp_()]]); } finally { lock.releaseLock(); }
-  return { ok: true, preq: parentFor_(u.acads || []) };
+  return { ok: true, preq: parentFor_(u.heads || []) };
 }
 
 /* ---------------- 접수 읽고 쓰기 ---------------- */
@@ -1359,7 +1360,7 @@ function famSave(token, room) {
     const sh = famSheet_(), all = famRooms_(), subs = loadSubs_(), P = famPeople_(subs), C = camp_().opt, cap = +C.roomCap || 4, fee = +C.roomEmptyFee || 0;
     const cur = room.id ? all.find(r => r.id === room.id) : null;
     if (room.id && !cur) throw new Error('가족방을 찾지 못했어요. 새로 고쳐 주세요.');
-    if (cur && !(cur.owner === u.name || (u.heads || []).includes(cur.acad))) throw new Error(cur.owner + ' 선생님이 신청한 가족방이라 고칠 수 없어요.');
+    if (cur && !(cur.owner === u.name || (u.acads || []).includes(cur.acad))) throw new Error(cur.owner + ' 선생님이 신청한 가족방이라 고칠 수 없어요.');
     if (cur && cur.pay !== '전') throw new Error('입금 신고한 가족방은 고칠 수 없어요. 먼저 신고를 취소해 주세요.');
     const rep = P[room.rep]; if (!rep) throw new Error('대표를 캠프 신청한 사람 중에서 골라 주세요.');
     if (!u.acads.includes(rep.acad)) throw new Error('대표는 우리 학원 사람이어야 해요.');
@@ -1378,7 +1379,7 @@ function famSave(token, room) {
 }
 function famDel(token, id) { const u = who_(token); const lock = lock_();
   try { const sh = famSheet_(), r = famRooms_().find(x => x.id === id); if (!r) throw new Error('가족방을 찾지 못했어요.');
-    if (!(r.owner === u.name || (u.heads || []).includes(r.acad))) throw new Error('신청한 선생님만 취소할 수 있어요.');
+    if (!(r.owner === u.name || (u.acads || []).includes(r.acad))) throw new Error('신청한 선생님만 취소할 수 있어요.');
     if (r.pay !== '전') throw new Error('입금 신고한 가족방은 운영진에게 취소를 요청해 주세요.');
     r.st = '취소'; famWrite_(sh, r); log_(u.name, '가족방 취소', r.id + ' · ' + r.repName);
   } finally { lock.releaseLock(); } return famList(token); }
@@ -1388,7 +1389,7 @@ function famPay(token, ids, name, date) { const u = who_(token); name = String(n
   const lock = lock_();
   try { const sh = famSheet_(), all = famRooms_();
     [].concat(ids || []).forEach(id => { const r = all.find(x => x.id === id); if (!r || r.st === '취소') return;
-      if (!(r.owner === u.name || (u.heads || []).includes(r.acad))) throw new Error(r.repName + ' 가족방은 신청한 선생님만 신고할 수 있어요.');
+      if (!(r.owner === u.name || (u.acads || []).includes(r.acad))) throw new Error(r.repName + ' 가족방은 신청한 선생님만 신고할 수 있어요.');
       if (r.pay === '확인') throw new Error(r.repName + ' 가족방은 입금 확인이 끝났어요.');
       if (name) { r.pay = '신고'; r.payer = name; r.payDate = date; } else { r.pay = '전'; r.payer = ''; r.payDate = ''; }
       famWrite_(sh, r); log_(u.name, name ? '가족방 입금 신고' : '가족방 신고 취소', r.id + ' · ' + r.amt); });

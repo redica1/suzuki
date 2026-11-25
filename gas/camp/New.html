@@ -363,7 +363,7 @@ function vMine0(){const v=S.mv||'pay',L=MS[v]||[],sub=L.some(q=>q[0]===S.ms)?S.m
  return top+chips+`<div class="panel"><div class="tbl"><table class="mineT mvT"><thead><tr><th>이름</th><th>악기</th>${H.map(h=>`<th>${h}</th>`).join('')}<th></th></tr></thead><tbody>${RR.map(o=>`<tr><td class="nm"><span class="kind">${o.x.k==='교사'?'교사':'학생'}</span><b>${esc(o.x.n)}</b></td><td>${esc(ins(o.x))}</td>${cells(o)}<td><button class="btn sm" type="button" data-tab="info">보기</button></td></tr>`).join('')}</tbody></table></div></div>`}
 function othersOf(){if(S.others)return S.others;const T=MEMBERS.filter(m=>m.k==='교사'&&m.a===ACAD&&m.n!==WHO),o1=(T[0]||{n:'정선생'}).n,taken=new Set(P.picked.map(x=>x.n));
  const st=MY.filter(m=>!taken.has(m.n)).slice(0,3);S.others=[{n:o1,k:'교사',i:(T[0]||{}).i||'바이올린',owner:o1,at:'26.11.18 10:20',sub:ACAD+' · 회원'},...st.map((m,k)=>({n:m.n,k:'학생',i:m.i,owner:o1,at:'26.11.18 10:2'+(k+1),sub:ACAD+' · 회원'}))];return S.others}
-function vMinePay(){let sum=0;const scope=S.scope||'mine',isHead=(S.role||'head')==='head',OT=othersOf(),LS=scope==='all'?P.picked.concat(OT):P.picked,own=x=>x.owner||WHO,canEd=x=>isHead||own(x)===WHO;
+function vMinePay(){let sum=0;const scope=S.scope||'mine',isHead=(S.role||'head')==='head',OT=othersOf(),LS=scope==='all'?P.picked.concat(OT):P.picked,own=x=>x.owner||WHO,canEd=x=>true;   /* 11-25 우리 학원 접수는 선생님 누구나 고침 */
  const nMine=P.picked.length?1:0,nAll=nMine+new Set(OT.map(own)).size;
  const top2=`<div class="row" style="justify-content:space-between;gap:8px;margin-bottom:12px"><div class="fchips" role="group" aria-label="접수 범위"><button type="button" data-scope="mine" aria-pressed="${scope==='mine'}">내가 낸 접수 <span>${nMine}건</span></button><button type="button" data-scope="all" aria-pressed="${scope==='all'}">우리 학원 전체 <span>${nAll}건</span></button></div>
  <div class="row adm" style="gap:6px"><span class="hint">미리보기:</span><div class="kchips" role="group" aria-label="역할">${[['head','원장으로'],['teacher','선생님으로']].map(([k,l])=>`<button type="button" data-role="${k}" aria-pressed="${(S.role||'head')===k}">${l}</button>`).join('')}</div></div></div>
@@ -393,7 +393,7 @@ function vMinePay(){let sum=0;const scope=S.scope||'mine',isHead=(S.role||'head'
  <div class="panel"><div class="spread"><b>입금하실 금액</b><b class="num" style="font-size:20px">${won(sum)}</b></div>
  <p class="hint">${isHead?'':'내가 낸 접수 금액이에요. '}가족방 금액은 대표 줄에 들어가요. 입금하고 「입금 신고」에서 체크한 사람을 한 번에 신고해요.</p>
  <div class="row" style="justify-content:space-between"><span class="row"><button class="btn" type="button" data-act="cxReq" ${S.mck&&Object.values(S.mck).some(Boolean)?'':'disabled'}>체크한 사람 취소 요청</button></span><button class="btn pri" type="button" data-mv="rep">입금 신고 →</button></div></div>`}
-function vMineRep(){const isHead=(S.role||'head')==='head',scope=S.scope||'mine',LS=(scope==='all'?P.picked.concat(othersOf()):P.picked).filter(x=>isHead||!x.owner||x.owner===WHO).concat(roomRows());
+function vMineRep(){const isHead=(S.role||'head')==='head',scope=S.scope||'mine',LS=(scope==='all'?P.picked.concat(othersOf()):P.picked).filter(x=>true).concat(roomRows());
  const R0=LS.filter(x=>!repOf(x)),R1=LS.filter(x=>repOf(x)&&!repOf(x).ok),R2=LS.filter(x=>repOf(x)&&repOf(x).ok),ck=S.rck||{},today=new Date().toLocaleDateString('sv-SE');
  const amtOf=x=>brk(x).reduce((a,q)=>a+q[1],0),sel=R0.filter(x=>ck[pkey(x)]),tot=sel.reduce((a,x)=>a+amtOf(x),0),pv=S.rv||{};
  const line=x=>brk(x).map(q=>`<span class="bk">${q[0]} <b>${won(q[1])}</b></span>`).join('');

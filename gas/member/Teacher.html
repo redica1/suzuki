@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261125-112029 -->
+<!-- build: 20261125-140213 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -140,6 +140,16 @@ table.tcht td,table.tcht th{white-space:nowrap}
 .mselp label{justify-content:flex-start;text-align:left}.mselp input[type=checkbox]{width:auto;flex:none;margin:0}
 table[data-stick] .sk{position:sticky;z-index:2;background:var(--surface)}table[data-stick] thead .sk{z-index:4}.stbl.uidock>table>thead th,.stbl.uibox>table>thead th{z-index:3;background:var(--surface);box-shadow:inset 0 -1px 0 var(--line)}table[data-stick] .skl{box-shadow:6px 0 6px -6px rgba(0,0,0,.25)}tr.dirty td.sk{background:var(--rosin-soft)}tr.past td.sk{opacity:1;color:var(--muted)}
 .mpw{position:fixed;inset:0;background:rgba(10,30,30,.5);display:grid;place-items:center;padding:16px;z-index:200}.mpwBox{background:var(--surface,#fff);color:var(--ink,#18232B);border-radius:18px;max-width:420px;width:100%;padding:20px;box-shadow:0 10px 40px rgba(0,0,0,.3);max-height:calc(100vh - 32px);overflow:auto}.mpwBox input[type=password],.mpwBox input[type=text]{width:100%;box-sizing:border-box}.mpl{display:block;font-weight:700;margin:10px 0 4px}.mpErr{color:#b3261e;font-weight:700;min-height:1.2em;margin:8px 0}
+.phc{position:fixed;inset:0;background:rgba(10,20,25,.6);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px}
+.phc-box{background:var(--surface);color:var(--ink);border-radius:14px;padding:16px;width:100%;max-width:330px;display:grid;gap:10px;box-shadow:0 10px 40px rgba(0,0,0,.3)}
+.phc-box p{margin:0}
+.phc-vp{position:relative;width:270px;height:360px;margin:0 auto;border-radius:8px;overflow:hidden;touch-action:none;background:var(--sunk)}
+.phc-vp canvas{width:270px;height:360px;display:block;cursor:grab}
+.phc-vp canvas:active{cursor:grabbing}
+.phc-vp::after{content:"";position:absolute;left:22%;right:22%;top:12%;bottom:30%;border:2px dashed rgba(255,255,255,.85);border-radius:50%;pointer-events:none;box-shadow:0 0 0 1px rgba(0,0,0,.15)}
+.phc-z{display:flex;align-items:center;gap:8px}
+.phc-z input{flex:1}
+.phc-z button{min-width:36px}
 </style>
 <style>
 /* 디자인 (10-31): 글꼴 Pretendard · 회원 파랑(#4285f4) 색 · 자간 .02em · 행간 1.75 · 낱말 단위 줄바꿈 — 위 색 정의를 덮어씀 */
@@ -323,7 +333,7 @@ function infoEdit(m){var j=S.j;
     '<div class="two">'+btn('infoSave','저장')+'<button class="btn" type="button" id="infoNo">취소</button></div></div>'}
 function vMe(){var m=S.me;if(!m)return '<div class="card"><span><span class="spin"></span> 불러오는 중…</span></div>';var p=m.pay;
   return '<div class="card"><div class="spread"><h2>'+esc(m.name)+' 선생님'+(m.heads&&m.heads.length?' <span class="pill info" style="vertical-align:3px">'+(m.heads.some(function(h){return h.kind!=='클래스'})?'원장':'클래스 대표')+'</span>':'')+'</h2><button class="btn ghost small" type="button" id="logout">로그아웃</button></div>'+
-    '<div class="phbox"><div class="phimg">'+(m.photo?'<img src="'+esc(m.photo)+'" alt="내 사진">':'사진<br>없음')+'</div><div><b>사진</b><p class="hint">명찰 · 프로그램북에 쓰는 얼굴 사진이에요. 정면, 밝은 배경이면 좋아요.</p><label class="btn small" for="phIn" style="display:inline-block;cursor:pointer">'+(S.phBusy?'<span class="spin"></span> 올리는 중…':m.photo?'사진 바꾸기':'사진 넣기')+'</label><input type="file" id="phIn" accept="image/*" hidden></div></div>'+
+    '<div class="phbox"><div class="phimg">'+(m.photo?'<img src="'+esc(m.photo)+'" alt="내 사진">':'사진<br>없음')+'</div><div><b>사진</b><p class="hint">명찰에 쓰는 얼굴 사진이에요. 정면, 얼굴이 잘 보이는 사진이 좋아요. 10MB 아래 사진을 고르면 확대하고 끌어서 자를 수 있어요.</p><label class="btn small" for="phIn" style="display:inline-block;cursor:pointer">'+(S.phBusy?'<span class="spin"></span> 올리는 중…':m.photo?'사진 바꾸기':'사진 넣기')+'</label><input type="file" id="phIn" accept="image/*" hidden></div></div>'+
     (m.reqs&&m.reqs.length?'<div class="note warn">협회가 확인 중인 요청: '+esc(m.reqs.join(', '))+'</div>':'')+
     (S.infoEd?infoEdit(m):'<dl class="kv"><dt>이메일</dt><dd>'+esc(m.email)+'</dd><dt>휴대전화</dt><dd class="num">'+fmtPh(m.phone)+'</dd><dt>성별</dt><dd>'+(m.sex?esc(m.sex):'<span class="pill due">없음</span> <button class="btn small" type="button" id="infoEd2">넣기</button>')+'</dd>'+(m.ext?'<dt>구분</dt><dd><span class="pill info">관계자</span></dd><dt>악기</dt><dd>'+esc(m.inst||'-')+'</dd></dl>':'<dt>직급</dt><dd>'+esc(m.role||'-')+'</dd><dt>악기</dt><dd>'+esc(m.inst||'-')+'</dd><dt>회원 종류</dt><dd>'+(KINDS.indexOf(m.kind)>=0?'<span class="pill info">'+esc(kindLabel(m.kind))+'</span>':'<span class="pill due">확인 전</span>')+'</dd></dl>')+certLine(m)+'<button class="btn small block" type="button" id="infoEd">기본 정보 고치기</button>')+
     (m.heads&&m.heads.length?'<div class="lock" style="margin-top:8px"><h3>우리 학원 · 클래스</h3>'+m.heads.map(function(a){return '<div class="spread" style="margin:4px 0"><b>'+esc(a.name)+' <span class="hint">'+(a.kind==='클래스'?'클래스 대표':'원장')+'</span></b><button class="btn small primary" type="button" data-myac="'+esc(a.id)+'">'+(a.kind==='클래스'?'클래스':'학원')+' 관리</button></div>'}).join('')+'</div>':'')+
@@ -938,7 +948,44 @@ document.addEventListener('input',function(e){var el=e.target;
   if(el.id==='z_h'||el.id==='z_m'){el.value=el.value.replace(/\D/g,'').slice(0,5)}
   if(el.id==='rrnIn'){var x=el.value.replace(/\D/g,'').slice(0,13);el.value=x.length>6?x.slice(0,6)+'-'+x.slice(6):x}
   if(el.id==='aq'){S.aq=el.value;document.getElementById('aList').innerHTML=aItems(aHits())}});
-/* 사진: 3:4 로 가운데를 잘라 360x480 JPEG 로 줄여서 보냄 (시트 한 칸에 들어가게) */
+/* 사진 (11-25): 10MB 아래 사진을 골라 → 끌기 · 확대로 3:4 자르기 → 360x480 JPEG 로 줄여서 보냄 (시트 한 칸에 들어가게) */
+function phPack(draw){var W=360,H=480,cv=document.createElement('canvas');cv.width=W;cv.height=H;var cx=cv.getContext('2d');draw(cx,W,H);
+  var q=0.85,u=cv.toDataURL('image/jpeg',q);while(u.length>46000&&q>0.3){q-=0.1;u=cv.toDataURL('image/jpeg',q)}
+  if(u.length>46000){var c2=document.createElement('canvas');c2.width=270;c2.height=360;c2.getContext('2d').drawImage(cv,0,0,270,360);u=c2.toDataURL('image/jpeg',0.7)}return u}
+function phCrop(file){return new Promise(function(res,rej){
+  if(file.size>10*1024*1024){rej('10MB 아래 사진으로 골라 주세요');return}
+  var url=URL.createObjectURL(file),im=new Image();
+  im.onerror=function(){URL.revokeObjectURL(url);rej('이 사진은 열 수 없어요. JPG · PNG 사진으로 골라 주세요')};
+  im.onload=function(){URL.revokeObjectURL(url);
+    var mx=Math.min(1,1800/Math.max(im.width,im.height)),src=document.createElement('canvas');src.width=Math.round(im.width*mx);src.height=Math.round(im.height*mx);src.getContext('2d').drawImage(im,0,0,src.width,src.height);
+    var IW=src.width,IH=src.height,VW=270,VH=360,base=Math.max(VW/IW,VH/IH),z=1,ox=0,oy=0,ZMAX=5;
+    var ov=document.createElement('div');ov.className='phc';
+    ov.innerHTML='<div class="phc-box" role="dialog" aria-modal="true" aria-label="사진 자르기"><b style="font-size:17px">사진 자르기</b><p class="hint">사진을 끌어서 얼굴을 점선 안에 맞추고, 막대(또는 두 손가락)로 확대해 주세요.</p>'+
+      '<div class="phc-vp"><canvas width="540" height="720"></canvas></div>'+
+      '<div class="phc-z"><button class="btn small ghost" type="button" data-phz="-1" aria-label="작게">−</button><input type="range" min="1" max="'+ZMAX+'" step="0.01" value="1" aria-label="확대"><button class="btn small ghost" type="button" data-phz="1" aria-label="크게">+</button></div>'+
+      '<div class="row" style="justify-content:flex-end;gap:6px"><button class="btn small ghost" type="button" data-phc="no">취소</button><button class="btn small primary" type="button" data-phc="ok">이대로 넣기</button></div></div>';
+    document.body.appendChild(ov);
+    var cv=ov.querySelector('canvas'),cx=cv.getContext('2d'),rg=ov.querySelector('input[type=range]');
+    var clamp=function(){var s=base*z,hx=Math.max(0,(IW*s-VW)/2),hy=Math.max(0,(IH*s-VH)/2);ox=Math.max(-hx,Math.min(hx,ox));oy=Math.max(-hy,Math.min(hy,oy))};
+    var paint=function(c,W,H){var k=W/VW,s=base*z;c.fillStyle='#fff';c.fillRect(0,0,W,H);c.imageSmoothingQuality='high';c.drawImage(src,(VW/2-IW*s/2+ox)*k,(VH/2-IH*s/2+oy)*k,IW*s*k,IH*s*k)};
+    var draw=function(){clamp();paint(cx,cv.width,cv.height)};
+    var setZ=function(nz){z=Math.max(1,Math.min(ZMAX,nz));rg.value=z;draw()};
+    var pts={},pd=0,pz=1;
+    cv.addEventListener('pointerdown',function(e){cv.setPointerCapture(e.pointerId);pts[e.pointerId]={x:e.clientX,y:e.clientY};var k=Object.keys(pts);if(k.length===2){var a=pts[k[0]],b=pts[k[1]];pd=Math.hypot(a.x-b.x,a.y-b.y);pz=z}});
+    cv.addEventListener('pointermove',function(e){var p=pts[e.pointerId];if(!p)return;var k=Object.keys(pts);
+      if(k.length>=2){p.x=e.clientX;p.y=e.clientY;var a=pts[k[0]],b=pts[k[1]],d=Math.hypot(a.x-b.x,a.y-b.y);if(pd>0)setZ(pz*d/pd);return}
+      ox+=e.clientX-p.x;oy+=e.clientY-p.y;p.x=e.clientX;p.y=e.clientY;draw()});
+    var up=function(e){delete pts[e.pointerId];pd=0};cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);
+    cv.addEventListener('wheel',function(e){e.preventDefault();setZ(z*(e.deltaY<0?1.08:1/1.08))},{passive:false});
+    rg.addEventListener('input',function(){setZ(+rg.value)});
+    var close=function(){document.removeEventListener('keydown',esc1);ov.remove()};
+    var esc1=function(e){if(e.key==='Escape'){close();rej('')}};document.addEventListener('keydown',esc1);
+    ov.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('button');if(!b)return;
+      if(b.dataset.phz){setZ(z+(+b.dataset.phz)*0.25);return}
+      if(b.dataset.phc==='no'){close();rej('');return}
+      if(b.dataset.phc==='ok'){var u=phPack(paint);close();res(u)}});
+    draw();ov.querySelector('[data-phc=ok]').focus()};
+  im.src=url})}
 function shrinkPhoto(file){return new Promise(function(res,rej){var fr=new FileReader();fr.onerror=function(){rej('읽지 못했어요')};fr.onload=function(){var im=new Image();im.onerror=function(){rej('사진 파일이 아니에요')};im.onload=function(){
   var W=360,H=480,r=W/H,sw=im.width,sh=im.height,cw=sw,ch=sh;if(sw/sh>r)cw=sh*r;else ch=sw/r;var sx=(sw-cw)/2,sy=(sh-ch)/2;
   var cv=document.createElement('canvas');cv.width=W;cv.height=H;var cx=cv.getContext('2d');cx.fillStyle='#fff';cx.fillRect(0,0,W,H);cx.drawImage(im,sx,sy,cw,ch,0,0,W,H);
@@ -950,8 +997,8 @@ document.addEventListener('change',function(e){if(e.target.dataset&&e.target.dat
     if(f2.size>10*1024*1024){toast('10MB 아래 파일로 올려 주세요');e.target.value='';return}
     var kind=DOC_SLOTS[slot][0]==='임대'?(S.leaseKind||'임대계약서'):DOC_SLOTS[slot][0];S.docBusy=slot;render();
     fileB64(f2).then(function(b64){return call('tDocUp',[S.sess,S.myac.id,kind,f2.name,mime,b64])}).then(function(r){S.docBusy=null;if(!r.ok){toast(r.msg);render();return}S.myac.data=r;render();toast(kind+'를 올렸어요')},function(er){S.docBusy=null;render();toast(String(er))});return}
-  if(e.target.id==='phIn'){var f=e.target.files&&e.target.files[0];if(!f)return;if(String(f.type).indexOf('image/')!==0){toast('사진 파일을 골라 주세요');return}
-  S.phBusy=true;render();shrinkPhoto(f).then(function(u){return call('tSavePhoto',[S.sess,u])}).then(function(r){S.phBusy=false;if(!r.ok){toast(r.msg);render();return}S.me=r.me;render();toast('사진을 넣었어요')},function(er){S.phBusy=false;render();toast(String(er))});return}
+  if(e.target.id==='phIn'){var f=e.target.files&&e.target.files[0];if(!f)return;e.target.value='';if(String(f.type).indexOf('image/')!==0){toast('사진 파일을 골라 주세요');return}if(f.size>10*1024*1024){toast('10MB 아래 사진으로 골라 주세요');return}
+  phCrop(f).then(function(u){S.phBusy=true;render();return call('tSavePhoto',[S.sess,u]).then(function(r){S.phBusy=false;if(!r.ok){toast(r.msg);render();return}S.me=r.me;render();toast('사진을 넣었어요')})},function(er){S.phBusy=false;render();if(er)toast(String(er))});return}
   if(e.target.id==='pSame'){readPayIn();var pd=curPay();if(pd&&pd.same){pd.zip=pd.hzip;pd.addr=pd.haddr;pd.addr2=pd.haddr2;delete S.err.a_m}render();return}if(e.target.id==='noWork'){readConfirm();S.acadTyping=false;if(S.j.noWork)delete S.err.acad;render();return}var dm=e.target.dataset&&e.target.dataset.dom;if(dm){var x=document.getElementById(dm+'X');x.hidden=e.target.value!=='';if(!e.target.value)x.focus();return}
   var n=e.target.dataset&&e.target.dataset.cert;if(!n)return;readConfirm();if(e.target.checked)S.j.certs[n]='';else delete S.j.certs[n];delete S.err['cy_'+n];render()});
 /* 휴대전화 칸: 앞의 010- 은 고르거나 지울 수 없게, 커서는 항상 010- 뒤로 (10-28) */
@@ -1033,7 +1080,7 @@ var MAN={
    '<li><b>기본 정보</b> · 이름 · 성별(필수) · 휴대전화 · 전공 · 자격.</li>'+
    '<li><b>소속 학원</b> · 근무 시작 년 · 월, 그만둔 학원은 끝낸 날짜. 주 소속을 골라요.</li>'+
    '<li><b>우편물 받을 주소</b> · 협회 우편물(공문 · 포스터)이 가는 곳이에요. 직접 넣어야 빠지지 않아요.</li>'+
-   '<li><b>강사료 정보</b> · 강사료를 받으실 분만 계좌 · 주민등록번호.</li><li><b>사진</b> · 행사 책자에 쓰여요. 정면, 밝은 배경이 좋아요.</li></ul>'},
+   '<li><b>강사료 정보</b> · 강사료를 받으실 분만 계좌 · 주민등록번호.</li><li><b>사진</b> · 명찰에 쓰는 얼굴 사진이에요. 정면, 얼굴이 잘 보이는 사진이 좋아요. 10MB 아래 사진을 확대 · 끌어서 자를 수 있어요.</li></ul>'},
   {k:'privacy',t:'개인정보는 안전한가요',q:['개인정보','주민','주민등록번호','암호화','안전','보안'],h:
    '<ul><li>주민등록번호는 <b>강사료를 받을 때만</b> 넣는 선택 항목이에요. 암호화해서 협회 관리자만 열 수 있고, 열면 기록이 남아요.</li>'+
    '<li>계좌 · 주소도 관리자 전용 파일에 따로 보관해요.</li><li>게시판 · 문의 글에는 주민등록번호 · 계좌번호를 적지 말아 주세요.</li></ul>'},
@@ -1153,7 +1200,7 @@ csMount();
   try{google.script.url.getLocation(function(l){var pr=l&&l.parameter||{},a=pr.as;if(a)setSess(a);if('ask' in pr||pr.v==='ask'){S.v0='ask'}if(pr.guide!==undefined)S.gd0=pr.guide||'why';go0()})}catch(x){go0()}})();
 </script>
 <script>try{window.top.postMessage('suzuki-ready','*')}catch(e){}</script>
-<div id="bldMark" hidden>빌드표시 20261125-112029 </div>
+<div id="bldMark" hidden>빌드표시 20261125-140213 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();
 /* 11-25: 캠프 · 졸업연주 등 다른 접수 화면은 언제나 새 창으로 (기본 base target=_top 이라 같은 창으로 가던 것 막음) */
 document.addEventListener('click',function(e){var a=e.target&&e.target.closest&&e.target.closest('a[href]');if(!a)return;var h=a.getAttribute('href')||'';

@@ -1,4 +1,4 @@
-/* build: 20261125-134111 */
+/* build: 20261125-134959 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -794,14 +794,14 @@ function parentInit() {
     price: { fees: ['학생', '회원의 첫번째 보호자', '회원의 그외 악기 안하는 동반가족', '동반가족 중 15개월 미만'].reduce((o, k) => { o[k] = C.fees[k] || []; return o; }, {}), rounds: C.rounds.map(r => ({ n: r.n, from: r.from, to: r.to })), ri: curRound_(C), dues: +(C.opt || {}).studentDues || 0, empty: +(C.opt || {}).roomEmptyFee || 0, lesson: +(C.opt || {}).lessonFee || 0, busBy: pa.reduce((o, a) => { const b = acadBank_(a); o[a] = (b && b.bus) || { r: 0, g: 0, b: 0, off: false, one: true }; return o; }, {}), roundsBy: pa.reduce((o, a) => { o[a] = acadRounds_(a, C).map(r => ({ n: r.n, from: r.from, to: r.to })); return o; }, {}) } };
 }
 function parentWho_(tok) { const v = tok && CacheService.getScriptCache().get('pt_' + tok); if (!v) throw new Error('들어온 지 오래되어 끊겼어요. 처음 화면에서 다시 들어와 주세요.'); return JSON.parse(v); }
-function parentOut_(r) { return r ? { id: r.id, acad: r.acad, name: r.name, d: r.d, at: r.at, st: r.st, byAt: r.byAt, m: r.m || {}, bank: acadBank_(r.acad), sub: parentSub_(r.id, null, r) } : null; }
+function parentOut_(r) { return r ? { id: r.id, acad: r.acad, name: r.name, d: r.d, at0: r.at0, at: r.at, st: r.st, byAt: r.byAt, m: r.m || {}, bank: acadBank_(r.acad), sub: parentSub_(r.id, null, r) } : null; }
 /* 학원이 이 신청을 담아 낸 접수 (11-15 사용자: 추가레슨 · 마스터클래스는 학원이 넣으니, 학부모에게 확정 금액 · 추가 비용을 보여 줌) */
 function parentSub_(id, all, pr) {
   try {
     const sb = (all || loadSubs_()).find(x => x.form && Array.isArray(x.form.preq) && x.form.preq.includes(id)); if (!sb) return null;
     const info = (sb.form && sb.form.info) || {};
     /* 11-24 학원 차수: 학부모가 학원에 처음 입금한 날(반려 빼고, 없으면 오늘)이 드는 학원 차수의 협회 금액 */
-    pr = pr || parentRows_().find(x => x.id === id); const C = camp_(), AR = acadRounds_((pr && pr.acad) || sb.acad, C), pd = (((pr && pr.m) || {}).reps || []).filter(x => x.st !== '반려' && x.w !== 'bus' && /^\d{4}-\d{2}-\d{2}$/.test(String(x.date || ''))).map(x => x.date).sort()[0], ari = acadRi_(AR, pd);
+    pr = pr || parentRows_().find(x => x.id === id); const C = camp_(), AR = C.rounds, pd = String((pr && pr.at0) || '').slice(0, 10), ari = acadRi_(AR, /^\d{4}-\d{2}-\d{2}$/.test(pd) ? pd : '');   /* 11-25 학부모도 신청 기준: 처음 보낸 날의 협회 차수 금액 */
     const ppl = sb.ppl.filter(p => p.status === '정상' || p.status === '취소요청').map(p => { const k = String(p.id).slice(String(sb.no).length + 1), i = info[k] || {}, fa = (C.fees[i.type || p.type] || [])[ari];
       return { id: p.id, name: p.name, type: p.type || '', fee: fa != null && p.status === '정상' ? +fa || 0 : +p.fee || 0, afee: +p.fee || 0, lesson: +p.lesson || 0, dues: +p.dues || 0, room: +p.room || 0, les: +i.lessons || 0, mc: Array.isArray(i.mc) ? i.mc.length : 0, st: p.status }; });
     const bx = parentBus_((pr && pr.d) || {}, ((acadBank_((pr && pr.acad) || sb.acad) || {}).bus) || {});   /* 11-25 학원 버스비도 학부모 낼 금액에 */
@@ -1095,7 +1095,7 @@ function parentCxDo(token, id, act, amt, note) {
   return { ok: true, preq: parentFor_(u.heads || []) };
 }
 /* 선생님 화면에 보내는 학부모 신청 (그 학원 것만, 휴대전화는 그 학원 선생님에게만) */
-function parentFor_(acads) { try { acads = acads.filter(parentOk_); if (!acads.length) return []; const L = parentRows_().filter(r => acads.includes(r.acad) && r.st !== '삭제'); const all = L.length ? loadSubs_() : []; return L.map(r => ({ id: r.id, acad: r.acad, name: r.name, phone: r.phone.replace(/(\d{3})(\d{3,4})(\d{4})/, '$1-$2-$3'), d: r.d, at: r.at, st: r.st, by: r.by, byAt: r.byAt, m: r.m || {}, sub: parentSub_(r.id, all, r) })); } catch (e) { return []; } }
+function parentFor_(acads) { try { acads = acads.filter(parentOk_); if (!acads.length) return []; const L = parentRows_().filter(r => acads.includes(r.acad) && r.st !== '삭제'); const all = L.length ? loadSubs_() : []; return L.map(r => ({ id: r.id, acad: r.acad, name: r.name, phone: r.phone.replace(/(\d{3})(\d{3,4})(\d{4})/, '$1-$2-$3'), d: r.d, at0: r.at0, at: r.at, st: r.st, by: r.by, byAt: r.byAt, m: r.m || {}, sub: parentSub_(r.id, all, r) })); } catch (e) { return []; } }
 /* 11-24 관리자: 학부모 신청 보기 (보기만 · 휴대전화는 뒤 4자리) */
 function adminParentList(token) {
   adm_(token);
@@ -1153,11 +1153,11 @@ function acadPayPdf(token, acad, o) {
     parentFor_([acad]).forEach(r => { const reps = (r.m && r.m.reps) || [], bill = (r.sub && r.sub.total) || 0, kids = ((r.d || {}).kids || []).map(k => k.name).filter(Boolean).join(' · ');
       if ((r.m && r.m.cx && (r.m.cx.st === '취소' || r.m.cx.st === '처리'))) return;
       if (!reps.length) { L.push({ g: r.name, k: kids, nm: '', d: '', rd: '', bill, amt: 0, st: '전' }); return; }
-      reps.forEach(p => { const j = acadRi_(AR, p.date); L.push({ g: r.name, k: kids, nm: p.nm || '', d: p.date || '', rd: p.w === 'bus' ? '-' : (AR[j] || {}).n || '', bill: p.w === 'bus' ? ((r.sub && r.sub.bus) || 0) : bill - ((r.sub && r.sub.bus && reps.some(q => q.w === 'bus')) ? r.sub.bus : 0), amt: +p.amt || 0, st: p.st || '신고', w: p.w === 'bus' ? '버스비' : '' }); }); });
+      reps.forEach(p => { const j = acadRi_(C.rounds, String(r.at0 || '').slice(0, 10)); L.push({ g: r.name, k: kids, nm: p.nm || '', d: p.date || '', rd: p.w === 'bus' ? '-' : (C.rounds[j] || {}).n || '', bill: p.w === 'bus' ? ((r.sub && r.sub.bus) || 0) : bill - ((r.sub && r.sub.bus && reps.some(q => q.w === 'bus')) ? r.sub.bus : 0), amt: +p.amt || 0, st: p.st || '신고', w: p.w === 'bus' ? '버스비' : '' }); }); });
     const V = L.filter(x => st === 'all' || (st === 'ok' ? x.st === '확인' : x.st === '신고'));
     const tb = V.reduce((t, x) => t + x.bill, 0), ta = V.reduce((t, x) => t + (x.st === '반려' ? 0 : x.amt), 0), tok = V.reduce((t, x) => t + (x.st === '확인' ? x.amt : 0), 0);
     h1 = '<h2 style="font-size:12pt;color:#0b6f6c;margin:14px 0 4px">① 학부모 → 학원 입금</h2>' + box([['신청', V.length + '건'], ['낼 금액', W(tb) + '원'], ['입금 신고', W(ta) + '원'], ['확인한 돈', W(tok) + '원']]) +
-      (V.length ? tbl(['보호자', '학생', '계좌', '입금자명', '입금일', '학원 차수', '낼 금액', '입금 신고', '차이', '상태'], V.map(x => { const df = x.bill && x.st !== '전' ? x.amt - x.bill : 0;
+      (V.length ? tbl(['보호자', '학생', '계좌', '입금자명', '입금일', '차수(신청일)', '낼 금액', '입금 신고', '차이', '상태'], V.map(x => { const df = x.bill && x.st !== '전' ? x.amt - x.bill : 0;
         return '<tr><td style="' + TL + '"><b>' + E(x.g) + '</b></td><td style="' + TL + '">' + E(x.k) + '</td><td style="' + TD + '">' + E(x.w || '참가비') + '</td><td style="' + TD + '">' + E(x.nm || '-') + '</td><td style="' + TD + '">' + md(x.d) + '</td><td style="' + TD + '">' + E(x.rd || '-') + '</td><td style="' + TR + '">' + (x.bill ? W(x.bill) : '담기 전') + '</td><td style="' + TR + '">' + (x.amt ? W(x.amt) : '-') + '</td><td style="' + TR + '">' + (!df ? '-' : df < 0 ? '<span style="color:#b4423a">' + W(-df) + ' 모자람</span>' : '<span style="color:#2f7a4b">' + W(df) + ' 더 냄</span>') + '</td><td style="' + TD + '">' + (x.st === '확인' ? '확인' : x.st === '신고' ? '확인 기다림' : x.st === '반려' ? '반려' : '입금 전') + '</td></tr>'; }),
         '<tr><td colspan="6" style="' + TL + TF + '">합계 (' + V.length + '건)</td><td style="' + TR + TF + '">' + W(tb) + '</td><td style="' + TR + TF + '">' + W(ta) + '</td><td style="' + TD + TF + '"></td><td style="' + TD + TF + '"></td></tr>') : '<p style="color:#888">없어요.</p>');
   }
@@ -1337,7 +1337,9 @@ function recalc_(sb) {
   const AM = M.am || adminMap_(), tdR = curRound_(CC);
   const rOf = p => { const add = rix(p.addAt) >= 0 ? rix(p.addAt) : ri, a = AM[p.id];
     const pay = a && a.amt > 0 ? (rix(a.date) >= 0 ? rix(a.date) : add) : (p.pay === '신고' && p.rep && rix(p.rep.date) >= 0 ? rix(p.rep.date) : tdR);
-    return Math.max(add, pay); };
+    return add; };   /* 11-25 사용자: 신청 기준 — 접수에 들어온 날의 차수 금액 (입금이 늦어도 그대로 · 5일 안 입금은 안내만) */
+  { const td = today_(); sb.ppl.forEach(p => { const d0 = String(p.addAt || '').slice(0, 10); if (!/^\d{4}-\d{2}-\d{2}$/.test(d0)) { delete p.due5; delete p.over5; return; } const t = new Date(d0 + 'T00:00:00'); t.setDate(t.getDate() + 5); p.due5 = Utilities.formatDate(t, TZ, 'yyyy-MM-dd');
+    if (p.status === '정상' && !(+p.paidAmt > 0) && p.pay !== '신고' && td > p.due5) p.over5 = true; else delete p.over5; }); }   /* 11-25 신청 후 5일 입금 안내 (금액은 안 바뀜) */
   const live = sb.ppl.filter(p => p.status !== '취소');
   const liveKeys = live.map(key);
   // 가족방: 대표 + 같은 방 형제 + 그 가족

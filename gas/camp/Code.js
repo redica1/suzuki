@@ -1,4 +1,4 @@
-/* build: 20261126-014043 */
+/* build: 20261126-022011 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -825,7 +825,7 @@ function parentInit() {
   const pa = parentAcads_();
   /* 11-15 사용자: 학부모가 추가레슨 횟수 · 마스터클래스를 고름 → 교수진의 마스터클래스(악기 · 시간 · 금액) */
   const mcs = profPublic_().filter((p, i, a) => p.mc && a.findIndex(q => q.mc && q.n === p.n && q.i === p.i) === i).map(p => ({ n: p.n, i: p.i, min: +p.min || 45, fee: +p.fee || 0 }));
-  return { ok: true, open: C.base.member !== false && pa.length > 0, acads: pa, mcs, lessonMax: OPT.lessonMax, camp: { name: C.base.name, start: C.base.start, end: C.base.end, place: C.base.place }, consent: (C.consent.items || []).filter(x => x.on), refund: C.refund, roomCap: (C.opt || {}).roomCap || 4,
+  return { ok: true, stg: qaOn_(), open: C.base.member !== false && pa.length > 0, acads: pa, mcs, lessonMax: OPT.lessonMax, camp: { name: C.base.name, start: C.base.start, end: C.base.end, place: C.base.place }, consent: (C.consent.items || []).filter(x => x.on), refund: C.refund, roomCap: (C.opt || {}).roomCap || 4,
     /* 예상 참가비 (11-15): 학생 · 첫 보호자 · 동반가족 · 15개월 미만 × 차수, 지금 차수, 학생 회비 · 가족방 빈 자리 · 추가레슨 */
     price: { fees: ['학생', '회원의 첫번째 보호자', '회원의 그외 악기 안하는 동반가족', '동반가족 중 15개월 미만'].reduce((o, k) => { o[k] = C.fees[k] || []; return o; }, {}), rounds: C.rounds.map(r => ({ n: r.n, from: r.from, to: r.to })), ri: curRound_(C), dues: +(C.opt || {}).studentDues || 0, empty: +(C.opt || {}).roomEmptyFee || 0, lesson: +(C.opt || {}).lessonFee || 0, busBy: pa.reduce((o, a) => { const b = acadBank_(a); o[a] = (b && b.bus) || { r: 0, g: 0, b: 0, off: false, one: true }; return o; }, {}), roundsBy: pa.reduce((o, a) => { o[a] = acadRounds_(a, C).map(r => ({ n: r.n, from: r.from, to: r.to })); return o; }, {}) }, slugs: pa.reduce((o, a) => { o[slugOf_(a)] = a; return o; }, {}) };
 }

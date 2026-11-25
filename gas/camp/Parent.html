@@ -1,4 +1,4 @@
-<!doctype html><!-- build: 20261126-014043 --><html lang="ko"><head><meta charset="utf-8"><link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"><meta name="viewport" content="width=device-width,initial-scale=1">
+<!doctype html><!-- build: 20261126-022011 --><html lang="ko"><head><meta charset="utf-8"><link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
 <style>
 /* 학부모 신청 (11-15): 학원 다니는 학생의 보호자가 회원가입 없이 「간다 / 안 간다」와 같이 가는 가족 이름만 학원 선생님께 보냄 */
@@ -240,7 +240,10 @@ function vStep1(){var I=S.I;if(!I.open)return '<div class="card"><h2>지금은 �
     '<label class="f">이메일 <span class="opt">신청 · 금액 · 입금 · 취소 소식을 메일로 보내 드려요</span><input type="email" id="pe" data-esplit value="'+esc(S.em)+'" autocomplete="email" inputmode="email" maxlength="80"></label>'+
     '<label class="f">비밀번호 숫자 4자리<input type="password" id="pw" value="'+esc(S.pw)+'" inputmode="numeric" maxlength="4" autocomplete="off" style="max-width:160px;letter-spacing:.3em"></label>'+
     '<label class="ck" style="margin:4px 0 14px"><input type="checkbox" id="sv" '+(S.sv?'checked':'')+'><span>이 기기에 저장 <span class="opt">내 휴대폰이면 다음에 바로 들어와요 · 같이 쓰는 기기면 끄세요</span></span></label>'+
-    (S.err?'<p class="err">'+esc(S.err)+'</p>':'')+'<button class="btn primary wide" type="button" id="go1">확인</button></div>'}
+    (S.err?'<p class="err">'+esc(S.err)+'</p>':'')+'<button class="btn primary wide" type="button" id="go1">확인</button></div>'+tlP()}
+/* 11-26 STG 시험 보호자: 학원마다 한 명 · 누르면 그 학원 신청서로 (STG에서만) */
+var TLP=[['마포스즈키','마포','01090001001'],['미사스즈키','미사','01090001002'],['청담스즈키','청담','01090001003'],['길음스즈키','길음','01090001004'],['갈매스즈키','갈매','01090001005']];
+function tlP(){if(!(S.I&&S.I.stg))return '';var on=S.I.acads||[];return '<div class="card" style="border:2px dashed #c2410c"><h3 style="color:#c2410c">STG 시험 보호자로 바로 들어가기</h3><p class="hint" style="margin:0 0 10px">테스트(STG)에서만 보여요 · 학원마다 시험 보호자 한 명 · 누르면 그 학원 신청서로 가요</p><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px">'+TLP.map(function(x,i){var ok=on.indexOf(x[0])>=0;return '<button type="button" data-tlp="'+i+'"'+(ok?'':' disabled')+' style="display:grid;gap:3px;text-align:left;font:inherit;color:inherit;background:transparent;border:1px dashed #c2410c;border-radius:12px;padding:12px;cursor:pointer'+(ok?'':';opacity:.5')+'"><b>'+esc(x[1])+' 시험 보호자</b><span class="hint">'+esc(x[0])+(ok?'':' · 학부모 신청 꺼짐')+'</span><span class="hint">'+x[2].replace(/(\d{3})(\d{4})(\d{4})/,'$1-$2-$3')+'</span></button>'}).join('')+'</div></div>'}
 function mineCard(){var r=S.req;if(!r||!r.id)return '<p class="note">처음 신청이에요. 아래를 채워 보내 주세요.</p>';var d=r.d||{},m=r.m||{};
   var st=r.st==='삭제'?'학원이 지움':r.st==='취소'?'취소함':r.sub?'학원이 접수함 ('+r.sub.no+')':r.st==='담음'?'학원이 담는 중':'학원에 보냄';
   return '<div class="card mine"><h3>내 신청</h3><table class="pt"><tbody><tr><td>상태</td><td class="r"><b>'+esc(st)+'</b></td></tr><tr><td>학원</td><td class="r">'+esc(r.acad)+'</td></tr><tr><td>학생</td><td class="r">'+esc((d.kids||[]).map(function(k){return k.name}).join(', '))+'</td></tr><tr><td>같이 가는 가족</td><td class="r">'+esc([(d.me||{}).go===false?'':r.name].concat((d.fam||[]).map(function(f){return f.name})).filter(Boolean).join(', ')||'-')+'</td></tr>'+
@@ -285,6 +288,7 @@ document.addEventListener('click',function(e){var b=e.target.closest('button');i
   if(b.id==='load'){var w=who();if(w){S.err=w;render();toast(w);return}
     run('parentLoad',[S.nm,S.ph,S.ac,S.pw],function(r){S.err='';if(r.req){setReq(r.req);render();toast('전에 보낸 신청을 불러왔어요')}else{render();toast('전에 보낸 신청이 없어요. 새로 써 주세요')}});return}
   if(b.id==='go1'){go1();return}
+  if(b.dataset.tlp!==undefined){var x=TLP[+b.dataset.tlp];S.lockA=x[0];S.ac=x[0];document.getElementById('pn').value=x[1]+' 시험보호자';document.getElementById('pp').value=x[2].slice(3);document.getElementById('pw').value='0000';var sv=document.getElementById('sv');if(sv)sv.checked=false;go1();return}
   if(b.id==='toStep1'){if(S.dirty&&!confirm('보내지 않은 내용이 있어요. 보호자 정보를 바꿀까요?'))return;S.step=1;S.req=null;S.err='';render();return}
   if(b.dataset.copy!==undefined){var v2=b.dataset.copy;try{navigator.clipboard.writeText(v2).then(function(){toast('복사했어요: '+v2)},function(){prompt('복사해 주세요',v2)})}catch(x){prompt('복사해 주세요',v2)}return}
   if(b.id==='paygo'){var w3=who();if(w3){S.err=w3;render();toast(w3);return}var pa={nm:document.getElementById('pyN').value,date:document.getElementById('pyD').value,amt:document.getElementById('pyA').value,w:S.payW==='bus'?'bus':''};

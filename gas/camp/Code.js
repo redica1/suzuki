@@ -1,4 +1,4 @@
-/* build: 20261126-025427 */
+/* build: 20261126-030245 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -1271,7 +1271,7 @@ function writeSubRow_(sb, isNew) {
   const sh = ss.getSheetByName(SH.SUB);
   const live = sb.ppl.filter(p => p.status === '정상');
   const amt = p => (+p.fee || 0) + (+p.lesson || 0) + (+p.dues || 0) + (+p.room || 0);
-  const bill = live.reduce((t, p) => t + amt(p), 0), paid = live.reduce((t, p) => t + (+p.paidAmt || 0), 0);
+  const bill = live.reduce((t, p) => t + amt(p), 0) + sb.ppl.reduce((t, p) => t + (p.status === '취소' && !(+p.paidAmt > 0) ? +p.cxFee || 0 : 0), 0), paid = live.reduce((t, p) => t + (+p.paidAmt || 0), 0);   /* 11-26 입금 전 취소 수수료도 청구 */
   const json = JSON.stringify(sb);
   const chunks = [0, 1, 2, 3].map(i => json.slice(i * JSON_CHUNK, (i + 1) * JSON_CHUNK));
   if (json.length > JSON_CHUNK * 4) throw new Error('접수 내용이 너무 길어요. 접수를 나눠서 내 주세요.');
@@ -1723,6 +1723,7 @@ function saveSubs0_(token, subs) {
       cur.ppl.forEach(c => {
         const p = sb.ppl.find(x => x.id === c.id); if (!p) return;
         if (c.status === '취소' && c.refund) { p.status = '취소'; p.refund = c.refund; }
+        if (c.status === '취소' && p.status === '취소') { if (c.cxFee) { p.cxFee = c.cxFee; p.cxRule = c.cxRule || ''; } else { delete p.cxFee; delete p.cxRule; } }   /* 11-26 취소 수수료는 서버 값만 */
         if (c.status === '정상' && c.cxRejected && p.status === '취소요청' && !(p.cxReqAt && p.cxReqAt > c.cxRejected)) { p.status = '정상'; }
         p.cxRejected = c.cxRejected; p.rejected = c.rejected;
         ['ovReq', 'ovDone', 'ovRejected'].forEach(k => { if (c[k] !== undefined) p[k] = c[k]; else delete p[k]; });
@@ -1749,15 +1750,19 @@ function saveSubs0_(token, subs) {
           const k = p.id.slice(sb.no.length + 1);
           const other = all.find(x => x.no !== sb.no && (x.acad === sb.acad || /^t_/.test(k)) && x.ppl.some(q => q.id.slice(x.no.length + 1) === k && (q.status === '정상' || q.status === '취소요청')));
           if (other) throw new Error(p.name + '은(는) 이미 ' + other.no + '에 접수돼 있어서 다시 참가할 수 없어요.');
-          delete p.cxAt; delete p.cxWhy; p.rejoinAt = stamp_();
+          delete p.cxAt; delete p.cxWhy; delete p.cxFee; delete p.cxRule; p.rejoinAt = stamp_();
           log_(u.name, '다시 참가', sb.no + ' · ' + p.name);
           markCx_(sb.no, p.id, '바로 취소', '다시 참가', '선생님이 다시 참가로 되돌림');
         }
         if (p.status === '취소' && b.status === '정상' && !p.refund) {
           if ((+p.paidAmt || 0) > 0) throw new Error(p.name + '은(는) 방금 입금이 확인됐어요. 화면을 새로 고친 뒤 「취소 요청」으로 다시 해 주세요.');
           p.cxAt = stamp_();
+          /* 11-26 사용자: 입금 전 취소도 수수료 기간이면 수수료 청구 (받을지는 나중에 협회가 정함) · 참가비 + 레슨 + 가족방 × (100 − 오늘 환불률)% */
+          { const R = camp_().refund || {}, td = today_(), rule = (R.rules || []).find(r => td <= r.until) || R.after || {}, rate = Math.max(0, Math.min(100, +rule.rate || 0));
+            const fee = Math.round(((+b.fee || 0) + (+b.lesson || 0) + (+b.room || 0)) * (100 - rate) / 100);
+            if (fee > 0) { p.cxFee = fee; p.cxRule = String(rule.label || ''); } else { delete p.cxFee; delete p.cxRule; } }
           ensureHead_(SH.CX, CX_HEAD);
-          SpreadsheetApp.getActive().getSheetByName(SH.CX).appendRow([stamp_(), sb.no, sb.acad, u.name, p.name, String(p.cxWhy || '').slice(0, 40), 0, '', '', '', '', '바로 취소', today_(), '입금 전이라 선생님이 바로 취소', p.id, amt_(p), 0, '입금 전 취소 (환불 없음)']);
+          SpreadsheetApp.getActive().getSheetByName(SH.CX).appendRow([stamp_(), sb.no, sb.acad, u.name, p.name, String(p.cxWhy || '').slice(0, 40), 0, '', '', '', '', '바로 취소', today_(), '입금 전이라 선생님이 바로 취소', p.id, amt_(p), 0, p.cxFee ? '입금 전 취소 · 수수료 ' + p.cxFee + '원 청구 (' + (p.cxRule || '') + ')' : '입금 전 취소 (환불 없음)']);
         }
       });
       writeSub_(sb, false);

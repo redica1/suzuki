@@ -117,7 +117,7 @@ button.pqBox{width:100%;text-align:left;font:inherit;color:inherit;cursor:pointe
 </style>
 
 <a class="helpfab" id="helpBtn" href="#" target="_blank" rel="noopener" aria-label="도움말 · 접수 안내 (새 창)"><span aria-hidden="true">?</span> 도움말</a>
-<div class="band"><div class="in bandin"><div style="min-width:0"><h1>2027 스즈키 겨울 음악제 접수</h1><p id="who"></p></div><span class="hdrbtns"><button type="button" class="hdrbtn pri" id="hdrLogin" hidden>로그인</button><button type="button" class="hdrbtn" id="hdrOut" hidden>로그아웃</button><a class="hdrbtn" id="hdrJoin" href="#" target="_blank" rel="noopener" hidden aria-label="회원가입 (새 창 · 회원 확인부터)">회원가입</a></span></div></div>
+<div class="band"><div class="in bandin"><div style="min-width:0"><h1><a href="#" id="hdrHome" title="처음으로" style="color:inherit;text-decoration:none">2027 스즈키 겨울 음악제 접수</a></h1><p id="who"></p></div><span class="hdrbtns"><button type="button" class="hdrbtn pri" id="hdrLogin" hidden>로그인</button><button type="button" class="hdrbtn" id="hdrOut" hidden>로그아웃</button><a class="hdrbtn" id="hdrJoin" href="#" target="_blank" rel="noopener" hidden aria-label="회원가입 (새 창 · 회원 확인부터)">회원가입</a></span></div></div>
 <main class="wrap">
   <div class="tabs" id="nav" role="group" aria-label="메뉴" hidden>
     <button type="button" data-tab="home" aria-pressed="false">홈</button>
@@ -695,6 +695,13 @@ function navSync(){const k=navKey();if(k===NAV_LAST)return;const first=NAV_LAST=
 function navGo(st){if(!st||!st.t)return;let t=st.t;if(t==='login'&&(S.token||S.tab!=='login'))t='home';if(t==='audp'&&S.tab!=='audp'&&!S.apl)S.AP=null;if(t==='tt'&&S.tab!=='tt')S.TT=undefined;if(t==='q'&&S.tab!=='q')S.QM=undefined;
  NAV_POP=true;S.tab=t;if(st.m)S.mv=st.m;if(st.h)S.ha=st.h;render();scrollTo(0,0)}
 (function(){const H=navH();if(H&&H.setChangeHandler)H.setChangeHandler(e=>navGo(e&&e.state));else window.addEventListener('popstate',e=>navGo(e.state))})();
+/* 11-25 제목 누르면 처음(홈) · 넣던 내용이 있으면 한 번 묻기 */
+document.addEventListener('click',e=>{const a=e.target.closest&&e.target.closest('#hdrHome');if(!a)return;e.preventDefault();
+ if(S.tab==='login'){scrollTo(0,0);return}
+ const dirty=P.picked.some(x=>x.edit)||!!S.hpD||(S.tab==='info'&&P.picked.some(x=>!x.done));
+ if(dirty&&!confirm('저장하지 않은 내용이 있어요. 처음으로 갈까요?'))return;
+ P.picked.forEach(x=>{if(x.edit){try{Object.assign(inf(x),JSON.parse(x.bak||'{}'))}catch(er){}inf(x).saved=true;x.edit=false;delete x.bak}});S.hpE=null;S.hpD=null;
+ S.tab='home';render();scrollTo(0,0)});
 function render(){helpSet();hdrSet();document.querySelectorAll('[data-tab]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.tab===S.tab)));document.getElementById('view').innerHTML=(S.tab==='login'?'':acadBar())+(S.tab!=='login'&&S.token&&!ACAD?acadNone():S.tab==='audp'?vAudP():S.tab==='orchv'?vOrchV():S.tab==='info'?vInfo():S.tab==='pick'?vPick():S.tab==='flow'?vFlow():S.tab==='list'||S.tab==='new'?vList()+(S.tab==='new'?vNew():''):S.tab==='mine'?vMine():S.tab==='login'?vLogin():S.tab==='home'?vHome():S.tab==='ens'?vEns():S.tab==='tt'?vTT():S.tab==='q'?vBoard():S.tab==='hadm'?vHadm():vNew());document.getElementById('nav').hidden=S.tab==='login';{const tb=document.getElementById('tabbar'),on=S.tab!=='login';tb.hidden=!on;document.body.classList.toggle('tbOn',on);const n=P.picked.filter(x=>x.done).length,b=document.getElementById('tbMineN');b.hidden=!n;b.textContent=n}document.getElementById('who').textContent=S.tab==='login'?(ENV.stg?'STG 시험 · 로그인':'로그인'):WHO+' '+((S.me&&S.me.role!=='원장')?'선생님':'원장님')+(ACAD?' · '+ACAD:'')+(ENV.stg?(S.token?' · STG 실제 명단 · 캠프 신청은 STG 시트에 저장돼요':' · 가상 데이터'):'');navSync()}
 document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const d=b.dataset;
  if(d.tab){if(d.tab==='audp'&&S.tab!=='audp'&&!S.apl){S.AP=null}if(d.tab==='tt'&&S.tab!=='tt')S.TT=undefined;if(d.tab==='q'&&S.tab!=='q')S.QM=undefined;S.tab=d.tab;if(d.mv)S.mv=d.mv;if(d.tab==='new'&&!S.room&&!S.done)S.room=true;render();scrollTo(0,0);return}

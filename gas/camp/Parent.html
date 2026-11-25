@@ -1,4 +1,4 @@
-<!doctype html><!-- build: 20261125-124530 --><html lang="ko"><head><meta charset="utf-8"><link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"><meta name="viewport" content="width=device-width,initial-scale=1">
+<!doctype html><!-- build: 20261125-124747 --><html lang="ko"><head><meta charset="utf-8"><link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
 <style>
 /* 학부모 신청 (11-15): 학원 다니는 학생의 보호자가 회원가입 없이 「간다 / 안 간다」와 같이 가는 가족 이름만 학원 선생님께 보냄 */
@@ -59,7 +59,7 @@ details .b{white-space:pre-wrap;color:var(--muted);margin-top:6px}
 .addrow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:0 0 10px;padding:10px;border:1px dashed var(--line,#cfdede);border-radius:12px}.addrow input[type=text]:not(.age){flex:1;min-width:120px}.listh{margin:8px 0 6px;font-weight:800;font-size:14px}.mvl{font-weight:700;font-size:14px}
 .mvrow{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--line,#e3e8ea)}.mvrow:first-of-type{border-top:0}
 </style></head><body>
-<div class="band"><button type="button" id="pgHelp" class="pgHelp">이용 안내</button><h1 id="ttl">스즈키 겨울 음악제 · 학부모 신청</h1><p id="sub">학원에 다니는 학생의 캠프 참가를 학원 선생님께 알려요</p></div>
+<div class="band"><button type="button" id="pgHelp" class="pgHelp">이용 안내</button><h1 id="ttl" title="처음으로" style="cursor:pointer">스즈키 겨울 음악제 · 학부모 신청</h1><p id="sub">학원에 다니는 학생의 캠프 참가를 학원 선생님께 알려요</p></div>
 <div id="pgG" class="pgG" hidden><div class="pgGs" role="dialog" aria-modal="true" aria-labelledby="pgGt"><div class="pgGh"><b id="pgGt">학부모 신청 이용 안내</b><button type="button" id="pgGx" class="btn small ghost">닫기</button></div><div class="pgGb" id="pgGb"></div></div></div><main class="wrap" id="app"><div class="card hint">불러오고 있어요…</div></main>
 <div class="dock" id="dock" hidden><div class="in"><button class="btn primary wide" type="button" id="send">학원 선생님께 보내기</button></div></div>
 <div class="toast" id="toast" hidden></div><div class="busy" id="busy" hidden>잠시만요…</div>
@@ -246,6 +246,8 @@ function navH(){try{return window.google&&google.script&&google.script.history||
 function navSync(){var k=String(S.step===2?2:1);if(k===NAV_LAST)return;var first=NAV_LAST===null;NAV_LAST=k;if(NAV_POP){NAV_POP=false;return}var st={s:+k},H=navH();try{if(H){first?H.replace(st,{},''):H.push(st,{},'')}else{first?history.replaceState(st,''):history.pushState(st,'')}}catch(e){}}
 function navGo(st){var s2=st&&st.s===2?2:1;if(s2===(S.step===2?2:1))return;if(s2===2&&!S.nm)return;if(s2===1){if(S.dirty&&!confirm('보내지 않은 내용이 있어요. 보호자 정보로 돌아갈까요?')){NAV_LAST=null;navSync();return}S.req=null;S.err=''}NAV_POP=true;S.step=s2;render();window.scrollTo(0,0)}
 (function(){var H=navH();if(H&&H.setChangeHandler)H.setChangeHandler(function(e){navGo(e&&e.state)});else window.addEventListener('popstate',function(e){navGo(e.state)})})();
+/* 11-25 제목 누르면 1단계(보호자 정보) · 보내지 않은 내용이 있으면 묻기 */
+document.addEventListener('click',function(e){var t=e.target.closest&&e.target.closest('#ttl');if(!t)return;if(S.step!==2){window.scrollTo(0,0);return}if(S.dirty&&!confirm('보내지 않은 내용이 있어요. 처음으로 갈까요?'))return;S.step=1;S.req=null;S.err='';render();window.scrollTo(0,0)});
 function render(){navSync();var a=document.getElementById('app');if(!S.I){a.innerHTML='<div class="card hint">불러오고 있어요…</div>';return}
   if(S.badA){a.innerHTML='<div class="card pqbad"><b>'+esc(S.badA)+'는 아직 학부모 신청을 받지 않아요.</b><br><span>다니는 학원 선생님께 신청해 주세요.</span></div>';document.getElementById('dock').hidden=true;return}
   if(S.step!==2){a.innerHTML=vStep1();document.getElementById('dock').hidden=true;return}

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>사단법인 한국스즈키음악협회</title><script>if(/[?&]test\b/i.test(location.search)&&document.title.indexOf('[STG]')<0)document.title='[STG] '+document.title</script>
 <!--
-  스즈키 시스템 홈 (2026-10-31) — 회원관리 · 캠프 · 교사연수 · 졸업연주로 가는 첫 화면
+  스즈키 시스템 홈 (2026-10-31 · 11-26 MAIN / STG 두 칸으로 나눔) — 회원관리 · 캠프 · 교사연수 · 졸업연주로 가는 첫 화면
   · https://app.suzukimusickorea.org/home/        → 메인
   · https://app.suzukimusickorea.org/home/?test   → 테스트(STG): 모든 링크 뒤에 ?test 가 붙음
   · 로그인은 모두 회원관리(선생님 회원)의 이메일 · 비밀번호 하나로 (캠프 · 캠프 담당자 화면도 같은 계정)
@@ -22,87 +22,59 @@
 <!-- 글꼴: 모두 Pretendard (CDN) -->
 <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <style>
-:root{
-  --bg:#f4f8ff; --surface:#ffffff; --line:#dbe6fa; --ink:#16233a; --muted:#55657f;
-  --accent:#4285f4; --accent-ink:#1967d2; --accent-soft:#e6f0ff; --rosin:#38bdf8; --rosin-soft:#e6f0ff;
-  --band:#4285f4; --band-ink:#ffffff; --band-muted:#eef4ff;
-  --display:var(--body);
-  --body:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
-}
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
-  --bg:#0e1626; --surface:#162236; --line:#26364f; --ink:#e8effa; --muted:#a3b3cc;
-  --accent:#8ab4f8; --accent-ink:#8ab4f8; --accent-soft:#1c2c47; --rosin:#7dd3fc; --rosin-soft:#1c2c47;
-  --band:#2b5fc0; --band-ink:#ffffff; --band-muted:#d6e4ff; color-scheme:dark}}
-:root[data-theme="dark"]{
-  --bg:#0e1626; --surface:#162236; --line:#26364f; --ink:#e8effa; --muted:#a3b3cc;
-  --accent:#8ab4f8; --accent-ink:#8ab4f8; --accent-soft:#1c2c47; --rosin:#7dd3fc; --rosin-soft:#1c2c47;
-  --band:#2b5fc0; --band-ink:#ffffff; --band-muted:#d6e4ff; color-scheme:dark}
-*{box-sizing:border-box}
-[hidden]{display:none!important}
-body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.75;letter-spacing:.02em;word-break:keep-all}
-header{background:var(--band);color:var(--band-ink);padding:14px 16px 16px}
-.top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
-.stg{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:14.5px;font-weight:600}
-.stg span{opacity:.75}
-.stg a{color:var(--band-ink);text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px}
-.stg a:hover{text-decoration-thickness:2px}
-header .in,main{max-width:720px;margin:0 auto}
-header small{color:var(--band-muted);letter-spacing:.08em}
-header h1{font-family:var(--body);font-weight:800;font-size:32px;margin:6px 0 2px;line-height:1.25;letter-spacing:0}
-header p{margin:0;color:var(--band-muted);font-size:15.5px}
-.test{display:inline-block;margin-left:6px;font-family:var(--body);background:#fff;color:#1967d2;border-radius:6px;padding:0 8px;font-weight:700;font-size:14px;vertical-align:middle}
-main{padding:22px 16px 48px;box-sizing:content-box}
-h2{font-size:21px;font-weight:700;margin:26px 0 10px}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}
-a.card{display:grid;gap:6px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px;text-decoration:none;color:inherit;transition:border-color .15s,transform .15s}
-a.card:hover{border-color:var(--accent);transform:translateY(-1px)}
-a.card b{font-size:18px}
-a.card span{color:var(--muted);font-size:15px;line-height:1.7}
-/* 회원 = 파랑(#4285f4), 캠프 = 청록(#0f9d9a) — 카드 왼쪽 줄 · 옅은 바탕 · 제목 색으로 살짝 구분 */
-a.card.mem{border-left:4px solid #4285f4;background:linear-gradient(90deg,#eef4ff,var(--surface) 60%)}
-a.card.camp{border-left:4px solid #0f9d9a;background:linear-gradient(90deg,#e8f7f6,var(--surface) 60%)}
-a.card.mem:hover{border-color:#4285f4}a.card.camp:hover{border-color:#0f9d9a}
-a.card.mem b{color:#1a5fd0}a.card.camp b{color:#0b7a78}
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) a.card.mem{background:var(--surface)}:root:not([data-theme="light"]) a.card.camp{background:var(--surface)}:root:not([data-theme="light"]) a.card.mem b{color:#8ab4f8}:root:not([data-theme="light"]) a.card.camp b{color:#5fd4cf}}
-a.card.main{border-left:4px solid var(--accent)}
-a.card.off{opacity:.55;pointer-events:none}
-.note{background:var(--rosin-soft);border-radius:10px;padding:14px 16px;margin-top:18px}
-.note b{display:block;margin-bottom:2px}
-.pill{display:inline-block;font-size:13px;font-weight:700;border-radius:999px;padding:0 8px;background:var(--rosin-soft);color:var(--rosin);margin-left:4px;vertical-align:middle}
-footer{color:var(--muted);font-size:14px;text-align:center;padding:0 16px 32px}
+:root{--bg:#f4f8ff;--surface:#fff;--line:#dbe6fa;--ink:#16233a;--muted:#55657f;--band:#4285f4;--mem:#4285f4;--memI:#1a5fd0;--camp:#0f9d9a;--campI:#0b7a78;--par:#e8833a;--parI:#b85d15;--stg:#c2410c;--stgS:#fff1e6;--main:#1967d2;--mainS:#e6f0ff}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e1626;--surface:#162236;--line:#26364f;--ink:#e8effa;--muted:#a3b3cc;--band:#2b5fc0;--memI:#8ab4f8;--campI:#5fd4cf;--parI:#f4b27a;--stg:#fb923c;--stgS:#3a2414;--main:#8ab4f8;--mainS:#1c2c47;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0e1626;--surface:#162236;--line:#26364f;--ink:#e8effa;--muted:#a3b3cc;--band:#2b5fc0;--memI:#8ab4f8;--campI:#5fd4cf;--parI:#f4b27a;--stg:#fb923c;--stgS:#3a2414;--main:#8ab4f8;--mainS:#1c2c47;color-scheme:dark}
+*{box-sizing:border-box}[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.65 "Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;word-break:keep-all}
+header{background:var(--band);color:#fff;padding:14px max(16px,env(safe-area-inset-right,0px)) 16px max(16px,env(safe-area-inset-left,0px))}
+.in{max-width:1000px;margin:0 auto}header small{opacity:.85;letter-spacing:.08em}header h1{margin:4px 0 2px;font-size:28px;line-height:1.25}header p{margin:0;opacity:.9;font-size:15px}
+main{max-width:1000px;margin:0 auto;padding:18px max(16px,env(safe-area-inset-right,0px)) 32px max(16px,env(safe-area-inset-left,0px))}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:16px}@media(max-width:760px){.cols{grid-template-columns:1fr}}
+.env{border-radius:14px;border:2px solid var(--line);background:var(--surface);overflow:hidden;min-width:0}
+.env.main{border-color:var(--main)}.env.stg{border-color:var(--stg)}
+.env.here{box-shadow:0 0 0 4px rgba(127,127,127,.15)}
+.eh{padding:10px 14px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.env.main .eh{background:var(--mainS)}.env.stg .eh{background:var(--stgS)}
+.eh b{font-size:19px}.env.main .eh b{color:var(--main)}.env.stg .eh b{color:var(--stg)}
+.eh span{font-size:13px;color:var(--muted)}
+.grp{padding:10px 14px;border-top:1px solid var(--line)}
+.gl{font-size:12.5px;font-weight:800;letter-spacing:.04em;color:var(--muted);margin-bottom:6px}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+a.c{display:block;border:1px solid var(--line);border-radius:10px;padding:10px 12px;text-decoration:none;color:inherit;background:var(--surface);transition:transform .15s,border-color .15s;min-width:0}
+a.c:hover{transform:translateY(-1px)}
+a.c b{display:block;font-size:16px}a.c small{color:var(--muted);font-size:12.5px;line-height:1.5;display:block}
+a.c.mem{border-left:4px solid var(--mem)}a.c.mem b{color:var(--memI)}
+a.c.camp{border-left:4px solid var(--camp)}a.c.camp b{color:var(--campI)}
+a.c.par{border-left:4px solid var(--par)}a.c.par b{color:var(--parI)}
+a.c.adm{background:repeating-linear-gradient(135deg,transparent 0 10px,rgba(127,127,127,.06) 10px 20px)}
+.tag{display:inline-block;font-size:11px;font-weight:800;border-radius:999px;padding:0 7px;background:var(--ink);color:var(--surface);margin-left:4px;vertical-align:middle}
+.etc{padding:10px 14px;border-top:1px solid var(--line);font-size:13.5px;color:var(--muted)}.etc a{color:inherit;margin-right:12px}
+.etc a.now{color:var(--stg);font-weight:700}
+footer{color:var(--muted);font-size:13px;text-align:center;padding:4px 16px 28px}
 </style>
 </head>
 <body>
-<header><div class="in">
-  <div class="top"><small>Korea Suzuki Music Association</small>
-    <nav class="stg" aria-label="테스트(STG) 바로가기"><span>STG</span>
-      <a href="../camp/?test" target="_blank" rel="noopener">캠프 접수</a><a href="../camp/new.html?test" target="_blank" rel="noopener">새 접수</a><a href="../camp/intl.html?test" target="_blank" rel="noopener">해외 접수</a><a href="../camp/find.html?test" target="_blank" rel="noopener">캠프 페이지(find)</a><a href="../camp/admin.html?test" target="_blank" rel="noopener">캠프 관리자</a><a href="../member/?test" target="_blank" rel="noopener">회원관리</a><a href="../member/admin.html?test" target="_blank" rel="noopener">회원관리 관리자</a><a id="stgNow" target="_blank" rel="noopener" hidden>STG 지금 적용 ↗</a></nav></div>
-  <h1>사단법인 한국스즈키음악협회<span class="test" id="testTag" hidden>테스트(STG)</span></h1>
-  <p>선생님 회원 계정 하나로 회원 정보 · 캠프 접수를 함께 써요.</p>
-</div></header>
-<main>
-  <h2>선생님</h2>
-  <div class="grid">
-    <a class="card mem" data-href="member/"><b>선생님 회원</b><span>가입 · 로그인 · 내 정보 · 우리 학원 · 학생 명단 · 회비 신고</span></a>
-    <a class="card camp" data-href="camp/"><b>겨울 음악제(캠프) 접수</b><span>회원 이메일 · 비밀번호로 로그인 · 접수 · 입금 신고 · 내 접수</span></a>
-    <a class="card camp stgonly" data-href="camp/new.html" hidden><b>새 접수 <span class="pill">STG 시험</span></b><span>홈 4칸 · 캠프 신청하기 · 내 신청 내역 · 가족방 · 앙상블 (실제 STG 데이터)</span></a>
-    <a class="card camp" data-href="camp/intl.html" lang="en"><b>Overseas participants <small style="font-weight:500">· 해외 참가</small></b><span>Group registration in English · fees in USD · leader signs in with the access code</span></a>
-    <a class="card" data-href=""><b>교사연수 신청</b><span>연수 신청 · 입금 신고 · 출석</span></a>
-    <a class="card off"><b>졸업연주 신청 <span class="pill">준비 중</span></b><span>회원 명단으로 신청 (1월 대구)</span></a>
-  </div>
-  <h2>운영진</h2>
-  <div class="grid">
-    <a class="card mem" data-href="member/admin.html"><b>회원관리 관리자</b><span>학원 · 교사 · 학생 · 연회비 · 승인 · 행사에서 온 보고</span></a>
-    <a class="card camp" data-href="camp/admin.html"><b>캠프 관리자</b><span>총관리자 · 담당 선생님(회원 이메일로 로그인)</span></a>
-  </div>
-</main>
+<header><div class="in"><small>Korea Suzuki Music Association</small><h1>사단법인 한국스즈키음악협회</h1><p>선생님 회원 계정 하나로 회원 정보 · 캠프 접수를 함께 써요.</p></div></header>
+<main><div class="cols" id="cols"></div></main>
+<footer>MAIN = 선생님 · 학부모가 지금 쓰는 실제 화면 · STG = 고친 것을 먼저 시험하는 화면 (주소 끝 ?test · 실제 접수에 안 들어가요)</footer>
 <script>
 (function () {
-  var STG_NOW = 'https://script.google.com/a/macros/redica.kr/s/AKfycbxr3zevlPHQhyExSQlHknsMF2whbvWIvuvWbzK0sfF6mlRNxXKOLbY9HDIJl3VhJB--rw/exec';   /* 캠프 도우미 웹 앱 주소(…/exec, 액세스: 나만) — 넣으면 「STG 지금 적용」 링크가 보임 */
-  if (STG_NOW) { var g = document.getElementById('stgNow'); g.href = STG_NOW; g.hidden = false; }
-  var test = /[?&]test\b/i.test(location.search), base = location.pathname.replace(/home\/(index\.html)?$/, '');
-  if (test) { document.getElementById('testTag').hidden = false; document.querySelectorAll('.stgonly').forEach(function (x) { x.hidden = false; }); }
-  [].forEach.call(document.querySelectorAll('a[data-href]'), function (a) { a.href = base + a.getAttribute('data-href') + (test ? '?test' : ''); a.target = '_blank'; a.rel = 'noopener'; });
+  var STG_NOW = 'https://script.google.com/a/macros/redica.kr/s/AKfycbxr3zevlPHQhyExSQlHknsMF2whbvWIvuvWbzK0sfF6mlRNxXKOLbY9HDIJl3VhJB--rw/exec';   /* 캠프 도우미 웹 앱 (액세스: 나만) */
+  var base = location.pathname.replace(/home\/(index\.html)?$/, ''), test = /[?&]test\b/i.test(location.search);
+  var G = [['교사 회원', 'mem', [['교사 회원', '가입 · 로그인 · 내 정보 · 우리 학원 · 학생', 'member/'], ['교사 회원 관리자', '학원 · 교사 · 학생 · 연회비 · 승인', 'member/admin.html']]],
+           ['캠프 접수', 'camp', [['캠프 접수', '캠프 신청 · 내 신청 내역 · 가족방 · 앙상블', 'camp/new.html'], ['캠프 접수 관리자', '접수 확인 · 스케줄 · 방배정 · 정산', 'camp/admin.html']]],
+           ['학부모 접수', 'par', [['학부모 접수', '학원 고르고 신청 · 회원가입 없이', 'camp/parent.html'], ['학원별 주소', '캠프 관리자 › 학부모 신청 학원 (예: /camp/p/misa.html)', 'camp/admin.html']]]];
+  function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+  function u(p, stg) { return base + p + (stg ? '?test' : ''); }
+  function env(stg) {
+    return '<section class="env ' + (stg ? 'stg' : 'main') + (stg === test ? ' here' : '') + '"><div class="eh"><b>' + (stg ? 'STG · 테스트' : 'MAIN · 실제') + '</b><span>' + (stg ? '주소 끝 ?test · 실제 접수에 안 들어가요' : '선생님 · 학부모가 지금 쓰는 화면') + '</span></div>' +
+      G.map(function (g) { return '<div class="grp"><div class="gl">' + g[0] + '</div><div class="pair">' + g[2].map(function (x, i) {
+        return '<a class="c ' + g[1] + (i ? ' adm' : '') + '" href="' + u(x[2], stg) + '" target="_blank" rel="noopener"><b>' + esc(x[0]) + (i && g[1] !== 'par' ? '<span class="tag">관리자</span>' : '') + '</b><small>' + esc(x[1]) + '</small></a>'; }).join('') + '</div></div>'; }).join('') +
+      '<div class="etc">그 밖에: <a href="' + u('camp/intl.html', stg) + '" target="_blank" rel="noopener">해외 접수</a><a href="' + u('camp/', stg) + '" target="_blank" rel="noopener">기존 캠프 접수</a><a href="' + u('camp/find.html', stg) + '" target="_blank" rel="noopener">캠프 일정 찾기</a><a href="' + base + '" target="_blank" rel="noopener">교사연수</a>' +
+      (stg && STG_NOW ? '<br><a class="now" href="' + STG_NOW + '" target="_blank" rel="noopener">STG 지금 적용 · 메인 반영 ↗</a> <span>(도우미 · 나만)</span>' : '') + '</div></section>';
+  }
+  document.getElementById('cols').innerHTML = env(false) + env(true);
 })();
 </script>
 </body>

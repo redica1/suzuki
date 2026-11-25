@@ -1,4 +1,4 @@
-/* build: 20261125-132039 */
+/* build: 20261125-132328 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -921,7 +921,7 @@ function parentNotifySubs_(nos) {
 /* ---------- 학부모 ↔ 학원 돈 (11-15 사용자: 학원 통장 · 입금 신고 · 취소 · 환불 요청, 처리는 그 학원 원장 · 선생님) ----------
  * 학원 통장은 원장이 선생님 화면에서 넣음(시트 「학원 통장」). 학부모 비밀번호 4자리(처음 보낼 때 정함, 해시로 저장). 돈 기록은 「학부모 신청」 시트 「돈」 칸 JSON:
  * { reps:[{at, nm(입금자명), date, amt, st:'신고'|'확인'|'반려', why, by, byAt}], cx:{at, why, bank, acct, holder, st:'요청'|'처리'|'반려'|'취소', amt, note, by, byAt} } */
-const ABANK_SH = '학원 통장', ABANK_HEAD = ['학원', '은행', '계좌번호', '예금주', '고친 사람', '고친 때', '입금 마감', '버스 왕복', '버스 갈 때만', '버스 올 때만', '버스 없음', '편도 없음', '학원 1차 마감', '학원 2차 마감', '학원 3차 마감', '버스 방식', '버스 확정'];   /* 11-25 버스 방식 = 나중(인원 보고 원장이 확정) */   /* 11-24 학원 차수 마감 (금액은 협회 차수 금액) */   /* 11-24 학원 단체 버스 1인 금액 (원장이 정함) */
+const ABANK_SH = '학원 통장', ABANK_HEAD = ['학원', '은행', '계좌번호', '예금주', '고친 사람', '고친 때', '입금 마감', '버스 왕복', '버스 갈 때만', '버스 올 때만', '버스 없음', '편도 없음', '학원 1차 마감', '학원 2차 마감', '학원 3차 마감', '버스 방식', '버스 확정', '버스 고르기'];   /* 11-25 버스 방식 = 나중(인원 보고 원장이 확정) */   /* 11-24 학원 차수 마감 (금액은 협회 차수 금액) */   /* 11-24 학원 단체 버스 1인 금액 (원장이 정함) */
 function acadBank_(acad) { try { const r = rows_(ABANK_SH).find(x => String(x['학원']) === acad); if (!r) return null; const dv = r['입금 마감'], due = dv instanceof Date ? Utilities.formatDate(dv, TZ, 'yyyy-MM-dd') : String(dv || '').slice(0, 10); const dd = v => v instanceof Date ? Utilities.formatDate(v, TZ, 'yyyy-MM-dd') : (/^\d{4}-\d{2}-\d{2}/.test(String(v || '')) ? String(v).slice(0, 10) : ''); return { bank: String(r['은행'] || ''), acct: String(r['계좌번호'] || ''), holder: String(r['예금주'] || ''), due, bus: busOf_(r), rd: [dd(r['학원 1차 마감']), dd(r['학원 2차 마감']), dd(r['학원 3차 마감'])] }; } catch (e) { return null; } }
 /* 11-24 학원 차수: 협회 차수 이름 · 금액 그대로, 마감(to)만 학원이 정한 날 (비우면 협회 날) · from = 앞 차수 마감 다음 날 */
 function acadRounds_(acad, C, b) { C = C || camp_(); const bb = (b === undefined ? acadBank_(acad) : b) || {}, rd = (bb.rd || []).slice(); const L = C.rounds.map((r, i) => ({ n: r.n, from: r.from, to: rd[i] || r.to, ato: r.to })); L.forEach((r, i) => { if (i) { const t = new Date(L[i - 1].to + 'T00:00:00'); t.setDate(t.getDate() + 1); r.from = Utilities.formatDate(t, TZ, 'yyyy-MM-dd'); } }); return L; }
@@ -945,7 +945,8 @@ function acadRoundSet(token, acad, arr) {
   log_(u.name, '학원 차수 마감', acad + ' ' + v.map((d, i) => A[i].n + ' ' + (d || '협회')).join(' · '));
   return { ok: true, pbank: acadBanks_(u.acads || []) };
 }
-function busOf_(r) { const n = k => +String(r[k] == null ? '' : r[k]).replace(/[^\d]/g, '') || 0, y = k => /^(예|y|true|1)$/i.test(String(r[k] || '').trim()); const later = String(r['버스 방식'] || '').trim() === '나중', cf = r['버스 확정']; return { r: n('버스 왕복'), g: n('버스 갈 때만'), b: n('버스 올 때만'), off: y('버스 없음'), one: !y('편도 없음'), later, conf: later && cf ? (cf instanceof Date ? Utilities.formatDate(cf, TZ, 'yyyy-MM-dd HH:mm') : String(cf)) : '' }; }
+function busOf_(r) { const n = k => +String(r[k] == null ? '' : r[k]).replace(/[^\d]/g, '') || 0, y = k => /^(예|y|true|1)$/i.test(String(r[k] || '').trim()); const later = String(r['버스 방식'] || '').trim() === '나중', cf = r['버스 확정']; const oz = String(r['버스 고르기'] || '').trim(), off0 = y('버스 없음'), one0 = !y('편도 없음'), o = oz ? { r: /r/.test(oz), g: /g/.test(oz), b: /b/.test(oz) } : { r: !off0, g: !off0 && one0, b: !off0 && one0 };   /* 11-25 받을 것 따로 (왕복 · 갈 때 · 올 때) */
+  return { r: n('버스 왕복'), g: n('버스 갈 때만'), b: n('버스 올 때만'), off: oz ? !(o.r || o.g || o.b) : off0, one: oz ? (o.g || o.b) : one0, o, later, conf: later && cf ? (cf instanceof Date ? Utilities.formatDate(cf, TZ, 'yyyy-MM-dd HH:mm') : String(cf)) : '' }; }
 /* 11-25 학부모 한 신청의 학원 버스비 (나중 방식이고 확정 전이면 pend) */
 function parentBus_(d, B) { B = B || {}; const pr = v => v === 'bus' ? +B.r || 0 : v === 'go' ? +B.g || 0 : v === 'back' ? +B.b || 0 : 0; d = d || {}; const L = []; (d.kids || []).forEach(k => { if (k.name) L.push(k.mv); }); if (d.me && d.me.go !== false) L.push(d.me.mv); (d.fam || []).forEach(f => { if (f.type !== '15개월 미만') L.push(f.mv); });
   const on = L.filter(v => v === 'bus' || v === 'go' || v === 'back'), pend = !!(B.later && !B.conf); return { n: on.length, amt: B.off || pend ? 0 : on.reduce((t, v) => t + pr(v), 0), pend: !B.off && pend && on.length > 0 }; }
@@ -955,13 +956,14 @@ function acadBusSet(token, acad, b) {
   let head = false; try { head = teachers_().some(t => t.name === u.name && t.role === '원장' && (t.acads || []).includes(acad)); } catch (e) {}
   if (!head) throw new Error('버스 금액은 그 학원 원장님만 정할 수 있어요.');
   b = b || {}; const n = v => Math.max(0, Math.min(1000000, +String(v == null ? '' : v).replace(/[^\d]/g, '') || 0));
+  const oz = b.o ? ['r', 'g', 'b'].filter(k => b.o[k]).join(',') || '-' : '';   /* 11-25 받을 것 */ if (b.o) { b.off = oz === '-'; b.one = !!(b.o.g || b.o.b); }
   const lock = lock_();
   try {
     const ss = SpreadsheetApp.getActive(); let sh = ss.getSheetByName(ABANK_SH);
     if (!sh) { sh = ss.insertSheet(ABANK_SH); sh.setFrozenRows(1); sh.getRange('A:F').setNumberFormat('@'); }
     sh.getRange(1, 1, 1, ABANK_HEAD.length).setValues([ABANK_HEAD]).setFontWeight('bold');
     const r = rows_(ABANK_SH).find(x => String(x['학원']) === acad), v = [n(b.r), n(b.g), n(b.b), b.off ? '예' : '', b.one === false ? '예' : ''], md = b.later ? '나중' : '';
-    if (r) { sh.getRange(r._row, 8, 1, 5).setValues([v]); const was = String(r['버스 방식'] || '').trim(); sh.getRange(r._row, 16).setValue(md); if (was !== md || !md) sh.getRange(r._row, 17).setValue(''); } else sh.appendRow([acad, '', '', '', u.name, stamp_(), ''].concat(v, ['', '', '', md, '']));
+    if (r) { sh.getRange(r._row, 8, 1, 5).setValues([v]); const was = String(r['버스 방식'] || '').trim(); sh.getRange(r._row, 16).setValue(md); if (was !== md || !md) sh.getRange(r._row, 17).setValue(''); sh.getRange(r._row, 18).setValue(oz); } else sh.appendRow([acad, '', '', '', u.name, stamp_(), ''].concat(v, ['', '', '', md, '', oz]));
   } finally { lock.releaseLock(); }
   log_(u.name, '학원 버스 금액', acad);
   return { ok: true, pbank: acadBanks_(u.acads || []) };

@@ -1,4 +1,4 @@
-<!doctype html><!-- build: 20261125-132039 --><html lang="ko"><head><meta charset="utf-8"><link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"><meta name="viewport" content="width=device-width,initial-scale=1">
+<!doctype html><!-- build: 20261125-132328 --><html lang="ko"><head><meta charset="utf-8"><link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
 <style>
 /* 학부모 신청 (11-15): 학원 다니는 학생의 보호자가 회원가입 없이 「간다 / 안 간다」와 같이 가는 가족 이름만 학원 선생님께 보냄 */
@@ -125,11 +125,11 @@ function busCfg(){return (((S.I&&S.I.price)||{}).busBy||{})[S.ac]||{r:0,g:0,b:0,
 /* 11-25 버스 「나중」 방식: 원장님이 확정하기 전엔 금액 없이 */
 function busPend(){var B=busCfg();return !!(B.later&&!B.conf&&!B.off)}
 function busFee(v){var B=busCfg();if(busPend())return 0;return v==='bus'?(+B.r||0):v==='go'?(+B.g||0):v==='back'?(+B.b||0):0}
-function mvOpts(){var B=busCfg(),pd=busPend(),w=function(n){return n&&!pd?' · '+won(n):''},L=[];if(!B.off){L.push(['bus','버스 왕복'+w(+B.r||0)]);if(B.one!==false){L.push(['go','버스 갈 때만'+w(+B.g||0)]);L.push(['back','버스 올 때만'+w(+B.b||0)])}}L.push(['car','자차']);return L}
+function mvOpts(){var B=busCfg(),pd=busPend(),w=function(n){return n&&!pd?' · '+won(n):''},L=[],o=B.o||{r:!B.off,g:!B.off&&B.one!==false,b:!B.off&&B.one!==false};if(!B.off){if(o.r)L.push(['bus','버스 왕복'+w(+B.r||0)]);if(o.g)L.push(['go','버스 갈 때만'+w(+B.g||0)]);if(o.b)L.push(['back','버스 올 때만'+w(+B.b||0)])}L.push(['car','자차']);return L}
 function mvRow(k,v){return '<div class="mvrow"><span class="mvl">오가는 방법 <span class="opt">꼭</span></span>'+seg('data-mv',k,v||'',mvOpts(),1)+'</div>'}
 function vMove(){var OK=mvOpts().map(function(x){return x[0]});moveList().forEach(function(x){if(x.o.mv&&OK.indexOf(x.o.mv)<0)x.o.mv=''});var L=moveList(),nb=L.filter(function(x){return x.o.mv&&x.o.mv!=='car'}).length,nc=L.filter(function(x){return x.o.mv==='car'}).length;
-  return '<div class="card"><h3><span class="no">5</span>오가는 방법 <span class="opt">꼭</span></h3><p class="hint" style="margin-top:0">가는 사람마다 골라 주세요. '+(busCfg().off?'우리 학원은 단체 버스가 없어요.':busCfg().one===false?'단체 버스는 왕복만 있어요.':'단체 버스는 왕복 · 갈 때만 · 올 때만을 고를 수 있어요.')+(busPend()?' <b>버스비는 신청 인원을 보고 학원이 정해 알려 드려요.</b>':'')+'</p>'+
-    '<div class="row" style="margin-bottom:8px">'+(busCfg().off?'':'<button class="btn small" type="button" data-mvall="bus">모두 버스 왕복</button>')+'<button class="btn small" type="button" data-mvall="car">모두 자차</button><span class="opt">버스 '+nb+'명 · 자차 '+nc+'명'+(L.length-nb-nc?' · 아직 '+(L.length-nb-nc)+'명':'')+'</span></div>'+
+  return '<div class="card"><h3><span class="no">5</span>오가는 방법 <span class="opt">꼭</span></h3><p class="hint" style="margin-top:0">가는 사람마다 골라 주세요. '+(busCfg().off?'우리 학원은 단체 버스가 없어요.':'단체 버스는 '+mvOpts().filter(function(x){return x[0]!=='car'}).map(function(x){return x[1].split(' · ')[0].replace('버스 ','')}).join(' · ')+'을 고를 수 있어요.')+(busPend()?' <b>버스비는 신청 인원을 보고 학원이 정해 알려 드려요.</b>':'')+'</p>'+
+    '<div class="row" style="margin-bottom:8px">'+(busCfg().off||!mvOpts().some(function(x){return x[0]==='bus'})?'':'<button class="btn small" type="button" data-mvall="bus">모두 버스 왕복</button>')+'<button class="btn small" type="button" data-mvall="car">모두 자차</button><span class="opt">버스 '+nb+'명 · 자차 '+nc+'명'+(L.length-nb-nc?' · 아직 '+(L.length-nb-nc)+'명':'')+'</span></div>'+
     L.map(function(x){return '<div class="mvrow"><span><b>'+esc(x.n)+'</b> <span class="opt">'+esc(x.t)+'</span></span>'+seg('data-mv',x.k,x.o.mv||'',mvOpts(),1)+'</div>'}).join('')+
     '</div>'}
 function vForm(){var I=S.I,d=S.d;if(!I.open)return '<div class="card"><h2>지금은 학부모 신청을 받지 않아요</h2><p class="hint">이번 캠프는 일부 학원만 학부모 신청을 받아요. 다니는 학원 선생님께 여쭤 주세요.</p></div>';

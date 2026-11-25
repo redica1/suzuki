@@ -1,4 +1,4 @@
-<!doctype html><!-- build: 20261125-111746 --><html lang="ko"><head><meta charset="utf-8"><link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"><meta name="viewport" content="width=device-width,initial-scale=1">
+<!doctype html><!-- build: 20261125-113954 --><html lang="ko"><head><meta charset="utf-8"><link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
 <style>
 /* 학부모 신청 (11-15): 학원 다니는 학생의 보호자가 회원가입 없이 「간다 / 안 간다」와 같이 가는 가족 이름만 학원 선생님께 보냄 */
@@ -236,7 +236,13 @@ function go1(){S.nm=document.getElementById('pn').value.trim();var p8=document.g
   if(S.nm.length<2){S.err='보호자 이름을 넣어 주세요.';render();return}if(p8.length!==8){S.err='휴대전화 010 뒤 8자리를 넣어 주세요.';render();return}S.ph='010'+p8;
   if(S.em&&!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(S.em)){S.err='이메일 주소를 확인해 주세요.';render();return}if(!/^\d{4}$/.test(S.pw)){S.err='비밀번호 숫자 4자리를 넣어 주세요.';render();return}
   run('parentLookup',[S.nm,S.ph,S.pw],function(r){S.err='';saveLogin();var L=(r.reqs||[]).filter(function(q){return !S.lockA||q.acad===S.lockA});if(L.length){setReq(L[0]);S.ac=L[0].acad}else{setReq(null)}if(S.lockA)S.ac=S.lockA;S.step=2;render();window.scrollTo(0,0)})}
-function render(){var a=document.getElementById('app');if(!S.I){a.innerHTML='<div class="card hint">불러오고 있어요…</div>';return}
+/* 11-25 뒤로가기: 2단계(신청서) → 뒤로가기 = 1단계(보호자 정보) */
+var NAV_LAST=null,NAV_POP=false;
+function navH(){try{return window.google&&google.script&&google.script.history||null}catch(e){return null}}
+function navSync(){var k=String(S.step===2?2:1);if(k===NAV_LAST)return;var first=NAV_LAST===null;NAV_LAST=k;if(NAV_POP){NAV_POP=false;return}var st={s:+k},H=navH();try{if(H){first?H.replace(st,{},''):H.push(st,{},'')}else{first?history.replaceState(st,''):history.pushState(st,'')}}catch(e){}}
+function navGo(st){var s2=st&&st.s===2?2:1;if(s2===(S.step===2?2:1))return;if(s2===2&&!S.nm)return;if(s2===1){if(S.dirty&&!confirm('보내지 않은 내용이 있어요. 보호자 정보로 돌아갈까요?')){NAV_LAST=null;navSync();return}S.req=null;S.err=''}NAV_POP=true;S.step=s2;render();window.scrollTo(0,0)}
+(function(){var H=navH();if(H&&H.setChangeHandler)H.setChangeHandler(function(e){navGo(e&&e.state)});else window.addEventListener('popstate',function(e){navGo(e.state)})})();
+function render(){navSync();var a=document.getElementById('app');if(!S.I){a.innerHTML='<div class="card hint">불러오고 있어요…</div>';return}
   if(S.badA){a.innerHTML='<div class="card pqbad"><b>'+esc(S.badA)+'는 아직 학부모 신청을 받지 않아요.</b><br><span>다니는 학원 선생님께 신청해 주세요.</span></div>';document.getElementById('dock').hidden=true;return}
   if(S.step!==2){a.innerHTML=vStep1();document.getElementById('dock').hidden=true;return}
   var y=window.scrollY;a.innerHTML=vForm();window.scrollTo(0,y);document.getElementById('dock').hidden=!S.I.open;sendBtn()}

@@ -1134,7 +1134,7 @@ function parentCxDo(token, id, act, amt, note) {
 function parentFor_(acads) { try { acads = acads.filter(parentOk_); if (!acads.length) return []; const L = parentRows_().filter(r => acads.includes(r.acad) && r.st !== '삭제'); const all = L.length ? loadSubs_() : []; return L.map(r => ({ id: r.id, acad: r.acad, name: r.name, phone: r.phone.replace(/(\d{3})(\d{3,4})(\d{4})/, '$1-$2-$3'), d: r.d, at0: r.at0, at: r.at, st: r.st, by: r.by, byAt: r.byAt, m: r.m || {}, sub: parentSub_(r.id, all, r) })); } catch (e) { return []; } }
 /* 11-24 관리자: 학부모 신청 보기 (보기만 · 휴대전화는 뒤 4자리) */
 function adminParentList(token) {
-  adm_(token);
+  see_(adm_(token), ['subs', 'fam']);
   const L = parentRows_(), all = L.length ? loadSubs_() : [];
   return L.map(r => ({ id: r.id, acad: r.acad, name: r.name, ph4: r.phone.slice(-4), d: r.d, at0: r.at0, at: r.at, st: r.st, by: r.by, byAt: r.byAt,
     reps: ((r.m || {}).reps || []).map(x => ({ st: x.st, amt: x.amt, date: x.date, w: x.w || '' })), cx: (r.m || {}).cx ? { st: r.m.cx.st } : null, sub: parentSub_(r.id, all, r) }));
@@ -1457,7 +1457,7 @@ function orfList_() { orfSheet_(); return rows_(ORF_SH).filter(r => r['ID']).map
 function orfFolder_() { const P = PropertiesService.getScriptProperties(); let id = P.getProperty('orchFolder');
   if (id) { try { return DriveApp.getFolderById(id); } catch (e) {} }
   const f = DriveApp.createFolder('캠프 악보 ' + ((camp_().base || {}).id || '')); P.setProperty('orchFolder', f.getId()); return f; }
-function orchFiles(token) { adm_(token); return orfList_().map(x => { delete x._row; return x; }); }
+function orchFiles(token) { see_(adm_(token), ['act', 'book', 'con', 'tt']); return orfList_().map(x => { delete x._row; return x; }); }
 function orchUpload(token, o, part, name, mime, b64) {
   const a = adm_(token); need_(a, 'act');
   o = String(o || '').slice(0, 40); part = ['전체', '바이올린', '비올라', '첼로', '플루트'].includes(part) ? part : '전체'; name = String(name || '악보').slice(0, 120);
@@ -1537,7 +1537,7 @@ function famPay(token, ids, name, date) { const u = who_(token); name = String(n
       famWrite_(sh, r); log_(u.name, name ? '가족방 입금 신고' : '가족방 신고 취소', r.id + ' · ' + r.amt); });
   } finally { lock.releaseLock(); } return famList(token); }
 /** 관리자: 가족방 목록 · 입금 확인 (amt 0 이면 되돌리기) · 취소 */
-function adminFam(token) { const a = adm_(token); return famRooms_().map(r => { const o = Object.assign({}, r); delete o._row; return o; }); }
+function adminFam(token) { const a = adm_(token); see_(a, ['fam', 'room', 'subs']); return famRooms_().map(r => { const o = Object.assign({}, r); delete o._row; return o; }); }
 function adminFamOk(token, id, amt, date) { const a = adm_(token); need_(a, ['fam', 'subs']); const lock = lock_();
   try { const sh = famSheet_(), r = famRooms_().find(x => x.id === id); if (!r) throw new Error('가족방을 찾지 못했어요.');
     amt = Math.max(0, +String(amt || '').replace(/[^\d]/g, '') || 0);
@@ -2335,7 +2335,7 @@ const SCHOL_HEAD = ['학원', '학생 수(저장 때)', '기준 금액', '조정
 const SCHOL_DEF = '[[30,1200000],[20,800000],[10,400000]]';   /* 26 여름 「추가 지급사항」: 30명↑ 120만 · 20명↑ 80만 · 10명↑ 40만 */
 function scholTiers_() { try { const v = JSON.parse(setting_('장학금 기준') || SCHOL_DEF); return Array.isArray(v) ? v.filter(x => +x[0] > 0).map(x => [+x[0], +x[1] || 0]).sort((a, b) => b[0] - a[0]) : []; } catch (x) { return []; } }
 function scholRows_() { return rows_(SCHOL_SH).filter(r => r['학원']).map(r => ({ acad: String(r['학원']), n: +r['학생 수(저장 때)'] || 0, base: +r['기준 금액'] || 0, amt: r['조정 금액'] === '' ? '' : +r['조정 금액'], state: String(r['상태'] || '예정'), date: dstr_(r['지급일']), memo: String(r['메모'] || '') })); }
-function scholData(token) { adm_(token); return { tiers: scholTiers_(), rows: scholRows_() }; }
+function scholData(token) { see_(adm_(token), ['schol']); return { tiers: scholTiers_(), rows: scholRows_() }; }
 function scholSave(token, b) {
   const a = adm_(token); need_(a, 'schol');
   const tiers = (b.tiers || []).map(x => [Math.round(+x[0] || 0), Math.round(+x[1] || 0)]).filter(x => x[0] > 0 && x[1] >= 0).sort((p, q) => q[0] - p[0]);
@@ -2977,6 +2977,8 @@ function needSup_(a) { if (!a.sup) throw new Error('총관리자만 할 수 있�
 /* 11-21: 캠프 설정은 담당자 권한 「캠프 설정」으로도 (편집 = 저장, 보기 = 읽기) */
 function needCamp_(a, read) { if (a.sup) return; const v = (a.perms || {}).camp; if (v === '편집' || (read && v === '보기')) return; throw new Error(read ? '캠프 설정 권한이 없어요.' : '캠프 설정은 보기만 할 수 있어요. 총관리자에게 「편집」 권한을 받아 주세요.'); }
 /** 그 메뉴를 「편집」할 수 있는지 (여러 메뉴 중 하나라도 되면 통과) */
+/* 11-26 전체 점검: 보기 권한 (보기 · 편집 중 하나라도) — 화면 메뉴만 숨기던 서버 읽기 함수에도 */
+function see_(a, tabs) { if (a.sup) return; if (![].concat(tabs).some(t => a.perms[t] === '편집' || a.perms[t] === '보기')) throw new Error('이 메뉴를 볼 권한이 없어요. 총관리자에게 권한을 받아 주세요.'); }
 function need_(a, tabs) {
   if (a.sup) return;
   if (![].concat(tabs).some(t => a.perms[t] === '편집')) throw new Error('이 메뉴는 보기만 할 수 있어요. 바꾸려면 총관리자에게 「편집」 권한을 받아 주세요.');
@@ -3447,7 +3449,7 @@ function bankTab_(ss, name) { const sh = ss.getSheetByName(name); if (!sh) retur
 function bankNum_(x) { return +String(x || '').replace(/[^\d]/g, '') || 0; }
 /** 관리자 입금 신고 화면: 캠프 입금 기간의 통장 입금 (이미 사람별로 이어진 것 포함) */
 function adminBank(token) {
-  adm_(token); const ss = bankBook_(); if (!ss) return { ok: true, none: true };
+  see_(adm_(token), ['subs', 'rp', 'bset', 'bplan']); const ss = bankBook_(); if (!ss) return { ok: true, none: true };
   const B = bankTab_(ss, '통장'); if (!B) return { ok: true, none: true };
   const D = bankTab_(ss, '통장상세'), K = bankTab_(ss, '통장목록'), C = camp_(), from = setting_('입금 시작일') || '2026-10-01';
   const to = (() => { const m = String(C.base.end || '').match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? new Date(Date.UTC(+m[1], +m[2] - 1, +m[3] + 60)).toISOString().slice(0, 10) : '9999'; })();
@@ -3754,7 +3756,7 @@ function mailStatus_() {
 }
 /** 못 보낸 메일 다시 보내기 (관리자) */
 function mailRetry(token) {
-  adm_(token); const sh = SpreadsheetApp.getActive().getSheetByName('못 보낸 메일'); if (!sh || sh.getLastRow() < 2) return { ok: true, sent: 0, left: 0, mail: mailStatus_() };
+  need_(adm_(token), ['subs', 'rp', 'cx']); const sh = SpreadsheetApp.getActive().getSheetByName('못 보낸 메일'); if (!sh || sh.getLastRow() < 2) return { ok: true, sent: 0, left: 0, mail: mailStatus_() };
   const V = sh.getRange(2, 1, sh.getLastRow() - 1, 8).getValues(); let sent = 0, left = 0;
   V.forEach((r, i) => { if (String(r[7]).trim()) return; const mail = { to: String(r[2]), subject: String(r[3]), body: String(r[4]), name: String(r[5] || '한국스즈키음악협회') };
     let ok = relaySend_(mail).ok; if (!ok) { try { if (MailApp.getRemainingDailyQuota() > 0) { MailApp.sendEmail(mail); ok = true; } } catch (e) {} }
@@ -3977,7 +3979,7 @@ function orchMerge_(rs, done) {
   ORCH_PARTS.filter(r => !L.includes(r)).reverse().forEach(r => L.splice(r === '지휘' ? 0 : at, 0, r)); o['공연'] = L; return o;
 }
 function schedData(token) {
-  adm_(token);
+  see_(adm_(token), ['act', 'tt', 'book', 'con', 'mcs', 'ens', 'room']);
   const c = actCfg_();
   const log = rows_(SH.ACTLOG).slice(-300).reverse().map(r => ({ at: String(r['일시'] instanceof Date ? Utilities.formatDate(r['일시'], TZ, 'M/d HH:mm') : r['일시']).replace(/^\d{4}-0?(\d+)-0?(\d+)/, '$1/$2'), t: (r['관리자'] ? r['관리자'] + ' · ' : '') + String(r['내용'] || '') }));
   return { days: c.days || [], rooms: c.rooms || {}, meals: Array.isArray(c.meals) ? c.meals : mealGen_(camp_().meals, (c.days || []).length), rows: c.rows || {}, people: actPeople_(c.people), unav: c.unav || {}, req: c.req || {}, target: c.target || { min: 2, max: 6 }, kinds: Array.isArray(c.kinds) && c.kinds.length ? c.kinds : ACT_KINDS, stages: Array.isArray(c.stages) && c.stages.length ? c.stages : ACT_STAGES, roleSets: c.roleSets && typeof c.roleSets === 'object' ? orchMerge_(c.roleSets, c.orchParts) : ACT_ROLESETS, tgSongs: c.tgSongs && typeof c.tgSongs === 'object' ? c.tgSongs : null, en: c.en || ACT_EN, bookDesc: c.bookDesc || ACT_BOOKDESC, dayNotes: c.dayNotes || [], roleShort: c.roleShort || {}, cellSty: c.cellSty || {}, orRos: c.orRos || {}, pvHide: c.pvHide || {}, rev: +c.rev || 0, events: actEvents_(), log, lessons: (() => { try { return lessons_().map(x => ({ d: x.d, t: x.t, pr: x.pr })); } catch (e) { return []; } })() };
@@ -4022,7 +4024,7 @@ const LES_HEAD = ['날짜', '시간', '교수', '참가자ID', '학생', '학원
 function lesSheet_() { const ss = SpreadsheetApp.getActive(); let sh = ss.getSheetByName(SH.LES); if (!sh) { sh = ss.insertSheet(SH.LES); sh.appendRow(LES_HEAD); } return sh; }
 function lessons_() { lesSheet_(); return rows_(SH.LES).filter(r => String(r['교수'] || '') && String(r['참가자ID'] || '')).map(r => ({ d: +r['날짜'] || 0, t: hm_(r['시간']), pr: String(r['교수']), pid: String(r['참가자ID']), _row: r._row })); }
 function lessonData(token) {
-  adm_(token);
+  see_(adm_(token), ['tt', 'mcs', 'act', 'book']);
   let days = []; try { days = actCfg_().days || []; } catch (x) {}
   let acts = []; try { acts = actEvents_().map(e => ({ d: e.d, s: e.s, e: e.e, room: e.room, title: e.title + (e.stage && e.stage !== '본공연' ? ' ' + e.stage : ''), ppl: e.ppl }));   /* 개인레슨 칸에는 활동(이름 · 단계)과 장소만 — 곡명(세부)은 뺌 */ } catch (x) {}
   let people = []; try { people = actPeople_(actCfg_().people).map(p => ({ id: p.id, n: p.n })); } catch (x) {}
@@ -4282,7 +4284,7 @@ function adminSetSetting(token, key, val) {
 }
 /** 캠프 설정 › 입금 안내 통장: 회원관리 › 통장에 등록한 통장 목록 + 지금 쓰는 계좌 (11-01) */
 function campBankAccts(token) {
-  adm_(token); const list = [];
+  see_(adm_(token), ['camp', 'subs', 'rp', 'bset']); const list = [];
   try { const ss = bankBook_(), A = ss && bankTab_(ss, '통장목록'); if (A) A.v.filter(r => r[A.c('사용')] !== '안씀' && r[A.c('계좌번호')]).forEach(r => list.push({ id: r[A.c('통장ID')], name: r[A.c('이름')], bank: r[A.c('은행')], acct: r[A.c('계좌번호')], holder: r[A.c('예금주')] })); } catch (e) { }
   const b = bankInfo_(); return { list, cur: { bank: b.bank, acct: b.acct, holder: b.holder, auto: !setting_('입금 계좌번호') } };
 }
@@ -4294,7 +4296,7 @@ function adminSetBankAcct(token, id) {
   CacheService.getScriptCache().remove('bankAcct'); log_('관리자 ' + a.name, '입금 안내 통장', x.name + ' · ' + x.bank + ' ' + x.acct);
   return campBankAccts(token);
 }
-function adminGetSetting(token, key) { adm_(token); return { val: setting_(key) }; }
+function adminGetSetting(token, key) { const a = adm_(token); needSup_(a); if (/비밀번호|키|토큰|token|key/i.test(String(key || ''))) throw new Error('이 설정은 화면으로 볼 수 없어요.'); return { val: setting_(key) }; }
 
 /* ================= 방 배정 =================
  * 「방배정」: 한 줄 = 방 하나. 처음 열 때 겨울 숙소 객실 목록(Stay Tower S · Plex Tower P, 406실)으로 채움
@@ -4374,7 +4376,7 @@ function roomCfgSave(token, b) {
   return roomData(token);
 }
 function roomData(token) {
-  adm_(token); let open = false; try { open = setting_('시간표 공개') === '예'; } catch (x) {}
+  see_(adm_(token), ['room', 'fam']); let open = false; try { open = setting_('시간표 공개') === '예'; } catch (x) {}
   let days = []; try { days = actCfg_().days || []; } catch (x) {}
   const cfg = roomCfg_();
   return { rooms: rooms_().map(r => { const o = Object.assign({}, r); delete o._row; return o; }), kinds: roomKinds_(), kindsFixed: ROOM_KINDS_FIXED, open, days, cfg: Object.assign({}, cfg, { live: roomPubNow_(cfg) }), layout: [], layoutTabs: [], layoutErr: '' };   /* 11-17: 시트 도면은 안 씀 → 다른 구글 시트를 여는 일(느림)을 뺌 */
@@ -4840,7 +4842,7 @@ function audPub(token, con, on) {
   return audList(token);
 }
 function conGet(token) {
-  adm_(token);
+  see_(adm_(token), ['con', 'book', 'aud']);
   const c = actCfg_();
   let concerts = Array.isArray(c.concerts) ? c.concerts : null;
   const linked = (Array.isArray(c.kinds) ? c.kinds : ACT_KINDS).filter(k => k.link).map(k => k.n);

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: 20261126-012524 -->
+<!-- build: 20261126-014652 -->
 <html lang="ko"><head>
 <base target="_top">
 <meta charset="utf-8">
@@ -249,7 +249,7 @@ function vHome(){var res='';
     '<div><label class="f" for="iPh">휴대전화 <span class="req">*</span><input type="tel" id="iPh" '+bad('phone')+' value="'+esc(ph010(S.phone))+'" inputmode="numeric" autocomplete="tel" '+(S.look?'disabled':'')+'></label>'+fe('phone')+'</div></div>'+
     msgBox()+(S.look?'':btn('lookup','회원 확인'))+'</div>'+res+
     '<div class="card"><div class="spread"><span class="hint">이미 계정을 만들었어요</span><button class="btn small" type="button" id="goLogin">로그인</button></div>'+
-    '<div class="spread" style="margin-top:8px"><span class="hint">궁금한 점 · 요청은 로그인한 뒤 「내 문의」에 남겨 주세요 · 로그인이 안 되면 카카오톡 채널 「suzukimusickorea」</span></div></div>'}
+    '<div class="spread" style="margin-top:8px"><span class="hint">궁금한 점 · 요청은 로그인한 뒤 「내 문의」에 남겨 주세요 · 로그인이 안 되면 카카오톡 채널 「suzukimusickorea」</span></div></div>'+tlBox()}
 function vFind(){return vHome()}
 function vEmail(){
   return steps(2)+'<div class="card"><h2>이메일</h2><p class="lede">이메일이 로그인 아이디가 되고, 인증 코드와 안내 메일이 이 주소로 가요.</p>'+
@@ -1203,7 +1203,7 @@ csMount();
   try{google.script.url.getLocation(function(l){var pr=l&&l.parameter||{},a=pr.as;if(a)setSess(a);if('ask' in pr||pr.v==='ask'){S.v0='ask'}if(pr.guide!==undefined)S.gd0=pr.guide||'why';go0()})}catch(x){go0()}})();
 </script>
 <script>try{window.top.postMessage('suzuki-ready','*')}catch(e){}</script>
-<div id="bldMark" hidden>빌드표시 20261126-012524 </div>
+<div id="bldMark" hidden>빌드표시 20261126-014652 </div>
 <script>(function(){var m=document.getElementById('bldMark');if(!m)return;var x=m.textContent.match(/(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/);if(!x)return;var p=document.createElement('div');p.className='bldmark';p.textContent='빌드 '+x[1].slice(2)+'.'+x[2]+'.'+x[3]+' '+x[4]+':'+x[5];p.style.cssText='text-align:center;font-size:11px;color:#9aa5ab;padding:10px 0 24px';document.body.appendChild(p)})();
 /* 11-25: 캠프 · 졸업연주 등 다른 접수 화면은 언제나 새 창으로 (기본 base target=_top 이라 같은 창으로 가던 것 막음) */
 document.addEventListener('click',function(e){var a=e.target&&e.target.closest&&e.target.closest('a[href]');if(!a)return;var h=a.getAttribute('href')||'';

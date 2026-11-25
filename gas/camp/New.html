@@ -762,7 +762,7 @@ document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)r
  if(d.act==='ensSave'){const E=S.ens;E.err=!E.name.trim()?'팀 이름을 넣어 주세요.':!E.n.trim()?'인원을 넣어 주세요.':!E.song.trim()||!E.comp.trim()?'곡명 · 작곡가를 넣어 주세요.':'';if(!E.err)E.done=true;render();return}
  if(d.act==='payRep'){S.paid=true;render();return}
  if(d.mf){S.mf=d.mf;render();return}
- if(d.medit!==undefined){const x=P.picked.find(y=>pkey(y)===d.medit);if(!x||!x.done){toast('고칠 사람을 찾지 못했어요',true);return}if(repOf(x)){toast('입금 신고한 사람은 고칠 수 없어요',true);return}x.edit=true;x.bak=JSON.stringify(inf(x));const f=inf(x);f.saved=false;f.err='';S.tab='info';render();const ix=P.picked.indexOf(x),el=document.getElementById('card'+ix);if(el)el.scrollIntoView({block:'start'});return}
+ if(d.medit!==undefined){const x=P.picked.find(y=>pkey(y)===d.medit);if(!x||!x.done){toast('고칠 사람을 찾지 못했어요',true);return}if(repOf(x)&&!repOf(x).ok){toast('입금 신고 중에는 고칠 수 없어요 · 확인된 뒤에 고쳐요',true);return}x.edit=true;x.bak=JSON.stringify(inf(x));const f=inf(x);f.saved=false;f.err='';S.tab='info';render();const ix=P.picked.indexOf(x),el=document.getElementById('card'+ix);if(el)el.scrollIntoView({block:'start'});return}
  if(d.fcx!==undefined){const x=P.picked[+d.fcx];if(x&&x.edit){try{Object.assign(inf(x),JSON.parse(x.bak||'{}'))}catch(e){}inf(x).saved=true;x.edit=false;delete x.bak}S.tab='mine';S.mv='pay';render();scrollTo(0,0);return}
  if(d.fedit!==undefined){inf(P.picked[+d.fedit]).saved=false;render();const el=document.getElementById('card'+d.fedit);if(el)el.scrollIntoView({block:'start'});return}
  if(d.fsave!==undefined){const ix=+d.fsave,x=P.picked[ix],f=inf(x),np=NOPLAY(x.k),stu=STU3(x.k);const c0=Object.keys(f.cons)[0],o=c0?f.cons[c0]:null;

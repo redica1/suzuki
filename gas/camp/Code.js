@@ -1,4 +1,4 @@
-/* build: 20261125-123843 */
+/* build: 20261125-124259 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -1109,6 +1109,51 @@ function parentDelHead(token, id, why) {
   try { parentMail_(r, '학원이 신청을 지웠어요', ['까닭: ' + w, '다시 신청하려면 신청서에서 고쳐 새로 보내 주세요.']); } catch (e) {}
   log_(u.name, '학부모 신청 삭제 (원장)', r.acad + ' · ' + r.name + ' · ' + w);
   return { ok: true, preq: parentFor_(u.heads || []) };
+}
+/* 11-25 원장: 입금 내역 PDF (① 학부모 → 학원 ② 학원 → 협회 캠프 신청) · A4 · 휴대전화 · 계좌 · 접수번호 없음 */
+function acadPayPdf(token, acad, o) {
+  const u = who_(token); acad = String(acad || ''); o = o || {};
+  if (!(u.heads || []).includes(acad)) throw new Error('입금 내역 PDF는 그 학원 원장님만 받을 수 있어요.');
+  const st = ['ok', 'wait'].includes(o.st) ? o.st : 'all', w1 = o.p !== false, w2 = o.c !== false;
+  const E = v => String(v == null ? '' : v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const W = n => (+n || 0).toLocaleString('ko-KR'), md = v => String(v || '').slice(5, 10) || '-';
+  const C = camp_(), now = Utilities.formatDate(new Date(), TZ, 'yyyy-MM-dd HH:mm'), all = loadSubs_();
+  const TH = 'background:#e3f2f1;border:1px solid #b9cfcd;padding:4px 5px;font-size:9.5pt;', TD = 'border:1px solid #cfd8d8;padding:4px 5px;font-size:9.5pt;text-align:center;', TL = TD + 'text-align:left;', TR = TD + 'text-align:right;', TF = 'background:#f1f5f5;font-weight:bold;';
+  const box = L => '<table style="width:100%;border-collapse:collapse;margin:4px 0 6px"><tr>' + L.map(x => '<td style="border:1px solid #cfd8d8;padding:5px 8px;font-size:9.5pt;color:#555">' + E(x[0]) + '<br><b style="font-size:12pt;color:#111">' + E(x[1]) + '</b></td>').join('') + '</tr></table>';
+  const tbl = (H, rows, foot) => '<table style="width:100%;border-collapse:collapse"><tr>' + H.map(h => '<th style="' + TH + '">' + E(h) + '</th>').join('') + '</tr>' + rows.join('') + (foot || '') + '</table>';
+  let h1 = '', h2 = '';
+  if (w1) {
+    const AR = acadRounds_(acad, C), L = [];
+    parentFor_([acad]).forEach(r => { const reps = (r.m && r.m.reps) || [], bill = (r.sub && r.sub.total) || 0, kids = ((r.d || {}).kids || []).map(k => k.name).filter(Boolean).join(' · ');
+      if ((r.m && r.m.cx && (r.m.cx.st === '취소' || r.m.cx.st === '처리'))) return;
+      if (!reps.length) { L.push({ g: r.name, k: kids, nm: '', d: '', rd: '', bill, amt: 0, st: '전' }); return; }
+      reps.forEach(p => { const j = acadRi_(AR, p.date); L.push({ g: r.name, k: kids, nm: p.nm || '', d: p.date || '', rd: (AR[j] || {}).n || '', bill, amt: +p.amt || 0, st: p.st || '신고' }); }); });
+    const V = L.filter(x => st === 'all' || (st === 'ok' ? x.st === '확인' : x.st === '신고'));
+    const tb = V.reduce((t, x) => t + x.bill, 0), ta = V.reduce((t, x) => t + (x.st === '반려' ? 0 : x.amt), 0), tok = V.reduce((t, x) => t + (x.st === '확인' ? x.amt : 0), 0);
+    h1 = '<h2 style="font-size:12pt;color:#0b6f6c;margin:14px 0 4px">① 학부모 → 학원 입금</h2>' + box([['신청', V.length + '건'], ['낼 금액', W(tb) + '원'], ['입금 신고', W(ta) + '원'], ['확인한 돈', W(tok) + '원']]) +
+      (V.length ? tbl(['보호자', '학생', '입금자명', '입금일', '학원 차수', '낼 금액', '입금 신고', '차이', '상태'], V.map(x => { const df = x.bill && x.st !== '전' ? x.amt - x.bill : 0;
+        return '<tr><td style="' + TL + '"><b>' + E(x.g) + '</b></td><td style="' + TL + '">' + E(x.k) + '</td><td style="' + TD + '">' + E(x.nm || '-') + '</td><td style="' + TD + '">' + md(x.d) + '</td><td style="' + TD + '">' + E(x.rd || '-') + '</td><td style="' + TR + '">' + (x.bill ? W(x.bill) : '담기 전') + '</td><td style="' + TR + '">' + (x.amt ? W(x.amt) : '-') + '</td><td style="' + TR + '">' + (!df ? '-' : df < 0 ? '<span style="color:#b4423a">' + W(-df) + ' 모자람</span>' : '<span style="color:#2f7a4b">' + W(df) + ' 더 냄</span>') + '</td><td style="' + TD + '">' + (x.st === '확인' ? '확인' : x.st === '신고' ? '확인 기다림' : x.st === '반려' ? '반려' : '입금 전') + '</td></tr>'; }),
+        '<tr><td colspan="5" style="' + TL + TF + '">합계 (' + V.length + '건)</td><td style="' + TR + TF + '">' + W(tb) + '</td><td style="' + TR + TF + '">' + W(ta) + '</td><td style="' + TD + TF + '"></td><td style="' + TD + TF + '"></td></tr>') : '<p style="color:#888">없어요.</p>');
+  }
+  if (w2) {
+    const L = [];
+    all.filter(sb => sb.acad === acad).forEach(sb => sb.ppl.forEach(p => { if (p.status !== '정상' && p.status !== '취소요청') return;
+      const bill = (+p.fee || 0) + (+p.lesson || 0) + (+p.dues || 0) + (+p.room || 0), paid = +p.paidAmt || 0, rw = p.rep && p.rep.rows && p.rep.rows[p.id] || {};
+      const s2 = bill && paid >= bill ? '확인' : p.pay === '신고' ? '신고' : paid > 0 ? '일부' : '전';
+      L.push({ n: p.name, kind: p.kind === '가족' ? (p.type || '가족') : p.kind || '', inst: p.inst || '', who: sb.owner, bill, rep: rw.date || (p.rep && p.rep.date) || '', paid, st: s2, cx: p.status === '취소요청' }); }));
+    const V = L.filter(x => st === 'all' || (st === 'ok' ? x.st === '확인' : x.st === '신고'));
+    const cb = V.reduce((t, x) => t + x.bill, 0), cp = V.reduce((t, x) => t + x.paid, 0);
+    h2 = '<h2 style="font-size:12pt;color:#0b6f6c;margin:16px 0 4px">② 학원 → 협회 입금 (캠프 신청)</h2>' + box([['참가자', V.length + '명'], ['청구', W(cb) + '원'], ['협회 확인', W(cp) + '원'], ['남은 돈', W(Math.max(0, cb - cp)) + '원']]) +
+      (V.length ? tbl(['이름', '구분', '악기', '접수 교사', '청구', '신고일', '협회 확인', '상태'], V.map(x => '<tr><td style="' + TL + '"><b>' + E(x.n) + '</b>' + (x.cx ? ' <span style="color:#a86a00">(취소 요청)</span>' : '') + '</td><td style="' + TD + '">' + E(x.kind) + '</td><td style="' + TD + '">' + E(x.inst || '-') + '</td><td style="' + TD + '">' + E(x.who) + '</td><td style="' + TR + '">' + W(x.bill) + '</td><td style="' + TD + '">' + md(x.rep) + '</td><td style="' + TR + '">' + (x.paid ? W(x.paid) : '-') + '</td><td style="' + TD + '">' + (x.st === '확인' ? '입금 확인' : x.st === '신고' ? '신고 · 확인 중' : x.st === '일부' ? '일부 확인' : '<span style="color:#b4423a">입금 전</span>') + '</td></tr>'),
+        '<tr><td colspan="4" style="' + TL + TF + '">합계 (' + V.length + '명)</td><td style="' + TR + TF + '">' + W(cb) + '</td><td style="' + TD + TF + '"></td><td style="' + TR + TF + '">' + W(cp) + '</td><td style="' + TD + TF + '"></td></tr>') : '<p style="color:#888">없어요.</p>');
+  }
+  const html = '<html><head><meta charset="utf-8"><style>@page{size:A4;margin:14mm 12mm}body{font-family:"Noto Sans KR","Malgun Gothic",sans-serif;color:#111;font-size:10pt}</style></head><body>' +
+    '<table style="width:100%;border-bottom:2px solid #0f8a86;margin-bottom:8px"><tr><td style="padding-bottom:6px"><b style="font-size:15pt">' + E(C.base.name || '캠프') + ' · 입금 내역</b><br><span style="color:#555;font-size:9pt">' + E(acad) + ' · 출력 ' + now + ' · ' + (st === 'all' ? '전체' : st === 'ok' ? '확인된 것만' : '확인 기다림만') + '</span></td><td style="text-align:right;color:#555;font-size:9pt;vertical-align:bottom;padding-bottom:6px">한국스즈키음악협회<br>학원 보관용</td></tr></table>' +
+    (h1 || '') + (h2 || '') + '<p style="text-align:right;margin-top:20px">확인 &nbsp; <span style="display:inline-block;min-width:140px;border-bottom:1px solid #999;text-align:right">원장 ' + E(u.name) + '</span></p></body></html>';
+  const name = acad + '_입금내역_' + Utilities.formatDate(new Date(), TZ, 'MMdd') + '.pdf';
+  const pdf = Utilities.newBlob(html, 'text/html', 'p.html').getAs('application/pdf');
+  log_(u.name, '입금 내역 PDF', acad + ' · ' + st);
+  return { name, b64: Utilities.base64Encode(pdf.getBytes()) };
 }
 function parentMark(token, id) {
   const u = who_(token), r = parentRows_().find(x => x.id === String(id));

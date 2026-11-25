@@ -1,4 +1,4 @@
-<!doctype html><!-- build: 20261125-134959 --><html lang="ko"><head><meta charset="utf-8"><link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"><meta name="viewport" content="width=device-width,initial-scale=1">
+<!doctype html><!-- build: 20261126-002719 --><html lang="ko"><head><meta charset="utf-8"><link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
 <style>
 /* 학부모 신청 (11-15): 학원 다니는 학생의 보호자가 회원가입 없이 「간다 / 안 간다」와 같이 가는 가족 이름만 학원 선생님께 보냄 */
@@ -344,7 +344,7 @@ new MutationObserver(()=>{clearTimeout(uiEsplitAll.t);uiEsplitAll.t=setTimeout(u
 try{uiEsplitAll()}catch(e){}
 window.addEventListener('beforeunload',function(e){if(S.dirty){e.preventDefault();e.returnValue=''}});
 /* 학원 전용 주소 parent.html?a=학원 (11-23): 켠 학원이면 그 학원으로 고정 · 아니면 안내 · 켠 학원이 1곳이면 그곳으로 고정 */
-function acadFromUrl(){var L=S.I.acads||[];if(L.length===1){S.lockA=L[0];S.ac=L[0]}try{google.script.url.getLocation(function(l){var a=String(((l&&l.parameter)||{}).a||'').trim();if(!a)return;if(L.indexOf(a)>=0){S.lockA=a;S.ac=a;S.badA=''}else{S.badA=a}render()})}catch(x){}}
+function acadFromUrl(){var L=S.I.acads||[];if(L.length===1){S.lockA=L[0];S.ac=L[0]}try{google.script.url.getLocation(function(l){var q=(l&&l.parameter)||{},a=String(q.a||'').trim();if(!a&&q.s)a=(S.I.slugs||{})[String(q.s).trim()]||'';if(!a)return;if(L.indexOf(a)>=0){S.lockA=a;S.ac=a;S.badA=''}else{S.badA=a}render()})}catch(x){}}
 google.script.run.withSuccessHandler(function(r){S.I=r;setReq(null);acadFromUrl();var sv=null;try{sv=JSON.parse(localStorage.getItem('pqLogin')||'null')}catch(x){}if(sv&&sv.nm&&sv.ph&&sv.pw){S.nm=sv.nm;S.ph=sv.ph;S.em=sv.em||'';S.pw=sv.pw;setTimeout(function(){render();if(document.getElementById('go1'))go1()},0)}if(r.camp){document.getElementById('ttl').textContent=(r.camp.name||'캠프')+' · 학부모 신청';var c=r.camp;document.getElementById('sub').textContent=(c.start?md(c.start)+' ~ '+md(c.end)+' · ':'')+'학원에 다니는 학생의 캠프 참가를 학원 선생님께 알려요'}render()}).withFailureHandler(function(e){document.getElementById('app').innerHTML='<div class="card err">'+esc((e&&e.message)||e)+'</div>'}).parentInit();
 
 /* 이용 안내 (11-15): 캠프 접수 안내 「학부모 신청 (학부모가 하는 일)」과 같은 글 */

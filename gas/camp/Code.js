@@ -1,4 +1,4 @@
-/* build: 20261125-134959 */
+/* build: 20261126-002719 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -758,8 +758,20 @@ function parentPilot_() { const v = String(setting_('학부모 신청 학원') |
 function parentOk_(a) { const p = parentPilot_(); return p === null || p.includes(a); }
 /* 학부모 신청 학원 (11-23): 관리자가 학원마다 켜고 끔 → 설정 「학부모 신청 학원」. 신청 주소 = parent.html?a=학원 (STG 는 &test) */
 /* 11-24 학원별 짧은 주소 + 학원 공유 그림이 있는 학원 (camp/p/○○.html) */
-const PARENT_SLUG = { '마포스즈키': 'mapo', '미사스즈키': 'misa' };
-function parentLink_(acad) { const stg = !!String(setting_('테스트 로그인') || '').trim(), sl = PARENT_SLUG[acad]; return sl ? 'https:\/\/app.suzukimusickorea.org/camp/p/' + sl + '.html' + (stg ? '?test' : '') : 'https:\/\/app.suzukimusickorea.org/camp/parent.html?a=' + encodeURIComponent(acad) + (stg ? '&test' : ''); }
+/* 11-26 학원 이름 → 영어 주소 (로마자 · 음절마다). 깃허브 camp/p/<영어>.html 은 같은 규칙으로 만듦 · 파일이 없어도 404.html 이 열어 줌 */
+const SLUG_FIX = { '마포스즈키': 'mapo', '미사스즈키': 'misa' };
+function slugOf_(name) {
+  name = String(name || '').trim(); if (SLUG_FIX[name]) return SLUG_FIX[name];
+  const I = ['g','kk','n','d','tt','r','m','b','pp','s','ss','','j','jj','ch','k','t','p','h'], V = ['a','ae','ya','yae','eo','e','yeo','ye','o','wa','wae','oe','yo','u','wo','we','wi','yu','eu','ui','i'], F = ['','k','k','k','n','n','n','t','l','k','m','l','l','l','p','l','m','p','p','t','t','ng','t','t','k','t','p','t'];
+  let s = name.replace(/스즈키/g, ' ').replace(/플루트/g, ' flute ').replace(/클래스/g, ' class ');
+  let out = '';
+  for (const ch of s) { const c = ch.charCodeAt(0);
+    if (c >= 0xAC00 && c <= 0xD7A3) { const k = c - 0xAC00, i = Math.floor(k / 588), v = Math.floor((k % 588) / 28), f = k % 28; let ini = I[i]; if (i === 5 && (!out || /[- ]$/.test(out))) ini = 'r'; out += ini + V[v] + F[f]; }
+    else if (/[A-Za-z0-9]/.test(ch)) out += ch.toLowerCase(); else out += ' '; }
+  return out.trim().replace(/\s+/g, '-').replace(/-+/g, '-') || 'acad';
+}
+const PARENT_SLUG = SLUG_FIX;
+function parentLink_(acad) { const stg = !!String(setting_('테스트 로그인') || '').trim(); return 'https:\/\/app.suzukimusickorea.org/camp/p/' + slugOf_(acad) + '.html' + (stg ? '?test' : ''); }
 function parentPilotData(token) {
   const a = adm_(token); needCamp_(a, true);
   const open = acadOpen_(), set = {}, head = {};
@@ -791,7 +803,7 @@ function parentInit() {
   const mcs = profPublic_().filter((p, i, a) => p.mc && a.findIndex(q => q.mc && q.n === p.n && q.i === p.i) === i).map(p => ({ n: p.n, i: p.i, min: +p.min || 45, fee: +p.fee || 0 }));
   return { ok: true, open: C.base.member !== false && pa.length > 0, acads: pa, mcs, lessonMax: OPT.lessonMax, camp: { name: C.base.name, start: C.base.start, end: C.base.end, place: C.base.place }, consent: (C.consent.items || []).filter(x => x.on), refund: C.refund, roomCap: (C.opt || {}).roomCap || 4,
     /* 예상 참가비 (11-15): 학생 · 첫 보호자 · 동반가족 · 15개월 미만 × 차수, 지금 차수, 학생 회비 · 가족방 빈 자리 · 추가레슨 */
-    price: { fees: ['학생', '회원의 첫번째 보호자', '회원의 그외 악기 안하는 동반가족', '동반가족 중 15개월 미만'].reduce((o, k) => { o[k] = C.fees[k] || []; return o; }, {}), rounds: C.rounds.map(r => ({ n: r.n, from: r.from, to: r.to })), ri: curRound_(C), dues: +(C.opt || {}).studentDues || 0, empty: +(C.opt || {}).roomEmptyFee || 0, lesson: +(C.opt || {}).lessonFee || 0, busBy: pa.reduce((o, a) => { const b = acadBank_(a); o[a] = (b && b.bus) || { r: 0, g: 0, b: 0, off: false, one: true }; return o; }, {}), roundsBy: pa.reduce((o, a) => { o[a] = acadRounds_(a, C).map(r => ({ n: r.n, from: r.from, to: r.to })); return o; }, {}) } };
+    price: { fees: ['학생', '회원의 첫번째 보호자', '회원의 그외 악기 안하는 동반가족', '동반가족 중 15개월 미만'].reduce((o, k) => { o[k] = C.fees[k] || []; return o; }, {}), rounds: C.rounds.map(r => ({ n: r.n, from: r.from, to: r.to })), ri: curRound_(C), dues: +(C.opt || {}).studentDues || 0, empty: +(C.opt || {}).roomEmptyFee || 0, lesson: +(C.opt || {}).lessonFee || 0, busBy: pa.reduce((o, a) => { const b = acadBank_(a); o[a] = (b && b.bus) || { r: 0, g: 0, b: 0, off: false, one: true }; return o; }, {}), roundsBy: pa.reduce((o, a) => { o[a] = acadRounds_(a, C).map(r => ({ n: r.n, from: r.from, to: r.to })); return o; }, {}) }, slugs: pa.reduce((o, a) => { o[slugOf_(a)] = a; return o; }, {}) };
 }
 function parentWho_(tok) { const v = tok && CacheService.getScriptCache().get('pt_' + tok); if (!v) throw new Error('들어온 지 오래되어 끊겼어요. 처음 화면에서 다시 들어와 주세요.'); return JSON.parse(v); }
 function parentOut_(r) { return r ? { id: r.id, acad: r.acad, name: r.name, d: r.d, at0: r.at0, at: r.at, st: r.st, byAt: r.byAt, m: r.m || {}, bank: acadBank_(r.acad), sub: parentSub_(r.id, null, r) } : null; }

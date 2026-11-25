@@ -1,4 +1,4 @@
-/* build: 20261125-122349 */
+/* build: 20261125-122737 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -837,7 +837,7 @@ function parentSave(tok, d) {
   try {
     const sh = parentSheet_(), L = parentRows_(), had = L.find(r => r.phone === u.ph && r.acad === u.ac);
     const ph = "'" + u.ph.replace(/(\d{3})(\d{3,4})(\d{4})/, '$1-$2-$3'), j = JSON.stringify(x);
-    if (had) { sh.getRange(had._row, 2, 1, 7).setValues([[u.ac, u.nm, ph, j, had.at0, stamp_(), had.st === '담음' ? '바뀜' : had.st === '바뀜' ? '바뀜' : '보냄']]); if (had.st === '취소' && had.m && had.m.cx) { delete had.m.cx; sh.getRange(had._row, 12).setValue(JSON.stringify(had.m)); } }   /* 취소한 뒤 다시 보내면 새로 참가 */
+    if (had) { sh.getRange(had._row, 2, 1, 7).setValues([[u.ac, u.nm, ph, j, had.at0, stamp_(), had.st === '담음' ? '바뀜' : had.st === '바뀜' ? '바뀜' : '보냄']]); if (had.st === '취소' && had.m && had.m.cx) { delete had.m.cx; sh.getRange(had._row, 12).setValue(JSON.stringify(had.m)); } if (had.m && (had.m.del || had.m.ed)) { delete had.m.del; delete had.m.ed; sh.getRange(had._row, 12).setValue(JSON.stringify(had.m)); } }   /* 취소한 뒤 다시 보내면 새로 참가 */
     else { const id = 'P' + String(L.reduce((m, r) => Math.max(m, +r.id.slice(1) || 0), 0) + 1).padStart(4, '0'); sh.appendRow([id, u.ac, u.nm, ph, j, stamp_(), stamp_(), '보냄', '', '']); }
     out = parentRows_().find(r => r.phone === u.ph && r.acad === u.ac);
   } finally { lock.releaseLock(); }
@@ -1069,13 +1069,46 @@ function parentCxDo(token, id, act, amt, note) {
   return { ok: true, preq: parentFor_(u.heads || []) };
 }
 /* 선생님 화면에 보내는 학부모 신청 (그 학원 것만, 휴대전화는 그 학원 선생님에게만) */
-function parentFor_(acads) { try { acads = acads.filter(parentOk_); if (!acads.length) return []; const L = parentRows_().filter(r => acads.includes(r.acad)); const all = L.length ? loadSubs_() : []; return L.map(r => ({ id: r.id, acad: r.acad, name: r.name, phone: r.phone.replace(/(\d{3})(\d{3,4})(\d{4})/, '$1-$2-$3'), d: r.d, at: r.at, st: r.st, by: r.by, byAt: r.byAt, m: r.m || {}, sub: parentSub_(r.id, all, r) })); } catch (e) { return []; } }
+function parentFor_(acads) { try { acads = acads.filter(parentOk_); if (!acads.length) return []; const L = parentRows_().filter(r => acads.includes(r.acad) && r.st !== '삭제'); const all = L.length ? loadSubs_() : []; return L.map(r => ({ id: r.id, acad: r.acad, name: r.name, phone: r.phone.replace(/(\d{3})(\d{3,4})(\d{4})/, '$1-$2-$3'), d: r.d, at: r.at, st: r.st, by: r.by, byAt: r.byAt, m: r.m || {}, sub: parentSub_(r.id, all, r) })); } catch (e) { return []; } }
 /* 11-24 관리자: 학부모 신청 보기 (보기만 · 휴대전화는 뒤 4자리) */
 function adminParentList(token) {
   adm_(token);
   const L = parentRows_(), all = L.length ? loadSubs_() : [];
   return L.map(r => ({ id: r.id, acad: r.acad, name: r.name, ph4: r.phone.slice(-4), d: r.d, at0: r.at0, at: r.at, st: r.st, by: r.by, byAt: r.byAt,
     reps: ((r.m || {}).reps || []).map(x => ({ st: x.st, amt: x.amt, date: x.date })), cx: (r.m || {}).cx ? { st: r.m.cx.st } : null, sub: parentSub_(r.id, all, r) }));
+}
+/* 11-25 원장: 학부모 신청 고치기 · 삭제 (담기 전만 · 보호자 이름 · 휴대전화는 못 고침) */
+function parentHeadRow_(token, id) {
+  const u = who_(token), r = parentRows_().find(x => x.id === String(id));
+  if (!r || !(u.heads || []).includes(r.acad)) throw new Error('학부모 신청은 그 학원 원장님만 고칠 수 있어요.');
+  if (r.st === '담음') throw new Error('접수에 담은 신청이에요. 「내 신청 내역」에서 고쳐 주세요.');
+  if (r.st === '삭제') throw new Error('이미 지운 신청이에요.');
+  return { u, r };
+}
+function parentEditHead(token, id, d, memo) {
+  const { u, r } = parentHeadRow_(token, id), x = parentClean_(Object.assign({}, r.d || {}, d || {}, { me: Object.assign({}, (r.d || {}).me || {}, (d || {}).me || {}) }));
+  if (!x.kids.length) throw new Error('아이를 1명 이상 넣어 주세요.');
+  if (x.kids.some(k => !k.name || !k.inst || k.age === '')) throw new Error('아이마다 이름 · 전공 · 나이를 넣어 주세요.');
+  const note = String(memo || '').replace(/[\r|]/g, ' ').trim().slice(0, 200);
+  const lock = lock_();
+  try { const sh = parentSheet_(), m = r.m || {}; m.ed = { by: u.name, at: stamp_(), memo: note };
+    sh.getRange(r._row, 5).setValue(JSON.stringify(x)); sh.getRange(r._row, 7).setValue(stamp_()); sh.getRange(r._row, 12).setValue(JSON.stringify(m));
+  } finally { lock.releaseLock(); }
+  try { const r2 = parentRows_().find(y => y.id === r.id); parentMail_(r2, '학원이 신청 내용을 고쳤어요', ['아이: ' + x.kids.map(k => k.name + '(' + k.inst + ', 만 ' + k.age + '세)').join(', '), x.fam.length ? '같이 가는 가족: ' + x.fam.map(f => f.name + '(' + f.type + ')').join(', ') : '', note ? '학원이 남긴 말: ' + note : '', '바꿀 게 있으면 신청서에서 고쳐 다시 보내 주세요.'].filter(Boolean)); } catch (e) {}
+  log_(u.name, '학부모 신청 고침 (원장)', r.acad + ' · ' + r.name);
+  return { ok: true, preq: parentFor_(u.heads || []) };
+}
+function parentDelHead(token, id, why) {
+  const { u, r } = parentHeadRow_(token, id), w = String(why || '').replace(/[\r|]/g, ' ').trim().slice(0, 100);
+  if (!w) throw new Error('지우는 까닭을 넣어 주세요.');
+  if (((r.m || {}).reps || []).some(x => x.st === '확인')) throw new Error('입금을 확인한 신청이에요. 삭제 대신 취소 · 환불로 처리해 주세요.');
+  const lock = lock_();
+  try { const sh = parentSheet_(), m = r.m || {}; m.del = { by: u.name, at: stamp_(), why: w };
+    sh.getRange(r._row, 7, 1, 2).setValues([[stamp_(), '삭제']]); sh.getRange(r._row, 12).setValue(JSON.stringify(m));
+  } finally { lock.releaseLock(); }
+  try { parentMail_(r, '학원이 신청을 지웠어요', ['까닭: ' + w, '다시 신청하려면 신청서에서 고쳐 새로 보내 주세요.']); } catch (e) {}
+  log_(u.name, '학부모 신청 삭제 (원장)', r.acad + ' · ' + r.name + ' · ' + w);
+  return { ok: true, preq: parentFor_(u.heads || []) };
 }
 function parentMark(token, id) {
   const u = who_(token), r = parentRows_().find(x => x.id === String(id));

@@ -1,4 +1,4 @@
-<!doctype html><!-- build: 20261125-122349 --><html lang="ko"><head><meta charset="utf-8"><link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"><meta name="viewport" content="width=device-width,initial-scale=1">
+<!doctype html><!-- build: 20261125-122737 --><html lang="ko"><head><meta charset="utf-8"><link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
 <style>
 /* 학부모 신청 (11-15): 학원 다니는 학생의 보호자가 회원가입 없이 「간다 / 안 간다」와 같이 가는 가족 이름만 학원 선생님께 보냄 */
@@ -79,7 +79,11 @@ function refundText(R){if(!R||!R.rules)return '';var p=null,L=R.rules.map(functi
   var A=R.after||{};if(p)L.push('- 그 뒤: '+(A.allow===false?'취소 불가':(+A.rate||0)+'% 환불'+((A.drate!=null&&A.drate!==''&&+A.drate!==+A.rate)?' (진단서 제출 시 '+A.drate+'%)':'')));return '취소하는 날에 따라 환불해요.\n'+L.join('\n')}
 function blank(){return {kids:[],fam:[],me:{go:false,gender:'',by:''},room:{fam:false,note:''},memo:''}}
 function seg(attr,i,val,opts,sm){return '<div class="seg'+(sm?' sm':'')+'" role="group">'+opts.map(function(o){return '<button type="button" '+attr+'="'+i+'|'+esc(o[0])+'" aria-pressed="'+(val===o[0])+'">'+esc(o[1])+'</button>'}).join('')+'</div>'}
-function stNote(){var r=S.req;if(!r)return '';var sub=r.sub,reps=((r.m||{}).reps||[]).filter(function(x){return x.st!=='반려'}),paid=reps.reduce(function(t,x){return t+x.amt},0);
+function stNote(){var r=S.req;if(!r)return '';var m0=r.m||{};
+  if(r.st==='삭제'){var dl=m0.del||{};return '<p class="note warn"><b>학원이 이 신청을 지웠어요</b> ('+esc(fdt(dl.at||r.at))+')'+(dl.why?' · 까닭: '+esc(dl.why):'')+'<br>다시 신청하려면 아래 내용을 고쳐 새로 보내 주세요.</p>'}
+  var edn=m0.ed?'<p class="note ok" style="margin-top:6px"><b>학원이 신청 내용을 고쳤어요</b> ('+esc(fdt(m0.ed.at))+')'+(m0.ed.memo?' · '+esc(m0.ed.memo):'')+'. 아래가 고친 내용이에요.</p>':'';
+  return stNote0(r)+edn}
+function stNote0(r){var sub=r.sub,reps=((r.m||{}).reps||[]).filter(function(x){return x.st!=='반려'}),paid=reps.reduce(function(t,x){return t+x.amt},0);
   if(sub){var ex=sub.ppl.reduce(function(t,p){return t+p.lesson},0),due=sub.total-paid;return '<p class="note '+(due>0?'warn':'ok')+'"><b>학원이 접수했어요 (접수번호 '+esc(sub.no)+').</b> 확정 금액 <b>'+won(sub.total)+'</b>'+(ex?' (추가레슨 · 마스터클래스 '+won(ex)+' 포함)':'')+(due>0?' · <b>더 보낼 금액 '+won(due)+'</b> — 아래 「입금 · 입금 신고」에서 보내고 신고해 주세요.':due<0?' · 더 낸 금액 '+won(-due):' · 다 냈어요.')+'</p>'}
   if(r.st==='담음')return '<p class="note ok"><b>학원 선생님이 접수에 담았어요.</b> 바꿀 게 있으면 고쳐서 다시 보내 주세요. 선생님께 「바뀜」으로 알려져요.</p>';
   return '<p class="note ok"><b>학원 선생님께 보냈어요</b> ('+esc(fdt(r.at))+'). 고칠 게 있으면 고쳐서 다시 보내면 돼요.</p>'}
@@ -227,7 +231,7 @@ function vStep1(){var I=S.I;if(!I.open)return '<div class="card"><h2>지금은 �
     '<label class="ck" style="margin:4px 0 14px"><input type="checkbox" id="sv" '+(S.sv?'checked':'')+'><span>이 기기에 저장 <span class="opt">내 휴대폰이면 다음에 바로 들어와요 · 같이 쓰는 기기면 끄세요</span></span></label>'+
     (S.err?'<p class="err">'+esc(S.err)+'</p>':'')+'<button class="btn primary wide" type="button" id="go1">확인</button></div>'}
 function mineCard(){var r=S.req;if(!r||!r.id)return '<p class="note">처음 신청이에요. 아래를 채워 보내 주세요.</p>';var d=r.d||{},m=r.m||{};
-  var st=r.st==='취소'?'취소함':r.sub?'학원이 접수함 ('+r.sub.no+')':r.st==='담음'?'학원이 담는 중':'학원에 보냄';
+  var st=r.st==='삭제'?'학원이 지움':r.st==='취소'?'취소함':r.sub?'학원이 접수함 ('+r.sub.no+')':r.st==='담음'?'학원이 담는 중':'학원에 보냄';
   return '<div class="card mine"><h3>내 신청</h3><table class="pt"><tbody><tr><td>상태</td><td class="r"><b>'+esc(st)+'</b></td></tr><tr><td>학원</td><td class="r">'+esc(r.acad)+'</td></tr><tr><td>학생</td><td class="r">'+esc((d.kids||[]).map(function(k){return k.name}).join(', '))+'</td></tr><tr><td>같이 가는 가족</td><td class="r">'+esc([(d.me||{}).go===false?'':r.name].concat((d.fam||[]).map(function(f){return f.name})).filter(Boolean).join(', ')||'-')+'</td></tr>'+
     (r.sub?'<tr><td>확정 금액</td><td class="r"><b>'+won(r.sub.total)+'</b>'+(m.prevTotal!=null&&m.prevTotal!==r.sub.total?'<br><small class="opt">'+won(m.prevTotal)+'에서 바뀜</small>':'')+'</td></tr>':'')+
     '<tr><td>마지막으로 보낸 때</td><td class="r">'+esc(fdt(r.at))+'</td></tr></tbody></table><p class="hint" style="margin:8px 0 0">고칠 게 있으면 아래에서 고쳐 다시 보내요. 입금 · 취소는 아래 「입금 · 입금 신고」 · 「취소 · 환불」에서.</p></div>'}

@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261126-002719 -->
+<!-- build: 20261126-003005 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -2297,7 +2297,7 @@ function ppPanel(){
 document.addEventListener('click',e=>{
   const b=e.target.closest('[data-ppon]');
   if(b&&S.PP){const a=b.dataset.ppon,cur=S.PP.list.filter(x=>x.on).map(x=>x.a),nx=cur.includes(a)?cur.filter(x=>x!==a):cur.concat([a]);
-    call('parentPilotSet',[nx],r=>{S.PP=r;render();toast(a+(nx.includes(a)?' 학부모 신청을 켰어요':' 학부모 신청을 껐어요'))},'저장하는 중…');return}
+    call('parentPilotSet',[nx],r=>{S.PP=r;render();toast(a+(nx.includes(a)?' 학부모 신청을 켰어요'+(r&&r.made?' · 영어 주소 페이지를 만들었어요 (1~2분 뒤 열려요)':''):' 학부모 신청을 껐어요'))},'저장하는 중…');return}
   const c=e.target.closest('[data-ppcp]');
   if(c){const u=c.dataset.ppcp;try{navigator.clipboard.writeText(u).then(()=>toast('주소를 복사했어요'),()=>toast('주소를 길게 눌러 복사해 주세요'))}catch(x){toast('주소를 길게 눌러 복사해 주세요')}}
 });

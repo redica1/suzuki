@@ -1,4 +1,4 @@
-/* build: 20261126-002719 */
+/* build: 20261126-003005 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -782,13 +782,37 @@ function parentPilotData(token) {
     .map(x => ({ a: x, head: head[x] || '', on: all || p.includes(x), url: parentLink_(x) }));
   return { ok: true, all, list, stg: !!String(setting_('테스트 로그인') || '').trim() };
 }
+/* 11-26 학원별 학부모 신청 페이지 HTML (공유 미리보기 = 글자: 「학원 학부모 접수」) — 깃허브 camp/p 파일도 같은 모양 */
+function parentPage_(tpl, name, slug, img) {
+  const E = s => String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const t = name + ' 학부모 접수', d = '2027 스즈키 겨울 음악제 · ' + name + ' 학생의 캠프 참가를 신청해요. 회원가입 없이 보호자 이름 · 휴대전화로.', u = 'https://app.suzukimusickorea.org/camp/p/' + slug + '.html';
+  let h = String(tpl).replace(/<title>[^<]*<\/title>/, '<title>' + E(t) + ' · 스즈키 겨울 음악제</title>')
+    .replace(/<meta name="description" content="[^"]*">/, '<meta name="description" content="' + E(d) + '">')
+    .replace(/<meta property="og:title" content="[^"]*">/, '<meta property="og:title" content="' + E(t) + '">')
+    .replace(/<meta property="og:description" content="[^"]*">/, '<meta property="og:description" content="' + E(d) + '">')
+    .replace(/<meta property="og:url" content="[^"]*">/, '<meta property="og:url" content="' + u + '">')
+    .replace(/APP \+= '&a=' \+ encodeURIComponent\('[^']*'\);[^\n]*/, "APP += '&a=' + encodeURIComponent('" + String(name).replace(/[\\']/g, '') + "');   // " + String(name).replace(/[\r\n]/g, '') + ' 학부모 신청 (영어 주소 ' + slug + ')');
+  if (img) h = h.replace(/<meta property="og:image" content="[^"]*">/, '<meta property="og:image" content="' + img + '">');
+  return h;
+}
+/* 11-26 학부모 신청을 ON 한 학원의 영어 주소 페이지가 깃허브에 없으면 만들어 줌 (토큰 없으면 건너뜀 · 그래도 404.html 이 열어 줌) */
+function parentPagesEnsure_(acads) {
+  if (!ogTok_()) return 0; let made = 0;
+  try { const L = ogGh_('get', 'camp/p') || [], have = {}; L.forEach(f => { have[f.name] = 1; });
+    const need = acads.filter(a => !have[slugOf_(a) + '.html']); if (!need.length) return 0;
+    const tf = ogGh_('get', 'camp/p/misa.html'); if (!tf) return 0; const tpl = Utilities.newBlob(Utilities.base64Decode(tf.content.replace(/\n/g, ''))).getDataAsString('UTF-8');
+    need.slice(0, 20).forEach(a => { const sl = slugOf_(a); ogGh_('put', 'camp/p/' + sl + '.html', { message: '학부모 신청 페이지 만듦 · ' + a, content: Utilities.base64Encode(parentPage_(tpl, a, sl, OG_BASE + 'camp/og-poster.jpg?v=10'), Utilities.Charset.UTF_8) }); made++; });
+  } catch (e) { Logger.log('학부모 페이지 만들기: ' + e.message); }
+  return made;
+}
 function parentPilotSet(token, acads) {
   const a = adm_(token); needCamp_(a);
   const L = (Array.isArray(acads) ? acads : []).map(x => String(x || '').replace(/,/g, ' ').trim().slice(0, 40)).filter((x, i, o) => x && o.indexOf(x) === i).slice(0, 300);
   ensureSettings_(); const sh = SpreadsheetApp.getActive().getSheetByName('설정'), r = rows_('설정').find(x => String(x['항목']) === '학부모 신청 학원'), v = L.join(', ');
   if (r) sh.getRange(r._row, 2).setValues([[v]]); else sh.appendRow(['학부모 신청 학원', v, '학부모 신청을 받는 학원 (쉼표로) · 비우면 아무 학원도 안 받음 · 전체 = 모든 학원']);
   log_('관리자 ' + a.name, '설정 바꿈', '학부모 신청 학원 = ' + (v || '(없음)')); setMemoClear_();
-  return parentPilotData(token);
+  const made = parentPagesEnsure_(L.filter(x => x !== '전체'));
+  return Object.assign(parentPilotData(token), { made });
 }
 function parentAcads_() {
   const open = acadOpen_(), set = {};

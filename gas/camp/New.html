@@ -387,12 +387,24 @@ function vMinePay(){let sum=0;const scope=S.scope||'mine',isHead=(S.role||'head'
   <td><span class="actc">${rp&&rp.ok?'<span class="pill ok" style="white-space:nowrap">입금 확인 · 수정 불가</span>':rp?'<span class="pill wait" style="white-space:nowrap">입금 신고 중 · 수정 불가</span>':''}${ed?`<button class="btn sm" type="button" data-medit="${esc(pkey(x))}">고치기</button>`:'<button class="btn sm" type="button" data-view="1">보기</button>'}</span></td></tr>`}).join('');
  const all=LS.length&&LS.every((x,i)=>!canEd(x)||(S.mck&&S.mck[i]));
  return `<div class="panel"><div class="spread"><h2>내 신청 내역</h2>${(()=>{const V=Object.values(S.prep||{}),a=V.filter(v=>v.ok).length,b=V.length-a;return '<span>'+(b?`<span class="pill wait">입금 확인 중 ${b}명</span> `:'')+(a?`<span class="pill ok">입금 확인 ${a}명</span>`:'')+(V.length?'':'<span class="pill wait">입금 전</span>')+'</span>'})()}</div>
- ${top2}<p class="hint">${ACAD} · ${esc(WHO)} ${isHead?'원장님':'선생님'} · 1차 (12월 1일 ~ 7일) · 7일까지 입금하면 1차 금액이에요.</p>
+ ${top2}${mmBoxN()}<p class="hint">${ACAD} · ${esc(WHO)} ${isHead?'원장님':'선생님'} · 1차 (12월 1일 ~ 7일) · 7일까지 입금하면 1차 금액이에요.</p>
  ${LS.length?chips+`<div class="tbl"><table class="mineT"><thead><tr><th></th><th>접수 시간</th>${scope==='all'?'<th>접수 교사</th>':''}<th>이름</th><th>악기</th><th class="r">청구</th><th></th></tr></thead><tbody>${rows}</tbody>
  <tfoot><tr><td colspan="${scope==='all'?5:4}" style="text-align:left"><button class="btn sm" type="button" data-act="mckAll">${all?'전체 해제':'전체 선택'}</button> <b style="margin-left:8px">${mf==='전체'&&!mi?LS.length+'명':[mf==='전체'?'':mf,mi].filter(Boolean).join(' · ')+' '+shown+'명 · 전체 '+LS.length+'명'}</b></td><td class="r"><b style="font-size:17px">${won(ssum)}</b></td><td></td></tr></tfoot></table></div>`:'<p class="hint">아직 신청한 사람이 없어요. 「캠프 신청하기」에서 시작해요.</p>'}</div>
  <div class="panel"><div class="spread"><b>입금하실 금액</b><b class="num" style="font-size:20px">${won(sum)}</b></div>
  <p class="hint">${isHead?'':'내가 낸 접수 금액이에요. '}가족방 금액은 대표 줄에 들어가요. 입금하고 「입금 신고」에서 체크한 사람을 한 번에 신고해요.</p>
  <div class="row" style="justify-content:space-between"><span class="row"><button class="btn" type="button" data-act="cxReq" ${S.mck&&Object.values(S.mck).some(Boolean)?'':'disabled'}>체크한 사람 취소 요청</button></span><button class="btn pri" type="button" data-mv="rep">입금 신고 →</button></div></div>`}
+/* 11-25 내 접수 내역 메일로 받기 (옛 화면과 같은 서버 mineMail · 하루 5번) */
+function mmBoxN(){const em=S.mmEm!==undefined?S.mmEm:((S.me&&S.me.email)||'');
+ return S.mmOpen?`<div class="panel" style="background:var(--sunk);margin:8px 0"><b>내 접수 내역 메일로 받기</b> <span class="hint">내가 낸 접수 전체 · 사람별 금액 · 입금 상태를 한 통으로 (하루 5번까지)</span>
+ <div class="row" style="gap:6px;margin-top:8px"><input type="email" data-mmem value="${esc(em)}" placeholder="받을 이메일" autocomplete="email" style="flex:1;min-width:200px"><button class="btn pri sm" type="button" data-mmgo="1" ${S.busy?'disabled':''}>보내기</button><button class="btn sm" type="button" data-mmx="1">닫기</button></div>${S.mmMsg?`<p class="hint" style="margin:6px 0 0">${esc(S.mmMsg)}</p>`:''}</div>`
+ :`<div class="row" style="justify-content:flex-end;margin:6px 0"><button class="btn sm" type="button" data-mmopen="1">✉ 내 접수 내역 메일로 받기</button></div>`}
+document.addEventListener('input',e=>{if(e.target&&e.target.hasAttribute&&e.target.hasAttribute('data-mmem'))S.mmEm=e.target.value});
+document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('button');if(!b)return;const d=b.dataset;
+ if(d.mmopen){S.mmOpen=true;S.mmMsg='';render();return}
+ if(d.mmx){S.mmOpen=false;render();return}
+ if(d.mmgo){const em=String((document.querySelector('[data-mmem]')||{}).value||'').trim();if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)){toast('받을 이메일을 확인해 주세요',true);return}S.mmEm=em;
+  if(!S.token||!(window.google&&google.script&&google.script.run)){S.mmMsg=em+'(으)로 보냈어요 (미리보기)';render();return}
+  if(S.busy)return;S.busy=true;render();google.script.run.withSuccessHandler(r=>{S.busy=false;S.mmMsg=r.sent?em+'(으)로 보냈어요 · '+r.n+'명':'지금은 메일을 바로 못 보내서 운영진 쪽에 모아 두었어요. 곧 보내 드려요.';render();toast(r.sent?'메일을 보냈어요':'메일을 모아 두었어요')}).withFailureHandler(x=>{S.busy=false;render();toast((x&&x.message)||String(x),true)}).mineMail(S.token,em);return}});
 function vMineRep(){const isHead=(S.role||'head')==='head',scope=S.scope||'mine',LS=(scope==='all'?P.picked.concat(othersOf()):P.picked).filter(x=>true).concat(roomRows());
  const R0=LS.filter(x=>!repOf(x)),R1=LS.filter(x=>repOf(x)&&!repOf(x).ok),R2=LS.filter(x=>repOf(x)&&repOf(x).ok),ck=S.rck||{},today=new Date().toLocaleDateString('sv-SE');
  const amtOf=x=>brk(x).reduce((a,q)=>a+q[1],0),sel=R0.filter(x=>ck[pkey(x)]),tot=sel.reduce((a,x)=>a+amtOf(x),0),pv=S.rv||{};

@@ -1,4 +1,4 @@
-/* build: 20261126-005134 */
+/* build: 20261126-012524 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -907,9 +907,10 @@ function tHello() {
   const s = settings_();
   const acads = tbl_('학원').v.filter(r => r[3] !== '탈퇴' && r[1]).map(r => [r[0], r[1], r[9]]).sort((a, b) => String(a[1]).localeCompare(String(b[1]), 'ko'));
   const test = s['테스트 표시'] === '예';
-  return { test, acads, testNames: test ? tNames_(s) : [] };
+  return { test, acads, testNames: test ? tNames_(s) : [], testCards: test ? tCards_(s, acads) : [] };
 }
 function tNames_(s) { const v = '테스트 선생님' in s ? s['테스트 선생님'] : '최서희, 박정연, 김가현, 정찬양, 최승아, 황선경'; return String(v || '').split(/[,\n]/).map(x => x.trim()).filter(Boolean); }   /* 설정 줄이 없으면 캠프 STG 와 같은 명단 */
+function tCards_(s, acads) { try { const T = tbl_('교사'), c = col_(T), an = {}; (acads || []).forEach(x => { an[x[0]] = x[1]; }); return tNames_(s).map(n => { const r = T.v.find(x => normN_(x[c['이름']]) === normN_(n) && x[c['상태']] !== '탈퇴'); return [n, r ? (an[r[c['학원1']]] || '') : '', r ? String(r[c['직급']] || '') : '']; }); } catch (e) { return tNames_(s).map(n => [n, '', '']); } }   /* 11-26 카드: 이름 · 학원 · 직급 */
 /** 11-26 STG 시험: 「테스트 선생님」 명단의 선생님으로 비밀번호 없이 들어감 (테스트 표시 = 예 인 시트에서만) */
 function tTestLogin(name) {
   const s = settings_(); if (s['테스트 표시'] !== '예') fail('테스트(STG)에서만 쓸 수 있어요.');

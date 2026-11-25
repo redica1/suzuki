@@ -1,4 +1,4 @@
-/* build: 20261125-124259 */
+/* build: 20261125-124433 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -605,7 +605,7 @@ function acctEmail_(tid) {
     const v = sh.getDataRange().getDisplayValues(), h = v[0], ie = h.indexOf('이메일'), it = h.indexOf('교사ID'), is = h.indexOf('상태');
     const r = v.slice(1).filter(x => String(x[it]) === String(tid) && x[is] === '사용').pop(); return r ? String(r[ie]).trim().toLowerCase() : ''; } catch (e) { return ''; }
 }
-function loginT_(t, consent) {
+function loginT_(t, consent) { memberTrigOk_();
   if (t.state === '대기') return { ok: false, msg: '승인 대기 중이에요. 협회가 확인하면 이메일로 알려 드려요.' };
   if (isStaffT_(t) && camp_().base.staff === false) return { ok: false, msg: '지금은 관계자 접수를 받지 않아요. 협회에 연락하면 운영진이 대신 접수해 드려요.' };
   if (!isStaffT_(t) && camp_().base.member === false) return { ok: false, msg: '이 행사는 회원 접수를 받지 않아요.' };
@@ -1829,7 +1829,7 @@ function ensureHead_(name, head) {
   head.forEach(h => { if (!cur.includes(h)) { cur.push(h); sh.getRange(1, cur.length).setValues([[h]]); } });
 }
 function adminLogin(id, pw) {
-  ensureSettings_();
+  ensureSettings_(); memberTrigOk_();
   const C = CacheService.getScriptCache(), fails = +C.get('adm_fail') || 0;
   if (fails >= 10) return { ok: false, msg: '비밀번호를 여러 번 틀려서 5분 동안 잠겼어요. 잠시 뒤 다시 해 주세요.' };
   const want = setting_('관리자 비밀번호');
@@ -2998,7 +2998,13 @@ function memberSync_(force) {
   log_('회원관리 연동', '명단 맞춤', '교사 ' + T.length + ' · 학생 ' + S.length + ' · 회원관리 ' + stamp);
   return { ok: true, at: stamp, t: T.length, s: S.length };
 }
-function memberSyncTick() { try { repriceTick_(); } catch (e) { Logger.log('차수 다시 셈: ' + e.message); } try { memberSync_(false); } catch (e) { Logger.log('회원관리 연동: ' + e.message); } try { memberReport_(); } catch (e) { Logger.log('회원관리 보고: ' + e.message); } try { campRegister_(); } catch (e) { Logger.log('회원관리 캠프 등록: ' + e.message); } }
+/* 11-25 회원관리 명단 5분 맞춤이 멈춰 있으면(트리거 없음) 다시 켬 · 한 시간에 한 번만 봄 */
+function memberTrigOk_() {
+  try { if (!memberSrcId_()) return; const C = CacheService.getScriptCache(); if (C.get('mtrig')) return; C.put('mtrig', '1', 3600);
+    if (!ScriptApp.getProjectTriggers().some(t => t.getHandlerFunction() === 'memberSyncTick')) { ScriptApp.newTrigger('memberSyncTick').timeBased().everyMinutes(5).create(); log_('회원관리 연동', '5분 맞춤 다시 켬', ''); }
+  } catch (e) { }
+}
+function memberSyncTick() { try { repriceTick_(); } catch (e) { Logger.log('차수 다시 셈: ' + e.message); } try { memberSync_(false); } catch (e) { Logger.log('회원관리 연동: ' + e.message); try { const C = CacheService.getScriptCache(); if (!C.get('msyncErr')) { C.put('msyncErr', '1', 3600); log_('회원관리 연동', '명단 맞춤 실패', String(e.message).slice(0, 200)); } } catch (x) { } } try { memberReport_(); } catch (e) { Logger.log('회원관리 보고: ' + e.message); } try { campRegister_(); } catch (e) { Logger.log('회원관리 캠프 등록: ' + e.message); } }
 /** 회원관리 설정 「캠프 시트」에 이 캠프 접수 시트를 적어 둠 (11-01) → 회원관리 통장 탭이 캠프 행사(27W)를 저절로 연결. 바뀐 때만 씀 */
 function campRegister_() {
   const mid = memberSheetId_(); if (!mid) return { skip: true };

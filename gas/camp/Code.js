@@ -1,4 +1,4 @@
-/* build: 20261125-122737 */
+/* build: 20261125-123830 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -734,7 +734,7 @@ function bundle_(acads, owner) {
   let audPre = {}; try { audPre = audPreMap_(acads); } catch (x) {}
   /* 중복 접수 막기용: 남의 접수 내용은 보내지 않고 「이미 접수된 사람」 번호만 (학생 = 내 학원들, 선생님 = 모든 학원) */
   const taken = []; all.forEach(sb => { if (vis.includes(sb)) return; sb.ppl.forEach(p => { if (p.status !== '정상' && p.status !== '취소요청') return; const k = String(p.id).slice(String(sb.no).length + 1); if (/^t_/.test(k) || acads.includes(sb.acad)) taken.push(k); }); });
-  const preq = parentFor_(heads.filter(a => acads.includes(a)).filter(a => a !== GUEST_ACAD && a !== STAFF_ACAD && a !== NOACAD)), pbank = acadBanks_(acads);
+  const preq = parentFor_(acads.filter(a => a !== GUEST_ACAD && a !== STAFF_ACAD && a !== NOACAD)), pbank = acadBanks_(acads);
   const ppilot = acads.filter(a => a !== GUEST_ACAD && a !== STAFF_ACAD && a !== NOACAD && parentOk_(a));
   return { aud, audPre, preq, pbank, ppilot, plink: ppilot.reduce((o, x) => { o[x] = parentLink_(x); return o; }, {}), rosters, subs: vis, taken, teams: teams_(all), bank: bankInfo_(), today: today_(), profs, camp, myPay: (() => { try { const me = ts.filter(t => t.name === owner); return myPay_(me.length === 1 ? me[0].id : '', owner); } catch (x) { return null; } })() };
 }
@@ -1112,10 +1112,10 @@ function parentDelHead(token, id, why) {
 }
 function parentMark(token, id) {
   const u = who_(token), r = parentRows_().find(x => x.id === String(id));
-  if (!r || !(u.heads || []).includes(r.acad)) throw new Error('학부모 신청은 그 학원 원장님만 처리할 수 있어요.');   /* 11-25 원장만 */
+  if (!r || !(u.acads || []).includes(r.acad)) throw new Error('신청을 찾지 못했어요.');   /* 11-25 담기는 같은 학원 선생님 누구나 (입금 확인 · 취소 처리 · 고치기 · 삭제는 원장만) */
   const lock = lock_();
   try { parentSheet_().getRange(r._row, 8, 1, 3).setValues([['담음', u.name, stamp_()]]); } finally { lock.releaseLock(); }
-  return { ok: true, preq: parentFor_(u.heads || []) };
+  return { ok: true, preq: parentFor_(u.acads || []) };
 }
 
 /* ---------------- 접수 읽고 쓰기 ---------------- */

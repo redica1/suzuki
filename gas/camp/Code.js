@@ -1,4 +1,4 @@
-/* build: 20261127-183314 */
+/* build: 20261127-190332 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -1219,7 +1219,33 @@ function acadPayPdf(token, acad, o) {
   log_(u.name, '입금 내역 PDF', acad + ' · ' + st);
   return { name, b64: Utilities.base64Encode(pdf.getBytes()) };
 }
-function parentMark(token, id) {
+/* 11-27 사용자: 학부모가 입금 신고했거나 원장이 받은 돈을 넣은 신청만 캠프 접수에 담음 (반려된 신고는 빼고) */
+function parentPaid_(r) { return ((r && r.m && r.m.reps) || []).some(x => x.st === '신고' || x.st === '확인'); }
+function parentGate_(sb) {
+  const ids = (sb && sb.form && Array.isArray(sb.form.preq)) ? sb.form.preq.map(String) : []; if (!ids.length) return [];
+  const R = parentRows_(), bad = ids.map(id => R.find(x => x.id === id)).filter(r => r && r.acad === sb.acad && r.st !== '담음' && r.st !== '삭제' && !parentPaid_(r));
+  if (bad.length) throw new Error('입금 신고 전인 학부모 신청이 있어요 (' + bad.map(r => r.name).join(', ') + '). 학부모가 입금 신고를 하거나 원장님이 「받은 돈 넣기」를 한 뒤 담아 주세요.');
+  return ids.filter(id => R.some(x => x.id === id && x.acad === sb.acad));
+}
+function parentMarkMany_(ids, u) {
+  const R = parentRows_(), sh = parentSheet_(), at = stamp_(), lock = lock_();
+  try { ids.forEach(id => { const r = R.find(x => x.id === id); if (r && (r.st === '보냄' || r.st === '바뀜')) sh.getRange(r._row, 8, 1, 3).setValues([['담음', u.name, at]]); }); } finally { lock.releaseLock(); }
+}
+/* 11-27 원장: 학부모가 신고하지 않고 학원에 직접 낸 돈(현금 · 직접 이체)을 넣음 → 바로 「확인」 */
+function parentPayAdd(token, id, p) {
+  const u = who_(token), r = parentRows_().find(x => x.id === String(id));
+  if (!r || !(u.heads || []).includes(r.acad)) throw new Error('받은 돈 넣기는 그 학원 원장님만 할 수 있어요.');
+  if (r.st === '취소' || r.st === '삭제') throw new Error('취소한 신청이에요.');
+  p = p || {};
+  const nm = String(p.nm || '').trim().slice(0, 20), date = String(p.date || '').slice(0, 10), amt = Math.max(0, Math.min(50000000, +String(p.amt || '').replace(/[^\d]/g, '') || 0));
+  if (!nm) throw new Error('입금자명을 넣어 주세요.'); if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) throw new Error('받은 날을 골라 주세요.'); if (!amt) throw new Error('금액을 넣어 주세요.');
+  const lock = lock_();
+  try { const m = r.m || {}; m.reps = (m.reps || []).concat([{ at: stamp_(), nm, date, amt, st: '확인', by: u.name, byAt: stamp_(), head: 1 }]).slice(-20); parentMoneySet_(r, m); } finally { lock.releaseLock(); }
+  try { parentMail_(r, '학원이 받은 돈을 넣었어요', [date + ' · ' + nm + ' · ' + amt.toLocaleString('ko-KR') + '원', '학원이 곧 캠프 접수를 해요.']); } catch (e) {}
+  log_(u.name, '학부모 받은 돈 넣기', r.acad + ' · ' + r.name + ' · ' + amt);
+  return { ok: true, preq: parentFor_(u.acads || []) };
+}
+function parentMark(token, id) {   /* 11-27부터 화면에서 안 부름 (담음은 접수를 낸 뒤 parentMarkMany_) · 옛 화면 캐시용으로 남김 */
   const u = who_(token), r = parentRows_().find(x => x.id === String(id));
   if (!r || !(u.acads || []).includes(r.acad)) throw new Error('신청을 찾지 못했어요.');   /* 11-25 담기는 같은 학원 선생님 누구나 (입금 확인 · 취소 처리 · 고치기 · 삭제는 원장만) */
   const lock = lock_();
@@ -1613,6 +1639,7 @@ function submitNew0_(token, sb) {
   if (sb.reqId) { const done = all.find(x => x.reqId === sb.reqId); if (done) return Object.assign({ ok: true, no: done.no, again: true }, bundle_(u.acads, u.name)); }
   famGate_(null, sb);
   stuDup_(all, sb, null);
+  const pqIds = parentGate_(sb);   /* 11-27 학부모 신청은 입금 신고(또는 원장이 넣은 입금)가 있어야 접수에 담음 */
   const tmp = sb.no;
   sb.owner = u.name;
   if (u.guest) sb.contact = String(u.phone || '').replace(/(\d{3})(\d{3,4})(\d{4})/, '$1-$2-$3');   // 비회원 보호자 연락처 (관리자 화면 · 시트에만)
@@ -1632,6 +1659,7 @@ function submitNew0_(token, sb) {
   } finally { RC_MEMO = null; lock.releaseLock(); }
   log_(u.name, '새 접수', sb.no + ' · ' + sb.ppl.length + '명');
   try { mail_(sb, u); } catch (e) { Logger.log('메일: ' + e.message); }
+  try { if (pqIds.length) parentMarkMany_(pqIds, u); } catch (e) { try { log_('시스템', '학부모 신청 담음 표시 실패', String(e)); } catch (x) {} }   /* 11-27 「담음」 = 접수를 낸 뒤 */
   try { if (sb.form && Array.isArray(sb.form.preq) && sb.form.preq.length) parentNotifySubs_([sb.no]); } catch (e) {}
   return Object.assign({ ok: true, no: sb.no }, bundle_(u.acads, u.name));
 }

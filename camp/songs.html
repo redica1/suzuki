@@ -53,6 +53,9 @@ input[type=search]{flex:1;min-width:0;font:inherit;font-size:15px;padding:9px 12
 .msg{text-align:center;color:var(--muted);padding:40px 0}
 .cnt{font-size:13px;color:var(--muted)}
 footer{max-width:880px;margin:0 auto;padding:0 16px 30px;color:var(--muted);font-size:12.5px;text-align:center}
+.h1en{margin:2px 0 0;font-size:15px;font-weight:600;opacity:.9}
+.rule{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--accentD);border-radius:10px;padding:9px 12px;margin:2px 0 4px}.rule p{margin:0;font-size:15px;font-weight:700;line-height:1.45}.rule p.en{margin-top:3px;font-size:13.5px;font-weight:500;color:var(--muted)}
+@media print{.rule{border:0;border-left:3px solid #0b6f6c;border-radius:0;padding:2px 8px;margin:6px 0}}
 .go2{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}.gob{display:inline-flex;align-items:center;min-height:44px;padding:9px 16px;border-radius:12px;font-weight:800;font-size:15px;text-decoration:none;background:rgba(255,255,255,.16);color:#fff;border:1.5px solid rgba(255,255,255,.75)}.gob.pri{background:#fff;color:var(--accentD);border-color:#fff}.gob:focus-visible{outline:3px solid #fff;outline-offset:2px}
 @media print{.go2{display:none}}
 .act{font:inherit;font-size:14.5px;font-weight:700;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:12px;padding:8px 14px;cursor:pointer}
@@ -75,12 +78,13 @@ footer{max-width:880px;margin:0 auto;padding:0 16px 30px;color:var(--muted);font
 </style>
 </head>
 <body>
-<header class="band"><div class="in"><small id="camp">스즈키 겨울 음악제</small><h1 id="h1">오후 음악회 신청 가능한 곡</h1>
+<header class="band"><div class="in"><small id="camp">스즈키 겨울 음악제</small><h1 id="h1">오후 음악회 신청 가능한 곡</h1><p class="h1en">Repertoire List for Concerts</p>
   <div class="go2"><a class="gob" id="goJoin" href="https://app.suzukimusickorea.org/member/index.html">회원가입</a><a class="gob pri" id="goCamp" href="https://app.suzukimusickorea.org/camp/new.html">겨울캠프 접수 · 음원 먼저 내기</a></div></div></header>
 <main class="wrap">
   <div class="bar">
-    <div class="row"><div class="seg" id="inst" role="tablist" aria-label="악기"></div></div>
+    <div class="row"><div class="seg" id="inst" role="tablist" aria-label="악기"></div><div class="seg" id="lang" aria-label="언어"><button type="button" data-l="ko" aria-pressed="true">한국어</button><button type="button" data-l="en" aria-pressed="false">English</button></div></div>
   </div>
+  <div class="rule"><p id="ruleKo">10권 이하 레벨 신청자는 스즈키 교재 수록곡 중 아래 지정곡만 신청 가능합니다.</p><p id="ruleEn" hidden>Applicants at Suzuki Book Level 10 or below may select only the designated pieces listed below from the Suzuki repertoire.</p></div>
   <div id="list"><p class="msg">곡 목록을 불러오고 있어요…</p></div>
   <p class="note" id="free"></p>
 </main>
@@ -94,7 +98,7 @@ footer{max-width:880px;margin:0 auto;padding:0 16px 30px;color:var(--muted);font
   /* 11-27 사용자: 언어 한국어 / English / 한국어+English · 처음 = 한국어 · 고른 악기 · 언어가 주소에 붙음(?i= · lang=) → 그 주소로 안내 */
   var QS=new URLSearchParams(location.search),L0=QS.get('lang');
   if(/[?&]test\b/i.test(location.search)){document.getElementById('goJoin').href+='?test';document.getElementById('goCamp').href+='?test'}   /* 11-27 위 버튼 2개: 회원가입 · 겨울캠프 = 새 접수 화면 camp/new.html (음원 먼저 내기 상자 있음) */
-  var S={d:null,inst:QS.get('i')||'',lang:'ko',q:''};   /* 11-27 사용자: 지금은 한글만 · 찾기 · 언어 · 링크 복사 없이 악기만 */
+  var S={d:null,inst:QS.get('i')||'',lang:L0==='en'?'en':'ko',q:''};   /* 11-27 사용자: 언어 탭 한국어 / English (외국인용 · 주소 lang=en) */   /* 11-27 사용자: 지금은 한글만 · 찾기 · 언어 · 링크 복사 없이 악기만 */
   function urlNow(){var p=new URLSearchParams();if(/[?&]test\b/i.test(location.search))p.set('test','');if(S.inst&&S.inst!=='바이올린')p.set('i',S.inst);if(S.lang!=='ko')p.set('lang',S.lang);var q=p.toString().replace(/^test=&?/,'test&').replace(/&$/,'');return location.origin+location.pathname+(q?'?'+q:'')}
   function syncUrl(){try{history.replaceState(null,'',urlNow())}catch(e){}}
   function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
@@ -105,7 +109,7 @@ footer{max-width:880px;margin:0 auto;padding:0 16px 30px;color:var(--muted);font
     if(!S.inst||keys.indexOf(S.inst)<0)S.inst=keys.indexOf('바이올린')>=0?'바이올린':keys[0]||'';
     document.documentElement.lang=S.lang;
     document.getElementById('camp').textContent=d.camp||'스즈키 겨울 음악제';
-    document.getElementById('h1').textContent=T('오후 음악회 신청 가능한 곡','Afternoon Concert – Eligible Repertoire');
+    
         document.getElementById('inst').innerHTML=keys.map(function(k){return '<button type="button" role="tab" data-i="'+esc(k)+'" aria-pressed="'+(k===S.inst)+'">'+esc(k==='전체'?T('전체','All'):T(k,EN[k]||k))+'</button>'}).join('');
         var q=S.q.trim().toLowerCase(),INS=S.inst==='전체'?keys:[S.inst],tot=0;
     var html=INS.map(function(ik){var L=(d.songs[ik]||[]).filter(function(x){return !q||(x.code+' '+x.t+' '+x.comp+' '+x.en+' '+(x.ec||'')).toLowerCase().indexOf(q)>=0}),B={},order=[];tot+=L.length;
@@ -114,10 +118,11 @@ footer{max-width:880px;margin:0 auto;padding:0 16px 30px;color:var(--muted);font
         var main=S.lang==='en'&&x.en?one(x,true):one(x,false),sub=S.lang==='both'&&x.en?one(x,true):'';
         return '<div class="it"><span class="code">'+esc(x.code||'')+'</span><span class="t">'+main+'</span>'+(sub?'<span class="sub">'+sub+'</span>':'')+'</div>'}).join('')+'</section>'}).join('')}).join('');
         document.getElementById('list').innerHTML=tot?html:'<p class="msg">'+T(keys.length?'이 악기는 아직 곡이 없어요.':'곡 목록을 준비하고 있어요. 조금 뒤에 다시 열어 주세요.','The list is being prepared. Please check back soon.')+'</p>';   /* 11-27 곡목록이 비어 있을 때 */
+    [].forEach.call(document.querySelectorAll('#lang button'),function(b){b.setAttribute('aria-pressed',String(b.dataset.l===S.lang))});document.getElementById('ruleKo').hidden=S.lang==='en';document.getElementById('ruleEn').hidden=S.lang!=='en';   /* 11-27 안내 문구도 언어 탭 따라 */
     syncUrl();
     document.getElementById('free').textContent=T('10권 이상 레벨은 자유곡으로 신청할 수 있어요.','Students at level Book 10 and above may apply with a piece of their choice.');
     document.getElementById('foot').textContent=T('한국스즈키음악협회 · 곡 목록은 협회가 바꾸면 여기에도 바로 바뀌어요','Suzuki Music Association of Korea · This list updates automatically.')}
-  document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('button');if(!b)return;if(b.dataset.i){S.inst=b.dataset.i;draw()}if(b.dataset.l){S.lang=b.dataset.l;draw()}
+    document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('button');if(!b)return;if(b.dataset.i){S.inst=b.dataset.i;draw()}if(b.dataset.l){S.lang=b.dataset.l;draw()}
 });
   
   fetch(URL0,{redirect:'follow'}).then(function(r){return r.json()}).then(function(d){if(!d||!d.ok)throw new Error((d&&d.msg)||'error');S.d=d;draw()}).catch(function(){document.getElementById('list').innerHTML='<p class="msg">곡 목록을 불러오지 못했어요. 잠시 뒤 새로 고침해 주세요.<br>Could not load the list. Please refresh later.</p>'});

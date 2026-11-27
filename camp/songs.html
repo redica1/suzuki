@@ -76,7 +76,7 @@ footer{max-width:880px;margin:0 auto;padding:0 16px 30px;color:var(--muted);font
 </head>
 <body>
 <header class="band"><div class="in"><small id="camp">스즈키 겨울 음악제</small><h1 id="h1">오후 음악회 신청 가능한 곡</h1>
-  <div class="go2"><a class="gob" id="goJoin" href="https://app.suzukimusickorea.org/member/index.html">회원가입</a><a class="gob pri" id="goCamp" href="https://app.suzukimusickorea.org/camp/">겨울캠프 접수 · 음원 먼저 내기</a></div></div></header>
+  <div class="go2"><a class="gob" id="goJoin" href="https://app.suzukimusickorea.org/member/index.html">회원가입</a><a class="gob pri" id="goCamp" href="https://app.suzukimusickorea.org/camp/new.html">겨울캠프 접수 · 음원 먼저 내기</a></div></div></header>
 <main class="wrap">
   <div class="bar">
     <div class="row"><div class="seg" id="inst" role="tablist" aria-label="악기"></div></div>
@@ -93,7 +93,7 @@ footer{max-width:880px;margin:0 auto;padding:0 16px 30px;color:var(--muted);font
   var EN={'바이올린':'Violin','첼로':'Cello','비올라':'Viola','플루트':'Flute'};
   /* 11-27 사용자: 언어 한국어 / English / 한국어+English · 처음 = 한국어 · 고른 악기 · 언어가 주소에 붙음(?i= · lang=) → 그 주소로 안내 */
   var QS=new URLSearchParams(location.search),L0=QS.get('lang');
-  if(/[?&]test\b/i.test(location.search)){document.getElementById('goJoin').href+='?test';document.getElementById('goCamp').href+='?test'}   /* 11-27 위 버튼 2개: 회원가입 · 겨울캠프(음원 먼저 내기) */
+  if(/[?&]test\b/i.test(location.search)){document.getElementById('goJoin').href+='?test';document.getElementById('goCamp').href+='?test'}   /* 11-27 위 버튼 2개: 회원가입 · 겨울캠프 = 새 접수 화면 camp/new.html (음원 먼저 내기 상자 있음) */
   var S={d:null,inst:QS.get('i')||'',lang:'ko',q:''};   /* 11-27 사용자: 지금은 한글만 · 찾기 · 언어 · 링크 복사 없이 악기만 */
   function urlNow(){var p=new URLSearchParams();if(/[?&]test\b/i.test(location.search))p.set('test','');if(S.inst&&S.inst!=='바이올린')p.set('i',S.inst);if(S.lang!=='ko')p.set('lang',S.lang);var q=p.toString().replace(/^test=&?/,'test&').replace(/&$/,'');return location.origin+location.pathname+(q?'?'+q:'')}
   function syncUrl(){try{history.replaceState(null,'',urlNow())}catch(e){}}

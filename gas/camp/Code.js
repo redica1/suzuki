@@ -1,4 +1,4 @@
-/* build: 20261127-192525 */
+/* build: 20261127-193041 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -739,7 +739,8 @@ function bundle_(acads, owner) {
   const taken = []; all.forEach(sb => { if (vis.includes(sb)) return; sb.ppl.forEach(p => { if (p.status !== '정상' && p.status !== '취소요청') return; const k = String(p.id).slice(String(sb.no).length + 1); if (/^t_/.test(k) || acads.includes(sb.acad)) taken.push(k); }); });
   const preq = parentFor_(acads.filter(a => a !== GUEST_ACAD && a !== STAFF_ACAD && a !== NOACAD)), pbank = acadBanks_(acads);
   const ppilot = acads.filter(a => a !== GUEST_ACAD && a !== STAFF_ACAD && a !== NOACAD && parentOk_(a));
-  return { aud, audPre, preq, pbank, ppilot, plink: ppilot.reduce((o, x) => { o[x] = parentLink_(x); return o; }, {}), rosters, subs: vis, taken, teams: teams_(all), bank: bankInfo_(), today: today_(), profs, camp, myPay: (() => { try { const me = ts.filter(t => t.name === owner); return myPay_(me.length === 1 ? me[0].id : '', owner); } catch (x) { return null; } })() };
+  let pqPre = ''; try { pqPre = regPre_(); } catch (x) {}   /* 11-27 접수 시작 전이면 학부모 신청 「접수에 담기」를 막음 (먼저 여는 학원은 빼고) */
+  return { pqPre, pqEarly: pqPre ? earlyAcads_().filter(a => acads.includes(a)) : [], aud, audPre, preq, pbank, ppilot, plink: ppilot.reduce((o, x) => { o[x] = parentLink_(x); return o; }, {}), rosters, subs: vis, taken, teams: teams_(all), bank: bankInfo_(), today: today_(), profs, camp, myPay: (() => { try { const me = ts.filter(t => t.name === owner); return myPay_(me.length === 1 ? me[0].id : '', owner); } catch (x) { return null; } })() };
 }
 
 
@@ -825,7 +826,8 @@ function parentInit() {
   const pa = parentAcads_();
   /* 11-15 사용자: 학부모가 추가레슨 횟수 · 마스터클래스를 고름 → 교수진의 마스터클래스(악기 · 시간 · 금액) */
   const mcs = profPublic_().filter((p, i, a) => p.mc && a.findIndex(q => q.mc && q.n === p.n && q.i === p.i) === i).map(p => ({ n: p.n, i: p.i, min: +p.min || 45, fee: +p.fee || 0 }));
-  return { ok: true, stg: qaOn_(), open: C.base.member !== false && pa.length > 0, acads: pa, mcs, lessonMax: OPT.lessonMax, camp: { name: C.base.name, start: C.base.start, end: C.base.end, place: C.base.place }, consent: (C.consent.items || []).filter(x => x.on), refund: C.refund, roomCap: (C.opt || {}).roomCap || 4,
+  let pre = '', early = []; try { pre = regPre_(C); early = pre ? earlyAcads_() : []; } catch (x) {}   /* 11-27 학원 접수 시작 전이면 학부모 화면에 「접수가 열리면 학원이 접수해요」 */
+  return { ok: true, stg: qaOn_(), pre, early, open: C.base.member !== false && pa.length > 0, acads: pa, mcs, lessonMax: OPT.lessonMax, camp: { name: C.base.name, start: C.base.start, end: C.base.end, place: C.base.place }, consent: (C.consent.items || []).filter(x => x.on), refund: C.refund, roomCap: (C.opt || {}).roomCap || 4,
     /* 예상 참가비 (11-15): 학생 · 첫 보호자 · 동반가족 · 15개월 미만 × 차수, 지금 차수, 학생 회비 · 가족방 빈 자리 · 추가레슨 */
     price: { fees: ['학생', '회원의 첫번째 보호자', '회원의 그외 악기 안하는 동반가족', '동반가족 중 15개월 미만'].reduce((o, k) => { o[k] = C.fees[k] || []; return o; }, {}), rounds: C.rounds.map(r => ({ n: r.n, from: r.from, to: r.to })), ri: curRound_(C), dues: +(C.opt || {}).studentDues || 0, empty: +(C.opt || {}).roomEmptyFee || 0, lesson: +(C.opt || {}).lessonFee || 0, busBy: pa.reduce((o, a) => { const b = acadBank_(a); o[a] = (b && b.bus) || { r: 0, g: 0, b: 0, off: false, one: true }; return o; }, {}), roundsBy: pa.reduce((o, a) => { o[a] = acadRounds_(a, C).map(r => ({ n: r.n, from: r.from, to: r.to })); return o; }, {}) }, slugs: pa.reduce((o, a) => { o[slugOf_(a)] = a; return o; }, {}) };
 }
@@ -2059,11 +2061,7 @@ function curRound_(c) {
 /** 접수 시작 전이면 시작일(yyyy-mm-dd), 아니면 ''. 시작일 = 캠프 설정 「접수 시작」, 없으면 1차 시작일. STG(설정 「테스트 로그인」 있음)는 언제나 열림 */
 function regPre_(c) { c = c || camp_(); try { if (String(setting_('테스트 로그인') || '').trim()) return ''; } catch (e) { } const o = String(c.base.open || (c.rounds[0] || {}).from || ''); return /^\d{4}-\d{2}-\d{2}$/.test(o) && today_() < o ? o : ''; }
 /* 11-25 「먼저 여는 학원」: 접수 시작일 전에도 그 학원 접수는 받음 */
-function earlyAcads_() {   /* 11-27 사용자: 「학부모 신청 학원」에 이름을 적은 학원도 먼저 엶 (「전체」는 빼고) */
-  let L = []; try { L = String(setting_('먼저 여는 학원') || '').split(/[,\n]/).map(x => x.trim()).filter(Boolean); } catch (e) {}
-  try { const p = parentPilot_(); if (Array.isArray(p)) L = L.concat(p); } catch (e) {}
-  return [...new Set(L)];
-}
+function earlyAcads_() { try { return String(setting_('먼저 여는 학원') || '').split(/[,\n]/).map(x => x.trim()).filter(Boolean); } catch (e) { return []; } }   /* 11-27 사용자: 학부모 신청 학원이어도 자동으로 먼저 열지 않음 (접수는 공지한 날 · 그 전엔 학부모 신청만) */
 function regGate_(acad) { if (acad && earlyAcads_().includes(String(acad))) return; const o = regPre_(); if (o) throw new Error('접수는 ' + (+o.slice(5, 7)) + '월 ' + (+o.slice(8, 10)) + '일부터 받아요. 그때 다시 와 주세요.'); }
 function campPublic_() { const c = camp_(), pp = parentPilot_(); return Object.assign({}, c, { ri: curRound_(c), pre: regPre_(c), pq: pp === null || pp.length > 0, songs: songList_(), songMeta: songMeta_(), progs: progList_() }); }
 /* ---- 음악회 곡 목록 (11-15 사용자: 학생이 고르는 곡 목록을 관리자가 직접) — 시트 「곡목록」 (악기 · 곡 · 순서). 비어 있으면 신청서에 들어 있는 기본 목록을 씀 ---- */

@@ -1,4 +1,4 @@
-/* build: 20261126-031743 */
+/* build: 20261127-183314 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -117,7 +117,7 @@ function doGet(e) {
   /* 11-23 새 접수 화면 메인 전환: ?page=new 는 늘 새 화면 · 주소만(?page 없음)이면 설정 「새 접수 화면」 = 켬 일 때 새 화면
    *  옛 화면이 필요한 곳(?page=old · 비회원 as=guest · 관계자 as=staff · board · guide · aud · tl · go)은 옛 화면 그대로 */
   { const P = (e && e.parameter) || {}, pg = P.page || '';
-    const oldNeed = pg === 'old' || (P.as && P.as !== 'member') || P.board || P.guide || P.aud || P.tl || P.go;
+    const oldNeed = pg === 'old' || P.board || P.guide || P.aud || P.tl || P.go;   /* 11-27 비회원 as=guest · 관계자 as=staff 는 막음 → 새 접수 첫 화면 */
     if (pg === 'new' || pg === 'newmock' || (!pg && !oldNeed && newUiOn_())) return newPage_(cname, P.as === 'member' ? 'member' : ''); }   /* 새 접수 · 가족방 화면 미리보기 (11-20, STG만 · 기존 접수와 따로) */
   if (e && e.parameter && e.parameter.page === 'parent') return HtmlService.createHtmlOutputFromFile('Parent').setTitle(cname + ' · 학부모 신청').addMetaTag('viewport', 'width=device-width, initial-scale=1').setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
   if (e && e.parameter && e.parameter.page === 'find') return HtmlService.createTemplateFromFile('Find').evaluate().setTitle(cname + ' · 일정 찾기').addMetaTag('viewport', 'width=device-width, initial-scale=1').setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
@@ -1199,7 +1199,9 @@ function acadPayPdf(token, acad, o) {
   }
   if (w2) {
     const L = [];
-    all.filter(sb => sb.acad === acad).forEach(sb => sb.ppl.forEach(p => { if (p.status !== '정상' && p.status !== '취소요청') return;
+    all.filter(sb => sb.acad === acad).forEach(sb => sb.ppl.forEach(p => {
+      if (p.status === '취소' && +p.cxFee > 0) { const pd = +p.paidAmt || 0; L.push({ n: p.name, kind: '취소 수수료', inst: p.inst || '', who: sb.owner, bill: +p.cxFee, rep: '', paid: pd, st: pd >= +p.cxFee ? '확인' : pd > 0 ? '일부' : '전', cx: false }); return; }   /* 11-27 입금 전 취소 수수료도 PDF 청구에 */
+      if (p.status !== '정상' && p.status !== '취소요청') return;
       const bill = (+p.fee || 0) + (+p.lesson || 0) + (+p.dues || 0) + (+p.room || 0), paid = +p.paidAmt || 0, rw = p.rep && p.rep.rows && p.rep.rows[p.id] || {};
       const s2 = bill && paid >= bill ? '확인' : p.pay === '신고' ? '신고' : paid > 0 ? '일부' : '전';
       L.push({ n: p.name, kind: p.kind === '가족' ? (p.type || '가족') : p.kind || '', inst: p.inst || '', who: sb.owner, bill, rep: rw.date || (p.rep && p.rep.date) || '', paid, st: s2, cx: p.status === '취소요청' }); }));
@@ -1503,7 +1505,7 @@ function famSave(token, room) {
     const cur = room.id ? all.find(r => r.id === room.id) : null;
     if (room.id && !cur) throw new Error('가족방을 찾지 못했어요. 새로 고쳐 주세요.');
     if (cur && !(cur.owner === u.name || (u.acads || []).includes(cur.acad))) throw new Error(cur.owner + ' 선생님이 신청한 가족방이라 고칠 수 없어요.');
-    if (cur && cur.pay !== '전') throw new Error('입금 신고한 가족방은 고칠 수 없어요. 먼저 신고를 취소해 주세요.');
+    if (cur && cur.pay === '신고') throw new Error('입금 신고 중인 가족방은 협회가 확인한 뒤에 고칠 수 있어요.');   /* 11-27 입금 확인 뒤에도 고치기 (차액은 화면에 더 냄 · 모자람) */
     const rep = P[room.rep]; if (!rep) throw new Error('대표를 캠프 신청한 사람 중에서 골라 주세요.');
     if (!u.acads.includes(rep.acad)) throw new Error('대표는 우리 학원 사람이어야 해요.');
     if (!['학생', '교사'].includes(rep.kind)) throw new Error('대표는 학생 또는 교사여야 해요.');

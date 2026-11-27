@@ -69,7 +69,14 @@ function famFindIn(a){if(a===ACAD){OTH.length=0;return}google.script.run.withSuc
 document.addEventListener('change',e=>{if(S.token&&e.target.id==='qa'){S.q.a=e.target.value;famFindIn(S.q.a)}},true);
 document.addEventListener('click',e=>{if(!S.token)return;const b=e.target.closest('[data-act="submit"]');if(!b||S.tab!=='new')return;e.stopImmediatePropagation();
  const rep=S.mem.find(m=>KEY(m)===S.rep);if(!rep||!rep.pid){toast('대표를 골라 주세요',true);return}const mem=S.mem.filter(m=>m!==rep).map(m=>m.pid).filter(Boolean);if(!mem.length){toast('함께 갈 가족을 추가해 주세요',true);return}
- S.busy=true;toast('가족방을 보내는 중…');google.script.run.withSuccessHandler(r=>{S.busy=false;famIn(r);S.done=true;render();toast('가족방 신청을 완료했어요')}).withFailureHandler(e=>{S.busy=false;toast((e&&e.message)||String(e),true)}).famSave(S.token,{rep:rep.pid,mem})},true);
+ const fid=S.famEdit||'';S.busy=true;toast(fid?'고친 내용을 저장하는 중…':'가족방을 보내는 중…');google.script.run.withSuccessHandler(r=>{S.busy=false;famIn(r);S.done=true;S.famEdit='';render();toast(fid?'가족방을 고쳤어요':'가족방 신청을 완료했어요')}).withFailureHandler(e=>{S.busy=false;toast((e&&e.message)||String(e),true)}).famSave(S.token,fid?{id:fid,rep:rep.pid,mem}:{rep:rep.pid,mem})},true);
+/* 11-27 신청한 가족방 고치기 · 취소 (입금 전 · 입금 확인은 고치기, 신고 중은 막음 · 서버도 같음) */
+document.addEventListener('click',e=>{if(!S.token)return;const b=e.target.closest&&e.target.closest('button');if(!b)return;const d=b.dataset;
+ if(d.fed!==undefined){const q=(S.famRooms||[]).find(r=>r.id===d.fed);if(!q)return;e.stopImmediatePropagation();S.famEdit=q.id;S.done=false;S.mem=q.mem.map(m=>({n:m.name,k:m.kind==='가족'?'첫번째 보호자':m.kind,i:'',a:m.acad,sub:m.acad||'',pid:m.id,id:m.id}));S.rep=q.rep;S.room=true;S.tab='new';render();toast(q.repName+' 가족방을 고치는 중이에요 · 다 고치면 「고친 내용 저장」');const el=document.querySelector('[data-act="submit"]');if(el)el.scrollIntoView({block:'center'});return}
+ if(d.fx!==undefined){e.stopImmediatePropagation();S.fxK=d.fx;render();return}
+ if(d.fx0){e.stopImmediatePropagation();S.fxK='';render();return}
+ if(d.fxgo!==undefined){e.stopImmediatePropagation();S.busy=true;google.script.run.withSuccessHandler(r=>{S.busy=false;S.fxK='';if(S.famEdit===d.fxgo){S.famEdit='';S.mem=[]}famIn(r);render();toast('가족방을 취소했어요')}).withFailureHandler(er=>{S.busy=false;toast((er&&er.message)||String(er),true)}).famDel(S.token,d.fxgo);return}
+},true);
 
 function failIn(e){S.loading=false;S.lerr='연결이 잠시 안 돼요. 다시 눌러 주세요.';render();toast(S.lerr,true)}
 document.addEventListener('click',e=>{if(!GS)return;const b=e.target.closest('[data-tt],[data-act="login"]');if(!b)return;e.stopImmediatePropagation();e.preventDefault();

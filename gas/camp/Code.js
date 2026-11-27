@@ -1,4 +1,4 @@
-/* build: 20261127-193944 */
+/* build: 20261127-194708 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -1221,6 +1221,7 @@ function acadPayPdf(token, acad, o) {
   return { name, b64: Utilities.base64Encode(pdf.getBytes()) };
 }
 /* 11-27 학부모 입금 신고 · 원장이 받은 돈이 있는지 (반려된 신고는 빼고) */
+let PQ_NOW = [];
 function parentPaid_(r) { return ((r && r.m && r.m.reps) || []).some(x => x.st === '신고' || x.st === '확인'); }
 function parentGate_(sb) {
   const ids = (sb && sb.form && Array.isArray(sb.form.preq)) ? sb.form.preq.map(String) : []; if (!ids.length) return [];
@@ -1229,7 +1230,7 @@ function parentGate_(sb) {
 }
 function parentMarkMany_(ids, u) {
   const R = parentRows_(), sh = parentSheet_(), at = stamp_(), lock = lock_();
-  try { ids.forEach(id => { const r = R.find(x => x.id === id); if (r && (r.st === '보냄' || r.st === '바뀜')) sh.getRange(r._row, 8, 1, 3).setValues([['담음', u.name, at]]); }); } finally { lock.releaseLock(); }
+  try { ids.forEach(id => { const r = R.find(x => x.id === id); if (r && (u.acads || []).includes(r.acad) && (r.st === '보냄' || r.st === '바뀜')) sh.getRange(r._row, 8, 1, 3).setValues([['담음', u.name, at]]); }); } finally { lock.releaseLock(); }
 }
 /* 11-27 원장: 학부모가 신고하지 않고 학원에 직접 낸 돈(현금 · 직접 이체)을 넣음 → 바로 「확인」 */
 function parentPayAdd(token, id, p) {
@@ -1639,7 +1640,8 @@ function submitNew0_(token, sb) {
   if (sb.reqId) { const done = all.find(x => x.reqId === sb.reqId); if (done) return Object.assign({ ok: true, no: done.no, again: true }, bundle_(u.acads, u.name)); }
   famGate_(null, sb);
   stuDup_(all, sb, null);
-  const pqIds = parentGate_(sb);   /* 11-27 이 접수에 담은 학부모 신청 (접수 뒤 「담음」 표시) */
+  const pqNow = Array.isArray(sb && sb.pqNow) ? sb.pqNow.map(String).slice(0, 20) : null; if (sb) delete sb.pqNow;   /* 11-27 새 화면: 이번에 담은 학부모 신청 */
+  const pqIds = pqNow || parentGate_(sb);   /* 11-27 이 접수에 담은 학부모 신청 (접수 뒤 「담음」 표시) */
   const tmp = sb.no;
   sb.owner = u.name;
   if (u.guest) sb.contact = String(u.phone || '').replace(/(\d{3})(\d{3,4})(\d{4})/, '$1-$2-$3');   // 비회원 보호자 연락처 (관리자 화면 · 시트에만)
@@ -1720,7 +1722,7 @@ function saveSubs(token, subs) {
   pressAt_(Array.isArray(subs) && subs[0] && subs[0].pressAt); try { return saveSubs0_(token, subs); } finally { NOW_AT = null; }
 }
 function saveSubs0_(token, subs) {
-  const u = who_(token);
+  const u = who_(token); PQ_NOW = [];
   const lock = lock_();
   try {
     const all = loadSubs_();
@@ -1728,6 +1730,7 @@ function saveSubs0_(token, subs) {
     const stale = (subs || []).filter(sb => { const cur = all.find(x => x.no === sb.no); return cur && (+cur.rev || 0) !== (+sb.rev || 0); });
     if (stale.length) { lock.releaseLock(); return Object.assign({ ok: false, conflict: true, msg: stale.map(x => x.no).join(', ') + ' 접수를 다른 화면에서 먼저 고쳤어요. 최신 내용으로 다시 불러왔으니 한 번 더 해 주세요.' }, bundle_(u.acads, u.name)); }
     (subs || []).forEach(sb => {
+      if (Array.isArray(sb.pqNow)) { sb.pqNow.map(String).slice(0, 20).forEach(id => PQ_NOW.push({ id, acad: sb.acad })); } delete sb.pqNow;   /* 11-27 새 화면: 내 접수에 더해 담은 학부모 신청 → 저장 뒤 「담음」 */
       const cur = all.find(x => x.no === sb.no);
       if (!cur) throw new Error(sb.no + ' 접수를 찾지 못했어요.');
       if (!canEdit_(u, cur)) throw new Error(sb.no + '는 ' + cur.owner + ' 선생님이 낸 접수라 고칠 수 없어요.');
@@ -1801,6 +1804,7 @@ function saveSubs0_(token, subs) {
     });
     writeTeams_(all);
   } finally { lock.releaseLock(); }
+  try { const L = PQ_NOW.filter(x => (u.acads || []).includes(x.acad)).map(x => x.id); PQ_NOW = []; if (L.length) parentMarkMany_(L, u); } catch (e) { try { log_('시스템', '학부모 신청 담음 표시 실패', String(e)); } catch (x) {} }
   try { parentNotifySubs_((subs || []).filter(x => x.form && Array.isArray(x.form.preq) && x.form.preq.length).map(x => x.no)); } catch (e) {}
   return Object.assign({ ok: true }, bundle_(u.acads, u.name));
 }

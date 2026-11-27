@@ -20,12 +20,14 @@ function nSubmit(L0){const L=L0||P.picked.filter(x=>!x.done);if(!L.length||S.bus
  const sb0=own?JSON.parse(JSON.stringify(own)):{no:'N'+Date.now(),owner:WHO,acad:ACAD,round:'',date:S.today||'',ppl:[],form:{picked:{},extra:[],fam:[],info:{},room:{},join:{},ens:{},note:null,ri:(S.camp||{}).ri||0}};const sb=sb0;sb.pressAt=new Date().toISOString();
  sb.form=sb.form||{};['picked','info','room','join','ens'].forEach(k=>{if(!sb.form[k])sb.form[k]={}});['extra','fam'].forEach(k=>{if(!Array.isArray(sb.form[k]))sb.form[k]=[]});
  const F=sb.form,stamp=(S.today||'')+' '+new Date().toTimeString().slice(0,8);
+ /* 11-27 새 화면에서 담은 학부모 신청: 접수에 이어 두고(form.preq) · 서버가 저장 뒤 「담음」 표시(pqNow) */
+ const PQT=(S.pqTake||[]).slice();if(PQT.length){F.preq=[...new Set([...(Array.isArray(F.preq)?F.preq:[]),...PQT])].slice(0,20);sb.pqNow=PQT}
  L.forEach((x,ix)=>{const f=inf(x),kk=f.kind||x.k,isT=kk==='교사',np=NOPLAY(kk);let key=x.id&&!/^t_n|^x\d|^f\d/.test(x.id)?x.id:'';
   if(key){F.picked[key]=true}else if(np){key='f'+Date.now()+ix;F.fam.push({id:key,name:x.n,type:K2T[kk],link:''})}else{key=(isT?'t_n':'x')+Date.now()+ix;const e={id:key,name:x.n,birth:'',inst:instOf(x),start:'-',teacher:f.t||''};if(isT)e.t=1;F.extra.push(e)}
   x.key=key;const i=infoOf(x);const ex=F.extra.find(e=>e.id===key);if(ex)ex.birth=i.by;F.info[key]=i;
   sb.ppl.push({id:sb.no+'_'+key,name:x.n,dtag:'',inst:np?'':instOf(x),kind:isT?'교사':np?'가족':'학생',type:i.type,fee:0,lesson:0,dues:0,room:0,status:'정상',pay:'전',paidAmt:0,batch:1,addAt:stamp})});
  S.busy=true;toast('캠프 신청을 보내는 중…');const keep=new Set(P.picked.filter(x=>x.now).map(x=>x.n+'|'+x.k).concat(L.map(x=>x.n+'|'+x.k)));
- const ok=r=>{S.busy=false;if(!r||r.ok===false){if(r&&r.subs)resync(r.subs,keep);toast((r&&r.msg)||'신청하지 못했어요.',true);return}resync(r.subs||[],keep,L);const left=P.picked.filter(y=>!y.done).length;render();toast(L.map(x=>x.n).join(', ')+' · 캠프 신청했어요'+(left?'':' · 모두 신청했어요'));if(!left)scrollTo(0,0)};
+ const ok=r=>{S.busy=false;if(!r||r.ok===false){if(r&&r.subs)resync(r.subs,keep);toast((r&&r.msg)||'신청하지 못했어요.',true);return}if(PQT.length){S.pqTake=(S.pqTake||[]).filter(x=>!PQT.includes(x))}if(Array.isArray(r.preq)&&S.pq)S.pq=Object.assign({},S.pq,{L:r.preq.filter(q=>q.acad===ACAD)});resync(r.subs||[],keep,L);const left=P.picked.filter(y=>!y.done).length;render();toast(L.map(x=>x.n).join(', ')+' · 캠프 신청했어요'+(left?'':' · 모두 신청했어요'));if(!left)scrollTo(0,0)};
  const bad=e=>{S.busy=false;toast('신청하지 못했어요 · '+((e&&e.message)||e),true)};
  if(own)google.script.run.withSuccessHandler(ok).withFailureHandler(bad).saveSubs(S.token,[sb]);else{sb.reqId=sb.no;google.script.run.withSuccessHandler(ok).withFailureHandler(bad).submitNew(S.token,sb)}}
 /* 11-25 신청한 사람 고치기: 그 접수의 info · 구분 · 담당 교사만 바꿔 saveSubs (금액은 서버가 다시 셈) */

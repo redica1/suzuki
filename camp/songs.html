@@ -68,9 +68,7 @@ footer{max-width:880px;margin:0 auto;padding:0 16px 30px;color:var(--muted);font
 <header class="band"><div class="in"><small id="camp">스즈키 겨울 음악제</small><h1 id="h1">오후 음악회 신청 가능한 곡</h1></div></header>
 <main class="wrap">
   <div class="bar">
-    <div class="row"><div class="seg" id="inst" role="tablist" aria-label="악기"></div><div class="seg" id="lang" aria-label="언어"><button type="button" data-l="ko" aria-pressed="true">한국어</button><button type="button" data-l="en" aria-pressed="false">English</button><button type="button" data-l="both" aria-pressed="false">한국어+English</button></div></div>
-    <div class="row noprint"><button type="button" class="act pri" id="print">🖨 인쇄 · PDF로 저장</button><button type="button" class="act" id="copy">링크 복사</button></div>
-    <div class="row"><input type="search" id="q" placeholder="곡명 · 작곡가 · 번호로 찾기" aria-label="찾기"><span class="cnt" id="cnt"></span></div>
+    <div class="row"><div class="seg" id="inst" role="tablist" aria-label="악기"></div></div>
   </div>
   <div id="list"><p class="msg">곡 목록을 불러오고 있어요…</p></div>
   <p class="note" id="free"></p>
@@ -84,7 +82,7 @@ footer{max-width:880px;margin:0 auto;padding:0 16px 30px;color:var(--muted);font
   var EN={'바이올린':'Violin','첼로':'Cello','비올라':'Viola','플루트':'Flute'};
   /* 11-27 사용자: 언어 한국어 / English / 한국어+English · 처음 = 한국어 · 고른 악기 · 언어가 주소에 붙음(?i= · lang=) → 그 주소로 안내 */
   var QS=new URLSearchParams(location.search),L0=QS.get('lang');
-  var S={d:null,inst:QS.get('i')||'',lang:L0==='en'||L0==='both'?L0:/[?&]en\b/i.test(location.search)?'en':'ko',q:''};
+  var S={d:null,inst:QS.get('i')||'',lang:'ko',q:''};   /* 11-27 사용자: 지금은 한글만 · 찾기 · 언어 · 링크 복사 없이 악기만 */
   function urlNow(){var p=new URLSearchParams();if(/[?&]test\b/i.test(location.search))p.set('test','');if(S.inst&&S.inst!=='바이올린')p.set('i',S.inst);if(S.lang!=='ko')p.set('lang',S.lang);var q=p.toString().replace(/^test=&?/,'test&').replace(/&$/,'');return location.origin+location.pathname+(q?'?'+q:'')}
   function syncUrl(){try{history.replaceState(null,'',urlNow())}catch(e){}}
   function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
@@ -92,29 +90,24 @@ footer{max-width:880px;margin:0 auto;padding:0 16px 30px;color:var(--muted);font
   function one(x,en){var c=en?(x.ec||x.comp):x.comp,t=en?x.en:x.t;return esc(t)+(c?' <span class="c">('+esc(c)+')</span>':'')}
   function draw(){
     var d=S.d;if(!d)return;var keys=Object.keys(d.songs||{}).filter(function(k){return (d.songs[k]||[]).length});
-    if(!S.inst||(S.inst!=='전체'&&keys.indexOf(S.inst)<0))S.inst=keys[0]||'';
+    if(!S.inst||keys.indexOf(S.inst)<0)S.inst=keys[0]||'';
     document.documentElement.lang=S.lang;
     document.getElementById('camp').textContent=d.camp||'스즈키 겨울 음악제';
     document.getElementById('h1').textContent=T('오후 음악회 신청 가능한 곡','Afternoon Concert – Eligible Repertoire');
-    document.getElementById('q').placeholder=T('곡명 · 작곡가 · 번호로 찾기','Search title, composer or code');
-    document.getElementById('inst').innerHTML=keys.concat(keys.length>1?['전체']:[]).map(function(k){return '<button type="button" role="tab" data-i="'+esc(k)+'" aria-pressed="'+(k===S.inst)+'">'+esc(k==='전체'?T('전체','All'):T(k,EN[k]||k))+'</button>'}).join('');
-    [].forEach.call(document.querySelectorAll('#lang button'),function(b){b.setAttribute('aria-pressed',String(b.dataset.l===S.lang))});
-    var q=S.q.trim().toLowerCase(),INS=S.inst==='전체'?keys:[S.inst],tot=0;
+        document.getElementById('inst').innerHTML=keys.map(function(k){return '<button type="button" role="tab" data-i="'+esc(k)+'" aria-pressed="'+(k===S.inst)+'">'+esc(k==='전체'?T('전체','All'):T(k,EN[k]||k))+'</button>'}).join('');
+        var q=S.q.trim().toLowerCase(),INS=S.inst==='전체'?keys:[S.inst],tot=0;
     var html=INS.map(function(ik){var L=(d.songs[ik]||[]).filter(function(x){return !q||(x.code+' '+x.t+' '+x.comp+' '+x.en+' '+(x.ec||'')).toLowerCase().indexOf(q)>=0}),B={},order=[];tot+=L.length;
       L.forEach(function(x){var k=x.bk||0;if(!B[k]){B[k]=[];order.push(k)}B[k].push(x)});order.sort(function(a,b){return (a||99)-(b||99)});
       return (INS.length>1?'<h2 class="ihd">'+esc(T(ik,EN[ik]||ik))+'</h2>':'')+order.map(function(k){return '<section class="bk"><h2>'+(k?T(k+'권','Book '+k):T('기타','Other'))+'<small>'+T(B[k].length+'곡',B[k].length+(B[k].length>1?' pieces':' piece'))+'</small></h2>'+B[k].map(function(x){
         var main=S.lang==='en'&&x.en?one(x,true):one(x,false),sub=S.lang==='both'&&x.en?one(x,true):'';
         return '<div class="it"><span class="code">'+esc(x.code||'')+'</span><span class="t">'+main+'</span>'+(sub?'<span class="sub">'+sub+'</span>':'')+'</div>'}).join('')+'</section>'}).join('')}).join('');
-    document.getElementById('cnt').textContent=T(tot+'곡',tot+' pieces');
-    document.getElementById('list').innerHTML=tot?html:'<p class="msg">'+T('찾는 곡이 없어요.','No matching pieces.')+'</p>';
+        document.getElementById('list').innerHTML=tot?html:'<p class="msg">'+T('찾는 곡이 없어요.','No matching pieces.')+'</p>';
     syncUrl();
     document.getElementById('free').textContent=T('10권 이상 레벨은 자유곡으로 신청할 수 있어요.','Students at level Book 10 and above may apply with a piece of their choice.');
-    document.getElementById('print').textContent='🖨 '+T('인쇄 · PDF로 저장','Print / Save PDF');document.getElementById('copy').textContent=T('링크 복사','Copy link');
     document.getElementById('foot').textContent=T('한국스즈키음악협회 · 곡 목록은 협회가 바꾸면 여기에도 바로 바뀌어요','Suzuki Music Association of Korea · This list updates automatically.')}
   document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('button');if(!b)return;if(b.dataset.i){S.inst=b.dataset.i;draw()}if(b.dataset.l){S.lang=b.dataset.l;draw()}
-    if(b.id==='print'){window.print();return}
-    if(b.id==='copy'){var u=urlNow();try{navigator.clipboard.writeText(u).then(function(){b.textContent=T('복사했어요','Copied')},function(){prompt('',u)})}catch(x){prompt('',u)}setTimeout(function(){b.textContent=T('링크 복사','Copy link')},1800)}});
-  document.getElementById('q').addEventListener('input',function(e){S.q=e.target.value;draw()});
+});
+  
   fetch(URL0,{redirect:'follow'}).then(function(r){return r.json()}).then(function(d){if(!d||!d.ok)throw new Error((d&&d.msg)||'error');S.d=d;draw()}).catch(function(){document.getElementById('list').innerHTML='<p class="msg">곡 목록을 불러오지 못했어요. 잠시 뒤 새로 고침해 주세요.<br>Could not load the list. Please refresh later.</p>'});
 })();
 </script>

@@ -45,13 +45,31 @@ input[type=search]{flex:1;min-width:0;font:inherit;font-size:15px;padding:9px 12
 .msg{text-align:center;color:var(--muted);padding:40px 0}
 .cnt{font-size:13px;color:var(--muted)}
 footer{max-width:880px;margin:0 auto;padding:0 16px 30px;color:var(--muted);font-size:12.5px;text-align:center}
+.act{font:inherit;font-size:14.5px;font-weight:700;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:12px;padding:8px 14px;cursor:pointer}
+.act.pri{background:var(--accentD);color:#fff;border-color:var(--accentD)}
+.ihd{margin:18px 0 0;font-size:18px}
+/* 11-27 인쇄: 버튼 · 찾기 빼고 흰 바탕 · 권마다 표 */
+@media print{
+  :root{--bg:#fff;--surface:#fff;--ink:#111;--muted:#555;--line:#ddd;--soft:#fff;--accentD:#0b6f6c;color-scheme:light}
+  body{font-size:12.5px;background:#fff}
+  .bar,.noprint,#q,#cnt{display:none!important}
+  .band{background:#fff;color:#111;padding:0 0 6px;border-bottom:2px solid #0b6f6c}
+  .wrap{padding:6px 0 0;max-width:none}
+  .bk{border:0;border-radius:0;margin:8px 0;break-inside:auto}
+  .bk h2{background:none;padding:6px 0 3px;border-bottom:1px solid #0b6f6c;font-size:14px}
+  .it{padding:4px 0;border-top:1px solid #eee;break-inside:avoid;grid-template-columns:60px minmax(0,1fr)}
+  .note{border:0;padding:6px 0}
+  footer{padding:6px 0}
+  @page{size:A4;margin:14mm 12mm}
+}
 </style>
 </head>
 <body>
 <header class="band"><div class="in"><small id="camp">스즈키 겨울 음악제</small><h1 id="h1">오후 음악회 신청 가능한 곡</h1></div></header>
 <main class="wrap">
   <div class="bar">
-    <div class="row"><div class="seg" id="inst" role="tablist" aria-label="악기"></div><div class="seg" id="lang" aria-label="언어"><button type="button" data-l="ko" aria-pressed="true">한국어</button><button type="button" data-l="en" aria-pressed="false">English</button></div></div>
+    <div class="row"><div class="seg" id="inst" role="tablist" aria-label="악기"></div><div class="seg" id="lang" aria-label="언어"><button type="button" data-l="ko" aria-pressed="true">한국어</button><button type="button" data-l="en" aria-pressed="false">English</button><button type="button" data-l="both" aria-pressed="false">한국어+English</button></div></div>
+    <div class="row noprint"><button type="button" class="act pri" id="print">🖨 인쇄 · PDF로 저장</button><button type="button" class="act" id="copy">링크 복사</button></div>
     <div class="row"><input type="search" id="q" placeholder="곡명 · 작곡가 · 번호로 찾기" aria-label="찾기"><span class="cnt" id="cnt"></span></div>
   </div>
   <div id="list"><p class="msg">곡 목록을 불러오고 있어요…</p></div>
@@ -64,28 +82,38 @@ footer{max-width:880px;margin:0 auto;padding:0 16px 30px;color:var(--muted);font
   var STGU='https:\/\/script.google.com/macros/s/AKfycby2WK6m-LkmOgUM3V2P_yA0f2kobvlfJw7qmNE36Tzxg6xvj6dQPKJuVFmT68zP7_55/exec';
   var URL0=(/[?&]test\b/i.test(location.search)?STGU:PROD)+'?page=songs';
   var EN={'바이올린':'Violin','첼로':'Cello','비올라':'Viola','플루트':'Flute'};
-  var S={d:null,inst:'',lang:/[?&]en\b/i.test(location.search)?'en':'ko',q:''};
+  /* 11-27 사용자: 언어 한국어 / English / 한국어+English · 처음 = 한국어 · 고른 악기 · 언어가 주소에 붙음(?i= · lang=) → 그 주소로 안내 */
+  var QS=new URLSearchParams(location.search),L0=QS.get('lang');
+  var S={d:null,inst:QS.get('i')||'',lang:L0==='en'||L0==='both'?L0:/[?&]en\b/i.test(location.search)?'en':'ko',q:''};
+  function urlNow(){var p=new URLSearchParams();if(/[?&]test\b/i.test(location.search))p.set('test','');if(S.inst&&S.inst!=='바이올린')p.set('i',S.inst);if(S.lang!=='ko')p.set('lang',S.lang);var q=p.toString().replace(/^test=&?/,'test&').replace(/&$/,'');return location.origin+location.pathname+(q?'?'+q:'')}
+  function syncUrl(){try{history.replaceState(null,'',urlNow())}catch(e){}}
   function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
   function T(ko,en){return S.lang==='en'?en:ko}
+  function one(x,en){var c=en?(x.ec||x.comp):x.comp,t=en?x.en:x.t;return esc(t)+(c?' <span class="c">('+esc(c)+')</span>':'')}
   function draw(){
     var d=S.d;if(!d)return;var keys=Object.keys(d.songs||{}).filter(function(k){return (d.songs[k]||[]).length});
-    if(!S.inst||keys.indexOf(S.inst)<0)S.inst=keys[0]||'';
+    if(!S.inst||(S.inst!=='전체'&&keys.indexOf(S.inst)<0))S.inst=keys[0]||'';
     document.documentElement.lang=S.lang;
     document.getElementById('camp').textContent=d.camp||'스즈키 겨울 음악제';
     document.getElementById('h1').textContent=T('오후 음악회 신청 가능한 곡','Afternoon Concert – Eligible Repertoire');
     document.getElementById('q').placeholder=T('곡명 · 작곡가 · 번호로 찾기','Search title, composer or code');
-    document.getElementById('inst').innerHTML=keys.map(function(k){return '<button type="button" role="tab" data-i="'+esc(k)+'" aria-pressed="'+(k===S.inst)+'">'+esc(T(k,EN[k]||k))+'</button>'}).join('');
+    document.getElementById('inst').innerHTML=keys.concat(keys.length>1?['전체']:[]).map(function(k){return '<button type="button" role="tab" data-i="'+esc(k)+'" aria-pressed="'+(k===S.inst)+'">'+esc(k==='전체'?T('전체','All'):T(k,EN[k]||k))+'</button>'}).join('');
     [].forEach.call(document.querySelectorAll('#lang button'),function(b){b.setAttribute('aria-pressed',String(b.dataset.l===S.lang))});
-    var q=S.q.trim().toLowerCase(),L=(d.songs[S.inst]||[]).filter(function(x){return !q||(x.code+' '+x.t+' '+x.comp+' '+x.en).toLowerCase().indexOf(q)>=0}),B={},order=[];
-    L.forEach(function(x){var k=x.bk||0;if(!B[k]){B[k]=[];order.push(k)}B[k].push(x)});order.sort(function(a,b){return (a||99)-(b||99)});
-    document.getElementById('cnt').textContent=T(L.length+'곡',L.length+' pieces');
-    document.getElementById('list').innerHTML=order.length?order.map(function(k){return '<section class="bk"><h2>'+(k?T(k+'권','Book '+k):T('기타','Other'))+'<small>'+T(B[k].length+'곡',B[k].length+(B[k].length>1?' pieces':' piece'))+'</small></h2>'+B[k].map(function(x){
-      var main=S.lang==='en'&&x.en?esc(x.en)+(x.comp?' <span class="c">· '+esc(x.comp)+'</span>':''):esc(x.t)+(x.comp?' <span class="c">('+esc(x.comp)+')</span>':'');
-      var sub=S.lang==='en'?(x.en?esc(x.t):''):esc(x.en||'');
-      return '<div class="it"><span class="code">'+esc(x.code||'')+'</span><span class="t">'+main+'</span>'+(sub?'<span class="sub">'+sub+'</span>':'')+'</div>'}).join('')+'</section>'}).join(''):'<p class="msg">'+T('찾는 곡이 없어요.','No matching pieces.')+'</p>';
+    var q=S.q.trim().toLowerCase(),INS=S.inst==='전체'?keys:[S.inst],tot=0;
+    var html=INS.map(function(ik){var L=(d.songs[ik]||[]).filter(function(x){return !q||(x.code+' '+x.t+' '+x.comp+' '+x.en+' '+(x.ec||'')).toLowerCase().indexOf(q)>=0}),B={},order=[];tot+=L.length;
+      L.forEach(function(x){var k=x.bk||0;if(!B[k]){B[k]=[];order.push(k)}B[k].push(x)});order.sort(function(a,b){return (a||99)-(b||99)});
+      return (INS.length>1?'<h2 class="ihd">'+esc(T(ik,EN[ik]||ik))+'</h2>':'')+order.map(function(k){return '<section class="bk"><h2>'+(k?T(k+'권','Book '+k):T('기타','Other'))+'<small>'+T(B[k].length+'곡',B[k].length+(B[k].length>1?' pieces':' piece'))+'</small></h2>'+B[k].map(function(x){
+        var main=S.lang==='en'&&x.en?one(x,true):one(x,false),sub=S.lang==='both'&&x.en?one(x,true):'';
+        return '<div class="it"><span class="code">'+esc(x.code||'')+'</span><span class="t">'+main+'</span>'+(sub?'<span class="sub">'+sub+'</span>':'')+'</div>'}).join('')+'</section>'}).join('')}).join('');
+    document.getElementById('cnt').textContent=T(tot+'곡',tot+' pieces');
+    document.getElementById('list').innerHTML=tot?html:'<p class="msg">'+T('찾는 곡이 없어요.','No matching pieces.')+'</p>';
+    syncUrl();
     document.getElementById('free').textContent=T('10권 이상 레벨은 자유곡으로 신청할 수 있어요.','Students at level Book 10 and above may apply with a piece of their choice.');
+    document.getElementById('print').textContent='🖨 '+T('인쇄 · PDF로 저장','Print / Save PDF');document.getElementById('copy').textContent=T('링크 복사','Copy link');
     document.getElementById('foot').textContent=T('한국스즈키음악협회 · 곡 목록은 협회가 바꾸면 여기에도 바로 바뀌어요','Suzuki Music Association of Korea · This list updates automatically.')}
-  document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('button');if(!b)return;if(b.dataset.i){S.inst=b.dataset.i;draw()}if(b.dataset.l){S.lang=b.dataset.l;draw()}});
+  document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('button');if(!b)return;if(b.dataset.i){S.inst=b.dataset.i;draw()}if(b.dataset.l){S.lang=b.dataset.l;draw()}
+    if(b.id==='print'){window.print();return}
+    if(b.id==='copy'){var u=urlNow();try{navigator.clipboard.writeText(u).then(function(){b.textContent=T('복사했어요','Copied')},function(){prompt('',u)})}catch(x){prompt('',u)}setTimeout(function(){b.textContent=T('링크 복사','Copy link')},1800)}});
   document.getElementById('q').addEventListener('input',function(e){S.q=e.target.value;draw()});
   fetch(URL0,{redirect:'follow'}).then(function(r){return r.json()}).then(function(d){if(!d||!d.ok)throw new Error((d&&d.msg)||'error');S.d=d;draw()}).catch(function(){document.getElementById('list').innerHTML='<p class="msg">곡 목록을 불러오지 못했어요. 잠시 뒤 새로 고침해 주세요.<br>Could not load the list. Please refresh later.</p>'});
 })();

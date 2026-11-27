@@ -1,4 +1,4 @@
-/* build: 20261127-194708 */
+/* build: 20261127-200412 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -2080,14 +2080,14 @@ function songList_() {
 function songMeta_() {
   try { const j = CacheService.getScriptCache().get('songsM'); if (j) return JSON.parse(j); } catch (e) {}
   const sh = SpreadsheetApp.getActive().getSheetByName(SONG_SH), o = {};
-  if (sh && sh.getLastRow() > 1 && sh.getLastColumn() >= 4) sh.getRange(2, 1, sh.getLastRow() - 1, Math.min(5, sh.getLastColumn())).getValues().forEach(r => { const s = String(r[1] || '').trim(); if (!s) return; const bt = String(r[3] || '').trim(), en = String(r[4] || '').trim(); if (bt || en) o[s] = { bt, en }; });
+  if (sh && sh.getLastRow() > 1 && sh.getLastColumn() >= 4) sh.getRange(2, 1, sh.getLastRow() - 1, Math.min(6, sh.getLastColumn())).getValues().forEach(r => { const s = String(r[1] || '').trim(); if (!s) return; const bt = String(r[3] || '').trim(), en = String(r[4] || '').trim(), ec = String(r[5] || '').trim(); if (bt || en || ec) o[s] = { bt, en, ec }; });   /* 11-27 F칸 영어 작곡가 */
   try { CacheService.getScriptCache().put('songsM', JSON.stringify(o), 300); } catch (e) {}
   return o;
 }
 /* 외부 공개 곡 목록 (11-23): app.suzukimusickorea.org/camp/songs.html 이 ?page=songs 로 읽음 — 이름 · 개인정보 없음 */
 function songsPublic_() {
   const L = songList_() || {}, M = songMeta_(), out = {};
-  Object.keys(L).forEach(k => { out[k] = L[k].map(s => { const m = String(s).match(/^([A-Z])(\d\d)-(\d\d) (.+?)(?: \(([^()]*)\))?$/), x = M[s] || {}; return m ? { code: m[1] + m[2] + '-' + m[3], bk: +m[2], t: m[4], comp: m[5] || '', en: x.en || '' } : { code: '', bk: 0, t: String(s), comp: '', en: x.en || '' }; }); });
+  Object.keys(L).forEach(k => { out[k] = L[k].map(s => { const m = String(s).match(/^([A-Z])(\d\d)-(\d\d) (.+?)(?: \(([^()]*)\))?$/), x = M[s] || {}; return m ? { code: m[1] + m[2] + '-' + m[3], bk: +m[2], t: m[4], comp: m[5] || '', en: x.en || '', ec: x.ec || '' } : { code: '', bk: 0, t: String(s), comp: '', en: x.en || '', ec: x.ec || '' }; }); });
   let name = CAMP_NAME; try { name = camp_().base.name; } catch (e) {}
   return { ok: true, camp: name, songs: out, at: today_() };
 }
@@ -2113,6 +2113,13 @@ function songRepRead(token) {
   const norm = v => String(v || '').replace(/\s+/g, ' ').replace(/\s*\(/g, ' (').replace(/\(\s+/g, '(').trim();
   const out = {}, cnt = {};
   [['Vn', '바이올린'], ['Vc', '첼로']].forEach(([ab, inst]) => {
+    /* 11-27 새 모양: 탭 「Vn 연주 곡목 리스트」 · A 합친 곡명(수식) · B 곡 코드 · C 곡명 · D 작곡가 · F Code · G Title · H Composer — 영어는 코드가 같은 줄에서 */
+    const nw = ss.getSheetByName(ab + ' 연주 곡목 리스트');
+    if (nw) { const R = nw.getDataRange().getDisplayValues().slice(1), E = {}, seen = {};
+      R.forEach(r => { const c = String(r[5] || '').trim(); if (/^[A-Z]\d{2}-\d{2}$/.test(c) && String(r[6] || '').trim()) E[c] = { en: String(r[6]).replace(/\s+/g, ' ').trim(), ec: String(r[7] || '').replace(/\s+/g, ' ').trim() }; });
+      out[inst] = R.map(r => { const c = String(r[1] || '').trim(), t = String(r[2] || '').replace(/\s+/g, ' ').trim(), cp = String(r[3] || '').replace(/\s+/g, ' ').trim(); if (!/^[A-Z]\d{2}-\d{2}$/.test(c) || !t || seen[c]) return null; seen[c] = 1; const e = E[c] || {};
+        return { s: c + ' ' + t + (cp ? ' (' + cp + ')' : ''), bt: '', en: e.en || '', ec: e.ec || '' }; }).filter(Boolean);
+      cnt[inst] = out[inst].length; return; }
     const ko = ss.getSheetByName(ab + ' 한글'), en = ss.getSheetByName(ab + ' English'); if (!ko) return;
     const E = {}; if (en) en.getDataRange().getDisplayValues().forEach(r => { const c = String(r[1] || '').trim(); if (/^[A-Z]\d{2}-\d{2}$/.test(c)) E[c] = String(r[2] || '').replace(/\s*\([^)]*\)/, '').replace(/\s+/g, ' ').trim(); });
     const seen = {};
@@ -2120,7 +2127,7 @@ function songRepRead(token) {
       return { s, bt: norm(r[4]) || norm(r[3]), en: E[code] || '' }; }).filter(Boolean);
     cnt[inst] = out[inst].length;
   });
-  if (!Object.keys(out).length) throw new Error('시트에서 「Vn 한글」 「Vc 한글」 탭을 찾지 못했어요.');
+  if (!Object.keys(out).length) throw new Error('시트에서 「Vn 연주 곡목 리스트」 「Vc 연주 곡목 리스트」 탭을 찾지 못했어요.');
   return { ok: true, songs: out, cnt };
 }
 function songsSave(token, o) {
@@ -2128,10 +2135,10 @@ function songsSave(token, o) {
   if (!o || typeof o !== 'object') throw new Error('저장할 곡 목록이 없어요.');
   const rows = []; let n = 0;
   Object.keys(o).slice(0, 10).forEach(k => { const inst = String(k).trim().slice(0, 10); if (!inst) return;
-    const seen = {}; (Array.isArray(o[k]) ? o[k] : []).map(x => x && typeof x === 'object' ? { s: String(x.s || '').trim().slice(0, 120), bt: String(x.bt || '').trim().slice(0, 120), en: String(x.en || '').trim().slice(0, 160) } : { s: String(x || '').trim().slice(0, 120), bt: '', en: '' }).filter(x => x.s && !seen[x.s] && (seen[x.s] = 1)).slice(0, 300).forEach(x => rows.push([inst, x.s, ++n, x.bt, x.en])); });
+    const seen = {}; (Array.isArray(o[k]) ? o[k] : []).map(x => x && typeof x === 'object' ? { s: String(x.s || '').trim().slice(0, 120), bt: String(x.bt || '').trim().slice(0, 120), en: String(x.en || '').trim().slice(0, 160), ec: String(x.ec || '').trim().slice(0, 60) } : { s: String(x || '').trim().slice(0, 120), bt: '', en: '', ec: '' }).filter(x => x.s && !seen[x.s] && (seen[x.s] = 1)).slice(0, 300).forEach(x => rows.push([inst, x.s, ++n, x.bt, x.en, x.ec])); });
   const lock = lock_();
   try { const ss = SpreadsheetApp.getActive(); let sh = ss.getSheetByName(SONG_SH); if (!sh) { sh = ss.insertSheet(SONG_SH); }
-    sh.clearContents(); sh.getRange(1, 1, 1, 5).setValues([['악기', '곡', '순서', '책자 제목', '영어']]).setFontWeight('bold'); sh.setFrozenRows(1); if (rows.length) sh.getRange(2, 1, rows.length, 5).setValues(rows);
+    sh.clearContents(); sh.getRange(1, 1, 1, 6).setValues([['악기', '곡', '순서', '책자 제목', '영어', '영어 작곡가']]).setFontWeight('bold'); sh.setFrozenRows(1); if (rows.length) sh.getRange(2, 1, rows.length, 6).setValues(rows);
     CacheService.getScriptCache().remove('songsJ'); CacheService.getScriptCache().remove('songsM'); campCacheClear_(); } finally { lock.releaseLock(); }
   log_('관리자 ' + a.name, '곡 목록 저장', rows.length + '곡');
   return { ok: true, n: rows.length, songs: songList_(), songMeta: songMeta_() };

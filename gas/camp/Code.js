@@ -1,4 +1,4 @@
-/* build: 20261127-190332 */
+/* build: 20261127-192525 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -1219,12 +1219,11 @@ function acadPayPdf(token, acad, o) {
   log_(u.name, '입금 내역 PDF', acad + ' · ' + st);
   return { name, b64: Utilities.base64Encode(pdf.getBytes()) };
 }
-/* 11-27 사용자: 학부모가 입금 신고했거나 원장이 받은 돈을 넣은 신청만 캠프 접수에 담음 (반려된 신고는 빼고) */
+/* 11-27 학부모 입금 신고 · 원장이 받은 돈이 있는지 (반려된 신고는 빼고) */
 function parentPaid_(r) { return ((r && r.m && r.m.reps) || []).some(x => x.st === '신고' || x.st === '확인'); }
 function parentGate_(sb) {
   const ids = (sb && sb.form && Array.isArray(sb.form.preq)) ? sb.form.preq.map(String) : []; if (!ids.length) return [];
-  const R = parentRows_(), bad = ids.map(id => R.find(x => x.id === id)).filter(r => r && r.acad === sb.acad && r.st !== '담음' && r.st !== '삭제' && !parentPaid_(r));
-  if (bad.length) throw new Error('입금 신고 전인 학부모 신청이 있어요 (' + bad.map(r => r.name).join(', ') + '). 학부모가 입금 신고를 하거나 원장님이 「받은 돈 넣기」를 한 뒤 담아 주세요.');
+  const R = parentRows_();   /* 11-27 사용자: 입금 신고 전이어도 원장 · 선생님이 믿고 담을 수 있음 (화면에서 한 번 물음) */
   return ids.filter(id => R.some(x => x.id === id && x.acad === sb.acad));
 }
 function parentMarkMany_(ids, u) {
@@ -1639,7 +1638,7 @@ function submitNew0_(token, sb) {
   if (sb.reqId) { const done = all.find(x => x.reqId === sb.reqId); if (done) return Object.assign({ ok: true, no: done.no, again: true }, bundle_(u.acads, u.name)); }
   famGate_(null, sb);
   stuDup_(all, sb, null);
-  const pqIds = parentGate_(sb);   /* 11-27 학부모 신청은 입금 신고(또는 원장이 넣은 입금)가 있어야 접수에 담음 */
+  const pqIds = parentGate_(sb);   /* 11-27 이 접수에 담은 학부모 신청 (접수 뒤 「담음」 표시) */
   const tmp = sb.no;
   sb.owner = u.name;
   if (u.guest) sb.contact = String(u.phone || '').replace(/(\d{3})(\d{3,4})(\d{4})/, '$1-$2-$3');   // 비회원 보호자 연락처 (관리자 화면 · 시트에만)
@@ -2060,7 +2059,11 @@ function curRound_(c) {
 /** 접수 시작 전이면 시작일(yyyy-mm-dd), 아니면 ''. 시작일 = 캠프 설정 「접수 시작」, 없으면 1차 시작일. STG(설정 「테스트 로그인」 있음)는 언제나 열림 */
 function regPre_(c) { c = c || camp_(); try { if (String(setting_('테스트 로그인') || '').trim()) return ''; } catch (e) { } const o = String(c.base.open || (c.rounds[0] || {}).from || ''); return /^\d{4}-\d{2}-\d{2}$/.test(o) && today_() < o ? o : ''; }
 /* 11-25 「먼저 여는 학원」: 접수 시작일 전에도 그 학원 접수는 받음 */
-function earlyAcads_() { try { return String(setting_('먼저 여는 학원') || '').split(/[,\n]/).map(x => x.trim()).filter(Boolean); } catch (e) { return []; } }
+function earlyAcads_() {   /* 11-27 사용자: 「학부모 신청 학원」에 이름을 적은 학원도 먼저 엶 (「전체」는 빼고) */
+  let L = []; try { L = String(setting_('먼저 여는 학원') || '').split(/[,\n]/).map(x => x.trim()).filter(Boolean); } catch (e) {}
+  try { const p = parentPilot_(); if (Array.isArray(p)) L = L.concat(p); } catch (e) {}
+  return [...new Set(L)];
+}
 function regGate_(acad) { if (acad && earlyAcads_().includes(String(acad))) return; const o = regPre_(); if (o) throw new Error('접수는 ' + (+o.slice(5, 7)) + '월 ' + (+o.slice(8, 10)) + '일부터 받아요. 그때 다시 와 주세요.'); }
 function campPublic_() { const c = camp_(), pp = parentPilot_(); return Object.assign({}, c, { ri: curRound_(c), pre: regPre_(c), pq: pp === null || pp.length > 0, songs: songList_(), songMeta: songMeta_(), progs: progList_() }); }
 /* ---- 음악회 곡 목록 (11-15 사용자: 학생이 고르는 곡 목록을 관리자가 직접) — 시트 「곡목록」 (악기 · 곡 · 순서). 비어 있으면 신청서에 들어 있는 기본 목록을 씀 ---- */

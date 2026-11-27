@@ -1,4 +1,4 @@
-/* build: 20261127-193041 */
+/* build: 20261127-193320 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -86,7 +86,6 @@ const SETTINGS = [['관리자 아이디', 'admin', '관리자 화면(?page=admin
   ['로그인 방식', '둘 다', '「둘 다」 = 이메일 · 비밀번호 + (회원 가입 전 선생님은) 이름 + 휴대전화 / 「회원관리 계정」 = 이메일 · 비밀번호만 / 「이름+휴대전화」 = 예전 방식'],
   ['회원관리 주소', 'https://app.suzukimusickorea.org/member/', '선생님 가입 · 비밀번호 찾기 안내에 쓰는 회원관리 주소 (STG 는 끝에 ?test)'],
   ['회원 명단 파일', '', '회원관리가 만드는 「행사용 명단」 파일 ID 또는 주소. 넣으면 명단_교사 · 명단_학생을 그 파일로 5분마다 맞춤 (비우면 지금처럼 이 시트의 명단 그대로)'],
-  ['먼저 여는 학원', '', '접수 시작일 전에 먼저 접수를 받는 학원 (쉼표로). 시작일이 되면 모두 열려서 비워도 돼요 (11-25)'],
   ['수당 공개', '아니오', '「예」면 선생님 화면에 「내 수당」(결산에서 회원관리로 보낸 정산)이 보여요. 정산을 마치기 전까지는 「아니오」'],
   ['해외 송금 안내', '', '해외 단체 영어 화면에 보이는 송금 안내 (영어로: 은행 · SWIFT · 계좌 · 예금주 · 주소 등)'],
   ['접수 가능 학원', '마포스즈키', '「전체」 또는 학원 이름을 쉼표로 (예: 마포스즈키, 미사스즈키)'],
@@ -739,7 +738,7 @@ function bundle_(acads, owner) {
   const taken = []; all.forEach(sb => { if (vis.includes(sb)) return; sb.ppl.forEach(p => { if (p.status !== '정상' && p.status !== '취소요청') return; const k = String(p.id).slice(String(sb.no).length + 1); if (/^t_/.test(k) || acads.includes(sb.acad)) taken.push(k); }); });
   const preq = parentFor_(acads.filter(a => a !== GUEST_ACAD && a !== STAFF_ACAD && a !== NOACAD)), pbank = acadBanks_(acads);
   const ppilot = acads.filter(a => a !== GUEST_ACAD && a !== STAFF_ACAD && a !== NOACAD && parentOk_(a));
-  let pqPre = ''; try { pqPre = regPre_(); } catch (x) {}   /* 11-27 접수 시작 전이면 학부모 신청 「접수에 담기」를 막음 (먼저 여는 학원은 빼고) */
+  let pqPre = ''; try { pqPre = regPre_(); } catch (x) {}   /* 11-27 접수 시작 전이면 학부모 신청 「접수에 담기」를 막음 */
   return { pqPre, pqEarly: pqPre ? earlyAcads_().filter(a => acads.includes(a)) : [], aud, audPre, preq, pbank, ppilot, plink: ppilot.reduce((o, x) => { o[x] = parentLink_(x); return o; }, {}), rosters, subs: vis, taken, teams: teams_(all), bank: bankInfo_(), today: today_(), profs, camp, myPay: (() => { try { const me = ts.filter(t => t.name === owner); return myPay_(me.length === 1 ? me[0].id : '', owner); } catch (x) { return null; } })() };
 }
 
@@ -2060,8 +2059,8 @@ function curRound_(c) {
 /** 선생님 화면에 보내는 설정 (+ 지금 차수) */
 /** 접수 시작 전이면 시작일(yyyy-mm-dd), 아니면 ''. 시작일 = 캠프 설정 「접수 시작」, 없으면 1차 시작일. STG(설정 「테스트 로그인」 있음)는 언제나 열림 */
 function regPre_(c) { c = c || camp_(); try { if (String(setting_('테스트 로그인') || '').trim()) return ''; } catch (e) { } const o = String(c.base.open || (c.rounds[0] || {}).from || ''); return /^\d{4}-\d{2}-\d{2}$/.test(o) && today_() < o ? o : ''; }
-/* 11-25 「먼저 여는 학원」: 접수 시작일 전에도 그 학원 접수는 받음 */
-function earlyAcads_() { try { return String(setting_('먼저 여는 학원') || '').split(/[,\n]/).map(x => x.trim()).filter(Boolean); } catch (e) { return []; } }   /* 11-27 사용자: 학부모 신청 학원이어도 자동으로 먼저 열지 않음 (접수는 공지한 날 · 그 전엔 학부모 신청만) */
+/* 11-27 사용자: 「먼저 여는 학원」 예외 없앰 — 모든 학원이 공지한 접수 시작일에 같이 열림 (설정 줄이 남아 있어도 안 씀 · 시험은 STG 「테스트 로그인」) */
+function earlyAcads_() { return []; }
 function regGate_(acad) { if (acad && earlyAcads_().includes(String(acad))) return; const o = regPre_(); if (o) throw new Error('접수는 ' + (+o.slice(5, 7)) + '월 ' + (+o.slice(8, 10)) + '일부터 받아요. 그때 다시 와 주세요.'); }
 function campPublic_() { const c = camp_(), pp = parentPilot_(); return Object.assign({}, c, { ri: curRound_(c), pre: regPre_(c), pq: pp === null || pp.length > 0, songs: songList_(), songMeta: songMeta_(), progs: progList_() }); }
 /* ---- 음악회 곡 목록 (11-15 사용자: 학생이 고르는 곡 목록을 관리자가 직접) — 시트 「곡목록」 (악기 · 곡 · 순서). 비어 있으면 신청서에 들어 있는 기본 목록을 씀 ---- */

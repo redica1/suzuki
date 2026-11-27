@@ -533,7 +533,7 @@ function vLogin0(){const B='https://app.suzukimusickorea.org/camp/';const card=(
 function roundTxt(){const C=S.camp;if(!C)return '1차 접수 12월 1일 ~ 7일 · ';const R=C.rounds||[],r=R[C.ri];if(!r)return '';const md=v=>v?(+String(v).slice(5,7))+'월 '+(+String(v).slice(8,10))+'일':'';return esc(r.n||'')+' 접수 '+md(r.from)+(r.to?' ~ '+md(r.to):'')+' · '}
 /* 11-23 학부모 신청 (시범 학원만): 새 화면은 알림만 · 처리(담기 · 통장 · 입금 확인 · 취소)는 기존 접수 화면 */
 /* 11-27 학부모 입금 신고(또는 원장이 넣은 받은 돈)가 있는지 · 없어도 담을 수 있음 (기존 화면에서 한 번 물음) */
-/* 11-27 사용자: 캠프 접수 시작 전이면 담기 막고 「○월 ○일부터 담을 수 있어요」 (먼저 여는 학원은 빼고) */
+/* 11-27 사용자: 캠프 접수 시작 전이면 담기 막고 「○월 ○일부터 담을 수 있어요」 */
 const pqPreTxt=()=>{const o=(S.pq&&S.pq.pre)||'';return o?(+o.slice(5,7))+'월 '+(+o.slice(8,10))+'일부터 담을 수 있어요':''};
 const pqPaid=r=>((r&&r.m&&r.m.reps)||[]).some(x=>x.st==='신고'||x.st==='확인');
 function pqHome(){const Q=S.pq||(S.token?null:{L:[{st:'보냄'},{st:'담음',m:{reps:[{st:'신고'}]}}],nob:true});if(!Q)return '';const L=Q.L||[],cx=r=>(r.m&&r.m.cx)||null;

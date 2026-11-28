@@ -46,6 +46,9 @@ var BOOK=[['Pre-Twinkle','Pre-Twinkle'],['1권','Book 1'],['2권','Book 2'],['3�
 var BL={};BOOK.forEach(function(t){BL[t[0]]=t[1]});
 function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
 function won(n){return 'USD '+(Math.round((+n||0)*100)/100).toLocaleString('en-US')}
+function thisYear(){return +String((S.D&&S.D.today)||new Date().toISOString()).slice(0,4)||2026}
+function ageOf(by){by=+by;return by>1900&&by<=thisYear()?String(thisYear()-by):''}
+function byHint(by){return /^(19|20)\d{2}$/.test(String(by||''))?'Born in '+by:'Enter age in years (0 for babies)'}
 function songsFor(p){return ((S.D&&S.D.songs)||{})[p.inst]||[]}
 /* 11-28 곡 목록 영어 표시: 시트 「곡목록」 E칸(영어 곡명) · F칸(영어 작곡가). 영어가 없으면 원래 곡명, 한글 작곡가는 빼요 */
 function songLbl(s){var M=((S.D&&S.D.songMeta)||{})[s]||{},m=String(s).match(/^([A-Z]\d\d-\d\d) (.+?)(?: \(([^()]*)\))?$/),c=M.ec||(m&&m[3]&&!/[가-힣]/.test(m[3])?m[3]:'');return (m?m[1]+' ':'')+(M.en||(m?m[2]:s))+(c?' ('+c+')':'')}
@@ -101,7 +104,8 @@ function vPerson(p,i){var plays=p.type==='해외 학생'||p.type==='해외 교�
   '<label>Last name *<input data-f="last" data-i="'+i+'" value="'+esc(p.last)+'"></label>'+
   '<label>Type *<select data-f="type" data-i="'+i+'"'+(p.paid>0?' disabled':'')+'>'+opt(TYPES.filter(function(t){return t[0]===p.type||((S.D&&S.D.hide)||[]).indexOf(t[0])<0}),p.type,'Choose')+'</select></label>'+
   '<label>Gender *<select data-f="gender" data-i="'+i+'">'+opt([['남','Male'],['여','Female'],['기타','Other'],['답변 안 함','Prefer not to say']],p.gender,'Choose')+'</select></label>'+
-  '<label>Birth year *<input data-f="by" data-i="'+i+'" value="'+esc(p.by)+'" inputmode="numeric" maxlength="4" placeholder="2015"></label>'+
+  /* 11-28 사용자: 출생연도 대신 나이(숫자)만 넣고, 출생연도는 계산해서 보여 줌 (한국 신청서 「만 나이 → 출생연도」와 같게) */
+  '<label>Age *<input data-age="'+i+'" value="'+esc(ageOf(p.by))+'" inputmode="numeric" maxlength="2" placeholder="e.g. 10"><small class="hint" id="byh_'+i+'">'+byHint(p.by)+'</small></label>'+
   (plays?'<label>Instrument *<select data-f="inst" data-i="'+i+'">'+opt(INST,p.inst,'Choose')+'</select></label>':'')+
   (p.type==='해외 학생'?'<label>Current book *<select data-f="prog" data-i="'+i+'">'+opt(BOOK,p.prog,'Choose')+'</select></label>':'')+
   (plays?'<label>Extra private lessons <span class="hint">(30 min · '+won(S.D.lessonUsd||45)+' each)</span><select data-f="lessons" data-i="'+i+'">'+opt([0,1,2,3,4,5].slice(0,(S.D.lessonMax||5)+1).map(function(n){return [String(n),n?n+' × '+won(S.D.lessonUsd||45)+' = '+won(n*(S.D.lessonUsd||45)):'None']}),String(p.lessons||0))+'</select></label>':'')+
@@ -133,7 +137,7 @@ function vMain(){var D=S.D,s=sum();
     '<div class="sticky"><div class="spread wrap" style="padding:0"><span>'+S.list.length+' people · <b>'+won(s.tot)+'</b>'+(S.dirty?' · <span class="err">not saved</span>':'')+'</span><button class="btn primary" type="button" id="save"'+(S.dirty?'':' disabled')+'>Save list</button></div>'+(S.err?'<p class="err" style="margin:6px 0 0">'+esc(S.err)+'</p>':'')+'</div>'}
 function render(){document.getElementById('app').innerHTML=S.D?vMain():vLogin();   /* 11-28 캠프 설정에서 뺀 참가자격은 「+ 추가」 버튼을 숨김 */
   if(S.D&&(S.D.hide||[]).length)document.querySelectorAll('[data-add]').forEach(function(b){if(S.D.hide.indexOf(b.dataset.add)>=0)b.remove()})}
-document.addEventListener('input',function(e){var t=e.target;if(t.dataset&&t.dataset.f!==undefined){var p=S.list[+t.dataset.i];p[t.dataset.f]=t.value;S.dirty=true;var b=document.getElementById('save');if(b)b.disabled=false}});
+document.addEventListener('input',function(e){var t=e.target;if(t.dataset&&t.dataset.age!==undefined){var q=S.list[+t.dataset.age],v=t.value.replace(/\D/g,'').slice(0,2);if(v!==t.value)t.value=v;q.by=v===''?'':String(thisYear()-(+v));var h=document.getElementById('byh_'+t.dataset.age);if(h)h.textContent=byHint(q.by);S.dirty=true;var sb=document.getElementById('save');if(sb)sb.disabled=false;return}if(t.dataset&&t.dataset.f!==undefined){var p=S.list[+t.dataset.i];p[t.dataset.f]=t.value;S.dirty=true;var b=document.getElementById('save');if(b)b.disabled=false}});
 document.addEventListener('change',function(e){var t=e.target;if(t.dataset&&t.dataset.other!==undefined){var o=S.list[+t.dataset.other];o.other=t.checked;S.dirty=true;render();return}if(t.dataset&&t.dataset.mc!==undefined){var q=S.list[+t.dataset.mc];q.mc=(q.mc||[]).filter(function(n){return n!==t.value});if(t.checked)q.mc.push(t.value);S.dirty=true;render();return}if(t.dataset&&t.dataset.f!==undefined&&(t.tagName==='SELECT'||t.dataset.f==='room')){var p=S.list[+t.dataset.i];p[t.dataset.f]=t.value;S.dirty=true;render()}});
 document.addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;var d=b.dataset;
   if(b.id==='go'){var em=document.getElementById('em').value.trim(),cd=document.getElementById('cd').value.trim(),ag=document.getElementById('ag').checked;if(!em||!cd){S.err='Please enter your email and access code.';render();return}if(!ag){S.err='Please agree to the collection and use of personal information.';render();return}

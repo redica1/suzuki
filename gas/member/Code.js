@@ -1,4 +1,4 @@
-/* build: 20261126-020825 */
+/* build: 20261129-021334 */
 /**
  * 스즈키 회원관리 (앱스크립트 웹 앱) — 학원 · 교사 · 학생 · 연회비
  *
@@ -21,6 +21,8 @@ function addMon_(ym, n) { const y = +ym.slice(0, 4), m = +ym.slice(5, 7) - 1 + n
 function memTerms_(rows, st) {
   st = st || {}; const ev = (st.events || []).filter(e => e.d).sort((a, b) => String(a.d).localeCompare(String(b.d)));
   const out = {}; let prev = '', prevS = '';
+  /* 11-29 사용자: 낸 금액은 있는데 납부일이 없으면(원본 불러오기 때 날짜 없던 줄) 그 해 1월 1일 납부로 보고 자격을 셈 */
+  rows = rows.map(r => +r.paid > 0 && !/^\d{4}-\d{2}-\d{2}/.test(String(r.date || '')) && /^\d{4}$/.test(String(r.year)) ? Object.assign({}, r, { date: String(r.year) + '-01-01' }) : r);
   rows.filter(r => +r.paid > 0 && /^\d{4}-\d{2}-\d{2}/.test(String(r.date || '')) && String(r.year) >= MEM_FROM.slice(0, 4))
     .sort((a, b) => String(a.date).localeCompare(String(b.date)))
     .forEach(r => {

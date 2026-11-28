@@ -617,7 +617,7 @@ function pqTakeN(id){const r=(haQ().L||[]).find(x=>x.id===id);if(!r)return;
  (d.fam||[]).forEach(f=>put({n:String(f.name||'').trim(),k:f.type==='15개월 미만'?'15개월 미만':'동반가족',i:'',sex:sx(f.gender),sub:ACAD+' · 학부모 신청'},{mv:f.mv||'',sex:sx(f.gender)}));
  if(!got.length){toast('담을 사람이 없어요'+(skip.length?' · '+skip.join(', '):'')+(dup.length?' · 같은 이름이 여럿: '+dup.join(', ')+' (참가자 선택에서 직접 골라 주세요)':''),true);return}
  S.pqTake=[...new Set([...(S.pqTake||[]),r.id])];S.tab='pick';render();scrollTo(0,0);
- toast(r.name+' 보호자 신청에서 '+got.length+'명을 담았어요'+(dup.length?' · 같은 이름 여럿: '+dup.join(', ')+' (직접 골라 주세요)':'')+(skip.length?' · 뺌: '+skip.join(', '):'')+' · 「상세정보 입력」에서 권수 · 곡을 넣고 캠프 신청을 눌러요'+(d.room&&d.room.fam?' · 가족방은 신청한 뒤 「가족방 신청」에서 묶어요':''),dup.length>0)}
+ toast(r.name+' 보호자 신청에서 '+got.length+'명을 담았어요'+(dup.length?' · 같은 이름 여럿: '+dup.join(', ')+' (직접 골라 주세요)':'')+(skip.length?' · 뺌: '+skip.join(', '):'')+' · 「상세정보 입력」에서 권수 · 곡을 넣고 캠프 신청을 눌러요'+(d.room&&d.room.fam?' · 가족방은 캠프 신청하면 자동으로 묶여요':''),dup.length>0)}
 document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-pqtake],[data-pqgo2]');if(!b)return;e.preventDefault();if(b.dataset.pqgo2){S.tab='hadm';S.ha='req';render();scrollTo(0,0);return}pqTakeN(b.dataset.pqtake)});
 /* 11-28 사용자: 차액은 모자라면 빨간 -30,000 · 더 오면 파란 +30,000 */
 function gapN(v){v=+v||0;if(!v)return '';const n=Math.abs(v).toLocaleString('ko-KR');return v<0?'<b class="gapM" title="모자람">-'+n+'</b>':'<b class="gapP" title="더 냄">+'+n+'</b>'}

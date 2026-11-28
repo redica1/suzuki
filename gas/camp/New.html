@@ -617,7 +617,7 @@ function pqTakeN(id){const r=(haQ().L||[]).find(x=>x.id===id);if(!r)return;
  (d.fam||[]).forEach(f=>put({n:String(f.name||'').trim(),k:f.type==='15개월 미만'?'15개월 미만':'동반가족',i:'',sex:sx(f.gender),sub:ACAD+' · 학부모 신청'},{mv:f.mv||'',sex:sx(f.gender)}));
  if(!got.length){toast('담을 사람이 없어요'+(skip.length?' · '+skip.join(', '):'')+(dup.length?' · 같은 이름이 여럿: '+dup.join(', ')+' (참가자 선택에서 직접 골라 주세요)':''),true);return}
  S.pqTake=[...new Set([...(S.pqTake||[]),r.id])];S.tab='pick';render();scrollTo(0,0);
- toast(r.name+' 보호자 신청에서 '+got.length+'명을 담았어요'+(dup.length?' · 같은 이름 여럿: '+dup.join(', ')+' (직접 골라 주세요)':'')+(skip.length?' · 뺌: '+skip.join(', '):'')+' · 「상세정보 입력」에서 권수 · 곡을 넣고 캠프 신청을 눌러요'+(d.room&&d.room.fam?' · 가족방은 신청한 뒤 「가족방 신청」에서 묶어요':''),dup.length>0)}
+ toast(r.name+' 보호자 신청에서 '+got.length+'명을 담았어요'+(dup.length?' · 같은 이름 여럿: '+dup.join(', ')+' (직접 골라 주세요)':'')+(skip.length?' · 뺌: '+skip.join(', '):'')+' · 「상세정보 입력」에서 권수 · 곡을 넣고 캠프 신청을 눌러요'+(d.room&&d.room.fam?' · 가족방은 캠프 신청하면 자동으로 묶여요':''),dup.length>0)}
 document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-pqtake],[data-pqgo2]');if(!b)return;e.preventDefault();if(b.dataset.pqgo2){S.tab='hadm';S.ha='req';render();scrollTo(0,0);return}pqTakeN(b.dataset.pqtake)});
 /* 11-28 사용자: 차액은 모자라면 빨간 -30,000 · 더 오면 파란 +30,000 */
 function gapN(v){v=+v||0;if(!v)return '';const n=Math.abs(v).toLocaleString('ko-KR');return v<0?'<b class="gapM" title="모자람">-'+n+'</b>':'<b class="gapP" title="더 냄">+'+n+'</b>'}
@@ -908,7 +908,7 @@ function nSubmit(L0){const L=L0||P.picked.filter(x=>!x.done);if(!L.length||S.bus
   x.key=key;const i=infoOf(x);const ex=F.extra.find(e=>e.id===key);if(ex)ex.birth=i.by;F.info[key]=i;
   sb.ppl.push({id:sb.no+'_'+key,name:x.n,dtag:'',inst:np?'':instOf(x),kind:isT?'교사':np?'가족':'학생',type:i.type,fee:0,lesson:0,dues:0,room:0,status:'정상',pay:'전',paidAmt:0,batch:1,addAt:stamp})});
  S.busy=true;toast('캠프 신청을 보내는 중…');const keep=new Set(P.picked.filter(x=>x.now).map(x=>x.n+'|'+x.k).concat(L.map(x=>x.n+'|'+x.k)));
- const ok=r=>{S.busy=false;if(!r||r.ok===false){if(r&&r.subs)resync(r.subs,keep);toast((r&&r.msg)||'신청하지 못했어요.',true);return}if(PQT.length){S.pqTake=(S.pqTake||[]).filter(x=>!PQT.includes(x))}if(Array.isArray(r.preq)&&S.pq)S.pq=Object.assign({},S.pq,{L:r.preq.filter(q=>q.acad===ACAD)});resync(r.subs||[],keep,L);const left=P.picked.filter(y=>!y.done).length;render();toast(L.map(x=>x.n).join(', ')+' · 캠프 신청했어요'+(left?'':' · 모두 신청했어요'));if(!left)scrollTo(0,0)};
+ const ok=r=>{S.busy=false;if(!r||r.ok===false){if(r&&r.subs)resync(r.subs,keep);toast((r&&r.msg)||'신청하지 못했어요.',true);return}if(PQT.length){S.pqTake=(S.pqTake||[]).filter(x=>!PQT.includes(x))}if(Array.isArray(r.preq)&&S.pq)S.pq=Object.assign({},S.pq,{L:r.preq.filter(q=>q.acad===ACAD)});resync(r.subs||[],keep,L);const left=P.picked.filter(y=>!y.done).length;render();toast(L.map(x=>x.n).join(', ')+' · 캠프 신청했어요'+(left?'':' · 모두 신청했어요')+(Array.isArray(r.famNote)&&r.famNote.length?' · '+r.famNote.join(' · '):''),Array.isArray(r.famNote)&&r.famNote.some(x=>!/자동으로 묶었어요/.test(x)));if(Array.isArray(r.famNote)&&r.famNote.length&&typeof famLoad==='function')famLoad();   /* 11-28 가족방 자동 */if(!left)scrollTo(0,0)};
  const bad=e=>{S.busy=false;toast('신청하지 못했어요 · '+((e&&e.message)||e),true)};
  if(own)google.script.run.withSuccessHandler(ok).withFailureHandler(bad).saveSubs(S.token,[sb]);else{sb.reqId=sb.no;google.script.run.withSuccessHandler(ok).withFailureHandler(bad).submitNew(S.token,sb)}}
 /* 11-25 신청한 사람 고치기: 그 접수의 info · 구분 · 담당 교사만 바꿔 saveSubs (금액은 서버가 다시 셈) */

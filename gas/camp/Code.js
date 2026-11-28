@@ -1,4 +1,4 @@
-/* build: 20261128-153817 */
+/* build: 20261128-154310 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -1557,6 +1557,32 @@ function famSave(token, room) {
   } finally { lock.releaseLock(); }
   return famList(token);
 }
+/* 11-28 사용자: 학부모가 가족방을 신청했으면 담아서 접수할 때 가족방을 자동으로 묶음 (famSave 와 같은 규칙)
+ * 학생 · 첫 번째 보호자 · 동반가족 중 이번 접수로 캠프 신청된 사람만 · 이미 다른 가족방에 있는 사람이 있으면 묶지 않고 알림 */
+function famAutoFromParent_(u, ids) {
+  const notes = []; ids = (ids || []).map(String); if (!ids.length) return notes;
+  const R = parentRows_().filter(r => ids.includes(r.id) && (u.acads || []).includes(r.acad) && r.d && r.d.room && r.d.room.fam);
+  if (!R.length) return notes;
+  const nm = s => String(s || '').replace(/\s+/g, '').replace(/[A-Z]$/, ''), lock = lock_();
+  try {
+    const sh = famSheet_(), all = famRooms_(), P = Object.values(famPeople_(loadSubs_())), C = camp_().opt, cap = +C.roomCap || 4, fee = +C.roomEmptyFee || 0, mx = +C.roomMax || 6;
+    R.forEach(r => {
+      const d = r.d || {}, me = d.me || {}, tag = r.name + ' 보호자 가족방';
+      const names = (d.kids || []).filter(k => k && k.name && (k.go == null || k.go === '간다' || k.go === true)).map(k => k.name)
+        .concat(me.go !== false && !me.stu ? [String(me.name || '').trim() || r.name] : []).concat((d.fam || []).map(f => f && f.name).filter(Boolean));
+      const mem = [], miss = [];
+      names.forEach(n => { const c = P.filter(p => p.acad === r.acad && nm(p.name) === nm(n) && !mem.some(m => m.id === p.id)); if (c.length === 1) mem.push({ id: c[0].id, name: c[0].name, acad: c[0].acad, kind: c[0].kind }); else miss.push(n); });
+      if (all.some(x => x.st !== '취소' && x.mem.some(m => mem.some(y => y.id === m.id)))) { const o = all.find(x => x.st !== '취소' && x.mem.some(m => mem.some(y => y.id === m.id))); notes.push(tag + ': 이미 ' + o.repName + ' 가족방이 있어 자동으로 묶지 않았어요'); return; }
+      if (mem.length < 2) { notes.push(tag + ': 캠프 신청된 사람이 2명이 안 돼 묶지 않았어요' + (miss.length ? ' (' + miss.join(', ') + ')' : '')); return; }
+      if (mem.length > mx) { notes.push(tag + ': ' + mx + '명이 넘어 묶지 않았어요'); return; }
+      const rep = mem.find(m => m.kind === '학생') || mem.find(m => m.kind === '교사'); if (!rep) { notes.push(tag + ': 대표(학생)가 없어 묶지 않았어요'); return; }
+      const empty = Math.max(0, cap - mem.length), room = { id: 'F' + Date.now().toString(36).toUpperCase() + all.length, owner: u.name, at: stamp_(), st: '정상', pay: '전', rep: rep.id, repName: rep.name, acad: rep.acad, mem: [rep].concat(mem.filter(m => m !== rep)), empty, amt: empty * fee };
+      famWrite_(sh, room); all.push(room); log_(u.name, '가족방 자동', room.id + ' · ' + rep.name + ' · ' + mem.length + '명 · 학부모 신청 ' + r.id);
+      notes.push(tag + ': ' + rep.name + ' 외 ' + (mem.length - 1) + '명 자동으로 묶었어요' + (miss.length ? ' (못 찾음: ' + miss.join(', ') + ')' : ''));
+    });
+  } finally { lock.releaseLock(); }
+  return notes;
+}
 function famDel(token, id) { const u = who_(token); const lock = lock_();
   try { const sh = famSheet_(), r = famRooms_().find(x => x.id === id); if (!r) throw new Error('가족방을 찾지 못했어요.');
     if (!(r.owner === u.name || (u.acads || []).includes(r.acad))) throw new Error('신청한 선생님만 취소할 수 있어요.');
@@ -1671,8 +1697,9 @@ function submitNew0_(token, sb) {
   log_(u.name, '새 접수', sb.no + ' · ' + sb.ppl.length + '명');
   try { mail_(sb, u); } catch (e) { Logger.log('메일: ' + e.message); }
   try { if (pqIds.length) parentMarkMany_(pqIds, u); } catch (e) { try { log_('시스템', '학부모 신청 담음 표시 실패', String(e)); } catch (x) {} }   /* 11-27 「담음」 = 접수를 낸 뒤 */
+  let famNote = []; try { famNote = famAutoFromParent_(u, pqIds); } catch (e) { famNote = ['가족방 자동 묶기를 못 했어요 · 「가족방 신청」에서 묶어 주세요']; }   /* 11-28 */
   try { if (sb.form && Array.isArray(sb.form.preq) && sb.form.preq.length) parentNotifySubs_([sb.no]); } catch (e) {}
-  return Object.assign({ ok: true, no: sb.no }, bundle_(u.acads, u.name));
+  return Object.assign({ ok: true, no: sb.no, famNote }, bundle_(u.acads, u.name));
 }
 /** 다음 접수번호: 접수 시트 「접수번호」 칸만 읽음 (잠근 안에서 부름) */
 function subNoNext_() {
@@ -1813,9 +1840,10 @@ function saveSubs0_(token, subs) {
     });
     writeTeams_(all);
   } finally { lock.releaseLock(); }
-  try { const L = PQ_NOW.filter(x => (u.acads || []).includes(x.acad)).map(x => x.id); PQ_NOW = []; if (L.length) parentMarkMany_(L, u); } catch (e) { try { log_('시스템', '학부모 신청 담음 표시 실패', String(e)); } catch (x) {} }
+  let famNote = [];
+  try { const L = PQ_NOW.filter(x => (u.acads || []).includes(x.acad)).map(x => x.id); PQ_NOW = []; if (L.length) { parentMarkMany_(L, u); try { famNote = famAutoFromParent_(u, L); } catch (e) { famNote = ['가족방 자동 묶기를 못 했어요 · 「가족방 신청」에서 묶어 주세요']; } } } catch (e) { try { log_('시스템', '학부모 신청 담음 표시 실패', String(e)); } catch (x) {} }
   try { parentNotifySubs_((subs || []).filter(x => x.form && Array.isArray(x.form.preq) && x.form.preq.length).map(x => x.no)); } catch (e) {}
-  return Object.assign({ ok: true }, bundle_(u.acads, u.name));
+  return Object.assign({ ok: true, famNote }, bundle_(u.acads, u.name));
 }
 
 /** 더 낸 금액(차액) 돌려받기 요청: 수정으로 청구액이 줄었거나 더 많이 입금한 사람. 취소가 아님 */

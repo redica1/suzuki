@@ -194,7 +194,7 @@ function rosterRow(x,kind){
   return `<tr class="${booked?'locked':''}${on?' incart':''}"><td><input type="checkbox" id="pk_${x.id}" data-pick="${x.id}" ${on||sel?'checked':''} ${booked||on?'disabled':''} aria-label="${esc(x.name)} 선택"></td><td class="l nmc">${nm}</td>${cells}<td class="num rtd bkc">${btxt?`<small>${btxt}</small>`:'<span class="hint">-</span>'}</td><td>${pill}</td><td class="r">${!booked&&!on?`<button class="btn small" type="button" data-add1="${x.id}" aria-label="${esc(x.name)} 신청 명단에 추가">추가</button>`:''}</td></tr>`;
 }
 function typeSeg(key,owner){
-  const opts=isGuest()?[['비회원 학생','비회원 참가 아이']]:owner==='teacher'&&isStaffAcad()?STAFF_TYPES.map(t=>[t,t]):owner==='teacher'?TEACHER_TYPES.map(t=>[t,t]):[['학생','학생'],['회원의 악기하는 자녀','악기하는 교사자녀']];
+  const opts=isGuest()?[['비회원 학생','비회원 참가 아이']]:owner==='teacher'&&isStaffAcad()?STAFF_TYPES.filter(t=>!(CAMP.hide||[]).includes(t)||(S.info[key]&&S.info[key].type)===t).map(t=>[t,t]):owner==='teacher'?TEACHER_TYPES.map(t=>[t,t]):[['학생','학생'],['회원의 악기하는 자녀','악기하는 교사자녀']];
   const cur=(S.info[key]&&S.info[key].type)||(owner==='teacher'&&isStaffAcad()?'':opts[0][0]);
   return `<div class="typeseg" role="group" aria-label="참가 구분">${opts.map(([v,l])=>`<button type="button" data-settype="${key}|${v}" aria-pressed="${cur===v}">${l}<span class="num">${won((FEES[v]||[])[pRi(key)]||0)}</span></button>`).join('')}</div>`;
 }

@@ -450,9 +450,9 @@ function intlData_(gid) {
   const C = camp_(), sb = loadSubs_().find(x => x.intl && x.intlId === gid), ri = sb ? (+((sb.form || {}).ri) || 0) : curRound_(C);
   const rate = +C.opt.usdRate || 1450;
   const ppl = sb ? sb.ppl.filter(p => p.status !== '취소').map(p => { const k = p.id.slice(sb.no.length + 1), i = (sb.form.info || {})[k] || {};
-    return { key: k, first: i.first || '', last: i.last || '', type: p.type, gender: i.gender || '', by: i.by || '', inst: i.inst || p.inst || '', prog: i.prog || '', note: i.note || '', room: i.room || '', lessons: +i.lessons || 0, mc: Array.isArray(i.mc) ? i.mc : [], concert: i.concert || '없음', song: i.ot || i.song || '', video: i.video || '', roomFee: Math.round((+p.room || 0) / rate), fee: +p.usd || Math.round((+p.fee || 0) / rate), paid: Math.round((+p.paidAmt || 0) / rate), pay: p.pay }; }) : [];
+    return { key: k, first: i.first || '', last: i.last || '', type: p.type, gender: i.gender || '', by: i.by || '', inst: i.inst || p.inst || '', prog: i.prog || '', note: i.note || '', room: i.room || '', lessons: +i.lessons || 0, mc: Array.isArray(i.mc) ? i.mc : [], concert: i.concert || '없음', song: i.other ? '' : (i.song || ''), other: !!i.other, oc: i.oc || '', ot: i.other ? (i.ot || '') : '', video: i.video || '', roomFee: Math.round((+p.room || 0) / rate), fee: +p.usd || Math.round((+p.fee || 0) / rate), paid: Math.round((+p.paidAmt || 0) / rate), pay: p.pay }; }) : [];
   const fees = {}; INTL_TYPES.forEach(t => fees[t] = (C.fees[t] || [])[ri] || 0);   /* USD */
-  return { group: { id: g.id, name: g.name, country: g.country, lead: g.lead, email: g.email }, no: sb ? sb.no : '', ppl, fees, cur: 'USD', roomCap: +C.opt.roomCap || 4, roomMax: +C.opt.roomMax || 6, roomEmptyUsd: INTL_USD(C.opt).room, cons: C.cons || ['오후', '트와일라잇', '이브닝'], lessonUsd: INTL_USD(C.opt).lesson, lessonMax: +C.opt.lessonMax || 5, mcs: profs_().filter(p => p.on && p.mc).map(p => ({ n: p.name, en: p.en || '', i: p.inst, min: +p.min || 45, usd: intlMcUsd_(C.opt, p.fee, p.usd) })), round: C.rounds[ri].n,
+  return { group: { id: g.id, name: g.name, country: g.country, lead: g.lead, email: g.email }, no: sb ? sb.no : '', ppl, fees, cur: 'USD', roomCap: +C.opt.roomCap || 4, roomMax: +C.opt.roomMax || 6, roomEmptyUsd: INTL_USD(C.opt).room, cons: C.cons || ['오후', '트와일라잇', '이브닝'], songs: songList_() || songDef_(), songMeta: songMeta_(), lessonUsd: INTL_USD(C.opt).lesson, lessonMax: +C.opt.lessonMax || 5, mcs: profs_().filter(p => p.on && p.mc).map(p => ({ n: p.name, en: p.en || '', i: p.inst, min: +p.min || 45, usd: intlMcUsd_(C.opt, p.fee, p.usd) })), round: C.rounds[ri].n,
     camp: { name: C.base.name, start: C.base.start, end: C.base.end, place: C.base.place }, remit: setting_('해외 송금 안내'), reps: sb ? (sb.intlRep || []) : [], today: today_() };
 }
 /** STG 시험: 설정 「해외 테스트 로그인」 = 이메일/접속코드 가 있으면 영어 화면에 「STG: 시험 단체로 바로 로그인」 버튼 (메인 시트에는 이 줄을 넣지 않음) */
@@ -475,10 +475,15 @@ function intlSave(token, list) {
     if (plays && !inst) throw new Error(at + 'Please choose an instrument.');
     if (x.type === '해외 학생' && !String(x.prog || '').trim()) throw new Error(at + 'Please choose the current book level.');
     const MC = mcList_(), CONS = camp_().cons || ['오후', '트와일라잇', '이브닝'];
-    const concert = plays && CONS.includes(x.concert) ? x.concert : '없음', song = concert !== '없음' ? String(x.song || '').trim().slice(0, 120) : '', video = concert !== '없음' ? String(x.video || '').trim().slice(0, 300) : '';
-    if (concert !== '없음' && !song) throw new Error(at + 'Please enter the piece (composer · title) for the concert.');
+    /* 11-28 곡: 한국 신청서와 같게 — 곡 목록에서 고르거나(song) · 목록에 없는 곡(10권 이상 등)은 작곡가(oc) · 곡명(ot) 직접 */
+    const concert = plays && CONS.includes(x.concert) ? x.concert : '없음', video = concert !== '없음' ? String(x.video || '').trim().slice(0, 300) : '';
+    const SL = ((songList_() || songDef_() || {})[inst]) || [], pick = String(x.song || '').trim();
+    const other = concert !== '없음' && (x.other === true || !SL.length || (x.other === undefined && pick && !SL.includes(pick)));
+    const song = concert !== '없음' && !other ? pick : '', oc = other ? String(x.oc || '').trim().slice(0, 80) : '', ot = other ? String(x.ot || (x.other === undefined ? pick : '') || '').trim().slice(0, 120) : '';
+    if (concert !== '없음' && !other && !SL.includes(song)) throw new Error(at + 'Please choose the piece from the list, or tick "My piece is not on the list".');
+    if (other && !ot) throw new Error(at + 'Please enter the title of the piece for the concert.');
     if (video && !/^https?:\/\/\S{6,}$/i.test(video)) throw new Error(at + 'The video link should start with https://');
-    return { concert, song, video, mc: plays ? (Array.isArray(x.mc) ? x.mc : []).map(v => String(v).slice(0, 30)).filter((v, j, A) => A.indexOf(v) === j && MC.some(m => m.n === v)).slice(0, 6) : [], lessons: plays ? Math.max(0, Math.min(5, parseInt(x.lessons, 10) || 0)) : 0, key: /^o[a-z0-9]{3,20}$/.test(String(x.key || '')) ? x.key : '', first, last, type: x.type, gender: x.gender, by, inst: plays ? inst : '', prog: x.type === '해외 학생' ? String(x.prog).slice(0, 40) : '', note: String(x.note || '').slice(0, 200), room: String(x.room || '').trim().replace(/\s+/g, ' ').slice(0, 40) };
+    return { concert, song, other, oc, ot, video, mc: plays ? (Array.isArray(x.mc) ? x.mc : []).map(v => String(v).slice(0, 30)).filter((v, j, A) => A.indexOf(v) === j && MC.some(m => m.n === v)).slice(0, 6) : [], lessons: plays ? Math.max(0, Math.min(5, parseInt(x.lessons, 10) || 0)) : 0, key: /^o[a-z0-9]{3,20}$/.test(String(x.key || '')) ? x.key : '', first, last, type: x.type, gender: x.gender, by, inst: plays ? inst : '', prog: x.type === '해외 학생' ? String(x.prog).slice(0, 40) : '', note: String(x.note || '').slice(0, 200), room: String(x.room || '').trim().replace(/\s+/g, ' ').slice(0, 40) };
   });
   const lock = lock_();
   try {
@@ -496,7 +501,7 @@ function intlSave(token, list) {
       seen[k] = 1;
       const old = (sb.form.info || {})[k] || {}, p0 = sb.ppl.find(p => p.id === sb.no + '_' + k);
       if (p0 && (+p0.paidAmt || 0) > 0 && p0.type !== x.type) throw new Error(x.first + ' ' + x.last + ': payment is already confirmed, so the type cannot be changed. Please contact the association.');
-      sb.form.info[k] = Object.assign(old, { type: x.type, gender: x.gender, by: x.by, inst: x.inst, prog: x.prog, first: x.first, last: x.last, note: x.note, room: x.room, teacher: '', lessons: x.lessons || 0, mc: x.mc || [], concert: x.concert || '없음', song: '', other: x.concert && x.concert !== '없음', oc: '', ot: x.song || '', video: x.video || '' });
+      sb.form.info[k] = Object.assign(old, { type: x.type, gender: x.gender, by: x.by, inst: x.inst, prog: x.prog, first: x.first, last: x.last, note: x.note, room: x.room, teacher: '', lessons: x.lessons || 0, mc: x.mc || [], concert: x.concert || '없음', song: x.song || '', other: !!x.other, oc: x.oc || '', ot: x.ot || '', video: x.video || '' });
       const kind = x.type === '해외 학생' ? '학생' : x.type === '해외 교사' ? '교사' : '가족', name = x.first + ' ' + x.last;
       if (p0) { Object.assign(p0, { name, inst: x.inst, kind, type: x.type }); if (p0.status === '취소' && !(+p0.paidAmt > 0)) { p0.status = '정상'; p0.addAt = at; } }
       else sb.ppl.push({ id: sb.no + '_' + k, name, dtag: '', inst: x.inst, kind, type: x.type, status: '정상', pay: '전', paidAmt: 0, batch: isNew ? 1 : batch, addAt: at });

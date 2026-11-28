@@ -296,7 +296,7 @@ tr.off td{opacity:.5}
 .nrgban{display:flex!important;align-items:center;gap:12px;flex-wrap:wrap;background:#fff3e0!important;border:1.5px solid #f57c00!important;border-left-width:1.5px!important;border-radius:10px!important;padding:10px 14px!important;margin:0 0 8px}.nrgban>div{flex:1;min-width:200px}.nrgban b{font-size:16px}.nrgic{font-size:20px;color:#f57c00}
 .nrgbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:var(--card,#fff);border:1px solid var(--line);border-radius:10px;padding:8px 12px;margin:0 0 8px;font-size:14px}.nrgbar .sp{flex:1}
 .nrgnew{display:inline-block;background:#f57c00;color:#fff;font-size:11px;font-weight:700;border-radius:4px;padding:0 5px;margin-left:4px;vertical-align:1px}
-tr.nrgtodo td{background:#fffaf2}.nrgf{margin:0 0 8px}
+tr.nrgtodo td{background:#fffaf2}.nrgt{white-space:nowrap;line-height:1.3}.nrgtm{display:block;font-size:12.5px;color:var(--muted)}.nrgia{display:inline-block;font-size:11.5px;font-weight:700;color:var(--accent);background:var(--accent-soft);border-radius:4px;padding:0 5px;margin-left:3px;vertical-align:1px}.nrgf{margin:0 0 8px}
 </style>
 <style>
 /* 디자인 (10-31): 글꼴 Pretendard · 캠프 청록(#0f9d9a) 색 · 자간 · 행간 · 낱말 단위 줄바꿈 (관리자 화면은 표가 많아 조금 촘촘하게) — 위 색 정의를 덮어씀 */
@@ -1635,8 +1635,10 @@ const N=()=>(S.D&&S.D.nr)||null;
 const kOf=(sb,p)=>p.id.slice(sb.no.length+1);
 const inf=(sb,p)=>(sb.form&&sb.form.info&&sb.form.info[kOf(sb,p)])||{};
 const tOf=v=>String(v||'').replace('T',' ').slice(0,16);
-const W='일월화수목금토';
-const fmt=t=>{const m=String(t||'').match(/^(\d{4})-(\d{2})-(\d{2}) (\d{2}:\d{2})/);if(!m)return esc(t||'-');const d=new Date(+m[1],+m[2]-1,+m[3]);return `${+m[2]}/${+m[3]}(${W[d.getDay()]}) ${m[4]}`};
+const fmt=t=>{const m=String(t||'').match(/^\d\d(\d{2})-(\d{2})-(\d{2}) (\d{2}:\d{2})/);return m?`${m[1]}.${m[2]}.${m[3]} ${m[4]}`:esc(t||'-')};
+const fmt2=t=>{const m=String(t||'').match(/^\d\d(\d{2})-(\d{2})-(\d{2}) (\d{2}:\d{2})/);return m?`${m[1]}.${m[2]}.${m[3]}<small class="nrgtm">${m[4]}</small>`:esc(t||'-')};
+const IA={'바이올린':'Vn','첼로':'Vc','비올라':'Va','플루트':'Fl','피아노':'Pf','기타':'Gt'};const ia=v=>IA[v]?` <span class="nrgia">${IA[v]}</span>`:'';
+const instOf=(sb,p)=>p.inst||inf(sb,p).inst||'';
 function req(sb,p){const i=inf(sb,p),ty=p.type||i.type||'';if(!LT.includes(ty))return -1;return (i.noBase?0:1)+(+i.lessons||0)}
 function kind(sb,p){const i=inf(sb,p),ty=p.type||i.type||'';return p.kind||(['교사','연수생','소속없는 중급연수생'].includes(ty)?'교사':/학생|자녀/.test(ty)?'학생':'가족')}
 function setNr(nr){if(nr&&S.D)S.D.nr=nr}
@@ -1645,14 +1647,14 @@ function setL(rows){const n=N();if(!n)return;const c={};(rows||[]).forEach(x=>c[
 function roomRows(){const n=N();if(!n||!S.D)return [];const base=n.base.room,snap=n.snap.room||{},ok=n.ok||{},G={};
   (S.D.subs||[]).forEach(sb=>(sb.ppl||[]).forEach(p=>{const live=p.status!=='취소',ev=live?'add':'cx',t=tOf(live?(p.addAt||sb.createdAt):(p.cxAt||sb.upAt||p.addAt||sb.createdAt));
     const nw=!!base&&(live?!(p.id in snap):(p.id in snap));if(!live&&!nw)return;
-    const key=sb.no+'|'+ev+'|'+t,g=G[key]=G[key]||{key,t,no:sb.no,acad:sb.acad,owner:sb.owner||'',ev,ppl:[]};g.ppl.push({p,k:kind(sb,p),nw,ok:ok[p.id+'|'+ev]})}));
+    const key=sb.no+'|'+ev+'|'+t,g=G[key]=G[key]||{key,t,no:sb.no,acad:sb.acad,owner:sb.owner||'',ev,ppl:[]};g.ppl.push({p,k:kind(sb,p),inst:instOf(sb,p),nw,ok:ok[p.id+'|'+ev]})}));
   return Object.values(G).map(g=>{const nv=g.ppl.filter(x=>x.nw);g.nw=nv.length>0;g.done=!g.nw||nv.every(x=>x.ok);g.keys=nv.map(x=>x.p.id+'|'+g.ev);g.okBy=nv.length&&nv.every(x=>x.ok)?nv[0].ok:null;return g}).sort((a,b)=>a.t<b.t?1:a.t>b.t?-1:0)}
 /* 레슨: 학생 한 명 = 한 줄 (신청 n회 · 배정 n칸) */
 function lesRows(){const n=N();if(!n||!S.D)return [];const base=n.base.lesson,snap=n.snap.lesson||{},cnt=n.lcnt||{},L=[];
   (S.D.subs||[]).forEach(sb=>(sb.ppl||[]).forEach(p=>{const r=req(sb,p);if(r<0)return;const live=p.status!=='취소',s=snap[p.id],had=p.id in snap,c=cnt[p.id]||0;let ev='',nw=false,t='';
     if(live){if(!had&&r<=0)return;ev=!base||!had?'add':r!==s?'chg':'old';nw=!!base&&ev!=='old';t=tOf(ev==='chg'?(sb.upAt||p.addAt||sb.createdAt):(p.addAt||sb.createdAt))}
     else{if(!had&&!c)return;ev='cx';nw=!!base&&had;t=tOf(p.cxAt||sb.upAt||p.addAt)}
-    const done=live?c>=r:c===0;L.push({key:p.id,pid:p.id,t,no:sb.no,acad:sb.acad,name:p.name,ev,nw,done,req:live?r:0,was:had?s:null,n:c})}));
+    const done=live?c>=r:c===0;L.push({key:p.id,pid:p.id,t,no:sb.no,acad:sb.acad,name:p.name,inst:instOf(sb,p),ev,nw,done,req:live?r:0,was:had?s:null,n:c})}));
   return L.sort((a,b)=>a.t<b.t?1:a.t>b.t?-1:0)}
 const rowsOf=w=>w==='room'?roomRows():lesRows();
 function count(w){const n=N();if(!n||!n.base||!n.base[w])return 0;return rowsOf(w).filter(x=>x.nw&&!x.done).length}
@@ -1669,11 +1671,11 @@ function table(w){const n=N();if(!n)return '<div class="panel hint">불러오는
   const chips=`<div class="row nrgf" style="gap:6px">${[['all','전체',L.length],['new','NEW만',nNew],['todo','미처리만',nTodo]].map(([k,l,c])=>`<button class="btn small ${f===k?'primary':''}" type="button" data-nrgf="${w}|${k}">${l} ${c}</button>`).join('')}<span class="hint">최근 접수가 위 · ${w==='room'?'방은 배정한 뒤 「처리 완료」를 눌러 주세요':'신청 횟수만큼 레슨 칸을 채우면(취소면 비우면) 저절로 처리 완료'}</span></div>`;
   let body;
   if(w==='room'){const M={};(S.D.subs||[]).forEach(sb=>sb.ppl.forEach(p=>{if(p.status==='취소')return;(M[sb.acad]=M[sb.acad]||{n:0}).n++}));
-    body=`<thead><tr><th>접수 일시</th><th>접수번호</th><th>학원</th><th>접수자</th><th class="l">내용</th><th>상태</th><th>처리</th></tr></thead><tbody>${vis.map(x=>{const by={};x.ppl.forEach(q=>by[q.k]=(by[q.k]||0)+1);
+    body=`<thead><tr><th>접수 일시</th><th>학원</th><th>접수자</th><th class="l">내용</th><th>상태</th><th>처리</th></tr></thead><tbody>${vis.map(x=>{const by={};x.ppl.forEach(q=>by[q.k]=(by[q.k]||0)+1);
       const what=(x.ev==='cx'?'취소 · ':'')+['교사','학생','가족'].filter(k=>by[k]).map(k=>k+' '+by[k]).join(' · ');
       const act=!n.base[w]||!x.nw?'':x.done?`<button class="btn small" type="button" data-nrgok="${esc(x.key)}" data-on="0" ${ed}>되돌리기</button>${x.okBy?`<small class="hint">${esc(x.okBy.by||'')} ${fmt(x.okBy.at)}</small>`:''}`:`<button class="btn small primary" type="button" data-nrgok="${esc(x.key)}" data-on="1" ${ed}>${x.ev==='cx'?'방에서 뺌':'처리 완료'}</button>`;
-      return `<tr class="${x.nw&&!x.done?'nrgtodo':''}"><td class="num" style="white-space:nowrap">${fmt(x.t)}${nwT(x)}</td><td>${esc(x.no)}</td><td>${esc(x.acad)}</td><td>${esc(x.owner)}</td><td class="l">${esc(what)}<small class="hint">${x.ppl.map(q=>esc(q.p.name)).join(', ')}</small></td><td>${stC(x)}</td><td>${act}</td></tr>`}).join('')||`<tr><td colspan="7" class="hint">${f==='todo'?'미처리 접수가 없어요':'해당하는 접수가 없어요'}</td></tr>`}</tbody>`}
-  else body=`<thead><tr><th>접수 일시</th><th>접수번호</th><th>학원</th><th class="l">학생</th><th>신청</th><th>배정</th><th>상태</th></tr></thead><tbody>${vis.map(x=>`<tr class="${x.nw&&!x.done?'nrgtodo':''}"><td class="num" style="white-space:nowrap">${fmt(x.t)}${nwT(x)}</td><td>${esc(x.no)}</td><td>${esc(x.acad)}</td><td class="l"><b>${esc(x.name)}</b>${x.ev==='chg'?`<small class="hint">횟수 바뀜 · 기준 때 ${x.was}회 → ${x.req}회</small>`:x.ev==='cx'?'<small class="hint">취소</small>':''}</td><td class="num">${x.ev==='cx'?'-':x.req+'회'}</td><td class="num">${x.n}회</td><td>${stC(x)}</td></tr>`).join('')||`<tr><td colspan="7" class="hint">${f==='todo'?'미처리 접수가 없어요':'해당하는 접수가 없어요'}</td></tr>`}</tbody>`;
+      return `<tr class="${x.nw&&!x.done?'nrgtodo':''}"><td class="num nrgt">${fmt2(x.t)}${nwT(x)}</td><td>${esc(x.acad)}</td><td>${esc(x.owner)}</td><td class="l">${esc(what)}<small class="hint">${x.ppl.map(q=>esc(q.p.name)+(q.k==='가족'?'':ia(q.inst))).join(', ')}</small></td><td>${stC(x)}</td><td>${act}</td></tr>`}).join('')||`<tr><td colspan="7" class="hint">${f==='todo'?'미처리 접수가 없어요':'해당하는 접수가 없어요'}</td></tr>`}</tbody>`}
+  else body=`<thead><tr><th>접수 일시</th><th>학원</th><th class="l">학생</th><th>신청</th><th>배정</th><th>상태</th></tr></thead><tbody>${vis.map(x=>`<tr class="${x.nw&&!x.done?'nrgtodo':''}"><td class="num nrgt">${fmt2(x.t)}${nwT(x)}</td><td>${esc(x.acad)}</td><td class="l"><b>${esc(x.name)}</b>${ia(x.inst)}${x.ev==='chg'?`<small class="hint">횟수 바뀜 · 기준 때 ${x.was}회 → ${x.req}회</small>`:x.ev==='cx'?'<small class="hint">취소</small>':''}</td><td class="num">${x.ev==='cx'?'-':x.req+'회'}</td><td class="num">${x.n}회</td><td>${stC(x)}</td></tr>`).join('')||`<tr><td colspan="7" class="hint">${f==='todo'?'미처리 접수가 없어요':'해당하는 접수가 없어요'}</td></tr>`}</tbody>`;
   return `<div class="panel tbl"><h3 style="margin:0 0 6px">접수 처리 현황 · ${w==='room'?'방배정':'개인레슨'}</h3>${chips}<div class="mtblw"><table class="mtbl">${body}</table></div></div>`}
 function keep(w){return rowsOf(w).filter(x=>x.nw&&!x.done).flatMap(x=>w==='room'?x.keys.map(k=>({pid:k.split('|')[0],ev:x.ev})):[{pid:x.pid,ev:x.ev}])}
 function go(w){F[w]='todo';S.nrgGo=w;render()}

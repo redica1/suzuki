@@ -1,4 +1,4 @@
-/* build: 20261129-014008 */
+/* build: 20261129-015234 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -1549,9 +1549,13 @@ function checkEns_(sb, all) {
   const e = sb.form && sb.form.ens; if (!e || !(e.on || e.member)) return;
   const T = teams_(all.filter(x => x.no !== sb.no));
   const t = T.find(x => x.rep === sb.acad || x.acads.includes(sb.acad));
-  if (!t) return;
-  if (e.member && e.joinNo === t.no) return;
-  throw new Error(sb.acad + '은(는) 이미 앙상블 「' + t.name + '」 팀에 들어가 있어요 (대표 학원 ' + t.rep + ' · ' + t.by + ' 선생님 신청). 화면을 새로 고쳐 확인해 주세요.');
+  if (t && !(e.member && e.joinNo === t.no)) throw new Error(sb.acad + '은(는) 이미 앙상블 「' + t.name + '」 팀에 들어가 있어요 (대표 학원 ' + t.rep + ' · ' + t.by + ' 선생님 신청). 화면을 새로 고쳐 확인해 주세요.');
+  if (e.on) ensMates_(e.acads, T, sb.no);
+}
+/** 11-29 한 학원은 한 팀에만: 대표가 넣은 함께하는 학원도 다른 팀에 들어가 있으면 막음 (T = 이 접수를 뺀 팀 목록) */
+function ensMates_(acads, T, no) {
+  const bad = (acads || []).map(m => ({ m, t: T.find(x => x.no !== no && (x.rep === m || x.acads.includes(m))) })).filter(x => x.t);
+  if (bad.length) throw new Error(bad.map(x => x.m + '은(는) 이미 「' + x.t.name + '」 팀이에요 (대표 ' + x.t.rep + ')').join(' · ') + '. 한 학원은 한 팀에만 들어가요.');
 }
 function writeTeams_(all) {
   const sh = SpreadsheetApp.getActive().getSheetByName(SH.ENS);
@@ -3830,6 +3834,7 @@ function adminSaveEns(token, no, patch) {
     ['acc1', 'video1', 'acc2', 'video2'].forEach(k => e[k] = !!patch[k]);
     e.tm = String(Math.min(99, Math.max(0, parseInt(patch.tm, 10) || 0)) || ''); e.ts = String(Math.min(59, Math.max(0, parseInt(patch.ts, 10) || 0)) || '');
     if (JSON.stringify(e) === before) return adminData(token);
+    ensMates_(e.acads, teams_(all.filter(x => x.no !== no)), no);
     e.adminEdited = stamp_() + ' ' + a.name;
     sb.rev = (+sb.rev || 0) + 1;
     writeSub_(sb, false); writeTeams_(all);

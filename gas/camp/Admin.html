@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261129-014008 -->
+<!-- build: 20261129-015234 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -3141,7 +3141,7 @@ document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)r
     if(+p.ts>59){toast('초는 59까지예요');return}
     const other=p.acads.filter(a=>(S.D.teams||[]).some(t=>t.no!==d.enssave&&(t.rep===a||(t.acads||[]).includes(a))));
     const go=()=>call('adminSaveEns',[d.enssave,p],r=>{setData(r);toast('앙상블 「'+p.group+'」 팀을 고쳤어요')});
-    if(other.length)ask('다른 팀에도 들어 있는 학원이 있어요','<b>'+other.map(esc).join(', ')+'</b>은(는) 다른 팀에도 있어요. 그래도 저장할까요?',go,'그래도 저장');else go();return}
+    if(other.length){toast(other.join(', ')+'은(는) 이미 다른 팀이에요 · 한 학원은 한 팀에만 들어가요');return}go();return}   /* 11-29 사용자: 경고 말고 저장을 막음 */
   if(b.id==='lalt'){S.lalt=!S.lalt;render();return}
   if(d.stft){busy(true,'들어가고 있어요…');google.script.run.withSuccessHandler(r=>{busy(false);if(!r.ok){document.getElementById('lerr').textContent=r.msg;return}S.tok=r.token;try{sessionStorage.setItem('campAdmTok',r.token);sessionStorage.removeItem('campAdmId')}catch(x){}setData(r)}).withFailureHandler(x=>{busy(false);document.getElementById('lerr').textContent=(x&&x.message)||String(x)}).staffTestLogin(d.stft);return}
   if(b.id==='doLogin'&&S.lmode==='stf'){const nm=S.lalt?val('lnm'):val('lem'),ph=S.lalt?val('lph'):document.getElementById('lpw2').value;if(!S.lalt)svSet('cs',nm,ph);busy(true,'확인하고 있어요…');

@@ -1,4 +1,4 @@
-/* build: 20261129-020725 */
+/* build: 20261129-020758 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -27,8 +27,8 @@ const FEES = {
   '교사': [560000, 570000, 590000], '연수생': [560000, 570000, 590000], '소속없는 중급연수생': [560000, 570000, 590000], '학생': [560000, 570000, 590000],
   '회원의 악기하는 자녀': [510000, 520000, 540000], '회원의 첫번째 보호자': [510000, 520000, 540000],
   '회원의 그외 악기 안하는 동반가족': [410000, 420000, 440000], '동반가족 중 15개월 미만': [310000, 320000, 340000],
-  /* 비회원(학부모 직접 접수) — 금액은 「캠프 설정」 참가비표에서 정함 (기본값은 회원 금액과 같게 넣어 둠) */
-  '비회원 학생': [560000, 570000, 590000], '비회원 보호자': [510000, 520000, 540000], '비회원 동반가족': [410000, 420000, 440000], '비회원 15개월 미만': [310000, 320000, 340000],
+  /* 비회원(학부모 직접 접수) — 11-29 사용자: 무조건 회원 금액 + 10만 원 (camp_ 에서 늘 다시 맞춤 · GUEST_ADD) */
+  '비회원 학생': [650000, 660000, 680000], '비회원 보호자': [610000, 620000, 640000], '비회원 동반가족': [510000, 520000, 540000], '비회원 15개월 미만': [410000, 420000, 440000],
   /* 관계자 (10-31) — 금액은 「캠프 설정」 참가비표에서 (기본 0원) */
   '초빙교수': [0, 0, 0], '반주자': [0, 0, 0], '지휘자': [0, 0, 0], '통역': [0, 0, 0], '초청강사': [0, 0, 0], '스태프': [0, 0, 0], '기타 관계자': [0, 0, 0],
   /* 해외 단체 (10-31, 영어 화면) — 금액은 「캠프 설정」 참가비표에서, 연회비 없음 */
@@ -49,7 +49,7 @@ const MASTER = [{ n: '안드레아 부샤츠', fee: 150000 }, { n: '이성주', 
 const PROF_SEED = {
   '바이올린':['곽은수','김소정','김유정','김한기','민연희','변지혜','서민정','신재원','양승돈','오영근','이광호','이슬비','정호진','황경익','황선영','Ayumi Moriyama','Jeffrey Solares','Motomichi Kisohara','Sara M. Gonzales'],
   '첼로':['김현실','이숙정','황선경']};
-const PROF_HEAD = ['이름', '악기', '레슨', '마스터클래스', '시간(분)', '마스터클래스 금액', '소속', '사용', '메모', '레슨실', '책자', '책자 묶음', '영문 이름', '직함', '약력', '책자 순서', '해외 마스터클래스 금액(USD)', '다른 이름'];   /* 다른 이름 = 예전 이름 · 한글 이름 (쉼표) — 이름을 바꿔 저장하면 예전 이름이 자동으로 들어감 · 접수에 예전 이름으로 된 마스터클래스 · 선호 교수도 지금 이름으로 맞춤 (11-28) */   /* 해외 USD = 외국인 접수 화면 금액 · 비우면 원화 ÷ 환율 (11-28) · 책자 = 협회 · 초청 · (빈칸 = 책자에 안 넣음) (11-05) */
+const PROF_HEAD = ['이름', '악기', '레슨', '마스터클래스', '시간(분)', '마스터클래스 금액', '소속', '사용', '메모', '레슨실', '책자', '책자 묶음', '영문 이름', '직함', '약력', '책자 순서', '해외 마스터클래스 금액(USD)', '다른 이름', '마스터클래스 정원'];   /* 정원 = 교수 한 명에 받는 인원 · 비우면 무제한 · 차면 「마감」 (11-29) */   /* 다른 이름 = 예전 이름 · 한글 이름 (쉼표) — 이름을 바꿔 저장하면 예전 이름이 자동으로 들어감 · 접수에 예전 이름으로 된 마스터클래스 · 선호 교수도 지금 이름으로 맞춤 (11-28) */   /* 해외 USD = 외국인 접수 화면 금액 · 비우면 원화 ÷ 환율 (11-28) · 책자 = 협회 · 초청 · (빈칸 = 책자에 안 넣음) (11-05) */
 const PROF_INST = ['바이올린', '첼로', '플루트', '비올라', '피아노', '지휘', '기타'];   /* 기본 목록 · 관리자 교수진에서 새 악기를 더할 수 있음 (11-14) */
 let PROF_CACHE = null;
 function profSheet_() {
@@ -70,7 +70,7 @@ function profs_() {
     name: String(r['이름']).trim(), inst: String(r['악기'] || '').trim(), lesson: yes_(r['레슨']), mc: yes_(r['마스터클래스']),
     min: +r['시간(분)'] || 0, fee: +String(r['마스터클래스 금액'] || 0).replace(/[^\d]/g, '') || 0, org: String(r['소속'] || ''), on: String(r['사용'] || '예').trim() === '' || yes_(r['사용']), memo: String(r['메모'] || ''), room: String(r['레슨실'] || ''),
     book: String(r['책자'] || '').trim(), bgrp: String(r['책자 묶음'] || '').trim(), en: String(r['영문 이름'] || '').trim(), title: String(r['직함'] || '').trim(), bio: String(r['약력'] || ''), bord: +r['책자 순서'] || 0, usd: +String(r['해외 마스터클래스 금액(USD)'] || 0).replace(/[^\d.]/g, '') || 0,
-    alias: String(r['다른 이름'] || '').split(/[,，]/).map(x => x.trim()).filter(Boolean) }));
+    alias: String(r['다른 이름'] || '').split(/[,，]/).map(x => x.trim()).filter(Boolean), cap: Math.max(0, parseInt(String(r['마스터클래스 정원'] || '').replace(/[^\d]/g, ''), 10) || 0) }));
   return PROF_CACHE;
 }
 /** 교수 이름 맞추기 (11-28): 다른 이름(예전 이름) → 지금 이름. 지금 이름과 같은 다른 이름은 무시 */
@@ -87,7 +87,14 @@ function canonSub_(sb, cn) {
     ['p1', 'p2'].forEach(f => { const v = String(i[f] || ''); if (!v) return; const q = v.split(' · '), c = cn(q[0]); if (c !== q[0]) { q[0] = c; i[f] = q.join(' · '); } }); });
 }
 /** 접수 화면용: 사용하는 교수만 (선호 교수 목록 · 마스터클래스) */
-function profPublic_() { return profs_().filter(p => p.on).map(p => ({ n: p.name, i: p.inst, l: p.lesson, mc: p.mc, min: p.min, fee: p.fee })); }
+function profPublic_() { const left = mcLeft_(); return profs_().filter(p => p.on).map(p => ({ n: p.name, i: p.inst, l: p.lesson, mc: p.mc, min: p.min, fee: p.fee, cap: p.cap || 0, left: left[p.name] == null ? null : left[p.name] })); }
+/* 11-29 마스터클래스 정원: 교수마다 남은 자리 (정원 없으면 null = 무제한) */
+function mcLeft_() { const P = profs_().filter(p => p.mc && p.cap); if (!P.length) return {}; const A = mcApps_(), o = {}; P.forEach(p => o[p.name] = Math.max(0, p.cap - ((A[p.name] || []).length))); return o; }
+/* 11-29 정원 검사: 이번 접수로 그 교수 신청이 늘었는데 정원을 넘으면 막음 (이미 들어 있던 사람 · 줄어든 경우는 그대로) — 먼저 「캠프 신청」을 누른 사람이 자리를 가짐 */
+function mcCapChk_(all, subs) { const P = profs_().filter(p => p.mc && p.cap); if (!P.length) return;
+  const cnt = L => { const o = {}; L.forEach(sb => (sb.ppl || []).forEach(p => { if (p.status === '취소') return; const k = String(p.id).slice(String(sb.no).length + 1); (((((sb.form || {}).info || {})[k]) || {}).mc || []).forEach(n => o[n] = (o[n] || 0) + 1); })); return o; };
+  const nos = new Set((subs || []).map(x => x.no)), other = cnt(all.filter(x => !nos.has(x.no))), old = cnt(all.filter(x => nos.has(x.no))), neu = cnt(subs || []);
+  P.forEach(p => { const n = p.name; if ((neu[n] || 0) > (old[n] || 0) && (other[n] || 0) + (neu[n] || 0) > p.cap) throw new Error(n + ' 마스터클래스는 마감됐어요 (정원 ' + p.cap + '명 · 남은 자리 ' + Math.max(0, p.cap - (other[n] || 0) - (old[n] || 0)) + '). 다른 교수를 고르거나 마스터클래스를 빼 주세요.'); }); }
 const mcList_ = () => profs_().filter(p => p.on && p.mc).map(p => ({ n: p.name, fee: p.fee, usd: p.usd || 0 }));
 const PAY_MAX = 10000000;            // 한 사람 입금 신고 금액 상한
 const RP_HEAD = ['기록 일시', '신고ID', '접수번호', '학원', '접수 교사', '참가자', '입금자명', '입금일', '금액', '메모', '구분', '환불 계좌'];
@@ -134,7 +141,7 @@ function doGet(e) {
   /* 11-23 새 접수 화면 메인 전환: ?page=new 는 늘 새 화면 · 주소만(?page 없음)이면 설정 「새 접수 화면」 = 켬 일 때 새 화면
    *  옛 화면이 필요한 곳(?page=old · 비회원 as=guest · 관계자 as=staff · board · guide · aud · tl · go)은 옛 화면 그대로 */
   { const P = (e && e.parameter) || {}, pg = P.page || '';
-    const oldNeed = pg === 'old' || P.board || P.guide || P.aud || P.tl || P.go;   /* 11-27 비회원 as=guest · 관계자 as=staff 는 막음 → 새 접수 첫 화면 */
+    const oldNeed = pg === 'old' || P.as === 'guest' || P.board || P.guide || P.aud || P.tl || P.go;   /* 11-27 관계자 as=staff 는 막음 → 새 접수 첫 화면 · 11-29 사용자: 비회원 as=guest 다시 엶 (옛 비회원 신청서) */
     if (pg === 'new' || pg === 'newmock' || (!pg && !oldNeed && newUiOn_())) return newPage_(cname, P.as === 'member' ? 'member' : ''); }   /* 새 접수 · 가족방 화면 미리보기 (11-20, STG만 · 기존 접수와 따로) */
   if (e && e.parameter && e.parameter.page === 'parent') return HtmlService.createHtmlOutputFromFile('Parent').setTitle(cname + ' · 학부모 신청').addMetaTag('viewport', 'width=device-width, initial-scale=1').setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
   if (e && e.parameter && e.parameter.page === 'find') return HtmlService.createTemplateFromFile('Find').evaluate().setTitle(cname + ' · 일정 찾기').addMetaTag('viewport', 'width=device-width, initial-scale=1').setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
@@ -628,7 +635,7 @@ function intlData_(gid) {
   const ppl = sb ? sb.ppl.filter(p => p.status !== '취소').map(p => { const k = p.id.slice(sb.no.length + 1), i = (sb.form.info || {})[k] || {};
     return { key: k, first: i.first || '', last: i.last || '', type: p.type, gender: i.gender || '', by: i.by || '', inst: i.inst || p.inst || '', prog: i.prog || '', note: i.note || '', room: i.room || '', lessons: +i.lessons || 0, mc: Array.isArray(i.mc) ? i.mc : [], concert: i.concert || '없음', song: i.other ? '' : (i.song || ''), other: !!i.other, oc: i.oc || '', ot: i.other ? (i.ot || '') : '', video: i.video || '', dur: i.dur || '', roomFee: Math.round((+p.room || 0) / rate), fee: +p.usd || Math.round((+p.fee || 0) / rate), paid: Math.round((+p.paidAmt || 0) / rate), pay: p.pay }; }) : [];
   const fees = {}; INTL_TYPES.forEach(t => fees[t] = (C.fees[t] || [])[ri] || 0);   /* USD */
-  return { group: { id: g.id, name: g.name, country: g.country, lead: g.lead, email: g.email }, no: sb ? sb.no : '', ppl, fees, cur: 'USD', roomCap: +C.opt.roomCap || 4, roomMax: +C.opt.roomMax || 6, hide: (C.hide || []).filter(x => INTL_TYPES.includes(x)), roomEmptyUsd: INTL_USD(C.opt).room * INTL_NIGHTS(C.base), roomNightUsd: INTL_USD(C.opt).room, nights: INTL_NIGHTS(C.base), cons: C.cons || ['오후', '트와일라잇', '이브닝'], songs: songList_() || songDef_(), songMeta: songMeta_(), lessonUsd: INTL_USD(C.opt).lesson, lessonMax: +C.opt.lessonMax || 5, mcs: profs_().filter(p => p.on && p.mc).map(p => ({ n: p.name, en: p.en || '', i: p.inst, min: +p.min || 45, usd: intlMcUsd_(C.opt, p.fee, p.usd) })), round: C.rounds[ri].n,
+  return { group: { id: g.id, name: g.name, country: g.country, lead: g.lead, email: g.email }, no: sb ? sb.no : '', ppl, fees, cur: 'USD', roomCap: +C.opt.roomCap || 4, roomMax: +C.opt.roomMax || 6, hide: (C.hide || []).filter(x => INTL_TYPES.includes(x)), roomEmptyUsd: INTL_USD(C.opt).room * INTL_NIGHTS(C.base), roomNightUsd: INTL_USD(C.opt).room, nights: INTL_NIGHTS(C.base), cons: C.cons || ['오후', '트와일라잇', '이브닝'], songs: songList_() || songDef_(), songMeta: songMeta_(), lessonUsd: INTL_USD(C.opt).lesson, lessonMax: +C.opt.lessonMax || 5, mcs: (() => { const LF = mcLeft_(); return profs_().filter(p => p.on && p.mc).map(p => ({ left: LF[p.name] == null ? null : LF[p.name], n: p.name, en: p.en || '', i: p.inst, min: +p.min || 45, usd: intlMcUsd_(C.opt, p.fee, p.usd) })); })(), round: C.rounds[ri].n,
     camp: { name: C.base.name, start: C.base.start, end: C.base.end, place: C.base.place }, remit: setting_('해외 송금 안내'), reps: sb ? (sb.intlRep || []) : [], today: today_() };
 }
 /** STG 시험: 설정 「해외 테스트 로그인」 = 이메일/접속코드 가 있으면 영어 화면에 「STG: 시험 단체로 바로 로그인」 버튼 (메인 시트에는 이 줄을 넣지 않음) */
@@ -690,7 +697,7 @@ function intlSave(token, list) {
     sb.ppl.forEach(p => { const k = p.id.slice(sb.no.length + 1); if (seen[k] || p.status === '취소') return;
       if ((+p.paidAmt || 0) > 0) throw new Error(p.name + ': payment is already confirmed, so this person cannot be removed here. Please contact the association.');
       p.status = '취소'; p.cxAt = at; });
-    sb.rev = (+sb.rev || 0) + 1; recalc_(sb);
+    sb.rev = (+sb.rev || 0) + 1; recalc_(sb); mcCapChk_(all, [sb]);
     writeSub_(sb, isNew); if (isNew) all.push(sb);
     log_('해외 ' + g.name, isNew ? '새 접수' : '명단 저장', sb.no + ' · ' + sb.ppl.filter(p => p.status === '정상').length + '명');
   } finally { lock.releaseLock(); }
@@ -1701,23 +1708,25 @@ function orchMine(token) { const u = who_(token); if (!u.tid) return [];
 /* ================= 가족방 신청 (11-21 새 접수) =================
  * 캠프 신청한 사람끼리 따로 묶는 가족방. 다른 학원 형제도 함께. 대표는 학생 · 교사.
  * 빈자리 금액(정원 - 인원) × 빈자리 금액은 사람 참가비와 따로 한 줄로 입금 신고 · 확인 */
-const FAMR_SH = '가족방신청', FAMR_HEAD = ['ID', '대표ID', '대표', '학원', '낸 사람', '가족', '인원', '빈자리', '금액', '상태', '입금', '입금자', '입금일', '확인액', '확인일', '만든 때', '고친 때'];
-function famSheet_() { const ss = SpreadsheetApp.getActive(); let sh = ss.getSheetByName(FAMR_SH); if (!sh) { sh = ss.insertSheet(FAMR_SH); sh.getRange(1, 1, 1, FAMR_HEAD.length).setValues([FAMR_HEAD]).setFontWeight('bold'); sh.setFrozenRows(1); sh.getRange(2, 1, 1000, FAMR_HEAD.length).setNumberFormat('@'); } return sh; }
+const FAMR_SH = '가족방신청', FAMR_HEAD = ['ID', '대표ID', '대표', '학원', '낸 사람', '가족', '인원', '빈자리', '금액', '상태', '입금', '입금자', '입금일', '확인액', '확인일', '만든 때', '고친 때', '메모'];   /* 메모 = 가족방 요구사항 (11-29) */
+function famSheet_() { const ss = SpreadsheetApp.getActive(); let sh = ss.getSheetByName(FAMR_SH); if (!sh) { sh = ss.insertSheet(FAMR_SH); sh.getRange(1, 1, 1, FAMR_HEAD.length).setValues([FAMR_HEAD]).setFontWeight('bold'); sh.setFrozenRows(1); sh.getRange(2, 1, 1000, FAMR_HEAD.length).setNumberFormat('@'); } else ensureHead_(FAMR_SH, FAMR_HEAD); return sh; }
 function famRooms_() {
   return rows_(FAMR_SH).filter(r => r['ID']).map(r => { let mem = []; try { mem = JSON.parse(String(r['가족'] || '[]')); } catch (e) {}
     return { id: String(r['ID']), rep: String(r['대표ID'] || ''), repName: String(r['대표'] || ''), acad: String(r['학원'] || ''), owner: String(r['낸 사람'] || ''), mem, n: +r['인원'] || mem.length, empty: +r['빈자리'] || 0, amt: +r['금액'] || 0,
-      st: String(r['상태'] || '정상'), pay: String(r['입금'] || '전'), payer: String(r['입금자'] || ''), payDate: dstr_(r['입금일']), ok: +r['확인액'] || 0, okDate: dstr_(r['확인일']), at: String(r['만든 때'] || ''), up: String(r['고친 때'] || ''), _row: r._row }; });
+      st: String(r['상태'] || '정상'), pay: String(r['입금'] || '전'), payer: String(r['입금자'] || ''), payDate: dstr_(r['입금일']), ok: +r['확인액'] || 0, okDate: dstr_(r['확인일']), at: String(r['만든 때'] || ''), up: String(r['고친 때'] || ''), memo: String(r['메모'] || ''), _row: r._row }; });
 }
-function famWrite_(sh, r) { const row = [r.id, r.rep, r.repName, r.acad, r.owner, JSON.stringify(r.mem), r.mem.length, r.empty, r.amt, r.st, r.pay, r.payer || '', r.payDate || '', r.ok || '', r.okDate || '', r.at, stamp_()];
+function famWrite_(sh, r) { const row = [r.id, r.rep, r.repName, r.acad, r.owner, JSON.stringify(r.mem), r.mem.length, r.empty, r.amt, r.st, r.pay, r.payer || '', r.payDate || '', r.ok || '', r.okDate || '', r.at, stamp_(), r.memo || ''];
   if (r._row) sh.getRange(r._row, 1, 1, row.length).setValues([row]); else sh.appendRow(row); }
-function famVis_(u, rooms) { return rooms.filter(r => r.st !== '취소' && (u.acads.includes(r.acad) || r.mem.some(m => u.acads.includes(m.acad)))); }
-function famPeople_(subs) { const m = {}; subs.forEach(sb => sb.ppl.forEach(p => { if (p.status === '정상' || p.status === '취소요청') m[p.id] = { id: p.id, name: p.name, acad: sb.acad, kind: p.kind, inst: p.inst || '', owner: sb.owner }; })); return m; }
+function famVis_(u, rooms) { if (u.guest) { const own = new Set(Object.values(famPeople_(loadSubs_())).filter(p => p.owner === u.name).map(p => p.id)); return rooms.filter(r => r.st !== '취소' && (r.owner === u.name || r.mem.some(m => own.has(m.id)))); }   /* 11-29 비회원: 내가 신청한 사람이 든 가족방만 */
+  return rooms.filter(r => r.st !== '취소' && (u.acads.includes(r.acad) || r.mem.some(m => u.acads.includes(m.acad)))); }
+function famPeople_(subs) { const m = {}; subs.forEach(sb => { const g = sb.acad === GUEST_ACAD, F = sb.form || {}, w0 = g ? String(((F.extra || []).map(x => x && x.w).find(Boolean)) || '') : '';   /* 11-29 비회원: 같이 가는 학원 — 사람마다 (info.w · 없으면 예전 접수의 extra.w) · 그 학원 가족방 화면에서 찾음 */
+  sb.ppl.forEach(p => { if (p.status === '정상' || p.status === '취소요청') { const k = String(p.id).slice(String(sb.no).length + 1), w = g ? String((((F.info || {})[k]) || {}).w || ((F.extra || []).find(x => x && x.id === k) || {}).w || w0 || '') : ''; m[p.id] = { id: p.id, name: p.name, acad: sb.acad, kind: p.kind, inst: p.inst || '', owner: sb.owner, w }; } }); }); return m; }
 /** 새 화면이 처음 · 저장 뒤마다 부름: 보이는 가족방 + 학원 이름 목록 */
 function famList(token) { const u = who_(token); const ts = teachers_(); const acads = [...new Set([].concat(...ts.map(t => t.acads || [])))].filter(Boolean).sort();
   return { ok: true, rooms: famVis_(u, famRooms_()).map(r => { const o = Object.assign({}, r); delete o._row; return o; }), acads, cap: +camp_().opt.roomCap || 4, emptyFee: +camp_().opt.roomEmptyFee || 0 }; }
 /** 다른 학원 형제 찾기: 그 학원에 캠프 신청한 사람 이름만 (2글자 이상 · 개인정보 없이) */
 function famFind(token, acad, q) { const u = who_(token); q = String(q || '').trim(); acad = String(acad || '');
-  const P = famPeople_(loadSubs_()); return Object.values(P).filter(p => p.acad === acad && (!q || p.name.indexOf(q) >= 0)).slice(0, 60).map(p => ({ id: p.id, name: p.name, acad: p.acad, kind: p.kind, inst: p.inst })); }
+  const P = famPeople_(loadSubs_()); return Object.values(P).filter(p => (u.guest ? p.owner === u.name : (p.acad === acad || (p.acad === GUEST_ACAD && p.w === acad))) && (!q || p.name.indexOf(q) >= 0)).slice(0, 60).map(p => ({ id: p.id, name: p.name, acad: p.acad, kind: p.kind, inst: p.inst })); }
 function famSave(token, room) {
   const u = who_(token); { const E = earlyAcads_(); if (!(u.acads || []).some(a => E.includes(a))) regGate_(); }
   const lock = lock_();
@@ -1729,6 +1738,7 @@ function famSave(token, room) {
     if (cur && cur.pay === '신고') throw new Error('입금 신고 중인 가족방은 협회가 확인한 뒤에 고칠 수 있어요.');   /* 11-27 입금 확인 뒤에도 고치기 (차액은 화면에 더 냄 · 모자람) */
     const rep = P[room.rep]; if (!rep) throw new Error('대표를 캠프 신청한 사람 중에서 골라 주세요.');
     if (!u.acads.includes(rep.acad)) throw new Error('대표는 우리 학원 사람이어야 해요.');
+    if (u.guest && [room.rep].concat(room.mem || []).some(id => !P[id] || P[id].owner !== u.name)) throw new Error('비회원 접수는 내가 신청한 사람끼리만 가족방으로 묶어요. 같이 가는 학원 선생님이 그 학원 가족과 묶어 드려요.');   /* 11-29 */
     if (!['학생', '교사'].includes(rep.kind)) throw new Error('대표는 학생 또는 교사여야 해요.');
     const ids = [...new Set([room.rep].concat(room.mem || []))];
     const mem = ids.map(id => { const p = P[id]; if (!p) throw new Error('캠프 신청한 사람만 넣을 수 있어요. 새로 고쳐 주세요.'); return { id, name: p.name, acad: p.acad, kind: p.kind }; });
@@ -1737,7 +1747,7 @@ function famSave(token, room) {
     const busy = all.filter(r => r.st !== '취소' && (!cur || r.id !== cur.id)); mem.forEach(m => { const o = busy.find(r => r.mem.some(x => x.id === m.id)); if (o) throw new Error(m.name + '은(는) 이미 ' + o.repName + ' 가족방에 있어요.'); });
     const empty = Math.max(0, cap - mem.length);
     const r = cur || { id: 'F' + Date.now().toString(36).toUpperCase(), owner: u.name, at: stamp_(), st: '정상', pay: '전' };
-    Object.assign(r, { rep: room.rep, repName: rep.name, acad: rep.acad, mem, empty, amt: empty * fee });
+    Object.assign(r, { rep: room.rep, repName: rep.name, acad: rep.acad, mem, empty, amt: empty * fee, memo: String(room.memo == null ? (r.memo || '') : room.memo).trim().slice(0, 300) });
     famWrite_(sh, r); log_(u.name, cur ? '가족방 고침' : '가족방 신청', r.id + ' · ' + rep.name + ' · ' + mem.length + '명');
   } finally { lock.releaseLock(); }
   return famList(token);
@@ -1761,7 +1771,7 @@ function famAutoFromParent_(u, ids) {
       if (mem.length < 2) { notes.push(tag + ': 캠프 신청된 사람이 2명이 안 돼 묶지 않았어요' + (miss.length ? ' (' + miss.join(', ') + ')' : '')); return; }
       if (mem.length > mx) { notes.push(tag + ': ' + mx + '명이 넘어 묶지 않았어요'); return; }
       const rep = mem.find(m => m.kind === '학생') || mem.find(m => m.kind === '교사'); if (!rep) { notes.push(tag + ': 대표(학생)가 없어 묶지 않았어요'); return; }
-      const empty = Math.max(0, cap - mem.length), room = { id: 'F' + Date.now().toString(36).toUpperCase() + all.length, owner: u.name, at: stamp_(), st: '정상', pay: '전', rep: rep.id, repName: rep.name, acad: rep.acad, mem: [rep].concat(mem.filter(m => m !== rep)), empty, amt: empty * fee };
+      const empty = Math.max(0, cap - mem.length), room = { id: 'F' + Date.now().toString(36).toUpperCase() + all.length, owner: u.name, at: stamp_(), st: '정상', pay: '전', rep: rep.id, repName: rep.name, acad: rep.acad, mem: [rep].concat(mem.filter(m => m !== rep)), empty, amt: empty * fee, memo: String((r.d.room && r.d.room.note) || '').trim().slice(0, 300) };   /* 학부모가 적은 가족방 메모를 그대로 (11-29) */
       famWrite_(sh, room); all.push(room); log_(u.name, '가족방 자동', room.id + ' · ' + rep.name + ' · ' + mem.length + '명 · 학부모 신청 ' + r.id);
       notes.push(tag + ': ' + rep.name + ' 외 ' + (mem.length - 1) + '명 자동으로 묶었어요' + (miss.length ? ' (못 찾음: ' + miss.join(', ') + ')' : ''));
     });
@@ -1873,7 +1883,7 @@ function submitNew0_(token, sb) {
     const no = subNoNext_();
     sb.no = no; sb.createdAt = stamp_();
     sb.ppl.forEach(p => { p.id = no + p.id.slice(tmp.length); p.pay = '전'; p.paidAmt = 0; delete p.rep; p.addAt = sb.createdAt; });   /* 11-23 추가 일시 = 누른 시각 (화면 값 안 믿음) */
-    recalc_(sb); checkEns_(sb, all);
+    recalc_(sb); checkEns_(sb, all); mcCapChk_(all, [sb]);
     teacherDup_(all, sb);
     writeSub_(sb, 'append');
     if (sb.reqId) C.put('req_' + sb.reqId, no, 21600);
@@ -1960,7 +1970,7 @@ function saveSubs0_(token, subs) {
       famGate_(cur, sb);
       sb.ppl.forEach(p => { const c = cur.ppl.find(x => x.id === p.id); p.addAt = !c ? stamp_() : (c.status === '취소' && p.status !== '취소' && !(+c.paidAmt > 0)) ? stamp_() : (c.addAt || p.addAt || ''); });   /* 11-23 추가 일시 = 누른 시각 (새 사람 · 되살린 사람) · 있던 사람은 그대로 */
       roomPen_(cur, sb); roomCredit_(cur, sb);
-      recalc_(sb);
+      recalc_(sb); mcCapChk_(all, [sb]);
       teacherDup_(all, sb, sb.ppl.filter(p => !cur.ppl.some(c => c.id === p.id)).map(p => p.id));
       stuDup_(all, sb, sb.ppl.filter(p => !cur.ppl.some(c => c.id === p.id)).map(p => p.id));
       if (JSON.stringify((sb.form || {}).ens || {}) !== JSON.stringify((cur.form || {}).ens || {})) checkEns_(sb, all);
@@ -2273,6 +2283,7 @@ function camp_() {
   /* 참가비표 칸 수 = 차수 수 (새로 생긴 참가자격·차수는 마지막 금액으로 채움) */
   c.cons = consClean_(c.cons);
   FEE_TYPES.forEach(t => { const a = (c.fees[t] || []).slice(0, c.rounds.length); while (a.length < c.rounds.length) a.push(a.length ? a[a.length - 1] : 0); c.fees[t] = a; });
+  GUEST_OF.forEach(([g, m]) => { c.fees[g] = (c.fees[m] || []).map(v => (+v || 0) + GUEST_ADD); });   /* 11-29 사용자: 비회원은 무조건 회원 금액 + 10만 원 (차수마다) */
   try { const j = JSON.stringify(c); if (j.length < 95000) CacheService.getScriptCache().put('campCfgJ', j, 120); } catch (e) {}
   return (CAMP_CACHE = c);
 }
@@ -2506,6 +2517,7 @@ function mealsApply_(meals) {
  * 비회원 = 보호자가 자기 아이(와 가족)를 직접 접수. 학원 = 「비회원」, 접수자 = 이름(휴대전화 뒤 4자리)
  * 휴대전화 전체는 「비회원」 시트에만 (같은 이름·뒷번호를 다른 사람이 쓰지 못하게) */
 const GUEST_ACAD = '비회원';
+const GUEST_ADD = 100000, GUEST_OF = [['비회원 학생', '학생'], ['비회원 보호자', '회원의 첫번째 보호자'], ['비회원 동반가족', '회원의 그외 악기 안하는 동반가족'], ['비회원 15개월 미만', '동반가족 중 15개월 미만']];   /* 11-29 비회원 = 회원 + 10만 원 */
 const GUEST_SH = '비회원';
 const CONSENT_SH = '동의기록';
 const isGuestType_ = t => /^비회원 /.test(String(t || ''));
@@ -2571,7 +2583,7 @@ function guestLogin(name, phone, consent) {
   const nm = String(name || '').trim().replace(/\s+/g, ' '), ph = String(phone || '').replace(/\D/g, '');
   if (nm.length < 2 || nm.length > 20 || /[()]/.test(nm)) return { ok: false, msg: '보호자 이름을 2~20자로 넣어 주세요.' };
   if (!/^01\d{8,9}$/.test(ph)) return { ok: false, msg: '휴대전화를 확인해 주세요.' };
-  const ce = consentErr_(consent); if (ce) return { ok: false, msg: ce };
+  const ce = consentErr_(consent); if (ce) return { ok: false, needConsent: true, msg: ce, consent: consentItems_() };   /* 11-29 새 화면: 동의 화면을 띄움 (기존 화면은 msg 만 봄) */
   let owner = nm + '(' + ph.slice(-4) + ')';
   const lock = lock_();
   try {
@@ -2590,7 +2602,12 @@ function guestLogin(name, phone, consent) {
   const token = Utilities.getUuid();
   CacheService.getScriptCache().put('tok_' + token, JSON.stringify({ name: owner, acads: [GUEST_ACAD], guest: true, phone: ph }), 21600);
   log_(owner, '비회원 로그인', '');
-  return Object.assign({ ok: true, token, today: today_(), teacher: { id: '', name: owner, real: nm, role: '보호자', inst: '', acads: [GUEST_ACAD], home: [GUEST_ACAD], p4: ph.slice(-4), guest: true }, myAcct: myAcct_(owner) }, bundle_([GUEST_ACAD], owner));
+  return Object.assign({ ok: true, token, today: today_(), teacher: { id: '', name: owner, real: nm, role: '보호자', inst: '', acads: [GUEST_ACAD], home: [GUEST_ACAD], p4: ph.slice(-4), guest: true }, myAcct: myAcct_(owner), acadList: guestAcads_() }, bundle_([GUEST_ACAD], owner));
+}
+/** 비회원 「같이 가는 학원」 고르기 목록 (11-29): 회원 선생님 소속 학원 이름만 */
+function guestAcads_() {
+  const set = {}; try { teachers_().forEach(t => (t.acads || []).forEach(x => { if (x) set[x] = 1; })); } catch (e) {}
+  return Object.keys(set).filter(x => x !== GUEST_ACAD && x !== STAFF_ACAD && x !== NOACAD).sort((x, y) => x.localeCompare(y, 'ko'));
 }
 
 
@@ -3916,7 +3933,7 @@ function adminSaveProfs(token, list) {
   const t = (s, n) => String(s == null ? '' : s).trim().slice(0, n || 60);
   const L = (list || []).map(p => ({ name: t(p.name, 40), inst: t(p.inst, 20), lesson: !!p.lesson, mc: !!p.mc, min: Math.max(0, Math.min(240, +p.min || 0)), fee: Math.max(0, Math.min(5000000, +String(p.fee || 0).replace(/[^\d]/g, '') || 0)), org: t(p.org, 40), on: p.on !== false, memo: t(p.memo, 200), room: t(p.room, 30),
     book: ['협회', '초청'].includes(String(p.book || '')) ? String(p.book) : '', bgrp: t(p.bgrp, 40), en: t(p.en, 80), title: t(p.title, 60), bio: String(p.bio == null ? '' : p.bio).trim().slice(0, 2000), bord: Math.max(0, Math.min(999, Math.round(+p.bord || 0))), usd: Math.max(0, Math.min(10000, Math.round((+String(p.usd || 0).replace(/[^\d.]/g, '') || 0) * 100) / 100)),
-    alias: (Array.isArray(p.alias) ? p.alias : String(p.alias || '').split(/[,，]/)).concat(p.was && t(p.was, 40) !== t(p.name, 40) ? [t(p.was, 40)] : []).map(x => t(x, 40)).filter((x, i, A) => x && x !== t(p.name, 40) && A.indexOf(x) === i).slice(0, 6) })).filter(p => p.name);
+    alias: (Array.isArray(p.alias) ? p.alias : String(p.alias || '').split(/[,，]/)).concat(p.was && t(p.was, 40) !== t(p.name, 40) ? [t(p.was, 40)] : []).map(x => t(x, 40)).filter((x, i, A) => x && x !== t(p.name, 40) && A.indexOf(x) === i).slice(0, 6), cap: Math.max(0, Math.min(999, parseInt(String(p.cap == null ? '' : p.cap).replace(/[^\d]/g, ''), 10) || 0)) })).filter(p => p.name);
   const seen = {};
   L.forEach(p => {
     if (!p.inst) throw new Error(p.name + ': 악기를 골라 주세요.');
@@ -3929,7 +3946,7 @@ function adminSaveProfs(token, list) {
   try {
     const sh = profSheet_(); const last = sh.getLastRow();
     if (last > 1) sh.getRange(2, 1, last - 1, PROF_HEAD.length).clearContent();
-    if (L.length) sh.getRange(2, 1, L.length, PROF_HEAD.length).setValues(L.map(p => [p.name, p.inst, p.lesson ? '예' : '아니오', p.mc ? '예' : '아니오', p.mc ? (p.min || '') : '', p.mc ? p.fee : '', p.org, p.on ? '예' : '아니오', p.memo, p.room, p.book, p.bgrp, p.en, p.title, p.bio, p.bord || '', p.mc ? (p.usd || '') : '', p.alias.join(', ')]));
+    if (L.length) sh.getRange(2, 1, L.length, PROF_HEAD.length).setValues(L.map(p => [p.name, p.inst, p.lesson ? '예' : '아니오', p.mc ? '예' : '아니오', p.mc ? (p.min || '') : '', p.mc ? p.fee : '', p.org, p.on ? '예' : '아니오', p.memo, p.room, p.book, p.bgrp, p.en, p.title, p.bio, p.bord || '', p.mc ? (p.usd || '') : '', p.alias.join(', '), p.mc ? (p.cap || '') : '']));
     PROF_CACHE = null;
     log_('관리자 ' + a.name, '교수진 저장', L.length + '명');
   } finally { lock.releaseLock(); }
@@ -4392,6 +4409,12 @@ function findAccess(name, phone, agree) {
   log_(nm + ' (' + ph.slice(-4) + ')', '일정 찾기 들어감', '');
   return Object.assign(G0, { tok });
 }
+/* 11-29 사용자: 일정 찾기는 로그인 없이 (학생 · 학부모가 휴대폰으로 바로) — 방문자 열쇠. 문의 · 분실물 올리기만 이름 · 휴대전화 */
+function findOpen() {
+  const G0 = findGate_(); if (!G0.open) return G0;
+  const tok = Utilities.getUuid(); CacheService.getScriptCache().put('fk_' + tok, '방문자|0000|A', 21600);
+  return Object.assign(G0, { tok, anon: true });
+}
 function findTok_(tok) { const v = tok && CacheService.getScriptCache().get('fk_' + tok); if (!v) throw new Error('NEEDIN'); return v; }
 /* 학원 방 (일정 찾기용): 공개된 방만, 비밀번호 · 다른 사람 이름은 빼고 */
 function acadRooms_(acad) {
@@ -4417,7 +4440,7 @@ function kidCard_(x, K) {
     grp: Object.values(G).map(g => ({ id: g.id, sub: g.sub, room: g.room, time: g.s + (g.e ? '~' + g.e : ''), days: g.d.sort((a, b) => a - b).map(K.dl), d: g.d.slice().sort((a, b) => a - b), s: g.s, e: g.e })),
     les: K.L.filter(l => l.pid === x.id).sort((a, b) => a.d - b.d || String(a.t).localeCompare(String(b.t))).map(l => ({ d: l.d, day: K.dl(l.d), t: l.t, pr: l.pr, room: K.roomOf(l.pr) })), mc };
 }
-function findWho_(tok) { const v = String(findTok_(tok)).split('|'); return { nm: v[0] || '', p4: v[1] || '' }; }
+function findWho_(tok) { const v = String(findTok_(tok)).split('|'); return { nm: v[0] || '', p4: v[1] || '', anon: v[2] === 'A' }; }
 /** 우리 아이: 보호자가 넣은 [{name, by(출생연도)}] + 비회원 보호자로 접수한 아이(이름 · 번호 뒤 4자리가 같으면 자동) */
 function findMyKids(list, tok) {
   const G0 = findGate_(); if (!G0.open) return G0; let me; try { me = findWho_(tok); } catch (e) { return { ok: false, needIn: true, msg: '처음 화면에서 이름 · 휴대전화를 넣어 주세요.' }; }
@@ -4450,10 +4473,11 @@ function campHome(tok) {
 }
 /** 캠프 페이지 요청 · 문의: 일정 찾기 이름 · 번호로 글쓰기 / 내 글 보기 */
 function findIssue(d, tok) { let me; try { me = findWho_(tok); } catch (e) { return { ok: false, needIn: true, msg: '처음 화면에서 이름 · 휴대전화를 넣어 주세요.' }; }
+  if (me.anon) return { ok: false, needName: true, msg: '문의는 이름 · 휴대전화를 넣고 보내요.' };
   d = d || {}; const r = submitIssue('', { name: me.nm, phone: me.p4, text: d.text, where: '캠프 페이지' + (d.where ? ' · ' + String(d.where).slice(0, 20) : ''), file: d.file, acad: d.acad || '' });
   return Object.assign({ ok: true }, r || {}, { mine: findMyIssues_(me) }); }
 function findMyIssues_(me) { return issues_().filter(x => x.name === me.nm && x.p4 === me.p4).reverse().map(x => ({ no: x.no, at: x.at, where: x.where, text: x.text, state: x.state, reply: x.reply })); }
-function findMyIssues(tok) { let me; try { me = findWho_(tok); } catch (e) { return { ok: false, needIn: true }; } return { ok: true, mine: findMyIssues_(me) }; }
+function findMyIssues(tok) { let me; try { me = findWho_(tok); } catch (e) { return { ok: false, needIn: true }; } if (me.anon) return { ok: true, anon: true, mine: [] }; return { ok: true, mine: findMyIssues_(me) }; }
 /** 이름으로 찾기: 학생이면 그 아이 일정, 교사 · 교수면 그 사람 스케줄 (누가 누군지 서로 알게, 11-03) */
 function findKid(q, tok) {
   const G0 = findGate_(); if (!G0.open) return G0; const name = G0.name; try { findTok_(tok); } catch (e) { return { ok: false, needIn: true, msg: '처음 화면에서 이름 · 휴대전화를 넣어 주세요.' }; }
@@ -5494,7 +5518,9 @@ function lostSheet_() { const ss = SpreadsheetApp.getActive(); let sh = ss.getSh
 function lostFolder_() { const n = '캠프 분실물 사진 ' + camp_().base.id, it = DriveApp.getFoldersByName(n); return it.hasNext() ? it.next() : DriveApp.createFolder(n); }
 function lostApiT(token, req) { const u = who_(token); return lost_({ key: 'T:' + u.name, name: u.name, kind: '선생님' }, req || {}); }
 function lostApiF(req, tok) { const G0 = findGate_(); if (!G0.open) return G0; let v; try { v = findTok_(tok); } catch (e) { return { ok: false, needIn: true, msg: '처음 화면에서 이름 · 휴대전화를 넣어 주세요.' }; }
-  const [nm, p4] = String(v).split('|'); return lost_({ key: 'F:' + nm + '|' + p4, name: nm, kind: '참가자' }, req || {}); }
+  const [nm, p4, an] = String(v).split('|'); const op = String((req || {}).op || 'list');
+  if (an === 'A' && op !== 'list' && op !== 'photo') return { ok: false, needName: true, msg: '분실물을 올리거나 「제 거예요」를 누르려면 이름 · 휴대전화를 넣어 주세요. (메뉴 아래 「이름 넣기」)' };   /* 11-29 방문자는 보기만 */
+  return lost_({ key: 'F:' + nm + '|' + p4, name: nm, kind: '참가자' }, req || {}); }
 function lost_(me, req) {
   const op = String(req.op || 'list'), a = req.a || {};
   const rows = () => rows_(LOST).filter(r => String(r['번호'] || ''));

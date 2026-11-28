@@ -1,4 +1,4 @@
-/* build: 20261128-205013 */
+/* build: 20261128-212429 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -49,7 +49,7 @@ const MASTER = [{ n: '안드레아 부샤츠', fee: 150000 }, { n: '이성주', 
 const PROF_SEED = {
   '바이올린':['곽은수','김소정','김유정','김한기','민연희','변지혜','서민정','신재원','양승돈','오영근','이광호','이슬비','정호진','황경익','황선영','Ayumi Moriyama','Jeffrey Solares','Motomichi Kisohara','Sara M. Gonzales'],
   '첼로':['김현실','이숙정','황선경']};
-const PROF_HEAD = ['이름', '악기', '레슨', '마스터클래스', '시간(분)', '마스터클래스 금액', '소속', '사용', '메모', '레슨실', '책자', '책자 묶음', '영문 이름', '직함', '약력', '책자 순서', '해외 마스터클래스 금액(USD)'];   /* 해외 USD = 외국인 접수 화면 금액 · 비우면 원화 ÷ 환율 (11-28) · 책자 = 협회 · 초청 · (빈칸 = 책자에 안 넣음) (11-05) */
+const PROF_HEAD = ['이름', '악기', '레슨', '마스터클래스', '시간(분)', '마스터클래스 금액', '소속', '사용', '메모', '레슨실', '책자', '책자 묶음', '영문 이름', '직함', '약력', '책자 순서', '해외 마스터클래스 금액(USD)', '다른 이름'];   /* 다른 이름 = 예전 이름 · 한글 이름 (쉼표) — 이름을 바꿔 저장하면 예전 이름이 자동으로 들어감 · 접수에 예전 이름으로 된 마스터클래스 · 선호 교수도 지금 이름으로 맞춤 (11-28) */   /* 해외 USD = 외국인 접수 화면 금액 · 비우면 원화 ÷ 환율 (11-28) · 책자 = 협회 · 초청 · (빈칸 = 책자에 안 넣음) (11-05) */
 const PROF_INST = ['바이올린', '첼로', '플루트', '비올라', '피아노', '지휘', '기타'];   /* 기본 목록 · 관리자 교수진에서 새 악기를 더할 수 있음 (11-14) */
 let PROF_CACHE = null;
 function profSheet_() {
@@ -69,8 +69,22 @@ function profs_() {
   PROF_CACHE = rows_(SH.PROF).filter(r => String(r['이름'] || '').trim()).map(r => ({
     name: String(r['이름']).trim(), inst: String(r['악기'] || '').trim(), lesson: yes_(r['레슨']), mc: yes_(r['마스터클래스']),
     min: +r['시간(분)'] || 0, fee: +String(r['마스터클래스 금액'] || 0).replace(/[^\d]/g, '') || 0, org: String(r['소속'] || ''), on: String(r['사용'] || '예').trim() === '' || yes_(r['사용']), memo: String(r['메모'] || ''), room: String(r['레슨실'] || ''),
-    book: String(r['책자'] || '').trim(), bgrp: String(r['책자 묶음'] || '').trim(), en: String(r['영문 이름'] || '').trim(), title: String(r['직함'] || '').trim(), bio: String(r['약력'] || ''), bord: +r['책자 순서'] || 0, usd: +String(r['해외 마스터클래스 금액(USD)'] || 0).replace(/[^\d.]/g, '') || 0 }));
+    book: String(r['책자'] || '').trim(), bgrp: String(r['책자 묶음'] || '').trim(), en: String(r['영문 이름'] || '').trim(), title: String(r['직함'] || '').trim(), bio: String(r['약력'] || ''), bord: +r['책자 순서'] || 0, usd: +String(r['해외 마스터클래스 금액(USD)'] || 0).replace(/[^\d.]/g, '') || 0,
+    alias: String(r['다른 이름'] || '').split(/[,，]/).map(x => x.trim()).filter(Boolean) }));
   return PROF_CACHE;
+}
+/** 교수 이름 맞추기 (11-28): 다른 이름(예전 이름) → 지금 이름. 지금 이름과 같은 다른 이름은 무시 */
+function profCanon_() {
+  const P = profs_(), now = {}, M = {}; P.forEach(p => now[p.name] = 1);
+  P.forEach(p => (p.alias || []).forEach(a => { if (!now[a] && !M[a]) M[a] = p.name; }));
+  return n => { const k = String(n == null ? '' : n).trim(); return M[k] || k; };
+}
+/** 접수 한 건의 마스터클래스 · 선호 교수를 지금 이름으로 (loadSubs_ 에서) */
+function canonSub_(sb, cn) {
+  const I = (sb.form || {}).info || {};
+  Object.keys(I).forEach(k => { const i = I[k]; if (!i || typeof i !== 'object') return;
+    if (Array.isArray(i.mc) && i.mc.length) i.mc = i.mc.map(cn).filter((v, j, A) => v && A.indexOf(v) === j);
+    ['p1', 'p2'].forEach(f => { const v = String(i[f] || ''); if (!v) return; const q = v.split(' · '), c = cn(q[0]); if (c !== q[0]) { q[0] = c; i[f] = q.join(' · '); } }); });
 }
 /** 접수 화면용: 사용하는 교수만 (선호 교수 목록 · 마스터클래스) */
 function profPublic_() { return profs_().filter(p => p.on).map(p => ({ n: p.name, i: p.inst, l: p.lesson, mc: p.mc, min: p.min, fee: p.fee })); }
@@ -875,7 +889,8 @@ function parentClean_(d) {
   const yr = v => { const y = String(v || '').replace(/\D/g, '').slice(0, 6); return y; };
   const g = v => (v === '남' || v === '여') ? v : '';
   const mv = v => MOVES_[v] ? v : '';
-  const kids = (Array.isArray(d.kids) ? d.kids : []).slice(0, 8).map(x => { const a = parseInt(String(x.age == null ? '' : x.age).replace(/\D/g, ''), 10); const by = String(x.by || '').replace(/\D/g, '').slice(0, 4); return { mv: mv(x.mv), name: t(x.name, 20), inst: t(x.inst, 10), age: a >= 0 && a <= 99 ? a : '', by: /^(19|20)\d\d$/.test(by) ? by : '', go: ['간다', '안 간다', '모름'].includes(x.go) ? x.go : '간다', lessons: Math.max(0, Math.min(OPT.lessonMax, parseInt(x.lessons, 10) || 0)), mc: (Array.isArray(x.mc) ? x.mc : []).map(n => t(n, 30)).filter((n, i, a) => n && a.indexOf(n) === i && mcList_().some(m => m.n === n)).slice(0, 6) }; }).filter(x => x.name);
+  const PCN = profCanon_();
+  const kids = (Array.isArray(d.kids) ? d.kids : []).slice(0, 8).map(x => { const a = parseInt(String(x.age == null ? '' : x.age).replace(/\D/g, ''), 10); const by = String(x.by || '').replace(/\D/g, '').slice(0, 4); return { mv: mv(x.mv), name: t(x.name, 20), inst: t(x.inst, 10), age: a >= 0 && a <= 99 ? a : '', by: /^(19|20)\d\d$/.test(by) ? by : '', go: ['간다', '안 간다', '모름'].includes(x.go) ? x.go : '간다', lessons: Math.max(0, Math.min(OPT.lessonMax, parseInt(x.lessons, 10) || 0)), mc: (Array.isArray(x.mc) ? x.mc : []).map(n => PCN(t(n, 30))).filter((n, i, a) => n && a.indexOf(n) === i && mcList_().some(m => m.n === n)).slice(0, 6) }; }).filter(x => x.name);
   const fam = (Array.isArray(d.fam) ? d.fam : []).slice(0, 12).map(x => ({ type: x.type === '15개월 미만' ? '15개월 미만' : '동반가족', name: t(x.name, 20), gender: g(x.gender), by: yr(x.by), mv: mv(x.mv) })).filter(x => x.name);
   return { kids, fam, me: { stu: !!(d.me || {}).stu, gender: g((d.me || {}).gender), by: yr((d.me || {}).by), go: (d.me || {}).go === false ? false : true, mv: mv((d.me || {}).mv), who: (d.me || {}).who === 'other' ? 'other' : 'me', name: t((d.me || {}).name, 20), rel: t((d.me || {}).rel, 10) }, room: { fam: !!(d.room || {}).fam, note: t((d.room || {}).note, 300) }, memo: t(d.memo, 300), car: t(d.car, 40) };
 }
@@ -1266,11 +1281,12 @@ function parentMark(token, id) {   /* 11-27부터 화면에서 안 부름 (담�
 
 /* ---------------- 접수 읽고 쓰기 ---------------- */
 function loadSubs_() {
-  const admin = adminMap_();
+  const admin = adminMap_(); let cn = null; try { cn = profCanon_(); } catch (e) {}
   return rows_(SH.SUB).filter(r => r['접수번호']).map(r => {
     const js = ['JSON_1', 'JSON_2', 'JSON_3', 'JSON_4'].map(k => String(r[k] || '')).join('');
     let sb; try { sb = JSON.parse(retype_(js)); } catch (e) { return null; }
     applyAdmin_(sb, admin);
+    if (cn) try { canonSub_(sb, cn); } catch (e) {}
     return sb;
   }).filter(Boolean);
 }
@@ -2720,7 +2736,8 @@ function mcData(token) {
   const a = adm_(token); if (!a.sup && !['mcs', 'book'].some(k => ['보기', '편집'].includes(a.perms[k]))) throw new Error('마스터클래스 권한이 있어야 볼 수 있어요.');
   const c = actCfg_(), C = camp_();
   return { ok: true, edit: a.sup || a.perms.mcs === '편집', profs: profs_().filter(p => p.mc).map(p => ({ n: p.name, i: p.inst, min: p.min || 0, room: p.room || '', en: p.en || '', on: p.on })),
-    apps: mcApps_(), order: c.mcOrder || { s: [] }, days: c.days || [], start: C.base.start || '' };
+    apps: mcApps_(), order: c.mcOrder || { s: [] }, days: c.days || [], start: C.base.start || '',
+    orph: (() => { const A = mcApps_(), on = {}; profs_().filter(p => p.mc && p.on).forEach(p => on[p.name] = 1); return Object.keys(A).filter(n => !on[n]).map(n => ({ n, ppl: A[n] })); })() };   /* 교수진에 없는(또는 꺼진) 교수 이름으로 된 신청 (11-28) */
 }
 function mcSave(token, order) {
   const a = adm_(token); need_(a, 'mcs');
@@ -3728,7 +3745,8 @@ function adminSaveProfs(token, list) {
   const a = adm_(token); need_(a, 'prof');
   const t = (s, n) => String(s == null ? '' : s).trim().slice(0, n || 60);
   const L = (list || []).map(p => ({ name: t(p.name, 40), inst: t(p.inst, 20), lesson: !!p.lesson, mc: !!p.mc, min: Math.max(0, Math.min(240, +p.min || 0)), fee: Math.max(0, Math.min(5000000, +String(p.fee || 0).replace(/[^\d]/g, '') || 0)), org: t(p.org, 40), on: p.on !== false, memo: t(p.memo, 200), room: t(p.room, 30),
-    book: ['협회', '초청'].includes(String(p.book || '')) ? String(p.book) : '', bgrp: t(p.bgrp, 40), en: t(p.en, 80), title: t(p.title, 60), bio: String(p.bio == null ? '' : p.bio).trim().slice(0, 2000), bord: Math.max(0, Math.min(999, Math.round(+p.bord || 0))), usd: Math.max(0, Math.min(10000, Math.round((+String(p.usd || 0).replace(/[^\d.]/g, '') || 0) * 100) / 100)) })).filter(p => p.name);
+    book: ['협회', '초청'].includes(String(p.book || '')) ? String(p.book) : '', bgrp: t(p.bgrp, 40), en: t(p.en, 80), title: t(p.title, 60), bio: String(p.bio == null ? '' : p.bio).trim().slice(0, 2000), bord: Math.max(0, Math.min(999, Math.round(+p.bord || 0))), usd: Math.max(0, Math.min(10000, Math.round((+String(p.usd || 0).replace(/[^\d.]/g, '') || 0) * 100) / 100)),
+    alias: (Array.isArray(p.alias) ? p.alias : String(p.alias || '').split(/[,，]/)).concat(p.was && t(p.was, 40) !== t(p.name, 40) ? [t(p.was, 40)] : []).map(x => t(x, 40)).filter((x, i, A) => x && x !== t(p.name, 40) && A.indexOf(x) === i).slice(0, 6) })).filter(p => p.name);
   const seen = {};
   L.forEach(p => {
     if (!p.inst) throw new Error(p.name + ': 악기를 골라 주세요.');
@@ -3741,7 +3759,7 @@ function adminSaveProfs(token, list) {
   try {
     const sh = profSheet_(); const last = sh.getLastRow();
     if (last > 1) sh.getRange(2, 1, last - 1, PROF_HEAD.length).clearContent();
-    if (L.length) sh.getRange(2, 1, L.length, PROF_HEAD.length).setValues(L.map(p => [p.name, p.inst, p.lesson ? '예' : '아니오', p.mc ? '예' : '아니오', p.mc ? (p.min || '') : '', p.mc ? p.fee : '', p.org, p.on ? '예' : '아니오', p.memo, p.room, p.book, p.bgrp, p.en, p.title, p.bio, p.bord || '', p.mc ? (p.usd || '') : '']));
+    if (L.length) sh.getRange(2, 1, L.length, PROF_HEAD.length).setValues(L.map(p => [p.name, p.inst, p.lesson ? '예' : '아니오', p.mc ? '예' : '아니오', p.mc ? (p.min || '') : '', p.mc ? p.fee : '', p.org, p.on ? '예' : '아니오', p.memo, p.room, p.book, p.bgrp, p.en, p.title, p.bio, p.bord || '', p.mc ? (p.usd || '') : '', p.alias.join(', ')]));
     PROF_CACHE = null;
     log_('관리자 ' + a.name, '교수진 저장', L.length + '명');
   } finally { lock.releaseLock(); }

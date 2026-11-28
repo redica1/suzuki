@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261128-205013 -->
+<!-- build: 20261128-212429 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -2153,6 +2153,9 @@ const mcDirty=()=>S.MC&&JSON.stringify(S.mcx)!==JSON.stringify(S.MC.order||{s:[]
 function vMcs(){if(!S.MC){if(!S.MCL)setTimeout(mcLoad,0);return '<div class="panel hint">불러오고 있어요…</div>'}
   const M=S.MC,X=S.mcx,ed=M.edit&&!RO(),dayOpt=d=>(M.days||[]).map((l,i)=>`<option value="${i}" ${+d===i?'selected':''}>${esc(l)}</option>`).join('');
   const used=new Set();X.s.forEach(x=>x.rows.forEach(r=>{if(r.pid)used.add(x.prof+'|'+r.pid)}));
+  const orph=(M.orph||[]).length?`<div class="panel" style="border:2px solid var(--bad)"><b style="color:var(--bad)">교수진에 없는(또는 꺼진) 교수 이름으로 된 마스터클래스 신청 ${M.orph.reduce((t,o)=>t+o.ppl.length,0)}명</b> <span class="hint">아래 교수 카드에 안 나와요 · 마스터클래스 금액도 청구에 안 들어가요</span>
+    ${M.orph.map(o=>`<p style="margin:6px 0 0"><b>${esc(o.n)}</b> — ${o.ppl.map(a=>esc(a.n+'('+a.a+')')).join(', ')}</p>`).join('')}
+    <p class="hint" style="margin:6px 0 0">· 같은 교수인데 이름만 바뀐 거면 「설정 › 교수진」에서 그 교수의 「다른 이름」에 이 이름을 적고 저장해요 (이름을 바꿔 저장하면 자동으로 들어가요).<br>· 이번에 빠진 교수면 「교수진」에서 다시 켜거나, 선생님께 다른 교수로 고쳐 달라고 해요.</p></div>`:'';
   const cards=M.profs.map(p=>{const ap=(M.apps[p.n]||[]),left=ap.filter(a=>!used.has(p.n+'|'+a.pid)),SS=X.s.map((x,i)=>[x,i]).filter(([x])=>x.prof===p.n);
     return `<div class="panel mcp"><div class="spread"><div><b>${esc(p.n)}</b> <span class="hint">${esc(p.i)} · 1인 ${p.min||30}분 · 신청 ${ap.length}명 · 순서에 ${ap.length-left.length}명${left.length?` · <b style="color:var(--bad)">남은 ${left.length}명</b>`:''}</span></div>${ed?`<button class="btn small" type="button" data-mcnew="${esc(p.n)}">＋ 세션</button>`:''}</div>
       ${SS.map(([x,i])=>{const T=mcTimes(x);return `<div class="mcs"><div class="row" style="gap:8px;flex-wrap:wrap;align-items:flex-end">
@@ -2170,7 +2173,7 @@ function vMcs(){if(!S.MC){if(!S.MCL)setTimeout(mcLoad,0);return '<div class="pan
       ${left.length?`<p class="hint" style="margin:6px 0 0">남은 신청자: ${left.map(a=>esc(a.n+'('+a.a+')')).join(', ')}</p>`:''}</div>`}).join('');
   return `<div class="panel"><div class="spread"><div><b>마스터클래스 순서</b> <span class="hint">교수별 세션 · 신청자 줄 세우기 · 곡명 — 시각은 시작부터 1인 시간씩 자동 · 행사 책자 「마스터클래스」 쪽에 그대로 나가요 (설정 › 교수진에서 마스터클래스를 켠 교수)</span></div>
     <div class="row" style="gap:6px">${mcDirty()?'<span class="pill due">저장 안 한 변경 있음</span><button class="btn small ghost" type="button" data-mcreset="1">되돌리기</button>':''}${ed?'<button class="btn small primary" type="button" data-mcsave="1">저장</button>':''}</div></div></div>
-    ${cards||'<div class="panel hint">마스터클래스 교수가 없어요 (설정 › 교수진에서 「마스터클래스」를 켜 주세요).</div>'}`}
+    ${orph}${cards||'<div class="panel hint">마스터클래스 교수가 없어요 (설정 › 교수진에서 「마스터클래스」를 켜 주세요).</div>'}`}
 function mcRowBtns(i,j){return `<span class="emv"><button type="button" class="btn small ghost" data-mcmv="${i}|${j}|-1" aria-label="위로">↑</button><button type="button" class="btn small ghost" data-mcmv="${i}|${j}|1" aria-label="아래로">↓</button><button type="button" class="btn small ghost" data-mcrdel="${i}|${j}" aria-label="지우기">×</button></span>`}
 document.addEventListener('change',e=>{if(S.tab!=='mcs'||!S.mcx)return;const t=e.target,d=t.dataset;
   if(d.mc){const [i,k]=d.mc.split('|'),x=S.mcx.s[+i];if(!x)return;let v=t.value.trim();if(k==='s'){v=v.replace(/^(\d):/,'0$1:');if(!/^\d{2}:\d{2}$/.test(v)){toast('시작은 13:30 처럼 넣어 주세요');t.value=x.s;return}}x[k]=k==='d'||k==='min'?(+v||0):v;render();return}
@@ -2189,7 +2192,7 @@ document.addEventListener('click',e=>{if(S.tab!=='mcs'||!S.mcx)return;const b=e.
 const PF_INST=['바이올린','첼로','플루트','비올라','피아노','지휘','기타'];
 /* 악기 목록 (11-14): 기본 + 이번에 더한 것 + 교수진에 이미 있는 악기 · 고르기 칸 「＋ 새 악기」로 더함 */
 const pfInsts=L=>{const o=[];[...PF_INST.filter(x=>x!=='기타'),...(S.pfInstAdd||[]),...(L||[]).map(p=>p.inst),'기타'].forEach(x=>{x=String(x||'').trim();if(x&&o.indexOf(x)<0)o.push(x)});return o};
-const pfCopy=()=>JSON.parse(JSON.stringify((S.D.profs||[]).map(p=>({name:p.name,inst:p.inst,lesson:!!p.lesson,mc:!!p.mc,min:p.min||'',fee:p.fee||'',org:p.org||'',on:p.on!==false,memo:p.memo||'',room:p.room||'',book:p.book||'',bgrp:p.bgrp||'',en:p.en||'',title:p.title||'',bio:p.bio||'',bord:p.bord||'',usd:p.usd||''}))));
+const pfCopy=()=>JSON.parse(JSON.stringify((S.D.profs||[]).map(p=>({name:p.name,inst:p.inst,lesson:!!p.lesson,mc:!!p.mc,min:p.min||'',fee:p.fee||'',org:p.org||'',on:p.on!==false,memo:p.memo||'',room:p.room||'',book:p.book||'',bgrp:p.bgrp||'',en:p.en||'',title:p.title||'',bio:p.bio||'',bord:p.bord||'',usd:p.usd||'',alias:(p.alias||[]).join(', '),was:p.name}))));
 const PF_GRP={바이올린:'바이올린 Violin',비올라:'비올라 Viola',첼로:'첼로 Cello',플루트:'플루트 Flute',피아노:'피아노 Piano',지휘:'지휘 Conductor',기타:''};
 const pfRate=()=>+((S.D.camp&&S.D.camp.opt&&S.D.camp.opt.usdRate)||1450);
 const pfDirty=()=>S.pf&&JSON.stringify(S.pf)!==JSON.stringify(pfCopy());
@@ -2200,7 +2203,7 @@ function vProf(){if(!S.pf)S.pf=pfCopy();const L=S.pf,f=S.pff||'all';
   const used={};(S.D.subs||[]).forEach(sb=>sb.ppl.filter(q=>q.status==='정상').forEach(q=>{const i=(sb.form&&sb.form.info&&sb.form.info[q.id.slice(sb.no.length+1)])||{};[i.p1,i.p2].filter(Boolean).forEach(x=>{used[x]=used[x]||{p:0,m:0};used[x].p++});(i.mc||[]).forEach(x=>{used[x]=used[x]||{p:0,m:0};used[x].m++})}));
   return `<div class="panel pfwrap"><div class="row pfbar"><span class="tfindslot"></span>${[['all','전체 '+L.length],...ins.map(i=>[i,i+' '+n(i)])].map(([k,l])=>`<button class="btn small ${f===k?'primary':''}" type="button" data-pff="${esc(k)}">${esc(l)}</button>`).join('')}<span style="flex:1"></span>${pfDirty()?'<span class="pill due">저장 안 한 변경 있음</span><button class="btn small ghost" type="button" data-pfreset="1">되돌리기</button>':''}<button class="btn small" type="button" data-pfimp="1" title="지난 캠프 DB 시트의 교수진에서 책자 · 영문 이름 · 직함 · 약력을 이름으로 맞춰 가져와요">지난 캠프에서 약력 가져오기</button><button class="btn small" type="button" data-pfadd="1">＋ 교수 추가</button><button class="btn small primary" type="button" data-pfsave="1">저장</button></div>
   <div class="mtblw"><table class="pft pfx mtbl"><thead><tr><th class="l">이름</th><th>악기</th><th>레슨</th><th>마스터<br>클래스</th><th>시간<br>(분)</th><th>마스터클래스<br>금액</th><th title="외국인 접수 화면에 보이는 금액 · 비우면 원화 ÷ 환율">해외 금액<br>(USD)</th><th>소속</th><th>레슨실</th><th>사용</th><th class="l">메모</th><th>책자</th><th>프로필</th><th>신청</th><th></th></tr></thead><tbody>
-  ${idx.map(i=>{const p=L[i],u=used[p.name];return `<tr class="${p.on?'':'off'}"><td class="l"><input type="text" data-pf="${i}|name" value="${esc(p.name)}" placeholder="이름" maxlength="40"></td>
+  ${idx.map(i=>{const p=L[i],u=used[p.name];return `<tr class="${p.on?'':'off'}"><td class="l"><input type="text" data-pf="${i}|name" value="${esc(p.name)}" placeholder="이름" maxlength="40">${p.alias?`<br><small class="faint" title="다른 이름(예전 이름) · 접수에 이 이름으로 된 마스터클래스 · 선호 교수도 이 교수로 셈 · 고치려면 시트 「교수진」 다른 이름 칸">= ${esc(p.alias)}</small>`:''}</td>
     <td><select data-pf="${i}|inst">${['',...AI].map(x=>`<option value="${esc(x)}" ${p.inst===x?'selected':''}>${esc(x||'악기')}</option>`).join('')}<option value="__add">＋ 새 악기…</option></select></td>
     <td class="c"><input type="checkbox" data-pf="${i}|lesson" ${p.lesson?'checked':''} aria-label="레슨"></td><td class="c"><input type="checkbox" data-pf="${i}|mc" ${p.mc?'checked':''} aria-label="마스터클래스"></td>
     <td><input type="text" inputmode="numeric" class="num" data-pf="${i}|min" value="${esc(String(p.min||''))}" ${p.mc?'':'disabled'} style="width:56px"></td>

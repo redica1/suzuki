@@ -1,4 +1,4 @@
-/* build: 20261129-001358 */
+/* build: 20261129-014008 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -1446,6 +1446,7 @@ function loadSubs_() {
     let sb; try { sb = JSON.parse(retype_(js)); } catch (e) { return null; }
     applyAdmin_(sb, admin);
     if (cn) try { canonSub_(sb, cn); } catch (e) {}
+    { const u = r['수정일시']; sb.upAt = u instanceof Date ? Utilities.formatDate(u, TZ, 'yyyy-MM-dd HH:mm:ss') : String(u || ''); }   /* 11-29 새 접수 경고: 레슨 횟수가 바뀐 때 */
     return sb;
   }).filter(Boolean);
 }
@@ -3754,7 +3755,8 @@ function adminData(token) {
   subs.forEach(sb => sb.ppl.forEach(p => { if (!p.inst) { const k = p.id.slice(sb.no.length + 1), i = (sb.form && sb.form.info && sb.form.info[k]) || {}; p.inst = i.inst || inst[k] || ''; } }));
   let mail = null; try { mail = mailStatus_(); } catch (e) {}
   let songsDef = {}, progsDef = {}; try { songsDef = songDef_(); progsDef = progDef_(); } catch (e) {}
-  return { today: today_(), subs, admin, cx, teams: teams_(subs), issues: issues_(), profs: profs_(), profRm: profRoomInfo_(), me: me_(me), camp: campPublic_(), scholar: scholTiers_(), mail, songsDef, progsDef };
+  let nr = null; try { nr = nrgState_(); } catch (e) {}
+  return { nr, today: today_(), subs, admin, cx, teams: teams_(subs), issues: issues_(), profs: profs_(), profRm: profRoomInfo_(), me: me_(me), camp: campPublic_(), scholar: scholTiers_(), mail, songsDef, progsDef };
 }
 function setAdminCols_(pid, vals) {
   const sh = SpreadsheetApp.getActive().getSheetByName(SH.P);
@@ -4295,7 +4297,8 @@ function lessonData(token) {
   let acts = []; try { acts = actEvents_().map(e => ({ d: e.d, s: e.s, e: e.e, room: e.room, title: e.title + (e.stage && e.stage !== '본공연' ? ' ' + e.stage : ''), ppl: e.ppl }));   /* 개인레슨 칸에는 활동(이름 · 단계)과 장소만 — 곡명(세부)은 뺌 */ } catch (x) {}
   let people = []; try { people = actPeople_(actCfg_().people).map(p => ({ id: p.id, n: p.n })); } catch (x) {}
   let open = false; try { open = setting_('시간표 공개') === '예'; } catch (x) {}
-  return { days, rows: lessons_().map(x => ({ d: x.d, t: x.t, pr: x.pr, pid: x.pid })), acts, people, open };
+  let nr = null; try { nr = nrgState_(); } catch (x) {}
+  return { nr, days, rows: lessons_().map(x => ({ d: x.d, t: x.t, pr: x.pr, pid: x.pid })), acts, people, open };
 }
 /** 칸 하나 배정/비우기: op = {d, t, pr, pid(빈 값이면 비우기)} */
 function lessonSet(token, op) {
@@ -4671,11 +4674,85 @@ function profRoomSync_(who, names, ok, over) {
   setMemoClear_(); PROF_CACHE = null;
   if (n) log_('관리자 ' + who, '레슨실 자동', want.join(', '));
 }
+/* ================= 11-29 새 접수 경고 (방배정 · 개인레슨) =================
+ * 「배정 완료(기준 잡기)」를 누르면 그때 사람 목록을 시트 「배정기준」에 남김 (종류 room = 참가 중인 사람 · lesson = 학생마다 레슨 횟수)
+ * 그 뒤 기준에 없는 사람(새로 들어옴) · 기준에 있었는데 취소한 사람 · 레슨 횟수가 바뀐 사람 = 새 접수
+ * 방은 담당자가 「처리 완료」를 눌러야 끝 (종류 roomOk · 키 = 참가자ID|add 또는 |cx) · 레슨은 배정 칸 수로 자동 판단 */
+const NRG_SH = '배정기준', NRG_HEAD = ['종류', '키', '값', '일시', '관리자'];
+const NRG_LES_T = ['학생', '회원의 악기하는 자녀', '비회원 학생', '해외 학생'];
+function nrgSheet_() { const ss = SpreadsheetApp.getActive(); let sh = ss.getSheetByName(NRG_SH);
+  if (!sh) { sh = ss.insertSheet(NRG_SH); sh.getRange(1, 1, 1, NRG_HEAD.length).setValues([NRG_HEAD]).setFontWeight('bold'); sh.setFrozenRows(1); sh.getRange(1, 1, Math.max(sh.getMaxRows(), 2), NRG_HEAD.length).setNumberFormat('@'); try { sh.hideSheet(); } catch (x) {} }
+  return sh; }
+const nrgT_ = v => v instanceof Date ? Utilities.formatDate(v, TZ, 'yyyy-MM-dd HH:mm:ss') : String(v || '');
+function nrgState_() {
+  const out = { base: { room: null, lesson: null }, snap: { room: {}, lesson: {} }, ok: {}, lcnt: {} };
+  rows_(NRG_SH).forEach(r => { const k = String(r['종류'] || ''), key = String(r['키'] || '');
+    if (k === 'base' && (key === 'room' || key === 'lesson')) out.base[key] = { at: nrgT_(r['일시']), by: String(r['관리자'] || '') };
+    else if (k === 'room' || k === 'lesson') out.snap[k][key] = k === 'lesson' ? +r['값'] || 0 : 1;
+    else if (k === 'roomOk') out.ok[key] = { at: nrgT_(r['일시']), by: String(r['관리자'] || '') }; });
+  if (!out.base.room) out.snap.room = {}; if (!out.base.lesson) out.snap.lesson = {};
+  try { lessons_().forEach(x => out.lcnt[x.pid] = (out.lcnt[x.pid] || 0) + 1); } catch (x) {}
+  return out;
+}
+/** 학생 한 명의 개인레슨 횟수 = 기본 1회(안 받으면 0) + 추가 (관리자 개인레슨 화면과 같은 셈) */
+function nrgReq_(sb, p) { const k = p.id.slice(sb.no.length + 1), i = (sb.form && sb.form.info && sb.form.info[k]) || {}, ty = p.type || i.type || '';
+  if (!NRG_LES_T.includes(ty)) return -1; return (i.noBase ? 0 : 1) + (+i.lessons || 0); }
+/** 기준 잡기: w = room | lesson · keep = 아직 미처리라 계속 새 접수로 남길 것 [{pid, ev}] */
+function nrgBase(token, w, keep) {
+  const a = adm_(token); if (w !== 'room' && w !== 'lesson') throw new Error('잘못된 요청이에요.'); need_(a, w === 'room' ? 'room' : 'tt');
+  const K = {}; (Array.isArray(keep) ? keep : []).slice(0, 3000).forEach(x => { if (x && x.pid) K[String(x.pid)] = String(x.ev || ''); });
+  const lock = lock_();
+  try {
+    const sh = nrgSheet_(), at = stamp_(), old = nrgState_(), subs = loadSubs_(), rows = [];
+    subs.forEach(sb => (sb.ppl || []).forEach(p => {
+      const live = p.status !== '취소', kp = K[p.id];
+      if (w === 'room') { if (live ? kp !== 'add' : kp === 'cx') rows.push(['room', p.id, 1, at, a.name]); }
+      else { const req = nrgReq_(sb, p); if (req < 0) return;
+        if (kp === 'add') return; if (kp === 'chg' || kp === 'cx') { if (p.id in old.snap.lesson) rows.push(['lesson', p.id, old.snap.lesson[p.id], at, a.name]); return; }
+        if (live && req > 0) rows.push(['lesson', p.id, req, at, a.name]); }
+    }));
+    nrgClear_(sh, x => x === w || (x === 'roomOk' && w === 'room') || x === 'base:' + w);
+    rows.push(['base', w, '', at, a.name]);
+    if (w === 'room') Object.keys(K).forEach(pid => { const key = pid + '|' + K[pid]; if (old.ok[key]) rows.push(['roomOk', key, '처리', old.ok[key].at, old.ok[key].by]); });
+    if (rows.length) sh.getRange(sh.getLastRow() + 1, 1, rows.length, NRG_HEAD.length).setValues(rows.map(r => r.map(String)));
+    log_('관리자 ' + a.name, w === 'room' ? '방 배정 완료 기준' : '개인레슨 배정 완료 기준', at + ' · 남긴 미처리 ' + Object.keys(K).length);
+  } finally { lock.releaseLock(); }
+  return nrgState_();
+}
+/** 줄 지우기: test(종류) 가 참인 줄 (base 줄은 'base:room' 꼴로 물음) */
+function nrgClear_(sh, test) {
+  const v = sh.getLastRow() > 1 ? sh.getRange(2, 1, sh.getLastRow() - 1, NRG_HEAD.length).getValues() : [];
+  const keep = v.filter(r => { const k = String(r[0]); return !test(k === 'base' ? 'base:' + r[1] : k); });
+  if (v.length) sh.getRange(2, 1, v.length, NRG_HEAD.length).clearContent();
+  if (keep.length) sh.getRange(2, 1, keep.length, NRG_HEAD.length).setValues(keep.map(r => r.map(nrgT_)));
+}
+function nrgUnbase(token, w) {
+  const a = adm_(token); if (w !== 'room' && w !== 'lesson') throw new Error('잘못된 요청이에요.'); need_(a, w === 'room' ? 'room' : 'tt');
+  const lock = lock_(); try { nrgClear_(nrgSheet_(), x => x === w || (x === 'roomOk' && w === 'room') || x === 'base:' + w); log_('관리자 ' + a.name, '배정 완료 기준 풂', w); } finally { lock.releaseLock(); }
+  return nrgState_();
+}
+/** 방 처리 완료 표시 · 풀기: keys = ['참가자ID|add' …] */
+function nrgOk(token, keys, on) {
+  const a = adm_(token); need_(a, 'room');
+  const L = [...new Set((Array.isArray(keys) ? keys : []).map(String).filter(k => /^[^|]{3,80}\|(add|cx)$/.test(k)))].slice(0, 500);
+  if (!L.length) throw new Error('처리할 접수가 없어요.');
+  const lock = lock_();
+  try { const sh = nrgSheet_(), at = stamp_();
+    const v = sh.getLastRow() > 1 ? sh.getRange(2, 1, sh.getLastRow() - 1, NRG_HEAD.length).getValues() : [];
+    const keep = v.filter(r => !(String(r[0]) === 'roomOk' && L.includes(String(r[1]))));
+    if (on) L.forEach(k => keep.push(['roomOk', k, '처리', at, a.name]));
+    if (v.length) sh.getRange(2, 1, v.length, NRG_HEAD.length).clearContent();
+    if (keep.length) sh.getRange(2, 1, keep.length, NRG_HEAD.length).setValues(keep.map(r => r.map(nrgT_)));
+    log_('관리자 ' + a.name, on ? '방 처리 완료' : '방 처리 완료 풂', L.join(', ').slice(0, 300));
+  } finally { lock.releaseLock(); }
+  return nrgState_();
+}
 function roomData(token) {
   see_(adm_(token), ['room', 'fam']); let open = false; try { open = setting_('시간표 공개') === '예'; } catch (x) {}
   let days = []; try { days = actCfg_().days || []; } catch (x) {}
   const cfg = roomCfg_();
-  return { profRm: profRoomInfo_(), rooms: rooms_().map(r => { const o = Object.assign({}, r); delete o._row; return o; }), kinds: roomKinds_(), kindsFixed: ROOM_KINDS_FIXED, open, days, cfg: Object.assign({}, cfg, { live: roomPubNow_(cfg) }), layout: [], layoutTabs: [], layoutErr: '' };   /* 11-17: 시트 도면은 안 씀 → 다른 구글 시트를 여는 일(느림)을 뺌 */
+  let nr = null; try { nr = nrgState_(); } catch (x) {}
+  return { nr, profRm: profRoomInfo_(), rooms: rooms_().map(r => { const o = Object.assign({}, r); delete o._row; return o; }), kinds: roomKinds_(), kindsFixed: ROOM_KINDS_FIXED, open, days, cfg: Object.assign({}, cfg, { live: roomPubNow_(cfg) }), layout: [], layoutTabs: [], layoutErr: '' };   /* 11-17: 시트 도면은 안 씀 → 다른 구글 시트를 여는 일(느림)을 뺌 */
 }
 
 /* ---------------- 객실배치도 (도면) ----------------

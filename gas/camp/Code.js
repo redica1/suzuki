@@ -1,4 +1,4 @@
-/* build: 20261128-193123 */
+/* build: 20261128-193220 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -450,7 +450,7 @@ function intlEnter(o, agree) {
 }
 function intlData_(gid) {
   const g = intlGroups_().find(x => x.id === gid); if (!g) throw new Error('Group not found.');
-  const C = camp_(), sb = loadSubs_().find(x => x.intl && x.intlId === gid), ri = curRound_(C);   /* 11-28 참가비표 · 차수 = 오늘 차수 (새로 넣는 사람이 낼 금액) · 이미 넣은 사람은 사람마다 fee(넣은 날 차수) */
+  const C = camp_(), sb = loadSubs_().find(x => x.intl && x.intlId === gid), ri = 0;   /* 11-28 사용자: 해외는 차수 없음 · 참가비표 1차 값 하나 */
   const rate = +C.opt.usdRate || 1450;
   const ppl = sb ? sb.ppl.filter(p => p.status !== '취소').map(p => { const k = p.id.slice(sb.no.length + 1), i = (sb.form.info || {})[k] || {};
     return { key: k, first: i.first || '', last: i.last || '', type: p.type, gender: i.gender || '', by: i.by || '', inst: i.inst || p.inst || '', prog: i.prog || '', note: i.note || '', room: i.room || '', lessons: +i.lessons || 0, mc: Array.isArray(i.mc) ? i.mc : [], concert: i.concert || '없음', song: i.other ? '' : (i.song || ''), other: !!i.other, oc: i.oc || '', ot: i.other ? (i.ot || '') : '', video: i.video || '', roomFee: Math.round((+p.room || 0) / rate), fee: +p.usd || Math.round((+p.fee || 0) / rate), paid: Math.round((+p.paidAmt || 0) / rate), pay: p.pay }; }) : [];
@@ -1412,7 +1412,7 @@ function recalc_(sb) {
   const rOf = p => { const add = rix(p.addAt) >= 0 ? rix(p.addAt) : ri, a = AM[p.id];
     const pay = a && a.amt > 0 ? (rix(a.date) >= 0 ? rix(a.date) : add) : (p.pay === '신고' && p.rep && rix(p.rep.date) >= 0 ? rix(p.rep.date) : tdR);
     return add; };   /* 11-25 사용자: 신청 기준 — 접수에 들어온 날의 차수 금액 (입금이 늦어도 그대로 · 5일 안 입금은 안내만) */
-  { const td = today_(); sb.ppl.forEach(p => { const d0 = String(p.addAt || '').slice(0, 10); if (!/^\d{4}-\d{2}-\d{2}$/.test(d0)) { delete p.due5; delete p.over5; return; } const t = new Date(d0 + 'T00:00:00'); t.setDate(t.getDate() + 5); p.due5 = Utilities.formatDate(t, TZ, 'yyyy-MM-dd');
+  { const td = today_(); sb.ppl.forEach(p => { const d0 = String(p.addAt || '').slice(0, 10); if (sb.intl || !/^\d{4}-\d{2}-\d{2}$/.test(d0)) {   /* 11-28 해외: 현장 현금 → 입금 기한 없음 */ delete p.due5; delete p.over5; return; } const t = new Date(d0 + 'T00:00:00'); t.setDate(t.getDate() + 5); p.due5 = Utilities.formatDate(t, TZ, 'yyyy-MM-dd');
     if (p.status === '정상' && !(+p.paidAmt > 0) && p.pay !== '신고' && td > p.due5) p.over5 = true; else delete p.over5; }); }   /* 11-25 신청 후 5일 입금 안내 (금액은 안 바뀜) */
   const live = sb.ppl.filter(p => p.status !== '취소');
   const liveKeys = live.map(key);
@@ -1443,7 +1443,7 @@ function recalc_(sb) {
     if (p.status !== '취소' && plays && String(i.video || '').trim() && !/^https?:\S{6,}$/i.test(String(i.video || '').trim())) throw new Error(p.name + ': 음원 주소는 https 로 시작하게 넣어 주세요. (나중에 「내 접수」에서 넣어도 돼요)');
     const isT = /^t_|^me_/.test(k), isFam = (f.fam || []).some(x => x.id === k);
     const paid = viaCamp[p.id] ? false : guest || staff || intl ? true : isFam ? true : isT ? (k.indexOf('me_') === 0 ? true : !!tPaid[k]) : !!sPaid[k];
-    const pr = p.status === '취소' ? (p.rnd != null ? +p.rnd : ri) : rOf(p); p.rnd = pr; p.rndN = RD[pr].n;
+    const pr = intl ? 0 : p.status === '취소' ? (p.rnd != null ? +p.rnd : ri) : rOf(p); p.rnd = pr; p.rndN = intl ? '' : RD[pr].n;   /* 11-28 사용자: 해외는 차수 없음 · 늘 1차 금액 */
     p.type = i.type; p.fee = FEES[i.type][pr];
     if (intl) { p.usd = +FEES[i.type][pr] || 0; p.fee = Math.round(p.usd * (+OPT.usdRate || 1450)); }   /* 해외: 참가비표 값 = USD, 원화 청구액 = USD × 환율 */ const mcU = intl && plays ? (i.mc || []).reduce((t, n) => { const m = mcList_().find(x => x.n === n); return t + (m ? intlMcUsd_(OPT, m.fee, m.usd) : 0); }, 0) : 0;
     p.lesson = intl ? Math.round((les * INTL_USD(OPT).lesson + mcU) * (+OPT.usdRate || 1450)) : les * OPT.lessonFee + mc; if (intl) { p.lessonUsd = les * INTL_USD(OPT).lesson; p.mcUsd = mcU; }

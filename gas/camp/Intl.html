@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head>
-<!-- build: 20261128-193123 -->
+<!-- build: 20261128-193220 -->
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <base target="_top">
 <title>Suzuki Winter Music Camp · Overseas Registration</title>
@@ -116,7 +116,7 @@ function vPerson(p,i){var plays=p.type==='해외 학생'||p.type==='해외 교�
   '<label>Family room<input data-f="room" data-i="'+i+'" value="'+esc(p.room)+'" placeholder="e.g. Dela Cruz family" list="roomNames"></label>'+
   '<label>Note<input data-f="note" data-i="'+i+'" value="'+esc(p.note)+'" placeholder="allergy, etc."></label></div></div>'}
 function vMain(){var D=S.D,s=sum();
-  var fee='<table><thead><tr><th>Participant type</th><th class="r">Fee ('+esc(String(D.round).replace(/(\d+)\s*차/,'round $1'))+')</th><th class="r">People</th></tr></thead><tbody>'+TYPES.filter(function(t){return (D.hide||[]).indexOf(t[0])<0||s.by[t[0]]}).map(function(t){return '<tr><td>'+esc(t[1])+'</td><td class="r num">'+won(D.fees[t[0]]||0)+'</td><td class="r num">'+(s.by[t[0]]||0)+'</td></tr>'}).join('')+
+  var fee='<table><thead><tr><th>Participant type</th><th class="r">Fee</th><th class="r">People</th></tr></thead><tbody>'+TYPES.filter(function(t){return (D.hide||[]).indexOf(t[0])<0||s.by[t[0]]}).map(function(t){return '<tr><td>'+esc(t[1])+'</td><td class="r num">'+won(D.fees[t[0]]||0)+'</td><td class="r num">'+(s.by[t[0]]||0)+'</td></tr>'}).join('')+
     (s.les?'<tr><td>Extra private lessons ('+s.les+' × '+won(D.lessonUsd||45)+')</td><td class="r num">'+won(s.les*(D.lessonUsd||45))+'</td><td></td></tr>':'')+
     (s.mcT?'<tr><td>Masterclasses ('+s.mcN+')</td><td class="r num">'+won(s.mcT)+'</td><td></td></tr>':'')+
     (s.room?'<tr><td>Family room empty bed spots</td><td class="r num">'+won(s.room)+'</td><td></td></tr>':'')+
@@ -131,8 +131,8 @@ function vMain(){var D=S.D,s=sum();
     '<p class="hint">Enter every person who will come. Names in English as in the passport. You can come back later to add or change people. People whose payment is confirmed cannot be removed here.</p>'+
     (S.list.length?S.list.map(vPerson).join('')+'<div class="addbot"><b>Add another person</b>'+'<div class="row addrow"><button class="btn small" type="button" data-add="해외 학생">+ Student</button><button class="btn small" type="button" data-add="해외 교사">+ Teacher</button><button class="btn small" type="button" data-add="해외 보호자">+ Parent</button><button class="btn small" type="button" data-add="해외 동반가족">+ Family</button><button class="btn small" type="button" data-add="해외 15개월 미만">+ Infant</button></div>'+'</div>':'<p class="hint">No one yet. Use the buttons above to add people.</p>')+'</div>'+
     roomBox+
-    /* 11-15 사용자: 해외 단체는 이체 없이 신청만 → 입금 · 이체 신고 칸을 뺌, 금액은 참고로만 */
-    '<div class="card"><h2>Fees</h2><p class="hint"><b>Registration only.</b> You do not need to send money or report a transfer on this page. The camp office will contact you by email about payment.</p>'+
+    /* 11-28 사용자: 해외 단체는 송금 · 신고 없이 캠프 현장에서 현금으로 냄 */
+    '<div class="card"><h2>Fees</h2><p class="hint"><b>Please pay in cash at the camp registration desk</b> when you arrive. You do not need to send money or report a transfer before the camp. The fee is the same whenever you register.</p>'+
     '<div class="spread" style="margin-top:10px"><b>Estimated total '+won(s.tot)+'</b><span class="hint">'+S.list.length+' people'+(s.room?' · incl. family room empty bed spots '+won(s.room):'')+'</span></div></div>'+
     '<div class="sticky"><div class="spread wrap" style="padding:0"><span>'+S.list.length+' people · <b>'+won(s.tot)+'</b>'+(S.dirty?' · <span class="err">not saved</span>':'')+'</span><button class="btn primary" type="button" id="save"'+(S.dirty?'':' disabled')+'>Save list</button></div>'+(S.err?'<p class="err" style="margin:6px 0 0">'+esc(S.err)+'</p>':'')+'</div>'}
 function render(){document.getElementById('app').innerHTML=S.D?vMain():vLogin();   /* 11-28 캠프 설정에서 뺀 참가자격은 「+ 추가」 버튼을 숨김 */

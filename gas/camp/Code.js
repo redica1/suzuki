@@ -1,4 +1,4 @@
-/* build: 20261128-193220 */
+/* build: 20261128-205013 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -887,6 +887,7 @@ function parentSave(tok, d) {
   try {
     const sh = parentSheet_(), L = parentRows_(), had = L.find(r => r.phone === u.ph && r.acad === u.ac);
     const ph = "'" + u.ph.replace(/(\d{3})(\d{3,4})(\d{4})/, '$1-$2-$3'), j = JSON.stringify(x);
+    if (had && had.st === '담음') throw new Error('학원 선생님이 이미 접수에 담아서 고칠 수 없어요. 바꿀 게 있으면 학원 선생님께 말씀해 주시거나, 아래 「취소 · 환불 요청」을 해 주세요.');   /* 11-28 사용자: 담은 뒤에는 학부모 수정 막기 */
     if (had) { sh.getRange(had._row, 2, 1, 7).setValues([[u.ac, u.nm, ph, j, had.at0, stamp_(), had.st === '담음' ? '바뀜' : had.st === '바뀜' ? '바뀜' : '보냄']]); if (had.st === '취소' && had.m && had.m.cx) { delete had.m.cx; sh.getRange(had._row, 12).setValue(JSON.stringify(had.m)); } if (had.m && (had.m.del || had.m.ed)) { delete had.m.del; delete had.m.ed; sh.getRange(had._row, 12).setValue(JSON.stringify(had.m)); } }   /* 취소한 뒤 다시 보내면 새로 참가 */
     else { const id = 'P' + String(L.reduce((m, r) => Math.max(m, +r.id.slice(1) || 0), 0) + 1).padStart(4, '0'); sh.appendRow([id, u.ac, u.nm, ph, j, stamp_(), stamp_(), '보냄', '', '']); }
     out = parentRows_().find(r => r.phone === u.ph && r.acad === u.ac);

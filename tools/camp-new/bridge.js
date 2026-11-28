@@ -15,7 +15,9 @@ function idsIn(R){MEMBERS.forEach(m=>{if(m.a!==ACAD)return;const L=m.k==='교사
 function infoOf(x){const f=inf(x),kk=f.kind||x.k,o0=Object.keys(f.cons||{})[0],o=o0?f.cons[o0]:null,by=x.y?String(x.y):f.age!==''&&f.age!=null&&!isNaN(+f.age)?String(new Date().getFullYear()-(+f.age)):'';
  return {by,man:f.age||'',gender:/^여/.test(f.sex||'')?'여':/^남/.test(f.sex||'')?'남':'',teacher:f.t||'',type:K2T[kk]||kk,prog:f.prog||'',pref:!!f.p1,p1:f.p1||'',p2:f.p2||'',lessons:f.no?0:+f.add||0,noBase:!!f.no,mc:f.mc?(f.mcP||[]).map(q=>String(q).split(' · ')[0]):[],
   move:f.mv||'',concert:o0||'없음',song:o&&!o.nl?o.song||'':'',other:!!(o&&o.nl),oc:o&&o.nl?o.comp||'':'',ot:o&&o.nl?o.title||'':'',dur:o&&/이브닝/.test(o0)?String(o.dur||''):'',video:o&&o.url||''}}
-function nSubmit(L0){const L=L0||P.picked.filter(x=>!x.done);if(!L.length||S.busy)return;
+function nSubmit(L0){const L=(L0||P.picked.filter(x=>!x.done)).filter(x=>!x.done);if(!L.length)return;
+ /* 11-28 저장 중에 다른 사람 「캠프 신청」을 누르면 버리지 않고 줄 세웠다가 이어서 보냄 */
+ if(S.busy){S.subQ=(S.subQ||[]).concat(L.filter(x=>!(S.subQ||[]).includes(x)));toast(L.map(x=>x.n).join(', ')+' · 앞 사람 저장이 끝나면 이어서 보내요');return}
  const own=(S.subs||[]).find(sb=>sb.owner===WHO&&sb.acad===ACAD&&(sb.ppl||[]).some(p=>p.status!=='취소'));
  const sb0=own?JSON.parse(JSON.stringify(own)):{no:'N'+Date.now(),owner:WHO,acad:ACAD,round:'',date:S.today||'',ppl:[],form:{picked:{},extra:[],fam:[],info:{},room:{},join:{},ens:{},note:null,ri:(S.camp||{}).ri||0}};const sb=sb0;sb.pressAt=new Date().toISOString();
  sb.form=sb.form||{};['picked','info','room','join','ens'].forEach(k=>{if(!sb.form[k])sb.form[k]={}});['extra','fam'].forEach(k=>{if(!Array.isArray(sb.form[k]))sb.form[k]=[]});
@@ -23,12 +25,14 @@ function nSubmit(L0){const L=L0||P.picked.filter(x=>!x.done);if(!L.length||S.bus
  /* 11-27 새 화면에서 담은 학부모 신청: 접수에 이어 두고(form.preq) · 서버가 저장 뒤 「담음」 표시(pqNow) */
  const PQT=(S.pqTake||[]).slice();if(PQT.length){F.preq=[...new Set([...(Array.isArray(F.preq)?F.preq:[]),...PQT])].slice(0,20);sb.pqNow=PQT}
  L.forEach((x,ix)=>{const f=inf(x),kk=f.kind||x.k,isT=kk==='교사',np=NOPLAY(kk);let key=x.id&&!/^t_n|^x\d|^f\d/.test(x.id)?x.id:'';
+  if(key&&isT&&/^[TX]\d{3,}$/.test(key))key='t_'+key;   /* 11-28 교사 번호는 t_T0000 (회비 · 회원 명단 · 중복 막기 · 회원관리 보고가 이 모양을 봄) */
   if(key){F.picked[key]=true}else if(np){key='f'+Date.now()+ix;F.fam.push({id:key,name:x.n,type:K2T[kk],link:''})}else{key=(isT?'t_n':'x')+Date.now()+ix;const e={id:key,name:x.n,birth:'',inst:instOf(x),start:'-',teacher:f.t||''};if(isT)e.t=1;F.extra.push(e)}
   x.key=key;const i=infoOf(x);const ex=F.extra.find(e=>e.id===key);if(ex)ex.birth=i.by;F.info[key]=i;
   sb.ppl.push({id:sb.no+'_'+key,name:x.n,dtag:'',inst:np?'':instOf(x),kind:isT?'교사':np?'가족':'학생',type:i.type,fee:0,lesson:0,dues:0,room:0,status:'정상',pay:'전',paidAmt:0,batch:1,addAt:stamp})});
  S.busy=true;toast('캠프 신청을 보내는 중…');const keep=new Set(P.picked.filter(x=>x.now).map(x=>x.n+'|'+x.k).concat(L.map(x=>x.n+'|'+x.k)));
- const ok=r=>{S.busy=false;if(!r||r.ok===false){if(r&&r.subs)resync(r.subs,keep);toast((r&&r.msg)||'신청하지 못했어요.',true);return}if(PQT.length){S.pqTake=(S.pqTake||[]).filter(x=>!PQT.includes(x))}if(Array.isArray(r.preq)&&S.pq)S.pq=Object.assign({},S.pq,{L:r.preq.filter(q=>q.acad===ACAD)});resync(r.subs||[],keep,L);const left=P.picked.filter(y=>!y.done).length;render();toast(L.map(x=>x.n).join(', ')+' · 캠프 신청했어요'+(left?'':' · 모두 신청했어요')+(Array.isArray(r.famNote)&&r.famNote.length?' · '+r.famNote.join(' · '):''),Array.isArray(r.famNote)&&r.famNote.some(x=>!/자동으로 묶었어요/.test(x)));if(Array.isArray(r.famNote)&&r.famNote.length&&typeof famLoad==='function')famLoad();   /* 11-28 가족방 자동 */if(!left)scrollTo(0,0)};
- const bad=e=>{S.busy=false;toast('신청하지 못했어요 · '+((e&&e.message)||e),true)};
+ const next=()=>{const q=(S.subQ||[]).filter(x=>!x.done);S.subQ=[];if(q.length)setTimeout(()=>nSubmit(q),300)};
+ const ok=r=>{S.busy=false;if(!r||r.ok===false){L.forEach(x=>{inf(x).saved=false});S.subQ=[];if(r&&r.subs)resync(r.subs,keep);render();toast((r&&r.msg)||'신청하지 못했어요.',true);return}setTimeout(next,0);if(PQT.length){S.pqTake=(S.pqTake||[]).filter(x=>!PQT.includes(x))}if(Array.isArray(r.preq)&&S.pq)S.pq=Object.assign({},S.pq,{L:r.preq.filter(q=>q.acad===ACAD)});resync(r.subs||[],keep,L);const left=P.picked.filter(y=>!y.done).length;render();toast(L.map(x=>x.n).join(', ')+' · 캠프 신청했어요'+(left?'':' · 모두 신청했어요')+(Array.isArray(r.famNote)&&r.famNote.length?' · '+r.famNote.join(' · '):''),Array.isArray(r.famNote)&&r.famNote.some(x=>!/자동으로 묶었어요/.test(x)));if(Array.isArray(r.famNote)&&r.famNote.length&&typeof famLoad==='function')famLoad();   /* 11-28 가족방 자동 */if(!left)scrollTo(0,0)};
+ const bad=e=>{S.busy=false;L.forEach(x=>{inf(x).saved=false});S.subQ=[];render();toast('신청하지 못했어요 · '+((e&&e.message)||e)+' · 「캠프 신청」을 다시 눌러 주세요',true)};
  if(own)google.script.run.withSuccessHandler(ok).withFailureHandler(bad).saveSubs(S.token,[sb]);else{sb.reqId=sb.no;google.script.run.withSuccessHandler(ok).withFailureHandler(bad).submitNew(S.token,sb)}}
 /* 11-25 신청한 사람 고치기: 그 접수의 info · 구분 · 담당 교사만 바꿔 saveSubs (금액은 서버가 다시 셈) */
 function nEdit(x){if(S.busy)return;const o=pOf(x);if(!o||!o.p){toast('접수를 찾지 못했어요. 새로 고침 해 주세요.',true);return}

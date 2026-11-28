@@ -657,6 +657,7 @@ function intlSave(token, list) {
     const SL = ((songList_() || songDef_() || {})[inst]) || [], pick = String(x.song || '').trim();
     const other = concert !== '없음' && (x.other === true || !SL.length || (x.other === undefined && pick && !SL.includes(pick)));
     const song = concert !== '없음' && !other ? pick : '', oc = other ? String(x.oc || '').trim().slice(0, 80) : '', ot = other ? String(x.ot || (x.other === undefined ? pick : '') || '').trim().slice(0, 120) : '';
+    if (x.type === '해외 학생' && concert === '없음') throw new Error(at + 'Please choose a concert.');   /* 11-29 학생은 음악회 필수 */
     if (concert !== '없음' && !other && !SL.includes(song)) throw new Error(at + 'Please choose the piece from the list, or tick "My piece is not on the list".');
     if (other && !ot) throw new Error(at + 'Please enter the title of the piece for the concert.');
     if (video && !/^https?:\/\/\S{6,}$/i.test(video)) throw new Error(at + 'The video link should start with https://');

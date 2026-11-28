@@ -1,4 +1,4 @@
-/* build: 20261128-233851 */
+/* build: 20261128-234058 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -336,7 +336,7 @@ function jfRow_(at, sid, p, M) {
   const typed = !p.acad && p.acadTyped, acad = M.acads[jfKey_(p.acad || p.acadTyped)] || '';
   const nm = String(p.name || '').replace(/\s/g, ''), isT = /교사|연수/.test(p.kind), isFam = /보호자|가족|아기/.test(p.kind);
   let match = '', id = '', dupNo = '';
-  if (!acad) match = typed ? '학원 직접 입력' : '학원 못 찾음';
+  if (!acad) match = typed ? '학원 직접 입력' : '회원관리 학원 목록에 없음';
   else if (!nm) match = '이름 없음';
   else if (isFam) match = '가족 (명단 없음)';
   else {

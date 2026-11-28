@@ -1,4 +1,4 @@
-/* build: 20261128-232732 */
+/* build: 20261128-233851 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -273,11 +273,18 @@ function jfCells_(v) {
   if (v.full !== undefined) return [String(v.full)];
   return Object.keys(v).filter(k => !/^Orphan/.test(k)).reduce((a, k) => a.concat(jfCells_(v[k])), []);
 }
+/** 표 답을 칸 번호(colIds)로: { '0': 교사, '1': 이름, '14': 악기, '15': 나이, '18': 성별, '19': 권수, '20': 바이올린 진도, '21': 첼로 진도 } (11-28 실제 웹훅 모양) */
+function jfCols_(v) {
+  if (!v || typeof v !== 'object' || Array.isArray(v)) return null;
+  let ids = v.colIds; try { if (typeof ids === 'string') ids = ids ? JSON.parse(ids) : null; } catch (x) { ids = null; }
+  const row = jfRow1_(v); if (!Array.isArray(ids) || !ids.length) return null;
+  const o = {}; ids.forEach((id, i) => o[String(id)] = String(row[i] || '').trim()); return o;
+}
 /** 표 답의 첫 줄을 칸 순서대로 (빈칸 자리 지킴) */
 function jfRow1_(v) {
   if (typeof v === 'string') { const s = v.trim(); if (/^[\[{]/.test(s)) { try { v = JSON.parse(s); } catch (x) { return [s]; } } else return s ? [s] : []; }
   if (Array.isArray(v)) { if (v.length && Array.isArray(v[0])) return v[0].map(x => jfCells_(x).join(' ')); return v.map(x => jfCells_(x).join(' ')); }
-  if (v && typeof v === 'object') { const k = Object.keys(v).filter(x => !/^Orphan/.test(x))[0]; return k === undefined ? [] : jfRow1_(v[k]); }
+  if (v && typeof v === 'object') { const k = Object.keys(v).filter(x => !/^Orphan|^colIds$|^rowIds$/.test(x))[0]; return k === undefined ? [] : jfRow1_(v[k]); }
   return [];
 }
 const jfTxt_ = v => jfCells_(v).filter(Boolean).join(', ');
@@ -298,9 +305,11 @@ function jfParse_(raw) {
     let teacher, name, inst, age, gender;
     if (q.name) { name = jfTxt_(g(q.name)); [teacher, inst, age, gender] = [info[0], info[1], info[2], info[3]]; if (!name && info.length >= 5) { name = info[1]; inst = info[2]; age = info[3]; gender = info[4]; } }
     else { [teacher, name, inst, age, gender] = [info[0], info[1], info[2], info[3], info[4]]; if (info.length === 4) { name = ''; [teacher, inst, age, gender] = info; } }
+    const ci = jfCols_(g(q.info));
+    if (ci) { teacher = ci['0'] || ''; inst = ci['14'] || ''; age = ci['15'] || ''; gender = ci['18'] || ''; if ('1' in ci) name = ci['1']; else if (q.name) name = jfTxt_(g(q.name)); }
     name = String(name || '').trim().replace(/\s+/g, ' ');
     if (!kind && !name) return;
-    const pr = jfRow1_(g(q.prog)), so = jfRow1_(g(q.song)), ot = jfRow1_(g(q.other));
+    const cp = jfCols_(g(q.prog)), pr = cp ? [cp['19'] || '', cp['20'] || '', cp['21'] || ''] : jfRow1_(g(q.prog)), so = jfRow1_(g(q.song)), ot = jfRow1_(g(q.other));
     const prof = jfRow1_(g(q.vn)).concat(jfRow1_(g(q.vc))).filter(x => x && x !== '선호없음');
     const xyn = jfTxt_(g(q.xyn)), xn = jfTxt_(g(q.xn));
     out.push(Object.assign({}, base, {

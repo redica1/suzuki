@@ -100,7 +100,7 @@ function vPerson(p,i){var plays=p.type==='해외 학생'||p.type==='해외 교�
   '<label>First name *<input data-f="first" data-i="'+i+'" value="'+esc(p.first)+'"></label>'+
   '<label>Last name *<input data-f="last" data-i="'+i+'" value="'+esc(p.last)+'"></label>'+
   '<label>Type *<select data-f="type" data-i="'+i+'"'+(p.paid>0?' disabled':'')+'>'+opt(TYPES.filter(function(t){return t[0]===p.type||((S.D&&S.D.hide)||[]).indexOf(t[0])<0}),p.type,'Choose')+'</select></label>'+
-  '<label>Gender *<select data-f="gender" data-i="'+i+'">'+opt([['남','Male'],['여','Female']],p.gender,'Choose')+'</select></label>'+
+  '<label>Gender *<select data-f="gender" data-i="'+i+'">'+opt([['남','Male'],['여','Female'],['기타','Other'],['답변 안 함','Prefer not to say']],p.gender,'Choose')+'</select></label>'+
   '<label>Birth year *<input data-f="by" data-i="'+i+'" value="'+esc(p.by)+'" inputmode="numeric" maxlength="4" placeholder="2015"></label>'+
   (plays?'<label>Instrument *<select data-f="inst" data-i="'+i+'">'+opt(INST,p.inst,'Choose')+'</select></label>':'')+
   (p.type==='해외 학생'?'<label>Current book *<select data-f="prog" data-i="'+i+'">'+opt(BOOK,p.prog,'Choose')+'</select></label>':'')+

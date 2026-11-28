@@ -480,7 +480,7 @@ function intlSave(token, list) {
     if (x.type === '해외 학생' && !String(x.prog || '').trim()) throw new Error(at + 'Please choose the current book level.');
     const MC = mcList_(), CONS = camp_().cons || ['오후', '트와일라잇', '이브닝'];
     /* 11-28 곡: 한국 신청서와 같게 — 곡 목록에서 고르거나(song) · 목록에 없는 곡(10권 이상 등)은 작곡가(oc) · 곡명(ot) 직접 */
-    const concert = plays && CONS.includes(x.concert) ? x.concert : '없음', video = concert !== '없음' ? String(x.video || '').trim().slice(0, 300) : '';
+    const concert = x.type === '해외 학생' && CONS.includes(x.concert) ? x.concert : '없음', video = concert !== '없음' ? String(x.video || '').trim().slice(0, 300) : '';
     const SL = ((songList_() || songDef_() || {})[inst]) || [], pick = String(x.song || '').trim();
     const other = concert !== '없음' && (x.other === true || !SL.length || (x.other === undefined && pick && !SL.includes(pick)));
     const song = concert !== '없음' && !other ? pick : '', oc = other ? String(x.oc || '').trim().slice(0, 80) : '', ot = other ? String(x.ot || (x.other === undefined ? pick : '') || '').trim().slice(0, 120) : '';

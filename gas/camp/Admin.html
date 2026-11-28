@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261128-142755 -->
+<!-- build: 20261128-153817 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -1563,7 +1563,7 @@ function view(){
     return `<div class="act">${head}<div class="row"><div class="seg" role="group" aria-label="날짜">${days.map((x,i)=>`<button type="button" data-lday="${i}" aria-pressed="${A.day===i}">${esc(x)}</button>`).join('')}</div></div>${picker()}
     <div class="tt les"><table><thead><tr><th>시간</th>${P.map(p=>`<th>${esc(p.name)}<small>${esc(p.room||'방 미정')} · ${p.inst==='첼로'?'Vc':p.inst==='플루트'?'Fl':'Vn'}</small></th>`).join('')}</tr></thead><tbody>${TIMES.map(t=>`<tr><th>${t}</th>${P.map(p=>cell(A.day,t,p.name)).join('')}</tr>`).join('')}</tbody></table></div></div>`}
   if(A.mode==='prof'){const pr=P.find(p=>p.name===A.prof);const n=L.rows.filter(x=>x.pr===pr.name).length;
-    return `<div class="act">${head}<div class="row"><label for="l_prof" class="cap" style="margin:0">교수</label><select id="l_prof">${P.map(p=>`<option ${p.name===A.prof?'selected':''}>${esc(p.name)}</option>`).join('')}</select><span class="pill info">${esc(pr.room||'레슨실 미정')}</span><span class="pill mute">총 ${n}회</span></div>${picker()}
+    return `<div class="act">${head}<div class="row"><label for="l_prof" class="cap" style="margin:0">교수</label><select id="l_prof">${P.map(p=>`<option value="${esc(p.name)}" ${p.name===A.prof?'selected':''}>${esc(p.name)}${p.room?' · '+esc(p.room):' · 레슨실 미정'}</option>`).join('')}</select><span class="pill info">${esc(pr.room||'레슨실 미정')}</span><span class="pill mute">총 ${n}회</span></div>${picker()}
     <div class="tt les"><table><thead><tr><th>시간</th>${days.map(x=>`<th>${esc(x)}</th>`).join('')}</tr></thead><tbody>${TIMES.map(t=>`<tr><th>${t}</th>${days.map((_,d)=>cell(d,t,pr.name)).join('')}</tr>`).join('')}</tbody></table></div>
     <p class="cap" style="margin:0">교수님께 보여 줄 「내 수업시간표」와 같은 내용이에요.</p></div>`}
   if(A.mode==='stu'){const q=A.stu.trim();const hits=q?all.filter(s=>s.name===q||s.name.includes(q)||s.acad.includes(q)||enName(s.name).toLowerCase().includes(q.toLowerCase())).slice(0,20):[];
@@ -1916,7 +1916,15 @@ function save(clear){const e=A.ed;if(!e)return;edRead();
   const x=clear?{no:e.no,occ:[],cap:e.cap,memo:e.memo,size:e.size,beds:e.beds,feat:e.feat}:{no:e.no,type:e.type,kind:e.kind,cap:e.cap,pw:e.pw,memo:e.memo,pub:e.pub,days:e.days,occ:e.occ,color:e.color,size:e.size,beds:e.beds,feat:e.feat};
   if(!clear&&!e.kind){toast('방종류를 골라 주세요 (필수)');const k=document.getElementById('r_kind');if(k){k.focus();k.style.outline='2px solid #d33'}return}
   if(!clear){const rd=e.days.length?e.days:allDays();const bad=rd.find(d=>e.occ.filter(o=>(o.days.length?o.days:rd).includes(d)).reduce((t,o)=>t+(+o.n||0),0)>e.cap);if(bad!=null){toast(dayLab(bad)+' 인원이 정원보다 많아요 · 정원을 고치거나 인원 · 날짜를 줄여 주세요');return}}
-  run('roomSave',[x],d=>{R=d;A.sel='';A.ed=null;render();toast(clear?e.no+' 방을 비웠어요':e.no+' 방을 저장했어요')},m=>toast('저장하지 못했어요 · '+m))}
+  /* 11-28 교수방 → 교수진 레슨실 자동: 손으로 적은 레슨실이면 한 번 묻고(확인 = 바꿈 · 취소 = 그대로) · 다른 교수방에도 있으면 알림 */
+  const PR=(R&&R.profRm)||{},nmz=v=>String(v||'').replace(/\s+/g,''),pn=v=>Object.keys(PR).find(n=>nmz(n)===nmz(v));
+  const inP=!clear&&e.kind==='교수방'?[...new Set((e.occ||[]).filter(o=>o.k==='name').map(o=>pn(o.v)).filter(Boolean))]:[];
+  x.profOk=[];const warn=[];
+  inP.forEach(n=>{const I=PR[n]||{},cur=I.room||'',au=I.auto||'';if(cur&&cur!==e.no&&cur!==au){if(confirm(`${n} 교수 레슨실이 지금 「${cur}」(직접 적은 값)이에요.\n${e.no}(으)로 바꿀까요?\n\n확인 = 바꿈 · 취소 = 레슨실은 그대로 두고 방만 저장`))x.profOk.push(n)}
+    const other=(I.rooms||[]).filter(r=>r!==e.no);if(other.length)warn.push(`${n} 교수가 ${other.join(' · ')} 교수방에도 있어요`)});
+  run('roomSave',[x],d=>{R=d;A.sel='';A.ed=null;
+    if(d.profRm&&S.D&&Array.isArray(S.D.profs)){S.D.profRm=d.profRm;S.D.profs.forEach(p=>{const q=d.profRm[p.name];if(q)p.room=q.room})}   /* 열려 있는 교수진 화면도 새 레슨실로 (교수진 저장 때 되돌아가지 않게) */
+    render();toast((clear?e.no+' 방을 비웠어요':e.no+' 방을 저장했어요')+(warn.length?' · ⚠ '+warn.join(' · '):''))},m=>toast('저장하지 못했어요 · '+m))}
 document.addEventListener('click',ev=>{if(S.tab!=='room')return;const b=ev.target.closest('button,td[data-rroom]');if(!b)return;const d=b.dataset;
   if(b.id==='r_retry'||b.id==='r_reload'){R=null;ERR='';load();render();return}
   if(!R)return;
@@ -2142,7 +2150,7 @@ function vProf(){if(!S.pf)S.pf=pfCopy();const L=S.pf,f=S.pff||'all';
     <td><input type="text" inputmode="numeric" class="num" data-pf="${i}|fee" value="${p.fee?(+p.fee).toLocaleString('ko-KR'):''}" ${p.mc?'':'disabled'} style="width:96px"></td>
     <td><input type="text" inputmode="decimal" class="num" data-pf="${i}|usd" value="${esc(String(p.usd||''))}" placeholder="${p.mc&&+p.fee?Math.round(+p.fee/pfRate()):''}" title="외국인 접수 화면 금액 (USD) · 비우면 원화 ÷ 환율" ${p.mc?'':'disabled'} style="width:72px"></td>
     <td><input type="text" data-pf="${i}|org" value="${esc(p.org)}" placeholder="교수진 · 학원 · 해외" maxlength="40"></td>
-    <td><input type="text" data-pf="${i}|room" value="${esc(p.room||'')}" placeholder="예: H350" maxlength="30" style="width:84px" ${p.lesson?'':'disabled'}></td>
+    <td><input type="text" data-pf="${i}|room" value="${esc(p.room||'')}" placeholder="예: H350" maxlength="30" style="width:84px" ${p.lesson?'':'disabled'}>${(()=>{const I=((S.D&&S.D.profRm)||{})[p.name]||{};const rs=I.rooms||[];return (p.room&&I.auto&&p.room===I.auto?'<br><small class="pill info" style="font-size:11px" title="방배정 교수방에서 자동으로 들어온 값">방 배정</small>':'')+(rs.length>1?`<br><small class="pill bad" style="font-size:11px" title="교수방 두 곳 이상에 들어가 있어요">⚠ ${esc(rs.join(' · '))}</small>`:'')})()}</td>
     <td class="c"><button type="button" class="onoff ${p.on?'on':''}" role="switch" aria-checked="${p.on}" data-pfon="${i}" aria-label="사용"><i><b></b></i><em>${p.on?'ON':'OFF'}</em></button></td>
     <td class="l"><input type="text" data-pf="${i}|memo" value="${esc(p.memo)}" maxlength="200"></td>
     <td><select data-pf="${i}|book">${[['','안 넣음'],['협회','협회'],['초청','초청']].map(([v,l])=>`<option value="${v}" ${p.book===v?'selected':''}>${l}</option>`).join('')}</select></td><td><button class="btn small ${S.pfOpen===i?'primary':''}" type="button" data-pfprof="${i}" title="책자에 나갈 영문 이름 · 직함 · 약력">프로필${p.bio?' ✓':''}</button></td>

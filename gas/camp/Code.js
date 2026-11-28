@@ -1,4 +1,4 @@
-/* build: 20261128-142755 */
+/* build: 20261128-153817 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -3542,7 +3542,7 @@ function adminData(token) {
   subs.forEach(sb => sb.ppl.forEach(p => { if (!p.inst) { const k = p.id.slice(sb.no.length + 1), i = (sb.form && sb.form.info && sb.form.info[k]) || {}; p.inst = i.inst || inst[k] || ''; } }));
   let mail = null; try { mail = mailStatus_(); } catch (e) {}
   let songsDef = {}, progsDef = {}; try { songsDef = songDef_(); progsDef = progDef_(); } catch (e) {}
-  return { today: today_(), subs, admin, cx, teams: teams_(subs), issues: issues_(), profs: profs_(), me: me_(me), camp: campPublic_(), scholar: scholTiers_(), mail, songsDef, progsDef };
+  return { today: today_(), subs, admin, cx, teams: teams_(subs), issues: issues_(), profs: profs_(), profRm: profRoomInfo_(), me: me_(me), camp: campPublic_(), scholar: scholTiers_(), mail, songsDef, progsDef };
 }
 function setAdminCols_(pid, vals) {
   const sh = SpreadsheetApp.getActive().getSheetByName(SH.P);
@@ -4428,11 +4428,41 @@ function roomCfgSave(token, b) {
   log_('관리자 ' + a.name, '방 공개 설정', (b && b.pubAll ? '일괄 공개 ' + (at || '바로') : '일괄 공개 안 함') + ' · 이름 ' + names.join(', '));
   return roomData(token);
 }
+/* 11-28 사용자: 방배정에서 교수방에 교수를 넣으면 교수진 「레슨실」 = 그 방번호 (옮기면 새 방 · 빼면 비움)
+ * 자동으로 넣은 값은 설정 「레슨실 자동」 {교수: 방번호}에 기록 → 레슨실이 그 값과 다르면 「손으로 적은 값」으로 보고, 화면에서 확인(profOk)한 교수만 덮어씀 */
+const nmP_ = s => String(s || '').replace(/\s+/g, '');
+function profAutoRooms_() { try { const o = JSON.parse(setting_('레슨실 자동') || '{}'); return o && typeof o === 'object' && !Array.isArray(o) ? o : {}; } catch (x) { return {}; } }
+/** 교수마다 들어가 있는 교수방 목록 · 자동 기록 · 지금 레슨실 */
+function profRoomInfo_(over) {
+  const P = profs_(), M = {};
+  rooms_().forEach(r => { const rr = over && over.no === r.no ? over : r; if (rr.kind !== '교수방') return; (rr.occ || []).forEach(o => { if (o.k !== 'name') return; const p = P.find(q => nmP_(q.name) === nmP_(o.v)); if (p) (M[p.name] = M[p.name] || []).includes(r.no) || M[p.name].push(r.no); }); });
+  const auto = profAutoRooms_(), out = {};
+  [...new Set(P.map(p => p.name))].forEach(n => { out[n] = { rooms: M[n] || [], auto: auto[n] || '', room: (P.find(p => p.name === n) || {}).room || '' }; });
+  return out;
+}
+function profRoomSync_(who, names, ok, over) {
+  const P = profs_(); if (!P.length) return;
+  const want = [...new Set((names || []).map(v => (P.find(p => nmP_(p.name) === nmP_(v)) || {}).name).filter(Boolean))]; if (!want.length) return;
+  const info = profRoomInfo_(over), auto = profAutoRooms_(), sh = profSheet_(), col = PROF_HEAD.indexOf('레슨실') + 1;
+  const rows = rows_(SH.PROF); let n = 0;
+  want.forEach(name => {
+    const I = info[name] || { rooms: [] }, cur = I.room, a = auto[name] || '', manual = !!cur && cur !== a;
+    const target = I.rooms.includes(over.no) && over.kind === '교수방' ? over.no : (I.rooms[0] || '');
+    if (target === cur) { if (target) auto[name] = target; else delete auto[name]; return; }
+    if (manual && !(target && ok.some(v => nmP_(v) === nmP_(name)))) return;   /* 손으로 적은 값: 확인한 경우만 바꿈 · 빼도 안 지움 */
+    rows.filter(r => String(r['이름'] || '').trim() === name).forEach(r => { sh.getRange(r._row, col).setValue(target); n++; });
+    if (target) auto[name] = target; else delete auto[name];
+  });
+  ensureSettings_(); const ss = SpreadsheetApp.getActive().getSheetByName('설정'), cur = rows_('설정').find(x => String(x['항목']) === '레슨실 자동'), v = JSON.stringify(auto);
+  if (cur) ss.getRange(cur._row, 2).setValues([[v]]); else ss.appendRow(['레슨실 자동', v, '방배정 교수방에서 자동으로 넣은 교수진 레슨실 (손으로 고치면 그 교수는 자동으로 안 바뀜)']);
+  setMemoClear_(); PROF_CACHE = null;
+  if (n) log_('관리자 ' + who, '레슨실 자동', want.join(', '));
+}
 function roomData(token) {
   see_(adm_(token), ['room', 'fam']); let open = false; try { open = setting_('시간표 공개') === '예'; } catch (x) {}
   let days = []; try { days = actCfg_().days || []; } catch (x) {}
   const cfg = roomCfg_();
-  return { rooms: rooms_().map(r => { const o = Object.assign({}, r); delete o._row; return o; }), kinds: roomKinds_(), kindsFixed: ROOM_KINDS_FIXED, open, days, cfg: Object.assign({}, cfg, { live: roomPubNow_(cfg) }), layout: [], layoutTabs: [], layoutErr: '' };   /* 11-17: 시트 도면은 안 씀 → 다른 구글 시트를 여는 일(느림)을 뺌 */
+  return { profRm: profRoomInfo_(), rooms: rooms_().map(r => { const o = Object.assign({}, r); delete o._row; return o; }), kinds: roomKinds_(), kindsFixed: ROOM_KINDS_FIXED, open, days, cfg: Object.assign({}, cfg, { live: roomPubNow_(cfg) }), layout: [], layoutTabs: [], layoutErr: '' };   /* 11-17: 시트 도면은 안 씀 → 다른 구글 시트를 여는 일(느림)을 뺌 */
 }
 
 /* ---------------- 객실배치도 (도면) ----------------
@@ -4618,10 +4648,12 @@ function roomSave(token, x) {
     if (occ.some(o => o.k === 'fam')) kind = '가족방'; /* 가족을 넣은 방은 방종류 = 가족방 */
     const all = nd ? [...Array(nd).keys()] : [0], use = days.length ? days : all;
     use.forEach(d => { const sum = occ.filter(o => !o.days.length || o.days.includes(d)).reduce((s2, o) => s2 + o.n, 0); if (sum > cap) throw new Error(`${r.no} 방: ${d + 1}번째 날 인원 ${sum}명이 정원 ${cap}명보다 많아요.`); });
+    const pqOld = r.kind === '교수방' ? r.occ.filter(o => o.k === 'name').map(o => o.v) : [];   /* 11-28 교수방 → 교수진 레슨실 */
     const m = occ[0] || {}, sub = occ.slice(1).find(o => o.k === 'acad' || o.k === 'grp'), pr = occ.find(o => o.k === 'name' && kind === '교수방');
     const row = [r.no, r.bld, r.fl, x.type !== undefined ? t(x.type, 10) : r.type, cap, clear ? '' : kind, clear ? '' : (m.v || ''), clear ? '' : m.n, clear ? '' : (sub ? sub.v : ''), clear ? '' : (sub ? sub.n : ''), clear ? '' : t(x.pw, 40), clear ? '' : (pr ? pr.v : ''), t(x.memo, 200), stamp_(), a.name,
       clear ? '' : JSON.stringify(occ), days.length && days.length < all.length ? days.join(',') : '', x.pub && !clear ? '예' : '', /^#[0-9a-f]{6}$/i.test(String(x.color || '')) && !clear ? String(x.color) : '', t(x.size, 12), x.beds === '' || x.beds == null ? '' : n(x.beds), t(x.feat, 40)];
     sh.getRange(r._row, 1, 1, ROOM_HEAD.length).setValues([row]);
+    try { profRoomSync_(a.name, pqOld.concat(!clear && kind === '교수방' ? occ.filter(o => o.k === 'name').map(o => o.v) : []), Array.isArray(x.profOk) ? x.profOk.map(String) : [], { no: r.no, kind: clear ? '' : kind, occ: clear ? [] : occ }); } catch (e) { log_('시스템', '레슨실 맞추기 실패', String(e)); }
     log_('관리자 ' + a.name, clear ? '방 비움' : '방 배정', r.no + (clear ? '' : ' · ' + occ.map(o => o.v + ' ' + o.n).join(', ') + ' ' + kind));
   } finally { lock.releaseLock(); }
   return roomData(token);

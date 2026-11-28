@@ -36,6 +36,8 @@ const FEES = {
 };
 const ROUND_NAMES = ['1차', '2차', '3차'];
 /* 해외(USD, 11-15 사용자): 추가 레슨 1회 45달러 · 가족방 빈 자리 1개 30달러 — 캠프설정 옵션 intlLessonUsd · intlRoomUsd 로 바꿀 수 있음 */
+/* 11-28 사용자: 가족방 빈 자리는 1박 금액 × 박 수 (캠프 시작~끝 날짜, 예: 1/11~1/15 = 4박 → 30 × 4 = 120달러) */
+const INTL_NIGHTS = b => { const s = Date.parse(String((b || {}).start || '') + 'T00:00:00Z'), e = Date.parse(String((b || {}).end || '') + 'T00:00:00Z'), n = Math.round((e - s) / 864e5); return n > 0 && n < 60 ? n : 4; };
 const INTL_USD = o => ({ lesson: +((o || {}).intlLessonUsd) || 45, room: +((o || {}).intlRoomUsd) || 30, mc: +((o || {}).intlMcUsd) || 0 });   /* mc: 0 이면 교수마다 원화 금액 ÷ 환율 (반올림) */
 const intlMcUsd_ = (o, fee, usd) => (+usd || 0) || INTL_USD(o).mc || Math.round((+fee || 0) / (+(o || {}).usdRate || 1450));
 /* 오가는 방법 (11-23): 버스 왕복 · 편도(갈 때 / 올 때) · 자차 */
@@ -452,7 +454,7 @@ function intlData_(gid) {
   const ppl = sb ? sb.ppl.filter(p => p.status !== '취소').map(p => { const k = p.id.slice(sb.no.length + 1), i = (sb.form.info || {})[k] || {};
     return { key: k, first: i.first || '', last: i.last || '', type: p.type, gender: i.gender || '', by: i.by || '', inst: i.inst || p.inst || '', prog: i.prog || '', note: i.note || '', room: i.room || '', lessons: +i.lessons || 0, mc: Array.isArray(i.mc) ? i.mc : [], concert: i.concert || '없음', song: i.other ? '' : (i.song || ''), other: !!i.other, oc: i.oc || '', ot: i.other ? (i.ot || '') : '', video: i.video || '', roomFee: Math.round((+p.room || 0) / rate), fee: +p.usd || Math.round((+p.fee || 0) / rate), paid: Math.round((+p.paidAmt || 0) / rate), pay: p.pay }; }) : [];
   const fees = {}; INTL_TYPES.forEach(t => fees[t] = (C.fees[t] || [])[ri] || 0);   /* USD */
-  return { group: { id: g.id, name: g.name, country: g.country, lead: g.lead, email: g.email }, no: sb ? sb.no : '', ppl, fees, cur: 'USD', roomCap: +C.opt.roomCap || 4, roomMax: +C.opt.roomMax || 6, roomEmptyUsd: INTL_USD(C.opt).room, cons: C.cons || ['오후', '트와일라잇', '이브닝'], songs: songList_() || songDef_(), songMeta: songMeta_(), lessonUsd: INTL_USD(C.opt).lesson, lessonMax: +C.opt.lessonMax || 5, mcs: profs_().filter(p => p.on && p.mc).map(p => ({ n: p.name, en: p.en || '', i: p.inst, min: +p.min || 45, usd: intlMcUsd_(C.opt, p.fee, p.usd) })), round: C.rounds[ri].n,
+  return { group: { id: g.id, name: g.name, country: g.country, lead: g.lead, email: g.email }, no: sb ? sb.no : '', ppl, fees, cur: 'USD', roomCap: +C.opt.roomCap || 4, roomMax: +C.opt.roomMax || 6, roomEmptyUsd: INTL_USD(C.opt).room * INTL_NIGHTS(C.base), roomNightUsd: INTL_USD(C.opt).room, nights: INTL_NIGHTS(C.base), cons: C.cons || ['오후', '트와일라잇', '이브닝'], songs: songList_() || songDef_(), songMeta: songMeta_(), lessonUsd: INTL_USD(C.opt).lesson, lessonMax: +C.opt.lessonMax || 5, mcs: profs_().filter(p => p.on && p.mc).map(p => ({ n: p.name, en: p.en || '', i: p.inst, min: +p.min || 45, usd: intlMcUsd_(C.opt, p.fee, p.usd) })), round: C.rounds[ri].n,
     camp: { name: C.base.name, start: C.base.start, end: C.base.end, place: C.base.place }, remit: setting_('해외 송금 안내'), reps: sb ? (sb.intlRep || []) : [], today: today_() };
 }
 /** STG 시험: 설정 「해외 테스트 로그인」 = 이메일/접속코드 가 있으면 영어 화면에 「STG: 시험 단체로 바로 로그인」 버튼 (메인 시트에는 이 줄을 넣지 않음) */
@@ -1422,7 +1424,7 @@ function recalc_(sb) {
   if (intl) {   /* 해외: 「Family room」 이름이 같은 사람끼리 한 방 · 맨 앞 사람(대표)에 빈 자리 금액 (10-31) */
     Object.keys(roomBy).forEach(k => delete roomBy[k]); const gr = {};
     sb.ppl.forEach(p => { if (p.status === '취소') return; const k = p.id.slice(sb.no.length + 1), t = String(((info[k] || {}).room) || '').trim().toLowerCase(); if (t) (gr[t] = gr[t] || []).push(k); });
-    sb.form.room = {}; Object.keys(gr).forEach(t => { const L = gr[t]; const mx = +OPT.roomMax || 6; if (L.length > mx) throw new Error('Family room "' + t + '": up to ' + mx + ' people per room.'); const rt = +OPT.usdRate || 1450; roomBy[L[0]] = Math.max(0, (+OPT.roomCap || 4) - L.length) * INTL_USD(OPT).room * rt; sb.form.room[L[0]] = true; });   /* 빈 자리 금액도 USD 로 맞춤 */
+    sb.form.room = {}; Object.keys(gr).forEach(t => { const L = gr[t]; const mx = +OPT.roomMax || 6; if (L.length > mx) throw new Error('Family room "' + t + '": up to ' + mx + ' people per room.'); const rt = +OPT.usdRate || 1450; roomBy[L[0]] = Math.max(0, (+OPT.roomCap || 4) - L.length) * INTL_USD(OPT).room * INTL_NIGHTS(CC.base) * rt; sb.form.room[L[0]] = true; });   /* 빈 자리 금액도 USD 로 맞춤 */
   }
   sb.ppl.forEach(p => {
     const k = key(p), i = info[k];

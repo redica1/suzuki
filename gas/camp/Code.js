@@ -474,7 +474,7 @@ function intlSave(token, list) {
     if (!INTL_TYPES.includes(x.type)) throw new Error(at + 'Please choose a participant type.');
     if (!x.key && (camp_().hide || []).includes(x.type)) throw new Error(at + 'This participant type is not available. Please choose another type.');
     if (!['남', '여', '기타', '답변 안 함'].includes(x.gender)) throw new Error(at + 'Please choose gender.');   /* 11-28 해외: Male · Female · Other · Prefer not to say */
-    const by = String(x.by || '').trim(); if (!/^(19|20)\d{2}$/.test(by)) throw new Error(at + 'Please enter birth year (e.g. 2015).');
+    const by = String(x.by || '').trim(); if (!/^(19|20)\d{2}$/.test(by)) throw new Error(at + 'Please enter age (e.g. 10).');
     const plays = INTL_PLAY.includes(x.type), inst = String(x.inst || '').trim().slice(0, 20);
     if (plays && !inst) throw new Error(at + 'Please choose an instrument.');
     if (x.type === '해외 학생' && !String(x.prog || '').trim()) throw new Error(at + 'Please choose the current book level.');

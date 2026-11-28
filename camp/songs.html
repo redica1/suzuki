@@ -109,7 +109,13 @@ footer{max-width:880px;margin:0 auto;padding:0 16px 30px;color:var(--muted);font
     var d=S.d;if(!d)return;var ORD=['바이올린','첼로'],keys=Object.keys(d.songs||{}).filter(function(k){return (d.songs[k]||[]).length}).sort(function(a,b){var x=ORD.indexOf(a),y=ORD.indexOf(b);return (x<0?99:x)-(y<0?99:y)});   /* 11-27 사용자: 탭 순서 바이올린 · 첼로 · 처음 고른 탭 = 바이올린 (?i=첼로 면 첼로) */
     if(!S.inst||keys.indexOf(S.inst)<0)S.inst=keys.indexOf('바이올린')>=0?'바이올린':keys[0]||'';
     document.documentElement.lang=S.lang;
-    document.getElementById('camp').textContent=d.camp||'스즈키 겨울 음악제';
+    /* 11-28 English 화면: 위 제목도 영어 (2027 SUZUKI WINTER CAMP · Repertoire List for Concerts) · 브라우저 탭 제목도 */
+    var EN_=S.lang==='en',stg=/[?&]test\b/i.test(location.search)?'[STG] ':'';
+    document.getElementById('camp').textContent=EN_?'2027 SUZUKI WINTER CAMP':(d.camp||'스즈키 겨울 음악제');
+    document.getElementById('h1').textContent=EN_?'Repertoire List for Concerts':'오후 음악회 신청 가능한 곡';
+    document.querySelector('.h1en').hidden=EN_;
+    document.getElementById('goJoin').textContent=EN_?'Sign up':'회원가입';document.getElementById('goCamp').textContent=EN_?'Winter Camp Registration':'겨울캠프 접수 · 음원 먼저 내기';
+    document.title=stg+(EN_?'Repertoire List for Concerts · 2027 SUZUKI WINTER CAMP':'오후 음악회 신청 가능한 곡 · 2027 스즈키 겨울음악제');
     
         document.getElementById('inst').innerHTML=keys.map(function(k){return '<button type="button" role="tab" data-i="'+esc(k)+'" aria-pressed="'+(k===S.inst)+'">'+esc(k==='전체'?T('전체','All'):T(k,EN[k]||k))+'</button>'}).join('');
         var q=S.q.trim().toLowerCase(),INS=S.inst==='전체'?keys:[S.inst],tot=0;

@@ -1541,21 +1541,21 @@ function teams_(all) {
 function guardRepTeam_(no, all, ensOn, leftCount) {
   const t = teams_(all).find(x => x.no === no); if (!t) return;
   const m = t.acads.filter(a => a !== t.rep); if (!m.length) return;
-  if (!ensOn) throw new Error('앙상블 「' + t.name + '」 팀에 함께하는 학원(' + m.join(', ') + ')이 있어서 대표 신청을 취소할 수 없어요. 운영진에게 연락해 주세요.');
-  if (leftCount < 1) throw new Error(no + ' 접수는 앙상블 「' + t.name + '」 팀 대표예요. 함께하는 학원(' + m.join(', ') + ')이 있어서 모두 취소할 수 없어요. 운영진에게 연락해 주세요.');
+  if (!ensOn) throw new Error('앙상블 「' + t.name + '」 팀에 함께하는 학원(' + m.join(', ') + ')이 있어서 팀 신청을 취소할 수 없어요. 운영진에게 연락해 주세요.');
+  if (leftCount < 1) throw new Error(no + ' 접수는 앙상블 「' + t.name + '」 팀을 만든 접수예요. 함께하는 학원(' + m.join(', ') + ')이 있어서 모두 취소할 수 없어요. 운영진에게 연락해 주세요.');
 }
 /** 한 학원은 한 팀에만: 이미 다른 접수(다른 선생님 포함)로 팀에 들어가 있으면 대표·함께 신청을 막음 */
 function checkEns_(sb, all) {
   const e = sb.form && sb.form.ens; if (!e || !(e.on || e.member)) return;
   const T = teams_(all.filter(x => x.no !== sb.no));
   const t = T.find(x => x.rep === sb.acad || x.acads.includes(sb.acad));
-  if (t && !(e.member && e.joinNo === t.no)) throw new Error(sb.acad + '은(는) 이미 앙상블 「' + t.name + '」 팀에 들어가 있어요 (대표 학원 ' + t.rep + ' · ' + t.by + ' 선생님 신청). 화면을 새로 고쳐 확인해 주세요.');
+  if (t && !(e.member && e.joinNo === t.no)) throw new Error(sb.acad + '은(는) 이미 앙상블 「' + t.name + '」 팀에 들어가 있어요 (만든 학원 ' + t.rep + ' · ' + t.by + ' 선생님 신청). 화면을 새로 고쳐 확인해 주세요.');
   if (e.on) ensMates_(e.acads, T, sb.no);
 }
 /** 11-29 한 학원은 한 팀에만: 대표가 넣은 함께하는 학원도 다른 팀에 들어가 있으면 막음 (T = 이 접수를 뺀 팀 목록) */
 function ensMates_(acads, T, no) {
   const bad = (acads || []).map(m => ({ m, t: T.find(x => x.no !== no && (x.rep === m || x.acads.includes(m))) })).filter(x => x.t);
-  if (bad.length) throw new Error(bad.map(x => x.m + '은(는) 이미 「' + x.t.name + '」 팀이에요 (대표 ' + x.t.rep + ')').join(' · ') + '. 한 학원은 한 팀에만 들어가요.');
+  if (bad.length) throw new Error(bad.map(x => x.m + '은(는) 이미 「' + x.t.name + '」 팀이에요 (만든 학원 ' + x.t.rep + ')').join(' · ') + '. 한 학원은 한 팀에만 들어가요.');
 }
 function writeTeams_(all) {
   const sh = SpreadsheetApp.getActive().getSheetByName(SH.ENS);
@@ -3824,7 +3824,7 @@ function adminSaveEns(token, no, patch) {
   const lock = lock_();
   try {
     const all = loadSubs_(); const sb = all.find(x => x.no === no);
-    if (!sb || !sb.form || !sb.form.ens || !sb.form.ens.on) throw new Error('앙상블 대표 접수를 찾지 못했어요. 새로 불러와 주세요.');
+    if (!sb || !sb.form || !sb.form.ens || !sb.form.ens.on) throw new Error('앙상블 팀 접수를 찾지 못했어요. 새로 불러와 주세요.');
     const e = sb.form.ens, t = s => String(s == null ? '' : s).trim().slice(0, 200);
     if (!t(patch.group)) throw new Error('팀 이름을 넣어 주세요.');
     const before = JSON.stringify(e);

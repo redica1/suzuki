@@ -1,4 +1,4 @@
-/* build: 20261128-212429 */
+/* build: 20261128-232732 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -106,7 +106,9 @@ const SETTINGS = [['관리자 아이디', 'admin', '관리자 화면(?page=admin
   ['해외 송금 안내', '', '해외 단체 영어 화면에 보이는 송금 안내 (영어로: 은행 · SWIFT · 계좌 · 예금주 · 주소 등)'],
   ['접수 가능 학원', '마포스즈키', '「전체」 또는 학원 이름을 쉼표로 (예: 마포스즈키, 미사스즈키)'],
   ['학부모 신청 학원', '', '학부모 신청(학부모가 직접 보내는 캠프 신청)을 쓰는 학원을 쉼표로 (예: 마포스즈키, 가상스즈키). 「전체」면 모든 학원, 비우면 아무 학원도 안 씀 (11-15: 이번 캠프는 일부 학원만 시범)'],
-  ['시간표 공개', '아니오', '「예」면 선생님 화면 「내 시간표」에 교사 일정·개인레슨이 보여요']];
+  ['시간표 공개', '아니오', '「예」면 선생님 화면 「내 시간표」에 교사 일정·개인레슨이 보여요'],
+  ['제이폼 폼 ID', '', '보조 창구 제이폼 폼 번호 (예: 263314146825456). 이 폼에서 온 웹훅만 받아요 (11-28)'],
+  ['제이폼 키', '', '12자 이상 아무 글자. 제이폼 웹훅 주소 끝에 ?jf=이 값 을 붙여요. 비우면 제이폼을 받지 않아요 (11-28)']];
 
 const SH = {
   T: '명단_교사', S: '명단_학생', SUB: '접수', P: '참가자', RP: '입금신고', CX: '환불요청', ENS: '앙상블팀', LOG: '기록', PROF: '교수진', ACT: '교사일정', ACTCFG: '일정설정', ACTLOG: '일정기록', LES: '개인레슨', ROOM: '방배정', CON: '음악회순서'
@@ -159,6 +161,7 @@ function perf_() {
  *  STG(설정 「테스트 로그인」이 있음) + 설정 「몰림 시험 키」가 맞을 때만. 만든 접수는 가상 표시(fake) → 관리자 「가상 접수 모두 지우기」 또는 op=clear */
 function doPost(e) {
   const out = o => ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON);
+  if (e && e.parameter && e.parameter.jf) return jfIn_(jfParams_(e));   /* 11-28 제이폼 보조 창구 웹훅 */
   const t0 = Date.now(); let q = {};
   try { q = JSON.parse((e && e.postData && e.postData.contents) || '{}'); } catch (x) {}
   try {
@@ -189,6 +192,152 @@ function doPost(e) {
     const inLock = Date.now() - tIn; t = Date.now(); bundle_([acad], '몰림' + i); const tBundle = Date.now() - t;
     return out({ ok: true, no, wait, inLock, tRead, tWrite, tTeam, tBundle, total: Date.now() - t0 });
   } catch (x) { return out({ ok: false, msg: String(x && x.message || x), total: Date.now() - t0 }); }
+}
+/* ---------------- 제이폼 보조 창구 (11-28) ----------------
+ *  제이폼 「2027 스즈키 겨울음악제」 폼 › Settings › Integrations › WebHooks 에 이 앱 주소 + ?jf=<설정 「제이폼 키」> 를 넣으면
+ *  제출할 때마다 여기로 들어옴. 설정 「제이폼 폼 ID」 · 「제이폼 키」(12자 이상)가 맞을 때만 받음.
+ *  · 「제이폼원본」: 제출 1건을 통째로(같은 제출ID 는 한 번만)
+ *  · 「제이폼접수」: 참가자 한 사람 = 한 줄 + 회원 명단 맞춤 결과. 정식 접수(접수 · 참가자 탭)에는 넣지 않음 → 운영진이 확인한 뒤 올림
+ *  질문 번호(qid)는 2026 여름 폼(251592009756462)을 복제한 그대로라 같음. 참가자 2 질문이 폼에 없으면 그 자리는 비어 있음 */
+const JF_RAW = '제이폼원본', JF_ROWS = '제이폼접수';
+const JF_RAW_HEAD = ['받은 때', '제출ID', '폼ID', '폼 이름', '총 금액', '참가자 수', 'JSON_1', 'JSON_2', 'JSON_3', 'JSON_4'];
+const JF_HEAD = ['받은 때', '제출ID', '순서', '차수', '학원(폼)', '학원(캠프)', '작성자', '휴대전화', '이메일', '참가자 구분', '이름', '담당 교사', '악기', '나이', '성별',
+  '권수', '진도', '희망 교수', '추가 레슨', '마스터클래스', '음악회', '음악회 곡', '제이폼 금액', '앙상블', '맞춤', '회원 번호', '이미 접수', '처리', '접수번호', '처리일', '메모'];
+/* 공통 질문 */
+const JF_Q = { round: 963, acad: 146, acadTyped: 80, writer: 78, email: 82, phone: 535, total: 569,
+  ens: 560, ensGroup: 564, ensTime: 565, ensSongs: 566, ensVn: 754, ensVc: 758, ensEtc: 759, ensAcc: 755, ensVideo: 756 };
+/* 참가자마다: kind 구분 · name 이름(1번만 따로) · info 정보표 · prog 진도표 · vn/vc 희망 교수 · xyn 추가 레슨 여부 · xn 횟수 · mc 마스터클래스 · con 음악회 · song 곡 · other 곡명 없을 때 · amt 금액 */
+const JF_P = {
+  1: { kind: 542, name: 965, info: 597, prog: 598, vn: 544, vc: 545, xyn: 546, xn: 547, mc: 594, con: 548, song: 549, other: 550, amt: 775 },
+  3: { kind: 835, info: 836, prog: 837, vn: 839, vc: 840, xyn: 841, xn: 842, mc: 843, con: 844, song: 845, other: 846, amt: 848 },
+  4: { kind: 851, info: 852, prog: 853, vn: 855, vc: 856, xyn: 857, xn: 858, mc: 859, con: 860, song: 861, other: 862, amt: 864 },
+  5: { kind: 867, info: 868, prog: 869, vn: 871, vc: 872, xyn: 873, xn: 874, mc: 875, con: 876, song: 877, other: 878, amt: 880 }
+};
+/* 6~10번(과 나중에 생길 2번)은 질문 제목 「N-1.참가자 구분」 … 순서로 찾음: 받은 원본에 제목이 없으므로 아래 표를 씀 (jfMapFill_) */
+const JF_MORE = { 6: 883, 7: 899, 8: 915, 9: 931, 10: 947 };   /* N-1 참가자 구분 qid. 나머지는 +1 정보 · +2 진도 · +4 VN · +5 VC · +6 여부 · +7 횟수 · +8 MC · +9 음악회 · +10 곡 · +11 곡명 · +13 금액 */
+function jfMap_() {
+  const m = Object.assign({}, JF_P);
+  Object.keys(JF_MORE).forEach(n => { const b = JF_MORE[n]; m[n] = { kind: b, info: b + 1, prog: b + 2, vn: b + 4, vc: b + 5, xyn: b + 6, xn: b + 7, mc: b + 8, con: b + 9, song: b + 10, other: b + 11, amt: b + 13 }; });
+  return m;
+}
+/** 웹훅 받기 — doPost 맨 앞에서 부름. 늘 200 으로 짧게 답함 (제이폼은 답을 쓰지 않음) */
+function jfIn_(e) {
+  const out = o => ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON);
+  const P = (e && e.parameter) || {};
+  const key = String(setting_('제이폼 키') || ''), fid = String(setting_('제이폼 폼 ID') || '').replace(/\D/g, '');
+  if (key.length < 12 || P.jf !== key) return out({ ok: false, msg: 'no' });
+  if (fid && String(P.formID || '') !== fid) return out({ ok: false, msg: 'form' });
+  let raw = {};
+  try { raw = JSON.parse(P.rawRequest || '{}'); } catch (x) { raw = {}; }
+  const sid = String(P.submissionID || raw.submission_id || raw.event_id || ('x' + Date.now()));
+  const l = LockService.getScriptLock(), got = l.tryLock(25000);
+  try {
+    ensureHead_(JF_RAW, JF_RAW_HEAD); ensureHead_(JF_ROWS, JF_HEAD);
+    if (rows_(JF_RAW).some(r => String(r['제출ID']).replace(/^'/, '') === sid)) return out({ ok: true, dup: true });
+    const people = jfParse_(raw), at = stamp_();
+    const json = JSON.stringify({ formID: P.formID, formTitle: P.formTitle, raw });
+    const ch = [0, 1, 2, 3].map(i => json.slice(i * 45000, (i + 1) * 45000));
+    const sh = SpreadsheetApp.getActive().getSheetByName(JF_RAW);
+    sh.appendRow([at, "'" + sid, "'" + String(P.formID || ''), String(P.formTitle || ''), jfTxt_(jfAns_(raw, JF_Q.total)), people.length].concat(ch));
+    const M = jfMatchCtx_();
+    const rows = people.map(p => jfRow_(at, sid, p, M));
+    if (rows.length) { const s2 = SpreadsheetApp.getActive().getSheetByName(JF_ROWS); s2.getRange(s2.getLastRow() + 1, 1, rows.length, JF_HEAD.length).setNumberFormat('@').setValues(rows); }
+    log_('제이폼', '제출 받음', sid + ' · ' + people.length + '명');
+    return out({ ok: true, n: people.length });
+  } catch (x) {
+    try { log_('제이폼', '받기 실패', sid + ' · ' + String(x && x.message || x).slice(0, 300)); } catch (y) {}
+    return out({ ok: false, msg: 'err' });
+  } finally { if (got) l.releaseLock(); }
+}
+/** 웹훅이 multipart 로 와서 e.parameter 에 rawRequest 가 없으면 본문에서 직접 꺼냄 */
+function jfParams_(e) {
+  const P = Object.assign({}, (e && e.parameter) || {});
+  if (P.rawRequest) return { parameter: P };
+  const body = String((e && e.postData && e.postData.contents) || ''), ty = String((e && e.postData && e.postData.type) || '');
+  const bm = ty.match(/boundary=([^;]+)/) || body.match(/^--([^\r\n]+)/);
+  if (bm) body.split('--' + bm[1].replace(/^"|"$/g, '')).forEach(part => { const m = part.match(/name="([^"]+)"[^\r\n]*\r?\n(?:[^\r\n]+\r?\n)*\r?\n([\s\S]*?)\r?\n?$/); if (m && !(m[1] in P)) P[m[1]] = m[2]; });
+  else if (/^[\[{]/.test(body.trim())) { try { const o = JSON.parse(body); Object.keys(o).forEach(k => { if (!(k in P)) P[k] = typeof o[k] === 'string' ? o[k] : JSON.stringify(o[k]); }); } catch (x) {} }
+  return { parameter: P };
+}
+/** rawRequest 에서 qid 로 답 찾기 (키 모양: q542_11542) */
+function jfAns_(raw, qid) {
+  const pre = 'q' + qid + '_'; const k = Object.keys(raw).find(x => x.indexOf(pre) === 0);
+  return k === undefined ? '' : raw[k];
+}
+/** 답을 글자 칸 목록으로 펴기 (표 · 체크 · 전화 { full } · JSON 글자 모두) */
+function jfCells_(v) {
+  if (v === null || v === undefined) return [];
+  if (typeof v === 'string') { const s = v.trim(); if (/^[\[{]/.test(s)) { try { return jfCells_(JSON.parse(s)); } catch (x) {} } return [s]; }
+  if (typeof v === 'number' || typeof v === 'boolean') return [String(v)];
+  if (Array.isArray(v)) return v.reduce((a, x) => a.concat(jfCells_(x)), []);
+  if (v.full !== undefined) return [String(v.full)];
+  return Object.keys(v).filter(k => !/^Orphan/.test(k)).reduce((a, k) => a.concat(jfCells_(v[k])), []);
+}
+/** 표 답의 첫 줄을 칸 순서대로 (빈칸 자리 지킴) */
+function jfRow1_(v) {
+  if (typeof v === 'string') { const s = v.trim(); if (/^[\[{]/.test(s)) { try { v = JSON.parse(s); } catch (x) { return [s]; } } else return s ? [s] : []; }
+  if (Array.isArray(v)) { if (v.length && Array.isArray(v[0])) return v[0].map(x => jfCells_(x).join(' ')); return v.map(x => jfCells_(x).join(' ')); }
+  if (v && typeof v === 'object') { const k = Object.keys(v).filter(x => !/^Orphan/.test(x))[0]; return k === undefined ? [] : jfRow1_(v[k]); }
+  return [];
+}
+const jfTxt_ = v => jfCells_(v).filter(Boolean).join(', ');
+/** 제출 1건 → 참가자 목록. 구분 · 이름이 모두 비면 없는 사람 */
+function jfParse_(raw) {
+  const M = jfMap_(), base = {
+    round: jfTxt_(jfAns_(raw, JF_Q.round)), acad: jfTxt_(jfAns_(raw, JF_Q.acad)), acadTyped: jfTxt_(jfAns_(raw, JF_Q.acadTyped)),
+    writer: jfTxt_(jfAns_(raw, JF_Q.writer)), email: jfTxt_(jfAns_(raw, JF_Q.email)), phone: jfTxt_(jfAns_(raw, JF_Q.phone))
+  };
+  const ensOn = /예/.test(jfTxt_(jfAns_(raw, JF_Q.ens)));
+  const ens = ensOn ? ['그룹 ' + jfTxt_(jfAns_(raw, JF_Q.ensGroup)), '시간 ' + jfTxt_(jfAns_(raw, JF_Q.ensTime)), '곡 ' + jfTxt_(jfAns_(raw, JF_Q.ensSongs)),
+    '바이올린 ' + jfTxt_(jfAns_(raw, JF_Q.ensVn)), '첼로 ' + jfTxt_(jfAns_(raw, JF_Q.ensVc)), '기타 ' + jfTxt_(jfAns_(raw, JF_Q.ensEtc)), '반주 ' + jfTxt_(jfAns_(raw, JF_Q.ensAcc)), '영상 ' + jfTxt_(jfAns_(raw, JF_Q.ensVideo))].join(' · ') : '';
+  const out = [];
+  Object.keys(M).map(Number).sort((a, b) => a - b).forEach(n => {
+    const q = M[n], g = id => jfAns_(raw, id);
+    const kind = jfTxt_(g(q.kind)), info = jfRow1_(g(q.info));
+    /* 1번 정보표: 교사명 · 악기 · 나이 · 성별 (이름은 1-2 따로) / 3번부터: 교사명 · 참가자이름 · 악기 · 나이 · 성별 */
+    let teacher, name, inst, age, gender;
+    if (q.name) { name = jfTxt_(g(q.name)); [teacher, inst, age, gender] = [info[0], info[1], info[2], info[3]]; if (!name && info.length >= 5) { name = info[1]; inst = info[2]; age = info[3]; gender = info[4]; } }
+    else { [teacher, name, inst, age, gender] = [info[0], info[1], info[2], info[3], info[4]]; if (info.length === 4) { name = ''; [teacher, inst, age, gender] = info; } }
+    name = String(name || '').trim().replace(/\s+/g, ' ');
+    if (!kind && !name) return;
+    const pr = jfRow1_(g(q.prog)), so = jfRow1_(g(q.song)), ot = jfRow1_(g(q.other));
+    const prof = jfRow1_(g(q.vn)).concat(jfRow1_(g(q.vc))).filter(x => x && x !== '선호없음');
+    const xyn = jfTxt_(g(q.xyn)), xn = jfTxt_(g(q.xn));
+    out.push(Object.assign({}, base, {
+      n, kind, name, teacher: String(teacher || '').trim(), inst: String(inst || '').trim(), age: String(age || '').trim(), gender: String(gender || '').trim(),
+      book: pr[0] || '', prog: pr.slice(1).filter(Boolean).join(' / '), prof: prof.join(', '),
+      extra: /예/.test(xyn) ? (xn || '예') : '', mc: jfTxt_(g(q.mc)), con: jfTxt_(g(q.con)),
+      song: so.filter(Boolean).join(' / ') + (ot.filter(Boolean).length ? (so.filter(Boolean).length ? ' / ' : '') + ot.filter(Boolean).join(' ') : ''),
+      amt: jfTxt_(g(q.amt)), ens: n === 1 ? ens : ''
+    }));
+  });
+  return out;
+}
+/** 맞춰 보기에 쓸 명단 · 접수 (한 번만 읽음) */
+function jfMatchCtx_() {
+  const acads = {}; const add = a => { a = String(a || '').trim(); if (a) acads[jfKey_(a)] = a; };
+  const st = rows_(SH.S), tc = teachers_();
+  st.forEach(r => add(r['학원'])); tc.forEach(t => t.acads.forEach(add));
+  const subs = loadSubs_().filter(x => !x.fake);
+  return { acads, st, tc, subs };
+}
+/** 학원 이름 비교용: 「대전_초급바이올린」 → 지역 떼고 · 띄어쓰기 · 「스즈키」 빼고 */
+function jfKey_(s) { return String(s || '').replace(/^[^_]{1,6}_/, '').replace(/\s|스즈키|음악학원|학원/g, '').toLowerCase(); }
+function jfRow_(at, sid, p, M) {
+  const typed = !p.acad && p.acadTyped, acad = M.acads[jfKey_(p.acad || p.acadTyped)] || '';
+  const nm = String(p.name || '').replace(/\s/g, ''), isT = /교사|연수/.test(p.kind), isFam = /보호자|가족|아기/.test(p.kind);
+  let match = '', id = '', dupNo = '';
+  if (!acad) match = typed ? '학원 직접 입력' : '학원 못 찾음';
+  else if (!nm) match = '이름 없음';
+  else if (isFam) match = '가족 (명단 없음)';
+  else {
+    const L = isT ? M.tc.filter(t => t.name.replace(/\s/g, '') === nm && t.acads.includes(acad)).map(t => t.id)
+      : M.st.filter(r => String(r['학원']).trim() === acad && String(r['이름']).replace(/\s/g, '') === nm).map(r => String(r['고유번호'] || r['ID']));
+    match = L.length === 1 ? '회원 번호 붙음' : L.length > 1 ? '동명이인 ' + L.length + '명' : '명단에 없음'; if (L.length === 1) id = L[0];
+  }
+  if (acad && nm) { const x = M.subs.find(sb => sb.acad === acad && sb.ppl.some(q => (q.status === '정상' || q.status === '취소요청') && String(q.name).replace(/\s/g, '') === nm)); if (x) dupNo = x.no; }
+  return [at, sid, String(p.n), p.round, p.acad || p.acadTyped || '', acad, p.writer, p.phone, p.email, p.kind, p.name, p.teacher, p.inst, p.age, p.gender,
+    p.book, p.prog, p.prof, p.extra, p.mc, p.con, p.song, p.amt, p.ens, match, id, dupNo, '대기', '', '', ''].map(v => String(v === undefined ? '' : v));
 }
 /** 화면 코드가 길어서 App1, App2 … 파일로 나눠 둠 → Index.html 이 붙여서 보냄 */
 function include(name) { return HtmlService.createTemplateFromFile(name).getRawContent(); }   // App1~5는 자바스크립트라 HTML 검사 없이 그대로 붙임

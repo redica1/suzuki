@@ -346,6 +346,7 @@ function staffOk_(t, staff) {
 const INTL_SH = '해외단체', INTL_HEAD = ['단체ID', '단체', '나라', '대표', '이메일', '접속코드', '만든날', '사용', '메모'];
 const INTL_TYPES = ['해외 학생', '해외 교사', '해외 보호자', '해외 동반가족', '해외 15개월 미만'];
 const INTL_PLAY = ['해외 학생', '해외 교사'];
+const HIDEABLE_ = STAFF_TYPES.concat(INTL_TYPES);   /* 11-28 캠프 설정 참가비표에서 「빼기」 할 수 있는 줄 */
 function intlSheet_() { const ss = SpreadsheetApp.getActive(); let sh = ss.getSheetByName(INTL_SH); if (!sh) { sh = ss.insertSheet(INTL_SH); sh.getRange(1, 1, 1, INTL_HEAD.length).setValues([INTL_HEAD]).setFontWeight('bold'); sh.setFrozenRows(1); sh.getRange('A:I').setNumberFormat('@'); } return sh; }
 function intlGroups_() { intlSheet_(); return rows_(INTL_SH).filter(r => r['단체ID']).map(r => ({ id: String(r['단체ID']), name: String(r['단체']), country: String(r['나라'] || ''), lead: String(r['대표'] || ''), email: String(r['이메일'] || '').toLowerCase(), code: String(r['접속코드'] || ''), at: String(r['만든날'] || ''), on: String(r['사용'] || '예') !== '아니오', memo: String(r['메모'] || ''), _row: r._row })); }
 const intlAcad_ = g => '해외 · ' + g.name;
@@ -454,7 +455,7 @@ function intlData_(gid) {
   const ppl = sb ? sb.ppl.filter(p => p.status !== '취소').map(p => { const k = p.id.slice(sb.no.length + 1), i = (sb.form.info || {})[k] || {};
     return { key: k, first: i.first || '', last: i.last || '', type: p.type, gender: i.gender || '', by: i.by || '', inst: i.inst || p.inst || '', prog: i.prog || '', note: i.note || '', room: i.room || '', lessons: +i.lessons || 0, mc: Array.isArray(i.mc) ? i.mc : [], concert: i.concert || '없음', song: i.other ? '' : (i.song || ''), other: !!i.other, oc: i.oc || '', ot: i.other ? (i.ot || '') : '', video: i.video || '', roomFee: Math.round((+p.room || 0) / rate), fee: +p.usd || Math.round((+p.fee || 0) / rate), paid: Math.round((+p.paidAmt || 0) / rate), pay: p.pay }; }) : [];
   const fees = {}; INTL_TYPES.forEach(t => fees[t] = (C.fees[t] || [])[ri] || 0);   /* USD */
-  return { group: { id: g.id, name: g.name, country: g.country, lead: g.lead, email: g.email }, no: sb ? sb.no : '', ppl, fees, cur: 'USD', roomCap: +C.opt.roomCap || 4, roomMax: +C.opt.roomMax || 6, roomEmptyUsd: INTL_USD(C.opt).room * INTL_NIGHTS(C.base), roomNightUsd: INTL_USD(C.opt).room, nights: INTL_NIGHTS(C.base), cons: C.cons || ['오후', '트와일라잇', '이브닝'], songs: songList_() || songDef_(), songMeta: songMeta_(), lessonUsd: INTL_USD(C.opt).lesson, lessonMax: +C.opt.lessonMax || 5, mcs: profs_().filter(p => p.on && p.mc).map(p => ({ n: p.name, en: p.en || '', i: p.inst, min: +p.min || 45, usd: intlMcUsd_(C.opt, p.fee, p.usd) })), round: C.rounds[ri].n,
+  return { group: { id: g.id, name: g.name, country: g.country, lead: g.lead, email: g.email }, no: sb ? sb.no : '', ppl, fees, cur: 'USD', roomCap: +C.opt.roomCap || 4, roomMax: +C.opt.roomMax || 6, hide: (C.hide || []).filter(x => INTL_TYPES.includes(x)), roomEmptyUsd: INTL_USD(C.opt).room * INTL_NIGHTS(C.base), roomNightUsd: INTL_USD(C.opt).room, nights: INTL_NIGHTS(C.base), cons: C.cons || ['오후', '트와일라잇', '이브닝'], songs: songList_() || songDef_(), songMeta: songMeta_(), lessonUsd: INTL_USD(C.opt).lesson, lessonMax: +C.opt.lessonMax || 5, mcs: profs_().filter(p => p.on && p.mc).map(p => ({ n: p.name, en: p.en || '', i: p.inst, min: +p.min || 45, usd: intlMcUsd_(C.opt, p.fee, p.usd) })), round: C.rounds[ri].n,
     camp: { name: C.base.name, start: C.base.start, end: C.base.end, place: C.base.place }, remit: setting_('해외 송금 안내'), reps: sb ? (sb.intlRep || []) : [], today: today_() };
 }
 /** STG 시험: 설정 「해외 테스트 로그인」 = 이메일/접속코드 가 있으면 영어 화면에 「STG: 시험 단체로 바로 로그인」 버튼 (메인 시트에는 이 줄을 넣지 않음) */
@@ -471,6 +472,7 @@ function intlSave(token, list) {
     const first = String(x.first || '').trim().replace(/\s+/g, ' ').slice(0, 40), last = String(x.last || '').trim().replace(/\s+/g, ' ').slice(0, 40), at = 'Row ' + (n + 1) + ': ';
     if (!first || !last) throw new Error(at + 'Please enter first name and last name.');
     if (!INTL_TYPES.includes(x.type)) throw new Error(at + 'Please choose a participant type.');
+    if (!x.key && (camp_().hide || []).includes(x.type)) throw new Error(at + 'This participant type is not available. Please choose another type.');
     if (!['남', '여'].includes(x.gender)) throw new Error(at + 'Please choose gender.');
     const by = String(x.by || '').trim(); if (!/^(19|20)\d{2}$/.test(by)) throw new Error(at + 'Please enter birth year (e.g. 2015).');
     const plays = INTL_PLAY.includes(x.type), inst = String(x.inst || '').trim().slice(0, 20);
@@ -1990,6 +1992,7 @@ const CAMP_DEF = {
     { k: '저녁', t: 'Dinner 저녁 식사', s: '17:30', e: '19:20', on: true, first: true, last: false }],
   /* 음원 제출 (11-04): 음악회마다 받을지 · 마감일(비우면 캠프 시작 전날까지). 결과 공개는 설정 「음원 결과 공개」 (심사 화면에서) */
   cons: ['오후', '트와일라잇', '이브닝'],   /* 음악회 이름 목록 (11-12): 캠프 관리자 설정에서 추가 · 빼기 */
+  hide: [],   /* 11-28 참가비표에서 「빼기」 한 참가자격 (관계자 · 해외 줄만) — 접수 화면 고르는 목록에서도 빠짐 · 이미 들어온 사람은 그대로 */
   aud: { '오후': { on: false, due: '' }, '트와일라잇': { on: true, due: '' }, '이브닝': { on: true, due: '' } },
   /* 공문 (11-04): 캠프 안내 공문 = 캠프의 시작. 글 속 {기간}·{장소}·[[참가비표]] 같은 표시는 위 캠프 설정 값으로 채워져서, 공문과 접수 화면 금액·날짜가 어긋나지 않음 */
   doc: { no: '', date: '', to: '', ref: '', title: '{캠프이름} 안내', num: '1.', t1: '14시', t2: '12시', sign: true, mg: { t: 13, b: 15, l: 16, r: 16 }, rnote: ['(*입금 확인 후 신청 등록 완료)', '', ''],
@@ -2014,7 +2017,7 @@ const CAMP_DEF = {
     { id: 'photo', title: '사진·영상 촬영과 홍보 활용 동의 (선택)', req: false, on: false, body: '캠프 중 찍은 사진·영상(참가자 모습 포함)을 협회 홈페이지, SNS, 소식지 같은 홍보에 쓸 수 있어요.\n보유 기간: 게시물을 내려 달라고 요청할 때까지\n\n동의하지 않아도 접수할 수 있어요. 동의하지 않으면 홍보물에 쓰지 않아요.' }
   ] },
 };
-const CAMP_KEYS = [['base', '기본'], ['rounds', '차수'], ['fees', '참가비'], ['opt', '옵션'], ['refund', '환불'], ['consent', '동의'], ['meals', '식사'], ['doc', '공문'], ['aud', '음원'], ['cons', '음악회']];
+const CAMP_KEYS = [['base', '기본'], ['rounds', '차수'], ['fees', '참가비'], ['opt', '옵션'], ['refund', '환불'], ['consent', '동의'], ['meals', '식사'], ['doc', '공문'], ['aud', '음원'], ['cons', '음악회'], ['hide', '뺀 참가자격']];
 const CON_DEF = ['오후', '트와일라잇', '이브닝'];
 function consClean_(a) { const o = []; (Array.isArray(a) ? a : []).forEach(x => { const n = String(x == null ? '' : x).replace(/[|,]/g, ' ').trim().slice(0, 12); if (n && n !== '없음' && o.indexOf(n) < 0 && o.length < 8) o.push(n); }); return o.length ? o : CON_DEF.slice(); }
 /* 음악회 목록 = 역할 설정 「공연」 중 신청서 이름(ko)이 있고 「사용」인 것 (11-21). 예전 자료(ko 없음 · link)는 지금 이름에서 짐작 */
@@ -2249,7 +2252,9 @@ function campSave(token, c, rev) {
   let linkMsg = '';
   const cons = consNow_(prev.cons) || (c.cons ? consClean_(c.cons) : consClean_(prev.cons));
   const aud = {}; cons.forEach(k => { const x = (c.aud && c.aud[k]) || audPick_(prev.aud, k) || audPick_(c.aud, k) || {}; aud[k] = { on: !!x.on, pre: !!x.on && !!x.pre, due: /^\d{4}-\d{2}-\d{2}$/.test(x.due || '') ? x.due : '' }; });
-  const nc = { meals, base: { id: String(b.id).trim(), name: String(b.name).trim(), start: b.start, end: b.end, place: String(b.place || '').trim(), open: b.open, close: b.close, famClose: /^\d{4}-\d{2}-\d{2}$/.test(b.famClose || '') ? b.famClose : '', cur, guest: b.guest !== false, staff: b.staff !== false, member: b.member !== false, intl: b.intl !== false }, rounds, fees, opt, refund, consent, doc, aud, cons };
+  /* 11-28 뺀 참가자격: 관계자 · 해외 줄만 · 옛 화면(값 없음)이면 지금 값 그대로 */
+  const hide = Array.isArray(c.hide) ? c.hide.filter((x, j, A) => HIDEABLE_.includes(x) && A.indexOf(x) === j) : (prev.hide || []);
+  const nc = { meals, base: { id: String(b.id).trim(), name: String(b.name).trim(), start: b.start, end: b.end, place: String(b.place || '').trim(), open: b.open, close: b.close, famClose: /^\d{4}-\d{2}-\d{2}$/.test(b.famClose || '') ? b.famClose : '', cur, guest: b.guest !== false, staff: b.staff !== false, member: b.member !== false, intl: b.intl !== false }, rounds, fees, opt, refund, consent, doc, aud, cons, hide };
   const lock = lock_();
   try {
     const ss = SpreadsheetApp.getActive(); let sh = ss.getSheetByName(CAMPCFG);
@@ -2258,7 +2263,7 @@ function campSave(token, c, rev) {
     if ((+rev || 0) !== (old.rev || 0)) throw new Error('다른 분이 먼저 캠프 설정을 바꿨어요. 새로 고친 뒤 다시 해 주세요.');
     /* 저장이 확실할 때(번호 확인 뒤)만 공문 대장에 올림 — 저장 실패로 대장 줄만 늘어나지 않게 */
     try { const g = campDocLink_(nc.base, nc.doc, a.name); if (g) nc.doc.gm = g; else linkMsg = '회원관리 시트(설정 「회원관리 시트」)나 그 시트의 「공문」 탭을 찾지 못해 공문 대장에 올리지 못했어요.'; } catch (e) { linkMsg = '공문 대장에 올리지 못했어요: ' + e.message; }
-    const desc = { base: '캠프 코드 · 이름 · 날짜 · 장소 · 접수 기간 · 비회원 접수', rounds: '차수 이름과 기간', fees: '참가자격 × 차수 참가비', opt: '추가 레슨 · 마스터클래스 · 회비 · 가족방', refund: '취소·환불 규정', cons: '음악회 이름 목록 (설정에서 추가 · 빼기)', meals: '식사 시간 (교사 일정 모든 날짜의 식사 줄)', doc: '캠프 안내 공문 (문서 정보 · 머리말 · 항목별 글)', aud: '음악회별 음원 제출 받기 · 마감일', consent: '개인정보 동의 문구 (바꾸면 버전 날짜가 바뀜)' };
+    const desc = { base: '캠프 코드 · 이름 · 날짜 · 장소 · 접수 기간 · 비회원 접수', rounds: '차수 이름과 기간', fees: '참가자격 × 차수 참가비', opt: '추가 레슨 · 마스터클래스 · 회비 · 가족방', refund: '취소·환불 규정', cons: '음악회 이름 목록 (설정에서 추가 · 빼기)', hide: '참가비표에서 뺀 참가자격 (접수 화면에서 안 보임)', meals: '식사 시간 (교사 일정 모든 날짜의 식사 줄)', doc: '캠프 안내 공문 (문서 정보 · 머리말 · 항목별 글)', aud: '음악회별 음원 제출 받기 · 마감일', consent: '개인정보 동의 문구 (바꾸면 버전 날짜가 바뀜)' };
     const ex = rows_(CAMPCFG).reduce((o, r) => { o[String(r['항목'])] = String(r['값'] || ''); return o; }, {});
     const vals = CAMP_KEYS.map(k => [k[1], JSON.stringify(nc[k[0]]), desc[k[0]]]).concat([['rev', String((old.rev || 0) + 1), '바꾼 횟수 (건드리지 마세요)'],
       ['공문HTML', c.docHtml != null ? String(c.docHtml).slice(0, 48000) : (ex['공문HTML'] || ''), '회원관리 공문 대장이 읽는 공문 그림 (저장할 때 저절로)'], ['공문CSS', c.docCss != null ? String(c.docCss).slice(0, 20000) : (ex['공문CSS'] || ''), '공문 그림 모양']]);

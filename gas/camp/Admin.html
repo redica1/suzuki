@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- build: 20261128-181604 -->
+<!-- build: 20261128-182459 -->
 <html lang="ko"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <base target="_top">
@@ -444,6 +444,7 @@ function vHome(){const st=stats();const t=(k,v,s,w,cls)=>`<div class="tile ${w?'
   const L=statRows(),T=L.filter(x=>T_TEACH.includes(x.type)),Sx=L.filter(x=>T_PLAY.includes(x.type)),fam=L.length-T.length-Sx.length;
   const ins=[...new Set([...T,...Sx].map(x=>x.inst||'미정'))].sort(instSort);
   const live=people().filter(x=>x.p.status==='정상');const rp=live.filter(x=>x.p.pay==='신고');const rpAmt=rp.reduce((s,x)=>s+((repRow(x.p)||{}).a||0),0);
+  /* 11-28 해외 단체 송금 신고 (단체 기록 intlRep · 아직 다 안 받은 단체) */ const iRp=(S.D.subs||[]).filter(sb=>sb.intl&&(sb.intlRep||[]).length&&sb.ppl.some(p=>p.status==='정상'&&pAmt(p)-(+p.paidAmt||0)>0));
   const CX=(S.D.cx||[]).filter(c=>c.why!=='차액 환불'||true),sumCx=k=>CX.filter(c=>c.state===k).reduce((s,c)=>s+(+c.amt||0),0),nCx=k=>CX.filter(c=>c.state===k).length;
   const ML=S.D.mail;const mlv=ML?`<div class="hsec mailst"><div class="spread"><p style="margin:0"><b>메일</b> 남은 수 <b class="${ML.left!=null&&ML.left<20?'bad':''}">${ML.left==null?'-':Number(ML.left).toLocaleString('ko-KR')}</b>${ML.fail?` · <b class="bad">못 보낸 메일 ${ML.fail}통</b>`:' · 못 보낸 메일 없음'}</p>${ML.fail?`<button class="btn small primary" type="button" id="mailRetry">못 보낸 메일 다시 보내기 (${ML.fail})</button>`:''}</div></div>`:'';
   return mlv+`<div class="hsec"><h3>인원 <span class="hint">취소한 사람 빼고 · 통계와 같은 기준</span></h3><div class="tiles">
@@ -453,7 +454,7 @@ function vHome(){const st=stats();const t=(k,v,s,w,cls)=>`<div class="tile ${w?'
     ${ins.map(i=>{const a=T.filter(x=>(x.inst||'미정')===i).length,b=Sx.filter(x=>(x.inst||'미정')===i).length;return t(esc(i),(a+b)+'명',`교사 ${a} · 학생 ${b}`,false,'inst')}).join('')}</div></div>
   <div class="hsec"><h3>금액</h3><div class="tiles">
     ${t('청구 합계',won(st.bill),`남은 금액 ${won(st.left)} · ${st.unpaid}명${st.cxF?` · 취소 수수료 ${won(st.cxF)} 포함`:''}`)}
-    ${t('입금 신고',won(rpAmt),rp.length?`${rp.length}명 · 확인 기다림`:'확인 기다리는 신고 없음',rp.length>0)}
+    ${t('입금 신고',won(rpAmt),(rp.length?`${rp.length}명 · 확인 기다림`:'확인 기다리는 신고 없음')+(iRp.length?` · 해외 송금 신고 ${iRp.length}단체 (접수 · 입금 확인 › 해외)`:''),rp.length>0||iRp.length>0)}
     ${t('입금 확인',won(st.paid))}
     ${t('환불 금액',won(sumCx('요청')+sumCx('환불 예정')+sumCx('환불 완료')),`요청 ${won(sumCx('요청'))} (${nCx('요청')}) · 예정 ${won(sumCx('환불 예정'))} (${nCx('환불 예정')}) · 완료 ${won(sumCx('환불 완료'))} (${nCx('환불 완료')})`,nCx('요청')+nCx('환불 예정')>0)}
     ${t('입금 전 취소 수수료',won(st.cxF),st.cxFn?`${st.cxFn}명 · 받음 ${won(st.cxFp)} · 남음 ${won(st.cxF-st.cxFp)}`:'없음',st.cxFu>0)}</div>${cxFeeBox()}</div>
@@ -1529,7 +1530,7 @@ function load(){LOADING=true;ERR='';run('lessonData',[],r=>{LOADING=false;L=r;if
 const profs=()=>(S.D.profs||[]).filter(p=>p.on&&p.lesson).slice().sort((a,b)=>(IO.indexOf(a.inst)+1||9)-(IO.indexOf(b.inst)+1||9));
 let GONE={};
 function students(){const out=[];GONE={};(S.D.subs||[]).forEach(sb=>sb.ppl.forEach(p=>{if(p.status==='취소'){GONE[p.id]={name:p.name,acad:sb.acad};return}const k=p.id.slice(sb.no.length+1),i=(sb.form&&sb.form.info&&sb.form.info[k])||{};const type=p.type||i.type||'';
-  if(!['학생','회원의 악기하는 자녀','비회원 학생'].includes(type))return;out.push({id:p.id,name:p.name,acad:sb.acad,no:sb.no,inst:p.inst||i.inst||'',teacher:i.teacher||'',prog:i.prog||'',req:(i.noBase?0:1)+(+i.lessons||0),base:!i.noBase,p1:i.p1||'',p2:i.p2||'',round:sb.round||''})}));return out}
+  if(!['학생','회원의 악기하는 자녀','비회원 학생','해외 학생'].includes(type))return;out.push({id:p.id,name:p.name,acad:sb.acad,no:sb.no,inst:p.inst||i.inst||'',teacher:i.teacher||'',prog:i.prog||'',req:(i.noBase?0:1)+(+i.lessons||0),base:!i.noBase,p1:i.p1||'',p2:i.p2||'',round:sb.round||''})}));return out}
 let SB={};const stuOf=id=>SB[id];
 const sh0=a=>String(a||'').replace(/스즈키$/,'');
 const at=(d,t,pr)=>L.rows.find(x=>x.d===d&&x.t===t&&x.pr===pr);
@@ -1715,6 +1716,10 @@ document.addEventListener('change',ev=>{if(S.tab==='room'&&ev.target.name==='rc_
 /* 가족방 신청: 대표 + 같은 방 형제 + 가족 · 방 = 배정에 그 가족(접수번호 · 대표 이름)이 든 방 (예전처럼 비번 수신자 · 메모에 대표 이름이 있는 가족방도) */
 function famRooms(){const L=[];(S.D.subs||[]).forEach(sb=>{const f=sb.form||{},room=f.room||{},join=f.join||{},fam=f.fam||[];
   const P=k=>sb.ppl.find(p=>p.id===sb.no+'_'+k),live=k=>{const p=P(k);return p&&p.status!=='취소'};
+  if(sb.intl){const G={},IN=f.info||{};sb.ppl.forEach(p=>{if(p.status==='취소')return;const k=p.id.slice(sb.no.length+1),t=String((IN[k]||{}).room||'').trim().replace(/\s+/g,' ').toLowerCase();if(t)(G[t]=G[t]||[]).push(p)});   /* 11-28 해외: Family room 이름이 같은 사람 = 한 가족방 (맨 앞 사람이 대표 · 빈 자리 금액) */
+    Object.keys(G).forEach(t=>{const ps=G[t],rep=ps[0],kt=q=>({'해외 학생':'학생','해외 교사':'교사','해외 보호자':'보호자','해외 15개월 미만':'15개월 미만'})[q.type]||'동반가족',mem=ps.map((q,j)=>({name:q.name,t:j?kt(q):'대표'}));const due=ps.reduce((s,q)=>s+pAmt(q)-(+q.paidAmt||0),0);
+      const rs=(R?R.rooms:[]).filter(r=>(r.occ||[]).some(o=>o.k==='fam'&&o.no===sb.no&&o.v.startsWith(rep.name))||(/가족방/.test(r.kind)&&(r.pw.includes(rep.name)||r.memo.includes(rep.name))));
+      L.push({sb,rep,mem,rq:'Family room: '+String((IN[rep.id.slice(sb.no.length+1)]||{}).room||''),n:mem.length,fee:ps.reduce((s,q)=>s+(+q.room||0),0),paid:ps.every(q=>(+q.paidAmt||0)>0&&pAmt(q)-(+q.paidAmt||0)<=0),due,rs,req:0})});return}
   Object.keys(room).filter(k=>room[k]&&live(k)).forEach(k=>{const heads=[k,...Object.keys(join).filter(j=>join[j]===k&&live(j))];
     const fm=fam.filter(x=>heads.includes(x.link)&&live(x.id));const rep=P(k);
     const mem=[...heads.map(h=>{const p=P(h);return {name:p.name,t:h===k?'대표':'형제·자녀'}}),...fm.map(x=>({name:(P(x.id)||{}).name||x.name,t:({'회원의 첫번째 보호자':'보호자','비회원 보호자':'보호자','동반가족 중 15개월 미만':'15개월 미만','비회원 15개월 미만':'15개월 미만'})[x.type]||'동반가족'}))];
@@ -2010,7 +2015,7 @@ const CAMP_YEAR=2027, CAMP_DAY='01-11';   /* 캠프 첫날 기준 만 나이 (�
 const manAge=by=>{by=String(by||'').trim();if(!/^\d{4}/.test(by))return '';const y=+by.slice(0,4);const md=by.length>=10?by.slice(5,10):'';return CAMP_YEAR-y-(md&&md<=CAMP_DAY?0:1)};
 const bookNo=g=>{g=String(g||'');if(/pre/i.test(g))return 0;const m=g.match(/(\d+)권/);return m?+m[1]+(/B/.test(g.slice(m.index,m.index+4))?.5:0)+(/이상/.test(g)?.6:0):99};
 function conRows(){const L=[];(S.D.subs||[]).forEach(sb=>sb.ppl.forEach(p=>{if(p.status==='취소')return;const k=p.id.slice(sb.no.length+1),i=(sb.form&&sb.form.info&&sb.form.info[k])||{};
-  const type=p.type||i.type||'';if(!['학생','회원의 악기하는 자녀','비회원 학생','교사','연수생','소속없는 중급연수생'].includes(type))return;
+  const type=p.type||i.type||'';if(!['학생','회원의 악기하는 자녀','비회원 학생','해외 학생','교사','연수생','소속없는 중급연수생'].includes(type))return;   /* 11-28 해외 학생도 음악회 */
   L.push({id:p.id,key:p.name+'('+String(sb.acad).replace(/스즈키$/,'')+')',at:String(p.addAt||sb.createdAt||''),round:sb.round||'',acad:sb.acad,owner:sb.owner||'',name:p.name,inst:p.inst||i.inst||'',by:i.by||'',age:manAge(i.by),type,prog:i.prog||'',con:i.concert||'없음',
     song:i.other?'':(i.song||''),oc:i.other?(i.oc||''):'',ot:i.other?(i.ot||''):'',video:i.concert==='이브닝'?(i.video||''):'',dur:i.dur||'',status:p.status})}));return L}
 function conAll(){const m={};(S.D.subs||[]).forEach(sb=>sb.ppl.forEach(p=>{m[p.id]={name:p.name,acad:sb.acad,status:p.status}}));return m}

@@ -1,4 +1,4 @@
-/* build: 20261128-181604 */
+/* build: 20261128-182459 */
 /**
  * 스즈키 겨울 음악제(2027 · 27W) 캠프 접수 — 앱스크립트판 (시험: 마포스즈키만)
  *
@@ -380,7 +380,7 @@ function intlAdmin(token, op) {
   }
   const subs = loadSubs_();
   return { groups: intlGroups_().map(g => { const sb = subs.find(x => x.intl && x.intlId === g.id); const live = sb ? sb.ppl.filter(p => p.status === '정상') : [];
-    return Object.assign({}, g, { _row: undefined, no: sb ? sb.no : '', n: live.length, bill: live.reduce((t, p) => t + amt_(p), 0), usd: live.reduce((t, p) => t + (+p.usd || 0), 0), paid: sb ? sb.ppl.reduce((t, p) => t + (+p.paidAmt || 0), 0) : 0, reps: sb ? (sb.intlRep || []) : [] }); }),
+    return Object.assign({}, g, { _row: undefined, no: sb ? sb.no : '', n: live.length, bill: live.reduce((t, p) => t + amt_(p), 0), usd: live.reduce((t, p) => t + (+p.usd || 0) + (+p.lessonUsd || 0) + (+p.mcUsd || 0) + Math.round((+p.room || 0) / (+camp_().opt.usdRate || 1450)), 0),   /* 11-28 참가비 + 레슨 + 마스터클래스 + 빈 자리 */ paid: sb ? sb.ppl.reduce((t, p) => t + (+p.paidAmt || 0), 0) : 0, reps: sb ? (sb.intlRep || []) : [] }); }),
     rate: +camp_().opt.usdRate || 1450,
     url: setting_('공유주소') ? String(setting_('공유주소')).replace(/\/$/, '') + '/intl.html' : '' };
 }
@@ -450,7 +450,7 @@ function intlEnter(o, agree) {
 }
 function intlData_(gid) {
   const g = intlGroups_().find(x => x.id === gid); if (!g) throw new Error('Group not found.');
-  const C = camp_(), sb = loadSubs_().find(x => x.intl && x.intlId === gid), ri = sb ? (+((sb.form || {}).ri) || 0) : curRound_(C);
+  const C = camp_(), sb = loadSubs_().find(x => x.intl && x.intlId === gid), ri = curRound_(C);   /* 11-28 참가비표 · 차수 = 오늘 차수 (새로 넣는 사람이 낼 금액) · 이미 넣은 사람은 사람마다 fee(넣은 날 차수) */
   const rate = +C.opt.usdRate || 1450;
   const ppl = sb ? sb.ppl.filter(p => p.status !== '취소').map(p => { const k = p.id.slice(sb.no.length + 1), i = (sb.form.info || {})[k] || {};
     return { key: k, first: i.first || '', last: i.last || '', type: p.type, gender: i.gender || '', by: i.by || '', inst: i.inst || p.inst || '', prog: i.prog || '', note: i.note || '', room: i.room || '', lessons: +i.lessons || 0, mc: Array.isArray(i.mc) ? i.mc : [], concert: i.concert || '없음', song: i.other ? '' : (i.song || ''), other: !!i.other, oc: i.oc || '', ot: i.other ? (i.ot || '') : '', video: i.video || '', roomFee: Math.round((+p.room || 0) / rate), fee: +p.usd || Math.round((+p.fee || 0) / rate), paid: Math.round((+p.paidAmt || 0) / rate), pay: p.pay }; }) : [];
@@ -1336,7 +1336,7 @@ function writePeople_(sb, isNew) {
     const vals = {
       '참가자ID': p.id, '접수번호': sb.no, '차수': p.rndN || sb.round, '학원': sb.acad, '접수 교사': sb.owner, '들어온 차례': (p.batch || 1) === 1 ? '처음 접수' : '추가 ' + ((p.batch || 1) - 1),
       '추가 일시': p.addAt || '', '이름': p.name, '구분': p.kind, '참가 구분': p.type, '악기': p.inst || i.inst || '', '담당 교사': i.teacher || '', '출생연도': i.by || '', '성별': i.gender || '',
-      '현재 진도': i.prog || '', '선호 교수1': i.p1 || '', '선호 교수2': i.p2 || '', '기본 레슨': ['학생', '회원의 악기하는 자녀', '비회원 학생'].includes(i.type) ? (i.noBase ? '안 받음' : '1회') : '', '추가 레슨': i.lessons || '', '마스터클래스': (i.mc || []).join(', '),
+      '현재 진도': i.prog || '', '선호 교수1': i.p1 || '', '선호 교수2': i.p2 || '', '기본 레슨': ['학생', '회원의 악기하는 자녀', '비회원 학생', '해외 학생'].includes(i.type) ? (i.noBase ? '안 받음' : '1회') : '', '추가 레슨': i.lessons || '', '마스터클래스': (i.mc || []).join(', '),
       '음악회': i.concert && i.concert !== '없음' ? i.concert : '', '음악회 곡': i.other ? (String(i.oc || '') + ' ' + String(i.ot || '')).trim() : (i.song || ''),
       '가족방': p.room ? '대표(빈 자리 요금)' : (f.room && f.room[key] ? '대표' : ''), '참가비': p.fee, '레슨·MC': p.lesson, '연회비': p.dues, '가족방비': p.room || 0,
       '청구액': (+p.fee || 0) + (+p.lesson || 0) + (+p.dues || 0) + (+p.room || 0), '상태': p.status, '입금 상태': p.pay,
@@ -4042,14 +4042,14 @@ function actEvents_() {
  *  예전에 넣었는데 지금은 명단에 없는 사람은 out=true 로 남겨 둠 (일정 칸에 이미 들어 있으면 보이게) */
 function actPeople_(saved) {
   const nm = s => String(s || '').replace(/\s+/g, '').toLowerCase();
-  const TT = ['교사', '연수생', '소속없는 중급연수생'];
+  const TT = ['교사', '연수생', '소속없는 중급연수생', '해외 교사'];   /* 11-28 해외 교사도 교사 일정에 */
   const M = {};
   loadSubs_().forEach(sb => sb.ppl.forEach(p => {
     const k = p.id.slice(sb.no.length + 1); const i = (sb.form && sb.form.info && sb.form.info[k]) || {};
     const type = p.type || i.type || ''; if (!TT.includes(type)) return;
     const id = 'C:' + k; const cx = p.status === '취소';
     if (M[id] && !M[id].cx) return;   // 다른 접수에서 살아 있으면 그쪽
-    M[id] = { id, n: p.name, acad: sb.acad, inst: p.inst || i.inst || '', kind: type === '교사' ? '교사' : '연수생', tid: /^t_/.test(k) ? k.slice(2) : '', cx };
+    M[id] = { id, n: p.name, acad: sb.acad, inst: p.inst || i.inst || '', kind: type === '교사' || type === '해외 교사' ? '교사' : '연수생', tid: /^t_/.test(k) ? k.slice(2) : '', cx };
   }));
   const L = Object.values(M);
   try { profs_().filter(p => p.on).forEach(p => {
@@ -4350,11 +4350,11 @@ function myTimetable(token) {
   const stu = [];
   const groupsOf = grpMatch_();
   Object.keys(byPid).forEach(id => { const s = byPid[id]; const type = s.p.type || s.i.type || '';
-    if (!['학생', '회원의 악기하는 자녀', '비회원 학생'].includes(type)) return;
+    if (!['학생', '회원의 악기하는 자녀', '비회원 학생', '해외 학생'].includes(type)) return;   /* 11-28 해외 학생도 개인레슨 */
     const mineSub = s.sb.owner === u.name, myPupil = nm(s.i.teacher) === nm(u.name) && u.acads.includes(s.sb.acad), sameAcad = u.acads.includes(s.sb.acad);
     if (!mineSub && !myPupil && !sameAcad) return;
     const inst = s.p.inst || s.i.inst || '';
-    stu.push({ name: s.p.name, acad: s.sb.acad, inst, teacher: s.i.teacher || '', req: (['학생', '회원의 악기하는 자녀', '비회원 학생'].includes(s.i.type) && !s.i.noBase ? 1 : 0) + (+s.i.lessons || 0), mine: mineSub || myPupil, prog: s.i.prog || '', mc: Array.isArray(s.i.mc) ? s.i.mc : (s.i.mc ? [String(s.i.mc)] : []), grp: groupsOf(inst, s.i.prog), lessons: L.filter(x => x.pid === id).map(x => ({ d: x.d, t: x.t, pr: x.pr, room: roomOf(x.pr) })) }); });
+    stu.push({ name: s.p.name, acad: s.sb.acad, inst, teacher: s.i.teacher || '', req: (['학생', '회원의 악기하는 자녀', '비회원 학생', '해외 학생'].includes(s.i.type) && !s.i.noBase ? 1 : 0) + (+s.i.lessons || 0), mine: mineSub || myPupil, prog: s.i.prog || '', mc: Array.isArray(s.i.mc) ? s.i.mc : (s.i.mc ? [String(s.i.mc)] : []), grp: groupsOf(inst, s.i.prog), lessons: L.filter(x => x.pid === id).map(x => ({ d: x.d, t: x.t, pr: x.pr, room: roomOf(x.pr) })) }); });
   stu.sort((a, b) => a.acad.localeCompare(b.acad) || a.name.localeCompare(b.name));
   /* 마스터클래스 일정 (11-03): 교사 일정 종류 「마스터클래스」, 교수 = 그 일정 사람 · 세부 이름 */
   const mcs = actEvents_().filter(e => e.title === '마스터클래스').map(e => ({ who: [e.sub].concat(e.ppl.map(p => pn(p.n))).filter(Boolean), d: e.d, s: e.s, e: e.e, room: e.room }));

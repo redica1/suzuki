@@ -1,4 +1,4 @@
-/* build: 20261129-015614 */
+/* build: 20261129-015712 */
   if(S.ttDay==null){const td=ttToday(days);S.ttDay=td!=null?td:(mine.length?Math.min(...mine.map(x=>x.d)):0)}
   if(tab==='me')return head+seg+(T.prof?`<p class="hint" style="margin:0 0 6px">교수 · 레슨실 <b>${esc(T.prof.room||'미정')}</b></p>`:'')+ttMineList(T,days,mine)+'</section>';
   const AC=S.user.acads||[];if(S.ttAcad&&!AC.includes(S.ttAcad))S.ttAcad='';
@@ -35,6 +35,8 @@ function hdSync(){const u=!!S.user,$=id=>document.getElementById(id);
   if(u&&S.token&&S.qMine===undefined&&!S.qMineL){S.qMineL=1;try{google.script.run.withSuccessHandler(r=>{S.qMine=(r&&r.mine)||[];hdSync()}).withFailureHandler(()=>{}).myIssues(S.token)}catch(e){}}   /* 내 글 답 빨간 점용 */
   if(!u){S.qMine=undefined;S.qMineL=0}}
 function render(){fillBanks();hdSync();
+  /* 11-29 사용자: 비회원은 「보호자 확인」 단계 없이 바로 참가학생 (이메일은 첫 화면에서 받음 · 내 접수가 있으면 1단계에 「내 접수 보기」) */
+  if(S.user&&S.user.guest&&S.view==='form'&&S.step===1&&S.verified&&!MY_SUBS.length)S.step=2;
   {const st=document.getElementById('steps');if(st)st.hidden=S.view==='audpre'||S.view==='mine'||S.view==='q'||!!(S.editNo&&S.quickEdit)}
   if(S.view==='pay'){const L=S.myPay||[],tx=x=>{const g=+x.g||0,f=v=>Math.floor(v/10)*10,it=x.rate==='3.3'?f(g*0.03):x.rate==='8.8'?f(g*0.4*0.2):0,lt=f(it*0.1);return {it,lt,net:g-it-lt}},W=v=>(+v||0).toLocaleString('ko-KR')+'원';
     document.getElementById('app').innerHTML=`<section class="sec"><div class="spread"><h2>내 수당</h2><button class="btn small ghost" type="button" id="lostBack">← 돌아가기</button></div>
@@ -57,7 +59,7 @@ function render(){fillBanks();hdSync();
   document.getElementById('dockLabel').textContent = S.step===1?'접수 준비':`선택 ${t.n}명${t.teams.length?` · 가족방 ${t.teams.length}`:''}${t.waiting?` · 회비확인대기 ${t.waiting}명`:''}`;
   document.getElementById('dockTotal').textContent = won(t.all);
   if(S.editNo&&S.step>1&&S.step<6){const D=editDiff();if(D)document.getElementById('dockLabel').textContent=D.diff?`고친 내용: ${won(D.before)} → ${won(D.after)} (${sgn(D.diff)})`:(S.quickEdit?'신청 내용 보기 · 금액 그대로':'고치는 중 · 금액 그대로')}
-  back.hidden = S.step===1||S.step===6;
+  back.hidden = S.step===1||S.step===6||(isGuest()&&S.step===2&&!MY_SUBS.length);
   next.hidden = S.step===6||!S.user;
   next.textContent = S.step===5?(S.editNo?'수정 내용 저장':'접수 완료하기'):(S.step===4&&S.editNo&&S.ensEdit?'앙상블 저장':S.step===3&&S.editNo&&S.quickEdit?'저장':'다음');
   next.disabled = false; next.classList.toggle('dim', blocked());

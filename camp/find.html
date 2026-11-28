@@ -15,6 +15,13 @@
 <meta property="og:title" content="스즈키 겨울 음악제 · 캠프 일정 찾기">
 <meta property="og:description" content="학생 이름으로 그룹레슨 · 개인레슨 교실과 시간을 찾아요 (캠프 기간에만)">
 <meta name="theme-color" content="#0f9d9a">
+<!-- 11-29 「홈 화면에 추가」해서 앱처럼 (안드로이드: 설치 창 · 아이폰: 공유 → 홈 화면에 추가 안내) -->
+<link rel="manifest" id="mf" href="app/find.webmanifest">
+<link rel="apple-touch-icon" href="app/find-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="캠프 일정">
+<script>if(/[?&]test\b/i.test(location.search))document.getElementById('mf').href='app/find-test.webmanifest'</script>
 <style>
   html, body { margin: 0; height: 100%; background: #eef0f4; }
   [hidden] { display: none !important; }
@@ -26,6 +33,18 @@
   .msg a.sub { color: #5d6680; font-size: 15px; }
   .spin { width: 26px; height: 26px; border-radius: 50%; border: 3px solid #2c46c9; border-right-color: transparent; animation: s .8s linear infinite; }
   @keyframes s { to { transform: rotate(360deg); } }
+  /* 11-29 앱처럼 쓰기 팝업 */
+  .a2h { position: fixed; inset: 0; z-index: 99; background: rgba(15, 24, 40, .45); display: flex; align-items: flex-end; justify-content: center; padding: 16px; }
+  .a2h .box { background: #fff; border-radius: 18px; padding: 20px 18px 16px; width: 100%; max-width: 420px; box-shadow: 0 10px 30px rgba(0,0,0,.25); margin-bottom: env(safe-area-inset-bottom); }
+  .a2h .hd { display: flex; gap: 12px; align-items: center; margin-bottom: 10px; }
+  .a2h img { width: 52px; height: 52px; border-radius: 12px; }
+  .a2h b { font-size: 18px; }
+  .a2h p { margin: 6px 0 14px; color: #5d6680; font-size: 15.5px; font-weight: 500; }
+  .a2h .ios { background: #eef6f6; border-radius: 12px; padding: 10px 12px; font-size: 15px; color: #18203a; margin: 0 0 14px; }
+  .a2h .row { display: flex; gap: 8px; }
+  .a2h button { flex: 1; border: 0; border-radius: 12px; padding: 13px; font: inherit; font-size: 16px; cursor: pointer; }
+  .a2h .go { background: #0f9d9a; color: #fff; }
+  .a2h .no { background: #eef0f4; color: #18203a; }
 </style>
 </head>
 <body>
@@ -36,6 +55,12 @@
   <a class="btn" id="openOut">브라우저로 열기</a>
   <a class="sub" id="copyUrl" href="#">주소 복사</a>
 </div>
+<div class="a2h" id="a2h" hidden><div class="box" role="dialog" aria-modal="true" aria-labelledby="a2hT">
+  <div class="hd"><img src="app/find-192.png" alt=""><div><b id="a2hT">바탕화면에 저장할까요?</b><br><small style="color:#5d6680;font-weight:500">캠프 일정 찾기를 앱처럼 바로 열 수 있어요</small></div></div>
+  <p>휴대폰 바탕화면에 아이콘이 생겨요. 캠프 동안 시간표 · 교실 · 식단을 한 번에 열어요.</p>
+  <div class="ios" id="a2hIos" hidden>아래(또는 위) <b>공유 버튼 <span aria-hidden="true">⬆︎</span></b>을 누르고<br>「<b>홈 화면에 추가</b>」를 눌러 주세요.</div>
+  <div class="row"><button type="button" class="no" id="a2hNo">다음에</button><button type="button" class="go" id="a2hGo">저장하기</button></div>
+</div></div>
 <iframe id="app" title="캠프 일정 찾기" allow="camera; clipboard-write; clipboard-read; screen-wake-lock" hidden></iframe>
 <script>
 (function () {
@@ -69,6 +94,28 @@
   document.getElementById('direct').href = APP;
   app.src = APP; app.hidden = false;
   setTimeout(function () { document.getElementById('slow').hidden = false; }, 10000);
+})();
+/* 11-29 앱처럼 쓰기: 처음 오면 「바탕화면에 저장할까요?」 · 이미 앱으로 열었거나 「다음에」를 누른 지 3일이 안 됐으면 안 물음 */
+(function () {
+  var standalone = (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
+  if (standalone) return;
+  try { if ('serviceWorker' in navigator) navigator.serviceWorker.register('find-sw.js', { scope: './find' }); } catch (x) {}
+  var K = 'a2hNo', ua = navigator.userAgent || '';
+  try { var t = +localStorage.getItem(K) || 0; if (Date.now() - t < 3 * 86400000) return; } catch (x) {}
+  if (/KAKAOTALK| Line\/|NAVER\(inapp|Instagram|FBAN|FBAV|BAND\/|DaumApps|everytimeApp|; wv\)/i.test(ua)) return;
+  var ios = /iPhone|iPad|iPod/i.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  var box = document.getElementById('a2h'), go = document.getElementById('a2hGo'), no = document.getElementById('a2hNo'), ev = null;
+  function open() { box.hidden = false; }
+  function close(later) { box.hidden = true; if (later) try { localStorage.setItem(K, String(Date.now())); } catch (x) {} }
+  no.onclick = function () { close(true); };
+  if (ios) {
+    document.getElementById('a2hIos').hidden = false; go.textContent = '알겠어요';
+    go.onclick = function () { close(true); };
+    setTimeout(open, 1500); return;
+  }
+  window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); ev = e; setTimeout(open, 800); });
+  go.onclick = function () { if (!ev) { close(true); return; } ev.prompt(); (ev.userChoice || Promise.resolve({})).then(function (c) { close(!(c && c.outcome === 'accepted')); ev = null; }); };
+  window.addEventListener('appinstalled', function () { close(false); });
 })();
 </script>
 </body>
